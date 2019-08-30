@@ -1,0 +1,57 @@
+version: 2
+jobs:
+  setup:
+    docker:
+      # specify the version you desire here
+      - image: circleci/node:10.16.0
+
+    working_directory: ~/chartbrew
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package.json" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+
+      - run: npm run setup
+
+      - save_cache:
+          paths:
+            - node_modules
+            - client/node_modules
+            - server/node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+
+  lint:
+    docker:
+      - image: circleci/node:10.16.0
+
+    working_directory: ~/chartbrew
+
+    steps:
+      - checkout
+
+      # lint the client project
+      - run: cd ~/chartbrew/client && npm run lint
+
+      # lint the server project
+      - run: cd ~/chartbrew/server && npm run lint
+
+  build:
+    docker:
+      - image: circleci/node:10.16.0
+
+    working_directory: ~/chartbrew
+
+    steps:
+      - checkout
+
+      # Build the client
+      - run: cd ~/chartbrew/client && npm run build
+
+      # build the docs
+      - run: npm run docs:build

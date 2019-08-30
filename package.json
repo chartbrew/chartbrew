@@ -1,0 +1,25 @@
+{
+  "name": "chartbrew",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "setup": "cd client && npm install && cd ../server/ && npm install",
+    "docs:dev": "vuepress dev docs",
+    "docs:build": "vuepress build docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/razvanilin/chart-brew.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/razvanilin/chart-brew/issues"
+  },
+  "homepage": "https://github.com/razvanilin/chart-brew#readme",
+  "devDependencies": {
+    "vuepress": "^1.0.3"
+  }
+}

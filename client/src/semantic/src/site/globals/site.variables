@@ -1,0 +1,16 @@
+/*******************************
+     User Global Variables
+*******************************/
+
+@primaryColor   : #1A7FA0;
+@secondaryColor : #F69977;
+@violet         : #1A7FA0;
+@olive          : #F69977;
+@teal           : #88BFc4;
+@blue           : #103751;
+@orange         : #CF6B4E;
+
+
+@headerFont        : 'Nunito Sans', sans-serif;
+@pageFont          : 'Nunito Sans', sans-serif;
+@googleFontFamily  : 'Nunito+Sans:600,700';

@@ -1,0 +1,31 @@
+# semantic ui
+
+src/semantic/dist
+src/semantic/tasks
+
+!/src/semantic/src/
+/src/semantic/src/*
+!/src/semantic/src/site
+/src/semantic/src/site/*
+!/src/semantic/src/site/globals
+
+# dependencies
+/node_modules
+
+# testing
+/coverage
+
+# production
+/build
+/dist
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

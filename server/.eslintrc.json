@@ -1,0 +1,28 @@
+{
+  "extends": "airbnb-base",
+  "rules": {
+    "quotes": [1, "double"],
+    "no-plusplus": "off",
+    "no-underscore-dangle": "off",
+    "no-shadow": "off",
+    "comma-dangle": ["error", {
+        "arrays": "only-multiline",
+        "objects": "only-multiline",
+        "imports": "only-multiline",
+        "exports": "only-multiline",
+        "functions": "ignore"
+    }],
+    "arrow-body-style": "off",
+    "no-else-return": "off",
+    "quote-props": "off",
+    "no-restricted-syntax": "off",
+    "linebreak-style": "off",
+    "class-methods-use-this": "off",
+    "prefer-promise-reject-errors": "off",
+    "camelcase": "off"
+  },
+  "parser": "babel-eslint",
+  "globals": {
+    "Headers": false
+  }
+}
