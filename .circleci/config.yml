@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  setup:
+  build:
     docker:
       # specify the version you desire here
       - image: circleci/node:10.16.0
@@ -26,29 +26,11 @@ jobs:
             - server/node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
 
-  lint:
-    docker:
-      - image: circleci/node:10.16.0
-
-    working_directory: ~/chartbrew
-
-    steps:
-      - checkout
-
       # lint the client project
       - run: cd ~/chartbrew/client && npm run lint
 
       # lint the server project
       - run: cd ~/chartbrew/server && npm run lint
-
-  build:
-    docker:
-      - image: circleci/node:10.16.0
-
-    working_directory: ~/chartbrew
-
-    steps:
-      - checkout
 
       # Build the client
       - run: cd ~/chartbrew/client && npm run build
