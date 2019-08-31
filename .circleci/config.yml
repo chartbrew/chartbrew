@@ -59,7 +59,7 @@ jobs:
             - v2-dependencies-
       - run:
           name: Building semantic
-          command: cd client && cp -Rn node_modules/fomantic-ui/tasks src/semantic && cp -Rn node_modules/fomantic-ui/src src/semantic && mv src/semantic/src/_site src/semantic/src/site && mv src/semantic/src/theme.config.example src/semantic/src/theme.config
+          command: cd client && cp -Rn node_modules/fomantic-ui/tasks src/semantic && cp -Rn node_modules/fomantic-ui/src src/semantic && mv src/semantic/src/_site src/semantic/src/site && mv src/semantic/src/theme.config.example src/semantic/src/theme.config && cd src/semantic && npx gulp build
       - run:
           name: Building the client
           command: cd client && npm run build
