@@ -22,6 +22,8 @@ jobs:
           paths:
             - node_modules
             - client/node_modules
+            - client/src/semantic/tasks
+            - client/src/semantic/src
             - server/node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
 
@@ -41,7 +43,7 @@ jobs:
             - v1-dependencies-
       - run:
           name: Linting client code
-          command: cd client && npm run lint
+          command: cd client/src/semantic && gulp build && cd ../../ && npm run lint
 
   # lint the server project
   lint2:
