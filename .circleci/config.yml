@@ -1,8 +1,7 @@
 version: 2
 jobs:
-  build:
+  setup:
     docker:
-      # specify the version you desire here
       - image: circleci/node:10.16.0
 
     working_directory: ~/chartbrew
@@ -22,18 +21,55 @@ jobs:
       - save_cache:
           paths:
             - node_modules
-            - client/node_modules
             - server/node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
 
-      # lint the client project
-      - run: cd ~/chartbrew/client && npm run lint
+  # lint the client project
+  lint1:
+    docker:
+      - image: circleci/node:10.16.0
+    - run:
+      name: Linting client code
+      command: cd ~/chartbrew/client && npm run lint
 
-      # lint the server project
-      - run: cd ~/chartbrew/server && npm run lint
+  # lint the server project
+  lint2:
+    docker:
+      - image: circleci/node:10.16.0
+    - run:
+      name: Linting server code
+      command: cd ~/chartbrew/server && npm run lint
 
-      # Build the client
-      - run: cd ~/chartbrew/client && npm run build
+  build1:
+    docker:
+      - image: circleci/node:10.16.0
+    # Build the client
+    - run:
+      name: Building the client
+      command: cd ~/chartbrew/client && npm run build
 
-      # build the docs
-      - run: npm run docs:build
+  build2:
+    docker:
+      - image: circleci/node:10.16.0
+    # build the docs
+    - run:
+      name: Building the docs
+      command: npm run docs:build
+
+workflows:
+  version: 2
+  setup_and_build:
+    jobs:
+      - setup
+      - lint1:
+        requires:
+          - setup
+      - lint2:
+        requires:
+          - setup
+      - build1:
+        requires:
+          - setup
+      - build2:
+        requires:
+          - setup
