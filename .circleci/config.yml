@@ -67,14 +67,14 @@ workflows:
     jobs:
       - setup
       - lint1:
-        requires:
-          - setup
+          requires:
+            - setup
       - lint2:
-        requires:
-          - setup
+          requires:
+            - setup
       - build1:
-        requires:
-          - setup
+          requires:
+            - setup
       - build2:
-        requires:
-          - setup
+          requires:
+            - setup
