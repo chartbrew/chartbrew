@@ -43,7 +43,7 @@ jobs:
             - v1-dependencies-
       - run:
           name: Linting client code
-          command: cd client/src/semantic && gulp build && cd ../../ && npm run lint
+          command: cd client/src/semantic && npx gulp build && cd ../../ && npm run lint
 
   # lint the server project
   lint2:
