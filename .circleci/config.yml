@@ -31,8 +31,8 @@ jobs:
 
     steps:
       - run:
-        name: Linting client code
-        command: cd ~/chartbrew/client && npm run lint
+          name: Linting client code
+          command: cd ~/chartbrew/client && npm run lint
 
   # lint the server project
   lint2:
@@ -40,8 +40,8 @@ jobs:
       - image: circleci/node:10.16.0
     steps:
       - run:
-        name: Linting server code
-        command: cd ~/chartbrew/server && npm run lint
+          name: Linting server code
+          command: cd ~/chartbrew/server && npm run lint
 
   build1:
     docker:
@@ -49,8 +49,8 @@ jobs:
     # Build the client
     steps:
       - run:
-        name: Building the client
-        command: cd ~/chartbrew/client && npm run build
+          name: Building the client
+          command: cd ~/chartbrew/client && npm run build
 
   build2:
     docker:
@@ -58,8 +58,8 @@ jobs:
     # build the docs
     steps:
       - run:
-        name: Building the docs
-        command: npm run docs:build
+          name: Building the docs
+          command: npm run docs:build
 
 workflows:
   version: 2
