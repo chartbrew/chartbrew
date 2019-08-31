@@ -22,8 +22,6 @@ jobs:
           paths:
             - node_modules
             - client/node_modules
-            - client/src/semantic/tasks
-            - client/src/semantic/src
             - server/node_modules
           key: v2-dependencies-{{ checksum "package.json" }}
 
@@ -41,6 +39,9 @@ jobs:
             - v2-dependencies-{{ checksum "package.json" }}
             # fallback to using the latest cache if no exact match is found
             - v2-dependencies-
+      - run:
+          name: Building semantic
+          command: cd client && cp -Rn node_modules/fomantic-ui/tasks src/semantic && cp -Rn node_modules/fomantic-ui/src src/semantic
       - run:
           name: Linting client code
           command: cd client/src/semantic && npx gulp build && cd ../../ && npm run lint
