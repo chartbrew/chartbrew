@@ -30,6 +30,8 @@ jobs:
     docker:
       - image: circleci/node:10.16.0
 
+    working_directory: ~/chartbrew/client
+
     steps:
       - checkout
 
@@ -41,12 +43,13 @@ jobs:
             - v1-dependencies-
       - run:
           name: Linting client code
-          command: cd ~/chartbrew/client && npm run lint
+          command: npm run lint
 
   # lint the server project
   lint2:
     docker:
       - image: circleci/node:10.16.0
+    working_directory: ~/chartbrew/server
     steps:
       - checkout
 
@@ -58,11 +61,12 @@ jobs:
             - v1-dependencies-
       - run:
           name: Linting server code
-          command: cd ~/chartbrew/server && npm run lint
+          command: npm run lint
 
   build1:
     docker:
       - image: circleci/node:10.16.0
+    working_directory: ~/chartbrew/client
     # Build the client
     steps:
       - checkout
@@ -75,11 +79,12 @@ jobs:
             - v1-dependencies-
       - run:
           name: Building the client
-          command: cd ~/chartbrew/client && npm run build
+          command: npm run build
 
   build2:
     docker:
       - image: circleci/node:10.16.0
+    working_directory: ~/chartbrew
     # build the docs
     steps:
       - checkout
