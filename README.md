@@ -4,6 +4,12 @@
   </a>
 </a>
 
+<p align="center">
+  <a href="https:/\/circleci.com/gh/razvanilin/chartbrew">
+    <img src="https://circleci.com/gh/razvanilin/chartbrew.svg?style=svg" alt="ChartBrew build" />
+  </a>
+</p>
+
 [ChartBrew](https://chartbrew.com) is an open-source web application used to generate charts from different data sources. The focus of this project is to make the process less tedious and put as much accent as possible on Usability.
 
 This project was created by [Kate Belakova](https://github.com/belakova) and [Razvan Ilin](https://github.com/razvanilin)
