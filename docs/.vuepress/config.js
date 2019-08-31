@@ -1,6 +1,6 @@
 module.exports = {
   title: 'ChartBrew',
-  description: 'Just playing around',
+  description: 'The official documentation of ChartBrew, a web app for generating charts from your data sources.',
   themeConfig: {
     logo: '/assets/cb_logo_4_small.png',
     displayAllHeaders: true,
