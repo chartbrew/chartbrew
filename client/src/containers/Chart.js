@@ -452,7 +452,7 @@ class Chart extends Component {
           />
           <Modal.Content>
             <p>
-              {"Public charts will show in your Public Dashboard page and it can be viewed by everyone on the Internet. Nobody other than you and your team will be able to edit or update the chart data."}
+              {"Public charts will show in your Public Dashboard page and it can be viewed by everyone that has access to your domain. Nobody other than you and your team will be able to edit or update the chart data."}
             </p>
           </Modal.Content>
           <Modal.Actions>

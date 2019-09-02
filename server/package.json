@@ -10,7 +10,7 @@
     "lint": "eslint ."
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "accesscontrol": "^2.2.1",
     "base-64": "^0.1.0",

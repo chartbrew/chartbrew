@@ -1,6 +1,6 @@
 {
   "name": "chartbrew",
-  "version": "1.0.0",
+  "version": "1.0.0-beta.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -11,14 +11,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/razvanilin/chart-brew.git"
+    "url": "git+https://github.com/razvanilin/chartbrew.git"
   },
-  "author": "",
-  "license": "ISC",
+  "author": {
+    "email": "hello@chartbrew.com",
+    "name": "ChartBrew"
+  },
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/razvanilin/chart-brew/issues"
+    "url": "https://github.com/razvanilin/chartbrew/issues"
   },
-  "homepage": "https://github.com/razvanilin/chart-brew#readme",
+  "homepage": "https://github.com/razvanilin/chartbrew",
   "devDependencies": {
     "vuepress": "^1.0.3"
   }
