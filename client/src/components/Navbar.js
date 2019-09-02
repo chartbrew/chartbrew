@@ -173,6 +173,15 @@ class Navbar extends Component {
                 <Icon name="github" />
                 GitHub
               </Dropdown.Item>
+              <Dropdown.Item
+                as="a"
+                href="https://join.slack.com/t/chartbrew/shared_invite/enQtNzMzMzkzMTQ5MDc0LTlhYTE0N2E4ZDE5Y2MyNTMxZGExNTVjYjZmN2FjZjlhMTdhZTBjMGQ5MGQwYjEzMjkzNzg0ZjE2MzEwMThlMjQ"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Icon name="slack" />
+                Join our Slack
+              </Dropdown.Item>
 
               <Dropdown.Divider />
               <Dropdown.Item onClick={logout}>
