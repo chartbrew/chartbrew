@@ -40,43 +40,18 @@ Currently, ChartBrew supports connections to these data sources.
 ### Setup
 
 ```sh
-git clone https://github.com/razvanilin/chartbrew.git
+git clone git@github.com:razvanilin/chartbrew.git --branch v1.0.0-beta.1
 cd chartbrew
 npm run setup
 ```
 
+You can remove `--branch <version>` from the git command if you want to checkout on `master`, although that main branch may not be stable at all times.
+
 ### Set up environmental variables
 
-`touch server/.env`
+Inspect `server/settings-dev.js` and `server/settings.js` to see what variables need to be set. You can place all these in a `server/.env` file or somewhere else to your liking.
 
-Inspect `server/settings-dev.js` and `server/settings.js` to see what variables need to be set. You can place all these in the `.env` file or somewhere else to your liking.
-
-Example of `settings-dev.js`:
-
-```javascript
-module.exports = {
-  port: 3210,
-  secret: process.env.CB_SECRET_DEV,
-  client: "http://localhost:3000",
-  api: "http://localhost:3210",
-  adminMail: process.env.CB_ADMIN_MAIL,
-  db: {
-    dbName: process.env.CB_DB_NAME_DEV,
-    dbUsername: process.env.CB_DB_USERNAME_DEV,
-    dbPassword: process.env.CB_DB_PASSWORD_DEV,
-    dbHost: process.env.CB_DB_HOST_DEV,
-  },
-  mailSettings: {
-    host: process.env.CB_MAIL_HOST_DEV,
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.CB_MAIL_USER_DEV,
-      pass: process.env.CB_MAIL_PASS_DEV,
-    },
-  },
-};
-```
+You can use `server/.env-template` as a guide to fill out the variables.
 
 ### Run the project in Development
 

@@ -30,16 +30,21 @@
 ### Installation & Setup
 
 ```sh
-git clone https://github.com/razvanilin/chartbrew.git
+# get the latest stable version
+git clone git@github.com:razvanilin/chartbrew.git --branch v1.0.0-beta.1
 cd chartbrew
 npm run setup
 ```
 
+::: tip
+If you want to get the latest changes you can remove the `--branch <version>`. Please not that the master branch might not be stable at all times.
+:::
+
 ### Set up environmental variables
 
-`touch server/.env`
+Inspect `server/settings-dev.js` and `server/settings.js` to see what variables need to be set. You can place all these in a `server/.env` file or somewhere else to your liking.
 
-Inspect `server/settings-dev.js` and `server/settings.js` to see what variables need to be set. You can place all these in the `.env` file or somewhere else to your liking.
+You can use `server/.env-template` as a guide to fill out the variables.
 
 Example of `settings-dev.js`:
 
