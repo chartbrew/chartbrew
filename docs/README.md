@@ -29,7 +29,7 @@
 
 ### Installation & Setup
 
-```sh
+```
 # get the latest stable version
 git clone git@github.com:razvanilin/chartbrew.git --branch v1.0.0-beta.1
 cd chartbrew
