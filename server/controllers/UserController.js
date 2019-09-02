@@ -31,7 +31,7 @@ class UserController {
           "email": user.email,
           "password": user.password,
           "icon": user.icon,
-          "active": user.active
+          "active": true
         });
       })
       .then((newUser) => { return newUser; })

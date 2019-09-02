@@ -74,48 +74,7 @@ module.exports = (app) => {
         return teamController.addTeamRole(team.id, user.id, "owner");
       })
       .then(() => {
-        const tokenizedData = {
-          id: user.id,
-          email: user.email,
-        };
-
-        jwt.sign(tokenizedData, app.settings.secret, {
-          expiresIn: 86400 // day
-        }, (err, token) => {
-          if (err) return res.status(400).send(err);
-
-          let verificationUrl = app.settings.client;
-          verificationUrl = `${verificationUrl}/verify?id=${user.id}&token=${token}`;
-
-          const welcomeMsg = {
-            "from": { "email": "info@depomo.com" },
-            "subject": "Welcome to chartBrew",
-            "personalizations": [{
-              "to": [{ email: userObj.email }],
-              "substitutions": {
-                "%firstName%": userObj.name,
-                "%insertLink%": verificationUrl
-              }
-            }],
-            "template_id": "4e90aecc-3ad8-49a3-bcaf-9aec0d1ea65e"
-          };
-
-          const options = {
-            method: "POST",
-            url: `${app.settings.sendgridHost}/mail/send`,
-            body: JSON.stringify(welcomeMsg),
-            headers: {
-              authorization: `Bearer ${app.settings.sendgridKey}`,
-              "content-type": "application/json"
-            }
-          };
-
-          return request(options, (err) => {
-            if (err) return res.status(400).send(err);
-
-            return tokenizeUser(user, res);
-          });
-        });
+        return tokenizeUser(user, res);
       })
       .catch((error) => {
         if (error.message === "409") return res.status(409).send("The email is already used");

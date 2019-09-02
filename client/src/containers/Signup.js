@@ -23,12 +23,11 @@ class Signup extends Component {
 
     this.state = {
       loading: false,
-      success: false,
     };
   }
 
   submitUser = (values) => {
-    const { createUser } = this.props;
+    const { createUser, history } = this.props;
 
     const parsedParams = queryString.parse(document.location.search.slice(1));
     this.setState({ loading: true });
@@ -37,7 +36,9 @@ class Signup extends Component {
     } else {
       createUser(values)
         .then(() => {
-          this.setState({ loading: false, success: true });
+          this.setState({ loading: false });
+
+          history.push("/user");
         })
         .catch((err) => {
           this.setState({ signupError: true, loading: false, errorMessage: err });
@@ -105,24 +106,10 @@ class Signup extends Component {
   }
 
   render() {
-    const { handleSubmit, user } = this.props;
+    const { handleSubmit } = this.props;
     const {
-      success, loading, signupError, errorMessage, addedToTeam,
+      loading, signupError, errorMessage, addedToTeam,
     } = this.state;
-
-    if (success && user) {
-      return (
-        <div style={styles.container}>
-          <Container textAlign="center">
-            <Header inverted as="h1">
-              <span role="img" aria-label="wave">👋</span>
-              {` Welcome to Chart Brew, ${user.name}!`}
-              <Header.Subheader>We are very excited to have you here</Header.Subheader>
-            </Header>
-          </Container>
-        </div>
-      );
-    }
 
     return (
       <div style={styles.container}>
