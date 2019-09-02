@@ -41,7 +41,7 @@ class Signup extends Component {
           history.push("/user");
         })
         .catch((err) => {
-          this.setState({ signupError: true, loading: false, errorMessage: err });
+          this.setState({ signupError: true, loading: false, errorMessage: err.message });
         });
     }
   }
@@ -60,7 +60,7 @@ class Signup extends Component {
           });
       })
       .catch((err) => {
-        this.setState({ signupError: true, loading: false, errorMessage: err });
+        this.setState({ signupError: true, loading: false, errorMessage: err.message });
       });
   }
 
