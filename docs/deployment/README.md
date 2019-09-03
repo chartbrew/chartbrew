@@ -6,10 +6,8 @@ With time, this guide will be updated with more ways of deploying. Any PR is wel
 
 ## Building the app
 
-The tools used in this guide are used as an example. There might be multiple other tools that you can use as well.
+Follow the [Getting Started](../#getting-started) guide to set up the project somewhere on your server.
 
-### Backend
-
-### Frontend
+Keep in mind that the tools used in this guide are used as an example but they work really well. There might be multiple other tools that you can use, so feel free to do so if you wish.
 
 ## Serving with Apache
