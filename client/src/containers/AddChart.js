@@ -249,8 +249,10 @@ class AddChart extends Component {
     const { newChart, previewChart } = this.state;
     if (previewChart) {
       const tempData = { ...previewChart };
-      tempData.options.elements.point.radius = point;
-      tempData.data.datasets[0].pointRadius = point;
+      // tempData.options.elements.point.radius = point;
+      if (!tempData.options.markers) tempData.options.markers = {};
+      tempData.options.markers.size = point;
+      // tempData.data.datasets[0].pointRadius = point;
       this.setState({
         newChart: { ...newChart, pointRadius: point },
         previewChart: tempData,

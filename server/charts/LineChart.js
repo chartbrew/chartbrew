@@ -206,7 +206,7 @@ class LineChart {
         elements: {
           point: {
             radius:
-              !this.chart.pointRadius && this.chart.pointRadius !== 0 ? 3 : this.chart.pointRadius,
+              !this.chart.pointRadius && this.chart.pointRadius !== 0 ? 5 : this.chart.pointRadius,
             hitRadius: 8,
             hoverRadius: 8,
           },
@@ -244,7 +244,15 @@ class LineChart {
           colors: fillColors,
         },
         colors: datasetColors,
-      }
+        markers: {
+          size: !this.chart.pointRadius && this.chart.pointRadius !== 0
+            ? 5
+            : this.chart.pointRadius,
+        },
+        legend: {
+          show: this.chart.displayLegend,
+        },
+      },
     };
 
     return new Promise(resolve => resolve(apexData));

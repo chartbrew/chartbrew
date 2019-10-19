@@ -30,7 +30,7 @@ class TimeseriesGlobalSettings extends Component {
     if (pointRadius || pointRadius === 0) {
       this._onAddPoints(pointRadius);
     } else {
-      this._onAddPoints(3);
+      this._onAddPoints(5);
     }
 
     if (startDate) {
@@ -113,7 +113,7 @@ class TimeseriesGlobalSettings extends Component {
                         if (dataPoints > 0) {
                           this._onAddPoints(0);
                         } else {
-                          this._onAddPoints(3);
+                          this._onAddPoints(5);
                         }
                       }}
                     />
