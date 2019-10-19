@@ -12,6 +12,7 @@ import {
 } from "react-chartjs-2";
 import moment from "moment";
 import "chart.piecelabel.js";
+import ApexChart from "react-apexcharts";
 
 import {
   removeChart, runQuery, updateChart, changeOrder
@@ -353,9 +354,10 @@ class Chart extends Component {
                     <div style={{ maxHeight: "30em" }}>
                       {chart.type === "line"
                         && (
-                        <Line
-                          data={chart.chartData.data}
+                        <ApexChart
                           options={chart.chartData.options}
+                          series={chart.chartData.series}
+                          type="area"
                           height={300}
                         />
                         )}

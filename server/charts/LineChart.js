@@ -21,6 +21,8 @@ class LineChart {
     const datasets = [];
     let maxLabelLength = 0;
     let selectedDatasetLabels = 0;
+    const datasetColors = [];
+    const fillColors = [];
 
     // go through all the datasets
     for (const dataset of this.chart.Datasets) {
@@ -45,6 +47,9 @@ class LineChart {
         }
 
         // build up the selector array which is used to show the way to the date value
+
+        // TODO: change the name of this attribute
+        // it's actually a field selector
         let xFieldSelector = dataset.xAxis;
         if (xFieldSelector.length < 2) {
           return new Promise((resolve, reject) => reject(new Error("The X selector is not formatted correctly")));
@@ -86,12 +91,12 @@ class LineChart {
 
         // include all the missing dates when includeZeros is true
         if (this.chart.includeZeros) {
-        // get the start date
+          // get the start date
           let startDate = axisData[0];
           let endDate = axisData[axisData.length - 1];
-        if (this.chart.startDate) startDate = moment(this.chart.startDate); // eslint-disable-line
-        if (this.chart.endDate) endDate = moment(this.chart.endDate); // eslint-disable-line
-        if (this.chart.currentEndDate) endDate = moment(); // eslint-disable-line
+          if (this.chart.startDate) startDate = moment(this.chart.startDate); // eslint-disable-line
+          if (this.chart.endDate) endDate = moment(this.chart.endDate); // eslint-disable-line
+          if (this.chart.currentEndDate) endDate = moment(); // eslint-disable-line
 
           const newAxisData = [];
           let index = 0;
@@ -167,10 +172,14 @@ class LineChart {
           data: yAxis,
         };
 
-        if (dataset.datasetColor) formattedDataset.borderColor = dataset.datasetColor;
+        if (dataset.datasetColor) {
+          formattedDataset.borderColor = dataset.datasetColor;
+          datasetColors.push(dataset.datasetColor);
+        }
         if (dataset.fillColor) {
           formattedDataset.backgroundColor = dataset.fillColor;
           formattedDataset.fill = true;
+          fillColors.push(dataset.fillColor);
         } else {
           formattedDataset.fill = false;
         }
@@ -212,7 +221,33 @@ class LineChart {
       }
     };
 
-    return new Promise(resolve => resolve(chartJsData));
+    const apexData = {
+      series: datasets,
+      options: {
+        chart: {
+          type: "line",
+          zoom: {
+            enabled: true,
+          },
+        },
+        xaxis: {
+          categories: selectedDatasetLabels,
+        },
+        dataLabels: {
+          enabled: true,
+        },
+        stroke: {
+          curve: "smooth"
+        },
+        fill: {
+          type: "solid",
+          colors: fillColors,
+        },
+        colors: datasetColors,
+      }
+    };
+
+    return new Promise(resolve => resolve(apexData));
   }
 }
 

@@ -10,6 +10,7 @@ import {
 import {
   Line, Bar, Pie, Doughnut, Radar, Polar
 } from "react-chartjs-2";
+import ApexChart from "react-apexcharts";
 import moment from "moment";
 
 import "chart.piecelabel.js";
@@ -165,8 +166,9 @@ class AddChart extends Component {
 
     if (previewChart) {
       const tempData = { ...previewChart };
-      if (tempData.data.datasets[activeDataset]) {
-        tempData.data.datasets[activeDataset].borderColor = color;
+      if (tempData.series[activeDataset]) {
+        // tempData.data.datasets[activeDataset].borderColor = color;
+        tempData.options.colors[activeDataset] = color; // apex
       }
       this.setState({
         newChart: tempChart,
@@ -201,12 +203,14 @@ class AddChart extends Component {
 
     if (previewChart) {
       const tempData = { ...previewChart };
-      if (tempData.data.datasets[activeDataset]) {
+      if (tempData.options && tempData.options.fill) {
         if (colorValue) {
-          tempData.data.datasets[activeDataset].backgroundColor = colorValue;
-          tempData.data.datasets[activeDataset].fill = true;
+          // tempData.data.datasets[activeDataset].backgroundColor = colorValue;
+          // tempData.data.datasets[activeDataset].fill = true;
+          tempData.options.fill.colors[activeDataset] = colorValue; // apex
         } else {
-          tempData.data.datasets[activeDataset].fill = false;
+          // tempData.data.datasets[activeDataset].fill = false;
+          tempData.options.fill.colors[activeDataset] = "rgba(0,0,0,0)"; // apex
         }
       }
 
@@ -539,7 +543,7 @@ class AddChart extends Component {
                     <Icon name="info" />
                     How to select fields
                   </Button>
-)}
+                )}
               >
                 <Container text>
                   <Header>Selecting fields</Header>
@@ -576,13 +580,13 @@ class AddChart extends Component {
                 fillColor={newChart.Datasets[activeDataset].fillColor}
                 legend={newChart.Datasets[activeDataset].legend}
                 patterns={newChart.Datasets[activeDataset].patterns}
-                dataArray={previewChart && previewChart.data.datasets[activeDataset]
-                  ? previewChart.data.datasets[activeDataset].data
-                  : newChart.chartData && newChart.chartData.data.datasets[activeDataset]
-                    ? newChart.chartData.data.datasets[activeDataset].data : []}
+                dataArray={previewChart && previewChart.series[activeDataset]
+                  ? previewChart.series[activeDataset].data
+                  : newChart.chartData && newChart.chartData.series[activeDataset]
+                    ? newChart.chartData.series[activeDataset].data : []}
                 dataLabels={previewChart
-                  ? previewChart.data.labels : newChart.chartData
-                    ? newChart.chartData.data.labels : []}
+                  ? previewChart.options.xaxis.categories : newChart.chartData
+                    ? newChart.chartData.options.xaxis.categories : []}
                 onChangeXAxis={(xAxis) => this._onChangeXAxis(xAxis)}
                 onDatasetColor={(color) => this._onDatasetColor(color)}
                 onFillColor={(color, colorIndex) => this._onFillColor(color, colorIndex)}
@@ -807,9 +811,10 @@ class AddChart extends Component {
                         <div style={{ maxHeight: "30em" }}>
                           {newChart.type === "line"
                             && (
-                            <Line
-                              data={previewChart.data}
+                            <ApexChart
                               options={previewChart.options}
+                              series={previewChart.series}
+                              type="area"
                               height={300}
                             />
                             )}

@@ -16,9 +16,9 @@ const history = createHistory();
 
 let middlewares = [thunk, routerMiddleware(history)];
 
-if (process.env.NODE_ENV !== "production") {
-  middlewares = [...middlewares, logger];
-}
+// if (process.env.NODE_ENV !== "production") {
+//   middlewares = [...middlewares, logger];
+// }
 
 const store = createStore(
   reducer,

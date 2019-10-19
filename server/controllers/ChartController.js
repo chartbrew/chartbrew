@@ -82,6 +82,35 @@ class ChartController {
       include: [{ model: Dataset }],
     })
       .then((charts) => {
+        // migrate the chart config
+        // const newCharts = charts.map((chart) => {
+        //   const newChart = chart;
+        //   const newChartData = {
+        //     series: chart.chartData.data.datasets,
+        //     options: {
+        //       chart: {
+        //         type: "line",
+        //         zoom: {
+        //           enabled: true,
+        //         },
+        //       },
+        //       xaxis: {
+        //         categories: chart.chartData.data.labels,
+        //       },
+        //       dataLabels: {
+        //         enabled: true,
+        //       },
+        //       stroke: {
+        //         curve: "smooth"
+        //       },
+        //     }
+        //   };
+        //
+        //   newChart.chartData = newChartData;
+        //
+        //   return newChart;
+        // });
+
         return charts;
       })
       .catch((error) => {
@@ -420,6 +449,7 @@ class ChartController {
         return new Promise(resolve => resolve(chartData));
       })
       .catch((error) => {
+        console.log("error", error);
         return new Promise((resolve, reject) => reject(error));
       });
   }
