@@ -4,6 +4,10 @@ body {
   font-family: sans-serif;
 }
 
+.menu.transition.left.visible {
+  z-index: 111;
+}
+
 .Resizer {
         background: #000;
         opacity: .2;
