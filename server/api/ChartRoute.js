@@ -242,7 +242,7 @@ module.exports = (app) => {
   /*
   ** Route to get a chart for embedding (must be public for success)
   */
-  app.get("/chart/:id", (req, res) => {
+  app.get("/chart/:id/embedded", (req, res) => {
     return chartController.findById(req.params.id)
       .then((chart) => {
         if (!chart.public) throw new Error("401");

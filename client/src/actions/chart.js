@@ -248,3 +248,25 @@ export function testQuery(projectId, data) {
       });
   };
 }
+
+export function getEmbeddedChart(id) {
+  return () => {
+    const url = `${API_HOST}/chart/${id}/embedded`;
+    const method = "GET";
+    const headers = new Headers({
+      "Accept": "application/json",
+    });
+
+    return fetch(url, { method, headers })
+      .then((response) => {
+        if (!response.ok) {
+          return Promise.reject(response.status);
+        }
+
+        return response.json();
+      })
+      .then((chart) => {
+        return Promise.resolve(chart);
+      });
+  };
+}
