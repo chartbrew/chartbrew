@@ -24,7 +24,6 @@ class EmbeddedChart extends Component {
     this.state = {
       loading: false,
       chart: null,
-      error: true,
     };
   }
 
