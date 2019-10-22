@@ -9,7 +9,6 @@ import {
 } from "semantic-ui-react";
 import moment from "moment";
 
-import "../embedded.css";
 import logo from "../assets/cb_logo_4_small.png";
 
 import { getEmbeddedChart as getEmbeddedChartAction } from "../actions/chart";
@@ -28,6 +27,9 @@ class EmbeddedChart extends Component {
   }
 
   componentDidMount() {
+    // change the background color to transparent
+    document.body.style.backgroundColor = "transparent";
+
     const { getEmbeddedChart, match } = this.props;
 
     this.setState({ loading: true });
