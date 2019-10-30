@@ -26,14 +26,16 @@ import { getAllProjects } from "../actions/project";
 class Main extends Component {
   componentWillMount() {
     const {
-      relog, getUser, getTeams, getAllProjects,
+      relog, getUser, getTeams, getAllProjects, location,
     } = this.props;
 
-    relog().then((data) => {
-      getUser(data.id);
-      getTeams(data.id);
-      return getAllProjects();
-    });
+    if (!location.pathname.match(/\/chart\/\d+\/embedded/g)) {
+      relog().then((data) => {
+        getUser(data.id);
+        getTeams(data.id);
+        return getAllProjects();
+      });
+    }
   }
 
   render() {
@@ -93,6 +95,7 @@ Main.propTypes = {
   getUser: PropTypes.func.isRequired,
   getTeams: PropTypes.func.isRequired,
   getAllProjects: PropTypes.func.isRequired,
+  location: PropTypes.object.isRequired,
   // user: PropTypes.object.isRequired,
 };
 
