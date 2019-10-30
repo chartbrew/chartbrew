@@ -560,11 +560,14 @@ class Chart extends Component {
             />
             <Modal.Content>
               <p>
-                {"Copy the following code on the website you wish to add your chart in. You can add other iframe settings if you wish so."}
+                {"Copy the following code on the website you wish to add your chart in."}
+              </p>
+              <p>
+                {"You can customize the iframe in any way you wish, but leave the 'src' attribute the way it is below."}
               </p>
               <Form>
                 <TextArea
-                  value={`<iframe src="${SITE_HOST}/chart/${selectedChart.id}/embedded" allowTransparency="true"></iframe>`}
+                  value={`<iframe src="${SITE_HOST}/chart/${selectedChart.id}/embedded" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0"></iframe>`}
                 />
               </Form>
             </Modal.Content>

@@ -13,6 +13,8 @@ import logo from "../assets/cb_logo_4_small.png";
 
 import { getEmbeddedChart as getEmbeddedChartAction } from "../actions/chart";
 
+const pageHeight = window.innerHeight;
+
 /*
   This container is used for embedding charts in other websites
 */
@@ -86,51 +88,63 @@ class EmbeddedChart extends Component {
           </Container>
           {chart.type === "line"
           && (
-          <Line
-            data={chart.chartData.data}
-            options={chart.chartData.options}
-            height={300}
-          />
+          <Container fluid>
+            <Line
+              data={chart.chartData.data}
+              options={chart.chartData.options}
+              responsive
+            />
+          </Container>
           )}
           {chart.type === "bar"
           && (
-          <Bar
-            data={chart.chartData.data}
-            options={chart.chartData.options}
-            height={300}
-          />
+          <Container fluid>
+            <Bar
+              data={chart.chartData.data}
+              options={chart.chartData.options}
+              height={pageHeight - 100}
+            />
+          </Container>
           )}
           {chart.type === "pie"
           && (
-          <Pie
-            data={chart.chartData.data}
-            options={chart.chartData.options}
-            height={300}
-          />
+          <Container fluid>
+            <Pie
+              data={chart.chartData.data}
+              options={chart.chartData.options}
+              height={pageHeight - 100}
+            />
+          </Container>
           )}
           {chart.type === "doughnut"
           && (
-          <Doughnut
-            data={chart.chartData.data}
-            options={chart.chartData.options}
-            height={300}
-          />
+          <Container fluid>
+            <Doughnut
+              data={chart.chartData.data}
+              options={chart.chartData.options}
+              height={pageHeight - 100}
+            />
+          </Container>
           )}
           {chart.type === "radar"
           && (
-          <Radar
-            data={chart.chartData.data}
-            options={chart.chartData.options}
-            height={300}
-          />
+          <Container fluid>
+            <Radar
+              data={chart.chartData.data}
+              options={chart.chartData.options}
+              height={pageHeight - 100}
+            />
+          </Container>
           )}
           {chart.type === "polar"
           && (
-          <Polar
-            data={chart.chartData.data}
-            options={chart.chartData.options}
-            height={300}
-          />
+          <Container fluid>
+            <Polar
+              data={chart.chartData.data}
+              options={chart.chartData.options}
+              height={pageHeight - 100}
+            />
+          </Container>
           )}
           <p style={styles.updatedText}>
             <small>
