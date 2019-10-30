@@ -23,6 +23,6 @@
   },
   "homepage": "https://github.com/razvanilin/chartbrew",
   "devDependencies": {
-    "vuepress": "^1.0.3"
+    "vuepress": "^1.2.0"
   }
 }
