@@ -29,9 +29,9 @@
 
 ### Installation & Setup
 
-```
+```sh
 # get the latest stable version
-git clone git@github.com:razvanilin/chartbrew.git --branch v1.0.0-beta.1
+git clone git@github.com:razvanilin/chartbrew.git --branch v1.0.0-beta.2
 cd chartbrew
 npm run setup
 ```
@@ -74,10 +74,6 @@ module.exports = {
 ```
 
 ### Setting up the frontend settings
-
-```sh
-cp client/src/config/settings.template.js client/src/config/settings.js
-```
 
 Modify the constants to match your environment.
 

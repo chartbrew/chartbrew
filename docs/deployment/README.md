@@ -98,6 +98,9 @@ This configuration file will have everything necessary to serve the backend and 
         ProxyPass http://0.0.0.0:5400/
         ProxyPassReverse http://0.0.0.0:5400/
     </Location>
+    <Location ~ "/chart/*">
+      Header always unset X-Frame-Options
+    </Location>
 </VirtualHost>
 
 # BACKEND
@@ -119,6 +122,7 @@ This configuration file will have everything necessary to serve the backend and 
         ProxyPass http://0.0.0.0:3210/
         ProxyPassReverse http://0.0.0.0:3210/
     </Location>
+
 </VirtualHost>
 
 ```
@@ -131,3 +135,15 @@ sudo service apache2 reload
 ```
 
 If you're making your site public, it's strongly recommended that you enable `https` on it. Some providers offer that automatically, but in case that's not happening have a look at [Certbot](https://certbot.eff.org/instructions) as it's super simple to set up and it's free.
+
+### Troubleshooting the Chart Embedding feature
+
+A problem that might arrise with embedding charts on other website is to do with the `X-Frame-Options` header being set as `deny` by the server. If your charts can't load on other sites because of this problem make sure you add the following configuration to the `VirtualHost` that serves your frontend:
+
+```
+<Location ~ "/chart/*">
+  Header always unset X-Frame-Options
+</Location>
+```
+
+This is already added in the example above, but if you create new virtual hosts for `https`, for example, don't forget to add it there as well.
