@@ -92,7 +92,7 @@ class EmbeddedChart extends Component {
             <Line
               data={chart.chartData.data}
               options={chart.chartData.options}
-              responsive
+              height={pageHeight - 100}
             />
           </Container>
           )}
@@ -146,11 +146,6 @@ class EmbeddedChart extends Component {
             />
           </Container>
           )}
-          <p style={styles.updatedText}>
-            <small>
-              <i>{`Last Updated ${moment(chart.chartDataUpdated).calendar()}`}</i>
-            </small>
-          </p>
         </Container>
       </div>
     );
