@@ -24,7 +24,7 @@ import { getAllProjects } from "../actions/project";
   Description
 */
 class Main extends Component {
-  componentWillMount() {
+  componentDidMount() {
     const {
       relog, getUser, getTeams, getAllProjects, location,
     } = this.props;
