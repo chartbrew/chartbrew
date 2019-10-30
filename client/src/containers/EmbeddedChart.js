@@ -7,7 +7,6 @@ import {
 import {
   Container, Loader, Header, Image, Message,
 } from "semantic-ui-react";
-import moment from "moment";
 
 import logo from "../assets/cb_logo_4_small.png";
 
