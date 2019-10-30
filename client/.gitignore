@@ -29,3 +29,6 @@ src/semantic/tasks
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# settings
+/src/config/settings.js

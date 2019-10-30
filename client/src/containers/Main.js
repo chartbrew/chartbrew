@@ -15,6 +15,7 @@ import ManageUser from "./ManageUser";
 import FeedbackForm from "../components/FeedbackForm";
 import PublicDashboard from "./PublicDashboard";
 import PasswordReset from "./PasswordReset";
+import EmbeddedChart from "./EmbeddedChart";
 
 import { relog, getUser } from "../actions/user";
 import { getTeams } from "../actions/team";
@@ -25,14 +26,16 @@ import { getAllProjects } from "../actions/project";
 class Main extends Component {
   componentWillMount() {
     const {
-      relog, getUser, getTeams, getAllProjects,
+      relog, getUser, getTeams, getAllProjects, location,
     } = this.props;
 
-    relog().then((data) => {
-      getUser(data.id);
-      getTeams(data.id);
-      return getAllProjects();
-    });
+    if (!location.pathname.match(/\/chart\/\d+\/embedded/g)) {
+      relog().then((data) => {
+        getUser(data.id);
+        getTeams(data.id);
+        return getAllProjects();
+      });
+    }
   }
 
   render() {
@@ -73,6 +76,7 @@ class Main extends Component {
             <Route exact path="/:teamId/:projectId/members" component={ProjectBoard} />
             <Route exact path="/:teamId/:projectId/settings" component={ProjectBoard} />
             <Route exact path="/:teamId/:projectId/public" component={ProjectBoard} />
+            <Route exact path="/chart/:chartId/embedded" component={EmbeddedChart} />
           </Switch>
         </div>
       </div>
@@ -91,6 +95,7 @@ Main.propTypes = {
   getUser: PropTypes.func.isRequired,
   getTeams: PropTypes.func.isRequired,
   getAllProjects: PropTypes.func.isRequired,
+  location: PropTypes.object.isRequired,
   // user: PropTypes.object.isRequired,
 };
 

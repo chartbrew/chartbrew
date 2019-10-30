@@ -238,6 +238,35 @@ module.exports = (app) => {
   });
   // --------------------------------------------------------
 
+
+  /*
+  ** Route to get a chart for embedding (must be public for success)
+  */
+  app.get("/chart/:id/embedded", (req, res) => {
+    return chartController.findById(req.params.id)
+      .then((chart) => {
+        if (!chart.public) throw new Error("401");
+
+        return res.status(200).send({
+          name: chart.name,
+          type: chart.type,
+          subType: chart.subType,
+          chartDataUpdated: chart.chartDataUpdated,
+          chartData: chart.chartData
+        });
+      })
+      .catch((error) => {
+        if (error.message === "401") {
+          return res.status(401).send({ error: "Not authorized" });
+        }
+        if (error.message.indexOf("413") > -1) {
+          return res.status(413).send(error);
+        }
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------------------------
+
   return (req, res, next) => {
     next();
   };

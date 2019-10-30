@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import {
   Card, Icon, Header, Grid, Segment, Dimmer, Loader, Modal, Button,
-  Dropdown, Message, Popup, Form,
+  Dropdown, Message, Popup, Form, TextArea,
 } from "semantic-ui-react";
 import {
   Line, Bar, Pie, Doughnut, Radar, Polar
@@ -17,9 +17,10 @@ import {
   removeChart, runQuery, updateChart, changeOrder
 } from "../actions/chart";
 import canAccess from "../config/canAccess";
+import { SITE_HOST } from "../config/settings";
 
 /*
-  Description
+  This is the container that generates the Charts together with the menu
 */
 class Chart extends Component {
   constructor(props) {
@@ -124,6 +125,10 @@ class Chart extends Component {
       });
   }
 
+  _onEmbed = (chart) => {
+    this.setState({ selectedChart: chart, embedModal: true });
+  }
+
   _openUpdateModal = (chart) => {
     this.setState({ updateModal: true, selectedChart: chart, updateFrequency: chart.autoUpdate });
   }
@@ -172,8 +177,8 @@ class Chart extends Component {
     } = this.props;
     const { projectId } = match.params;
     const {
-      error, chartLoading, deleteModal, publicModal, publicLoading,
-      updateModal, updateFrequency, autoUpdateLoading,
+      error, chartLoading, deleteModal, publicModal, publicLoading, embedModal,
+      updateModal, updateFrequency, autoUpdateLoading, selectedChart,
     } = this.state;
 
     return (
@@ -244,6 +249,11 @@ class Chart extends Component {
                           <Icon name="world" color={chart.public ? "red" : "green"} />
                           {chart.public ? "Make private" : "Make public"}
                         </Dropdown.Item>
+                        <Dropdown.Item
+                          icon="code"
+                          text="Embed"
+                          onClick={() => this._onEmbed(chart)}
+                        />
                         <Dropdown.Divider />
                         <Dropdown
                           item
@@ -535,6 +545,66 @@ class Chart extends Component {
             </Button>
           </Modal.Actions>
         </Modal>
+
+        {/* EMBED CHART MODAL */}
+        {selectedChart && (
+          <Modal
+            open={embedModal}
+            basic
+            size="small"
+            onClose={() => this.setState({ embedModal: false })}
+          >
+            <Header
+              icon="code"
+              content="Embed your chart on other websites"
+            />
+            <Modal.Content>
+              <p>
+                {"Copy the following code on the website you wish to add your chart in."}
+              </p>
+              <p>
+                {"You can customize the iframe in any way you wish, but leave the 'src' attribute the way it is below."}
+              </p>
+              <Form>
+                <TextArea
+                  value={`<iframe src="${SITE_HOST}/chart/${selectedChart.id}/embedded" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0"></iframe>`}
+                />
+              </Form>
+            </Modal.Content>
+            <Modal.Actions>
+              {selectedChart.public && (
+                <Button
+                  basic
+                  inverted
+                  onClick={() => this.setState({ embedModal: false })}
+                >
+                  Done
+                </Button>
+              )}
+              {!selectedChart.public && (
+                <Button
+                  basic
+                  inverted
+                  onClick={() => this.setState({ embedModal: false })}
+                >
+                  Cancel
+                </Button>
+              )}
+              {!selectedChart.public && (
+                <Button
+                  color="teal"
+                  inverted
+                  onClick={() => {
+                    this._onPublic();
+                    this.setState({ embedModal: false });
+                  }}
+                >
+                  Make public
+                </Button>
+              )}
+            </Modal.Actions>
+          </Modal>
+        )}
       </div>
     );
   }

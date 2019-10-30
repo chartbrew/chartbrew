@@ -73,6 +73,20 @@ module.exports = {
 };
 ```
 
+### Setting up the frontend settings
+
+```sh
+cp client/src/config/settings.template.js client/src/config/settings.js
+```
+
+Modify the constants to match your environment.
+
+`API_HOST` - where your API is running
+
+`DOCUMENTATION_HOST` - in case you're running the documentation somewhere on your server (you can also leave it to the live ChartBrew one)
+
+`SITE_HOST` - this is where your frontend is sitting
+
 ### Run the project in Development
 
 Open two terminals, one for front-end and the other for back-end.
