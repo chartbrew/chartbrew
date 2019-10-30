@@ -23,7 +23,7 @@ class VerifyUser extends Component {
     };
   }
 
-  componentWillMount() {
+  componentDidMount() {
     const { verify } = this.props;
     const parsedParams = queryString.parse(document.location.search.slice(1));
 

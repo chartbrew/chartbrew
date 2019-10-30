@@ -25,7 +25,11 @@ class UserInvite extends Component {
     };
   }
 
-  componentWillReceiveProps(nextProps) {
+  componentDidUpdate(nextProps) {
+    this.updateProps(nextProps);
+  }
+
+  updateProps = (nextProps) => {
     const { addTeamMember } = this.props;
     const { fetched } = this.state;
     const parsedParams = queryString.parse(document.location.search.slice(1));

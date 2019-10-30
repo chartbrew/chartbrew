@@ -29,11 +29,11 @@ class EditUserForm extends Component {
     };
   }
 
-  componentWillMount() {
+  componentDidMount() {
     this.loadData(this.props);
   }
 
-  componentWillReceiveProps(nextProps) {
+  componentDidUpdate(nextProps) {
     const { user } = this.state;
     if (!user.name) {
       this.loadData(nextProps);
