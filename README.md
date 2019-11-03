@@ -29,29 +29,20 @@ Currently, ChartBrew supports connections to these data sources.
 * MongoDB
 * APIs that support JSON data
 
-## Quickstart
-
-### Prerequisites
+## Prerequisites
 
 * NodeJS v10.16.0+
 * NPM
 * MySQL v5+ Server running
 
-### Setup
+## Quickstart
 
 ```sh
-git clone git@github.com:razvanilin/chartbrew.git --branch v1.0.0-beta.1
-cd chartbrew
-npm run setup
+npm install -g create-chartbrew-app
+create-chartbrew-app myApp --dbname="chartbrew" --dbusername="root" --dbpassword="" --dbhost="localhost"
 ```
 
-You can remove `--branch <version>` from the git command if you want to checkout on `master`, although that main branch may not be stable at all times.
-
-### Set up environmental variables
-
-Inspect `server/settings-dev.js` and `server/settings.js` to see what variables need to be set. You can place all these in a `server/.env` file or somewhere else to your liking.
-
-You can use `server/.env-template` as a guide to fill out the variables.
+The arguments are optional, but they set the environmental variables needed for the project to run. [Check out which need to be set here.](https://docs.chartbrew.com/#set-up-environmental-variables)
 
 ### Run the project in Development
 

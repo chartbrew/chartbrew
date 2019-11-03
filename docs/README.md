@@ -30,15 +30,11 @@
 ### Installation & Setup
 
 ```sh
-# get the latest stable version
-git clone git@github.com:razvanilin/chartbrew.git --branch v1.0.0-beta.2
-cd chartbrew
-npm run setup
+npm install -g create-chartbrew-app
+create-chartbrew-app myApp --dbname="chartbrew" --dbusername="root" --dbpassword="" --dbhost="localhost"
 ```
 
-::: tip
-If you want to get the latest changes you can remove the `--branch <version>`. Please not that the master branch might not be stable at all times.
-:::
+The arguments are optional, but they set the environmental variables needed for the project to run. Check the section below to see what needs to be set.
 
 ### Set up environmental variables
 
