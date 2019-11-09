@@ -3,6 +3,7 @@ const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
+const limitationMiddleware = require("../middlewares/limitationMiddleware");
 
 module.exports = (app) => {
   const chartController = new ChartController();
@@ -37,7 +38,7 @@ module.exports = (app) => {
   /*
   ** Route to create a new chart
   */
-  app.post("/project/:project_id/chart", verifyToken, (req, res) => {
+  app.post("/project/:project_id/chart", verifyToken, limitationMiddleware.canCreateChart, (req, res) => {
     return projectController.findById(req.params.project_id)
       .then((project) => {
         return teamController.getTeamRole(project.team_id, req.user.id);
@@ -67,7 +68,7 @@ module.exports = (app) => {
   /*
   ** Route to update a chart
   */
-  app.put("/project/:project_id/chart/:id", verifyToken, (req, res) => {
+  app.put("/project/:project_id/chart/:id", verifyToken, limitationMiddleware.canChangeAutoUpdate, (req, res) => {
     return projectController.findById(req.params.project_id)
       .then((project) => {
         return teamController.getTeamRole(project.team_id, req.user.id);

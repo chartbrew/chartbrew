@@ -3,6 +3,7 @@ const TeamController = require("../controllers/TeamController");
 const ProjectController = require("../controllers/ProjectController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
+const limitationMiddleware = require("../middlewares/limitationMiddleware");
 
 module.exports = (app) => {
   const connectionController = new ConnectionController();
@@ -11,7 +12,7 @@ module.exports = (app) => {
   /*
   ** Route to create a connection
   */
-  app.post("/project/:project_id/connection", verifyToken, (req, res) => {
+  app.post("/project/:project_id/connection", verifyToken, limitationMiddleware.canCreateConnection, (req, res) => {
     return projectController.findById(req.params.project_id)
       .then((project) => {
         return teamController.getTeamRole(project.team_id, req.user.id);

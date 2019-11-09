@@ -33,6 +33,7 @@
     "request-promise": "^4.2.4",
     "sequelize": "^5.21.2",
     "simplecrypt": "^0.1.0",
+    "stripe": "^7.11.0",
     "uuid": "^3.3.3"
   },
   "devDependencies": {
