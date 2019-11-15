@@ -53,7 +53,6 @@ class TeamController {
     return this.getTeamPlan(teamId)
       .then((sub) => {
         features = settings.features[sub.plan.nickname.toLowerCase()];
-
         return this.teamRole.findAll({
           where: { team_id: teamId },
           include: [{ model: User }]
@@ -73,7 +72,6 @@ class TeamController {
 
           return this.stripeController.updateMembers(subscriptionId, 1);
         }
-
         return roles;
       })
       .then(() => {
@@ -83,7 +81,7 @@ class TeamController {
         return role;
       })
       .catch((error) => {
-        if (error === "404") {
+        if (error.message === "404") {
           return this.teamRole.create({ "team_id": teamId, "user_id": userId, "role": roleName });
         }
         return new Promise((resolve, reject) => reject(error));
@@ -354,7 +352,7 @@ class TeamController {
   // get the owner of the team to check the subscription
     return this.getAllTeamRoles(teamId)
       .then((roles) => {
-        if (!roles) throw new Error(404);
+        if (!roles || roles.length < 1) throw new Error(404);
         // llok for the owner in the array
         let owner;
         for (const role of roles) {
@@ -380,13 +378,13 @@ class TeamController {
         return this.stripeController.getSubscriptionDetails(subscriptionId);
       })
       .then((subscription) => {
-      // set the teamId inside to make sure the subscription is identifiable
+        // set the teamId inside to make sure the subscription is identifiable
         const newSub = subscription;
         newSub.teamId = teamId;
 
         // check if the subscription has a plan and if not add the plan from the items array
         if (!newSub.plan) {
-        newSub.plan = newSub.items.data[0].plan; // eslint-disable-line
+          newSub.plan = newSub.items.data[0].plan; // eslint-disable-line
         }
 
         return new Promise(resolve => resolve(newSub));

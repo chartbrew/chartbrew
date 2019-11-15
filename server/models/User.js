@@ -61,7 +61,22 @@ const User = db.define("User", {
   createdAt: {
     type: Sequelize.DATE,
     defaultValue: Sequelize.literal("CURRENT_TIMESTAMP")
-  }
+  },
+  stripeId: {
+    type: Sequelize.STRING,
+    set(val) {
+      return this.setDataValue("stripeId", sc.encrypt(val));
+    },
+  },
+  subscriptionId: {
+    type: Sequelize.STRING,
+    set(val) {
+      return this.setDataValue("subscriptionId", sc.encrypt(val));
+    },
+  },
+  plan: {
+    type: Sequelize.STRING,
+  },
 }, {
   freezeTableName: true
 });

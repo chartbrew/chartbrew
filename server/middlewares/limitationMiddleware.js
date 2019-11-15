@@ -1,15 +1,17 @@
 const LimitationController = require("../controllers/LimitationController");
 const ProjectController = require("../controllers/ProjectController");
+const constants = require("../constants");
 
 const limitationController = new LimitationController();
 const projectController = new ProjectController();
 
 function canCreateProject(req, res, next) {
-  return limitationController.canCreateProject(req.params.team_id)
+  return limitationController.canCreateProject(req.body.team_id)
     .then((canCreate) => {
       if (!canCreate) {
         return res.status(406).send({
           code: 406,
+          limit: constants.CAN_CREATE_PROJECT,
           error: "The current plan does not allow the creation of more projects.",
         });
       }
@@ -27,6 +29,7 @@ function canCreateConnection(req, res, next) {
       if (!canCreate) {
         return res.status(406).send({
           code: 406,
+          limit: constants.CAN_CREATE_CONNECTION,
           error: "The current plan does not allow the creation of more Connections",
         });
       }
@@ -44,6 +47,7 @@ function canCreateChart(req, res, next) {
       if (!canCreate) {
         return res.status(406).send({
           code: 406,
+          limit: constants.CAN_CREATE_CHART,
           error: "The plan does not allow the creation of more charts",
         });
       }
@@ -60,6 +64,7 @@ function canChangeAutoUpdate(req, res, next) {
       if (!canUpdate) {
         return res.status(406).send({
           status: 406,
+          limit: constants.CAN_CHANGE_AUTOUPDATE,
           error: "The current plan doesn't support this Auto Update change",
         });
       }

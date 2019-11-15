@@ -4,6 +4,7 @@ const TeamController = require("../controllers/TeamController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
 const limitationMiddleware = require("../middlewares/limitationMiddleware");
+const constants = require("../constants");
 
 module.exports = (app) => {
   const chartController = new ChartController();
@@ -167,7 +168,11 @@ module.exports = (app) => {
           return res.status(401).send({ error: "Not authorized" });
         }
         if (error.message.indexOf("413") > -1) {
-          return res.status(413).send(error);
+          return res.status(413).send({
+            code: 413,
+            limit: constants.CAN_USE_DATA,
+            error: "The query size exceeds the limit of your plan",
+          });
         }
         return res.status(400).send(error);
       });
@@ -200,7 +205,11 @@ module.exports = (app) => {
           return res.status(401).send({ error: "Not authorized" });
         }
         if (error.message && error.message.indexOf("413") > -1) {
-          return res.status(413).send(error);
+          return res.status(413).send({
+            code: 413,
+            limit: constants.CAN_USE_DATA,
+            error: "The query size exceeds the limit of your plan",
+          });
         }
 
         return res.status(400).send({ error });
@@ -232,7 +241,11 @@ module.exports = (app) => {
           return res.status(401).send({ error: "Not authorized" });
         }
         if (error.message.indexOf("413") > -1) {
-          return res.status(413).send(error);
+          return res.status(413).send({
+            code: 413,
+            limit: constants.CAN_USE_DATA,
+            error: "The query size exceeds the limit of your plan",
+          });
         }
         return res.status(400).send(error);
       });
@@ -261,7 +274,11 @@ module.exports = (app) => {
           return res.status(401).send({ error: "Not authorized" });
         }
         if (error.message.indexOf("413") > -1) {
-          return res.status(413).send(error);
+          return res.status(413).send({
+            code: 413,
+            limit: constants.CAN_USE_DATA,
+            error: "The query size exceeds the limit of your plan",
+          });
         }
         return res.status(400).send(error);
       });

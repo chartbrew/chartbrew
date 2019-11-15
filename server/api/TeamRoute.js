@@ -327,6 +327,19 @@ module.exports = (app) => {
   });
   // --------------------------------------
 
+  /*
+  ** Route to get the team's subscription plan
+  */
+  app.get("/team/:id/subscription", verifyToken, (req, res) => {
+    return teamController.getTeamPlan(req.params.id, req.user.id)
+      .then((subscription) => {
+        return res.status(200).send(subscription);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+
   return (req, res, next) => {
     next();
   };
