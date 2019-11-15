@@ -74,6 +74,14 @@ export function createUser(data) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch({
+            type: ADD_ERROR,
+            error: {
+              pathname: window.location.pathname,
+              code: response.status,
+              message: "Server Error",
+            },
+          });
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
@@ -196,6 +204,11 @@ export function createInvitedUser(data) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch({
+            pathname: window.location.pathname,
+            code: response.status,
+            message: "Server Error",
+          });
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
