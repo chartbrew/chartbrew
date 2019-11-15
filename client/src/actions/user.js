@@ -1,5 +1,6 @@
 import cookie from "react-cookies";
 import { API_HOST } from "../config/settings";
+import { ADD_ERROR } from "./error";
 
 export const SAVE_USER = "SAVE_USER";
 export const LOGOUT_USER = "LOGOUT_USER";
@@ -249,6 +250,14 @@ export function login(data) {
     return fetch(`${API_HOST}/user/login`, { method: "POST", headers, body })
       .then((response) => {
         if (!response.ok) {
+          dispatch({
+            type: ADD_ERROR,
+            error: {
+              pathname: window.location.pathname,
+              code: response.status,
+              message: "Couldn't login",
+            },
+          });
           throw new Error("Couldn't login");
         }
         return response.json();
