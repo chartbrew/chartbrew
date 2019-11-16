@@ -10,6 +10,7 @@ import {
 } from "semantic-ui-react";
 
 import { getTeam, saveActiveTeam } from "../actions/team";
+import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import TeamMembers from "./TeamMembers";
 import TeamSettings from "./TeamSettings";
 import Navbar from "../components/Navbar";
@@ -28,6 +29,8 @@ class ManageTeam extends Component {
   }
 
   componentDidMount() {
+    const { cleanErrors } = this.props;
+    cleanErrors();
     this._getTeam();
   }
 
@@ -136,6 +139,7 @@ ManageTeam.propTypes = {
   user: PropTypes.object.isRequired,
   match: PropTypes.object.isRequired,
   saveActiveTeam: PropTypes.func.isRequired,
+  cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -149,6 +153,7 @@ const mapDispatchToProps = (dispatch) => {
   return {
     getTeam: id => dispatch(getTeam(id)),
     saveActiveTeam: (team) => dispatch(saveActiveTeam(team)),
+    cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
 

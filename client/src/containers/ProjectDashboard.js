@@ -7,11 +7,17 @@ import {
 import { Link } from "react-router-dom";
 
 import Chart from "./Chart";
+import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import dashboardImage from "../assets/290.png";
 /*
   Description
 */
 class ProjectDashboard extends Component {
+  componentDidMount() {
+    const { cleanErrors } = this.props;
+    cleanErrors();
+  }
+
   render() {
     const { connections, charts, match } = this.props;
 
@@ -41,7 +47,7 @@ class ProjectDashboard extends Component {
             <Header size="huge" textAlign="center">
               <span role="img" aria-label="wave">👋</span>
               {" "}
-Welcome to Chart Brew
+              Welcome to Chart Brew
               <Header.Subheader>
                 {"Why not jump right into it? Create a new database connection and start visualizing your data. "}
               </Header.Subheader>
@@ -61,6 +67,7 @@ Welcome to Chart Brew
     );
   }
 }
+
 const styles = {
   container: {
     flex: 1,
@@ -73,6 +80,7 @@ ProjectDashboard.propTypes = {
   connections: PropTypes.array.isRequired,
   charts: PropTypes.array.isRequired,
   match: PropTypes.object.isRequired,
+  cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -82,8 +90,9 @@ const mapStateToProps = (state) => {
   };
 };
 
-const mapDispatchToProps = () => {
+const mapDispatchToProps = (dispatch) => {
   return {
+    cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
 export default connect(mapStateToProps, mapDispatchToProps)(ProjectDashboard);

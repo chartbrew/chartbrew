@@ -6,6 +6,7 @@ import {
   Dimmer, Segment, Loader, Divider, Message, Icon, Form, Container, Header
 } from "semantic-ui-react";
 import { getTeam, updateTeam } from "../actions/team";
+import { cleanErrors as cleanErrorsAction } from "../actions/error";
 
 /*
   Contains team update functionality
@@ -25,7 +26,8 @@ class TeamSettings extends Component {
   }
 
   componentDidMount() {
-    const { getTeam, match } = this.props;
+    const { getTeam, match, cleanErrors } = this.props;
+    cleanErrors();
     getTeam(match.params.teamId)
       .then((team) => {
         this.setState({ teamState: { name: team.name } });
@@ -121,6 +123,7 @@ TeamSettings.propTypes = {
   match: PropTypes.object.isRequired,
   updateTeam: PropTypes.func.isRequired,
   style: PropTypes.object,
+  cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -133,6 +136,7 @@ const mapDispatchToProps = (dispatch) => {
   return {
     getTeam: id => dispatch(getTeam(id)),
     updateTeam: (teamId, data) => dispatch(updateTeam(teamId, data)),
+    cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
 

@@ -8,6 +8,7 @@ import {
 } from "semantic-ui-react";
 
 import { getPublicDashboard } from "../actions/project";
+import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import Chart from "./Chart";
 import { blue } from "../config/colors";
 import cbLogo from "../assets/cb_logo_4_small_inverted.png";
@@ -26,7 +27,8 @@ class PublicDashboard extends Component {
   }
 
   componentDidMount() {
-    const { getPublicDashboard, match } = this.props;
+    const { getPublicDashboard, match, cleanErrors } = this.props;
+    cleanErrors();
     getPublicDashboard(match.params.brewName)
       .then((dashboard) => {
         this.setState({ dashboard, loading: false });
@@ -140,6 +142,7 @@ const styles = {
 PublicDashboard.propTypes = {
   getPublicDashboard: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
+  cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = () => {
@@ -150,6 +153,7 @@ const mapStateToProps = () => {
 const mapDispatchToProps = (dispatch) => {
   return {
     getPublicDashboard: (brewName) => dispatch(getPublicDashboard(brewName)),
+    cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
 
