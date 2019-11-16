@@ -1,8 +1,9 @@
 import cookie from "react-cookies";
 import { API_HOST } from "../config/settings";
+import { addError } from "./error";
 
 export function getApiRequestByChart(projectId, chartId) {
-  return () => {
+  return (dispatch) => {
     const token = cookie.load("brewToken");
     const url = `${API_HOST}/project/${projectId}/chart/${chartId}/apiRequest`;
     const method = "GET";
@@ -14,6 +15,7 @@ export function getApiRequestByChart(projectId, chartId) {
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status, "API request failed"));
           return new Promise((resolve, reject) => reject(response.status));
         }
 

@@ -1,6 +1,7 @@
 import cookie from "react-cookies";
 
 import { API_HOST } from "../config/settings";
+import { addError } from "./error";
 
 export const FETCH_CHART = "FETCH_CHART";
 export const FETCH_ALL_CHARTS = "FETCH_ALL_CHARTS";
@@ -21,6 +22,7 @@ export function getProjectCharts(projectId) {
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 
@@ -52,6 +54,7 @@ export function createChart(projectId, data) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 
@@ -84,6 +87,7 @@ export function updateChart(projectId, chartId, data) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 
@@ -116,6 +120,7 @@ export function changeOrder(projectId, chartId, otherId) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 
@@ -146,6 +151,7 @@ export function removeChart(projectId, chartId) {
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 
@@ -177,6 +183,7 @@ export function runQuery(projectId, chartId) {
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.status));
         }
 
@@ -207,6 +214,7 @@ export function getPreviewData(projectId, chart) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 
@@ -222,7 +230,7 @@ export function getPreviewData(projectId, chart) {
 }
 
 export function testQuery(projectId, data) {
-  return () => {
+  return (dispatch) => {
     const token = cookie.load("brewToken");
     const url = `${API_HOST}/project/${projectId}/chart/test`;
     const method = "POST";
@@ -236,6 +244,7 @@ export function testQuery(projectId, data) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.status));
         }
         return response.json();
@@ -250,7 +259,7 @@ export function testQuery(projectId, data) {
 }
 
 export function getEmbeddedChart(id) {
-  return () => {
+  return (dispatch) => {
     const url = `${API_HOST}/chart/${id}/embedded`;
     const method = "GET";
     const headers = new Headers({
@@ -260,6 +269,7 @@ export function getEmbeddedChart(id) {
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return Promise.reject(response.status);
         }
 

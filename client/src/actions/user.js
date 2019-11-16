@@ -1,6 +1,6 @@
 import cookie from "react-cookies";
 import { API_HOST } from "../config/settings";
-import { ADD_ERROR } from "./error";
+import { addError } from "./error";
 
 export const SAVE_USER = "SAVE_USER";
 export const LOGOUT_USER = "LOGOUT_USER";
@@ -74,14 +74,7 @@ export function createUser(data) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
-          dispatch({
-            type: ADD_ERROR,
-            error: {
-              pathname: window.location.pathname,
-              code: response.status,
-              message: "Server Error",
-            },
-          });
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
@@ -103,7 +96,7 @@ export function createUser(data) {
 }
 
 export function addEmailToList(email) {
-  return () => {
+  return (dispatch) => {
     const url = `${API_HOST}/user/email`;
     const body = JSON.stringify({ email });
     const headers = new Headers({
@@ -115,6 +108,7 @@ export function addEmailToList(email) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
@@ -145,6 +139,7 @@ export function updateUser(id, data) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 
@@ -176,6 +171,7 @@ export function deleteUser(id) {
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
@@ -204,11 +200,7 @@ export function createInvitedUser(data) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
-          dispatch({
-            pathname: window.location.pathname,
-            code: response.status,
-            message: "Server Error",
-          });
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
@@ -235,6 +227,7 @@ export function verify(id, token) {
     return fetch(`${API_HOST}/user/${id}/verify`, { method: "GET", headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           throw new Error("Could not verify email.");
         }
 
@@ -263,14 +256,7 @@ export function login(data) {
     return fetch(`${API_HOST}/user/login`, { method: "POST", headers, body })
       .then((response) => {
         if (!response.ok) {
-          dispatch({
-            type: ADD_ERROR,
-            error: {
-              pathname: window.location.pathname,
-              code: response.status,
-              message: "Couldn't login",
-            },
-          });
+          dispatch(addError(response.status, "Couldn't login"));
           throw new Error("Couldn't login");
         }
         return response.json();
@@ -290,7 +276,7 @@ export function login(data) {
 
 export function relog() {
   const token = cookie.load("brewToken");
-  return () => {
+  return (dispatch) => {
     if (!token) {
       if (authenticatePage()) {
         window.location.pathname = "/login";
@@ -309,6 +295,7 @@ export function relog() {
     return fetch(url, { method, headers })
       .then(response => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject("Couldn't relog"));
         }
         return response.json();
@@ -335,6 +322,7 @@ export function getUser(id) {
     return fetch(`${API_HOST}/user/${id}`, { method: "GET", headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status, "Couldn't get requested user"));
           throw new Error("Couldn't get requested user");
         }
         return response.json();
@@ -364,6 +352,7 @@ export function getPendingInvites(id) {
     return fetch(`${API_HOST}/user/${id}/teamInvites`, { method: "GET", headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
@@ -387,7 +376,7 @@ export function logout() {
 }
 
 export function sendFeedback({ name, feedback, email }) {
-  return () => {
+  return (dispatch) => {
     const body = JSON.stringify({
       "from": name,
       "email": email,
@@ -400,6 +389,7 @@ export function sendFeedback({ name, feedback, email }) {
     return fetch(`${API_HOST}/user/feedback`, { method: "POST", body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
@@ -414,7 +404,7 @@ export function sendFeedback({ name, feedback, email }) {
 }
 
 export function requestPasswordReset(email) {
-  return () => {
+  return (dispatch) => {
     const url = `${API_HOST}/user/password/reset`;
     const method = "POST";
     const body = JSON.stringify({ email });
@@ -426,6 +416,7 @@ export function requestPasswordReset(email) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           throw new Error(response.status);
         }
       })
@@ -439,7 +430,7 @@ export function requestPasswordReset(email) {
 }
 
 export function changePasswordWithToken(data) {
-  return () => {
+  return (dispatch) => {
     const url = `${API_HOST}/user/password/change`;
     const method = "PUT";
     const headers = new Headers({
@@ -451,6 +442,7 @@ export function changePasswordWithToken(data) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.status));
         }
 

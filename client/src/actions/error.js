@@ -2,11 +2,15 @@ export const ADD_ERROR = "ADD_ERROR";
 export const REMOVE_ERROR = "REMOVE_ERROR";
 export const CLEAN_ERRORS = "CLEAN_ERRORS";
 
-export function addError(error) {
+export function addError(code, message = "Server Error") {
   return (dispatch) => {
     dispatch({
       type: ADD_ERROR,
-      error,
+      error: {
+        pathname: window.location.pathname,
+        code,
+        message,
+      },
     });
   };
 }
