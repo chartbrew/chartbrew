@@ -2,6 +2,7 @@ import cookie from "react-cookies";
 
 import { API_HOST } from "../config/settings";
 import { getProject } from "./project";
+import { addError } from "./error";
 
 export const FETCHING_CONNECTION = "FETCHING_CONNECTION";
 export const FETCH_CONNECTION_SUCCESS = "FETCH_CONNECTION_SUCCESS";
@@ -25,6 +26,7 @@ export function getProjectConnections(projectId) {
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 
@@ -59,6 +61,7 @@ export function addConnection(projectId, connection) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           throw new Error(response.status);
         }
 
@@ -94,6 +97,7 @@ export function saveConnection(projectId, connection) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           throw new Error(response.status);
         }
 
@@ -111,7 +115,7 @@ export function saveConnection(projectId, connection) {
 }
 
 export function testConnection(projectId, id) {
-  return () => {
+  return (dispatch) => {
     if (!cookie.load("brewToken")) {
       return new Promise((resolve, reject) => reject(new Error("No Token")));
     }
@@ -126,6 +130,7 @@ export function testConnection(projectId, id) {
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 
@@ -141,7 +146,7 @@ export function testConnection(projectId, id) {
 }
 
 export function testApiRequest(projectId, id, apiRequest) {
-  return () => {
+  return (dispatch) => {
     if (!cookie.load("brewToken")) {
       return new Promise((resolve, reject) => reject(new Error("No Token")));
     }
@@ -168,6 +173,7 @@ export function testApiRequest(projectId, id, apiRequest) {
         };
 
         if (!response.ok) {
+          dispatch(addError(status.statusCode, status.statusText));
           return new Promise((resolve, reject) => reject(status));
         }
 
@@ -205,6 +211,7 @@ export function updateConnection(projectId, id, data) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 
@@ -221,7 +228,7 @@ export function updateConnection(projectId, id, data) {
 }
 
 export function removeConnection(projectId, id) {
-  return () => {
+  return (dispatch) => {
     if (!cookie.load("brewToken")) {
       return new Promise((resolve, reject) => reject(new Error("No Token")));
     }
@@ -236,6 +243,7 @@ export function removeConnection(projectId, id) {
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 

@@ -17,6 +17,7 @@ import "chart.piecelabel.js";
 import {
   testQuery, createChart, runQuery, updateChart, getPreviewData
 } from "../actions/chart";
+import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import ChartTypesSelector from "../components/ChartTypesSelector";
 import ObjectExplorer from "../components/ObjectExplorer";
 import ChartBuilder from "../components/ChartBuilder";
@@ -52,6 +53,8 @@ class AddChart extends Component {
   }
 
   componentDidMount() {
+    const { cleanErrors } = this.props;
+    cleanErrors();
     this._populateConnections();
   }
 
@@ -1111,6 +1114,7 @@ AddChart.propTypes = {
   match: PropTypes.object.isRequired,
   history: PropTypes.object.isRequired,
   charts: PropTypes.array.isRequired,
+  cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -1128,6 +1132,7 @@ const mapDispatchToProps = (dispatch) => {
     runQuery: (projectId, chartId) => dispatch(runQuery(projectId, chartId)),
     updateChart: (projectId, chartId, data) => dispatch(updateChart(projectId, chartId, data)),
     getPreviewData: (projectId, chart) => dispatch(getPreviewData(projectId, chart)),
+    cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
 

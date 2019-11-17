@@ -1,6 +1,7 @@
 import cookie from "react-cookies";
 import { API_HOST } from "../config/settings";
 import { removeTeamInvite, saveTeamInvites } from "./user";
+import { addError } from "./error";
 
 export const SAVE_ACTIVE_TEAM = "SAVE_ACTIVE_TEAM";
 export const ADD_TEAM = "ADD_TEAM";
@@ -46,6 +47,7 @@ export function getTeams(userId) {
     return fetch(`${API_HOST}/team/user/${userId}`, { method: "GET", headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 
@@ -75,6 +77,7 @@ export function getTeam(teamId) {
     return fetch(`${API_HOST}/team/${teamId}`, { method: "GET", headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
@@ -102,6 +105,7 @@ export function createTeam(userId, name) {
     return fetch(`${API_HOST}/team`, { method: "POST", headers, body })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
@@ -135,6 +139,7 @@ export function updateTeam(teamId, data) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 
@@ -151,7 +156,7 @@ export function updateTeam(teamId, data) {
 }
 
 export function inviteMembers(userId, email, teamId) {
-  return () => {
+  return (dispatch) => {
     if (!cookie.load("brewToken")) {
       return new Promise((resolve, reject) => reject(new Error("No Token")));
     }
@@ -168,6 +173,7 @@ export function inviteMembers(userId, email, teamId) {
     return fetch(`${API_HOST}/team/${teamId}/invite`, { method: "POST", headers, body })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
@@ -198,6 +204,7 @@ export function addTeamMember(userId, inviteToken) {
     return fetch(`${API_HOST}/team/user/${userId}`, { method: "POST", headers, body })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
@@ -227,6 +234,7 @@ export function getTeamMembers(teamId) {
     return fetch(`${API_HOST}/team/${teamId}/members`, { method: "GET", headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
@@ -259,6 +267,7 @@ export function updateTeamRole(role, memberId, teamId) {
     return fetch(`${API_HOST}/team/${teamId}/role`, { method: "PUT", headers, body })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
@@ -274,7 +283,7 @@ export function updateTeamRole(role, memberId, teamId) {
 }
 
 export function deleteTeamMember(memberId, teamId) {
-  return () => {
+  return (dispatch) => {
     if (!cookie.load("brewToken")) {
       return new Promise((resolve, reject) => reject(new Error("No Token")));
     }
@@ -290,6 +299,7 @@ export function deleteTeamMember(memberId, teamId) {
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 
@@ -321,6 +331,7 @@ export function declineTeamInvite(teamId, inviteToken) {
     return fetch(`${API_HOST}/team/${teamId}/declineInvite/user`, { method: "POST", headers, body })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
@@ -337,7 +348,7 @@ export function declineTeamInvite(teamId, inviteToken) {
 }
 
 export function getUserByTeamInvite(token) {
-  return () => {
+  return (dispatch) => {
     const headers = new Headers({
       "Accept": "application/json",
       "Content-Type": "application/json",
@@ -345,6 +356,7 @@ export function getUserByTeamInvite(token) {
     return fetch(`${API_HOST}/team/invite/${token}`, { method: "GET", headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
@@ -372,6 +384,7 @@ export function getTeamInvites(teamId) {
     return fetch(`${API_HOST}/team/pendingInvites/${teamId}`, { method: "GET", headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
@@ -387,7 +400,7 @@ export function getTeamInvites(teamId) {
 }
 
 export function resendTeamInvite(invite) {
-  return () => {
+  return (dispatch) => {
     if (!cookie.load("brewToken")) {
       return new Promise((resolve, reject) => reject(new Error("No Token")));
     }
@@ -403,6 +416,7 @@ export function resendTeamInvite(invite) {
     return fetch(`${API_HOST}/team/resendInvite`, { method: "POST", body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();

@@ -21,7 +21,6 @@ class LoginForm extends Component {
     this.loginUser = this.loginUser.bind(this);
     this.state = {
       loading: false,
-      loginError: false,
     };
   }
 
@@ -65,8 +64,8 @@ class LoginForm extends Component {
       }
       this.setState({ loading: false });
       history.push("/user");
-    }).catch((err) => {
-      this.setState({ loginError: true, loading: false, errorMessage: err });
+    }).catch(() => {
+      this.setState({ loading: false });
     });
   }
 
@@ -92,7 +91,7 @@ class LoginForm extends Component {
   render() {
     const { handleSubmit } = this.props;
     const {
-      loading, loginError, errorMessage, forgotModal, resetSuccess, resetError,
+      loading, forgotModal, resetSuccess, resetError,
       resetLoading,
     } = this.state;
     return (
@@ -122,13 +121,6 @@ class LoginForm extends Component {
           >
             <a href="#">Forgot password?</a>
           </Item>
-          {loginError
-          && (
-          <Message negative>
-            <Message.Header>{errorMessage}</Message.Header>
-            <p>Please try it again.</p>
-          </Message>
-          )}
         </Form>
         {/*
           <Divider horizontal> Or </Divider>

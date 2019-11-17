@@ -8,6 +8,7 @@ import {
 } from "semantic-ui-react";
 
 import { changePasswordWithToken } from "../actions/user";
+import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import { blue } from "../config/colors";
 import cbLogoSmall from "../assets/cb_logo_4_small_inverted.png";
 
@@ -23,6 +24,11 @@ class PasswordReset extends Component {
       success: false,
       error: false,
     };
+  }
+
+  componentDidMount() {
+    const { cleanErrors } = this.props;
+    cleanErrors();
   }
 
   _onSubmit = () => {
@@ -143,6 +149,7 @@ const styles = {
 PasswordReset.propTypes = {
   changePasswordWithToken: PropTypes.func.isRequired,
   history: PropTypes.object.isRequired,
+  cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = () => {
@@ -153,6 +160,7 @@ const mapStateToProps = () => {
 const mapDispatchToProps = (dispatch) => {
   return {
     changePasswordWithToken: (data) => dispatch(changePasswordWithToken(data)),
+    cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
 

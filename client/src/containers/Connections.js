@@ -14,6 +14,7 @@ import MysqlConnectionForm from "../components/MysqlConnectionForm";
 import {
   testConnection, updateConnection, removeConnection, getProjectConnections
 } from "../actions/connection";
+import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import mongoLogo from "../assets/mongodb-logo-1.png";
 import canAccess from "../config/canAccess";
 import mysql from "../assets/mysql.svg";
@@ -31,6 +32,11 @@ class Connections extends Component {
     this.state = {
       testModal: false,
     };
+  }
+
+  componentDidMount() {
+    const { cleanErrors } = this.props;
+    cleanErrors();
   }
 
   _testConnection = (id) => {
@@ -487,6 +493,7 @@ Connections.propTypes = {
   removeConnection: PropTypes.func.isRequired,
   getProjectConnections: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
+  cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -503,6 +510,7 @@ const mapDispatchToProps = (dispatch) => {
     updateConnection: (projectId, id, data) => dispatch(updateConnection(projectId, id, data)),
     removeConnection: (projectId, id) => dispatch(removeConnection(projectId, id)),
     getProjectConnections: (projectId) => dispatch(getProjectConnections(projectId)),
+    cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
 

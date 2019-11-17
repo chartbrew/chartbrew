@@ -6,12 +6,14 @@ import { Link } from "react-router-dom";
 import {
   Message, Divider, Container, Segment, Form, Button, Header, Icon, Label,
 } from "semantic-ui-react";
+import _ from "lodash";
 
 import { createUser, createInvitedUser } from "../actions/user";
 import { addTeamMember } from "../actions/team";
 import { required, email } from "../config/validations";
 import cbLogoSmall from "../assets/cb_logo_4_small_inverted.png";
 import { blue } from "../config/colors";
+import { cleanErrors as cleanErrorsAction } from "../actions/error";
 
 const queryString = require("qs"); // eslint-disable-line
 /*
@@ -24,6 +26,11 @@ class Signup extends Component {
     this.state = {
       loading: false,
     };
+  }
+
+  componentDidMount() {
+    const { cleanErrors } = this.props;
+    cleanErrors();
   }
 
   submitUser = (values) => {
@@ -40,8 +47,8 @@ class Signup extends Component {
 
           history.push("/user");
         })
-        .catch((err) => {
-          this.setState({ signupError: true, loading: false, errorMessage: err.message });
+        .catch(() => {
+          this.setState({ loading: false });
         });
     }
   }
@@ -59,8 +66,8 @@ class Signup extends Component {
             }, 3000);
           });
       })
-      .catch((err) => {
-        this.setState({ signupError: true, loading: false, errorMessage: err.message });
+      .catch(() => {
+        this.setState({ loading: false });
       });
   }
 
@@ -106,10 +113,12 @@ class Signup extends Component {
   }
 
   render() {
-    const { handleSubmit } = this.props;
+    const { handleSubmit, errors } = this.props;
     const {
-      loading, signupError, errorMessage, addedToTeam,
+      loading, addedToTeam,
     } = this.state;
+
+    const signupError = _.find(errors, { pathname: window.location.pathname });
 
     return (
       <div style={styles.container}>
@@ -154,7 +163,7 @@ class Signup extends Component {
               {signupError
               && (
               <Message negative>
-                <Message.Header>{errorMessage}</Message.Header>
+                <Message.Header>{signupError.message}</Message.Header>
                 <p>Please try it again.</p>
               </Message>
               )}
@@ -209,12 +218,15 @@ Signup.propTypes = {
   createInvitedUser: PropTypes.func.isRequired,
   history: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
+  errors: PropTypes.array.isRequired,
+  cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
     form: state.forms,
     user: state.user.data,
+    errors: state.error,
   };
 };
 
@@ -223,6 +235,7 @@ const mapDispatchToProps = (dispatch) => {
     createUser: user => dispatch(createUser(user)),
     addTeamMember: (userId, token) => dispatch(addTeamMember(userId, token)),
     createInvitedUser: user => dispatch(createInvitedUser(user)),
+    cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
 export default reduxForm({ form: "signup", validate })(connect(mapStateToProps, mapDispatchToProps)(Signup));

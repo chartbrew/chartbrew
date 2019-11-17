@@ -9,6 +9,8 @@ import {
 
 import Chart from "./Chart";
 import { updateProject, changeActiveProject } from "../actions/project";
+import { cleanErrors as cleanErrorsAction } from "../actions/error";
+
 /*
   Description
 */
@@ -23,6 +25,8 @@ class PublicDashboardEditor extends Component {
   }
 
   componentDidMount() {
+    const { cleanErrors } = this.props;
+    cleanErrors();
     this._checkIfNoPublic();
   }
 
@@ -179,6 +183,7 @@ PublicDashboardEditor.propTypes = {
   match: PropTypes.object.isRequired,
   updateProject: PropTypes.func.isRequired,
   changeActiveProject: PropTypes.func.isRequired,
+  cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -192,6 +197,7 @@ const mapDispatchToProps = (dispatch) => {
   return {
     updateProject: (projectId, data) => dispatch(updateProject(projectId, data)),
     changeActiveProject: (projectId) => dispatch(changeActiveProject(projectId)),
+    cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
 
