@@ -38,6 +38,7 @@
     "window": false,
     "FormData": false,
     "document": false,
-    "it": false
+    "it": false,
+    "$crisp": false
   }
 }

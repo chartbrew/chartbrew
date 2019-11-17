@@ -1,8 +1,10 @@
 import cookie from "react-cookies";
+
 import { API_HOST } from "../config/settings";
+import { addError } from "./error";
 
 export function addSource(tokenId) {
-  return () => {
+  return (dispatch) => {
     const token = cookie.load("brewToken");
     const url = `${API_HOST}/stripe/source`;
     const method = "POST";
@@ -15,7 +17,10 @@ export function addSource(tokenId) {
 
     return fetch(url, { method, body, headers })
       .then((response) => {
-        if (!response.ok) throw new Error(response.statusText);
+        if (!response.ok) {
+          dispatch(addError(response.status));
+          throw new Error(response.statusText);
+        }
 
         return response.json();
       })
@@ -29,7 +34,7 @@ export function addSource(tokenId) {
 }
 
 export function subscribeToPlan(plan) {
-  return () => {
+  return (dispatch) => {
     const token = cookie.load("brewToken");
     const url = `${API_HOST}/stripe/subscription`;
     const method = "POST";
@@ -42,7 +47,10 @@ export function subscribeToPlan(plan) {
 
     return fetch(url, { method, body, headers })
       .then((response) => {
-        if (!response.ok) throw new Error(response.statusText);
+        if (!response.ok) {
+          dispatch(addError(response.status));
+          throw new Error(response.statusText);
+        }
 
         return response.json();
       })
@@ -56,7 +64,7 @@ export function subscribeToPlan(plan) {
 }
 
 export function updateSubscription(plan) {
-  return () => {
+  return (dispatch) => {
     const token = cookie.load("brewToken");
     const url = `${API_HOST}/stripe/subscription`;
     const method = "PUT";
@@ -70,6 +78,7 @@ export function updateSubscription(plan) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           if (response.status === 406) {
             return response.json();
           }
@@ -92,7 +101,7 @@ export function updateSubscription(plan) {
 }
 
 export function removeSubscription() {
-  return () => {
+  return (dispatch) => {
     const token = cookie.load("brewToken");
     const url = `${API_HOST}/stripe/subscription`;
     const method = "DELETE";
@@ -105,6 +114,7 @@ export function removeSubscription() {
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           if (response.status === 406) {
             return response.json();
           }
@@ -128,7 +138,7 @@ export function removeSubscription() {
 }
 
 export function getCustomer() {
-  return () => {
+  return (dispatch) => {
     const token = cookie.load("brewToken");
     const url = `${API_HOST}/stripe/customer`;
     const method = "GET";
@@ -139,7 +149,10 @@ export function getCustomer() {
 
     return fetch(url, { method, headers })
       .then((response) => {
-        if (!response.ok) throw new Error(response.status);
+        if (!response.ok) {
+          dispatch(addError(response.status));
+          throw new Error(response.status);
+        }
 
         return response.json();
       })
@@ -153,7 +166,7 @@ export function getCustomer() {
 }
 
 export function setDefaultSource(cardId) {
-  return () => {
+  return (dispatch) => {
     const token = cookie.load("brewToken");
     const url = `${API_HOST}/stripe/source/default`;
     const method = "PUT";
@@ -166,7 +179,10 @@ export function setDefaultSource(cardId) {
 
     return fetch(url, { method, body, headers })
       .then((response) => {
-        if (!response.ok) throw new Error(response.statusText);
+        if (!response.ok) {
+          dispatch(addError(response.status));
+          throw new Error(response.statusText);
+        }
 
         return response.json();
       })
@@ -180,7 +196,7 @@ export function setDefaultSource(cardId) {
 }
 
 export function removeSource(cardId) {
-  return () => {
+  return (dispatch) => {
     const token = cookie.load("brewToken");
     const url = `${API_HOST}/stripe/source`;
     const method = "DELETE";
@@ -193,7 +209,10 @@ export function removeSource(cardId) {
 
     return fetch(url, { method, body, headers })
       .then((response) => {
-        if (!response.ok) throw new Error(response.statusText);
+        if (!response.ok) {
+          dispatch(addError(response.status));
+          throw new Error(response.statusText);
+        }
 
         return response.json();
       })

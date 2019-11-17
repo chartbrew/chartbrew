@@ -431,7 +431,7 @@ export function resendTeamInvite(invite) {
 }
 
 export function getTeamPlan(teamId) {
-  return () => {
+  return (dispatch) => {
     if (!cookie.load("brewToken")) {
       return new Promise((resolve, reject) => reject(new Error("No Token")));
     }
@@ -444,6 +444,7 @@ export function getTeamPlan(teamId) {
     return fetch(`${API_HOST}/team/${teamId}/subscription`, { method: "GET", headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
         return response.json();
