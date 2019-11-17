@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import PropTypes from "prop-types";
 import { Route, Switch, withRouter } from "react-router";
 
 import { Link } from "react-router-dom";
@@ -7,10 +8,17 @@ import { Link } from "react-router-dom";
 import { Menu, Header, Grid } from "semantic-ui-react";
 import EditUserForm from "../components/EditUserForm";
 import Navbar from "../components/Navbar";
+import { cleanErrors as cleanErrorsAction } from "../actions/error";
+
 /*
   Component for inviting user to the team
 */
 class ManageUser extends Component {
+  componentDidMount() {
+    const { cleanErrors } = this.props;
+    cleanErrors();
+  }
+
   check(path) {
     switch (path) {
       case "edit":
@@ -66,6 +74,7 @@ const styles = {
 };
 
 ManageUser.propTypes = {
+  cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -74,8 +83,9 @@ const mapStateToProps = (state) => {
   };
 };
 
-const mapDispatchToProps = () => {
+const mapDispatchToProps = (dispatch) => {
   return {
+    cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
 

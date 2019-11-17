@@ -10,6 +10,7 @@ import {
 import SplitPane from "react-split-pane";
 
 import { getProject, changeActiveProject } from "../actions/project";
+import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import { getTeam } from "../actions/team";
 import { getProjectCharts } from "../actions/chart";
 import { getProjectConnections } from "../actions/connection";
@@ -40,6 +41,8 @@ class ProjectBoard extends Component {
   }
 
   componentDidMount() {
+    const { cleanErrors } = this.props;
+    cleanErrors();
     this._init();
     if (window.localStorage.getItem("_cb_menu_size")) {
       this._setMenuSize(window.localStorage.getItem("_cb_menu_size"), true);
@@ -470,6 +473,7 @@ ProjectBoard.propTypes = {
   getProjectCharts: PropTypes.func.isRequired,
   getProjectConnections: PropTypes.func.isRequired,
   getTeam: PropTypes.func.isRequired,
+  cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -488,6 +492,7 @@ const mapDispatchToProps = (dispatch) => {
     getProjectCharts: (projectId) => dispatch(getProjectCharts(projectId)),
     getProjectConnections: (projectId) => dispatch(getProjectConnections(projectId)),
     getTeam: (teamId) => dispatch(getTeam(teamId)),
+    cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
 

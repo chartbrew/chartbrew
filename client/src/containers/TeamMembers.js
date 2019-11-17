@@ -9,6 +9,7 @@ import {
 import {
   getTeam, getTeamMembers, updateTeamRole, deleteTeamMember
 } from "../actions/team";
+import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import Invites from "../components/Invites";
 import InviteMembersForm from "../components/InviteMembersForm";
 import canAccess from "../config/canAccess";
@@ -28,6 +29,8 @@ class TeamMembers extends Component {
   }
 
   componentDidMount() {
+    const { cleanErrors } = this.props;
+    cleanErrors();
     this._getTeam();
   }
 
@@ -287,6 +290,7 @@ TeamMembers.propTypes = {
   getTeamMembers: PropTypes.func.isRequired,
   updateTeamRole: PropTypes.func.isRequired,
   deleteTeamMember: PropTypes.func.isRequired,
+  cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -303,6 +307,7 @@ const mapDispatchToProps = (dispatch) => {
     getTeamMembers: teamId => dispatch(getTeamMembers(teamId)),
     updateTeamRole: (role, memberId, teamId) => dispatch(updateTeamRole(role, memberId, teamId)),
     deleteTeamMember: (memberId, teamId) => dispatch(deleteTeamMember(memberId, teamId)),
+    cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
 

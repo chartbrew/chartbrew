@@ -2,6 +2,7 @@ import cookie from "react-cookies";
 
 import { API_HOST } from "../config/settings";
 import { FETCH_ALL_CHARTS } from "./chart";
+import { addError } from "./error";
 
 export const FETCHING_ALL_PROJECTS = "FETCHING_ALL_PROJECTS";
 export const FETCHING_PROJECT = "FETCHING_PROJECT";
@@ -26,6 +27,7 @@ export function getAllProjects() {
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 
@@ -57,6 +59,7 @@ export function getProject(id, active) {
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 
@@ -100,6 +103,7 @@ export function createProject(data) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 
@@ -135,6 +139,7 @@ export function updateProject(projectId, data) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 
@@ -165,6 +170,7 @@ export function removeProject(projectId) {
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.status));
         }
 
@@ -183,7 +189,7 @@ export function removeProject(projectId) {
 }
 
 export function getPublicDashboard(brewName) {
-  return () => {
+  return (dispatch) => {
     const token = cookie.load("brewToken");
     const url = `${API_HOST}/project/dashboard/${brewName}`;
     const headers = new Headers({
@@ -195,6 +201,7 @@ export function getPublicDashboard(brewName) {
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject(response.statusText));
         }
 

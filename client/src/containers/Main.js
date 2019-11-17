@@ -20,15 +20,18 @@ import EmbeddedChart from "./EmbeddedChart";
 import { relog, getUser } from "../actions/user";
 import { getTeams } from "../actions/team";
 import { getAllProjects } from "../actions/project";
+import { cleanErrors as cleanErrorsAction } from "../actions/error";
+
 /*
   Description
 */
 class Main extends Component {
   componentDidMount() {
     const {
-      relog, getUser, getTeams, getAllProjects, location,
+      relog, getUser, getTeams, getAllProjects, location, cleanErrors,
     } = this.props;
 
+    cleanErrors();
     if (!location.pathname.match(/\/chart\/\d+\/embedded/g)) {
       relog().then((data) => {
         getUser(data.id);
@@ -96,7 +99,7 @@ Main.propTypes = {
   getTeams: PropTypes.func.isRequired,
   getAllProjects: PropTypes.func.isRequired,
   location: PropTypes.object.isRequired,
-  // user: PropTypes.object.isRequired,
+  cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -111,6 +114,7 @@ const mapDispatchToProps = (dispatch) => {
     getUser: (id) => dispatch(getUser(id)),
     getAllProjects: () => dispatch(getAllProjects()),
     getTeams: (id) => dispatch(getTeams(id)),
+    cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
 

@@ -1,5 +1,7 @@
 import cookie from "react-cookies";
+
 import { API_HOST } from "../config/settings";
+import { addError } from "./error";
 
 export const FETCHING_QUERY = "FETCHING_QUERY";
 export const FETCH_QUERY_FAIL = "FETCH_QUERY_FAIL";
@@ -19,6 +21,7 @@ export function getSavedQueries(projectId, type) {
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           throw new Error(response.status);
         }
 
@@ -49,6 +52,7 @@ export function createSavedQuery(projectId, data) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           throw new Error(response.status);
         }
 
@@ -79,6 +83,7 @@ export function updateSavedQuery(projectId, savedQueryId, data) {
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           throw new Error(response.status);
         }
 
@@ -107,6 +112,7 @@ export function deleteSavedQuery(projectId, savedQueryId) {
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
+          dispatch(addError(response.status));
           throw new Error(response.status);
         }
 

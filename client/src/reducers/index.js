@@ -9,6 +9,7 @@ import team from "./team";
 import chart from "./chart";
 import connection from "./connection";
 import savedQuery from "./savedQuery";
+import error from "./error";
 
 const AppReducer = combineReducers({
   user,
@@ -18,6 +19,7 @@ const AppReducer = combineReducers({
   chart,
   connection,
   savedQuery,
+  error,
   route: routerReducer,
 });
 

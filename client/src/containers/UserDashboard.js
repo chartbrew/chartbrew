@@ -9,6 +9,7 @@ import {
 
 import { getTeams, createTeam, saveActiveTeam } from "../actions/team";
 import { getUser, relog as relogAction } from "../actions/user";
+import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import ProjectForm from "../components/ProjectForm";
 import InviteMembersForm from "../components/InviteMembersForm";
 import Invites from "../components/Invites";
@@ -35,7 +36,8 @@ class UserDashboard extends Component {
   }
 
   componentDidMount() {
-    const { relog } = this.props;
+    const { relog, cleanErrors } = this.props;
+    cleanErrors();
     relog();
     this._getTeams();
   }
@@ -339,6 +341,7 @@ UserDashboard.propTypes = {
   saveActiveTeam: PropTypes.func.isRequired,
   history: PropTypes.object.isRequired,
   relog: PropTypes.func.isRequired,
+  cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -355,6 +358,7 @@ const mapDispatchToProps = (dispatch) => {
     createTeam: (userId, name) => dispatch(createTeam(userId, name)),
     saveActiveTeam: (team) => dispatch(saveActiveTeam(team)),
     relog: () => dispatch(relogAction()),
+    cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
 

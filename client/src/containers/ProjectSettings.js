@@ -8,6 +8,7 @@ import {
 
 import canAccess from "../config/canAccess";
 import { updateProject, changeActiveProject, removeProject } from "../actions/project";
+import { cleanErrors as cleanErrorsAction } from "../actions/error";
 
 const queryString = require("qs"); // eslint-disable-line
 /*
@@ -21,6 +22,11 @@ class ProjectSettings extends Component {
       success: false,
       error: false,
     };
+  }
+
+  componentDidMount() {
+    const { cleanErrors } = this.props;
+    cleanErrors();
   }
 
   _onSaveName = () => {
@@ -184,6 +190,7 @@ ProjectSettings.propTypes = {
   updateProject: PropTypes.func.isRequired,
   changeActiveProject: PropTypes.func.isRequired,
   removeProject: PropTypes.func.isRequired,
+  cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -199,6 +206,7 @@ const mapDispatchToProps = (dispatch) => {
     updateProject: (projectId, data) => dispatch(updateProject(projectId, data)),
     changeActiveProject: (projectId) => dispatch(changeActiveProject(projectId)),
     removeProject: (projectId) => dispatch(removeProject(projectId)),
+    cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
 
