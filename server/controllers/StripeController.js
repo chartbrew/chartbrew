@@ -25,7 +25,7 @@ class StripeController {
 
   createCustomer(id) {
     let gCustomer;
-    return this.user.findByPk(id)
+    return this.user.findById(id)
       .then((user) => {
         // return the user if they already have a stripe ID
         if (user.stripeId) {
@@ -175,7 +175,7 @@ class StripeController {
       .catch((error) => {
         if (error.message && error.message.indexOf("No such subscription") > -1) {
           // make a new subscription
-          return this.user.findByPk(userId);
+          return this.user.findById(userId);
         }
         return new Promise((resolve, reject) => reject(error));
       })

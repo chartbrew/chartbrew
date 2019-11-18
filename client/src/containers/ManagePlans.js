@@ -290,7 +290,7 @@ You are still able to take advantage of the extra features until
                       <Header.Subheader>team members</Header.Subheader>
                     </Header>
                   </Grid.Column>
-                  <Grid.Column textAlign="center" verticalAlign="middle" width={5}>
+                  <Grid.Column textAlign="left" verticalAlign="middle" width={5}>
                     <List animated relaxed verticalAlign="middle">
                       {currentPlan.features.map((feature) => {
                         return (

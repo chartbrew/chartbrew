@@ -70,6 +70,8 @@ class Main extends Component {
             <Route exact path="/passwordReset" component={PasswordReset} />
             <Route exact path="/manage/:teamId/members" component={ManageTeam} />
             <Route exact path="/manage/:teamId/settings" component={ManageTeam} />
+            <Route exact path="/manage/:teamId/plans" component={ManageTeam} />
+            <Route exact path="/manage/:teamId/payment" component={ManageTeam} />
             <Route exact path="/:teamId/:projectId/dashboard" component={ProjectBoard} />
             <Route exact path="/:teamId/:projectId/connections" component={ProjectBoard} />
             <Route exact path="/:teamId/:projectId/chart" component={ProjectBoard} />
