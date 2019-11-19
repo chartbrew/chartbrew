@@ -6,22 +6,32 @@ import {
 } from "semantic-ui-react";
 
 import AddStripeSource from "../components/AddStripeSource";
-import { getCustomer, setDefaultSource, removeSource } from "../actions/stripe";
+import {
+  getCustomer as getCustomerAction,
+  setDefaultSource as setDefaultSourceAction,
+  removeSource as removeSourceAction,
+} from "../actions/stripe";
 /*
   Login container with an embedded login form
 */
 class ManagePaymentMethods extends Component {
-  state = {
-    loading: true,
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      loading: true,
+    };
   }
 
   componentDidMount() {
     this._getComponentData();
   }
 
-  _getComponentData() {
+  _getComponentData = () => {
+    const { getCustomer } = this.props;
     this.setState({ loading: true, error: false });
-    this.props.getCustomer()
+
+    getCustomer()
       .then((customer) => {
         if (!customer.sources) throw new Error("malformed customer object");
         this.setState({
@@ -42,8 +52,10 @@ class ManagePaymentMethods extends Component {
   }
 
   _setDefaultSource = (cardId) => {
+    const { setDefaultSource } = this.props;
     this.setState({ loading: true });
-    this.props.setDefaultSource(cardId)
+
+    setDefaultSource(cardId)
       .then(() => {
         this._getComponentData();
       })
@@ -53,8 +65,10 @@ class ManagePaymentMethods extends Component {
   }
 
   _removeSource = (cardId) => {
+    const { removeSource } = this.props;
     this.setState({ loading: true });
-    this.props.removeSource(cardId)
+
+    removeSource(cardId)
       .then(() => {
         this._getComponentData();
       })
@@ -64,12 +78,13 @@ class ManagePaymentMethods extends Component {
   }
 
   render() {
+    const { style } = this.props;
     const {
       error, loading, sources, defaultSource
     } = this.state;
 
     return (
-      <div style={this.props.style}>
+      <div style={style}>
         <Header attached="top" as="h3">Add a new payment method</Header>
         <Segment attached raised>
           <AddStripeSource onComplete={this._onSourceAdded} />
@@ -125,6 +140,7 @@ class ManagePaymentMethods extends Component {
     );
   }
 }
+
 const styles = {
   container: {
     flex: 1,
@@ -152,9 +168,9 @@ const mapStateToProps = () => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    getCustomer: () => dispatch(getCustomer()),
-    setDefaultSource: (cardId) => dispatch(setDefaultSource(cardId)),
-    removeSource: (cardId) => dispatch(removeSource(cardId)),
+    getCustomer: () => dispatch(getCustomerAction()),
+    setDefaultSource: (cardId) => dispatch(setDefaultSourceAction(cardId)),
+    removeSource: (cardId) => dispatch(removeSourceAction(cardId)),
   };
 };
 

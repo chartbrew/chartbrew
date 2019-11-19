@@ -9,66 +9,75 @@ import {
 import moment from "moment";
 
 import PricingPlans from "../components/PricingPlans";
-import { getTeamPlan } from "../actions/team";
-import { removeSubscription, updateSubscription } from "../actions/stripe";
+import { getTeamPlan as getTeamPlanAction } from "../actions/team";
+import {
+  removeSubscription as removeSubscriptionAction,
+  updateSubscription as updateSubscriptionAction,
+} from "../actions/stripe";
 import AddStripeSource from "../components/AddStripeSource";
 
 /*
   Login container with an embedded login form
 */
 class ManagePlans extends Component {
-  state = {
-    allPlans: [{
-      id: 1,
-      name: "Community",
-      price: "Free",
-      priceDetail: "forever",
-      description: "This will remove your subscription",
-      primary: false,
-      features: ["3 Charts", "1 Project", "1 Team member", "1 Datasource connection", "10MB Max query size"],
-      buttonText: "Change plan",
-      onClick: () => {
-        this.setState({ freeModal: true, selectedPlan: 1 });
-      }
-    }, {
-      id: 2,
-      name: "Basic",
-      price: "$9",
-      priceDetail: "per month",
-      description: "Create more charts and connect multiple data sources",
-      primary: false,
-      features: ["10 Charts", "3 Project", "2 Team members", "5 Datasource connections", "30MB Max query size", "Auto-refresh every hour"],
-      buttonText: "Change plan",
-      onClick: () => {
-        if (this.state.currentPlan.id > 2) {
-          this.setState({ downgradeModal: true, selectedPlan: 2 });
-        } else {
-          this.setState({ upgradeModal: true, selectedPlan: 2 });
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      allPlans: [{
+        id: 1,
+        name: "Community",
+        price: "Free",
+        priceDetail: "forever",
+        description: "This will remove your subscription",
+        primary: false,
+        features: ["3 Charts", "1 Project", "1 Team member", "1 Datasource connection", "10MB Max query size"],
+        buttonText: "Change plan",
+        onClick: () => {
+          this.setState({ freeModal: true, selectedPlan: 1 });
         }
-      },
-    }, {
-      id: 3,
-      name: "Pro",
-      price: "$49",
-      priceDetail: "per month",
-      description: "More power, more amazing dashboards",
-      primary: false,
-      features: ["20 Charts per project", "10 projects", "5 Team members", "Unlimited datasource connections", "50MB Max query size", "Auto-refresh every 30 minutes"],
-      buttonText: "Change plan",
-      onClick: () => {
-        this.setState({ upgradeModal: true, selectedPlan: 3 });
-      },
-    }],
+      }, {
+        id: 2,
+        name: "Basic",
+        price: "$9",
+        priceDetail: "per month",
+        description: "Create more charts and connect multiple data sources",
+        primary: false,
+        features: ["10 Charts", "3 Project", "2 Team members", "5 Datasource connections", "30MB Max query size", "Auto-refresh every hour"],
+        buttonText: "Change plan",
+        onClick: () => {
+          if (this.state.currentPlan.id > 2) { // eslint-disable-line
+            this.setState({ downgradeModal: true, selectedPlan: 2 });
+          } else {
+            this.setState({ upgradeModal: true, selectedPlan: 2 });
+          }
+        },
+      }, {
+        id: 3,
+        name: "Pro",
+        price: "$49",
+        priceDetail: "per month",
+        description: "More power, more amazing dashboards",
+        primary: false,
+        features: ["20 Charts per project", "10 projects", "5 Team members", "Unlimited datasource connections", "50MB Max query size", "Auto-refresh every 30 minutes"],
+        buttonText: "Change plan",
+        onClick: () => {
+          this.setState({ upgradeModal: true, selectedPlan: 3 });
+        },
+      }],
+    };
   }
 
   componentDidMount() {
     this._prepareComponentData();
   }
 
-  _prepareComponentData() {
+  _prepareComponentData = () => {
+    const { getTeamPlan, match } = this.props;
     const { allPlans } = this.state;
+
     this.setState({ loading: true, error: false, modalLoading: false });
-    this.props.getTeamPlan(this.props.match.params.teamId)
+    getTeamPlan(match.params.teamId)
       .then((subscription) => {
         const { plan } = subscription;
 
@@ -100,7 +109,9 @@ class ManagePlans extends Component {
   }
 
   _updateSubscription = () => {
+    const { updateSubscription } = this.props;
     const { allPlans, selectedPlan } = this.state;
+
     this.setState({
       modalLoading: true,
       error: false,
@@ -109,7 +120,8 @@ class ManagePlans extends Component {
       chartError: false,
       memberError: false,
     });
-    this.props.updateSubscription(allPlans[selectedPlan - 1].name)
+
+    updateSubscription(allPlans[selectedPlan - 1].name)
       .then((subscription) => {
         // check if the object is customer (which means there's no payment method)
         if (subscription.object === "customer") {
@@ -157,6 +169,8 @@ class ManagePlans extends Component {
   }
 
   _removeSubscription = () => {
+    const { removeSubscription } = this.props;
+
     this.setState({
       modalLoading: true,
       error: false,
@@ -165,7 +179,8 @@ class ManagePlans extends Component {
       chartError: false,
       memberError: false,
     });
-    this.props.removeSubscription()
+
+    removeSubscription()
       .then(() => {
         this._prepareComponentData();
         this.setState({ modalLoading: false, freeModal: false });
@@ -208,9 +223,10 @@ class ManagePlans extends Component {
   render() {
     const {
       loading, currentPlan, availablePlans, allPlans, selectedPlan, error, subCanceled,
-      connectionError, projectError, chartError, memberError,
+      connectionError, projectError, chartError, memberError, upgradeModal,
+      modalLoading, downgradeModal, freeModal, payModal,
     } = this.state;
-    const { team } = this.props;
+    const { team, style } = this.props;
 
     if (loading || !allPlans || !selectedPlan || !team.id) {
       return (
@@ -223,7 +239,7 @@ class ManagePlans extends Component {
     }
 
     return (
-      <div style={this.props.style}>
+      <div style={style}>
         <div style={styles.container}>
           {error && !connectionError && !projectError && !chartError
             && (
@@ -265,7 +281,7 @@ class ManagePlans extends Component {
             <Message warning>
               <Message.Header>{"Your subscription was canceled. You won't be charged again"}</Message.Header>
               <p>
-You are still able to take advantage of the extra features until
+                You are still able to take advantage of the extra features until
                 {subCanceled}
               </p>
             </Message>
@@ -329,7 +345,7 @@ You are still able to take advantage of the extra features until
 
           {/* UPGRADE MODAL */}
           <Modal
-            open={this.state.upgradeModal}
+            open={upgradeModal}
             size="small"
             onClose={() => this.setState({ upgradeModal: false })}
           >
@@ -338,7 +354,7 @@ You are still able to take advantage of the extra features until
               {" "}
               {allPlans[selectedPlan - 1].name}
               {" "}
-plan?
+              plan?
             </Modal.Header>
             <Modal.Content>
               <p>{"Awesome to hear that! You will get access to all the extra features immediately."}</p>
@@ -367,7 +383,7 @@ plan?
                 positive
                 icon
                 labelPosition="right"
-                loading={this.state.modalLoading}
+                loading={modalLoading}
                 onClick={this._updateSubscription}
               >
                 <Icon name="angle double up" />
@@ -378,7 +394,7 @@ plan?
 
           {/* DOWNGRADE MODAL */}
           <Modal
-            open={this.state.downgradeModal}
+            open={downgradeModal}
             size="small"
             onClose={() => this.setState({ downgradeModal: false })}
           >
@@ -387,7 +403,7 @@ plan?
               {" "}
               {allPlans[selectedPlan - 1].name}
               {" "}
-plan?
+              plan?
             </Modal.Header>
             <Modal.Content>
               <p>{"Downgrading your plan will cap your usage on projects, charts, connections and more."}</p>
@@ -405,7 +421,7 @@ plan?
                 negative
                 icon
                 labelPosition="right"
-                loading={this.state.modalLoading}
+                loading={modalLoading}
                 onClick={this._updateSubscription}
               >
                 <Icon name="angle double down" />
@@ -416,7 +432,7 @@ plan?
 
           {/* FREE MODAL */}
           <Modal
-            open={this.state.freeModal}
+            open={freeModal}
             size="small"
             onClose={() => this.setState({ freeModal: false })}
           >
@@ -425,7 +441,7 @@ plan?
               {" "}
               {allPlans[selectedPlan - 1].name}
               {" "}
-plan?
+              plan?
             </Modal.Header>
             <Modal.Content>
               <p>{"Downgrading your plan will cap your usage on projects, charts, connections and more."}</p>
@@ -444,7 +460,7 @@ plan?
                 negative
                 icon
                 labelPosition="right"
-                loading={this.state.modalLoading}
+                loading={modalLoading}
                 onClick={this._removeSubscription}
               >
                 <Icon name="angle double down" />
@@ -455,7 +471,7 @@ plan?
 
           {/* PAYMENT MODAL */}
           <Modal
-            open={this.state.payModal}
+            open={payModal}
             size="small"
             onClose={() => this.setState({ payModal: false })}
           >
@@ -464,7 +480,7 @@ plan?
               {" "}
               {allPlans[selectedPlan - 1].name}
               {" "}
-plan
+              plan
             </Modal.Header>
             <Modal.Content>
               <Header textAlign="center" size="large">
@@ -520,9 +536,9 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    getTeamPlan: (teamId) => dispatch(getTeamPlan(teamId)),
-    removeSubscription: () => dispatch(removeSubscription()),
-    updateSubscription: (plan) => dispatch(updateSubscription(plan)),
+    getTeamPlan: (teamId) => dispatch(getTeamPlanAction(teamId)),
+    removeSubscription: () => dispatch(removeSubscriptionAction()),
+    updateSubscription: (plan) => dispatch(updateSubscriptionAction(plan)),
   };
 };
 

@@ -39,6 +39,8 @@ class Main extends Component {
         return getAllProjects();
       });
     }
+
+    $crisp.push(["safe", true]);
   }
 
   render() {
