@@ -2,7 +2,7 @@ const TeamController = require("../controllers/TeamController");
 const UserController = require("../controllers/UserController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
-const nodemail = require("../modules/nodemail");
+const mail = require("../modules/mail");
 
 module.exports = (app) => {
   const teamController = new TeamController();
@@ -81,7 +81,7 @@ module.exports = (app) => {
   });
 
   const sendInviteEmail = ((invite, admin, teamName) => {
-    return nodemail.sendInvite(invite, admin.name, teamName.name);
+    return mail.sendInvite(invite, admin.name, teamName.name);
   });
 
   // a route to send a team invite
