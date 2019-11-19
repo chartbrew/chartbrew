@@ -5,7 +5,7 @@ const User = require("../models/User");
 const TeamRole = require("../models/TeamRole");
 const Team = require("../models/Team");
 const TeamInvite = require("../models/TeamInvintation");
-const nodemail = require("../modules/nodemail");
+const mail = require("../modules/mail");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -151,7 +151,7 @@ class UserController {
           email: user.email,
         }));
 
-        return nodemail.passwordReset({
+        return mail.passwordReset({
           email: user.email,
           resetUrl: `${settings.client}/passwordReset?token=${newToken}&hash=${hash}`,
         });
