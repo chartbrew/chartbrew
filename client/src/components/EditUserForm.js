@@ -30,13 +30,15 @@ class EditUserForm extends Component {
   }
 
   componentDidMount() {
-    this.loadData(this.props);
+    this.loadData();
   }
 
-  componentDidUpdate(nextProps) {
+  componentDidUpdate() {
+    const { userProp } = this.props;
     const { user } = this.state;
-    if (!user.name) {
-      this.loadData(nextProps);
+
+    if (userProp.name && !user.name) {
+      this.loadData();
     }
   }
 
@@ -48,11 +50,14 @@ class EditUserForm extends Component {
     }
   }
 
-  loadData = (props) => {
+  loadData = () => {
+    const { userProp } = this.props;
+    if (!userProp && !userProp.name) return;
+
     this.setState({
       loading: false,
       user: {
-        name: props.user.name, surname: props.user.surname, icon: props.user.icon
+        name: userProp.name, surname: userProp.surname, icon: userProp.icon
       }
     });
   }
@@ -218,7 +223,7 @@ EditUserForm.propTypes = {
 };
 const mapStateToProps = (state) => {
   return {
-    user: state.user.data,
+    userProp: state.user.data,
   };
 };
 
