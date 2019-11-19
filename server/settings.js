@@ -59,4 +59,8 @@ module.exports = {
       autoRefresh: 1800,
     },
   },
+  sendgrid: {
+    key: process.env.CB_SENDGRID,
+    host: "https://api.sendgrid.com/v3",
+  },
 };

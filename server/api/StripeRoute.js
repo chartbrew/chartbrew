@@ -3,7 +3,7 @@ const requestP = require("request-promise");
 
 const StripeController = require("../controllers/StripeController");
 const verifyToken = require("../modules/verifyToken");
-const prepareMail = require("../modules/prepareMail");
+const mail = require("../modules/mail");
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
 const sc = simplecrypt({
@@ -123,7 +123,7 @@ module.exports = (app) => {
       .then((subscription) => {
         gSub = subscription;
         // send confirmation email
-        const mailOpt = prepareMail.updateSubscription({
+        const mailOpt = mail.updateSubscription({
           plan: req.body.plan,
           email: req.user.email,
         });
@@ -163,7 +163,7 @@ module.exports = (app) => {
         .then((subscription) => {
           gSub = subscription;
           // send confirmation email
-          const mailOpt = prepareMail.updateSubscription({
+          const mailOpt = mail.updateSubscription({
             plan: req.body.plan,
             email: req.user.email,
           });
@@ -190,7 +190,7 @@ module.exports = (app) => {
       .then((subscription) => {
         gSub = subscription;
         // send confirmation email
-        const mailOpt = prepareMail.updateSubscription({
+        const mailOpt = mail.updateSubscription({
           plan: req.body.plan,
           email: req.user.email,
         });
@@ -218,7 +218,7 @@ module.exports = (app) => {
       .then((confirmation) => {
         gConf = confirmation;
 
-        const mailOpt = prepareMail.endSubscription({
+        const mailOpt = mail.endSubscription({
           email: req.user.email,
         });
         return requestP(mailOpt);

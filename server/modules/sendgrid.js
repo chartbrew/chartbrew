@@ -1,49 +1,52 @@
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 const base64 = require("base-64");
 const utf8 = require("utf8");
+const request = require("request-promise");
 
-module.exports.sendInvite = (app, invite, admin, teamName) => {
-  const inviteUrl = `${app.settings.client}/invite?team_id=${invite.team_id}&token=${invite.token}`;
+module.exports.sendInvite = (invite, admin, teamName) => {
+  const inviteUrl = `${settings.client}/invite?team_id=${invite.team_id}&token=${invite.token}`;
 
   const inviteMsg = {
     "from": { "email": "info@depomo.com" },
     "subject": "Join the team",
     "personalizations": [{
       "to": [{ email: invite.email }],
-      "substitutions": {
-        "%first_name%": admin,
-        "%team_name%": teamName,
-        "%insertLink%": inviteUrl
+      "dynamic_template_data": {
+        "first_name": admin,
+        "team_name": teamName,
+        "invite_url": inviteUrl
       }
     }],
-    "template_id": "2b9740d1-aacf-46fd-9312-d11a0973def0"
+    "template_id": "d-a1a0a72588324b67a6678f71719ee312"
   };
 
   const options = {
     method: "POST",
-    url: `${app.settings.sendgridHost}/mail/send`,
+    url: `${settings.sendgrid.host}/mail/send`,
     body: JSON.stringify(inviteMsg),
     headers: {
-      authorization: `Bearer ${app.settings.sendgridKey}`,
+      authorization: `Bearer ${settings.sendgrid.key}`,
       "content-type": "application/json"
     }
   };
-  return options;
+
+  return request(options);
 };
 
-module.exports.addUserToMailList = (app, recipientId, listId) => {
+module.exports.addUserToMailList = (recipientId, listId) => {
   const options = {
     method: "POST",
-    url: `${app.settings.sendgridHost}/contactdb/lists/${listId}/recipients/${recipientId}`,
+    url: `${settings.sendgrid.host}/contactdb/lists/${listId}/recipients/${recipientId}`,
     headers: {
-      authorization: `Bearer ${app.settings.sendgridKey}`,
+      authorization: `Bearer ${settings.sendgrid.key}`,
       "content-type": "application/json"
     }
   };
-  return options;
+
+  return request(options);
 };
 
-module.exports.createRecipient = (app, user) => {
+module.exports.createRecipient = (user) => {
   const recipientMsg = {
     "listIds": [settings.sendgridInterestedList],
     "contacts": [
@@ -57,60 +60,60 @@ module.exports.createRecipient = (app, user) => {
 
   const recipientOptions = {
     method: "PUT",
-    url: `${app.settings.sendgridHost}/marketing/contacts`,
+    url: `${settings.sendgrid.host}/marketing/contacts`,
     body: JSON.stringify(recipientMsg),
     headers: {
-      authorization: `Bearer ${app.settings.sendgridKey}`,
+      authorization: `Bearer ${settings.sendgrid.key}`,
       "content-type": "application/json"
     }
   };
-  return recipientOptions;
+  return request(recipientOptions);
 };
 
-module.exports.getRecipientId = (app, user) => {
+module.exports.getRecipientId = (user) => {
   const bytes = utf8.encode(user.email);
   const encoded = base64.encode(bytes);
   return encoded;
 };
 
-module.exports.deleteUser = (app, recipientId) => {
+module.exports.deleteUser = (recipientId) => {
   const options = {
     method: "DELETE",
-    url: `${app.settings.sendgridHost}/contactdb/recipients/${recipientId}`,
+    url: `${settings.sendgrid.host}/contactdb/recipients/${recipientId}`,
     headers: {
-      authorization: `Bearer ${app.settings.sendgridKey}`,
+      authorization: `Bearer ${settings.sendgrid.key}`,
       "content-type": "application/json"
     }
   };
-  return options;
+  return request(options);
 };
 
-module.exports.goodbyeEmail = (app, user) => {
-  const feedbackUrl = `${app.settings.client}/feedback`;
+module.exports.goodbyeEmail = (user) => {
+  const feedbackUrl = `${settings.client}/feedback`;
 
   const message = {
     "from": { "email": "info@depomo.com" },
     "subject": "We are sorry to see you leave",
     "personalizations": [{
       "to": [{ email: user.email }],
-      "substitutions": {
-        "%first_name%": user.name,
-        "%feedback_url%": feedbackUrl
+      "dynamic_template_data": {
+        "first_name": user.name,
+        "feedback_url": feedbackUrl
       }
     }],
-    "template_id": "03b780dc-f2ca-4a25-b190-e1ec4a527cd1"
+    "template_id": "d-b9749448b58d49a4a85485b74c5fc137"
   };
 
   const options = {
     method: "POST",
-    url: `${app.settings.sendgridHost}/mail/send`,
+    url: `${settings.sendgrid.host}/mail/send`,
     body: JSON.stringify(message),
     headers: {
-      authorization: `Bearer ${app.settings.sendgridKey}`,
+      authorization: `Bearer ${settings.sendgrid.key}`,
       "content-type": "application/json"
     }
   };
-  return options;
+  return request(options);
 };
 
 module.exports.updateSubscription = (data) => {
@@ -129,14 +132,14 @@ module.exports.updateSubscription = (data) => {
 
   const options = {
     method: "POST",
-    url: `${settings.sendgridHost}/mail/send`,
+    url: `${settings.sendgrid.host}/mail/send`,
     body: JSON.stringify(message),
     headers: {
-      authorization: `Bearer ${settings.sendgridKey}`,
+      authorization: `Bearer ${settings.sendgrid.key}`,
       "content-type": "application/json"
     }
   };
-  return options;
+  return request(options);
 };
 
 module.exports.endSubscription = (data) => {
@@ -154,14 +157,14 @@ module.exports.endSubscription = (data) => {
 
   const options = {
     method: "POST",
-    url: `${settings.sendgridHost}/mail/send`,
+    url: `${settings.sendgrid.host}/mail/send`,
     body: JSON.stringify(message),
     headers: {
-      authorization: `Bearer ${settings.sendgridKey}`,
+      authorization: `Bearer ${settings.sendgrid.key}`,
       "content-type": "application/json"
     }
   };
-  return options;
+  return request(options);
 };
 
 module.exports.passwordReset = (data) => {
@@ -179,12 +182,12 @@ module.exports.passwordReset = (data) => {
 
   const options = {
     method: "POST",
-    url: `${settings.sendgridHost}/mail/send`,
+    url: `${settings.sendgrid.host}/mail/send`,
     body: JSON.stringify(message),
     headers: {
-      authorization: `Bearer ${settings.sendgridKey}`,
+      authorization: `Bearer ${settings.sendgrid.key}`,
       "content-type": "application/json"
     }
   };
-  return options;
+  return request(options);
 };
