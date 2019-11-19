@@ -30,6 +30,9 @@ class ProjectForm extends Component {
       .then((project) => {
         this.setState({ loading: false, newProject: {} });
         onComplete(project);
+      })
+      .catch((error) => {
+        this.setState({ loading: false, error });
       });
   }
 
