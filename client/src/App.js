@@ -1,7 +1,7 @@
 import React from "react";
 import { Provider } from "react-redux";
 
-import createHistory from "history/createBrowserHistory";
+import { createBrowserHistory } from "history";
 
 import { ConnectedRouter, routerMiddleware } from "react-router-redux";
 
@@ -12,7 +12,7 @@ import logger from "redux-logger";
 import Main from "./containers/Main";
 import reducer from "./reducers";
 
-const history = createHistory();
+const history = createBrowserHistory();
 
 let middlewares = [thunk, routerMiddleware(history)];
 
