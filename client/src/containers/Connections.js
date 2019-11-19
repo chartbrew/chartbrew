@@ -6,6 +6,7 @@ import {
   Card, Image, Button, Icon, Container, Divider,
   Modal, Header, Message, Dimmer, Segment,
 } from "semantic-ui-react";
+import { Link } from "react-router-dom";
 
 import ConnectionForm from "../components/ConnectionForm";
 import ApiConnectionForm from "../components/ApiConnectionForm";
@@ -37,6 +38,20 @@ class Connections extends Component {
   componentDidMount() {
     const { cleanErrors } = this.props;
     cleanErrors();
+  }
+
+  componentDidUpdate() {
+    const { errors } = this.props;
+    const { limitationModal } = this.state;
+
+    if (!limitationModal) {
+      errors.map((error) => {
+        if (error.code === 406 && error.pathname === window.location.pathname) {
+          this.setState({ limitationModal: true });
+        }
+        return true;
+      });
+    }
   }
 
   _testConnection = (id) => {
@@ -133,6 +148,46 @@ class Connections extends Component {
     this.setState({
       newConnectionModal: false, formType: null, editConnection: null,
     });
+  }
+
+  limitationModal = () => {
+    const { team, cleanErrors } = this.props;
+    const { limitationModal } = this.state;
+    return (
+      <Modal
+        open={limitationModal && !!team.id}
+        size="small"
+        onClose={() => {
+          this.setState({ limitationModal: false });
+          cleanErrors();
+        }}
+      >
+        <Header
+          content="Oh no! You've reached the limits of your plan"
+          inverted
+        />
+        <Modal.Content>
+          You can create more connections when you upgrade your current plan. Want to have a look?
+        </Modal.Content>
+        <Modal.Actions>
+          <Button
+            onClick={() => {
+              this.setState({ limitationModal: false });
+              cleanErrors();
+            }}
+          >
+            Close
+          </Button>
+          <Link to={`/manage/${team.id}/plans`}>
+            <Button
+              positive
+            >
+              See the plans
+            </Button>
+          </Link>
+        </Modal.Actions>
+      </Modal>
+    );
   }
 
   _canAccess(role) {
@@ -471,6 +526,8 @@ class Connections extends Component {
             </Button>
           </Modal.Actions>
         </Modal>
+
+        {this.limitationModal()}
       </div>
     );
   }
@@ -494,6 +551,7 @@ Connections.propTypes = {
   getProjectConnections: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
+  errors: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -501,6 +559,7 @@ const mapStateToProps = (state) => {
     connections: state.connection.data,
     team: state.team.active,
     user: state.user.data,
+    errors: state.error,
   };
 };
 
