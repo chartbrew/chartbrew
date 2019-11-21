@@ -62,5 +62,7 @@ module.exports = {
   sendgrid: {
     key: process.env.CB_SENDGRID,
     host: "https://api.sendgrid.com/v3",
+    userList: "ead92280-f39b-40d2-b441-02dfb5d20aaf",
+    uAccount: 6516,
   },
 };

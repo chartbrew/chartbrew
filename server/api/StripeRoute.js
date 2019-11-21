@@ -1,5 +1,4 @@
 const simplecrypt = require("simplecrypt");
-const requestP = require("request-promise");
 
 const StripeController = require("../controllers/StripeController");
 const verifyToken = require("../modules/verifyToken");
@@ -114,24 +113,19 @@ module.exports = (app) => {
   ** Route to subscribe to a plan
   */
   app.post("/stripe/subscription", verifyToken, (req, res) => {
-    let gSub;
     return stripeController.subscribeToPlan(
       req.user.id,
       sc.decrypt(req.user.stripeId),
       req.body.plan
     )
       .then((subscription) => {
-        gSub = subscription;
         // send confirmation email
-        const mailOpt = mail.updateSubscription({
+        mail.updateSubscription({
           plan: req.body.plan,
           email: req.user.email,
         });
 
-        return requestP(mailOpt);
-      })
-      .then(() => {
-        return res.status(200).send(gSub);
+        return res.status(200).send(subscription);
       })
       .catch((error) => {
         return res.status(400).send(error);
@@ -154,24 +148,21 @@ module.exports = (app) => {
     }
 
     if (!req.user.subscriptionId) {
-      let gSub;
       return stripeController.subscribeToPlan(
         req.user.id,
         sc.decrypt(req.user.stripeId),
         req.body.plan
       )
         .then((subscription) => {
-          gSub = subscription;
           // send confirmation email
-          const mailOpt = mail.updateSubscription({
+          mail.updateSubscription({
             plan: req.body.plan,
             email: req.user.email,
           });
 
-          return requestP(mailOpt);
+          return res.status(200).send(subscription);
         })
         .then(() => {
-          return res.status(200).send(gSub);
         })
         .catch((error) => {
           if (error && error.code === "resource_missing") {
@@ -181,24 +172,19 @@ module.exports = (app) => {
         });
     }
 
-    let gSub;
     return stripeController.updateSubscription(
       req.user.id,
       sc.decrypt(req.user.subscriptionId),
       req.body.plan
     )
       .then((subscription) => {
-        gSub = subscription;
         // send confirmation email
-        const mailOpt = mail.updateSubscription({
+        mail.updateSubscription({
           plan: req.body.plan,
           email: req.user.email,
         });
 
-        return requestP(mailOpt);
-      })
-      .then(() => {
-        return res.status(200).send(gSub);
+        return res.status(200).send(subscription);
       })
       .catch((error) => {
         if (error.cbEntity) {
@@ -213,18 +199,13 @@ module.exports = (app) => {
   ** Route to remove a subscription
   */
   app.delete("/stripe/subscription", verifyToken, (req, res) => {
-    let gConf;
     return stripeController.removeSubscription(sc.decrypt(req.user.subscriptionId))
       .then((confirmation) => {
-        gConf = confirmation;
-
-        const mailOpt = mail.endSubscription({
+        // send email
+        mail.endSubscription({
           email: req.user.email,
         });
-        return requestP(mailOpt);
-      })
-      .then(() => {
-        return res.status(200).send(gConf);
+        return res.status(200).send(confirmation);
       })
       .catch((error) => {
         if (error.cbEntity) {
