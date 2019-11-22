@@ -3,12 +3,15 @@ const requestP = require("request-promise");
 
 const Connection = require("../models/Connection");
 const ProjectController = require("./ProjectController");
+const LimitationController = require("./LimitationController");
 const externalDbConnection = require("../modules/externalDbConnection");
+const getMemorySize = require("../modules/getMemorySize");
 
 class ConnectionController {
   constructor() {
     this.connection = Connection;
     this.projectController = new ProjectController();
+    this.limitation = new LimitationController();
   }
 
   findById(id) {
@@ -141,8 +144,11 @@ class ConnectionController {
   }
 
   testApiRequest(connectionId, apiRequest) {
+    let gConnection;
+    let gResponse;
     return this.findById(connectionId)
       .then((connection) => {
+        gConnection = connection;
         const options = {
           url: `${connection.getApiUrl(connection)}${apiRequest.route || ""}`,
           method: apiRequest.method || "GET",
@@ -175,13 +181,21 @@ class ConnectionController {
       .then((response) => {
         if (response.statusCode < 300) {
           try {
-            return new Promise(resolve => resolve(JSON.parse(response.body)));
+            // check the query limitations
+            gResponse = JSON.parse(response.body);
+            const objSize = getMemorySize(gResponse);
+            return this.limitation.canUseTheData(gConnection.project_id, objSize);
           } catch (e) {
             return new Promise((resolve, reject) => reject(406));
           }
         } else {
           return new Promise((resolve, reject) => reject(response.statusCode));
         }
+      })
+      .then((canUse) => {
+        if (!canUse) throw new Error(413);
+
+        return new Promise(resolve => resolve(gResponse));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

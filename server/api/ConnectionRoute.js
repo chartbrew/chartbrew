@@ -4,6 +4,7 @@ const ProjectController = require("../controllers/ProjectController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
 const limitationMiddleware = require("../middlewares/limitationMiddleware");
+const constants = require("../constants");
 
 module.exports = (app) => {
   const connectionController = new ConnectionController();
@@ -230,8 +231,16 @@ module.exports = (app) => {
         if (!apiRequest) return res.status(500).send("Api Request Error");
         return res.status(200).send(apiRequest);
       })
-      .catch((errorCode) => {
-        return res.status(errorCode).send({ error: errorCode });
+      .catch((error) => {
+        if (error && error.message && error.message.indexOf("413") > -1) {
+          return res.status(413).send({
+            code: 413,
+            limit: constants.CAN_USE_DATA,
+            error: "The query size exceeds the limit of your plan",
+          });
+        }
+
+        return res.status(error).send({ error });
       });
   });
   // -------------------------------------------------

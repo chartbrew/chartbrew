@@ -486,6 +486,44 @@ class AddChart extends Component {
     }
   }
 
+  limitationModal = () => {
+    const { match, errors, cleanErrors } = this.props;
+
+    let dataLimit = false;
+    errors.map((error) => {
+      if (error.code === 413 && error.pathname === window.location.pathname) {
+        dataLimit = true;
+      }
+      return error;
+    });
+
+    return (
+      <Modal open={dataLimit} size="small" onClose={() => cleanErrors()}>
+        <Header
+          content="Oh no! You've reached the limits of your plan."
+          inverted
+        />
+        <Modal.Content>
+          {"The payload of your request is too large. You can limit the amount of data you're requesting from the API or upgrade your plan."}
+        </Modal.Content>
+        <Modal.Actions>
+          <Button
+            onClick={() => cleanErrors()}
+          >
+            Close
+          </Button>
+          <Link to={`/manage/${match.params.teamId}/plans`}>
+            <Button
+              positive
+            >
+              See the plans
+            </Button>
+          </Link>
+        </Modal.Actions>
+      </Modal>
+    );
+  }
+
   render() {
     const {
       activeDataset, newChart, previewChart, selectedConnection, testSuccess,
@@ -1136,6 +1174,8 @@ class AddChart extends Component {
             </Button>
           </Modal.Actions>
         </Modal>
+
+        {this.limitationModal()}
       </div>
     );
   }
@@ -1165,6 +1205,7 @@ AddChart.propTypes = {
   charts: PropTypes.array.isRequired,
   cleanErrors: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,
+  errors: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -1172,6 +1213,7 @@ const mapStateToProps = (state) => {
     connections: state.connection.data,
     charts: state.chart.data,
     team: state.team.active,
+    errors: state.error,
   };
 };
 
