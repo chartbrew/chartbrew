@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
-  Menu, Dropdown, Dimmer, Container, Loader, Icon, Modal, Button,
+  Menu, Dropdown, Dimmer, Container, Loader, Icon, Modal, Button, Popup,
 } from "semantic-ui-react";
 import UserAvatar from "react-user-avatar";
 
@@ -26,6 +26,7 @@ class Navbar extends Component {
 
     this.state = {
       loading: true,
+      chatActive: false,
     };
   }
 
@@ -61,6 +62,17 @@ class Navbar extends Component {
       .catch(() => {});
   }
 
+  _toggleChat = () => {
+    if ($crisp.is("chat:visible")) {
+      $crisp.push(["do", "chat:hide"]);
+      this.setState({ chatActive: false });
+    } else {
+      $crisp.push(["do", "chat:show"]);
+      $crisp.push(["do", "chat:open"]);
+      this.setState({ chatActive: true });
+    }
+  }
+
   _canAccess(role) {
     const { user, team } = this.props;
     return canAccess(role, user.id, team.TeamRoles);
@@ -70,7 +82,7 @@ class Navbar extends Component {
     const {
       hideTeam, transparent, team, teams, projectProp, user, logout,
     } = this.props;
-    const { loading, feedbackModal } = this.state;
+    const { loading, feedbackModal, chatActive } = this.state;
 
     if (!team.id && !teams) {
       return (
@@ -136,6 +148,19 @@ class Navbar extends Component {
           )}
 
         <Menu.Menu position="right">
+          <Popup
+            trigger={(
+              <Menu.Item
+                onClick={this._toggleChat}
+                color={chatActive ? "olive" : null}
+              >
+                {!chatActive && <Icon name="chat" />}
+                {chatActive && <Icon name="x" />}
+                Support
+              </Menu.Item>
+            )}
+            content={chatActive ? "Hide the chat" : "Chat with us"}
+          />
           <Menu.Item
             as="a"
             href={DOCUMENTATION_HOST}
