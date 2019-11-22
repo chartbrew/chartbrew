@@ -59,6 +59,8 @@ class AddChart extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
+    const { match } = this.props;
+
     if (prevProps.charts) {
       if (prevProps.match.params.chartId && prevProps.charts.length > 0 && !prevState.updatedEdit) {
         this._prepopulateState();
@@ -67,6 +69,13 @@ class AddChart extends Component {
 
     if (prevProps.connections.length > 0 && prevState.ddConnections.length === 0) {
       this._populateConnections();
+    }
+
+    if (prevState.canCreate !== 1
+      && prevState.canCreate !== 0
+      && !match.params.chartId
+    ) {
+      this._canCreateChart();
     }
   }
 
@@ -466,15 +475,55 @@ class AddChart extends Component {
     }
   }
 
+  _canCreateChart = () => {
+    const { team, charts } = this.props;
+    const { newChart } = this.state;
+
+    if (team.plan && team.plan.charts <= charts.length && !newChart.id) {
+      this.setState({ canCreate: 0, limitationModal: true });
+    } else if (team.plan) {
+      this.setState({ canCreate: 1 });
+    }
+  }
+
   render() {
     const {
       activeDataset, newChart, previewChart, selectedConnection, testSuccess,
       viewDatasetOptions, queryData, step, ddConnections,
       testError, testFailed, testingQuery, apiRequest, previewLoading,
       previewError, lcArrayError, createError, initialQuery,
-      removeModal, createLoading, removeLoading,
+      removeModal, createLoading, removeLoading, limitationModal, canCreate
     } = this.state;
     const { connections, match } = this.props;
+
+    if (limitationModal) {
+      return (
+        <Segment style={styles.mainSegment}>
+          <Dimmer active={canCreate === 0} inverted>
+            <Header as="h2" icon style={{ color: "black" }}>
+              <Icon name="lock" />
+              You reached the limits of your plan
+              <Header.Subheader>
+                Unlock more charts below
+              </Header.Subheader>
+            </Header>
+            <div>
+              <Link to={`/manage/${match.params.teamId}/plans`}>
+                <Button
+                  size="large"
+                  primary
+                  icon
+                  labelPosition="right"
+                >
+                  <Icon name="chevron right" />
+                  See available plans
+                </Button>
+              </Link>
+            </div>
+          </Dimmer>
+        </Segment>
+      );
+    }
 
     return (
       <div style={styles.container}>
@@ -1115,6 +1164,7 @@ AddChart.propTypes = {
   history: PropTypes.object.isRequired,
   charts: PropTypes.array.isRequired,
   cleanErrors: PropTypes.func.isRequired,
+  team: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {

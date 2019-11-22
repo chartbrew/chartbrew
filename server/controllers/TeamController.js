@@ -352,7 +352,9 @@ class TeamController {
   // get the owner of the team to check the subscription
     return this.getAllTeamRoles(teamId)
       .then((roles) => {
-        if (!roles || roles.length < 1) throw new Error(404);
+        if (!roles || roles.length < 1) {
+          return new Promise((resolve, reject) => reject(new Error(404)));
+        }
         // llok for the owner in the array
         let owner;
         for (const role of roles) {
