@@ -16,6 +16,7 @@ import FeedbackForm from "../components/FeedbackForm";
 import PublicDashboard from "./PublicDashboard";
 import PasswordReset from "./PasswordReset";
 import EmbeddedChart from "./EmbeddedChart";
+import Homepage from "./Homepage";
 
 import { relog, getUser } from "../actions/user";
 import { getTeams } from "../actions/team";
@@ -48,7 +49,7 @@ class Main extends Component {
       <div style={styles.container}>
         <div>
           <Switch>
-            <Route exact path="/" component={UserDashboard} />
+            <Route exact path="/" component={Homepage} />
             <Route exact path="/b/:brewName" component={PublicDashboard} />
             <Route
               exact
