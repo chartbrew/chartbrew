@@ -38,6 +38,8 @@
     "window": false,
     "FormData": false,
     "document": false,
-    "it": false
+    "it": false,
+    "HW_config": false,
+    "Headway": false
   }
 }

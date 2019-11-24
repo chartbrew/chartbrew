@@ -25,6 +25,16 @@
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
     <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
     <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:600,700" rel="stylesheet">
+
+    <script>
+      // @see https://docs.headwayapp.co/widget for more configuration options.
+      var HW_config = {
+        selector: ".changelog-badge", // CSS selector where to inject the badge
+        trigger: ".changelog-trigger",
+        account:  "JVODWy"
+      }
+    </script>
+    <script async src="https://cdn.headwayapp.co/widget.js"></script>
     <!--
       Notice the use of %PUBLIC_URL% in the tags above.
       It will be replaced with the URL of the `public` folder during the build.
