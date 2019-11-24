@@ -33,6 +33,8 @@ class Navbar extends Component {
   componentDidMount() {
     const { match } = this.props;
     this._onTeamChange(match.params.teamId, match.params.projectId);
+
+    Headway.init(HW_config);
   }
 
   _onTeamChange = (teamId, projectId) => {
@@ -161,6 +163,15 @@ class Navbar extends Component {
             )}
             content={chatActive ? "Hide the chat" : "Chat with us"}
           />
+          <Menu.Item
+            className="changelog-trigger"
+            as="a"
+            style={{ paddingTop: 0, paddingBottom: 0, paddingRight: 0 }}
+            title="Changelog"
+          >
+            Updates
+            <div className="changelog-badge" />
+          </Menu.Item>
           <Menu.Item
             as="a"
             href={DOCUMENTATION_HOST}

@@ -107,9 +107,11 @@ class Homepage extends Component {
 
   _screenUpdate = (e, { width }) => {
     if (width < 639) {
-      this.setState({ mobile: true });
+      this.setState({ mobile: true, collapseMenu: true });
+    } else if (width < 1000) {
+      this.setState({ collapseMenu: true });
     } else {
-      this.setState({ mobile: false });
+      this.setState({ mobile: false, collapseMenu: false });
     }
   }
 
@@ -136,7 +138,7 @@ class Homepage extends Component {
   render() {
     const {
       activateShowcase, mobile, superMenu, emailError, email, submitting,
-      emailSuccess, plans,
+      emailSuccess, plans, collapseMenu,
     } = this.state;
     const { user } = this.props;
 
@@ -147,6 +149,7 @@ class Homepage extends Component {
           inverted={!superMenu}
           borderless
           fluid
+          size="small"
           style={!superMenu ? { backgroundColor: "transparent" } : {}}
         >
           {superMenu
@@ -171,7 +174,11 @@ class Homepage extends Component {
               content="Chartbrew is in beta which means we are actively working on adding a lot of new features. We really appreciate your support and feedback at this stage to make Chartbrew an awesome product!"
             />
           </Menu.Item>
-          {!mobile && (
+          <Menu.Item className="changelog-trigger" as="a">
+            Updates
+            <div className="changelog-badge" />
+          </Menu.Item>
+          {!collapseMenu && (
             <>
               {!user.id
                 && (
@@ -222,7 +229,7 @@ class Homepage extends Component {
               )}
             </>
           )}
-          {mobile && (
+          {collapseMenu && (
             <Menu.Menu position="right" style={{ fontSize: "1.1em" }}>
               <Menu.Item>
                 <Popup
