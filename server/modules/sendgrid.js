@@ -70,9 +70,12 @@ module.exports.sendInvite = (invite, admin, teamName) => {
   return request(options);
 };
 
-module.exports.addToList = (user) => {
+module.exports.addToList = (
+  user,
+  list = [settings.sendgrid.interestedList, settings.sendgrid.userList]
+) => {
   const recipientMsg = {
-    list_ids: [settings.sendgrid.userList],
+    list_ids: list,
     contacts: [{
       "email": user.email,
       "first_name": user.name || "",

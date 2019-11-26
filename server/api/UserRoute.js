@@ -292,6 +292,25 @@ module.exports = (app) => {
   });
   // --------------------------------------
 
+  /*
+** Route to add email the the email list
+*/
+  app.post("/user/email", (req, res) => {
+    if (!req.body.email) return res.status(400).send("Missing email");
+
+    const user = {
+      email: req.body.email,
+    };
+
+    return mail.addToList(user, [app.settings.sendgrid.interestedList])
+      .then((body) => {
+        return res.status(200).send(body);
+      })
+      .catch((err) => {
+        return res.status(400).send(err);
+      });
+  });
+
   return (req, res, next) => {
     next();
   };
