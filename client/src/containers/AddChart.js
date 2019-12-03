@@ -145,6 +145,7 @@ class AddChart extends Component {
     this.setState({
       newChart: { ...newChart, connection_id: value, query },
       selectedConnection,
+      noSource: true,
     });
   }
 
@@ -317,22 +318,29 @@ class AddChart extends Component {
     const newRequest = apiRequest;
     newRequest.headers = newHeaders;
 
+    this.setState({ noSource: false });
+
     return newRequest;
   }
 
-  _onPreview = () => {
+  _onPreview = (e, refresh) => {
     const { getPreviewData, match } = this.props;
-    const { newChart, selectedConnection } = this.state;
+    const { newChart, selectedConnection, noSource } = this.state;
     const previewData = newChart;
+
+    let tempNoSource = noSource;
+    if (refresh === true) {
+      tempNoSource = false;
+    }
 
     if (selectedConnection && selectedConnection.type === "api") {
       previewData.apiRequest = this._formatApiRequest();
     }
 
     this.setState({ previewLoading: true, previewError: false });
-    getPreviewData(match.params.projectId, previewData)
+    getPreviewData(match.params.projectId, previewData, tempNoSource)
       .then((chartData) => {
-        this.setState({ previewChart: chartData, previewLoading: false });
+        this.setState({ previewChart: chartData, previewLoading: false, noSource: true });
       })
       .catch(() => {
         this.setState({ previewLoading: false, previewError: true });
@@ -795,15 +803,28 @@ class AddChart extends Component {
                         <Header textAlign="left" as="h3" dividing>
                           Build your chart
                         </Header>
-                        <Button
-                          icon
-                          labelPosition="left"
-                          onClick={this._onPreview}
-                          style={{ marginBottom: 20 }}
-                        >
-                          <Icon name="refresh" />
-                          Refresh Preview
-                        </Button>
+                        <Button.Group widths={10}>
+                          <Button
+                            icon
+                            labelPosition="left"
+                            onClick={this._onPreview}
+                            style={{ marginBottom: 20 }}
+                          >
+                            <Icon name="refresh" />
+                            Refresh preview
+                          </Button>
+
+                          <Button
+                            icon
+                            labelPosition="right"
+                            onClick={() => this._onPreview(null, true)}
+                            style={{ marginBottom: 20 }}
+                            basic
+                          >
+                            <Icon name="angle double down" />
+                            Get latest data
+                          </Button>
+                        </Button.Group>
                       </Container>
                       {previewChart
                         && (
@@ -1131,7 +1152,9 @@ const mapDispatchToProps = (dispatch) => {
     createChart: (projectId, data) => dispatch(createChart(projectId, data)),
     runQuery: (projectId, chartId) => dispatch(runQuery(projectId, chartId)),
     updateChart: (projectId, chartId, data) => dispatch(updateChart(projectId, chartId, data)),
-    getPreviewData: (projectId, chart) => dispatch(getPreviewData(projectId, chart)),
+    getPreviewData: (projectId, chart, noSource) => {
+      return dispatch(getPreviewData(projectId, chart, noSource));
+    },
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
