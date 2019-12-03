@@ -811,7 +811,7 @@ class AddChart extends Component {
                             style={{ marginBottom: 20 }}
                           >
                             <Icon name="refresh" />
-                            Refresh Preview
+                            Refresh preview
                           </Button>
 
                           <Button
@@ -821,8 +821,8 @@ class AddChart extends Component {
                             style={{ marginBottom: 20 }}
                             basic
                           >
-                            <Icon name="refresh" />
-                            Refresh Data
+                            <Icon name="angle double down" />
+                            Get latest data
                           </Button>
                         </Button.Group>
                       </Container>
