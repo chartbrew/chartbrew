@@ -11,7 +11,7 @@ const settings = process.env.NODE_ENV === "production" ? require("./settings") :
 const models = require("./models/index");
 const routes = require("./api");
 const updateChartsCron = require("./modules/updateChartsCron");
-const cleanChartCache = require("./modules/cleanChartCache");
+const cleanChartCache = require("./modules/CleanChartCache");
 
 const app = express();
 app.settings = settings;
