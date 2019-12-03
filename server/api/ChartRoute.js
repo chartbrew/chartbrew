@@ -189,7 +189,7 @@ module.exports = (app) => {
 
         let chart = req.body;
         if (chart.chart) chart = chart.chart; // eslint-disable-line
-        return chartController.previewChart(chart, req.params.project_id);
+        return chartController.previewChart(chart, req.params.project_id, req.query.no_source);
       })
       .then((chart) => {
         return res.status(200).send(chart);

@@ -383,7 +383,11 @@ class ChartController {
       });
   }
 
-  previewChart(chart, projectId) {
+  previewChart(chart, projectId, noSource) {
+    if (noSource === "true") {
+      return new Promise(resolve => resolve(chart.chartData));
+    }
+
     return this.getPreviewData(chart, projectId)
       .then((data) => {
         // LINE CHART
