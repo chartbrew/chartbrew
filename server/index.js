@@ -11,6 +11,7 @@ const settings = process.env.NODE_ENV === "production" ? require("./settings") :
 const models = require("./models/index");
 const routes = require("./api");
 const updateChartsCron = require("./modules/updateChartsCron");
+const cleanChartCache = require("./modules/cleanChartCache");
 
 const app = express();
 app.settings = settings;
@@ -40,6 +41,7 @@ app.listen(app.settings.port, () => {
   // start CronJob, making sure the database is populated for the first time
   setTimeout(() => {
     updateChartsCron();
+    cleanChartCache();
   }, 3000);
 
   console.log(`Running server on port ${app.settings.port}`); // eslint-disable-line
