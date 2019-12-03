@@ -9,6 +9,7 @@ const dataset = require("./Dataset");
 const teamInvintation = require("./TeamInvintation");
 const savedQuery = require("./SavedQuery");
 const apiRequest = require("./ApiRequest");
+const chartCache = require("./ChartCache");
 
 // create the database relations
 team.hasMany(project, { foreignKey: "team_id" });
@@ -18,6 +19,7 @@ team.hasMany(teamInvintation, { foreignKey: "team_id" });
 user.hasMany(teamRole, { foreignKey: "user_id" });
 user.hasMany(projectRole, { foreignKey: "user_id" });
 user.hasMany(teamInvintation, { foreignKey: "user_id" });
+user.hasMany(chartCache, { foreignKey: "user_id" });
 
 project.hasMany(projectRole, { foreignKey: "project_id" });
 project.hasMany(connection, { foreignKey: "project_id" });
