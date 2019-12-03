@@ -115,11 +115,6 @@ class ChartController {
         .then(() => {
           const updatePromises = [];
 
-          // clear chart cache
-          if (user) {
-            this.chartCache.deleteAll(user.id);
-          }
-
           if (data.Datasets || data.apiRequest) {
             if (data.Datasets) {
               updatePromises
@@ -144,6 +139,11 @@ class ChartController {
       where: { id },
     })
       .then(() => {
+        // clear chart cache
+        if (user) {
+          this.chartCache.deleteAll(user.id);
+        }
+
         const updatePromises = [];
         if (data.Datasets || data.apiRequest) {
           if (data.Datasets) {
