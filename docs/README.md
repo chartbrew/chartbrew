@@ -1,22 +1,5 @@
 # ChartBrew Docs
 
-## Tech stack
-
-**Backend**
-
-* [NodeJS](https://nodejs.org/en/)
-* [ExpressJS](https://expressjs.com/)
-* [Sequelize ORM](https://sequelize.org/)
-* [Nodemailer](https://nodemailer.com/about/)
-* [Mongoose](https://mongoosejs.com/) for mongoDB data sources
-
-**Frontend**
-
-* [ReactJS](https://reactjs.org/)
-* [Redux](https://redux.js.org/)
-* [Semantic UI](https://fomantic-ui.com/) (Fomantic UI at the moment)
-* [ChartJs](https://www.chartjs.org/)
-
 ## Prerequisites
 
 **NodeJS** v10.16.0+
@@ -101,3 +84,24 @@ ChartBrew uses [Vuepress](https://vuepress.vuejs.org/) and you can check their d
 cd chartbrew
 npm run docs:dev
 ```
+
+## Tech stack
+
+**Backend**
+
+* [NodeJS](https://nodejs.org/en/)
+* [ExpressJS](https://expressjs.com/)
+* [Sequelize ORM](https://sequelize.org/)
+* [Nodemailer](https://nodemailer.com/about/)
+* [Mongoose](https://mongoosejs.com/) for mongoDB data sources
+
+**Frontend**
+
+* [ReactJS](https://reactjs.org/)
+* [Redux](https://redux.js.org/)
+* [Semantic UI](https://fomantic-ui.com/) (Fomantic UI at the moment)
+* [ChartJs](https://www.chartjs.org/)
+
+**Docs**
+
+* [Vuepress](https://vuepress.vuejs.org/)
