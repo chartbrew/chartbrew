@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https:/\/circleci.com/gh/razvanilin/chartbrew">
-    <img src="https://circleci.com/gh/razvanilin/chartbrew.svg?style=svg" alt="ChartBrew build" />
+    <img src="https://circleci.com/gh/chartbrew/chartbrew.svg?style=svg" alt="ChartBrew build" />
   </a>
 </p>
 
