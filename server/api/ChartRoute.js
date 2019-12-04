@@ -52,7 +52,7 @@ module.exports = (app) => {
 
         // assign the project id to the new chart
         req.body.project_id = req.params.project_id;
-        return chartController.create(req.body);
+        return chartController.create(req.body, req.user);
       })
       .then((chart) => {
         return res.status(200).send(chart);
@@ -79,7 +79,7 @@ module.exports = (app) => {
         if (!permission.granted) {
           throw new Error(401);
         }
-        return chartController.update(req.params.id, req.body);
+        return chartController.update(req.params.id, req.body, req.user);
       })
       .then((chart) => {
         return res.status(200).send(chart);
@@ -195,7 +195,12 @@ module.exports = (app) => {
 
         let chart = req.body;
         if (chart.chart) chart = chart.chart; // eslint-disable-line
-        return chartController.previewChart(chart, req.params.project_id);
+        return chartController.previewChart(
+          chart,
+          req.params.project_id,
+          req.user,
+          req.query.no_source
+        );
       })
       .then((chart) => {
         return res.status(200).send(chart);

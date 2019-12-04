@@ -11,6 +11,7 @@ const DatasetController = require("./DatasetController");
 const ConnectionController = require("./ConnectionController");
 const ProjectController = require("./ProjectController");
 const ApiRequestController = require("./ApiRequestController");
+const ChartCacheController = require("./ChartCacheController");
 const LimitationController = require("./LimitationController");
 
 // charts
@@ -25,10 +26,11 @@ class ChartController {
     this.dataset = new DatasetController();
     this.project = new ProjectController();
     this.apiRequestController = new ApiRequestController();
+    this.chartCache = new ChartCacheController();
     this.limitation = new LimitationController();
   }
 
-  create(data) {
+  create(data, user) {
     let chartId;
     return this.chart.create(data)
       .then((chart) => {
@@ -61,6 +63,11 @@ class ChartController {
         }
       })
       .then(() => {
+        // delete chart cache
+        if (user) {
+          this.chartCache.deleteAll(user.id);
+        }
+
         return this.findById(chartId);
       })
       .catch((error) => {
@@ -105,11 +112,12 @@ class ChartController {
       });
   }
 
-  update(id, data) {
+  update(id, data, user) {
     if (data.autoUpdate) {
       return this.chart.update(data, { where: { id } })
         .then(() => {
           const updatePromises = [];
+
           if (data.Datasets || data.apiRequest) {
             if (data.Datasets) {
               updatePromises
@@ -134,6 +142,11 @@ class ChartController {
       where: { id },
     })
       .then(() => {
+        // clear chart cache
+        if (user) {
+          this.chartCache.deleteAll(user.id);
+        }
+
         const updatePromises = [];
         if (data.Datasets || data.apiRequest) {
           if (data.Datasets) {
@@ -433,9 +446,20 @@ class ChartController {
       });
   }
 
-  getPreviewData(chart, projectId) {
-    return this.connection.findById(chart.connection_id)
+  getPreviewData(chart, projectId, user, noSource) {
+    return this.chartCache.findLast(user.id)
+      .then((cache) => {
+        if (noSource === "true") {
+          return new Promise(resolve => resolve(cache));
+        }
+
+        return this.connection.findById(chart.connection_id);
+      })
       .then((connection) => {
+        if (noSource === "true") {
+          return new Promise(resolve => resolve(connection.data));
+        }
+
         if (connection.type === "mongodb") {
           return this.testQuery(chart, projectId);
         } else if (connection.type === "api") {
@@ -446,13 +470,22 @@ class ChartController {
           throw new Error("The connection type is not supported");
         }
       })
+      .then((data) => {
+        if (noSource !== "true") {
+          // cache, but do it async
+          this.chartCache.create(user.id, data);
+        }
+
+        return new Promise(resolve => resolve(data));
+      })
       .catch((error) => {
+        // console.log("Error", error);
         return new Promise((resolve, reject) => reject(error));
       });
   }
 
-  previewChart(chart, projectId) {
-    return this.getPreviewData(chart, projectId)
+  previewChart(chart, projectId, user, noSource) {
+    return this.getPreviewData(chart, projectId, user, noSource)
       .then((data) => {
         // LINE CHART
         if (chart.type === "line") {

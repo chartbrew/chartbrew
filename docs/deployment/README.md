@@ -44,12 +44,36 @@ The Frontend app needs to be built and then server using [pm2](https://pm2.keyme
 ```sh
 # build the app
 cd chartbrew/client
-npm run build
-
-# serve the build
-# export PM2_SERVE_PORT=5400 --> this is needed if you want to change pm2's default 8080 port
-pm2 serve build/ --name "chartbrew-client"
+mkdir dist && cd dist
+vim build.sh
 ```
+
+Copy the following in the `build.sh` file
+
+```sh
+cd ../ && npm run build && cp -rf build/* dist/
+```
+
+Create the `pm2` configuration file:
+
+```sh
+vim app.config.json
+```
+
+```js
+{
+  apps : [
+    {
+      name: "cbc-client",
+      script: "npx",
+      interpreter: "none",
+      args: "serve -s . -p 5100"
+    }
+  ]
+}
+```
+
+Now you can start the front-end app with `pm2 start app.config.json`
 
 Using the methods above, the app can be accessed on localhost. To serve it on a domain, continue reading on.
 

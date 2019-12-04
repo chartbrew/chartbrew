@@ -198,10 +198,10 @@ export function runQuery(projectId, chartId) {
   };
 }
 
-export function getPreviewData(projectId, chart) {
+export function getPreviewData(projectId, chart, noSource = false) {
   return (dispatch) => {
     const token = cookie.load("brewToken");
-    const url = `${API_HOST}/project/${projectId}/chart/preview`;
+    const url = `${API_HOST}/project/${projectId}/chart/preview?no_source=${noSource}`;
     const method = "POST";
     const body = JSON.stringify(chart);
     const headers = new Headers({
