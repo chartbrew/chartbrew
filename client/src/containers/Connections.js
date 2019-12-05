@@ -123,9 +123,6 @@ class Connections extends Component {
   }
 
   _onEditConnection = (connection) => {
-    document.getElementById("connection-form-area").scrollIntoView({
-      behavior: "smooth"
-    });
     this.setState({ editConnection: connection, formType: connection.type });
   }
 

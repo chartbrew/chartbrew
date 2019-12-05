@@ -164,12 +164,16 @@ class ApiConnectionForm extends Component {
 
   render() {
     const {
-      connection, errors, loading, addError, editConnection,
+      connection, errors, loading, addError,
     } = this.state;
+    const { editConnection } = this.props;
 
     return (
       <div style={styles.container}>
-        <Header attached="top" as="h2">Add a new API host</Header>
+        <Header attached="top" as="h2">
+          {!editConnection && "Add a new API host"}
+          {editConnection && `Edit ${editConnection.name}`}
+        </Header>
         <Segment raised attached>
           <Form>
             <Form.Field error={!!errors.name} required>
@@ -237,7 +241,6 @@ class ApiConnectionForm extends Component {
                 size="small"
                 icon
                 labelPosition="right"
-                loading={loading}
                 onClick={this._addOption}
               >
                 <Icon name="plus" />
