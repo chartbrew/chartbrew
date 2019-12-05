@@ -47,6 +47,8 @@ class ApiConnectionForm extends Component {
         }
 
         newConnection.optionsArray = formattedOptions;
+      } else {
+        newConnection.optionsArray = [];
       }
 
       this.setState({ connection: newConnection });
@@ -86,29 +88,32 @@ class ApiConnectionForm extends Component {
           ...connection, project_id: projectId, options: newOptions,
         },
         loading: true,
-      }, () => {
-        if (!connection.id) {
-          addConnection(projectId, connection)
-            .then(() => {
-              this.setState({ loading: false });
-              onComplete();
-            })
-            .catch((error) => {
-              onComplete(error);
-              this.setState({ addError: error, loading: false });
-            });
-        } else {
-          saveConnection(projectId, connection)
-            .then(() => {
-              this.setState({ loading: false });
-              onComplete();
-            })
-            .catch((error) => {
-              onComplete(error);
-              this.setState({ addError: error, loading: false });
-            });
-        }
       });
+      const newConnection = connection;
+      newConnection.project_id = projectId;
+      newConnection.options = newOptions;
+
+      if (!connection.id) {
+        addConnection(projectId, connection)
+          .then(() => {
+            this.setState({ loading: false });
+            onComplete();
+          })
+          .catch((error) => {
+            onComplete(error);
+            this.setState({ addError: error, loading: false });
+          });
+      } else {
+        saveConnection(projectId, newConnection)
+          .then(() => {
+            this.setState({ loading: false });
+            onComplete();
+          })
+          .catch((error) => {
+            onComplete(error);
+            this.setState({ addError: error, loading: false });
+          });
+      }
     });
   }
 
@@ -119,9 +124,10 @@ class ApiConnectionForm extends Component {
       key: "",
       value: "",
     };
+
     this.setState({
       connection: {
-        ...connection, optionsArray: [...connection.optionsArray, option]
+        ...connection, optionsArray: [...connection.optionsArray, option],
       },
     });
   }
