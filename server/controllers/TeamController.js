@@ -5,6 +5,8 @@ const Team = require("../models/Team");
 const TeamRole = require("../models/TeamRole");
 const User = require("../models/User");
 const Project = require("../models/Project");
+const Chart = require("../models/Chart");
+const Connection = require("../models/Connection");
 const TeamInvite = require("../models/TeamInvintation");
 const UserController = require("./UserController");
 
@@ -145,7 +147,10 @@ class TeamController {
   findById(id) {
     return this.team.findOne({
       where: { id },
-      include: [{ model: TeamRole }, { model: Project }],
+      include: [
+        { model: TeamRole },
+        { model: Project, include: [{ model: Chart }] }
+      ],
     })
       .then((team) => {
         if (!team) return new Promise((resolve, reject) => reject(new Error(404)));
@@ -176,7 +181,16 @@ class TeamController {
         if (idsArray < 1) return new Promise(resolve => resolve([]));
         return this.team.findAll({
           where: { id: idsArray },
-          include: [{ model: TeamRole }, { model: Project }]
+          include: [
+            { model: TeamRole },
+            {
+              model: Project,
+              include: [
+                { model: Chart, attributes: ["id"] },
+                { model: Connection, attributes: ["id"] },
+              ],
+            },
+          ],
         });
       })
       .catch((error) => {
