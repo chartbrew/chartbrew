@@ -5,7 +5,7 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import {
   Menu, Header, Button, Segment, Container, Icon, Image, Label, Card,
-  Grid, Divider, Responsive, Visibility, Form, Input, Popup,
+  Grid, Divider, Responsive, Visibility, Form, Input, Popup, Dimmer,
 } from "semantic-ui-react";
 import AnchorLink from "react-anchor-link-smooth-scroll";
 import moment from "moment";
@@ -17,7 +17,8 @@ import {
 import { addEmailToList } from "../actions/user";
 import cbLogoSmall from "../assets/cb_logo_4_small.png";
 import cbLogoSmallInverted from "../assets/cb_logo_4_small_inverted.png";
-import showcase from "../assets/demo.gif";
+import showcaseVideo from "../assets/cb_homepage_video.mp4";
+import showcasePlaceholder from "../assets/cb_homepage_placeholder.png";
 import mongo from "../assets/mongodb-logo-1.png";
 import mysql from "../assets/mysql.svg";
 import postgres from "../assets/postgres.png";
@@ -99,10 +100,24 @@ class Homepage extends Component {
     script.async = true;
 
     document.getElementById("twitterRaz").appendChild(script);
+
+    setTimeout(() => {
+      this.setState({ showReplay: true });
+    }, 45000);
+  }
+
+  _onReplay = () => {
+    this.setState({ showReplay: false });
+    const video = document.getElementById("showcase-video");
+    video.play();
+
+    setTimeout(() => {
+      this.setState({ showReplay: true });
+    }, 45000);
   }
 
   _activateShowcase = () => {
-    setTimeout(() => this.setState({ activateShowcase: true }), 500);
+    setTimeout(() => this.setState({ activateShowcase: true }), 2000);
   }
 
   _screenUpdate = (e, { width }) => {
@@ -138,7 +153,7 @@ class Homepage extends Component {
   render() {
     const {
       activateShowcase, mobile, superMenu, emailError, email, submitting,
-      emailSuccess, plans, collapseMenu,
+      emailSuccess, plans, collapseMenu, showReplay,
     } = this.state;
     const { user } = this.props;
 
@@ -150,7 +165,7 @@ class Homepage extends Component {
           borderless
           fluid
           size="small"
-          style={!superMenu ? { backgroundColor: "transparent" } : {}}
+          style={!superMenu ? styles.nonSuperMenu : styles.superMenu}
         >
           {superMenu
             && (
@@ -364,18 +379,29 @@ class Homepage extends Component {
                     ? styles.showcaseSegmentActive : styles.showcaseSegment
               }
             >
-              <Image
-                size="huge"
-                rounded
-                src={showcase}
-                alt="Chartbrew - how to visualize your data"
-                style={styles.showcaseImage}
-              />
+              <Dimmer active={showReplay}>
+                <Button basic inverted onClick={this._onReplay}>
+                  Replay
+                </Button>
+              </Dimmer>
+              {activateShowcase
+                && (
+                <video id="showcase-video" autoPlay muted inline>
+                  <source src={showcaseVideo} type="video/mp4" />
+                  <img src={showcasePlaceholder} alt="ChartBrew showcase video" />
+                </video>
+                )}
             </Segment>
           </Responsive>
         </div>
 
-        <div style={styles.firstContainer}>
+        <div
+          style={
+            activateShowcase
+              ? styles.firstContainer
+              : { ...styles.firstContainer, ...styles.tempTopBuffer }
+          }
+        >
           <Container fluid textAlign="center">
             <Header size="big" inverted style={styles.pageHeader}>
               Stop being a stranger to your data
@@ -1024,6 +1050,16 @@ const styles = {
   },
   topBufferSm: {
     marginTop: 25,
+  },
+  tempTopBuffer: {
+    marginTop: 100,
+  },
+  superMenu: {
+    zIndex: 10000,
+  },
+  nonSuperMenu: {
+    zIndex: 10000,
+    backgroundColor: "transparent",
   },
 };
 
