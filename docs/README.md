@@ -13,8 +13,7 @@
 ### Installation & Setup
 
 ```sh
-npm install -g create-chartbrew-app
-create-chartbrew-app myApp --dbname="chartbrew" --dbusername="root" --dbpassword="" --dbhost="localhost"
+npx create-chartbrew-app myApp --dbname="chartbrew" --dbusername="root" --dbpassword="" --dbhost="localhost"
 ```
 
 The arguments are optional, but they set the environmental variables needed for the project to run. Check the section below to see what needs to be set.
