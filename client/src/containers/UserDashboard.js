@@ -3,8 +3,8 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import {
-  Divider, Dimmer, Loader, Form, Modal, List, Header, Message, Container,
-  Segment, Button, Icon, Card,
+  Divider, Dimmer, Loader, Form, Modal, Header, Message, Container,
+  Button, Icon, Grid, Card,
 } from "semantic-ui-react";
 
 import { getTeams, createTeam, saveActiveTeam } from "../actions/team";
@@ -15,6 +15,7 @@ import InviteMembersForm from "../components/InviteMembersForm";
 import Invites from "../components/Invites";
 import Navbar from "../components/Navbar";
 import canAccess from "../config/canAccess";
+
 /*
   Description
 */
@@ -126,10 +127,10 @@ class UserDashboard extends Component {
         onClose={() => this.setState({ addMembersModal: false })}
         size="small"
         closeIcon
-          >
+      >
         <InviteMembersForm
           skipTeamInvite={() => this.setState({ addMembersModal: false })}
-            />
+        />
       </Modal>
     );
   }
@@ -263,7 +264,7 @@ class UserDashboard extends Component {
       <div style={styles.container}>
         <Navbar hideTeam transparent />
         <Container textAlign="center" style={styles.mainContent}>
-          <Header textAlign="center" as="h2" inverted>Your teams</Header>
+          <Divider hidden />
           {loading && <Loader inverted active={loading} />}
 
           <Invites />
@@ -272,74 +273,112 @@ class UserDashboard extends Component {
           {this.newProjectModal()}
           {this.limitationModal()}
 
-          <List>
-            {teams && teams.map((key) => {
-              return (
-                <List.Item key={key.id} style={styles.listItem}>
-                  <Segment attached="top" raised>
-                    <Header textAlign="center" as="h3" content={key.name} />
-                  </Segment>
-                  <Segment style={styles.violetSection} raised attached clearing>
-                    {this._canAccess("admin", key.TeamRoles)
+          {teams && teams.map((key) => {
+            return (
+              <Container
+                textAlign="left"
+                key={key.id}
+                style={styles.teamContainer}
+              >
+                <Header
+                  textAlign="left"
+                  as="h2"
+                  inverted
+                  style={styles.teamHeader}
+                  title={`${key.TeamRoles.length} member${key.TeamRoles.length > 1 ? "s" : ""}`}
+                >
+                  <Icon name={key.TeamRoles.length > 1 ? "users" : "user"} size="small" />
+                  <Header.Content>{key.name}</Header.Content>
+                </Header>
+                {this._canAccess("admin", key.TeamRoles)
+                  && (
+                  <Button
+                    style={styles.settingsBtn}
+                    size="small"
+                    basic
+                    inverted
+                    icon
+                    floated="right"
+                    labelPosition="right"
+                    as={Link}
+                    to={`/manage/${key.id}/members`}
+                  >
+                    <Icon name="settings" />
+                    Team settings
+                  </Button>
+                  )}
+                {key.TeamRoles[0] && key.TeamRoles.map((teamRole) => {
+                  return (
+                    teamRole.user_id === user.data.id
                       && (
-                      <Button
-                        style={{ marginTop: -55, float: "right" }}
-                        size="small"
-                        secondary
-                        icon
-                        labelPosition="right"
-                        as={Link}
-                        to={`/manage/${key.id}/members`}
-                      >
-                        <Icon name="settings" />
-                        Settings
-                      </Button>
-                      )}
+                        <span key={teamRole.user_id}>
+                          <Header style={styles.listRole} content={teamRole.role} />
+                        </span>
+                      )
+                  );
+                })}
 
-                    {key.TeamRoles[0] && key.TeamRoles.map((teamRole) => {
-                      return (
-                        teamRole.user_id === user.data.id
-                          && (
-                          <span key={teamRole.user_id}>
-                            <Icon inverted circular name={this.setTeamIcon(teamRole.role)} size="large" color="blue" />
-                            <List.Description style={styles.listRole} content={`team ${teamRole.role}`} />
-                          </span>
-                          )
-                      );
-                    })}
-                    <Container style={{ paddingTop: 20 }}>
-                      <Card.Group itemsPerRow={3} stackable centered>
-                        {key.Projects && key.Projects.map((project) => {
-                          return (
-                            <Card
-                              style={styles.card}
-                              key={project.id}
-                              onClick={() => this.directToProject(key, project.id)}>
-                              <Card.Content>
-                                <Header size="large">{project.name}</Header>
-                              </Card.Content>
-                            </Card>
-                          );
-                        })}
-                        {this._canAccess("admin", key.TeamRoles)
-                          && (
-                          <Card
-                            style={styles.card}
-                            onClick={() => this._onNewProject(key)}
-                          >
-                            <Card.Content>
-                              <List.Icon name="add circle" size="large" color="green" />
-                            </Card.Content>
-                            <Card.Content extra> Add a new project </Card.Content>
-                          </Card>
-                          )}
-                      </Card.Group>
-                    </Container>
-                  </Segment>
-                </List.Item>
-              );
-            })}
-          </List>
+                <Card.Group itemsPerRow={4} style={styles.cardsContainer}>
+                  {key.Projects && key.Projects.map((project) => {
+                    return (
+                      <Card
+                        style={styles.projectContainer}
+                        key={project.id}
+                        onClick={() => this.directToProject(key, project.id)}
+                        className="project-segment"
+                      >
+                        <Card.Header textAlign="center" as="h3" style={styles.cardHeader}>
+                          {project.name}
+                        </Card.Header>
+                        <Card.Content>
+                          <Grid columns={2} centered>
+                            <Grid.Column textAlign="center" style={styles.iconColumn}>
+                              <Container textAlign="center" title="Number of connections">
+                                <Icon name="plug" size="large" />
+                                <span>{project.Connections.length}</span>
+                              </Container>
+                            </Grid.Column>
+                            <Grid.Column textAlign="center" style={styles.iconColumn}>
+                              <Container textAlign="center" title="Number of charts">
+                                <Icon name="chart line" size="large" />
+                                <span>{project.Charts.length}</span>
+                              </Container>
+                            </Grid.Column>
+                          </Grid>
+                        </Card.Content>
+                      </Card>
+                    );
+                  })}
+                  {this._canAccess("admin", key.TeamRoles)
+                    && (
+                      <Card
+                        style={{ ...styles.projectContainer, ...styles.addProjectCard }}
+                        onClick={() => this._onNewProject(key)}
+                        className="project-segment"
+                      >
+                        <Card.Header textAlign="center" as="h3" style={styles.cardHeader}>
+                          Create new project
+                        </Card.Header>
+                        <Card.Content>
+                          <Header textAlign="center" as="h2">
+                            <Icon name="plus" size="large" color="orange" />
+                          </Header>
+                        </Card.Content>
+                      </Card>
+                    )}
+
+                </Card.Group>
+                {key.Projects && key.Projects.length === 0 && !this._canAccess("admin", key.TeamRoles)
+                  && (
+                    <Message>
+                      <p>
+                        {"This team doesn't have any projects yet."}
+                      </p>
+                    </Message>
+                  )}
+              </Container>
+            );
+          })}
         </Container>
       </div>
     );
@@ -354,10 +393,6 @@ const styles = {
   },
   listContent: {
     cursor: "pointer",
-  },
-  teamHeader: {
-    cursor: "pointer",
-    backgroundColor: "",
   },
   listItem: {
     margin: "4em",
@@ -381,6 +416,33 @@ const styles = {
   violetSection: {
     backgroundColor: "#1a7fa0",
     borderColor: "#1a7fa0",
+  },
+  teamContainer: {
+    marginTop: 50,
+  },
+  projectContainer: {
+    textAlign: "center",
+    cursor: "pointer",
+  },
+  cardsContainer: {
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  cardHeader: {
+    paddingTop: 10,
+    color: "black",
+  },
+  teamHeader: {
+    display: "inline",
+  },
+  settingsBtn: {
+    marginLeft: 20,
+  },
+  addProjectCard: {
+    opacity: 0.7,
+  },
+  iconColumn: {
+    color: "black",
   },
 };
 

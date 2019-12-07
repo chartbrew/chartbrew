@@ -62,7 +62,20 @@ class ProjectDashboard extends Component {
             </Link>
           </Container>
           )}
-        {connections.length > 0 && <Chart charts={charts} />}
+        {connections.length > 0 && (
+          <>
+            <Chart charts={charts} />
+
+            <Container textAlign="center" style={{ paddingTop: 50 }}>
+              <Link to={`/${match.params.teamId}/${match.params.projectId}/chart`}>
+                <Button secondary icon labelPosition="right" style={styles.addChartBtn}>
+                  <Icon name="plus" />
+                  Add a new chart
+                </Button>
+              </Link>
+            </Container>
+          </>
+        )}
       </div>
     );
   }
@@ -73,6 +86,9 @@ const styles = {
     flex: 1,
     padding: 10,
     paddingLeft: 20,
+  },
+  addChartBtn: {
+    boxShadow: "0 1px 10px 0 #d4d4d5, 0 0 0 1px #d4d4d5",
   },
 };
 

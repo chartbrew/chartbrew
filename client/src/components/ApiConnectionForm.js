@@ -47,6 +47,8 @@ class ApiConnectionForm extends Component {
         }
 
         newConnection.optionsArray = formattedOptions;
+      } else {
+        newConnection.optionsArray = [];
       }
 
       this.setState({ connection: newConnection });
@@ -86,29 +88,32 @@ class ApiConnectionForm extends Component {
           ...connection, project_id: projectId, options: newOptions,
         },
         loading: true,
-      }, () => {
-        if (!connection.id) {
-          addConnection(projectId, connection)
-            .then(() => {
-              this.setState({ loading: false });
-              onComplete();
-            })
-            .catch((error) => {
-              onComplete(error);
-              this.setState({ addError: error, loading: false });
-            });
-        } else {
-          saveConnection(projectId, connection)
-            .then(() => {
-              this.setState({ loading: false });
-              onComplete();
-            })
-            .catch((error) => {
-              onComplete(error);
-              this.setState({ addError: error, loading: false });
-            });
-        }
       });
+      const newConnection = connection;
+      newConnection.project_id = projectId;
+      newConnection.options = newOptions;
+
+      if (!connection.id) {
+        addConnection(projectId, connection)
+          .then(() => {
+            this.setState({ loading: false });
+            onComplete();
+          })
+          .catch((error) => {
+            onComplete(error);
+            this.setState({ addError: error, loading: false });
+          });
+      } else {
+        saveConnection(projectId, newConnection)
+          .then(() => {
+            this.setState({ loading: false });
+            onComplete();
+          })
+          .catch((error) => {
+            onComplete(error);
+            this.setState({ addError: error, loading: false });
+          });
+      }
     });
   }
 
@@ -119,9 +124,10 @@ class ApiConnectionForm extends Component {
       key: "",
       value: "",
     };
+
     this.setState({
       connection: {
-        ...connection, optionsArray: [...connection.optionsArray, option]
+        ...connection, optionsArray: [...connection.optionsArray, option],
       },
     });
   }
@@ -158,12 +164,16 @@ class ApiConnectionForm extends Component {
 
   render() {
     const {
-      connection, errors, loading, addError, editConnection,
+      connection, errors, loading, addError,
     } = this.state;
+    const { editConnection } = this.props;
 
     return (
       <div style={styles.container}>
-        <Header attached="top" as="h2">Add a new API host</Header>
+        <Header attached="top" as="h2">
+          {!editConnection && "Add a new API host"}
+          {editConnection && `Edit ${editConnection.name}`}
+        </Header>
         <Segment raised attached>
           <Form>
             <Form.Field error={!!errors.name} required>
@@ -231,7 +241,6 @@ class ApiConnectionForm extends Component {
                 size="small"
                 icon
                 labelPosition="right"
-                loading={loading}
                 onClick={this._addOption}
               >
                 <Icon name="plus" />

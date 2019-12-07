@@ -38,8 +38,7 @@ Currently, ChartBrew supports connections to these data sources.
 ## Quickstart
 
 ```sh
-npm install -g create-chartbrew-app
-create-chartbrew-app myApp --dbname="chartbrew" --dbusername="root" --dbpassword="" --dbhost="localhost"
+npx create-chartbrew-app myApp --dbname="chartbrew" --dbusername="root" --dbpassword="" --dbhost="localhost"
 ```
 
 The arguments are optional, but they set the environmental variables needed for the project to run. [Check out which need to be set here.](https://docs.chartbrew.com/#set-up-environmental-variables)
@@ -57,3 +56,5 @@ npm run start
 cd server/
 npm run start-dev
 ```
+
+For more information on how to configure, modify and deploy ChartBrew, [**read the full docs here**](https://docs.chartbrew.com)

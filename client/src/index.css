@@ -88,3 +88,7 @@ body {
     .StripeElement--webkit-autofill {	
       background-color: #fefde5 !important;
     }
+
+  .ui.segment.project-segment:hover {
+    box-shadow: 0 1px 10px 0 #d4d4d5, 0 0 0 1px #d4d4d5;
+  }
