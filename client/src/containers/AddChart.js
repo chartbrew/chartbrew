@@ -27,8 +27,6 @@ import ApiBuilder from "../components/ApiBuilder";
 import PostgresQueryBuilder from "../components/PostgresQueryBuilder";
 import MysqlQueryBuilder from "../components/MysqlQueryBuilder";
 
-const numRegex = /^[0-9]*$/;
-
 /*
   Container used for setting up a new chart
 */
@@ -331,70 +329,16 @@ class AddChart extends Component {
     return newRequest;
   }
 
-  _onItemsChanged = (type, value) => {
-    const { newChart } = this.state;
-
-    if (type === "key") {
-      this.setState({
-        newChart: {
-          ...newChart, items: { ...newChart.items, key: value },
-        },
-      });
-    } else if (type === "value" && value.match(numRegex)) {
-      this.setState({
-        newChart: {
-          ...newChart, items: { ...newChart.items, value },
-        },
-      });
-    }
-  }
-
-  _onLimitChanged = (type, value) => {
-    const { newChart } = this.state;
-
-    if (type === "key") {
-      this.setState({
-        newChart: {
-          ...newChart, limit: { ...newChart.limit, key: value },
-        },
-      });
-    } else if (type === "value" && value.match(numRegex)) {
-      this.setState({
-        newChart: {
-          ...newChart, limit: { ...newChart.limit, value },
-        },
-      });
-    }
-  }
-
-  _onOffsetChanged = (type, value) => {
-    const { newChart } = this.state;
-
-    if (type === "key") {
-      this.setState({
-        newChart: {
-          ...newChart, offset: { ...newChart.offset, key: value },
-        },
-      });
-    } else if (type === "value" && value.match(numRegex)) {
-      this.setState({
-        newChart: {
-          ...newChart, offset: { ...newChart.offset, value },
-        },
-      });
-    }
-  }
-
-  _onPaginationChanged = (value) => {
+  _onPaginationChanged = (type, value) => {
     const { newChart } = this.state;
 
     this.setState({
       newChart: {
-        ...newChart,
-        pagination: value,
+        ...newChart, [type]: value,
       },
     });
   }
+
   /* End of API Stuff */
 
   _onPreview = (e, refresh) => {
@@ -837,9 +781,6 @@ class AddChart extends Component {
                     items={newChart.items}
                     offset={newChart.offset}
                     pagination={newChart.pagination}
-                    onLimitChanged={this._onLimitChanged}
-                    onItemsChanged={this._onItemsChanged}
-                    onOffsetChanged={this._onOffsetChanged}
                     onPaginationChanged={this._onPaginationChanged}
                   />
                   )}

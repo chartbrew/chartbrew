@@ -277,8 +277,8 @@ class ApiBuilder extends Component {
       requestLoading, body, result, apiRequest,
     } = this.state;
     const {
-      connection, items, limit, offset, pagination, onItemsChanged,
-      onLimitChanged, onOffsetChanged, onPaginationChanged,
+      connection, items, limit, offset, pagination,
+      onPaginationChanged,
     } = this.props;
 
     return (
@@ -453,11 +453,8 @@ class ApiBuilder extends Component {
               {activeMenu === "pagination" && (
                 <ApiPagination
                   items={items}
-                  onItemsChanged={onItemsChanged}
                   limit={limit}
-                  onLimitChanged={onLimitChanged}
                   offset={offset}
-                  onOffsetChanged={onOffsetChanged}
                   pagination={pagination}
                   onPaginationChanged={onPaginationChanged}
                 />
@@ -501,18 +498,9 @@ const styles = {
 ApiBuilder.defaultProps = {
   apiRequest: null,
   chartId: -1,
-  items: {
-    key: "items",
-    value: 1000,
-  },
-  limit: {
-    key: "limit",
-    value: 5000,
-  },
-  offset: {
-    key: "offset",
-    value: 0,
-  },
+  items: "items",
+  limit: "limit",
+  offset: "offset",
   pagination: false,
 };
 
@@ -525,13 +513,10 @@ ApiBuilder.propTypes = {
   onChangeRequest: PropTypes.func.isRequired,
   apiRequest: PropTypes.object,
   chartId: PropTypes.number,
-  items: PropTypes.object,
-  limit: PropTypes.object,
-  offset: PropTypes.object,
+  items: PropTypes.string,
+  limit: PropTypes.string,
+  offset: PropTypes.string,
   pagination: PropTypes.bool,
-  onItemsChanged: PropTypes.func.isRequired,
-  onLimitChanged: PropTypes.func.isRequired,
-  onOffsetChanged: PropTypes.func.isRequired,
   onPaginationChanged: PropTypes.func.isRequired,
 };
 

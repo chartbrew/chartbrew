@@ -10,8 +10,8 @@ import {
 class ApiPagination extends Component {
   render() {
     const {
-      items, limit, offset, pagination, onItemsChanged,
-      onLimitChanged, onOffsetChanged, onPaginationChanged,
+      items, limit, offset, pagination,
+      onPaginationChanged,
     } = this.props;
 
     return (
@@ -21,13 +21,15 @@ class ApiPagination extends Component {
           `ChartBrew can paginate the request. 
           It can get all the data you need based 
           on the configuration below. If your API support pagination, 
-          modify the keys and values accordingly.`
+          selector names below. The selectors are identified in the query 
+          parameters or in the request body, so make sure you write those 
+          in the query or body.`
           }
         </p>
         <p>{"Instead of making one big request, ChartBrew can paginate the requests automatically."}</p>
         <Divider />
         <Form>
-          <Form.Group widths={3}>
+          <Form.Group widths={2}>
             <Form.Field width={4}>
               <Popup
                 content={"The amount of items to get per request"}
@@ -42,20 +44,13 @@ class ApiPagination extends Component {
             <Form.Field width={6}>
               <Input
                 placeholder="Items per page"
-                value={items.key}
-                onChange={(e, data) => onItemsChanged("key", data.value)}
-              />
-            </Form.Field>
-            <Form.Field width={6}>
-              <Input
-                placeholder="Value"
-                value={items.value}
-                onChange={(e, data) => onItemsChanged("value", data.value)}
+                value={items}
+                onChange={(e, data) => onPaginationChanged("items", data.value)}
               />
             </Form.Field>
           </Form.Group>
 
-          <Form.Group widths={3}>
+          <Form.Group widths={2}>
             <Form.Field width={4}>
               <Popup
                 content={"The total amount of items to get. Put 0 for getting everything."}
@@ -70,20 +65,13 @@ class ApiPagination extends Component {
             <Form.Field width={6}>
               <Input
                 placeholder="Limit"
-                value={limit.key}
-                onChange={(e, data) => onLimitChanged("key", data.value)}
-              />
-            </Form.Field>
-            <Form.Field width={6}>
-              <Input
-                placeholder="Value"
-                value={limit.value}
-                onChange={(e, data) => onLimitChanged("value", data.value)}
+                value={limit}
+                onChange={(e, data) => onPaginationChanged("limit", data.value)}
               />
             </Form.Field>
           </Form.Group>
 
-          <Form.Group widths={3}>
+          <Form.Group widths={2}>
             <Form.Field width={4}>
               <Popup
                 content={"Set this to whatever value you want to start from"}
@@ -98,15 +86,8 @@ class ApiPagination extends Component {
             <Form.Field width={6}>
               <Input
                 placeholder="Offset"
-                value={offset.key}
-                onChange={(e, data) => onOffsetChanged("key", data.value)}
-              />
-            </Form.Field>
-            <Form.Field width={6}>
-              <Input
-                placeholder="Value"
-                value={offset.value}
-                onChange={(e, data) => onOffsetChanged("value", data.value)}
+                value={offset}
+                onChange={(e, data) => onPaginationChanged("offset", data.value)}
               />
             </Form.Field>
           </Form.Group>
@@ -116,7 +97,7 @@ class ApiPagination extends Component {
               label="Activate pagination"
               toggle
               checked={pagination}
-              onChange={() => onPaginationChanged(!pagination)}
+              onChange={() => onPaginationChanged("pagination", !pagination)}
             />
           </Form.Field>
         </Form>
@@ -126,13 +107,10 @@ class ApiPagination extends Component {
 }
 
 ApiPagination.propTypes = {
-  items: PropTypes.object.isRequired,
-  limit: PropTypes.object.isRequired,
-  offset: PropTypes.object.isRequired,
+  items: PropTypes.string.isRequired,
+  limit: PropTypes.string.isRequired,
+  offset: PropTypes.string.isRequired,
   pagination: PropTypes.bool.isRequired,
-  onItemsChanged: PropTypes.func.isRequired,
-  onLimitChanged: PropTypes.func.isRequired,
-  onOffsetChanged: PropTypes.func.isRequired,
   onPaginationChanged: PropTypes.func.isRequired,
 };
 
