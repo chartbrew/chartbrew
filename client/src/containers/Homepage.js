@@ -19,6 +19,7 @@ import cbLogoSmall from "../assets/cb_logo_4_small.png";
 import cbLogoSmallInverted from "../assets/cb_logo_4_small_inverted.png";
 import showcaseVideo from "../assets/cb_homepage_video.mp4";
 import showcasePlaceholder from "../assets/cb_homepage_placeholder.png";
+import embedVideo from "../assets/cb_embed_showcase.mp4";
 import mongo from "../assets/mongodb-logo-1.png";
 import mysql from "../assets/mysql.svg";
 import postgres from "../assets/postgres.png";
@@ -116,6 +117,16 @@ class Homepage extends Component {
     }, 45000);
   }
 
+  _onShowEmbed = () => {
+    this.setState({ showEmbedDemo: true });
+    const video = document.getElementById("embed-video");
+    video.play();
+
+    setTimeout(() => {
+      this.setState({ showEmbedDemo: false });
+    }, 35000);
+  }
+
   _activateShowcase = () => {
     setTimeout(() => this.setState({ activateShowcase: true }), 2000);
   }
@@ -153,7 +164,7 @@ class Homepage extends Component {
   render() {
     const {
       activateShowcase, mobile, superMenu, emailError, email, submitting,
-      emailSuccess, plans, collapseMenu, showReplay,
+      emailSuccess, plans, collapseMenu, showReplay, showEmbedDemo,
     } = this.state;
     const { user } = this.props;
 
@@ -580,6 +591,7 @@ class Homepage extends Component {
                     {"Choose from the multiple types of charts available to you. You can create timeseries, data type comparisons and much more. Your imagination is the limit."}
                   </Header.Subheader>
                 </Header>
+                <Divider hidden />
                 <Button secondary size="big" icon labelPosition="right" as={Link} to="/signup">
                   <Icon name="cogs" />
                   Build your own
@@ -614,6 +626,7 @@ class Homepage extends Component {
                       {"You can resize and order the charts to your liking. You and your team can now watch as your data evolves and get useful insights using different chart types."}
                     </Header.Subheader>
                   </Header>
+                  <Divider hidden />
                   <Button secondary size="big" icon labelPosition="right" as={Link} to="/signup">
                     <Icon name="line chart" />
                     Create your dashboard
@@ -631,6 +644,7 @@ class Homepage extends Component {
                       {"You can easily mark charts as public and share your unique dashboard link with the world. Your followers can stay up-to-date with your metrics if you're planning on building an open product."}
                     </Header.Subheader>
                   </Header>
+                  <Divider hidden />
                   <Button size="big" secondary as={Link} to="/b/Humminz_1" icon labelPosition="right">
                     <Icon name="globe" />
                     Public dashboard demo
@@ -638,7 +652,25 @@ class Homepage extends Component {
                 </Grid.Column>
                 <Grid.Column width={8}>
                   <Segment raised compact style={styles.imageSegment}>
-                    <Image rounded src={publicImage} />
+                    <Dimmer active={!showEmbedDemo} inverted onClick={this._onShowEmbed}>
+                      <Header textAlign="center">
+                        Add live charts to your blog posts or other websites
+                      </Header>
+                      <Button
+                        color="orange"
+                        basic
+                        onClick={this._onShowEmbed}
+                        labelPosition="right"
+                        icon
+                      >
+                        <Icon name="play" />
+                        Play demo
+                      </Button>
+                    </Dimmer>
+                    <video id="embed-video" muted inline style={styles.showcaseVideo}>
+                      <source src={embedVideo} type="video/mp4" />
+                      <Image rounded src={publicImage} alt="ChartBrew public dashboard" />
+                    </video>
                   </Segment>
                 </Grid.Column>
               </Grid.Row>
