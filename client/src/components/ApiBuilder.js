@@ -15,6 +15,7 @@ import "brace/theme/tomorrow";
 
 import { testApiRequest } from "../actions/connection";
 import { getApiRequestByChart } from "../actions/apiRequest";
+import ApiPagination from "./ApiPagination";
 
 /*
   Description
@@ -275,7 +276,10 @@ class ApiBuilder extends Component {
       methods, activeMenu, requestSuccess, requestError,
       requestLoading, body, result, apiRequest,
     } = this.state;
-    const { connection } = this.props;
+    const {
+      connection, items, limit, offset, pagination, onItemsChanged,
+      onLimitChanged, onOffsetChanged, onPaginationChanged,
+    } = this.props;
 
     return (
       <div style={styles.container}>
@@ -335,6 +339,11 @@ class ApiBuilder extends Component {
                   disabled={apiRequest.method === "GET" || apiRequest.method === "OPTIONS"}
                   active={activeMenu === "body"}
                   onClick={() => this.setState({ activeMenu: "body" })}
+                />
+                <Menu.Item
+                  name="Pagination"
+                  active={activeMenu === "pagination"}
+                  onClick={() => this.setState({ activeMenu: "pagination" })}
                 />
               </Menu>
               {activeMenu === "headers" && (
@@ -441,6 +450,18 @@ class ApiBuilder extends Component {
                   />
                 </div>
               )}
+              {activeMenu === "pagination" && (
+                <ApiPagination
+                  items={items}
+                  onItemsChanged={onItemsChanged}
+                  limit={limit}
+                  onLimitChanged={onLimitChanged}
+                  offset={offset}
+                  onOffsetChanged={onOffsetChanged}
+                  pagination={pagination}
+                  onPaginationChanged={onPaginationChanged}
+                />
+              )}
             </Grid.Column>
             <Grid.Column width={6}>
               <Header as="h3" dividing style={{ paddingTop: 15 }}>Result:</Header>
@@ -480,6 +501,19 @@ const styles = {
 ApiBuilder.defaultProps = {
   apiRequest: null,
   chartId: -1,
+  items: {
+    key: "items",
+    value: 1000,
+  },
+  limit: {
+    key: "limit",
+    value: 5000,
+  },
+  offset: {
+    key: "offset",
+    value: 0,
+  },
+  pagination: false,
 };
 
 ApiBuilder.propTypes = {
@@ -491,6 +525,14 @@ ApiBuilder.propTypes = {
   onChangeRequest: PropTypes.func.isRequired,
   apiRequest: PropTypes.object,
   chartId: PropTypes.number,
+  items: PropTypes.object,
+  limit: PropTypes.object,
+  offset: PropTypes.object,
+  pagination: PropTypes.bool,
+  onItemsChanged: PropTypes.func.isRequired,
+  onLimitChanged: PropTypes.func.isRequired,
+  onOffsetChanged: PropTypes.func.isRequired,
+  onPaginationChanged: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = () => {

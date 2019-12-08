@@ -27,6 +27,8 @@ import ApiBuilder from "../components/ApiBuilder";
 import PostgresQueryBuilder from "../components/PostgresQueryBuilder";
 import MysqlQueryBuilder from "../components/MysqlQueryBuilder";
 
+const numRegex = /^[0-9]*$/;
+
 /*
   Container used for setting up a new chart
 */
@@ -43,6 +45,10 @@ class AddChart extends Component {
           xAxis: "root",
           legend: "Dataset #1",
         }],
+        // TODO: remove this before commit
+        name: "Something",
+        type: "line",
+        subType: "lcTimeseries",
       },
       ddConnections: [],
       updatedEdit: false, // eslint-disable-line
@@ -302,6 +308,8 @@ class AddChart extends Component {
     });
   }
 
+  /* API Stuff */
+
   _formatApiRequest = () => {
     const { apiRequest } = this.state;
     if (!apiRequest) return {};
@@ -322,6 +330,72 @@ class AddChart extends Component {
 
     return newRequest;
   }
+
+  _onItemsChanged = (type, value) => {
+    const { newChart } = this.state;
+
+    if (type === "key") {
+      this.setState({
+        newChart: {
+          ...newChart, items: { ...newChart.items, key: value },
+        },
+      });
+    } else if (type === "value" && value.match(numRegex)) {
+      this.setState({
+        newChart: {
+          ...newChart, items: { ...newChart.items, value },
+        },
+      });
+    }
+  }
+
+  _onLimitChanged = (type, value) => {
+    const { newChart } = this.state;
+
+    if (type === "key") {
+      this.setState({
+        newChart: {
+          ...newChart, limit: { ...newChart.limit, key: value },
+        },
+      });
+    } else if (type === "value" && value.match(numRegex)) {
+      this.setState({
+        newChart: {
+          ...newChart, limit: { ...newChart.limit, value },
+        },
+      });
+    }
+  }
+
+  _onOffsetChanged = (type, value) => {
+    const { newChart } = this.state;
+
+    if (type === "key") {
+      this.setState({
+        newChart: {
+          ...newChart, offset: { ...newChart.offset, key: value },
+        },
+      });
+    } else if (type === "value" && value.match(numRegex)) {
+      this.setState({
+        newChart: {
+          ...newChart, offset: { ...newChart.offset, value },
+        },
+      });
+    }
+  }
+
+  _onPaginationChanged = (value) => {
+    const { newChart } = this.state;
+
+    this.setState({
+      newChart: {
+        ...newChart,
+        pagination: value,
+      },
+    });
+  }
+  /* End of API Stuff */
 
   _onPreview = (e, refresh) => {
     const { getPreviewData, match } = this.props;
@@ -759,6 +833,14 @@ class AddChart extends Component {
                       this.setState({ apiRequest });
                     }}
                     chartId={newChart.id}
+                    limit={newChart.limit}
+                    items={newChart.items}
+                    offset={newChart.offset}
+                    pagination={newChart.pagination}
+                    onLimitChanged={this._onLimitChanged}
+                    onItemsChanged={this._onItemsChanged}
+                    onOffsetChanged={this._onOffsetChanged}
+                    onPaginationChanged={this._onPaginationChanged}
                   />
                   )}
 
