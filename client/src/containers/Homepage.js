@@ -386,7 +386,7 @@ class Homepage extends Component {
               </Dimmer>
               {activateShowcase
                 && (
-                <video id="showcase-video" autoPlay muted inline>
+                <video id="showcase-video" autoPlay muted inline style={styles.showcaseVideo}>
                   <source src={showcaseVideo} type="video/mp4" />
                   <img src={showcasePlaceholder} alt="ChartBrew showcase video" />
                 </video>
@@ -397,7 +397,7 @@ class Homepage extends Component {
 
         <div
           style={
-            activateShowcase
+            ((activateShowcase && !mobile) || mobile)
               ? styles.firstContainer
               : { ...styles.firstContainer, ...styles.tempTopBuffer }
           }
@@ -1060,6 +1060,11 @@ const styles = {
   nonSuperMenu: {
     zIndex: 10000,
     backgroundColor: "transparent",
+  },
+  showcaseVideo: {
+    maxWidth: "100%",
+    height: "auto !important",
+    maxHeight: "100%",
   },
 };
 
