@@ -797,7 +797,7 @@ class Homepage extends Component {
                 }}
                 name="queryEditor"
                 editorProps={{ $blockScrolling: true }}
-                readOnly={true}
+                readOnly
                 style={{ fontSize: mobile ? "15px" : "20px" }}
               />
             </Container>
