@@ -10,7 +10,7 @@ import {
 class ApiPagination extends Component {
   render() {
     const {
-      items, limit, offset, pagination,
+      items, itemsLimit, offset, pagination,
       onPaginationChanged,
     } = this.props;
 
@@ -65,8 +65,8 @@ class ApiPagination extends Component {
             <Form.Field width={6}>
               <Input
                 placeholder="Limit"
-                value={limit}
-                onChange={(e, data) => onPaginationChanged("limit", data.value)}
+                value={itemsLimit}
+                onChange={(e, data) => onPaginationChanged("itemsLimit", data.value)}
               />
             </Form.Field>
           </Form.Group>
@@ -108,7 +108,7 @@ class ApiPagination extends Component {
 
 ApiPagination.propTypes = {
   items: PropTypes.string.isRequired,
-  limit: PropTypes.string.isRequired,
+  itemsLimit: PropTypes.string.isRequired,
   offset: PropTypes.string.isRequired,
   pagination: PropTypes.bool.isRequired,
   onPaginationChanged: PropTypes.func.isRequired,

@@ -105,6 +105,22 @@ const Chart = db.define("Chart", {
     allowNull: false,
     defaultValue: moment().toDate(),
   },
+  pagination: {
+    type: Sequelize.BOOLEAN,
+    defaultValue: false,
+  },
+  items: {
+    type: Sequelize.STRING,
+    defaultValue: "items",
+  },
+  itemsLimit: {
+    type: Sequelize.STRING,
+    defaultValue: "limit",
+  },
+  offset: {
+    type: Sequelize.STRING,
+    defaultValue: "offset",
+  },
 }, {
   freezeTableName: true
 });

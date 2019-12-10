@@ -43,10 +43,6 @@ class AddChart extends Component {
           xAxis: "root",
           legend: "Dataset #1",
         }],
-        // TODO: remove this before commit
-        name: "Something",
-        type: "line",
-        subType: "lcTimeseries",
       },
       ddConnections: [],
       updatedEdit: false, // eslint-disable-line
@@ -777,7 +773,7 @@ class AddChart extends Component {
                       this.setState({ apiRequest });
                     }}
                     chartId={newChart.id}
-                    limit={newChart.limit}
+                    itemsLimit={newChart.itemsLimit}
                     items={newChart.items}
                     offset={newChart.offset}
                     pagination={newChart.pagination}

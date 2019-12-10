@@ -277,7 +277,7 @@ class ApiBuilder extends Component {
       requestLoading, body, result, apiRequest,
     } = this.state;
     const {
-      connection, items, limit, offset, pagination,
+      connection, items, itemsLimit, offset, pagination,
       onPaginationChanged,
     } = this.props;
 
@@ -453,7 +453,7 @@ class ApiBuilder extends Component {
               {activeMenu === "pagination" && (
                 <ApiPagination
                   items={items}
-                  limit={limit}
+                  itemsLimit={itemsLimit}
                   offset={offset}
                   pagination={pagination}
                   onPaginationChanged={onPaginationChanged}
@@ -499,7 +499,7 @@ ApiBuilder.defaultProps = {
   apiRequest: null,
   chartId: -1,
   items: "items",
-  limit: "limit",
+  itemsLimit: "limit",
   offset: "offset",
   pagination: false,
 };
@@ -514,7 +514,7 @@ ApiBuilder.propTypes = {
   apiRequest: PropTypes.object,
   chartId: PropTypes.number,
   items: PropTypes.string,
-  limit: PropTypes.string,
+  itemsLimit: PropTypes.string,
   offset: PropTypes.string,
   pagination: PropTypes.bool,
   onPaginationChanged: PropTypes.func.isRequired,
