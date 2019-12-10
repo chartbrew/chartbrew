@@ -9,6 +9,11 @@ import {
 } from "semantic-ui-react";
 import AnchorLink from "react-anchor-link-smooth-scroll";
 import moment from "moment";
+import brace from "brace"; // eslint-disable-line
+import AceEditor from "react-ace";
+
+import "brace/mode/sh";
+import "brace/theme/tomorrow";
 
 import PricingPlans from "../components/PricingPlans";
 import {
@@ -53,7 +58,7 @@ class Homepage extends Component {
         priceDetail: "forever",
         description: "No credit card required",
         primary: false,
-        features: ["3 Charts", "1 Project", "1 Team member", "1 Datasource connection", "10MB Max query size"],
+        features: ["1 Project", "3 Charts", "1 Datasource connection", "1 Team member", "10MB Max query size"],
         onClick: () => {
           history.push({
             pathname: "/signup",
@@ -66,7 +71,7 @@ class Homepage extends Component {
         priceDetail: "per month",
         description: "Create more charts and connect multiple data sources",
         primary: true,
-        features: ["10 Charts", "3 Project", "2 Team members", "5 Datasource connections", "30MB Max query size", "Auto-refresh every hour"],
+        features: ["3 Projects", "10 Charts per project", "5 Connections per project", "2 Team members included", "30MB Max query size", "Auto-refresh every hour"],
         onClick: () => {
           history.push({
             pathname: "/signup",
@@ -79,7 +84,7 @@ class Homepage extends Component {
         priceDetail: "per month",
         description: "More power, more amazing dashboards",
         primary: false,
-        features: ["20 Charts per project", "10 projects", "5 Team members", "Unlimited datasource connections", "50MB Max query size", "Auto-refresh every 30 minutes"],
+        features: ["10 Projects", "20 Charts per project", "Unlimited datasource connections", "5 Team members included", "50MB Max query size", "Auto-refresh every 30 minutes"],
         onClick: () => {
           history.push({
             pathname: "/signup",
@@ -777,9 +782,25 @@ class Homepage extends Component {
             <Header inverted textAlign="center" style={styles.pageTitle}>
               ChartBrew is open source
               <Header.Subheader style={styles.pageSubheader}>
-                The codebase is available to everybody, you can run it yourself for free
+                Run it yourself for free
               </Header.Subheader>
             </Header>
+            <Container style={{ paddingTop: 20, paddingBottom: 20 }}>
+              <AceEditor
+                mode="sh"
+                theme="tomorrow"
+                height="30px"
+                width="none"
+                value={"npx create-chartbrew-app myApp"}
+                onChange={(value) => {
+                  this._onChangeBody(value);
+                }}
+                name="queryEditor"
+                editorProps={{ $blockScrolling: true }}
+                readOnly={true}
+                style={{ fontSize: mobile ? "15px" : "20px" }}
+              />
+            </Container>
             <Button basic inverted size="massive" icon labelPosition="right" as="a" href="https://github.com/razvanilin/chartbrew">
               <Icon name="github" />
               ChartBrew repo
