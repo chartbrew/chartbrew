@@ -236,6 +236,7 @@ class ApiBuilder extends Component {
   _onTest = () => {
     const {
       match, connection, testApiRequest, onComplete,
+      offset, items, itemsLimit, pagination,
     } = this.props;
     const {
       headers, apiRequest
@@ -248,8 +249,13 @@ class ApiBuilder extends Component {
       }
     }
 
-    const finalApiRequest = apiRequest;
-    finalApiRequest.headers = newHeaders;
+    const finalApiRequest = { apiRequest };
+    finalApiRequest.apiRequest.headers = newHeaders;
+
+    finalApiRequest.pagination = pagination;
+    finalApiRequest.items = items;
+    finalApiRequest.offset = offset;
+    finalApiRequest.itemsLimit = itemsLimit;
 
     this.setState({ requestLoading: true, requestSuccess: false, requestError: false });
     testApiRequest(match.params.projectId, connection.id, finalApiRequest)
@@ -499,7 +505,7 @@ ApiBuilder.defaultProps = {
   apiRequest: null,
   chartId: -1,
   items: "items",
-  itemsLimit: "limit",
+  itemsLimit: 100,
   offset: "offset",
   pagination: false,
 };

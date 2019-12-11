@@ -1,9 +1,37 @@
 const mongoose = require("mongoose");
 const requestP = require("request-promise");
+const querystring = require("querystring");
 
 const Connection = require("../models/Connection");
 const ProjectController = require("./ProjectController");
 const externalDbConnection = require("../modules/externalDbConnection");
+
+/*
+** Helper functions
+*/
+
+function paginateRequests(options, limit, items, offset, totalResults) {
+  return requestP(options)
+    .then((response) => {
+      const { results } = JSON.parse(response.body);
+
+      const tempResults = totalResults.concat(results);
+      if (results === [] || tempResults.length >= limit) {
+        return new Promise(resolve => resolve(tempResults));
+      }
+
+      const newOptions = options;
+      newOptions.qs[offset] =
+        parseInt(options.qs[offset], 10) + parseInt(options.qs[items], 10);
+
+      return paginateRequests(newOptions, limit, items, offset, tempResults);
+    })
+    .catch((e) => {
+      console.log("e", e); // eslint-disable-line
+    });
+}
+
+// ----------------
 
 class ConnectionController {
   constructor() {
@@ -140,13 +168,25 @@ class ConnectionController {
       });
   }
 
-  testApiRequest(connectionId, apiRequest) {
-    return this.findById(connectionId)
+  testApiRequest({
+    connection_id, apiRequest, pagination, itemsLimit, items, offset,
+  }) {
+    return this.findById(connection_id)
       .then((connection) => {
+        const tempUrl = `${connection.getApiUrl(connection)}${apiRequest.route || ""}`;
+        const queryParams = querystring.parse(tempUrl.split("?")[1]);
+
+
+        let url = tempUrl;
+        if (url.indexOf("?") > -1) {
+          url = tempUrl.substring(0, tempUrl.indexOf("?"));
+        }
+
         const options = {
-          url: `${connection.getApiUrl(connection)}${apiRequest.route || ""}`,
+          url,
           method: apiRequest.method || "GET",
           headers: {},
+          qs: queryParams,
           resolveWithFullResponse: true,
           simple: false,
         };
@@ -170,9 +210,21 @@ class ConnectionController {
           options.body = apiRequest.body;
         }
 
+        if (pagination) {
+          if ((options.url.indexOf(`?${items}=`) || options.url.indexOf(`&${items}=`))
+            && (options.url.indexOf(`?${offset}=`) || options.url.indexOf(`&${offset}=`))
+          ) {
+            return paginateRequests(options, itemsLimit, items, offset, []);
+          }
+        }
+
         return requestP(options);
       })
       .then((response) => {
+        if (pagination) {
+          return new Promise(resolve => resolve(response));
+        }
+
         if (response.statusCode < 300) {
           try {
             return new Promise(resolve => resolve(JSON.parse(response.body)));

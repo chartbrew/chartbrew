@@ -114,8 +114,8 @@ const Chart = db.define("Chart", {
     defaultValue: "items",
   },
   itemsLimit: {
-    type: Sequelize.STRING,
-    defaultValue: "limit",
+    type: Sequelize.INTEGER,
+    defaultValue: 100,
   },
   offset: {
     type: Sequelize.STRING,
