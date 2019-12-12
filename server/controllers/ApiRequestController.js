@@ -1,7 +1,6 @@
-const requestP = require("request-promise");
-
 const ApiRequest = require("../models/ApiRequest");
 const ConnectionController = require("./ConnectionController");
+const Chart = require("../models/Chart");
 
 class ApiRequestController {
   constructor() {
@@ -57,59 +56,18 @@ class ApiRequestController {
       });
   }
 
-  sendRequest(chartId, connectionId) {
+  sendRequest(chartId) {
     let gApiRequest;
     return this.findByChart(chartId)
       .then((apiRequest) => {
         if (!apiRequest) throw new Error(404);
         gApiRequest = JSON.parse(JSON.stringify(apiRequest));
-        return this.connectionController.findById(connectionId);
+
+        return Chart.findByPk(chartId);
       })
-      .then((connection) => {
-        if (gApiRequest.useGlobalHeaders) {
-          const globalHeaders = connection.getHeaders(connection);
-          for (const header of globalHeaders) {
-            gApiRequest.headers = Object.assign(header, gApiRequest.headers);
-          }
-        }
-
-        const options = {
-          url: `${connection.getApiUrl(connection)}${gApiRequest.route}`,
-          method: gApiRequest.method,
-          headers: {},
-          resolveWithFullResponse: true,
-          simple: false,
-        };
-
-        // prepare the headers
-        let headers = {};
-        if (gApiRequest.useGlobalHeaders) {
-          const globalHeaders = connection.getHeaders(connection);
-          for (const opt of globalHeaders) {
-            headers = Object.assign(opt, headers);
-          }
-        }
-        if (gApiRequest.headers) {
-          headers = Object.assign(gApiRequest.headers, headers);
-        }
-        options.headers = headers;
-
-        if (gApiRequest.body) {
-          options.body = JSON.stringify(gApiRequest.body);
-        }
-
-        return requestP(options);
-      })
-      .then((response) => {
-        if (response.statusCode < 300) {
-          try {
-            return new Promise(resolve => resolve(JSON.parse(response.body)));
-          } catch (e) {
-            return new Promise((resolve, reject) => reject(406));
-          }
-        } else {
-          return new Promise((resolve, reject) => reject(response.statusCode));
-        }
+      .then((chart) => {
+        const jsChart = chart.get({ plain: true });
+        return this.connectionController.testApiRequest({ ...jsChart, apiRequest: gApiRequest });
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

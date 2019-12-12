@@ -13,10 +13,17 @@ const externalDbConnection = require("../modules/externalDbConnection");
 function paginateRequests(options, limit, items, offset, totalResults) {
   return requestP(options)
     .then((response) => {
-      const { results } = JSON.parse(response.body);
+      responseCode = response.responseCode; // eslint-disable-line
+      let results;
+      try {
+        results = JSON.parse(response.body).results; // eslint-disable-line
+      } catch (error) {
+        return new Promise((resolve, reject) => reject(response.statusCode));
+      }
 
       const tempResults = totalResults.concat(results);
-      if (results === [] || tempResults.length >= limit) {
+
+      if (results.length === 0 || (tempResults.length >= limit && limit !== 0)) {
         return new Promise(resolve => resolve(tempResults));
       }
 
@@ -27,7 +34,7 @@ function paginateRequests(options, limit, items, offset, totalResults) {
       return paginateRequests(newOptions, limit, items, offset, tempResults);
     })
     .catch((e) => {
-      console.log("e", e); // eslint-disable-line
+      return Promise.reject(e);
     });
 }
 
@@ -169,13 +176,15 @@ class ConnectionController {
   }
 
   testApiRequest({
-    connection_id, apiRequest, pagination, itemsLimit, items, offset,
+    connection_id, apiRequest, itemsLimit, items, offset, pagination,
   }) {
+    const limit = itemsLimit
+      ? parseInt(itemsLimit, 10) : null;
+
     return this.findById(connection_id)
       .then((connection) => {
         const tempUrl = `${connection.getApiUrl(connection)}${apiRequest.route || ""}`;
         const queryParams = querystring.parse(tempUrl.split("?")[1]);
-
 
         let url = tempUrl;
         if (url.indexOf("?") > -1) {
@@ -214,7 +223,7 @@ class ConnectionController {
           if ((options.url.indexOf(`?${items}=`) || options.url.indexOf(`&${items}=`))
             && (options.url.indexOf(`?${offset}=`) || options.url.indexOf(`&${offset}=`))
           ) {
-            return paginateRequests(options, itemsLimit, items, offset, []);
+            return paginateRequests(options, limit, items, offset, []);
           }
         }
 
