@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const requestP = require("request-promise");
 const querystring = require("querystring");
+const _ = require("lodash");
 
 const Connection = require("../models/Connection");
 const ProjectController = require("./ProjectController");
@@ -16,15 +17,32 @@ function paginateRequests(options, limit, items, offset, totalResults) {
       responseCode = response.responseCode; // eslint-disable-line
       let results;
       try {
-        results = JSON.parse(response.body).results; // eslint-disable-line
+        const parsedResponse = JSON.parse(response.body);
+
+        if (parsedResponse instanceof Array) {
+          results = parsedResponse;
+        } else {
+          Object.keys(parsedResponse).forEach((key) => {
+            if (parsedResponse[key] instanceof Array) {
+              results = parsedResponse[key];
+            }
+          });
+        }
       } catch (error) {
         return new Promise((resolve, reject) => reject(response.statusCode));
       }
 
+      // check if results are the same as previous ones (infinite request loop?)
+      let skipping = false;
+
+      if (_.isEqual(results, totalResults)) {
+        skipping = true;
+      }
+
       const tempResults = totalResults.concat(results);
 
-      if (results.length === 0 || (tempResults.length >= limit && limit !== 0)) {
-        let finalResults = tempResults;
+      if (skipping || results.length === 0 || (tempResults.length >= limit && limit !== 0)) {
+        let finalResults = skipping ? results : tempResults;
 
         // check if it goes above the limit
         if (tempResults.length > limit && limit !== 0) {
