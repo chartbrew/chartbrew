@@ -228,7 +228,7 @@ module.exports = (app) => {
 
         return connectionController.testApiRequest(requestData);
       })
-      .then((apiRequest) => {        
+      .then((apiRequest) => {
         if (!apiRequest) return res.status(500).send("Api Request Error");
         return res.status(200).send(apiRequest);
       })

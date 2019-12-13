@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import {
-  Container, Form, Input, Checkbox, Icon, Popup, Divider,
+  Container, Form, Input, Checkbox, Icon, Popup, Divider, Label,
 } from "semantic-ui-react";
 
 /*
@@ -11,7 +11,7 @@ class ApiPagination extends Component {
   render() {
     const {
       items, itemsLimit, offset, pagination,
-      onPaginationChanged,
+      onPaginationChanged, apiRoute,
     } = this.props;
 
     return (
@@ -30,12 +30,12 @@ class ApiPagination extends Component {
         <Divider />
         <Form>
           <Form.Group widths={2}>
-            <Form.Field width={4}>
+            <Form.Field width={6}>
               <Popup
-                content={"The amount of items to get per request"}
+                content={"The query parameter name that limits the number of item per request."}
                 trigger={(
                   <label>
-                    {"Items "}
+                    {"Items per page "}
                     <Icon name="info circle" />
                   </label>
                 )}
@@ -51,30 +51,9 @@ class ApiPagination extends Component {
           </Form.Group>
 
           <Form.Group widths={2}>
-            <Form.Field width={4}>
-              <Popup
-                content={"The total amount of items to get. Put 0 for getting everything."}
-                trigger={(
-                  <label>
-                    {"Limit "}
-                    <Icon name="info circle" />
-                  </label>
-                )}
-              />
-            </Form.Field>
             <Form.Field width={6}>
-              <Input
-                placeholder="Limit"
-                value={itemsLimit}
-                onChange={(e, data) => onPaginationChanged("itemsLimit", data.value)}
-              />
-            </Form.Field>
-          </Form.Group>
-
-          <Form.Group widths={2}>
-            <Form.Field width={4}>
               <Popup
-                content={"Set this to whatever value you want to start from"}
+                content={"The query parameter name used for the starting point of the first request. "}
                 trigger={(
                   <label>
                     {"Offset "}
@@ -92,6 +71,28 @@ class ApiPagination extends Component {
             </Form.Field>
           </Form.Group>
 
+          <Form.Group widths={2}>
+            <Form.Field width={6}>
+              <Popup
+                content={"The total amount of items to get (all the paged items put together) - Leave empty or 0 for unlimited"}
+                trigger={(
+                  <label>
+                    {"Total maximum number "}
+                    <Icon name="info circle" />
+                  </label>
+                )}
+              />
+            </Form.Field>
+            <Form.Field width={6}>
+              <Input
+                placeholder="Limit"
+                type="number"
+                value={itemsLimit}
+                onChange={(e, data) => onPaginationChanged("itemsLimit", data.value)}
+              />
+            </Form.Field>
+          </Form.Group>
+
           <Form.Field>
             <Checkbox
               label="Activate pagination"
@@ -101,10 +102,37 @@ class ApiPagination extends Component {
             />
           </Form.Field>
         </Form>
+
+        <Divider />
+        <span>
+          {"You should include these query parameters: "}
+          <Label>{`${items}=<xxx>&${offset}=<xxx> `}</Label>
+          {(apiRoute.indexOf(`?${items}=`) > -1 || apiRoute.indexOf(`&${items}=`) > -1) && (
+            <Label color="green">{`${items} was found`}</Label>
+          )}
+          {(apiRoute.indexOf(`?${items}=`) === -1 && apiRoute.indexOf(`&${items}=`) === -1) && (
+            <Label color="red">{`${items} not found in route`}</Label>
+          )}
+          {(apiRoute.indexOf(`?${offset}=`) > -1 || apiRoute.indexOf(`&${offset}=`) > -1) && (
+            <Label color="green">{`${offset} was found`}</Label>
+          )}
+          {(apiRoute.indexOf(`?${offset}=`) === -1 && apiRoute.indexOf(`&${offset}=`) === -1) && (
+            <Label color="red">{`${offset} not found in route`}</Label>
+          )}
+        </span>
+        <Divider hidden />
+        <p>
+          {"The maximum amount of item that you're going to get is: "}
+          <Label>{ itemsLimit === "0" || !itemsLimit ? "no max" : itemsLimit }</Label>
+        </p>
       </Container>
     );
   }
 }
+
+ApiPagination.defaultProps = {
+  apiRoute: "",
+};
 
 ApiPagination.propTypes = {
   items: PropTypes.string.isRequired,
@@ -112,6 +140,7 @@ ApiPagination.propTypes = {
   offset: PropTypes.string.isRequired,
   pagination: PropTypes.bool.isRequired,
   onPaginationChanged: PropTypes.func.isRequired,
+  apiRoute: PropTypes.string,
 };
 
 export default ApiPagination;

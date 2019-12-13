@@ -329,9 +329,14 @@ class AddChart extends Component {
   _onPaginationChanged = (type, value) => {
     const { newChart } = this.state;
 
+    let newValue = value;
+    if (type === "itemsLimit" && value && value !== "0") {
+      newValue = Math.abs(parseInt(value, 10));
+    }
+
     this.setState({
       newChart: {
-        ...newChart, [type]: value,
+        ...newChart, [type]: newValue,
       },
     });
   }

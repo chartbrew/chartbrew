@@ -463,6 +463,7 @@ class ApiBuilder extends Component {
                   offset={offset}
                   pagination={pagination}
                   onPaginationChanged={onPaginationChanged}
+                  apiRoute={apiRequest.route}
                 />
               )}
             </Grid.Column>
@@ -509,7 +510,7 @@ const styles = {
 ApiBuilder.defaultProps = {
   apiRequest: null,
   chartId: -1,
-  items: "items",
+  items: "limit",
   itemsLimit: 100,
   offset: "offset",
   pagination: false,
