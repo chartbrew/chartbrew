@@ -469,9 +469,14 @@ class ApiBuilder extends Component {
             <Grid.Column width={6}>
               <Header as="h3" dividing style={{ paddingTop: 15 }}>Result:</Header>
               {requestSuccess && (
-                <Label color="green" style={{ marginBottom: 10 }}>
-                  {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
-                </Label>
+                <>
+                  <Label color="green" style={{ marginBottom: 10 }}>
+                    {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
+                  </Label>
+                  <Label style={{ marginBottom: 10 }}>
+                    {`Length: ${result ? JSON.parse(result).length : 0}`}
+                  </Label>
+                </>
               )}
               {requestError && (
                 <Label color="red" style={{ marginBottom: 10 }}>
@@ -520,7 +525,7 @@ ApiBuilder.propTypes = {
   apiRequest: PropTypes.object,
   chartId: PropTypes.number,
   items: PropTypes.string,
-  itemsLimit: PropTypes.string,
+  itemsLimit: PropTypes.number,
   offset: PropTypes.string,
   pagination: PropTypes.bool,
   onPaginationChanged: PropTypes.func.isRequired,

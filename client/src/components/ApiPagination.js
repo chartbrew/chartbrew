@@ -108,7 +108,7 @@ class ApiPagination extends Component {
 
 ApiPagination.propTypes = {
   items: PropTypes.string.isRequired,
-  itemsLimit: PropTypes.string.isRequired,
+  itemsLimit: PropTypes.number.isRequired,
   offset: PropTypes.string.isRequired,
   pagination: PropTypes.bool.isRequired,
   onPaginationChanged: PropTypes.func.isRequired,

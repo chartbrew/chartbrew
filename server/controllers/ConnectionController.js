@@ -24,7 +24,14 @@ function paginateRequests(options, limit, items, offset, totalResults) {
       const tempResults = totalResults.concat(results);
 
       if (results.length === 0 || (tempResults.length >= limit && limit !== 0)) {
-        return new Promise(resolve => resolve(tempResults));
+        let finalResults = tempResults;
+
+        // check if it goes above the limit
+        if (tempResults.length > limit && limit !== 0) {
+          finalResults = tempResults.slice(0, limit);
+        }
+
+        return new Promise(resolve => resolve(finalResults));
       }
 
       const newOptions = options;
@@ -179,7 +186,7 @@ class ConnectionController {
     connection_id, apiRequest, itemsLimit, items, offset, pagination,
   }) {
     const limit = itemsLimit
-      ? parseInt(itemsLimit, 10) : null;
+      ? parseInt(itemsLimit, 10) : 0;
 
     return this.findById(connection_id)
       .then((connection) => {
