@@ -356,7 +356,7 @@ class ChartController {
   }
 
   getApiChartData(chart) {
-    return this.connection.testApiRequest(chart.connection_id, chart.apiRequest)
+    return this.connection.testApiRequest(chart)
       .then((data) => {
         return new Promise(resolve => resolve(data));
       })
@@ -411,7 +411,6 @@ class ChartController {
         return new Promise(resolve => resolve(data));
       })
       .catch((error) => {
-        // console.log("Error", error);
         return new Promise((resolve, reject) => reject(error));
       });
   }

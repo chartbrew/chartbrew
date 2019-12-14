@@ -1,9 +1,69 @@
 const mongoose = require("mongoose");
 const requestP = require("request-promise");
+const querystring = require("querystring");
+const _ = require("lodash");
 
 const Connection = require("../models/Connection");
 const ProjectController = require("./ProjectController");
 const externalDbConnection = require("../modules/externalDbConnection");
+
+/*
+** Helper functions
+*/
+
+function paginateRequests(options, limit, items, offset, totalResults) {
+  return requestP(options)
+    .then((response) => {
+      responseCode = response.responseCode; // eslint-disable-line
+      let results;
+      try {
+        const parsedResponse = JSON.parse(response.body);
+
+        if (parsedResponse instanceof Array) {
+          results = parsedResponse;
+        } else {
+          Object.keys(parsedResponse).forEach((key) => {
+            if (parsedResponse[key] instanceof Array) {
+              results = parsedResponse[key];
+            }
+          });
+        }
+      } catch (error) {
+        return new Promise((resolve, reject) => reject(response.statusCode));
+      }
+
+      // check if results are the same as previous ones (infinite request loop?)
+      let skipping = false;
+
+      if (_.isEqual(results, totalResults)) {
+        skipping = true;
+      }
+
+      const tempResults = totalResults.concat(results);
+
+      if (skipping || results.length === 0 || (tempResults.length >= limit && limit !== 0)) {
+        let finalResults = skipping ? results : tempResults;
+
+        // check if it goes above the limit
+        if (tempResults.length > limit && limit !== 0) {
+          finalResults = tempResults.slice(0, limit);
+        }
+
+        return new Promise(resolve => resolve(finalResults));
+      }
+
+      const newOptions = options;
+      newOptions.qs[offset] =
+        parseInt(options.qs[offset], 10) + parseInt(options.qs[items], 10);
+
+      return paginateRequests(newOptions, limit, items, offset, tempResults);
+    })
+    .catch((e) => {
+      return Promise.reject(e);
+    });
+}
+
+// ----------------
 
 class ConnectionController {
   constructor() {
@@ -140,13 +200,27 @@ class ConnectionController {
       });
   }
 
-  testApiRequest(connectionId, apiRequest) {
-    return this.findById(connectionId)
+  testApiRequest({
+    connection_id, apiRequest, itemsLimit, items, offset, pagination,
+  }) {
+    const limit = itemsLimit
+      ? parseInt(itemsLimit, 10) : 0;
+
+    return this.findById(connection_id)
       .then((connection) => {
+        const tempUrl = `${connection.getApiUrl(connection)}${apiRequest.route || ""}`;
+        const queryParams = querystring.parse(tempUrl.split("?")[1]);
+
+        let url = tempUrl;
+        if (url.indexOf("?") > -1) {
+          url = tempUrl.substring(0, tempUrl.indexOf("?"));
+        }
+
         const options = {
-          url: `${connection.getApiUrl(connection)}${apiRequest.route || ""}`,
+          url,
           method: apiRequest.method || "GET",
           headers: {},
+          qs: queryParams,
           resolveWithFullResponse: true,
           simple: false,
         };
@@ -170,9 +244,21 @@ class ConnectionController {
           options.body = apiRequest.body;
         }
 
+        if (pagination) {
+          if ((options.url.indexOf(`?${items}=`) || options.url.indexOf(`&${items}=`))
+            && (options.url.indexOf(`?${offset}=`) || options.url.indexOf(`&${offset}=`))
+          ) {
+            return paginateRequests(options, limit, items, offset, []);
+          }
+        }
+
         return requestP(options);
       })
       .then((response) => {
+        if (pagination) {
+          return new Promise(resolve => resolve(response));
+        }
+
         if (response.statusCode < 300) {
           try {
             return new Promise(resolve => resolve(JSON.parse(response.body)));
