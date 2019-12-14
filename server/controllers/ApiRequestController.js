@@ -1,17 +1,15 @@
-const ApiRequest = require("../models/ApiRequest");
 const ConnectionController = require("./ConnectionController");
-const Chart = require("../models/Chart");
+const db = require("../models/models");
 
 class ApiRequestController {
   constructor() {
-    this.apiRequest = ApiRequest;
     this.connectionController = new ConnectionController();
   }
 
   create(data) {
-    return this.apiRequest.create(data)
+    return db.ApiRequest.create(data)
       .then((apiRequest) => {
-        return this.apiRequest.findByPk(apiRequest.id);
+        return db.ApiRequest.findByPk(apiRequest.id);
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -19,7 +17,7 @@ class ApiRequestController {
   }
 
   findById(id) {
-    return this.apiRequest.findByPk(id)
+    return db.ApiRequest.findByPk(id)
       .then((apiRequest) => {
         if (!apiRequest) {
           throw new Error(404);
@@ -32,7 +30,7 @@ class ApiRequestController {
   }
 
   findByChart(chartId) {
-    return this.apiRequest.findOne({ where: { chart_id: chartId } })
+    return db.ApiRequest.findOne({ where: { chart_id: chartId } })
       .then((apiRequest) => {
         if (!apiRequest) {
           throw new Error(404);
@@ -45,11 +43,11 @@ class ApiRequestController {
   }
 
   update(id, data) {
-    return this.apiRequest.update(data, {
+    return db.ApiRequest.update(data, {
       where: { id },
     })
       .then(() => {
-        return this.apiRequest.findByPk(id);
+        return db.ApiRequest.findByPk(id);
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -63,7 +61,7 @@ class ApiRequestController {
         if (!apiRequest) throw new Error(404);
         gApiRequest = JSON.parse(JSON.stringify(apiRequest));
 
-        return Chart.findByPk(chartId);
+        return db.Chart.findByPk(chartId);
       })
       .then((chart) => {
         const jsChart = chart.get({ plain: true });

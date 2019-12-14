@@ -3,7 +3,7 @@ const requestP = require("request-promise");
 const querystring = require("querystring");
 const _ = require("lodash");
 
-const Connection = require("../models/Connection");
+const db = require("../models/models");
 const ProjectController = require("./ProjectController");
 const externalDbConnection = require("../modules/externalDbConnection");
 
@@ -67,12 +67,11 @@ function paginateRequests(options, limit, items, offset, totalResults) {
 
 class ConnectionController {
   constructor() {
-    this.connection = Connection;
     this.projectController = new ProjectController();
   }
 
   findById(id) {
-    return this.connection.findByPk(id)
+    return db.Connection.findByPk(id)
       .then((connection) => {
         if (!connection) {
           return new Promise((resolve, reject) => reject(new Error(404)));
@@ -85,7 +84,7 @@ class ConnectionController {
   }
 
   findByProject(projectId) {
-    return this.connection.findAll({
+    return db.Connection.findAll({
       where: { project_id: projectId },
       attributes: { exclude: ["password"] },
     })
@@ -99,7 +98,7 @@ class ConnectionController {
 
   create(data) {
     if (!data.type) data.type = "mongodb"; // eslint-disable-line
-    return this.connection.create(data)
+    return db.Connection.create(data)
       .then((connection) => {
         return connection;
       })
@@ -109,7 +108,7 @@ class ConnectionController {
   }
 
   update(id, data) {
-    return this.connection.update(data, { where: { id } })
+    return db.Connection.update(data, { where: { id } })
       .then(() => {
         return this.findById(id);
       })
@@ -119,7 +118,7 @@ class ConnectionController {
   }
 
   getConnectionUrl(id) {
-    return this.connection.findByPk(id)
+    return db.Connection.findByPk(id)
       .then((connection) => {
         if (!connection) {
           return new Promise((resolve, reject) => reject(new Error(404)));
@@ -137,7 +136,7 @@ class ConnectionController {
   }
 
   removeConnection(id) {
-    return this.connection.destroy({ where: { id } })
+    return db.Connection.destroy({ where: { id } })
       .then(() => {
         return true;
       })
@@ -168,7 +167,7 @@ class ConnectionController {
 
   testConnection(id) {
     let gConnection;
-    return this.connection.findByPk(id)
+    return db.Connection.findByPk(id)
       .then((connection) => {
         gConnection = connection;
         if (connection.type === "mongodb") {
