@@ -39,10 +39,10 @@ class ApiPagination extends Component {
               <Popup
                 content={"The query parameter name that limits the number of item per request."}
                 trigger={(
-                  <label>
+                  <p>
                     {"Items per page "}
                     <Icon name="info circle" />
-                  </label>
+                  </p>
                 )}
               />
             </Form.Field>
@@ -61,10 +61,10 @@ class ApiPagination extends Component {
               <Popup
                 content={"The query parameter name used for the starting point of the first request. "}
                 trigger={(
-                  <label>
+                  <p>
                     {"Offset "}
                     <Icon name="info circle" />
-                  </label>
+                  </p>
                 )}
               />
             </Form.Field>
@@ -83,10 +83,10 @@ class ApiPagination extends Component {
               <Popup
                 content={"The total amount of items to get (all the paged items put together) - Leave empty or 0 for unlimited"}
                 trigger={(
-                  <label>
+                  <p>
                     {"Total maximum number "}
                     <Icon name="info circle" />
-                  </label>
+                  </p>
                 )}
               />
             </Form.Field>
