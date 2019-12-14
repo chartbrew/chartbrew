@@ -24,14 +24,14 @@
     "lodash": "^4.17.15",
     "method-override": "^3.0.0",
     "moment": "^2.24.0",
-    "mongoose": "^5.7.13",
+    "mongoose": "^5.8.1",
     "mysql2": "^1.7.0",
-    "nodemailer": "^6.4.0",
+    "nodemailer": "^6.4.2",
     "pg": "^7.14.0",
     "pg-hstore": "^2.3.3",
     "request": "^2.88.0",
     "request-promise": "^4.2.5",
-    "sequelize": "^5.21.2",
+    "sequelize": "^5.21.3",
     "simplecrypt": "^0.1.0",
     "uuid": "^3.3.3"
   },
@@ -39,7 +39,7 @@
     "babel-eslint": "^8.2.6",
     "eslint": "^4.19.1",
     "eslint-config-airbnb-base": "^12.1.0",
-    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-import": "^2.19.1",
     "nodemon": "^1.19.4"
   }
 }
