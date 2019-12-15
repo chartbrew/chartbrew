@@ -1,6 +1,6 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable("Teams", {
+    return queryInterface.createTable("Team", {
       id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
@@ -22,6 +22,6 @@ module.exports = {
   },
 
   down: (queryInterface, Sequelize) => { // eslint-disable-line
-    return queryInterface.dropTable("Teams");
+    return queryInterface.dropTable("Team");
   }
 };

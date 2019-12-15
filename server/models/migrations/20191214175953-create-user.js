@@ -10,7 +10,7 @@ const sc = simplecrypt({
 
 module.exports = {
   up: (queryInterface, DataTypes) => {
-    return queryInterface.createTable("Users", {
+    return queryInterface.createTable("User", {
       id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -71,6 +71,6 @@ module.exports = {
     });
   },
   down: (queryInterface, Sequelize) => { // eslint-disable-line
-    return queryInterface.dropTable("Users");
+    return queryInterface.dropTable("User");
   }
 };

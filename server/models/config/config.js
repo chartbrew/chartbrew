@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 module.exports = {
   development: {
     username: process.env.CB_DB_USERNAME_DEV,

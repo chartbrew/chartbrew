@@ -9,7 +9,7 @@ const sc = simplecrypt({
 
 module.exports = {
   up: (queryInterface, DataTypes) => {
-    return queryInterface.createTable("ApiRequests", {
+    return queryInterface.createTable("ApiRequest", {
       id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -72,6 +72,6 @@ module.exports = {
     });
   },
   down: (queryInterface, Sequelize) => { // eslint-disable-line
-    return queryInterface.dropTable("ApiRequests");
+    return queryInterface.dropTable("ApiRequest");
   }
 };

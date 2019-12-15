@@ -9,7 +9,7 @@ const sc = simplecrypt({
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable("Connections", {
+    return queryInterface.createTable("Connection", {
       id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
@@ -138,6 +138,6 @@ module.exports = {
     });
   },
   down: (queryInterface, Sequelize) => { // eslint-disable-line
-    return queryInterface.dropTable("Connections");
+    return queryInterface.dropTable("Connection");
   }
 };
