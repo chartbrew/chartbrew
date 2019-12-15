@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "setup": "npm install && cd client && cp -n src/config/settings.template.js src/config/settings.js && npm install && cd ../server/ && npm install && cp -n server/models/.env_template server/models/.env && npm run db:migrate",
+    "setup": "npm install && cd client && cp -n src/config/settings.template.js src/config/settings.js && npm install && cd ../server/ && npm install && cp -n models/.env_template models/.env && npm run db:migrate",
     "docs:dev": "vuepress dev docs",
     "docs:build": "vuepress build docs"
   },
