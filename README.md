@@ -39,6 +39,8 @@ Currently, ChartBrew supports connections to these data sources.
 
 ## Quickstart
 
+**Create a new database** that you're going to use with Chartbrew. Also, note down the username and password because you will need them in the next steps.
+
 ```sh
 npx create-chartbrew-app myApp --dbname="chartbrew" --dbusername="root" --dbpassword="" --dbhost="localhost"
 ```
