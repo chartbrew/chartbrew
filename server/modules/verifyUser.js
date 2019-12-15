@@ -1,5 +1,7 @@
-const User = require("../models/User");
 const jwt = require("jsonwebtoken");
+
+const db = require("../models/models");
+
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
 module.exports = (req, res, next) => {
@@ -11,7 +13,7 @@ module.exports = (req, res, next) => {
     return jwt.verify(token, settings.secret, (err, decoded) => {
       if (err) return res.status(401).send("Unauthorized access.");
 
-      return User.findByPk(decoded.id).then((user) => {
+      return db.User.findByPk(decoded.id).then((user) => {
         if (!user) return res.status(400).send("Could not process your user information. Try again later.");
         if (user.id === parseInt(requestedOwner, 0)) {
           req.decoded = decoded;

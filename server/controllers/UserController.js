@@ -1,10 +1,7 @@
 const simplecrypt = require("simplecrypt");
 const uuid = require("uuid/v4");
 
-const User = require("../models/User");
-const TeamRole = require("../models/TeamRole");
-const Team = require("../models/Team");
-const TeamInvite = require("../models/TeamInvintation");
+const db = require("../models/models");
 const mail = require("../modules/mail");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
@@ -15,17 +12,11 @@ const sc = simplecrypt({
 });
 
 class UserController {
-  constructor() {
-    this.user = User;
-    this.teamInvite = TeamInvite;
-  }
-
-
   createUser(user) {
-    return this.user.findOne({ where: { email: user.email } })
+    return db.User.findOne({ where: { email: user.email } })
       .then((foundUser) => {
         if (foundUser) return new Promise((resolve, reject) => reject(new Error(409)));
-        return this.user.create({
+        return db.User.create({
           "name": user.name,
           "surname": user.surname,
           "email": user.email,
@@ -42,7 +33,7 @@ class UserController {
 
 
   deleteUser(id) {
-    return this.user.destroy({ where: { id } })
+    return db.User.destroy({ where: { id } })
       .then(() => {
         return true;
       })
@@ -53,7 +44,7 @@ class UserController {
 
 
   login(email, password) {
-    return this.user.findOne({ where: { "email": sc.encrypt(email) } })
+    return db.User.findOne({ where: { "email": sc.encrypt(email) } })
       .then((foundUser) => {
         if (!foundUser) return new Promise((resolve, reject) => reject(new Error(404)));
         if (!(foundUser.password === sc.encrypt(password))) {
@@ -67,9 +58,9 @@ class UserController {
   }
 
   findById(id) {
-    return this.user.findOne({
+    return db.User.findOne({
       where: { "id": id },
-      include: [{ model: TeamRole }],
+      include: [{ model: db.TeamRole }],
     }).then((user) => {
       if (!user) return new Promise((resolve, reject) => reject(new Error(404)));
       return user;
@@ -79,7 +70,7 @@ class UserController {
   }
 
   emailExists(email) {
-    return this.user.findOne({ where: { "email": sc.encrypt(email) } })
+    return db.User.findOne({ where: { "email": sc.encrypt(email) } })
       .then((user) => {
         if (user !== null) return true;
         return false;
@@ -89,7 +80,7 @@ class UserController {
   }
 
   update(id, data) {
-    return this.user.update(data, { where: { "id": id } })
+    return db.User.update(data, { where: { "id": id } })
       .then(() => {
         return this.findById(id);
       })
@@ -99,9 +90,9 @@ class UserController {
   }
 
   getTeamInvitesByUser(email) {
-    return this.teamInvite.findAll({
+    return db.TeamInvite.findAll({
       where: { email: sc.encrypt(email) },
-      include: [{ model: Team }],
+      include: [{ model: db.Team }],
     })
       .then((invites) => {
         const idsArray = [];
@@ -109,7 +100,7 @@ class UserController {
           idsArray.push(invite.team_id);
         });
         if (idsArray < 1) return new Promise(resolve => resolve([]));
-        return Team.findAll({ where: { id: idsArray } })
+        return db.Team.findAll({ where: { id: idsArray } })
           .then((teams) => {
             return new Promise(resolve => resolve([invites, teams]));
           });
@@ -120,10 +111,10 @@ class UserController {
   }
 
   getUsersById(ids, teamId) {
-    return this.user.findAll({
+    return db.User.findAll({
       where: { id: ids },
       include: [{
-        model: TeamRole,
+        model: db.TeamRole,
         where: {
           team_id: teamId
         }
@@ -137,7 +128,7 @@ class UserController {
 
   requestPasswordReset(email) {
     const newToken = uuid();
-    return this.user.findOne({ where: { email: sc.encrypt(email) } })
+    return db.User.findOne({ where: { email: sc.encrypt(email) } })
       .then((user) => {
         if (!user) {
           throw new Error(404);

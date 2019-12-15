@@ -8,7 +8,6 @@ const cors = require("cors");
 const _ = require("lodash");
 
 const settings = process.env.NODE_ENV === "production" ? require("./settings") : require("./settings-dev");
-const models = require("./models/index");
 const routes = require("./api");
 const updateChartsCron = require("./modules/updateChartsCron");
 const cleanChartCache = require("./modules/CleanChartCache");
@@ -28,9 +27,6 @@ app.use(cors());
 app.get("/", (req, res) => {
   return res.send("Welcome to chartBrew server API");
 });
-
-// Load the models
-app.models = models;
 
 // Load the routes
 _.each(routes, (controller, route) => {

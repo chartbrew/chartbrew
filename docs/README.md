@@ -33,12 +33,6 @@ module.exports = {
   client: "http://localhost:3000",
   api: "http://localhost:3210",
   adminMail: process.env.CB_ADMIN_MAIL,
-  db: {
-    dbName: process.env.CB_DB_NAME_DEV,
-    dbUsername: process.env.CB_DB_USERNAME_DEV,
-    dbPassword: process.env.CB_DB_PASSWORD_DEV,
-    dbHost: process.env.CB_DB_HOST_DEV,
-  },
   mailSettings: {
     host: process.env.CB_MAIL_HOST_DEV,
     port: 465,
@@ -48,6 +42,36 @@ module.exports = {
       pass: process.env.CB_MAIL_PASS_DEV,
     },
   },
+};
+```
+
+Next, set the environmental variables for the database connection parameters. These can be found in `server/models/.env`. If the file is not there create one from `server/models/.env_template`.
+
+Check the `server/models/config/config.js` file to see what needs to be set:
+
+```javascript
+module.exports = {
+  development: {
+    username: process.env.CB_DB_USERNAME_DEV,
+    password: process.env.CB_DB_PASSWORD_DEV,
+    database: process.env.CB_DB_NAME_DEV,
+    host: process.env.CB_DB_HOST_DEV,
+    dialect: "mysql"
+  },
+  test: {
+    username: process.env.CB_DB_USERNAME_DEV,
+    password: process.env.CB_DB_PASSWORD_DEV,
+    database: process.env.CB_DB_NAME_DEV,
+    host: process.env.CB_DB_HOST_DEV,
+    dialect: "mysql"
+  },
+  production: {
+    username: process.env.CB_DB_USERNAME,
+    password: process.env.CB_DB_PASSWORD,
+    database: process.env.CB_DB_NAME,
+    host: process.env.CB_DB_HOST,
+    dialect: "mysql",
+  }
 };
 ```
 
