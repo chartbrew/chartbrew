@@ -9,7 +9,6 @@ jobs:
           MYSQL_ROOT_PASSWORD:
           MYSQL_DATABASE: chartbrewdev
           MYSQL_USER: root
-          MYSQL_PASSWORD:
 
     working_directory: ~/chartbrew
 
