@@ -47,6 +47,14 @@ npx create-chartbrew-app myApp --dbname="chartbrew" --dbusername="root" --dbpass
 
 The arguments are optional, but they set the environmental variables needed for the project to run. [Check out which need to be set here.](https://docs.chartbrew.com/#set-up-environmental-variables)
 
+**Run the database migrations**
+
+Ensure all the environmental variables are set, then run the following command in the `server` folder:
+
+```sh
+npm run db:migrate
+```
+
 ### Run the project in Development
 
 Open two terminals, one for front-end and the other for back-end.

@@ -79,6 +79,14 @@ module.exports = {
 };
 ```
 
+### Run the database migrations
+
+Running the migrations will ensure that you have the most up-to-date database schema. Ensure that all environmental variables are set before running the following command in the `server` folder:
+
+```sh
+npm run db:migrate
+```
+
 ### Setting up the frontend settings
 
 Modify the constants to match your environment.
