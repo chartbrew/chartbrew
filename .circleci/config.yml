@@ -4,7 +4,7 @@ jobs:
     docker:
       - image: circleci/node:10.16.0
       - image: circleci/php:7.1-apache-node-browsers # The primary container where steps are run
-      - image: circleci/mysql:8.0.4
+      - image: circleci/mysql:5.7.27
         environment:
           MYSQL_ROOT_PASSWORD:
           MYSQL_DATABASE: chartbrewdev
