@@ -18,7 +18,6 @@ module.exports = (sequelize, DataTypes) => {
     },
     connection_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
       reference: {
         model: "Connection",
         key: "id",
@@ -118,6 +117,10 @@ module.exports = (sequelize, DataTypes) => {
     offset: {
       type: DataTypes.STRING,
       defaultValue: "offset",
+    },
+    draft: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
     },
   }, {
     freezeTableName: true,
