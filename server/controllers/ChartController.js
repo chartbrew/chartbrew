@@ -163,6 +163,19 @@ class ChartController {
       });
   }
 
+  addConnection(chartId, connection) {
+    return db.Chart.findByPk(chartId)
+      .then((chart) => {
+        return chart.addConnections([connection]);
+      })
+      .then((chart) => {
+        return this.findById(chart.id);
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
   updateDatasets(chartId, datasets) {
     const updatePromises = [];
     for (const dataset of datasets) {

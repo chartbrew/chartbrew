@@ -92,6 +92,35 @@ module.exports = (app) => {
   // --------------------------------------------------------
 
   /*
+  ** Route to add a new connection to the chart
+  */
+  app.post("/project/:project_id/chart/:id/connection", verifyToken, (req, res) => {
+    if (!req.body.connection_id) return res.status(400).send({ error: "no connection_id" });
+
+    return projectController.findById(req.params.project_id)
+      .then((project) => {
+        return teamController.getTeamRole(project.team_id, req.user.id);
+      })
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).updateAny("chart");
+        if (!permission.granted) {
+          throw new Error(401);
+        }
+        return chartController.addConnection(req.params.id, req.body);
+      })
+      .then((chart) => {
+        return res.status(200).send(chart);
+      })
+      .catch((error) => {
+        if (error.message.indexOf("406") > -1) {
+          return res.status(406).send(error);
+        }
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------------------------
+
+  /*
   ** Route to update the order of the chart
   */
   app.put("/project/:project_id/chart/:id/order", verifyToken, (req, res) => {
