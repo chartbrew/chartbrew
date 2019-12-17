@@ -74,7 +74,7 @@ class TeamController {
       })
       .catch((error) => {
         if (error.message === "404") {
-          return this.teamRole.create({ "team_id": teamId, "user_id": userId, "role": roleName });
+          return db.TeamRole.create({ "team_id": teamId, "user_id": userId, "role": roleName });
         }
         return new Promise((resolve, reject) => reject(error));
       })
@@ -149,7 +149,7 @@ class TeamController {
       .then((sub) => {
         features = settings.features[sub.plan.nickname.toLowerCase()];
 
-        return this.teamRole.findAll({
+        return db.TeamRole.findAll({
           where: { team_id: teamId },
           include: [{ model: db.User }]
         });
