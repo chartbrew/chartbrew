@@ -43,6 +43,7 @@ class AddChart extends Component {
           xAxis: "root",
           legend: "Dataset #1",
         }],
+        offset: "offset",
       },
       ddConnections: [],
       updatedEdit: false, // eslint-disable-line
@@ -311,6 +312,8 @@ class AddChart extends Component {
     });
   }
 
+  /* API Stuff */
+
   _formatApiRequest = () => {
     const { apiRequest } = this.state;
     if (!apiRequest) return {};
@@ -331,6 +334,23 @@ class AddChart extends Component {
 
     return newRequest;
   }
+
+  _onPaginationChanged = (type, value) => {
+    const { newChart } = this.state;
+
+    let newValue = value;
+    if (type === "itemsLimit" && value && value !== "0") {
+      newValue = Math.abs(parseInt(value, 10));
+    }
+
+    this.setState({
+      newChart: {
+        ...newChart, [type]: newValue,
+      },
+    });
+  }
+
+  /* End of API Stuff */
 
   _onPreview = (e, refresh) => {
     const { getPreviewData, match } = this.props;
@@ -846,6 +866,11 @@ class AddChart extends Component {
                       this.setState({ apiRequest });
                     }}
                     chartId={newChart.id}
+                    itemsLimit={newChart.itemsLimit}
+                    items={newChart.items}
+                    offset={newChart.offset}
+                    pagination={newChart.pagination}
+                    onPaginationChanged={this._onPaginationChanged}
                   />
                   )}
 

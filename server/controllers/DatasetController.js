@@ -1,12 +1,8 @@
-const Dataset = require("../models/Dataset");
+const db = require("../models/models");
 
 class DatasetController {
-  constructor() {
-    this.dataset = Dataset;
-  }
-
   findById(id) {
-    return this.dataset.findByPk(id)
+    return db.Dataset.findByPk(id)
       .then((dataset) => {
         if (!dataset) {
           return new Promise((resolve, reject) => reject(new Error(404)));
@@ -19,7 +15,7 @@ class DatasetController {
   }
 
   findByChart(chartId) {
-    return this.dataset.findAll({
+    return db.Dataset.findAll({
       where: { project_id: chartId },
     })
       .then((datasets) => {
@@ -31,7 +27,7 @@ class DatasetController {
   }
 
   create(data) {
-    return this.dataset.create(data)
+    return db.Dataset.create(data)
       .then((dataset) => {
         return dataset;
       })
@@ -42,7 +38,7 @@ class DatasetController {
 
   update(id, data) {
     if (!id) {
-      return this.dataset.create(data)
+      return db.Dataset.create(data)
         .then((dataset) => {
           return this.findById(dataset.id);
         })
@@ -51,7 +47,7 @@ class DatasetController {
         });
     }
 
-    return this.dataset.update(data, { where: { id } })
+    return db.Dataset.update(data, { where: { id } })
       .then(() => {
         return this.findById(id);
       })
@@ -61,7 +57,7 @@ class DatasetController {
   }
 
   remove(id) {
-    return this.dataset.destroy({ where: { id } })
+    return db.Dataset.destroy({ where: { id } })
       .then(() => {
         return true;
       })

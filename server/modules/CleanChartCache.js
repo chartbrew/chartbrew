@@ -1,17 +1,17 @@
 const moment = require("moment");
 const { CronJob } = require("cron");
 
-const ChartCache = require("../models/ChartCache");
+const db = require("../models/models");
 
 function clean() {
-  return ChartCache.findAll()
+  return db.ChartCache.findAll()
     .then((cache) => {
       const cleanPromises = [];
       for (const item of cache) {
         const timeDiff = moment().diff(item.createdAt, "hours");
 
         if (timeDiff > 23) {
-          cleanPromises.push(ChartCache.destroy({ where: { id: item.id } }));
+          cleanPromises.push(db.ChartCache.destroy({ where: { id: item.id } }));
         }
       }
 

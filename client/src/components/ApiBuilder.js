@@ -15,6 +15,7 @@ import "brace/theme/tomorrow";
 
 import { testApiRequest } from "../actions/connection";
 import { getApiRequestByChart } from "../actions/apiRequest";
+import ApiPagination from "./ApiPagination";
 
 /*
   Description
@@ -235,6 +236,7 @@ class ApiBuilder extends Component {
   _onTest = () => {
     const {
       match, connection, testApiRequest, onComplete,
+      offset, items, itemsLimit, pagination,
     } = this.props;
     const {
       headers, apiRequest
@@ -247,8 +249,13 @@ class ApiBuilder extends Component {
       }
     }
 
-    const finalApiRequest = apiRequest;
-    finalApiRequest.headers = newHeaders;
+    const finalApiRequest = { apiRequest };
+    finalApiRequest.apiRequest.headers = newHeaders;
+
+    finalApiRequest.pagination = pagination;
+    finalApiRequest.items = items;
+    finalApiRequest.offset = offset;
+    finalApiRequest.itemsLimit = itemsLimit;
 
     this.setState({ requestLoading: true, requestSuccess: false, requestError: false });
     testApiRequest(match.params.projectId, connection.id, finalApiRequest)
@@ -275,7 +282,10 @@ class ApiBuilder extends Component {
       methods, activeMenu, requestSuccess, requestError,
       requestLoading, body, result, apiRequest,
     } = this.state;
-    const { connection } = this.props;
+    const {
+      connection, items, itemsLimit, offset, pagination,
+      onPaginationChanged,
+    } = this.props;
 
     return (
       <div style={styles.container}>
@@ -335,6 +345,11 @@ class ApiBuilder extends Component {
                   disabled={apiRequest.method === "GET" || apiRequest.method === "OPTIONS"}
                   active={activeMenu === "body"}
                   onClick={() => this.setState({ activeMenu: "body" })}
+                />
+                <Menu.Item
+                  name="Pagination"
+                  active={activeMenu === "pagination"}
+                  onClick={() => this.setState({ activeMenu: "pagination" })}
                 />
               </Menu>
               {activeMenu === "headers" && (
@@ -441,13 +456,28 @@ class ApiBuilder extends Component {
                   />
                 </div>
               )}
+              {activeMenu === "pagination" && (
+                <ApiPagination
+                  items={items}
+                  itemsLimit={itemsLimit}
+                  offset={offset}
+                  pagination={pagination}
+                  onPaginationChanged={onPaginationChanged}
+                  apiRoute={apiRequest.route}
+                />
+              )}
             </Grid.Column>
             <Grid.Column width={6}>
               <Header as="h3" dividing style={{ paddingTop: 15 }}>Result:</Header>
               {requestSuccess && (
-                <Label color="green" style={{ marginBottom: 10 }}>
-                  {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
-                </Label>
+                <>
+                  <Label color="green" style={{ marginBottom: 10 }}>
+                    {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
+                  </Label>
+                  <Label style={{ marginBottom: 10 }}>
+                    {`Length: ${result ? JSON.parse(result).length : 0}`}
+                  </Label>
+                </>
               )}
               {requestError && (
                 <Label color="red" style={{ marginBottom: 10 }}>
@@ -480,6 +510,10 @@ const styles = {
 ApiBuilder.defaultProps = {
   apiRequest: null,
   chartId: -1,
+  items: "limit",
+  itemsLimit: 100,
+  offset: "offset",
+  pagination: false,
 };
 
 ApiBuilder.propTypes = {
@@ -491,6 +525,11 @@ ApiBuilder.propTypes = {
   onChangeRequest: PropTypes.func.isRequired,
   apiRequest: PropTypes.object,
   chartId: PropTypes.number,
+  items: PropTypes.string,
+  itemsLimit: PropTypes.number,
+  offset: PropTypes.string,
+  pagination: PropTypes.bool,
+  onPaginationChanged: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = () => {

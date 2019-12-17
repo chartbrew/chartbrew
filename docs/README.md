@@ -12,6 +12,10 @@
 
 ### Installation & Setup
 
+**Create a new database** that you're going to use with Chartbrew. Also, note down the username and password because you will need them in the next steps.
+
+Then run:
+
 ```sh
 npx create-chartbrew-app myApp --dbname="chartbrew" --dbusername="root" --dbpassword="" --dbhost="localhost"
 ```
@@ -33,12 +37,6 @@ module.exports = {
   client: "http://localhost:3000",
   api: "http://localhost:3210",
   adminMail: process.env.CB_ADMIN_MAIL,
-  db: {
-    dbName: process.env.CB_DB_NAME_DEV,
-    dbUsername: process.env.CB_DB_USERNAME_DEV,
-    dbPassword: process.env.CB_DB_PASSWORD_DEV,
-    dbHost: process.env.CB_DB_HOST_DEV,
-  },
   mailSettings: {
     host: process.env.CB_MAIL_HOST_DEV,
     port: 465,
@@ -49,6 +47,49 @@ module.exports = {
     },
   },
 };
+```
+
+Next, set the environmental variables for the database connection parameters. Set these in the following locations:
+
+* `server/.env` - needed for running the app
+* `server/models/.env` - needed for running migrations to update the database
+
+Check the `.env_template` files in each folder for guidance on how to set these variables.
+
+Check the `server/models/config/config.js` file to see what needs to be set:
+
+```javascript
+module.exports = {
+  development: {
+    username: process.env.CB_DB_USERNAME_DEV,
+    password: process.env.CB_DB_PASSWORD_DEV,
+    database: process.env.CB_DB_NAME_DEV,
+    host: process.env.CB_DB_HOST_DEV,
+    dialect: "mysql"
+  },
+  test: {
+    username: process.env.CB_DB_USERNAME_DEV,
+    password: process.env.CB_DB_PASSWORD_DEV,
+    database: process.env.CB_DB_NAME_DEV,
+    host: process.env.CB_DB_HOST_DEV,
+    dialect: "mysql"
+  },
+  production: {
+    username: process.env.CB_DB_USERNAME,
+    password: process.env.CB_DB_PASSWORD,
+    database: process.env.CB_DB_NAME,
+    host: process.env.CB_DB_HOST,
+    dialect: "mysql",
+  }
+};
+```
+
+### Run the database migrations
+
+Running the migrations will ensure that you have the most up-to-date database schema. Ensure that all environmental variables are set before running the following command in the `server` folder:
+
+```sh
+npm run db:migrate
 ```
 
 ### Setting up the frontend settings

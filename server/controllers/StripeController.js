@@ -2,12 +2,7 @@ const stripe = require("stripe");
 const simplecrypt = require("simplecrypt");
 
 const UserController = require("./UserController");
-const TeamRole = require("../models/TeamRole");
-
-const Chart = require("../models/Chart");
-const Connection = require("../models/Connection");
-const Project = require("../models/Project");
-const User = require("../models/User");
+const db = require("../models/models");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -20,7 +15,6 @@ class StripeController {
   constructor() {
     this.stripe = stripe(settings.stripe.secret);
     this.user = new UserController();
-    this.teamRole = TeamRole;
   }
 
   createCustomer(id) {
@@ -126,7 +120,7 @@ class StripeController {
     let gSub;
     let teamId;
     // first get the team details to see if the plan can be updated
-    return this.teamRole.findOne({ where: { user_id: userId, role: "owner" } })
+    return db.TeamRole.findOne({ where: { user_id: userId, role: "owner" } })
       .then((teamRole) => {
         if (!teamRole) throw new Error(400);
         teamId = teamRole.team_id;
@@ -151,7 +145,7 @@ class StripeController {
       .then((subscription) => {
         gSub = subscription;
         // update the number of members subscription items
-        return this.teamRole.findAll({ where: { team_id: teamId } });
+        return db.TeamRole.findAll({ where: { team_id: teamId } });
       })
       .then((roles) => {
         const newPlan = settings.features[plan];
@@ -192,9 +186,9 @@ class StripeController {
 
   removeSubscription(subscriptionId) {
     // check if the user is allowed to remove the subscription
-    return User.findOne({ where: { subscriptionId: sc.encrypt(subscriptionId) } })
+    return db.User.findOne({ where: { subscriptionId: sc.encrypt(subscriptionId) } })
       .then((user) => {
-        return this.teamRole.findOne({ where: { user_id: user.id, role: "owner" } });
+        return db.TeamRole.findOne({ where: { user_id: user.id, role: "owner" } });
       })
       .then((teamRole) => {
         if (!teamRole) throw new Error(400);
@@ -287,14 +281,14 @@ class StripeController {
     const limitations = settings.features[newPlan];
     let gProjects;
     // check members
-    return this.teamRole.findAll({ where: { team_id: teamId } })
+    return db.TeamRole.findAll({ where: { team_id: teamId } })
       .then((roles) => {
         if (newPlan === "community" && roles.length > 1) {
           return new Promise((resolve, reject) => reject({ cbEntity: "member" }));
         }
 
         // check projects
-        return Project.findAll({ where: { team_id: teamId } });
+        return db.Project.findAll({ where: { team_id: teamId } });
       })
       .then((projects) => {
         gProjects = projects;
@@ -305,7 +299,7 @@ class StripeController {
         // check connections
         const connectionPromises = [];
         for (const project of projects) {
-          connectionPromises.push(Connection.findAll({ where: { project_id: project.id } }));
+          connectionPromises.push(db.Connection.findAll({ where: { project_id: project.id } }));
         }
 
         return Promise.all(connectionPromises);
@@ -321,7 +315,7 @@ class StripeController {
         // check the charts
         const chartPromises = [];
         for (const project of gProjects) {
-          chartPromises.push(Chart.findAll({ where: { project_id: project.id } }));
+          chartPromises.push(db.Chart.findAll({ where: { project_id: project.id } }));
         }
 
         return Promise.all(chartPromises);

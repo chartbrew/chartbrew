@@ -1,11 +1,11 @@
 {
   "name": "chartbrew",
-  "version": "1.0.0-beta.3",
+  "version": "1.0.0-beta.4.1",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "setup": "npm install && cd client && cp -n src/config/settings.template.js src/config/settings.js && npm install && cd ../server/ && npm install",
+    "setup": "npm install && cd client && cp -n src/config/settings.template.js src/config/settings.js && npm install && cd ../server/ && npm install && cp -n models/.env_template models/.env && npm run db:migrate",
     "docs:dev": "vuepress dev docs",
     "docs:build": "vuepress build docs"
   },

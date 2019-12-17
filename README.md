@@ -16,7 +16,9 @@ This project was created by [Kate Belakova](https://github.com/belakova) and [Ra
 
 📚 [**Read the full docs here**](https://docs.chartbrew.com)
 
-🚙 [**Public roadmap over here**](https://trello.com/b/IQ7eiDqZ/chartbrew-roadmap)
+🔧 [**Development roadmap**](https://github.com/orgs/chartbrew/projects/1) - start here if you want to contribute
+
+🚙 [**Public feature roadmap over here**](https://trello.com/b/IQ7eiDqZ/chartbrew-roadmap)
 
 💬 [**Join our Slack workspace**](https://join.slack.com/t/chartbrew/shared_invite/enQtODU3MzYzNTkwOTMwLTZiOTA5YzczODUzZGFiZmQyMGI1ZGVmZGI4YTVmOTBkMTI0YzQ2ZjJjOGI5NzQ0NmNmYzRmMDk3MmY4YmI4MTI)
 
@@ -37,11 +39,21 @@ Currently, ChartBrew supports connections to these data sources.
 
 ## Quickstart
 
+**Create a new database** that you're going to use with Chartbrew. Also, note down the username and password because you will need them in the next steps.
+
 ```sh
 npx create-chartbrew-app myApp --dbname="chartbrew" --dbusername="root" --dbpassword="" --dbhost="localhost"
 ```
 
 The arguments are optional, but they set the environmental variables needed for the project to run. [Check out which need to be set here.](https://docs.chartbrew.com/#set-up-environmental-variables)
+
+**Run the database migrations**
+
+Ensure all the environmental variables are set, then run the following command in the `server` folder:
+
+```sh
+npm run db:migrate
+```
 
 ### Run the project in Development
 

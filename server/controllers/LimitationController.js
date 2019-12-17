@@ -1,6 +1,4 @@
-const Chart = require("../models/Chart");
-const Connection = require("../models/Connection");
-const Project = require("../models/Project");
+const db = require("../models/models");
 const TeamController = require("./TeamController");
 const UserController = require("./UserController");
 
@@ -18,7 +16,7 @@ class LimitationController {
       .then((resp) => {
         limitations = resp;
         // now get the project and see if the number of charts reached the limitation
-        return Chart.count({ where: { project_id: projectId } });
+        return db.Chart.count({ where: { project_id: projectId } });
       })
       .then((count) => {
         if (limitations.charts === "unlimited") {
@@ -41,7 +39,7 @@ class LimitationController {
       .then((resp) => {
         limitations = resp;
 
-        return Connection.count({ where: { project_id: projectId } });
+        return db.Connection.count({ where: { project_id: projectId } });
       })
       .then((count) => {
         if (limitations.connections === "unlimited") {
@@ -64,7 +62,7 @@ class LimitationController {
       .then((resp) => {
         limitations = resp;
 
-        return Project.count({ where: { team_id: teamId } });
+        return db.Project.count({ where: { team_id: teamId } });
       })
       .then((count) => {
         if (limitations.projects === "unlimited") {
@@ -82,9 +80,9 @@ class LimitationController {
   }
 
   canChangeAutoUpdate(chartId, autoUpdate) {
-    return Chart.findOne({ where: { id: chartId } })
+    return db.Chart.findOne({ where: { id: chartId } })
       .then((chart) => {
-        return Project.findOne({ where: { id: chart.project_id } });
+        return db.Project.findOne({ where: { id: chart.project_id } });
       })
       .then((project) => {
         return this.getLimitations(project.team_id);
@@ -99,7 +97,7 @@ class LimitationController {
   }
 
   canUseTheData(projectId, objSize) {
-    return Project.findOne({ where: { id: projectId } })
+    return db.Project.findOne({ where: { id: projectId } })
       .then((project) => {
         return this.getLimitations(project.team_id);
       })

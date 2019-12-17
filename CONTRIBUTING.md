@@ -5,7 +5,7 @@ ChartBrew is currently maintained by:
 * [Razvan Ilin](https://github.com/razvanilin)
 * [Kate Belakova](https://github.com/belakova)
 
-Everybody is welcome to contribute to ChartBrew and the core team will review any open PRs before merging with the codebase. Please follow this guide to ensure that the process is as smooth as possible. Any active contributor can become part of the core maintenance team if they so wish.
+Everybody is welcome to contribute to ChartBrew and the core team will review any open PRs before merging with the codebase. Please follow this guide to ensure that the process is as smooth as possible. Any active contributor can become part of the core maintenance team if they wish so.
 
 ChartBrew is an open-source project under the MIT license. This is the official repository and it contains all the work done by contributors.
 
@@ -13,9 +13,9 @@ ChartBrew is an open-source project under the MIT license. This is the official 
 
 1. Fork the repository on your GitHub account
 
-2. Clone from your repository and make sure you stay on `master` branch
+2. Clone from your repository and make sure you stay on the `master` branch
 
-3. [Follow the setup guide](https://docs.chartbrew.com/#getting-started), ignoring the `git clone` and including the environment setup
+3. [Follow the setup guide](https://docs.chartbrew.com/#getting-started), ignoring the `create-chartbrew-app` command and including the environment setup
 
 4. Run the project in development using the guide above and make sure everything works
 
@@ -28,6 +28,10 @@ It's highly recommended that you create the PR as soon as you start development 
 
 For any backend changes, make sure you have some chart data recorded in the application before submitting the PR, to help detect any bugs.
 
+### What to work on
+
+It is recommended to check the [project roadmap](https://github.com/orgs/chartbrew/projects) to see what are the most important items you can work on.
+
 ### General checks
 
 - [ ] The PR is adding value
@@ -36,7 +40,8 @@ For any backend changes, make sure you have some chart data recorded in the appl
 - [ ] The PR contains any documentation updates if needed
 - [ ] The PR has an appropriate title that explains the change concisely
 - [ ] The PR has a detailed description
-- [ ] The PR contains small commits in the past tense `e.g. fixed the brew from spilling charts`
+- [ ] The PR contains small commits in the past tense `e.g. :bug: fixed the brew from spilling charts`
+- [ ] The PR contains commits that follow the [gitmoji guidelines](https://github.com/carloscuesta/gitmoji)
 
 ### Bug fixing checks
 

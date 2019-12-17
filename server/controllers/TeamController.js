@@ -1,13 +1,7 @@
 const simplecrypt = require("simplecrypt");
 const uuidv4 = require("uuid/v4");
 
-const Team = require("../models/Team");
-const TeamRole = require("../models/TeamRole");
-const User = require("../models/User");
-const Project = require("../models/Project");
-const Chart = require("../models/Chart");
-const Connection = require("../models/Connection");
-const TeamInvite = require("../models/TeamInvintation");
+const db = require("../models/models");
 const UserController = require("./UserController");
 const StripeController = require("./StripeController");
 
@@ -20,17 +14,13 @@ const sc = simplecrypt({
 
 class TeamController {
   constructor() {
-    this.team = Team;
-    this.teamRole = TeamRole;
-    this.teamInvite = TeamInvite;
-    this.user = User;
     this.userController = new UserController();
     this.stripeController = new StripeController();
   }
 
   // create a new team
   createTeam(data) {
-    return this.team.create({ "name": data.name })
+    return db.Team.create({ "name": data.name })
       .then((team) => {
         return team;
       }).catch((error) => {
@@ -39,7 +29,7 @@ class TeamController {
   }
 
   deleteTeam(id) {
-    return this.team.destroy({ where: { id } })
+    return db.Team.destroy({ where: { id } })
       .then(() => {
         return true;
       })
@@ -57,7 +47,7 @@ class TeamController {
         features = settings.features[sub.plan.nickname.toLowerCase()];
         return this.teamRole.findAll({
           where: { team_id: teamId },
-          include: [{ model: User }]
+          include: [{ model: db.User }]
         });
       })
       .then((roles) => {
@@ -77,7 +67,7 @@ class TeamController {
         return roles;
       })
       .then(() => {
-        return this.teamRole.create({ "team_id": teamId, "user_id": userId, "role": roleName });
+        return db.TeamRole.create({ "team_id": teamId, "user_id": userId, "role": roleName });
       })
       .then((role) => {
         return role;
@@ -94,7 +84,7 @@ class TeamController {
   }
 
   getTeamRole(teamId, userId) {
-    return this.teamRole.findOne({
+    return db.TeamRole.findOne({
       where: {
         team_id: teamId,
         user_id: userId,
@@ -109,7 +99,7 @@ class TeamController {
   }
 
   getAllTeamRoles(teamId) {
-    return this.teamRole.findAll({
+    return db.TeamRole.findAll({
       where: { team_id: teamId }
     })
       .then((roles) => {
@@ -121,7 +111,7 @@ class TeamController {
   }
 
   getTeamMembersId(teamId) {
-    return this.teamRole.findAll({
+    return db.TeamRole.findAll({
       where: { team_id: teamId }
     }).then((teamRoles) => {
       const userIds = [];
@@ -135,7 +125,7 @@ class TeamController {
   }
 
   updateTeamRole(teamId, userId, newRole) {
-    return this.teamRole.update({ role: newRole }, { where: { "team_id": teamId, "user_id": userId } })
+    return db.TeamRole.update({ role: newRole }, { where: { "team_id": teamId, "user_id": userId } })
       .then(() => {
         return this.getTeamRole(teamId, userId);
       })
@@ -147,10 +137,10 @@ class TeamController {
   deleteTeamMember(id) {
     let features;
     let teamId;
-    return this.teamRole.findByPk(id)
+    return db.TeamRole.findByPk(id)
       .then((role) => {
         teamId = role.team_id;
-        return this.teamRole.destroy({ where: { id } });
+        return db.TeamRole.destroy({ where: { id } });
       })
       .then(() => {
         // now check if the subscription should be changed as well
@@ -161,7 +151,7 @@ class TeamController {
 
         return this.teamRole.findAll({
           where: { team_id: teamId },
-          include: [{ model: User }]
+          include: [{ model: db.User }]
         });
       })
       .then((roles) => {
@@ -189,10 +179,10 @@ class TeamController {
   isUserInTeam(teamId, email) {
     // checking if a user is already in the team
     const idsArray = [];
-    return this.user.findOne({ where: { "email": sc.encrypt(email) } })
+    return db.User.findOne({ where: { "email": sc.encrypt(email) } })
       .then((invitedUser) => {
         if (!invitedUser) return [];
-        return this.teamRole.findAll({ where: { "user_id": invitedUser.id } })
+        return db.TeamRole.findAll({ where: { "user_id": invitedUser.id } })
           .then((teamRoles) => {
             if (teamRoles.length < 1) return [];
             teamRoles.forEach((teamRole) => {
@@ -209,11 +199,11 @@ class TeamController {
   findById(id) {
     let gTeam;
 
-    return this.team.findOne({
+    return db.Team.findOne({
       where: { id },
       include: [
-        { model: TeamRole },
-        { model: Project, include: [{ model: Chart }] }
+        { model: db.TeamRole },
+        { model: db.Project, include: [{ model: db.Chart }] }
       ],
     })
       .then((team) => {
@@ -235,7 +225,7 @@ class TeamController {
   }
 
   update(id, data) {
-    return this.team.update(data, { where: { "id": id } })
+    return db.Team.update(data, { where: { "id": id } })
       .then(() => {
         return this.findById(id);
       })
@@ -247,22 +237,22 @@ class TeamController {
   getUserTeams(userId) {
     let gTeams;
 
-    return this.teamRole.findAll({ where: { user_id: userId } })
+    return db.TeamRole.findAll({ where: { user_id: userId } })
       .then((teamIds) => {
         const idsArray = [];
         teamIds.forEach((role) => {
           idsArray.push(role.team_id);
         });
         if (idsArray < 1) return new Promise(resolve => resolve([]));
-        return this.team.findAll({
+        return db.Team.findAll({
           where: { id: idsArray },
           include: [
-            { model: TeamRole },
+            { model: db.TeamRole },
             {
-              model: Project,
+              model: db.Project,
               include: [
-                { model: Chart, attributes: ["id"] },
-                { model: Connection, attributes: ["id"] },
+                { model: db.Chart, attributes: ["id"] },
+                { model: db.Connection, attributes: ["id"] },
               ],
             },
           ],
@@ -306,7 +296,7 @@ class TeamController {
         }
 
         const token = uuidv4();
-        return this.teamInvite.create({
+        return db.TeamInvite.create({
           "team_id": teamId, "email": data.email, "user_id": data.user_id, token
         });
       })
@@ -316,7 +306,7 @@ class TeamController {
   }
 
   getTeamInvite(token) {
-    return this.teamInvite.findOne({ where: { token } })
+    return db.TeamInvite.findOne({ where: { token } })
       .then((invite) => {
         if (!invite) return new Promise((resolve, reject) => reject(new Error(404)));
         return invite;
@@ -327,9 +317,9 @@ class TeamController {
   }
 
   getTeamInvitesById(teamId) {
-    return this.teamInvite.findAll({
+    return db.TeamInvite.findAll({
       where: { team_id: teamId },
-      include: [{ model: Team }],
+      include: [{ model: db.Team }],
     })
       .then((invites) => {
         return invites;
@@ -340,9 +330,9 @@ class TeamController {
   }
 
   getInviteByEmail(teamId, email) {
-    return this.teamInvite.findOne({
+    return db.TeamInvite.findOne({
       where: { team_id: teamId, email: sc.encrypt(email) },
-      include: [{ model: Team }],
+      include: [{ model: db.Team }],
     })
       .then((foundInvite) => {
         return foundInvite;
@@ -353,7 +343,7 @@ class TeamController {
   }
 
   deleteTeamInvite(token) {
-    return this.teamInvite.destroy({ where: { token } })
+    return db.TeamInvite.destroy({ where: { token } })
       .then(() => {
         return true;
       })

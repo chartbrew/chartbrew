@@ -20,9 +20,14 @@
     |   |-- PieChart.js
     |-- controllers             # Controllers that interact directly with the models
     |   |-- UserController.js
-    |-- models                  # All the sequelize models
-    |   |-- index.js            # All the models and relations are registered here
-    |   |-- User.js             # Example User model
+    |-- models                  # All database-related files
+    |   |-- config              # DB configration
+    |   |   |-- config.js
+    |   |-- models
+    |   |   |-- User.js         # Example User model
+    |   |-- migrations          # DB migration files
+    |   |-- seeders             # If any data needs to be placed in the database
+    |   |-- .env                # DB environmental variables for running migrations
     |-- modules                 # Misc modules (AKA Services, Middlewares)
 ```
 
@@ -35,12 +40,21 @@ Basically, a Model needs a Controller and if any data needs to be exposed throug
 
 Check out the [Sequelize documentation](https://sequelize.org/master/manual/models-definition.html) to find out all the possible options for a model.
 
-The configuration file for the models can be found in `models/index.js`. All new models need to be registered here, including the relations with other models. Check this file to find the latest schema configuration.
+To create a new model run the following command in `server/models`:
+
+```sh
+npx sequelize-cli model:generate --name Brew --attributes name:string
+```
+
+...where `Brew` is the model name and `name` is a string attribute.
+
+**Important!** make sure that the generated migration contains all the fields created in the model.
+
+Check the other models to learn how to create associations.
 
 Code style used by the models:
 
 ```javascript
-
 // any fields that define a relation will use snake_case
 user_id: { // snake_case here
   type: Sequelize.INTEGER,
@@ -61,52 +75,40 @@ name: { // camelCase here
 Now let's see how a new model can be integrated with the app. In the example below we will create a `Brew` model.
 
 ```javascript
-const db = require("../modules/dbConnection");
-const Sequelize = require("sequelize");
-
-const Brew = db.define("Brew", {
-  id: {
-    type: Sequelize.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
-  },
-  user_id: {
-    type: Sequelize.INTEGER,
-    allowNull: false,
-    reference: {
-      model: "Team",
-      key: "id",
-      onDelete: "cascade",
+module.exports = (sequelize, DataTypes) => {
+  const Brew = sequelize.define("Brew", {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
     },
-  },
-  name: {
-    type: Sequelize.STRING,
-  },
-  flavour: {
-    type: Sequelize.String,
-    defaultValue: "Charty",
-  },
-}, {
-  freezeTableName: true
-});
+    user_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      reference: {
+        model: "Team",
+        key: "id",
+        onDelete: "cascade",
+      },
+    },
+    name: {
+      type: DataTypes.STRING,
+    },
+    flavour: {
+      type: DataTypes.String,
+      defaultValue: "Charty",
+    },
+  }, {
+    freezeTableName: true, // ! important to set this !
+  });
 
-module.exports = Brew;
-```
+  Brew.associate = (models) => {
+    // example association when a brew has multiple ingredients
+    // the 'Ingredient' model has a foreign key names 'brew_id'
+    models.Brew.hasMany(models.Ingredients, { foreignKey: "brew_id" });
+  };
 
-This model will then be registered in the `index` file in the root models folder.
-
-```javascript
-const user = require("./User");
-const brew = require("./Brew");
-// ----
-
-user.hasMany(brew, { foreignKey: "user_id" });
-// ---
-
-module.exports = {
-  user,
-  brew,
-  // ---
+  return Brew;
 };
 ```
 
@@ -117,15 +119,11 @@ The controllers hold all the functions that the app needs to manipulate the data
 Controllers code-style and `Brew` example below:
 
 ```javascript
-const brew = require("../models/brew");
+const db = require("../models/models");
 
 class BrewController { // The name of the controllers should always be <Model>Controller
-  contructor() {
-    this.brew = brew; // always register the model as a class attribute
-  }
-
   findById(id) { // standard function name when retrieving one item
-    return this.brew.findByPk(id) // always using promises (no callbacks, async/await acceptable)
+    return db.Brew.findByPk(id) // always using promises (no callbacks, async/await acceptable)
       .then((foundBrew) => {
         if (!foundBrew) {
           return new Promise((resolve, reject) => reject(new Error(404)));
@@ -175,7 +173,7 @@ module.exports = (app) => {
   return (req, res, next) => {
     next();
   };
-}
+};
 ```
 
 The next step is to register the new route with the `index` file:

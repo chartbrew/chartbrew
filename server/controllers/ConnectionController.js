@@ -1,21 +1,80 @@
 const mongoose = require("mongoose");
 const requestP = require("request-promise");
+const querystring = require("querystring");
+const _ = require("lodash");
 
-const Connection = require("../models/Connection");
+const db = require("../models/models");
 const ProjectController = require("./ProjectController");
 const LimitationController = require("./LimitationController");
 const externalDbConnection = require("../modules/externalDbConnection");
 const getMemorySize = require("../modules/getMemorySize");
 
+/*
+** Helper functions
+*/
+
+function paginateRequests(options, limit, items, offset, totalResults) {
+  return requestP(options)
+    .then((response) => {
+      responseCode = response.responseCode; // eslint-disable-line
+      let results;
+      try {
+        const parsedResponse = JSON.parse(response.body);
+
+        if (parsedResponse instanceof Array) {
+          results = parsedResponse;
+        } else {
+          Object.keys(parsedResponse).forEach((key) => {
+            if (parsedResponse[key] instanceof Array) {
+              results = parsedResponse[key];
+            }
+          });
+        }
+      } catch (error) {
+        return new Promise((resolve, reject) => reject(response.statusCode));
+      }
+
+      // check if results are the same as previous ones (infinite request loop?)
+      let skipping = false;
+
+      if (_.isEqual(results, totalResults)) {
+        skipping = true;
+      }
+
+      const tempResults = totalResults.concat(results);
+
+      if (skipping || results.length === 0 || (tempResults.length >= limit && limit !== 0)) {
+        let finalResults = skipping ? results : tempResults;
+
+        // check if it goes above the limit
+        if (tempResults.length > limit && limit !== 0) {
+          finalResults = tempResults.slice(0, limit);
+        }
+
+        return new Promise(resolve => resolve(finalResults));
+      }
+
+      const newOptions = options;
+      newOptions.qs[offset] =
+        parseInt(options.qs[offset], 10) + parseInt(options.qs[items], 10);
+
+      return paginateRequests(newOptions, limit, items, offset, tempResults);
+    })
+    .catch((e) => {
+      return Promise.reject(e);
+    });
+}
+
+// ----------------
+
 class ConnectionController {
   constructor() {
-    this.connection = Connection;
     this.projectController = new ProjectController();
     this.limitation = new LimitationController();
   }
 
   findById(id) {
-    return this.connection.findByPk(id)
+    return db.Connection.findByPk(id)
       .then((connection) => {
         if (!connection) {
           return new Promise((resolve, reject) => reject(new Error(404)));
@@ -28,7 +87,7 @@ class ConnectionController {
   }
 
   findByProject(projectId) {
-    return this.connection.findAll({
+    return db.Connection.findAll({
       where: { project_id: projectId },
       attributes: { exclude: ["password"] },
     })
@@ -42,7 +101,7 @@ class ConnectionController {
 
   create(data) {
     if (!data.type) data.type = "mongodb"; // eslint-disable-line
-    return this.connection.create(data)
+    return db.Connection.create(data)
       .then((connection) => {
         return connection;
       })
@@ -52,7 +111,7 @@ class ConnectionController {
   }
 
   update(id, data) {
-    return this.connection.update(data, { where: { id } })
+    return db.Connection.update(data, { where: { id } })
       .then(() => {
         return this.findById(id);
       })
@@ -62,7 +121,7 @@ class ConnectionController {
   }
 
   getConnectionUrl(id) {
-    return this.connection.findByPk(id)
+    return db.Connection.findByPk(id)
       .then((connection) => {
         if (!connection) {
           return new Promise((resolve, reject) => reject(new Error(404)));
@@ -80,7 +139,7 @@ class ConnectionController {
   }
 
   removeConnection(id) {
-    return this.connection.destroy({ where: { id } })
+    return db.Connection.destroy({ where: { id } })
       .then(() => {
         return true;
       })
@@ -111,7 +170,7 @@ class ConnectionController {
 
   testConnection(id) {
     let gConnection;
-    return this.connection.findByPk(id)
+    return db.Connection.findByPk(id)
       .then((connection) => {
         gConnection = connection;
         if (connection.type === "mongodb") {
@@ -143,16 +202,30 @@ class ConnectionController {
       });
   }
 
-  testApiRequest(connectionId, apiRequest) {
+  testApiRequest({
+    connection_id, apiRequest, itemsLimit, items, offset, pagination,
+  }) {
     let gConnection;
     let gResponse;
-    return this.findById(connectionId)
+
+    const limit = itemsLimit
+      ? parseInt(itemsLimit, 10) : 0;
+
+    return this.findById(connection_id)
       .then((connection) => {
-        gConnection = connection;
+        const tempUrl = `${connection.getApiUrl(connection)}${apiRequest.route || ""}`;
+        const queryParams = querystring.parse(tempUrl.split("?")[1]);
+
+        let url = tempUrl;
+        if (url.indexOf("?") > -1) {
+          url = tempUrl.substring(0, tempUrl.indexOf("?"));
+        }
+
         const options = {
-          url: `${connection.getApiUrl(connection)}${apiRequest.route || ""}`,
+          url,
           method: apiRequest.method || "GET",
           headers: {},
+          qs: queryParams,
           resolveWithFullResponse: true,
           simple: false,
         };
@@ -176,9 +249,22 @@ class ConnectionController {
           options.body = apiRequest.body;
         }
 
+        if (pagination) {
+          if ((options.url.indexOf(`?${items}=`) || options.url.indexOf(`&${items}=`))
+            && (options.url.indexOf(`?${offset}=`) || options.url.indexOf(`&${offset}=`))
+          ) {
+            return paginateRequests(options, limit, items, offset, []);
+          }
+        }
+
         return requestP(options);
       })
       .then((response) => {
+        if (pagination) {
+          gResponse = response;
+          return new Promise(resolve => resolve(response));
+        }
+
         if (response.statusCode < 300) {
           try {
             // check the query limitations

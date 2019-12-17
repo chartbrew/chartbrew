@@ -5,8 +5,7 @@ const Sequelize = require("sequelize");
 const externalDbConnection = require("../modules/externalDbConnection");
 const getMemorySize = require("../modules/getMemorySize");
 
-const Chart = require("../models/Chart");
-const Dataset = require("../models/Dataset");
+const db = require("../models/models");
 const DatasetController = require("./DatasetController");
 const ConnectionController = require("./ConnectionController");
 const ProjectController = require("./ProjectController");
@@ -21,7 +20,6 @@ const PieChart = require("../charts/PieChart");
 
 class ChartController {
   constructor() {
-    this.chart = Chart;
     this.connection = new ConnectionController();
     this.dataset = new DatasetController();
     this.project = new ProjectController();
@@ -32,7 +30,7 @@ class ChartController {
 
   create(data, user) {
     let chartId;
-    return this.chart.create(data)
+    return db.Chart.create(data)
       .then((chart) => {
         chartId = chart.id;
         if (data.Datasets || data.apiRequest) {
@@ -76,7 +74,7 @@ class ChartController {
   }
 
   findAll(conditions = {}) {
-    return this.chart.findAll(conditions)
+    return db.Chart.findAll(conditions)
       .then((charts) => {
         return new Promise(resolve => resolve(charts));
       })
@@ -86,10 +84,10 @@ class ChartController {
   }
 
   findByProject(projectId) {
-    return this.chart.findAll({
+    return db.Chart.findAll({
       where: { project_id: projectId },
       order: [["dashboardOrder", "ASC"]],
-      include: [{ model: Dataset }],
+      include: [{ model: db.Dataset }],
     })
       .then((charts) => {
         return charts;
@@ -100,9 +98,9 @@ class ChartController {
   }
 
   findById(id) {
-    return this.chart.findOne({
+    return db.Chart.findOne({
       where: { id },
-      include: [{ model: Dataset }],
+      include: [{ model: db.Dataset }],
     })
       .then((chart) => {
         return chart;
@@ -114,7 +112,7 @@ class ChartController {
 
   update(id, data, user) {
     if (data.autoUpdate) {
-      return this.chart.update(data, { where: { id } })
+      return db.Chart.update(data, { where: { id } })
         .then(() => {
           const updatePromises = [];
 
@@ -138,7 +136,7 @@ class ChartController {
         });
     }
 
-    return this.chart.update(data, {
+    return db.Chart.update(data, {
       where: { id },
     })
       .then(() => {
@@ -219,7 +217,7 @@ class ChartController {
   }
 
   remove(id) {
-    return this.chart.destroy({ where: { id } })
+    return db.Chart.destroy({ where: { id } })
       .then((response) => {
         return response;
       })
@@ -405,7 +403,7 @@ class ChartController {
   getApiChartData(chart, projectId) {
     let gData;
 
-    return this.connection.testApiRequest(chart.connection_id, chart.apiRequest)
+    return this.connection.testApiRequest(chart)
       .then((data) => {
         gData = data;
         // check the query limitations
@@ -479,7 +477,6 @@ class ChartController {
         return new Promise(resolve => resolve(data));
       })
       .catch((error) => {
-        // console.log("Error", error);
         return new Promise((resolve, reject) => reject(error));
       });
   }

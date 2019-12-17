@@ -1,19 +1,10 @@
-const Project = require("../models/Project");
-const Connection = require("../models/Connection");
-const ProjectRole = require("../models/ProjectRole");
-const Chart = require("../models/Chart");
-const Team = require("../models/Team");
+const db = require("../models/models");
 
 class ProjectController {
-  constructor() {
-    this.project = Project;
-    this.projectRole = ProjectRole;
-  }
-
   findById(id) {
-    return this.project.findOne({
+    return db.Project.findOne({
       where: { id },
-      include: [{ model: Connection }, { model: Chart }],
+      include: [{ model: db.Connection }, { model: db.Chart }],
     })
       .then((project) => {
         if (!project) {
@@ -27,7 +18,7 @@ class ProjectController {
   }
 
   findByUserId(userId) {
-    return this.projectRole.findAll({
+    return db.ProjectRole.findAll({
       where: {
         user_id: userId
       },
@@ -43,11 +34,11 @@ class ProjectController {
           return new Promise(resolve => resolve([]));
         }
 
-        return this.project.findAll({
+        return db.Project.findAll({
           where: {
             id: idArray,
           },
-          include: [{ model: ProjectRole }, { model: Chart }],
+          include: [{ model: db.ProjectRole }, { model: db.Chart }],
         });
       })
       .then((projects) => {
@@ -61,7 +52,7 @@ class ProjectController {
 
   create(userId, data) {
     let newProject = {};
-    return this.project.create(data)
+    return db.Project.create(data)
       .then((project) => {
         newProject = project;
         return this.updateProjectRole(project.id, userId, "owner");
@@ -79,7 +70,7 @@ class ProjectController {
   }
 
   update(id, data) {
-    return this.project.update(data, { where: { id } })
+    return db.Project.update(data, { where: { id } })
       .then(() => {
         return this.findById(id);
       })
@@ -90,7 +81,7 @@ class ProjectController {
 
   remove(id) {
     // remove the project and any associated items alongs with that
-    return this.project.destroy({ where: { id } })
+    return db.Project.destroy({ where: { id } })
       .then((result) => {
         return result;
       })
@@ -100,7 +91,7 @@ class ProjectController {
   }
 
   updateProjectRole(projectId, userId, role) {
-    return this.projectRole.findOne({
+    return db.ProjectRole.findOne({
       where: {
         project_id: projectId,
         user_id: userId,
@@ -112,7 +103,7 @@ class ProjectController {
           return projectRole.save();
         }
 
-        return this.projectRole.create({
+        return db.ProjectRole.create({
           project_id: projectId,
           user_id: userId,
           role,
@@ -127,7 +118,7 @@ class ProjectController {
   }
 
   getTeamProjects(teamId) {
-    return this.project.findAll({ where: { team_id: teamId } })
+    return db.Project.findAll({ where: { team_id: teamId } })
       .then((projects) => {
         return projects;
       })
@@ -137,13 +128,13 @@ class ProjectController {
   }
 
   getPublicDashboard(brewName) {
-    return this.project.findOne({
+    return db.Project.findOne({
       where: { brewName },
       include: [
-        { model: Chart, attributes: { exclude: ["query"] }, where: { public: true } },
-        { model: Team, attributes: ["name"] },
+        { model: db.Chart, attributes: { exclude: ["query"] }, where: { public: true } },
+        { model: db.Team, attributes: ["name"] },
       ],
-      order: [[Chart, "dashboardOrder", "ASC"]],
+      order: [[db.Chart, "dashboardOrder", "ASC"]],
     })
       .then((dashboard) => {
         if (!dashboard) throw new Error(404);

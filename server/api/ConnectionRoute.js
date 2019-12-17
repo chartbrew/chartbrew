@@ -225,7 +225,10 @@ module.exports = (app) => {
           throw new Error(401);
         }
 
-        return connectionController.testApiRequest(req.params.connection_id, req.body);
+        const requestData = req.body;
+        requestData.connection_id = req.params.connection_id;
+
+        return connectionController.testApiRequest(requestData);
       })
       .then((apiRequest) => {
         if (!apiRequest) return res.status(500).send("Api Request Error");

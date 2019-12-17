@@ -1,12 +1,8 @@
-const ChartCache = require("../models/ChartCache");
+const db = require("../models/models");
 
 class ChartCacheController {
-  constructor() {
-    this.chartCache = ChartCache;
-  }
-
   create(userId, data, type = "CHART_CACHE") {
-    return this.chartCache.create({
+    return db.ChartCache.create({
       user_id: userId,
       data,
       type,
@@ -20,7 +16,7 @@ class ChartCacheController {
   }
 
   findLast(userId) {
-    return this.chartCache.findAll({
+    return db.ChartCache.findAll({
       where: { user_id: userId },
       order: [["createdAt", "DESC"]],
     })
@@ -39,7 +35,7 @@ class ChartCacheController {
   }
 
   deleteAll(userId) {
-    return this.chartCache.destroy({ where: { user_id: userId } })
+    return db.ChartCache.destroy({ where: { user_id: userId } })
       .then((result) => {
         return new Promise(resolve => resolve(result));
       })

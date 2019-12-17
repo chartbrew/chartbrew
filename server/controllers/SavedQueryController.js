@@ -1,15 +1,10 @@
-const SavedQuery = require("../models/SavedQuery");
-const User = require("../models/User");
+const db = require("../models/models");
 
 class SavedQueryController {
-  constructor() {
-    this.savedQuery = SavedQuery;
-  }
-
   findById(id) {
-    return this.savedQuery.findOne({
+    return db.SavedQuery.findOne({
       where: { id },
-      include: [{ model: User }],
+      include: [{ model: db.User }],
     })
       .then((savedQuery) => {
         if (!savedQuery) {
@@ -23,9 +18,9 @@ class SavedQueryController {
   }
 
   findByProject(projectId, type) {
-    return this.savedQuery.findAll({
+    return db.SavedQuery.findAll({
       where: { project_id: projectId, type },
-      include: [{ model: User }],
+      include: [{ model: db.User }],
     })
       .then((savedQueries) => {
         return savedQueries;
@@ -36,7 +31,7 @@ class SavedQueryController {
   }
 
   create(data) {
-    return this.savedQuery.create(data)
+    return db.SavedQuery.create(data)
       .then((savedQuery) => {
         return this.findById(savedQuery.id);
       })
@@ -47,7 +42,7 @@ class SavedQueryController {
 
   update(id, data) {
     if (!id) {
-      return this.savedQuery.create(data)
+      return db.SavedQuery.create(data)
         .then((savedQuery) => {
           return this.findById(savedQuery.id);
         })
@@ -56,7 +51,7 @@ class SavedQueryController {
         });
     }
 
-    return this.savedQuery.update(data, { where: { id } })
+    return db.SavedQuery.update(data, { where: { id } })
       .then(() => {
         return this.findById(id);
       })
@@ -66,7 +61,7 @@ class SavedQueryController {
   }
 
   remove(id) {
-    return this.savedQuery.destroy({ where: { id } })
+    return db.SavedQuery.destroy({ where: { id } })
       .then(() => {
         return true;
       })
