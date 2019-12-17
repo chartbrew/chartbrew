@@ -49,7 +49,12 @@ module.exports = {
 };
 ```
 
-Next, set the environmental variables for the database connection parameters. These can be found in `server/models/.env`. If the file is not there create one from `server/models/.env_template`.
+Next, set the environmental variables for the database connection parameters. Set these in the following locations:
+
+* `server/.env` - needed for running the app
+* `server/models/.env` - needed for running migrations to update the database
+
+Check the `.env_template` files in each folder for guidance on how to set these variables.
 
 Check the `server/models/config/config.js` file to see what needs to be set:
 

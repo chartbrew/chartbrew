@@ -23,7 +23,7 @@ CB_DB_HOST_DEV= # Database host
 ```
 
 ::: tip
-The project uses `dotenv` meaning that you can also put your environmental variables in a `server/models/.env` file.
+The project uses `dotenv` meaning that you can also put your environmental variables in a `server/models/.env` and `server/models/.env` files.
 :::
 
 ## PostgreSQL

@@ -27,6 +27,7 @@
     |   |   |-- User.js         # Example User model
     |   |-- migrations          # DB migration files
     |   |-- seeders             # If any data needs to be placed in the database
+    |   |-- .env                # DB environmental variables for running migrations
     |-- modules                 # Misc modules (AKA Services, Middlewares)
 ```
 
