@@ -1,0 +1,34 @@
+version: '3.3'
+
+services:
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: chartbrewdev
+      MYSQL_USER: root
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - 3306:3306
+    expose:
+      - 3306
+    volumes:
+      - chartbrew-db:/var/lib/mysql
+
+  chartbrew:
+    build: .
+    restart: always
+    ports:
+      - 3000:3000
+      - 3210:3210
+    expose:
+      - 3000
+      - 3210
+    depends_on:
+      - db
+    links:
+      - db
+
+volumes:
+  chartbrew-db:
