@@ -4,7 +4,6 @@
 
 ```
 |-- server
-    |-- .env                    # Optional file for environmental variables
     |-- .eslintrc.json          # eslint configuration
     |-- .gitignore
     |-- index.js                # Server entry file
@@ -27,7 +26,6 @@
     |   |   |-- User.js         # Example User model
     |   |-- migrations          # DB migration files
     |   |-- seeders             # If any data needs to be placed in the database
-    |   |-- .env                # DB environmental variables for running migrations
     |-- modules                 # Misc modules (AKA Services, Middlewares)
 ```
 
