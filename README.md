@@ -73,6 +73,13 @@ npm run start-dev
 
 #### The Containerized Way
 
+First run
+```sh
+npm run setup:docker
+```
+
+Then
+
 ```sh
 docker-compose up
 ```
