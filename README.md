@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https:/\/circleci.com/gh/razvanilin/chartbrew">
-    <img src="https://circleci.com/gh/chartbrew/chartbrew.svg?style=svg" alt="ChartBrew build" />
+    <img src="https://app.buddy.works/razvanilin/chartbrew/pipelines/pipeline/230383/badge.svg?token=25baf00f6b4d446c82fc0d93f2330616808aeb930dc818c5138b5c5cf22f4bc8" alt="ChartBrew build" />
   </a>
 </p>
 
