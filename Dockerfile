@@ -1,9 +1,10 @@
 FROM node:10
 
 WORKDIR /code
-COPY . .
+# COPY . .
 
 RUN npm install
+run npm run setup
 RUN cd client && npm install
 RUN cd server && npm install
 
