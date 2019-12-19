@@ -57,6 +57,8 @@ npm run db:migrate
 
 ### Run the project in Development
 
+#### The Usual Way
+
 Open two terminals, one for front-end and the other for back-end.
 
 ```sh
@@ -67,6 +69,19 @@ npm run start
 # backend
 cd server/
 npm run start-dev
+```
+
+#### The Containerized Way
+
+First run
+```sh
+npm run setup:docker
+```
+
+And, because of the way it works, you'd change `CB_DB_HOST_DEV=localhost` to `CB_DB_HOST_DEV=db`, and you'll be fine. Then
+
+```sh
+docker-compose up
 ```
 
 For more information on how to configure, modify and deploy ChartBrew, [**read the full docs here**](https://docs.chartbrew.com)
