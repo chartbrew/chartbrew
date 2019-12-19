@@ -78,7 +78,7 @@ First run
 npm run setup:docker
 ```
 
-Then
+And, because of the way it works, you'd change `CB_DB_HOST_DEV=localhost` to `CB_DB_HOST_DEV=db`, and you'll be fine. Then
 
 ```sh
 docker-compose up
