@@ -14,7 +14,7 @@
 
 **Create a new database** that you're going to use with Chartbrew. Also, note down the username and password because you will need them in the next steps.
 
-Then run:
+#### Quickstart
 
 ```sh
 npx create-chartbrew-app myApp --dbname="chartbrew" --dbusername="root" --dbpassword="" --dbhost="localhost"
@@ -22,62 +22,20 @@ npx create-chartbrew-app myApp --dbname="chartbrew" --dbusername="root" --dbpass
 
 The arguments are optional, but they set the environmental variables needed for the project to run. Check the section below to see what needs to be set.
 
+#### Developing and extending the application
+
+If you plan on doing this, setup the app like so:
+
+```sh
+git clone https://github.com/chartbrew/chartbrew.git
+cd chartbrew && npm run setup
+```
+
 ### Set up environmental variables
 
-Inspect `server/settings-dev.js` and `server/settings.js` to see what variables need to be set. You can place all these in a `server/.env` file or somewhere else to your liking.
+All the environmental variables that need to be set are found in the `.env-template` file in the root folder of the project. If you ran the setup above, you should already have a `.env` file there as well. If not, copy the template file and rename it `.env`.
 
-You can use `server/.env-template` as a guide to fill out the variables.
-
-Example of `settings-dev.js`:
-
-```javascript
-module.exports = {
-  port: 3210,
-  secret: process.env.CB_SECRET_DEV,
-  client: "http://localhost:3000",
-  api: "http://localhost:3210",
-  adminMail: process.env.CB_ADMIN_MAIL,
-  mailSettings: {
-    host: process.env.CB_MAIL_HOST_DEV,
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.CB_MAIL_USER_DEV,
-      pass: process.env.CB_MAIL_PASS_DEV,
-    },
-  },
-};
-```
-
-Next, set the environmental variables for the database connection parameters. These can be found in `server/models/.env`. If the file is not there create one from `server/models/.env_template`.
-
-Check the `server/models/config/config.js` file to see what needs to be set:
-
-```javascript
-module.exports = {
-  development: {
-    username: process.env.CB_DB_USERNAME_DEV,
-    password: process.env.CB_DB_PASSWORD_DEV,
-    database: process.env.CB_DB_NAME_DEV,
-    host: process.env.CB_DB_HOST_DEV,
-    dialect: "mysql"
-  },
-  test: {
-    username: process.env.CB_DB_USERNAME_DEV,
-    password: process.env.CB_DB_PASSWORD_DEV,
-    database: process.env.CB_DB_NAME_DEV,
-    host: process.env.CB_DB_HOST_DEV,
-    dialect: "mysql"
-  },
-  production: {
-    username: process.env.CB_DB_USERNAME,
-    password: process.env.CB_DB_PASSWORD,
-    database: process.env.CB_DB_NAME,
-    host: process.env.CB_DB_HOST,
-    dialect: "mysql",
-  }
-};
-```
+Make sure you fill out the `Production` and `Development` sections accordingly.
 
 ### Run the database migrations
 

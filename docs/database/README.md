@@ -4,7 +4,7 @@
 
 In order to successfully start the server-side app you need to have MySQL running on your machine. Create a new database that will be used by ChartBrew.
 
-Additionally, the environmental variables below need to be set.
+Additionally, the environmental variables below need to be set in the `.env` file in the root folder. If the file is not there, create it yourself and use the `.env-template` file as a guide.
 
 ```sh
 ### PRODUCTION
@@ -21,10 +21,6 @@ CB_DB_USERNAME_DEV= # Database username
 CB_DB_PASSWORD_DEV= # Database password
 CB_DB_HOST_DEV= # Database host
 ```
-
-::: tip
-The project uses `dotenv` meaning that you can also put your environmental variables in a `server/models/.env` file.
-:::
 
 ## PostgreSQL
 

@@ -4,7 +4,6 @@
 
 ```
 |-- server
-    |-- .env                    # Optional file for environmental variables
     |-- .eslintrc.json          # eslint configuration
     |-- .gitignore
     |-- index.js                # Server entry file
