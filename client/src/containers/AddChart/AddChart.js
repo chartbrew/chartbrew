@@ -11,6 +11,10 @@ import ChartPreview from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
 import Connection from "./components/Connection";
 
+import {
+  createChart as createChartAction,
+} from "../../actions/chart";
+
 /*
   Container used for setting up a new chart
 */
@@ -21,9 +25,17 @@ class AddChart extends Component {
     this.state = {
       connectionActive: false,
       newChart: {
-        name: "Untitled chart"
+        name: "Untitled chart",
+        connection_id: 3,
       },
     };
+  }
+
+  componentDidMount() {
+    const { match, createChart } = this.props;
+    const { newChart } = this.state;
+
+    createChart(match.params.projectId, newChart);
   }
 
   _onConnectionClicked = () => {
@@ -40,7 +52,6 @@ class AddChart extends Component {
   }
 
   render() {
-    const { chart } = this.props;
     const { connectionActive, editingTitle, newChart } = this.state;
 
     return (
@@ -90,7 +101,7 @@ class AddChart extends Component {
                     </Form>
                   </Container>
                 )}
-              <ChartPreview chart={chart} />
+              <ChartPreview />
             </Grid.Row>
             <Grid.Row style={styles.topBuffer}>
               <ChartSettings />
@@ -144,17 +155,18 @@ const styles = {
 };
 
 AddChart.propTypes = {
-  chart: PropTypes.object.isRequired,
+  createChart: PropTypes.func.isRequired,
+  match: PropTypes.object.isRequired,
 };
 
-const mapStateToProps = (state) => {
+const mapStateToProps = () => {
   return {
-    chart: state.chart.data[0],
   };
 };
 
-const mapDispatchToProps = () => {
+const mapDispatchToProps = (dispatch) => {
   return {
+    createChart: (projectId, data) => dispatch(createChartAction(projectId, data)),
   };
 };
 

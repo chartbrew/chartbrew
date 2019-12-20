@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import {
   Card, Icon, Header, Grid, Segment, Dimmer, Loader, Modal, Button,
-  Dropdown, Message, Popup, Form, TextArea,
+  Dropdown, Message, Popup, Form, TextArea, Label,
 } from "semantic-ui-react";
 import {
   Line, Bar, Pie, Doughnut, Radar, Polar
@@ -223,6 +223,9 @@ class Chart extends Component {
             return (
               <Grid.Column width={chart.chartSize * 4} key={chart.id}>
                 <Segment attached="top" clearing>
+                  {chart.draft && (
+                    <Label color="olive" size="large" style={styles.draft}>Draft</Label>
+                  )}
                   {this._canAccess("editor") && projectId
                     && (
                     <Dropdown icon="ellipsis vertical" direction="left" button className="icon" style={{ float: "right" }}>
@@ -615,7 +618,10 @@ const styles = {
   },
   addCard: {
     paddingTop: 50,
-  }
+  },
+  draft: {
+    marginRight: 10,
+  },
 };
 
 Chart.defaultProps = {
