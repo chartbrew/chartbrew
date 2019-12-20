@@ -22,6 +22,8 @@ This project was created by [Kate Belakova](https://github.com/belakova) and [Ra
 
 💬 [**Join our Slack workspace**](https://join.slack.com/t/chartbrew/shared_invite/enQtODU3MzYzNTkwOTMwLTZiOTA5YzczODUzZGFiZmQyMGI1ZGVmZGI4YTVmOTBkMTI0YzQ2ZjJjOGI5NzQ0NmNmYzRmMDk3MmY4YmI4MTI)
 
+🤟 [**Join our Discord**](https://discord.gg/KwGEbFk)
+
 ## Data sources
 
 Currently, ChartBrew supports connections to these data sources.
@@ -37,9 +39,15 @@ Currently, ChartBrew supports connections to these data sources.
 * NPM
 * MySQL v5+ Server running
 
+## Start
+
+It is recommended you head over to the more detailed documentation to find out how to set up Chartbrew
+
+[📚 You can find it here](https://docs.chartbrew.com/#getting-started)
+
 ## Quickstart
 
-**Create a new database** that you're going to use with Chartbrew. Also, note down the username and password because you will need them in the next steps.
+If you already have a MySQL server running, create a database called charbrew and adjust the parameters below with your connection settings. The command will then setup everything for you.
 
 ```sh
 npx create-chartbrew-app myApp --dbname="chartbrew" --dbusername="root" --dbpassword="" --dbhost="localhost"
@@ -49,15 +57,13 @@ The arguments are optional, but they set the environmental variables needed for 
 
 **Run the database migrations**
 
-Ensure all the environmental variables are set, then run the following command in the `server` folder:
+If the database parameters are correct, the migrations should run automatically. If the new database wasn't populated with tables, ensure all the environmental variables are set, then run the following command in the `server` folder:
 
 ```sh
 npm run db:migrate
 ```
 
 ### Run the project in Development
-
-#### The Usual Way
 
 Open two terminals, one for front-end and the other for back-end.
 
@@ -71,16 +77,18 @@ cd server/
 npm run start-dev
 ```
 
-#### The Containerized Way
+## Docker container
 
-First run
+Open up `.env-template` in the root folder of the project and make sure that the database host var is set to `db` like so:
+
+`CB_DB_HOST_DEV=localhost` -> `CB_DB_HOST_DEV=db`
+
+`CB_DB_HOST=localhost` -> `CB_DB_HOST=db`
+
+Then run the following commands:
+
 ```sh
 npm run setup:docker
-```
-
-And, because of the way it works, you'd change `CB_DB_HOST_DEV=localhost` to `CB_DB_HOST_DEV=db`, and you'll be fine. Then
-
-```sh
 docker-compose up
 ```
 
