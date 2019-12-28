@@ -31,6 +31,8 @@ git clone https://github.com/chartbrew/chartbrew.git
 cd chartbrew && npm run setup
 ```
 
+If you submit any PRs, please [follow the guidelines here](https://github.com/chartbrew/chartbrew/blob/master/CONTRIBUTING.md).
+
 ### Set up environmental variables
 
 All the environmental variables that need to be set are found in the `.env-template` file in the root folder of the project. If you ran the setup above, you should already have a `.env` file there as well. If not, copy the template file and rename it `.env`.
