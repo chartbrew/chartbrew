@@ -213,6 +213,7 @@ class ConnectionController {
 
     return this.findById(connection_id)
       .then((connection) => {
+        gConnection = connection;
         const tempUrl = `${connection.getApiUrl(connection)}${apiRequest.route || ""}`;
         const queryParams = querystring.parse(tempUrl.split("?")[1]);
 
