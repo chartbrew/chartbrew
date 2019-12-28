@@ -96,11 +96,5 @@ For more information on how to configure, modify and deploy ChartBrew, [**read t
 
 Everybody that contributed to Chartbrew outside of the core Team:
 
-<style>
-.contributors {
-  border-radius: 20px;
-}
-</style>
-
 <a href="https://github.com/Mobilpadde" target="_blank"><img class="contributors" src="https://avatars0.githubusercontent.com/u/1170567?s=40&v=4">
 </a>
