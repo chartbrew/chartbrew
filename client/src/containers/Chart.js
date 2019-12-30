@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import {
   Card, Icon, Header, Grid, Segment, Dimmer, Loader, Modal, Button,
-  Dropdown, Message, Popup, Form, TextArea,
+  Dropdown, Message, Popup, Form, TextArea, Label,
 } from "semantic-ui-react";
 import {
   Line, Bar, Pie, Doughnut, Radar, Polar
@@ -223,6 +223,9 @@ class Chart extends Component {
             return (
               <Grid.Column width={chart.chartSize * 4} key={chart.id}>
                 <Segment attached="top" clearing>
+                  {chart.draft && (
+                    <Label color="olive" size="large" style={styles.draft}>Draft</Label>
+                  )}
                   {this._canAccess("editor") && projectId
                     && (
                     <Dropdown icon="ellipsis vertical" direction="left" button className="icon" style={{ float: "right" }}>
@@ -243,17 +246,21 @@ class Chart extends Component {
                           as={Link}
                           to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}
                         />
-                        <Dropdown.Item
-                          onClick={() => this._onPublicConfirmation(chart)}
-                        >
-                          <Icon name="world" color={chart.public ? "red" : "green"} />
-                          {chart.public ? "Make private" : "Make public"}
-                        </Dropdown.Item>
-                        <Dropdown.Item
-                          icon="code"
-                          text="Embed"
-                          onClick={() => this._onEmbed(chart)}
-                        />
+                        {!chart.draft && (
+                          <>
+                            <Dropdown.Item
+                              onClick={() => this._onPublicConfirmation(chart)}
+                            >
+                              <Icon name="world" color={chart.public ? "red" : "green"} />
+                              {chart.public ? "Make private" : "Make public"}
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                              icon="code"
+                              text="Embed"
+                              onClick={() => this._onEmbed(chart)}
+                            />
+                          </>
+                        )}
                         <Dropdown.Divider />
                         <Dropdown
                           item
@@ -615,7 +622,10 @@ const styles = {
   },
   addCard: {
     paddingTop: 50,
-  }
+  },
+  draft: {
+    marginRight: 10,
+  },
 };
 
 Chart.defaultProps = {

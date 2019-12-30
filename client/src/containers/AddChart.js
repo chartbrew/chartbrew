@@ -37,8 +37,10 @@ class AddChart extends Component {
     this.state = {
       step: 0,
       newChart: {
+        name: "Untitled chart",
         query: "connection.collection('users').find()",
         displayLegend: false,
+        connection_id: null,
         Datasets: [{
           xAxis: "root",
           legend: "Dataset #1",
@@ -47,7 +49,6 @@ class AddChart extends Component {
       },
       ddConnections: [],
       updatedEdit: false, // eslint-disable-line
-      initialQuery: "",
       viewDatasetOptions: false,
       activeDataset: 0,
     };
@@ -96,7 +97,7 @@ class AddChart extends Component {
         }
 
         this.setState({
-          newChart: foundChart, updatedEdit: true, initialQuery: chart.query, selectedConnection,
+          newChart: foundChart, updatedEdit: true, selectedConnection,
         }, () => {
           this._onPreview();
         });
@@ -121,6 +122,21 @@ class AddChart extends Component {
     });
 
     this.setState({ ddConnections: tempState });
+  }
+
+  _onChangeStep = (step) => {
+    const { createChart, match } = this.props;
+    const { newChart } = this.state;
+    this.setState({ step });
+
+    if (!newChart.id && step > 0) {
+      createChart(match.params.projectId, newChart)
+        .then((chart) => {
+          if (chart && chart.id) {
+            this.setState({ newChart: { ...newChart, id: chart.id } });
+          }
+        });
+    }
   }
 
   _onChangeConnection = (value) => {
@@ -379,7 +395,6 @@ class AddChart extends Component {
           testingQuery: false,
           testSuccess: true,
           queryData: data,
-          initialQuery: newChart.query
         });
       })
       .catch((error) => {
@@ -450,14 +465,14 @@ class AddChart extends Component {
     }
   }
 
-  _onCreateChart = () => {
+  _onCreateChart = (create) => {
     const {
       createChart, match, runQuery, history, updateChart
     } = this.props;
     const { newChart, selectedConnection } = this.state;
     const updatedChart = newChart;
 
-    if (selectedConnection.type === "api") {
+    if (selectedConnection && selectedConnection.type === "api") {
       updatedChart.apiRequest = this._formatApiRequest();
     }
 
@@ -476,17 +491,22 @@ class AddChart extends Component {
           this.setState({ createLoading: false, createError: true });
         });
     } else {
+      if (create) updatedChart.draft = false;
+
       updateChart(
         match.params.projectId,
         newChart.id,
         updatedChart
       )
         .then((chart) => {
-          return runQuery(match.params.projectId, chart.id);
-        })
-        .then(() => {
-          this.setState({ createLoading: false });
-          history.push(`/${match.params.teamId}/${match.params.projectId}/dashboard`);
+          this.setState({ createLoading: false, updateSuccess: true });
+          runQuery(match.params.projectId, chart.id);
+
+          if (create) {
+            history.push(`/${match.params.teamId}/${match.params.projectId}/dashboard`);
+          }
+
+          return Promise.resolve(true);
         })
         .catch(() => {
           this.setState({ createLoading: false, createError: true });
@@ -499,7 +519,7 @@ class AddChart extends Component {
       activeDataset, newChart, previewChart, selectedConnection, testSuccess,
       viewDatasetOptions, queryData, step, ddConnections,
       testError, testFailed, testingQuery, apiRequest, previewLoading,
-      previewError, lcArrayError, createError, initialQuery,
+      previewError, lcArrayError, createError, updateSuccess,
       removeModal, createLoading, removeLoading,
     } = this.state;
     const { connections, match } = this.props;
@@ -639,7 +659,7 @@ class AddChart extends Component {
                 <Step.Group fluid widths={4}>
                   <Step
                     active={step === 0}
-                    onClick={() => this.setState({ step: 0 })}
+                    onClick={() => this._onChangeStep(0)}
                   >
                     <Icon name="th large" />
                     <Step.Content>
@@ -651,7 +671,7 @@ class AddChart extends Component {
                   <Step
                     active={step === 1}
                     disabled={!newChart.subType}
-                    onClick={() => this.setState({ step: 1 })}
+                    onClick={() => this._onChangeStep(1)}
                   >
                     <Icon name="plug" />
                     <Step.Content>
@@ -667,7 +687,7 @@ class AddChart extends Component {
                       || !newChart.name
                       || !newChart.subType
                     }
-                    onClick={() => this.setState({ step: 2 })}
+                    onClick={() => this._onChangeStep(2)}
                   >
                     <Icon name="database" />
                     <Step.Content>
@@ -684,7 +704,7 @@ class AddChart extends Component {
                       || !testSuccess
                       || !newChart.subType
                     }
-                    onClick={() => this.setState({ step: 3 })}
+                    onClick={() => this._onChangeStep(3)}
                   >
                     <Icon name="chart area" />
                     <Step.Content>
@@ -700,7 +720,7 @@ class AddChart extends Component {
                     type={newChart.type}
                     subType={newChart.subType}
                     typeSelected={(type) => {
-                      setTimeout(() => this.setState({ newChart: { ...newChart, type } }));
+                      setTimeout(() => this._onTypeSelect(type));
                     }}
                     subTypeSelected={(subType) => {
                       if (!subType) {
@@ -1029,6 +1049,19 @@ class AddChart extends Component {
                     content="In order to create a valid time series chart, you must select a date field that is within an array. Make sure there is only one array in your selector '[]'."
                   />
                   )}
+                {updateSuccess && (
+                  <Message
+                    positive
+                    onDismiss={() => this.setState({ updateSuccess: false })}
+                  >
+                    <Header>Your chart was updated</Header>
+                    <p>
+                      {"You can "}
+                      <Link to={`/${match.params.teamId}/${match.params.projectId}/dashboard`}>go back to your dashboard</Link>
+                      {" or continue editing."}
+                    </p>
+                  </Message>
+                )}
               </Segment>
               <Button.Group attached="bottom">
                 <Button
@@ -1036,7 +1069,7 @@ class AddChart extends Component {
                   icon
                   labelPosition="left"
                   disabled={step === 0}
-                  onClick={() => this.setState({ step: step - 1 })}
+                  onClick={() => this._onChangeStep(step - 1)}
                 >
                   <Icon name="chevron left" />
                   Back
@@ -1046,9 +1079,6 @@ class AddChart extends Component {
                   && (
                   <Button
                     primary
-                    disabled={
-                      initialQuery !== newChart.query || !newChart.subType
-                    }
                     loading={createLoading}
                     onClick={this._onUpdateConfirmation}
                   >
@@ -1066,7 +1096,7 @@ class AddChart extends Component {
                       if (step === 2 && !testSuccess && selectedConnection.type !== "api") {
                         this._testQuery();
                       } else {
-                        this.setState({ step: step + 1 });
+                        this._onChangeStep(step + 1);
                       }
                     }}
                     loading={testingQuery}
@@ -1080,7 +1110,7 @@ class AddChart extends Component {
                       ? "Run test" : "Next"}
                   </Button>
                   )}
-                {step > 2 && !newChart.id
+                {step > 2 && newChart.draft
                   && (
                   <Button
                     secondary
@@ -1088,7 +1118,7 @@ class AddChart extends Component {
                     labelPosition="right"
                     disabled={!testSuccess}
                     loading={createLoading}
-                    onClick={this._onCreateChart}
+                    onClick={() => this._onCreateChart(true)}
                   >
                     <Icon name="checkmark" />
                     Create the chart
@@ -1126,7 +1156,7 @@ class AddChart extends Component {
               color="teal"
               inverted
               loading={!!removeLoading}
-              onClick={this._onCreateChart}
+              onClick={() => this._onCreateChart()}
             >
               <Icon name="checkmark" />
               Update & Remove datasets
