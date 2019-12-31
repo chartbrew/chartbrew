@@ -383,11 +383,11 @@ class ProjectBoard extends Component {
                       <Menu.Item onClick={() => this._setDraftsVisible(!showDrafts)}>
                         {menuSize === "small" && (
                           <>
-                            <Header as="h6" inverted>Drafts</Header>
-                            <Icon name={showDrafts ? "toggle on" : "toggle off"} />
+                            <Header as="h6" inverted textAlign="center" style={styles.draftsHeader}>Drafts</Header>
+                            <Icon name={showDrafts ? "toggle on" : "toggle off"} size="large" />
                           </>
                         )}
-                        {menuSize === "large" && <Icon name={showDrafts ? "toggle on" : "toggle off"} />}
+                        {menuSize === "large" && <Icon name={showDrafts ? "toggle on" : "toggle off"} size="large" />}
                         {menuSize === "large" && "Drafts toggle"}
                       </Menu.Item>
                     )}
@@ -494,6 +494,9 @@ const styles = {
   teamSettings: {
     padding: 20,
     paddingLeft: 30,
+  },
+  draftsHeader: {
+    color: "#91A3A2",
   },
 };
 
