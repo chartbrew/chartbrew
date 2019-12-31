@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import {
   Menu, Header, Button, Segment, Container, Icon, Image, Label, Card,
   Grid, Divider, Responsive, Visibility, Form, Input, Popup, Dimmer,
+  Modal,
 } from "semantic-ui-react";
 import AnchorLink from "react-anchor-link-smooth-scroll";
 import moment from "moment";
@@ -40,6 +41,8 @@ import linkIcon from "../assets/linkIcon.png";
 import chartIcon from "../assets/chartIcon.png";
 import developerImage from "../assets/developer.png";
 import headerBgImage from "../assets/brew-bg.png";
+import slackLogo from "../assets/slack_logo.jfif";
+import discordLogo from "../assets/discord_logo.png";
 
 /*
   Description
@@ -170,6 +173,7 @@ class Homepage extends Component {
     const {
       activateShowcase, mobile, superMenu, emailError, email, submitting,
       emailSuccess, plans, collapseMenu, showReplay, showEmbedDemo,
+      showCommunity,
     } = this.state;
     const { user } = this.props;
 
@@ -223,13 +227,7 @@ class Homepage extends Component {
                     <Icon name="github" />
                     View on GitHub
                   </Menu.Item>
-                  <Menu.Item
-                    as="a"
-                    href="https://join.slack.com/t/chartbrew/shared_invite/enQtODU3MzYzNTkwOTMwLTZiOTA5YzczODUzZGFiZmQyMGI1ZGVmZGI4YTVmOTBkMTI0YzQ2ZjJjOGI5NzQ0NmNmYzRmMDk3MmY4YmI4MTI"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Icon name="slack" />
+                  <Menu.Item onClick={() => this.setState({ showCommunity: true })}>
                     Join our Community
                   </Menu.Item>
                   <Menu.Item
@@ -274,7 +272,7 @@ class Homepage extends Component {
                   size="large"
                   hideOnScroll
                 >
-                  <Menu vertical>
+                  <Menu secondary vertical>
                     <Menu.Item
                       as="a"
                       href="https://github.com/razvanilin/chartbrew"
@@ -283,15 +281,6 @@ class Homepage extends Component {
                     >
                       <Icon name="github" />
                       View on GitHub
-                    </Menu.Item>
-                    <Menu.Item
-                      as="a"
-                      href="https://join.slack.com/t/chartbrew/shared_invite/enQtODU3MzYzNTkwOTMwLTZiOTA5YzczODUzZGFiZmQyMGI1ZGVmZGI4YTVmOTBkMTI0YzQ2ZjJjOGI5NzQ0NmNmYzRmMDk3MmY4YmI4MTI"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Icon name="slack" />
-                      Join our Community
                     </Menu.Item>
                     <Menu.Item
                       as="a"
@@ -305,6 +294,12 @@ class Homepage extends Component {
                     <Menu.Item as={AnchorLink} href="#pricing">
                       <Icon name="dollar sign" />
                       Pricing
+                    </Menu.Item>
+                    <Menu.Item
+                      onClick={() => this.setState({ showCommunity: true })}
+                    >
+                      <Icon name="users" />
+                      Join our Community
                     </Menu.Item>
                     <Menu.Item as={Link} to="/signup">
                       Sign up
@@ -431,19 +426,19 @@ class Homepage extends Component {
               <Card.Group stackable itemsPerRow={3} centered>
                 <Card as={AnchorLink} href="#connect" raised link color="violet">
                   <Card.Content>
-                    <Image src={linkIcon} style={{ paddingBottom: 20, maxHeight: 156 }} />
+                    <Image src={linkIcon} style={{ paddingBottom: 20, maxHeight: 156 }} alt="Connect to Chartbrew" />
                     <Card.Header>Connect to your datasource</Card.Header>
                   </Card.Content>
                 </Card>
                 <Card as={AnchorLink} href="#build" raised link color="violet">
                   <Card.Content>
-                    <Image src={buildIcon} style={{ paddingBottom: 20, maxHeight: 156 }} />
+                    <Image src={buildIcon} style={{ paddingBottom: 20, maxHeight: 156 }} alt="Build your Chartbrew charts" />
                     <Card.Header>Build your charts using our editor</Card.Header>
                   </Card.Content>
                 </Card>
                 <Card as={AnchorLink} href="#visualize" raised link color="violet">
                   <Card.Content>
-                    <Image src={chartIcon} style={{ paddingBottom: 20, maxHeight: 156 }} />
+                    <Image src={chartIcon} style={{ paddingBottom: 20, maxHeight: 156 }} alt="Visualize your data in Chartbrew" />
                     <Card.Header>Visualize your data</Card.Header>
                   </Card.Content>
                 </Card>
@@ -509,7 +504,7 @@ class Homepage extends Component {
             <Grid columns={4} centered stackable>
               <Grid.Column width={3}>
                 <Card centered color="blue" raised>
-                  <Image src={mongo} />
+                  <Image src={mongo} alt="Connect MongoDB to Chartbrew" />
                   <Card.Content>
                     <Card.Header textAlign="center">MongoDB</Card.Header>
                   </Card.Content>
@@ -517,7 +512,7 @@ class Homepage extends Component {
               </Grid.Column>
               <Grid.Column width={3}>
                 <Card centered color="blue" raised>
-                  <Image src={api} />
+                  <Image src={api} alt="Connect any API to Chartbrew" />
                   <Card.Content>
                     <Card.Header textAlign="center">APIs</Card.Header>
                   </Card.Content>
@@ -525,7 +520,7 @@ class Homepage extends Component {
               </Grid.Column>
               <Grid.Column width={3}>
                 <Card centered color="blue" raised>
-                  <Image src={postgres} />
+                  <Image src={postgres} alt="Connect PostgreSQL to Chartbrew" />
                   <Card.Content>
                     <Card.Header textAlign="center">PostgreSQL</Card.Header>
                   </Card.Content>
@@ -533,7 +528,7 @@ class Homepage extends Component {
               </Grid.Column>
               <Grid.Column width={3}>
                 <Card centered color="blue" raised>
-                  <Image src={mysql} />
+                  <Image src={mysql} alt="Connect MySQL to Chartbrew" />
                   <Card.Content>
                     <Card.Header textAlign="center">MySQL</Card.Header>
                   </Card.Content>
@@ -546,7 +541,7 @@ class Homepage extends Component {
               <Divider hidden />
               <Card.Group centered itemsPerRow={mobile ? 2 : 4}>
                 <Card centered color="violet" raised style={mobile ? styles.upcomingCardsMobile : styles.upcomingCards}>
-                  <Image src={firebase} />
+                  <Image src={firebase} alt="Connect Firebase to Chartbrew" />
                   <Card.Content>
                     <Card.Header>Firebase</Card.Header>
                   </Card.Content>
@@ -586,7 +581,7 @@ class Homepage extends Component {
             <Grid centered stackable columns={2}>
               <Grid.Column width={8}>
                 <Segment raised compact style={styles.imageSegment}>
-                  <Image rounded src={chartsImage} />
+                  <Image rounded src={chartsImage} alt="Represent your data in Chartbrew" />
                 </Segment>
               </Grid.Column>
               <Grid.Column width={6} textAlign={mobile ? "center" : "left"} verticalAlign="middle">
@@ -621,7 +616,7 @@ class Homepage extends Component {
               <Grid.Row>
                 <Grid.Column width={8}>
                   <Segment raised compact style={styles.imageSegment}>
-                    <Image rounded src={dashboardImage} />
+                    <Image rounded src={dashboardImage} alt="Create your dashboard in Chartbrew" />
                   </Segment>
                 </Grid.Column>
                 <Grid.Column width={6} verticalAlign="middle" textAlign={mobile ? "center" : "left"}>
@@ -695,7 +690,7 @@ class Homepage extends Component {
 
             <Container text>
               <Segment raised compact style={styles.illustrationSegment}>
-                <Image rounded src={teamImage} />
+                <Image rounded src={teamImage} alt="Manage your team in Chartbrew" />
               </Segment>
             </Container>
           </Container>
@@ -713,7 +708,7 @@ class Homepage extends Component {
             <Grid centered columns={3} stackable padded>
               <Grid.Column width={6}>
                 <Segment raised compact style={styles.illustrationSegment}>
-                  <Image size="large" rounded src={securityImage} />
+                  <Image size="large" rounded src={securityImage} alt="Chartbrew connections are secure" />
                 </Segment>
               </Grid.Column>
 
@@ -810,7 +805,7 @@ class Homepage extends Component {
 
         <div style={styles.fifthContainer}>
           <Container fluid textAlign="center">
-            <Image centered src={developerImage} />
+            <Image centered src={developerImage} alt="Start creating charts in Chartbrew" />
             <Header textAlign="center" size="huge" inverted icon style={styles.pageTitle}>
               {"Now let's brew some charts"}
             </Header>
@@ -867,10 +862,7 @@ class Homepage extends Component {
                   Open-source
                 </Menu.Item>
                 <Menu.Item
-                  as="a"
-                  href="https://join.slack.com/t/chartbrew/shared_invite/enQtODU3MzYzNTkwOTMwLTZiOTA5YzczODUzZGFiZmQyMGI1ZGVmZGI4YTVmOTBkMTI0YzQ2ZjJjOGI5NzQ0NmNmYzRmMDk3MmY4YmI4MTI"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  onClick={() => this.setState({ showCommunity: true })}
                 >
                   Community
                 </Menu.Item>
@@ -894,6 +886,82 @@ class Homepage extends Component {
             </Menu>
           </Container>
         </div>
+
+        <Modal
+          open={showCommunity}
+          onClose={() => this.setState({ showCommunity: false })}
+        >
+          <Modal.Header>Chartbrew Community</Modal.Header>
+          <Modal.Content>
+            <Header textAlign="center">
+              {"Join our Chartbrew community where we want to build an inclusive learning-focused space where any tech enthusiast feels like home"}
+              <Header.Subheader>
+                {"Come and discuss anything you'd like about tech, data viz, pose any questions, request Chartbrew help or make any suggestions"}
+              </Header.Subheader>
+            </Header>
+            <Grid stackable centered column={2}>
+              <Grid.Column width={5}>
+                <Container textAlign="center">
+                  <Image
+                    centered
+                    src={discordLogo}
+                    alt="Chartbrew discord community"
+                    size="small"
+                    href="https://discord.gg/KwGEbFk"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
+                  <Divider hidden />
+                  <Button
+                    icon
+                    labelPosition="right"
+                    primary
+                    as="a"
+                    href="https://discord.gg/KwGEbFk"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Icon name="discord" />
+                    Join our Discord
+                  </Button>
+                </Container>
+              </Grid.Column>
+              <Grid.Column width={5}>
+                <Container textAlign="center">
+                  <Image
+                    centered
+                    src={slackLogo}
+                    alt="Chartbrew slack community"
+                    size="small"
+                    href="https://join.slack.com/t/chartbrew/shared_invite/enQtODU3MzYzNTkwOTMwLTZiOTA5YzczODUzZGFiZmQyMGI1ZGVmZGI4YTVmOTBkMTI0YzQ2ZjJjOGI5NzQ0NmNmYzRmMDk3MmY4YmI4MTI"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
+                  <Divider hidden />
+                  <Button
+                    icon
+                    labelPosition="right"
+                    primary
+                    as="a"
+                    href="https://join.slack.com/t/chartbrew/shared_invite/enQtODU3MzYzNTkwOTMwLTZiOTA5YzczODUzZGFiZmQyMGI1ZGVmZGI4YTVmOTBkMTI0YzQ2ZjJjOGI5NzQ0NmNmYzRmMDk3MmY4YmI4MTI"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Icon name="slack" />
+                    Join our Slack
+                  </Button>
+                </Container>
+              </Grid.Column>
+            </Grid>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button
+              secondary
+              content="Close"
+              onClick={() => this.setState({ showCommunity: false })}
+            />
+          </Modal.Actions>
+        </Modal>
       </div>
     );
   }
@@ -1108,10 +1176,10 @@ const styles = {
     marginTop: 100,
   },
   superMenu: {
-    zIndex: 10000,
+    zIndex: 1000,
   },
   nonSuperMenu: {
-    zIndex: 10000,
+    zIndex: 1000,
     backgroundColor: "transparent",
   },
   showcaseVideo: {
