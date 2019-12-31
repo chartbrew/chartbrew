@@ -173,7 +173,7 @@ class Chart extends Component {
 
   render() {
     const {
-      charts, isPublic, match, connections,
+      charts, isPublic, match, connections, showDrafts,
     } = this.props;
     const { projectId } = match.params;
     const {
@@ -212,6 +212,9 @@ class Chart extends Component {
         <Grid stackable centered>
           {connections && charts.map((chart, index) => {
             if (isPublic && !chart.public) return (<span key={chart.id} />);
+            if (isPublic && chart.draft) return (<span key={chart.id} />);
+            if (chart.draft && !showDrafts) return (<span key={chart.id} />);
+            
             // get connection
             let connection;
             for (let i = 0; i < connections.length; i++) {
@@ -643,6 +646,7 @@ Chart.propTypes = {
   team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
   isPublic: PropTypes.bool,
+  showDrafts: PropTypes.bool.isRequired,
 };
 
 const mapStateToProps = (state) => {

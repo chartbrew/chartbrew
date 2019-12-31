@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
+import { withRouter } from "react-router";
 import {
   Message, Icon, Button, Container, Header, Image
 } from "semantic-ui-react";
@@ -19,7 +20,9 @@ class ProjectDashboard extends Component {
   }
 
   render() {
-    const { connections, charts, match } = this.props;
+    const {
+      connections, charts, match, showDrafts,
+    } = this.props;
 
     return (
       <div style={styles.container}>
@@ -64,7 +67,7 @@ class ProjectDashboard extends Component {
           )}
         {connections.length > 0 && (
           <>
-            <Chart charts={charts} />
+            <Chart charts={charts} showDrafts={showDrafts} />
 
             <Container textAlign="center" style={{ paddingTop: 50 }}>
               <Link to={`/${match.params.teamId}/${match.params.projectId}/chart`}>
@@ -92,11 +95,16 @@ const styles = {
   },
 };
 
+ProjectDashboard.defaultProps = {
+  showDrafts: true,
+};
+
 ProjectDashboard.propTypes = {
   connections: PropTypes.array.isRequired,
   charts: PropTypes.array.isRequired,
   match: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
+  showDrafts: PropTypes.bool,
 };
 
 const mapStateToProps = (state) => {
@@ -111,4 +119,4 @@ const mapDispatchToProps = (dispatch) => {
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
-export default connect(mapStateToProps, mapDispatchToProps)(ProjectDashboard);
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ProjectDashboard));
