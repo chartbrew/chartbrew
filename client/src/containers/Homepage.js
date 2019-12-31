@@ -1176,10 +1176,10 @@ const styles = {
     marginTop: 100,
   },
   superMenu: {
-    zIndex: 1000,
+    zIndex: 10000,
   },
   nonSuperMenu: {
-    zIndex: 1000,
+    zIndex: 10000,
     backgroundColor: "transparent",
   },
   showcaseVideo: {
