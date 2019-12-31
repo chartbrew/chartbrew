@@ -214,7 +214,7 @@ class Chart extends Component {
             if (isPublic && !chart.public) return (<span key={chart.id} />);
             if (isPublic && chart.draft) return (<span key={chart.id} />);
             if (chart.draft && !showDrafts) return (<span key={chart.id} />);
-            
+
             // get connection
             let connection;
             for (let i = 0; i < connections.length; i++) {
