@@ -10,9 +10,12 @@ import {
 import {
   Line, Bar, Pie, Doughnut, Radar, Polar
 } from "react-chartjs-2";
+import { ToastContainer, toast, Flip } from "react-toastify";
 import moment from "moment";
+import _ from "lodash";
 
 import "chart.piecelabel.js";
+import "react-toastify/dist/ReactToastify.min.css";
 
 import {
   testQuery, createChart, runQuery, updateChart, getPreviewData
@@ -51,6 +54,7 @@ class AddChart extends Component {
       updatedEdit: false, // eslint-disable-line
       viewDatasetOptions: false,
       activeDataset: 0,
+      timeToSave: true,
     };
   }
 
@@ -61,6 +65,8 @@ class AddChart extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
+    const { newChart, timeToSave } = this.state;
+
     if (prevProps.charts) {
       if (prevProps.match.params.chartId && prevProps.charts.length > 0 && !prevState.updatedEdit) {
         this._prepopulateState();
@@ -69,6 +75,11 @@ class AddChart extends Component {
 
     if (prevProps.connections.length > 0 && prevState.ddConnections.length === 0) {
       this._populateConnections();
+    }
+
+    // update the draft if it's already created
+    if (!_.isEqual(prevState.newChart, newChart) && timeToSave && newChart.id) {
+      this._updateDraft();
     }
   }
 
@@ -465,6 +476,15 @@ class AddChart extends Component {
     }
   }
 
+  _updateDraft = () => {
+    this.setState({ timeToSave: false });
+    this._onCreateChart();
+
+    setTimeout(() => {
+      this.setState({ timeToSave: true });
+    }, 10000);
+  }
+
   _onCreateChart = (create) => {
     const {
       createChart, match, runQuery, history, updateChart
@@ -499,7 +519,16 @@ class AddChart extends Component {
         updatedChart
       )
         .then((chart) => {
-          this.setState({ createLoading: false, updateSuccess: true });
+          this.setState({ createLoading: false });
+          toast.success("Chart updated 👌", {
+            position: "bottom-right",
+            autoClose: 1500,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            transition: Flip,
+          });
           runQuery(match.params.projectId, chart.id);
 
           if (create) {
@@ -519,7 +548,7 @@ class AddChart extends Component {
       activeDataset, newChart, previewChart, selectedConnection, testSuccess,
       viewDatasetOptions, queryData, step, ddConnections,
       testError, testFailed, testingQuery, apiRequest, previewLoading,
-      previewError, lcArrayError, createError, updateSuccess,
+      previewError, lcArrayError, createError,
       removeModal, createLoading, removeLoading,
     } = this.state;
     const { connections, match } = this.props;
@@ -930,7 +959,10 @@ class AddChart extends Component {
                         && (
                         <div>
                           <br />
-                          <Message negative>
+                          <Message
+                            negative
+                            onDismiss={() => this.setState({ previewError: false })}
+                          >
                             <Message.Header>
                               {"Oh snap! We could't render the chart for you"}
                             </Message.Header>
@@ -1049,19 +1081,18 @@ class AddChart extends Component {
                     content="In order to create a valid time series chart, you must select a date field that is within an array. Make sure there is only one array in your selector '[]'."
                   />
                   )}
-                {updateSuccess && (
-                  <Message
-                    positive
-                    onDismiss={() => this.setState({ updateSuccess: false })}
-                  >
-                    <Header>Your chart was updated</Header>
-                    <p>
-                      {"You can "}
-                      <Link to={`/${match.params.teamId}/${match.params.projectId}/dashboard`}>go back to your dashboard</Link>
-                      {" or continue editing."}
-                    </p>
-                  </Message>
-                )}
+                <ToastContainer
+                  position="bottom-right"
+                  autoClose={1500}
+                  hideProgressBar={false}
+                  newestOnTop={false}
+                  closeOnClick
+                  rtl={false}
+                  pauseOnVisibilityChange
+                  draggable
+                  pauseOnHover
+                  transition={Flip}
+                />
               </Segment>
               <Button.Group attached="bottom">
                 <Button
