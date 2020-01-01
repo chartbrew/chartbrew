@@ -3,7 +3,6 @@
 ChartBrew is currently maintained by:
 
 * [Razvan Ilin](https://github.com/razvanilin)
-* [Kate Belakova](https://github.com/belakova)
 
 Everybody is welcome to contribute to ChartBrew and the core team will review any open PRs before merging with the codebase. Please follow this guide to ensure that the process is as smooth as possible. Any active contributor can become part of the core maintenance team if they wish so.
 
@@ -15,22 +14,30 @@ ChartBrew is an open-source project under the MIT license. This is the official 
 
 2. Clone from your repository and make sure you stay on the `master` branch
 
-3. [Follow the setup guide](https://docs.chartbrew.com/#getting-started), ignoring the `create-chartbrew-app` command and including the environment setup
+3. [Follow the setup guide](https://docs.chartbrew.com/#developing-and-extending-the-application)
 
 4. Run the project in development using the guide above and make sure everything works
 
 
+## What to work on
+
+It is recommended to check the [project roadmap](https://github.com/orgs/chartbrew/projects) to see what are the most important items you can work on.
+
+
 ## Pull requests checklist
+
+Read the following:
+
+- [ ] [Frontend](https://docs.chartbrew.com/frontend/) - if you change anything in the `client`
+- [ ] [Backend](https://docs.chartbrew.com/backend/) - if you change anything in `server` 
 
 Make sure that you work with the code on the `master` branch. There might be some cases when you contribute to an active development on another branch, but all other cases will result in your PR getting closed.
 
-It's highly recommended that you create the PR as soon as you start development and explain it well so we know what you're working on and help when needed.
+If your PR is more complex and it requires multiple commits, [create a draft PR](https://github.blog/2019-02-14-introducing-draft-pull-requests/) as soon as you push your first commit and explain what your PR does.
 
 For any backend changes, make sure you have some chart data recorded in the application before submitting the PR, to help detect any bugs.
 
-### What to work on
-
-It is recommended to check the [project roadmap](https://github.com/orgs/chartbrew/projects) to see what are the most important items you can work on.
+For any model change in the database schema, [consult the documentation](https://docs.chartbrew.com/backend/#models) and make sure that migrations are in place to modify the schema accordingly.
 
 ### General checks
 

@@ -5,7 +5,7 @@ import { Route, Switch, withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
   Dimmer, Loader, Container, Icon, Grid,
-  Menu, Dropdown, Popup, Image,
+  Menu, Dropdown, Popup, Image, Header,
 } from "semantic-ui-react";
 import SplitPane from "react-split-pane";
 
@@ -37,6 +37,7 @@ class ProjectBoard extends Component {
     this.state = {
       loading: true,
       menuSize: "large",
+      showDrafts: true,
     };
   }
 
@@ -49,6 +50,10 @@ class ProjectBoard extends Component {
     }
 
     $crisp.push(["do", "chat:hide"]);
+
+    if (window.localStorage.getItem("_cb_drafts")) {
+      this._setDraftsVisible(window.localStorage.getItem("_cb_drafts") === "true");
+    }
   }
 
   _init = () => {
@@ -132,6 +137,11 @@ class ProjectBoard extends Component {
     window.localStorage.setItem("_cb_menu_size", menuSize);
   }
 
+  _setDraftsVisible = (isShowing) => {
+    this.setState({ showDrafts: isShowing });
+    window.localStorage.setItem("_cb_drafts", isShowing);
+  }
+
   _getDefaultMenuSize() {
     const { menuSize } = this.state;
     if (menuSize === "small") return 70;
@@ -150,7 +160,7 @@ class ProjectBoard extends Component {
 
   render() {
     const { project, projects, match } = this.props;
-    const { loading, menuSize } = this.state;
+    const { loading, menuSize, showDrafts } = this.state;
 
     if (!project.id) {
       return (
@@ -369,6 +379,27 @@ class ProjectBoard extends Component {
                     )}
                 </Menu.Menu>
               </Menu.Item>
+              <Menu.Menu style={styles.absoluteDrafts}>
+                {this._checkIfActive("dashboard") && (
+                  <Popup
+                    trigger={(
+                      <Menu.Item onClick={() => this._setDraftsVisible(!showDrafts)}>
+                        {menuSize === "small" && (
+                          <>
+                            <Header as="h6" inverted textAlign="center" style={styles.draftsHeader}>Drafts</Header>
+                            <Icon name={showDrafts ? "toggle on" : "toggle off"} size="large" />
+                          </>
+                        )}
+                        {menuSize === "large" && <Icon name={showDrafts ? "toggle on" : "toggle off"} size="large" />}
+                        {menuSize === "large" && "Drafts toggle"}
+                      </Menu.Item>
+                    )}
+                    content="Show or hide drafts"
+                    position="right center"
+                    inverted
+                  />
+                )}
+              </Menu.Menu>
               {menuSize === "large"
                 && (
                 <Popup
@@ -406,7 +437,7 @@ class ProjectBoard extends Component {
               <Grid.Column width={16} computer={16} style={{ paddingLeft: 0 }}>
                 <Container fluid>
                   <Switch>
-                    <Route path="/:teamId/:projectId/dashboard" component={ProjectDashboard} />
+                    <Route path="/:teamId/:projectId/dashboard" render={() => (<ProjectDashboard showDrafts={showDrafts} />)} />
                     {this._canAccess("editor") && <Route path="/:teamId/:projectId/connections" component={Connections} />}
                     {this._canAccess("editor") && <Route path="/:teamId/:projectId/chart/:chartId/edit" component={AddChart} />}
                     {this._canAccess("editor") && <Route path="/:teamId/:projectId/chart" component={AddChart} />}
@@ -458,9 +489,17 @@ const styles = {
     bottom: 50,
     width: "100%",
   },
+  absoluteDrafts: {
+    position: "absolute",
+    bottom: 110,
+    width: "100%",
+  },
   teamSettings: {
     padding: 20,
     paddingLeft: 30,
+  },
+  draftsHeader: {
+    color: "#91A3A2",
   },
 };
 
