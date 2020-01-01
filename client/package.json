@@ -42,6 +42,7 @@
     "react-router-dom": "^4.3.1",
     "react-router-redux": "^5.0.0-alpha.9",
     "react-split-pane": "^0.1.89",
+    "react-toastify": "^5.5.0",
     "react-user-avatar": "^1.10.0",
     "redux": "^4.0.4",
     "redux-form": "^7.4.2",

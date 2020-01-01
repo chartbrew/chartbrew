@@ -145,12 +145,29 @@ class ChartController {
         const updatePromises = [];
         if (data.Datasets || data.apiRequest) {
           if (data.Datasets) {
-            updatePromises
-              .push(this.updateDatasets(id, data.Datasets));
+            const datasetsToUpdate = [];
+            for (const dataset of data.Datasets) {
+              if (!dataset.deleted && !dataset.id) {
+                dataset.chart_id = id;
+                updatePromises.push(this.dataset.create(dataset));
+              } else if (!dataset.deleted && dataset.id) {
+                datasetsToUpdate.push(dataset);
+              }
+            }
+
+            if (datasetsToUpdate.length > 0) {
+              updatePromises
+                .push(this.updateDatasets(id, data.Datasets));
+            }
           }
-          if (data.apiRequest) {
+          if (data.apiRequest && data.apiRequest.id) {
             updatePromises
               .push(this.apiRequestController.update(data.apiRequest.id, data.apiRequest));
+          }
+
+          if (data.apiRequest && !data.apiRequest.id) {
+            const newApiRequest = { ...data.apiRequest, chart_id: id };
+            updatePromises.push(this.apiRequestController.create(newApiRequest));
           }
 
           return Promise.all(updatePromises).then(() => this.findById(id));
