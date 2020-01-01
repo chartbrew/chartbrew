@@ -65,7 +65,7 @@ class AddChart extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    const { newChart, timeToSave } = this.state;
+    const { newChart, timeToSave, autosave } = this.state;
 
     if (prevProps.charts) {
       if (prevProps.match.params.chartId && prevProps.charts.length > 0 && !prevState.updatedEdit) {
@@ -77,8 +77,8 @@ class AddChart extends Component {
       this._populateConnections();
     }
 
-    // update the draft if it's already created
-    if (!_.isEqual(prevState.newChart, newChart) && timeToSave && newChart.id) {
+    // update the draft if it's already created and only if it's a draft
+    if (!_.isEqual(prevState.newChart, newChart) && timeToSave && newChart.id && autosave) {
       this._updateDraft();
     }
   }
@@ -108,7 +108,10 @@ class AddChart extends Component {
         }
 
         this.setState({
-          newChart: foundChart, updatedEdit: true, selectedConnection,
+          newChart: foundChart,
+          updatedEdit: true,
+          selectedConnection,
+          autosave: foundChart.draft,
         }, () => {
           this._onPreview();
         });
@@ -485,6 +488,11 @@ class AddChart extends Component {
     }, 10000);
   }
 
+  _onSetAutosave = () => {
+    const { autosave } = this.state;
+    this.setState({ autosave: !autosave });
+  }
+
   _onCreateChart = (create) => {
     const {
       createChart, match, runQuery, history, updateChart
@@ -548,7 +556,7 @@ class AddChart extends Component {
       activeDataset, newChart, previewChart, selectedConnection, testSuccess,
       viewDatasetOptions, queryData, step, ddConnections,
       testError, testFailed, testingQuery, apiRequest, previewLoading,
-      previewError, lcArrayError, createError,
+      previewError, lcArrayError, createError, autosave,
       removeModal, createLoading, removeLoading,
     } = this.state;
     const { connections, match } = this.props;
@@ -1096,7 +1104,7 @@ class AddChart extends Component {
               </Segment>
               <Button.Group attached="bottom">
                 <Button
-                  color="teal"
+                  secondary
                   icon
                   labelPosition="left"
                   disabled={step === 0}
@@ -1106,13 +1114,29 @@ class AddChart extends Component {
                   Back
                 </Button>
 
+                {newChart.id && (
+                  <Button
+                    color={autosave ? "teal" : "gray"}
+                    onClick={this._onSetAutosave}
+                    icon
+                    labelPosition="left"
+                  >
+                    <Icon name={autosave ? "toggle on" : "toggle off"} />
+                    Autosave
+                    { autosave ? " on" : " off" }
+                  </Button>
+                )}
+
                 {newChart.id
                   && (
                   <Button
                     primary
                     loading={createLoading}
                     onClick={this._onUpdateConfirmation}
+                    icon
+                    labelPosition="right"
                   >
+                    <Icon name="edit" />
                     Update the chart
                   </Button>
                   )}
