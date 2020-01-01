@@ -7,7 +7,7 @@ module.exports = {
         `),
         queryInterface.addColumn("Chart", "draft", {
           type: Sequelize.BOOLEAN,
-          defaultValue: true,
+          defaultValue: false,
         }, { transaction: t }),
       ])
         .catch(() => Promise.resolve("done"));

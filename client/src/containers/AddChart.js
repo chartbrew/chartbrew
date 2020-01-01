@@ -49,6 +49,7 @@ class AddChart extends Component {
           legend: "Dataset #1",
         }],
         offset: "offset",
+        draft: true,
       },
       ddConnections: [],
       updatedEdit: false, // eslint-disable-line

@@ -122,7 +122,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     draft: {
       type: DataTypes.BOOLEAN,
-      defaultValue: true,
+      defaultValue: false,
     },
   }, {
     freezeTableName: true,
