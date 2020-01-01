@@ -6,7 +6,7 @@
 
 <p align="center">
   <img src="https://app.buddy.works/razvanilin/chartbrew/pipelines/pipeline/230383/badge.svg?token=25baf00f6b4d446c82fc0d93f2330616808aeb930dc818c5138b5c5cf22f4bc8" alt="ChartBrew build" />
-  <img src="https://img.shields.io/discord/656557151048957995?label=Discord" alt="" />
+  <a href="https://discord.gg/KwGEbFk" target="_blank"><img src="https://img.shields.io/discord/656557151048957995?label=Discord" alt="" /></a>
 </p>
 
 [ChartBrew](https://chartbrew.com) is an open-source web application used to generate charts from different data sources. The focus of this project is to make the process less tedious and put as much accent as possible on Usability.
