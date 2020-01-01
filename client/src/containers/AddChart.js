@@ -55,6 +55,7 @@ class AddChart extends Component {
       viewDatasetOptions: false,
       activeDataset: 0,
       timeToSave: true,
+      autosave: true,
     };
   }
 
