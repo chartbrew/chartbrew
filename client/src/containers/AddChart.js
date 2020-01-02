@@ -10,9 +10,12 @@ import {
 import {
   Line, Bar, Pie, Doughnut, Radar, Polar
 } from "react-chartjs-2";
+import { ToastContainer, toast, Flip } from "react-toastify";
 import moment from "moment";
+import _ from "lodash";
 
 import "chart.piecelabel.js";
+import "react-toastify/dist/ReactToastify.min.css";
 
 import {
   testQuery, createChart, runQuery, updateChart, getPreviewData
@@ -37,19 +40,23 @@ class AddChart extends Component {
     this.state = {
       step: 0,
       newChart: {
+        name: "Untitled chart",
         query: "connection.collection('users').find()",
         displayLegend: false,
+        connection_id: null,
         Datasets: [{
           xAxis: "root",
           legend: "Dataset #1",
         }],
         offset: "offset",
+        draft: true,
       },
       ddConnections: [],
       updatedEdit: false, // eslint-disable-line
-      initialQuery: "",
       viewDatasetOptions: false,
       activeDataset: 0,
+      timeToSave: true,
+      autosave: true,
     };
   }
 
@@ -60,6 +67,8 @@ class AddChart extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
+    const { newChart, timeToSave, autosave } = this.state;
+
     if (prevProps.charts) {
       if (prevProps.match.params.chartId && prevProps.charts.length > 0 && !prevState.updatedEdit) {
         this._prepopulateState();
@@ -68,6 +77,11 @@ class AddChart extends Component {
 
     if (prevProps.connections.length > 0 && prevState.ddConnections.length === 0) {
       this._populateConnections();
+    }
+
+    // update the draft if it's already created and only if it's a draft
+    if (!_.isEqual(prevState.newChart, newChart) && timeToSave && newChart.id && autosave) {
+      this._updateDraft();
     }
   }
 
@@ -96,7 +110,10 @@ class AddChart extends Component {
         }
 
         this.setState({
-          newChart: foundChart, updatedEdit: true, initialQuery: chart.query, selectedConnection,
+          newChart: foundChart,
+          updatedEdit: true,
+          selectedConnection,
+          autosave: foundChart.draft,
         }, () => {
           this._onPreview();
         });
@@ -121,6 +138,21 @@ class AddChart extends Component {
     });
 
     this.setState({ ddConnections: tempState });
+  }
+
+  _onChangeStep = (step) => {
+    const { createChart, match } = this.props;
+    const { newChart } = this.state;
+    this.setState({ step });
+
+    if (!newChart.id && step > 0) {
+      createChart(match.params.projectId, newChart)
+        .then((chart) => {
+          if (chart && chart.id) {
+            this.setState({ newChart: { ...newChart, id: chart.id } });
+          }
+        });
+    }
   }
 
   _onChangeConnection = (value) => {
@@ -379,7 +411,6 @@ class AddChart extends Component {
           testingQuery: false,
           testSuccess: true,
           queryData: data,
-          initialQuery: newChart.query
         });
       })
       .catch((error) => {
@@ -450,14 +481,28 @@ class AddChart extends Component {
     }
   }
 
-  _onCreateChart = () => {
+  _updateDraft = () => {
+    this.setState({ timeToSave: false });
+    this._onCreateChart();
+
+    setTimeout(() => {
+      this.setState({ timeToSave: true });
+    }, 10000);
+  }
+
+  _onSetAutosave = () => {
+    const { autosave } = this.state;
+    this.setState({ autosave: !autosave });
+  }
+
+  _onCreateChart = (create) => {
     const {
       createChart, match, runQuery, history, updateChart
     } = this.props;
     const { newChart, selectedConnection } = this.state;
     const updatedChart = newChart;
 
-    if (selectedConnection.type === "api") {
+    if (selectedConnection && selectedConnection.type === "api") {
       updatedChart.apiRequest = this._formatApiRequest();
     }
 
@@ -476,17 +521,31 @@ class AddChart extends Component {
           this.setState({ createLoading: false, createError: true });
         });
     } else {
+      if (create) updatedChart.draft = false;
+
       updateChart(
         match.params.projectId,
         newChart.id,
         updatedChart
       )
         .then((chart) => {
-          return runQuery(match.params.projectId, chart.id);
-        })
-        .then(() => {
           this.setState({ createLoading: false });
-          history.push(`/${match.params.teamId}/${match.params.projectId}/dashboard`);
+          toast.success("Chart updated 👌", {
+            position: "bottom-right",
+            autoClose: 1500,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            transition: Flip,
+          });
+          runQuery(match.params.projectId, chart.id);
+
+          if (create) {
+            history.push(`/${match.params.teamId}/${match.params.projectId}/dashboard`);
+          }
+
+          return Promise.resolve(true);
         })
         .catch(() => {
           this.setState({ createLoading: false, createError: true });
@@ -499,7 +558,7 @@ class AddChart extends Component {
       activeDataset, newChart, previewChart, selectedConnection, testSuccess,
       viewDatasetOptions, queryData, step, ddConnections,
       testError, testFailed, testingQuery, apiRequest, previewLoading,
-      previewError, lcArrayError, createError, initialQuery,
+      previewError, lcArrayError, createError, autosave,
       removeModal, createLoading, removeLoading,
     } = this.state;
     const { connections, match } = this.props;
@@ -639,7 +698,7 @@ class AddChart extends Component {
                 <Step.Group fluid widths={4}>
                   <Step
                     active={step === 0}
-                    onClick={() => this.setState({ step: 0 })}
+                    onClick={() => this._onChangeStep(0)}
                   >
                     <Icon name="th large" />
                     <Step.Content>
@@ -651,7 +710,7 @@ class AddChart extends Component {
                   <Step
                     active={step === 1}
                     disabled={!newChart.subType}
-                    onClick={() => this.setState({ step: 1 })}
+                    onClick={() => this._onChangeStep(1)}
                   >
                     <Icon name="plug" />
                     <Step.Content>
@@ -667,7 +726,7 @@ class AddChart extends Component {
                       || !newChart.name
                       || !newChart.subType
                     }
-                    onClick={() => this.setState({ step: 2 })}
+                    onClick={() => this._onChangeStep(2)}
                   >
                     <Icon name="database" />
                     <Step.Content>
@@ -684,7 +743,7 @@ class AddChart extends Component {
                       || !testSuccess
                       || !newChart.subType
                     }
-                    onClick={() => this.setState({ step: 3 })}
+                    onClick={() => this._onChangeStep(3)}
                   >
                     <Icon name="chart area" />
                     <Step.Content>
@@ -700,7 +759,7 @@ class AddChart extends Component {
                     type={newChart.type}
                     subType={newChart.subType}
                     typeSelected={(type) => {
-                      setTimeout(() => this.setState({ newChart: { ...newChart, type } }));
+                      setTimeout(() => this._onTypeSelect(type));
                     }}
                     subTypeSelected={(subType) => {
                       if (!subType) {
@@ -910,7 +969,10 @@ class AddChart extends Component {
                         && (
                         <div>
                           <br />
-                          <Message negative>
+                          <Message
+                            negative
+                            onDismiss={() => this.setState({ previewError: false })}
+                          >
                             <Message.Header>
                               {"Oh snap! We could't render the chart for you"}
                             </Message.Header>
@@ -1029,29 +1091,54 @@ class AddChart extends Component {
                     content="In order to create a valid time series chart, you must select a date field that is within an array. Make sure there is only one array in your selector '[]'."
                   />
                   )}
+                <ToastContainer
+                  position="bottom-right"
+                  autoClose={1500}
+                  hideProgressBar={false}
+                  newestOnTop={false}
+                  closeOnClick
+                  rtl={false}
+                  pauseOnVisibilityChange
+                  draggable
+                  pauseOnHover
+                  transition={Flip}
+                />
               </Segment>
               <Button.Group attached="bottom">
                 <Button
-                  color="teal"
+                  secondary
                   icon
                   labelPosition="left"
                   disabled={step === 0}
-                  onClick={() => this.setState({ step: step - 1 })}
+                  onClick={() => this._onChangeStep(step - 1)}
                 >
                   <Icon name="chevron left" />
                   Back
                 </Button>
 
+                {newChart.id && (
+                  <Button
+                    color={autosave ? "teal" : "gray"}
+                    onClick={this._onSetAutosave}
+                    icon
+                    labelPosition="left"
+                  >
+                    <Icon name={autosave ? "toggle on" : "toggle off"} />
+                    Autosave
+                    { autosave ? " on" : " off" }
+                  </Button>
+                )}
+
                 {newChart.id
                   && (
                   <Button
                     primary
-                    disabled={
-                      initialQuery !== newChart.query || !newChart.subType
-                    }
                     loading={createLoading}
                     onClick={this._onUpdateConfirmation}
+                    icon
+                    labelPosition="right"
                   >
+                    <Icon name="edit" />
                     Update the chart
                   </Button>
                   )}
@@ -1066,7 +1153,7 @@ class AddChart extends Component {
                       if (step === 2 && !testSuccess && selectedConnection.type !== "api") {
                         this._testQuery();
                       } else {
-                        this.setState({ step: step + 1 });
+                        this._onChangeStep(step + 1);
                       }
                     }}
                     loading={testingQuery}
@@ -1080,7 +1167,7 @@ class AddChart extends Component {
                       ? "Run test" : "Next"}
                   </Button>
                   )}
-                {step > 2 && !newChart.id
+                {step > 2 && newChart.draft
                   && (
                   <Button
                     secondary
@@ -1088,7 +1175,7 @@ class AddChart extends Component {
                     labelPosition="right"
                     disabled={!testSuccess}
                     loading={createLoading}
-                    onClick={this._onCreateChart}
+                    onClick={() => this._onCreateChart(true)}
                   >
                     <Icon name="checkmark" />
                     Create the chart
@@ -1126,7 +1213,7 @@ class AddChart extends Component {
               color="teal"
               inverted
               loading={!!removeLoading}
-              onClick={this._onCreateChart}
+              onClick={() => this._onCreateChart()}
             >
               <Icon name="checkmark" />
               Update & Remove datasets

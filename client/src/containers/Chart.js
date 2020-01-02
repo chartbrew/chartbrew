@@ -173,7 +173,7 @@ class Chart extends Component {
 
   render() {
     const {
-      charts, isPublic, match, connections,
+      charts, isPublic, match, connections, showDrafts,
     } = this.props;
     const { projectId } = match.params;
     const {
@@ -212,6 +212,9 @@ class Chart extends Component {
         <Grid stackable centered>
           {connections && charts.map((chart, index) => {
             if (isPublic && !chart.public) return (<span key={chart.id} />);
+            if (isPublic && chart.draft) return (<span key={chart.id} />);
+            if (chart.draft && !showDrafts) return (<span key={chart.id} />);
+
             // get connection
             let connection;
             for (let i = 0; i < connections.length; i++) {
@@ -246,17 +249,21 @@ class Chart extends Component {
                           as={Link}
                           to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}
                         />
-                        <Dropdown.Item
-                          onClick={() => this._onPublicConfirmation(chart)}
-                        >
-                          <Icon name="world" color={chart.public ? "red" : "green"} />
-                          {chart.public ? "Make private" : "Make public"}
-                        </Dropdown.Item>
-                        <Dropdown.Item
-                          icon="code"
-                          text="Embed"
-                          onClick={() => this._onEmbed(chart)}
-                        />
+                        {!chart.draft && (
+                          <>
+                            <Dropdown.Item
+                              onClick={() => this._onPublicConfirmation(chart)}
+                            >
+                              <Icon name="world" color={chart.public ? "red" : "green"} />
+                              {chart.public ? "Make private" : "Make public"}
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                              icon="code"
+                              text="Embed"
+                              onClick={() => this._onEmbed(chart)}
+                            />
+                          </>
+                        )}
                         <Dropdown.Divider />
                         <Dropdown
                           item
@@ -639,6 +646,7 @@ Chart.propTypes = {
   team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
   isPublic: PropTypes.bool,
+  showDrafts: PropTypes.bool.isRequired,
 };
 
 const mapStateToProps = (state) => {

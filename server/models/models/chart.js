@@ -18,6 +18,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     connection_id: {
       type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
       reference: {
         model: "Connection",
         key: "id",
@@ -120,7 +122,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     draft: {
       type: DataTypes.BOOLEAN,
-      defaultValue: true,
+      defaultValue: false,
     },
   }, {
     freezeTableName: true,

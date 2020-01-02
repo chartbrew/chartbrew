@@ -12,7 +12,13 @@
 
 ### Installation & Setup
 
-**Create a new database** that you're going to use with Chartbrew. Also, note down the username and password because you will need them in the next steps.
+::: tip
+The setup doesn't work in Windows PowerShell or cmd.exe. If you're using Windows, please use a bash command line like [Git Bash](https://git-scm.com/downloads) or [cygwin](https://www.cygwin.com/install.html)
+:::
+
+#### Run MySQL service and create the chartbrew database
+
+**Important!** Make sure you have a MySQL service running and you have created a database for Chartbrew. [Follow the instruction here >>](/database/#mysql)
 
 #### Quickstart
 
@@ -44,6 +50,7 @@ Make sure you fill out the `Production` and `Development` sections accordingly.
 Running the migrations will ensure that you have the most up-to-date database schema. Ensure that all environmental variables are set before running the following command in the `server` folder:
 
 ```sh
+cd server
 npm run db:migrate
 ```
 
