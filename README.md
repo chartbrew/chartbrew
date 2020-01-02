@@ -59,6 +59,7 @@ The arguments are optional, but they set the environmental variables needed for 
 If the database parameters are correct, the migrations should run automatically. If the new database wasn't populated with tables, ensure all the environmental variables are set, then run the following command in the `server` folder:
 
 ```sh
+cd server
 npm run db:migrate
 ```
 
