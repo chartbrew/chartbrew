@@ -44,19 +44,9 @@ class UserDashboard extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { errors } = this.props;
-    const { fetched, limitationModal } = this.state;
+    const { fetched } = this.state;
     if (!fetched && prevProps.user.data.id && !prevProps.user.loading) {
       this._getTeams();
-    }
-
-    if (!limitationModal) {
-      errors.map((error) => {
-        if (error.code === 406 && error.pathname === window.location.pathname) {
-          this.setState({ limitationModal: true });
-        }
-        return true;
-      });
     }
   }
 
@@ -187,46 +177,6 @@ class UserDashboard extends Component {
     );
   }
 
-  limitationModal = () => {
-    const { team, cleanErrors } = this.props;
-    const { limitationModal } = this.state;
-    return (
-      <Modal
-        open={limitationModal && !!team.id}
-        size="small"
-        onClose={() => {
-          this.setState({ limitationModal: false });
-          cleanErrors();
-        }}
-      >
-        <Header
-          content="Oh no! You've reached the limits of your plan"
-          inverted
-        />
-        <Modal.Content>
-          You can create more projects when you upgrade your current plan. Want to have a look?
-        </Modal.Content>
-        <Modal.Actions>
-          <Button
-            onClick={() => {
-              this.setState({ limitationModal: false });
-              cleanErrors();
-            }}
-          >
-            Close
-          </Button>
-          <Link to={`/manage/${team.id}/plans`}>
-            <Button
-              positive
-            >
-              See the plans
-            </Button>
-          </Link>
-        </Modal.Actions>
-      </Modal>
-    );
-  }
-
   directToProject = (team, projectId) => {
     const { saveActiveTeam, history } = this.props;
 
@@ -271,7 +221,6 @@ class UserDashboard extends Component {
           {this.newTeamModal()}
           {this.invitationModal()}
           {this.newProjectModal()}
-          {this.limitationModal()}
 
           {teams && teams.map((key) => {
             return (
@@ -455,16 +404,12 @@ UserDashboard.propTypes = {
   history: PropTypes.object.isRequired,
   relog: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
-  errors: PropTypes.array.isRequired,
-  team: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
     user: state.user,
     teams: state.team.data,
-    team: state.team.active,
-    errors: state.error,
   };
 };
 

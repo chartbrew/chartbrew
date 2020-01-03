@@ -5,9 +5,7 @@ const _ = require("lodash");
 
 const db = require("../models/models");
 const ProjectController = require("./ProjectController");
-const LimitationController = require("./LimitationController");
 const externalDbConnection = require("../modules/externalDbConnection");
-const getMemorySize = require("../modules/getMemorySize");
 
 /*
 ** Helper functions
@@ -70,7 +68,6 @@ function paginateRequests(options, limit, items, offset, totalResults) {
 class ConnectionController {
   constructor() {
     this.projectController = new ProjectController();
-    this.limitation = new LimitationController();
   }
 
   findById(id) {
@@ -205,15 +202,11 @@ class ConnectionController {
   testApiRequest({
     connection_id, apiRequest, itemsLimit, items, offset, pagination,
   }) {
-    let gConnection;
-    let gResponse;
-
     const limit = itemsLimit
       ? parseInt(itemsLimit, 10) : 0;
 
     return this.findById(connection_id)
       .then((connection) => {
-        gConnection = connection;
         const tempUrl = `${connection.getApiUrl(connection)}${apiRequest.route || ""}`;
         const queryParams = querystring.parse(tempUrl.split("?")[1]);
 
@@ -262,27 +255,18 @@ class ConnectionController {
       })
       .then((response) => {
         if (pagination) {
-          gResponse = response;
           return new Promise(resolve => resolve(response));
         }
 
         if (response.statusCode < 300) {
           try {
-            // check the query limitations
-            gResponse = JSON.parse(response.body);
-            const objSize = getMemorySize(gResponse);
-            return this.limitation.canUseTheData(gConnection.project_id, objSize);
+            return new Promise(resolve => resolve(JSON.parse(response.body)));
           } catch (e) {
             return new Promise((resolve, reject) => reject(406));
           }
         } else {
           return new Promise((resolve, reject) => reject(response.statusCode));
         }
-      })
-      .then((canUse) => {
-        if (!canUse) throw new Error(413);
-
-        return new Promise(resolve => resolve(gResponse));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

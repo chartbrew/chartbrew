@@ -15,8 +15,6 @@ import TeamMembers from "./TeamMembers";
 import TeamSettings from "./TeamSettings";
 import Navbar from "../components/Navbar";
 import canAccess from "../config/canAccess";
-import ManagePlans from "./ManagePlans";
-import ManagePaymentMethods from "./ManagePaymentMethods";
 
 /*
   Description
@@ -113,29 +111,6 @@ class ManageTeam extends Component {
                 </Menu.Item>
                 )}
             </Menu>
-            {this._canAccess("owner")
-            && (
-              <div>
-                <Header as="h3" style={{ paddingTop: 20 }}>
-                  Account Settings
-                </Header>
-                <Menu secondary vertical fluid>
-                  <Menu.Item
-                    active={this.checkIfActive("plans")}
-                    as={Link}
-                    to={`/manage/${match.params.teamId}/plans`}>
-                    Subscription
-                  </Menu.Item>
-
-                  <Menu.Item
-                    active={this.checkIfActive("payment")}
-                    as={Link}
-                    to={`/manage/${match.params.teamId}/payment`}>
-                    Payment methods
-                  </Menu.Item>
-                </Menu>
-              </div>
-            )}
           </Grid.Column>
 
           <Grid.Column stretched width={12}>
@@ -143,8 +118,6 @@ class ManageTeam extends Component {
               <Switch>
                 <Route path="/manage/:teamId/members" component={TeamMembers} />
                 {this._canAccess("owner") && <Route path="/manage/:teamId/settings" component={TeamSettings} />}
-                {this._canAccess("owner") && <Route path="/manage/:teamId/plans" component={ManagePlans} />}
-                {this._canAccess("owner") && <Route path="/manage/:teamId/payment" component={ManagePaymentMethods} />}
               </Switch>
             </Container>
           </Grid.Column>

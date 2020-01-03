@@ -2,7 +2,6 @@ const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
-const limitationMiddleware = require("../middlewares/limitationMiddleware");
 
 module.exports = (app) => {
   const projectController = new ProjectController();
@@ -10,7 +9,7 @@ module.exports = (app) => {
   /*
   ** Route to create a project
   */
-  app.post("/project", verifyToken, limitationMiddleware.canCreateProject, (req, res) => {
+  app.post("/project", verifyToken, (req, res) => {
     return teamController.getTeamRole(req.body.team_id, req.user.id)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).createAny("project");

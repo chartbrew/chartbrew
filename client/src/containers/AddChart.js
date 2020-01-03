@@ -68,7 +68,6 @@ class AddChart extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     const { newChart, timeToSave, autosave } = this.state;
-    const { match } = this.props;
 
     if (prevProps.charts) {
       if (prevProps.match.params.chartId && prevProps.charts.length > 0 && !prevState.updatedEdit) {
@@ -80,12 +79,6 @@ class AddChart extends Component {
       this._populateConnections();
     }
 
-    if (prevState.canCreate !== 1
-      && prevState.canCreate !== 0
-      && !match.params.chartId
-    ) {
-      this._canCreateChart();
-    }
     // update the draft if it's already created and only if it's a draft
     if (!_.isEqual(prevState.newChart, newChart) && timeToSave && newChart.id && autosave) {
       this._updateDraft();
@@ -560,93 +553,15 @@ class AddChart extends Component {
     }
   }
 
-  _canCreateChart = () => {
-    const { team, charts } = this.props;
-    const { newChart } = this.state;
-
-    if (team.plan && team.plan.charts <= charts.length && !newChart.id) {
-      this.setState({ canCreate: 0, limitationModal: true });
-    } else if (team.plan) {
-      this.setState({ canCreate: 1 });
-    }
-  }
-
-  limitationModal = () => {
-    const { match, errors, cleanErrors } = this.props;
-
-    let dataLimit = false;
-    errors.map((error) => {
-      if (error.code === 413 && error.pathname === window.location.pathname) {
-        dataLimit = true;
-      }
-      return error;
-    });
-
-    return (
-      <Modal open={dataLimit} size="small" onClose={() => cleanErrors()}>
-        <Header
-          content="Oh no! You've reached the limits of your plan."
-          inverted
-        />
-        <Modal.Content>
-          {"The payload of your request is too large. You can limit the amount of data you're requesting from the API or upgrade your plan."}
-        </Modal.Content>
-        <Modal.Actions>
-          <Button
-            onClick={() => cleanErrors()}
-          >
-            Close
-          </Button>
-          <Link to={`/manage/${match.params.teamId}/plans`}>
-            <Button
-              positive
-            >
-              See the plans
-            </Button>
-          </Link>
-        </Modal.Actions>
-      </Modal>
-    );
-  }
-
   render() {
     const {
       activeDataset, newChart, previewChart, selectedConnection, testSuccess,
       viewDatasetOptions, queryData, step, ddConnections,
       testError, testFailed, testingQuery, apiRequest, previewLoading,
       previewError, lcArrayError, createError, autosave,
-      removeModal, createLoading, removeLoading, limitationModal, canCreate
+      removeModal, createLoading, removeLoading,
     } = this.state;
     const { connections, match } = this.props;
-
-    if (limitationModal) {
-      return (
-        <Segment style={styles.mainSegment}>
-          <Dimmer active={canCreate === 0} inverted>
-            <Header as="h2" icon style={{ color: "black" }}>
-              <Icon name="lock" />
-              You reached the limits of your plan
-              <Header.Subheader>
-                Unlock more charts below
-              </Header.Subheader>
-            </Header>
-            <div>
-              <Link to={`/manage/${match.params.teamId}/plans`}>
-                <Button
-                  size="large"
-                  primary
-                  icon
-                  labelPosition="right"
-                >
-                  <Icon name="chevron right" />
-                  See available plans
-                </Button>
-              </Link>
-            </div>
-          </Dimmer>
-        </Segment>
-      );
-    }
 
     return (
       <div style={styles.container}>
@@ -1305,8 +1220,6 @@ class AddChart extends Component {
             </Button>
           </Modal.Actions>
         </Modal>
-
-        {this.limitationModal()}
       </div>
     );
   }
@@ -1335,8 +1248,6 @@ AddChart.propTypes = {
   history: PropTypes.object.isRequired,
   charts: PropTypes.array.isRequired,
   cleanErrors: PropTypes.func.isRequired,
-  team: PropTypes.object.isRequired,
-  errors: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -1344,7 +1255,6 @@ const mapStateToProps = (state) => {
     connections: state.connection.data,
     charts: state.chart.data,
     team: state.team.active,
-    errors: state.error,
   };
 };
 

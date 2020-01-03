@@ -25,8 +25,6 @@ class EmbeddedChart extends Component {
       loading: false,
       chart: null,
     };
-
-    $crisp.push(["do", "chat:hide"]);
   }
 
   componentDidMount() {

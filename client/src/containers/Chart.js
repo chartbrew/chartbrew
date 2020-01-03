@@ -173,7 +173,7 @@ class Chart extends Component {
 
   render() {
     const {
-      charts, isPublic, match, connections, team, showDrafts,
+      charts, isPublic, match, connections, showDrafts,
     } = this.props;
     const { projectId } = match.params;
     const {
@@ -517,33 +517,21 @@ class Chart extends Component {
                   }, {
                     text: "Every 30 minutes",
                     value: 1800,
-                    disabled: team.plan
-                      && (team.plan.autoRefresh === false || team.plan.autoRefresh > 1800),
                   }, {
                     text: "Every hour",
                     value: 3600,
-                    disabled: team.plan
-                      && (team.plan.autoRefresh === false || team.plan.autoRefresh > 3600),
                   }, {
                     text: "Every 3 hours",
                     value: 10800,
-                    disabled: team.plan
-                      && (team.plan.autoRefresh === false || team.plan.autoRefresh > 10800),
                   }, {
                     text: "Every day",
                     value: 86400,
-                    disabled: team.plan
-                      && (team.plan.autoRefresh === false || team.plan.autoRefresh > 86400),
                   }, {
                     text: "Every week",
                     value: 604800,
-                    disabled: team.plan
-                      && (team.plan.autoRefresh === false || team.plan.autoRefresh > 604800),
                   }, {
                     text: "Every month",
                     value: 2592000,
-                    disabled: team.plan
-                      && (team.plan.autoRefresh === false || team.plan.autoRefresh > 2592000),
                   }]}
                   value={updateFrequency || 0}
                   onChange={(e, data) => this.setState({ updateFrequency: data.value })}

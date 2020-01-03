@@ -3,7 +3,6 @@ const moment = require("moment");
 const Sequelize = require("sequelize");
 
 const externalDbConnection = require("../modules/externalDbConnection");
-const getMemorySize = require("../modules/getMemorySize");
 
 const db = require("../models/models");
 const DatasetController = require("./DatasetController");
@@ -11,7 +10,6 @@ const ConnectionController = require("./ConnectionController");
 const ProjectController = require("./ProjectController");
 const ApiRequestController = require("./ApiRequestController");
 const ChartCacheController = require("./ChartCacheController");
-const LimitationController = require("./LimitationController");
 
 // charts
 const LineChart = require("../charts/LineChart");
@@ -25,7 +23,6 @@ class ChartController {
     this.project = new ProjectController();
     this.apiRequestController = new ApiRequestController();
     this.chartCache = new ChartCacheController();
-    this.limitation = new LimitationController();
   }
 
   create(data, user) {
@@ -268,28 +265,15 @@ class ChartController {
   }
 
   runPostgresQuery(chart) {
-    let gData;
-    let gConnection;
-
     return this.connection.findById(chart.connection_id)
       .then((connection) => {
-        gConnection = connection;
         return externalDbConnection(connection);
       })
       .then((db) => {
         return db.query(chart.query, { type: Sequelize.QueryTypes.SELECT });
       })
       .then((results) => {
-        gData = results;
-
-        // check the query limitations
-        const objSize = getMemorySize(gData);
-        return this.limitation.canUseTheData(gConnection.project_id, objSize);
-      })
-      .then((canUse) => {
-        if (!canUse) throw new Error(413);
-
-        return this.getChartData(chart.id, gData);
+        return this.getChartData(chart.id, results);
       })
       .then(() => {
         return this.findById(chart.id);
@@ -300,19 +284,9 @@ class ChartController {
   }
 
   runRequest(chart) {
-    let gData;
-
     return this.apiRequestController.sendRequest(chart.id, chart.connection_id)
       .then((data) => {
-        gData = data;
-        // check the query size
-        const objSize = getMemorySize(data);
-        return this.limitation.canUseTheData(chart.project_id, objSize);
-      })
-      .then((canUse) => {
-        if (!canUse) throw new Error(413);
-
-        return this.getChartData(chart.id, gData);
+        return this.getChartData(chart.id, data);
       })
       .then(() => {
         return this.findById(chart.id);
@@ -324,8 +298,6 @@ class ChartController {
 
   runQuery(id) {
     let gChart;
-    let gData;
-
     return this.findById(id)
       .then((chart) => {
         gChart = chart;
@@ -346,15 +318,7 @@ class ChartController {
         return Function(`'use strict';return (mongoose) => mongoose.${gChart.query}`)()(mongoose); // eslint-disable-line
       })
       .then((data) => {
-        gData = data;
-        // check the query size
-        const objSize = getMemorySize(data);
-        return this.limitation.canUseTheData(gChart.project_id, objSize);
-      })
-      .then((canUse) => {
-        if (!canUse) throw new Error(413);
-
-        return this.getChartData(gChart.getDataValue("id"), gData);
+        return this.getChartData(gChart.getDataValue("id"), data);
       })
       .then(() => {
         return this.findById(gChart.getDataValue("id"));
@@ -364,9 +328,7 @@ class ChartController {
       });
   }
 
-  testMongoQuery({ connection_id, query }, projectId) {
-    let gData;
-
+  testMongoQuery({ connection_id, query }) {
     return this.connection.getConnectionUrl(connection_id)
       .then((url) => {
         const options = {
@@ -379,16 +341,7 @@ class ChartController {
         return Function(`'use strict';return (mongoose) => mongoose.${query}.toArray()`)()(mongoose); // eslint-disable-line
       })
       .then((data) => {
-        gData = data;
-
-        // check the query size limitations
-        const objSize = getMemorySize(data);
-        return this.limitation.canUseTheData(projectId, objSize);
-      })
-      .then((canUse) => {
-        if (!canUse) throw new Error(413);
-
-        return new Promise(resolve => resolve(gData));
+        return new Promise(resolve => resolve(data));
       })
       .catch(() => {
         return Function(`'use strict';return (mongoose) => mongoose.${query}`)()(mongoose); // eslint-disable-line
@@ -417,20 +370,10 @@ class ChartController {
       });
   }
 
-  getApiChartData(chart, projectId) {
-    let gData;
-
+  getApiChartData(chart) {
     return this.connection.testApiRequest(chart)
       .then((data) => {
-        gData = data;
-        // check the query limitations
-        const objSize = getMemorySize(data);
-        return this.limitation.canUseTheData(projectId, objSize);
-      })
-      .then((canUse) => {
-        if (!canUse) throw new Error(413);
-
-        return new Promise(resolve => resolve(gData));
+        return new Promise(resolve => resolve(data));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -438,23 +381,12 @@ class ChartController {
   }
 
   getPostgresData(chart, projectId, connection) {
-    let gData;
-
     return externalDbConnection(connection)
       .then((db) => {
         return db.query(chart.query, { type: Sequelize.QueryTypes.SELECT });
       })
       .then((results) => {
-        gData = results;
-
-        // check the query limitations
-        const objSize = getMemorySize(gData);
-        return this.limitation.canUseTheData(projectId, objSize);
-      })
-      .then((canUse) => {
-        if (!canUse) throw new Error(413);
-
-        return new Promise(resolve => resolve(gData));
+        return new Promise(resolve => resolve(results));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

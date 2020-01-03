@@ -8,6 +8,6 @@
 ** passwordReset()
 */
 
-const sendgrid = require("./sendgrid");
+const nodemail = require("./nodemail");
 
-module.exports = sendgrid;
+module.exports = nodemail;

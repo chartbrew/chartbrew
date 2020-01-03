@@ -3,7 +3,6 @@ const uuidv4 = require("uuid/v4");
 
 const db = require("../models/models");
 const UserController = require("./UserController");
-const StripeController = require("./StripeController");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -15,7 +14,6 @@ const sc = simplecrypt({
 class TeamController {
   constructor() {
     this.userController = new UserController();
-    this.stripeController = new StripeController();
   }
 
   // create a new team
@@ -40,43 +38,9 @@ class TeamController {
 
   // add a new team role
   addTeamRole(teamId, userId, roleName) {
-    // check if the plan requires extra member subscription item or not
-    let features;
-    return this.getTeamPlan(teamId)
-      .then((sub) => {
-        features = settings.features[sub.plan.nickname.toLowerCase()];
-        return this.teamRole.findAll({
-          where: { team_id: teamId },
-          include: [{ model: db.User }]
-        });
-      })
-      .then((roles) => {
-        // if the plan reached the maximum number of users in the plan, get some $$$
-        if (roles.length >= features.members) {
-          // get the subscriptionId of the owner
-          let subscriptionId;
-          for (const role of roles) {
-            if (role.role === "owner") {
-              subscriptionId = sc.decrypt(role.User.subscriptionId);
-              break;
-            }
-          }
-
-          return this.stripeController.updateMembers(subscriptionId, 1);
-        }
-        return roles;
-      })
-      .then(() => {
-        return db.TeamRole.create({ "team_id": teamId, "user_id": userId, "role": roleName });
-      })
+    return db.TeamRole.create({ "team_id": teamId, "user_id": userId, "role": roleName })
       .then((role) => {
         return role;
-      })
-      .catch((error) => {
-        if (error.message === "404") {
-          return db.TeamRole.create({ "team_id": teamId, "user_id": userId, "role": roleName });
-        }
-        return new Promise((resolve, reject) => reject(error));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -135,7 +99,6 @@ class TeamController {
   }
 
   deleteTeamMember(id) {
-    let features;
     let teamId;
     return db.TeamRole.findByPk(id)
       .then((role) => {
@@ -143,32 +106,7 @@ class TeamController {
         return db.TeamRole.destroy({ where: { id } });
       })
       .then(() => {
-        // now check if the subscription should be changed as well
-        return this.getTeamPlan(teamId);
-      })
-      .then((sub) => {
-        features = settings.features[sub.plan.nickname.toLowerCase()];
-
-        return db.TeamRole.findAll({
-          where: { team_id: teamId },
-          include: [{ model: db.User }]
-        });
-      })
-      .then((roles) => {
-        // if the plan reached the maximum number of users in the plan, get some $$$
-        if (roles.length >= features.members) {
-          // get the subscriptionId of the owner
-          let subscriptionId;
-          for (const role of roles) {
-            if (role.role === "owner") {
-              subscriptionId = sc.decrypt(role.User.subscriptionId);
-              break;
-            }
-          }
-          return this.stripeController.updateMembers(subscriptionId, -1);
-        }
-
-        return roles;
+        return this.getAllTeamRoles(teamId);
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -197,8 +135,6 @@ class TeamController {
   }
 
   findById(id) {
-    let gTeam;
-
     return db.Team.findOne({
       where: { id },
       include: [
@@ -208,18 +144,9 @@ class TeamController {
     })
       .then((team) => {
         if (!team) return new Promise((resolve, reject) => reject(new Error(404)));
-        gTeam = team;
 
-        return this.getTeamPlan(id);
-      })
-      .then((subscription) => {
-        if (subscription.plan) {
-          gTeam.setDataValue("plan", settings.features[subscription.plan.nickname.toLowerCase()]);
-        }
-
-        return gTeam;
-      })
-      .catch((error) => {
+        return team;
+      }).catch((error) => {
         return new Promise((resolve, reject) => reject(error.message));
       });
   }
@@ -235,8 +162,6 @@ class TeamController {
   }
 
   getUserTeams(userId) {
-    let gTeams;
-
     return db.TeamRole.findAll({ where: { user_id: userId } })
       .then((teamIds) => {
         const idsArray = [];
@@ -258,55 +183,23 @@ class TeamController {
           ],
         });
       })
-      .then((teams) => {
-        gTeams = teams;
-        // prepare promises for fetching the subscription plan for each team
-        const promises = [];
-        for (const team of teams) {
-          promises.push(this.getTeamPlan(team.id));
-        }
-
-        return Promise.all(promises);
-      })
-      .then((responses) => {
-        // go through the responses and match the plan limitations with the team
-        for (const response of responses) {
-          for (const team of gTeams) {
-            if (response.teamId === team.id && response.plan) {
-              team.setDataValue("plan", settings.features[response.plan.nickname.toLowerCase()]);
-              break;
-            }
-          }
-        }
-
-        return new Promise(resolve => resolve(gTeams));
-      })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
       });
   }
 
   saveTeamInvite(teamId, data) {
-    // first check if the user is allowed to add memembers
-    return this.getTeamPlan(teamId)
-      .then((sub) => {
-        // if the user is on the community plan, they can't add more members
-        if (sub.plan.nickname.toLowerCase === "community") {
-          throw new Error(406);
-        }
-
-        const token = uuidv4();
-        return db.TeamInvitation.create({
-          "team_id": teamId, "email": data.email, "user_id": data.user_id, token
-        });
-      })
-      .then((invite) => {
-        return invite;
+    const token = uuidv4();
+    return db.TeamInvite.create({
+      "team_id": teamId, "email": data.email, "user_id": data.user_id, token
+    })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
       });
   }
 
   getTeamInvite(token) {
-    return db.TeamInvitation.findOne({ where: { token } })
+    return db.TeamInvite.findOne({ where: { token } })
       .then((invite) => {
         if (!invite) return new Promise((resolve, reject) => reject(new Error(404)));
         return invite;
@@ -317,7 +210,7 @@ class TeamController {
   }
 
   getTeamInvitesById(teamId) {
-    return db.TeamInvitation.findAll({
+    return db.TeamInvite.findAll({
       where: { team_id: teamId },
       include: [{ model: db.Team }],
     })
@@ -330,7 +223,7 @@ class TeamController {
   }
 
   getInviteByEmail(teamId, email) {
-    return db.TeamInvitation.findOne({
+    return db.TeamInvite.findOne({
       where: { team_id: teamId, email: sc.encrypt(email) },
       include: [{ model: db.Team }],
     })
@@ -343,57 +236,9 @@ class TeamController {
   }
 
   deleteTeamInvite(token) {
-    return db.TeamInvitation.destroy({ where: { token } })
+    return db.TeamInvite.destroy({ where: { token } })
       .then(() => {
         return true;
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
-      });
-  }
-
-  getTeamPlan(teamId) {
-  // get the owner of the team to check the subscription
-    return this.getAllTeamRoles(teamId)
-      .then((roles) => {
-        if (!roles || roles.length < 1) {
-          return new Promise((resolve, reject) => reject(new Error(404)));
-        }
-        // llok for the owner in the array
-        let owner;
-        for (const role of roles) {
-          if (role.role === "owner") {
-            owner = role.user_id;
-            break;
-          }
-        }
-
-        return this.userController.findById(owner);
-      })
-      .then((user) => {
-        if (!user.subscriptionId) {
-        // quick hack to be able to give users access to different plans for free
-          if (user.plan && settings.features[user.plan.toLowerCase()]) {
-            return new Promise(resolve => resolve({ plan: { nickname: user.plan } }));
-          }
-
-          return new Promise(resolve => resolve({ plan: { nickname: "Community" } }));
-        }
-
-        const subscriptionId = sc.decrypt(user.subscriptionId);
-        return this.stripeController.getSubscriptionDetails(subscriptionId);
-      })
-      .then((subscription) => {
-        // set the teamId inside to make sure the subscription is identifiable
-        const newSub = subscription;
-        newSub.teamId = teamId;
-
-        // check if the subscription has a plan and if not add the plan from the items array
-        if (!newSub.plan) {
-          newSub.plan = newSub.items.data[0].plan; // eslint-disable-line
-        }
-
-        return new Promise(resolve => resolve(newSub));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
