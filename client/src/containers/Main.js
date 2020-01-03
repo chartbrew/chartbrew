@@ -16,6 +16,7 @@ import FeedbackForm from "../components/FeedbackForm";
 import PublicDashboard from "./PublicDashboard";
 import PasswordReset from "./PasswordReset";
 import EmbeddedChart from "./EmbeddedChart";
+import Homepage from "./Homepage";
 
 import { relog, getUser } from "../actions/user";
 import { getTeams } from "../actions/team";
@@ -39,6 +40,8 @@ class Main extends Component {
         return getAllProjects();
       });
     }
+
+    $crisp.push(["safe", true]);
   }
 
   render() {
@@ -46,7 +49,7 @@ class Main extends Component {
       <div style={styles.container}>
         <div>
           <Switch>
-            <Route exact path="/" component={UserDashboard} />
+            <Route exact path="/" component={Homepage} />
             <Route exact path="/b/:brewName" component={PublicDashboard} />
             <Route
               exact
@@ -70,6 +73,8 @@ class Main extends Component {
             <Route exact path="/passwordReset" component={PasswordReset} />
             <Route exact path="/manage/:teamId/members" component={ManageTeam} />
             <Route exact path="/manage/:teamId/settings" component={ManageTeam} />
+            <Route exact path="/manage/:teamId/plans" component={ManageTeam} />
+            <Route exact path="/manage/:teamId/payment" component={ManageTeam} />
             <Route exact path="/:teamId/:projectId/dashboard" component={ProjectBoard} />
             <Route exact path="/:teamId/:projectId/connections" component={ProjectBoard} />
             <Route exact path="/:teamId/:projectId/chart" component={ProjectBoard} />

@@ -3,6 +3,8 @@ const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
+const limitationMiddleware = require("../middlewares/limitationMiddleware");
+const constants = require("../constants");
 
 module.exports = (app) => {
   const chartController = new ChartController();
@@ -37,7 +39,7 @@ module.exports = (app) => {
   /*
   ** Route to create a new chart
   */
-  app.post("/project/:project_id/chart", verifyToken, (req, res) => {
+  app.post("/project/:project_id/chart", verifyToken, limitationMiddleware.canCreateChart, (req, res) => {
     return projectController.findById(req.params.project_id)
       .then((project) => {
         return teamController.getTeamRole(project.team_id, req.user.id);
@@ -67,7 +69,7 @@ module.exports = (app) => {
   /*
   ** Route to update a chart
   */
-  app.put("/project/:project_id/chart/:id", verifyToken, (req, res) => {
+  app.put("/project/:project_id/chart/:id", verifyToken, limitationMiddleware.canChangeAutoUpdate, (req, res) => {
     return projectController.findById(req.params.project_id)
       .then((project) => {
         return teamController.getTeamRole(project.team_id, req.user.id);
@@ -166,7 +168,11 @@ module.exports = (app) => {
           return res.status(401).send({ error: "Not authorized" });
         }
         if (error.message.indexOf("413") > -1) {
-          return res.status(413).send(error);
+          return res.status(413).send({
+            code: 413,
+            limit: constants.CAN_USE_DATA,
+            error: "The query size exceeds the limit of your plan",
+          });
         }
         return res.status(400).send(error);
       });
@@ -204,7 +210,11 @@ module.exports = (app) => {
           return res.status(401).send({ error: "Not authorized" });
         }
         if (error.message && error.message.indexOf("413") > -1) {
-          return res.status(413).send(error);
+          return res.status(413).send({
+            code: 413,
+            limit: constants.CAN_USE_DATA,
+            error: "The query size exceeds the limit of your plan",
+          });
         }
 
         return res.status(400).send({ error });
@@ -236,7 +246,11 @@ module.exports = (app) => {
           return res.status(401).send({ error: "Not authorized" });
         }
         if (error.message.indexOf("413") > -1) {
-          return res.status(413).send(error);
+          return res.status(413).send({
+            code: 413,
+            limit: constants.CAN_USE_DATA,
+            error: "The query size exceeds the limit of your plan",
+          });
         }
         return res.status(400).send(error);
       });
@@ -265,7 +279,11 @@ module.exports = (app) => {
           return res.status(401).send({ error: "Not authorized" });
         }
         if (error.message.indexOf("413") > -1) {
-          return res.status(413).send(error);
+          return res.status(413).send({
+            code: 413,
+            limit: constants.CAN_USE_DATA,
+            error: "The query size exceeds the limit of your plan",
+          });
         }
         return res.status(400).send(error);
       });

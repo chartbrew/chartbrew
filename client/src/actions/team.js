@@ -429,3 +429,31 @@ export function resendTeamInvite(invite) {
       });
   };
 }
+
+export function getTeamPlan(teamId) {
+  return (dispatch) => {
+    if (!cookie.load("brewToken")) {
+      return new Promise((resolve, reject) => reject(new Error("No Token")));
+    }
+    const token = cookie.load("brewToken");
+    const headers = {
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    };
+    return fetch(`${API_HOST}/team/${teamId}/subscription`, { method: "GET", headers })
+      .then((response) => {
+        if (!response.ok) {
+          dispatch(addError(response.status));
+          return new Promise((resolve, reject) => reject(response.statusText));
+        }
+        return response.json();
+      })
+      .then(data => {
+        return new Promise(resolve => resolve(data));
+      })
+      .catch(err => {
+        return new Promise((resolve, reject) => reject(err));
+      });
+  };
+}

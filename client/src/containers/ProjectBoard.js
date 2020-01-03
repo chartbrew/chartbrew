@@ -48,6 +48,9 @@ class ProjectBoard extends Component {
     if (window.localStorage.getItem("_cb_menu_size")) {
       this._setMenuSize(window.localStorage.getItem("_cb_menu_size"), true);
     }
+
+    $crisp.push(["do", "chat:hide"]);
+
     if (window.localStorage.getItem("_cb_drafts")) {
       this._setDraftsVisible(window.localStorage.getItem("_cb_drafts") === "true");
     }

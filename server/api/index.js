@@ -5,6 +5,7 @@ const connection = require("./ConnectionRoute");
 const chart = require("./ChartRoute");
 const savedQuery = require("./SavedQueryRoute");
 const apiRequest = require("./ApiRequestRoute");
+const stripe = require("./StripeRoute");
 
 module.exports = {
   team,
@@ -14,4 +15,5 @@ module.exports = {
   chart,
   savedQuery,
   apiRequest,
+  stripe,
 };

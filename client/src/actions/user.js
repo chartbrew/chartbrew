@@ -13,7 +13,9 @@ export const REMOVE_PENDING_INVITE = "REMOVE_PENDING_INVITE";
 
 
 function authenticatePage() {
-  if (window.location.pathname === "/login") {
+  if (window.location.pathname === "/") {
+    return false;
+  } else if (window.location.pathname === "/login") {
     return false;
   } else if (window.location.pathname === "/signup") {
     return false;

@@ -58,6 +58,21 @@ module.exports = (sequelize, DataTypes) => {
     passwordResetToken: {
       type: DataTypes.STRING,
     },
+    stripeId: {
+      type: DataTypes.STRING,
+      set(val) {
+        return this.setDataValue("stripeId", sc.encrypt(val));
+      },
+    },
+    subscriptionId: {
+      type: DataTypes.STRING,
+      set(val) {
+        return this.setDataValue("subscriptionId", sc.encrypt(val));
+      },
+    },
+    plan: {
+      type: DataTypes.STRING,
+    },
     createdAt: {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal("CURRENT_TIMESTAMP")

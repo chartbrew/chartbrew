@@ -5,6 +5,7 @@ const UserController = require("../controllers/UserController");
 const TeamController = require("../controllers/TeamController");
 const verifyUser = require("../modules/verifyUser");
 const verifyToken = require("../modules/verifyToken");
+const mail = require("../modules/mail");
 
 module.exports = (app) => {
   const userController = new UserController();
@@ -68,6 +69,11 @@ module.exports = (app) => {
           user_id: user.id,
           name: `${user.name}'s space`
         };
+
+        // add the user the the mailing lists
+        mail.addToList(user);
+        mail.welcome(user);
+
         return teamController.createTeam(newTeam);
       })
       .then((team) => {
@@ -285,6 +291,25 @@ module.exports = (app) => {
       });
   });
   // --------------------------------------
+
+  /*
+** Route to add email the the email list
+*/
+  app.post("/user/email", (req, res) => {
+    if (!req.body.email) return res.status(400).send("Missing email");
+
+    const user = {
+      email: req.body.email,
+    };
+
+    return mail.addToList(user, [app.settings.sendgrid.interestedList])
+      .then((body) => {
+        return res.status(200).send(body);
+      })
+      .catch((err) => {
+        return res.status(400).send(err);
+      });
+  });
 
   return (req, res, next) => {
     next();
