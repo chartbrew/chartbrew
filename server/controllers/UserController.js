@@ -90,7 +90,7 @@ class UserController {
   }
 
   getTeamInvitesByUser(email) {
-    return db.TeamInvite.findAll({
+    return db.TeamInvitation.findAll({
       where: { email: sc.encrypt(email) },
       include: [{ model: db.Team }],
     })
