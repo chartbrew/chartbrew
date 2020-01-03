@@ -190,7 +190,7 @@ class TeamController {
 
   saveTeamInvite(teamId, data) {
     const token = uuidv4();
-    return db.TeamInvite.create({
+    return db.TeamInvitation.create({
       "team_id": teamId, "email": data.email, "user_id": data.user_id, token
     })
       .catch((error) => {
@@ -199,7 +199,7 @@ class TeamController {
   }
 
   getTeamInvite(token) {
-    return db.TeamInvite.findOne({ where: { token } })
+    return db.TeamInvitation.findOne({ where: { token } })
       .then((invite) => {
         if (!invite) return new Promise((resolve, reject) => reject(new Error(404)));
         return invite;
@@ -210,7 +210,7 @@ class TeamController {
   }
 
   getTeamInvitesById(teamId) {
-    return db.TeamInvite.findAll({
+    return db.TeamInvitation.findAll({
       where: { team_id: teamId },
       include: [{ model: db.Team }],
     })
@@ -223,7 +223,7 @@ class TeamController {
   }
 
   getInviteByEmail(teamId, email) {
-    return db.TeamInvite.findOne({
+    return db.TeamInvitation.findOne({
       where: { team_id: teamId, email: sc.encrypt(email) },
       include: [{ model: db.Team }],
     })
@@ -236,7 +236,7 @@ class TeamController {
   }
 
   deleteTeamInvite(token) {
-    return db.TeamInvite.destroy({ where: { token } })
+    return db.TeamInvitation.destroy({ where: { token } })
       .then(() => {
         return true;
       })
