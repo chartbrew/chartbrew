@@ -5,7 +5,7 @@
 </a>
 
 <p align="center">
-  <img src="https://app.buddy.works/razvanilin/chartbrew/pipelines/pipeline/230383/badge.svg?token=25baf00f6b4d446c82fc0d93f2330616808aeb930dc818c5138b5c5cf22f4bc8" alt="ChartBrew build" />
+  <a href="https://circleci.com/gh/chartbrew/chartbrew" target="_blank"><img src="https://circleci.com/gh/chartbrew/chartbrew.svg?style=svg" alt="ChartBrew build" /></a>
   <a href="https://discord.gg/KwGEbFk" target="_blank"><img src="https://img.shields.io/discord/656557151048957995?label=Discord" alt="" /></a>
 </p>
 
