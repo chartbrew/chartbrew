@@ -60,11 +60,12 @@
     "whatwg-fetch": "2.0.3"
   },
   "scripts": {
-    "start": "node scripts/start.js",
-    "build": "cp -n src/config/settings.template.js src/config/settings.js && node scripts/build.js",
+    "start": "npm run setup && node scripts/start.js",
+    "build": "npm run setup && node scripts/build.js",
     "test": "node scripts/test.js --env=jsdom",
-    "lint": "eslint src/",
-    "lint-fix": "eslint src/ --fix"
+    "lint": "npm run setup && eslint src/",
+    "lint-fix": "eslint src/ --fix",
+    "setup": "cp -n src/config/settings.template.js src/config/settings.js"
   },
   "jest": {
     "collectCoverageFrom": [
