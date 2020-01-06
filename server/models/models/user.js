@@ -22,6 +22,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    admin: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -73,6 +77,11 @@ module.exports = (sequelize, DataTypes) => {
     models.User.hasMany(models.TeamInvitation, { foreignKey: "user_id" });
     models.User.hasMany(models.ChartCache, { foreignKey: "user_id" });
   };
+
+  User.beforeValidate((user) => {
+    user.admin = false; // eslint-disable-line
+    return new Promise(resolve => resolve(user));
+  });
 
   return User;
 };
