@@ -1,6 +1,16 @@
 const db = require("../models/models");
 
 class ProjectController {
+  findAll() {
+    return db.Project.findAll()
+      .then((projects) => {
+        return Promise.resolve(projects);
+      })
+      .catch((error) => {
+        return Promise.reject(error);
+      });
+  }
+
   findById(id) {
     return db.Project.findOne({
       where: { id },

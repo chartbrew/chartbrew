@@ -32,14 +32,14 @@ module.exports = (app) => {
   });
 
   /*
-  ** Route to get all the users
+  ** [MASTER] Route to get all the users
   */
   app.get("/user", verifyToken, (req, res) => {
     if (!req.user.admin) {
       return res.status(401).send({ error: "Not Authorized" });
     }
 
-    return userController.find()
+    return userController.findAll()
       .then((users) => {
         return res.status(200).send(users);
       })

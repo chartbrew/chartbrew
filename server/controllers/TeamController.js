@@ -16,6 +16,16 @@ class TeamController {
     this.userController = new UserController();
   }
 
+  findAll() {
+    return db.Team.findAll()
+      .then((teams) => {
+        return Promise.resolve(teams);
+      })
+      .catch((error) => {
+        return Promise.reject(error);
+      });
+  }
+
   // create a new team
   createTeam(data) {
     return db.Team.create({ "name": data.name })

@@ -58,7 +58,7 @@ class UserController {
       });
   }
 
-  find() {
+  findAll() {
     return db.User.findAll({
       attributes: { exclude: ["password", "passwordResetToken"] },
     })
