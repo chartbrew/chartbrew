@@ -32,6 +32,24 @@ module.exports = (app) => {
   });
 
   /*
+  ** [MASTER] Route to get all the users
+  */
+  app.get("/user", verifyToken, (req, res) => {
+    if (!req.user.admin) {
+      return res.status(401).send({ error: "Not Authorized" });
+    }
+
+    return userController.findAll()
+      .then((users) => {
+        return res.status(200).send(users);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------
+
+  /*
   ** Route to get the user by id
   */
   app.get("/user/:id", (req, res) => {
@@ -46,7 +64,9 @@ module.exports = (app) => {
   });
   // --------------------------------------
 
-  // a route for creating a new user
+  /*
+  ** Route for creating a new user
+  */
   app.post("/user", (req, res) => {
     if (!req.body.email || !req.body.password) return res.status(400).send("no email or password");
 
@@ -83,6 +103,9 @@ module.exports = (app) => {
   });
   // --------------------------------------
 
+  /*
+  ** Route to delete a user
+  */
   app.delete("/user/:id", verifyToken, (req, res) => {
     if (req.user.id !== parseInt(req.params.id, 0)) return res.status(401).send("Unauthorised user");
     let user = {};
@@ -108,6 +131,9 @@ module.exports = (app) => {
   });
   // --------------------------------------
 
+  /*
+  ** Route to process invitations
+  */
   app.post("/user/invited", (req, res) => {
     if (!req.body.email || !req.body.password) return res.status(400).send("no email or password");
 
@@ -146,7 +172,9 @@ module.exports = (app) => {
   });
   // --------------------------------------
 
-  // verifying a new user
+  /*
+  ** Route to verify new users (not used atm)
+  */
   app.get("/user/:id/verify", verifyUser, (req, res) => {
     return userController.update(req.params.id, { "active": true })
       .then((user) => {
@@ -160,7 +188,9 @@ module.exports = (app) => {
   });
   // --------------------------------------
 
-  // login route
+  /*
+  ** Route to login users
+  */
   app.post("/user/login", (req, res) => {
     if (!req.body.email || !req.body.password) return res.status(400).send("fields are missing");
     let user = {};
@@ -180,14 +210,20 @@ module.exports = (app) => {
   });
   // --------------------------------------
 
+  /*
+  ** Route to relog users based on their tokens
+  */
   app.post("/user/relog", verifyToken, (req, res) => {
     return userController.update(req.user.id, { lastLogin: new Date() })
       .then(() => {
         return res.status(200).send(req.user);
       });
   });
+  // --------------------------------------
 
-  // updating user fields
+  /*
+  ** Route to modify users' fields
+  */
   app.put("/user/:id", (req, res) => {
     if (!req.body || !req.params.id) return res.status(400).send("Missing fields");
     return userController.update(req.params.id, req.body)
@@ -200,7 +236,9 @@ module.exports = (app) => {
   });
   // --------------------------------------
 
-  // route to get all team invites for the user
+  /*
+  ** Route to get all team invites for the user
+  */
   app.get("/user/:id/teamInvites", verifyToken, (req, res) => {
     if (req.user.id !== parseInt(req.params.id, 0)) return res.status(401).send("unauthorised user");
     return userController.findById(req.params.id)

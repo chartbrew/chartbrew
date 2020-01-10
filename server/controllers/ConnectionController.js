@@ -70,6 +70,18 @@ class ConnectionController {
     this.projectController = new ProjectController();
   }
 
+  findAll() {
+    return db.Connection.findAll({
+      attributes: { exclude: ["dbName", "password", "username", "options", "port", "host"] },
+    })
+      .then((connections) => {
+        return Promise.resolve(connections);
+      })
+      .catch((error) => {
+        return Promise.reject(error);
+      });
+  }
+
   findById(id) {
     return db.Connection.findByPk(id)
       .then((connection) => {

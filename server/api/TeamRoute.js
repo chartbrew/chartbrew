@@ -8,6 +8,24 @@ module.exports = (app) => {
   const teamController = new TeamController();
   const userController = new UserController();
 
+  /**
+   * [MASTER] Route to get all the teams
+   */
+  app.get("/team", verifyToken, (req, res) => {
+    if (!req.user.admin) {
+      return res.status(401).send({ error: "Not authorized" });
+    }
+
+    return teamController.findAll()
+      .then((teams) => {
+        return res.status(200).send(teams);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------
+
   // route to get a team by its id
   app.get("/team/:id", verifyToken, (req, res) => {
     return teamController.getTeamRole(req.params.id, req.user.id)
@@ -27,6 +45,7 @@ module.exports = (app) => {
         return res.status(400).send(error);
       });
   });
+  // --------------------------------------
 
   // route to create a team
   app.post("/team", (req, res) => {
@@ -47,6 +66,7 @@ module.exports = (app) => {
         return res.status(400).send(error);
       });
   });
+  // --------------------------------------
 
   // route to update a team
   app.put("/team/:id", verifyToken, (req, res) => {
@@ -67,6 +87,7 @@ module.exports = (app) => {
         return res.status(400).send(error);
       });
   });
+  // --------------------------------------
 
   // route to get all user's teams
   app.get("/team/user/:user_id", verifyToken, (req, res) => {
@@ -83,6 +104,7 @@ module.exports = (app) => {
   const sendInviteEmail = ((invite, admin, teamName) => {
     return mail.sendInvite(invite, admin.name, teamName.name);
   });
+  // --------------------------------------
 
   // a route to send a team invite
   app.post("/team/:id/invite", verifyToken, (req, res) => {
@@ -128,6 +150,7 @@ module.exports = (app) => {
         return res.status(400).send(error);
       });
   });
+  // --------------------------------------
 
   // route to resend existing team invite
   // TODO: test
@@ -157,6 +180,7 @@ module.exports = (app) => {
         return res.status(400).send(error);
       });
   });
+  // --------------------------------------
 
   // route for adding a team member with invite url
   app.post("/team/user/:user_id", verifyToken, (req, res) => {
@@ -181,6 +205,7 @@ module.exports = (app) => {
         return res.status(400).send(error);
       });
   });
+  // --------------------------------------
 
   // route to get all team users
   app.get("/team/:id/members", verifyToken, (req, res) => {
@@ -205,6 +230,7 @@ module.exports = (app) => {
         return res.status(400).send(error);
       });
   });
+  // --------------------------------------
 
   // route to find an invited user by invite token
   app.get("/team/invite/:token", (req, res) => {
@@ -221,6 +247,7 @@ module.exports = (app) => {
         return res.status(400).send(error);
       });
   });
+  // --------------------------------------
 
   // route to delete a team invite by token
   // // TODO: TEST
@@ -260,6 +287,7 @@ module.exports = (app) => {
         return res.status(400).send(error);
       });
   });
+  // --------------------------------------
 
   // route to get pending invites for the team
   app.get("/team/pendingInvites/:id", verifyToken, (req, res) => {
@@ -279,6 +307,7 @@ module.exports = (app) => {
         return res.status(400).send(error);
       });
   });
+  // --------------------------------------
 
   // route to update a team role
   app.put("/team/:id/role", verifyToken, (req, res) => {
@@ -298,7 +327,7 @@ module.exports = (app) => {
         return res.status(400).send(error);
       });
   });
-
+  // --------------------------------------
 
   // route to delete a team member
   app.delete("/team/:id/member/:userId", verifyToken, (req, res) => {

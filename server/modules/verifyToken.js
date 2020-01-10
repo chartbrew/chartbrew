@@ -18,6 +18,7 @@ module.exports = (req, res, next) => {
           "name": user.name,
           "email": user.email,
           "token": token,
+          "admin": user.admin,
         };
         req.user = userObj;
         return next();

@@ -22,7 +22,8 @@ class UserController {
           "email": user.email,
           "password": user.password,
           "icon": user.icon,
-          "active": true
+          "active": true,
+          "admin": true,
         });
       })
       .then((newUser) => { return newUser; })
@@ -54,6 +55,18 @@ class UserController {
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(new Error(error.message)));
+      });
+  }
+
+  findAll() {
+    return db.User.findAll({
+      attributes: { exclude: ["password", "passwordResetToken"] },
+    })
+      .then((users) => {
+        return Promise.resolve(users);
+      })
+      .catch((error) => {
+        return Promise.reject(error);
       });
   }
 

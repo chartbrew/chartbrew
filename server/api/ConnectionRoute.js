@@ -8,6 +8,25 @@ module.exports = (app) => {
   const connectionController = new ConnectionController();
   const projectController = new ProjectController();
   const teamController = new TeamController();
+
+  /*
+  ** [MASTER] Route to get all the connections
+  */
+  app.get("/connection", verifyToken, (req, res) => {
+    if (!req.user.admin) {
+      return res.status(401).send({ error: "Not authorized" });
+    }
+
+    return connectionController.findAll()
+      .then((connections) => {
+        return res.status(200).send(connections);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // -----------------------------------------
+
   /*
   ** Route to create a connection
   */
