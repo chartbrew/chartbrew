@@ -40,7 +40,7 @@ class AddChart extends Component {
     this.state = {
       step: 0,
       newChart: {
-        name: "Untitled chart",
+        name: "Untitled",
         query: "connection.collection('users').find()",
         displayLegend: false,
         connection_id: null,
@@ -149,7 +149,11 @@ class AddChart extends Component {
       createChart(match.params.projectId, newChart)
         .then((chart) => {
           if (chart && chart.id) {
-            this.setState({ newChart: { ...newChart, id: chart.id } });
+            this.setState({
+              newChart: {
+                ...newChart, id: chart.id, Datasets: chart.Datasets,
+              }
+            });
           }
         });
     }
@@ -544,6 +548,12 @@ class AddChart extends Component {
           if (create) {
             history.push(`/${match.params.teamId}/${match.params.projectId}/dashboard`);
           }
+
+          this.setState({
+            newChart: {
+              ...newChart, Datasets: chart.Datasets,
+            },
+          });
 
           return Promise.resolve(true);
         })
