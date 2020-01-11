@@ -393,6 +393,8 @@ class AddChart extends Component {
       previewData.apiRequest = this._formatApiRequest();
     }
 
+    console.log("previewData", previewData);
+
     this.setState({ previewLoading: true, previewError: false });
     getPreviewData(match.params.projectId, previewData, tempNoSource)
       .then((chartData) => {

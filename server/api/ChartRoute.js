@@ -228,6 +228,7 @@ module.exports = (app) => {
         return res.status(200).send(chart);
       })
       .catch((error) => {
+        console.trace("error api", error);
         if (error.message === "401") {
           return res.status(401).send({ error: "Not authorized" });
         }
