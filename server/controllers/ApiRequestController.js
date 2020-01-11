@@ -7,7 +7,14 @@ class ApiRequestController {
   }
 
   create(data) {
-    return db.ApiRequest.create(data)
+    return db.ApiRequest.findOne({
+      where: { chart_id: data.chart_id },
+    })
+      .then((apiRequest) => {
+        if (apiRequest) return this.update(apiRequest.id, data);
+
+        return db.ApiRequest.create(data);
+      })
       .then((apiRequest) => {
         return db.ApiRequest.findByPk(apiRequest.id);
       })
