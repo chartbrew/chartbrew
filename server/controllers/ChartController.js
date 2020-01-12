@@ -396,16 +396,16 @@ class ChartController {
   getPreviewData(chart, projectId, user, noSource) {
     return this.chartCache.findLast(user.id)
       .then((cache) => {
-        // if (noSource === "true") {
-        //   return new Promise(resolve => resolve(cache));
-        // }
+        if (noSource === "true") {
+          return new Promise(resolve => resolve(cache));
+        }
 
         return this.connection.findById(chart.connection_id);
       })
       .then((connection) => {
-        // if (noSource === "true") {
-        //   return new Promise(resolve => resolve(connection.data));
-        // }
+        if (noSource === "true") {
+          return new Promise(resolve => resolve(connection.data));
+        }
 
         if (connection.type === "mongodb") {
           return this.testQuery(chart, projectId);
