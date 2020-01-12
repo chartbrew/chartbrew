@@ -86,7 +86,6 @@ class LineChart {
 
         // include all the missing dates when includeZeros is true
         if (this.chart.includeZeros) {
-          console.log("axisData initial", axisData);
           // get the start date
           let startDate = axisData[0];
           let endDate = axisData[axisData.length - 1];
@@ -94,16 +93,12 @@ class LineChart {
           if (this.chart.endDate) endDate = moment(this.chart.endDate); // eslint-disable-line
           if (this.chart.currentEndDate) endDate = moment(); // eslint-disable-line
 
-          console.log("startDate", startDate);
-          console.log("endDate", endDate);
-
           const newAxisData = [];
           let index = 0;
           // make a new array containing all the dates between startDate and endDate
           while (moment(startDate).isBefore(moment(endDate))) {
             newAxisData.push(moment(startDate));
             if (axisData[index]) {
-              console.log("axisData[index]", axisData[index]);
               while (moment(axisData[index]).isSame(moment(startDate), this.chart.timeInterval)) {
                 if (!axisData[index]) break;
                 newAxisData.push(moment(axisData[index]));
@@ -148,9 +143,6 @@ class LineChart {
             formattedData[value] += 1;
           }
         }
-
-        console.log("axisData", axisData);
-        console.log("formattedData", formattedData);
 
         if (this.chart.subType.indexOf("AddTimeseries") > -1) {
           let previousKey;

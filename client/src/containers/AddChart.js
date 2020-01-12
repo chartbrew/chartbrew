@@ -50,6 +50,8 @@ class AddChart extends Component {
         }],
         offset: "offset",
         draft: true,
+        includeZeros: true,
+        timeInterval: "day",
       },
       ddConnections: [],
       updatedEdit: false, // eslint-disable-line
@@ -392,8 +394,6 @@ class AddChart extends Component {
     if (selectedConnection && selectedConnection.type === "api") {
       previewData.apiRequest = this._formatApiRequest();
     }
-
-    console.log("previewData", previewData);
 
     this.setState({ previewLoading: true, previewError: false });
     getPreviewData(match.params.projectId, previewData, tempNoSource)
