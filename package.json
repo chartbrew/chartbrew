@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "setup": "cp -n .env-template .env && npm install && cd client && cp -n src/config/settings.template.js src/config/settings.js && npm install && cd ../server/ && npm install",
-    "setup:docker": "cp -n .env-template .env",
+    "setup": "npm run prepareSettings && npm install && cd client && npm install && cd ../server/ && npm install",
+    "prepareSettings": "rsync -a -v --ignore-existing .env-template .env && cd client && rsync -a -v --ignore-existing src/config/settings.template.js src/config/settings.js",
     "client": "cd client && npm start",
     "server": "cd server && npm run start-dev",
     "docs:dev": "vuepress dev docs",
