@@ -37,6 +37,7 @@ Currently, ChartBrew supports connections to these data sources.
 * NodeJS v10.16.0+
 * NPM
 * MySQL v5+ Server running
+* 
 
 ## Start
 
@@ -47,6 +48,8 @@ It is recommended you head over to the more detailed documentation to find out h
 ## Quickstart
 
 If you already have a MySQL server running, create a database called charbrew and adjust the parameters below with your connection settings. The command will then setup everything for you.
+
+**Important** Windows command line is not supported at the moment. Use something like [Cygwin](http://www.cygwin.com/) on Windows.
 
 ```sh
 npx create-chartbrew-app myApp --dbname="chartbrew" --dbusername="root" --dbpassword="" --dbhost="localhost"
@@ -88,7 +91,7 @@ Open up `.env-template` in the root folder of the project and make sure that the
 Then run the following commands:
 
 ```sh
-npm run setup:docker
+npm run prepareSettings
 docker-compose up
 ```
 
