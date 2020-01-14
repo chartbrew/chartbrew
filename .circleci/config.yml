@@ -86,6 +86,8 @@ jobs:
             - v2-dependencies-{{ checksum "package.json" }}
             # fallback to using the latest cache if no exact match is found
             - v2-dependencies-
+      - run: sudo apt update
+      - run: sudo apt-get install rsync 
       - run:
           name: Building semantic
           command: cd client && cp -Rn node_modules/fomantic-ui/tasks src/semantic && cp -Rn node_modules/fomantic-ui/src src/semantic && mv src/semantic/src/_site src/semantic/src/site && mv src/semantic/src/theme.config.example src/semantic/src/theme.config && cd src/semantic && npx gulp build
