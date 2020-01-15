@@ -188,10 +188,9 @@ class AddChart extends Component {
     });
   }
 
-  _onTypeSelect = (type) => {
+  _onChangeType = ({ type, subType }) => {
     const { newChart } = this.state;
-    this.setState({ newChart: { ...newChart, type } });
-    return type;
+    this.setState({ newChart: { ...newChart, type, subType: subType || "" } });
   }
 
   _onChangeXAxis = (xAxis) => {
@@ -770,19 +769,7 @@ class AddChart extends Component {
                   <ChartTypesSelector
                     type={newChart.type}
                     subType={newChart.subType}
-                    typeSelected={(type) => {
-                      setTimeout(() => this._onTypeSelect(type));
-                    }}
-                    subTypeSelected={(subType) => {
-                      if (!subType) {
-                        setTimeout(() => {
-                          // hacky things
-                          this.setState({ newChart: { ...newChart, subType: "" } });
-                        });
-                      } else {
-                        this.setState({ newChart: { ...newChart, subType } });
-                      }
-                    }}
+                    onChange={this._onChangeType}
                   />
                   )}
 
