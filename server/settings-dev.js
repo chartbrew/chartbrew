@@ -1,8 +1,8 @@
 module.exports = {
   port: 3210,
   secret: process.env.CB_SECRET_DEV,
-  client: "http://localhost:3000",
-  api: "http://localhost:3210",
+  client: process.env.CB_CLIENT_DEV,
+  api: process.env.CB_API_HOST_DEV,
   adminMail: process.env.CB_ADMIN_MAIL,
   mailSettings: {
     host: process.env.CB_MAIL_HOST_DEV,
