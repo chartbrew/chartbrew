@@ -200,6 +200,20 @@ class AddChart extends Component {
     this.setState({ newChart: tempChart });
   }
 
+  _onChangeAxis = ({ xAxis, yAxis }) => {
+    const { activeDataset, newChart } = this.state;
+    const tempChart = { ...newChart };
+
+    if (xAxis) {
+      tempChart.Datasets[activeDataset].xAxis = xAxis;
+    }
+    if (yAxis) {
+      tempChart.yAxis = yAxis;
+    }
+
+    this.setState({ newChart: tempChart });
+  }
+
   _onDatasetColor = (color) => {
     const { activeDataset, newChart, previewChart } = this.state;
     const tempChart = { ...newChart };
@@ -640,7 +654,7 @@ class AddChart extends Component {
                     <Icon name="info" />
                     How to select fields
                   </Button>
-)}
+                )}
               >
                 <Container text>
                   <Header>Selecting fields</Header>
@@ -659,10 +673,8 @@ class AddChart extends Component {
                 objectData={queryData}
                 type={newChart.type}
                 subType={newChart.subType}
-                onSelectXField={(value) => this._onChangeXAxis(value)}
-                onSelectYField={(value) => {
-                  this.setState({ newChart: { ...newChart, yAxis: value } });
-                }}
+                onChange={this._onChangeAxis}
+                xAxisField={newChart.Datasets[activeDataset].xAxis}
               />
               )}
             <br />
@@ -684,7 +696,7 @@ class AddChart extends Component {
                 dataLabels={previewChart
                   ? previewChart.data.labels : newChart.chartData
                     ? newChart.chartData.data.labels : []}
-                onChangeXAxis={(xAxis) => this._onChangeXAxis(xAxis)}
+                onChangeXAxis={(xAxis) => this._onChangeAxis({ xAxis })}
                 onDatasetColor={(color) => this._onDatasetColor(color)}
                 onFillColor={(color, colorIndex) => this._onFillColor(color, colorIndex)}
                 onChangeLegend={(legend) => this._onChangeLegend(legend)}
