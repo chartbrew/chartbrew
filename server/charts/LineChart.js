@@ -169,12 +169,8 @@ class LineChart {
         };
 
         if (dataset.datasetColor) formattedDataset.borderColor = dataset.datasetColor;
-        if (dataset.fillColor) {
-          formattedDataset.backgroundColor = dataset.fillColor;
-          formattedDataset.fill = true;
-        } else {
-          formattedDataset.fill = false;
-        }
+        if (dataset.fillColor) formattedDataset.backgroundColor = dataset.fillColor;
+        formattedDataset.fill = dataset.fill;
 
         datasets.push(formattedDataset);
 

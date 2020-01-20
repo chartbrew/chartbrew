@@ -193,13 +193,6 @@ class AddChart extends Component {
     this.setState({ newChart: { ...newChart, type, subType: subType || "" } });
   }
 
-  _onChangeXAxis = (xAxis) => {
-    const { activeDataset, newChart } = this.state;
-    const tempChart = { ...newChart };
-    tempChart.Datasets[activeDataset].xAxis = xAxis;
-    this.setState({ newChart: tempChart });
-  }
-
   _onChangeAxis = ({ xAxis, yAxis }) => {
     const { activeDataset, newChart } = this.state;
     const tempChart = { ...newChart };
@@ -214,86 +207,68 @@ class AddChart extends Component {
     this.setState({ newChart: tempChart });
   }
 
-  _onDatasetColor = (color) => {
+  _onChangeChart = ({
+    datasetColor, fillColor, fill, xAxis, patterns, legend,
+  }) => {
     const { activeDataset, newChart, previewChart } = this.state;
-    const tempChart = { ...newChart };
-    tempChart.Datasets[activeDataset].datasetColor = color;
+    const tempChart = newChart;
+    const realTimeData = previewChart;
 
-    if (previewChart) {
-      const tempData = { ...previewChart };
-      if (tempData.data.datasets[activeDataset]) {
-        tempData.data.datasets[activeDataset].borderColor = color;
-      }
-      this.setState({
-        newChart: tempChart,
-        previewChart: tempData,
-      });
-    } else {
-      this.setState({
-        newChart: tempChart,
-      });
-    }
-  }
-
-  _onFillColor = (color, colorIndex) => {
-    const { activeDataset, newChart, previewChart } = this.state;
-    const tempChart = { ...newChart };
-
-    let colorValue = color;
-    if (colorIndex != null) {
-      colorValue = [color];
-      if (!tempChart.Datasets[activeDataset].fillColor) {
-        tempChart.Datasets[activeDataset].fillColor = colorValue;
-      } else if (tempChart.Datasets[activeDataset].fillColor[colorIndex]) {
-        tempChart.Datasets[activeDataset].fillColor[colorIndex] = color;
-      } else {
-        tempChart.Datasets[activeDataset].fillColor.push(color);
-      }
-
-      colorValue = tempChart.Datasets[activeDataset].fillColor;
-    }
-
-    tempChart.Datasets[activeDataset].fillColor = colorValue;
-
-    if (previewChart) {
-      const tempData = { ...previewChart };
-      if (tempData.data.datasets[activeDataset]) {
-        if (colorValue) {
-          tempData.data.datasets[activeDataset].backgroundColor = colorValue;
-          tempData.data.datasets[activeDataset].fill = true;
-        } else {
-          tempData.data.datasets[activeDataset].fill = false;
+    if (datasetColor) {
+      tempChart.Datasets[activeDataset].datasetColor = datasetColor;
+      if (previewChart) {
+        if (realTimeData.data.datasets[activeDataset]) {
+          realTimeData.data.datasets[activeDataset].borderColor = datasetColor;
         }
       }
-
-      this.setState({
-        newChart: tempChart,
-        previewChart: tempData,
-      });
-    } else {
-      this.setState({
-        newChart: tempChart,
-      });
     }
-  }
 
-  _onChangeLegend = (legend) => {
-    const { activeDataset, newChart, previewChart } = this.state;
-    const tempChart = { ...newChart };
-    tempChart.Datasets[activeDataset].legend = legend;
+    if (fillColor) {
+      tempChart.Datasets[activeDataset].fillColor = fillColor;
 
-    if (previewChart) {
-      const tempData = { ...previewChart };
-      if (tempData.data.datasets[activeDataset]) {
-        if (legend) {
-          tempData.data.datasets[activeDataset].label = legend;
-        } else {
-          tempData.data.datasets[activeDataset].label = "";
+      if (previewChart && realTimeData.data.datasets[activeDataset]) {
+        realTimeData.data.datasets[activeDataset].backgroundColor = fillColor;
+      }
+    }
+
+    if (fill || fill === false) {
+      tempChart.Datasets[activeDataset].fill = fill;
+      if (previewChart && realTimeData.data.datasets[activeDataset]) {
+        realTimeData.data.datasets[activeDataset].fill = fill;
+      }
+    }
+
+    if (xAxis) {
+      tempChart.Datasets[activeDataset].xAxis = xAxis;
+    }
+
+    if (patterns) {
+      tempChart.Datasets[activeDataset].patterns = JSON.parse(JSON.stringify(patterns));
+    }
+
+    if (legend) {
+      tempChart.Datasets[activeDataset].legend = legend;
+
+      if (previewChart) {
+        if (realTimeData.data.datasets[activeDataset]) {
+          if (legend) {
+            realTimeData.data.datasets[activeDataset].label = legend;
+          } else {
+            realTimeData.data.datasets[activeDataset].label = "";
+          }
         }
       }
-      this.setState({ newChart: tempChart, previewChart: tempData });
+    }
+
+    if (previewChart) {
+      this.setState({
+        newChart: tempChart,
+        previewChart: realTimeData,
+      });
     } else {
-      this.setState({ newChart: tempChart });
+      this.setState({
+        newChart: tempChart,
+      });
     }
   }
 
@@ -333,14 +308,6 @@ class AddChart extends Component {
         newChart: { ...newChart, displayLegend: display },
       });
     }
-  }
-
-  _onChangePatterns = (patterns) => {
-    const { activeDataset, newChart } = this.state;
-    const tempChart = { ...newChart };
-    tempChart.Datasets[activeDataset].patterns = JSON.parse(JSON.stringify(patterns));
-
-    this.setState({ newChart: tempChart });
   }
 
   _onDateRange = (range) => {
@@ -468,6 +435,7 @@ class AddChart extends Component {
       xAxis: "root",
       legend: `Dataset #${tempChart.Datasets.length + 1}`,
     });
+
     this.setState({
       newChart: tempChart,
       activeDataset: tempChart.Datasets.length - 1,
@@ -687,6 +655,7 @@ class AddChart extends Component {
                 xAxis={newChart.Datasets[activeDataset].xAxis || ""}
                 datasetColor={newChart.Datasets[activeDataset].datasetColor}
                 fillColor={newChart.Datasets[activeDataset].fillColor}
+                fill={newChart.Datasets[activeDataset].fill}
                 legend={newChart.Datasets[activeDataset].legend}
                 patterns={newChart.Datasets[activeDataset].patterns}
                 dataArray={previewChart && previewChart.data.datasets[activeDataset]
@@ -696,11 +665,7 @@ class AddChart extends Component {
                 dataLabels={previewChart
                   ? previewChart.data.labels : newChart.chartData
                     ? newChart.chartData.data.labels : []}
-                onChangeXAxis={(xAxis) => this._onChangeAxis({ xAxis })}
-                onDatasetColor={(color) => this._onDatasetColor(color)}
-                onFillColor={(color, colorIndex) => this._onFillColor(color, colorIndex)}
-                onChangeLegend={(legend) => this._onChangeLegend(legend)}
-                onChangePatterns={(patterns) => this._onChangePatterns(patterns)}
+                onChange={this._onChangeChart}
               />
               )}
           </Sidebar>
