@@ -257,7 +257,7 @@ class ChartBuilder extends Component {
                     <SketchPicker
                       color={subType === "pattern"
                         ? (fillColor && fillColor[0])
-                        : fillColor}
+                        : fillColor || secondaryTransparent(0.8)}
                       onChangeComplete={(color) => this._onFillColor(color.rgb)}
                     />
                   </Form.Field>

@@ -37,7 +37,6 @@ Currently, ChartBrew supports connections to these data sources.
 * NodeJS v10.16.0+
 * NPM
 * MySQL v5+ Server running
-* 
 
 ## Start
 
