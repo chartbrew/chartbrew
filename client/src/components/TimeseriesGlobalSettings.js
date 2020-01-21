@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import PropTypes from "prop-types";
 import {
   Form, Segment, Checkbox, Grid, Modal, Button,
-  Accordion, Icon, Dropdown,
+  Accordion, Icon, Dropdown, Label,
 } from "semantic-ui-react";
 import moment from "moment";
 import { DateRangePicker } from "react-date-range";
@@ -19,7 +19,7 @@ class TimeseriesGlobalSettings extends Component {
         endDate: moment().endOf("month"),
         key: "selection",
       },
-      viewDateRange: false,
+      viewDateRange: (props.startDate && props.endDate && true) || false,
       dateRangeModal: false,
     };
   }
@@ -39,9 +39,9 @@ class TimeseriesGlobalSettings extends Component {
   }
 
   _onViewRange = (value, init) => {
-    const { onChangeDateRange } = this.props;
+    const { onChange } = this.props;
     if (!value) {
-      onChangeDateRange({ startDate: null, endDate: null });
+      onChange({ startDate: null, endDate: null });
     }
 
     let isModalOpen = value;
@@ -53,16 +53,15 @@ class TimeseriesGlobalSettings extends Component {
   }
 
   _onAddPoints = (value) => {
-    const { onChangePoint } = this.props;
-    onChangePoint(value);
-    this.setState({ dataPoints: value });
+    const { onChange } = this.props;
+    onChange({ pointRadius: value });
   }
 
   _onChangeDateRange = (range) => {
-    const { onChangeDateRange } = this.props;
+    const { onChange } = this.props;
     const startDate = moment(range.selection.startDate).toDate();
     const endDate = moment(range.selection.endDate).toDate();
-    onChangeDateRange({ startDate, endDate });
+    onChange({ dateRange: { startDate, endDate } });
   }
 
   _onComplete = () => {
@@ -82,12 +81,12 @@ class TimeseriesGlobalSettings extends Component {
 
   render() {
     const {
-      type, pointRadius, onDisplayLegend, displayLegend, subType,
-      onChangeCurrentEndDate, endDate, currentEndDate, timeInterval,
-      onChangeTimeInterval, includeZeros, onChangeZeros, startDate,
+      type, pointRadius, displayLegend, subType,
+      endDate, currentEndDate, timeInterval,
+      includeZeros, startDate, onChange,
     } = this.props;
     const {
-      activeOption, dataPoints, viewDateRange, selectionRange, dateRangeModal,
+      activeOption, viewDateRange, selectionRange, dateRangeModal,
     } = this.state;
     return (
       <div style={styles.container}>
@@ -110,7 +109,7 @@ class TimeseriesGlobalSettings extends Component {
                       toggle
                       checked={pointRadius > 0}
                       onChange={() => {
-                        if (dataPoints > 0) {
+                        if (pointRadius > 0) {
                           this._onAddPoints(0);
                         } else {
                           this._onAddPoints(3);
@@ -124,7 +123,7 @@ class TimeseriesGlobalSettings extends Component {
                     label="Add legend"
                     toggle
                     checked={displayLegend}
-                    onChange={onDisplayLegend}
+                    onChange={() => onChange({ displayLegend: !displayLegend })}
                   />
                 </Form.Field>
               </Form.Group>
@@ -150,6 +149,27 @@ class TimeseriesGlobalSettings extends Component {
                         checked={viewDateRange}
                         onChange={() => this._onViewRange(!viewDateRange)}
                       />
+                      <div style={{ padding: 5, marginTop: 5 }}>
+                        { startDate && (
+                          <Label
+                            color="olive"
+                            as="a"
+                            onClick={() => this.setState({ dateRangeModal: true })}
+                          >
+                            {moment(startDate).format("ll")}
+                          </Label>
+                        )}
+                        { startDate && (<span> - </span>)}
+                        { endDate && (
+                          <Label
+                            color="olive"
+                            as="a"
+                            onClick={() => this.setState({ dateRangeModal: true })}
+                          >
+                            {moment(endDate).format("ll")}
+                          </Label>
+                        )}
+                      </div>
                     </Form.Field>
                     <Form.Field>
                       <Checkbox
@@ -158,7 +178,7 @@ class TimeseriesGlobalSettings extends Component {
                         checked={currentEndDate}
                         disabled={!endDate}
                         onChange={() => {
-                          onChangeCurrentEndDate(!currentEndDate);
+                          onChange({ currentEndDate: !currentEndDate });
                         }}
                       />
                     </Form.Field>
@@ -186,7 +206,7 @@ class TimeseriesGlobalSettings extends Component {
                           value: "year",
                         }]}
                         value={timeInterval || "day"}
-                        onChange={(e, data) => onChangeTimeInterval(data.value)}
+                        onChange={(e, data) => onChange({ timeInterval: data.value })}
                       />
                     </Form.Field>
                     <Form.Field>
@@ -195,31 +215,10 @@ class TimeseriesGlobalSettings extends Component {
                         label="Allow zero dates"
                         toggle
                         checked={includeZeros}
-                        onChange={() => onChangeZeros(!includeZeros)}
+                        onChange={() => onChange({ includeZeros: !includeZeros })}
                       />
                     </Form.Field>
                   </Form.Group>
-                  {viewDateRange === "yolo"
-                    && (
-                    <Form.Field>
-                      <Grid centered padded>
-                        <Segment textAlign="center" compact>
-                          <DateRangePicker
-                            direction="horizontal"
-                            rangeColors={[secondary, primary]}
-                            ranges={[
-                              startDate && endDate ? {
-                                startDate,
-                                endDate,
-                                key: "selection",
-                              } : selectionRange
-                            ]}
-                            onChange={this._onChangeDateRange}
-                          />
-                        </Segment>
-                      </Grid>
-                    </Form.Field>
-                    )}
                 </Form>
               </Accordion.Content>
             </div>
@@ -283,12 +282,7 @@ TimeseriesGlobalSettings.defaultProps = {
   includeZeros: true,
   currentEndDate: false,
   timeInterval: "day",
-  onDisplayLegend: () => {},
-  onChangeDateRange: () => {},
-  onChangeZeros: () => {},
-  onChangePoint: () => {},
-  onChangeCurrentEndDate: () => {},
-  onChangeTimeInterval: () => {},
+  onChange: () => {},
   onComplete: () => {},
 };
 
@@ -302,12 +296,7 @@ TimeseriesGlobalSettings.propTypes = {
   includeZeros: PropTypes.bool,
   currentEndDate: PropTypes.bool,
   timeInterval: PropTypes.string,
-  onDisplayLegend: PropTypes.func,
-  onChangeDateRange: PropTypes.func,
-  onChangeZeros: PropTypes.func,
-  onChangePoint: PropTypes.func,
-  onChangeCurrentEndDate: PropTypes.func,
-  onChangeTimeInterval: PropTypes.func,
+  onChange: PropTypes.func,
   onComplete: PropTypes.func,
 };
 

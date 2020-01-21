@@ -272,57 +272,44 @@ class AddChart extends Component {
     }
   }
 
-  _onChangePoint = (point) => {
+  _onChangeGlobalSettings = ({
+    pointRadius, displayLegend, dateRange, includeZeros, timeInterval, currentEndDate,
+  }) => {
     const { newChart, previewChart } = this.state;
+
+    let realTimeData;
     if (previewChart) {
-      const tempData = { ...previewChart };
-      tempData.options.elements.point.radius = point;
-      tempData.data.datasets[0].pointRadius = point;
-      this.setState({
-        newChart: { ...newChart, pointRadius: point },
-        previewChart: tempData,
-      });
-    } else {
-      this.setState({ newChart: { ...newChart, pointRadius: point } });
+      realTimeData = { ...previewChart };
+      // point
+      realTimeData.options.elements.point.radius = pointRadius;
+      realTimeData.data.datasets[0].pointRadius = pointRadius;
+      // legend
+      realTimeData.options.legend.display = displayLegend;
     }
-  }
 
-  _onDisplayLegend = (display) => {
-    const { newChart, previewChart, pointRadius } = this.state;
-
-    if (previewChart) {
-      const tempData = { ...previewChart };
-      tempData.options.legend.display = display;
-      tempData.options.elements.point.radius = pointRadius;
-      tempData.data.datasets[0].pointRadius = pointRadius;
-      this.setState({
-        newChart: { ...newChart, displayLegend: display },
-        previewChart: tempData,
-      }, () => {
-        // tempData.options.elements.point.radius = this.state.pointRadius;
-        // tempData.data.datasets[0].pointRadius = this.state.pointRadius;
-        // this.setState({ previewChart: tempData });
-      });
-    } else {
-      this.setState({
-        newChart: { ...newChart, displayLegend: display },
-      });
-    }
-  }
-
-  _onDateRange = (range) => {
-    const { newChart } = this.state;
     this.setState({
+      previewChart: realTimeData || previewChart,
       newChart: {
         ...newChart,
-        startDate: range.startDate,
-        endDate: range.endDate,
+        pointRadius: typeof pointRadius !== "undefined" ? pointRadius : newChart.pointRadius,
+        displayLegend: typeof displayLegend !== "undefined" ? displayLegend : newChart.displayLegend,
+        startDate: (dateRange && dateRange.startDate) || newChart.startDate,
+        endDate: (dateRange && dateRange.endDate) || newChart.endDate,
+        timeInterval: timeInterval || newChart.timeInterval,
+        includeZeros: typeof includeZeros !== "undefined" ? includeZeros : newChart.includeZeros,
+        currentEndDate: typeof currentEndDate !== "undefined" ? currentEndDate : newChart.currentEndDate,
+      },
+    }, () => {
+      if (includeZeros || includeZeros === false
+        || currentEndDate || currentEndDate === false
+        || timeInterval
+      ) {
+        this._onPreview();
       }
     });
   }
 
   /* API Stuff */
-
   _formatApiRequest = () => {
     const { apiRequest } = this.state;
     if (!apiRequest) return {};
@@ -1026,24 +1013,7 @@ class AddChart extends Component {
                         includeZeros={newChart.includeZeros}
                         currentEndDate={newChart.currentEndDate}
                         timeInterval={newChart.timeInterval}
-                        onDisplayLegend={() => this._onDisplayLegend(!newChart.displayLegend)}
-                        onChangeDateRange={this._onDateRange}
-                        onChangePoint={(point) => this._onChangePoint(point)}
-                        onChangeZeros={(includeZeros) => {
-                          this.setState({ newChart: { ...newChart, includeZeros } }, () => {
-                            this._onPreview();
-                          });
-                        }}
-                        onChangeCurrentEndDate={(currentEndDate) => {
-                          this.setState({ newChart: { ...newChart, currentEndDate } }, () => {
-                            this._onPreview();
-                          });
-                        }}
-                        onChangeTimeInterval={(timeInterval) => {
-                          this.setState({ newChart: { ...newChart, timeInterval } }, () => {
-                            this._onPreview();
-                          });
-                        }}
+                        onChange={this._onChangeGlobalSettings}
                         onComplete={() => this._onPreview()}
                       />
                     </Grid.Column>
