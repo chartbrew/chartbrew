@@ -1,4 +1,6 @@
 import cookie from "react-cookies";
+import moment from "moment";
+
 import { API_HOST } from "../config/settings";
 import { addError } from "./error";
 
@@ -11,6 +13,7 @@ export const VERIFY_USER = "VERIFY_USER";
 export const SAVE_PENDING_INVITES = "SAVE_PENDING_INVITES";
 export const REMOVE_PENDING_INVITE = "REMOVE_PENDING_INVITE";
 
+const expires = moment().add(1, "month").toDate();
 
 function authenticatePage() {
   if (window.location.pathname === "/login") {
@@ -82,7 +85,7 @@ export function createUser(data) {
       .then((user) => {
         // save the cookie here
         if (cookie.load("brewToken")) cookie.remove("brewToken", { path: "/" });
-        cookie.save("brewToken", user.token, { path: "/" });
+        cookie.save("brewToken", user.token, { expires, path: "/" });
 
         // dispatch({ type: INITIALISING_USER_SUCCESS, user });
         dispatch(saveUser(user));
@@ -207,7 +210,7 @@ export function createInvitedUser(data) {
       })
       .then((user) => {
         if (cookie.load("brewToken")) cookie.remove("brewToken", { path: "/" });
-        cookie.save("brewToken", user.token, { path: "/" });
+        cookie.save("brewToken", user.token, { expires, path: "/" });
         dispatch(saveUser(user));
         return new Promise(resolve => resolve(user));
       })
@@ -236,7 +239,7 @@ export function verify(id, token) {
       .then(user => {
         // save the cookie here
         cookie.remove("brewToken", { path: "/" });
-        cookie.save("brewToken", user.token, { path: "/" });
+        cookie.save("brewToken", user.token, { expires, path: "/" });
         dispatch(saveUser(user));
         return new Promise(resolve => resolve(user));
       })
@@ -264,7 +267,7 @@ export function login(data) {
       .then(user => {
         // save the cookie here
         if (cookie.load("brewToken")) cookie.remove("brewToken", { path: "/" });
-        cookie.save("brewToken", user.token, { path: "/" });
+        cookie.save("brewToken", user.token, { expires, path: "/" });
         dispatch(saveUser(user));
         return new Promise(resolve => resolve(user));
       })
