@@ -26,6 +26,7 @@ class Navbar extends Component {
 
     this.state = {
       loading: true,
+      changelogPadding: true,
     };
   }
 
@@ -33,7 +34,14 @@ class Navbar extends Component {
     const { match } = this.props;
     this._onTeamChange(match.params.teamId, match.params.projectId);
 
-    Headway.init(HW_config);
+    setTimeout(() => {
+      try {
+        Headway.init(HW_config);
+        this.setState({ changelogPadding: false });
+      } catch (e) {
+        // ---
+      }
+    }, 1000);
   }
 
   _onTeamChange = (teamId, projectId) => {
@@ -72,7 +80,7 @@ class Navbar extends Component {
     const {
       hideTeam, transparent, team, teams, projectProp, user, logout,
     } = this.props;
-    const { loading, feedbackModal } = this.state;
+    const { loading, feedbackModal, changelogPadding } = this.state;
 
     if (!team.id && !teams) {
       return (
@@ -145,7 +153,9 @@ class Navbar extends Component {
             title="Changelog"
           >
             Updates
-            <div className="changelog-badge" />
+            <div className="changelog-badge">
+              {changelogPadding && <span style={{ paddingLeft: 16, paddingRight: 16 }} />}
+            </div>
           </Menu.Item>
           <Menu.Item
             as="a"
