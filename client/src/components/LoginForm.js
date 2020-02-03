@@ -112,7 +112,7 @@ class LoginForm extends Component {
               >
             {" "}
             <Icon name="right arrow" />
-              Login
+            Login
           </Button>
 
           <Item

@@ -74,7 +74,7 @@ class UserInvite extends Component {
         <Header as="h2" icon color="green">
           <Icon color="green" name="checkmark" circular />
           {user.data.name}
-, you have been added to the team
+          , you have been added to the team
         </Header>
         <Button positive icon labelPosition="right">
           <Link to={`/team/${teamId}/members`} style={{ color: "white" }}> Explore team </Link>
@@ -88,9 +88,9 @@ class UserInvite extends Component {
     return (
       <Header as="h2" icon color="orange">
         <Icon color="orange" name="delete" circular />
-          There was an error adding you to the team.
+        There was an error adding you to the team.
         <Header.Subheader>
-            Please try refreshing the page or contact us.
+          Please try refreshing the page or contact us.
         </Header.Subheader>
       </Header>
     );

@@ -768,7 +768,7 @@ class AddChart extends Component {
                         <Link to={`/${match.params.teamId}/${match.params.projectId}/connections`}>
                           <Button primary icon labelPosition="right">
                             <Icon name="plug" />
-                              Go to connections
+                            Go to connections
                           </Button>
                         </Link>
                       </Form.Field>
