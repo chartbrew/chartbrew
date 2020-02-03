@@ -32,7 +32,7 @@ jobs:
             - node_modules
             - client/node_modules
             - server/node_modules
-          key: v2-dependencies-{{ checksum "package.json" }}
+          key: v3-dependencies-{{ checksum "package.json" }}
 
   # lint the server project
   lint_server:
