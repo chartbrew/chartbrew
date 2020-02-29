@@ -5,7 +5,7 @@ import { Route, Switch, withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
   Dimmer, Loader, Container, Icon, Grid,
-  Menu, Dropdown, Popup, Image, Header,
+  Menu, Dropdown, Popup, Header,
 } from "semantic-ui-react";
 import SplitPane from "react-split-pane";
 
@@ -19,12 +19,12 @@ import ProjectDashboard from "./ProjectDashboard";
 import AddChart from "./AddChart";
 import Navbar from "../components/Navbar";
 import { primary, blue, lightGray } from "../config/colors";
-import cbLogo from "../assets/cb_logo_4_small.png";
 import TeamMembers from "./TeamMembers";
 import TeamSettings from "./TeamSettings";
 import PublicDashboardEditor from "./PublicDashboardEditor";
 import ProjectSettings from "./ProjectSettings";
 import canAccess from "../config/canAccess";
+import { APP_VERSION } from "../config/settings";
 
 const pageHeight = window.innerHeight;
 /*
@@ -168,6 +168,8 @@ class ProjectBoard extends Component {
         </Container>
       );
     }
+
+    console.log("styles.absoluteCollapse(menuSize)", styles.absoluteCollapse(menuSize));
 
     return (
       <div style={styles.container}>
@@ -403,7 +405,7 @@ class ProjectBoard extends Component {
                   trigger={(
                     <Menu.Item
                       onClick={() => this._setMenuSize(70)}
-                      style={styles.absoluteCollapse}
+                      style={styles.absoluteCollapse(menuSize)}
                     >
                       <Icon name="toggle left" size="large" />
                     </Menu.Item>
@@ -415,7 +417,10 @@ class ProjectBoard extends Component {
                 )}
               {menuSize === "small"
                 && (
-                <Menu.Item onClick={() => this._setMenuSize(250)} style={styles.absoluteCollapse}>
+                <Menu.Item
+                  onClick={() => this._setMenuSize(250)}
+                  style={styles.absoluteCollapse(menuSize)}
+                >
                   <Popup
                     trigger={<Icon name="toggle right" size="large" />}
                     content="Expand menu"
@@ -424,12 +429,23 @@ class ProjectBoard extends Component {
                   />
                 </Menu.Item>
                 )}
-              <Menu.Item header style={styles.absoluteLogo}>
-                <Image size="mini" centered src={cbLogo} alt="bottle" />
+              <Menu.Item verticalAlign="center" style={styles.absoluteLogo}>
+                {/* <Image size="mini" centered src={cbLogo} alt="bottle" /> */}
+                <Header as="h6" inverted style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
+                  {menuSize !== "small" && (
+                    <span>
+                      Chartbrew
+                      { ` ${APP_VERSION}` }
+                    </span>
+                  )}
+                  {menuSize === "small" && (
+                    <span>{APP_VERSION}</span>
+                  )}
+                </Header>
               </Menu.Item>
             </Menu>
           </div>
-          <div style={{ }}>
+          <div>
             <Grid columns={1} centered stackable>
               <Grid.Column width={16} computer={16} style={{ paddingLeft: 0 }}>
                 <Container fluid>
@@ -481,11 +497,18 @@ const styles = {
     textAlign: "center",
     padding: 5,
   },
-  absoluteCollapse: {
-    position: "absolute",
-    bottom: 50,
-    width: "100%",
+  cbVersion: {
+    verticalAlign: "center",
+    padding: 7,
   },
+  cbVersionCollapsed: {
+    verticalAlign: "center",
+  },
+  absoluteCollapse: (menuSize) => ({
+    position: "absolute",
+    bottom: menuSize === "small" ? 35 : 35,
+    width: "100%",
+  }),
   absoluteDrafts: {
     position: "absolute",
     bottom: 110,
