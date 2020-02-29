@@ -169,8 +169,6 @@ class ProjectBoard extends Component {
       );
     }
 
-    console.log("styles.absoluteCollapse(menuSize)", styles.absoluteCollapse(menuSize));
-
     return (
       <div style={styles.container}>
         <Navbar />
