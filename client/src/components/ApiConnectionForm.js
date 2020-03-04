@@ -1,16 +1,12 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
 import {
   Segment, Form, Button, Icon, Header, Label, Message,
 } from "semantic-ui-react";
 import uuid from "uuid/v4";
-import { withRouter } from "react-router";
-
-import { addConnection, saveConnection } from "../actions/connection";
 
 /*
-  Description
+  The Form used to create API connections
 */
 class ApiConnectionForm extends Component {
   constructor(props) {
@@ -57,7 +53,7 @@ class ApiConnectionForm extends Component {
 
   _onCreateConnection = () => {
     const {
-      projectId, addConnection, onComplete, saveConnection,
+      projectId, onComplete,
     } = this.props;
     const { connection, errors } = this.state;
 
@@ -89,30 +85,14 @@ class ApiConnectionForm extends Component {
         },
         loading: true,
       });
-      const newConnection = connection;
-      newConnection.project_id = projectId;
-      newConnection.options = newOptions;
 
       if (!connection.id) {
-        addConnection(projectId, connection)
-          .then(() => {
-            this.setState({ loading: false });
-            onComplete();
-          })
-          .catch((error) => {
-            onComplete(error);
-            this.setState({ addError: error, loading: false });
-          });
+        onComplete(connection);
       } else {
-        saveConnection(projectId, newConnection)
-          .then(() => {
-            this.setState({ loading: false });
-            onComplete();
-          })
-          .catch((error) => {
-            onComplete(error);
-            this.setState({ addError: error, loading: false });
-          });
+        const newConnection = connection;
+        newConnection.project_id = projectId;
+        newConnection.options = newOptions;
+        onComplete(newConnection);
       }
     });
   }
@@ -164,9 +144,9 @@ class ApiConnectionForm extends Component {
 
   render() {
     const {
-      connection, errors, loading, addError,
+      connection, errors, loading,
     } = this.state;
-    const { editConnection } = this.props;
+    const { editConnection, addError } = this.props;
 
     return (
       <div style={styles.container}>
@@ -290,25 +270,14 @@ const styles = {
 ApiConnectionForm.defaultProps = {
   onComplete: () => {},
   editConnection: null,
+  addError: null,
 };
 
 ApiConnectionForm.propTypes = {
-  addConnection: PropTypes.func.isRequired,
-  saveConnection: PropTypes.func.isRequired,
   onComplete: PropTypes.func,
   projectId: PropTypes.string.isRequired,
   editConnection: PropTypes.object,
+  addError: PropTypes.object,
 };
 
-const mapStateToProps = () => {
-  return {
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    addConnection: (projectId, connection) => dispatch(addConnection(projectId, connection)),
-    saveConnection: (projectId, connection) => dispatch(saveConnection(projectId, connection)),
-  };
-};
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ApiConnectionForm));
+export default ApiConnectionForm;

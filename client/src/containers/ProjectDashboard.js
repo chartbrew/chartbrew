@@ -57,7 +57,12 @@ class ProjectDashboard extends Component {
             </Header>
             <Image centered size="large" src={dashboardImage} alt="Chartbrew create chart" />
             <br />
-            <Link to={`/${match.params.teamId}/${match.params.projectId}/connections`}>
+            <Link
+              to={{
+                pathname: `/${match.params.teamId}/${match.params.projectId}/connections`,
+                state: { onboarding: true },
+              }}
+            >
               <Button primary icon labelPosition="right" size="huge">
                 <Icon name="play" />
                 Get started

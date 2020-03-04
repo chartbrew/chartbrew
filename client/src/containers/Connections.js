@@ -12,7 +12,9 @@ import ApiConnectionForm from "../components/ApiConnectionForm";
 import PostgresConnectionForm from "../components/PostgresConnectionForm";
 import MysqlConnectionForm from "../components/MysqlConnectionForm";
 import {
-  testConnection, updateConnection, removeConnection, getProjectConnections
+  testConnection, updateConnection, removeConnection, getProjectConnections,
+  addConnection as addConnectionAction,
+  saveConnection as saveConnectionAction,
 } from "../actions/connection";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import mongoLogo from "../assets/mongodb-logo-1.png";
@@ -91,10 +93,31 @@ class Connections extends Component {
     this.setState({ newConnectionModal: true });
   }
 
-  _onAddNewConnection = (error) => {
-    if (error) return;
+  _onAddNewConnection = (connection) => {
+    const {
+      addConnection, saveConnection, match, location, history,
+    } = this.props;
 
-    this.setState({ formType: null, editConnection: null });
+    if (!connection.id) {
+      addConnection(match.params.projectId, connection)
+        .then(() => {
+          this.setState({ formType: null, editConnection: null });
+          if (location.state && location.state.onboarding) {
+            history.push(`/${match.params.teamId}/${match.params.projectId}/chart`);
+          }
+        })
+        .catch((error) => {
+          this.setState({ addError: error });
+        });
+    } else {
+      saveConnection(match.params.projectId, connection)
+        .then(() => {
+          this.setState({ formType: null, editConnection: null });
+        })
+        .catch((error) => {
+          this.setState({ addError: error });
+        });
+    }
   }
 
   _onRemoveConfirmation = (connection) => {
@@ -151,7 +174,7 @@ class Connections extends Component {
     const {
       statusChangeFailed, removeError, formType, newConnectionModal,
       editConnection, testModalLoading, testModal, testModalSuccess, testModalFailed,
-      statusChangeLoading, statusModal, removeLoading, removeModal,
+      statusChangeLoading, statusModal, removeLoading, removeModal, addError,
     } = this.state;
 
     return (
@@ -242,8 +265,9 @@ class Connections extends Component {
               && (
               <ConnectionForm
                 projectId={match.params.projectId}
-                onComplete={(error) => this._onAddNewConnection(error)}
+                onComplete={this._onAddNewConnection}
                 editConnection={editConnection}
+                addError={addError}
               />
               )}
 
@@ -251,8 +275,9 @@ class Connections extends Component {
               && (
               <ApiConnectionForm
                 projectId={match.params.projectId}
-                onComplete={(error) => this._onAddNewConnection(error)}
+                onComplete={this._onAddNewConnection}
                 editConnection={editConnection}
+                addError={addError}
               />
               )}
 
@@ -260,8 +285,9 @@ class Connections extends Component {
               && (
               <PostgresConnectionForm
                 projectId={match.params.projectId}
-                onComplete={(error) => this._onAddNewConnection(error)}
+                onComplete={this._onAddNewConnection}
                 editConnection={editConnection}
+                addError={addError}
               />
               )}
 
@@ -269,8 +295,9 @@ class Connections extends Component {
               && (
               <MysqlConnectionForm
                 projectId={match.params.projectId}
-                onComplete={(error) => this._onAddNewConnection(error)}
+                onComplete={this._onAddNewConnection}
                 editConnection={editConnection}
+                addError={addError}
               />
               )}
           </div>
@@ -298,14 +325,6 @@ class Connections extends Component {
                   <Card.Header>{connection.name}</Card.Header>
                   <Card.Meta>{`Created on ${moment(connection.createdAt).format("LLL")}`}</Card.Meta>
                   <Card.Description>
-                    {/*
-                      connection.active &&
-                      <Label color="green">The connection is active</Label>
-                    */}
-                    {/*
-                      !connection.active &&
-                      <Label color="red">The connection is not active</Label>
-                    */}
                   </Card.Description>
                 </Card.Content>
                 <Card.Content extra>
@@ -314,29 +333,6 @@ class Connections extends Component {
                       <Icon name="flask" />
                       Test
                     </Button>
-                    {/*
-                      connection.active &&
-                      <Button
-                        basic
-                        color="yellow"
-                        onClick={() => this._prepareConnectionStatus(connection)}
-                      >
-                        <Icon name="pause" />
-                        De-activate
-                      </Button>
-                    */}
-                    {/*
-                      !connection.active &&
-                      <Button
-                        basic
-                        color="green"
-                        loading={this.state.statusChangeLoading}
-                        onClick={() => this._changeConnectionStatus(connection)}
-                      >
-                        <Icon name="play" />
-                        Activate
-                      </Button>
-                    */}
                     {this._canAccess("admin")
                       && (
                       <Button
@@ -490,7 +486,11 @@ Connections.propTypes = {
   removeConnection: PropTypes.func.isRequired,
   getProjectConnections: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
+  location: PropTypes.object.isRequired,
+  history: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
+  saveConnection: PropTypes.func.isRequired,
+  addConnection: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -507,6 +507,10 @@ const mapDispatchToProps = (dispatch) => {
     updateConnection: (projectId, id, data) => dispatch(updateConnection(projectId, id, data)),
     removeConnection: (projectId, id) => dispatch(removeConnection(projectId, id)),
     getProjectConnections: (projectId) => dispatch(getProjectConnections(projectId)),
+    addConnection: (projectId, connection) => dispatch(addConnectionAction(projectId, connection)),
+    saveConnection: (projectId, connection) => {
+      return dispatch(saveConnectionAction(projectId, connection));
+    },
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
