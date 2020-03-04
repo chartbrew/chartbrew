@@ -209,7 +209,8 @@ class ConnectionForm extends Component {
 
           {showIp && (
             <Message onDismiss={() => this.setState({ showIp: false })}>
-              <Message.Header>{"You might need to whitelist our IP address: 188.226.145.211"}</Message.Header>
+              <Message.Header>{"Whitelist the IP of the server the app is running from"}</Message.Header>
+              <p>This is sometimes required when the database and the Chartbrew app are running on separate servers.</p>
             </Message>
           )}
           <Form>
@@ -233,7 +234,7 @@ class ConnectionForm extends Component {
             <Form.Field error={!!errors.host} required>
               <label>Hostname or IP address</label>
               <Form.Input
-                placeholder="'yourmongodomain.com' or '188.226.145.211' "
+                placeholder="'yourmongodomain.com' or '0.0.0.0' "
                 value={connection.host || ""}
                 onChange={(e, data) => {
                   this.setState({ connection: { ...connection, host: data.value } });

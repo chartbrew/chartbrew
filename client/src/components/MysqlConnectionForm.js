@@ -188,7 +188,7 @@ class MysqlConnectionForm extends Component {
 
           <Message info>
             <Message.Header>{"You need to allow remote connections to your MySQL database"}</Message.Header>
-            <p>{"When you grant user privileges you might want to grant access just to our server: 188.226.145.211"}</p>
+            <p>{"When you grant user privileges you might have to grant access to the server Chartbrew is running from (if the app is running separately than the database)."}</p>
             <a href="https://www.cyberciti.biz/tips/how-do-i-enable-remote-access-to-mysql-database-server.html" target="_blank" rel="noopener noreferrer">
               Check this link on how to do it
             </a>
