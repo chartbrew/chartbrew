@@ -1,3 +1,5 @@
+const { Op } = require("sequelize");
+
 const db = require("../models/models");
 
 class ProjectController {
@@ -46,7 +48,7 @@ class ProjectController {
 
         return db.Project.findAll({
           where: {
-            id: idArray,
+            id: { [Op.in]: idArray },
           },
           include: [{ model: db.ProjectRole }, { model: db.Chart }],
         });

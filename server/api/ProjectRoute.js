@@ -52,9 +52,8 @@ module.exports = (app) => {
 
   /*
   ** Route to get all the user's projects
-  ** TODO: MODIFY ACCORDNG TO NEW TEAM ROLE CHANGES
   */
-  app.get("/project", verifyToken, (req, res) => {
+  app.get("/project/user", verifyToken, (req, res) => {
     projectController.findByUserId(req.user.id)
       .then((projects) => {
         return res.status(200).send(projects);

@@ -16,7 +16,7 @@ export function getAllProjects() {
       return new Promise((resolve, reject) => reject(new Error("No Token")));
     }
     const token = cookie.load("brewToken");
-    const url = `${API_HOST}/project`;
+    const url = `${API_HOST}/project/user`;
     const method = "GET";
     const headers = new Headers({
       "Accept": "application/json",
