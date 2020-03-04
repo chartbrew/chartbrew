@@ -210,7 +210,7 @@ class ConnectionForm extends Component {
           {showIp && (
             <Message onDismiss={() => this.setState({ showIp: false })}>
               <Message.Header>{"Whitelist the IP of the server the app is running from"}</Message.Header>
-              <p>This is sometimes required when the database and the Chartbrew app are running on separate servers.</p>
+              <p>{"This is sometimes required when the database and the Chartbrew app are running on separate servers."}</p>
             </Message>
           )}
           <Form>
