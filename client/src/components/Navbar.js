@@ -196,12 +196,21 @@ class Navbar extends Component {
               </Dropdown.Item>
               <Dropdown.Item
                 as="a"
+                href="https://discord.gg/KwGEbFk"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Icon name="discord" />
+                Discord
+              </Dropdown.Item>
+              <Dropdown.Item
+                as="a"
                 href="https://join.slack.com/t/chartbrew/shared_invite/enQtODU3MzYzNTkwOTMwLTZiOTA5YzczODUzZGFiZmQyMGI1ZGVmZGI4YTVmOTBkMTI0YzQ2ZjJjOGI5NzQ0NmNmYzRmMDk3MmY4YmI4MTI"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <Icon name="slack" />
-                Join our Slack
+                Slack
               </Dropdown.Item>
 
               <Dropdown.Divider />
