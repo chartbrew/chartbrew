@@ -107,7 +107,7 @@ class EditUserForm extends Component {
     return (
       <div style={styles.container}>
         <Header attached="top" as="h3">Profile</Header>
-        <Segment raised attached>
+        <Segment attached>
           <Form>
             <Form.Input
               label="Firstname *"

@@ -90,7 +90,7 @@ class InviteMembersForm extends Component {
     return (
       <div style={style}>
         <Header attached="top" as="h3">Invite New Members</Header>
-        <Segment raised attached>
+        <Segment attached>
           <Form onSubmit={this.inviteMembers}>
             <Form.Field style={{ paddingTop: 10 }}>
               <Dropdown

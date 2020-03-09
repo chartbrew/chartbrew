@@ -68,7 +68,7 @@ class TeamSettings extends Component {
     return (
       <div style={style}>
         <Header attached="top" as="h3">Team settings</Header>
-        <Segment raised attached>
+        <Segment attached>
           <Container>
             <Form onSubmit={this._onTeamUpdate}>
               <Form.Input
