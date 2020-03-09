@@ -82,7 +82,7 @@
     "workbox-webpack-plugin": "4.3.1"
   },
   "scripts": {
-    "start": "npm run setup && node scripts/start.js",
+    "start": "npm run setup && cross-env REACT_APP_VERSION=$npm_package_version node scripts/start.js",
     "build": "npm run setup && cross-env REACT_APP_VERSION=$npm_package_version node scripts/build.js",
     "test": "node scripts/test.js --env=jsdom",
     "lint": "npm run setup && eslint src/",
