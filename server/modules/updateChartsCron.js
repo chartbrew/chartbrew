@@ -41,7 +41,7 @@ module.exports = () => {
   updateCharts();
 
   // now run the cron job
-  const cron = new CronJob("0 */30 * * * *", () => {
+  const cron = new CronJob("0 */1 * * * *", () => {
     updateCharts();
   });
 
