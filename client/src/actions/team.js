@@ -36,7 +36,7 @@ export function addNewTeam(addTeam) {
 export function getTeams(userId) {
   return (dispatch) => {
     if (!cookie.load("brewToken")) {
-      return new Promise((resolve, reject) => reject(new Error("No Token")));
+      return "No Token";
     }
     const token = cookie.load("brewToken");
     const headers = {

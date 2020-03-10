@@ -284,7 +284,7 @@ class UserDashboard extends Component {
                             <Grid.Column textAlign="center" style={styles.iconColumn}>
                               <Container textAlign="center" title="Number of connections">
                                 <Icon name="plug" size="large" />
-                                <span>{project.Connections.length}</span>
+                                <span>{project.Connections && project.Connections.length}</span>
                               </Container>
                             </Grid.Column>
                             <Grid.Column textAlign="center" style={styles.iconColumn}>
