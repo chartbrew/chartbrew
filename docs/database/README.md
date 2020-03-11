@@ -2,13 +2,13 @@
 
 ## MySQL
 
-In order to successfully start the server-side app you need to have MySQL running on your machine. Create a new database that will be used by ChartBrew.
+In order to successfully start the server-side app you need to have MySQL running on your machine. Create a new database that will be used by Chartbrew.
 
 ### Install MySQL and create a database
 
 You can install MySQL from multiple places. You can install it using Xampp, for example. [Download it from here >>](https://www.apachefriends.org/download.html)
 
-After you download it, make sure the MySQL and Apache services are running in the console, then head over to http://localhost/phpmyadmin and create a new database using the UI.
+After you download it, make sure the MySQL and Apache services are running in the console, then head over to [localhost/phpmyadmin](http://localhost/phpmyadmin) or [127.0.0.1/phpmyadmin](http://127.0.0.1/phpmyadmin) and create a new database using the UI.
 
 ### Set up the environmental variables
 

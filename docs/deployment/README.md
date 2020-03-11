@@ -1,4 +1,4 @@
-# Deploy ChartBrew on your server
+# Deploy Chartbrew on your server
 
 ::: tip INFO
 With time, this guide will be updated with more ways of deploying. Any PR is welcome!
@@ -21,7 +21,7 @@ This guide is tried and tested with Ubuntu. The settings should be the same on a
 The backend doesn't need to undergo a build process. You need the following things to make sure it can be served:
 
 - MySQL running
-- A database is created so that ChartBrew can use it (it must be empty if it wasn't used by ChartBrew before)
+- A database is created so that Chartbrew can use it (it must be empty if it wasn't used by Chartbrew before)
 - `npm install` ran in the server folder or `npm run setup` in the project root folder
 - Environmental variables are set for Production (check `server/settings.js` to see which)
 
@@ -39,7 +39,7 @@ This will then run the server on the `port` specified in `server/settings.js`.
 
 ### Frontend
 
-The Frontend app needs to be built and then server using [pm2](https://pm2.keymetrics.io) like above.
+The Frontend app needs to be built and then served using [pm2](https://pm2.keymetrics.io) like above.
 
 ```sh
 # build the app
@@ -90,7 +90,7 @@ As you already guessed, you will need Apache for this one. Below is a list of gu
 This guide is made for Apache running on Ubuntu 16. It might be different on other operating systems and distros.
 :::
 
-Create a new Apache configuration file for the ChartBrew site.
+Create a new Apache configuration file for the Chartbrew site.
 
 ```sh
 sudo vim /etc/apache2/sites-available/chartbrew.conf
@@ -151,7 +151,7 @@ This configuration file will have everything necessary to serve the backend and 
 
 ```
 
-Make sure you type your domain correctly and all the subdomains that you use are registered in your DNS configuration ([Cloudflare example](https://support.cloudflare.com/hc/en-us/articles/360019093151-Managing-DNS-records-in-Cloudflare)). Now activate the site and you will be able to access ChartBrew using your domain:
+Make sure you type your domain correctly and all the subdomains that you use are registered in your DNS configuration ([Cloudflare example](https://support.cloudflare.com/hc/en-us/articles/360019093151-Managing-DNS-records-in-Cloudflare)). Now activate the site and you will be able to access Chartbrew using your domain:
 
 ```sh
 sudo a2ensite chartbrew

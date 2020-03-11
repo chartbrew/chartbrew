@@ -1,12 +1,12 @@
 module.exports = {
-  title: 'ChartBrew',
-  description: 'The official documentation of ChartBrew, a web app for generating charts from your data sources.',
+  title: 'Chartbrew',
+  description: 'The official documentation of Chartbrew, a web app for generating charts from your data sources.',
   themeConfig: {
     logo: '/assets/cb_logo_4_small.png',
     displayAllHeaders: true,
     nav: [
       { text: 'Home', link: '/' },
-      { text: '🍺 ChartBrew website', link: 'https://chartbrew.com' },
+      { text: '🍺 Chartbrew website', link: 'https://chartbrew.com' },
       { text: '🤘 Join our Discord', link: 'https://discord.gg/KwGEbFk' },
       { text: '👋 Join our Slack', link: 'https://join.slack.com/t/chartbrew/shared_invite/enQtODU3MzYzNTkwOTMwLTZiOTA5YzczODUzZGFiZmQyMGI1ZGVmZGI4YTVmOTBkMTI0YzQ2ZjJjOGI5NzQ0NmNmYzRmMDk3MmY4YmI4MTI' },
       { text: '👨‍💻 GitHub', link: 'https://github.com/chartbrew/chartbrew' },

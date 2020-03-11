@@ -1,4 +1,4 @@
-# ChartBrew's backend
+# Chartbrew's backend
 
 ## Structure
 
@@ -188,7 +188,7 @@ module.exports = {
 
 ## Authentication
 
-ChartBrew uses [jwt](https://jwt.io) token authentication.
+Chartbrew uses [jwt](https://jwt.io) token authentication.
 
 To make authenticated requests, the `Authorization` header must be set to include a valid token
 
@@ -212,7 +212,7 @@ app.get("/brew/:id", verifyToken, (req, res) => {
 
 ### Permissions & Roles
 
-ChartBrew implements permissions and roles as well, but in not-so-ideal way. A future update will try a remedy this in a way to make it easier to make changes to these.
+Chartbrew implements permissions and roles as well, but in not-so-ideal way. A future update will try a remedy this in a way to make it easier to make changes to these.
 
 All the permissions and roles are registered in `modules/accessControl.js`. It is important to note that most of these roles are from the team perspective. So for example if a chart `"read:any"` permission is given to a user, this user can read `any` charts from the `team` that user is in **only**.
 
