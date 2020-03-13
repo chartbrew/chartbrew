@@ -13,7 +13,7 @@ import { logout } from "../actions/user";
 import { getProject, changeActiveProject } from "../actions/project";
 import { getProjectCharts } from "../actions/chart";
 import FeedbackForm from "./FeedbackForm";
-import cbLogo from "../assets/cb_logo_4_small_inverted.png";
+import cbLogo from "../assets/logo_inverted.png";
 import canAccess from "../config/canAccess";
 import { DOCUMENTATION_HOST } from "../config/settings";
 /*

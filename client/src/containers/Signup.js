@@ -11,7 +11,7 @@ import _ from "lodash";
 import { createUser, createInvitedUser } from "../actions/user";
 import { addTeamMember } from "../actions/team";
 import { required, email } from "../config/validations";
-import cbLogoSmall from "../assets/cb_logo_4_small_inverted.png";
+import cbLogoSmall from "../assets/logo_inverted.png";
 import { blue, secondary } from "../config/colors";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 

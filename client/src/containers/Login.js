@@ -10,7 +10,7 @@ import _ from "lodash";
 import LoginForm from "../components/LoginForm";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import { blue } from "../config/colors";
-import cbLogoSmall from "../assets/cb_logo_4_small_inverted.png";
+import cbLogoSmall from "../assets/logo_inverted.png";
 
 /*
   Login container with an embedded login form

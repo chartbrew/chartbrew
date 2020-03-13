@@ -11,7 +11,7 @@ import { getPublicDashboard } from "../actions/project";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import Chart from "./Chart";
 import { blue } from "../config/colors";
-import cbLogo from "../assets/cb_logo_4_small_inverted.png";
+import cbLogo from "../assets/logo_inverted.png";
 
 /*
   Description
