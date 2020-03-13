@@ -13,6 +13,14 @@
 
 This project was created by [Kate Belakova](https://github.com/belakova) and [Razvan Ilin](https://github.com/razvanilin)
 
+<p align="center">
+  <a href="https://chartbrew.com">
+    <img src="https://docs.chartbrew.com/assets/flat_browser.jpg" alt="ChartBrew logo" width="600"/>
+  </a>
+</a>
+
+<hr />
+
 📚 [**Read the full docs here**](https://docs.chartbrew.com)
 
 🔧 [**Development roadmap**](https://github.com/orgs/chartbrew/projects/1) - start here if you want to contribute
