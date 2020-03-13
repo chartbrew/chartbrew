@@ -1,7 +1,14 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: sans-serif;
+}
+
+a {
+  color: #f69977;
+}
+
+a:hover {
+  color: #cf6b4e;
 }
 
 .Resizer {

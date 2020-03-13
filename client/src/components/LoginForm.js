@@ -97,8 +97,8 @@ class LoginForm extends Component {
     return (
       <div style={styles.container}>
         <Form size="large">
-          <Field name="email" component={this.renderField} validate={[required, email]} placeholder="Email *" icon="mail" />
-          <Field name="password" type="password" component={this.renderField} validate={required} placeholder="Password *" icon="lock" />
+          <Field name="email" component={this.renderField} validate={[required, email]} placeholder="Email" icon="mail" />
+          <Field name="password" type="password" component={this.renderField} validate={required} placeholder="Password" icon="lock" />
 
           <Button
             onClick={handleSubmit(this.loginUser)}
@@ -119,7 +119,7 @@ class LoginForm extends Component {
             style={{ paddingTop: 10 }}
             onClick={() => this.setState({ forgotModal: true })}
           >
-            <a href="#">Forgot password?</a>
+            <a href="#">Did you forget your password?</a>
           </Item>
         </Form>
         {/*

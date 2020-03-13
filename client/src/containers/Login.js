@@ -31,7 +31,7 @@ class Login extends Component {
           <Link to="/">
             <img size="tiny" src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
           </Link>
-          <Header inverted as="h2" style={{ marginTop: 0 }}>Login to your account</Header>
+          <Header inverted as="h2" style={{ marginTop: 0 }}>Log in to your account</Header>
           <Segment raised>
             <LoginForm />
             {loginError && (
@@ -41,10 +41,12 @@ class Login extends Component {
               </Message>
             )}
           </Segment>
-          <Message>
-            {" You don't have an account yet? "}
-            <Link to={"/signup"}>Sign Up</Link>
-          </Message>
+          <div>
+            <p style={styles.signupText}>
+              {" You don't have an account yet? "}
+              <Link to={"/signup"}>Sign up here</Link>
+            </p>
+          </div>
         </Container>
       </div>
     );
@@ -57,6 +59,9 @@ const styles = {
     minHeight: window.innerHeight,
     paddingBottom: 50,
     paddingTop: 50,
+  },
+  signupText: {
+    color: "white",
   },
 };
 
