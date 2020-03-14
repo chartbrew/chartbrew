@@ -5,7 +5,7 @@ module.exports = (connection) => {
   const username = connection.username || "";
   const password = connection.password || "";
   const host = connection.host || "localhost";
-  const { port } = connection.port;
+  const { port } = connection;
   const dialect = connection.type;
 
   const sequelize = new Sequelize(name, username, password, {
