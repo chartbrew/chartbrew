@@ -30,6 +30,14 @@ import ApiBuilder from "../components/ApiBuilder";
 import PostgresQueryBuilder from "../components/PostgresQueryBuilder";
 import MysqlQueryBuilder from "../components/MysqlQueryBuilder";
 
+const initialQuery = `
+// MongoDB example:
+connection.collection('users').find()
+
+// MySQL & PostgreSQL example:
+SELECT * FROM user;
+`;
+
 /*
   Container used for setting up a new chart
 */
@@ -41,7 +49,7 @@ class AddChart extends Component {
       step: 0,
       newChart: {
         name: "Untitled",
-        query: "connection.collection('users').find()",
+        query: initialQuery,
         displayLegend: false,
         connection_id: null,
         Datasets: [{
@@ -164,7 +172,6 @@ class AddChart extends Component {
   _onChangeConnection = (value) => {
     const { connections } = this.props;
     const { newChart } = this.state;
-    let { query } = newChart;
 
     let selectedConnection;
     for (let i = 0; i < connections.length; i++) {
@@ -173,16 +180,8 @@ class AddChart extends Component {
       }
     }
 
-    if (!newChart.id) {
-      if (selectedConnection.type === "mongodb") {
-        query = "connection.collection('users').find()";
-      } else if (selectedConnection.type === "postgres") {
-        query = "SELECT * FROM table1;";
-      }
-    }
-
     this.setState({
-      newChart: { ...newChart, connection_id: value, query },
+      newChart: { ...newChart, connection_id: value },
       selectedConnection,
       noSource: true,
     });
