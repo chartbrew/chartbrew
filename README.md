@@ -33,6 +33,8 @@ This project was created by [Kate Belakova](https://github.com/belakova) and [Ra
 
 ## Data sources
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/b245aa07f69c4250a2de9d24efc659e6)](https://app.codacy.com/gh/chartbrew/chartbrew?utm_source=github.com&utm_medium=referral&utm_content=chartbrew/chartbrew&utm_campaign=Badge_Grade_Dashboard)
+
 Currently, ChartBrew supports connections to these data sources.
 
 * MySQL
