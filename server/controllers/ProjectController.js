@@ -16,7 +16,7 @@ class ProjectController {
   findById(id) {
     return db.Project.findOne({
       where: { id },
-      include: [{ model: db.Connection }, { model: db.Chart }],
+      include: [{ model: db.Connection }, { model: db.Chart, include: [{ model: db.Dataset }] }],
     })
       .then((project) => {
         if (!project) {
