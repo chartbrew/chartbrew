@@ -178,7 +178,7 @@ class TeamController {
         teamIds.forEach((role) => {
           idsArray.push(role.team_id);
         });
-        if (idsArray < 1) return new Promise(resolve => resolve([]));
+        if (idsArray < 1) return new Promise((resolve) => resolve([]));
         return db.Team.findAll({
           where: { id: idsArray },
           include: [

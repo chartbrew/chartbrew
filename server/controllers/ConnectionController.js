@@ -49,12 +49,11 @@ function paginateRequests(options, limit, items, offset, totalResults) {
           finalResults = tempResults.slice(0, limit);
         }
 
-        return new Promise(resolve => resolve(finalResults));
+        return new Promise((resolve) => resolve(finalResults));
       }
 
       const newOptions = options;
-      newOptions.qs[offset] =
-        parseInt(options.qs[offset], 10) + parseInt(options.qs[items], 10);
+      newOptions.qs[offset] = parseInt(options.qs[offset], 10) + parseInt(options.qs[items], 10);
 
       return paginateRequests(newOptions, limit, items, offset, tempResults);
     })
@@ -196,15 +195,15 @@ class ConnectionController {
         if (gConnection.type === "mongodb") {
           return mongoose.connect(response);
         } else if (gConnection.type === "api" && response.statusCode < 300) {
-          return new Promise(resolve => resolve({ success: true }));
+          return new Promise((resolve) => resolve({ success: true }));
         } else if (gConnection.type === "postgres" || gConnection.type === "mysql") {
-          return new Promise(resolve => resolve({ success: true }));
+          return new Promise((resolve) => resolve({ success: true }));
         } else {
           throw new Error(400);
         }
       })
       .then(() => {
-        return new Promise(resolve => resolve({ success: true }));
+        return new Promise((resolve) => resolve({ success: true }));
       })
       .catch((err) => {
         return new Promise((resolve, reject) => reject(err));
@@ -267,12 +266,12 @@ class ConnectionController {
       })
       .then((response) => {
         if (pagination) {
-          return new Promise(resolve => resolve(response));
+          return new Promise((resolve) => resolve(response));
         }
 
         if (response.statusCode < 300) {
           try {
-            return new Promise(resolve => resolve(JSON.parse(response.body)));
+            return new Promise((resolve) => resolve(JSON.parse(response.body)));
           } catch (e) {
             return new Promise((resolve, reject) => reject(406));
           }

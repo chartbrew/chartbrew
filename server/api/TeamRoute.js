@@ -126,7 +126,7 @@ module.exports = (app) => {
       .then((existingInvite) => {
         if (existingInvite) {
           invite = existingInvite;
-          return new Promise(resolve => resolve(invite));
+          return new Promise((resolve) => resolve(invite));
         }
         return teamController.saveTeamInvite(req.params.id, req.body);
       })

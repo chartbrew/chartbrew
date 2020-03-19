@@ -112,10 +112,10 @@ class UserController {
         invites.forEach((invite) => {
           idsArray.push(invite.team_id);
         });
-        if (idsArray < 1) return new Promise(resolve => resolve([]));
+        if (idsArray < 1) return new Promise((resolve) => resolve([]));
         return db.Team.findAll({ where: { id: idsArray } })
           .then((teams) => {
-            return new Promise(resolve => resolve([invites, teams]));
+            return new Promise((resolve) => resolve([invites, teams]));
           });
       })
       .catch((error) => {
@@ -161,7 +161,7 @@ class UserController {
         });
       })
       .then((body) => {
-        return new Promise(resolve => resolve(body));
+        return new Promise((resolve) => resolve(body));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -192,7 +192,7 @@ class UserController {
         return this.update(user.id, userUpdate);
       })
       .then(() => {
-        return new Promise(resolve => resolve({ completed: true }));
+        return new Promise((resolve) => resolve({ completed: true }));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

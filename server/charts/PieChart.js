@@ -17,7 +17,7 @@ class PieChart {
     };
     // config.options.scale = { gridLines: { display: false } };
 
-    return new Promise(resolve => resolve(config));
+    return new Promise((resolve) => resolve(config));
   }
 }
 

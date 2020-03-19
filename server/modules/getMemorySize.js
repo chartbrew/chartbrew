@@ -1,6 +1,7 @@
 module.exports = (obj) => {
   let bytes = 0;
   function sizeOf(obj) {
+    let objClass;
     if (obj !== null && obj !== undefined) {
       switch (typeof obj) {
         case "number":
@@ -13,13 +14,15 @@ module.exports = (obj) => {
           bytes += 4;
           break;
         case "object": // eslint-disable-line
-          const objClass = Object.prototype.toString.call(obj).slice(8, -1);
+          objClass = Object.prototype.toString.call(obj).slice(8, -1);
           if (objClass === "Object" || objClass === "Array") {
             for (const key in obj) {
               if (!obj.hasOwnProperty(key)) continue; // eslint-disable-line
               sizeOf(obj[key]);
             }
-          } else bytes += obj.toString().length * 2;
+          } else {
+            bytes += obj.toString().length * 2;
+          }
           break;
         default:
           bytes += 0;

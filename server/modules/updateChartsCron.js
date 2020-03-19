@@ -17,7 +17,7 @@ function updateCharts() {
     .then((charts) => {
       const promises = [];
       if (!charts || charts.length === 0) {
-        return new Promise(resolve => resolve({ completed: true }));
+        return new Promise((resolve) => resolve({ completed: true }));
       }
 
       for (const chart of charts) {
@@ -27,7 +27,7 @@ function updateCharts() {
         }
       }
 
-      if (promises.length === 0) return new Promise(resolve => resolve({ completed: true }));
+      if (promises.length === 0) return new Promise((resolve) => resolve({ completed: true }));
 
       return Promise.all(promises);
     })

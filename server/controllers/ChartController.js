@@ -73,7 +73,7 @@ class ChartController {
   findAll(conditions = {}) {
     return db.Chart.findAll(conditions)
       .then((charts) => {
-        return new Promise(resolve => resolve(charts));
+        return new Promise((resolve) => resolve(charts));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -341,13 +341,13 @@ class ChartController {
         return Function(`'use strict';return (mongoose) => mongoose.${query}.toArray()`)()(mongoose); // eslint-disable-line
       })
       .then((data) => {
-        return new Promise(resolve => resolve(data));
+        return new Promise((resolve) => resolve(data));
       })
       .catch(() => {
         return Function(`'use strict';return (mongoose) => mongoose.${query}`)()(mongoose); // eslint-disable-line
       })
       .then((data) => {
-        return new Promise(resolve => resolve(data));
+        return new Promise((resolve) => resolve(data));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -373,7 +373,7 @@ class ChartController {
   getApiChartData(chart) {
     return this.connection.testApiRequest(chart)
       .then((data) => {
-        return new Promise(resolve => resolve(data));
+        return new Promise((resolve) => resolve(data));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -386,7 +386,7 @@ class ChartController {
         return db.query(chart.query, { type: Sequelize.QueryTypes.SELECT });
       })
       .then((results) => {
-        return new Promise(resolve => resolve(results));
+        return new Promise((resolve) => resolve(results));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -397,14 +397,14 @@ class ChartController {
     return this.chartCache.findLast(user.id)
       .then((cache) => {
         if (noSource === "true") {
-          return new Promise(resolve => resolve(cache));
+          return new Promise((resolve) => resolve(cache));
         }
 
         return this.connection.findById(chart.connection_id);
       })
       .then((connection) => {
         if (noSource === "true") {
-          return new Promise(resolve => resolve(connection.data));
+          return new Promise((resolve) => resolve(connection.data));
         }
 
         if (connection.type === "mongodb") {
@@ -423,7 +423,7 @@ class ChartController {
           this.chartCache.create(user.id, data);
         }
 
-        return new Promise(resolve => resolve(data));
+        return new Promise((resolve) => resolve(data));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -464,7 +464,7 @@ class ChartController {
         }
       })
       .then((chartData) => {
-        return new Promise(resolve => resolve(chartData));
+        return new Promise((resolve) => resolve(chartData));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -509,7 +509,7 @@ class ChartController {
         return this.update(id, { chartData: gChartData, chartDataUpdated: moment() });
       })
       .then(() => {
-        return new Promise(resolve => resolve(gChartData));
+        return new Promise((resolve) => resolve(gChartData));
       });
   }
 }

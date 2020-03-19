@@ -43,7 +43,7 @@ class ProjectController {
         });
 
         if (idArray.length < 1) {
-          return new Promise(resolve => resolve([]));
+          return new Promise((resolve) => resolve([]));
         }
 
         return db.Project.findAll({
@@ -54,8 +54,8 @@ class ProjectController {
         });
       })
       .then((projects) => {
-        if (projects.length === 1) return new Promise(resolve => resolve(projects));
-        return new Promise(resolve => resolve(projects));
+        if (projects.length === 1) return new Promise((resolve) => resolve(projects));
+        return new Promise((resolve) => resolve(projects));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

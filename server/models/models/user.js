@@ -80,7 +80,7 @@ module.exports = (sequelize, DataTypes) => {
 
   User.beforeValidate((user) => {
     user.admin = false; // eslint-disable-line
-    return new Promise(resolve => resolve(user));
+    return new Promise((resolve) => resolve(user));
   });
 
   return User;

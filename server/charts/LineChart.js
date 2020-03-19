@@ -209,7 +209,7 @@ class LineChart {
       }
     };
 
-    return new Promise(resolve => resolve(chartJsData));
+    return new Promise((resolve) => resolve(chartJsData));
   }
 }
 

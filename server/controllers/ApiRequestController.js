@@ -29,7 +29,7 @@ class ApiRequestController {
         if (!apiRequest) {
           throw new Error(404);
         }
-        return new Promise(resolve => resolve(apiRequest));
+        return new Promise((resolve) => resolve(apiRequest));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -42,7 +42,7 @@ class ApiRequestController {
         if (!apiRequest) {
           throw new Error(404);
         }
-        return new Promise(resolve => resolve(apiRequest));
+        return new Promise((resolve) => resolve(apiRequest));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

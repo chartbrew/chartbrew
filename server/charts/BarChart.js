@@ -47,7 +47,7 @@ class BarChart {
       dataset.hoverBorderWidth = 3;
     }
 
-    return new Promise(resolve => resolve(chartConf));
+    return new Promise((resolve) => resolve(chartConf));
   }
 
   createPatterns() {
@@ -165,7 +165,7 @@ class BarChart {
       }
     };
 
-    return new Promise(resolve => resolve(chartJsData));
+    return new Promise((resolve) => resolve(chartJsData));
   }
 }
 

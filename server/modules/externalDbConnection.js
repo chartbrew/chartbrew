@@ -18,7 +18,7 @@ module.exports = (connection) => {
   return sequelize
     .authenticate()
     .then(() => {
-      return new Promise(resolve => resolve(sequelize));
+      return new Promise((resolve) => resolve(sequelize));
     })
     .catch((err) => {
       return new Promise((resolve, reject) => reject(err));
