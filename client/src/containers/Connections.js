@@ -324,8 +324,7 @@ class Connections extends Component {
                   />
                   <Card.Header>{connection.name}</Card.Header>
                   <Card.Meta>{`Created on ${moment(connection.createdAt).format("LLL")}`}</Card.Meta>
-                  <Card.Description>
-                  </Card.Description>
+                  <Card.Description />
                 </Card.Content>
                 <Card.Content extra>
                   <div className="ui three buttons">
