@@ -1,10 +1,22 @@
+const { Op } = require("sequelize");
+
 const db = require("../models/models");
 
 class ProjectController {
+  findAll() {
+    return db.Project.findAll()
+      .then((projects) => {
+        return Promise.resolve(projects);
+      })
+      .catch((error) => {
+        return Promise.reject(error);
+      });
+  }
+
   findById(id) {
     return db.Project.findOne({
       where: { id },
-      include: [{ model: db.Connection }, { model: db.Chart }],
+      include: [{ model: db.Connection }, { model: db.Chart, include: [{ model: db.Dataset }] }],
     })
       .then((project) => {
         if (!project) {
@@ -31,19 +43,19 @@ class ProjectController {
         });
 
         if (idArray.length < 1) {
-          return new Promise(resolve => resolve([]));
+          return new Promise((resolve) => resolve([]));
         }
 
         return db.Project.findAll({
           where: {
-            id: idArray,
+            id: { [Op.in]: idArray },
           },
           include: [{ model: db.ProjectRole }, { model: db.Chart }],
         });
       })
       .then((projects) => {
-        if (projects.length === 1) return new Promise(resolve => resolve(projects));
-        return new Promise(resolve => resolve(projects));
+        if (projects.length === 1) return new Promise((resolve) => resolve(projects));
+        return new Promise((resolve) => resolve(projects));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

@@ -515,6 +515,15 @@ class Chart extends Component {
                     text: "Don't auto update",
                     value: 0,
                   }, {
+                    text: "Every minute",
+                    value: 60,
+                  }, {
+                    text: "Every 5 minutes",
+                    value: 300,
+                  }, {
+                    text: "Every 15 minutes",
+                    value: 900,
+                  }, {
                     text: "Every 30 minutes",
                     value: 1800,
                   }, {

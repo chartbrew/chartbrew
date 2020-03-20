@@ -1,6 +1,16 @@
 const db = require("../models/models");
 
 class SavedQueryController {
+  findAll(conditions = { attributes: { exclude: ["query"] } }) {
+    return db.SavedQuery.findAll(conditions)
+      .then((savedQueries) => {
+        return Promise.resolve(savedQueries);
+      })
+      .catch((error) => {
+        return Promise.reject(error);
+      });
+  }
+
   findById(id) {
     return db.SavedQuery.findOne({
       where: { id },

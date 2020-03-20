@@ -10,6 +10,34 @@ module.exports = (app) => {
   const teamController = new TeamController();
 
   /*
+  ** [MASTER] Route to get all the charts
+  */
+  app.get("/chart", verifyToken, (req, res) => {
+    if (!req.user.admin) {
+      return res.status(401).send({ error: "Not authorized" });
+    }
+
+    // check query parameters
+    const conditions = {};
+    if (req.query.exclude) {
+      const exclusions = req.query.exclude.split(",");
+      conditions.attributes = { exclude: exclusions };
+    } else if (req.query.include) {
+      const inclusions = req.query.include.split(",");
+      conditions.attributes = inclusions;
+    }
+
+    return chartController.findAll(conditions)
+      .then((charts) => {
+        return res.status(200).send(charts);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------------------------
+
+  /*
   ** Route to get all the charts for a project
   */
   app.get("/project/:project_id/chart", verifyToken, (req, res) => {

@@ -47,7 +47,7 @@ class BarChart {
       dataset.hoverBorderWidth = 3;
     }
 
-    return new Promise(resolve => resolve(chartConf));
+    return new Promise((resolve) => resolve(chartConf));
   }
 
   createPatterns() {
@@ -130,12 +130,8 @@ class BarChart {
         };
 
         if (dataset.datasetColor) formattedDataset.borderColor = dataset.datasetColor;
-        if (dataset.fillColor) {
-          formattedDataset.backgroundColor = dataset.fillColor;
-          formattedDataset.fill = true;
-        } else {
-          formattedDataset.fill = false;
-        }
+        if (dataset.fillColor) formattedDataset.backgroundColor = dataset.fillColor;
+        formattedDataset.fill = dataset.fill;
 
         datasets.push(formattedDataset);
       }
@@ -169,7 +165,7 @@ class BarChart {
       }
     };
 
-    return new Promise(resolve => resolve(chartJsData));
+    return new Promise((resolve) => resolve(chartJsData));
   }
 }
 

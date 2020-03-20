@@ -107,7 +107,7 @@ class EditUserForm extends Component {
     return (
       <div style={styles.container}>
         <Header attached="top" as="h3">Profile</Header>
-        <Segment raised attached>
+        <Segment attached>
           <Form>
             <Form.Input
               label="Firstname *"
@@ -179,11 +179,11 @@ class EditUserForm extends Component {
               <Header icon="exclamation triangle" content="Delete Account" />
               <Modal.Content>
                 <p>
-                This action will delete your account permanently,
+                  This action will delete your account permanently,
                   all teams, projects and charts that you created.
                 </p>
                 <p>
-                Are you sure you want to delete it?
+                  Are you sure you want to delete it?
                 </p>
               </Modal.Content>
               <Modal.Actions>

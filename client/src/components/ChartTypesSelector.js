@@ -69,20 +69,23 @@ class ChartTypesSelector extends Component {
   }
 
   _onTypeSelect = (card) => {
-    const { typeSelected, subTypeSelected } = this.props;
+    const { onChange } = this.props;
     const { selected } = this.state;
     // reset the subType when changing the main type
+    let { subType } = card;
     if (selected && card.type !== selected.type) {
-      subTypeSelected("");
+      subType = "";
     }
     this.setState({ selected: card });
 
-    typeSelected(card.type);
+    onChange({ type: card.type, subType });
   }
 
   _onSubTypeSelect = (card) => {
-    const { subTypeSelected } = this.props;
-    subTypeSelected(card.subType);
+    const { onChange } = this.props;
+    const { selected } = this.state;
+
+    onChange({ type: selected.type, subType: card.subType });
   }
 
   render() {
@@ -229,8 +232,7 @@ ChartTypesSelector.defaultProps = {
       src: polarChartPatternImage,
     }],
   }],
-  typeSelected: () => {},
-  subTypeSelected: () => {},
+  onChange: () => {},
   type: "",
   subType: "",
 };
@@ -239,8 +241,7 @@ ChartTypesSelector.propTypes = {
   chartCards: PropTypes.array,
   type: PropTypes.string,
   subType: PropTypes.string,
-  typeSelected: PropTypes.func,
-  subTypeSelected: PropTypes.func,
+  onChange: PropTypes.func,
 };
 
 export default ChartTypesSelector;

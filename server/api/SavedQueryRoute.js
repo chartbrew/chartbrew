@@ -9,6 +9,29 @@ module.exports = (app) => {
   const projectController = new ProjectController();
   const teamController = new TeamController();
 
+  /**
+   * [MASTER] Route to get all saved queries
+   */
+  app.get("/savedQuery", verifyToken, (req, res) => {
+    if (!req.user.admin) {
+      return res.status(401).send({ error: "Not authorized" });
+    }
+
+    let conditions;
+    if (req.query.include === "query") {
+      conditions = {};
+    }
+
+    return savedQueryController.findAll(conditions)
+      .then((savedQueries) => {
+        return res.status(200).send(savedQueries);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------------------------
+
   /*
   ** Route to get all the saved queries in a project
   */

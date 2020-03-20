@@ -8,66 +8,62 @@ import uuid from "uuid/v4";
 
 import { primary, secondaryTransparent } from "../config/colors";
 
+function getRandomColorRgb() {
+  const red = Math.floor(Math.random() * 256);
+  const green = Math.floor(Math.random() * 256);
+  const blue = Math.floor(Math.random() * 256);
+  return `rgba(${red}, ${green}, ${blue}, ${0.5})`;
+}
+
 /*
-  Description
+  Component for configuring the Chart and its datasets
 */
 class ChartBuilder extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      addFill: true,
+      activeOption: "",
     };
   }
 
-  componentDidMount() {
-    const {
-      fillColor, editChart, onFillColor, datasetColor, onDatasetColor,
-    } = this.props;
-
-    if (!fillColor && !editChart) {
-      setTimeout(() => {
-        onFillColor(secondaryTransparent(0.5));
-      });
-    } else if (!fillColor && editChart) {
-      this._onAddFill(false);
-    }
-
-    if (!datasetColor) {
-      onDatasetColor(primary);
-    }
-  }
-
   _onChangeXAxis = (value) => {
-    const { onChangeXAxis } = this.props;
-    onChangeXAxis(value);
+    const { onChange } = this.props;
+    onChange({ xAxis: value });
   }
 
   _onDatasetColor = (color) => {
-    const { onDatasetColor } = this.props;
-    const stringColor = `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`;
-    onDatasetColor(stringColor);
+    const { onChange } = this.props;
+    const datasetColor = `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`;
+    onChange({ datasetColor });
   }
 
-  _onFillColor = (color, colorIndex) => {
-    const { onFillColor } = this.props;
-    const stringColor = `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`;
-    setTimeout(() => {
-      onFillColor(stringColor, colorIndex);
-    });
-  }
+  _onFillColor = (color, index) => {
+    const {
+      onChange, fillColor, dataArray, subType, fill,
+    } = this.props;
 
-  _onAddFill = (value) => {
-    const { onFillColor, fillColor } = this.props;
-    if (!value) {
-      onFillColor([""]);
-    } else if (!fillColor) {
-      setTimeout(() => {
-        onFillColor(secondaryTransparent(0.5));
-      });
+    // add a fill color for all each pattern
+    let newFillColor = fillColor || [];
+    if (subType === "pattern") {
+      for (let i = 0; i < dataArray.length; i++) {
+        if (!newFillColor[i]) {
+          newFillColor.push(getRandomColorRgb());
+        } else if (i === index) {
+          newFillColor[i] = `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`;
+        }
+      }
+    } else {
+      newFillColor = `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`;
     }
 
-    this.setState({ addFill: value });
+    onChange({ fillColor: newFillColor, fill });
+  }
+
+  _onAddFill = () => {
+    const { onChange, fill } = this.props;
+
+    onChange({ fill: !fill });
   }
 
   _onChangeActiveOption = (option) => {
@@ -80,18 +76,18 @@ class ChartBuilder extends Component {
   }
 
   _onAddPattern = () => {
-    const { patterns, onChangePatterns } = this.props;
+    const { patterns, onChange } = this.props;
     if ((patterns.length === 0 || patterns[patterns.length - 1].value !== "")) {
       patterns.push({
         id: uuid(),
         value: "",
       });
-      onChangePatterns(patterns);
+      onChange({ patterns });
     }
   }
 
   _onRemovePattern = (id) => {
-    const { patterns, onChangePatterns } = this.props;
+    const { patterns, onChange } = this.props;
     let index = -1;
 
     for (let i = 0; i < patterns.length; i++) {
@@ -103,12 +99,12 @@ class ChartBuilder extends Component {
 
     if (index > -1) {
       patterns.splice(index, 1);
-      onChangePatterns(patterns);
+      onChange({ patterns });
     }
   }
 
   _onChangePattern = (id, value) => {
-    const { patterns, onChangePatterns } = this.props;
+    const { patterns, onChange } = this.props;
     let index = -1;
     for (let i = 0; i < patterns.length; i++) {
       if (id === patterns[i].id) {
@@ -119,7 +115,7 @@ class ChartBuilder extends Component {
 
     if (index > -1) {
       patterns[index].value = value;
-      onChangePatterns(patterns);
+      onChange({ patterns });
     }
   }
 
@@ -172,11 +168,11 @@ class ChartBuilder extends Component {
 
   render() {
     const {
-      patterns, xAxis, subType, legend, onChangeLegend, type, datasetColor,
-      fillColor, dataArray, dataLabels,
+      patterns, xAxis, subType, legend, type, datasetColor,
+      fillColor, dataArray, dataLabels, onChange, fill,
     } = this.props;
     const {
-      activeOption, addFill,
+      activeOption,
     } = this.state;
 
     return (
@@ -219,7 +215,7 @@ class ChartBuilder extends Component {
                 <Input
                   placeholder="What data is your dataset showing?"
                   value={legend || ""}
-                  onChange={(event, data) => onChangeLegend(data.value)}
+                  onChange={(event, data) => onChange({ legend: data.value })}
                 />
               </Form.Field>
             </Form>
@@ -249,17 +245,19 @@ class ChartBuilder extends Component {
                     <Checkbox
                       label="Fill the area?"
                       toggle
-                      checked={addFill}
-                      onChange={() => this._onAddFill(!addFill)}
+                      checked={fill}
+                      onChange={this._onAddFill}
                     />
                   </Form.Field>
                   )}
-                {fillColor && subType !== "pattern"
+                {fill && subType !== "pattern"
                   && (
                   <Form.Field>
                     <label>Choose the color for the chart area</label>
                     <SketchPicker
-                      color={fillColor || secondaryTransparent(0.8)}
+                      color={subType === "pattern"
+                        ? (fillColor && fillColor[0])
+                        : fillColor || secondaryTransparent(0.8)}
                       onChangeComplete={(color) => this._onFillColor(color.rgb)}
                     />
                   </Form.Field>
@@ -316,36 +314,28 @@ ChartBuilder.defaultProps = {
   type: "",
   subType: "",
   xAxis: "",
-  datasetColor: "",
+  datasetColor: primary,
   fillColor: [],
+  fill: false,
   legend: "",
   patterns: [],
   dataArray: [],
   dataLabels: [],
-  onChangeXAxis: () => {},
-  onDatasetColor: () => {},
-  onFillColor: () => {},
-  onChangeLegend: () => {},
-  onChangePatterns: () => {},
-  editChart: false,
+  onChange: () => {},
 };
 
 ChartBuilder.propTypes = {
   type: PropTypes.string,
   subType: PropTypes.string,
-  editChart: PropTypes.bool,
   xAxis: PropTypes.string,
   datasetColor: PropTypes.string,
   fillColor: PropTypes.array,
+  fill: PropTypes.bool,
   legend: PropTypes.string,
   patterns: PropTypes.array,
   dataArray: PropTypes.array,
   dataLabels: PropTypes.array,
-  onChangeXAxis: PropTypes.func,
-  onDatasetColor: PropTypes.func,
-  onFillColor: PropTypes.func,
-  onChangeLegend: PropTypes.func,
-  onChangePatterns: PropTypes.func,
+  onChange: PropTypes.func,
 };
 
 export default ChartBuilder;

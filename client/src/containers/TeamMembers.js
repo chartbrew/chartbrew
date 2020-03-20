@@ -122,9 +122,9 @@ class TeamMembers extends Component {
         {this._canAccess("admin")
           && <InviteMembersForm />}
 
+        <Divider hidden />
         <Header as="h3" attached="top">{"Team members"}</Header>
-        <Segment raised attached>
-
+        <Segment attached>
           <Container fluid>
             <List relaxed divided size="large" selection>
               {teamMembers && teamMembers.map((member) => {

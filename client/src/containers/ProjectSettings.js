@@ -81,7 +81,7 @@ class ProjectSettings extends Component {
     return (
       <div style={style}>
         <Header attached="top" as="h3">Project settings</Header>
-        <Segment attached raised>
+        <Segment attached>
           <Loader active={!project.id} />
           <Form>
             <label>Project name</label>

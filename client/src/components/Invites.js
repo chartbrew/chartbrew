@@ -179,7 +179,7 @@ class Invites extends Component {
       <div style={styles.container}>
         {match.params.teamId
           ? (
-            <Segment attached="top" raised>
+            <Segment attached="top">
               <Header as="h3" style={{ borderBottom: "1px solid #d4d4d5", paddingBottom: 10, top: 0 }}> Pending team invites </Header>
               <Container>
                 { !showpendings

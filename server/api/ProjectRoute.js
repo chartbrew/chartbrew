@@ -6,6 +6,25 @@ const accessControl = require("../modules/accessControl");
 module.exports = (app) => {
   const projectController = new ProjectController();
   const teamController = new TeamController();
+
+  /*
+  ** [MASTER] Route to get all the projects
+  */
+  app.get("/project", verifyToken, (req, res) => {
+    if (!req.user.admin) {
+      return res.status(401).send({ error: "Not authorized" });
+    }
+
+    return projectController.findAll()
+      .then((projects) => {
+        return res.status(200).send(projects);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // -----------------------------------------
+
   /*
   ** Route to create a project
   */
@@ -33,9 +52,8 @@ module.exports = (app) => {
 
   /*
   ** Route to get all the user's projects
-  ** TODO: MODIFY ACCORDNG TO NEW TEAM ROLE CHANGES
   */
-  app.get("/project", verifyToken, (req, res) => {
+  app.get("/project/user", verifyToken, (req, res) => {
     projectController.findByUserId(req.user.id)
       .then((projects) => {
         return res.status(200).send(projects);

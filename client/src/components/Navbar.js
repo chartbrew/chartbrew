@@ -13,7 +13,7 @@ import { logout } from "../actions/user";
 import { getProject, changeActiveProject } from "../actions/project";
 import { getProjectCharts } from "../actions/chart";
 import FeedbackForm from "./FeedbackForm";
-import cbLogo from "../assets/cb_logo_4_small_inverted.png";
+import cbLogo from "../assets/logo_inverted.png";
 import canAccess from "../config/canAccess";
 import { DOCUMENTATION_HOST } from "../config/settings";
 /*
@@ -26,6 +26,7 @@ class Navbar extends Component {
 
     this.state = {
       loading: true,
+      changelogPadding: true,
     };
   }
 
@@ -33,7 +34,14 @@ class Navbar extends Component {
     const { match } = this.props;
     this._onTeamChange(match.params.teamId, match.params.projectId);
 
-    Headway.init(HW_config);
+    setTimeout(() => {
+      try {
+        Headway.init(HW_config);
+        this.setState({ changelogPadding: false });
+      } catch (e) {
+        // ---
+      }
+    }, 1000);
   }
 
   _onTeamChange = (teamId, projectId) => {
@@ -72,7 +80,7 @@ class Navbar extends Component {
     const {
       hideTeam, transparent, team, teams, projectProp, user, logout,
     } = this.props;
-    const { loading, feedbackModal } = this.state;
+    const { loading, feedbackModal, changelogPadding } = this.state;
 
     if (!team.id && !teams) {
       return (
@@ -145,7 +153,9 @@ class Navbar extends Component {
             title="Changelog"
           >
             Updates
-            <div className="changelog-badge" />
+            <div className="changelog-badge">
+              {changelogPadding && <span style={{ paddingLeft: 16, paddingRight: 16 }} />}
+            </div>
           </Menu.Item>
           <Menu.Item
             as="a"
@@ -186,12 +196,21 @@ class Navbar extends Component {
               </Dropdown.Item>
               <Dropdown.Item
                 as="a"
+                href="https://discord.gg/KwGEbFk"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Icon name="discord" />
+                Discord
+              </Dropdown.Item>
+              <Dropdown.Item
+                as="a"
                 href="https://join.slack.com/t/chartbrew/shared_invite/enQtODU3MzYzNTkwOTMwLTZiOTA5YzczODUzZGFiZmQyMGI1ZGVmZGI4YTVmOTBkMTI0YzQ2ZjJjOGI5NzQ0NmNmYzRmMDk3MmY4YmI4MTI"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <Icon name="slack" />
-                Join our Slack
+                Slack
               </Dropdown.Item>
 
               <Dropdown.Divider />

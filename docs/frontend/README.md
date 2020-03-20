@@ -1,4 +1,4 @@
-# ChartBrew Frontend
+# Chartbrew Frontend
 
 ## Structure
 
@@ -32,7 +32,7 @@
 
 If you never used [React Redux](https://react-redux.js.org/) before, it's strongly recommended to run a [quick-start](https://react-redux.js.org/introduction/quick-start) before attempting to modify anything in the front-end.
 
-The main point on future developments will be to always develop with the [props down, events up](https://jasonformat.com/props-down-events-up/) mentality. In ChartBrew this means that a container should send the props to a component and the component can call any events that were passed down by the container. The events will run in the parent component.
+The main point on future developments will be to always develop with the [props down, events up](https://jasonformat.com/props-down-events-up/) mentality. In Chartbrew this means that a container should send the props to a component and the component can call any events that were passed down by the container. The events will run in the parent component.
 
 ::: warning
 Currently, the containers are quite huge and some components are not as dumb as they should be. This will be improved with future updates.
@@ -250,6 +250,6 @@ export default connect(mapStateToProps, mapDispatchToProps)(BrewPage);
 
 ## Styling
 
-ChartBrew is using Fomantic UI as the CSS framework. This is a community maintained version of Semantic UI which is not really maintained anymore. The react components usable within ChartBrew can be found here: https://react.semantic-ui.com
+Chartbrew is using Fomantic UI as the CSS framework. This is a community maintained version of Semantic UI which is not really maintained anymore. The react components usable within Chartbrew can be found here: [react.semantic-ui.com](https://react.semantic-ui.com)
 
 For any changes to the general feel of the site you can modify Sematic's global variables in `src/semantic/src/site/globals`. You can check out the theming docs on [Fomantic's website](https://fomantic-ui.com/usage/theming.html).

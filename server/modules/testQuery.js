@@ -19,7 +19,7 @@ module.exports = ({ connection_id, query }) => {
       return Function(`'use strict';return (mongoose) => mongoose.${query}`)()(mongoose); // eslint-disable-line
     })
     .then((data) => {
-      return new Promise(resolve => resolve(data));
+      return new Promise((resolve) => resolve(data));
     })
     .catch((error) => {
       return new Promise((resolve, reject) => reject(error));

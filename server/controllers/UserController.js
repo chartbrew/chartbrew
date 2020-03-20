@@ -22,7 +22,8 @@ class UserController {
           "email": user.email,
           "password": user.password,
           "icon": user.icon,
-          "active": true
+          "active": true,
+          "admin": true,
         });
       })
       .then((newUser) => { return newUser; })
@@ -54,6 +55,18 @@ class UserController {
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(new Error(error.message)));
+      });
+  }
+
+  findAll() {
+    return db.User.findAll({
+      attributes: { exclude: ["password", "passwordResetToken"] },
+    })
+      .then((users) => {
+        return Promise.resolve(users);
+      })
+      .catch((error) => {
+        return Promise.reject(error);
       });
   }
 
@@ -90,7 +103,7 @@ class UserController {
   }
 
   getTeamInvitesByUser(email) {
-    return db.TeamInvite.findAll({
+    return db.TeamInvitation.findAll({
       where: { email: sc.encrypt(email) },
       include: [{ model: db.Team }],
     })
@@ -99,10 +112,10 @@ class UserController {
         invites.forEach((invite) => {
           idsArray.push(invite.team_id);
         });
-        if (idsArray < 1) return new Promise(resolve => resolve([]));
+        if (idsArray < 1) return new Promise((resolve) => resolve([]));
         return db.Team.findAll({ where: { id: idsArray } })
           .then((teams) => {
-            return new Promise(resolve => resolve([invites, teams]));
+            return new Promise((resolve) => resolve([invites, teams]));
           });
       })
       .catch((error) => {
@@ -148,7 +161,7 @@ class UserController {
         });
       })
       .then((body) => {
-        return new Promise(resolve => resolve(body));
+        return new Promise((resolve) => resolve(body));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -179,7 +192,7 @@ class UserController {
         return this.update(user.id, userUpdate);
       })
       .then(() => {
-        return new Promise(resolve => resolve({ completed: true }));
+        return new Promise((resolve) => resolve({ completed: true }));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

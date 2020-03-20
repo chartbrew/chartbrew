@@ -10,7 +10,7 @@ import {
 import { changePasswordWithToken } from "../actions/user";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import { blue } from "../config/colors";
-import cbLogoSmall from "../assets/cb_logo_4_small_inverted.png";
+import cbLogoSmall from "../assets/logo_inverted.png";
 
 const queryString = require("qs"); // eslint-disable-line
 /*

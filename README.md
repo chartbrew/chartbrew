@@ -1,17 +1,26 @@
 <p align="center">
   <a href="https://chartbrew.com">
-    <img src="https://docs.chartbrew.com/assets/cb_logo_4.png" alt="ChartBrew logo" width="250"/>
+    <img src="https://docs.chartbrew.com/assets/logo_full_2.png" alt="ChartBrew logo" width="250"/>
   </a>
 </a>
 
 <p align="center">
-  <img src="https://app.buddy.works/razvanilin/chartbrew/pipelines/pipeline/230383/badge.svg?token=25baf00f6b4d446c82fc0d93f2330616808aeb930dc818c5138b5c5cf22f4bc8" alt="ChartBrew build" />
+  <a href="https://circleci.com/gh/chartbrew/chartbrew" target="_blank"><img src="https://circleci.com/gh/chartbrew/chartbrew.svg?style=svg" alt="ChartBrew build" /></a>
+  <a href="https://app.codacy.com/gh/chartbrew/chartbrew" target="_blank"><img src="https://api.codacy.com/project/badge/Grade/b245aa07f69c4250a2de9d24efc659e6"></a>
   <a href="https://discord.gg/KwGEbFk" target="_blank"><img src="https://img.shields.io/discord/656557151048957995?label=Discord" alt="" /></a>
 </p>
 
 [ChartBrew](https://chartbrew.com) is an open-source web application used to generate charts from different data sources. The focus of this project is to make the process less tedious and put as much accent as possible on Usability.
 
 This project was created by [Kate Belakova](https://github.com/belakova) and [Razvan Ilin](https://github.com/razvanilin)
+
+<p align="center">
+  <a href="https://chartbrew.com">
+    <img src="https://docs.chartbrew.com/assets/flat_browser.jpg" alt="ChartBrew logo" width="600"/>
+  </a>
+</a>
+
+<hr />
 
 📚 [**Read the full docs here**](https://docs.chartbrew.com)
 
@@ -47,6 +56,8 @@ It is recommended you head over to the more detailed documentation to find out h
 ## Quickstart
 
 If you already have a MySQL server running, create a database called charbrew and adjust the parameters below with your connection settings. The command will then setup everything for you.
+
+**Important** Windows command line is not supported at the moment. Use something like [Cygwin](http://www.cygwin.com/) on Windows.
 
 ```sh
 npx create-chartbrew-app myApp --dbname="chartbrew" --dbusername="root" --dbpassword="" --dbhost="localhost"
@@ -88,7 +99,7 @@ Open up `.env-template` in the root folder of the project and make sure that the
 Then run the following commands:
 
 ```sh
-npm run setup:docker
+npm run prepareSettings
 docker-compose up
 ```
 

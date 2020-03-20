@@ -1,13 +1,9 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
 import {
   Segment, Form, Button, Icon, Header, Label, Divider, Message, Checkbox, Popup,
 } from "semantic-ui-react";
 import uuid from "uuid/v4";
-import { withRouter } from "react-router";
-
-import { addConnection, saveConnection } from "../actions/connection";
 
 /*
   Description
@@ -33,7 +29,7 @@ class ConnectionForm extends Component {
     if (editConnection) {
       const newConnection = editConnection;
       // format the options
-      if (newConnection.options.length > 0) {
+      if (newConnection.options && newConnection.options.length > 0) {
         const newOptions = [];
         const formattedOptions = newConnection.options.split("&");
         for (let i = 0; i < formattedOptions.length; i++) {
@@ -64,7 +60,7 @@ class ConnectionForm extends Component {
 
   _onCreateConnection = () => {
     const {
-      projectId, addConnection, onComplete, saveConnection,
+      projectId, onComplete,
     } = this.props;
     const { connection, errors } = this.state;
 
@@ -100,27 +96,7 @@ class ConnectionForm extends Component {
         },
         loading: true,
       }, () => {
-        if (!connection.id) {
-          addConnection(projectId, connection)
-            .then(() => {
-              this.setState({ loading: false });
-              onComplete();
-            })
-            .catch((error) => {
-              onComplete(error);
-              this.setState({ addError: error, loading: false });
-            });
-        } else {
-          saveConnection(projectId, connection)
-            .then(() => {
-              this.setState({ loading: false });
-              onComplete();
-            })
-            .catch((error) => {
-              onComplete(error);
-              this.setState({ addError: error, loading: false });
-            });
-        }
+        onComplete(connection);
       });
     });
   }
@@ -209,7 +185,8 @@ class ConnectionForm extends Component {
 
           {showIp && (
             <Message onDismiss={() => this.setState({ showIp: false })}>
-              <Message.Header>{"You might need to whitelist our IP address: 188.226.145.211"}</Message.Header>
+              <Message.Header>{"Whitelist the IP of the server the app is running from"}</Message.Header>
+              <p>{"This is sometimes required when the database and the Chartbrew app are running on separate servers."}</p>
             </Message>
           )}
           <Form>
@@ -233,7 +210,7 @@ class ConnectionForm extends Component {
             <Form.Field error={!!errors.host} required>
               <label>Hostname or IP address</label>
               <Form.Input
-                placeholder="'yourmongodomain.com' or '188.226.145.211' "
+                placeholder="'yourmongodomain.com' or '0.0.0.0' "
                 value={connection.host || ""}
                 onChange={(e, data) => {
                   this.setState({ connection: { ...connection, host: data.value } });
@@ -410,22 +387,9 @@ ConnectionForm.defaultProps = {
 };
 
 ConnectionForm.propTypes = {
-  addConnection: PropTypes.func.isRequired,
-  saveConnection: PropTypes.func.isRequired,
   onComplete: PropTypes.func,
   projectId: PropTypes.string.isRequired,
   editConnection: PropTypes.object,
 };
 
-const mapStateToProps = () => {
-  return {
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    addConnection: (projectId, connection) => dispatch(addConnection(projectId, connection)),
-    saveConnection: (projectId, connection) => dispatch(saveConnection(projectId, connection)),
-  };
-};
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ConnectionForm));
+export default ConnectionForm;

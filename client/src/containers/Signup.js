@@ -11,8 +11,8 @@ import _ from "lodash";
 import { createUser, createInvitedUser } from "../actions/user";
 import { addTeamMember } from "../actions/team";
 import { required, email } from "../config/validations";
-import cbLogoSmall from "../assets/cb_logo_4_small_inverted.png";
-import { blue } from "../config/colors";
+import cbLogoSmall from "../assets/logo_inverted.png";
+import { blue, secondary } from "../config/colors";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 
 const queryString = require("qs"); // eslint-disable-line
@@ -126,7 +126,7 @@ class Signup extends Component {
           <Link to="/">
             <img size="tiny" centered src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
           </Link>
-          <Header inverted as="h2" style={{ marginTop: 0 }}>Join Chart Brew</Header>
+          <Header inverted as="h2" style={{ marginTop: 0 }}>Join Charbrew</Header>
 
           <Segment color="olive" raised>
             <Form size="large">
@@ -182,12 +182,15 @@ class Signup extends Component {
               this.socialSignup()
             */}
           </Segment>
-          <Message>
-            {" "}
-            Already have an account?
-            <Link to={"/login"}>Login here</Link>
-            {" "}
-          </Message>
+          <div>
+            <p style={styles.loginText}>
+              {" "}
+              Already have an account?
+              {" "}
+              <Link to={"/login"} style={styles.loginLink}>Login here</Link>
+              {" "}
+            </p>
+          </div>
         </Container>
       </div>
     );
@@ -208,6 +211,12 @@ const styles = {
     minHeight: window.innerHeight,
     paddingBottom: 50,
     paddingTop: 50,
+  },
+  loginText: {
+    color: "white",
+  },
+  loginLink: {
+    color: secondary,
   },
 };
 

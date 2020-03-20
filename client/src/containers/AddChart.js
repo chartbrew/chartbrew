@@ -30,6 +30,14 @@ import ApiBuilder from "../components/ApiBuilder";
 import PostgresQueryBuilder from "../components/PostgresQueryBuilder";
 import MysqlQueryBuilder from "../components/MysqlQueryBuilder";
 
+const initialQuery = `
+// MongoDB example:
+connection.collection('users').find()
+
+// MySQL & PostgreSQL example:
+SELECT * FROM user;
+`;
+
 /*
   Container used for setting up a new chart
 */
@@ -40,8 +48,8 @@ class AddChart extends Component {
     this.state = {
       step: 0,
       newChart: {
-        name: "Untitled chart",
-        query: "connection.collection('users').find()",
+        name: "Untitled",
+        query: initialQuery,
         displayLegend: false,
         connection_id: null,
         Datasets: [{
@@ -50,6 +58,8 @@ class AddChart extends Component {
         }],
         offset: "offset",
         draft: true,
+        includeZeros: true,
+        timeInterval: "day",
       },
       ddConnections: [],
       updatedEdit: false, // eslint-disable-line
@@ -149,7 +159,11 @@ class AddChart extends Component {
       createChart(match.params.projectId, newChart)
         .then((chart) => {
           if (chart && chart.id) {
-            this.setState({ newChart: { ...newChart, id: chart.id } });
+            this.setState({
+              newChart: {
+                ...newChart, id: chart.id, Datasets: chart.Datasets,
+              }
+            });
           }
         });
     }
@@ -158,7 +172,6 @@ class AddChart extends Component {
   _onChangeConnection = (value) => {
     const { connections } = this.props;
     const { newChart } = this.state;
-    let { query } = newChart;
 
     let selectedConnection;
     for (let i = 0; i < connections.length; i++) {
@@ -167,176 +180,135 @@ class AddChart extends Component {
       }
     }
 
-    if (!newChart.id) {
-      if (selectedConnection.type === "mongodb") {
-        query = "connection.collection('users').find()";
-      } else if (selectedConnection.type === "postgres") {
-        query = "SELECT * FROM table1;";
-      }
-    }
-
     this.setState({
-      newChart: { ...newChart, connection_id: value, query },
+      newChart: { ...newChart, connection_id: value },
       selectedConnection,
       noSource: true,
     });
   }
 
-  _onTypeSelect = (type) => {
+  _onChangeType = ({ type, subType }) => {
     const { newChart } = this.state;
-    this.setState({ newChart: { ...newChart, type } });
-    return type;
+    this.setState({ newChart: { ...newChart, type, subType: subType || "" } });
   }
 
-  _onChangeXAxis = (xAxis) => {
+  _onChangeAxis = ({ xAxis, yAxis }) => {
     const { activeDataset, newChart } = this.state;
     const tempChart = { ...newChart };
-    tempChart.Datasets[activeDataset].xAxis = xAxis;
+
+    if (xAxis) {
+      tempChart.Datasets[activeDataset].xAxis = xAxis;
+    }
+    if (yAxis) {
+      tempChart.yAxis = yAxis;
+    }
+
     this.setState({ newChart: tempChart });
   }
 
-  _onDatasetColor = (color) => {
+  _onChangeChart = ({
+    datasetColor, fillColor, fill, xAxis, patterns, legend,
+  }) => {
     const { activeDataset, newChart, previewChart } = this.state;
-    const tempChart = { ...newChart };
-    tempChart.Datasets[activeDataset].datasetColor = color;
+    const tempChart = newChart;
+    const realTimeData = previewChart;
 
-    if (previewChart) {
-      const tempData = { ...previewChart };
-      if (tempData.data.datasets[activeDataset]) {
-        tempData.data.datasets[activeDataset].borderColor = color;
-      }
-      this.setState({
-        newChart: tempChart,
-        previewChart: tempData,
-      });
-    } else {
-      this.setState({
-        newChart: tempChart,
-      });
-    }
-  }
-
-  _onFillColor = (color, colorIndex) => {
-    const { activeDataset, newChart, previewChart } = this.state;
-    const tempChart = { ...newChart };
-
-    let colorValue = color;
-    if (colorIndex != null) {
-      colorValue = [color];
-      if (!tempChart.Datasets[activeDataset].fillColor) {
-        tempChart.Datasets[activeDataset].fillColor = colorValue;
-      } else if (tempChart.Datasets[activeDataset].fillColor[colorIndex]) {
-        tempChart.Datasets[activeDataset].fillColor[colorIndex] = color;
-      } else {
-        tempChart.Datasets[activeDataset].fillColor.push(color);
-      }
-
-      colorValue = tempChart.Datasets[activeDataset].fillColor;
-    }
-
-    tempChart.Datasets[activeDataset].fillColor = colorValue;
-
-    if (previewChart) {
-      const tempData = { ...previewChart };
-      if (tempData.data.datasets[activeDataset]) {
-        if (colorValue) {
-          tempData.data.datasets[activeDataset].backgroundColor = colorValue;
-          tempData.data.datasets[activeDataset].fill = true;
-        } else {
-          tempData.data.datasets[activeDataset].fill = false;
+    if (datasetColor) {
+      tempChart.Datasets[activeDataset].datasetColor = datasetColor;
+      if (previewChart) {
+        if (realTimeData.data.datasets[activeDataset]) {
+          realTimeData.data.datasets[activeDataset].borderColor = datasetColor;
         }
       }
-
-      this.setState({
-        newChart: tempChart,
-        previewChart: tempData,
-      });
-    } else {
-      this.setState({
-        newChart: tempChart,
-      });
     }
-  }
 
-  _onChangeLegend = (legend) => {
-    const { activeDataset, newChart, previewChart } = this.state;
-    const tempChart = { ...newChart };
-    tempChart.Datasets[activeDataset].legend = legend;
+    if (fillColor) {
+      tempChart.Datasets[activeDataset].fillColor = fillColor;
 
-    if (previewChart) {
-      const tempData = { ...previewChart };
-      if (tempData.data.datasets[activeDataset]) {
-        if (legend) {
-          tempData.data.datasets[activeDataset].label = legend;
-        } else {
-          tempData.data.datasets[activeDataset].label = "";
+      if (previewChart && realTimeData.data.datasets[activeDataset]) {
+        realTimeData.data.datasets[activeDataset].backgroundColor = fillColor;
+      }
+    }
+
+    if (fill || fill === false) {
+      tempChart.Datasets[activeDataset].fill = fill;
+      if (previewChart && realTimeData.data.datasets[activeDataset]) {
+        realTimeData.data.datasets[activeDataset].fill = fill;
+      }
+    }
+
+    if (xAxis) {
+      tempChart.Datasets[activeDataset].xAxis = xAxis;
+    }
+
+    if (patterns) {
+      tempChart.Datasets[activeDataset].patterns = JSON.parse(JSON.stringify(patterns));
+    }
+
+    if (legend) {
+      tempChart.Datasets[activeDataset].legend = legend;
+
+      if (previewChart) {
+        if (realTimeData.data.datasets[activeDataset]) {
+          if (legend) {
+            realTimeData.data.datasets[activeDataset].label = legend;
+          } else {
+            realTimeData.data.datasets[activeDataset].label = "";
+          }
         }
       }
-      this.setState({ newChart: tempChart, previewChart: tempData });
+    }
+
+    if (previewChart) {
+      this.setState({
+        newChart: tempChart,
+        previewChart: realTimeData,
+      });
     } else {
-      this.setState({ newChart: tempChart });
+      this.setState({
+        newChart: tempChart,
+      });
     }
   }
 
-  _onChangePoint = (point) => {
+  _onChangeGlobalSettings = ({
+    pointRadius, displayLegend, dateRange, includeZeros, timeInterval, currentEndDate,
+  }) => {
     const { newChart, previewChart } = this.state;
+
+    let realTimeData;
     if (previewChart) {
-      const tempData = { ...previewChart };
-      tempData.options.elements.point.radius = point;
-      tempData.data.datasets[0].pointRadius = point;
-      this.setState({
-        newChart: { ...newChart, pointRadius: point },
-        previewChart: tempData,
-      });
-    } else {
-      this.setState({ newChart: { ...newChart, pointRadius: point } });
+      realTimeData = { ...previewChart };
+      // point
+      realTimeData.options.elements.point.radius = pointRadius;
+      realTimeData.data.datasets[0].pointRadius = pointRadius;
+      // legend
+      realTimeData.options.legend.display = displayLegend;
     }
-  }
 
-  _onDisplayLegend = (display) => {
-    const { newChart, previewChart, pointRadius } = this.state;
-
-    if (previewChart) {
-      const tempData = { ...previewChart };
-      tempData.options.legend.display = display;
-      tempData.options.elements.point.radius = pointRadius;
-      tempData.data.datasets[0].pointRadius = pointRadius;
-      this.setState({
-        newChart: { ...newChart, displayLegend: display },
-        previewChart: tempData,
-      }, () => {
-        // tempData.options.elements.point.radius = this.state.pointRadius;
-        // tempData.data.datasets[0].pointRadius = this.state.pointRadius;
-        // this.setState({ previewChart: tempData });
-      });
-    } else {
-      this.setState({
-        newChart: { ...newChart, displayLegend: display },
-      });
-    }
-  }
-
-  _onChangePatterns = (patterns) => {
-    const { activeDataset, newChart } = this.state;
-    const tempChart = { ...newChart };
-    tempChart.Datasets[activeDataset].patterns = JSON.parse(JSON.stringify(patterns));
-
-    this.setState({ newChart: tempChart });
-  }
-
-  _onDateRange = (range) => {
-    const { newChart } = this.state;
     this.setState({
+      previewChart: realTimeData || previewChart,
       newChart: {
         ...newChart,
-        startDate: range.startDate,
-        endDate: range.endDate,
+        pointRadius: typeof pointRadius !== "undefined" ? pointRadius : newChart.pointRadius,
+        displayLegend: typeof displayLegend !== "undefined" ? displayLegend : newChart.displayLegend,
+        startDate: (dateRange && dateRange.startDate) || newChart.startDate,
+        endDate: (dateRange && dateRange.endDate) || newChart.endDate,
+        timeInterval: timeInterval || newChart.timeInterval,
+        includeZeros: typeof includeZeros !== "undefined" ? includeZeros : newChart.includeZeros,
+        currentEndDate: typeof currentEndDate !== "undefined" ? currentEndDate : newChart.currentEndDate,
+      },
+    }, () => {
+      if (includeZeros || includeZeros === false
+        || currentEndDate || currentEndDate === false
+        || timeInterval
+      ) {
+        this._onPreview();
       }
     });
   }
 
   /* API Stuff */
-
   _formatApiRequest = () => {
     const { apiRequest } = this.state;
     if (!apiRequest) return {};
@@ -449,6 +421,7 @@ class AddChart extends Component {
       xAxis: "root",
       legend: `Dataset #${tempChart.Datasets.length + 1}`,
     });
+
     this.setState({
       newChart: tempChart,
       activeDataset: tempChart.Datasets.length - 1,
@@ -545,6 +518,12 @@ class AddChart extends Component {
             history.push(`/${match.params.teamId}/${match.params.projectId}/dashboard`);
           }
 
+          this.setState({
+            newChart: {
+              ...newChart, Datasets: chart.Datasets,
+            },
+          });
+
           return Promise.resolve(true);
         })
         .catch(() => {
@@ -629,7 +608,7 @@ class AddChart extends Component {
                     <Icon name="info" />
                     How to select fields
                   </Button>
-)}
+                )}
               >
                 <Container text>
                   <Header>Selecting fields</Header>
@@ -648,10 +627,8 @@ class AddChart extends Component {
                 objectData={queryData}
                 type={newChart.type}
                 subType={newChart.subType}
-                onSelectXField={(value) => this._onChangeXAxis(value)}
-                onSelectYField={(value) => {
-                  this.setState({ newChart: { ...newChart, yAxis: value } });
-                }}
+                onChange={this._onChangeAxis}
+                xAxisField={newChart.Datasets[activeDataset].xAxis}
               />
               )}
             <br />
@@ -664,6 +641,7 @@ class AddChart extends Component {
                 xAxis={newChart.Datasets[activeDataset].xAxis || ""}
                 datasetColor={newChart.Datasets[activeDataset].datasetColor}
                 fillColor={newChart.Datasets[activeDataset].fillColor}
+                fill={newChart.Datasets[activeDataset].fill}
                 legend={newChart.Datasets[activeDataset].legend}
                 patterns={newChart.Datasets[activeDataset].patterns}
                 dataArray={previewChart && previewChart.data.datasets[activeDataset]
@@ -673,11 +651,7 @@ class AddChart extends Component {
                 dataLabels={previewChart
                   ? previewChart.data.labels : newChart.chartData
                     ? newChart.chartData.data.labels : []}
-                onChangeXAxis={(xAxis) => this._onChangeXAxis(xAxis)}
-                onDatasetColor={(color) => this._onDatasetColor(color)}
-                onFillColor={(color, colorIndex) => this._onFillColor(color, colorIndex)}
-                onChangeLegend={(legend) => this._onChangeLegend(legend)}
-                onChangePatterns={(patterns) => this._onChangePatterns(patterns)}
+                onChange={this._onChangeChart}
               />
               )}
           </Sidebar>
@@ -758,19 +732,7 @@ class AddChart extends Component {
                   <ChartTypesSelector
                     type={newChart.type}
                     subType={newChart.subType}
-                    typeSelected={(type) => {
-                      setTimeout(() => this._onTypeSelect(type));
-                    }}
-                    subTypeSelected={(subType) => {
-                      if (!subType) {
-                        setTimeout(() => {
-                          // hacky things
-                          this.setState({ newChart: { ...newChart, subType: "" } });
-                        });
-                      } else {
-                        this.setState({ newChart: { ...newChart, subType } });
-                      }
-                    }}
+                    onChange={this._onChangeType}
                   />
                   )}
 
@@ -805,7 +767,7 @@ class AddChart extends Component {
                         <Link to={`/${match.params.teamId}/${match.params.projectId}/connections`}>
                           <Button primary icon labelPosition="right">
                             <Icon name="plug" />
-                              Go to connections
+                            Go to connections
                           </Button>
                         </Link>
                       </Form.Field>
@@ -1050,24 +1012,7 @@ class AddChart extends Component {
                         includeZeros={newChart.includeZeros}
                         currentEndDate={newChart.currentEndDate}
                         timeInterval={newChart.timeInterval}
-                        onDisplayLegend={() => this._onDisplayLegend(!newChart.displayLegend)}
-                        onChangeDateRange={this._onDateRange}
-                        onChangePoint={(point) => this._onChangePoint(point)}
-                        onChangeZeros={(includeZeros) => {
-                          this.setState({ newChart: { ...newChart, includeZeros } }, () => {
-                            this._onPreview();
-                          });
-                        }}
-                        onChangeCurrentEndDate={(currentEndDate) => {
-                          this.setState({ newChart: { ...newChart, currentEndDate } }, () => {
-                            this._onPreview();
-                          });
-                        }}
-                        onChangeTimeInterval={(timeInterval) => {
-                          this.setState({ newChart: { ...newChart, timeInterval } }, () => {
-                            this._onPreview();
-                          });
-                        }}
+                        onChange={this._onChangeGlobalSettings}
                         onComplete={() => this._onPreview()}
                       />
                     </Grid.Column>

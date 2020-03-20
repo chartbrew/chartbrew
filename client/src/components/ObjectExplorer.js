@@ -9,7 +9,7 @@ import moment from "moment";
 import { secondaryTransparent } from "../config/colors";
 
 /*
-  Description
+  Component used for displaying the object's attributes
 */
 class ObjectExplorer extends Component {
   constructor(props) {
@@ -24,7 +24,7 @@ class ObjectExplorer extends Component {
   }
 
   _onSelectXField = (key) => {
-    const { subType, onSelectXField } = this.props;
+    const { subType, onChange } = this.props;
     // display a warning if the user didn't select a date field and subtype is timeseries
     if (subType.toLowerCase().indexOf("timeseries") > -1) {
       if (this.objectMapper[key] !== "date") {
@@ -40,19 +40,12 @@ class ObjectExplorer extends Component {
       }
     }
 
-    this.setState({ xAxisField: key });
-    onSelectXField(key);
-  }
-
-  _onSelectYField = (key) => {
-    const { onSelectYField } = this.props;
-    this.setState({ yAxisField: key });
-    onSelectYField(key);
+    onChange({ xAxis: key });
   }
 
   _makeAccordion(key, uniqueKey, data) {
-    const { accordionActive, xAxisField, yAxisField } = this.state;
-    const { type, subType } = this.props;
+    const { accordionActive } = this.state;
+    const { type, subType, xAxisField } = this.props;
 
     let newUniqueKey = `${uniqueKey}.${key}`;
 
@@ -171,38 +164,6 @@ class ObjectExplorer extends Component {
                 content="Select this as your field"
               />
               )}
-
-            {subType === "custom"
-              && (
-              <div>
-                <Popup
-                  trigger={(
-                    <Button
-                      secondary={xAxisField === newUniqueKey}
-                      icon
-                      onClick={() => this._onSelectXField(newUniqueKey)}
-                    >
-                      <Icon name="long arrow alternate right" />
-                    </Button>
-                  )}
-                  position="bottom center"
-                  content="Select this field for the X Axis"
-                />
-                <Popup
-                  trigger={(
-                    <Button
-                      primary={yAxisField === newUniqueKey}
-                      icon
-                      onClick={() => this._onSelectYField(newUniqueKey)}
-                    >
-                      <Icon name="long arrow alternate up" />
-                    </Button>
-                  )}
-                  position="bottom center"
-                  content="Select this field for the Y Axis"
-                />
-              </div>
-              )}
           </div>
           )}
       </div>
@@ -211,9 +172,9 @@ class ObjectExplorer extends Component {
 
   render() {
     const {
-      visualiseDataset, xAxisField, yAxisField, arrayWarning, notDateWarning,
+      visualiseDataset, arrayWarning, notDateWarning,
     } = this.state;
-    const { objectData, subType } = this.props;
+    const { objectData } = this.props;
 
     return (
       <div style={styles.container}>
@@ -246,37 +207,6 @@ class ObjectExplorer extends Component {
           <Accordion.Content active={visualiseDataset}>
             <div>
               <p>Select the root object or array</p>
-              {subType === "custom"
-                && (
-                <div>
-                  <Popup
-                    trigger={(
-                      <Button
-                        secondary={xAxisField === "root"}
-                        icon
-                        onClick={() => this._onSelectXField("root")}
-                      >
-                        <Icon name="long arrow alternate right" />
-                      </Button>
-                    )}
-                    position="bottom center"
-                    content="Select the root for the X Axis"
-                  />
-                  <Popup
-                    trigger={(
-                      <Button
-                        primary={yAxisField === "root"}
-                        icon
-                        onClick={() => this._onSelectYField("root")}
-                      >
-                        <Icon name="long arrow alternate up" />
-                      </Button>
-                    )}
-                    position="bottom center"
-                    content="Select the root for the Y Axis"
-                  />
-                </div>
-                )}
             </div>
             {objectData instanceof Array
               && Object.keys(objectData[0]).map((key) => {
@@ -314,10 +244,10 @@ const styles = {
 
 ObjectExplorer.defaultProps = {
   objectData: [],
-  onSelectXField: () => {},
-  onSelectYField: () => {},
   type: "",
   subType: "",
+  xAxisField: "",
+  onChange: () => {},
 };
 
 ObjectExplorer.propTypes = {
@@ -325,10 +255,10 @@ ObjectExplorer.propTypes = {
     PropTypes.array,
     PropTypes.object,
   ]),
-  onSelectXField: PropTypes.func,
-  onSelectYField: PropTypes.func,
+  onChange: PropTypes.func,
   type: PropTypes.string,
   subType: PropTypes.string,
+  xAxisField: PropTypes.string,
 };
 
 export default ObjectExplorer;

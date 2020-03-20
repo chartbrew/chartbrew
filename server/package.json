@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "1.0.0",
+  "version": "v1.0.0-beta.6",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -16,31 +16,31 @@
     "accesscontrol": "^2.2.1",
     "base-64": "^0.1.0",
     "body-parser": "^1.19.0",
-    "cookie-parser": "^1.4.4",
+    "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
-    "cron": "^1.7.2",
+    "cron": "^1.8.2",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.15",
     "method-override": "^3.0.0",
     "moment": "^2.24.0",
-    "mongoose": "^5.8.3",
+    "mongoose": "^5.9.5",
     "mysql2": "^1.7.0",
-    "nodemailer": "^6.4.2",
-    "pg": "^7.17.0",
+    "nodemailer": "^6.4.5",
+    "pg": "^7.18.2",
     "pg-hstore": "^2.3.3",
-    "request": "^2.88.0",
+    "request": "^2.88.2",
     "request-promise": "^4.2.5",
-    "sequelize": "^5.21.3",
+    "sequelize": "^5.21.5",
     "simplecrypt": "^0.1.0",
-    "uuid": "^3.3.3"
+    "uuid": "^3.4.0"
   },
   "devDependencies": {
-    "babel-eslint": "^8.2.6",
-    "eslint": "^4.19.1",
-    "eslint-config-airbnb-base": "^12.1.0",
-    "eslint-plugin-import": "^2.19.1",
-    "nodemon": "^1.19.4"
+    "babel-eslint": "^10.1.0",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-plugin-import": "^2.20.1",
+    "nodemon": "^2.0.2"
   }
 }

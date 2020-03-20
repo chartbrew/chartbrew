@@ -55,6 +55,10 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+    fill: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
     dateFormat: {
       type: DataTypes.STRING,
     },

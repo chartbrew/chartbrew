@@ -1,15 +1,11 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
 import {
   Segment, Form, Button, Header, Label, Message
 } from "semantic-ui-react";
-import { withRouter } from "react-router";
-
-import { addConnection, saveConnection } from "../actions/connection";
 
 /*
-  Description
+  The Form for creating a new Mysql connection
 */
 class MysqlConnectionForm extends Component {
   constructor(props) {
@@ -35,7 +31,7 @@ class MysqlConnectionForm extends Component {
 
   _onCreateConnection = () => {
     const {
-      projectId, addConnection, onComplete, saveConnection,
+      projectId, onComplete,
     } = this.props;
     const { connection, errors } = this.state;
 
@@ -56,27 +52,7 @@ class MysqlConnectionForm extends Component {
         },
         loading: true,
       }, () => {
-        if (!connection.id) {
-          addConnection(projectId, connection)
-            .then(() => {
-              this.setState({ loading: false });
-              onComplete();
-            })
-            .catch((error) => {
-              onComplete(error);
-              this.setState({ addError: error, loading: false });
-            });
-        } else {
-          saveConnection(projectId, connection)
-            .then(() => {
-              this.setState({ loading: false });
-              onComplete();
-            })
-            .catch((error) => {
-              onComplete(error);
-              this.setState({ addError: error, loading: false });
-            });
-        }
+        onComplete(connection);
       });
     });
   }
@@ -188,7 +164,7 @@ class MysqlConnectionForm extends Component {
 
           <Message info>
             <Message.Header>{"You need to allow remote connections to your MySQL database"}</Message.Header>
-            <p>{"When you grant user privileges you might want to grant access just to our server: 188.226.145.211"}</p>
+            <p>{"When you grant user privileges you might have to grant access to the server Chartbrew is running from (if the app is running separately than the database)."}</p>
             <a href="https://www.cyberciti.biz/tips/how-do-i-enable-remote-access-to-mysql-database-server.html" target="_blank" rel="noopener noreferrer">
               Check this link on how to do it
             </a>
@@ -232,22 +208,9 @@ MysqlConnectionForm.defaultProps = {
 };
 
 MysqlConnectionForm.propTypes = {
-  addConnection: PropTypes.func.isRequired,
-  saveConnection: PropTypes.func.isRequired,
   onComplete: PropTypes.func,
   projectId: PropTypes.string.isRequired,
   editConnection: PropTypes.object,
 };
 
-const mapStateToProps = () => {
-  return {
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    addConnection: (projectId, connection) => dispatch(addConnection(projectId, connection)),
-    saveConnection: (projectId, connection) => dispatch(saveConnection(projectId, connection)),
-  };
-};
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(MysqlConnectionForm));
+export default MysqlConnectionForm;

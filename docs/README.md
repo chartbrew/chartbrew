@@ -1,4 +1,4 @@
-# ChartBrew Docs
+# Chartbrew Docs
 
 ## Prerequisites
 
@@ -60,7 +60,7 @@ Modify the constants to match your environment.
 
 `API_HOST` - where your API is running
 
-`DOCUMENTATION_HOST` - in case you're running the documentation somewhere on your server (you can also leave it to the live ChartBrew one)
+`DOCUMENTATION_HOST` - in case you're running the documentation somewhere on your server (you can also leave it to the live Chartbrew one)
 
 `SITE_HOST` - this is where your frontend is sitting
 
@@ -80,7 +80,7 @@ npm run start-dev
 
 ### Changing the docs
 
-ChartBrew uses [Vuepress](https://vuepress.vuejs.org/) and you can check their documentation to see how it works. You can start the documentation development using the command below:
+Chartbrew uses [Vuepress](https://vuepress.vuejs.org/) and you can check their documentation to see how it works. You can start the documentation development using the command below:
 
 ```sh
 cd chartbrew

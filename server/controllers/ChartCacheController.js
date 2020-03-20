@@ -8,7 +8,7 @@ class ChartCacheController {
       type,
     })
       .then((cache) => {
-        return new Promise(resolve => resolve(cache));
+        return new Promise((resolve) => resolve(cache));
       })
       .catch((e) => {
         return new Promise((resolve, reject) => reject(e));
@@ -22,22 +22,22 @@ class ChartCacheController {
     })
       .then((cache) => {
         if (!cache || cache.length < 1) {
-          return new Promise(resolve => resolve([]));
+          return new Promise((resolve) => resolve([]));
         }
 
         // return only the last one
-        return new Promise(resolve => resolve(cache[0]));
+        return new Promise((resolve) => resolve(cache[0]));
       })
       .catch(() => {
         // this operation shouldn't stop what else is running
-        return new Promise(resolve => resolve([]));
+        return new Promise((resolve) => resolve([]));
       });
   }
 
   deleteAll(userId) {
     return db.ChartCache.destroy({ where: { user_id: userId } })
       .then((result) => {
-        return new Promise(resolve => resolve(result));
+        return new Promise((resolve) => resolve(result));
       })
       .catch((e) => {
         return new Promise((resolve, reject) => reject(e));

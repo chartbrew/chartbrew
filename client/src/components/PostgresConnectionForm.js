@@ -1,15 +1,12 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
 import {
   Segment, Form, Button, Header, Label, Message
 } from "semantic-ui-react";
-import { withRouter } from "react-router";
 
-import { addConnection, saveConnection } from "../actions/connection";
 
 /*
-  Description
+  A form for creating a new Postgres connection
 */
 class PostgresConnectionForm extends Component {
   constructor(props) {
@@ -36,7 +33,7 @@ class PostgresConnectionForm extends Component {
 
   _onCreateConnection = () => {
     const {
-      projectId, addConnection, onComplete, saveConnection,
+      projectId, onComplete,
     } = this.props;
     const { connection, errors } = this.state;
     this.setState({ errors: {} }, () => {
@@ -56,27 +53,7 @@ class PostgresConnectionForm extends Component {
         },
         loading: true,
       }, () => {
-        if (!connection.id) {
-          addConnection(projectId, connection)
-            .then(() => {
-              this.setState({ loading: false });
-              onComplete();
-            })
-            .catch((error) => {
-              onComplete(error);
-              this.setState({ addError: error, loading: false });
-            });
-        } else {
-          saveConnection(projectId, connection)
-            .then(() => {
-              this.setState({ loading: false });
-              onComplete();
-            })
-            .catch((error) => {
-              onComplete(error);
-              this.setState({ addError: error, loading: false });
-            });
-        }
+        onComplete(connection);
       });
     });
   }
@@ -225,22 +202,9 @@ PostgresConnectionForm.defaultProps = {
 };
 
 PostgresConnectionForm.propTypes = {
-  addConnection: PropTypes.func.isRequired,
-  saveConnection: PropTypes.func.isRequired,
   onComplete: PropTypes.func,
   projectId: PropTypes.string.isRequired,
   editConnection: PropTypes.object,
 };
 
-const mapStateToProps = () => {
-  return {
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    addConnection: (projectId, connection) => dispatch(addConnection(projectId, connection)),
-    saveConnection: (projectId, connection) => dispatch(saveConnection(projectId, connection)),
-  };
-};
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(PostgresConnectionForm));
+export default PostgresConnectionForm;

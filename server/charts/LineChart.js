@@ -86,12 +86,12 @@ class LineChart {
 
         // include all the missing dates when includeZeros is true
         if (this.chart.includeZeros) {
-        // get the start date
+          // get the start date
           let startDate = axisData[0];
           let endDate = axisData[axisData.length - 1];
-        if (this.chart.startDate) startDate = moment(this.chart.startDate); // eslint-disable-line
-        if (this.chart.endDate) endDate = moment(this.chart.endDate); // eslint-disable-line
-        if (this.chart.currentEndDate) endDate = moment(); // eslint-disable-line
+          if (this.chart.startDate) startDate = moment(this.chart.startDate); // eslint-disable-line
+          if (this.chart.endDate) endDate = moment(this.chart.endDate); // eslint-disable-line
+          if (this.chart.currentEndDate) endDate = moment(); // eslint-disable-line
 
           const newAxisData = [];
           let index = 0;
@@ -112,6 +112,7 @@ class LineChart {
               startDate = startDate.add(1, "day");
             }
           }
+
           axisData = newAxisData;
         }
 
@@ -168,12 +169,8 @@ class LineChart {
         };
 
         if (dataset.datasetColor) formattedDataset.borderColor = dataset.datasetColor;
-        if (dataset.fillColor) {
-          formattedDataset.backgroundColor = dataset.fillColor;
-          formattedDataset.fill = true;
-        } else {
-          formattedDataset.fill = false;
-        }
+        if (dataset.fillColor) formattedDataset.backgroundColor = dataset.fillColor;
+        formattedDataset.fill = dataset.fill;
 
         datasets.push(formattedDataset);
 
@@ -212,7 +209,7 @@ class LineChart {
       }
     };
 
-    return new Promise(resolve => resolve(chartJsData));
+    return new Promise((resolve) => resolve(chartJsData));
   }
 }
 
