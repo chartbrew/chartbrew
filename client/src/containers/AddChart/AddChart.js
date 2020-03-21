@@ -10,6 +10,7 @@ import {
 import ChartPreview from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
 import Connection from "./components/Connection";
+import ChartDescription from "./components/ChartDescription";
 
 import {
   createChart as createChartAction,
@@ -24,18 +25,21 @@ class AddChart extends Component {
 
     this.state = {
       connectionActive: false,
+      titleScreen: true,
       newChart: {
-        name: "Untitled chart",
         connection_id: 3,
       },
     };
   }
 
   componentDidMount() {
-    const { match, createChart } = this.props;
+    const { match, createChart } = this.props; // eslint-disable-line
     const { newChart } = this.state;
 
-    createChart(match.params.projectId, newChart);
+    if (newChart.id) {
+      this.setState({ titleScreen: false });
+    }
+    // createChart(match.params.projectId, newChart);
   }
 
   _onConnectionClicked = () => {
@@ -52,7 +56,21 @@ class AddChart extends Component {
   }
 
   render() {
-    const { connectionActive, editingTitle, newChart } = this.state;
+    const { history } = this.props;
+    const {
+      connectionActive, editingTitle, newChart, titleScreen,
+    } = this.state;
+
+    if (titleScreen) {
+      return (
+        <ChartDescription
+          name={newChart.name}
+          onChange={this._onNameChange}
+          onCreate={() => this.setState({ titleScreen: false })}
+          history={history}
+        />
+      );
+    }
 
     return (
       <div style={styles.container}>
@@ -157,6 +175,7 @@ const styles = {
 AddChart.propTypes = {
   createChart: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
+  history: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = () => {
