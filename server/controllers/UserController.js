@@ -18,6 +18,7 @@ class UserController {
         if (foundUser) return new Promise((resolve, reject) => reject(new Error(409)));
         return db.User.create({
           "name": user.name,
+          "oneaccountId": user.oneaccountId,
           "surname": user.surname,
           "email": user.email,
           "password": user.password,
@@ -73,6 +74,18 @@ class UserController {
   findById(id) {
     return db.User.findOne({
       where: { "id": id },
+      include: [{ model: db.TeamRole }],
+    }).then((user) => {
+      if (!user) return new Promise((resolve, reject) => reject(new Error(404)));
+      return user;
+    }).catch((error) => {
+      return new Promise((resolve, reject) => reject(error.message));
+    });
+  }
+
+  findByEmail(email) {
+    return db.User.findOne({
+      where: { "email": sc.encrypt(email) },
       include: [{ model: db.TeamRole }],
     }).then((user) => {
       if (!user) return new Promise((resolve, reject) => reject(new Error(404)));

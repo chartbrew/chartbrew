@@ -27,6 +27,13 @@
     <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:600,700" rel="stylesheet">
 
     <script>
+      // @see https://docs.oneaccount.app for more configuration options.
+      window.oneaccountConfig = {
+        externalId: "REPLACE_WITH_ONEACCOUNT_EXTERNAL_ID"
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/oneaccount@v2.1.0/dist/oneaccount.min.js" defer async></script>
+    <script>
       // @see https://docs.headwayapp.co/widget for more configuration options.
       var HW_config = {
         selector: ".changelog-badge", // CSS selector where to inject the badge

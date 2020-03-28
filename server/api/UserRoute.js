@@ -1,12 +1,16 @@
 const jwt = require("jsonwebtoken");
 const request = require("request");
+const uuid = require("uuid/v4");
+const axios = require('axios')
 
+const AuthCacheController = require("../controllers/AuthCacheController");
 const UserController = require("../controllers/UserController");
 const TeamController = require("../controllers/TeamController");
 const verifyUser = require("../modules/verifyUser");
 const verifyToken = require("../modules/verifyToken");
 
 module.exports = (app) => {
+  const authCache = new AuthCacheController();
   const userController = new UserController();
   const teamController = new TeamController();
 
@@ -100,6 +104,81 @@ module.exports = (app) => {
         if (error.message === "409") return res.status(409).send("The email is already used");
         return res.status(400).send(error);
       });
+  });
+
+  // --------------------------------------
+  /*
+  ** Route for authenticating a oneaccount user
+  */
+  app.post('/user/oneaccount', async (req, res) => {
+    if (!req.body.uuid || !req.body.token) return res.status(400).send("no token or uuid");
+    let userObj = {}
+    try {
+      userObj = await authCache.get(req.body.uuid)
+    } catch(error) {
+      return res.status(400).send("Could not authenticate");
+    }
+    // verify token
+    try {
+      let res = await axios
+        .post('https://api.oneaccount.app/widget/verify', { uuid: req.body.uuid }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `BEARER ${req.body.token}`
+          }
+        });
+      if (res.status !== 200 || !res.data || !res.data.success) {
+        return res.status(400).send("Token verification failed");
+      }
+    } catch (error) {
+      return res.status(500).send("One account couldnt verify token");
+    }
+
+    // one account provides the same flow for sign up and sign in
+    // so we can handle both here:
+    // log in if exists
+    try {
+      const user = await userController.findByEmail(userObj.email)
+      if (user && user.id) {
+        const updatedUser = await userController.update(user.id, { lastLogin: new Date() });
+        return tokenizeUser(updatedUser, res)
+      }
+    } catch (error) { }
+    // otherwise register
+    try {
+      if (!userObj || !userObj.email) throw new Error("no email is provided")
+      let user = await userController.createUser(userObj);
+      const newTeam = {
+        user_id: user.id,
+        name: `${user.name}'s space`
+      };
+      const team = await teamController.createTeam(newTeam);
+      await teamController.addTeamRole(team.id, user.id, "owner");
+      return tokenizeUser(user, res)
+    } catch (error) {
+      if (error.message === "409") return res.status(409).send("The email is already used");
+      return res.status(400).send(error);
+    }
+  })
+
+  /*
+  ** Route for creating a new oneaccount user
+  */
+  app.post("/user/oneaccount-callback", async (req, res) => {
+    if (!req.body.email || !req.body.uuid) return res.status(400).send("no email or uuid");
+    const icon = req.body.firstName.substring(0, 1) + req.body.lastName.substring(0, 1);
+    const userObj = {
+      oneaccountId: req.body.userId,
+      name: req.body.firstName,
+      surname: req.body.lastName,
+      email: req.body.email,
+      // generate random password so no one can login using email/pass combination
+      password: uuid(),
+      active: false,
+      icon: icon.toUpperCase(),
+    };
+    await authCache.set(req.body.uuid, userObj);
+    return res.json({ success: true })
   });
   // --------------------------------------
 

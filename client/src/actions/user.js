@@ -98,6 +98,40 @@ export function createUser(data) {
   };
 }
 
+export function oneaccountAuth(data) {
+  return (dispatch) => {
+    const url = `${API_HOST}/user/oneaccount`;
+    const body = JSON.stringify(data);
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+    });
+    const method = "POST";
+
+    return fetch(url, { method, body, headers })
+      .then((response) => {
+        if (!response.ok) {
+          dispatch(addError(response.status));
+          return new Promise((resolve, reject) => reject(response.statusText));
+        }
+        return response.json();
+      })
+      .then((user) => {
+        // save the cookie here
+        if (cookie.load("brewToken")) cookie.remove("brewToken", { path: "/" });
+        cookie.save("brewToken", user.token, { path: "/" });
+
+        // dispatch({ type: INITIALISING_USER_SUCCESS, user });
+        dispatch(saveUser(user));
+        return new Promise(resolve => resolve(user));
+      })
+      .catch((error) => {
+        dispatch({ type: INITIALISING_USER_FAIL, error });
+        return new Promise((resolve, reject) => reject(error));
+      });
+  };
+}
+
 export function addEmailToList(email) {
   return (dispatch) => {
     const url = `${API_HOST}/user/email`;

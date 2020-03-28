@@ -4,10 +4,10 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { Field, reduxForm } from "redux-form";
 import {
-  Form, Button, Message, Icon, Label, Item, Modal, Header, Input
+  Container, Form, Divider, Button, Message, Icon, Label, Item, Modal, Header, Input
 } from "semantic-ui-react";
 
-import { login, requestPasswordReset } from "../actions/user";
+import { login, requestPasswordReset, oneaccountAuth } from "../actions/user";
 import { addTeamMember } from "../actions/team";
 import { required, email } from "../config/validations";
 
@@ -21,6 +21,7 @@ class LoginForm extends Component {
     this.loginUser = this.loginUser.bind(this);
     this.state = {
       loading: false,
+      oaloading: false,
     };
   }
 
@@ -51,6 +52,38 @@ class LoginForm extends Component {
           });
         }
       });
+  }
+
+  socialSignin() {
+    window.oneaccount.setOnAuth((token, uuid) => {
+      const values = { token, uuid };
+      const { oneaccountAuth, history } = this.props;
+
+      this.setState({ oaloading: true });
+      oneaccountAuth(values)
+        .then(() => {
+          this.setState({ oaloading: false });
+
+          history.push("/user");
+        })
+        .catch(() => {
+          this.setState({ oaloading: false });
+        });
+    });
+    const { oaloading } = this.state;
+    return (
+      <Container>
+        <Button
+          loading={oaloading}
+          size="large"
+          className="oneaccount-button oneaccount-show"
+          style={styles.oneaccount}>
+          {" "}
+          <OneaccountSVG style={styles.oneaccountIcon} />
+          Sign in with One account
+        </Button>
+      </Container>
+    );
   }
 
   loginUser(values) {
@@ -173,6 +206,10 @@ class LoginForm extends Component {
             </Button>
           </Modal.Actions>
         </Modal>
+        <Divider horizontal>
+          Or
+        </Divider>
+        {this.socialSignin()}
       </div>
     );
   }
@@ -183,13 +220,57 @@ const validate = () => {
   return errors;
 };
 
+
+const OneaccountSVG = (props) => {
+  const { style } = props;
+  return (
+    <svg style={style} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+      <g fill="none" fillRule="evenodd">
+        <mask id="a">
+          <rect width="100%" height="100%" fill="#fff" />
+          <path
+            fill="#000"
+            d="M148.65 225.12c-30.6-5.51-71.54-106.68-55.76-137.06 14.38-27.7 102.01-13.66 116.08 20.9 13.82 33.97-32.89 121.1-60.32 116.16zm-30.35-76.6c0 18.24 13.68 33.02 30.55 33.02s30.54-14.78 30.54-33.02c0-18.25-13.67-33.03-30.54-33.03-16.87 0-30.55 14.78-30.55 33.03z"
+          />
+        </mask>
+        <path
+          fill="#fff"
+          d="M153.27 298.95c60.25-10.84 140.8-209.72 109.75-269.44C234.72-24.95 62.25 2.66 34.57 70.6c-27.2 66.77 64.72 238.06 118.7 228.34z"
+          mask="url(#a)"
+        />
+      </g>
+    </svg>
+  );
+};
+
+OneaccountSVG.propTypes = {
+  style: PropTypes.object
+};
+
+OneaccountSVG.defaultProps = {
+  style: {}
+};
+
 const styles = {
+  oneaccount: {
+    backgroundColor: "#FA4900",
+    color: "white"
+  },
+  oneaccountIcon: {
+    height: "18px",
+    verticalAlign: "sub",
+    marginRight: "10px"
+  },
+  oneaccountText: {
+    verticalAlign: "middle"
+  },
   container: {
     flex: 1,
   },
 };
 
 LoginForm.propTypes = {
+  oneaccountAuth: PropTypes.func.isRequired,
   login: PropTypes.func.isRequired,
   handleSubmit: PropTypes.func.isRequired,
   addTeamMember: PropTypes.func.isRequired,
@@ -205,6 +286,7 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
+    oneaccountAuth: user => dispatch(oneaccountAuth(user)),
     login: data => dispatch(login(data)),
     addTeamMember: (userId, token) => dispatch(addTeamMember(userId, token)),
     requestPasswordReset: (email) => dispatch(requestPasswordReset(email)),
