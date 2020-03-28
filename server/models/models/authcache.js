@@ -13,15 +13,15 @@ module.exports = (sequelize, DataTypes) => {
     user: {
       type: DataTypes.TEXT("long"),
       allowNull: false,
-      get: function () {
+      get() {
         try {
-          return JSON.parse(this.getDataValue('user'));
+          return JSON.parse(this.getDataValue("user"));
         } catch (e) {
           return this.getDataValue("user");
         }
       },
-      set: function (user) {
-        this.setDataValue('user', JSON.stringify(user));
+      set(user) {
+        this.setDataValue("user", JSON.stringify(user));
       },
     },
   }, {

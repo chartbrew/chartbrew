@@ -14,11 +14,11 @@ module.exports = {
       user: {
         type: Sequelize.TEXT("long"),
         allowNull: false,
-        get: function () {
-          return JSON.parse(this.getDataValue('user'));
+        get() {
+          return JSON.parse(this.getDataValue("user"));
         },
-        set: function (user) {
-          this.setDataValue('user', JSON.stringify(user));
+        set(user) {
+          this.setDataValue("user", JSON.stringify(user));
         },
       },
       createdAt: {

@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const request = require("request");
 const uuid = require("uuid/v4");
-const axios = require('axios')
+const axios = require("axios");
 
 const AuthCacheController = require("../controllers/AuthCacheController");
 const UserController = require("../controllers/UserController");
@@ -110,21 +110,21 @@ module.exports = (app) => {
   /*
   ** Route for authenticating a oneaccount user
   */
-  app.post('/user/oneaccount', async (req, res) => {
+  app.post("/user/oneaccount", async (req, res) => {
     if (!req.body.uuid || !req.body.token) return res.status(400).send("no token or uuid");
-    let userObj = {}
+    let userObj = {};
     try {
-      userObj = await authCache.get(req.body.uuid)
-    } catch(error) {
+      userObj = await authCache.get(req.body.uuid);
+    } catch (error) {
       return res.status(400).send("Could not authenticate");
     }
     // verify token
     try {
-      let res = await axios
-        .post('https://api.oneaccount.app/widget/verify', { uuid: req.body.uuid }, {
+      const res = await axios
+        .post("https://api.oneaccount.app/widget/verify", { uuid: req.body.uuid }, {
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `BEARER ${req.body.token}`
+            "Content-Type": "application/json",
+            "Authorization": `BEARER ${req.body.token}`
           }
         });
       if (res.status !== 200 || !res.data || !res.data.success) {
@@ -138,28 +138,30 @@ module.exports = (app) => {
     // so we can handle both here:
     // log in if exists
     try {
-      const user = await userController.findByEmail(userObj.email)
+      const user = await userController.findByEmail(userObj.email);
       if (user && user.id) {
         const updatedUser = await userController.update(user.id, { lastLogin: new Date() });
-        return tokenizeUser(updatedUser, res)
+        return tokenizeUser(updatedUser, res);
       }
-    } catch (error) { }
+    } catch (error) {
+      // the user is not registered yet, continue to register
+    }
     // otherwise register
     try {
-      if (!userObj || !userObj.email) throw new Error("no email is provided")
-      let user = await userController.createUser(userObj);
+      if (!userObj || !userObj.email) throw new Error("no email is provided");
+      const user = await userController.createUser(userObj);
       const newTeam = {
         user_id: user.id,
         name: `${user.name}'s space`
       };
       const team = await teamController.createTeam(newTeam);
       await teamController.addTeamRole(team.id, user.id, "owner");
-      return tokenizeUser(user, res)
+      return tokenizeUser(user, res);
     } catch (error) {
       if (error.message === "409") return res.status(409).send("The email is already used");
       return res.status(400).send(error);
     }
-  })
+  });
 
   /*
   ** Route for creating a new oneaccount user
@@ -178,7 +180,7 @@ module.exports = (app) => {
       icon: icon.toUpperCase(),
     };
     await authCache.set(req.body.uuid, userObj);
-    return res.json({ success: true })
+    return res.json({ success: true });
   });
   // --------------------------------------
 
