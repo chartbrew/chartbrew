@@ -14,7 +14,6 @@
   "license": "MIT",
   "dependencies": {
     "accesscontrol": "^2.2.1",
-    "axios": "^0.19.1",
     "base-64": "^0.1.0",
     "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.5",

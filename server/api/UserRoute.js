@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const request = require("request");
+const requestPromise = require("request-promise");
 const uuid = require("uuid/v4");
-const axios = require("axios");
 
 const AuthCacheController = require("../controllers/AuthCacheController");
 const UserController = require("../controllers/UserController");
@@ -120,14 +120,21 @@ module.exports = (app) => {
     }
     // verify token
     try {
-      const res = await axios
-        .post("https://api.oneaccount.app/widget/verify", { uuid: req.body.uuid }, {
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `BEARER ${req.body.token}`
-          }
-        });
-      if (res.status !== 200 || !res.data || !res.data.success) {
+      const options = {
+        method: "POST",
+        url: "https://api.oneaccount.app/widget/verify",
+        headers: {
+          authorization: `BEARER ${req.body.token}`,
+          "content-type": "application/json"
+        },
+        body: {
+          "uuid": req.body.uuid
+        },
+        json: true,
+        resolveWithFullResponse: true
+      };
+      const response = await requestPromise(options);
+      if (response.statusCode !== 200 || !response.body || !response.body.success) {
         return res.status(400).send("Token verification failed");
       }
     } catch (error) {
