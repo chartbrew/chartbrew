@@ -14,6 +14,15 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "cascade",
       },
     },
+    connection_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      reference: {
+        model: "Connection",
+        key: "id",
+        onDelete: "cascade",
+      },
+    },
     query: {
       type: DataTypes.TEXT,
     },
@@ -86,6 +95,10 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     freezeTableName: true,
   });
+
+  Dataset.associate = (models) => {
+    models.Dataset.hasOne(models.Connection, { foreignKey: "connection_id" });
+  };
 
   return Dataset;
 };

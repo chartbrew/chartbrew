@@ -130,10 +130,6 @@ module.exports = (sequelize, DataTypes) => {
     freezeTableName: true,
   });
 
-  Connection.associate = (models) => {
-    models.Connection.belongsToMany(models.Chart, { through: models.ChartConnection });
-  };
-
   Connection.prototype.decryptField = (val) => {
     return sc.decrypt(val);
   };

@@ -1,5 +1,9 @@
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  up: (queryInterface) => {
+    return queryInterface.dropTable("ChartConnection");
+  },
+
+  down: (queryInterface, Sequelize) => {
     return queryInterface.createTable("ChartConnection", {
       id: {
         allowNull: false,
@@ -22,8 +26,5 @@ module.exports = {
         type: Sequelize.DATE
       }
     });
-  },
-  down: (queryInterface) => {
-    return queryInterface.dropTable("ChartConnection");
   }
 };

@@ -16,16 +16,6 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "cascade",
       },
     },
-    connection_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      defaultValue: null,
-      reference: {
-        model: "Connection",
-        key: "id",
-        onDelete: "cascade",
-      },
-    },
     name: {
       type: DataTypes.STRING,
     },
@@ -131,7 +121,6 @@ module.exports = (sequelize, DataTypes) => {
   Chart.associate = (models) => {
     models.Chart.hasMany(models.Dataset, { foreignKey: "chart_id" });
     models.Chart.hasOne(models.ApiRequest, { foreignKey: "chart_id" });
-    models.Chart.belongsToMany(models.Connection, { through: models.ChartConnection });
   };
 
   return Chart;
