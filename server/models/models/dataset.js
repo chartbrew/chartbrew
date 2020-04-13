@@ -96,9 +96,5 @@ module.exports = (sequelize, DataTypes) => {
     freezeTableName: true,
   });
 
-  Dataset.associate = (models) => {
-    models.Dataset.hasOne(models.Connection, { foreignKey: "connection_id" });
-  };
-
   return Dataset;
 };
