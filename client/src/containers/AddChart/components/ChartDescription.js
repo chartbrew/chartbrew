@@ -60,6 +60,7 @@ function ChartDescription(props) {
             Go back
           </Button>
           <Button
+            type="submit"
             primary
             icon
             labelPosition="right"

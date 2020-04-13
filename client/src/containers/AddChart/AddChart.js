@@ -25,8 +25,9 @@ class AddChart extends Component {
 
     this.state = {
       connectionActive: false,
-      titleScreen: true,
+      titleScreen: false,
       newChart: {
+        name: "Test chart",
         connection_id: 3,
       },
     };
@@ -127,7 +128,7 @@ class AddChart extends Component {
           </Grid.Column>
 
           <Grid.Column width={6}>
-            <Header>Connections</Header>
+            <Header>Datasets</Header>
             <Divider />
             <Button
               primary
