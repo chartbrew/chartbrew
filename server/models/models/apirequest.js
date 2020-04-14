@@ -14,11 +14,11 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true,
     },
-    chart_id: {
+    dataset_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       reference: {
-        model: "Chart",
+        model: "Dataset",
         key: "id",
         onDelete: "cascade",
       },
@@ -65,7 +65,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   ApiRequest.associate = (models) => {
-    models.ApiRequest.belongsTo(models.Chart, { foreignKey: "chart_id" });
+    models.ApiRequest.belongsTo(models.Dataset, { foreignKey: "dataset_id" });
   };
 
   return ApiRequest;

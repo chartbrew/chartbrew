@@ -96,5 +96,11 @@ module.exports = (sequelize, DataTypes) => {
     freezeTableName: true,
   });
 
+  Dataset.associate = (models) => {
+    models.Dataset.belongsTo(models.Chart, { foreignKey: "chart_id" });
+    models.Dataset.belongsTo(models.Connection, { foreignKey: "connection_id" });
+    models.Dataset.hasOne(models.ApiRequest, { foreignKey: "dataset_id" });
+  };
+
   return Dataset;
 };
