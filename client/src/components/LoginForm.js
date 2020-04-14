@@ -11,6 +11,8 @@ import { login, requestPasswordReset, oneaccountAuth } from "../actions/user";
 import { addTeamMember } from "../actions/team";
 import { required, email } from "../config/validations";
 
+import { ONE_ACCOUNT_ENABLED } from "../config/settings";
+
 const queryString = require("qs"); // eslint-disable-line
 /*
   Contains login functionality
@@ -206,10 +208,15 @@ class LoginForm extends Component {
             </Button>
           </Modal.Actions>
         </Modal>
-        <Divider horizontal>
-          Or
-        </Divider>
-        {this.socialSignin()}
+        {ONE_ACCOUNT_ENABLED
+          && (
+            <>
+              <Divider horizontal>
+                Or
+              </Divider>
+              {this.socialSignin()}
+            </>
+          )}
       </div>
     );
   }

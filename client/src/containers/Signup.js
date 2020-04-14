@@ -15,6 +15,8 @@ import cbLogoSmall from "../assets/logo_inverted.png";
 import { blue, secondary } from "../config/colors";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 
+import { ONE_ACCOUNT_ENABLED } from "../config/settings";
+
 const queryString = require("qs"); // eslint-disable-line
 /*
   Description
@@ -194,10 +196,15 @@ class Signup extends Component {
               </Message>
               )}
             </Form>
-            <Divider horizontal>
-              Or
-            </Divider>
-            {this.socialSignup()}
+            {ONE_ACCOUNT_ENABLED
+              && (
+                <>
+                  <Divider horizontal>
+                    Or
+                  </Divider>
+                  {this.socialSignup()}
+                </>
+              )}
 
           </Segment>
           <div>
