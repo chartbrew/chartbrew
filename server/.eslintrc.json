@@ -19,7 +19,8 @@
     "linebreak-style": "off",
     "class-methods-use-this": "off",
     "prefer-promise-reject-errors": "off",
-    "camelcase": "off"
+    "camelcase": "off",
+    "import/extensions": "off"
   },
   "parser": "babel-eslint",
   "globals": {
