@@ -174,7 +174,13 @@ module.exports = (app) => {
   ** Route for creating a new oneaccount user
   */
   app.post("/user/oneaccount-callback", async (req, res) => {
-    if (!req.body.email || !req.body.uuid) return res.status(400).send("no email or uuid");
+    if (!req.body.email || !req.body.uuid) {
+      return res.status(400).send("no email or uuid");
+    }
+    if (!req.body.firstName || !req.body.lastName) {
+      return res.status(400).send("no firstName or lasName found");
+    }
+
     const icon = req.body.firstName.substring(0, 1) + req.body.lastName.substring(0, 1);
     const userObj = {
       oneaccountId: req.body.userId,

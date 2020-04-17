@@ -263,15 +263,15 @@ const validate = values => {
 const styles = {
   oneaccount: {
     backgroundColor: "#FA4900",
-    color: "white"
+    color: "white",
   },
   oneaccountIcon: {
-    height: "18px",
+    height: 18,
     verticalAlign: "sub",
-    marginRight: "10px"
+    marginRight: 10,
   },
   oneaccountText: {
-    verticalAlign: "middle"
+    verticalAlign: "middle",
   },
   container: {
     flex: 1,

@@ -119,9 +119,8 @@ export function oneaccountAuth(data) {
       .then((user) => {
         // save the cookie here
         if (cookie.load("brewToken")) cookie.remove("brewToken", { path: "/" });
-        cookie.save("brewToken", user.token, { path: "/" });
+        cookie.save("brewToken", user.token, { expires, path: "/" });
 
-        // dispatch({ type: INITIALISING_USER_SUCCESS, user });
         dispatch(saveUser(user));
         return new Promise(resolve => resolve(user));
       })
