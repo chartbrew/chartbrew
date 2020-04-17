@@ -14,6 +14,9 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true,
     },
+    oneaccountId: {
+      type: DataTypes.UUID,
+    },
     name: {
       type: DataTypes.STRING,
       allowNull: false,

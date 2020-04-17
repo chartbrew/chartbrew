@@ -17,6 +17,7 @@ module.exports = {
       ['/deployment/', '🌍 Deployment'],
       ['/backend/', '🧪 Backend'],
       ['/frontend/', '✨ Frontend'],
+      ['/oneaccount/', '🔐 One account setup'],
     ],
     lastUpdated: true,
     docsRepo: "chartbrew/chartbrew",
