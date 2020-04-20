@@ -15,8 +15,8 @@ class TimeseriesGlobalSettings extends Component {
 
     this.state = {
       selectionRange: {
-        startDate: moment().startOf("month"),
-        endDate: moment().endOf("month"),
+        startDate: moment().startOf("month").toDate(),
+        endDate: moment().endOf("month").toDate(),
         key: "selection",
       },
       viewDateRange: (props.startDate && props.endDate && true) || false,
@@ -235,18 +235,20 @@ class TimeseriesGlobalSettings extends Component {
           <Modal.Content>
             <Grid centered padded>
               <Segment textAlign="center" compact>
-                <DateRangePicker
-                  direction="horizontal"
-                  rangeColors={[secondary, primary]}
-                  ranges={[
-                    startDate && endDate ? {
-                      startDate,
-                      endDate,
-                      key: "selection",
-                    } : selectionRange
-                  ]}
-                  onChange={this._onChangeDateRange}
-                />
+                { startDate && endDate && (
+                  <DateRangePicker
+                    direction="horizontal"
+                    rangeColors={[secondary, primary]}
+                    ranges={[
+                      startDate && endDate ? {
+                        startDate: moment(startDate).toDate(),
+                        endDate: moment(endDate).toDate(),
+                        key: "selection",
+                      } : selectionRange
+                    ]}
+                    onChange={this._onChangeDateRange}
+                  />
+                )}
               </Segment>
             </Grid>
           </Modal.Content>
