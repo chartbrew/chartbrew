@@ -260,10 +260,10 @@ module.exports = (app) => {
         return res.status(200).send(chart);
       })
       .catch((error) => {
-        if (error.message === "401") {
+        if (error === "401" || error.message === "401") {
           return res.status(401).send({ error: "Not authorized" });
         }
-        if (error.message.indexOf("413") > -1) {
+        if (error === "413" && error.message === "413") {
           return res.status(413).send(error);
         }
         return res.status(400).send(error);
