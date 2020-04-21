@@ -1,3 +1,6 @@
 src/registerServiceWorker.js
 src/semantic
+scripts/
+config/
+public/
 node_modules
