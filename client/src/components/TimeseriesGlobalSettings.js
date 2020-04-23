@@ -41,7 +41,7 @@ class TimeseriesGlobalSettings extends Component {
   _onViewRange = (value, init) => {
     const { onChange } = this.props;
     if (!value) {
-      onChange({ startDate: null, endDate: null });
+      onChange({ dateRange: { startDate: null, endDate: null } });
     }
 
     let isModalOpen = value;
@@ -235,20 +235,18 @@ class TimeseriesGlobalSettings extends Component {
           <Modal.Content>
             <Grid centered padded>
               <Segment textAlign="center" compact>
-                { startDate && endDate && (
-                  <DateRangePicker
-                    direction="horizontal"
-                    rangeColors={[secondary, primary]}
-                    ranges={[
-                      startDate && endDate ? {
-                        startDate: moment(startDate).toDate(),
-                        endDate: moment(endDate).toDate(),
-                        key: "selection",
-                      } : selectionRange
-                    ]}
-                    onChange={this._onChangeDateRange}
-                  />
-                )}
+                <DateRangePicker
+                  direction="horizontal"
+                  rangeColors={[secondary, primary]}
+                  ranges={[
+                    startDate && endDate ? {
+                      startDate: moment(startDate).toDate(),
+                      endDate: moment(endDate).toDate(),
+                      key: "selection",
+                    } : selectionRange
+                  ]}
+                  onChange={this._onChangeDateRange}
+                />
               </Segment>
             </Grid>
           </Modal.Content>
