@@ -215,7 +215,6 @@ class ConnectionController {
   }) {
     const limit = itemsLimit
       ? parseInt(itemsLimit, 10) : 0;
-
     return this.findById(connection_id)
       .then((connection) => {
         const tempUrl = `${connection.getApiUrl(connection)}${apiRequest.route || ""}`;
@@ -252,6 +251,7 @@ class ConnectionController {
 
         if (apiRequest.body && apiRequest.method !== "GET") {
           options.body = apiRequest.body;
+          options.headers["Content-Type"] = "application/json";
         }
 
         if (pagination) {

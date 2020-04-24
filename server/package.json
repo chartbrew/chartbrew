@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "v1.0.0-beta.6",
+  "version": "v1.0.0-beta.8.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -25,14 +25,14 @@
     "lodash": "^4.17.15",
     "method-override": "^3.0.0",
     "moment": "^2.24.0",
-    "mongoose": "^5.9.5",
+    "mongoose": "^5.9.10",
     "mysql2": "^1.7.0",
-    "nodemailer": "^6.4.5",
+    "nodemailer": "^6.4.6",
     "pg": "^7.18.2",
     "pg-hstore": "^2.3.3",
     "request": "^2.88.2",
     "request-promise": "^4.2.5",
-    "sequelize": "^5.21.5",
+    "sequelize": "^5.21.7",
     "simplecrypt": "^0.1.0",
     "uuid": "^3.4.0"
   },
@@ -40,7 +40,7 @@
     "babel-eslint": "^10.1.0",
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.1.0",
-    "eslint-plugin-import": "^2.20.1",
-    "nodemon": "^2.0.2"
+    "eslint-plugin-import": "^2.20.2",
+    "nodemon": "^2.0.3"
   }
 }

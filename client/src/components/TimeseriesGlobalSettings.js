@@ -15,8 +15,8 @@ class TimeseriesGlobalSettings extends Component {
 
     this.state = {
       selectionRange: {
-        startDate: moment().startOf("month"),
-        endDate: moment().endOf("month"),
+        startDate: moment().startOf("month").toDate(),
+        endDate: moment().endOf("month").toDate(),
         key: "selection",
       },
       viewDateRange: (props.startDate && props.endDate && true) || false,
@@ -41,7 +41,7 @@ class TimeseriesGlobalSettings extends Component {
   _onViewRange = (value, init) => {
     const { onChange } = this.props;
     if (!value) {
-      onChange({ startDate: null, endDate: null });
+      onChange({ dateRange: { startDate: null, endDate: null } });
     }
 
     let isModalOpen = value;
@@ -240,8 +240,8 @@ class TimeseriesGlobalSettings extends Component {
                   rangeColors={[secondary, primary]}
                   ranges={[
                     startDate && endDate ? {
-                      startDate,
-                      endDate,
+                      startDate: moment(startDate).toDate(),
+                      endDate: moment(endDate).toDate(),
                       key: "selection",
                     } : selectionRange
                   ]}

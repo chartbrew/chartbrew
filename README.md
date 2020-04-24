@@ -10,9 +10,11 @@
   <a href="https://discord.gg/KwGEbFk" target="_blank"><img src="https://img.shields.io/discord/656557151048957995?label=Discord" alt="" /></a>
 </p>
 
-[ChartBrew](https://chartbrew.com) is an open-source web application used to generate charts from different data sources. The focus of this project is to make the process less tedious and put as much accent as possible on Usability.
-
-This project was created by [Kate Belakova](https://github.com/belakova) and [Razvan Ilin](https://github.com/razvanilin)
+<p align="center">
+  <strong>
+    <a href="https://chartbrew.com">Chartbrew</a> is an open-source web application that can connect directly to databases and APIs and use the data to create beautiful charts. It features a chart builder, editable dashboards, embedable charts, query & requests editor, and team capabilities.
+  </strong>
+</p>
 
 <p align="center">
   <a href="https://chartbrew.com">
@@ -105,9 +107,8 @@ docker-compose up
 
 For more information on how to configure, modify and deploy ChartBrew, [**read the full docs here**](https://docs.chartbrew.com)
 
-## Contributors
+## Acknowledgements
 
-Everybody that contributed to Chartbrew outside of the core Team:
+Many thanks to [everybody that contributed](https://github.com/chartbrew/chartbrew/graphs/contributors) to this open-source project 🙏
 
-<a href="https://github.com/Mobilpadde" target="_blank"><img class="contributors" src="https://avatars0.githubusercontent.com/u/1170567?s=40&v=4">
-</a>
+[Start here if you want to become a contributor](https://github.com/chartbrew/chartbrew/blob/master/CONTRIBUTING.md)

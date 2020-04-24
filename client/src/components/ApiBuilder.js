@@ -215,7 +215,11 @@ class ApiBuilder extends Component {
     const { onChangeRequest } = this.props;
     const { apiRequest } = this.state;
 
-    this.setState({ body: value }, () => {
+    this.setState({
+      apiRequest: {
+        ...apiRequest, body: value,
+      }
+    }, () => {
       onChangeRequest(apiRequest);
     });
   }
@@ -280,7 +284,7 @@ class ApiBuilder extends Component {
   render() {
     const {
       methods, activeMenu, requestSuccess, requestError,
-      requestLoading, body, result, apiRequest,
+      requestLoading, result, apiRequest,
     } = this.state;
     const {
       connection, items, itemsLimit, offset, pagination,
@@ -447,7 +451,7 @@ class ApiBuilder extends Component {
                     theme="tomorrow"
                     height="400px"
                     width="none"
-                    value={body || ""}
+                    value={apiRequest.body || ""}
                     onChange={(value) => {
                       this._onChangeBody(value);
                     }}

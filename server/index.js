@@ -12,6 +12,7 @@ const settings = process.env.NODE_ENV === "production" ? require("./settings") :
 const routes = require("./api");
 const updateChartsCron = require("./modules/updateChartsCron");
 const cleanChartCache = require("./modules/CleanChartCache");
+const cleanAuthCache = require("./modules/CleanAuthCache");
 
 const app = express();
 app.settings = settings;
@@ -39,6 +40,7 @@ app.listen(app.settings.port, () => {
   setTimeout(() => {
     updateChartsCron();
     cleanChartCache();
+    cleanAuthCache();
   }, 3000);
 
   console.log(`Running server on port ${app.settings.port}`); // eslint-disable-line
