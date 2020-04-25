@@ -8,7 +8,7 @@ const db = require("../models/models");
 const DatasetController = require("./DatasetController");
 const ConnectionController = require("./ConnectionController");
 const ProjectController = require("./ProjectController");
-const ApiRequestController = require("./ApiRequestController");
+const DataRequestController = require("./DataRequestController");
 const ChartCacheController = require("./ChartCacheController");
 
 // charts
@@ -21,7 +21,7 @@ class ChartController {
     this.connection = new ConnectionController();
     this.dataset = new DatasetController();
     this.project = new ProjectController();
-    this.apiRequestController = new ApiRequestController();
+    this.dataRequestController = new DataRequestController();
     this.chartCache = new ChartCacheController();
   }
 
@@ -30,7 +30,7 @@ class ChartController {
     return db.Chart.create(data)
       .then((chart) => {
         chartId = chart.id;
-        if (data.Datasets || data.apiRequest) {
+        if (data.Datasets || data.dataRequest) {
           const createPromises = [];
 
           // add the datasets creation
@@ -43,11 +43,11 @@ class ChartController {
             }
           }
 
-          // add the apiRequest creation
-          if (data.apiRequest) {
-            const { apiRequest } = data;
-            apiRequest.chart_id = chart.id;
-            createPromises.push(this.apiRequestController.create(apiRequest));
+          // add the dataRequest creation
+          if (data.dataRequest) {
+            const { dataRequest } = data;
+            dataRequest.chart_id = chart.id;
+            createPromises.push(this.dataRequestController.create(dataRequest));
           }
 
           // add the update promise as well
@@ -113,14 +113,14 @@ class ChartController {
         .then(() => {
           const updatePromises = [];
 
-          if (data.Datasets || data.apiRequest) {
+          if (data.Datasets || data.dataRequest) {
             if (data.Datasets) {
               updatePromises
                 .push(this.updateDatasets(id, data.Datasets));
             }
-            if (data.apiRequest) {
+            if (data.dataRequest) {
               updatePromises
-                .push(this.apiRequestController.update(data.apiRequest.id, data.apiRequest));
+                .push(this.dataRequestController.update(data.dataRequest.id, data.dataRequest));
             }
 
             return Promise.all(updatePromises).then(() => this.findById(id));
@@ -143,7 +143,7 @@ class ChartController {
         }
 
         const updatePromises = [];
-        if (data.Datasets || data.apiRequest) {
+        if (data.Datasets || data.dataRequest) {
           if (data.Datasets) {
             const datasetsToUpdate = [];
             for (const dataset of data.Datasets) {
@@ -160,14 +160,14 @@ class ChartController {
                 .push(this.updateDatasets(id, data.Datasets));
             }
           }
-          if (data.apiRequest && data.apiRequest.id) {
+          if (data.dataRequest && data.dataRequest.id) {
             updatePromises
-              .push(this.apiRequestController.update(data.apiRequest.id, data.apiRequest));
+              .push(this.dataRequestController.update(data.dataRequest.id, data.dataRequest));
           }
 
-          if (data.apiRequest && !data.apiRequest.id) {
-            const newApiRequest = { ...data.apiRequest, chart_id: id };
-            updatePromises.push(this.apiRequestController.create(newApiRequest));
+          if (data.dataRequest && !data.dataRequest.id) {
+            const newDataRequest = { ...data.dataRequest, chart_id: id };
+            updatePromises.push(this.dataRequestController.create(newDataRequest));
           }
 
           return Promise.all(updatePromises).then(() => this.findById(id));
@@ -277,6 +277,15 @@ class ChartController {
       });
   }
 
+  // updateChartData2(id) {
+  //   let gChart;
+  //   return this.findById(id)
+  //     .then((chart) => {
+  //       gChart = chart;
+  //       return
+  //     })
+  // }
+
   runPostgresQuery(chart) {
     return this.connection.findById(chart.connection_id)
       .then((connection) => {
@@ -297,7 +306,7 @@ class ChartController {
   }
 
   runRequest(chart) {
-    return this.apiRequestController.sendRequest(chart.id, chart.connection_id)
+    return this.dataRequestController.sendRequest(chart.id, chart.connection_id)
       .then((data) => {
         return this.getChartData(chart.id, data);
       })
@@ -384,7 +393,7 @@ class ChartController {
   }
 
   getApiChartData(chart) {
-    return this.connection.testApiRequest(chart)
+    return this.connection.testDataRequest(chart)
       .then((data) => {
         return new Promise((resolve) => resolve(data));
       })

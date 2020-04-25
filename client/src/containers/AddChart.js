@@ -795,7 +795,7 @@ class AddChart extends Component {
                   <ApiBuilder
                     connection={selectedConnection}
                     onComplete={(data) => this._apiTest(data)}
-                    apiRequest={apiRequest || ""}
+                    dataRequest={apiRequest || ""}
                     onChangeRequest={(apiRequest) => {
                       this.setState({ apiRequest });
                     }}

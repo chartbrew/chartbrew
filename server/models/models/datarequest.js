@@ -8,7 +8,7 @@ const sc = simplecrypt({
 });
 
 module.exports = (sequelize, DataTypes) => {
-  const ApiRequest = sequelize.define("ApiRequest", {
+  const DataRequest = sequelize.define("DataRequest", {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -60,13 +60,32 @@ module.exports = (sequelize, DataTypes) => {
       required: true,
       defaultValue: true,
     },
+    query: {
+      type: DataTypes.TEXT,
+    },
+    pagination: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    items: {
+      type: DataTypes.STRING,
+      defaultValue: "items",
+    },
+    itemsLimit: {
+      type: DataTypes.INTEGER,
+      defaultValue: 100,
+    },
+    offset: {
+      type: DataTypes.STRING,
+      defaultValue: "offset",
+    },
   }, {
     freezeTableName: true,
   });
 
-  ApiRequest.associate = (models) => {
-    models.ApiRequest.belongsTo(models.Dataset, { foreignKey: "dataset_id" });
+  DataRequest.associate = (models) => {
+    models.DataRequest.belongsTo(models.Dataset, { foreignKey: "dataset_id" });
   };
 
-  return ApiRequest;
+  return DataRequest;
 };

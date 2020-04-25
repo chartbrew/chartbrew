@@ -211,13 +211,13 @@ class ConnectionController {
   }
 
   testApiRequest({
-    connection_id, apiRequest, itemsLimit, items, offset, pagination,
+    connection_id, dataRequest, itemsLimit, items, offset, pagination,
   }) {
     const limit = itemsLimit
       ? parseInt(itemsLimit, 10) : 0;
     return this.findById(connection_id)
       .then((connection) => {
-        const tempUrl = `${connection.getApiUrl(connection)}${apiRequest.route || ""}`;
+        const tempUrl = `${connection.getApiUrl(connection)}${dataRequest.route || ""}`;
         const queryParams = querystring.parse(tempUrl.split("?")[1]);
 
         let url = tempUrl;
@@ -227,7 +227,7 @@ class ConnectionController {
 
         const options = {
           url,
-          method: apiRequest.method || "GET",
+          method: dataRequest.method || "GET",
           headers: {},
           qs: queryParams,
           resolveWithFullResponse: true,
@@ -236,21 +236,21 @@ class ConnectionController {
 
         // prepare the headers
         let headers = {};
-        if (apiRequest.useGlobalHeaders) {
+        if (dataRequest.useGlobalHeaders) {
           const globalHeaders = connection.getHeaders(connection);
           for (const opt of globalHeaders) {
             headers = Object.assign(opt, headers);
           }
 
-          if (apiRequest.headers) {
-            headers = Object.assign(apiRequest.headers, headers);
+          if (dataRequest.headers) {
+            headers = Object.assign(dataRequest.headers, headers);
           }
         }
 
         options.headers = headers;
 
-        if (apiRequest.body && apiRequest.method !== "GET") {
-          options.body = apiRequest.body;
+        if (dataRequest.body && dataRequest.method !== "GET") {
+          options.body = dataRequest.body;
           options.headers["Content-Type"] = "application/json";
         }
 

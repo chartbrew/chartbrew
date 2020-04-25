@@ -4,7 +4,7 @@ const project = require("./ProjectRoute");
 const connection = require("./ConnectionRoute");
 const chart = require("./ChartRoute");
 const savedQuery = require("./SavedQueryRoute");
-const apiRequest = require("./ApiRequestRoute");
+const dataRequest = require("./DataRequestRoute");
 
 module.exports = {
   team,
@@ -13,5 +13,5 @@ module.exports = {
   connection,
   chart,
   savedQuery,
-  apiRequest,
+  dataRequest,
 };

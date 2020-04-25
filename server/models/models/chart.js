@@ -120,7 +120,6 @@ module.exports = (sequelize, DataTypes) => {
 
   Chart.associate = (models) => {
     models.Chart.hasMany(models.Dataset, { foreignKey: "chart_id" });
-    models.Chart.hasOne(models.ApiRequest, { foreignKey: "chart_id" });
   };
 
   return Chart;

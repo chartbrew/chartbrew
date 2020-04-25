@@ -14,7 +14,7 @@ import "brace/mode/json";
 import "brace/theme/tomorrow";
 
 import { testApiRequest } from "../actions/connection";
-import { getApiRequestByChart } from "../actions/apiRequest";
+import { getDataRequestByChart } from "../actions/dataRequest";
 import ApiPagination from "./ApiPagination";
 
 /*
@@ -72,23 +72,23 @@ class ApiBuilder extends Component {
 
   _onInit = () => {
     const {
-      apiRequest, chartId, getApiRequestByChart, match, onChangeRequest,
+      dataRequest, chartId, getDataRequestByChart, match, onChangeRequest,
     } = this.props;
-    if (apiRequest) {
-      this.setState({ apiRequest });
+    if (dataRequest) {
+      this.setState({ apiRequest: dataRequest });
     }
 
-    if (chartId > 0 && !apiRequest) {
-      getApiRequestByChart(match.params.projectId, chartId)
-        .then((apiRequest) => {
+    if (chartId > 0 && !dataRequest) {
+      getDataRequestByChart(match.params.projectId, chartId)
+        .then((fetchedRequest) => {
           // format the headers into key: value -> value: value format
-          const formattedApiRequest = apiRequest;
+          const formattedApiRequest = fetchedRequest;
           const formattedHeaders = [];
-          Object.keys(apiRequest.headers).forEach((key) => {
+          Object.keys(fetchedRequest.headers).forEach((key) => {
             formattedHeaders.push({
               id: uuid(),
               key,
-              value: apiRequest.headers[key],
+              value: fetchedRequest.headers[key],
             });
           });
 
@@ -253,8 +253,8 @@ class ApiBuilder extends Component {
       }
     }
 
-    const finalApiRequest = { apiRequest };
-    finalApiRequest.apiRequest.headers = newHeaders;
+    const finalApiRequest = { dataRequest: apiRequest };
+    finalApiRequest.dataRequest.headers = newHeaders;
 
     finalApiRequest.pagination = pagination;
     finalApiRequest.items = items;
@@ -512,7 +512,7 @@ const styles = {
 };
 
 ApiBuilder.defaultProps = {
-  apiRequest: null,
+  dataRequest: null,
   chartId: -1,
   items: "limit",
   itemsLimit: 100,
@@ -523,11 +523,11 @@ ApiBuilder.defaultProps = {
 ApiBuilder.propTypes = {
   connection: PropTypes.object.isRequired,
   testApiRequest: PropTypes.func.isRequired,
-  getApiRequestByChart: PropTypes.func.isRequired,
+  getDataRequestByChart: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   onComplete: PropTypes.func.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
-  apiRequest: PropTypes.object,
+  dataRequest: PropTypes.object,
   chartId: PropTypes.number,
   items: PropTypes.string,
   itemsLimit: PropTypes.number,
@@ -546,8 +546,8 @@ const mapDispatchToProps = (dispatch) => {
     testApiRequest: (projectId, connectionId, apiRequest) => {
       return dispatch(testApiRequest(projectId, connectionId, apiRequest));
     },
-    getApiRequestByChart: (projectId, chartId) => {
-      return dispatch(getApiRequestByChart(projectId, chartId));
+    getDataRequestByChart: (projectId, chartId) => {
+      return dispatch(getDataRequestByChart(projectId, chartId));
     },
   };
 };
