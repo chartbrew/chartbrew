@@ -30,9 +30,6 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: false,
     },
-    query: {
-      type: DataTypes.TEXT,
-    },
     chartData: {
       type: DataTypes.TEXT("long"),
       set(val) {
@@ -93,22 +90,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: moment().toDate(),
-    },
-    pagination: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-    items: {
-      type: DataTypes.STRING,
-      defaultValue: "items",
-    },
-    itemsLimit: {
-      type: DataTypes.INTEGER,
-      defaultValue: 100,
-    },
-    offset: {
-      type: DataTypes.STRING,
-      defaultValue: "offset",
     },
     draft: {
       type: DataTypes.BOOLEAN,
