@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const requestP = require("request-promise");
+const Sequelize = require("sequelize");
 const querystring = require("querystring");
 const _ = require("lodash");
 
@@ -266,6 +267,118 @@ class ConnectionController {
       })
       .then((response) => {
         if (pagination) {
+          return new Promise((resolve) => resolve(response));
+        }
+
+        if (response.statusCode < 300) {
+          try {
+            return new Promise((resolve) => resolve(JSON.parse(response.body)));
+          } catch (e) {
+            return new Promise((resolve, reject) => reject(406));
+          }
+        } else {
+          return new Promise((resolve, reject) => reject(response.statusCode));
+        }
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
+  runMongo(id, dataRequest) {
+    return this.connection.getConnectionUrl(id)
+      .then((url) => {
+        const options = {
+          keepAlive: 1,
+          connectTimeoutMS: 30000,
+        };
+        return mongoose.connect(url, options);
+      })
+      .then(() => {
+        return Function(`'use strict';return (mongoose) => mongoose.${dataRequest.query}.toArray()`)()(mongoose); // eslint-disable-line
+      })
+      // if array fails, check if it works with object (for example .findOne() return object)
+      .catch(() => {
+        return Function(`'use strict';return (mongoose) => mongoose.${dataRequest.query}`)()(mongoose); // eslint-disable-line
+      })
+      .then((data) => {
+        return Promise.resolve(data);
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
+  runMysqlOrPostgres(id, dataRequest) {
+    return this.findById(id)
+      .then((connection) => {
+        return externalDbConnection(connection);
+      })
+      .then((db) => {
+        return db.query(dataRequest.query, { type: Sequelize.QueryTypes.SELECT });
+      })
+      .then((results) => {
+        return new Promise((resolve) => resolve(results));
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
+  runApiRequest(id, dataRequest) {
+    const limit = dataRequest.itemsLimit
+      ? parseInt(dataRequest.itemsLimit, 10) : 0;
+    return this.findById(id)
+      .then((connection) => {
+        const tempUrl = `${connection.getApiUrl(connection)}${dataRequest.route || ""}`;
+        const queryParams = querystring.parse(tempUrl.split("?")[1]);
+
+        let url = tempUrl;
+        if (url.indexOf("?") > -1) {
+          url = tempUrl.substring(0, tempUrl.indexOf("?"));
+        }
+
+        const options = {
+          url,
+          method: dataRequest.method || "GET",
+          headers: {},
+          qs: queryParams,
+          resolveWithFullResponse: true,
+          simple: false,
+        };
+
+        // prepare the headers
+        let headers = {};
+        if (dataRequest.useGlobalHeaders) {
+          const globalHeaders = connection.getHeaders(connection);
+          for (const opt of globalHeaders) {
+            headers = Object.assign(opt, headers);
+          }
+
+          if (dataRequest.headers) {
+            headers = Object.assign(dataRequest.headers, headers);
+          }
+        }
+
+        options.headers = headers;
+
+        if (dataRequest.body && dataRequest.method !== "GET") {
+          options.body = dataRequest.body;
+          options.headers["Content-Type"] = "application/json";
+        }
+
+        if (dataRequest.pagination) {
+          if ((options.url.indexOf(`?${dataRequest.items}=`) || options.url.indexOf(`&${dataRequest.items}=`))
+            && (options.url.indexOf(`?${dataRequest.offset}=`) || options.url.indexOf(`&${dataRequest.offset}=`))
+          ) {
+            return paginateRequests(options, limit, dataRequest.items, dataRequest.offset, []);
+          }
+        }
+
+        return requestP(options);
+      })
+      .then((response) => {
+        if (dataRequest.pagination) {
           return new Promise((resolve) => resolve(response));
         }
 

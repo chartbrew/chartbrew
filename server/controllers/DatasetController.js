@@ -1,6 +1,11 @@
 const db = require("../models/models");
+const ConnectionController = require("./ConnectionController");
 
 class DatasetController {
+  constructor() {
+    this.connectionController = new ConnectionController();
+  }
+
   findById(id) {
     return db.Dataset.findByPk(id)
       .then((dataset) => {
@@ -63,6 +68,38 @@ class DatasetController {
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
+  runRequest(id) {
+    let gDataset;
+    return db.Dataset.findOne({
+      where: { id },
+      include: [{ model: db.DataRequest }, { model: db.Connection }],
+    })
+      .then((dataset) => {
+        gDataset = dataset;
+        const connection = dataset.Connection;
+        const dataRequest = dataset.DataRequest;
+
+        if (connection.type === "mongodb") {
+          return this.connectionController.runMongo(connection.id, dataRequest);
+        } else if (connection.type === "api") {
+          return this.connectionController.runApiRequest(connection.id, dataRequest);
+        } else if (connection.type === "postgres" || connection.type === "mysql") {
+          return this.connectionController.runMysqlOrPostgres(connection.id, dataRequest);
+        } else {
+          throw new Error("Invalid connection type");
+        }
+      })
+      .then((data) => {
+        return Promise.resolve({
+          dataset: gDataset,
+          data,
+        });
+      })
+      .catch((err) => {
+        return err;
       });
   }
 }

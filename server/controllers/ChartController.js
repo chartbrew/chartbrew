@@ -7,7 +7,6 @@ const externalDbConnection = require("../modules/externalDbConnection");
 const db = require("../models/models");
 const DatasetController = require("./DatasetController");
 const ConnectionController = require("./ConnectionController");
-const ProjectController = require("./ProjectController");
 const DataRequestController = require("./DataRequestController");
 const ChartCacheController = require("./ChartCacheController");
 
@@ -18,9 +17,8 @@ const PieChart = require("../charts/PieChart");
 
 class ChartController {
   constructor() {
-    this.connection = new ConnectionController();
-    this.dataset = new DatasetController();
-    this.project = new ProjectController();
+    this.connectionController = new ConnectionController();
+    this.datasetController = new DatasetController();
     this.dataRequestController = new DataRequestController();
     this.chartCache = new ChartCacheController();
   }
@@ -38,7 +36,7 @@ class ChartController {
             for (const dataset of data.Datasets) {
               if (!dataset.deleted) {
                 dataset.chart_id = chartId;
-                createPromises.push(this.dataset.create(dataset));
+                createPromises.push(this.datasetController.create(dataset));
               }
             }
           }
@@ -149,7 +147,7 @@ class ChartController {
             for (const dataset of data.Datasets) {
               if (!dataset.deleted && !dataset.id) {
                 dataset.chart_id = id;
-                updatePromises.push(this.dataset.create(dataset));
+                updatePromises.push(this.datasetController.create(dataset));
               } else if (!dataset.deleted && dataset.id) {
                 datasetsToUpdate.push(dataset);
               }
@@ -198,13 +196,13 @@ class ChartController {
     for (const dataset of datasets) {
       if (dataset.id && !dataset.deleted) {
         if (parseInt(dataset.chart_id, 10) === parseInt(chartId, 10)) {
-          updatePromises.push(this.dataset.update(dataset.id, dataset));
+          updatePromises.push(this.datasetController.update(dataset.id, dataset));
         }
       } else if (dataset.id && dataset.deleted) {
-        updatePromises.push(this.dataset.remove(dataset.id));
+        updatePromises.push(this.datasetController.remove(dataset.id));
       } else if (!dataset.id && !dataset.deleted) {
         dataset.chart_id = chartId;
-        updatePromises.push(this.dataset.create(dataset));
+        updatePromises.push(this.datasetController.create(dataset));
       }
     }
 
@@ -259,7 +257,7 @@ class ChartController {
       .then((chart) => {
         if (!chart) throw new Error(404);
         gChart = chart;
-        return this.connection.findById(chart.connection_id);
+        return this.connectionController.findById(chart.connection_id);
       })
       .then((connection) => {
         if (connection.type === "mongodb") {
@@ -277,17 +275,36 @@ class ChartController {
       });
   }
 
-  // updateChartData2(id) {
-  //   let gChart;
-  //   return this.findById(id)
-  //     .then((chart) => {
-  //       gChart = chart;
-  //       return
-  //     })
-  // }
+  updateChartData2(id) {
+    let gChart;
+    return this.findById(id)
+      .then((chart) => {
+        gChart = chart;
+        if (!chart.Datasets || chart.Datasets.length === 0) {
+          throw new Error("The chart doesn't have any datasets");
+        }
+
+        const requestPromises = [];
+        chart.Datasets.map((dataset) => {
+          requestPromises.push(this.datasetController.runRequest(dataset.id));
+          return dataset;
+        });
+
+        return Promise.all(requestPromises);
+      })
+      .then((datasets) => {
+        return Promise.resolve({
+          chart: gChart,
+          datasets,
+        });
+      })
+      .catch((err) => {
+        return err;
+      });
+  }
 
   runPostgresQuery(chart) {
-    return this.connection.findById(chart.connection_id)
+    return this.connectionController.findById(chart.connection_id)
       .then((connection) => {
         return externalDbConnection(connection);
       })
@@ -323,7 +340,7 @@ class ChartController {
     return this.findById(id)
       .then((chart) => {
         gChart = chart;
-        return this.connection.getConnectionUrl(chart.connection_id);
+        return this.connectionController.getConnectionUrl(chart.connection_id);
       })
       .then((url) => {
         const options = {
@@ -351,7 +368,7 @@ class ChartController {
   }
 
   testMongoQuery({ connection_id, query }) {
-    return this.connection.getConnectionUrl(connection_id)
+    return this.connectionController.getConnectionUrl(connection_id)
       .then((url) => {
         const options = {
           keepAlive: 1,
@@ -377,7 +394,7 @@ class ChartController {
   }
 
   testQuery(chart, projectId) {
-    return this.connection.findById(chart.connection_id)
+    return this.connectionController.findById(chart.connection_id)
       .then((connection) => {
         if (connection.type === "mongodb") {
           return this.testMongoQuery(chart, projectId);
@@ -393,7 +410,7 @@ class ChartController {
   }
 
   getApiChartData(chart) {
-    return this.connection.testDataRequest(chart)
+    return this.connectionController.testDataRequest(chart)
       .then((data) => {
         return new Promise((resolve) => resolve(data));
       })
@@ -422,7 +439,7 @@ class ChartController {
           return new Promise((resolve) => resolve(cache));
         }
 
-        return this.connection.findById(chart.connection_id);
+        return this.connectionController.findById(chart.connection_id);
       })
       .then((connection) => {
         if (noSource === "true") {
