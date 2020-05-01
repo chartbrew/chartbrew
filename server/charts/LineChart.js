@@ -2,32 +2,25 @@ const moment = require("moment");
 const dataFinder = require("../modules/dataFinder");
 
 class LineChart {
-  constructor(chart, data) {
-    this.chart = chart;
-    this.chartData = data;
+  constructor(data) {
+    this.chart = data.chart;
+    this.datasets = data.datasets;
   }
 
   /*
   ** Get data for a chart that aggregates a length(obj) over time
   */
   aggregateOverTime() {
-    let parsedData;
-    try {
-      parsedData = JSON.parse(this.chartData);
-    } catch (e) {
-      parsedData = this.chartData;
-    }
-
     const datasets = [];
     let maxLabelLength = 0;
     let selectedDatasetLabels = 0;
 
     // go through all the datasets
-    for (const dataset of this.chart.Datasets) {
+    for (const dataset of this.datasets) {
       if (!dataset.deleted) {
-      // get the array in the selector chain
+        // get the array in the selector chain
         const arrayFieldSelector = [];
-        for (const value of dataset.xAxis.split(".")) {
+        for (const value of dataset.options.xAxis.split(".")) {
           if (value.indexOf("[]") > -1) {
             arrayFieldSelector.push(value.replace("[]", ""));
             break;
@@ -39,13 +32,13 @@ class LineChart {
         // the connector data will be used as the main array where to look for the date
         let connectorData;
         if (arrayFieldSelector.length === 1) {
-          connectorData = parsedData;
+          connectorData = dataset.data;
         } else {
-          connectorData = dataFinder.findField(parsedData, arrayFieldSelector, 1);
+          connectorData = dataFinder.findField(dataset.data, arrayFieldSelector, 1);
         }
 
         // build up the selector array which is used to show the way to the date value
-        let xFieldSelector = dataset.xAxis;
+        let xFieldSelector = dataset.options.xAxis;
         if (xFieldSelector.length < 2) {
           return new Promise((resolve, reject) => reject(new Error("The X selector is not formatted correctly")));
         }
@@ -164,13 +157,17 @@ class LineChart {
         });
 
         const formattedDataset = {
-          label: dataset.legend,
+          label: dataset.options.legend,
           data: yAxis,
         };
 
-        if (dataset.datasetColor) formattedDataset.borderColor = dataset.datasetColor;
-        if (dataset.fillColor) formattedDataset.backgroundColor = dataset.fillColor;
-        formattedDataset.fill = dataset.fill;
+        if (dataset.options.datasetColor) {
+          formattedDataset.borderColor = dataset.options.datasetColor;
+        }
+        if (dataset.options.fillColor) {
+          formattedDataset.backgroundColor = dataset.options.fillColor;
+        }
+        formattedDataset.fill = dataset.options.fill;
 
         datasets.push(formattedDataset);
 

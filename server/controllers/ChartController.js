@@ -298,6 +298,43 @@ class ChartController {
           datasets,
         });
       })
+      .then((chartData) => {
+        // LINE CHART
+        if (gChart.type === "line") {
+          const lineChart = new LineChart(chartData);
+          return lineChart.aggregateOverTime();
+
+          // BAR CHART
+        } else if (gChart.type === "bar") {
+          const barChart = new BarChart(chartData);
+
+          if (gChart.subType.toLowerCase().indexOf("timeseries") > -1) {
+            return barChart.aggregateOverTime();
+          } else if (gChart.subType === "pattern") {
+            return barChart.createPatterns();
+          } else {
+            return new Promise((resolve, reject) => reject(new Error("Could not find the chart type")));
+          }
+
+          // PIE CHART
+        } else if (gChart.type === "pie" || gChart.type === "doughnut"
+          || gChart.type === "radar" || gChart.type === "polar") {
+          const pieChart = new PieChart(chartData);
+          if (gChart.subType === "pattern") {
+            return pieChart.createPatterns();
+          } else {
+            return new Promise((resolve, reject) => reject(new Error("Could not find the chart type")));
+          }
+        } else {
+          return new Promise((resolve, reject) => reject(new Error("Could not find the chart type")));
+        }
+      })
+      .then((chartData) => {
+        return this.update(id, { chartData, chartDataUpdated: moment() });
+      })
+      .then(() => {
+        return this.findById(id);
+      })
       .catch((err) => {
         return err;
       });

@@ -94,7 +94,7 @@ class DatasetController {
       })
       .then((data) => {
         return Promise.resolve({
-          dataset: gDataset,
+          options: gDataset,
           data,
         });
       })
