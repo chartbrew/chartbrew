@@ -6,6 +6,7 @@ import {
 
 function ChartDescription(props) {
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
   const {
     name, onChange, history, onCreate,
   } = props;
@@ -19,7 +20,7 @@ function ChartDescription(props) {
       setError(true);
       return;
     }
-
+    setLoading(true);
     onCreate();
   };
 
@@ -60,6 +61,7 @@ function ChartDescription(props) {
             Go back
           </Button>
           <Button
+            loading={loading}
             type="submit"
             primary
             icon

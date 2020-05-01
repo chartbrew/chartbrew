@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
@@ -19,140 +19,140 @@ import {
 /*
   Container used for setting up a new chart
 */
-class AddChart extends Component {
-  constructor(props) {
-    super(props);
+function AddChart(props) {
+  const [connectionActive, setConnectionActive] = useState(false);
+  const [titleScreen, setTitleScreen] = useState(true);
+  const [newChart, setNewChart] = useState({ name: "Test chart" });
+  const [editingTitle, setEditingTitle] = useState(false);
 
-    this.state = {
-      connectionActive: false,
-      titleScreen: false,
-      newChart: {
-        name: "Test chart",
-        connection_id: 3,
-      },
-    };
-  }
+  const {
+    match, createChart, history, charts,
+  } = props;
 
-  componentDidMount() {
-    const { match, createChart } = this.props; // eslint-disable-line
-    const { newChart } = this.state;
-
-    if (newChart.id) {
-      this.setState({ titleScreen: false });
+  useEffect(() => {
+    if (match.params.chartId) {
+      charts.map((chart) => {
+        if (chart.id === parseInt(match.params.chartId, 10)) {
+          setNewChart(chart);
+        }
+        return chart;
+      });
+      setTitleScreen(false);
     }
-    // createChart(match.params.projectId, newChart);
-  }
+  }, []);
 
-  _onConnectionClicked = () => {
-    this.setState({ connectionActive: true });
-  }
+  const _onConnectionClicked = () => {
+    setConnectionActive(true);
+  };
 
-  _onConnectionClosed = () => {
-    this.setState({ connectionActive: false });
-  }
+  const _onConnectionClosed = () => {
+    setConnectionActive(false);
+  };
 
-  _onNameChange = (value) => {
-    const { newChart } = this.state;
-    this.setState({ newChart: { ...newChart, name: value } });
-  }
+  const _onNameChange = (value) => {
+    setNewChart({ ...newChart, name: value });
+  };
 
-  render() {
-    const { history } = this.props;
-    const {
-      connectionActive, editingTitle, newChart, titleScreen,
-    } = this.state;
+  const _onCreateClicked = () => {
+    return createChart(match.params.projectId, newChart)
+      .then((createdChart) => {
+        setTitleScreen(false);
+        history.push(`chart/${createdChart.id}/edit`);
+      })
+      .catch(() => {
+      });
+  };
 
-    if (titleScreen) {
-      return (
-        <ChartDescription
-          name={newChart.name}
-          onChange={this._onNameChange}
-          onCreate={() => this.setState({ titleScreen: false })}
-          history={history}
-        />
-      );
-    }
-
+  if (titleScreen) {
     return (
-      <div style={styles.container}>
-        <Grid columns={2} divided centered>
-          <Grid.Column width={9}>
-            <Grid.Row>
-              {!editingTitle
-                && (
-                  <Header textAlign="left" dividing onClick={() => this.setState({ editingTitle: true })}>
-                    <Popup
-                      trigger={(
-                        <a style={styles.editTitle}>
-                          {newChart.name}
-                        </a>
-                      )}
-                      content="Edit the chart name"
-                    />
-                  </Header>
-                )}
-
-              {editingTitle
-                && (
-                  <Container fluid textAlign="left">
-                    <Form style={{ display: "inline-block" }}>
-                      <Form.Group>
-                        <Form.Field>
-                          <Input
-                            placeholder="Enter a title"
-                            value={newChart.name}
-                            onChange={(e, data) => this._onNameChange(data.value)}
-                          />
-                        </Form.Field>
-                        <Form.Field>
-                          <Button
-                            secondary
-                            icon
-                            labelPosition="right"
-                            type="submit"
-                            onClick={() => this.setState({ editingTitle: false })}
-                          >
-                            <Icon name="checkmark" />
-                            Save
-                          </Button>
-                        </Form.Field>
-                      </Form.Group>
-                    </Form>
-                  </Container>
-                )}
-              <ChartPreview />
-            </Grid.Row>
-            <Grid.Row style={styles.topBuffer}>
-              <ChartSettings />
-            </Grid.Row>
-          </Grid.Column>
-
-          <Grid.Column width={6}>
-            <Header>Datasets</Header>
-            <Divider />
-            <Button
-              primary
-              icon
-              labelPosition="right"
-              onClick={this._onConnectionClicked}
-            >
-              <Icon name="plug" />
-              ConnectionAPI
-            </Button>
-            <Button basic icon labelPosition="right">
-              <Icon name="plus" />
-              New connection
-            </Button>
-
-            <Connection
-              active={connectionActive}
-              onCloseConnection={this._onConnectionClosed}
-            />
-          </Grid.Column>
-        </Grid>
-      </div>
+      <ChartDescription
+        name={newChart.name}
+        onChange={_onNameChange}
+        onCreate={_onCreateClicked}
+        history={history}
+      />
     );
   }
+
+  return (
+    <div style={styles.container}>
+      <Grid columns={2} divided centered>
+        <Grid.Column width={9}>
+          <Grid.Row>
+            {!editingTitle
+              && (
+                <Header textAlign="left" dividing onClick={() => setEditingTitle(true)}>
+                  <Popup
+                    trigger={(
+                      <a style={styles.editTitle}>
+                        {newChart.name}
+                      </a>
+                    )}
+                    content="Edit the chart name"
+                  />
+                </Header>
+              )}
+
+            {editingTitle
+              && (
+                <Container fluid textAlign="left">
+                  <Form style={{ display: "inline-block" }}>
+                    <Form.Group>
+                      <Form.Field>
+                        <Input
+                          placeholder="Enter a title"
+                          value={newChart.name}
+                          onChange={(e, data) => _onNameChange(data.value)}
+                        />
+                      </Form.Field>
+                      <Form.Field>
+                        <Button
+                          secondary
+                          icon
+                          labelPosition="right"
+                          type="submit"
+                          onClick={() => setEditingTitle(false)}
+                        >
+                          <Icon name="checkmark" />
+                          Save
+                        </Button>
+                      </Form.Field>
+                    </Form.Group>
+                  </Form>
+                </Container>
+              )}
+            <ChartPreview />
+          </Grid.Row>
+          <Grid.Row style={styles.topBuffer}>
+            <ChartSettings />
+          </Grid.Row>
+        </Grid.Column>
+
+        <Grid.Column width={6}>
+          <Header>Datasets</Header>
+          <Divider />
+          <Button
+            primary
+            icon
+            labelPosition="right"
+            onClick={_onConnectionClicked}
+          >
+            <Icon name="plug" />
+            ConnectionAPI
+          </Button>
+          <Button basic icon labelPosition="right">
+            <Icon name="plus" />
+            New connection
+          </Button>
+
+          <Connection
+            active={connectionActive}
+            onCloseConnection={_onConnectionClosed}
+          />
+        </Grid.Column>
+      </Grid>
+    </div>
+  );
 }
 
 const styles = {
@@ -177,10 +177,12 @@ AddChart.propTypes = {
   createChart: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   history: PropTypes.object.isRequired,
+  charts: PropTypes.array.isRequired,
 };
 
-const mapStateToProps = () => {
+const mapStateToProps = (state) => {
   return {
+    charts: state.chart.data,
   };
 };
 
