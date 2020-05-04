@@ -9,7 +9,7 @@ import {
 
 import ChartPreview from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
-import Connection from "./components/Connection";
+import Dataset from "./components/Dataset";
 import ChartDescription from "./components/ChartDescription";
 
 import {
@@ -20,7 +20,7 @@ import {
   Container used for setting up a new chart
 */
 function AddChart(props) {
-  const [connectionActive, setConnectionActive] = useState(false);
+  const [datasetActive, setConnectionActive] = useState(false);
   const [titleScreen, setTitleScreen] = useState(true);
   const [newChart, setNewChart] = useState({ name: "Test chart" });
   const [editingTitle, setEditingTitle] = useState(false);
@@ -41,11 +41,11 @@ function AddChart(props) {
     }
   }, []);
 
-  const _onConnectionClicked = () => {
+  const _onDatasetClicked = () => {
     setConnectionActive(true);
   };
 
-  const _onConnectionClosed = () => {
+  const _onDatasetClosed = () => {
     setConnectionActive(false);
   };
 
@@ -135,19 +135,20 @@ function AddChart(props) {
             primary
             icon
             labelPosition="right"
-            onClick={_onConnectionClicked}
+            onClick={_onDatasetClicked}
           >
             <Icon name="plug" />
-            ConnectionAPI
+            Dataset #1
           </Button>
           <Button basic icon labelPosition="right">
             <Icon name="plus" />
-            New connection
+            New Dataset
           </Button>
 
-          <Connection
-            active={connectionActive}
-            onCloseConnection={_onConnectionClosed}
+          <Divider />
+          <Dataset
+            active={datasetActive}
+            onCloseDataset={_onDatasetClosed}
           />
         </Grid.Column>
       </Grid>
