@@ -110,6 +110,19 @@ const grantList = [
   {
     role: "owner", resource: "savedQuery", action: "delete:any", attributes: "*",
   },
+  // resource: dataset ---> Team Perspective
+  {
+    role: "owner", resource: "dataset", action: "create:any", attributes: "*",
+  },
+  {
+    role: "owner", resource: "dataset", action: "read:any", attributes: "*",
+  },
+  {
+    role: "owner", resource: "dataset", action: "update:any", attributes: "*",
+  },
+  {
+    role: "owner", resource: "dataset", action: "delete:any", attributes: "*",
+  },
   // resource: request ---> Team Perspective
   {
     role: "owner", resource: "dataRequest", action: "create:any", attributes: "*",
@@ -223,6 +236,19 @@ const grantList = [
   {
     role: "admin", resource: "savedQuery", action: "delete:any", attributes: "*",
   },
+  // resource: dataset ---> Team Perspective
+  {
+    role: "admin", resource: "dataset", action: "create:any", attributes: "*",
+  },
+  {
+    role: "admin", resource: "dataset", action: "read:any", attributes: "*",
+  },
+  {
+    role: "admin", resource: "dataset", action: "update:any", attributes: "*",
+  },
+  {
+    role: "admin", resource: "dataset", action: "delete:any", attributes: "*",
+  },
   // resource: request ---> Team Perspective
   {
     role: "admin", resource: "dataRequest", action: "create:any", attributes: "*",
@@ -299,6 +325,19 @@ const grantList = [
   },
   {
     role: "editor", resource: "savedQuery", action: "delete:any", attributes: "*",
+  },
+  // resource: dataset ---> Team Perspective
+  {
+    role: "editor", resource: "dataset", action: "create:any", attributes: "*",
+  },
+  {
+    role: "editor", resource: "dataset", action: "read:any", attributes: "*",
+  },
+  {
+    role: "editor", resource: "dataset", action: "update:any", attributes: "*",
+  },
+  {
+    role: "editor", resource: "dataset", action: "delete:any", attributes: "*",
   },
   // resource: request ---> Team Perspective
   {

@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     connection_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       reference: {
         model: "Connection",
         key: "id",

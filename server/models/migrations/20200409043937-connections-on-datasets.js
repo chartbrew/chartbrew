@@ -6,6 +6,7 @@ module.exports = {
       return Promise.all([
         queryInterface.addColumn("Dataset", "connection_id", {
           type: Sequelize.INTEGER,
+          allowNull: true,
           reference: {
             model: "Connection",
             key: "id",

@@ -5,6 +5,7 @@ const connection = require("./ConnectionRoute");
 const chart = require("./ChartRoute");
 const savedQuery = require("./SavedQueryRoute");
 const dataRequest = require("./DataRequestRoute");
+const dataset = require("./DatasetRoute");
 
 module.exports = {
   team,
@@ -14,4 +15,5 @@ module.exports = {
   chart,
   savedQuery,
   dataRequest,
+  dataset,
 };

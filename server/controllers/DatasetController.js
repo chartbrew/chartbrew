@@ -21,7 +21,7 @@ class DatasetController {
 
   findByChart(chartId) {
     return db.Dataset.findAll({
-      where: { project_id: chartId },
+      where: { chart_id: chartId },
     })
       .then((datasets) => {
         return datasets;
@@ -34,7 +34,7 @@ class DatasetController {
   create(data) {
     return db.Dataset.create(data)
       .then((dataset) => {
-        return dataset;
+        return this.findById(dataset.id);
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

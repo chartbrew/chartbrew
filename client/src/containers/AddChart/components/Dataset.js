@@ -12,17 +12,16 @@ import postgresImg from "../../../assets/postgres.png";
 import DatarequestModal from "./DatarequestModal";
 
 function Dataset(props) {
-  const { active, onCloseDataset, connections } = props;
+  const { dataset, connections } = props;
   const [dropdownConfig, setDropdownConfig] = useState([]);
   const [connection, setConnection] = useState({});
   const [dataRequest] = useState({});
   const [configOpened, setConfigOpened] = useState(false);
-  const [dataset] = useState({});
 
   useEffect(() => {
     const config = [];
     connections.map((connection) => {
-      const image = connection.type === "mongo"
+      const image = connection.type === "mongodb"
         ? mongoImg : connection.type === "api"
           ? apiImg : connection.type === "mysql"
             ? mysqlImg : postgresImg;
@@ -61,13 +60,12 @@ function Dataset(props) {
     setConfigOpened(false);
   };
 
-  if (!active) return (<span />);
+  if (!dataset || !dataset.id) return (<span />);
 
   return (
     <Container text style={styles.container}>
       <Header as="h2">
-        <Icon name="close" onClick={() => onCloseDataset()} />
-        <Header.Content>Dataset #1</Header.Content>
+        <Header.Content>{dataset.legend}</Header.Content>
       </Header>
       <Divider hidden />
 
@@ -86,7 +84,7 @@ function Dataset(props) {
           </Grid.Column>
           <Grid.Column textAlign="left">
             <Button
-              secondary
+              primary
               icon
               labelPosition="right"
               disabled={!connection.id}
@@ -112,14 +110,8 @@ function Dataset(props) {
   );
 }
 
-Dataset.defaultProps = {
-  active: false,
-  onCloseDataset: () => {},
-};
-
 Dataset.propTypes = {
-  active: PropTypes.bool,
-  onCloseDataset: PropTypes.func,
+  dataset: PropTypes.object.isRequired,
   connections: PropTypes.array.isRequired,
 };
 

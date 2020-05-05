@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Grid, Button, Icon, Header, Divider, Popup, Container,
-  Form, Input
+  Form, Input, List,
 } from "semantic-ui-react";
 
 import ChartPreview from "./components/ChartPreview";
@@ -15,18 +15,26 @@ import ChartDescription from "./components/ChartDescription";
 import {
   createChart as createChartAction,
 } from "../../actions/chart";
+import {
+  getChartDatasets as getChartDatasetsAction,
+  saveNewDataset as saveNewDatasetAction,
+} from "../../actions/dataset";
 
 /*
   Container used for setting up a new chart
 */
 function AddChart(props) {
-  const [datasetActive, setConnectionActive] = useState(false);
+  const [activeDataset, setActiveDataset] = useState({});
   const [titleScreen, setTitleScreen] = useState(true);
   const [newChart, setNewChart] = useState({ name: "Test chart" });
   const [editingTitle, setEditingTitle] = useState(false);
+  const [addingDataset, setAddingDataset] = useState(false);
+  const [datasetName, setDatasetName] = useState("");
+  const [savingDataset, setSavingDataset] = useState(false);
 
   const {
-    match, createChart, history, charts,
+    match, createChart, history, charts, saveNewDataset, getChartDatasets,
+    datasets,
   } = props;
 
   useEffect(() => {
@@ -38,15 +46,14 @@ function AddChart(props) {
         return chart;
       });
       setTitleScreen(false);
+
+      // also fetch the chart's datasets
+      getChartDatasets(match.params.projectId, match.params.chartId);
     }
   }, []);
 
-  const _onDatasetClicked = () => {
-    setConnectionActive(true);
-  };
-
-  const _onDatasetClosed = () => {
-    setConnectionActive(false);
+  const _onDatasetClicked = (dataset) => {
+    setActiveDataset(dataset);
   };
 
   const _onNameChange = (value) => {
@@ -60,6 +67,23 @@ function AddChart(props) {
         history.push(`chart/${createdChart.id}/edit`);
       })
       .catch(() => {
+      });
+  };
+
+  const _onSaveNewDataset = () => {
+    setSavingDataset(true);
+    saveNewDataset(match.params.projectId, match.params.chartId, {
+      chart_id: match.params.chartId,
+      legend: datasetName,
+    })
+      .then((dataset) => {
+        setSavingDataset(false);
+        setAddingDataset(false);
+        setActiveDataset(dataset);
+        setDatasetName("");
+      })
+      .catch(() => {
+        setSavingDataset(false);
       });
   };
 
@@ -131,24 +155,76 @@ function AddChart(props) {
         <Grid.Column width={6}>
           <Header>Datasets</Header>
           <Divider />
-          <Button
-            primary
-            icon
-            labelPosition="right"
-            onClick={_onDatasetClicked}
-          >
-            <Icon name="plug" />
-            Dataset #1
-          </Button>
-          <Button basic icon labelPosition="right">
-            <Icon name="plus" />
-            New Dataset
-          </Button>
+
+          <div>
+            {datasets && datasets.map((dataset) => {
+              return (
+                <Button
+                  style={styles.datasetButtons}
+                  key={dataset.id}
+                  primary={dataset.id !== activeDataset.id}
+                  icon
+                  labelPosition="right"
+                  onClick={() => _onDatasetClicked(dataset)}
+                  secondary={dataset.id === activeDataset.id}
+                >
+                  <Icon name="plug" />
+                  {dataset.legend}
+                </Button>
+              );
+            })}
+          </div>
+
+          <div style={styles.addDataset}>
+            {!addingDataset && (
+              <List>
+                <List.Item as="a" onClick={() => setAddingDataset(true)}>
+                  <Icon name="plus" />
+                  <List.Content>
+                    <List.Header>Add a new dataset</List.Header>
+                  </List.Content>
+                </List.Item>
+              </List>
+            )}
+
+            {addingDataset && (
+              <Form>
+                <Form.Group>
+                  <Form.Field>
+                    <Input
+                      placeholder="Dataset name"
+                      value={datasetName}
+                      onChange={(e, data) => setDatasetName(data.value)}
+                    />
+                  </Form.Field>
+                  <Form.Field>
+                    <Button
+                      icon
+                      secondary
+                      onClick={_onSaveNewDataset}
+                      loading={savingDataset}
+                    >
+                      <Icon name="checkmark" />
+                    </Button>
+                    <Button
+                      icon
+                      basic
+                      onClick={() => {
+                        setAddingDataset(false);
+                        setDatasetName("");
+                      }}
+                    >
+                      <Icon name="x" />
+                    </Button>
+                  </Form.Field>
+                </Form.Group>
+              </Form>
+            )}
+          </div>
 
           <Divider />
           <Dataset
-            active={datasetActive}
-            onCloseDataset={_onDatasetClosed}
+            dataset={activeDataset}
           />
         </Grid.Column>
       </Grid>
@@ -172,6 +248,12 @@ const styles = {
   topBuffer: {
     marginTop: 20,
   },
+  addDataset: {
+    marginTop: 10,
+  },
+  datasetButtons: {
+    marginBottom: 10,
+  }
 };
 
 AddChart.propTypes = {
@@ -179,17 +261,27 @@ AddChart.propTypes = {
   match: PropTypes.object.isRequired,
   history: PropTypes.object.isRequired,
   charts: PropTypes.array.isRequired,
+  getChartDatasets: PropTypes.func.isRequired,
+  saveNewDataset: PropTypes.func.isRequired,
+  datasets: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
     charts: state.chart.data,
+    datasets: state.dataset.data,
   };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
     createChart: (projectId, data) => dispatch(createChartAction(projectId, data)),
+    getChartDatasets: (projectId, chartId) => {
+      return dispatch(getChartDatasetsAction(projectId, chartId));
+    },
+    saveNewDataset: (projectId, chartId, data) => {
+      return dispatch(saveNewDatasetAction(projectId, chartId, data));
+    },
   };
 };
 
