@@ -2,18 +2,22 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Container, Icon, Divider, Header, Dropdown,
+  Container, Icon, Divider, Header, Dropdown, Button, Grid,
 } from "semantic-ui-react";
 
 import mongoImg from "../../../assets/mongodb-logo-1.png";
 import mysqlImg from "../../../assets/mysql.svg";
 import apiImg from "../../../assets/api.png";
 import postgresImg from "../../../assets/postgres.png";
+import DatarequestModal from "./DatarequestModal";
 
 function Dataset(props) {
   const { active, onCloseDataset, connections } = props;
   const [dropdownConfig, setDropdownConfig] = useState([]);
-  const [dataset, setDataset] = useState({});
+  const [connection, setConnection] = useState({});
+  const [dataRequest] = useState({});
+  const [configOpened, setConfigOpened] = useState(false);
+  const [dataset] = useState({});
 
   useEffect(() => {
     const config = [];
@@ -36,17 +40,25 @@ function Dataset(props) {
     });
 
     setDropdownConfig(config);
-    if (!dataset.id && connections[0]) setDataset(connections[0]);
+    // if (!dataset.id && connections[0]) setDataset(connections[0]);
   }, [connections]);
 
   const _onChangeConnection = (e, data) => {
     connections.map((connection) => {
       if (data.value === connection.id) {
-        setDataset(connection);
+        setConnection(connection);
       }
 
       return connection;
     });
+  };
+
+  const _openConfigModal = () => {
+    setConfigOpened(true);
+  };
+
+  const _onCloseConfig = () => {
+    setConfigOpened(false);
   };
 
   if (!active) return (<span />);
@@ -59,14 +71,43 @@ function Dataset(props) {
       </Header>
       <Divider hidden />
 
-      <Dropdown
-        placeholder="Select an available connection from the list"
-        selection
-        value={dataset.id}
-        options={dropdownConfig}
-        disabled={connections.length < 1}
-        onChange={_onChangeConnection}
-      />
+      <Grid stackable>
+        <Grid.Row columns={2}>
+          <Grid.Column>
+            <Dropdown
+              placeholder="Select an available connection from the list"
+              selection
+              value={connection.id}
+              options={dropdownConfig}
+              disabled={connections.length < 1}
+              onChange={_onChangeConnection}
+              fluid
+            />
+          </Grid.Column>
+          <Grid.Column textAlign="left">
+            <Button
+              secondary
+              icon
+              labelPosition="right"
+              disabled={!connection.id}
+              onClick={_openConfigModal}
+            >
+              <Icon name="cog" />
+              Configure
+            </Button>
+          </Grid.Column>
+        </Grid.Row>
+      </Grid>
+
+      {connection && (
+        <DatarequestModal
+          dataset={dataset}
+          connection={connection}
+          dataRequest={dataRequest}
+          open={configOpened}
+          onClose={_onCloseConfig}
+        />
+      )}
     </Container>
   );
 }
