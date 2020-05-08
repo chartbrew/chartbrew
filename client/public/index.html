@@ -30,10 +30,11 @@
     <script>
       // @see https://docs.oneaccount.app for more configuration options.
       window.oneaccountConfig = {
-        externalId: "%REACT_APP_ONE_ACCOUNT_EXTERNAL_ID%"
+        externalId: "%REACT_APP_ONE_ACCOUNT_EXTERNAL_ID%",
+        iOSRedirectURL: "/user"
       }
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/oneaccount@v2.1.0/dist/oneaccount.min.js" defer async></script>
+    <script src="https://cdn.jsdelivr.net/npm/oneaccount@v2.3.0/dist/oneaccount.min.js" defer async></script>
     <% } %>
     <script>
       // @see https://docs.headwayapp.co/widget for more configuration options.
