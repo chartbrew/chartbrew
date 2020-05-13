@@ -21,6 +21,7 @@ import {
   getChartDatasets as getChartDatasetsAction,
   saveNewDataset as saveNewDatasetAction,
   updateDataset as updateDatasetAction,
+  deleteDataset as deleteDatasetAction,
 } from "../../actions/dataset";
 
 /*
@@ -37,7 +38,7 @@ function AddChart(props) {
 
   const {
     match, createChart, history, charts, saveNewDataset, getChartDatasets,
-    datasets, updateDataset,
+    datasets, updateDataset, deleteDataset,
   } = props;
 
   useEffect(() => {
@@ -111,13 +112,19 @@ function AddChart(props) {
       })
       .catch(() => {
         toast.error("Cannot update the dataset 😫 Please try again", {
-          position: "bottom-right",
           autoClose: 2500,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          transition: Flip,
+        });
+      });
+  };
+
+  const _onDeleteDataset = () => {
+    return deleteDataset(match.params.projectId, match.params.chartId, activeDataset.id)
+      .then(() => {
+        setActiveDataset({});
+      })
+      .catch(() => {
+        toast.error("Cannot delete the dataset 😫 Please try again", {
+          autoClose: 2500,
         });
       });
   };
@@ -135,7 +142,18 @@ function AddChart(props) {
 
   return (
     <div style={styles.container}>
-      <ToastContainer />
+      <ToastContainer
+        position="bottom-right"
+        autoClose={1500}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnVisibilityChange
+        draggable
+        pauseOnHover
+        transition={Flip}
+      />
       <Grid columns={2} divided centered>
         <Grid.Column width={9}>
           <Grid.Row>
@@ -259,6 +277,7 @@ function AddChart(props) {
           <Dataset
             dataset={activeDataset}
             onUpdate={_onUpdateDataset}
+            onDelete={_onDeleteDataset}
           />
         </Grid.Column>
       </Grid>
@@ -298,6 +317,7 @@ AddChart.propTypes = {
   getChartDatasets: PropTypes.func.isRequired,
   saveNewDataset: PropTypes.func.isRequired,
   updateDataset: PropTypes.func.isRequired,
+  deleteDataset: PropTypes.func.isRequired,
   datasets: PropTypes.array.isRequired,
 };
 
@@ -319,6 +339,9 @@ const mapDispatchToProps = (dispatch) => {
     },
     updateDataset: (projectId, chartId, datasetId, data) => {
       return dispatch(updateDatasetAction(projectId, chartId, datasetId, data));
+    },
+    deleteDataset: (projectId, chartId, datasetId) => {
+      return dispatch(deleteDatasetAction(projectId, chartId, datasetId));
     },
   };
 };

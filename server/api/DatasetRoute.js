@@ -124,6 +124,31 @@ module.exports = (app) => {
         return res.status(400).send(err);
       });
   });
+  // ----------------------------------------------------
+
+  /*
+  ** Route to delete a dataset
+  */
+  app.delete(`${root}/:id`, verifyToken, (req, res) => {
+    return projectController.findById(req.params.project_id)
+      .then((project) => {
+        return teamController.getTeamRole(project.team_id, req.user.id);
+      })
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).deleteAny("dataset");
+        if (!permission.granted) {
+          throw new Error(401);
+        }
+        return datasetController.remove(req.params.id);
+      })
+      .then((result) => {
+        return res.status(200).send(result);
+      })
+      .catch((err) => {
+        return res.status(400).send(err);
+      });
+  });
+  // ----------------------------------------------------
 
   return (req, res, next) => {
     next();

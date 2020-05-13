@@ -6,6 +6,7 @@ export const FETCHING_DATASET = "FETCHING_DATASET";
 export const FETCH_DATASET_SUCCESS = "FETCH_DATASET_SUCCESS";
 export const FETCH_DATASET_FAIL = "FETCH_DATASET_FAIL";
 export const FETCH_CHART_DATASETS = "FETCH_CHART_DATASETS";
+export const REMOVE_DATASET = "REMOVE_DATASET";
 
 export function getChartDatasets(projectId, chartId) {
   return (dispatch) => {
@@ -93,6 +94,36 @@ export function updateDataset(projectId, chartId, datasetId, data) {
       .then((dataset) => {
         dispatch({ type: FETCH_DATASET_SUCCESS, dataset });
         return dataset;
+      })
+      .catch((error) => {
+        return error;
+      });
+  };
+}
+
+export function deleteDataset(projectId, chartId, datasetId) {
+  return (dispatch) => {
+    const token = cookie.load("brewToken");
+    const url = `${API_HOST}/project/${projectId}/chart/${chartId}/dataset/${datasetId}`;
+    const method = "DELETE";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`,
+    });
+
+    dispatch({ type: FETCHING_DATASET });
+    return fetch(url, { method, headers })
+      .then((response) => {
+        if (!response.ok) {
+          addError(response.status, "Failed to delete the dataset");
+          throw new Error(response.status);
+        }
+
+        return response.json();
+      })
+      .then((result) => {
+        dispatch({ type: REMOVE_DATASET, datasetId });
+        return result;
       })
       .catch((error) => {
         return error;

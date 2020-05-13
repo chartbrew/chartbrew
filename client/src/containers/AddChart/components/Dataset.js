@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import _ from "lodash";
 import {
   Container, Icon, Divider, Dropdown, Button, Grid,
-  Form, Input,
+  Form, Input, Modal, Header,
 } from "semantic-ui-react";
 import moment from "moment";
 
@@ -15,13 +15,17 @@ import postgresImg from "../../../assets/postgres.png";
 import DatarequestModal from "./DatarequestModal";
 
 function Dataset(props) {
-  const { dataset, connections, onUpdate } = props;
+  const {
+    dataset, connections, onUpdate, onDelete,
+  } = props;
   const [newDataset, setNewDataset] = useState(dataset);
   const [dropdownConfig, setDropdownConfig] = useState([]);
   const [dataRequest] = useState({});
   const [configOpened, setConfigOpened] = useState(false);
   const [saveRequired, setSaveRequired] = useState(false);
   const [shouldSave, setShouldSave] = useState(null);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     const config = [];
@@ -86,11 +90,10 @@ function Dataset(props) {
   };
 
   const _onDeleteDataset = () => {
-    if (!newDataset.deleted && newDataset.deleted !== false) {
-      setNewDataset({ ...newDataset, deleted: true });
-    } else {
-      setNewDataset({ ...newDataset, deleted: !newDataset.deleted });
-    }
+    setDeleteLoading(true);
+    onDelete()
+      .then(() => setDeleteLoading(false))
+      .catch(() => setDeleteLoading(false));
   };
 
   const _onChangeLegend = (e, data) => {
@@ -149,8 +152,8 @@ function Dataset(props) {
               disabled={!newDataset.connection_id}
               onClick={_openConfigModal}
             >
-              <Icon name="cog" />
-              Configure
+              <Icon name="database" />
+              Get data
             </Button>
           </Grid.Column>
         </Grid.Row>
@@ -169,13 +172,13 @@ function Dataset(props) {
             </Button>
             <Button
               basic
-              negative={!newDataset.deleted}
+              negative
               icon
               labelPosition="right"
-              onClick={_onDeleteDataset}
+              onClick={() => setDeleteModal(true)}
             >
-              <Icon name={newDataset.deleted ? "archive" : "trash"} />
-              {newDataset.deleted ? "Re-activate dataset" : "Remove dataset"}
+              <Icon name="trash" />
+              Remove dataset
             </Button>
           </Grid.Column>
         </Grid.Row>
@@ -183,13 +186,44 @@ function Dataset(props) {
 
       {newDataset.connection_id && (
         <DatarequestModal
-          dataset={dataset}
           connection={_getActiveConnection()}
           dataRequest={dataRequest}
           open={configOpened}
           onClose={_onCloseConfig}
         />
       )}
+
+      {/* DELETE CONFIRMATION MODAL */}
+      <Modal open={deleteModal} basic size="small" onClose={() => setDeleteModal(false)}>
+        <Header
+          icon="exclamation triangle"
+          content="Are you sure you want to remove this dataset?"
+        />
+        <Modal.Content>
+          <p>
+            {"This action cannot be reversed."}
+          </p>
+        </Modal.Content>
+        <Modal.Actions>
+          <Button
+            basic
+            inverted
+            onClick={() => setDeleteModal(false)}
+          >
+            Go back
+          </Button>
+          <Button
+            negative
+            loading={deleteLoading}
+            onClick={_onDeleteDataset}
+            icon
+            labelPosition="right"
+          >
+            <Icon name="trash" />
+            Remove dataset
+          </Button>
+        </Modal.Actions>
+      </Modal>
     </Container>
   );
 }
@@ -198,6 +232,7 @@ Dataset.propTypes = {
   dataset: PropTypes.object.isRequired,
   connections: PropTypes.array.isRequired,
   onUpdate: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
 };
 
 const styles = {

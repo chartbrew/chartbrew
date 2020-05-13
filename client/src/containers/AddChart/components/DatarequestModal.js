@@ -8,7 +8,7 @@ import ApiBuilder from "./ApiBuilder";
 
 function DatarequestModal(props) {
   const {
-    open, dataset, onClose, dataRequest, connection,
+    open, onClose, dataRequest, connection,
   } = props;
 
   const _onClose = () => {
@@ -16,8 +16,14 @@ function DatarequestModal(props) {
   };
 
   return (
-    <Modal open={open} size="fullscreen" onClose={_onClose}>
-      <Modal.Header>{`Configure ${dataset.name}`}</Modal.Header>
+    <Modal
+      open={open}
+      size="fullscreen"
+      onClose={_onClose}
+      closeOnDimmerClick={false}
+      closeOnEscape={false}
+    >
+      <Modal.Header>{`Configure ${connection.name}`}</Modal.Header>
       <Modal.Content>
         {connection.type === "api" && (
           <ApiBuilder
@@ -40,7 +46,6 @@ DatarequestModal.defaultProps = {
 
 DatarequestModal.propTypes = {
   open: PropTypes.bool,
-  dataset: PropTypes.object.isRequired,
   onClose: PropTypes.func.isRequired,
   connection: PropTypes.object.isRequired,
   dataRequest: PropTypes.object.isRequired,

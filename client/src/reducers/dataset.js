@@ -3,6 +3,7 @@ import {
   FETCH_DATASET_FAIL,
   FETCH_CHART_DATASETS,
   FETCH_DATASET_SUCCESS,
+  REMOVE_DATASET,
 } from "../actions/dataset";
 
 export default function dataset(state = {
@@ -33,6 +34,20 @@ export default function dataset(state = {
       return { ...state, loading: false, data: newData };
     case FETCH_DATASET_FAIL:
       return { ...state, loading: false, error: true };
+    case REMOVE_DATASET:
+      // look for existing datasets in the data array and remove it if it exists
+      let removeIndex = -1;
+      for (let i = 0; i < state.data.length; i++) {
+        if (state.data[i].id === parseInt(action.datasetId, 10)) {
+          removeIndex = i;
+          break;
+        }
+      }
+      const tempData = [...state.data];
+      if (removeIndex > -1) {
+        tempData.splice(removeIndex, 1);
+      }
+      return { ...state, loading: false, data: tempData };
     default:
       return state;
   }
