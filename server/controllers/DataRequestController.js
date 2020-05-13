@@ -8,7 +8,7 @@ class RequestController {
 
   create(data) {
     return db.DataRequest.findOne({
-      where: { chart_id: data.chart_id },
+      where: { dataset_id: data.dataset_id },
     })
       .then((dataRequest) => {
         if (dataRequest) return this.update(dataRequest.id, data);
@@ -46,6 +46,19 @@ class RequestController {
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
+  findByDataset(datasetId) {
+    return db.DataRequest.findOne({ where: { dataset_id: datasetId } })
+      .then((dataRequest) => {
+        if (!dataRequest) {
+          throw new Error(404);
+        }
+        return Promise.resolve(dataRequest);
+      })
+      .catch((error) => {
+        return Promise.reject(error);
       });
   }
 

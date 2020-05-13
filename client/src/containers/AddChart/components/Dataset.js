@@ -20,7 +20,6 @@ function Dataset(props) {
   } = props;
   const [newDataset, setNewDataset] = useState(dataset);
   const [dropdownConfig, setDropdownConfig] = useState([]);
-  const [dataRequest] = useState({});
   const [configOpened, setConfigOpened] = useState(false);
   const [saveRequired, setSaveRequired] = useState(false);
   const [shouldSave, setShouldSave] = useState(null);
@@ -92,8 +91,14 @@ function Dataset(props) {
   const _onDeleteDataset = () => {
     setDeleteLoading(true);
     onDelete()
-      .then(() => setDeleteLoading(false))
-      .catch(() => setDeleteLoading(false));
+      .then(() => {
+        setDeleteLoading(false);
+        setDeleteModal(false);
+      })
+      .catch(() => {
+        setDeleteLoading(false);
+        setDeleteModal(false);
+      });
   };
 
   const _onChangeLegend = (e, data) => {
@@ -186,8 +191,8 @@ function Dataset(props) {
 
       {newDataset.connection_id && (
         <DatarequestModal
+          dataset={dataset}
           connection={_getActiveConnection()}
-          dataRequest={dataRequest}
           open={configOpened}
           onClose={_onCloseConfig}
         />

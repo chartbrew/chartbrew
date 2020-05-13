@@ -30,6 +30,7 @@ module.exports = (app) => {
         return res.status(200).send(dataRequest);
       })
       .catch((error) => {
+        console.log("error", error);
         if (error.message === "401") {
           return res.status(401).send({ error: "Not authorized" });
         }
@@ -125,6 +126,36 @@ module.exports = (app) => {
       });
   });
   // -------------------------------------------------
+
+  /*
+  ** Route to get a Data Request by dataset ID
+  */
+  app.get(`${root}/dataset/:datasetId`, verifyToken, (req, res) => {
+    return projectController.findById(req.params.project_id)
+      .then((project) => {
+        return teamController.getTeamRole(project.team_id, req.user.id);
+      })
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).readAny("dataRequest");
+        if (!permission.granted) {
+          throw new Error(401);
+        }
+
+        return dataRequestController.findByDataset(req.params.datasetId);
+      })
+      .then((dataRequest) => {
+        return res.status(200).send(dataRequest);
+      })
+      .catch((error) => {
+        if (error && error.message === "404") {
+          return res.status(404).send(error);
+        }
+
+        return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------------
+
 
   return (req, res, next) => {
     next();
