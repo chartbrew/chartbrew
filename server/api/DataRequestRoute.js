@@ -30,7 +30,6 @@ module.exports = (app) => {
         return res.status(200).send(dataRequest);
       })
       .catch((error) => {
-        console.log("error", error);
         if (error.message === "401") {
           return res.status(401).send({ error: "Not authorized" });
         }
