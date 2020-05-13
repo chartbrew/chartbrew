@@ -68,3 +68,34 @@ export function saveNewDataset(projectId, chartId, data) {
       });
   };
 }
+
+export function updateDataset(projectId, chartId, datasetId, data) {
+  return (dispatch) => {
+    const token = cookie.load("brewToken");
+    const url = `${API_HOST}/project/${projectId}/chart/${chartId}/dataset/${datasetId}`;
+    const method = "PUT";
+    const body = JSON.stringify(data);
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    });
+    dispatch({ type: FETCHING_DATASET });
+    return fetch(url, { method, body, headers })
+      .then((response) => {
+        if (!response.ok) {
+          addError(response.status, "Failed to fetch datasets");
+          throw new Error(response.status);
+        }
+
+        return response.json();
+      })
+      .then((dataset) => {
+        dispatch({ type: FETCH_DATASET_SUCCESS, dataset });
+        return dataset;
+      })
+      .catch((error) => {
+        return error;
+      });
+  };
+}

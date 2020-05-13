@@ -6,6 +6,8 @@ import {
   Grid, Button, Icon, Header, Divider, Popup, Container,
   Form, Input, List,
 } from "semantic-ui-react";
+import { ToastContainer, toast, Flip } from "react-toastify";
+import "react-toastify/dist/ReactToastify.min.css";
 
 import ChartPreview from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
@@ -18,6 +20,7 @@ import {
 import {
   getChartDatasets as getChartDatasetsAction,
   saveNewDataset as saveNewDatasetAction,
+  updateDataset as updateDatasetAction,
 } from "../../actions/dataset";
 
 /*
@@ -34,7 +37,7 @@ function AddChart(props) {
 
   const {
     match, createChart, history, charts, saveNewDataset, getChartDatasets,
-    datasets,
+    datasets, updateDataset,
   } = props;
 
   useEffect(() => {
@@ -87,6 +90,38 @@ function AddChart(props) {
       });
   };
 
+  const _onUpdateDataset = (newDataset) => {
+    return updateDataset(
+      match.params.projectId,
+      match.params.chartId,
+      activeDataset.id,
+      newDataset
+    )
+      .then((dataset) => {
+        setActiveDataset(dataset);
+        toast.success("Updated the dataset 👌", {
+          position: "bottom-right",
+          autoClose: 1500,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          transition: Flip,
+        });
+      })
+      .catch(() => {
+        toast.error("Cannot update the dataset 😫 Please try again", {
+          position: "bottom-right",
+          autoClose: 2500,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          transition: Flip,
+        });
+      });
+  };
+
   if (titleScreen) {
     return (
       <ChartDescription
@@ -100,6 +135,7 @@ function AddChart(props) {
 
   return (
     <div style={styles.container}>
+      <ToastContainer />
       <Grid columns={2} divided centered>
         <Grid.Column width={9}>
           <Grid.Row>
@@ -163,12 +199,9 @@ function AddChart(props) {
                   style={styles.datasetButtons}
                   key={dataset.id}
                   primary={dataset.id !== activeDataset.id}
-                  icon
-                  labelPosition="right"
                   onClick={() => _onDatasetClicked(dataset)}
                   secondary={dataset.id === activeDataset.id}
                 >
-                  <Icon name="plug" />
                   {dataset.legend}
                 </Button>
               );
@@ -225,6 +258,7 @@ function AddChart(props) {
           <Divider />
           <Dataset
             dataset={activeDataset}
+            onUpdate={_onUpdateDataset}
           />
         </Grid.Column>
       </Grid>
@@ -263,6 +297,7 @@ AddChart.propTypes = {
   charts: PropTypes.array.isRequired,
   getChartDatasets: PropTypes.func.isRequired,
   saveNewDataset: PropTypes.func.isRequired,
+  updateDataset: PropTypes.func.isRequired,
   datasets: PropTypes.array.isRequired,
 };
 
@@ -281,6 +316,9 @@ const mapDispatchToProps = (dispatch) => {
     },
     saveNewDataset: (projectId, chartId, data) => {
       return dispatch(saveNewDatasetAction(projectId, chartId, data));
+    },
+    updateDataset: (projectId, chartId, datasetId, data) => {
+      return dispatch(updateDatasetAction(projectId, chartId, datasetId, data));
     },
   };
 };

@@ -97,6 +97,34 @@ module.exports = (app) => {
   });
   // ----------------------------------------------------
 
+  /*
+  ** Route to update a dataset
+  */
+  app.put(`${root}/:id`, verifyToken, (req, res) => {
+    return projectController.findById(req.params.project_id)
+      .then((project) => {
+        return teamController.getTeamRole(project.team_id, req.user.id);
+      })
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).updateAny("dataset");
+        if (!permission.granted) {
+          throw new Error(401);
+        }
+
+        return datasetController.update(req.params.id, req.body);
+      })
+      .then((dataset) => {
+        return res.status(200).send(dataset);
+      })
+      .catch((err) => {
+        if (err && err.message && err.message === "401") {
+          return res.status(401).send(err);
+        }
+
+        return res.status(400).send(err);
+      });
+  });
+
   return (req, res, next) => {
     next();
   };
