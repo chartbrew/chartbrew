@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
@@ -9,6 +9,7 @@ import {
 import brace from "brace"; // eslint-disable-line
 import AceEditor from "react-ace";
 import uuid from "uuid/v4";
+import _ from "lodash";
 
 import "brace/mode/json";
 import "brace/theme/tomorrow";
@@ -17,65 +18,58 @@ import { testApiRequest } from "../../../actions/connection";
 import { getDataRequestByChart } from "../../../actions/dataRequest";
 import ApiPagination from "../../../components/ApiPagination";
 
+const methods = [{
+  key: 1,
+  text: "GET",
+  value: "GET",
+}, {
+  key: 2,
+  text: "POST",
+  value: "POST",
+}, {
+  key: 3,
+  text: "PUT",
+  value: "PUT",
+}, {
+  key: 4,
+  text: "DELETE",
+  value: "DELETE",
+}, {
+  key: 5,
+  text: "OPTIONS",
+  value: "OPTIONS",
+}];
+
 /*
-  Description
+  The API Data Request builder
 */
-class ApiBuilder extends Component {
-  constructor(props) {
-    super(props);
+function ApiBuilder(props) {
+  const [apiRequest, setApiRequest] = useState({
+    method: "GET",
+    route: "",
+    useGlobalHeaders: true,
+    formattedHeaders: [{
+      id: uuid(),
+      key: "",
+      value: "",
+    }]
+  });
+  const [result, setResult] = useState("");
+  const [activeMenu, setActiveMenu] = useState("headers");
+  const [requestSuccess, setRequestSuccess] = useState(false);
+  const [requestLoading, setRequestLoading] = useState(false);
+  const [requestError, setRequestError] = useState(false);
 
-    this.state = {
-      methods: [{
-        key: 1,
-        text: "GET",
-        value: "GET",
-      }, {
-        key: 2,
-        text: "POST",
-        value: "POST",
-      }, {
-        key: 3,
-        text: "PUT",
-        value: "PUT",
-      }, {
-        key: 4,
-        text: "DELETE",
-        value: "DELETE",
-      }, {
-        key: 5,
-        text: "OPTIONS",
-        value: "OPTIONS",
-      }],
-      headers: [{
-        id: uuid(),
-        key: "",
-        value: "",
-      }],
-      apiRequest: {
-        method: "GET",
-        route: "",
-        useGlobalHeaders: true,
-        formattedHeaders: [{
-          id: uuid(),
-          key: "",
-          value: "",
-        }]
-      },
-      result: "",
-      activeMenu: "headers",
-    };
-  }
+  const {
+    dataRequest, chartId, getDataRequestByChart, match, onChangeRequest,
+    connection, testApiRequest, onComplete, onPaginationChanged,
+    offset, items, itemsLimit, pagination,
+  } = props;
 
-  componentDidMount() {
-    this._onInit();
-  }
-
-  _onInit = () => {
-    const {
-      dataRequest, chartId, getDataRequestByChart, match, onChangeRequest,
-    } = this.props;
+  // on init effect
+  useEffect(() => {
     if (dataRequest) {
-      this.setState({ apiRequest: dataRequest });
+      setApiRequest(dataRequest);
     }
 
     if (chartId > 0 && !dataRequest) {
@@ -94,17 +88,19 @@ class ApiBuilder extends Component {
 
           formattedApiRequest.formattedHeaders = formattedHeaders;
 
-          this.setState({ apiRequest: formattedApiRequest }, () => {
-            onChangeRequest(formattedApiRequest);
-          });
+          setApiRequest(formattedApiRequest);
         })
         .catch(() => {});
     }
-  }
+  }, []);
 
-  _addHeader = () => {
-    const { onChangeRequest } = this.props;
-    const { apiRequest } = this.state;
+  useEffect(() => {
+    if (!_.isEqual(dataRequest, apiRequest)) {
+      onChangeRequest(apiRequest);
+    }
+  }, [apiRequest, onChangeRequest]);
+
+  const _addHeader = () => {
     const { formattedHeaders } = apiRequest;
 
     formattedHeaders.push({
@@ -113,17 +109,12 @@ class ApiBuilder extends Component {
       value: "",
     });
 
-    this.setState({
-      apiRequest: { ...apiRequest, formattedHeaders },
-    }, () => {
-      onChangeRequest(apiRequest);
-    });
-  }
+    setApiRequest({ ...apiRequest, formattedHeaders });
+  };
 
-  _removeHeader = (id) => {
-    const { onChangeRequest } = this.props;
-    const { apiRequest } = this.state;
+  const _removeHeader = (id) => {
     const { formattedHeaders } = apiRequest;
+
     let found;
     for (let i = 0; i < formattedHeaders.length; i++) {
       if (formattedHeaders[i].id === id) {
@@ -131,19 +122,12 @@ class ApiBuilder extends Component {
         break;
       }
     }
-
     if (found) formattedHeaders.splice(found, 1);
 
-    this.setState({
-      apiRequest: { ...apiRequest, formattedHeaders },
-    }, () => {
-      onChangeRequest(apiRequest);
-    });
-  }
+    setApiRequest({ ...apiRequest, formattedHeaders });
+  };
 
-  _onChangeHeader = (id, value) => {
-    const { onChangeRequest } = this.props;
-    const { apiRequest } = this.state;
+  const _onChangeHeader = (id, value) => {
     const { formattedHeaders } = apiRequest;
 
     for (let i = 0; i < formattedHeaders.length; i++) {
@@ -153,17 +137,12 @@ class ApiBuilder extends Component {
       }
     }
 
-    this.setState({
-      apiRequest: { ...apiRequest, formattedHeaders },
-    }, () => {
-      onChangeRequest(apiRequest);
-    });
-  }
+    setApiRequest({ ...apiRequest, formattedHeaders });
+  };
 
-  _onChangeHeaderValue = (id, value) => {
-    const { onChangeRequest } = this.props;
-    const { apiRequest } = this.state;
+  const _onChangeHeaderValue = (id, value) => {
     const { formattedHeaders } = apiRequest;
+
     for (let i = 0; i < formattedHeaders.length; i++) {
       if (formattedHeaders[i].id === id) {
         formattedHeaders[i].value = value;
@@ -171,85 +150,42 @@ class ApiBuilder extends Component {
       }
     }
 
-    this.setState({
-      apiRequest: { ...apiRequest, formattedHeaders },
-    }, () => {
-      onChangeRequest(apiRequest);
-    });
-  }
+    setApiRequest({ ...apiRequest, formattedHeaders });
+  };
 
-  _changeMethod = (value) => {
-    const { onChangeRequest } = this.props;
-    const { apiRequest } = this.state;
-
+  const _changeMethod = (value) => {
     if (value === "GET" || value === "OPTIONS") {
-      this.setState({
-        apiRequest: { ...apiRequest, method: value },
-        activeMenu: "headers"
-      }, () => {
-        onChangeRequest(apiRequest);
-      });
+      setApiRequest({ ...apiRequest, method: value });
+      setActiveMenu("headers");
     } else {
-      this.setState({
-        apiRequest: { ...apiRequest, method: value }
-      }, () => {
-        onChangeRequest(apiRequest);
-      });
+      setApiRequest({ ...apiRequest, method: value });
     }
-  }
+  };
 
-  _onToggleGlobal = () => {
-    const { onChangeRequest } = this.props;
-    const { apiRequest } = this.state;
-
-    this.setState({
-      apiRequest: {
-        ...apiRequest, useGlobalHeaders: !apiRequest.useGlobalHeaders,
-      }
-    }, () => {
-      onChangeRequest(apiRequest);
+  const _onToggleGlobal = () => {
+    setApiRequest({
+      ...apiRequest, useGlobalHeaders: !apiRequest.useGlobalHeaders,
     });
-  }
+  };
 
-  _onChangeBody = (value) => {
-    const { onChangeRequest } = this.props;
-    const { apiRequest } = this.state;
+  const _onChangeBody = (value) => {
+    setApiRequest({ ...apiRequest, body: value });
+  };
 
-    this.setState({
-      apiRequest: {
-        ...apiRequest, body: value,
-      }
-    }, () => {
-      onChangeRequest(apiRequest);
-    });
-  }
-
-  _onChangeRoute = (value) => {
-    const { onChangeRequest } = this.props;
-    const { apiRequest } = this.state;
-
+  const _onChangeRoute = (value) => {
     if (value[0] !== "/") {
       value = `/${value}`; // eslint-disable-line
     }
 
-    this.setState({ apiRequest: { ...apiRequest, route: value } }, () => {
-      onChangeRequest({ ...apiRequest, route: value });
-    });
-  }
+    setApiRequest({ ...apiRequest, route: value });
+  };
 
-  _onTest = () => {
-    const {
-      match, connection, testApiRequest, onComplete,
-      offset, items, itemsLimit, pagination,
-    } = this.props;
-    const {
-      headers, apiRequest
-    } = this.state;
-
+  const _onTest = () => {
+    const { formattedHeaders } = apiRequest;
     let newHeaders = {};
-    for (let i = 0; i < headers.length; i++) {
-      if (headers[i].key && headers[i].value) {
-        newHeaders = { ...newHeaders, [headers[i].key]: headers[i].value };
+    for (let i = 0; i < formattedHeaders.length; i++) {
+      if (formattedHeaders[i].key && formattedHeaders[i].value) {
+        newHeaders = { ...newHeaders, [formattedHeaders[i].key]: formattedHeaders[i].value };
       }
     }
 
@@ -261,249 +197,236 @@ class ApiBuilder extends Component {
     finalApiRequest.offset = offset;
     finalApiRequest.itemsLimit = itemsLimit;
 
-    this.setState({ requestLoading: true, requestSuccess: false, requestError: false });
+    setRequestLoading(true);
+    setRequestSuccess(false);
+    setRequestError(false);
     testApiRequest(match.params.projectId, connection.id, finalApiRequest)
       .then((result) => {
-        this.setState({
-          requestLoading: false,
-          requestSuccess: result.status,
-          result: JSON.stringify(result.body, null, 2)
-        });
+        setRequestLoading(false);
+        setRequestSuccess(result.status);
+        setResult(JSON.stringify(result.body, null, 2));
 
         onComplete(result.body);
       })
       .catch((error) => {
-        this.setState({
-          requestLoading: false,
-          requestError: error,
-          result: JSON.stringify(error, null, 2)
-        });
+        setRequestLoading(false);
+        setRequestError(error);
+        setResult(JSON.stringify(error, null, 2));
       });
-  }
+  };
 
-  render() {
-    const {
-      methods, activeMenu, requestSuccess, requestError,
-      requestLoading, result, apiRequest,
-    } = this.state;
-    const {
-      connection, items, itemsLimit, offset, pagination,
-      onPaginationChanged,
-    } = this.props;
-
-    return (
-      <div style={styles.container}>
-        <Grid columns={2} stackable centered>
-          <Grid.Row>
-            <Grid.Column width={15}>
-              <Form>
-                <Form.Group widths={3}>
-                  <Form.Field width={2}>
-                    <label>Method</label>
-                    <Dropdown
-                      fluid
-                      text={apiRequest.method}
-                      options={methods}
-                      selection
-                      onChange={(e, data) => this._changeMethod(data.value)}
-                    />
-                  </Form.Field>
-                  <Form.Field width={12}>
-                    <label>{"Add the route and any query parameters below"}</label>
-                    <Input
-                      label={connection.host}
-                      placeholder="/route?key=value"
-                      focus
-                      value={apiRequest.route || ""}
-                      onChange={(e, data) => this._onChangeRoute(data.value)}
-                    />
-                  </Form.Field>
-                  <Form.Field width={2}>
-                    <label>Make the request</label>
-                    <Button
-                      primary
-                      icon
-                      labelPosition="right"
-                      loading={requestLoading}
-                      onClick={this._onTest}
-                    >
-                      <Icon name="play" />
-                      Send
-                    </Button>
-                  </Form.Field>
-                </Form.Group>
-              </Form>
-            </Grid.Column>
-            <Grid.Column width={1} />
-          </Grid.Row>
-          <Grid.Row>
-            <Grid.Column width={10}>
-              <Menu pointing secondary>
-                <Menu.Item
-                  name="Headers"
-                  active={activeMenu === "headers"}
-                  onClick={() => this.setState({ activeMenu: "headers" })}
-                />
-                <Menu.Item
-                  name="Body"
-                  disabled={apiRequest.method === "GET" || apiRequest.method === "OPTIONS"}
-                  active={activeMenu === "body"}
-                  onClick={() => this.setState({ activeMenu: "body" })}
-                />
-                <Menu.Item
-                  name="Pagination"
-                  active={activeMenu === "pagination"}
-                  onClick={() => this.setState({ activeMenu: "pagination" })}
-                />
-              </Menu>
-              {activeMenu === "headers" && (
-                <div>
-                  {connection.options && connection.options.length > 0 && (
-                    <div>
-                      <Checkbox
-                        label="Enable global headers"
-                        defaultChecked={!!apiRequest.useGlobalHeaders}
-                        onChange={this._onToggleGlobal}
-                      />
-
-                      {apiRequest.useGlobalHeaders && (
-                        <List>
-                          {connection.options.map((header) => {
-                            return (
-                              <List.Item key={header}>
-                                <List.Content>
-                                  <Form>
-                                    <Form.Group widths={2}>
-                                      <Form.Field width={7}>
-                                        <Input value={Object.keys(header)[0]} />
-                                      </Form.Field>
-                                      <Form.Field width={7}>
-                                        <Input value={header[Object.keys(header)[0]]} />
-                                      </Form.Field>
-                                    </Form.Group>
-                                  </Form>
-                                </List.Content>
-                              </List.Item>
-                            );
-                          })}
-                        </List>
-                      )}
-
-                      <Divider />
-                    </div>
-                  )}
-                  <List>
-                    {apiRequest.formattedHeaders && apiRequest.formattedHeaders.map((header) => {
-                      return (
-                        <List.Item key={header.id}>
-                          <List.Content>
-                            <Form>
-                              <Form.Group widths={3}>
-                                <Form.Field width={7}>
-                                  <Input
-                                    placeholder="Header"
-                                    value={header.key}
-                                    onChange={(e, data) => {
-                                      this._onChangeHeader(header.id, data.value);
-                                    }}
-                                  />
-                                </Form.Field>
-                                <Form.Field width={7}>
-                                  <Input
-                                    placeholder="Value"
-                                    value={header.value}
-                                    onChange={(e, data) => {
-                                      this._onChangeHeaderValue(header.id, data.value);
-                                    }}
-                                  />
-                                </Form.Field>
-                                <Form.Field width={1}>
-                                  <Button
-                                    icon
-                                    onClick={() => this._removeHeader(header.id)}
-                                  >
-                                    <Icon name="close" />
-                                  </Button>
-                                </Form.Field>
-                              </Form.Group>
-                            </Form>
-                          </List.Content>
-                        </List.Item>
-                      );
-                    })}
-                  </List>
-
+  return (
+    <div style={styles.container}>
+      <Grid columns={2} stackable centered>
+        <Grid.Row>
+          <Grid.Column width={15}>
+            <Form>
+              <Form.Group widths={3}>
+                <Form.Field width={2}>
+                  <label>Method</label>
+                  <Dropdown
+                    fluid
+                    text={apiRequest.method}
+                    options={methods}
+                    selection
+                    onChange={(e, data) => _changeMethod(data.value)}
+                  />
+                </Form.Field>
+                <Form.Field width={12}>
+                  <label>{"Add the route and any query parameters below"}</label>
+                  <Input
+                    label={connection.host}
+                    placeholder="/route?key=value"
+                    focus
+                    value={apiRequest.route || ""}
+                    onChange={(e, data) => _onChangeRoute(data.value)}
+                  />
+                </Form.Field>
+                <Form.Field width={2}>
+                  <label>Make the request</label>
                   <Button
+                    primary
                     icon
                     labelPosition="right"
-                    size="small"
-                    onClick={this._addHeader}
+                    loading={requestLoading}
+                    onClick={_onTest}
                   >
-                    <Icon name="plus" />
-                    Add header
+                    <Icon name="play" />
+                    Send
                   </Button>
-                </div>
-              )}
-              {activeMenu === "body" && (
-                <div>
-                  <AceEditor
-                    mode="json"
-                    theme="tomorrow"
-                    height="400px"
-                    width="none"
-                    value={apiRequest.body || ""}
-                    onChange={(value) => {
-                      this._onChangeBody(value);
-                    }}
-                    name="queryEditor"
-                    editorProps={{ $blockScrolling: true }}
-                  />
-                </div>
-              )}
-              {activeMenu === "pagination" && (
-                <ApiPagination
-                  items={items}
-                  itemsLimit={itemsLimit}
-                  offset={offset}
-                  pagination={pagination}
-                  onPaginationChanged={onPaginationChanged}
-                  apiRoute={apiRequest.route}
-                />
-              )}
-            </Grid.Column>
-            <Grid.Column width={6}>
-              <Header as="h3" dividing style={{ paddingTop: 15 }}>Result:</Header>
-              {requestSuccess && (
-                <>
-                  <Label color="green" style={{ marginBottom: 10 }}>
-                    {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
-                  </Label>
-                  <Label style={{ marginBottom: 10 }}>
-                    {`Length: ${result ? JSON.parse(result).length : 0}`}
-                  </Label>
-                </>
-              )}
-              {requestError && (
-                <Label color="red" style={{ marginBottom: 10 }}>
-                  {`${requestError.statusCode} ${requestError.statusText}`}
-                </Label>
-              )}
-              <AceEditor
-                mode="json"
-                theme="tomorrow"
-                height="400px"
-                width="none"
-                value={result || ""}
-                onChange={() => this.setState({ result })}
-                name="resultEditor"
-                editorProps={{ $blockScrolling: false }}
+                </Form.Field>
+              </Form.Group>
+            </Form>
+          </Grid.Column>
+          <Grid.Column width={1} />
+        </Grid.Row>
+        <Grid.Row>
+          <Grid.Column width={10}>
+            <Menu pointing secondary>
+              <Menu.Item
+                name="Headers"
+                active={activeMenu === "headers"}
+                onClick={() => setActiveMenu("headers")}
               />
-            </Grid.Column>
-          </Grid.Row>
-        </Grid>
-      </div>
-    );
-  }
+              <Menu.Item
+                name="Body"
+                disabled={apiRequest.method === "GET" || apiRequest.method === "OPTIONS"}
+                active={activeMenu === "body"}
+                onClick={() => setActiveMenu("body")}
+              />
+              <Menu.Item
+                name="Pagination"
+                active={activeMenu === "pagination"}
+                onClick={() => setActiveMenu("pagination")}
+              />
+            </Menu>
+            {activeMenu === "headers" && (
+              <div>
+                {connection.options && connection.options.length > 0 && (
+                  <div>
+                    <Checkbox
+                      label="Enable global headers"
+                      defaultChecked={!!apiRequest.useGlobalHeaders}
+                      onChange={_onToggleGlobal}
+                    />
+
+                    {apiRequest.useGlobalHeaders && (
+                      <List>
+                        {connection.options.map((header) => {
+                          return (
+                            <List.Item key={header}>
+                              <List.Content>
+                                <Form>
+                                  <Form.Group widths={2}>
+                                    <Form.Field width={7}>
+                                      <Input value={Object.keys(header)[0]} />
+                                    </Form.Field>
+                                    <Form.Field width={7}>
+                                      <Input value={header[Object.keys(header)[0]]} />
+                                    </Form.Field>
+                                  </Form.Group>
+                                </Form>
+                              </List.Content>
+                            </List.Item>
+                          );
+                        })}
+                      </List>
+                    )}
+
+                    <Divider />
+                  </div>
+                )}
+                <List>
+                  {apiRequest.formattedHeaders && apiRequest.formattedHeaders.map((header) => {
+                    return (
+                      <List.Item key={header.id}>
+                        <List.Content>
+                          <Form>
+                            <Form.Group widths={3}>
+                              <Form.Field width={7}>
+                                <Input
+                                  placeholder="Header"
+                                  value={header.key}
+                                  onChange={(e, data) => {
+                                    _onChangeHeader(header.id, data.value);
+                                  }}
+                                />
+                              </Form.Field>
+                              <Form.Field width={7}>
+                                <Input
+                                  placeholder="Value"
+                                  value={header.value}
+                                  onChange={(e, data) => {
+                                    _onChangeHeaderValue(header.id, data.value);
+                                  }}
+                                />
+                              </Form.Field>
+                              <Form.Field width={1}>
+                                <Button
+                                  icon
+                                  onClick={() => _removeHeader(header.id)}
+                                >
+                                  <Icon name="close" />
+                                </Button>
+                              </Form.Field>
+                            </Form.Group>
+                          </Form>
+                        </List.Content>
+                      </List.Item>
+                    );
+                  })}
+                </List>
+
+                <Button
+                  icon
+                  labelPosition="right"
+                  size="small"
+                  onClick={_addHeader}
+                >
+                  <Icon name="plus" />
+                  Add header
+                </Button>
+              </div>
+            )}
+            {activeMenu === "body" && (
+              <div>
+                <AceEditor
+                  mode="json"
+                  theme="tomorrow"
+                  height="400px"
+                  width="none"
+                  value={apiRequest.body || ""}
+                  onChange={(value) => {
+                    _onChangeBody(value);
+                  }}
+                  name="queryEditor"
+                  editorProps={{ $blockScrolling: true }}
+                />
+              </div>
+            )}
+            {activeMenu === "pagination" && (
+              <ApiPagination
+                items={items}
+                itemsLimit={itemsLimit}
+                offset={offset}
+                pagination={pagination}
+                onPaginationChanged={onPaginationChanged}
+                apiRoute={apiRequest.route}
+              />
+            )}
+          </Grid.Column>
+          <Grid.Column width={6}>
+            <Header as="h3" dividing style={{ paddingTop: 15 }}>Result:</Header>
+            {requestSuccess && (
+              <>
+                <Label color="green" style={{ marginBottom: 10 }}>
+                  {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
+                </Label>
+                <Label style={{ marginBottom: 10 }}>
+                  {`Length: ${result ? JSON.parse(result).length : 0}`}
+                </Label>
+              </>
+            )}
+            {requestError && (
+              <Label color="red" style={{ marginBottom: 10 }}>
+                {`${requestError.statusCode} ${requestError.statusText}`}
+              </Label>
+            )}
+            <AceEditor
+              mode="json"
+              theme="tomorrow"
+              height="400px"
+              width="none"
+              value={result || ""}
+              onChange={() => setResult(result)}
+              name="resultEditor"
+              editorProps={{ $blockScrolling: false }}
+            />
+          </Grid.Column>
+        </Grid.Row>
+      </Grid>
+    </div>
+  );
 }
 const styles = {
   container: {

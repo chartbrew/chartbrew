@@ -87,6 +87,7 @@ function DatarequestModal(props) {
           <ApiBuilder
             dataRequest={dataRequest}
             connection={connection}
+            onChangeRequest={() => {}}
           />
         )}
       </Modal.Content>
