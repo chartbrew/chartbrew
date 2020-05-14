@@ -10,20 +10,24 @@ import ApiBuilder from "./ApiBuilder";
 import {
   getDataRequestByDataset as getDataRequestByDatasetAction,
   createDataRequest as createDataRequestAction,
+  updateDataRequest as updateDataRequestAction,
 } from "../../../actions/dataRequest";
 
 function DatarequestModal(props) {
   const {
-    open, onClose, connection, dataset, match,
-    getDataRequestByDataset, createDataRequest,
+    open, onClose, connection, dataset, match, getDataRequestByDataset,
+    createDataRequest, updateDataRequest,
   } = props;
 
   const [dataRequest, setDataRequest] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [closeTrigger, setCloseTrigger] = useState(false);
 
   useEffect(() => {
     if (!open) {
-      setDataRequest({});
+      setDataRequest(null);
       return;
     }
     let fetched = false;
@@ -31,6 +35,10 @@ function DatarequestModal(props) {
       .then((result) => {
         fetched = true;
         setDataRequest(result);
+
+        setTimeout(() => {
+          setSaved(true);
+        }, 100);
       })
       .catch((err) => {
         if (err && err.message === "404") {
@@ -44,6 +52,9 @@ function DatarequestModal(props) {
       .then((result) => {
         if (!fetched && result) {
           setDataRequest(result);
+          setTimeout(() => {
+            setSaved(true);
+          }, 100);
         }
       })
       .catch(() => {
@@ -51,8 +62,58 @@ function DatarequestModal(props) {
       });
   }, [open, dataset]);
 
+  useEffect(() => {
+    setSaved(false);
+  }, [dataRequest]);
+
   const _onClose = () => {
-    onClose();
+    if (saved || closeTrigger) {
+      setCloseTrigger(false);
+      onClose();
+    } else if (!saved) {
+      setCloseTrigger(true);
+    }
+  };
+
+  const _updateDataRequest = (newData) => {
+    let newDr = newData;
+    // transform the headers array
+    if (newDr && newDr.formattedHeaders && newDr.formattedHeaders.length > 0) {
+      const { formattedHeaders } = newDr;
+      let newHeaders = {};
+      for (let i = 0; i < formattedHeaders.length; i++) {
+        if (formattedHeaders[i].key && formattedHeaders[i].value) {
+          newHeaders = { [formattedHeaders[i].key]: formattedHeaders[i].value, ...newHeaders };
+        }
+      }
+
+      newDr = { ...newDr, headers: newHeaders };
+    }
+
+    setDataRequest(newDr);
+  };
+
+  const _onSaveRequest = () => {
+    setLoading(true);
+
+    return updateDataRequest(
+      match.params.projectId,
+      match.params.chartId,
+      dataRequest.id,
+      dataRequest
+    )
+      .then((newDr) => {
+        setLoading(false);
+        setDataRequest(newDr);
+
+        setTimeout(() => {
+          setSaved(true);
+        }, 100);
+      })
+      .catch((e) => {
+        setLoading(false);
+        setError(e);
+      });
   };
 
   return (
@@ -87,13 +148,27 @@ function DatarequestModal(props) {
           <ApiBuilder
             dataRequest={dataRequest}
             connection={connection}
-            onChangeRequest={() => {}}
+            onChangeRequest={_updateDataRequest}
           />
         )}
       </Modal.Content>
       <Modal.Actions>
-        <Button onClick={_onClose} basic>Close</Button>
-        <Button primary onClick={() => {}}>Save</Button>
+        {closeTrigger && <span>Are you sure? Your settings are not saved</span>}
+        <Button
+          negative={closeTrigger}
+          onClick={_onClose}
+          basic
+        >
+          Close
+        </Button>
+        <Button
+          primary={!saved}
+          positive={saved}
+          onClick={_onSaveRequest}
+          loading={loading}
+        >
+          {saved ? "Saved" : "Save"}
+        </Button>
       </Modal.Actions>
     </Modal>
   );
@@ -111,6 +186,7 @@ DatarequestModal.propTypes = {
   getDataRequestByDataset: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   createDataRequest: PropTypes.func.isRequired,
+  updateDataRequest: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = () => {
@@ -125,6 +201,9 @@ const mapDispatchToProps = (dispatch) => {
     },
     createDataRequest: (projectId, chartId, data) => {
       return dispatch(createDataRequestAction(projectId, chartId, data));
+    },
+    updateDataRequest: (projectId, chartId, drId, data) => {
+      return dispatch(updateDataRequestAction(projectId, chartId, drId, data));
     },
   };
 };

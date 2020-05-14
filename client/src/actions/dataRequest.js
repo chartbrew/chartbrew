@@ -87,3 +87,33 @@ export function createDataRequest(projectId, chartId, data) {
       });
   };
 }
+
+export function updateDataRequest(projectId, chartId, drId, data) {
+  return (dispatch) => {
+    const token = cookie.load("brewToken");
+    const url = `${API_HOST}/project/${projectId}/chart/${chartId}/dataRequest/${drId}`;
+    const method = "PUT";
+    const body = JSON.stringify(data);
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    });
+
+    return fetch(url, { method, body, headers })
+      .then((response) => {
+        if (!response.ok) {
+          dispatch(addError(response.status, "Could not update the Data Request"));
+          throw new Error(response.status);
+        }
+
+        return response.json();
+      })
+      .then((dataRequest) => {
+        return Promise.resolve(dataRequest);
+      })
+      .catch((err) => {
+        return Promise.reject(err);
+      });
+  };
+}

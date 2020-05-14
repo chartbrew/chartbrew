@@ -9,13 +9,11 @@ import {
 import brace from "brace"; // eslint-disable-line
 import AceEditor from "react-ace";
 import uuid from "uuid/v4";
-import _ from "lodash";
 
 import "brace/mode/json";
 import "brace/theme/tomorrow";
 
 import { testApiRequest } from "../../../actions/connection";
-import { getDataRequestByChart } from "../../../actions/dataRequest";
 import ApiPagination from "../../../components/ApiPagination";
 
 const methods = [{
@@ -61,44 +59,36 @@ function ApiBuilder(props) {
   const [requestError, setRequestError] = useState(false);
 
   const {
-    dataRequest, chartId, getDataRequestByChart, match, onChangeRequest,
-    connection, testApiRequest, onComplete, onPaginationChanged,
-    offset, items, itemsLimit, pagination,
+    dataRequest, match, onChangeRequest,
+    connection, testApiRequest, onComplete,
   } = props;
 
   // on init effect
   useEffect(() => {
     if (dataRequest) {
-      setApiRequest(dataRequest);
-    }
+      // format the headers into key: value -> value: value format
+      const formattedApiRequest = dataRequest;
+      const formattedHeaders = [];
 
-    if (chartId > 0 && !dataRequest) {
-      getDataRequestByChart(match.params.projectId, chartId)
-        .then((fetchedRequest) => {
-          // format the headers into key: value -> value: value format
-          const formattedApiRequest = fetchedRequest;
-          const formattedHeaders = [];
-          Object.keys(fetchedRequest.headers).forEach((key) => {
-            formattedHeaders.push({
-              id: uuid(),
-              key,
-              value: fetchedRequest.headers[key],
-            });
+      if (dataRequest.headers) {
+        Object.keys(dataRequest.headers).forEach((key) => {
+          formattedHeaders.push({
+            id: uuid(),
+            key,
+            value: dataRequest.headers[key],
           });
+        });
+      }
+      if (!formattedApiRequest.method) formattedApiRequest.method = "GET";
+      formattedApiRequest.formattedHeaders = formattedHeaders;
 
-          formattedApiRequest.formattedHeaders = formattedHeaders;
-
-          setApiRequest(formattedApiRequest);
-        })
-        .catch(() => {});
+      setApiRequest(formattedApiRequest);
     }
   }, []);
 
   useEffect(() => {
-    if (!_.isEqual(dataRequest, apiRequest)) {
-      onChangeRequest(apiRequest);
-    }
-  }, [apiRequest, onChangeRequest]);
+    onChangeRequest(apiRequest);
+  }, [apiRequest]);
 
   const _addHeader = () => {
     const { formattedHeaders } = apiRequest;
@@ -113,7 +103,8 @@ function ApiBuilder(props) {
   };
 
   const _removeHeader = (id) => {
-    const { formattedHeaders } = apiRequest;
+    let { formattedHeaders } = apiRequest;
+    if (formattedHeaders.length === 1) formattedHeaders = [];
 
     let found;
     for (let i = 0; i < formattedHeaders.length; i++) {
@@ -180,6 +171,17 @@ function ApiBuilder(props) {
     setApiRequest({ ...apiRequest, route: value });
   };
 
+
+  const _onPaginationChanged = (type, value) => {
+    let newValue = value;
+    if (type === "itemsLimit" && value && value !== "0") {
+      newValue = Math.abs(parseInt(value, 10));
+    }
+
+    setApiRequest({ ...apiRequest, [type]: newValue });
+  };
+
+
   const _onTest = () => {
     const { formattedHeaders } = apiRequest;
     let newHeaders = {};
@@ -191,11 +193,6 @@ function ApiBuilder(props) {
 
     const finalApiRequest = { dataRequest: apiRequest };
     finalApiRequest.dataRequest.headers = newHeaders;
-
-    finalApiRequest.pagination = pagination;
-    finalApiRequest.items = items;
-    finalApiRequest.offset = offset;
-    finalApiRequest.itemsLimit = itemsLimit;
 
     setRequestLoading(true);
     setRequestSuccess(false);
@@ -285,7 +282,7 @@ function ApiBuilder(props) {
                 {connection.options && connection.options.length > 0 && (
                   <div>
                     <Checkbox
-                      label="Enable global headers"
+                      label="Include connection headers"
                       defaultChecked={!!apiRequest.useGlobalHeaders}
                       onChange={_onToggleGlobal}
                     />
@@ -386,12 +383,12 @@ function ApiBuilder(props) {
             )}
             {activeMenu === "pagination" && (
               <ApiPagination
-                items={items}
-                itemsLimit={itemsLimit}
-                offset={offset}
-                pagination={pagination}
-                onPaginationChanged={onPaginationChanged}
-                apiRoute={apiRequest.route}
+                items={apiRequest.items}
+                itemsLimit={apiRequest.itemsLimit}
+                offset={apiRequest.offset}
+                pagination={apiRequest.pagination}
+                onPaginationChanged={_onPaginationChanged}
+                apiRoute={apiRequest.route || ""}
               />
             )}
           </Grid.Column>
@@ -436,27 +433,15 @@ const styles = {
 
 ApiBuilder.defaultProps = {
   dataRequest: null,
-  chartId: -1,
-  items: "limit",
-  itemsLimit: 100,
-  offset: "offset",
-  pagination: false,
 };
 
 ApiBuilder.propTypes = {
   connection: PropTypes.object.isRequired,
   testApiRequest: PropTypes.func.isRequired,
-  getDataRequestByChart: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   onComplete: PropTypes.func.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
   dataRequest: PropTypes.object,
-  chartId: PropTypes.number,
-  items: PropTypes.string,
-  itemsLimit: PropTypes.number,
-  offset: PropTypes.string,
-  pagination: PropTypes.bool,
-  onPaginationChanged: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = () => {
@@ -468,9 +453,6 @@ const mapDispatchToProps = (dispatch) => {
   return {
     testApiRequest: (projectId, connectionId, apiRequest) => {
       return dispatch(testApiRequest(projectId, connectionId, apiRequest));
-    },
-    getDataRequestByChart: (projectId, chartId) => {
-      return dispatch(getDataRequestByChart(projectId, chartId));
     },
   };
 };
