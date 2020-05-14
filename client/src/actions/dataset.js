@@ -130,3 +130,40 @@ export function deleteDataset(projectId, chartId, datasetId) {
       });
   };
 }
+
+export function runRequest(projectId, chartId, datasetId) {
+  return (dispatch) => {
+    const token = cookie.load("brewToken");
+    const url = `${API_HOST}/project/${projectId}/chart/${chartId}/dataset/${datasetId}/request`;
+    const method = "GET";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`,
+    });
+
+    let status = {
+      statusCode: 500,
+      statusText: "Internal Server Error",
+    };
+    return fetch(url, { method, headers })
+      .then((response) => {
+        status = {
+          statusCode: response.status,
+          statusText: response.statusText,
+        };
+
+        if (!response.ok) {
+          dispatch(addError(response.status, "Error while making the request"));
+          throw new Error(response.status);
+        }
+
+        return response.json();
+      })
+      .then((result) => {
+        return Promise.resolve({ ...result, status });
+      })
+      .catch(() => {
+        return Promise.reject(status);
+      });
+  };
+}

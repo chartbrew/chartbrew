@@ -150,6 +150,32 @@ module.exports = (app) => {
   });
   // ----------------------------------------------------
 
+  /*
+  ** Route to run the request attached to the dataset
+  */
+  app.get(`${root}/:id/request`, verifyToken, (req, res) => {
+    return projectController.findById(req.params.project_id)
+      .then((project) => {
+        return teamController.getTeamRole(project.team_id, req.user.id);
+      })
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).readAny("dataset");
+        if (!permission.granted) {
+          throw new Error(401);
+        }
+
+        return datasetController.runRequest(req.params.id);
+      })
+      .then((result) => {
+        return res.status(200).send(result);
+      })
+      .catch((err) => {
+        return res.status(400).send(err);
+      });
+  });
+  // ----------------------------------------------------
+
+
   return (req, res, next) => {
     next();
   };

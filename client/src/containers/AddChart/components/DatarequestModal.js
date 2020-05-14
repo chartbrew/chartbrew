@@ -109,10 +109,13 @@ function DatarequestModal(props) {
         setTimeout(() => {
           setSaved(true);
         }, 100);
+
+        return newDr;
       })
       .catch((e) => {
         setLoading(false);
         setError(e);
+        return e;
       });
   };
 
@@ -146,9 +149,11 @@ function DatarequestModal(props) {
         )}
         {connection.type === "api" && dataRequest && (
           <ApiBuilder
+            dataset={dataset}
             dataRequest={dataRequest}
             connection={connection}
             onChangeRequest={_updateDataRequest}
+            onSave={_onSaveRequest}
           />
         )}
       </Modal.Content>

@@ -13,8 +13,10 @@ import uuid from "uuid/v4";
 import "brace/mode/json";
 import "brace/theme/tomorrow";
 
-import { testApiRequest } from "../../../actions/connection";
 import ApiPagination from "../../../components/ApiPagination";
+import {
+  runRequest as runRequestAction,
+} from "../../../actions/dataset";
 
 const methods = [{
   key: 1,
@@ -59,8 +61,8 @@ function ApiBuilder(props) {
   const [requestError, setRequestError] = useState(false);
 
   const {
-    dataRequest, match, onChangeRequest,
-    connection, testApiRequest, onComplete,
+    dataRequest, match, onChangeRequest, runRequest, dataset,
+    connection, onSave,
   } = props;
 
   // on init effect
@@ -197,19 +199,20 @@ function ApiBuilder(props) {
     setRequestLoading(true);
     setRequestSuccess(false);
     setRequestError(false);
-    testApiRequest(match.params.projectId, connection.id, finalApiRequest)
-      .then((result) => {
-        setRequestLoading(false);
-        setRequestSuccess(result.status);
-        setResult(JSON.stringify(result.body, null, 2));
 
-        onComplete(result.body);
-      })
-      .catch((error) => {
-        setRequestLoading(false);
-        setRequestError(error);
-        setResult(JSON.stringify(error, null, 2));
-      });
+    onSave().then(() => {
+      runRequest(match.params.projectId, match.params.chartId, dataset.id)
+        .then((result) => {
+          setRequestLoading(false);
+          setRequestSuccess(result.status);
+          setResult(JSON.stringify(result.data, null, 2));
+        })
+        .catch((error) => {
+          setRequestLoading(false);
+          setRequestError(error);
+          setResult(JSON.stringify(error, null, 2));
+        });
+    });
   };
 
   return (
@@ -393,22 +396,24 @@ function ApiBuilder(props) {
             )}
           </Grid.Column>
           <Grid.Column width={6}>
-            <Header as="h3" dividing style={{ paddingTop: 15 }}>Result:</Header>
-            {requestSuccess && (
-              <>
-                <Label color="green" style={{ marginBottom: 10 }}>
-                  {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
+            <Header as="h3" dividing style={{ paddingTop: 15 }}>
+              Result:
+              {requestSuccess && (
+                <>
+                  <Label color="green" style={{ marginBottom: 10 }}>
+                    {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
+                  </Label>
+                  <Label style={{ marginBottom: 10 }}>
+                    {`Length: ${result ? JSON.parse(result).length : 0}`}
+                  </Label>
+                </>
+              )}
+              {requestError && (
+                <Label color="red" style={{ marginBottom: 10 }}>
+                  {`${requestError.statusCode} ${requestError.statusText}`}
                 </Label>
-                <Label style={{ marginBottom: 10 }}>
-                  {`Length: ${result ? JSON.parse(result).length : 0}`}
-                </Label>
-              </>
-            )}
-            {requestError && (
-              <Label color="red" style={{ marginBottom: 10 }}>
-                {`${requestError.statusCode} ${requestError.statusText}`}
-              </Label>
-            )}
+              )}
+            </Header>
             <AceEditor
               mode="json"
               theme="tomorrow"
@@ -436,11 +441,12 @@ ApiBuilder.defaultProps = {
 };
 
 ApiBuilder.propTypes = {
+  dataset: PropTypes.object.isRequired,
   connection: PropTypes.object.isRequired,
-  testApiRequest: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
-  onComplete: PropTypes.func.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
+  runRequest: PropTypes.func.isRequired,
+  onSave: PropTypes.func.isRequired,
   dataRequest: PropTypes.object,
 };
 
@@ -451,8 +457,8 @@ const mapStateToProps = () => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    testApiRequest: (projectId, connectionId, apiRequest) => {
-      return dispatch(testApiRequest(projectId, connectionId, apiRequest));
+    runRequest: (projectId, chartId, datasetId) => {
+      return dispatch(runRequestAction(projectId, chartId, datasetId));
     },
   };
 };
