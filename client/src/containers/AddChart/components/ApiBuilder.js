@@ -417,7 +417,7 @@ function ApiBuilder(props) {
             <AceEditor
               mode="json"
               theme="tomorrow"
-              height="400px"
+              height="370px"
               width="none"
               value={result || ""}
               onChange={() => setResult(result)}

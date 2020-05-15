@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import _ from "lodash";
 import {
-  Container, Icon, Divider, Dropdown, Button, Grid,
+  Popup, Icon, Divider, Dropdown, Button, Grid,
   Form, Input, Modal, Header,
 } from "semantic-ui-react";
 import moment from "moment";
@@ -123,20 +123,22 @@ function Dataset(props) {
   if (!dataset || !dataset.id) return (<span />);
 
   return (
-    <Container text style={styles.container}>
-      <Form>
-        <Form.Field>
-          <label>Dataset name</label>
-          <Input
-            placeholder="Enter the dataset name"
-            value={newDataset.legend}
-            onChange={_onChangeLegend}
-          />
-        </Form.Field>
-      </Form>
-      <Divider hidden />
-
+    <div style={styles.container}>
       <Grid stackable>
+        <Grid.Row>
+          <Grid.Column>
+            <Form>
+              <Form.Field>
+                <label>Dataset name</label>
+                <Input
+                  placeholder="Enter the dataset name"
+                  value={newDataset.legend}
+                  onChange={_onChangeLegend}
+                />
+              </Form.Field>
+            </Form>
+          </Grid.Column>
+        </Grid.Row>
         <Grid.Row columns={2}>
           <Grid.Column>
             <Dropdown
@@ -160,6 +162,15 @@ function Dataset(props) {
               <Icon name="database" />
               Get data
             </Button>
+            <Popup
+              content="Refresh data"
+              trigger={(
+                <Button
+                  primary
+                  icon="refresh"
+                />
+              )}
+            />
           </Grid.Column>
         </Grid.Row>
         <Grid.Row>
@@ -229,7 +240,7 @@ function Dataset(props) {
           </Button>
         </Modal.Actions>
       </Modal>
-    </Container>
+    </div>
   );
 }
 

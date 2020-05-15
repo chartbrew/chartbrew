@@ -2,6 +2,11 @@ import cookie from "react-cookies";
 import { API_HOST } from "../config/settings";
 import { addError } from "./error";
 
+export const FETCHING_DATA_REQUEST = "FETCHING_DATA_REQUEST";
+export const FETCH_DATA_REQUEST_SUCCESS = "FETCH_DATA_REQUEST_SUCCESS";
+export const FETCH_DATA_REQUEST_FAIL = "FETCH_DATA_REQUEST_FAIL";
+export const FETCH_CHART_DATA_REQUESTS = "FETCH_CHART_DATA_REQUESTS";
+
 export function getDataRequestByChart(projectId, chartId) {
   return (dispatch) => {
     const token = cookie.load("brewToken");
@@ -12,6 +17,7 @@ export function getDataRequestByChart(projectId, chartId) {
       "authorization": `Bearer ${token}`,
     });
 
+    dispatch({ type: FETCHING_DATA_REQUEST });
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
@@ -21,10 +27,12 @@ export function getDataRequestByChart(projectId, chartId) {
 
         return response.json();
       })
-      .then((dataRequest) => {
-        return new Promise(resolve => resolve(dataRequest));
+      .then((dataRequests) => {
+        dispatch({ type: FETCH_CHART_DATA_REQUESTS, dataRequests });
+        return new Promise(resolve => resolve(dataRequests));
       })
       .catch((error) => {
+        dispatch({ type: FETCH_DATA_REQUEST_FAIL });
         return new Promise((resolve, reject) => reject(error));
       });
   };
@@ -40,6 +48,7 @@ export function getDataRequestByDataset(projectId, chartId, datasetId) {
       "Authorization": `Bearer ${token}`,
     });
 
+    dispatch({ type: FETCHING_DATA_REQUEST });
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
@@ -50,9 +59,11 @@ export function getDataRequestByDataset(projectId, chartId, datasetId) {
         return response.json();
       })
       .then((dataRequest) => {
+        dispatch({ type: FETCH_DATA_REQUEST_SUCCESS, dataRequest });
         return Promise.resolve(dataRequest);
       })
       .catch((error) => {
+        dispatch({ type: FETCH_DATA_REQUEST_FAIL });
         return Promise.reject(error);
       });
   };
@@ -70,6 +81,7 @@ export function createDataRequest(projectId, chartId, data) {
       "Authorization": `Bearer ${token}`,
     });
 
+    dispatch({ type: FETCHING_DATA_REQUEST });
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
@@ -80,9 +92,11 @@ export function createDataRequest(projectId, chartId, data) {
         return response.json();
       })
       .then((dataRequest) => {
+        dispatch({ type: FETCH_DATA_REQUEST_SUCCESS, dataRequest });
         return Promise.resolve(dataRequest);
       })
       .catch((err) => {
+        dispatch({ type: FETCH_DATA_REQUEST_FAIL });
         return Promise.reject(err);
       });
   };
@@ -100,6 +114,7 @@ export function updateDataRequest(projectId, chartId, drId, data) {
       "Authorization": `Bearer ${token}`,
     });
 
+    dispatch({ type: FETCHING_DATA_REQUEST });
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
@@ -110,9 +125,11 @@ export function updateDataRequest(projectId, chartId, drId, data) {
         return response.json();
       })
       .then((dataRequest) => {
+        dispatch({ type: FETCH_DATA_REQUEST_SUCCESS, dataRequest });
         return Promise.resolve(dataRequest);
       })
       .catch((err) => {
+        dispatch({ type: FETCH_DATA_REQUEST_FAIL });
         return Promise.reject(err);
       });
   };

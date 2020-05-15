@@ -11,6 +11,7 @@ import connection from "./connection";
 import savedQuery from "./savedQuery";
 import error from "./error";
 import dataset from "./dataset";
+import dataRequest from "./dataRequest";
 
 const AppReducer = combineReducers({
   user,
@@ -21,6 +22,7 @@ const AppReducer = combineReducers({
   connection,
   savedQuery,
   dataset,
+  dataRequest,
   error,
   route: routerReducer,
 });

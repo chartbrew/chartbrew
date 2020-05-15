@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Modal, Button, Loader, Container, Placeholder, Message,
+  Modal, Button, Loader, Container, Placeholder, Message, Icon,
 } from "semantic-ui-react";
 
 import ApiBuilder from "./ApiBuilder";
@@ -173,6 +173,15 @@ function DatarequestModal(props) {
           loading={loading}
         >
           {saved ? "Saved" : "Save"}
+        </Button>
+        <Button
+          secondary
+          icon
+          labelPosition="right"
+          disabled
+        >
+          <Icon name="chevron right" />
+          Setup the fields
         </Button>
       </Modal.Actions>
     </Modal>

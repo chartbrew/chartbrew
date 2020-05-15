@@ -154,9 +154,9 @@ function AddChart(props) {
         pauseOnHover
         transition={Flip}
       />
-      <Grid columns={2} divided centered>
+      <Grid columns={2} divided centered stackable>
         <Grid.Column width={9}>
-          <Grid.Row>
+          <div>
             {!editingTitle
               && (
                 <Header textAlign="left" dividing onClick={() => setEditingTitle(true)}>
@@ -200,10 +200,10 @@ function AddChart(props) {
                 </Container>
               )}
             <ChartPreview />
-          </Grid.Row>
-          <Grid.Row style={styles.topBuffer}>
+          </div>
+          <div style={styles.topBuffer}>
             <ChartSettings />
-          </Grid.Row>
+          </div>
         </Grid.Column>
 
         <Grid.Column width={6}>
