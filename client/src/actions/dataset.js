@@ -7,6 +7,7 @@ export const FETCH_DATASET_SUCCESS = "FETCH_DATASET_SUCCESS";
 export const FETCH_DATASET_FAIL = "FETCH_DATASET_FAIL";
 export const FETCH_CHART_DATASETS = "FETCH_CHART_DATASETS";
 export const REMOVE_DATASET = "REMOVE_DATASET";
+export const FETCH_REQUESTED_DATA = "FETCH_REQUESTED_DATA";
 
 export function getChartDatasets(projectId, chartId) {
   return (dispatch) => {
@@ -160,6 +161,7 @@ export function runRequest(projectId, chartId, datasetId) {
         return response.json();
       })
       .then((result) => {
+        dispatch({ type: FETCH_REQUESTED_DATA, request: result, id: datasetId });
         return Promise.resolve({ ...result, status });
       })
       .catch(() => {

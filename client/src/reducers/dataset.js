@@ -4,12 +4,14 @@ import {
   FETCH_CHART_DATASETS,
   FETCH_DATASET_SUCCESS,
   REMOVE_DATASET,
+  FETCH_REQUESTED_DATA,
 } from "../actions/dataset";
 
 export default function dataset(state = {
   loading: false,
   error: false,
   data: [],
+  requests: [],
 }, action) {
   switch (action.type) {
     case FETCHING_DATASET:
@@ -48,6 +50,21 @@ export default function dataset(state = {
         tempData.splice(removeIndex, 1);
       }
       return { ...state, loading: false, data: tempData };
+    case FETCH_REQUESTED_DATA:
+      let indexReq = -1;
+      for (let i = 0; i < state.requests.length; i++) {
+        if (state.requests[i].id === parseInt(action.id, 10)) {
+          indexReq = i;
+          break;
+        }
+      }
+      const newRequests = [...state.requests];
+      if (indexReq > -1) {
+        newRequests[indexReq] = action.request;
+      } else {
+        newRequests.push(action.request);
+      }
+      return { ...state, loading: false, requests: newRequests };
     default:
       return state;
   }

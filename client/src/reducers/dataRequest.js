@@ -9,6 +9,7 @@ export default function dataset(state = {
   loading: false,
   error: false,
   data: [],
+  requests: [],
 }, action) {
   switch (action.type) {
     case FETCHING_DATA_REQUEST:
