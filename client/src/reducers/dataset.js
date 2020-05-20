@@ -53,7 +53,7 @@ export default function dataset(state = {
     case FETCH_REQUESTED_DATA:
       let indexReq = -1;
       for (let i = 0; i < state.requests.length; i++) {
-        if (state.requests[i].id === parseInt(action.id, 10)) {
+        if (state.requests[i].options.id === parseInt(action.id, 10)) {
           indexReq = i;
           break;
         }

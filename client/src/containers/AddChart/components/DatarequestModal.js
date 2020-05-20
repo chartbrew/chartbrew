@@ -5,18 +5,23 @@ import { withRouter } from "react-router";
 import {
   Modal, Button, Loader, Container, Placeholder, Message, Icon,
 } from "semantic-ui-react";
+import _ from "lodash";
 
 import ApiBuilder from "./ApiBuilder";
+import ObjectExplorer from "./ObjectExplorer";
 import {
   getDataRequestByDataset as getDataRequestByDatasetAction,
   createDataRequest as createDataRequestAction,
   updateDataRequest as updateDataRequestAction,
 } from "../../../actions/dataRequest";
+import {
+  updateDataset as updateDatasetAction,
+} from "../../../actions/dataset";
 
 function DatarequestModal(props) {
   const {
     open, onClose, connection, dataset, match, getDataRequestByDataset,
-    createDataRequest, updateDataRequest,
+    createDataRequest, updateDataRequest, requests, updateDataset,
   } = props;
 
   const [dataRequest, setDataRequest] = useState(null);
@@ -24,6 +29,8 @@ function DatarequestModal(props) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [closeTrigger, setCloseTrigger] = useState(false);
+  const [result, setResult] = useState(null);
+  const [fieldsView, setFieldsView] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -65,6 +72,11 @@ function DatarequestModal(props) {
   useEffect(() => {
     setSaved(false);
   }, [dataRequest]);
+
+  useEffect(() => {
+    const request = _.find(requests, { options: { id: dataset.id } });
+    setResult(request);
+  }, [requests]);
 
   const _onClose = () => {
     if (saved || closeTrigger) {
@@ -119,6 +131,29 @@ function DatarequestModal(props) {
       });
   };
 
+  const _onChangeField = (field) => {
+    setLoading(true);
+
+    updateDataset(
+      match.params.projectId,
+      match.params.chartId,
+      dataRequest.id,
+      { xAxis: field },
+    )
+      .then(() => {
+        setLoading(false);
+
+        setTimeout(() => {
+          setSaved(true);
+        }, 100);
+      })
+      .catch((e) => {
+        setLoading(false);
+        setError(e);
+        return e;
+      });
+  };
+
   return (
     <Modal
       open={open}
@@ -147,13 +182,19 @@ function DatarequestModal(props) {
             <p>Please try refreshing the page.</p>
           </Message>
         )}
-        {connection.type === "api" && dataRequest && (
+        {!fieldsView && connection.type === "api" && dataRequest && (
           <ApiBuilder
             dataset={dataset}
             dataRequest={dataRequest}
             connection={connection}
             onChangeRequest={_updateDataRequest}
             onSave={_onSaveRequest}
+          />
+        )}
+        {fieldsView && result && (
+          <ObjectExplorer
+            objectData={result.data}
+            onChange={_onChangeField}
           />
         )}
       </Modal.Content>
@@ -174,15 +215,31 @@ function DatarequestModal(props) {
         >
           {saved ? "Saved" : "Save"}
         </Button>
-        <Button
-          secondary
-          icon
-          labelPosition="right"
-          disabled
-        >
-          <Icon name="chevron right" />
-          Setup the fields
-        </Button>
+
+        {!fieldsView && (
+          <Button
+            secondary
+            icon
+            labelPosition="right"
+            disabled={!result}
+            onClick={() => setFieldsView(true)}
+          >
+            <Icon name="chevron right" />
+            Set up the fields
+          </Button>
+        )}
+        {fieldsView && (
+          <Button
+            secondary
+            icon
+            labelPosition="left"
+            onClick={() => setFieldsView(false)}
+            floated="left"
+          >
+            <Icon name="chevron left" />
+            Back to the builder
+          </Button>
+        )}
       </Modal.Actions>
     </Modal>
   );
@@ -201,10 +258,13 @@ DatarequestModal.propTypes = {
   match: PropTypes.object.isRequired,
   createDataRequest: PropTypes.func.isRequired,
   updateDataRequest: PropTypes.func.isRequired,
+  updateDataset: PropTypes.func.isRequired,
+  requests: PropTypes.array.isRequired,
 };
 
-const mapStateToProps = () => {
+const mapStateToProps = (state) => {
   return {
+    requests: state.dataset.requests,
   };
 };
 
@@ -218,6 +278,9 @@ const mapDispatchToProps = (dispatch) => {
     },
     updateDataRequest: (projectId, chartId, drId, data) => {
       return dispatch(updateDataRequestAction(projectId, chartId, drId, data));
+    },
+    updateDataset: (projectId, chartId, datasetId, data) => {
+      return dispatch(updateDatasetAction(projectId, chartId, datasetId, data));
     },
   };
 };
