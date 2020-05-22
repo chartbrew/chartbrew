@@ -3,15 +3,10 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Accordion, Button, Icon, Popup, Label, Message, Grid,
+  Accordion, Button, Icon, Popup, Label, Message,
 } from "semantic-ui-react";
 import moment from "moment";
 import _ from "lodash";
-import brace from "brace"; // eslint-disable-line
-import AceEditor from "react-ace";
-
-import "brace/mode/json";
-import "brace/theme/tomorrow";
 
 import { secondaryTransparent } from "../../../config/colors";
 
@@ -20,7 +15,7 @@ import { secondaryTransparent } from "../../../config/colors";
 */
 function ObjectExplorer(props) {
   const [accordionActive, setAccordionActive] = useState("");
-  const [visualiseDataset, setVisualiseDataset] = useState(false);
+  const [visualiseDataset, setVisualiseDataset] = useState(true);
   const [type, setType] = useState("");
   const [subType, setSubType] = useState("");
   const [arrayWarning, setArrayWarning] = useState(false);
@@ -186,73 +181,42 @@ function ObjectExplorer(props) {
 
   return (
     <div style={styles.container}>
-      <Grid columns={2}>
-        <Grid.Column width={7}>
-          {objectData && (
-            <AceEditor
-              mode="json"
-              theme="tomorrow"
-              height="450px"
-              width="none"
-              value={JSON.stringify(objectData, null, 2) || ""}
-              name="resultEditor"
-              readOnly
-              editorProps={{ $blockScrolling: false }}
-            />
-          )}
-        </Grid.Column>
-        <Grid.Column width={9}>
-          {visualiseDataset
-            && (
-            <Button
-              size="small"
-              icon
-              labelPosition="right"
-              floated="right"
-              onClick={() => setVisualiseDataset(false)}
-            >
-              <Icon name="minus" />
-              Minimize
-            </Button>
-            )}
-          <Accordion styled fluid style={{ maxHeight: "400px", overflow: "auto" }}>
-            <Accordion.Title
-              active={visualiseDataset}
-              onClick={() => setVisualiseDataset(!visualiseDataset)}
-            >
-              <span>Root</span>
-              {objectData instanceof Array
-                && <Label color="teal" style={{ float: "right" }}>Array</Label>}
-              {!(objectData instanceof Array)
-                && <Label color="orange" style={{ float: "right" }}>Object</Label>}
-            </Accordion.Title>
-            <Accordion.Content active={visualiseDataset}>
-              {objectData instanceof Array
-                && Object.keys(objectData[0]).map((key) => {
-                  return _makeAccordion(key, "root[]", objectData[0][key]);
-                })}
-              {!(objectData instanceof Array)
-                && Object.keys(objectData).map((key) => {
-                  return _makeAccordion(key, "root", objectData[key]);
-                })}
-            </Accordion.Content>
-          </Accordion>
-          {notDateWarning
-            && (
-            <Message warning onDismiss={() => setNotDateWarning(false)}>
-              <Message.Header>Have you selected a Date?</Message.Header>
-              <p>{"We think that the field you selected might not be of Date type and your chart might not show as expected."}</p>
-            </Message>
-            )}
-          {arrayWarning
-            && (
-            <Message warning onDismiss={() => setArrayWarning(false)}>
-              <Message.Header>The Date field needs to be inside a single array</Message.Header>
-              <p>{"The chart generator will not be able to process the information correctly when the selected date field is not part of an array or when it's nested in multiple arrays."}</p>
-            </Message>
-            )}
-        </Grid.Column>
-      </Grid>
+      <Accordion styled fluid style={{ maxHeight: "400px", overflow: "auto" }}>
+        <Accordion.Title
+          active={visualiseDataset}
+          onClick={() => setVisualiseDataset(!visualiseDataset)}
+        >
+          <span>Root</span>
+          {objectData instanceof Array
+            && <Label color="teal" style={{ float: "right" }}>Array</Label>}
+          {!(objectData instanceof Array)
+            && <Label color="orange" style={{ float: "right" }}>Object</Label>}
+        </Accordion.Title>
+        <Accordion.Content active={visualiseDataset}>
+          {objectData instanceof Array
+            && Object.keys(objectData[0]).map((key) => {
+              return _makeAccordion(key, "root[]", objectData[0][key]);
+            })}
+          {!(objectData instanceof Array)
+            && Object.keys(objectData).map((key) => {
+              return _makeAccordion(key, "root", objectData[key]);
+            })}
+        </Accordion.Content>
+      </Accordion>
+      {notDateWarning
+        && (
+        <Message warning onDismiss={() => setNotDateWarning(false)}>
+          <Message.Header>Have you selected a Date?</Message.Header>
+          <p>{"We think that the field you selected might not be of Date type and your chart might not show as expected."}</p>
+        </Message>
+        )}
+      {arrayWarning
+        && (
+        <Message warning onDismiss={() => setArrayWarning(false)}>
+          <Message.Header>The Date field needs to be inside a single array</Message.Header>
+          <p>{"The chart generator will not be able to process the information correctly when the selected date field is not part of an array or when it's nested in multiple arrays."}</p>
+        </Message>
+        )}
     </div>
   );
 }

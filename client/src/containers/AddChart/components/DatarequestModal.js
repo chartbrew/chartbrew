@@ -4,8 +4,13 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Modal, Button, Loader, Container, Placeholder, Message, Icon,
+  Input, Grid,
 } from "semantic-ui-react";
 import _ from "lodash";
+import brace from "brace"; // eslint-disable-line
+import AceEditor from "react-ace";
+import "brace/mode/json";
+import "brace/theme/tomorrow";
 
 import ApiBuilder from "./ApiBuilder";
 import ObjectExplorer from "./ObjectExplorer";
@@ -137,7 +142,7 @@ function DatarequestModal(props) {
     updateDataset(
       match.params.projectId,
       match.params.chartId,
-      dataRequest.id,
+      dataset.id,
       { xAxis: field },
     )
       .then(() => {
@@ -192,10 +197,31 @@ function DatarequestModal(props) {
           />
         )}
         {fieldsView && result && (
-          <ObjectExplorer
-            objectData={result.data}
-            onChange={_onChangeField}
-          />
+          <Grid columns={2}>
+            <Grid.Column width={7}>
+              <AceEditor
+                mode="json"
+                theme="tomorrow"
+                height="450px"
+                width="none"
+                value={JSON.stringify(result.data, null, 2) || ""}
+                name="resultEditor"
+                readOnly
+                editorProps={{ $blockScrolling: false }}
+              />
+            </Grid.Column>
+            <Grid.Column width={9}>
+              <Input
+                placeholder="select a field below"
+                value={dataset.xAxis}
+                style={styles.fieldInput}
+              />
+              <ObjectExplorer
+                objectData={result.data}
+                onChange={_onChangeField}
+              />
+            </Grid.Column>
+          </Grid>
         )}
       </Modal.Content>
       <Modal.Actions>
@@ -244,6 +270,12 @@ function DatarequestModal(props) {
     </Modal>
   );
 }
+
+const styles = {
+  fieldInput: {
+    marginBottom: 20,
+  },
+};
 
 DatarequestModal.defaultProps = {
   open: false,
