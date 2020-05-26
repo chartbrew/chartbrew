@@ -16,6 +16,7 @@ import ChartDescription from "./components/ChartDescription";
 
 import {
   createChart as createChartAction,
+  updateChart as updateChartAction,
 } from "../../actions/chart";
 import {
   getChartDatasets as getChartDatasetsAction,
@@ -38,7 +39,7 @@ function AddChart(props) {
 
   const {
     match, createChart, history, charts, saveNewDataset, getChartDatasets,
-    datasets, updateDataset, deleteDataset,
+    datasets, updateDataset, deleteDataset, updateChart,
   } = props;
 
   useEffect(() => {
@@ -129,6 +130,11 @@ function AddChart(props) {
       });
   };
 
+  const _onChangePreview = (data) => {
+    setNewChart({ ...newChart, ...data });
+    return updateChart(match.params.projectId, match.params.chartId, data);
+  };
+
   if (titleScreen) {
     return (
       <ChartDescription
@@ -199,7 +205,7 @@ function AddChart(props) {
                   </Form>
                 </Container>
               )}
-            <ChartPreview />
+            <ChartPreview chart={newChart} onChange={_onChangePreview} />
           </div>
           <div style={styles.topBuffer}>
             <ChartSettings />
@@ -319,6 +325,7 @@ AddChart.propTypes = {
   updateDataset: PropTypes.func.isRequired,
   deleteDataset: PropTypes.func.isRequired,
   datasets: PropTypes.array.isRequired,
+  updateChart: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -342,6 +349,9 @@ const mapDispatchToProps = (dispatch) => {
     },
     deleteDataset: (projectId, chartId, datasetId) => {
       return dispatch(deleteDatasetAction(projectId, chartId, datasetId));
+    },
+    updateChart: (projectId, chartId, data) => {
+      return dispatch(updateChartAction(projectId, chartId, data));
     },
   };
 };

@@ -255,7 +255,7 @@ function ApiBuilder(props) {
               active={activeMenu === "pagination"}
               onClick={() => setActiveMenu("pagination")}
             />
-            <div style={{ position: "absolute", right: 5 }}>
+            <div style={{ position: "absolute", right: 15 }}>
               {requestSuccess && (
                 <>
                   <Label color="green" style={{ marginBottom: 10 }}>

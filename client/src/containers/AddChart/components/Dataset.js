@@ -146,7 +146,7 @@ function Dataset(props) {
         <Grid.Row columns={2}>
           <Grid.Column>
             <Dropdown
-              placeholder="Select an available connection from the list"
+              placeholder="Select a connection"
               selection
               value={newDataset.connection_id}
               options={dropdownConfig}
