@@ -107,6 +107,10 @@ function Dataset(props) {
     }
   };
 
+  const _onChangeField = (field) => {
+    setNewDataset({ ...newDataset, xAxis: field });
+  };
+
   const _getActiveConnection = () => {
     let activeConnection;
     connections.map((connection) => {
@@ -206,6 +210,7 @@ function Dataset(props) {
           connection={_getActiveConnection()}
           open={configOpened}
           onClose={_onCloseConfig}
+          onUpdateDataset={_onChangeField}
         />
       )}
 

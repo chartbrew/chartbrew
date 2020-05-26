@@ -19,14 +19,11 @@ import {
   createDataRequest as createDataRequestAction,
   updateDataRequest as updateDataRequestAction,
 } from "../../../actions/dataRequest";
-import {
-  updateDataset as updateDatasetAction,
-} from "../../../actions/dataset";
 
 function DatarequestModal(props) {
   const {
     open, onClose, connection, dataset, match, getDataRequestByDataset,
-    createDataRequest, updateDataRequest, requests, updateDataset,
+    createDataRequest, updateDataRequest, requests, onUpdateDataset,
   } = props;
 
   const [dataRequest, setDataRequest] = useState(null);
@@ -137,26 +134,7 @@ function DatarequestModal(props) {
   };
 
   const _onChangeField = (field) => {
-    setLoading(true);
-
-    updateDataset(
-      match.params.projectId,
-      match.params.chartId,
-      dataset.id,
-      { xAxis: field },
-    )
-      .then(() => {
-        setLoading(false);
-
-        setTimeout(() => {
-          setSaved(true);
-        }, 100);
-      })
-      .catch((e) => {
-        setLoading(false);
-        setError(e);
-        return e;
-      });
+    onUpdateDataset(field);
   };
 
   return (
@@ -290,7 +268,7 @@ DatarequestModal.propTypes = {
   match: PropTypes.object.isRequired,
   createDataRequest: PropTypes.func.isRequired,
   updateDataRequest: PropTypes.func.isRequired,
-  updateDataset: PropTypes.func.isRequired,
+  onUpdateDataset: PropTypes.func.isRequired,
   requests: PropTypes.array.isRequired,
 };
 
@@ -310,9 +288,6 @@ const mapDispatchToProps = (dispatch) => {
     },
     updateDataRequest: (projectId, chartId, drId, data) => {
       return dispatch(updateDataRequestAction(projectId, chartId, drId, data));
-    },
-    updateDataset: (projectId, chartId, datasetId, data) => {
-      return dispatch(updateDatasetAction(projectId, chartId, datasetId, data));
     },
   };
 };
