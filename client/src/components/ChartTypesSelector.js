@@ -1,8 +1,8 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 
 import {
-  Card, Label, Image, Icon, Grid, Header
+  Card, Label, Image, Icon, Header, Button,
 } from "semantic-ui-react";
 
 // types
@@ -27,133 +27,150 @@ import polarChartPatternImage from "../assets/polarChartPattern.png";
 /*
   Description
 */
-class ChartTypesSelector extends Component {
-  constructor(props) {
-    super(props);
+function ChartTypesSelector(props) {
+  const [selected, setSelected] = useState(null);
+  const [chartType, setChartType] = useState({});
+  const [loading, setLoading] = useState(false);
 
-    this.state = {
-      selected: null,
-    };
-  }
+  const {
+    type, subType, onChange, chartCards, onClose,
+  } = props;
 
-  componentDidMount() {
-    const { type, chartCards } = this.props;
-    const { selected } = this.state;
-
+  useEffect(() => {
+    setChartType({ type, subType });
     if (type && !selected) {
       for (let i = 0; i < chartCards.length; i++) {
         if (chartCards[i].type === type) {
-          this._saveSelected(chartCards[i]);
+          _saveSelected(chartCards[i]);
           break;
         }
       }
     }
-  }
+  }, [type, subType]);
 
-  componentDidUpdate(prevProps) {
-    const { chartCards } = this.props;
-    const { selected } = this.state;
+  const _saveSelected = (card) => {
+    setSelected(card);
+  };
 
-    if (prevProps.type && !selected) {
-      for (let i = 0; i < chartCards.length; i++) {
-        if (chartCards[i].type === prevProps.type) {
-          this._saveSelected(chartCards[i]);
-          break;
-        }
-      }
-    }
-  }
-
-  _saveSelected = (card) => {
-    this.setState({ selected: card });
-  }
-
-  _onTypeSelect = (card) => {
-    const { onChange } = this.props;
-    const { selected } = this.state;
+  const _onTypeSelect = (card) => {
     // reset the subType when changing the main type
     let { subType } = card;
     if (selected && card.type !== selected.type) {
       subType = "";
     }
-    this.setState({ selected: card });
+    setSelected(card);
 
-    onChange({ type: card.type, subType });
-  }
+    setChartType({ type: card.type, subType });
+  };
 
-  _onSubTypeSelect = (card) => {
-    const { onChange } = this.props;
-    const { selected } = this.state;
+  const _onSubTypeSelect = (card) => {
+    setChartType({ type: selected.type, subType: card.subType });
+  };
 
-    onChange({ type: selected.type, subType: card.subType });
-  }
+  const _onSave = () => {
+    setLoading(true);
+    onChange(chartType)
+      .then(() => {
+        setLoading(false);
+        onClose();
+      })
+      .catch(() => setLoading(false));
+  };
 
-  render() {
-    const { type, chartCards, subType } = this.props;
-    const { selected } = this.state;
-
-    return (
-      <div style={styles.container}>
-        <Grid stackable centered columns={2} divided>
-          <Grid.Column width={!type ? 16 : 6}>
-            <div style={type ? styles.typeContainer : {}}>
-              <Card.Group stackable centered itemsPerRow={!type ? 3 : 1}>
-                {chartCards.map((card) => {
-                  return (
-                    <Card
-                      key={card.type}
-                      onClick={() => this._onTypeSelect(card)}
-                      color={card.type === type ? "blue" : null}
-                    >
-                      <Image src={card.src} />
-                      {card.type === type && (
-                        <Label corner="right" color="blue">
-                          <Icon name="checkmark" />
-                        </Label>
-                      )}
-                      <Card.Content>
-                        <Card.Header>{card.name}</Card.Header>
-                      </Card.Content>
-                    </Card>
-                  );
-                })}
-              </Card.Group>
-            </div>
-          </Grid.Column>
-          {selected && (
-            <Grid.Column width={!type ? 0 : 10}>
-              <Header>
-                Select a Sub Type
-              </Header>
-              <Card.Group stackable centered itemsPerRow={2}>
-                {selected.subTypes.map((subTypeObj) => {
-                  return (
-                    <Card
-                      key={subTypeObj.subType}
-                      onClick={() => this._onSubTypeSelect(subTypeObj)}
-                      color={subTypeObj.subType === subType ? "olive" : null}
-                    >
-                      <Image src={subTypeObj.src} />
-                      {subTypeObj.subType === subType
-                        && (
-                        <Label corner="right" color="olive">
-                          <Icon name="checkmark" />
-                        </Label>
-                        )}
-                      <Card.Content>
-                        <Card.Header>{subTypeObj.name}</Card.Header>
-                      </Card.Content>
-                    </Card>
-                  );
-                })}
-              </Card.Group>
-            </Grid.Column>
+  return (
+    <div style={styles.container}>
+      {!selected && (
+        <>
+          <Button
+            size="small"
+            icon
+            labelPosition="left"
+            onClick={onClose}
+          >
+            <Icon name="chevron left" />
+            Back
+          </Button>
+          <Header>
+            Select your chart style
+          </Header>
+          <Card.Group stackable centered itemsPerRow={3}>
+            {chartCards.map((card) => {
+              return (
+                <Card
+                  key={card.type}
+                  onClick={() => _onTypeSelect(card)}
+                  color={card.type === chartType.type ? "blue" : null}
+                >
+                  <Image src={card.src} />
+                  {card.type === chartType.type && (
+                    <Label corner="right" color="blue">
+                      <Icon name="checkmark" />
+                    </Label>
+                  )}
+                  <Card.Content>
+                    <Card.Header>{card.name}</Card.Header>
+                  </Card.Content>
+                </Card>
+              );
+            })}
+          </Card.Group>
+        </>
+      )}
+      {selected && (
+        <>
+          <Button
+            size="small"
+            icon
+            labelPosition="left"
+            onClick={() => setSelected(null)}
+          >
+            <Icon name="chevron left" />
+            Back
+          </Button>
+          {chartType.subType && (
+            <Button
+              size="small"
+              icon
+              labelPosition="right"
+              onClick={_onSave}
+              loading={loading}
+              primary
+            >
+              <Icon name="checkmark" />
+              Save
+            </Button>
           )}
-        </Grid>
-      </div>
-    );
-  }
+          <Header>
+            Select a Sub Type
+          </Header>
+          <Card.Group stackable centered itemsPerRow={2}>
+            {selected.subTypes.map((subTypeObj) => {
+              return (
+                <Card
+                  key={subTypeObj.subType}
+                  onClick={() => _onSubTypeSelect(subTypeObj)}
+                  color={subTypeObj.subType === chartType.subType ? "olive" : null}
+                >
+                  <Image src={subTypeObj.src} />
+                  {subTypeObj.subType === chartType.subType
+                    && (
+                    <Label corner="right" color="olive">
+                      <Icon name="checkmark" />
+                    </Label>
+                    )}
+                  <Card.Content>
+                    <Card.Header>{subTypeObj.name}</Card.Header>
+                  </Card.Content>
+                </Card>
+              );
+            })}
+          </Card.Group>
+        </>
+      )}
+    </div>
+  );
 }
+
 const styles = {
   container: {
     flex: 1,
@@ -242,6 +259,7 @@ ChartTypesSelector.propTypes = {
   type: PropTypes.string,
   subType: PropTypes.string,
   onChange: PropTypes.func,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default ChartTypesSelector;
