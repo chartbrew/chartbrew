@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Modal, Button, Loader, Container, Placeholder, Message, Icon,
-  Input, Grid,
+  Input, Grid, Header,
 } from "semantic-ui-react";
 import _ from "lodash";
 import brace from "brace"; // eslint-disable-line
@@ -177,6 +177,7 @@ function DatarequestModal(props) {
         {fieldsView && result && (
           <Grid columns={2}>
             <Grid.Column width={7}>
+              <Header size="small" dividing>Explore your data</Header>
               <AceEditor
                 mode="json"
                 theme="tomorrow"
@@ -189,6 +190,7 @@ function DatarequestModal(props) {
               />
             </Grid.Column>
             <Grid.Column width={9}>
+              <Header size="small" dividing>Select a field to visualize</Header>
               <Input
                 placeholder="select a field below"
                 value={dataset.xAxis}
