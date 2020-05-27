@@ -8,6 +8,7 @@ import {
 } from "semantic-ui-react";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
+import _ from "lodash";
 
 import ChartPreview from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
@@ -17,6 +18,7 @@ import ChartDescription from "./components/ChartDescription";
 import {
   createChart as createChartAction,
   updateChart as updateChartAction,
+  runQuery as runQueryAction,
 } from "../../actions/chart";
 import {
   getChartDatasets as getChartDatasetsAction,
@@ -39,7 +41,7 @@ function AddChart(props) {
 
   const {
     match, createChart, history, charts, saveNewDataset, getChartDatasets,
-    datasets, updateDataset, deleteDataset, updateChart,
+    datasets, updateDataset, deleteDataset, updateChart, runQuery,
   } = props;
 
   useEffect(() => {
@@ -56,6 +58,17 @@ function AddChart(props) {
       getChartDatasets(match.params.projectId, match.params.chartId);
     }
   }, []);
+
+  useEffect(() => {
+    charts.map((chart) => {
+      if (chart.id === parseInt(match.params.chartId, 10)) {
+        if (!_.isEqual(chart, newChart)) {
+          setNewChart(chart);
+        }
+      }
+      return chart;
+    });
+  }, [charts]);
 
   const _onDatasetClicked = (dataset) => {
     setActiveDataset(dataset);
@@ -135,6 +148,12 @@ function AddChart(props) {
     return updateChart(match.params.projectId, match.params.chartId, data);
   };
 
+  const _onRefreshData = () => {
+    runQuery(match.params.projectId, match.params.chartId);
+  };
+
+  const _onRefreshPreview = () => {};
+
   if (titleScreen) {
     return (
       <ChartDescription
@@ -205,7 +224,12 @@ function AddChart(props) {
                   </Form>
                 </Container>
               )}
-            <ChartPreview chart={newChart} onChange={_onChangePreview} />
+            <ChartPreview
+              chart={newChart}
+              onChange={_onChangePreview}
+              onRefreshData={_onRefreshData}
+              onRefreshPreview={_onRefreshPreview}
+            />
           </div>
           <div style={styles.topBuffer}>
             <ChartSettings />
@@ -326,6 +350,7 @@ AddChart.propTypes = {
   deleteDataset: PropTypes.func.isRequired,
   datasets: PropTypes.array.isRequired,
   updateChart: PropTypes.func.isRequired,
+  runQuery: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -353,6 +378,7 @@ const mapDispatchToProps = (dispatch) => {
     updateChart: (projectId, chartId, data) => {
       return dispatch(updateChartAction(projectId, chartId, data));
     },
+    runQuery: (projectId, chartId) => dispatch(runQueryAction(projectId, chartId)),
   };
 };
 

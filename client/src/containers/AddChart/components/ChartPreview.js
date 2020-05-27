@@ -15,7 +15,9 @@ import doughnutChartImage from "../../../assets/doughnutChart.PNG";
 
 function ChartPreview(props) {
   const [typesVisible, setTypesVisible] = useState(false);
-  const { chart, onChange } = props;
+  const {
+    chart, onChange, onRefreshData, onRefreshPreview
+  } = props;
 
   const _onChangeChartType = (type) => {
     return onChange(type);
@@ -23,7 +25,7 @@ function ChartPreview(props) {
 
   return (
     <>
-      {chart && chart.chartData && (
+      {chart && chart.chartData && !typesVisible && (
         <Container>
           <Line
             data={chart.chartData.data}
@@ -98,11 +100,19 @@ function ChartPreview(props) {
             <Icon name="chart line" />
             Type
           </Button>
-          <Button icon labelPosition="right">
+          <Button
+            icon
+            labelPosition="right"
+            onClick={onRefreshPreview}
+          >
             <Icon name="refresh" />
             Refresh chart
           </Button>
-          <Button icon labelPosition="right">
+          <Button
+            icon
+            labelPosition="right"
+            onClick={onRefreshData}
+          >
             <Icon name="angle double down" />
             Refresh Data
           </Button>
@@ -115,6 +125,8 @@ function ChartPreview(props) {
 ChartPreview.propTypes = {
   chart: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
+  onRefreshData: PropTypes.func.isRequired,
+  onRefreshPreview: PropTypes.func.isRequired,
 };
 
 const styles = {
