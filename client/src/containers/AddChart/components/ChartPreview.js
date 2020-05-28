@@ -3,7 +3,9 @@ import PropTypes from "prop-types";
 import {
   Container, Button, Icon, Header, Image, Dimmer,
 } from "semantic-ui-react";
-import { Line } from "react-chartjs-2";
+import {
+  Line, Bar, Doughnut, Polar, Pie, Radar
+} from "react-chartjs-2";
 
 import ChartTypesSelector from "../../../components/ChartTypesSelector";
 import lineChartImage from "../../../assets/lineChart.PNG";
@@ -27,11 +29,54 @@ function ChartPreview(props) {
     <>
       {chart && chart.chartData && !typesVisible && (
         <Container>
-          <Line
-            data={chart.chartData.data}
-            options={chart.chartData.options}
-            height={300}
-          />
+          {chart.type === "line"
+            && (
+              <Line
+                data={chart.chartData.data}
+                options={chart.chartData.options}
+                height={300}
+              />
+            )}
+          {chart.type === "bar"
+            && (
+              <Bar
+                data={chart.chartData.data}
+                options={chart.chartData.options}
+                height={300}
+              />
+            )}
+          {chart.type === "pie"
+            && (
+              <Pie
+                data={chart.chartData.data}
+                options={chart.chartData.options}
+                height={300}
+              />
+            )}
+          {chart.type === "doughnut"
+            && (
+              <Doughnut
+                data={chart.chartData.data}
+                options={chart.chartData.options}
+                height={300}
+              />
+            )}
+          {chart.type === "radar"
+            && (
+              <Radar
+                data={chart.chartData.data}
+                options={chart.chartData.options}
+                height={300}
+              />
+            )}
+          {chart.type === "polar"
+            && (
+              <Polar
+                data={chart.chartData.data}
+                options={chart.chartData.options}
+                height={300}
+              />
+            )}
         </Container>
       )}
 
