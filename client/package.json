@@ -49,7 +49,7 @@
     "react-anchor-link-smooth-scroll": "^1.0.12",
     "react-app-polyfill": "^1.0.6",
     "react-chartjs-2": "^2.9.0",
-    "react-color": "^2.18.0",
+    "react-color": "^2.18.1",
     "react-cookies": "^0.1.1",
     "react-date-range": "^1.0.3",
     "react-dev-utils": "^10.1.0",

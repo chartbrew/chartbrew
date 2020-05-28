@@ -4,10 +4,12 @@ import { connect } from "react-redux";
 import _ from "lodash";
 import {
   Popup, Icon, Divider, Dropdown, Button, Grid,
-  Form, Input, Modal, Header,
+  Form, Input, Modal, Header, Label, Checkbox,
 } from "semantic-ui-react";
+import { SketchPicker } from "react-color";
 import moment from "moment";
 
+import { primary } from "../../../config/colors";
 import mongoImg from "../../../assets/mongodb-logo-1.png";
 import mysqlImg from "../../../assets/mysql.svg";
 import apiImg from "../../../assets/api.png";
@@ -129,6 +131,25 @@ function Dataset(props) {
     return activeConnection;
   };
 
+  const _renderColorPicker = (type) => {
+    return (
+      <SketchPicker
+        color={type === "dataset" ? newDataset.datasetColor : newDataset.fillColor}
+        onChangeComplete={(color) => {
+          const rgba = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
+
+          if (type === "dataset") {
+            setNewDataset({ ...newDataset, datasetColor: rgba });
+          }
+
+          if (type === "fill") {
+            setNewDataset({ ...newDataset, fillColor: rgba });
+          }
+        }}
+      />
+    );
+  };
+
   if (!dataset || !dataset.id) return (<span />);
 
   return (
@@ -180,6 +201,55 @@ function Dataset(props) {
                 />
               )}
             />
+          </Grid.Column>
+        </Grid.Row>
+        <Grid.Row>
+          <Grid.Column>
+            <Header size="small">Dataset Color</Header>
+            <div>
+              <Popup
+                content={() => _renderColorPicker("dataset")}
+                trigger={(
+                  <Label
+                    size="large"
+                    color="blue"
+                    style={styles.datasetColorBtn(newDataset.datasetColor)}
+                    content="Click to select"
+                  />
+                )}
+                style={{ padding: 0, margin: 0 }}
+                on="click"
+                offset="0, 10px"
+                position="right center"
+              />
+            </div>
+
+            <Header size="small">Fill Color</Header>
+            <div>
+              <Popup
+                content={() => _renderColorPicker("fill")}
+                trigger={(
+                  <Label
+                    size="large"
+                    color="blue"
+                    style={styles.datasetColorBtn(newDataset.fillColor)}
+                    content="Click to select"
+                  />
+                )}
+                style={{ padding: 0, margin: 0 }}
+                on="click"
+                offset="0, 10px"
+                position="right center"
+              />
+              <Checkbox
+                value={newDataset.fill || false}
+                checked={newDataset.fill || false}
+                onChange={(e, data) => {
+                  setNewDataset({ ...newDataset, fill: data.checked });
+                }}
+                style={{ verticalAlign: "middle", marginLeft: 10 }}
+              />
+            </div>
           </Grid.Column>
         </Grid.Row>
         <Grid.Row>
@@ -268,6 +338,17 @@ const styles = {
   closeBtn: {
     float: "left",
   },
+  colorPreview: {
+    width: 30,
+    height: 30,
+    borderRadius: 5,
+    backgroundColor: primary,
+  },
+  datasetColorBtn: (datasetColor) => ({
+    cursor: "pointer",
+    backgroundColor: datasetColor === "rgba(0,0,0,0)" ? primary : datasetColor,
+    border: `1px solid ${primary}`
+  }),
 };
 
 const mapStateToProps = (state) => {

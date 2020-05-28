@@ -26,6 +26,7 @@ import {
   updateDataset as updateDatasetAction,
   deleteDataset as deleteDatasetAction,
 } from "../../actions/dataset";
+import { chartColors } from "../../config/colors";
 
 /*
   Container used for setting up a new chart
@@ -93,6 +94,8 @@ function AddChart(props) {
     saveNewDataset(match.params.projectId, match.params.chartId, {
       chart_id: match.params.chartId,
       legend: datasetName,
+      datasetColor: chartColors[Math.floor(Math.random() * chartColors.length)],
+      fillColor: "rgba(0,0,0,0)",
     })
       .then((dataset) => {
         setSavingDataset(false);
