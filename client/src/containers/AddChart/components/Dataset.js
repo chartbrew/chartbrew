@@ -62,13 +62,18 @@ function Dataset(props) {
     }
 
     setSaveRequired(true);
-    if (shouldSave === null) {
-      setShouldSave(moment().add(2, "seconds"));
-    } else if (moment().isAfter(shouldSave)) {
-      onUpdate(newDataset);
-      setShouldSave(moment().add(2, "seconds"));
+
+    if (dataset.legend !== newDataset.legend) {
+      if (shouldSave === null) {
+        setShouldSave(moment().add(2, "seconds"));
+      } else if (moment().isAfter(shouldSave)) {
+        onUpdate(newDataset);
+        setShouldSave(moment().add(2, "seconds"));
+      } else {
+        setShouldSave(moment().add(2, "seconds"));
+      }
     } else {
-      setShouldSave(moment().add(2, "seconds"));
+      onUpdate(newDataset);
     }
   }, [newDataset]);
 

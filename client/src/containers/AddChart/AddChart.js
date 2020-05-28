@@ -115,7 +115,7 @@ function AddChart(props) {
       .then((dataset) => {
         setActiveDataset(dataset);
         toast.success("Updated the dataset 👌", {
-          position: "bottom-right",
+          position: "top-right",
           autoClose: 1500,
           hideProgressBar: false,
           closeOnClick: true,
@@ -168,7 +168,7 @@ function AddChart(props) {
   return (
     <div style={styles.container}>
       <ToastContainer
-        position="bottom-right"
+        position="top-right"
         autoClose={1500}
         hideProgressBar={false}
         newestOnTop={false}
@@ -246,9 +246,9 @@ function AddChart(props) {
                 <Button
                   style={styles.datasetButtons}
                   key={dataset.id}
-                  primary={dataset.id !== activeDataset.id}
+                  primary
                   onClick={() => _onDatasetClicked(dataset)}
-                  secondary={dataset.id === activeDataset.id}
+                  basic={dataset.id !== activeDataset.id}
                 >
                   {dataset.legend}
                 </Button>
