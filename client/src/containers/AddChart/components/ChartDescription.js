@@ -11,11 +11,11 @@ function ChartDescription(props) {
     name, onChange, history, onCreate,
   } = props;
 
-  const onNameChange = (e, data) => {
+  const _onNameChange = (e, data) => {
     onChange(data.value);
   };
 
-  const onCreatePressed = () => {
+  const _onCreatePressed = () => {
     if (!name) {
       setError(true);
       return;
@@ -43,7 +43,7 @@ function ChartDescription(props) {
             placeholder="Short summary"
             error={error}
             value={name}
-            onChange={onNameChange}
+            onChange={_onNameChange}
             size="big"
             fluid
           />
@@ -66,7 +66,7 @@ function ChartDescription(props) {
             primary
             icon
             labelPosition="right"
-            onClick={onCreatePressed}
+            onClick={_onCreatePressed}
             size="big"
           >
             <Icon name="angle right" />

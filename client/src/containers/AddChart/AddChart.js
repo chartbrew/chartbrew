@@ -76,7 +76,7 @@ function AddChart(props) {
   };
 
   const _onNameChange = (value) => {
-    setNewChart({ ...newChart, name: value });
+    _onChangeChart({ name: value });
   };
 
   const _onCreateClicked = () => {
@@ -146,9 +146,17 @@ function AddChart(props) {
       });
   };
 
-  const _onChangePreview = (data) => {
+  const _onChangeChart = (data) => {
     setNewChart({ ...newChart, ...data });
-    return updateChart(match.params.projectId, match.params.chartId, data);
+    return updateChart(match.params.projectId, match.params.chartId, data)
+      .then((newData) => {
+        toast.success("Updated the chart 📈");
+        return Promise.resolve(newData);
+      })
+      .catch((e) => {
+        toast.error("Oups! Can't save the chart. Please try again.");
+        return Promise.reject(e);
+      });
   };
 
   const _onRefreshData = () => {
@@ -229,7 +237,7 @@ function AddChart(props) {
               )}
             <ChartPreview
               chart={newChart}
-              onChange={_onChangePreview}
+              onChange={_onChangeChart}
               onRefreshData={_onRefreshData}
               onRefreshPreview={_onRefreshPreview}
             />
