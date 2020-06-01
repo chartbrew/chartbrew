@@ -319,6 +319,7 @@ function AddChart(props) {
             dataset={activeDataset}
             onUpdate={_onUpdateDataset}
             onDelete={_onDeleteDataset}
+            chart={newChart}
           />
         </Grid.Column>
       </Grid>

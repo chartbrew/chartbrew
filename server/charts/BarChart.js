@@ -75,7 +75,7 @@ class BarChart {
         }
 
         // build up the selector array which is used to show the way to the date value
-        let xFieldSelector = dataset.xAxis;
+        let xFieldSelector = dataset.options.xAxis;
         if (xFieldSelector.length < 2) {
           return new Promise((resolve, reject) => reject(new Error("The X selector is not formatted correctly")));
         }

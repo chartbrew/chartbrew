@@ -18,7 +18,7 @@ import DatarequestModal from "./DatarequestModal";
 
 function Dataset(props) {
   const {
-    dataset, connections, onUpdate, onDelete,
+    dataset, connections, onUpdate, onDelete, chart,
   } = props;
   const [newDataset, setNewDataset] = useState(dataset);
   const [dropdownConfig, setDropdownConfig] = useState([]);
@@ -27,6 +27,7 @@ function Dataset(props) {
   const [shouldSave, setShouldSave] = useState(null);
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [dataItems, setDataItems] = useState([]);
 
   useEffect(() => {
     const config = [];
@@ -79,6 +80,24 @@ function Dataset(props) {
     }
   }, [newDataset]);
 
+  useEffect(() => {
+    if (chart.chartData && chart.chartData.data && chart.chartData.data.datasets) {
+      // find the dataset in the chart data
+      let foundIndex;
+      for (let i = 0; i < chart.Datasets.length; i++) {
+        const d = chart.Datasets[i];
+        if (d.id === dataset.id) {
+          foundIndex = i;
+          break;
+        }
+      }
+
+      if (foundIndex || foundIndex === 0) {
+        setDataItems(chart.chartData.data.datasets[foundIndex]);
+      }
+    }
+  }, [chart, dataset]);
+
   const _onChangeConnection = (e, data) => {
     onUpdate({ connection_id: data.value });
   };
@@ -109,8 +128,8 @@ function Dataset(props) {
   };
 
   const _onChangeLegend = (e, data) => {
-    if (data.value && data.value.length > 0) {
-      setNewDataset({ ...newDataset, legend: data.value });
+    if (data.value && e.target.value.length > 0) {
+      setNewDataset({ ...newDataset, legend: e.target.value });
     }
   };
 
@@ -150,7 +169,7 @@ function Dataset(props) {
     );
   };
 
-  if (!dataset || !dataset.id) return (<span />);
+  if (!dataset || !dataset.id || !newDataset.id) return (<span />);
 
   return (
     <div style={styles.container}>
@@ -161,6 +180,7 @@ function Dataset(props) {
               <Form.Field>
                 <label>Dataset name</label>
                 <Input
+                  type="text"
                   placeholder="Enter the dataset name"
                   value={newDataset.legend}
                   onChange={_onChangeLegend}
@@ -189,39 +209,56 @@ function Dataset(props) {
               disabled={!newDataset.connection_id}
               onClick={_openConfigModal}
             >
-              <Icon name="database" />
+              <Icon name="wifi" />
               Get data
             </Button>
-            <Popup
-              content="Refresh data"
-              trigger={(
-                <Button
-                  primary
-                  icon="refresh"
-                />
-              )}
-            />
           </Grid.Column>
         </Grid.Row>
         <Grid.Row>
           <Grid.Column>
             <Header size="small">Dataset Color</Header>
             <div>
-              <Popup
-                content={() => _renderColorPicker("dataset")}
-                trigger={(
-                  <Label
-                    size="large"
-                    color="blue"
-                    style={styles.datasetColorBtn(newDataset.datasetColor)}
-                    content="Click to select"
-                  />
-                )}
-                style={{ padding: 0, margin: 0 }}
-                on="click"
-                offset="0, 10px"
-                position="right center"
-              />
+              {chart.subType !== "pattern" && (
+                <Popup
+                  content={() => _renderColorPicker("dataset")}
+                  trigger={(
+                    <Label
+                      size="large"
+                      color="blue"
+                      style={styles.datasetColorBtn(newDataset.datasetColor)}
+                      content="Click to select"
+                    />
+                  )}
+                  style={{ padding: 0, margin: 0 }}
+                  on="click"
+                  offset="0, 10px"
+                  position="right center"
+                />
+              )}
+              {chart.subType === "pattern" && (
+                <Label.Group>
+                  {dataItems && dataItems.data && dataItems.data.map((val) => {
+                    return (
+                      <Popup
+                        key={val}
+                        content={() => _renderColorPicker("dataset")}
+                        trigger={(
+                          <Label
+                            size="large"
+                            color="blue"
+                            style={styles.datasetColorBtn(newDataset.datasetColor)}
+                            content={val}
+                          />
+                        )}
+                        style={{ padding: 0, margin: 0 }}
+                        on="click"
+                        offset="0, 10px"
+                        position="right center"
+                      />
+                    );
+                  })}
+                </Label.Group>
+              )}
             </div>
 
             <Header size="small">Fill Color</Header>
@@ -242,7 +279,6 @@ function Dataset(props) {
                 position="right center"
               />
               <Checkbox
-                value={newDataset.fill || false}
                 checked={newDataset.fill || false}
                 onChange={(e, data) => {
                   setNewDataset({ ...newDataset, fill: data.checked });
@@ -329,6 +365,7 @@ Dataset.propTypes = {
   connections: PropTypes.array.isRequired,
   onUpdate: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  chart: PropTypes.object.isRequired,
 };
 
 const styles = {
