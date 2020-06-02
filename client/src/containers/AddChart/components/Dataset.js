@@ -218,22 +218,50 @@ function Dataset(props) {
           <Grid.Column>
             <Header size="small">Dataset Color</Header>
             <div>
+              <Popup
+                content={() => _renderColorPicker("dataset")}
+                trigger={(
+                  <Label
+                    size="large"
+                    color="blue"
+                    style={styles.datasetColorBtn(newDataset.datasetColor)}
+                    content="Click to select"
+                  />
+                )}
+                style={{ padding: 0, margin: 0 }}
+                on="click"
+                offset="0, 10px"
+                position="right center"
+              />
+            </div>
+
+            <Header size="small">Fill Color</Header>
+            <div>
               {chart.subType !== "pattern" && (
-                <Popup
-                  content={() => _renderColorPicker("dataset")}
-                  trigger={(
-                    <Label
-                      size="large"
-                      color="blue"
-                      style={styles.datasetColorBtn(newDataset.datasetColor)}
-                      content="Click to select"
-                    />
-                  )}
-                  style={{ padding: 0, margin: 0 }}
-                  on="click"
-                  offset="0, 10px"
-                  position="right center"
-                />
+                <>
+                  <Popup
+                    content={() => _renderColorPicker("fill")}
+                    trigger={(
+                      <Label
+                        size="large"
+                        color="blue"
+                        style={styles.datasetColorBtn(newDataset.fillColor)}
+                        content="Click to select"
+                      />
+                    )}
+                    style={{ padding: 0, margin: 0 }}
+                    on="click"
+                    offset="0, 10px"
+                    position="right center"
+                  />
+                  <Checkbox
+                    checked={newDataset.fill || false}
+                    onChange={(e, data) => {
+                      setNewDataset({ ...newDataset, fill: data.checked });
+                    }}
+                    style={{ verticalAlign: "middle", marginLeft: 10 }}
+                  />
+                </>
               )}
               {chart.subType === "pattern" && (
                 <Label.Group>
@@ -241,12 +269,12 @@ function Dataset(props) {
                     return (
                       <Popup
                         key={val}
-                        content={() => _renderColorPicker("dataset")}
+                        content={() => _renderColorPicker("fill")}
                         trigger={(
                           <Label
                             size="large"
                             color="blue"
-                            style={styles.datasetColorBtn(newDataset.datasetColor)}
+                            style={styles.datasetColorBtn(newDataset.fillColor)}
                             content={val}
                           />
                         )}
@@ -259,32 +287,6 @@ function Dataset(props) {
                   })}
                 </Label.Group>
               )}
-            </div>
-
-            <Header size="small">Fill Color</Header>
-            <div>
-              <Popup
-                content={() => _renderColorPicker("fill")}
-                trigger={(
-                  <Label
-                    size="large"
-                    color="blue"
-                    style={styles.datasetColorBtn(newDataset.fillColor)}
-                    content="Click to select"
-                  />
-                )}
-                style={{ padding: 0, margin: 0 }}
-                on="click"
-                offset="0, 10px"
-                position="right center"
-              />
-              <Checkbox
-                checked={newDataset.fill || false}
-                onChange={(e, data) => {
-                  setNewDataset({ ...newDataset, fill: data.checked });
-                }}
-                style={{ verticalAlign: "middle", marginLeft: 10 }}
-              />
             </div>
           </Grid.Column>
         </Grid.Row>
