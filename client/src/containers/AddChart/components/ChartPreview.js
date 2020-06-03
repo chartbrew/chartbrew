@@ -140,23 +140,26 @@ function ChartPreview(props) {
             icon
             labelPosition="right"
             primary
+            basic
             onClick={() => setTypesVisible(true)}
           >
             <Icon name="chart line" />
-            Type
+            Chart type
           </Button>
           <Button
             icon
             labelPosition="right"
             onClick={onRefreshPreview}
+            basic
           >
-            <Icon name="refresh" />
-            Refresh chart
+            <Icon name="eye" />
+            Refresh style
           </Button>
           <Button
             icon
             labelPosition="right"
             onClick={onRefreshData}
+            basic
           >
             <Icon name="angle double down" />
             Refresh Data

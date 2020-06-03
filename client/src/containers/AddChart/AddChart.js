@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Grid, Button, Icon, Header, Divider, Popup, Container,
-  Form, Input, List,
+  Form, Input, List, Message,
 } from "semantic-ui-react";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
@@ -195,7 +195,7 @@ function AddChart(props) {
           <div>
             {!editingTitle
               && (
-                <Header textAlign="left" dividing onClick={() => setEditingTitle(true)}>
+                <Header textAlign="left" onClick={() => setEditingTitle(true)}>
                   <Popup
                     trigger={(
                       <a style={styles.editTitle}>
@@ -235,6 +235,7 @@ function AddChart(props) {
                   </Form>
                 </Container>
               )}
+            <Divider />
             <ChartPreview
               chart={newChart}
               onChange={_onChangeChart}
@@ -315,12 +316,19 @@ function AddChart(props) {
           </div>
 
           <Divider />
-          <Dataset
-            dataset={activeDataset}
-            onUpdate={_onUpdateDataset}
-            onDelete={_onDeleteDataset}
-            chart={newChart}
-          />
+          {activeDataset.id && (
+            <Dataset
+              dataset={activeDataset}
+              onUpdate={_onUpdateDataset}
+              onDelete={_onDeleteDataset}
+              chart={newChart}
+            />
+          )}
+          {!activeDataset.id && (
+            <Message
+              content="Select or create a dataset above"
+            />
+          )}
         </Grid.Column>
       </Grid>
     </div>
