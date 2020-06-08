@@ -217,7 +217,7 @@ function Dataset(props) {
           <Grid.Column>
             <Form>
               <Form.Field>
-                <label>Dataset name</label>
+                <Header size="tiny">Dataset name</Header>
                 <Input
                   type="text"
                   placeholder="Enter the dataset name"
@@ -255,7 +255,7 @@ function Dataset(props) {
         </Grid.Row>
         <Grid.Row>
           <Grid.Column>
-            <Header size="small">Dataset Color</Header>
+            <Header size="tiny">Dataset Color</Header>
             <div>
               <Popup
                 content={() => _renderColorPicker("dataset")}
@@ -274,7 +274,7 @@ function Dataset(props) {
               />
             </div>
 
-            <Header size="small">Fill Color</Header>
+            <Header size="tiny">Fill Color</Header>
             <div>
               {chart.subType !== "pattern" && (
                 <>
