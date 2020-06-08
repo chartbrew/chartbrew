@@ -95,7 +95,7 @@ function AddChart(props) {
       chart_id: match.params.chartId,
       legend: datasetName,
       datasetColor: chartColors[Math.floor(Math.random() * chartColors.length)],
-      fillColor: "rgba(0,0,0,0)",
+      fillColor: ["rgba(0,0,0,0)"],
     })
       .then((dataset) => {
         setSavingDataset(false);

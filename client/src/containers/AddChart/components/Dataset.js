@@ -81,6 +81,7 @@ function Dataset(props) {
   }, [newDataset]);
 
   useEffect(() => {
+    let tempDataItems;
     if (chart.chartData && chart.chartData.data && chart.chartData.data.datasets) {
       // find the dataset in the chart data
       let foundIndex;
@@ -93,10 +94,35 @@ function Dataset(props) {
       }
 
       if (foundIndex || foundIndex === 0) {
-        setDataItems(chart.chartData.data.datasets[foundIndex]);
+        tempDataItems = chart.chartData.data.datasets[foundIndex];
+        tempDataItems = { ...tempDataItems, labels: chart.chartData.data.labels };
+        setDataItems(tempDataItems);
       }
     }
   }, [chart, dataset]);
+
+  useEffect(() => {
+    // reformat the fill color value based on the chart type
+    if (chart.subType === "pattern" && dataItems && dataItems.data) {
+      let { fillColor } = dataset;
+      if (!Array.isArray(fillColor)) {
+        fillColor = [fillColor];
+      }
+
+      for (let i = 0; i < dataItems.data.length; i++) {
+        if (!fillColor[i]) fillColor.push(fillColor[0]);
+      }
+
+      setNewDataset({ ...newDataset, fillColor });
+    } else if (chart.subType !== "pattern") {
+      let newFillColor = newDataset.fillColor;
+      if (Array.isArray(newFillColor)) {
+        newFillColor = newFillColor[0].replace("\"", "");
+      }
+
+      setNewDataset({ ...newDataset, fillColor: newFillColor });
+    }
+  }, [dataItems]);
 
   const _onChangeConnection = (e, data) => {
     onUpdate({ connection_id: data.value });
@@ -150,10 +176,14 @@ function Dataset(props) {
     return activeConnection;
   };
 
-  const _renderColorPicker = (type) => {
+  const _renderColorPicker = (type, fillIndex) => {
     return (
       <SketchPicker
-        color={type === "dataset" ? newDataset.datasetColor : newDataset.fillColor}
+        color={
+          type === "dataset" ? newDataset.datasetColor
+            : (fillIndex || fillIndex === 0)
+              ? newDataset.fillColor[fillIndex] : newDataset.fillColor
+        }
         onChangeComplete={(color) => {
           const rgba = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
 
@@ -162,7 +192,16 @@ function Dataset(props) {
           }
 
           if (type === "fill") {
-            setNewDataset({ ...newDataset, fillColor: rgba });
+            if (!fillIndex && fillIndex !== 0) {
+              setNewDataset({ ...newDataset, fillColor: rgba });
+            } else {
+              const { fillColor } = newDataset;
+              if (Array.isArray(fillColor) && fillColor[fillIndex]) {
+                fillColor[fillIndex] = rgba;
+              }
+              onUpdate({ ...newDataset, fillColor });
+              // setNewDataset({ ...newDataset, fillColor });
+            }
           }
         }}
       />
@@ -265,17 +304,17 @@ function Dataset(props) {
               )}
               {chart.subType === "pattern" && (
                 <Label.Group>
-                  {dataItems && dataItems.data && dataItems.data.map((val) => {
+                  {dataItems && dataItems.data && dataItems.data.map((val, fillIndex) => {
                     return (
                       <Popup
                         key={val}
-                        content={() => _renderColorPicker("fill")}
+                        content={() => _renderColorPicker("fill", fillIndex)}
                         trigger={(
                           <Label
                             size="large"
                             color="blue"
-                            style={styles.datasetColorBtn(newDataset.fillColor)}
-                            content={val}
+                            style={styles.datasetColorBtn(newDataset.fillColor[fillIndex])}
+                            content={dataItems.labels[fillIndex]}
                           />
                         )}
                         style={{ padding: 0, margin: 0 }}
