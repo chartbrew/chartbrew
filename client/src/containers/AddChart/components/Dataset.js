@@ -307,7 +307,7 @@ function Dataset(props) {
                   {dataItems && dataItems.data && dataItems.data.map((val, fillIndex) => {
                     return (
                       <Popup
-                        key={val}
+                        key={dataItems.labels[fillIndex]}
                         content={() => _renderColorPicker("fill", fillIndex)}
                         trigger={(
                           <Label
