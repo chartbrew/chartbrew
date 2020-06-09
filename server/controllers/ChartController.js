@@ -278,19 +278,20 @@ class ChartController {
   updateChartData2(id, user, noSource) {
     let gChart;
     let gCache;
-    return this.chartCache.findLast(user.id)
-      .then((cache) => {
-        gCache = cache;
-        return this.findById(id);
-      })
+    return this.findById(id)
       .then((chart) => {
         gChart = chart;
         if (!chart.Datasets || chart.Datasets.length === 0) {
           throw new Error("The chart doesn't have any datasets");
         }
 
+        return this.chartCache.findLast(user.id, chart.id);
+      })
+      .then((cache) => {
+        gCache = cache;
+
         const requestPromises = [];
-        chart.Datasets.map((dataset) => {
+        gChart.Datasets.map((dataset) => {
           if (noSource && gCache && gCache.data) {
             requestPromises.push(this.datasetController.runRequest(dataset.id, true));
           } else {
@@ -321,7 +322,7 @@ class ChartController {
           });
         } else {
           // create a new cache for the data that was fetched
-          this.chartCache.create(user.id, resolvingData);
+          this.chartCache.create(user.id, gChart.id, resolvingData);
         }
 
         return Promise.resolve(resolvingData);
@@ -498,7 +499,7 @@ class ChartController {
   }
 
   getPreviewData(chart, projectId, user, noSource) {
-    return this.chartCache.findLast(user.id)
+    return this.chartCache.findLast(user.id, chart.id)
       .then((cache) => {
         if (noSource === "true") {
           return new Promise((resolve) => resolve(cache));
@@ -524,7 +525,7 @@ class ChartController {
       .then((data) => {
         if (noSource !== "true") {
           // cache, but do it async
-          this.chartCache.create(user.id, data);
+          this.chartCache.create(user.id, chart.id, data);
         }
 
         return new Promise((resolve) => resolve(data));

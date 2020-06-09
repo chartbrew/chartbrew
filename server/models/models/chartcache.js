@@ -23,6 +23,15 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "cascade",
       },
     },
+    chart_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      reference: {
+        model: "Chart",
+        key: "id",
+        onDelete: "cascade",
+      },
+    },
     data: {
       type: DataTypes.TEXT("long"),
       allowNull: false,

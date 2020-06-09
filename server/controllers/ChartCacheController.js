@@ -1,9 +1,10 @@
 const db = require("../models/models");
 
 class ChartCacheController {
-  create(userId, data, type = "CHART_CACHE") {
+  create(userId, chartId, data, type = "CHART_CACHE") {
     return db.ChartCache.create({
       user_id: userId,
+      chart_id: chartId,
       data,
       type,
     })
@@ -15,9 +16,9 @@ class ChartCacheController {
       });
   }
 
-  findLast(userId) {
+  findLast(userId, chartId) {
     return db.ChartCache.findAll({
-      where: { user_id: userId },
+      where: { user_id: userId, chart_id: chartId },
       order: [["createdAt", "DESC"]],
     })
       .then((cache) => {
