@@ -22,7 +22,7 @@ class ChartCacheController {
     })
       .then((cache) => {
         if (!cache || cache.length < 1) {
-          return new Promise((resolve) => resolve([]));
+          return new Promise((resolve) => resolve(false));
         }
 
         // return only the last one
@@ -30,7 +30,7 @@ class ChartCacheController {
       })
       .catch(() => {
         // this operation shouldn't stop what else is running
-        return new Promise((resolve) => resolve([]));
+        return new Promise((resolve) => resolve(false));
       });
   }
 

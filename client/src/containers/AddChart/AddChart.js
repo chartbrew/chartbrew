@@ -163,7 +163,9 @@ function AddChart(props) {
     runQuery(match.params.projectId, match.params.chartId);
   };
 
-  const _onRefreshPreview = () => {};
+  const _onRefreshPreview = () => {
+    runQuery(match.params.projectId, match.params.chartId, true);
+  };
 
   if (titleScreen) {
     return (
@@ -398,7 +400,9 @@ const mapDispatchToProps = (dispatch) => {
     updateChart: (projectId, chartId, data) => {
       return dispatch(updateChartAction(projectId, chartId, data));
     },
-    runQuery: (projectId, chartId) => dispatch(runQueryAction(projectId, chartId)),
+    runQuery: (projectId, chartId, noSource) => {
+      return dispatch(runQueryAction(projectId, chartId, noSource));
+    },
   };
 };
 

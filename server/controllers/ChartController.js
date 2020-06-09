@@ -275,9 +275,14 @@ class ChartController {
       });
   }
 
-  updateChartData2(id) {
+  updateChartData2(id, user, noSource) {
     let gChart;
-    return this.findById(id)
+    let gCache;
+    return this.chartCache.findLast(user.id)
+      .then((cache) => {
+        gCache = cache;
+        return this.findById(id);
+      })
       .then((chart) => {
         gChart = chart;
         if (!chart.Datasets || chart.Datasets.length === 0) {
@@ -286,17 +291,40 @@ class ChartController {
 
         const requestPromises = [];
         chart.Datasets.map((dataset) => {
-          requestPromises.push(this.datasetController.runRequest(dataset.id));
+          if (noSource && gCache && gCache.data) {
+            requestPromises.push(this.datasetController.runRequest(dataset.id, true));
+          } else {
+            requestPromises.push(this.datasetController.runRequest(dataset.id));
+          }
           return dataset;
         });
 
         return Promise.all(requestPromises);
       })
       .then((datasets) => {
-        return Promise.resolve({
+        const resolvingData = {
           chart: gChart,
           datasets,
-        });
+        };
+
+        // change the datasets data if the cache is called
+        if (noSource === true && gCache && gCache.data && gCache.data.datasets) {
+          resolvingData.datasets = gCache.data.datasets.map((item) => {
+            const tempItem = item;
+            for (let i = 0; i < datasets.length; i++) {
+              if (item.options.id === datasets[i].options.id) {
+                tempItem.options = datasets[i].options;
+                break;
+              }
+            }
+            return tempItem;
+          });
+        } else {
+          // create a new cache for the data that was fetched
+          this.chartCache.create(user.id, resolvingData);
+        }
+
+        return Promise.resolve(resolvingData);
       })
       .then((chartData) => {
         // LINE CHART

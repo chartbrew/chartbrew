@@ -71,7 +71,7 @@ class DatasetController {
       });
   }
 
-  runRequest(id) {
+  runRequest(id, noSource) {
     let gDataset;
     return db.Dataset.findOne({
       where: { id },
@@ -81,6 +81,10 @@ class DatasetController {
         gDataset = dataset;
         const connection = dataset.Connection;
         const dataRequest = dataset.DataRequest;
+
+        if (noSource === true) {
+          return new Promise((resolve) => resolve({}));
+        }
 
         if (connection.type === "mongodb") {
           return this.connectionController.runMongo(connection.id, dataRequest);
