@@ -39,6 +39,7 @@ function AddChart(props) {
   const [addingDataset, setAddingDataset] = useState(false);
   const [datasetName, setDatasetName] = useState("");
   const [savingDataset, setSavingDataset] = useState(false);
+  const [chartName, setChartName] = useState("");
 
   const {
     match, createChart, history, charts, saveNewDataset, getChartDatasets,
@@ -65,6 +66,7 @@ function AddChart(props) {
       if (chart.id === parseInt(match.params.chartId, 10)) {
         if (!_.isEqual(chart, newChart)) {
           setNewChart(chart);
+          setChartName(chart.name);
         }
       }
       return chart;
@@ -76,7 +78,12 @@ function AddChart(props) {
   };
 
   const _onNameChange = (value) => {
-    _onChangeChart({ name: value });
+    setChartName(value);
+  };
+
+  const _onSubmitNewName = () => {
+    setEditingTitle(false);
+    _onChangeChart({ name: chartName });
   };
 
   const _onCreateClicked = () => {
@@ -218,7 +225,7 @@ function AddChart(props) {
                       <Form.Field>
                         <Input
                           placeholder="Enter a title"
-                          value={newChart.name}
+                          value={chartName}
                           onChange={(e, data) => _onNameChange(data.value)}
                         />
                       </Form.Field>
@@ -228,7 +235,7 @@ function AddChart(props) {
                           icon
                           labelPosition="right"
                           type="submit"
-                          onClick={() => setEditingTitle(false)}
+                          onClick={_onSubmitNewName}
                         >
                           <Icon name="checkmark" />
                           Save
