@@ -137,35 +137,40 @@ function ChartPreview(props) {
 
       {chart && chart.type && !typesVisible && (
         <Container textAlign="center" style={styles.topBuffer}>
-          <Button
-            icon
-            labelPosition="right"
-            onClick={() => setTypesVisible(true)}
-            primary
-          >
-            <Icon name="chart line" />
-            {"Chart type"}
-          </Button>
-          <Button
-            icon
-            labelPosition="right"
-            onClick={onRefreshPreview}
-            primary
-            loading={chartLoading}
-          >
-            <Icon name="eye" />
-            {"Refresh style"}
-          </Button>
-          <Button
-            icon
-            labelPosition="right"
-            onClick={onRefreshData}
-            primary
-            loading={chartLoading}
-          >
-            <Icon name="angle double down" />
-            Refresh Data
-          </Button>
+          <Button.Group fluid>
+            <Button
+              icon
+              labelPosition="right"
+              onClick={() => setTypesVisible(true)}
+              primary
+              basic
+            >
+              <Icon name="chart line" />
+              {"Chart type"}
+            </Button>
+            <Button
+              icon
+              labelPosition="right"
+              onClick={onRefreshPreview}
+              primary
+              basic
+              loading={chartLoading}
+            >
+              <Icon name="eye" />
+              {"Refresh style"}
+            </Button>
+            <Button
+              icon
+              labelPosition="right"
+              onClick={onRefreshData}
+              primary
+              basic
+              loading={chartLoading}
+            >
+              <Icon name="angle double down" />
+              Refresh Data
+            </Button>
+          </Button.Group>
         </Container>
       )}
     </>

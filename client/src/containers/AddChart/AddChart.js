@@ -40,6 +40,7 @@ function AddChart(props) {
   const [datasetName, setDatasetName] = useState("");
   const [savingDataset, setSavingDataset] = useState(false);
   const [chartName, setChartName] = useState("");
+  const [toastOpen, setToastOpen] = useState(false);
 
   const {
     match, createChart, history, charts, saveNewDataset, getChartDatasets,
@@ -124,15 +125,12 @@ function AddChart(props) {
     )
       .then((dataset) => {
         setActiveDataset(dataset);
-        toast.success("Updated the dataset 👌", {
-          position: "top-right",
-          autoClose: 1500,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          transition: Flip,
-        });
+        if (!toastOpen) {
+          toast.success("Updated the dataset 👌", {
+            onClose: () => setToastOpen(false),
+            onOpen: () => setToastOpen(true),
+          });
+        }
         _onRefreshPreview();
       })
       .catch(() => {
@@ -158,7 +156,13 @@ function AddChart(props) {
     setNewChart({ ...newChart, ...data });
     return updateChart(match.params.projectId, match.params.chartId, data)
       .then((newData) => {
-        toast.success("Updated the chart 📈");
+        if (!toastOpen) {
+          toast.success("Updated the chart 📈", {
+            onClose: () => setToastOpen(false),
+            onOpen: () => setToastOpen(true),
+          });
+        }
+        _onRefreshPreview();
         return Promise.resolve(newData);
       })
       .catch((e) => {
@@ -366,7 +370,10 @@ const styles = {
   },
   datasetButtons: {
     marginBottom: 10,
-  }
+  },
+  editTitle: {
+    cursor: "pointer",
+  },
 };
 
 AddChart.propTypes = {
