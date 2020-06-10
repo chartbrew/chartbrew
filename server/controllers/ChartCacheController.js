@@ -2,12 +2,15 @@ const db = require("../models/models");
 
 class ChartCacheController {
   create(userId, chartId, data, type = "CHART_CACHE") {
-    return db.ChartCache.create({
-      user_id: userId,
-      chart_id: chartId,
-      data,
-      type,
-    })
+    return this.deleteAll(userId, chartId)
+      .then(() => {
+        return db.ChartCache.create({
+          user_id: userId,
+          chart_id: chartId,
+          data,
+          type,
+        });
+      })
       .then((cache) => {
         return new Promise((resolve) => resolve(cache));
       })
@@ -35,8 +38,12 @@ class ChartCacheController {
       });
   }
 
-  deleteAll(userId) {
-    return db.ChartCache.destroy({ where: { user_id: userId } })
+  deleteAll(userId, chartId) {
+    const condition = { user_id: userId };
+    if (chartId) {
+      condition.chart_id = chartId;
+    }
+    return db.ChartCache.destroy({ where: condition })
       .then((result) => {
         return new Promise((resolve) => resolve(result));
       })
