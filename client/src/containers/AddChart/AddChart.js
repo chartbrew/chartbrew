@@ -126,6 +126,7 @@ function AddChart(props) {
           draggable: true,
           transition: Flip,
         });
+        _onRefreshPreview();
       })
       .catch(() => {
         toast.error("Cannot update the dataset 😫 Please try again", {

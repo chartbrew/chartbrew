@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
+import { connect } from "react-redux";
 import {
   Container, Button, Icon, Header, Image, Dimmer,
 } from "semantic-ui-react";
@@ -18,7 +19,7 @@ import doughnutChartImage from "../../../assets/doughnutChart.PNG";
 function ChartPreview(props) {
   const [typesVisible, setTypesVisible] = useState(false);
   const {
-    chart, onChange, onRefreshData, onRefreshPreview
+    chart, onChange, onRefreshData, onRefreshPreview, chartLoading,
   } = props;
 
   const _onChangeChartType = (type) => {
@@ -139,27 +140,28 @@ function ChartPreview(props) {
           <Button
             icon
             labelPosition="right"
-            primary
-            basic
             onClick={() => setTypesVisible(true)}
+            primary
           >
             <Icon name="chart line" />
-            Chart type
+            {"Chart type"}
           </Button>
           <Button
             icon
             labelPosition="right"
             onClick={onRefreshPreview}
-            basic
+            primary
+            loading={chartLoading}
           >
             <Icon name="eye" />
-            Refresh style
+            {"Refresh style"}
           </Button>
           <Button
             icon
             labelPosition="right"
             onClick={onRefreshData}
-            basic
+            primary
+            loading={chartLoading}
           >
             <Icon name="angle double down" />
             Refresh Data
@@ -170,17 +172,24 @@ function ChartPreview(props) {
   );
 }
 
-ChartPreview.propTypes = {
-  chart: PropTypes.object.isRequired,
-  onChange: PropTypes.func.isRequired,
-  onRefreshData: PropTypes.func.isRequired,
-  onRefreshPreview: PropTypes.func.isRequired,
-};
-
 const styles = {
   topBuffer: {
     marginTop: 20,
   },
 };
 
-export default ChartPreview;
+ChartPreview.propTypes = {
+  chart: PropTypes.object.isRequired,
+  chartLoading: PropTypes.bool.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onRefreshData: PropTypes.func.isRequired,
+  onRefreshPreview: PropTypes.func.isRequired,
+};
+
+const mapStateToProps = (state) => {
+  return {
+    chartLoading: state.chart.loading,
+  };
+};
+
+export default connect(mapStateToProps)(ChartPreview);
