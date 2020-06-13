@@ -152,6 +152,21 @@ function AddChart(props) {
       });
   };
 
+  const _onChangeGlobalSettings = ({
+    pointRadius, displayLegend, dateRange, includeZeros, timeInterval, currentEndDate,
+  }) => {
+    const tempChart = {
+      pointRadius: typeof pointRadius !== "undefined" ? pointRadius : newChart.pointRadius,
+      displayLegend: typeof displayLegend !== "undefined" ? displayLegend : newChart.displayLegend,
+      startDate: dateRange ? dateRange.startDate : newChart.startDate,
+      endDate: dateRange ? dateRange.endDate : newChart.endDate,
+      timeInterval: timeInterval || newChart.timeInterval,
+      includeZeros: typeof includeZeros !== "undefined" ? includeZeros : newChart.includeZeros,
+      currentEndDate: typeof currentEndDate !== "undefined" ? currentEndDate : newChart.currentEndDate,
+    };
+    _onChangeChart(tempChart);
+  };
+
   const _onChangeChart = (data) => {
     setNewChart({ ...newChart, ...data });
     return updateChart(match.params.projectId, match.params.chartId, data)
@@ -258,7 +273,19 @@ function AddChart(props) {
             />
           </div>
           <div style={styles.topBuffer}>
-            <ChartSettings />
+            <ChartSettings
+              type={newChart.type}
+              subType={newChart.subType}
+              pointRadius={newChart.pointRadius}
+              startDate={newChart.startDate}
+              endDate={newChart.endDate}
+              displayLegend={newChart.displayLegend}
+              includeZeros={newChart.includeZeros}
+              currentEndDate={newChart.currentEndDate}
+              timeInterval={newChart.timeInterval}
+              onChange={_onChangeGlobalSettings}
+              onComplete={_onRefreshPreview}
+            />
           </div>
         </Grid.Column>
 

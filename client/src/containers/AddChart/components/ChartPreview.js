@@ -137,7 +137,7 @@ function ChartPreview(props) {
 
       {chart && chart.type && !typesVisible && (
         <Container textAlign="center" style={styles.topBuffer}>
-          <Button.Group fluid>
+          <Button.Group fluid size="small">
             <Button
               icon
               labelPosition="right"
