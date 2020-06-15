@@ -314,8 +314,8 @@ class ConnectionController {
       .then((connection) => {
         return externalDbConnection(connection);
       })
-      .then((db) => {
-        return db.query(dataRequest.query, { type: Sequelize.QueryTypes.SELECT });
+      .then((dbConnection) => {
+        return dbConnection.query(dataRequest.query, { type: Sequelize.QueryTypes.SELECT });
       })
       .then((results) => {
         return new Promise((resolve) => resolve(results));

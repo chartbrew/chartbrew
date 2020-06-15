@@ -3,16 +3,18 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Modal, Button, Loader, Container, Placeholder, Message, Icon,
+  Modal, Button, Loader, Container, Placeholder, Icon,
   Input, Grid, Header,
 } from "semantic-ui-react";
 import _ from "lodash";
+import { toast } from "react-toastify";
 import brace from "brace"; // eslint-disable-line
 import AceEditor from "react-ace";
 import "brace/mode/json";
 import "brace/theme/tomorrow";
 
 import ApiBuilder from "./ApiBuilder";
+import SqlBuilder from "./SqlBuilder";
 import ObjectExplorer from "./ObjectExplorer";
 import {
   getDataRequestByDataset as getDataRequestByDatasetAction,
@@ -29,7 +31,7 @@ function DatarequestModal(props) {
   const [dataRequest, setDataRequest] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
   const [closeTrigger, setCloseTrigger] = useState(false);
   const [result, setResult] = useState(null);
   const [fieldsView, setFieldsView] = useState(false);
@@ -79,6 +81,17 @@ function DatarequestModal(props) {
     const request = _.find(requests, { options: { id: dataset.id } });
     setResult(request);
   }, [requests]);
+
+  useEffect(() => {
+    let message = error;
+    if (error instanceof Error) {
+      message = "Could not fetch data. Please check your query.";
+    }
+
+    if (error) {
+      toast.error(message);
+    }
+  }, [error]);
 
   const _onClose = () => {
     if (saved || closeTrigger) {
@@ -159,14 +172,17 @@ function DatarequestModal(props) {
             </Placeholder>
           </Container>
         )}
-        {error && (
-          <Message>
-            <Message.Header>Could not fetch the data request</Message.Header>
-            <p>Please try refreshing the page.</p>
-          </Message>
-        )}
         {!fieldsView && connection.type === "api" && dataRequest && (
           <ApiBuilder
+            dataset={dataset}
+            dataRequest={dataRequest}
+            connection={connection}
+            onChangeRequest={_updateDataRequest}
+            onSave={_onSaveRequest}
+          />
+        )}
+        {!fieldsView && (connection.type === "mysql" || connection.type === "postgres") && dataRequest && (
+          <SqlBuilder
             dataset={dataset}
             dataRequest={dataRequest}
             connection={connection}

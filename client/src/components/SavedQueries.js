@@ -94,9 +94,11 @@ class SavedQueries extends Component {
       loading, error, editQuery, editLoading, savedQuerySummary, removeQuery,
       removeLoading,
     } = this.state;
-    const { savedQueries, onSelectQuery, selectedQuery } = this.props;
+    const {
+      savedQueries, onSelectQuery, selectedQuery, style
+    } = this.props;
     return (
-      <div style={styles.container}>
+      <div style={{ ...styles.container, ...style }}>
         <Loader active={loading} />
 
         {error
@@ -246,6 +248,7 @@ SavedQueries.defaultProps = {
   onSelectQuery: () => {},
   selectedQuery: -1,
   type: "",
+  style: {},
 };
 
 SavedQueries.propTypes = {
@@ -257,6 +260,7 @@ SavedQueries.propTypes = {
   onSelectQuery: PropTypes.func,
   selectedQuery: PropTypes.number,
   type: PropTypes.string,
+  style: PropTypes.object,
 };
 
 const mapStateToProps = (state) => {
