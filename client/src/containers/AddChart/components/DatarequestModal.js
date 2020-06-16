@@ -15,6 +15,7 @@ import "brace/theme/tomorrow";
 
 import ApiBuilder from "./ApiBuilder";
 import SqlBuilder from "./SqlBuilder";
+import MongoQueryBuilder from "./MongoQueryBuilder";
 import ObjectExplorer from "./ObjectExplorer";
 import {
   getDataRequestByDataset as getDataRequestByDatasetAction,
@@ -192,6 +193,16 @@ function DatarequestModal(props) {
             exploreData={result && JSON.stringify(result.data, null, 2)}
           />
         )}
+        {!fieldsView && connection.type === "mongodb" && dataRequest && (
+          <MongoQueryBuilder
+            dataset={dataset}
+            dataRequest={dataRequest}
+            onChangeRequest={_updateDataRequest}
+            onSave={_onSaveRequest}
+            exploreData={result && JSON.stringify(result.data, null, 2)}
+          />
+        )}
+
         {fieldsView && result && (
           <Grid columns={2}>
             <Grid.Column width={7}>

@@ -286,7 +286,7 @@ class ConnectionController {
   }
 
   runMongo(id, dataRequest) {
-    return this.connection.getConnectionUrl(id)
+    return this.getConnectionUrl(id)
       .then((url) => {
         const options = {
           keepAlive: 1,
