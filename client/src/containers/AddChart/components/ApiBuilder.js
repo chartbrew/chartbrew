@@ -10,6 +10,7 @@ import brace from "brace"; // eslint-disable-line
 import AceEditor from "react-ace";
 import uuid from "uuid/v4";
 import _ from "lodash";
+import { toast } from "react-toastify";
 
 import "brace/mode/json";
 import "brace/theme/tomorrow";
@@ -217,6 +218,7 @@ function ApiBuilder(props) {
         .catch((error) => {
           setRequestLoading(false);
           setRequestError(error);
+          toast.error("The request failed. Please check your request 🕵️‍♂️");
           setResult(JSON.stringify(error, null, 2));
         });
     });

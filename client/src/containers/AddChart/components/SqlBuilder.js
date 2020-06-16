@@ -257,6 +257,7 @@ const styles = {
   },
   savedQueriesContainer: {
     maxHeight: 170,
+    overflow: "auto",
   },
 };
 
