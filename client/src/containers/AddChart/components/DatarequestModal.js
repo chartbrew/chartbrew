@@ -179,6 +179,7 @@ function DatarequestModal(props) {
             connection={connection}
             onChangeRequest={_updateDataRequest}
             onSave={_onSaveRequest}
+            exploreData={result && JSON.stringify(result.data, null, 2)}
           />
         )}
         {!fieldsView && (connection.type === "mysql" || connection.type === "postgres") && dataRequest && (
@@ -188,6 +189,7 @@ function DatarequestModal(props) {
             connection={connection}
             onChangeRequest={_updateDataRequest}
             onSave={_onSaveRequest}
+            exploreData={result && JSON.stringify(result.data, null, 2)}
           />
         )}
         {fieldsView && result && (

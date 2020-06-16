@@ -3,11 +3,12 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Header, Button, Container, Icon, Message, Segment,
+  Grid, Header, Button, Icon, Label, Container,
   Modal, Input,
 } from "semantic-ui-react";
 import brace from "brace"; // eslint-disable-line
 import AceEditor from "react-ace";
+import { toast } from "react-toastify";
 
 import "brace/mode/json";
 import "brace/mode/pgsql";
@@ -24,8 +25,8 @@ import SavedQueries from "../../../components/SavedQueries";
 */
 function SqlBuilder(props) {
   const {
-    createSavedQuery, match, currentQuery, updateSavedQuery,
-    dataset, dataRequest, onChangeRequest, onSave, runRequest,
+    createSavedQuery, match, currentQuery, updateSavedQuery, exploreData,
+    dataset, dataRequest, onChangeRequest, onSave, runRequest, connection,
   } = props;
 
   const [sqlRequest, setSqlRequest] = useState({
@@ -36,9 +37,6 @@ function SqlBuilder(props) {
   const [saveQueryModal, setSaveQueryModal] = useState(false);
   const [savingQuery, setSavingQuery] = useState(false);
   const [updatingSavedQuery, setUpdatingSavedQuery] = useState(false);
-  const [queryUpdated, setQueryUpdated] = useState(false);
-  const [queryUpdateError, setQueryUpdateError] = useState(false);
-  const [savingQueryError, setSavingQueryError] = useState(false);
   const [requestSuccess, setRequestSuccess] = useState(false);
   const [requestLoading, setRequestLoading] = useState(false);
   const [requestError, setRequestError] = useState(false);
@@ -63,7 +61,7 @@ function SqlBuilder(props) {
     createSavedQuery(match.params.projectId, {
       query: currentQuery,
       summary: savedQuerySummary,
-      type: "mysql",
+      type: connection.type,
     })
       .then((savedQuery) => {
         setSavingQuery(false);
@@ -72,8 +70,8 @@ function SqlBuilder(props) {
       })
       .catch(() => {
         setSavingQuery(false);
-        setSavingQueryError(true);
         setSaveQueryModal(false);
+        toast.error("There was a problem with saving your query 😳");
       });
   };
 
@@ -86,11 +84,11 @@ function SqlBuilder(props) {
     )
       .then(() => {
         setUpdatingSavedQuery(false);
-        setQueryUpdated(true);
+        toast.success("The query was updated 👍");
       })
       .catch(() => {
         setUpdatingSavedQuery(false);
-        setQueryUpdateError(true);
+        toast.error("There was a problem with saving your query 😿");
       });
   };
 
@@ -114,6 +112,7 @@ function SqlBuilder(props) {
           setRequestLoading(false);
           setRequestError(error);
           setResult(JSON.stringify(error, null, 2));
+          toast.error("The request failed. Please check your query 🕵️‍♂️");
         });
     });
   };
@@ -122,11 +121,12 @@ function SqlBuilder(props) {
     <div style={styles.container}>
       <Grid columns={2} stackable centered divided>
         <Grid.Column width={8}>
-          <Header size="small">{"Enter your MySQL query here"}</Header>
+          {connection.type === "mysql" && <Header size="small">{"Enter your MySQL query here"}</Header>}
+          {connection.type === "postgres" && <Header size="small">{"Enter your PostgreSQL query here"}</Header>}
           <AceEditor
             mode="pgsql"
             theme="tomorrow"
-            height="250px"
+            height="200px"
             width="none"
             value={sqlRequest.query || ""}
             onChange={(value) => {
@@ -135,7 +135,7 @@ function SqlBuilder(props) {
             name="queryEditor"
             editorProps={{ $blockScrolling: true }}
           />
-          <Container textAlign="center" fluid>
+          <Button.Group fluid>
             <Button
               color={requestSuccess ? "green" : requestError ? "red" : null}
               primary={!requestSuccess && !requestError}
@@ -177,30 +177,10 @@ function SqlBuilder(props) {
                 Update the query
               </Button>
               )}
-          </Container>
-          {(savingQueryError || queryUpdateError)
-            && (
-            <Message negative>
-              <Message.Header>
-                {"Oh snap! There was an issue with your request"}
-              </Message.Header>
-              <p>{"Please try again or refresh the page and if it still doesn't work, get in touch with us."}</p>
-            </Message>
-            )}
-          {queryUpdated
-            && (
-            <Message
-              positive
-              onDismiss={() => setQueryUpdated(false)}
-            >
-              <Message.Header>
-                {"The query was updated successfully"}
-              </Message.Header>
-            </Message>
-            )}
+          </Button.Group>
 
-          <Header>Saved queries</Header>
-          <Segment>
+          <Header size="small">Saved queries</Header>
+          <Container>
             <SavedQueries
               selectedQuery={savedQuery}
               onSelectQuery={(savedQuery) => {
@@ -210,7 +190,7 @@ function SqlBuilder(props) {
               type="mysql"
               style={styles.savedQueriesContainer}
             />
-          </Segment>
+          </Container>
         </Grid.Column>
         <Grid.Column width={8}>
           <Header size="small">{"Query result"}</Header>
@@ -219,12 +199,19 @@ function SqlBuilder(props) {
             theme="tomorrow"
             height="450px"
             width="none"
-            value={result || ""}
+            value={exploreData || result || ""}
             onChange={() => setResult(result)}
             name="resultEditor"
             readOnly
             editorProps={{ $blockScrolling: false }}
           />
+          {result && (
+            <p>
+              <Label color="green" style={{ marginTop: 10 }}>
+                {`Result length: ${result ? JSON.parse(result).length : 0}`}
+              </Label>
+            </p>
+          )}
         </Grid.Column>
       </Grid>
 
@@ -273,8 +260,8 @@ const styles = {
   },
 };
 
-
 SqlBuilder.defaultProps = {
+  exploreData: "",
 };
 
 SqlBuilder.propTypes = {
@@ -287,6 +274,8 @@ SqlBuilder.propTypes = {
   updateSavedQuery: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   currentQuery: PropTypes.string.isRequired,
+  connection: PropTypes.object.isRequired,
+  exploreData: PropTypes.string,
 };
 
 const mapStateToProps = () => {
