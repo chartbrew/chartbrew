@@ -25,7 +25,7 @@ import SavedQueries from "../../../components/SavedQueries";
 */
 function SqlBuilder(props) {
   const {
-    createSavedQuery, match, currentQuery, updateSavedQuery, exploreData,
+    createSavedQuery, match, updateSavedQuery, exploreData,
     dataset, dataRequest, onChangeRequest, onSave, runRequest, connection,
   } = props;
 
@@ -59,7 +59,7 @@ function SqlBuilder(props) {
   const _onSaveQuery = () => {
     setSavingQuery(true);
     createSavedQuery(match.params.projectId, {
-      query: currentQuery,
+      query: sqlRequest.query,
       summary: savedQuerySummary,
       type: connection.type,
     })
@@ -80,7 +80,7 @@ function SqlBuilder(props) {
     updateSavedQuery(
       match.params.projectId,
       savedQuery,
-      { query: currentQuery }
+      { query: sqlRequest.query }
     )
       .then(() => {
         setUpdatingSavedQuery(false);
@@ -274,7 +274,6 @@ SqlBuilder.propTypes = {
   createSavedQuery: PropTypes.func.isRequired,
   updateSavedQuery: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
-  currentQuery: PropTypes.string.isRequired,
   connection: PropTypes.object.isRequired,
   exploreData: PropTypes.string,
 };

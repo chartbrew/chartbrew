@@ -24,7 +24,7 @@ import {
 */
 function MongoQueryBuilder(props) {
   const {
-    createSavedQuery, match, currentQuery, updateSavedQuery, onChangeRequest,
+    createSavedQuery, match, updateSavedQuery, onChangeRequest,
     runRequest, onSave, dataset, dataRequest, exploreData,
   } = props;
 
@@ -60,7 +60,7 @@ function MongoQueryBuilder(props) {
   const _onSaveQuery = () => {
     setSavingQuery(true);
     createSavedQuery(match.params.projectId, {
-      query: currentQuery,
+      query: mongoRequest.query,
       summary: savedQuerySummary,
       type: "mongodb",
     })
@@ -83,7 +83,7 @@ function MongoQueryBuilder(props) {
     updateSavedQuery(
       match.params.projectId,
       savedQuery,
-      { query: currentQuery }
+      { query: mongoRequest.query }
     )
       .then(() => {
         setUpdatingSavedQuery(false);
@@ -325,7 +325,6 @@ MongoQueryBuilder.propTypes = {
   createSavedQuery: PropTypes.func.isRequired,
   updateSavedQuery: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
-  currentQuery: PropTypes.string.isRequired,
 };
 
 const mapStateToProps = () => {
