@@ -181,7 +181,6 @@ function ApiBuilder(props) {
     setApiRequest({ ...apiRequest, route: value });
   };
 
-
   const _onPaginationChanged = (type, value) => {
     let newValue = value;
     if (type === "itemsLimit" && value && value !== "0") {
@@ -190,7 +189,6 @@ function ApiBuilder(props) {
 
     setApiRequest({ ...apiRequest, [type]: newValue });
   };
-
 
   const _onTest = () => {
     const { formattedHeaders } = apiRequest;

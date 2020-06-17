@@ -206,7 +206,15 @@ function MongoQueryBuilder(props) {
           </Container>
         </Grid.Column>
         <Grid.Column width={8}>
-          <Header size="small">Query results</Header>
+          <Header size="small">
+            {"Query result"}
+            {result && (
+              <Label color="green">
+                {`Result length: ${result ? JSON.parse(result).length : 0}`}
+              </Label>
+            )}
+          </Header>
+
           <AceEditor
             mode="json"
             theme="tomorrow"
@@ -218,13 +226,6 @@ function MongoQueryBuilder(props) {
             readOnly
             editorProps={{ $blockScrolling: false }}
           />
-          {result && (
-            <p>
-              <Label color="green" style={{ marginTop: 10 }}>
-                {`Result length: ${result ? JSON.parse(result).length : 0}`}
-              </Label>
-            </p>
-          )}
 
           <Popup
             on="click"

@@ -109,7 +109,7 @@ function ChartSettings(props) {
               <Accordion.Content active={activeOption === "daterange"}>
                 <Form>
                   <Form.Group widths="equal" style={{ paddingBottom: 20 }}>
-                    <Form.Field textAlign="center">
+                    <Form.Field>
                       <Button
                         content="Date filter"
                         primary

@@ -44,9 +44,9 @@ function DatarequestModal(props) {
     }
     let fetched = false;
     getDataRequestByDataset(match.params.projectId, match.params.chartId, dataset.id)
-      .then((result) => {
+      .then((dr) => {
         fetched = true;
-        setDataRequest(result);
+        setDataRequest(dr);
 
         setTimeout(() => {
           setSaved(true);
@@ -61,9 +61,9 @@ function DatarequestModal(props) {
         setError("Cannot fetch the data request configuration. Try to refresh the page.");
         return err;
       })
-      .then((result) => {
-        if (!fetched && result) {
-          setDataRequest(result);
+      .then((dr) => {
+        if (!fetched && dr) {
+          setDataRequest(dr);
           setTimeout(() => {
             setSaved(true);
           }, 100);
@@ -81,7 +81,7 @@ function DatarequestModal(props) {
   useEffect(() => {
     const request = _.find(requests, { options: { id: dataset.id } });
     setResult(request);
-  }, [requests]);
+  }, [requests, dataset]);
 
   useEffect(() => {
     let message = error;
