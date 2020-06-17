@@ -3,8 +3,8 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Button, Icon, Header, Divider, Popup, Container,
-  Form, Input, List, Message,
+  Grid, Button, Icon, Header, Divider, Popup,
+  Form, Input, List, Message, Checkbox,
 } from "semantic-ui-react";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
@@ -41,6 +41,8 @@ function AddChart(props) {
   const [savingDataset, setSavingDataset] = useState(false);
   const [chartName, setChartName] = useState("");
   const [toastOpen, setToastOpen] = useState(false);
+  const [saveRequired, setSaveRequired] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const {
     match, createChart, history, charts, saveNewDataset, getChartDatasets,
@@ -73,6 +75,20 @@ function AddChart(props) {
       return chart;
     });
   }, [charts]);
+
+  useEffect(() => {
+    let found = false;
+    charts.map((chart) => {
+      if (chart.id === parseInt(match.params.chartId, 10)) {
+        if (!_.isEqual(chart, newChart)) {
+          setSaveRequired(true);
+          found = true;
+        }
+      }
+      return chart;
+    });
+    if (!found) setSaveRequired(false);
+  }, [newChart]);
 
   const _onDatasetClicked = (dataset) => {
     setActiveDataset(dataset);
@@ -169,6 +185,7 @@ function AddChart(props) {
 
   const _onChangeChart = (data) => {
     setNewChart({ ...newChart, ...data });
+    setLoading(true);
     return updateChart(match.params.projectId, match.params.chartId, data)
       .then((newData) => {
         if (!toastOpen) {
@@ -178,10 +195,12 @@ function AddChart(props) {
           });
         }
         _onRefreshPreview();
+        setLoading(false);
         return Promise.resolve(newData);
       })
       .catch((e) => {
         toast.error("Oups! Can't save the chart. Please try again.");
+        setLoading(false);
         return Promise.reject(e);
       });
   };
@@ -222,48 +241,71 @@ function AddChart(props) {
       <Grid columns={2} divided centered stackable>
         <Grid.Column width={9}>
           <div>
-            {!editingTitle
-              && (
-                <Header textAlign="left" onClick={() => setEditingTitle(true)}>
-                  <Popup
-                    trigger={(
-                      <a style={styles.editTitle}>
-                        {newChart.name}
-                      </a>
-                    )}
-                    content="Edit the chart name"
-                  />
-                </Header>
-              )}
+            <div style={{ display: "flex" }}>
+              <div style={{ flex: 0.5 }}>
+                {!editingTitle
+                  && (
+                    <Header textAlign="left" onClick={() => setEditingTitle(true)}>
+                      <Popup
+                        trigger={(
+                          <a style={styles.editTitle}>
+                            {newChart.name}
+                          </a>
+                        )}
+                        content="Edit the chart name"
+                      />
+                    </Header>
+                  )}
 
-            {editingTitle
-              && (
-                <Container fluid textAlign="left">
-                  <Form style={{ display: "inline-block" }}>
-                    <Form.Group>
-                      <Form.Field>
-                        <Input
-                          placeholder="Enter a title"
-                          value={chartName}
-                          onChange={(e, data) => _onNameChange(data.value)}
-                        />
-                      </Form.Field>
-                      <Form.Field>
-                        <Button
-                          secondary
-                          icon
-                          labelPosition="right"
-                          type="submit"
-                          onClick={_onSubmitNewName}
-                        >
-                          <Icon name="checkmark" />
-                          Save
-                        </Button>
-                      </Form.Field>
-                    </Form.Group>
-                  </Form>
-                </Container>
-              )}
+                {editingTitle
+                  && (
+                    <Form style={{ display: "inline-block" }}>
+                      <Form.Group>
+                        <Form.Field>
+                          <Input
+                            placeholder="Enter a title"
+                            value={chartName}
+                            onChange={(e, data) => _onNameChange(data.value)}
+                          />
+                        </Form.Field>
+                        <Form.Field>
+                          <Button
+                            secondary
+                            icon
+                            labelPosition="right"
+                            type="submit"
+                            onClick={_onSubmitNewName}
+                          >
+                            <Icon name="checkmark" />
+                            Save
+                          </Button>
+                        </Form.Field>
+                      </Form.Group>
+                    </Form>
+                  )}
+              </div>
+              <div style={{ flex: 0.5, textAlign: "right" }}>
+                <Checkbox
+                  label="Draft"
+                  toggle
+                  style={{ marginRight: 20 }}
+                  checked={newChart.draft}
+                  onChange={() => _onChangeChart({ draft: !newChart.draft })}
+                />
+                <Button
+                  primary={saveRequired}
+                  positive={!saveRequired}
+                  icon
+                  labelPosition="right"
+                  onClick={() => _onChangeChart({})}
+                  loading={loading}
+                >
+                  <Icon name={saveRequired ? "save" : "checkmark"} />
+                  {saveRequired && "Save chart"}
+                  {!saveRequired && "Chart saved"}
+                </Button>
+              </div>
+            </div>
             <Divider />
             <ChartPreview
               chart={newChart}
