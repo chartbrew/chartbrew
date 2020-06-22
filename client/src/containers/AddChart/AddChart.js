@@ -315,19 +315,21 @@ function AddChart(props) {
             />
           </div>
           <div style={styles.topBuffer}>
-            <ChartSettings
-              type={newChart.type}
-              subType={newChart.subType}
-              pointRadius={newChart.pointRadius}
-              startDate={newChart.startDate}
-              endDate={newChart.endDate}
-              displayLegend={newChart.displayLegend}
-              includeZeros={newChart.includeZeros}
-              currentEndDate={newChart.currentEndDate}
-              timeInterval={newChart.timeInterval}
-              onChange={_onChangeGlobalSettings}
-              onComplete={_onRefreshPreview}
-            />
+            {newChart.type && newChart.subType && (
+              <ChartSettings
+                type={newChart.type}
+                subType={newChart.subType}
+                pointRadius={newChart.pointRadius}
+                startDate={newChart.startDate}
+                endDate={newChart.endDate}
+                displayLegend={newChart.displayLegend}
+                includeZeros={newChart.includeZeros}
+                currentEndDate={newChart.currentEndDate}
+                timeInterval={newChart.timeInterval}
+                onChange={_onChangeGlobalSettings}
+                onComplete={_onRefreshPreview}
+              />
+            )}
           </div>
         </Grid.Column>
 

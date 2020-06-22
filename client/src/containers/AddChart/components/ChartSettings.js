@@ -96,7 +96,7 @@ function ChartSettings(props) {
     <div style={styles.container}>
       <Header dividing size="small">Chart Settings</Header>
       <Accordion fluid styled>
-        {subType.toLowerCase().indexOf("timeseries") > -1
+        {subType && subType.toLowerCase().indexOf("timeseries") > -1
           && (
             <>
               <Accordion.Title
