@@ -15,6 +15,7 @@ import mysqlImg from "../../../assets/mysql.svg";
 import apiImg from "../../../assets/api.png";
 import postgresImg from "../../../assets/postgres.png";
 import DatarequestModal from "./DatarequestModal";
+import Filters from "./Filters";
 
 function Dataset(props) {
   const {
@@ -27,6 +28,7 @@ function Dataset(props) {
   const [shouldSave, setShouldSave] = useState(null);
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [viewFilters, setViewFilters] = useState(false);
   const [dataItems, setDataItems] = useState([]);
 
   useEffect(() => {
@@ -176,6 +178,10 @@ function Dataset(props) {
     return activeConnection;
   };
 
+  const _onChangePatterns = (newPatterns) => {
+    setNewDataset({ ...newDataset, patterns: newPatterns });
+  };
+
   const _renderColorPicker = (type, fillIndex) => {
     return (
       <SketchPicker
@@ -255,6 +261,20 @@ function Dataset(props) {
         </Grid.Row>
         <Grid.Row>
           <Grid.Column>
+            <Button
+              icon
+              primary
+              labelPosition="right"
+              onClick={() => setViewFilters(true)}
+            >
+              <Icon name="options" />
+              Filters
+            </Button>
+          </Grid.Column>
+        </Grid.Row>
+        <Grid.Row>
+          <Grid.Column>
+            <Divider />
             <Header size="tiny">Dataset Color</Header>
             <div>
               <Popup
@@ -395,6 +415,28 @@ function Dataset(props) {
             <Icon name="trash" />
             Remove dataset
           </Button>
+        </Modal.Actions>
+      </Modal>
+
+      {/* FILTERS MODAL */}
+      <Modal
+        open={viewFilters}
+        onClose={() => setViewFilters(false)}
+        closeOnDimmerClick={false}
+      >
+        <Modal.Header>Filter the data</Modal.Header>
+        <Modal.Content>
+          <Filters
+            patterns={newDataset.patterns}
+            labels={dataItems && dataItems.labels}
+            onSave={_onChangePatterns}
+          />
+        </Modal.Content>
+        <Modal.Actions>
+          <Button
+            content="Close"
+            onClick={() => setViewFilters(false)}
+          />
         </Modal.Actions>
       </Modal>
     </div>
