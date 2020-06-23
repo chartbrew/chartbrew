@@ -259,19 +259,21 @@ function Dataset(props) {
             </Button>
           </Grid.Column>
         </Grid.Row>
-        <Grid.Row>
-          <Grid.Column>
-            <Button
-              icon
-              primary
-              labelPosition="right"
-              onClick={() => setViewFilters(true)}
-            >
-              <Icon name="options" />
-              Filters
-            </Button>
-          </Grid.Column>
-        </Grid.Row>
+        {chart.subType === "pattern" && (
+          <Grid.Row>
+            <Grid.Column>
+              <Button
+                icon
+                primary
+                labelPosition="right"
+                onClick={() => setViewFilters(true)}
+              >
+                <Icon name="options" />
+                Filters
+              </Button>
+            </Grid.Column>
+          </Grid.Row>
+        )}
         <Grid.Row>
           <Grid.Column>
             <Divider />

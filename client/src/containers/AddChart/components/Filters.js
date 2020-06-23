@@ -166,7 +166,7 @@ function Filters(props) {
       </Button>
       <Divider />
       <Message info>
-        <p>New filters coming soon</p>
+        <p>The filter option is only available on pattern charts. New filters coming soon.</p>
       </Message>
     </div>
   );
