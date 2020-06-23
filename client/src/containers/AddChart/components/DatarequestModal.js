@@ -94,6 +94,12 @@ function DatarequestModal(props) {
     }
   }, [error]);
 
+  useEffect(() => {
+    if (!result && fieldsView) {
+      setFieldsView(false);
+    }
+  }, [result]);
+
   const _onClose = () => {
     if (saved || closeTrigger) {
       setCloseTrigger(false);
