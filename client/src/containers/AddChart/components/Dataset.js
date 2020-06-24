@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
+import { withRouter } from "react-router";
 import _ from "lodash";
 import {
   Popup, Icon, Divider, Dropdown, Button, Grid,
@@ -19,8 +20,9 @@ import Filters from "./Filters";
 
 function Dataset(props) {
   const {
-    dataset, connections, onUpdate, onDelete, chart,
+    dataset, connections, onUpdate, onDelete, chart, match,
   } = props;
+
   const [newDataset, setNewDataset] = useState(dataset);
   const [dropdownConfig, setDropdownConfig] = useState([]);
   const [configOpened, setConfigOpened] = useState(false);
@@ -182,6 +184,10 @@ function Dataset(props) {
     setNewDataset({ ...newDataset, patterns: newPatterns });
   };
 
+  const _onManageConnections = () => {
+    return `/${match.params.teamId}/${match.params.projectId}/connections`;
+  };
+
   const _renderColorPicker = (type, fillIndex) => {
     return (
       <SketchPicker
@@ -257,6 +263,18 @@ function Dataset(props) {
               <Icon name="wifi" />
               Get data
             </Button>
+            <Popup
+              trigger={(
+                <Button
+                  as="a"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  icon="plug"
+                  href={_onManageConnections()}
+                />
+              )}
+              content="Manage connections"
+            />
           </Grid.Column>
         </Grid.Row>
         {chart.subType === "pattern" && (
@@ -451,6 +469,7 @@ Dataset.propTypes = {
   onUpdate: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   chart: PropTypes.object.isRequired,
+  match: PropTypes.object.isRequired,
 };
 
 const styles = {
@@ -480,4 +499,4 @@ const mapStateToProps = (state) => {
   };
 };
 
-export default connect(mapStateToProps)(Dataset);
+export default withRouter(connect(mapStateToProps)(Dataset));
