@@ -40,12 +40,13 @@ function ChartDescription(props) {
         <Container text style={styles.topBuffer}>
           <Input
             type="text"
-            placeholder="Short summary"
+            placeholder="'User growth in the last month'"
             error={error}
             value={name}
             onChange={_onNameChange}
             size="big"
             fluid
+            autoFocus
           />
         </Container>
 

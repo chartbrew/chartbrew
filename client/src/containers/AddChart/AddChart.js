@@ -34,7 +34,7 @@ import { chartColors } from "../../config/colors";
 function AddChart(props) {
   const [activeDataset, setActiveDataset] = useState({});
   const [titleScreen, setTitleScreen] = useState(true);
-  const [newChart, setNewChart] = useState({ name: "Test chart" });
+  const [newChart, setNewChart] = useState({});
   const [editingTitle, setEditingTitle] = useState(false);
   const [addingDataset, setAddingDataset] = useState(false);
   const [datasetName, setDatasetName] = useState("");
@@ -104,8 +104,10 @@ function AddChart(props) {
   };
 
   const _onCreateClicked = () => {
-    return createChart(match.params.projectId, newChart)
+    const tempChart = { ...newChart, name: chartName };
+    return createChart(match.params.projectId, tempChart)
       .then((createdChart) => {
+        setNewChart(createdChart);
         setTitleScreen(false);
         history.push(`chart/${createdChart.id}/edit`);
       })
@@ -216,7 +218,7 @@ function AddChart(props) {
   if (titleScreen) {
     return (
       <ChartDescription
-        name={newChart.name}
+        name={chartName}
         onChange={_onNameChange}
         onCreate={_onCreateClicked}
         history={history}
