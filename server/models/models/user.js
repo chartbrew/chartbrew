@@ -65,6 +65,25 @@ module.exports = (sequelize, DataTypes) => {
     passwordResetToken: {
       type: DataTypes.STRING,
     },
+    tutorials: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: "{}",
+      set(val) {
+        try {
+          return this.setDataValue("tutorials", JSON.stringify(val));
+        } catch (e) {
+          return this.setDataValue("tutorials", val);
+        }
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("tutorials"));
+        } catch (e) {
+          return this.getDataValue("tutorials");
+        }
+      },
+    },
     createdAt: {
       type: DataTypes.DATE,
       defaultValue: sequelize.literal("CURRENT_TIMESTAMP")

@@ -318,7 +318,7 @@ module.exports = (app) => {
   /*
   ** Route to modify users' fields
   */
-  app.put("/user/:id", (req, res) => {
+  app.put("/user/:id", verifyUser, (req, res) => {
     if (!req.body || !req.params.id) return res.status(400).send("Missing fields");
     return userController.update(req.params.id, req.body)
       .then((user) => {

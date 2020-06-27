@@ -240,7 +240,7 @@ function Dataset(props) {
             </Form>
           </Grid.Column>
         </Grid.Row>
-        <Grid.Row columns={2}>
+        <Grid.Row columns={2} className="dataset-manage-tut">
           <Grid.Column>
             <Dropdown
               placeholder="Select a connection"
@@ -293,7 +293,7 @@ function Dataset(props) {
           </Grid.Row>
         )}
         <Grid.Row>
-          <Grid.Column>
+          <Grid.Column className="dataset-colors-tut">
             <Divider />
             <Header size="tiny">Dataset Color</Header>
             <div>
@@ -370,7 +370,7 @@ function Dataset(props) {
           </Grid.Column>
         </Grid.Row>
         <Grid.Row>
-          <Grid.Column>
+          <Grid.Column className="dataset-actions-tut">
             <Divider />
             <Button
               primary

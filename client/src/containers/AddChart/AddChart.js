@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Grid, Button, Icon, Header, Divider, Popup,
-  Form, Input, List, Message, Checkbox,
+  Form, Input, List, Message, Checkbox, Modal,
 } from "semantic-ui-react";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
@@ -14,7 +14,7 @@ import ChartPreview from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
 import Dataset from "./components/Dataset";
 import ChartDescription from "./components/ChartDescription";
-
+import Walkthrough from "./components/Walkthrough";
 import {
   createChart as createChartAction,
   updateChart as updateChartAction,
@@ -26,7 +26,9 @@ import {
   updateDataset as updateDatasetAction,
   deleteDataset as deleteDatasetAction,
 } from "../../actions/dataset";
+import { updateUser as updateUserAction } from "../../actions/user";
 import { chartColors } from "../../config/colors";
+import { APP_VERSION } from "../../config/settings";
 
 /*
   Container used for setting up a new chart
@@ -43,10 +45,12 @@ function AddChart(props) {
   const [toastOpen, setToastOpen] = useState(false);
   const [saveRequired, setSaveRequired] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [tourActive, setTourActive] = useState("");
+  const [startTutorial, setStartTutorial] = useState(false);
 
   const {
     match, createChart, history, charts, saveNewDataset, getChartDatasets,
-    datasets, updateDataset, deleteDataset, updateChart, runQuery,
+    datasets, updateDataset, deleteDataset, updateChart, runQuery, user, updateUser,
   } = props;
 
   useEffect(() => {
@@ -61,6 +65,10 @@ function AddChart(props) {
 
       // also fetch the chart's datasets
       getChartDatasets(match.params.projectId, match.params.chartId);
+    }
+
+    if (user && !user.tutorials) {
+      setStartTutorial(true);
     }
   }, []);
 
@@ -90,8 +98,11 @@ function AddChart(props) {
     if (!found) setSaveRequired(false);
   }, [newChart]);
 
-  const _onDatasetClicked = (dataset) => {
+  const _onDatasetChanged = (dataset) => {
     setActiveDataset(dataset);
+    setTimeout(() => {
+      setTourActive("dataset");
+    }, 1000);
   };
 
   const _onNameChange = (value) => {
@@ -126,7 +137,7 @@ function AddChart(props) {
       .then((dataset) => {
         setSavingDataset(false);
         setAddingDataset(false);
-        setActiveDataset(dataset);
+        _onDatasetChanged(dataset);
         setDatasetName("");
       })
       .catch(() => {
@@ -215,6 +226,28 @@ function AddChart(props) {
     runQuery(match.params.projectId, match.params.chartId, true);
   };
 
+  const _onCloseTour = () => {
+    // save the tour that was closed and then close it without delay
+    const tempTour = `${tourActive}`;
+    setTourActive("");
+    let tempTutorials = {
+      tutorials: {
+        [tempTour]: APP_VERSION,
+      },
+    };
+
+    if (user.tutorials) {
+      tempTutorials = {
+        tutorials: {
+          ...user.tutorials,
+          [tempTour]: APP_VERSION,
+        },
+      };
+    }
+
+    updateUser(user.id, tempTutorials);
+  };
+
   if (titleScreen) {
     return (
       <ChartDescription
@@ -244,7 +277,7 @@ function AddChart(props) {
         <Grid.Column width={9}>
           <div>
             <div style={{ display: "flex" }}>
-              <div style={{ flex: 0.5 }}>
+              <div style={{ flex: 0.5 }} className="chart-name-tut">
                 {!editingTitle
                   && (
                     <Header textAlign="left" onClick={() => setEditingTitle(true)}>
@@ -286,7 +319,7 @@ function AddChart(props) {
                     </Form>
                   )}
               </div>
-              <div style={{ flex: 0.5, textAlign: "right" }}>
+              <div style={{ flex: 0.5, textAlign: "right" }} className="chart-actions-tut">
                 <Checkbox
                   label="Draft"
                   toggle
@@ -309,12 +342,14 @@ function AddChart(props) {
               </div>
             </div>
             <Divider />
-            <ChartPreview
-              chart={newChart}
-              onChange={_onChangeChart}
-              onRefreshData={_onRefreshData}
-              onRefreshPreview={_onRefreshPreview}
-            />
+            <div className="chart-type-tut">
+              <ChartPreview
+                chart={newChart}
+                onChange={_onChangeChart}
+                onRefreshData={_onRefreshData}
+                onRefreshPreview={_onRefreshPreview}
+              />
+            </div>
           </div>
           <div style={styles.topBuffer}>
             {newChart.type && newChart.subType && (
@@ -335,7 +370,7 @@ function AddChart(props) {
           </div>
         </Grid.Column>
 
-        <Grid.Column width={6}>
+        <Grid.Column width={6} className="add-dataset-tut">
           <Header>Datasets</Header>
           <Divider />
 
@@ -346,7 +381,7 @@ function AddChart(props) {
                   style={styles.datasetButtons}
                   key={dataset.id}
                   primary
-                  onClick={() => _onDatasetClicked(dataset)}
+                  onClick={() => _onDatasetChanged(dataset)}
                   basic={dataset.id !== activeDataset.id}
                 >
                   {dataset.legend}
@@ -404,12 +439,14 @@ function AddChart(props) {
 
           <Divider />
           {activeDataset.id && (
-            <Dataset
-              dataset={activeDataset}
-              onUpdate={_onUpdateDataset}
-              onDelete={_onDeleteDataset}
-              chart={newChart}
-            />
+            <div>
+              <Dataset
+                dataset={activeDataset}
+                onUpdate={_onUpdateDataset}
+                onDelete={_onDeleteDataset}
+                chart={newChart}
+              />
+            </div>
           )}
           {!activeDataset.id && (
             <Message
@@ -418,6 +455,42 @@ function AddChart(props) {
           )}
         </Grid.Column>
       </Grid>
+
+      <Walkthrough
+        tourActive={tourActive}
+        closeTour={_onCloseTour}
+        userTutorials={user.tutorials}
+      />
+
+      <Modal open={startTutorial} onClose={() => setStartTutorial(false)}>
+        <Modal.Header>Welcome to the brewery</Modal.Header>
+        <Modal.Content>
+          <Header>{"This is the place where your charts will take shape."}</Header>
+          <p>
+            {"It is recommended that you read through the next steps to get familiar with the interface. "}
+            {"You can always restart the tutorial from the upper right corner at any later time."}
+          </p>
+          <p>{"But without further ado, let's get started"}</p>
+        </Modal.Content>
+        <Modal.Actions>
+          <Button
+            content="Cancel walkthrough"
+            onClick={() => setStartTutorial(false)}
+          />
+          <Button
+            positive
+            icon
+            labelPosition="right"
+            onClick={() => {
+              setStartTutorial(false);
+              setTourActive("addchart");
+            }}
+          >
+            <Icon name="chevron right" />
+            Get started
+          </Button>
+        </Modal.Actions>
+      </Modal>
     </div>
   );
 }
@@ -461,12 +534,15 @@ AddChart.propTypes = {
   datasets: PropTypes.array.isRequired,
   updateChart: PropTypes.func.isRequired,
   runQuery: PropTypes.func.isRequired,
+  user: PropTypes.object.isRequired,
+  updateUser: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
     charts: state.chart.data,
     datasets: state.dataset.data,
+    user: state.user.data,
   };
 };
 
@@ -491,6 +567,7 @@ const mapDispatchToProps = (dispatch) => {
     runQuery: (projectId, chartId, noSource) => {
       return dispatch(runQueryAction(projectId, chartId, noSource));
     },
+    updateUser: (id, data) => dispatch(updateUserAction(id, data)),
   };
 };
 
