@@ -28,7 +28,10 @@ import {
 } from "../../actions/dataset";
 import { updateUser as updateUserAction } from "../../actions/user";
 import { chartColors } from "../../config/colors";
-import { APP_VERSION } from "../../config/settings";
+import {
+  changeTutorial as changeTutorialAction,
+  completeTutorial as completeTutorialAction,
+} from "../../actions/tutorial";
 
 /*
   Container used for setting up a new chart
@@ -45,12 +48,12 @@ function AddChart(props) {
   const [toastOpen, setToastOpen] = useState(false);
   const [saveRequired, setSaveRequired] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [tourActive, setTourActive] = useState("");
   const [startTutorial, setStartTutorial] = useState(false);
 
   const {
-    match, createChart, history, charts, saveNewDataset, getChartDatasets,
-    datasets, updateDataset, deleteDataset, updateChart, runQuery, user, updateUser,
+    match, createChart, history, charts, saveNewDataset, getChartDatasets, tutorial,
+    datasets, updateDataset, deleteDataset, updateChart, runQuery, user,
+    changeTutorial, completeTutorial,
   } = props;
 
   useEffect(() => {
@@ -101,7 +104,7 @@ function AddChart(props) {
   const _onDatasetChanged = (dataset) => {
     setActiveDataset(dataset);
     setTimeout(() => {
-      setTourActive("dataset");
+      _changeTour("dataset");
     }, 1000);
   };
 
@@ -226,26 +229,12 @@ function AddChart(props) {
     runQuery(match.params.projectId, match.params.chartId, true);
   };
 
+  const _changeTour = (tut) => {
+    changeTutorial(tut);
+  };
+
   const _onCloseTour = () => {
-    // save the tour that was closed and then close it without delay
-    const tempTour = `${tourActive}`;
-    setTourActive("");
-    let tempTutorials = {
-      tutorials: {
-        [tempTour]: APP_VERSION,
-      },
-    };
-
-    if (user.tutorials) {
-      tempTutorials = {
-        tutorials: {
-          ...user.tutorials,
-          [tempTour]: APP_VERSION,
-        },
-      };
-    }
-
-    updateUser(user.id, tempTutorials);
+    completeTutorial();
   };
 
   if (titleScreen) {
@@ -457,7 +446,7 @@ function AddChart(props) {
       </Grid>
 
       <Walkthrough
-        tourActive={tourActive}
+        tourActive={tutorial}
         closeTour={_onCloseTour}
         userTutorials={user.tutorials}
       />
@@ -483,7 +472,7 @@ function AddChart(props) {
             labelPosition="right"
             onClick={() => {
               setStartTutorial(false);
-              setTourActive("addchart");
+              _changeTour("addchart");
             }}
           >
             <Icon name="chevron right" />
@@ -535,7 +524,9 @@ AddChart.propTypes = {
   updateChart: PropTypes.func.isRequired,
   runQuery: PropTypes.func.isRequired,
   user: PropTypes.object.isRequired,
-  updateUser: PropTypes.func.isRequired,
+  tutorial: PropTypes.string.isRequired,
+  changeTutorial: PropTypes.func.isRequired,
+  completeTutorial: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -543,6 +534,7 @@ const mapStateToProps = (state) => {
     charts: state.chart.data,
     datasets: state.dataset.data,
     user: state.user.data,
+    tutorial: state.tutorial,
   };
 };
 
@@ -568,6 +560,8 @@ const mapDispatchToProps = (dispatch) => {
       return dispatch(runQueryAction(projectId, chartId, noSource));
     },
     updateUser: (id, data) => dispatch(updateUserAction(id, data)),
+    changeTutorial: (tut) => dispatch(changeTutorialAction(tut)),
+    completeTutorial: () => dispatch(completeTutorialAction()),
   };
 };
 

@@ -38,6 +38,16 @@ function Walkthrough(props) {
           disableDotsNavigation={["esc"]}
         />
       )}
+      {tourActive === "apibuilder" && (
+        <Tour
+          accentColor={secondary}
+          steps={apibuilderSteps}
+          isOpen={isActive("dataset")}
+          onRequestClose={closeTour}
+          closeWithMask={false}
+          disableDotsNavigation={["esc"]}
+        />
+      )}
     </>
   );
 }
@@ -114,6 +124,52 @@ const datasetSteps = [
       </>
     ),
   }
+];
+
+const apibuilderSteps = [
+  {
+    selector: ".apibuilder-route-tut",
+    content: () => (
+      <>
+        <p>{"The host address was already set when you created the connection."}</p>
+        <p>{"Here, you will have to enter the route and and query parameters that you need for your API request."}</p>
+      </>
+    ),
+  },
+  {
+    selector: ".apibuilder-headers-tut",
+    content: () => (
+      <>
+        <p>{"You can further configure your requests by adding headers, a body of data and you can also paginate requests if the API allows it."}</p>
+        <p>{"The global headers are enabled by default. These are set in the Connections page and it's best used for headers that need to be included often, such as the 'Authorization' header."}</p>
+      </>
+    ),
+  },
+  {
+    selector: ".apibuilder-type-tut",
+    content: () => (
+      <>
+        <p>{"You can select what type of API request you want to send from here."}</p>
+      </>
+    ),
+  },
+  {
+    selector: ".apibuilder-request-tut",
+    content: () => (
+      <>
+        <p>{"Once your have everything ready, send the request away and get the data"}</p>
+      </>
+    ),
+  },
+  {
+    selector: ".apibuilder-result-tut",
+    content: () => (
+      <>
+        <p>{"If the request is successful you will see the JSON data in this section"}</p>
+        <p>{"If the API suports it, you will also get the error message here in case the request is not successful. On the right, you will also see the HTTP error code in red."}</p>
+      </>
+    ),
+  },
 ];
 
 Walkthrough.defaultProps = {

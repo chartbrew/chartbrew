@@ -1,8 +1,6 @@
 import compareVersions, { compare } from "compare-versions";
 
 export default function showTutorial(type, userData) {
-  console.log("type", type);
-  console.log("userData", userData);
   if (!userData || !userData[type]) return true;
 
   switch (type) {
