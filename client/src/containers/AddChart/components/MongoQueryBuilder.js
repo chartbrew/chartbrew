@@ -15,9 +15,8 @@ import "brace/theme/tomorrow";
 
 import { createSavedQuery, updateSavedQuery } from "../../../actions/savedQuery";
 import SavedQueries from "../../../components/SavedQueries";
-import {
-  runRequest as runRequestAction,
-} from "../../../actions/dataset";
+import { runRequest as runRequestAction } from "../../../actions/dataset";
+import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 
 /*
   MongoDB query builder
@@ -26,6 +25,7 @@ function MongoQueryBuilder(props) {
   const {
     createSavedQuery, match, updateSavedQuery, onChangeRequest,
     runRequest, onSave, dataset, dataRequest, exploreData,
+    changeTutorial,
   } = props;
 
   const [savedQuery, setSavedQuery] = useState(null);
@@ -46,6 +46,7 @@ function MongoQueryBuilder(props) {
       const newRequest = { ...mongoRequest, ...dataRequest };
       if (!dataRequest.query) newRequest.query = mongoRequest.query;
       setMongoRequest(newRequest);
+      changeTutorial("mongobuilder");
     }
   }, []);
 
@@ -147,8 +148,9 @@ function MongoQueryBuilder(props) {
             }}
             name="queryEditor"
             editorProps={{ $blockScrolling: true }}
+            className="mongobuilder-query-tut"
           />
-          <Button.Group fluid>
+          <Button.Group fluid className="mongobuilder-buttons-tut">
             <Button
               color={testSuccess ? "green" : testError ? "red" : null}
               primary={!testSuccess && !testError}
@@ -193,7 +195,7 @@ function MongoQueryBuilder(props) {
           </Button.Group>
 
           <Header size="small">Saved queries</Header>
-          <Container>
+          <Container className="mongobuilder-saved-tut">
             <SavedQueries
               selectedQuery={savedQuery}
               onSelectQuery={(savedQuery) => {
@@ -225,6 +227,7 @@ function MongoQueryBuilder(props) {
             name="resultEditor"
             readOnly
             editorProps={{ $blockScrolling: false }}
+            className="mongobuilder-result-tut"
           />
 
           <Popup
@@ -326,6 +329,7 @@ MongoQueryBuilder.propTypes = {
   createSavedQuery: PropTypes.func.isRequired,
   updateSavedQuery: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
+  changeTutorial: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = () => {
@@ -342,6 +346,7 @@ const mapDispatchToProps = (dispatch) => {
     runRequest: (projectId, chartId, datasetId) => {
       return dispatch(runRequestAction(projectId, chartId, datasetId));
     },
+    changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };
 };
 

@@ -48,6 +48,16 @@ function Walkthrough(props) {
           disableDotsNavigation={["esc"]}
         />
       )}
+      {tourActive === "mongobuilder" && (
+        <Tour
+          accentColor={secondary}
+          steps={mongobuilderSteps}
+          isOpen={isActive("mongobuilder")}
+          onRequestClose={closeTour}
+          closeWithMask={false}
+          disableDotsNavigation={["esc"]}
+        />
+      )}
     </>
   );
 }
@@ -174,6 +184,55 @@ const apibuilderSteps = [
       <>
         <p>{"If the request is successful you will see the JSON data in this section."}</p>
         <p>{"If the API suports it, you will also get the error message here in case the request is not successful. On the right, you will also see the HTTP error code in red."}</p>
+      </>
+    ),
+  },
+];
+
+const mongobuilderSteps = [
+  {
+    selector: ".mongobuilder-query-tut",
+    content: () => (
+      <>
+        <p>
+          {"Here you can enter your MongoDB query to get data from your database. You can have a look at "}
+          <a
+            href="https://docs.mongodb.com/manual/tutorial/query-documents/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {"MongoDB's docummentation on how to query documents."}
+          </a>
+        </p>
+        <p>
+          {"Note that you should always start the query with: "}
+          <pre>connection.collection...</pre>
+        </p>
+      </>
+    ),
+  },
+  {
+    selector: ".mongobuilder-buttons-tut",
+    content: () => (
+      <>
+        <p>{"Once you write the query, you can run it from here."}</p>
+        <p>{"To make things easier later on, you can also save the query and use it for other charts."}</p>
+      </>
+    ),
+  },
+  {
+    selector: ".mongobuilder-saved-tut",
+    content: () => (
+      <>
+        <p>{"Once you save some queries they will appear in this section. You can update and delete them from here as well."}</p>
+      </>
+    ),
+  },
+  {
+    selector: ".mongobuilder-result-tut",
+    content: () => (
+      <>
+        <p>{"The JSON-formatted data will appear here when you run a successful query."}</p>
       </>
     ),
   },
