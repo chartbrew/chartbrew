@@ -95,7 +95,9 @@ function ApiBuilder(props) {
         setResult(JSON.stringify(requestBody.data, null, 2));
       }
 
-      changeTutorial("apibuilder");
+      setTimeout(() => {
+        changeTutorial("apibuilder");
+      }, 1000);
     }
   }, []);
 

@@ -44,7 +44,9 @@ function SqlBuilder(props) {
   useEffect(() => {
     if (dataRequest) {
       setSqlRequest({ ...sqlRequest, ...dataRequest });
-      changeTutorial("sqlbuilder");
+      setTimeout(() => {
+        changeTutorial("sqlbuilder");
+      }, 1000);
     }
   }, []);
 

@@ -74,7 +74,9 @@ function AddChart(props) {
     }
 
     if (user && !user.tutorials) {
-      setStartTutorial(true);
+      setTimeout(() => {
+        setStartTutorial(true);
+      }, 1000);
     }
   }, []);
 

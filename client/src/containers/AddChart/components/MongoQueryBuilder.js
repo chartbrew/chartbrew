@@ -46,7 +46,9 @@ function MongoQueryBuilder(props) {
       const newRequest = { ...mongoRequest, ...dataRequest };
       if (!dataRequest.query) newRequest.query = mongoRequest.query;
       setMongoRequest(newRequest);
-      changeTutorial("mongobuilder");
+      setTimeout(() => {
+        changeTutorial("mongobuilder");
+      }, 1000);
     }
   }, []);
 
