@@ -14,6 +14,21 @@ export default function showTutorial(type, userData) {
         return true;
       }
       break;
+    case "apibuilder":
+      if (userData[type] && compareVersions(userData[type], "1.0.0-beta.8.1") < 0) {
+        return true;
+      }
+      break;
+    case "mongobuilder":
+      if (userData[type] && compareVersions(userData[type], "1.0.0-beta.8.1") < 0) {
+        return true;
+      }
+      break;
+    case "sqlbuilder":
+      if (userData[type] && compareVersions(userData[type], "1.0.0-beta.8.1") < 0) {
+        return true;
+      }
+      break;
     default:
       break;
   }

@@ -15,9 +15,8 @@ import "brace/mode/pgsql";
 import "brace/theme/tomorrow";
 
 import { createSavedQuery, updateSavedQuery } from "../../../actions/savedQuery";
-import {
-  runRequest as runRequestAction,
-} from "../../../actions/dataset";
+import { runRequest as runRequestAction } from "../../../actions/dataset";
+import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import SavedQueries from "../../../components/SavedQueries";
 
 /*
@@ -25,7 +24,7 @@ import SavedQueries from "../../../components/SavedQueries";
 */
 function SqlBuilder(props) {
   const {
-    createSavedQuery, match, updateSavedQuery, exploreData,
+    createSavedQuery, match, updateSavedQuery, exploreData, changeTutorial,
     dataset, dataRequest, onChangeRequest, onSave, runRequest, connection,
   } = props;
 
@@ -45,6 +44,7 @@ function SqlBuilder(props) {
   useEffect(() => {
     if (dataRequest) {
       setSqlRequest({ ...sqlRequest, ...dataRequest });
+      changeTutorial("sqlbuilder");
     }
   }, []);
 
@@ -134,8 +134,9 @@ function SqlBuilder(props) {
             }}
             name="queryEditor"
             editorProps={{ $blockScrolling: true }}
+            className="sqlbuilder-query-tut"
           />
-          <Button.Group fluid>
+          <Button.Group fluid className="sqlbuilder-buttons-tut">
             <Button
               color={requestSuccess ? "green" : requestError ? "red" : null}
               primary={!requestSuccess && !requestError}
@@ -180,7 +181,7 @@ function SqlBuilder(props) {
           </Button.Group>
 
           <Header size="small">Saved queries</Header>
-          <Container>
+          <Container className="sqlbuilder-saved-tut">
             <SavedQueries
               selectedQuery={savedQuery}
               onSelectQuery={(savedQuery) => {
@@ -212,6 +213,7 @@ function SqlBuilder(props) {
             name="resultEditor"
             readOnly
             editorProps={{ $blockScrolling: false }}
+            className="sqlbuilder-result-tut"
           />
         </Grid.Column>
       </Grid>
@@ -277,6 +279,7 @@ SqlBuilder.propTypes = {
   match: PropTypes.object.isRequired,
   connection: PropTypes.object.isRequired,
   exploreData: PropTypes.string,
+  changeTutorial: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = () => {
@@ -293,6 +296,7 @@ const mapDispatchToProps = (dispatch) => {
     runRequest: (projectId, chartId, datasetId) => {
       return dispatch(runRequestAction(projectId, chartId, datasetId));
     },
+    changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };
 };
 

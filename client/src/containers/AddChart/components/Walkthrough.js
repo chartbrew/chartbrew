@@ -58,6 +58,16 @@ function Walkthrough(props) {
           disableDotsNavigation={["esc"]}
         />
       )}
+      {tourActive === "sqlbuilder" && (
+        <Tour
+          accentColor={secondary}
+          steps={sqlbuilderSteps}
+          isOpen={isActive("sqlbuilder")}
+          onRequestClose={closeTour}
+          closeWithMask={false}
+          disableDotsNavigation={["esc"]}
+        />
+      )}
     </>
   );
 }
@@ -230,6 +240,48 @@ const mongobuilderSteps = [
   },
   {
     selector: ".mongobuilder-result-tut",
+    content: () => (
+      <>
+        <p>{"The JSON-formatted data will appear here when you run a successful query."}</p>
+      </>
+    ),
+  },
+];
+
+const sqlbuilderSteps = [
+  {
+    selector: ".sqlbuilder-query-tut",
+    content: () => (
+      <>
+        <p>
+          {"Here you can enter your SQL query to get data from your database."}
+        </p>
+        <p>
+          {"As an example, it should look like this: "}
+          <pre>{"SELECT * from users WHERE age > 43;"}</pre>
+        </p>
+      </>
+    ),
+  },
+  {
+    selector: ".sqlbuilder-buttons-tut",
+    content: () => (
+      <>
+        <p>{"Once you write the query, you can run it from here."}</p>
+        <p>{"To make things easier later on, you can also save the query and use it for other charts."}</p>
+      </>
+    ),
+  },
+  {
+    selector: ".sqlbuilder-saved-tut",
+    content: () => (
+      <>
+        <p>{"Once you save some queries they will appear in this section. You can update and delete them from here as well."}</p>
+      </>
+    ),
+  },
+  {
+    selector: ".sqlbuilder-result-tut",
     content: () => (
       <>
         <p>{"The JSON-formatted data will appear here when you run a successful query."}</p>
