@@ -5,14 +5,17 @@ import {
   FETCH_DATASET_SUCCESS,
   REMOVE_DATASET,
   FETCH_REQUESTED_DATA,
+  CLEAR_DATASETS,
 } from "../actions/dataset";
 
-export default function dataset(state = {
+const initialState = {
   loading: false,
   error: false,
   data: [],
   requests: [],
-}, action) {
+};
+
+export default function dataset(state = initialState, action) {
   switch (action.type) {
     case FETCHING_DATASET:
       return { ...state, loading: true };
@@ -65,6 +68,8 @@ export default function dataset(state = {
         newRequests.push(action.request);
       }
       return { ...state, loading: false, requests: newRequests };
+    case CLEAR_DATASETS:
+      return initialState;
     default:
       return state;
   }

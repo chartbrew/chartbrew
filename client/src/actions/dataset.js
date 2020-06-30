@@ -8,6 +8,7 @@ export const FETCH_DATASET_FAIL = "FETCH_DATASET_FAIL";
 export const FETCH_CHART_DATASETS = "FETCH_CHART_DATASETS";
 export const REMOVE_DATASET = "REMOVE_DATASET";
 export const FETCH_REQUESTED_DATA = "FETCH_REQUESTED_DATA";
+export const CLEAR_DATASETS = "CLEAR_DATASETS";
 
 export function getChartDatasets(projectId, chartId) {
   return (dispatch) => {
@@ -167,5 +168,11 @@ export function runRequest(projectId, chartId, datasetId) {
       .catch(() => {
         return Promise.reject(status);
       });
+  };
+}
+
+export function clearDatasets() {
+  return (dispatch) => {
+    dispatch({ type: CLEAR_DATASETS });
   };
 }

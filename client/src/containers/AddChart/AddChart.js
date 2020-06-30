@@ -25,6 +25,7 @@ import {
   saveNewDataset as saveNewDatasetAction,
   updateDataset as updateDatasetAction,
   deleteDataset as deleteDatasetAction,
+  clearDatasets as clearDatasetsAction,
 } from "../../actions/dataset";
 import { updateUser as updateUserAction } from "../../actions/user";
 import { chartColors } from "../../config/colors";
@@ -53,7 +54,7 @@ function AddChart(props) {
   const {
     match, createChart, history, charts, saveNewDataset, getChartDatasets, tutorial,
     datasets, updateDataset, deleteDataset, updateChart, runQuery, user,
-    changeTutorial, completeTutorial,
+    changeTutorial, completeTutorial, clearDatasets,
   } = props;
 
   useEffect(() => {
@@ -68,6 +69,8 @@ function AddChart(props) {
 
       // also fetch the chart's datasets
       getChartDatasets(match.params.projectId, match.params.chartId);
+    } else {
+      clearDatasets();
     }
 
     if (user && !user.tutorials) {
@@ -527,6 +530,7 @@ AddChart.propTypes = {
   tutorial: PropTypes.string.isRequired,
   changeTutorial: PropTypes.func.isRequired,
   completeTutorial: PropTypes.func.isRequired,
+  clearDatasets: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -562,6 +566,7 @@ const mapDispatchToProps = (dispatch) => {
     updateUser: (id, data) => dispatch(updateUserAction(id, data)),
     changeTutorial: (tut) => dispatch(changeTutorialAction(tut)),
     completeTutorial: () => dispatch(completeTutorialAction()),
+    clearDatasets: () => dispatch(clearDatasetsAction()),
   };
 };
 
