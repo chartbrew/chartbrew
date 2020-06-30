@@ -19,6 +19,7 @@ import ApiPagination from "../../../components/ApiPagination";
 import {
   runRequest as runRequestAction,
 } from "../../../actions/dataset";
+import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 
 const methods = [{
   key: 1,
@@ -64,7 +65,7 @@ function ApiBuilder(props) {
 
   const {
     dataRequest, match, onChangeRequest, runRequest, dataset,
-    connection, onSave, requests,
+    connection, onSave, requests, changeTutorial,
   } = props;
 
   // on init effect
@@ -93,6 +94,8 @@ function ApiBuilder(props) {
       if (requestBody) {
         setResult(JSON.stringify(requestBody.data, null, 2));
       }
+
+      changeTutorial("apibuilder");
     }
   }, []);
 
@@ -227,7 +230,7 @@ function ApiBuilder(props) {
       <Grid columns={2} stackable centered>
         <Grid.Column width={10}>
           <Form>
-            <Form.Field>
+            <Form.Field className="apibuilder-route-tut">
               <Input
                 label={connection.host}
                 placeholder="/route?key=value"
@@ -238,7 +241,7 @@ function ApiBuilder(props) {
             </Form.Field>
           </Form>
 
-          <Menu pointing secondary>
+          <Menu pointing secondary className="apibuilder-menu-tut">
             <Menu.Item
               name="Headers"
               active={activeMenu === "headers"}
@@ -274,7 +277,7 @@ function ApiBuilder(props) {
             </div>
           </Menu>
           {activeMenu === "headers" && (
-            <div>
+            <div className="apibuilder-headers-tut">
               {connection.options && connection.options.length > 0 && (
                 <div>
                   <Checkbox
@@ -391,7 +394,7 @@ function ApiBuilder(props) {
         <Grid.Column width={6}>
           <Form>
             <Form.Group widths={2}>
-              <Form.Field>
+              <Form.Field className="apibuilder-type-tut">
                 <Dropdown
                   fluid
                   text={apiRequest.method}
@@ -400,7 +403,7 @@ function ApiBuilder(props) {
                   onChange={(e, data) => _changeMethod(data.value)}
                 />
               </Form.Field>
-              <Form.Field>
+              <Form.Field className="apibuilder-request-tut">
                 <Button
                   primary
                   icon
@@ -425,6 +428,7 @@ function ApiBuilder(props) {
             name="resultEditor"
             readOnly
             editorProps={{ $blockScrolling: false }}
+            className="apibuilder-result-tut"
           />
         </Grid.Column>
       </Grid>
@@ -450,6 +454,7 @@ ApiBuilder.propTypes = {
   onSave: PropTypes.func.isRequired,
   requests: PropTypes.array.isRequired,
   dataRequest: PropTypes.object,
+  changeTutorial: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -463,6 +468,7 @@ const mapDispatchToProps = (dispatch) => {
     runRequest: (projectId, chartId, datasetId) => {
       return dispatch(runRequestAction(projectId, chartId, datasetId));
     },
+    changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };
 };
 

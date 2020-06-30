@@ -42,7 +42,7 @@ function Walkthrough(props) {
         <Tour
           accentColor={secondary}
           steps={apibuilderSteps}
-          isOpen={isActive("dataset")}
+          isOpen={isActive("apibuilder")}
           onRequestClose={closeTour}
           closeWithMask={false}
           disableDotsNavigation={["esc"]}
@@ -137,10 +137,17 @@ const apibuilderSteps = [
     ),
   },
   {
-    selector: ".apibuilder-headers-tut",
+    selector: ".apibuilder-menu-tut",
     content: () => (
       <>
         <p>{"You can further configure your requests by adding headers, a body of data and you can also paginate requests if the API allows it."}</p>
+      </>
+    ),
+  },
+  {
+    selector: ".apibuilder-headers-tut",
+    content: () => (
+      <>
         <p>{"The global headers are enabled by default. These are set in the Connections page and it's best used for headers that need to be included often, such as the 'Authorization' header."}</p>
       </>
     ),
@@ -157,7 +164,7 @@ const apibuilderSteps = [
     selector: ".apibuilder-request-tut",
     content: () => (
       <>
-        <p>{"Once your have everything ready, send the request away and get the data"}</p>
+        <p>{"Once your have everything ready, send the request away and get the data."}</p>
       </>
     ),
   },
@@ -165,7 +172,7 @@ const apibuilderSteps = [
     selector: ".apibuilder-result-tut",
     content: () => (
       <>
-        <p>{"If the request is successful you will see the JSON data in this section"}</p>
+        <p>{"If the request is successful you will see the JSON data in this section."}</p>
         <p>{"If the API suports it, you will also get the error message here in case the request is not successful. On the right, you will also see the HTTP error code in red."}</p>
       </>
     ),
