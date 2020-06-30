@@ -22,11 +22,13 @@ import {
   createDataRequest as createDataRequestAction,
   updateDataRequest as updateDataRequestAction,
 } from "../../../actions/dataRequest";
+import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 
 function DatarequestModal(props) {
   const {
     open, onClose, connection, dataset, match, getDataRequestByDataset,
     createDataRequest, updateDataRequest, requests, onUpdateDataset,
+    changeTutorial,
   } = props;
 
   const [dataRequest, setDataRequest] = useState(null);
@@ -81,6 +83,7 @@ function DatarequestModal(props) {
   useEffect(() => {
     const request = _.find(requests, { options: { id: dataset.id } });
     setResult(request);
+    if (open) changeTutorial("requestmodal");
   }, [requests, dataset]);
 
   useEffect(() => {
@@ -157,6 +160,13 @@ function DatarequestModal(props) {
     onUpdateDataset(field);
   };
 
+  const _onFieldsClicked = () => {
+    setFieldsView(true);
+    setTimeout(() => {
+      changeTutorial("objectexplorer");
+    }, 1000);
+  };
+
   return (
     <Modal
       open={open}
@@ -211,7 +221,7 @@ function DatarequestModal(props) {
 
         {fieldsView && result && (
           <Grid columns={2}>
-            <Grid.Column width={7}>
+            <Grid.Column width={7} className="objectexplorer-data-tut">
               <Header size="small" dividing>Explore your data</Header>
               <AceEditor
                 mode="json"
@@ -224,7 +234,7 @@ function DatarequestModal(props) {
                 editorProps={{ $blockScrolling: false }}
               />
             </Grid.Column>
-            <Grid.Column width={9}>
+            <Grid.Column width={9} className="objectexplorer-object-tut">
               <Header size="small" dividing>Select a field to visualize</Header>
               <Input
                 placeholder="select a field below"
@@ -263,7 +273,8 @@ function DatarequestModal(props) {
             icon
             labelPosition="right"
             disabled={!result}
-            onClick={() => setFieldsView(true)}
+            onClick={_onFieldsClicked}
+            className="requestmodal-fields-tut"
           >
             <Icon name="chevron right" />
             Set up the fields
@@ -307,6 +318,7 @@ DatarequestModal.propTypes = {
   updateDataRequest: PropTypes.func.isRequired,
   onUpdateDataset: PropTypes.func.isRequired,
   requests: PropTypes.array.isRequired,
+  changeTutorial: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -326,6 +338,7 @@ const mapDispatchToProps = (dispatch) => {
     updateDataRequest: (projectId, chartId, drId, data) => {
       return dispatch(updateDataRequestAction(projectId, chartId, drId, data));
     },
+    changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };
 };
 
