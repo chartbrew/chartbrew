@@ -6,23 +6,23 @@ import {
 } from "semantic-ui-react";
 
 // types
-import lineChartImage from "../assets/lineChart.PNG";
-import barChartImage from "../assets/barChart.PNG";
-import radarChartImage from "../assets/radarChart.PNG";
-import polarChartImage from "../assets/polarChart.PNG";
-import pieChartImage from "../assets/pieChart.PNG";
-import doughnutChartImage from "../assets/doughnutChart.PNG";
+import lineChartImage from "../../../assets/lineChart.PNG";
+import barChartImage from "../../../assets/barChart.PNG";
+import radarChartImage from "../../../assets/radarChart.PNG";
+import polarChartImage from "../../../assets/polarChart.PNG";
+import pieChartImage from "../../../assets/pieChart.PNG";
+import doughnutChartImage from "../../../assets/doughnutChart.PNG";
 
 // subTypes
-import lcTimeseriesImage from "../assets/timeSeries.PNG";
-import lcAddTimeseriesImage from "../assets/addTimeSeries.PNG";
-import bcTimeseriesImage from "../assets/timeSeriesBar.PNG";
-import bcAddTimeseriesImage from "../assets/addTimeSeriesBar.PNG";
-import barChartPatternImage from "../assets/barChartPattern.png";
-import pieChartPatternImage from "../assets/pieChartPattern.png";
-import doughnutChartPatternImage from "../assets/doughnutChartPattern.png";
-import radarChartPatternImage from "../assets/radarChartPattern.png";
-import polarChartPatternImage from "../assets/polarChartPattern.png";
+import lcTimeseriesImage from "../../../assets/timeSeries.PNG";
+import lcAddTimeseriesImage from "../../../assets/addTimeSeries.PNG";
+import bcTimeseriesImage from "../../../assets/timeSeriesBar.PNG";
+import bcAddTimeseriesImage from "../../../assets/addTimeSeriesBar.PNG";
+import barChartPatternImage from "../../../assets/barChartPattern.png";
+import pieChartPatternImage from "../../../assets/pieChartPattern.png";
+import doughnutChartPatternImage from "../../../assets/doughnutChartPattern.png";
+import radarChartPatternImage from "../../../assets/radarChartPattern.png";
+import polarChartPatternImage from "../../../assets/polarChartPattern.png";
 
 /*
   Description

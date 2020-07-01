@@ -8,7 +8,7 @@ import {
   Line, Bar, Doughnut, Polar, Pie, Radar
 } from "react-chartjs-2";
 
-import ChartTypesSelector from "../../../components/ChartTypesSelector";
+import ChartTypesSelector from "./ChartTypesSelector";
 import lineChartImage from "../../../assets/lineChart.PNG";
 import barChartImage from "../../../assets/barChart.PNG";
 import radarChartImage from "../../../assets/radarChart.PNG";
