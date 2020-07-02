@@ -3,6 +3,8 @@ const { QueryTypes } = require("sequelize");
 const db = require("../models");
 
 module.exports.up = () => {
+  // when querying using the models, the fields you get back are only the ones in the current schema
+  // so use raw queries to make sure that you get all the fields (from previous migration as well)
   return db.sequelize.query("SELECT id, connection_id FROM chart", { type: QueryTypes.SELECT })
     .then((charts) => {
       if (!charts || charts.length < 1) return Promise.resolve("done");
@@ -27,7 +29,7 @@ module.exports.up = () => {
 };
 
 module.exports.down = () => {
-  return db.Dataset.findAll()
+  return db.sequelize.query("SELECT * FROM dataset", { type: QueryTypes.SELECT })
     .then((datasets) => {
       if (!datasets || datasets.length < 1) return Promise.resolve("done");
 
