@@ -16,7 +16,7 @@ import { getProjectCharts } from "../actions/chart";
 import { getProjectConnections } from "../actions/connection";
 import Connections from "./Connections";
 import ProjectDashboard from "./ProjectDashboard";
-import AddChart from "./AddChart";
+import AddChart from "./AddChart/AddChart";
 import Navbar from "../components/Navbar";
 import { primary, blue, lightGray } from "../config/colors";
 import TeamMembers from "./TeamMembers";

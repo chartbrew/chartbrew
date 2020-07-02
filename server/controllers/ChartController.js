@@ -7,8 +7,7 @@ const externalDbConnection = require("../modules/externalDbConnection");
 const db = require("../models/models");
 const DatasetController = require("./DatasetController");
 const ConnectionController = require("./ConnectionController");
-const ProjectController = require("./ProjectController");
-const ApiRequestController = require("./ApiRequestController");
+const DataRequestController = require("./DataRequestController");
 const ChartCacheController = require("./ChartCacheController");
 
 // charts
@@ -18,10 +17,9 @@ const PieChart = require("../charts/PieChart");
 
 class ChartController {
   constructor() {
-    this.connection = new ConnectionController();
-    this.dataset = new DatasetController();
-    this.project = new ProjectController();
-    this.apiRequestController = new ApiRequestController();
+    this.connectionController = new ConnectionController();
+    this.datasetController = new DatasetController();
+    this.dataRequestController = new DataRequestController();
     this.chartCache = new ChartCacheController();
   }
 
@@ -30,7 +28,7 @@ class ChartController {
     return db.Chart.create(data)
       .then((chart) => {
         chartId = chart.id;
-        if (data.Datasets || data.apiRequest) {
+        if (data.Datasets || data.dataRequest) {
           const createPromises = [];
 
           // add the datasets creation
@@ -38,16 +36,16 @@ class ChartController {
             for (const dataset of data.Datasets) {
               if (!dataset.deleted) {
                 dataset.chart_id = chartId;
-                createPromises.push(this.dataset.create(dataset));
+                createPromises.push(this.datasetController.create(dataset));
               }
             }
           }
 
-          // add the apiRequest creation
-          if (data.apiRequest) {
-            const { apiRequest } = data;
-            apiRequest.chart_id = chart.id;
-            createPromises.push(this.apiRequestController.create(apiRequest));
+          // add the dataRequest creation
+          if (data.dataRequest) {
+            const { dataRequest } = data;
+            dataRequest.chart_id = chart.id;
+            createPromises.push(this.dataRequestController.create(dataRequest));
           }
 
           // add the update promise as well
@@ -113,14 +111,14 @@ class ChartController {
         .then(() => {
           const updatePromises = [];
 
-          if (data.Datasets || data.apiRequest) {
+          if (data.Datasets || data.dataRequest) {
             if (data.Datasets) {
               updatePromises
                 .push(this.updateDatasets(id, data.Datasets));
             }
-            if (data.apiRequest) {
+            if (data.dataRequest) {
               updatePromises
-                .push(this.apiRequestController.update(data.apiRequest.id, data.apiRequest));
+                .push(this.dataRequestController.update(data.dataRequest.id, data.dataRequest));
             }
 
             return Promise.all(updatePromises).then(() => this.findById(id));
@@ -143,13 +141,13 @@ class ChartController {
         }
 
         const updatePromises = [];
-        if (data.Datasets || data.apiRequest) {
+        if (data.Datasets || data.dataRequest) {
           if (data.Datasets) {
             const datasetsToUpdate = [];
             for (const dataset of data.Datasets) {
               if (!dataset.deleted && !dataset.id) {
                 dataset.chart_id = id;
-                updatePromises.push(this.dataset.create(dataset));
+                updatePromises.push(this.datasetController.create(dataset));
               } else if (!dataset.deleted && dataset.id) {
                 datasetsToUpdate.push(dataset);
               }
@@ -160,14 +158,14 @@ class ChartController {
                 .push(this.updateDatasets(id, data.Datasets));
             }
           }
-          if (data.apiRequest && data.apiRequest.id) {
+          if (data.dataRequest && data.dataRequest.id) {
             updatePromises
-              .push(this.apiRequestController.update(data.apiRequest.id, data.apiRequest));
+              .push(this.dataRequestController.update(data.dataRequest.id, data.dataRequest));
           }
 
-          if (data.apiRequest && !data.apiRequest.id) {
-            const newApiRequest = { ...data.apiRequest, chart_id: id };
-            updatePromises.push(this.apiRequestController.create(newApiRequest));
+          if (data.dataRequest && !data.dataRequest.id) {
+            const newDataRequest = { ...data.dataRequest, chart_id: id };
+            updatePromises.push(this.dataRequestController.create(newDataRequest));
           }
 
           return Promise.all(updatePromises).then(() => this.findById(id));
@@ -180,18 +178,31 @@ class ChartController {
       });
   }
 
+  addConnection(chartId, connection) {
+    return db.Chart.findByPk(chartId)
+      .then((chart) => {
+        return chart.addConnections([connection]);
+      })
+      .then((chart) => {
+        return this.findById(chart.id);
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
   updateDatasets(chartId, datasets) {
     const updatePromises = [];
     for (const dataset of datasets) {
       if (dataset.id && !dataset.deleted) {
         if (parseInt(dataset.chart_id, 10) === parseInt(chartId, 10)) {
-          updatePromises.push(this.dataset.update(dataset.id, dataset));
+          updatePromises.push(this.datasetController.update(dataset.id, dataset));
         }
       } else if (dataset.id && dataset.deleted) {
-        updatePromises.push(this.dataset.remove(dataset.id));
+        updatePromises.push(this.datasetController.remove(dataset.id));
       } else if (!dataset.id && !dataset.deleted) {
         dataset.chart_id = chartId;
-        updatePromises.push(this.dataset.create(dataset));
+        updatePromises.push(this.datasetController.create(dataset));
       }
     }
 
@@ -246,7 +257,7 @@ class ChartController {
       .then((chart) => {
         if (!chart) throw new Error(404);
         gChart = chart;
-        return this.connection.findById(chart.connection_id);
+        return this.connectionController.findById(chart.connection_id);
       })
       .then((connection) => {
         if (connection.type === "mongodb") {
@@ -264,8 +275,102 @@ class ChartController {
       });
   }
 
+  updateChartData2(id, user, noSource) {
+    let gChart;
+    let gCache;
+    return this.findById(id)
+      .then((chart) => {
+        gChart = chart;
+        if (!chart.Datasets || chart.Datasets.length === 0) {
+          throw new Error("The chart doesn't have any datasets");
+        }
+
+        return this.chartCache.findLast(user.id, chart.id);
+      })
+      .then((cache) => {
+        gCache = cache;
+
+        const requestPromises = [];
+        gChart.Datasets.map((dataset) => {
+          if (noSource && gCache && gCache.data) {
+            requestPromises.push(this.datasetController.runRequest(dataset.id, true));
+          } else {
+            requestPromises.push(this.datasetController.runRequest(dataset.id));
+          }
+          return dataset;
+        });
+
+        return Promise.all(requestPromises);
+      })
+      .then((datasets) => {
+        const resolvingData = {
+          chart: gChart,
+          datasets,
+        };
+
+        // change the datasets data if the cache is called
+        if (noSource === true && gCache && gCache.data && gCache.data.datasets) {
+          resolvingData.datasets = gCache.data.datasets.map((item) => {
+            const tempItem = item;
+            for (let i = 0; i < datasets.length; i++) {
+              if (item.options.id === datasets[i].options.id) {
+                tempItem.options = datasets[i].options;
+                break;
+              }
+            }
+            return tempItem;
+          });
+        } else {
+          // create a new cache for the data that was fetched
+          this.chartCache.create(user.id, gChart.id, resolvingData);
+        }
+
+        return Promise.resolve(resolvingData);
+      })
+      .then((chartData) => {
+        // LINE CHART
+        if (gChart.type === "line") {
+          const lineChart = new LineChart(chartData);
+          return lineChart.aggregateOverTime();
+
+          // BAR CHART
+        } else if (gChart.type === "bar") {
+          const barChart = new BarChart(chartData);
+
+          if (gChart.subType.toLowerCase().indexOf("timeseries") > -1) {
+            return barChart.aggregateOverTime();
+          } else if (gChart.subType === "pattern") {
+            return barChart.createPatterns();
+          } else {
+            return new Promise((resolve, reject) => reject(new Error("Could not find the chart type")));
+          }
+
+          // PIE CHART
+        } else if (gChart.type === "pie" || gChart.type === "doughnut"
+          || gChart.type === "radar" || gChart.type === "polar") {
+          const pieChart = new PieChart(chartData);
+          if (gChart.subType === "pattern") {
+            return pieChart.createPatterns();
+          } else {
+            return new Promise((resolve, reject) => reject(new Error("Could not find the chart type")));
+          }
+        } else {
+          return new Promise((resolve, reject) => reject(new Error("Could not find the chart type")));
+        }
+      })
+      .then((chartData) => {
+        return this.update(id, { chartData, chartDataUpdated: moment() });
+      })
+      .then(() => {
+        return this.findById(id);
+      })
+      .catch((err) => {
+        return err;
+      });
+  }
+
   runPostgresQuery(chart) {
-    return this.connection.findById(chart.connection_id)
+    return this.connectionController.findById(chart.connection_id)
       .then((connection) => {
         return externalDbConnection(connection);
       })
@@ -284,7 +389,7 @@ class ChartController {
   }
 
   runRequest(chart) {
-    return this.apiRequestController.sendRequest(chart.id, chart.connection_id)
+    return this.dataRequestController.sendRequest(chart.id, chart.connection_id)
       .then((data) => {
         return this.getChartData(chart.id, data);
       })
@@ -301,7 +406,7 @@ class ChartController {
     return this.findById(id)
       .then((chart) => {
         gChart = chart;
-        return this.connection.getConnectionUrl(chart.connection_id);
+        return this.connectionController.getConnectionUrl(chart.connection_id);
       })
       .then((url) => {
         const options = {
@@ -329,7 +434,7 @@ class ChartController {
   }
 
   testMongoQuery({ connection_id, query }) {
-    return this.connection.getConnectionUrl(connection_id)
+    return this.connectionController.getConnectionUrl(connection_id)
       .then((url) => {
         const options = {
           keepAlive: 1,
@@ -355,7 +460,7 @@ class ChartController {
   }
 
   testQuery(chart, projectId) {
-    return this.connection.findById(chart.connection_id)
+    return this.connectionController.findById(chart.connection_id)
       .then((connection) => {
         if (connection.type === "mongodb") {
           return this.testMongoQuery(chart, projectId);
@@ -371,7 +476,7 @@ class ChartController {
   }
 
   getApiChartData(chart) {
-    return this.connection.testApiRequest(chart)
+    return this.connectionController.testDataRequest(chart)
       .then((data) => {
         return new Promise((resolve) => resolve(data));
       })
@@ -394,13 +499,13 @@ class ChartController {
   }
 
   getPreviewData(chart, projectId, user, noSource) {
-    return this.chartCache.findLast(user.id)
+    return this.chartCache.findLast(user.id, chart.id)
       .then((cache) => {
         if (noSource === "true") {
           return new Promise((resolve) => resolve(cache));
         }
 
-        return this.connection.findById(chart.connection_id);
+        return this.connectionController.findById(chart.connection_id);
       })
       .then((connection) => {
         if (noSource === "true") {
@@ -420,7 +525,7 @@ class ChartController {
       .then((data) => {
         if (noSource !== "true") {
           // cache, but do it async
-          this.chartCache.create(user.id, data);
+          this.chartCache.create(user.id, chart.id, data);
         }
 
         return new Promise((resolve) => resolve(data));

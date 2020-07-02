@@ -1,52 +1,61 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-
+import { connect } from "react-redux";
+import { withRouter } from "react-router";
 import {
-  Accordion, Button, Icon, Popup, Header, Label, Message
+  Accordion, Button, Icon, Popup, Label, Message,
 } from "semantic-ui-react";
 import moment from "moment";
+import _ from "lodash";
 
-import { secondaryTransparent } from "../config/colors";
+import { secondaryTransparent } from "../../../config/colors";
 
 /*
   Component used for displaying the object's attributes
 */
-class ObjectExplorer extends Component {
-  constructor(props) {
-    super(props);
+function ObjectExplorer(props) {
+  const [accordionActive, setAccordionActive] = useState("");
+  const [visualiseDataset, setVisualiseDataset] = useState(true);
+  const [type, setType] = useState("");
+  const [subType, setSubType] = useState("");
+  const [arrayWarning, setArrayWarning] = useState(false);
+  const [notDateWarning, setNotDateWarning] = useState(false);
 
-    this.state = {
-      accordionActive: "",
-      visualiseDataset: false,
-    };
 
-    this.objectMapper = {};
-  }
+  const objectMapper = {};
 
-  _onSelectXField = (key) => {
-    const { subType, onChange } = this.props;
+  const {
+    onChange, objectData, charts, xAxisField, match
+  } = props;
+
+  useEffect(() => {
+    const chart = _.find(charts, { id: match.params.chartId });
+    if (chart) {
+      setType(chart.type);
+      setSubType(chart.subType);
+    }
+  }, []);
+
+  const _onSelectXField = (key) => {
     // display a warning if the user didn't select a date field and subtype is timeseries
     if (subType.toLowerCase().indexOf("timeseries") > -1) {
-      if (this.objectMapper[key] !== "date") {
-        this.setState({ notDateWarning: true });
+      if (objectMapper[key] !== "date") {
+        setNotDateWarning(true);
       } else {
-        this.setState({ notDateWarning: false });
+        setNotDateWarning(false);
       }
       // display a warning if the user selected something outside or in multiple arrays
       if (key.indexOf("[]") === -1 || key.split("[]").length - 1 > 1) { // eslint-disable-line
-        this.setState({ arrayWarning: true });
+        setArrayWarning(true);
       } else {
-        this.setState({ arrayWarning: false });
+        setArrayWarning(false);
       }
     }
 
-    onChange({ xAxis: key });
-  }
+    onChange(key);
+  };
 
-  _makeAccordion(key, uniqueKey, data) {
-    const { accordionActive } = this.state;
-    const { type, subType, xAxisField } = this.props;
-
+  const _makeAccordion = (key, uniqueKey, data) => {
     let newUniqueKey = `${uniqueKey}.${key}`;
 
     // cheeky way of detecting the arrays in the back-end
@@ -76,7 +85,7 @@ class ObjectExplorer extends Component {
       dataType = "date";
     }
 
-    this.objectMapper[newUniqueKey] = dataType;
+    objectMapper[newUniqueKey] = dataType;
 
     return (
       <div key={newUniqueKey}>
@@ -89,9 +98,9 @@ class ObjectExplorer extends Component {
             active={accordionActive.indexOf(newUniqueKey) > -1}
             onClick={() => {
               if (accordionActive === newUniqueKey) {
-                this.setState({ accordionActive: newUniqueKey.substring(0, newUniqueKey.lastIndexOf(".")) });
+                setAccordionActive(newUniqueKey.substring(0, newUniqueKey.lastIndexOf(".")));
               } else {
-                this.setState({ accordionActive: newUniqueKey });
+                setAccordionActive(newUniqueKey);
               }
             }}
           >
@@ -114,11 +123,11 @@ class ObjectExplorer extends Component {
           >
             {data !== null && typeof data === "object" && !(data instanceof Array)
               && Object.keys(data).map((dataKey) => {
-                return (this._makeAccordion(dataKey, newUniqueKey, data[dataKey]));
+                return (_makeAccordion(dataKey, newUniqueKey, data[dataKey]));
               })}
             {data !== null && data instanceof Array && data[0]
               && Object.keys(data[0]).map((dataKey) => {
-                return (this._makeAccordion(dataKey, newUniqueKey, data[0][dataKey]));
+                return (_makeAccordion(dataKey, newUniqueKey, data[0][dataKey]));
               })}
             {typeof data !== "object" && !(data instanceof Array) && data.toString()}
           </Accordion.Content>
@@ -135,7 +144,7 @@ class ObjectExplorer extends Component {
                     secondary={xAxisField === newUniqueKey}
                     icon
                     labelPosition="left"
-                    onClick={() => this._onSelectXField(newUniqueKey)}
+                    onClick={() => _onSelectXField(newUniqueKey)}
                   >
                     <Icon name="calendar alternate" />
                     Select
@@ -146,7 +155,7 @@ class ObjectExplorer extends Component {
               />
               )}
 
-            {subType === "pattern"
+            {((subType === "pattern") || (!type && !subType))
               && (
               <Popup
                 trigger={(
@@ -154,7 +163,7 @@ class ObjectExplorer extends Component {
                     secondary={xAxisField === newUniqueKey}
                     icon
                     labelPosition="left"
-                    onClick={() => this._onSelectXField(newUniqueKey)}
+                    onClick={() => _onSelectXField(newUniqueKey)}
                   >
                     <Icon name="checkmark" />
                     Select
@@ -168,74 +177,50 @@ class ObjectExplorer extends Component {
           )}
       </div>
     );
-  }
+  };
 
-  render() {
-    const {
-      visualiseDataset, arrayWarning, notDateWarning,
-    } = this.state;
-    const { objectData } = this.props;
-
-    return (
-      <div style={styles.container}>
-        <Header as="h4">
-          Click here to visualise and select your fields
-        </Header>
-        {visualiseDataset
-          && (
-          <Button
-            icon
-            labelPosition="right"
-            floated="right"
-            onClick={() => this.setState({ visualiseDataset: false })}
-          >
-            <Icon name="minus" />
-            Minimize
-          </Button>
-          )}
-        <Accordion styled fluid style={{ maxHeight: "300px", overflow: "auto" }}>
-          <Accordion.Title
-            active={visualiseDataset}
-            onClick={() => this.setState({ visualiseDataset: !visualiseDataset })}
-          >
-            <span>Root</span>
-            {objectData instanceof Array
-              && <Label color="teal" style={{ float: "right" }}>Array</Label>}
-            {!(objectData instanceof Array)
-              && <Label color="orange" style={{ float: "right" }}>Object</Label>}
-          </Accordion.Title>
-          <Accordion.Content active={visualiseDataset}>
-            <div>
-              <p>Select the root object or array</p>
-            </div>
-            {objectData instanceof Array
-              && Object.keys(objectData[0]).map((key) => {
-                return this._makeAccordion(key, "root[]", objectData[0][key]);
-              })}
-            {!(objectData instanceof Array)
-              && Object.keys(objectData).map((key) => {
-                return this._makeAccordion(key, "root", objectData[key]);
-              })}
-          </Accordion.Content>
-        </Accordion>
-        {notDateWarning
-          && (
-          <Message warning onDismiss={() => this.setState({ notDateWarning: false })}>
-            <Message.Header>Have you selected a Date?</Message.Header>
-            <p>{"We think that the field you selected might not be of Date type and your chart might not show as expected."}</p>
-          </Message>
-          )}
-        {arrayWarning
-          && (
-          <Message warning onDismiss={() => this.setState({ arrayWarning: false })}>
-            <Message.Header>The Date field needs to be inside a single array</Message.Header>
-            <p>{"The chart generator will not be able to process the information correctly when the selected date field is not part of an array or when it's nested in multiple arrays."}</p>
-          </Message>
-          )}
-      </div>
-    );
-  }
+  return (
+    <div style={styles.container}>
+      <Accordion styled fluid style={{ maxHeight: "400px", overflow: "auto" }}>
+        <Accordion.Title
+          active={visualiseDataset}
+          onClick={() => setVisualiseDataset(!visualiseDataset)}
+        >
+          <span>Root</span>
+          {objectData instanceof Array
+            && <Label color="teal" style={{ float: "right" }}>Array</Label>}
+          {!(objectData instanceof Array)
+            && <Label color="orange" style={{ float: "right" }}>Object</Label>}
+        </Accordion.Title>
+        <Accordion.Content active={visualiseDataset}>
+          {objectData instanceof Array
+            && Object.keys(objectData[0]).map((key) => {
+              return _makeAccordion(key, "root[]", objectData[0][key]);
+            })}
+          {!(objectData instanceof Array)
+            && Object.keys(objectData).map((key) => {
+              return _makeAccordion(key, "root", objectData[key]);
+            })}
+        </Accordion.Content>
+      </Accordion>
+      {notDateWarning
+        && (
+        <Message warning onDismiss={() => setNotDateWarning(false)}>
+          <Message.Header>Have you selected a Date?</Message.Header>
+          <p>{"We think that the field you selected might not be of Date type and your chart might not show as expected."}</p>
+        </Message>
+        )}
+      {arrayWarning
+        && (
+        <Message warning onDismiss={() => setArrayWarning(false)}>
+          <Message.Header>The Date field needs to be inside a single array</Message.Header>
+          <p>{"The chart generator will not be able to process the information correctly when the selected date field is not part of an array or when it's nested in multiple arrays."}</p>
+        </Message>
+        )}
+    </div>
+  );
 }
+
 const styles = {
   container: {
     flex: 1,
@@ -244,8 +229,6 @@ const styles = {
 
 ObjectExplorer.defaultProps = {
   objectData: [],
-  type: "",
-  subType: "",
   xAxisField: "",
   onChange: () => {},
 };
@@ -256,9 +239,15 @@ ObjectExplorer.propTypes = {
     PropTypes.object,
   ]),
   onChange: PropTypes.func,
-  type: PropTypes.string,
-  subType: PropTypes.string,
   xAxisField: PropTypes.string,
+  charts: PropTypes.array.isRequired,
+  match: PropTypes.object.isRequired,
 };
 
-export default ObjectExplorer;
+const mapStateToProps = (state) => {
+  return {
+    charts: state.chart.data,
+  };
+};
+
+export default withRouter(connect(mapStateToProps)(ObjectExplorer));

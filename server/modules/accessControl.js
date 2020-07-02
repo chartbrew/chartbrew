@@ -110,18 +110,31 @@ const grantList = [
   {
     role: "owner", resource: "savedQuery", action: "delete:any", attributes: "*",
   },
-  // resource: apiRequest ---> Team Perspective
+  // resource: dataset ---> Team Perspective
   {
-    role: "owner", resource: "apiRequest", action: "create:any", attributes: "*",
+    role: "owner", resource: "dataset", action: "create:any", attributes: "*",
   },
   {
-    role: "owner", resource: "apiRequest", action: "read:any", attributes: "*",
+    role: "owner", resource: "dataset", action: "read:any", attributes: "*",
   },
   {
-    role: "owner", resource: "apiRequest", action: "update:any", attributes: "*",
+    role: "owner", resource: "dataset", action: "update:any", attributes: "*",
   },
   {
-    role: "owner", resource: "apiRequest", action: "delete:any", attributes: "*",
+    role: "owner", resource: "dataset", action: "delete:any", attributes: "*",
+  },
+  // resource: request ---> Team Perspective
+  {
+    role: "owner", resource: "dataRequest", action: "create:any", attributes: "*",
+  },
+  {
+    role: "owner", resource: "dataRequest", action: "read:any", attributes: "*",
+  },
+  {
+    role: "owner", resource: "dataRequest", action: "update:any", attributes: "*",
+  },
+  {
+    role: "owner", resource: "dataRequest", action: "delete:any", attributes: "*",
   },
   //
   // --------------------
@@ -223,18 +236,31 @@ const grantList = [
   {
     role: "admin", resource: "savedQuery", action: "delete:any", attributes: "*",
   },
-  // resource: apiRequest ---> Team Perspective
+  // resource: dataset ---> Team Perspective
   {
-    role: "admin", resource: "apiRequest", action: "create:any", attributes: "*",
+    role: "admin", resource: "dataset", action: "create:any", attributes: "*",
   },
   {
-    role: "admin", resource: "apiRequest", action: "read:any", attributes: "*",
+    role: "admin", resource: "dataset", action: "read:any", attributes: "*",
   },
   {
-    role: "admin", resource: "apiRequest", action: "update:any", attributes: "*",
+    role: "admin", resource: "dataset", action: "update:any", attributes: "*",
   },
   {
-    role: "admin", resource: "apiRequest", action: "delete:any", attributes: "*",
+    role: "admin", resource: "dataset", action: "delete:any", attributes: "*",
+  },
+  // resource: request ---> Team Perspective
+  {
+    role: "admin", resource: "dataRequest", action: "create:any", attributes: "*",
+  },
+  {
+    role: "admin", resource: "dataRequest", action: "read:any", attributes: "*",
+  },
+  {
+    role: "admin", resource: "dataRequest", action: "update:any", attributes: "*",
+  },
+  {
+    role: "admin", resource: "dataRequest", action: "delete:any", attributes: "*",
   },
   //
   // --------------------
@@ -300,18 +326,31 @@ const grantList = [
   {
     role: "editor", resource: "savedQuery", action: "delete:any", attributes: "*",
   },
-  // resource: apiRequest ---> Team Perspective
+  // resource: dataset ---> Team Perspective
   {
-    role: "editor", resource: "apiRequest", action: "create:any", attributes: "*",
+    role: "editor", resource: "dataset", action: "create:any", attributes: "*",
   },
   {
-    role: "editor", resource: "apiRequest", action: "read:any", attributes: "*",
+    role: "editor", resource: "dataset", action: "read:any", attributes: "*",
   },
   {
-    role: "editor", resource: "apiRequest", action: "update:any", attributes: "*",
+    role: "editor", resource: "dataset", action: "update:any", attributes: "*",
   },
   {
-    role: "editor", resource: "apiRequest", action: "delete:any", attributes: "*",
+    role: "editor", resource: "dataset", action: "delete:any", attributes: "*",
+  },
+  // resource: request ---> Team Perspective
+  {
+    role: "editor", resource: "dataRequest", action: "create:any", attributes: "*",
+  },
+  {
+    role: "editor", resource: "dataRequest", action: "read:any", attributes: "*",
+  },
+  {
+    role: "editor", resource: "dataRequest", action: "update:any", attributes: "*",
+  },
+  {
+    role: "editor", resource: "dataRequest", action: "delete:any", attributes: "*",
   },
   //
   // --------------------

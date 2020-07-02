@@ -27,5 +27,6 @@
   "homepage": "https://github.com/chartbrew/chartbrew",
   "devDependencies": {
     "vuepress": "^1.4.1"
-  }
+  },
+  "dependencies": {}
 }

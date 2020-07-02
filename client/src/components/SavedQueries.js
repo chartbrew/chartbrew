@@ -6,6 +6,7 @@ import {
 } from "semantic-ui-react";
 
 import { getSavedQueries, updateSavedQuery, deleteSavedQuery } from "../actions/savedQuery";
+import { secondaryTransparent } from "../config/colors";
 
 /*
   Contains the project creation functionality
@@ -94,9 +95,11 @@ class SavedQueries extends Component {
       loading, error, editQuery, editLoading, savedQuerySummary, removeQuery,
       removeLoading,
     } = this.state;
-    const { savedQueries, onSelectQuery, selectedQuery } = this.props;
+    const {
+      savedQueries, onSelectQuery, selectedQuery, style
+    } = this.props;
     return (
-      <div style={styles.container}>
+      <div style={{ ...styles.container, ...style }}>
         <Loader active={loading} />
 
         {error
@@ -109,10 +112,17 @@ class SavedQueries extends Component {
 
         {savedQueries.length > 0
           && (
-          <List divided selection verticalAlign="middle" style={{ maxHeight: 170, overflow: "auto" }}>
+          <List
+            divided
+            selection
+            verticalAlign="middle"
+          >
             {savedQueries.map((query) => {
               return (
-                <List.Item key={query.id}>
+                <List.Item
+                  key={query.id}
+                  style={selectedQuery === query.id ? styles.selectedItem : {}}
+                >
                   <List.Content floated="right">
                     <Popup
                       trigger={(
@@ -125,6 +135,7 @@ class SavedQueries extends Component {
                         </Button>
                       )}
                       content="Use this query"
+                      position="top left"
                     />
 
                     <Popup
@@ -139,6 +150,7 @@ class SavedQueries extends Component {
                         </Button>
                       )}
                       content="Edit the summary"
+                      position="top center"
                     />
 
                     <Popup
@@ -152,10 +164,10 @@ class SavedQueries extends Component {
                         </Button>
                       )}
                       content="Remove the saved query"
+                      position="top right"
                     />
                   </List.Content>
 
-                  {selectedQuery === query.id && <List.Icon name="checkmark" color="green" />}
                   <List.Content verticalAlign="middle">
                     <List.Header>{query.summary}</List.Header>
                     <List.Description>{`created by ${query.User.name} ${query.User.surname}`}</List.Description>
@@ -240,12 +252,16 @@ class SavedQueries extends Component {
 const styles = {
   container: {
   },
+  selectedItem: {
+    backgroundColor: secondaryTransparent(0.1),
+  },
 };
 
 SavedQueries.defaultProps = {
   onSelectQuery: () => {},
   selectedQuery: -1,
   type: "",
+  style: {},
 };
 
 SavedQueries.propTypes = {
@@ -257,6 +273,7 @@ SavedQueries.propTypes = {
   onSelectQuery: PropTypes.func,
   selectedQuery: PropTypes.number,
   type: PropTypes.string,
+  style: PropTypes.object,
 };
 
 const mapStateToProps = (state) => {

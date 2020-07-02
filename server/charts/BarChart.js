@@ -30,9 +30,9 @@ function getLabelOffset(key, labels) {
 ** A class for generating chartjs data for a Bar Chart
 */
 class BarChart {
-  constructor(chart, data) {
-    this.chart = chart;
-    this.chartData = data;
+  constructor(data) {
+    this.chart = data.chart;
+    this.datasets = data.datasets;
   }
 
   async aggregateOverTime() {
@@ -54,10 +54,10 @@ class BarChart {
     const labels = [];
     const datasets = [];
 
-    for (const dataset of this.chart.Datasets) {
+    for (const dataset of this.datasets) {
       if (!dataset.deleted) {
         const arrayFieldSelector = [];
-        for (const value of dataset.xAxis.split(".")) {
+        for (const value of dataset.options.xAxis.split(".")) {
           if (value.indexOf("[]") > -1) {
             arrayFieldSelector.push(value.replace("[]", ""));
             break;
@@ -69,13 +69,13 @@ class BarChart {
         // the connector data will be used as the main array where to look for the date
         let connectorData;
         if (arrayFieldSelector.length === 1) {
-          connectorData = this.chartData;
+          connectorData = dataset.data;
         } else {
-          connectorData = dataFinder.findField(this.chartData, arrayFieldSelector, 1);
+          connectorData = dataFinder.findField(dataset.data, arrayFieldSelector, 1);
         }
 
         // build up the selector array which is used to show the way to the date value
-        let xFieldSelector = dataset.xAxis;
+        let xFieldSelector = dataset.options.xAxis;
         if (xFieldSelector.length < 2) {
           return new Promise((resolve, reject) => reject(new Error("The X selector is not formatted correctly")));
         }
@@ -95,12 +95,12 @@ class BarChart {
         const chartDatasetData = [];
         // populate the labels
         Object.keys(axisData).forEach((key) => {
-          if (dataset.patterns && dataset.patterns.length > 0) {
+          if (dataset.options.patterns && dataset.options.patterns.length > 0) {
             let insertingLabel = key;
             if (key.toLowerCase() === "true" || key.toLowerCase() === "false") {
               insertingLabel = key.toLowerCase();
             }
-            for (const pattern of dataset.patterns) {
+            for (const pattern of dataset.options.patterns) {
               if (pattern.value == insertingLabel) { // eslint-disable-line
                 if (!isDuplicate(insertingLabel, labels)) {
                   labels.push(insertingLabel);
@@ -123,15 +123,19 @@ class BarChart {
         });
 
         const formattedDataset = {
-          label: dataset.legend,
+          label: dataset.options.legend,
           data: chartDatasetData,
           borderWidth: 2,
           hoverBorderWidth: 3,
         };
 
-        if (dataset.datasetColor) formattedDataset.borderColor = dataset.datasetColor;
-        if (dataset.fillColor) formattedDataset.backgroundColor = dataset.fillColor;
-        formattedDataset.fill = dataset.fill;
+        if (dataset.options.datasetColor) {
+          formattedDataset.borderColor = dataset.options.datasetColor;
+        }
+        if (dataset.options.fillColor) {
+          formattedDataset.backgroundColor = dataset.options.fillColor;
+        }
+        formattedDataset.fill = dataset.options.fill;
 
         datasets.push(formattedDataset);
       }

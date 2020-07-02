@@ -16,16 +16,6 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "cascade",
       },
     },
-    connection_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      defaultValue: null,
-      reference: {
-        model: "Connection",
-        key: "id",
-        onDelete: "cascade",
-      },
-    },
     name: {
       type: DataTypes.STRING,
     },
@@ -39,9 +29,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
-    },
-    query: {
-      type: DataTypes.TEXT,
     },
     chartData: {
       type: DataTypes.TEXT("long"),
@@ -104,25 +91,9 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: moment().toDate(),
     },
-    pagination: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-    items: {
-      type: DataTypes.STRING,
-      defaultValue: "items",
-    },
-    itemsLimit: {
-      type: DataTypes.INTEGER,
-      defaultValue: 100,
-    },
-    offset: {
-      type: DataTypes.STRING,
-      defaultValue: "offset",
-    },
     draft: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false,
+      defaultValue: true,
     },
   }, {
     freezeTableName: true,
@@ -130,7 +101,6 @@ module.exports = (sequelize, DataTypes) => {
 
   Chart.associate = (models) => {
     models.Chart.hasMany(models.Dataset, { foreignKey: "chart_id" });
-    models.Chart.hasOne(models.ApiRequest, { foreignKey: "chart_id" });
   };
 
   return Chart;

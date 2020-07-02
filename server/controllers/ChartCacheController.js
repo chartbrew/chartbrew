@@ -1,12 +1,16 @@
 const db = require("../models/models");
 
 class ChartCacheController {
-  create(userId, data, type = "CHART_CACHE") {
-    return db.ChartCache.create({
-      user_id: userId,
-      data,
-      type,
-    })
+  create(userId, chartId, data, type = "CHART_CACHE") {
+    return this.deleteAll(userId, chartId)
+      .then(() => {
+        return db.ChartCache.create({
+          user_id: userId,
+          chart_id: chartId,
+          data,
+          type,
+        });
+      })
       .then((cache) => {
         return new Promise((resolve) => resolve(cache));
       })
@@ -15,14 +19,14 @@ class ChartCacheController {
       });
   }
 
-  findLast(userId) {
+  findLast(userId, chartId) {
     return db.ChartCache.findAll({
-      where: { user_id: userId },
+      where: { user_id: userId, chart_id: chartId },
       order: [["createdAt", "DESC"]],
     })
       .then((cache) => {
         if (!cache || cache.length < 1) {
-          return new Promise((resolve) => resolve([]));
+          return new Promise((resolve) => resolve(false));
         }
 
         // return only the last one
@@ -30,12 +34,16 @@ class ChartCacheController {
       })
       .catch(() => {
         // this operation shouldn't stop what else is running
-        return new Promise((resolve) => resolve([]));
+        return new Promise((resolve) => resolve(false));
       });
   }
 
-  deleteAll(userId) {
-    return db.ChartCache.destroy({ where: { user_id: userId } })
+  deleteAll(userId, chartId) {
+    const condition = { user_id: userId };
+    if (chartId) {
+      condition.chart_id = chartId;
+    }
+    return db.ChartCache.destroy({ where: condition })
       .then((result) => {
         return new Promise((resolve) => resolve(result));
       })

@@ -130,6 +130,10 @@ module.exports = (sequelize, DataTypes) => {
     freezeTableName: true,
   });
 
+  Connection.associate = (models) => {
+    models.Connection.hasMany(models.Dataset, { foreignKey: "connection_id" });
+  };
+
   Connection.prototype.decryptField = (val) => {
     return sc.decrypt(val);
   };

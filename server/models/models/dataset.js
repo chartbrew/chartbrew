@@ -14,6 +14,15 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "cascade",
       },
     },
+    connection_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      reference: {
+        model: "Connection",
+        key: "id",
+        onDelete: "cascade",
+      },
+    },
     query: {
       type: DataTypes.TEXT,
     },
@@ -86,6 +95,12 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     freezeTableName: true,
   });
+
+  Dataset.associate = (models) => {
+    models.Dataset.belongsTo(models.Chart, { foreignKey: "chart_id" });
+    models.Dataset.belongsTo(models.Connection, { foreignKey: "connection_id" });
+    models.Dataset.hasOne(models.DataRequest, { foreignKey: "dataset_id" });
+  };
 
   return Dataset;
 };

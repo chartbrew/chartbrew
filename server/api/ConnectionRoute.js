@@ -237,7 +237,7 @@ module.exports = (app) => {
         return teamController.getTeamRole(project.team_id, req.user.id);
       })
       .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).createAny("apiRequest");
+        const permission = accessControl.can(teamRole.role).createAny("dataRequest");
         if (!permission.granted) {
           throw new Error(401);
         }
@@ -247,9 +247,9 @@ module.exports = (app) => {
 
         return connectionController.testApiRequest(requestData);
       })
-      .then((apiRequest) => {
-        if (!apiRequest) return res.status(500).send("Api Request Error");
-        return res.status(200).send(apiRequest);
+      .then((dataRequest) => {
+        if (!dataRequest) return res.status(500).send("Api Request Error");
+        return res.status(200).send(dataRequest);
       })
       .catch((errorCode) => {
         return res.status(errorCode).send({ error: errorCode });

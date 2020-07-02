@@ -169,15 +169,19 @@ export function removeChart(projectId, chartId) {
   };
 }
 
-export function runQuery(projectId, chartId) {
+export function runQuery(projectId, chartId, noSource) {
   return (dispatch) => {
     const token = cookie.load("brewToken");
-    const url = `${API_HOST}/project/${projectId}/chart/${chartId}`;
+    let url = `${API_HOST}/project/${projectId}/chart/${chartId}`;
     const method = "GET";
     const headers = new Headers({
       "Accept": "application/json",
       "authorization": `Bearer ${token}`,
     });
+
+    if (noSource) {
+      url += "?no_source=true";
+    }
 
     dispatch({ type: FETCH_CHART });
     return fetch(url, { method, headers })
