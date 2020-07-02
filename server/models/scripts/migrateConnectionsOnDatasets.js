@@ -1,7 +1,9 @@
+const { QueryTypes } = require("sequelize");
+
 const db = require("../models");
 
 module.exports.up = () => {
-  return db.Chart.findAll()
+  return db.sequelize.query("SELECT id, connection_id FROM chart", { type: QueryTypes.SELECT })
     .then((charts) => {
       if (!charts || charts.length < 1) return Promise.resolve("done");
 
