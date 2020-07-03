@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-**NodeJS** v10.16.0+
+**NodeJS** v12.17.0+
 
 **NPM**
 

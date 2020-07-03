@@ -12,12 +12,37 @@ module.exports = {
       { text: '👨‍💻 GitHub', link: 'https://github.com/chartbrew/chartbrew' },
     ],
     sidebar: [
-      ['/', '🚀 Introduction'],
-      ['/database/', '🔌 Database configuration'],
-      ['/deployment/', '🌍 Deployment'],
-      ['/backend/', '🧪 Backend'],
-      ['/frontend/', '✨ Frontend'],
-      ['/oneaccount/', '🔐 One account setup'],
+      {
+        path: '/',
+        title: '🚀 Introduction',
+      },
+      {
+        path: '/database/',
+        title: '🔌 Database configuration',
+      },
+      {
+        path: '/deployment/',
+        title: '🌍 Deployment',
+      },
+      {
+        path: '/backend/',
+        title: '🧪 Backend'
+      },
+      {
+        path: '/frontend/',
+        title: '✨ Frontend'
+      },
+      { 
+        path: '/oneaccount/',
+        title: '🔐 One account setup'
+      },
+      {
+        title: "🚧 Migrations",
+        collapsable: false,
+        children: [
+          ["/migrations/v1.0.0-beta.9/", "v1.0.0-beta.9"]
+        ],
+      }
     ],
     lastUpdated: true,
     docsRepo: "chartbrew/chartbrew",
