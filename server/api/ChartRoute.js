@@ -283,7 +283,7 @@ module.exports = (app) => {
           throw new Error(401);
         }
 
-        return chartController.updateChartData2(
+        return chartController.updateChartData(
           req.params.id,
           req.user,
           req.query.no_source === "true",

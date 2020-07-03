@@ -251,33 +251,10 @@ class ChartController {
       });
   }
 
-  updateChartData(id) {
-    let gChart;
-    return this.findById(id)
-      .then((chart) => {
-        if (!chart) throw new Error(404);
-        gChart = chart;
-        return this.connectionController.findById(chart.connection_id);
-      })
-      .then((connection) => {
-        if (connection.type === "mongodb") {
-          return this.runQuery(id);
-        } else if (connection.type === "api") {
-          return this.runRequest(gChart);
-        } else if (connection.type === "postgres" || connection.type === "mysql") {
-          return this.runPostgresQuery(gChart);
-        } else {
-          throw new Error("Invalid connection type");
-        }
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
-      });
-  }
-
-  updateChartData2(id, user, noSource) {
+  updateChartData(id, user, noSource) {
     let gChart;
     let gCache;
+    let skipCache = false;
     return this.findById(id)
       .then((chart) => {
         gChart = chart;
@@ -285,10 +262,17 @@ class ChartController {
           throw new Error("The chart doesn't have any datasets");
         }
 
+        if (!user) {
+          skipCache = true;
+          return new Promise((resolve) => resolve(false));
+        }
+
         return this.chartCache.findLast(user.id, chart.id);
       })
       .then((cache) => {
-        gCache = cache;
+        if (!skipCache) {
+          gCache = cache;
+        }
 
         const requestPromises = [];
         gChart.Datasets.map((dataset) => {
@@ -309,7 +293,7 @@ class ChartController {
         };
 
         // change the datasets data if the cache is called
-        if (noSource === true && gCache && gCache.data && gCache.data.datasets) {
+        if (!skipCache && noSource === true && gCache && gCache.data && gCache.data.datasets) {
           resolvingData.datasets = gCache.data.datasets.map((item) => {
             const tempItem = item;
             for (let i = 0; i < datasets.length; i++) {
@@ -320,7 +304,7 @@ class ChartController {
             }
             return tempItem;
           });
-        } else {
+        } else if (!skipCache) {
           // create a new cache for the data that was fetched
           this.chartCache.create(user.id, gChart.id, resolvingData);
         }
