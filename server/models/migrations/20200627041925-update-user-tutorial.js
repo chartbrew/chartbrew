@@ -1,6 +1,6 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    return queryInterface.addColumn("user", "tutorials", {
+    return queryInterface.addColumn("User", "tutorials", {
       type: Sequelize.TEXT,
       allowNull: false,
       defaultValue: "{}",
@@ -22,6 +22,6 @@ module.exports = {
   },
 
   down: async (queryInterface) => {
-    return queryInterface.removeColumn("user", "tutorials");
+    return queryInterface.removeColumn("User", "tutorials");
   },
 };
