@@ -32,6 +32,7 @@ import { chartColors } from "../../config/colors";
 import {
   changeTutorial as changeTutorialAction,
   completeTutorial as completeTutorialAction,
+  resetTutorial as resetTutorialAction,
 } from "../../actions/tutorial";
 
 /*
@@ -50,11 +51,12 @@ function AddChart(props) {
   const [saveRequired, setSaveRequired] = useState(true);
   const [loading, setLoading] = useState(false);
   const [startTutorial, setStartTutorial] = useState(false);
+  const [resetingTutorial, setResetingTutorial] = useState(false);
 
   const {
     match, createChart, history, charts, saveNewDataset, getChartDatasets, tutorial,
     datasets, updateDataset, deleteDataset, updateChart, runQuery, user,
-    changeTutorial, completeTutorial, clearDatasets,
+    changeTutorial, completeTutorial, clearDatasets, resetTutorial,
   } = props;
 
   useEffect(() => {
@@ -242,6 +244,38 @@ function AddChart(props) {
     completeTutorial();
   };
 
+  const _onCancelWalkthrough = () => {
+    setStartTutorial(false);
+    // complete all AddChart-related tutorials
+    // TODO: find a better way of doing this
+    return completeTutorial("addchart")
+      .then(() => completeTutorial("dataset"))
+      .then(() => completeTutorial("apibuilder"))
+      .then(() => completeTutorial("mongobuilder"))
+      .then(() => completeTutorial("sqlbuilder"))
+      .then(() => completeTutorial("objectexplorer"))
+      .then(() => completeTutorial("requestmodal"));
+  };
+
+  const _onResetTutorial = () => {
+    setResetingTutorial(true);
+    return resetTutorial([
+      "addchart",
+      "dataset",
+      "apibuilder",
+      "mongobuilder",
+      "sqlbuilder",
+      "objectexplorer",
+      "requestmodal",
+      "addchart"
+    ])
+      .then(() => {
+        changeTutorial("addchart");
+        setResetingTutorial(false);
+      })
+      .catch(() => setResetingTutorial(false));
+  };
+
   if (titleScreen) {
     return (
       <ChartDescription
@@ -365,7 +399,22 @@ function AddChart(props) {
         </Grid.Column>
 
         <Grid.Column width={6} className="add-dataset-tut">
-          <Header>Datasets</Header>
+          <Header>
+            Datasets
+            <Popup
+              trigger={(
+                <Button
+                  basic
+                  onClick={_onResetTutorial}
+                  icon="question circle outline"
+                  loading={resetingTutorial}
+                  floated="right"
+                />
+              )}
+              content="Start the chart builder tutorial"
+              position="top right"
+            />
+          </Header>
           <Divider />
 
           <div>
@@ -469,7 +518,7 @@ function AddChart(props) {
         <Modal.Actions>
           <Button
             content="Cancel walkthrough"
-            onClick={() => setStartTutorial(false)}
+            onClick={_onCancelWalkthrough}
           />
           <Button
             positive
@@ -532,6 +581,7 @@ AddChart.propTypes = {
   tutorial: PropTypes.string.isRequired,
   changeTutorial: PropTypes.func.isRequired,
   completeTutorial: PropTypes.func.isRequired,
+  resetTutorial: PropTypes.func.isRequired,
   clearDatasets: PropTypes.func.isRequired,
 };
 
@@ -567,7 +617,8 @@ const mapDispatchToProps = (dispatch) => {
     },
     updateUser: (id, data) => dispatch(updateUserAction(id, data)),
     changeTutorial: (tut) => dispatch(changeTutorialAction(tut)),
-    completeTutorial: () => dispatch(completeTutorialAction()),
+    completeTutorial: (tut) => dispatch(completeTutorialAction(tut)),
+    resetTutorial: (tut) => dispatch(resetTutorialAction(tut)),
     clearDatasets: () => dispatch(clearDatasetsAction()),
   };
 };

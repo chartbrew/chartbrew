@@ -13,13 +13,14 @@ export function changeTutorial(tutorial) {
   };
 }
 
-export function completeTutorial() {
+export function completeTutorial(tut) {
   return (dispatch, getState) => {
     const user = getState().user.data;
     const { tutorial } = getState();
     if (!user.id) throw new Error("No user found");
 
-    const tempTour = `${tutorial}`;
+    // if a tutorial is passed, use the argument, otherwise use current tutorial
+    const tempTour = tut ? `${tut}` : `${tutorial}`;
     let tempTutorials = {
       tutorials: {
         [tempTour]: APP_VERSION,
@@ -37,5 +38,21 @@ export function completeTutorial() {
 
     dispatch({ type: COMPLETE_TUTORIAL });
     return dispatch(updateUser(user.id, tempTutorials));
+  };
+}
+
+export function resetTutorial(tuts) {
+  return (dispatch, getState) => {
+    const user = getState().user.data;
+
+    const tempTutorials = user.tutorials;
+    for (let i = 0; i < tuts.length; i++) {
+      const tut = tuts[i];
+      if (tempTutorials[tut]) {
+        delete tempTutorials[tut];
+      }
+    }
+
+    return dispatch(updateUser(user.id, { tutorials: tempTutorials }));
   };
 }
