@@ -214,6 +214,7 @@ class Chart extends Component {
             if (isPublic && !chart.public) return (<span key={chart.id} />);
             if (isPublic && chart.draft) return (<span key={chart.id} />);
             if (chart.draft && !showDrafts) return (<span key={chart.id} />);
+            if (!chart.id) return (<span key={`no_id_${index}`} />); // eslint-disable-line
 
             // get connection
             let connection;
