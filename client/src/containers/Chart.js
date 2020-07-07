@@ -643,6 +643,7 @@ const styles = {
 
 Chart.defaultProps = {
   isPublic: false,
+  showDrafts: true,
 };
 
 Chart.propTypes = {
@@ -656,7 +657,7 @@ Chart.propTypes = {
   team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
   isPublic: PropTypes.bool,
-  showDrafts: PropTypes.bool.isRequired,
+  showDrafts: PropTypes.bool,
 };
 
 const mapStateToProps = (state) => {

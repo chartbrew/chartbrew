@@ -5,7 +5,7 @@ import { Route, Switch, withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
   Dimmer, Loader, Container, Icon, Grid,
-  Menu, Dropdown, Popup, Header,
+  Menu, Dropdown, Popup, Header, Button,
 } from "semantic-ui-react";
 import SplitPane from "react-split-pane";
 
@@ -27,6 +27,7 @@ import canAccess from "../config/canAccess";
 import { APP_VERSION } from "../config/settings";
 
 const pageHeight = window.innerHeight;
+const sideMaxSize = 220;
 /*
   Description
 */
@@ -126,7 +127,7 @@ class ProjectBoard extends Component {
     }
 
     let menuSize = "large";
-    if (size < 250) {
+    if (size < sideMaxSize) {
       menuSize = "small";
     }
 
@@ -142,11 +143,11 @@ class ProjectBoard extends Component {
   _getDefaultMenuSize() {
     const { menuSize } = this.state;
     if (menuSize === "small") return 70;
-    if (menuSize === "large") return 250;
+    if (menuSize === "large") return sideMaxSize;
     if (window.localStorage.getItem("_cb_menu_size") === "small") {
       return 70;
     } else {
-      return 250;
+      return sideMaxSize;
     }
   }
 
@@ -182,10 +183,10 @@ class ProjectBoard extends Component {
           onChange={() => {}}
         >
           <div
-            style={{ backgroundColor: primary, width: menuSize === "small" ? 70 : 250 }}
+            style={{ backgroundColor: primary, width: menuSize === "small" ? 70 : sideMaxSize }}
           >
             <Menu
-              size="huge"
+              size={menuSize === "small" ? "large" : "huge"}
               fluid
               inverted
               vertical
@@ -198,15 +199,16 @@ class ProjectBoard extends Component {
                   button={menuSize === "small"}
                   labeled={menuSize === "small"}
                   icon={menuSize === "small"
-                    ? (
+                    && (
                       <Popup
                         trigger={<Icon name="list ul" size="large" />}
                         content="Switch projects"
                         position="right center"
                         inverted
                     />
-                    ) : "list ul"}
+                    )}
                   item
+                  style={styles.centered}
                 >
                   <Dropdown.Menu>
                     <Dropdown.Header>Select another project</Dropdown.Header>
@@ -228,6 +230,48 @@ class ProjectBoard extends Component {
                   </Dropdown.Menu>
                 </Dropdown>
               </Menu.Item>
+
+              {this._canAccess("editor")
+                && (
+                  <Menu.Item
+                    active={this._checkIfActive("chart")}
+                    style={styles.centered}
+                  >
+                    {menuSize === "small"
+                      && (
+                        <Popup
+                          trigger={(
+                            <Button
+                              primary
+                              icon
+                              as={Link}
+                              to={`/${match.params.teamId}/${match.params.projectId}/chart`}
+                              size="small"
+                            >
+                              <Icon name="plus" />
+                            </Button>
+                          )}
+                          content="Create a new chart"
+                          position="right center"
+                          inverted
+                        />
+                      )}
+                    {menuSize === "large" && (
+                      <Button
+                        primary
+                        icon
+                        labelPosition="right"
+                        as={Link}
+                        to={`/${match.params.teamId}/${match.params.projectId}/chart`}
+                        fluid
+                      >
+                        <Icon name="plus" />
+                        Create a chart
+                      </Button>
+                    )}
+                  </Menu.Item>
+                )}
+
               <Menu.Item>
                 {menuSize === "large"
                   && (
@@ -253,27 +297,6 @@ class ProjectBoard extends Component {
                     {menuSize === "large" && <Icon name="line graph" />}
                     {menuSize === "large" && "Dashboard"}
                   </Menu.Item>
-
-                  {this._canAccess("editor")
-                    && (
-                    <Menu.Item
-                      active={this._checkIfActive("chart")}
-                      as={Link}
-                      to={`/${match.params.teamId}/${match.params.projectId}/chart`}
-                    >
-                      {menuSize === "small"
-                        && (
-                        <Popup
-                          trigger={<Icon name="plus" size="large" />}
-                          content="Add a new chart"
-                          position="right center"
-                          inverted
-                        />
-                        )}
-                      {menuSize === "large" && <Icon name="plus" />}
-                      {menuSize === "large" && "Add a new chart"}
-                    </Menu.Item>
-                    )}
 
                   {this._canAccess("editor")
                     && (
@@ -387,8 +410,8 @@ class ProjectBoard extends Component {
                             <Icon name={showDrafts ? "toggle on" : "toggle off"} size="large" />
                           </>
                         )}
-                        {menuSize === "large" && <Icon name={showDrafts ? "toggle on" : "toggle off"} size="large" />}
-                        {menuSize === "large" && "Drafts toggle"}
+                        {menuSize === "large" && <Icon name={showDrafts ? "toggle on" : "toggle off"} />}
+                        {menuSize === "large" && "Show drafts"}
                       </Menu.Item>
                     )}
                     content="Show or hide drafts"
@@ -416,7 +439,7 @@ class ProjectBoard extends Component {
               {menuSize === "small"
                 && (
                 <Menu.Item
-                  onClick={() => this._setMenuSize(250)}
+                  onClick={() => this._setMenuSize(sideMaxSize)}
                   style={styles.absoluteCollapse(menuSize)}
                 >
                   <Popup
@@ -427,7 +450,7 @@ class ProjectBoard extends Component {
                   />
                 </Menu.Item>
                 )}
-              <Menu.Item verticalAlign="center" style={styles.absoluteLogo}>
+              <Menu.Item style={styles.absoluteLogo}>
                 {/* <Image size="mini" centered src={cbLogo} alt="bottle" /> */}
                 <Header as="h6" inverted style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
                   {menuSize !== "small" && (
@@ -445,7 +468,7 @@ class ProjectBoard extends Component {
           </div>
           <div>
             <Grid columns={1} centered stackable>
-              <Grid.Column width={16} computer={16} style={{ paddingLeft: 0 }}>
+              <Grid.Column computer={16} style={{ paddingLeft: 0 }}>
                 <Container fluid>
                   <Switch>
                     <Route path="/:teamId/:projectId/dashboard" render={() => (<ProjectDashboard showDrafts={showDrafts} />)} />
@@ -518,6 +541,10 @@ const styles = {
   },
   draftsHeader: {
     color: "#91A3A2",
+    fontSize: 12,
+  },
+  centered: {
+    textAlign: "center",
   },
 };
 
