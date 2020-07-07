@@ -8,6 +8,8 @@ Create a back-up of your database before continuing
 
 ## How to migrate
 
+**🔥 Breaking change**: This version is built with **Node v12.17.0** so make sure you don't use an older version when setting up the project.
+
 If you used the [`create-chartbrew-app`](https://github.com/chartbrew/create-chartbrew-app) CLI tool:
 
 ```sh
@@ -19,6 +21,8 @@ If you [cloned the repository](https://github.com/chartbrew/chartbrew) do the fo
 
 ```sh
 # checkout the new release tag (this really depends on your setup)
+# It is recommended you merge the new release tag into one of your branches
+# You might need to fix any merge conflicts that arise
 
 cd yourChartbrewApp/
 npm run setup
@@ -27,10 +31,12 @@ cd server/
 npm run db:migration
 ```
 
-That's pretty much it. Your existing charts and connections should work as normal, but you will notice a brand new chart builder interface.
+**That's pretty much it**. Your existing charts and connections should work as normal, but you will notice a brand new chart builder interface.
 
 
 ## Architectural changes
+
+The following section is just informational - _no action required_.
 
 ### Models changes
 

@@ -39,6 +39,7 @@ module.exports = {
       {
         title: "🚧 Migrations",
         collapsable: false,
+        sidebarDepth: 0,
         children: [
           ["/migrations/v1.0.0-beta.9/", "v1.0.0-beta.9"]
         ],
