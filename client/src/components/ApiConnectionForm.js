@@ -70,7 +70,7 @@ class ApiConnectionForm extends Component {
       // prepare the options
       const tempOptions = connection.optionsArray;
       const newOptions = [];
-      if (connection.optionsArray && connection.optionsArray.length > 0) {
+      if (tempOptions && tempOptions.length > 0) {
         for (let i = 0; i < tempOptions.length; i++) {
           if (tempOptions[i].key && tempOptions[i].value) {
             newOptions.push({ [tempOptions[i].key]: tempOptions[i].value });
@@ -86,14 +86,10 @@ class ApiConnectionForm extends Component {
         loading: true,
       });
 
-      if (!connection.id) {
-        onComplete(connection);
-      } else {
-        const newConnection = connection;
-        newConnection.project_id = projectId;
-        newConnection.options = newOptions;
-        onComplete(newConnection);
-      }
+      const newConnection = connection;
+      if (!connection.id) newConnection.project_id = projectId;
+      newConnection.options = newOptions;
+      onComplete(newConnection);
     });
   }
 

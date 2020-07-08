@@ -12,7 +12,10 @@ import ApiConnectionForm from "../components/ApiConnectionForm";
 import PostgresConnectionForm from "../components/PostgresConnectionForm";
 import MysqlConnectionForm from "../components/MysqlConnectionForm";
 import {
-  testConnection, updateConnection, removeConnection, getProjectConnections,
+  testConnection as testConnectionAction,
+  updateConnection as updateConnectionAction,
+  removeConnection as removeConnectionAction,
+  getProjectConnections as getProjectConnectionsAction,
   addConnection as addConnectionAction,
   saveConnection as saveConnectionAction,
 } from "../actions/connection";
@@ -502,10 +505,12 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    testConnection: (projectId, id) => dispatch(testConnection(projectId, id)),
-    updateConnection: (projectId, id, data) => dispatch(updateConnection(projectId, id, data)),
-    removeConnection: (projectId, id) => dispatch(removeConnection(projectId, id)),
-    getProjectConnections: (projectId) => dispatch(getProjectConnections(projectId)),
+    testConnection: (projectId, id) => dispatch(testConnectionAction(projectId, id)),
+    updateConnection: (projectId, id, data) => {
+      return dispatch(updateConnectionAction(projectId, id, data));
+    },
+    removeConnection: (projectId, id) => dispatch(removeConnectionAction(projectId, id)),
+    getProjectConnections: (projectId) => dispatch(getProjectConnectionsAction(projectId)),
     addConnection: (projectId, connection) => dispatch(addConnectionAction(projectId, connection)),
     saveConnection: (projectId, connection) => {
       return dispatch(saveConnectionAction(projectId, connection));
