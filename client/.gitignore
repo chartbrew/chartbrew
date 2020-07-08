@@ -5,6 +5,7 @@ src/semantic/tasks
 
 !/src/semantic/src/
 /src/semantic/src/*
+!/src/semantic/src/theme.config
 !/src/semantic/src/site
 /src/semantic/src/site/*
 !/src/semantic/src/site/globals
