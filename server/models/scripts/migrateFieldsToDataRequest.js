@@ -51,7 +51,6 @@ module.exports.up = () => {
     });
 };
 
-
 module.exports.down = () => {
   return db.Chart.findAll({
     include: [{ model: db.Dataset, include: [{ model: db.DataRequest }] }],

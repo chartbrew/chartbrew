@@ -304,7 +304,6 @@ module.exports = (app) => {
   });
   // --------------------------------------------------------
 
-
   /*
   ** Route to get a chart for embedding (must be public for success)
   */

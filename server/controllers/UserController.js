@@ -33,7 +33,6 @@ class UserController {
       });
   }
 
-
   deleteUser(id) {
     return db.User.destroy({ where: { id } })
       .then(() => {
@@ -43,7 +42,6 @@ class UserController {
         return new Promise((resolve, reject) => reject(error));
       });
   }
-
 
   login(email, password) {
     return db.User.findOne({ where: { "email": sc.encrypt(email) } })

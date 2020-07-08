@@ -109,7 +109,6 @@ class LineChart {
           axisData = newAxisData;
         }
 
-
         // format the dates
         for (let i = 0; i < axisData.length; i++) {
           if (this.chart.timeInterval === "hour") {

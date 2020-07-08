@@ -25,7 +25,6 @@ app.use(methodOverride("X-HTTP-Method-Override"));
 app.use(cors());
 //---------------------------------------
 
-
 app.get("/", (req, res) => {
   return res.send("Welcome to chartBrew server API");
 });

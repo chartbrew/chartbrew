@@ -123,7 +123,6 @@ class TeamController {
       });
   }
 
-
   isUserInTeam(teamId, email) {
     // checking if a user is already in the team
     const idsArray = [];
