@@ -109,20 +109,45 @@ class LineChart {
           axisData = newAxisData;
         }
 
+        const startDate = axisData[0];
+        const endDate = axisData[axisData.length - 1];
         // format the dates
         for (let i = 0; i < axisData.length; i++) {
-          if (this.chart.timeInterval === "hour") {
-            axisData[i] = axisData[i].format("MMM Do hA");
-          } else if (this.chart.timeInterval === "day") {
-            axisData[i] = axisData[i].format("MMM D");
-          } else if (this.chart.timeInterval === "week") {
-            axisData[i] = axisData[i].format("MMM [week] w");
-          } else if (this.chart.timeInterval === "month") {
-            axisData[i] = axisData[i].format("MMM");
-          } else if (this.chart.timeInterval === "year") {
-            axisData[i] = axisData[i].format("YYYY");
-          } else {
-            axisData[i] = axisData[i].format("MMM D");
+          switch (this.chart.timeInterval) {
+            case "hour":
+              if (startDate.year() !== endDate.year()) {
+                axisData[i] = axisData[i].format("YYYY/MM/DD hA");
+              } else {
+                axisData[i] = axisData[i].format("MMM Do hA");
+              }
+              break;
+            case "day":
+              if (startDate.year() !== endDate.year()) {
+                axisData[i] = axisData[i].format("YYYY MMM D");
+              } else {
+                axisData[i] = axisData[i].format("MMM D");
+              }
+              break;
+            case "week":
+              if (startDate.year() !== endDate.year()) {
+                axisData[i] = axisData[i].format("YYYY MMM [w] w");
+              } else {
+                axisData[i] = axisData[i].format("MMM [w] w");
+              }
+              break;
+            case "month":
+              if (startDate.year() !== endDate.year()) {
+                axisData[i] = axisData[i].format("MMM YYYY");
+              } else {
+                axisData[i] = axisData[i].format("MMM");
+              }
+              break;
+            case "year":
+              axisData[i] = axisData[i].format("YYYY");
+              break;
+            default:
+              axisData[i] = axisData[i].format("MMM D");
+              break;
           }
         }
 
