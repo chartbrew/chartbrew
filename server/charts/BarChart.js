@@ -36,7 +36,7 @@ class BarChart {
   }
 
   async aggregateOverTime() {
-    const lineChart = new LineChart(this.chart, this.chartData);
+    const lineChart = new LineChart({ chart: this.chart, datasets: this.datasets });
 
     // reuse the code for aggregation from the line chart
     const chartConf = await lineChart.aggregateOverTime();

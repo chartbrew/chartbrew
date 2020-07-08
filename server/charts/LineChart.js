@@ -10,7 +10,7 @@ class LineChart {
   /*
   ** Get data for a chart that aggregates a length(obj) over time
   */
-  aggregateOverTime() {
+  async aggregateOverTime() {
     const datasets = [];
     let maxLabelLength = 0;
     let selectedDatasetLabels = 0;
