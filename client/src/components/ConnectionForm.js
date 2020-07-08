@@ -57,7 +57,6 @@ class ConnectionForm extends Component {
     }
   }
 
-
   _onCreateConnection = () => {
     const {
       projectId, onComplete,

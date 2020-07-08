@@ -11,7 +11,6 @@ export const CREATING_TEAM_FAILED = "CREATING_TEAM_FAILED";
 export const SAVE_TEAM_MEMBERS = "SAVE_TEAM_MEMBERS";
 export const UPDATE_TEAM_MEMBER_ROLE = "UPDATE_TEAM_MEMBER_ROLE";
 
-
 export function saveActiveTeam(activeTeam) {
   return {
     type: SAVE_ACTIVE_TEAM,

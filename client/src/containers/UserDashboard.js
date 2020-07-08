@@ -125,7 +125,6 @@ class UserDashboard extends Component {
     );
   }
 
-
   /* Modal to create new team  */
   newTeamModal = () => {
     const {

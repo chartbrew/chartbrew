@@ -227,7 +227,6 @@ const validate = () => {
   return errors;
 };
 
-
 const OneaccountSVG = (props) => {
   const { style } = props;
   return (

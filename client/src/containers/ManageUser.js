@@ -30,7 +30,6 @@ class ManageUser extends Component {
     return false;
   }
 
-
   render() {
     return (
       <div style={styles.container}>

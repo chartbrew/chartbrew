@@ -21,7 +21,6 @@ function ObjectExplorer(props) {
   const [arrayWarning, setArrayWarning] = useState(false);
   const [notDateWarning, setNotDateWarning] = useState(false);
 
-
   const objectMapper = {};
 
   const {

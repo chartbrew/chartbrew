@@ -4,7 +4,6 @@ import {
   Segment, Form, Button, Header, Label, Message
 } from "semantic-ui-react";
 
-
 /*
   A form for creating a new Postgres connection
 */
