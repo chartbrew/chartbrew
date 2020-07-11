@@ -6,23 +6,23 @@ import {
 } from "semantic-ui-react";
 
 // types
-import lineChartImage from "../../../assets/lineChart.PNG";
-import barChartImage from "../../../assets/barChart.PNG";
-import radarChartImage from "../../../assets/radarChart.PNG";
-import polarChartImage from "../../../assets/polarChart.PNG";
-import pieChartImage from "../../../assets/pieChart.PNG";
-import doughnutChartImage from "../../../assets/doughnutChart.PNG";
+import lineChartImage from "../../../assets/charts/lineChart.jpg";
+import barChartImage from "../../../assets/charts/barChart.jpg";
+import radarChartImage from "../../../assets/charts/radarChart.jpg";
+import polarChartImage from "../../../assets/charts/polarChart.jpg";
+import pieChartImage from "../../../assets/charts/pieChart.jpg";
+import doughnutChartImage from "../../../assets/charts/doughnutChart.jpg";
 
 // subTypes
-import lcTimeseriesImage from "../../../assets/timeSeries.PNG";
-import lcAddTimeseriesImage from "../../../assets/addTimeSeries.PNG";
-import bcTimeseriesImage from "../../../assets/timeSeriesBar.PNG";
-import bcAddTimeseriesImage from "../../../assets/addTimeSeriesBar.PNG";
-import barChartPatternImage from "../../../assets/barChartPattern.png";
-import pieChartPatternImage from "../../../assets/pieChartPattern.png";
-import doughnutChartPatternImage from "../../../assets/doughnutChartPattern.png";
-import radarChartPatternImage from "../../../assets/radarChartPattern.png";
-import polarChartPatternImage from "../../../assets/polarChartPattern.png";
+import lcTimeseriesImage from "../../../assets/charts/timeSeries.jpg";
+import lcAddTimeseriesImage from "../../../assets/charts/addTimeSeries.jpg";
+import bcTimeseriesImage from "../../../assets/charts/timeSeriesBar.jpg";
+import bcAddTimeseriesImage from "../../../assets/charts/addTimeSeriesBar.jpg";
+import barChartPatternImage from "../../../assets/charts/barChartPattern.jpg";
+import pieChartPatternImage from "../../../assets/charts/pieChartPattern.jpg";
+import doughnutChartPatternImage from "../../../assets/charts/doughnutChartPattern.jpg";
+import radarChartPatternImage from "../../../assets/charts/radarChartPattern.jpg";
+import polarChartPatternImage from "../../../assets/charts/polarChartPattern.jpg";
 
 /*
   Description

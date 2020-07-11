@@ -9,12 +9,12 @@ import {
 } from "react-chartjs-2";
 
 import ChartTypesSelector from "./ChartTypesSelector";
-import lineChartImage from "../../../assets/lineChart.PNG";
-import barChartImage from "../../../assets/barChart.PNG";
-import radarChartImage from "../../../assets/radarChart.PNG";
-import polarChartImage from "../../../assets/polarChart.PNG";
-import pieChartImage from "../../../assets/pieChart.PNG";
-import doughnutChartImage from "../../../assets/doughnutChart.PNG";
+import lineChartImage from "../../../assets/charts/lineChart.jpg";
+import barChartImage from "../../../assets/charts/barChart.jpg";
+import radarChartImage from "../../../assets/charts/radarChart.jpg";
+import polarChartImage from "../../../assets/charts/polarChart.jpg";
+import pieChartImage from "../../../assets/charts/pieChart.jpg";
+import doughnutChartImage from "../../../assets/charts/doughnutChart.jpg";
 
 function ChartPreview(props) {
   const [typesVisible, setTypesVisible] = useState(false);
