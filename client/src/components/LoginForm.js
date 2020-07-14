@@ -57,21 +57,23 @@ class LoginForm extends Component {
   }
 
   socialSignin() {
-    window.oneaccount.setOnAuth((token, uuid) => {
-      const values = { token, uuid };
-      const { oneaccountAuth, history } = this.props;
+    if (window.oneaccount) {
+      window.oneaccount.setOnAuth((token, uuid) => {
+        const values = { token, uuid };
+        const { oneaccountAuth, history } = this.props;
 
-      this.setState({ oaloading: true });
-      oneaccountAuth(values)
-        .then(() => {
-          this.setState({ oaloading: false });
+        this.setState({ oaloading: true });
+        oneaccountAuth(values)
+          .then(() => {
+            this.setState({ oaloading: false });
 
-          history.push("/user");
-        })
-        .catch(() => {
-          this.setState({ oaloading: false });
-        });
-    });
+            history.push("/user");
+          })
+          .catch(() => {
+            this.setState({ oaloading: false });
+          });
+      });
+    }
     const { oaloading } = this.state;
     return (
       <Container>
