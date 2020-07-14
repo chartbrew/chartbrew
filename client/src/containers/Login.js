@@ -31,13 +31,14 @@ class Login extends Component {
           <Link to="/">
             <img size="tiny" src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
           </Link>
-          <Header inverted as="h2" style={{ marginTop: 0 }}>Log in to your account</Header>
-          <Segment raised>
+          <Header inverted as="h2" style={{ marginTop: 0 }}>{"Log in to your account"}</Header>
+          <Segment color="olive" raised style={styles.verticalPadding} padded>
+            <Header textAlign="left" as="h5">{"Enter your login details"}</Header>
             <LoginForm />
             {loginError && (
               <Message negative>
                 <Message.Header>{loginError.message}</Message.Header>
-                <p>Please try it again.</p>
+                <p>{"Please try it again."}</p>
               </Message>
             )}
           </Segment>
@@ -62,6 +63,10 @@ const styles = {
   },
   signupText: {
     color: "white",
+  },
+  verticalPadding: {
+    paddingRight: 40,
+    paddingLeft: 40
   },
 };
 

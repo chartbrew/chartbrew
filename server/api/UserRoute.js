@@ -27,7 +27,6 @@ module.exports = (app) => {
         id: user.id,
         email: user.email,
         name: user.name,
-        surname: user.surname,
         icon: user.icon,
         token,
       };
@@ -74,10 +73,9 @@ module.exports = (app) => {
   app.post("/user", (req, res) => {
     if (!req.body.email || !req.body.password) return res.status(400).send("no email or password");
 
-    const icon = req.body.name.substring(0, 1) + req.body.surname.substring(0, 1);
+    const icon = req.body.name.substring(0, 2);
     const userObj = {
       name: req.body.name,
-      surname: req.body.surname,
       email: req.body.email,
       password: req.body.password,
       active: false,
@@ -184,8 +182,7 @@ module.exports = (app) => {
     const icon = req.body.firstName.substring(0, 1) + req.body.lastName.substring(0, 1);
     const userObj = {
       oneaccountId: req.body.userId,
-      name: req.body.firstName,
-      surname: req.body.lastName,
+      name: `${req.body.firstName} ${req.body.lastName}`,
       email: req.body.email,
       // generate random password so no one can login using email/pass combination
       password: uuid(),
@@ -231,13 +228,12 @@ module.exports = (app) => {
   app.post("/user/invited", (req, res) => {
     if (!req.body.email || !req.body.password) return res.status(400).send("no email or password");
 
-    const icon = req.body.name.substring(0, 1) + req.body.surname.substring(0, 1);
+    const icon = req.body.name.substring(0, 2);
 
     const userObj = {
       email: req.body.email,
       password: req.body.password,
       name: req.body.name,
-      surname: req.body.surname,
       icon: icon.toUpperCase(),
       active: true,
     };

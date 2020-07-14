@@ -19,7 +19,6 @@ class UserController {
         return db.User.create({
           "name": user.name,
           "oneaccountId": user.oneaccountId,
-          "surname": user.surname,
           "email": user.email,
           "password": user.password,
           "icon": user.icon,

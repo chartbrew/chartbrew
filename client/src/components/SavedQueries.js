@@ -170,7 +170,7 @@ class SavedQueries extends Component {
 
                   <List.Content verticalAlign="middle">
                     <List.Header>{query.summary}</List.Header>
-                    <List.Description>{`created by ${query.User.name} ${query.User.surname}`}</List.Description>
+                    <List.Description>{`created by ${query.User.name}`}</List.Description>
                   </List.Content>
                 </List.Item>
               );

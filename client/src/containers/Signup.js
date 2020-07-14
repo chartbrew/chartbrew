@@ -10,7 +10,7 @@ import _ from "lodash";
 
 import { createUser, createInvitedUser, oneaccountAuth } from "../actions/user";
 import { addTeamMember } from "../actions/team";
-import { required, email } from "../config/validations";
+import { required, email, password } from "../config/validations";
 import cbLogoSmall from "../assets/logo_inverted.png";
 import { blue, secondary } from "../config/colors";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
@@ -75,26 +75,29 @@ class Signup extends Component {
   }
 
   socialSignup() {
-    window.oneaccount.setOnAuth((token, uuid) => {
-      const values = { token, uuid };
-      const { oneaccountAuth, history } = this.props;
+    if (window.oneaccount) {
+      window.oneaccount.setOnAuth((token, uuid) => {
+        const values = { token, uuid };
+        const { oneaccountAuth, history } = this.props;
 
-      const parsedParams = queryString.parse(document.location.search.slice(1));
-      this.setState({ oaloading: true });
-      if (parsedParams.inviteToken) {
-        this._createInvitedUser(values, parsedParams.inviteToken);
-      } else {
-        oneaccountAuth(values)
-          .then(() => {
-            this.setState({ oaloading: false });
+        const parsedParams = queryString.parse(document.location.search.slice(1));
+        this.setState({ oaloading: true });
+        if (parsedParams.inviteToken) {
+          this._createInvitedUser(values, parsedParams.inviteToken);
+        } else {
+          oneaccountAuth(values)
+            .then(() => {
+              this.setState({ oaloading: false });
 
-            history.push("/user");
-          })
-          .catch(() => {
-            this.setState({ oaloading: false });
-          });
-      }
-    });
+              history.push("/user");
+            })
+            .catch(() => {
+              this.setState({ oaloading: false });
+            });
+        }
+      });
+    }
+
     const { oaloading } = this.state;
     return (
       <Container>
@@ -118,10 +121,14 @@ class Signup extends Component {
     return (
       <Form.Field>
         { !hasError && <Message error header="Error" content={error} />}
-        <Form.Input iconPosition="left" type={type} error={hasError} {...input} {...custom} /> {/* eslint-disable-line */}
+        <Form.Input
+          iconPosition="left"
+          type={type}
+          error={hasError}
+          {...input} {...custom} /> {/* eslint-disable-line */}
         {touched
           && ((error && (
-          <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
+          <Label size="medium" style={{ marginTop: -30 }} basic pointing>
             {" "}
             {error}
             {" "}
@@ -145,26 +152,39 @@ class Signup extends Component {
           <Link to="/">
             <img size="tiny" centered src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
           </Link>
-          <Header inverted as="h2" style={{ marginTop: 0 }}>Join Charbrew</Header>
+          <Header inverted as="h2" style={{ marginTop: 0 }}>{"Time to brew some charts!"}</Header>
 
-          <Segment color="olive" raised>
+          <Segment color="olive" raised style={styles.verticalPadding} padded>
             <Form size="large">
-              <p style={{ textAlign: "left" }}>{"What's your name?"}</p>
-              <Field name="name" component={this.renderField} validate={required} placeholder="Firstname *" icon="user" />
-              <Field name="surname" component={this.renderField} validate={required} placeholder="Surname *" icon="user" />
-              <Divider />
-              <p style={{ textAlign: "left" }}>Your new account details</p>
-              <Field name="email" component={this.renderField} validate={[required, email]} placeholder="Email *" icon="mail" />
-              <Field name="password" type="password" component={this.renderField} validate={required} placeholder="Password *" icon="lock" />
-              <Field name="passwordconfirm" type="password" component={this.renderField} placeholder="Confirm Password *" icon="lock" />
+              <Header as="h5" style={styles.leftAligned}>{"What's your name?"}</Header>
+              <Field
+                name="name"
+                component={this.renderField}
+                validate={required}
+                placeholder="John Doe"
+                icon="user"
+                style={styles.leftAligned}
+              />
+
+              <Header as="h5" style={styles.leftAligned}>{"Your new sign in details"}</Header>
+              <Field
+                name="email"
+                component={this.renderField}
+                validate={[required, email]}
+                placeholder="example@site.com"
+                icon="mail"
+              />
+              <Field
+                name="password"
+                type="password"
+                component={this.renderField}
+                validate={[required, password]}
+                placeholder="Enter a secure password"
+                icon="lock"
+                style={styles.leftAligned}
+              />
 
               <Form.Field>
-                <label>
-                  {"By clicking Sign Up, you agree to our "}
-                  <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/TermsAndConditions.md" rel="noopener noreferrer" target="_blank">Terms</a>
-                  {" and that you have read our "}
-                  <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/PrivacyPolicy.md" rel="noopener noreferrer" target="_blank">Privacy Policy</a>
-                </label>
                 <Button
                   onClick={handleSubmit(this.submitUser)}
                   icon
@@ -205,7 +225,13 @@ class Signup extends Component {
                   {this.socialSignup()}
                 </>
               )}
-
+            <Divider hidden />
+            <p>
+              {"By clicking Sign Up, you agree to our "}
+              <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/TermsAndConditions.md" rel="noopener noreferrer" target="_blank">Terms of Service</a>
+              {" and "}
+              <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/PrivacyPolicy.md" rel="noopener noreferrer" target="_blank">Privacy Policy</a>
+            </p>
           </Segment>
           <div>
             <p style={styles.loginText}>
@@ -252,11 +278,8 @@ OneaccountSVG.defaultProps = {
   style: {}
 };
 
-const validate = values => {
+const validate = () => {
   const errors = {};
-  if (!values.passwordconfirm || values.passwordconfirm !== values.password) {
-    errors.passwordconfirm = "Passwords do not match";
-  }
   return errors;
 };
 
@@ -285,6 +308,13 @@ const styles = {
   },
   loginLink: {
     color: secondary,
+  },
+  leftAligned: {
+    textAlign: "left",
+  },
+  verticalPadding: {
+    paddingRight: 40,
+    paddingLeft: 40
   },
 };
 

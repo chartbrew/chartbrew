@@ -18,7 +18,6 @@ class EditUserForm extends Component {
       loading: true,
       user: {
         name: "",
-        surname: "",
         icon: "",
       },
       btnIcon: "right arrow",
@@ -57,7 +56,7 @@ class EditUserForm extends Component {
     this.setState({
       loading: false,
       user: {
-        name: userProp.name, surname: userProp.surname, icon: userProp.icon
+        name: userProp.name, icon: userProp.icon
       }
     });
   }
@@ -110,7 +109,7 @@ class EditUserForm extends Component {
         <Segment attached>
           <Form>
             <Form.Input
-              label="Firstname *"
+              label="Name"
               name="name"
               value={user.name || ""}
               type="text"
@@ -120,19 +119,8 @@ class EditUserForm extends Component {
                 user: { ...user, name: data.value }
               })} />
             <Form.Input
-              label="Lastname *"
-              name="surname"
-              value={user.surname || ""}
-              type="text"
-              placeholder="Surname"
-              icon="user"
-              onChange={(e, data) => this.setState({
-                user: { ...user, surname: data.value }
-              })}
-              />
-            <Form.Input
               maxLength="2"
-              label="User Icon *"
+              label="User Icon"
               name="icon"
               value={user.icon || ""}
               type="text"
@@ -151,7 +139,7 @@ class EditUserForm extends Component {
           <Divider hidden />
           <Button
             loading={loading}
-            disabled={!user.name || !user.surname || !user.icon}
+            disabled={!user.name || !user.icon}
             floated="right"
             icon
             labelPosition="right"
