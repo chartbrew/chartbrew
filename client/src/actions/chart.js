@@ -77,8 +77,8 @@ export function updateChart(projectId, chartId, data) {
     const formattedData = data;
 
     if (data && data.startDate && data.endDate) {
-      formattedData.startDate = moment(data.startDate).format();
-      formattedData.endDate = moment(data.endDate).format();
+      formattedData.startDate = moment(data.startDate).endOf("day").format();
+      formattedData.endDate = moment(data.endDate).endOf("day").format();
     }
 
     const token = cookie.load("brewToken");
