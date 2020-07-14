@@ -1,4 +1,5 @@
 import cookie from "react-cookies";
+import moment from "moment";
 
 import { API_HOST } from "../config/settings";
 import { addError } from "./error";
@@ -73,10 +74,17 @@ export function createChart(projectId, data) {
 
 export function updateChart(projectId, chartId, data) {
   return (dispatch) => {
+    const formattedData = data;
+
+    if (data && data.startDate && data.endDate) {
+      formattedData.startDate = moment(data.startDate).format();
+      formattedData.endDate = moment(data.endDate).format();
+    }
+
     const token = cookie.load("brewToken");
     const url = `${API_HOST}/project/${projectId}/chart/${chartId}`;
     const method = "PUT";
-    const body = JSON.stringify(data);
+    const body = JSON.stringify(formattedData);
     const headers = new Headers({
       "Accept": "application/json",
       "Content-Type": "application/json",
