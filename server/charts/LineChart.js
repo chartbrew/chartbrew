@@ -5,6 +5,14 @@ class LineChart {
   constructor(data) {
     this.chart = data.chart;
     this.datasets = data.datasets;
+
+    // make sure the dates start from midnight
+    if (this.chart.startDate) {
+      this.chart.startDate = moment(this.chart.startDate).startOf("day");
+    }
+    if (this.chart.endDate) {
+      this.chart.endDate = moment(this.chart.endDate).endOf("day");
+    }
   }
 
   /*
