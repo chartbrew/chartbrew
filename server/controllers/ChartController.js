@@ -221,17 +221,49 @@ class ChartController {
       .then((chart) => {
         selectedChart = chart;
 
+        if (otherId === "top") {
+          return db.Chart.findAll({
+            limit: 1,
+            order: [["dashboardOrder", "ASC"]],
+          });
+        }
+
+        if (otherId === "bottom") {
+          return db.Chart.findAll({
+            limit: 1,
+            order: [["dashboardOrder", "DESC"]],
+          });
+        }
+
         return this.findById(otherId);
       })
-      .then((otherChart) => {
-        const updateSelected = this.update(selectedId, {
-          dashboardOrder: otherChart.dashboardOrder,
-        });
-        const updateNeighbour = this.update(otherChart.id, {
-          dashboardOrder: selectedChart.dashboardOrder,
-        });
+      .then((other) => {
+        const updatePromises = [];
+        let otherChart = other;
+        if (otherId === "top") {
+          [otherChart] = other;
+          updatePromises.push(
+            this.update(selectedId, {
+              dashboardOrder: otherChart.dashboardOrder - 1,
+            }),
+          );
+        } else if (otherId === "bottom") {
+          [otherChart] = other;
+          updatePromises.push(
+            this.update(selectedId, {
+              dashboardOrder: otherChart.dashboardOrder + 1,
+            }),
+          );
+        } else {
+          updatePromises.push(this.update(selectedId, {
+            dashboardOrder: otherChart.dashboardOrder,
+          }));
+          updatePromises.push(this.update(otherChart.id, {
+            dashboardOrder: selectedChart.dashboardOrder,
+          }));
+        }
 
-        return Promise.all([updateSelected, updateNeighbour]);
+        return Promise.all(updatePromises);
       })
       .then((values) => {
         return values;

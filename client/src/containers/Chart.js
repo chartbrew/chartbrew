@@ -49,6 +49,7 @@ class Chart extends Component {
 
   _onChangeOrder = (chartId, otherId) => {
     const { match, changeOrder } = this.props;
+
     this.setState({ chartLoading: chartId });
     changeOrder(
       match.params.projectId,
@@ -313,16 +314,30 @@ class Chart extends Component {
                         >
                           <Dropdown.Menu>
                             <Dropdown.Item
+                              text="Move to top"
+                              icon="angle double up"
+                              disabled={index === 0}
+                              onClick={() => this._onChangeOrder(chart.id, "top")}
+                            />
+                            <Dropdown.Item
                               text="Move up"
-                              icon="arrow up"
+                              icon="chevron up"
                               disabled={index === 0}
                               onClick={() => this._onChangeOrder(chart.id, charts[index - 1].id)}
                             />
                             <Dropdown.Item
                               text="Move down"
-                              icon="arrow down"
+                              icon="chevron down"
                               disabled={index === charts.length - 1}
                               onClick={() => this._onChangeOrder(chart.id, charts[index + 1].id)}
+                            />
+                            <Dropdown.Item
+                              text="Move to bottom"
+                              icon="angle double down"
+                              disabled={index === charts.length - 1}
+                              onClick={() => {
+                                this._onChangeOrder(chart.id, "bottom");
+                              }}
                             />
                           </Dropdown.Menu>
                         </Dropdown>
