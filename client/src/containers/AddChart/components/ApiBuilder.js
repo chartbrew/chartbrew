@@ -284,7 +284,7 @@ function ApiBuilder(props) {
                 <div>
                   <Checkbox
                     label="Include connection headers"
-                    defaultChecked={!!apiRequest.useGlobalHeaders}
+                    checked={!!apiRequest.useGlobalHeaders}
                     onChange={_onToggleGlobal}
                   />
 
