@@ -488,6 +488,7 @@ function AddChart(props) {
                 onUpdate={_onUpdateDataset}
                 onDelete={_onDeleteDataset}
                 chart={newChart}
+                onRefresh={_onRefreshData}
               />
             </div>
           )}

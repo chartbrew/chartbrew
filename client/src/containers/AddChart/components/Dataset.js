@@ -20,7 +20,7 @@ import Filters from "./Filters";
 
 function Dataset(props) {
   const {
-    dataset, connections, onUpdate, onDelete, chart, match,
+    dataset, connections, onUpdate, onDelete, chart, match, onRefresh,
   } = props;
 
   const [newDataset, setNewDataset] = useState(dataset);
@@ -150,6 +150,7 @@ function Dataset(props) {
       .then(() => {
         setDeleteLoading(false);
         setDeleteModal(false);
+        onRefresh();
       })
       .catch(() => {
         setDeleteLoading(false);
@@ -165,6 +166,9 @@ function Dataset(props) {
 
   const _onChangeField = (field) => {
     setNewDataset({ ...newDataset, xAxis: field });
+    setTimeout(() => {
+      onRefresh();
+    }, 500);
   };
 
   const _getActiveConnection = () => {
@@ -473,6 +477,7 @@ Dataset.propTypes = {
   onDelete: PropTypes.func.isRequired,
   chart: PropTypes.object.isRequired,
   match: PropTypes.object.isRequired,
+  onRefresh: PropTypes.func.isRequired,
 };
 
 const styles = {
