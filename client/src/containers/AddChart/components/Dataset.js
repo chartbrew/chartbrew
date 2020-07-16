@@ -10,7 +10,7 @@ import {
 import { SketchPicker } from "react-color";
 import moment from "moment";
 
-import { primary } from "../../../config/colors";
+import { primary, chartColors } from "../../../config/colors";
 import mongoImg from "../../../assets/mongodb-logo-1.png";
 import mysqlImg from "../../../assets/mysql.svg";
 import apiImg from "../../../assets/api.png";
@@ -189,13 +189,17 @@ function Dataset(props) {
   };
 
   const _renderColorPicker = (type, fillIndex) => {
+    let color = type === "dataset" ? newDataset.datasetColor
+      : (fillIndex || fillIndex === 0)
+        ? newDataset.fillColor[fillIndex] : newDataset.fillColor;
+
+    if (!newDataset.datasetColor && type === "dataset") {
+      color = chartColors[Math.floor(Math.random() * chartColors.length)];
+    }
+
     return (
       <SketchPicker
-        color={
-          type === "dataset" ? newDataset.datasetColor
-            : (fillIndex || fillIndex === 0)
-              ? newDataset.fillColor[fillIndex] : newDataset.fillColor
-        }
+        color={color}
         onChangeComplete={(color) => {
           const rgba = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
 
@@ -212,7 +216,6 @@ function Dataset(props) {
                 fillColor[fillIndex] = rgba;
               }
               onUpdate({ ...newDataset, fillColor });
-              // setNewDataset({ ...newDataset, fillColor });
             }
           }
         }}
