@@ -25,16 +25,24 @@
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
     <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.png">
     <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:600,700" rel="stylesheet">
-    
+
     <% if (process.env.REACT_APP_ONE_ACCOUNT_EXTERNAL_ID) { %>
     <script>
-      // @see https://docs.oneaccount.app for more configuration options.
-      window.oneaccountConfig = {
-        externalId: "%REACT_APP_ONE_ACCOUNT_EXTERNAL_ID%",
-        iOSRedirectURL: "/user"
+      if (window.oneaccount) {
+        initOneaccount();
+      } else {
+        document.addEventListener("oneaccount-loaded", initOneaccount);
+      }
+      // init the library
+      function initOneaccount() {
+        window.oneaccount.init("%REACT_APP_ONE_ACCOUNT_EXTERNAL_ID%", {
+          // @see https://docs.oneaccount.app for more configuration options.
+          iOSRedirectURL: "/user",
+          callbackURL: "http://localhost:3210/oneaccountauth"
+        });
       }
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/oneaccount@v2.3.0/dist/oneaccount.min.js" defer async></script>
+    <script src="https://cdn.jsdelivr.net/npm/oneaccount@v3.1.3/dist/oneaccount.min.js" defer async></script>
     <% } %>
     <script>
       // @see https://docs.headwayapp.co/widget for more configuration options.

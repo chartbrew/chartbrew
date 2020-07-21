@@ -7,12 +7,15 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const _ = require("lodash");
+const { OneAccount } = require("oneaccount-express");
 
 const settings = process.env.NODE_ENV === "production" ? require("./settings") : require("./settings-dev");
 const routes = require("./api");
 const updateChartsCron = require("./modules/updateChartsCron");
 const cleanChartCache = require("./modules/CleanChartCache");
 const cleanAuthCache = require("./modules/CleanAuthCache");
+const AuthCacheController = require("./controllers/AuthCacheController");
+const authCache = new AuthCacheController();
 
 const app = express();
 app.settings = settings;
@@ -23,6 +26,17 @@ app.use(bodyParser.json());
 app.use(methodOverride("X-HTTP-Method-Override"));
 
 app.use(cors());
+app.use(new OneAccount({
+  engine: {
+    set: (k, v) => {
+      authCache.set(k, v);
+    },
+    get: async (k) => {
+      let v = await authCache.get(k); authCache.delete(k); return v;
+    }
+  },
+  callbackURL: "/oneaccountauth"
+}));
 //---------------------------------------
 
 app.get("/", (req, res) => {

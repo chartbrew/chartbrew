@@ -75,28 +75,22 @@ class Signup extends Component {
   }
 
   socialSignup() {
-    if (window.oneaccount) {
-      window.oneaccount.setOnAuth((token, uuid) => {
-        const values = { token, uuid };
-        const { oneaccountAuth, history } = this.props;
+    document.addEventListener("oneaccount-authenticated", (event) => {
+      const data = event.detail;
+      const { oneaccountAuth, history } = this.props;
 
-        const parsedParams = queryString.parse(document.location.search.slice(1));
-        this.setState({ oaloading: true });
-        if (parsedParams.inviteToken) {
-          this._createInvitedUser(values, parsedParams.inviteToken);
-        } else {
-          oneaccountAuth(values)
-            .then(() => {
-              this.setState({ oaloading: false });
-
-              history.push("/user");
-            })
-            .catch(() => {
-              this.setState({ oaloading: false });
-            });
-        }
-      });
-    }
+      const parsedParams = queryString.parse(document.location.search.slice(1));
+      this.setState({ oaloading: true });
+      if (parsedParams.inviteToken) {
+        this._createInvitedUser(data, parsedParams.inviteToken);
+      } else {
+        oneaccountAuth(data)
+          .then(() => {
+            this.setState({ oaloading: false });
+            history.push("/user");
+          });
+      }
+    });
 
     const { oaloading } = this.state;
     return (

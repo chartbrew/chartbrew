@@ -108,37 +108,20 @@ module.exports = (app) => {
   /*
   ** Route for authenticating a oneaccount user
   */
-  app.post("/user/oneaccount", async (req, res) => {
-    if (!req.body.uuid || !req.body.token) return res.status(400).send("no token or uuid");
-    let userObj = {};
-    try {
-      userObj = await authCache.get(req.body.uuid);
-    } catch (error) {
-      return res.status(400).send("Could not authenticate");
+  app.post('/oneaccountauth', async (req, res, next) => {
+    if (!req.oneaccount) {
+      return res.status(401).send("Unauthorized");
     }
-    // verify token
-    try {
-      const options = {
-        method: "POST",
-        url: "https://api.oneaccount.app/widget/verify",
-        headers: {
-          authorization: `BEARER ${req.body.token}`,
-          "content-type": "application/json"
-        },
-        body: {
-          "uuid": req.body.uuid
-        },
-        json: true,
-        resolveWithFullResponse: true
-      };
-      const response = await requestPromise(options);
-      if (response.statusCode !== 200 || !response.body || !response.body.success) {
-        return res.status(400).send("Token verification failed");
-      }
-    } catch (error) {
-      return res.status(500).send("One account couldnt verify token");
-    }
-
+    const icon = req.oneaccount.firstName.substring(0, 1) + req.oneaccount.lastName.substring(0, 1);
+    const userObj = {
+      oneaccountId: req.oneaccount.userId,
+      name: `${req.oneaccount.firstName} ${req.oneaccount.lastName}`,
+      email: req.oneaccount.email,
+      // generate random password so no one can login using email/pass combination
+      password: uuid(),
+      active: false,
+      icon: icon.toUpperCase(),
+    };
     // one account provides the same flow for sign up and sign in
     // so we can handle both here:
     // log in if exists
@@ -166,31 +149,6 @@ module.exports = (app) => {
       if (error.message === "409") return res.status(409).send("The email is already used");
       return res.status(400).send(error);
     }
-  });
-
-  /*
-  ** Route for creating a new oneaccount user
-  */
-  app.post("/user/oneaccount-callback", async (req, res) => {
-    if (!req.body.email || !req.body.uuid) {
-      return res.status(400).send("no email or uuid");
-    }
-    if (!req.body.firstName || !req.body.lastName) {
-      return res.status(400).send("no firstName or lasName found");
-    }
-
-    const icon = req.body.firstName.substring(0, 1) + req.body.lastName.substring(0, 1);
-    const userObj = {
-      oneaccountId: req.body.userId,
-      name: `${req.body.firstName} ${req.body.lastName}`,
-      email: req.body.email,
-      // generate random password so no one can login using email/pass combination
-      password: uuid(),
-      active: false,
-      icon: icon.toUpperCase(),
-    };
-    await authCache.set(req.body.uuid, userObj);
-    return res.json({ success: true });
   });
   // --------------------------------------
 
