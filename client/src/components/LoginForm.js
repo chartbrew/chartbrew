@@ -25,6 +25,15 @@ class LoginForm extends Component {
       loading: false,
       oaloading: false,
     };
+    this._isMounted = false;
+  }
+
+  componentDidMount() {
+    this._isMounted = true;
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   _onSendResetRequest = () => {
@@ -60,9 +69,11 @@ class LoginForm extends Component {
     const { oneaccountAuth, history } = this.props;
     document.addEventListener("oneaccount-authenticated", (event) => {
       const data = event.detail;
+      if (!this._isMounted) return;
       this.setState({ oaloading: true });
       oneaccountAuth(data)
         .then(() => {
+          if (!this._isMounted) return;
           this.setState({ oaloading: false });
           history.push("/user");
         });

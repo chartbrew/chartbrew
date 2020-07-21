@@ -29,11 +29,17 @@ class Signup extends Component {
       loading: false,
       oaloading: false,
     };
+    this._isMounted = false;
   }
 
   componentDidMount() {
+    this._isMounted = true;
     const { cleanErrors } = this.props;
     cleanErrors();
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   submitUser = (values) => {
@@ -75,17 +81,19 @@ class Signup extends Component {
   }
 
   socialSignup() {
+    const { oneaccountAuth, history } = this.props;
     document.addEventListener("oneaccount-authenticated", (event) => {
       const data = event.detail;
-      const { oneaccountAuth, history } = this.props;
 
       const parsedParams = queryString.parse(document.location.search.slice(1));
+      if (!this._isMounted) return;
       this.setState({ oaloading: true });
       if (parsedParams.inviteToken) {
         this._createInvitedUser(data, parsedParams.inviteToken);
       } else {
         oneaccountAuth(data)
           .then(() => {
+            if (!this._isMounted) return;
             this.setState({ oaloading: false });
             history.push("/user");
           });
