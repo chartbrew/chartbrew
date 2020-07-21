@@ -29,17 +29,16 @@ class Signup extends Component {
       loading: false,
       oaloading: false,
     };
-    this._isMounted = false;
   }
 
   componentDidMount() {
-    this._isMounted = true;
+    document.addEventListener("oneaccount-authenticated", this.authenticate.bind(this));
     const { cleanErrors } = this.props;
     cleanErrors();
   }
 
   componentWillUnmount() {
-    this._isMounted = false;
+    document.removeEventListener("oneaccount-authenticated", this.authenticate.bind(this));
   }
 
   submitUser = (values) => {
@@ -80,26 +79,26 @@ class Signup extends Component {
       });
   }
 
-  socialSignup() {
+  authenticate(event) {
     const { oneaccountAuth, history } = this.props;
-    document.addEventListener("oneaccount-authenticated", (event) => {
-      const data = event.detail;
+    const data = event.detail;
 
-      const parsedParams = queryString.parse(document.location.search.slice(1));
-      if (!this._isMounted) return;
-      this.setState({ oaloading: true });
-      if (parsedParams.inviteToken) {
-        this._createInvitedUser(data, parsedParams.inviteToken);
-      } else {
-        oneaccountAuth(data)
-          .then(() => {
-            if (!this._isMounted) return;
-            this.setState({ oaloading: false });
-            history.push("/user");
-          });
-      }
-    });
+    const parsedParams = queryString.parse(document.location.search.slice(1));
+    if (!this._isMounted) return;
+    this.setState({ oaloading: true });
+    if (parsedParams.inviteToken) {
+      this._createInvitedUser(data, parsedParams.inviteToken);
+    } else {
+      oneaccountAuth(data)
+        .then(() => {
+          if (!this._isMounted) return;
+          this.setState({ oaloading: false });
+          history.push("/user");
+        });
+    }
+  }
 
+  socialSignup() {
     const { oaloading } = this.state;
     return (
       <Container>

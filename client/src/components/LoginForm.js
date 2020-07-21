@@ -25,15 +25,14 @@ class LoginForm extends Component {
       loading: false,
       oaloading: false,
     };
-    this._isMounted = false;
   }
 
   componentDidMount() {
-    this._isMounted = true;
+    document.addEventListener("oneaccount-authenticated", this.authenticate.bind(this));
   }
 
   componentWillUnmount() {
-    this._isMounted = false;
+    document.removeEventListener("oneaccount-authenticated", this.authenticate.bind(this));
   }
 
   _onSendResetRequest = () => {
@@ -65,20 +64,18 @@ class LoginForm extends Component {
       });
   }
 
-  socialSignin() {
+  authenticate(event) {
     const { oneaccountAuth, history } = this.props;
-    document.addEventListener("oneaccount-authenticated", (event) => {
-      const data = event.detail;
-      if (!this._isMounted) return;
-      this.setState({ oaloading: true });
-      oneaccountAuth(data)
-        .then(() => {
-          if (!this._isMounted) return;
-          this.setState({ oaloading: false });
-          history.push("/user");
-        });
-    });
+    const data = event.detail;
+    this.setState({ oaloading: true });
+    oneaccountAuth(data)
+      .then(() => {
+        this.setState({ oaloading: false });
+        history.push("/user");
+      });
+  }
 
+  socialSignin() {
     const { oaloading } = this.state;
     return (
       <Container>
