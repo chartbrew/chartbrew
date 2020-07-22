@@ -32,7 +32,7 @@ app.use(new OneAccount({
       authCache.set(k, v);
     },
     get: async (k) => {
-      let v = await authCache.get(k); authCache.delete(k); return v;
+      const v = await authCache.get(k); authCache.delete(k); return v;
     }
   },
   callbackURL: "/oneaccountauth"

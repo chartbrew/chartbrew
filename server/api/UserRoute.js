@@ -1,16 +1,13 @@
 const jwt = require("jsonwebtoken");
 const request = require("request");
-const requestPromise = require("request-promise");
 const uuid = require("uuid/v4");
 
-const AuthCacheController = require("../controllers/AuthCacheController");
 const UserController = require("../controllers/UserController");
 const TeamController = require("../controllers/TeamController");
 const verifyUser = require("../modules/verifyUser");
 const verifyToken = require("../modules/verifyToken");
 
 module.exports = (app) => {
-  const authCache = new AuthCacheController();
   const userController = new UserController();
   const teamController = new TeamController();
 

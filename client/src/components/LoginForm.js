@@ -28,11 +28,11 @@ class LoginForm extends Component {
   }
 
   componentDidMount() {
-    document.addEventListener("oneaccount-authenticated", this.authenticate.bind(this));
+    document.addEventListener("oneaccount-authenticated", this.authenticateOneaccount);
   }
 
   componentWillUnmount() {
-    document.removeEventListener("oneaccount-authenticated", this.authenticate.bind(this));
+    document.removeEventListener("oneaccount-authenticated", this.authenticateOneaccount);
   }
 
   _onSendResetRequest = () => {
@@ -64,7 +64,7 @@ class LoginForm extends Component {
       });
   }
 
-  authenticate(event) {
+  authenticateOneaccount = (event) => {
     const { oneaccountAuth, history } = this.props;
     const data = event.detail;
     this.setState({ oaloading: true });

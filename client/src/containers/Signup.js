@@ -32,13 +32,13 @@ class Signup extends Component {
   }
 
   componentDidMount() {
-    document.addEventListener("oneaccount-authenticated", this.authenticate.bind(this));
+    document.addEventListener("oneaccount-authenticated", this.authenticateOneaccount);
     const { cleanErrors } = this.props;
     cleanErrors();
   }
 
   componentWillUnmount() {
-    document.removeEventListener("oneaccount-authenticated", this.authenticate.bind(this));
+    document.removeEventListener("oneaccount-authenticated", this.authenticateOneaccount);
   }
 
   submitUser = (values) => {
@@ -79,7 +79,7 @@ class Signup extends Component {
       });
   }
 
-  authenticate(event) {
+  authenticateOneaccount = (event) => {
     const { oneaccountAuth, history } = this.props;
     const data = event.detail;
 
