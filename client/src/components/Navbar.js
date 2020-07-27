@@ -149,13 +149,13 @@ class Navbar extends Component {
           <Menu.Item
             className="changelog-trigger"
             as="a"
-            style={{ paddingTop: 0, paddingBottom: 0, paddingRight: 0 }}
+            style={{ paddingTop: 0, paddingBottom: 0, paddingLeft: 0 }}
             title="Changelog"
           >
-            Updates
             <div className="changelog-badge">
               {changelogPadding && <span style={{ paddingLeft: 16, paddingRight: 16 }} />}
             </div>
+            Updates
           </Menu.Item>
           <Menu.Item
             as="a"
