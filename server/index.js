@@ -15,6 +15,7 @@ const updateChartsCron = require("./modules/updateChartsCron");
 const cleanChartCache = require("./modules/CleanChartCache");
 const cleanAuthCache = require("./modules/CleanAuthCache");
 const AuthCacheController = require("./controllers/AuthCacheController");
+
 const authCache = new AuthCacheController();
 
 const app = express();

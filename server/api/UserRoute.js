@@ -105,7 +105,7 @@ module.exports = (app) => {
   /*
   ** Route for authenticating a oneaccount user
   */
-  app.post('/oneaccountauth', async (req, res, next) => {
+  app.post("/oneaccountauth", async (req, res) => {
     if (!req.oneaccount) {
       return res.status(401).send("Unauthorized");
     }
