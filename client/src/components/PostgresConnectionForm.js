@@ -66,7 +66,7 @@ class PostgresConnectionForm extends Component {
     return (
       <div style={styles.container}>
         <Header attached="top" as="h2">Add a new PostgreSQL connection</Header>
-        <Segment raised attached>
+        <Segment attached>
           <Form>
             <Form.Field error={!!errors.name} required>
               <label>Name your connection</label>

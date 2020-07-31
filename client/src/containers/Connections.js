@@ -188,8 +188,7 @@ class Connections extends Component {
     return (
       <div style={styles.container}>
         <Container style={styles.mainContent}>
-          {connections.length > 0
-            && (
+          {formType && (
             <Container>
               {(statusChangeFailed || removeError)
                 && (
@@ -199,32 +198,37 @@ class Connections extends Component {
                 </Message>
                 )}
 
-              {!formType
-                && (
-                <Button primary icon labelPosition="right" onClick={this._onOpenConnectionForm}>
-                  <Icon name="plus" />
-                  Add a new connection
-                </Button>
-                )}
               {formType
                 && (
-                <Button secondary icon labelPosition="right" onClick={this._closeConnectionForm}>
-                  <Icon name="x" />
-                  Close
+                <Button secondary icon labelPosition="left" onClick={this._closeConnectionForm}>
+                  <Icon name="chevron left" />
+                  Back
                 </Button>
                 )}
 
               <Divider />
             </Container>
-            )}
+          )}
+
+          {connections.length > 0 && !formType && (
+            <Container>
+              <Button primary icon labelPosition="right" onClick={this._onOpenConnectionForm}>
+                <Icon name="plus" />
+                Add a new connection
+              </Button>
+              <Divider />
+            </Container>
+          )}
 
           {(connections.length < 1 || newConnectionModal) && !formType
             && (
             <div>
-              <Header as="h2">
-                {"Select a connection type"}
+              <Divider hidden />
+              <Header as="h1" textAlign="center">
+                {"Let's connect and get some data ✨"}
+                <Header.Subheader>Select one of the connection types below</Header.Subheader>
               </Header>
-              <Segment>
+              <Segment attached>
                 <Card.Group centered itemsPerRow={5} stackable>
                   <Card color="violet" raised link onClick={() => this.setState({ formType: "mongodb" })}>
                     <Image src={mongoLogo} />
@@ -264,6 +268,14 @@ class Connections extends Component {
                     </Card.Content>
                   </Card>
                 </Card.Group>
+              </Segment>
+              <Segment attached="bottom">
+                <p>
+                  {"Need access to another data source? "}
+                  <a href="https://github.com/chartbrew/chartbrew/issues" target="_blank" rel="noopener noreferrer">
+                    {"Let us know 💬"}
+                  </a>
+                </p>
               </Segment>
             </div>
             )}

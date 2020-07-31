@@ -164,7 +164,7 @@ class ConnectionForm extends Component {
     return (
       <div style={styles.container}>
         <Header attached="top" as="h2">Connect to a MongoDB database</Header>
-        <Segment raised attached>
+        <Segment attached>
           {showTutorial && (
             <Message onDismiss={() => this.setState({ showTutorial: false })}>
               <Message.Header>How to complete the fields?</Message.Header>

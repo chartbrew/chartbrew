@@ -150,7 +150,7 @@ class ApiConnectionForm extends Component {
           {!editConnection && "Add a new API host"}
           {editConnection && `Edit ${editConnection.name}`}
         </Header>
-        <Segment raised attached>
+        <Segment attached>
           <Form>
             <Form.Field error={!!errors.name} required>
               <label>Name your connection</label>
