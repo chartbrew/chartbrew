@@ -75,7 +75,7 @@ function AddChart(props) {
       clearDatasets();
     }
 
-    if (user && !user.tutorials) {
+    if (user && (!user.tutorials || Object.keys(user.tutorials).length === 0)) {
       setTimeout(() => {
         setStartTutorial(true);
       }, 1000);
