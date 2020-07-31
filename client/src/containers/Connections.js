@@ -28,7 +28,7 @@ import postgres from "../assets/postgres.png";
 import firebase from "../assets/firebase_logo.png";
 
 /*
-  Description
+  The page that contains all the connections
 */
 class Connections extends Component {
   constructor(props) {
@@ -98,14 +98,19 @@ class Connections extends Component {
 
   _onAddNewConnection = (connection) => {
     const {
-      addConnection, saveConnection, match, location, history,
+      addConnection, saveConnection, match, history, connections,
     } = this.props;
+
+    let redirect = false;
+    if (connections.length === 0) {
+      redirect = true;
+    }
 
     if (!connection.id) {
       addConnection(match.params.projectId, connection)
         .then(() => {
           this.setState({ formType: null, editConnection: null });
-          if (location.state && location.state.onboarding) {
+          if (redirect) {
             history.push(`/${match.params.teamId}/${match.params.projectId}/chart`);
           }
         })
@@ -488,7 +493,6 @@ Connections.propTypes = {
   removeConnection: PropTypes.func.isRequired,
   getProjectConnections: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
-  location: PropTypes.object.isRequired,
   history: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
   saveConnection: PropTypes.func.isRequired,
