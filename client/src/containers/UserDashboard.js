@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
@@ -17,131 +17,103 @@ import Navbar from "../components/Navbar";
 import canAccess from "../config/canAccess";
 
 /*
-  Description
+  The user dashboard with all the teams and projects
 */
+function UserDashboard(props) {
+  const {
+    relog, cleanErrors, user, getTeams, createTeam, saveActiveTeam,
+    history, teams,
+  } = props;
 
-class UserDashboard extends Component {
-  constructor(props) {
-    super(props);
+  const [loading, setLoading] = useState(false);
+  const [createTeamModal, setCreateTeamModal] = useState(false);
+  const [addMembersModal, setAddMembersModal] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
+  const [name, setName] = useState("");
+  const [addProject, setAddProject] = useState(false);
+  const [fetched, setFetched] = useState(false);
+  const [retried, setRetried] = useState(false);
 
-    this.state = {
-      loading: false,
-      createTeamModal: false,
-      addMembersModal: false,
-      submitError: false,
-      name: "",
-      addProject: false,
-      selectedTeamId: -1,
-      fetched: false,
-    };
-  }
-
-  componentDidMount() {
-    const { relog, cleanErrors } = this.props;
+  useEffect(() => {
     cleanErrors();
     relog();
-    this._getTeams();
-  }
+    _getTeams();
+  }, []);
 
-  componentDidUpdate(prevProps) {
-    const { fetched } = this.state;
-    if (!fetched && prevProps.user.data.id && !prevProps.user.loading) {
-      this._getTeams();
+  useEffect(() => {
+    if (!fetched && user.data.id && !user.loading) {
+      _getTeams();
     }
-  }
+  }, [user]);
 
-  setTeamIcon(role) {
-    switch (role) {
-      case "member":
-        return "user";
-      case "owner":
-        return "star";
-      case "editor":
-        return "edit";
-      case "admin":
-        return "star half full";
-      default: return "user";
-    }
-  }
-
-  _getTeams = () => {
-    const { getTeams, user } = this.props;
-    const { retried } = this.state;
-
-    this.setState({ fetched: true, loading: true });
+  const _getTeams = () => {
+    setFetched(true);
+    setLoading(true);
     getTeams(user.data.id)
       .then(() => {
-        this.setState({ loading: false });
+        setLoading(false);
       })
       .catch(() => {
         if (!retried) {
-          this._getTeams();
+          _getTeams();
         }
-        this.setState({ loading: false, retried: true });
+        setLoading(false);
+        setRetried(true);
       });
-  }
+  };
 
-  handleChange = (e, { name, value }) => this.setState({ [name]: value });
+  const handleChange = (e, { value }) => setName(value);
 
-  createTeam = () => {
-    const { createTeam, user, saveActiveTeam } = this.props;
-    const { name } = this.state;
-
-    this.setState({ loading: true });
+  const _createTeam = () => {
+    setLoading(true);
     createTeam(user.data.id, name)
       .then((newTeam) => {
         // set team to saveActiveTeam
         saveActiveTeam(newTeam);
-        this.setState({
-          canCreateTeam: false, loading: false, createTeamModal: false, addMembersModal: true, name: "" // eslint-disable-line
-        });
+        setLoading(false);
+        setCreateTeamModal(false);
+        setAddMembersModal(true);
+        setName("");
       }).catch(() => {
-        this.setState({ submitError: true, loading: false });
+        setSubmitError(true);
+        setLoading(false);
       });
-  }
+  };
 
-  _onProjectCreated = () => {
-    const { getTeams, user } = this.props;
-
+  const _onProjectCreated = () => {
     getTeams(user.data.id);
-    this.setState({ addProject: false });
-  }
+    setAddProject(false);
+  };
 
   /* Modal to invite team members  */
-  invitationModal = () => {
-    const { addMembersModal } = this.state;
-
+  const invitationModal = () => {
     return (
       <Modal
         open={addMembersModal}
-        onClose={() => this.setState({ addMembersModal: false })}
+        onClose={() => setAddMembersModal(false)}
         size="small"
         closeIcon
       >
         <InviteMembersForm
-          skipTeamInvite={() => this.setState({ addMembersModal: false })}
+          skipTeamInvite={() => setAddMembersModal(false)}
         />
       </Modal>
     );
-  }
+  };
 
   /* Modal to create new team  */
-  newTeamModal = () => {
-    const {
-      createTeamModal, submitError, loading, name,
-    } = this.state;
-
+  const newTeamModal = () => {
     return (
       <Modal
         open={createTeamModal}
-        onClose={() => this.setState({ createTeamModal: false })}
+        onClose={() => setCreateTeamModal(false)}
         size="mini"
         closeIcon
         >
         <Modal.Header> Create a new Team </Modal.Header>
         <Modal.Content>
-          <Form onSubmit={this.createTeam}>
-            <Form.Input label="Team name *" placeholder="Enter a name for your team" name="name" value={name} onChange={this.handleChange} />
+          <Form onSubmit={_createTeam}>
+            <Form.Input label="Team name *" placeholder="Enter a name for your team" name="name" value={name} onChange={handleChange} />
             <Divider />
             {submitError
             && (
@@ -160,177 +132,165 @@ class UserDashboard extends Component {
         <Divider hidden />
       </Modal>
     );
-  }
+  };
 
-  newProjectModal = () => {
-    const { addProject, selectedTeamId } = this.state;
-
+  const newProjectModal = () => {
     return (
       <Modal
         open={addProject}
-        onClose={() => this.setState({ addProject: false })}
+        onClose={() => setAddProject(false)}
         size="tiny"
         closeIcon>
-        <ProjectForm onComplete={this._onProjectCreated} teamId={selectedTeamId} />
+        <ProjectForm onComplete={_onProjectCreated} />
       </Modal>
     );
-  }
+  };
 
-  directToProject = (team, projectId) => {
-    const { saveActiveTeam, history } = this.props;
-
+  const directToProject = (team, projectId) => {
     saveActiveTeam(team);
     history.push(`/${team.id}/${projectId}/dashboard`);
-  }
+  };
 
-  _onNewProject = (team) => {
-    const { saveActiveTeam } = this.props;
-    this.setState({ addProject: true });
-
+  const _onNewProject = (team) => {
+    setAddProject(true);
     saveActiveTeam(team);
-  }
+  };
 
-  _canAccess(role, teamRoles) {
-    const { user } = this.props;
+  const _canAccess = (role, teamRoles) => {
     return canAccess(role, user.data.id, teamRoles);
-  }
+  };
 
-  render() {
-    const { user, teams } = this.props;
-    const { loading } = this.state;
-
-    if (!user.data.id) {
-      return (
-        <div style={styles.container}>
-          <Dimmer active={loading}>
-            <Loader />
-          </Dimmer>
-        </div>
-      );
-    }
-
+  if (!user.data.id) {
     return (
       <div style={styles.container}>
-        <Navbar hideTeam transparent />
-        <Container textAlign="center" style={styles.mainContent}>
-          <Divider hidden />
-          {loading && <Loader inverted active={loading} />}
-
-          <Invites />
-          {this.newTeamModal()}
-          {this.invitationModal()}
-          {this.newProjectModal()}
-
-          {teams && teams.map((key) => {
-            return (
-              <Container
-                textAlign="left"
-                key={key.id}
-                style={styles.teamContainer}
-              >
-                <Header
-                  textAlign="left"
-                  as="h2"
-                  inverted
-                  style={styles.teamHeader}
-                  title={`${key.TeamRoles.length} member${key.TeamRoles.length > 1 ? "s" : ""}`}
-                >
-                  <Icon name={key.TeamRoles.length > 1 ? "users" : "user"} size="small" />
-                  <Header.Content>{key.name}</Header.Content>
-                </Header>
-                {this._canAccess("admin", key.TeamRoles)
-                  && (
-                  <Button
-                    style={styles.settingsBtn}
-                    size="small"
-                    basic
-                    inverted
-                    icon
-                    floated="right"
-                    labelPosition="right"
-                    as={Link}
-                    to={`/manage/${key.id}/members`}
-                  >
-                    <Icon name="settings" />
-                    Team settings
-                  </Button>
-                  )}
-                {key.TeamRoles[0] && key.TeamRoles.map((teamRole) => {
-                  return (
-                    teamRole.user_id === user.data.id
-                      && (
-                        <span key={teamRole.user_id}>
-                          <Header style={styles.listRole} content={teamRole.role} />
-                        </span>
-                      )
-                  );
-                })}
-
-                <Card.Group itemsPerRow={4} style={styles.cardsContainer}>
-                  {key.Projects && key.Projects.map((project) => {
-                    return (
-                      <Card
-                        style={styles.projectContainer}
-                        key={project.id}
-                        onClick={() => this.directToProject(key, project.id)}
-                        className="project-segment"
-                      >
-                        <Card.Header textAlign="center" as="h3" style={styles.cardHeader}>
-                          {project.name}
-                        </Card.Header>
-                        <Card.Content>
-                          <Grid columns={2} centered>
-                            <Grid.Column textAlign="center" style={styles.iconColumn}>
-                              <Container textAlign="center" title="Number of connections">
-                                <Icon name="plug" size="large" />
-                                <span>{project.Connections && project.Connections.length}</span>
-                              </Container>
-                            </Grid.Column>
-                            <Grid.Column textAlign="center" style={styles.iconColumn}>
-                              <Container textAlign="center" title="Number of charts">
-                                <Icon name="chart line" size="large" />
-                                <span>{project.Charts.length}</span>
-                              </Container>
-                            </Grid.Column>
-                          </Grid>
-                        </Card.Content>
-                      </Card>
-                    );
-                  })}
-                  {this._canAccess("admin", key.TeamRoles)
-                    && (
-                      <Card
-                        style={{ ...styles.projectContainer, ...styles.addProjectCard }}
-                        onClick={() => this._onNewProject(key)}
-                        className="project-segment"
-                      >
-                        <Card.Header textAlign="center" as="h3" style={styles.cardHeader}>
-                          Create new project
-                        </Card.Header>
-                        <Card.Content>
-                          <Header textAlign="center" as="h2">
-                            <Icon name="plus" size="large" color="orange" />
-                          </Header>
-                        </Card.Content>
-                      </Card>
-                    )}
-
-                </Card.Group>
-                {key.Projects && key.Projects.length === 0 && !this._canAccess("admin", key.TeamRoles)
-                  && (
-                    <Message>
-                      <p>
-                        {"This team doesn't have any projects yet."}
-                      </p>
-                    </Message>
-                  )}
-              </Container>
-            );
-          })}
-        </Container>
+        <Dimmer active={loading}>
+          <Loader />
+        </Dimmer>
       </div>
     );
   }
+
+  return (
+    <div style={styles.container}>
+      <Navbar hideTeam transparent />
+      <Container textAlign="center" style={styles.mainContent}>
+        <Divider hidden />
+        {loading && <Loader inverted active={loading} />}
+
+        <Invites />
+        {newTeamModal()}
+        {invitationModal()}
+        {newProjectModal()}
+
+        {teams && teams.map((key) => {
+          return (
+            <Container
+              textAlign="left"
+              key={key.id}
+              style={styles.teamContainer}
+            >
+              <Header
+                textAlign="left"
+                as="h2"
+                inverted
+                style={styles.teamHeader}
+                title={`${key.TeamRoles.length} member${key.TeamRoles.length > 1 ? "s" : ""}`}
+              >
+                <Icon name={key.TeamRoles.length > 1 ? "users" : "user"} size="small" />
+                <Header.Content>{key.name}</Header.Content>
+              </Header>
+              {_canAccess("admin", key.TeamRoles)
+                && (
+                <Button
+                  style={styles.settingsBtn}
+                  size="small"
+                  basic
+                  inverted
+                  icon
+                  floated="right"
+                  labelPosition="right"
+                  as={Link}
+                  to={`/manage/${key.id}/members`}
+                >
+                  <Icon name="settings" />
+                  Team settings
+                </Button>
+                )}
+              {key.TeamRoles[0] && key.TeamRoles.map((teamRole) => {
+                return (
+                  teamRole.user_id === user.data.id
+                    && (
+                      <span key={teamRole.user_id}>
+                        <Header style={styles.listRole} content={teamRole.role} />
+                      </span>
+                    )
+                );
+              })}
+
+              <Card.Group itemsPerRow={4} style={styles.cardsContainer}>
+                {key.Projects && key.Projects.map((project) => {
+                  return (
+                    <Card
+                      style={styles.projectContainer}
+                      key={project.id}
+                      onClick={() => directToProject(key, project.id)}
+                      className="project-segment"
+                    >
+                      <Card.Header textAlign="center" as="h3" style={styles.cardHeader}>
+                        {project.name}
+                      </Card.Header>
+                      <Card.Content>
+                        <Grid columns={2} centered>
+                          <Grid.Column textAlign="center" style={styles.iconColumn}>
+                            <Container textAlign="center" title="Number of connections">
+                              <Icon name="plug" size="large" />
+                              <span>{project.Connections && project.Connections.length}</span>
+                            </Container>
+                          </Grid.Column>
+                          <Grid.Column textAlign="center" style={styles.iconColumn}>
+                            <Container textAlign="center" title="Number of charts">
+                              <Icon name="chart line" size="large" />
+                              <span>{project.Charts.length}</span>
+                            </Container>
+                          </Grid.Column>
+                        </Grid>
+                      </Card.Content>
+                    </Card>
+                  );
+                })}
+                {_canAccess("admin", key.TeamRoles)
+                  && (
+                    <Card
+                      style={{ ...styles.projectContainer, ...styles.addProjectCard }}
+                      onClick={() => _onNewProject(key)}
+                      className="project-segment"
+                    >
+                      <Card.Header textAlign="center" as="h3" style={styles.cardHeader}>
+                        Create new project
+                      </Card.Header>
+                      <Card.Content>
+                        <Header textAlign="center" as="h2">
+                          <Icon name="plus" size="large" color="orange" />
+                        </Header>
+                      </Card.Content>
+                    </Card>
+                  )}
+
+              </Card.Group>
+              {key.Projects && key.Projects.length === 0 && !_canAccess("admin", key.TeamRoles)
+                && (
+                  <Message>
+                    <p>
+                      {"This team doesn't have any projects yet."}
+                    </p>
+                  </Message>
+                )}
+            </Container>
+          );
+        })}
+      </Container>
+    </div>
+  );
 }
 
 const styles = {

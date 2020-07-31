@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
@@ -10,77 +10,67 @@ import { createProject } from "../actions/project";
 /*
   Contains the project creation functionality
 */
-class ProjectForm extends Component {
-  constructor(props) {
-    super(props);
+function ProjectForm(props) {
+  const {
+    createProject, onComplete, team,
+  } = props;
 
-    this.state = {
-      loading: false,
-      newProject: {},
-      error: "",
-    };
-  }
+  const [loading, setLoading] = useState(false);
+  const [newProject, setNewProject] = useState({});
+  const [error, setError] = useState("");
 
-  _onCreateProject = () => {
-    const { createProject, onComplete } = this.props;
-    const { newProject } = this.state;
-
-    this.setState({ loading: true });
+  const _onCreateProject = () => {
+    setLoading(true);
     createProject(newProject)
       .then((project) => {
-        this.setState({ loading: false, newProject: {} });
+        setLoading(false);
+        setNewProject({});
         onComplete(project);
       })
       .catch((error) => {
-        this.setState({ loading: false, error });
+        setLoading(false);
+        setError(error);
       });
-  }
+  };
 
-  render() {
-    const { error, newProject, loading } = this.state;
-    const { team } = this.props;
-
-    return (
-      <div style={styles.container}>
-        <Header attached="top" as="h2">Create a new project</Header>
-        <Segment raised attached>
-          <Form size="large">
-            <Form.Field error={!!error}>
-              <label>Name your project</label>
-              <Form.Input
-                onChange={(e, data) => this.setState({
-                  newProject: {
-                    ...newProject,
-                    name: data.value,
-                    team_id: team.active.id
-                  }
-                })}
-              />
-              {error
-                && (
-                <Label basic color="red" pointing>
-                  {error}
-                </Label>
-                )}
-            </Form.Field>
-            <Form.Field>
-              <Button
-                primary
-                icon
-                labelPosition="right"
-                loading={loading}
-                disabled={!newProject.name}
-                onClick={this._onCreateProject}
-              >
-                <Icon name="right arrow" />
-                Create
-              </Button>
-            </Form.Field>
-          </Form>
-        </Segment>
-      </div>
-    );
-  }
+  return (
+    <div style={styles.container}>
+      <Header attached="top" as="h2">Create a new project</Header>
+      <Segment raised attached>
+        <Form size="large">
+          <Form.Field error={!!error}>
+            <label>Name your project</label>
+            <Form.Input
+              onChange={(e, data) => setNewProject({
+                ...newProject,
+                name: data.value,
+                team_id: team.active.id,
+              })}
+            />
+            {error
+              && (
+              <Label basic color="red" pointing>
+                {error}
+              </Label>
+              )}
+          </Form.Field>
+          <Form.Field>
+            <Button
+              primary
+              icon
+              labelPosition="right"
+              loading={loading}
+              disabled={!newProject.name}
+              onClick={_onCreateProject}
+            >
+              <Icon name="right arrow" />
+              Create
+            </Button>
+          </Form.Field>
+        </Form>
+      </Segment>
+    </div>
+  );
 }
 
 const styles = {
