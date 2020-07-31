@@ -46,6 +46,14 @@ function UserDashboard(props) {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (teams.length > 0) {
+      if (teams[0].Projects && teams[0].Projects.length === 0) {
+        _onNewProject(teams[0]);
+      }
+    }
+  }, [teams]);
+
   const _getTeams = () => {
     setFetched(true);
     setLoading(true);
@@ -80,9 +88,24 @@ function UserDashboard(props) {
       });
   };
 
-  const _onProjectCreated = () => {
+  const _onNewProject = (team) => {
+    setAddProject(true);
+    saveActiveTeam(team);
+  };
+
+  const _onProjectCreated = (project) => {
     getTeams(user.data.id);
     setAddProject(false);
+    history.push(`/${project.team_id}/${project.id}/dashboard`);
+  };
+
+  const directToProject = (team, projectId) => {
+    saveActiveTeam(team);
+    history.push(`/${team.id}/${projectId}/dashboard`);
+  };
+
+  const _canAccess = (role, teamRoles) => {
+    return canAccess(role, user.data.id, teamRoles);
   };
 
   /* Modal to invite team members  */
@@ -144,20 +167,6 @@ function UserDashboard(props) {
         <ProjectForm onComplete={_onProjectCreated} />
       </Modal>
     );
-  };
-
-  const directToProject = (team, projectId) => {
-    saveActiveTeam(team);
-    history.push(`/${team.id}/${projectId}/dashboard`);
-  };
-
-  const _onNewProject = (team) => {
-    setAddProject(true);
-    saveActiveTeam(team);
-  };
-
-  const _canAccess = (role, teamRoles) => {
-    return canAccess(role, user.data.id, teamRoles);
   };
 
   if (!user.data.id) {
