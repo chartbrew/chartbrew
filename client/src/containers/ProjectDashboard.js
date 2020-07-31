@@ -50,7 +50,7 @@ class ProjectDashboard extends Component {
             <Header size="huge" textAlign="center">
               <span role="img" aria-label="wave">👋</span>
               {" "}
-              Welcome to Chart Brew
+              Welcome to Chartbrew
               <Header.Subheader>
                 {"Why not jump right into it? Create a new database connection and start visualizing your data. "}
               </Header.Subheader>

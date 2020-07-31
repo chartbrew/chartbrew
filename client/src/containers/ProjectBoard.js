@@ -26,10 +26,12 @@ import ProjectSettings from "./ProjectSettings";
 import canAccess from "../config/canAccess";
 import { APP_VERSION } from "../config/settings";
 
+const queryString = require("qs"); // eslint-disable-line
+
 const pageHeight = window.innerHeight;
 const sideMaxSize = 220;
 /*
-  Description
+  The project screen where the dashboard, builder, etc. are
 */
 class ProjectBoard extends Component {
   constructor(props) {
@@ -43,7 +45,11 @@ class ProjectBoard extends Component {
   }
 
   componentDidMount() {
-    const { cleanErrors } = this.props;
+    const { cleanErrors, history } = this.props;
+
+    const parsedParams = queryString.parse(document.location.search.slice(1));
+    if (parsedParams.new) history.push("connections");
+
     cleanErrors();
     this._init();
     if (window.localStorage.getItem("_cb_menu_size")) {
@@ -560,6 +566,7 @@ ProjectBoard.propTypes = {
   getProjectConnections: PropTypes.func.isRequired,
   getTeam: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
+  history: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {

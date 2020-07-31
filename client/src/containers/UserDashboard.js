@@ -96,7 +96,7 @@ function UserDashboard(props) {
   const _onProjectCreated = (project) => {
     getTeams(user.data.id);
     setAddProject(false);
-    history.push(`/${project.team_id}/${project.id}/dashboard`);
+    history.push(`/${project.team_id}/${project.id}/dashboard?new=true`);
   };
 
   const directToProject = (team, projectId) => {
