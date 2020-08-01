@@ -4,7 +4,7 @@ WORKDIR /code
 COPY . .
 
 # install rsync
-RUN apt-get update && apt-get upgrade -y && apt-get install -y rsync
+RUN apt-get update && apt-get install -y rsync
 
 RUN npm install
 RUN npm run setup
