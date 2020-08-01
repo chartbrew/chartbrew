@@ -29,8 +29,6 @@ services:
       - db
     links:
       - db
-    volumes:
-      - .:/code
 
 volumes:
   chartbrew-db:
