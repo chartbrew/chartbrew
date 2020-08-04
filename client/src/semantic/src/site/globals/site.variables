@@ -10,8 +10,8 @@
 @blue           : #103751;
 @orange         : #CF6B4E;
 
-@fontName          : 'Nunito Sans';
-@headerFont        : 'Nunito Sans', sans-serif;
-@pageFont          : 'Nunito Sans', sans-serif;
-@googleFontFamily  : 'Nunito+Sans:600,700';
+@fontName          : 'Inter';
+@headerFont        : 'Inter', sans-serif;
+@pageFont          : 'Inter', sans-serif;
+@googleFontFamily  : 'Inter:600,700';
 @googleFontDisplay : 'swap';
