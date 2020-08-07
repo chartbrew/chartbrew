@@ -263,7 +263,11 @@ module.exports = (app) => {
   app.post("/project/:project_id/connection/:type/test", verifyToken, (req, res) => {
     return connectionController.testRequest(req.body)
       .then((response) => {
-        return res.status(response.statusCode).send(response.body);
+        if (req.params.type === "api") {
+          return res.status(response.statusCode).send(response.body);
+        } else {
+          return res.status(200).send(response);
+        }
       })
       .catch((err) => {
         return res.status(400).send(err.message || err);

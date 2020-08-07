@@ -185,6 +185,8 @@ class ConnectionController {
   testRequest(data) {
     if (data.type === "api") {
       return this.testApi(data);
+    } else if (data.type === "mongodb") {
+      return this.testMongo(data);
     }
 
     return new Promise((resolve, reject) => reject(new Error("No request type specified")));
@@ -194,6 +196,22 @@ class ConnectionController {
     const testOpt = this.getApiTestOptions(data);
 
     return requestP(testOpt);
+  }
+
+  testMongo(data) {
+    const mongoString = assembleMongoUrl(data);
+
+    return mongoose.connect(mongoString, { useNewUrlParser: true, useUnifiedTopology: true })
+      .then((connection) => {
+        return connection.connection.db.listCollections().toArray();
+      })
+      .then((collections) => {
+        return Promise.resolve({
+          success: true,
+          collections
+        });
+      })
+      .catch((err) => Promise.reject(err.message || err));
   }
 
   testConnection(id) {

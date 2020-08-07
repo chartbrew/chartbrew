@@ -136,6 +136,13 @@ class Connections extends Component {
         testResult.status = response.status;
         testResult.body = await response.text();
 
+        try {
+          testResult.body = JSON.parse(testResult.body);
+          testResult.body = JSON.stringify(testResult, null, 2);
+        } catch (e) {
+          // the response is not in JSON format
+        }
+
         this.setState({ testResult });
         return Promise.resolve(testResult);
       })
@@ -302,6 +309,7 @@ class Connections extends Component {
                 onComplete={this._onAddNewConnection}
                 editConnection={editConnection}
                 addError={addError}
+                testResult={testResult}
               />
               )}
 
@@ -313,6 +321,7 @@ class Connections extends Component {
                 onComplete={this._onAddNewConnection}
                 editConnection={editConnection}
                 addError={addError}
+                testResult={testResult}
               />
               )}
 
@@ -324,6 +333,7 @@ class Connections extends Component {
                 onComplete={this._onAddNewConnection}
                 editConnection={editConnection}
                 addError={addError}
+                testResult={testResult}
               />
               )}
           </div>

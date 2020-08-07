@@ -2,20 +2,27 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Segment, Form, Button, Icon, Header, Label, Divider, Message, Checkbox, Popup,
+  Placeholder, Container,
 } from "semantic-ui-react";
 import uuid from "uuid/v4";
+import brace from "brace"; // eslint-disable-line
+import AceEditor from "react-ace";
+
+import "brace/mode/json";
+import "brace/theme/tomorrow";
 
 /*
-  Description
+  The MongoDB connection form
 */
 function MongoConnectionForm(props) {
   const {
-    editConnection, projectId, onComplete, addError
+    editConnection, projectId, onComplete, addError, testResult, onTest,
   } = props;
 
   const [showTutorial, setShowTutorial] = useState(true);
   const [showIp, setShowIp] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
   const [connection, setConnection] = useState({ type: "mongodb", optionsArray: [], srv: false });
   const [errors, setErrors] = useState({});
 
@@ -55,7 +62,7 @@ function MongoConnectionForm(props) {
     }
   };
 
-  const _onCreateConnection = () => {
+  const _onCreateConnection = (test = false) => {
     setErrors({});
     if (!connection.name || connection.name.length > 24) {
       setTimeout(() => {
@@ -91,9 +98,18 @@ function MongoConnectionForm(props) {
     setConnection({
       ...connection, project_id: projectId, options: newOptions,
     });
-    setLoading(true);
     setTimeout(() => {
-      onComplete(connection);
+      if (test) {
+        setTestLoading(true);
+        onTest(connection)
+          .then(() => setTestLoading(false))
+          .catch(() => setTestLoading(false));
+      } else {
+        setLoading(true);
+        onComplete(connection)
+          .then(() => setLoading(false))
+          .catch(() => setLoading(false));
+      }
     }, 100);
   };
 
@@ -327,28 +343,74 @@ function MongoConnectionForm(props) {
           </Message>
         )}
       </Segment>
-      {!editConnection
-        && (
+      <Button.Group attached="bottom">
         <Button
           primary
-          attached="bottom"
-          loading={loading}
-          onClick={_onCreateConnection}
+          basic
+          onClick={() => _onCreateConnection(true)}
+          loading={testLoading}
         >
-          Save connection
+          Test connection
         </Button>
-        )}
-      {editConnection
-        && (
-        <Button
-          secondary
-          attached="bottom"
-          loading={loading}
-          onClick={_onCreateConnection}
-        >
-          Save changes
-        </Button>
-        )}
+        {!editConnection
+          && (
+          <Button
+            primary
+            attached="bottom"
+            loading={loading}
+            onClick={_onCreateConnection}
+          >
+            Save connection
+          </Button>
+          )}
+        {editConnection
+          && (
+          <Button
+            secondary
+            attached="bottom"
+            loading={loading}
+            onClick={_onCreateConnection}
+          >
+            Save changes
+          </Button>
+          )}
+      </Button.Group>
+      {testLoading && (
+        <Segment>
+          <Placeholder>
+            <Placeholder.Line />
+            <Placeholder.Line />
+            <Placeholder.Line />
+            <Placeholder.Line />
+            <Placeholder.Line />
+          </Placeholder>
+        </Segment>
+      )}
+
+      {testResult && !testLoading && (
+        <Container fluid style={{ marginTop: 15 }}>
+          <Header attached="top">
+            Test Result
+            <Label
+              color={testResult.status < 400 ? "green" : "orange"}
+            >
+              {testResult.status < 400 ? "Your connection works!" : "We couldn't connect"}
+            </Label>
+          </Header>
+          <Segment attached>
+            <AceEditor
+              mode="json"
+              theme="tomorrow"
+              height="150px"
+              width="none"
+              value={testResult.body}
+              readOnly
+              name="queryEditor"
+              editorProps={{ $blockScrolling: true }}
+            />
+          </Segment>
+        </Container>
+      )}
     </div>
   );
 }
@@ -361,15 +423,19 @@ const styles = {
 
 MongoConnectionForm.defaultProps = {
   onComplete: () => {},
+  onTest: () => {},
   editConnection: null,
   addError: false,
+  testResult: null,
 };
 
 MongoConnectionForm.propTypes = {
   onComplete: PropTypes.func,
+  onTest: PropTypes.func,
   projectId: PropTypes.string.isRequired,
   editConnection: PropTypes.object,
   addError: PropTypes.bool,
+  testResult: PropTypes.object,
 };
 
 export default MongoConnectionForm;

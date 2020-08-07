@@ -7,8 +7,20 @@ const sc = simplecrypt({
   salt: "10",
 });
 
-module.exports = (connection) => {
-  // TODO: get the connection URL depending on the connection type - at a later stage
+module.exports = (data) => {
+  // check if encrypted first
+  const connection = data;
+
+  try {
+    connection.dbName = sc.decrypt(connection.dbName);
+    connection.host = sc.decrypt(connection.host);
+    connection.port = sc.decrypt(connection.port);
+    connection.username = sc.decrypt(connection.username);
+    connection.password = sc.decrypt(connection.password);
+  } catch (e) {
+    // info is not encrypted, must be a test
+  }
+
   let url = "mongodb://";
   if (connection.srv) {
     url = "mongodb+srv://";
@@ -16,19 +28,19 @@ module.exports = (connection) => {
 
   // add the username and password
   if (connection.username && connection.password) {
-    url += `${encodeURIComponent(sc.decrypt(connection.username))}:${encodeURIComponent(sc.decrypt(connection.password))}@`;
+    url += `${encodeURIComponent(connection.username)}:${encodeURIComponent(connection.password)}@`;
   }
 
   // add the host
-  url += `${sc.decrypt(connection.host)}`;
+  url += `${connection.host}`;
 
   // add the port
   if (connection.port) {
-    url += `:${sc.decrypt(connection.port)}`;
+    url += `:${connection.port}`;
   }
 
   // add the database name
-  url += `/${sc.decrypt(connection.dbName)}`;
+  url += `/${connection.dbName}`;
 
   // lastly, add the options
   if (connection.options) {
