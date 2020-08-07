@@ -7,25 +7,26 @@ import {
   Modal, Header, Message, Dimmer, Segment,
 } from "semantic-ui-react";
 
-import ConnectionForm from "../components/ConnectionForm";
-import ApiConnectionForm from "../components/ApiConnectionForm";
-import PostgresConnectionForm from "../components/PostgresConnectionForm";
-import MysqlConnectionForm from "../components/MysqlConnectionForm";
+import MongoConnectionForm from "./components/MongoConnectionForm";
+import ApiConnectionForm from "./components/ApiConnectionForm";
+import PostgresConnectionForm from "./components/PostgresConnectionForm";
+import MysqlConnectionForm from "./components/MysqlConnectionForm";
 import {
+  testRequest as testRequestAction,
   testConnection as testConnectionAction,
   updateConnection as updateConnectionAction,
   removeConnection as removeConnectionAction,
   getProjectConnections as getProjectConnectionsAction,
   addConnection as addConnectionAction,
   saveConnection as saveConnectionAction,
-} from "../actions/connection";
-import { cleanErrors as cleanErrorsAction } from "../actions/error";
-import mongoLogo from "../assets/mongodb-logo-1.png";
-import canAccess from "../config/canAccess";
-import mysql from "../assets/mysql.svg";
-import rest from "../assets/api.png";
-import postgres from "../assets/postgres.png";
-import firebase from "../assets/firebase_logo.png";
+} from "../../actions/connection";
+import { cleanErrors as cleanErrorsAction } from "../../actions/error";
+import mongoLogo from "../../assets/mongodb-logo-1.png";
+import canAccess from "../../config/canAccess";
+import mysql from "../../assets/mysql.svg";
+import rest from "../../assets/api.png";
+import postgres from "../../assets/postgres.png";
+import firebase from "../../assets/firebase_logo.png";
 
 /*
   The page that contains all the connections
@@ -126,6 +127,11 @@ class Connections extends Component {
           this.setState({ addError: error });
         });
     }
+  }
+
+  _onTestRequest = (data) => {
+    const { testRequest, match } = this.props;
+    testRequest(match.params.projectId, data);
   }
 
   _onRemoveConfirmation = (connection) => {
@@ -283,8 +289,9 @@ class Connections extends Component {
           <div id="connection-form-area">
             {formType === "mongodb"
               && (
-              <ConnectionForm
+              <MongoConnectionForm
                 projectId={match.params.projectId}
+                onTest={this._onTestRequest}
                 onComplete={this._onAddNewConnection}
                 editConnection={editConnection}
                 addError={addError}
@@ -295,6 +302,7 @@ class Connections extends Component {
               && (
               <ApiConnectionForm
                 projectId={match.params.projectId}
+                onTest={this._onTestRequest}
                 onComplete={this._onAddNewConnection}
                 editConnection={editConnection}
                 addError={addError}
@@ -305,6 +313,7 @@ class Connections extends Component {
               && (
               <PostgresConnectionForm
                 projectId={match.params.projectId}
+                onTest={this._onTestRequest}
                 onComplete={this._onAddNewConnection}
                 editConnection={editConnection}
                 addError={addError}
@@ -315,6 +324,7 @@ class Connections extends Component {
               && (
               <MysqlConnectionForm
                 projectId={match.params.projectId}
+                onTest={this._onTestRequest}
                 onComplete={this._onAddNewConnection}
                 editConnection={editConnection}
                 addError={addError}
@@ -509,6 +519,7 @@ Connections.propTypes = {
   cleanErrors: PropTypes.func.isRequired,
   saveConnection: PropTypes.func.isRequired,
   addConnection: PropTypes.func.isRequired,
+  testRequest: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -521,6 +532,7 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
+    testRequest: (projectId, data) => dispatch(testRequestAction(projectId, data)),
     testConnection: (projectId, id) => dispatch(testConnectionAction(projectId, id)),
     updateConnection: (projectId, id, data) => {
       return dispatch(updateConnectionAction(projectId, id, data));

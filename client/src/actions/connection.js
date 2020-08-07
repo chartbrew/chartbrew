@@ -145,49 +145,34 @@ export function testConnection(projectId, id) {
   };
 }
 
-export function testApiRequest(projectId, id, apiRequest) {
+export function testRequest(projectId, data) {
   return (dispatch) => {
     if (!cookie.load("brewToken")) {
       return new Promise((resolve, reject) => reject(new Error("No Token")));
     }
     const token = cookie.load("brewToken");
-    const url = `${API_HOST}/project/${projectId}/connection/${id}/apiTest`;
+    const url = `${API_HOST}/project/${projectId}/connection/${data.type}/test`;
     const method = "POST";
-    const body = JSON.stringify(apiRequest);
     const headers = new Headers({
       "Accept": "application/json",
-      "Content-Type": "application/json",
       "authorization": `Bearer ${token}`,
     });
-
-    let status = {
-      statusCode: 500,
-      statusText: "Internal Server Error",
-    };
+    const body = JSON.stringify(data);
 
     return fetch(url, { method, body, headers })
       .then((response) => {
-        status = {
-          statusCode: response.status,
-          statusText: response.statusText,
-        };
-
         if (!response.ok) {
-          dispatch(addError(status.statusCode, status.statusText));
-          return new Promise((resolve, reject) => reject(status));
+          dispatch(addError(response.status));
+          return new Promise((resolve, reject) => reject(response.statusText));
         }
 
         return response.json();
       })
       .then((test) => {
-        const result = {};
-        result.body = test;
-        result.status = status;
-
-        return new Promise(resolve => resolve(result));
+        return new Promise(resolve => resolve(test));
       })
-      .catch(() => {
-        return new Promise((resolve, reject) => reject(status));
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
       });
   };
 }

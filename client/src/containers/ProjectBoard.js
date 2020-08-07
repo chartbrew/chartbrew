@@ -14,7 +14,7 @@ import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import { getTeam } from "../actions/team";
 import { getProjectCharts } from "../actions/chart";
 import { getProjectConnections } from "../actions/connection";
-import Connections from "./Connections";
+import Connections from "./Connections/Connections";
 import ProjectDashboard from "./ProjectDashboard";
 import AddChart from "./AddChart/AddChart";
 import Navbar from "../components/Navbar";
