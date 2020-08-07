@@ -146,7 +146,7 @@ export function testConnection(projectId, id) {
 }
 
 export function testRequest(projectId, data) {
-  return (dispatch) => {
+  return () => {
     if (!cookie.load("brewToken")) {
       return new Promise((resolve, reject) => reject(new Error("No Token")));
     }
@@ -155,21 +155,14 @@ export function testRequest(projectId, data) {
     const method = "POST";
     const headers = new Headers({
       "Accept": "application/json",
+      "Content-type": "application/json",
       "authorization": `Bearer ${token}`,
     });
     const body = JSON.stringify(data);
 
     return fetch(url, { method, body, headers })
       .then((response) => {
-        if (!response.ok) {
-          dispatch(addError(response.status));
-          return new Promise((resolve, reject) => reject(response.statusText));
-        }
-
-        return response.json();
-      })
-      .then((test) => {
-        return new Promise(resolve => resolve(test));
+        return new Promise((resolve) => resolve(response));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

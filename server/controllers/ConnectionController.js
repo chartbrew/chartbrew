@@ -7,6 +7,7 @@ const _ = require("lodash");
 const db = require("../models/models");
 const ProjectController = require("./ProjectController");
 const externalDbConnection = require("../modules/externalDbConnection");
+const assembleMongoUrl = require("../modules/assembleMongoUrl");
 
 /*
 ** Helper functions
@@ -137,7 +138,7 @@ class ConnectionController {
         }
 
         if (connection.type === "mongodb") {
-          return connection.getMongoConnectionUrl(connection);
+          return assembleMongoUrl(connection);
         } else {
           return new Promise((resolve, reject) => reject(new Error(400)));
         }
@@ -167,7 +168,11 @@ class ConnectionController {
       resolveWithFullResponse: true,
     };
 
-    const globalHeaders = connection.getHeaders(connection);
+    let globalHeaders = connection.options;
+    if (connection.getHeaders) {
+      globalHeaders = connection.getHeaders(connection);
+    }
+
     if (globalHeaders && globalHeaders.length > 0) {
       for (const option of connection.options) {
         testOptions.headers[Object.keys(option)[0]] = option[Object.keys(option)[0]];
@@ -175,6 +180,20 @@ class ConnectionController {
     }
 
     return testOptions;
+  }
+
+  testRequest(data) {
+    if (data.type === "api") {
+      return this.testApi(data);
+    }
+
+    return new Promise((resolve, reject) => reject(new Error("No request type specified")));
+  }
+
+  testApi(data) {
+    const testOpt = this.getApiTestOptions(data);
+
+    return requestP(testOpt);
   }
 
   testConnection(id) {

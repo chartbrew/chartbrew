@@ -1,4 +1,5 @@
 const simplecrypt = require("simplecrypt");
+const assembleMongoUrl = require("../../modules/assembleMongoUrl");
 
 const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
 
@@ -139,42 +140,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Connection.prototype.getMongoConnectionUrl = (connection) => {
-    // TODO: get the connection URL depending on the connection type - at a later stage
-    let url = "mongodb://";
-    if (connection.getDataValue("srv")) {
-      url = "mongodb+srv://";
-    }
-
-    // add the username and password
-    if (connection.getDataValue("username") && connection.getDataValue("password")) {
-      url += `${encodeURIComponent(connection.decryptField(connection.getDataValue("username")))}:${encodeURIComponent(connection.decryptField(connection.getDataValue("password")))}@`;
-    }
-
-    // add the host
-    url += `${connection.decryptField(connection.getDataValue("host"))}`;
-
-    // add the port
-    if (connection.getDataValue("port")) {
-      url += `:${connection.decryptField(connection.getDataValue("port"))}`;
-    }
-
-    // add the database name
-    url += `/${connection.decryptField(connection.getDataValue("dbName"))}`;
-
-    // lastly, add the options
-    if (connection.getDataValue("options")) {
-      const options = connection.getDataValue("options");
-      if (options.length > 0) {
-        url += "?";
-        for (const option of options) {
-          url += `${Object.keys(option)[0]}=${option[Object.keys(option)[0]]}&`;
-        }
-        // remove the last &
-        url = url.slice(0, -1);
-      }
-    }
-
-    return url;
+    return assembleMongoUrl(connection);
   };
 
   Connection.prototype.getApiUrl = (connection) => {

@@ -1,19 +1,26 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Segment, Form, Button, Icon, Header, Label, Message,
+  Segment, Form, Button, Icon, Header, Label, Message, Container,
+  Placeholder,
 } from "semantic-ui-react";
 import uuid from "uuid/v4";
+import brace from "brace"; // eslint-disable-line
+import AceEditor from "react-ace";
+
+import "brace/mode/json";
+import "brace/theme/tomorrow";
 
 /*
   The Form used to create API connections
 */
 function ApiConnectionForm(props) {
   const {
-    editConnection, projectId, onComplete, addError
+    editConnection, projectId, onComplete, addError, onTest, testResult,
   } = props;
 
   const [loading, setLoading] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
   const [connection, setConnection] = useState({ type: "api", optionsArray: [] });
   const [errors, setErrors] = useState({});
 
@@ -84,6 +91,28 @@ function ApiConnectionForm(props) {
       newConnection.options = newOptions;
       onComplete(newConnection);
     }, 100);
+  };
+
+  const _onTest = () => {
+    // prepare the options
+    const tempOptions = connection.optionsArray;
+    const newOptions = [];
+    if (tempOptions && tempOptions.length > 0) {
+      for (let i = 0; i < tempOptions.length; i++) {
+        if (tempOptions[i].key && tempOptions[i].value) {
+          newOptions.push({ [tempOptions[i].key]: tempOptions[i].value });
+        }
+      }
+    }
+
+    const newConnection = connection;
+    if (!connection.id) newConnection.project_id = projectId;
+    newConnection.options = newOptions;
+
+    setTestLoading(true);
+    onTest(newConnection)
+      .then(() => setTestLoading(false))
+      .catch(() => setTestLoading(false));
   };
 
   const _addOption = () => {
@@ -213,6 +242,8 @@ function ApiConnectionForm(props) {
         <Button
           primary
           basic
+          onClick={_onTest}
+          loading={testLoading}
         >
           Test connection
         </Button>
@@ -237,6 +268,43 @@ function ApiConnectionForm(props) {
           </Button>
         )}
       </Button.Group>
+
+      {testLoading && (
+        <Segment>
+          <Placeholder>
+            <Placeholder.Line />
+            <Placeholder.Line />
+            <Placeholder.Line />
+            <Placeholder.Line />
+            <Placeholder.Line />
+          </Placeholder>
+        </Segment>
+      )}
+
+      {testResult && !testLoading && (
+        <Container fluid style={{ marginTop: 15 }}>
+          <Header attached="top">
+            Test Result
+            <Label
+              color={testResult.status < 400 ? "green" : "orange"}
+            >
+              {`Status code: ${testResult.status}`}
+            </Label>
+          </Header>
+          <Segment attached>
+            <AceEditor
+              mode="json"
+              theme="tomorrow"
+              height="150px"
+              width="none"
+              value={testResult.body}
+              readOnly
+              name="queryEditor"
+              editorProps={{ $blockScrolling: true }}
+            />
+          </Segment>
+        </Container>
+      )}
     </div>
   );
 }
@@ -247,16 +315,18 @@ const styles = {
 };
 
 ApiConnectionForm.defaultProps = {
-  onComplete: () => {},
   editConnection: null,
   addError: null,
+  testResult: null,
 };
 
 ApiConnectionForm.propTypes = {
-  onComplete: PropTypes.func,
+  onComplete: PropTypes.func.isRequired,
+  onTest: PropTypes.func.isRequired,
   projectId: PropTypes.string.isRequired,
   editConnection: PropTypes.object,
   addError: PropTypes.object,
+  testResult: PropTypes.object,
 };
 
 export default ApiConnectionForm;

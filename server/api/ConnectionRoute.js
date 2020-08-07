@@ -257,6 +257,20 @@ module.exports = (app) => {
   });
   // -------------------------------------------------
 
+  /*
+  ** Route to test any connection
+  */
+  app.post("/project/:project_id/connection/:type/test", verifyToken, (req, res) => {
+    return connectionController.testRequest(req.body)
+      .then((response) => {
+        return res.status(response.statusCode).send(response.body);
+      })
+      .catch((err) => {
+        return res.status(400).send(err.message || err);
+      });
+  });
+  // -------------------------------------------------
+
   return (req, res, next) => {
     next();
   };

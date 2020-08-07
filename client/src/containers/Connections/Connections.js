@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import moment from "moment";
 import {
   Card, Image, Button, Icon, Container, Divider,
-  Modal, Header, Message, Dimmer, Segment,
+  Modal, Header, Message, Segment,
 } from "semantic-ui-react";
 
 import MongoConnectionForm from "./components/MongoConnectionForm";
@@ -26,7 +26,6 @@ import canAccess from "../../config/canAccess";
 import mysql from "../../assets/mysql.svg";
 import rest from "../../assets/api.png";
 import postgres from "../../assets/postgres.png";
-import firebase from "../../assets/firebase_logo.png";
 
 /*
   The page that contains all the connections
@@ -131,7 +130,16 @@ class Connections extends Component {
 
   _onTestRequest = (data) => {
     const { testRequest, match } = this.props;
-    testRequest(match.params.projectId, data);
+    const testResult = {};
+    return testRequest(match.params.projectId, data)
+      .then(async (response) => {
+        testResult.status = response.status;
+        testResult.body = await response.text();
+
+        this.setState({ testResult });
+        return Promise.resolve(testResult);
+      })
+      .catch(() => {});
   }
 
   _onRemoveConfirmation = (connection) => {
@@ -188,7 +196,7 @@ class Connections extends Component {
     const {
       statusChangeFailed, removeError, formType, newConnectionModal,
       editConnection, testModalLoading, testModal, testModalSuccess, testModalFailed,
-      statusChangeLoading, statusModal, removeLoading, removeModal, addError,
+      statusChangeLoading, statusModal, removeLoading, removeModal, addError, testResult,
     } = this.state;
 
     return (
@@ -235,17 +243,17 @@ class Connections extends Component {
                 <Header.Subheader>Select one of the connection types below</Header.Subheader>
               </Header>
               <Segment attached>
-                <Card.Group centered itemsPerRow={5} stackable>
-                  <Card color="violet" raised link onClick={() => this.setState({ formType: "mongodb" })}>
-                    <Image src={mongoLogo} />
-                    <Card.Content>
-                      <Card.Header>MongoDB</Card.Header>
-                    </Card.Content>
-                  </Card>
+                <Card.Group centered itemsPerRow={4} stackable>
                   <Card color="violet" raised link onClick={() => this.setState({ formType: "api" })}>
                     <Image src={rest} />
                     <Card.Content>
                       <Card.Header>API</Card.Header>
+                    </Card.Content>
+                  </Card>
+                  <Card color="violet" raised link onClick={() => this.setState({ formType: "mongodb" })}>
+                    <Image src={mongoLogo} />
+                    <Card.Content>
+                      <Card.Header>MongoDB</Card.Header>
                     </Card.Content>
                   </Card>
                   <Card color="violet" raised link onClick={() => this.setState({ formType: "postgres" })}>
@@ -258,19 +266,6 @@ class Connections extends Component {
                     <Image src={mysql} />
                     <Card.Content>
                       <Card.Header>MySQL</Card.Header>
-                    </Card.Content>
-                  </Card>
-                  <Card color="olive" raised>
-                    <Dimmer.Dimmable
-                      as={Image}
-                      dimmed
-                      dimmer={{ active: true, content: this.renderComingSoon() }}
-                      onMouseEnter={this.handleShow}
-                      onMouseLeave={this.handleHide}
-                      src={firebase}
-                    />
-                    <Card.Content>
-                      <Card.Header>Firebase</Card.Header>
                     </Card.Content>
                   </Card>
                 </Card.Group>
@@ -287,20 +282,21 @@ class Connections extends Component {
             )}
 
           <div id="connection-form-area">
+            {formType === "api"
+              && (
+                <ApiConnectionForm
+                  projectId={match.params.projectId}
+                  onTest={this._onTestRequest}
+                  onComplete={this._onAddNewConnection}
+                  editConnection={editConnection}
+                  addError={addError}
+                  testResult={testResult}
+                />
+              )}
+
             {formType === "mongodb"
               && (
               <MongoConnectionForm
-                projectId={match.params.projectId}
-                onTest={this._onTestRequest}
-                onComplete={this._onAddNewConnection}
-                editConnection={editConnection}
-                addError={addError}
-              />
-              )}
-
-            {formType === "api"
-              && (
-              <ApiConnectionForm
                 projectId={match.params.projectId}
                 onTest={this._onTestRequest}
                 onComplete={this._onAddNewConnection}
