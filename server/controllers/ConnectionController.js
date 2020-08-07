@@ -187,6 +187,8 @@ class ConnectionController {
       return this.testApi(data);
     } else if (data.type === "mongodb") {
       return this.testMongo(data);
+    } else if (data.type === "mysql" || data.type === "postgres") {
+      return this.testMysql(data);
     }
 
     return new Promise((resolve, reject) => reject(new Error("No request type specified")));
@@ -209,6 +211,21 @@ class ConnectionController {
         return Promise.resolve({
           success: true,
           collections
+        });
+      })
+      .catch((err) => Promise.reject(err.message || err));
+  }
+
+  testMysql(data) {
+    console.log("data", data);
+    return externalDbConnection(data)
+      .then((sequelize) => {
+        return sequelize.getQueryInterface().showAllSchemas();
+      })
+      .then((tables) => {
+        return Promise.resolve({
+          success: true,
+          tables,
         });
       })
       .catch((err) => Promise.reject(err.message || err));
