@@ -13,8 +13,6 @@ import PostgresConnectionForm from "./components/PostgresConnectionForm";
 import MysqlConnectionForm from "./components/MysqlConnectionForm";
 import {
   testRequest as testRequestAction,
-  testConnection as testConnectionAction,
-  updateConnection as updateConnectionAction,
   removeConnection as removeConnectionAction,
   getProjectConnections as getProjectConnectionsAction,
   addConnection as addConnectionAction,
@@ -35,61 +33,12 @@ class Connections extends Component {
     super(props);
 
     this.state = {
-      testModal: false,
     };
   }
 
   componentDidMount() {
     const { cleanErrors } = this.props;
     cleanErrors();
-  }
-
-  _testConnection = (id) => {
-    const { testConnection, match } = this.props;
-
-    this.setState({
-      testModal: true,
-      testModalLoading: true,
-      testModalFailed: false,
-      testModalSuccess: false,
-    });
-    testConnection(match.params.projectId, id)
-      .then(() => {
-        this.setState({ testModalSuccess: true, testModalLoading: false });
-      })
-      .catch(() => {
-        this.setState({ testModalFailed: true, testModalLoading: false });
-      });
-  }
-
-  _prepareConnectionStatus = (connection) => {
-    this.setState({ selectedConnection: connection, statusModal: true });
-  }
-
-  _changeConnectionStatus = (connection) => {
-    const { updateConnection, match } = this.props;
-
-    if (this.state.selectedConnection) connection = this.state.selectedConnection; // eslint-disable-line
-    this.setState({
-      statusChangeLoading: true,
-      statusChangeFailed: false,
-    });
-
-    updateConnection(
-      match.params.projectId,
-      connection.id,
-      { active: !connection.active }
-    )
-      .then(() => {
-        this.setState({
-          statusChangeLoading: false,
-          statusModal: false,
-          selectedConnection: false
-        });
-      })
-      .catch(() => {
-        this.setState({ statusChangeLoading: false, statusChangeFailed: true });
-      });
   }
 
   _onOpenConnectionForm = () => {
@@ -202,8 +151,7 @@ class Connections extends Component {
     const { connections, match } = this.props;
     const {
       statusChangeFailed, removeError, formType, newConnectionModal,
-      editConnection, testModalLoading, testModal, testModalSuccess, testModalFailed,
-      statusChangeLoading, statusModal, removeLoading, removeModal, addError, testResult,
+      editConnection, removeLoading, removeModal, addError, testResult,
     } = this.state;
 
     return (
@@ -364,10 +312,6 @@ class Connections extends Component {
                 </Card.Content>
                 <Card.Content extra>
                   <div className="ui three buttons">
-                    <Button basic color="teal" onClick={() => this._testConnection(connection.id)}>
-                      <Icon name="flask" />
-                      Test
-                    </Button>
                     {this._canAccess("admin")
                       && (
                       <Button
@@ -397,77 +341,6 @@ class Connections extends Component {
             );
           })}
         </Container>
-
-        {/* TESTING CONNECTION MODAL */}
-        <Modal open={testModal} basic size="small" onClose={() => this.setState({ testModal: false })}>
-          <Header
-            icon={testModalLoading ? "flask" : testModalSuccess ? "checkmark" : "x"}
-            color={testModalSuccess ? "green" : testModalFailed ? "red" : null}
-            content="Testing your connection settings"
-          />
-          <Modal.Content>
-            {testModalLoading
-              && (
-              <p>
-                {"Testing underway..."}
-              </p>
-              )}
-            {testModalSuccess
-              && (
-              <p>
-                {"Yay! We connected successfully."}
-              </p>
-              )}
-            {testModalFailed
-              && (
-              <p>
-                {"Oh no! We were unable to connect to your database. Check your settings and try again."}
-              </p>
-              )}
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              inverted
-              loading={testModalLoading}
-              onClick={() => this.setState({ testModal: false })}
-            >
-              <Icon name="checkmark" />
-              {" "}
-              Close
-            </Button>
-          </Modal.Actions>
-        </Modal>
-
-        {/* STATUS MODAL */}
-        <Modal open={statusModal} basic size="small" onClose={() => this.setState({ statusModal: false })}>
-          <Header
-            icon="question circle"
-            content="Are you sure you want to stop this connection?"
-          />
-          <Modal.Content>
-            <p>
-              {"All the charts that are using this connection will stop updating."}
-            </p>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              basic
-              inverted
-              onClick={() => this.setState({ statusModal: false })}
-            >
-              Close
-            </Button>
-            <Button
-              color="orange"
-              inverted
-              loading={statusChangeLoading}
-              onClick={this._changeConnectionStatus}
-            >
-              <Icon name="checkmark" />
-              De-activate
-            </Button>
-          </Modal.Actions>
-        </Modal>
 
         {/* REMOVE CONFIRMATION MODAL */}
         <Modal open={removeModal} basic size="small" onClose={() => this.setState({ removeModal: false })}>
@@ -516,8 +389,6 @@ Connections.propTypes = {
   connections: PropTypes.array.isRequired,
   team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
-  testConnection: PropTypes.func.isRequired,
-  updateConnection: PropTypes.func.isRequired,
   removeConnection: PropTypes.func.isRequired,
   getProjectConnections: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
@@ -539,10 +410,6 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
   return {
     testRequest: (projectId, data) => dispatch(testRequestAction(projectId, data)),
-    testConnection: (projectId, id) => dispatch(testConnectionAction(projectId, id)),
-    updateConnection: (projectId, id, data) => {
-      return dispatch(updateConnectionAction(projectId, id, data));
-    },
     removeConnection: (projectId, id) => dispatch(removeConnectionAction(projectId, id)),
     getProjectConnections: (projectId) => dispatch(getProjectConnectionsAction(projectId)),
     addConnection: (projectId, connection) => dispatch(addConnectionAction(projectId, connection)),

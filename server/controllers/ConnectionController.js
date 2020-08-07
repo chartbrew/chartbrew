@@ -217,7 +217,6 @@ class ConnectionController {
   }
 
   testMysql(data) {
-    console.log("data", data);
     return externalDbConnection(data)
       .then((sequelize) => {
         return sequelize.getQueryInterface().showAllSchemas();
