@@ -20,6 +20,8 @@ function MysqlConnectionForm(props) {
   const [testLoading, setTestLoading] = useState(false);
   const [connection, setConnection] = useState({ type: "mysql" });
   const [errors, setErrors] = useState({});
+  const [showUsersTut, setShowUsersTut] = useState(true);
+  const [showIpTut, setShowIpTut] = useState(true);
 
   useEffect(() => {
     _init();
@@ -50,7 +52,7 @@ function MysqlConnectionForm(props) {
     // add the project ID
     setConnection({ ...connection, project_id: projectId });
     setTimeout(() => {
-      if (test) {
+      if (test === true) {
         setTestLoading(true);
         onTest(connection)
           .then(() => setTestLoading(false))
@@ -148,21 +150,25 @@ function MysqlConnectionForm(props) {
               <p>Please try adding your connection again.</p>
             </Message>
             )}
-        <Message info>
-          <Message.Header>Avoid using users that can write data</Message.Header>
-          <p>{"Out of abundance of caution, we recommend all our users to connect read-only permissions to their MySQL database."}</p>
-          <a href="https://www.digitalocean.com/community/tutorials/how-to-create-a-new-user-and-grant-permissions-in-mysql" target="_blank" rel="noopener noreferrer">
-            Check this link on how to do it
-          </a>
-        </Message>
+        {showUsersTut && (
+          <Message info onDismiss={() => setShowUsersTut(false)}>
+            <Message.Header>Avoid using users that can write data</Message.Header>
+            <p>{"Out of abundance of caution, we recommend all our users to connect read-only permissions to their MySQL database."}</p>
+            <a href="https://www.digitalocean.com/community/tutorials/how-to-create-a-new-user-and-grant-permissions-in-mysql" target="_blank" rel="noopener noreferrer">
+              Check this link on how to do it
+            </a>
+          </Message>
+        )}
 
-        <Message info>
-          <Message.Header>{"You need to allow remote connections to your MySQL database"}</Message.Header>
-          <p>{"When you grant user privileges you might have to grant access to the server Chartbrew is running from (if the app is running on a separate server than the database)."}</p>
-          <a href="https://www.cyberciti.biz/tips/how-do-i-enable-remote-access-to-mysql-database-server.html" target="_blank" rel="noopener noreferrer">
-            Check this link on how to do it
-          </a>
-        </Message>
+        {showIpTut && (
+          <Message info onDismiss={() => setShowIpTut(false)}>
+            <Message.Header>{"You need to allow remote connections to your MySQL database"}</Message.Header>
+            <p>{"When you grant user privileges you might have to grant access to the server Chartbrew is running from (if the app is running on a separate server than the database)."}</p>
+            <a href="https://www.cyberciti.biz/tips/how-do-i-enable-remote-access-to-mysql-database-server.html" target="_blank" rel="noopener noreferrer">
+              Check this link on how to do it
+            </a>
+          </Message>
+        )}
       </Segment>
       <Button.Group attached="bottom">
         <Button

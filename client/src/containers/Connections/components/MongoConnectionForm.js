@@ -99,16 +99,14 @@ function MongoConnectionForm(props) {
       ...connection, project_id: projectId, options: newOptions,
     });
     setTimeout(() => {
-      if (test) {
+      if (test === true) {
         setTestLoading(true);
         onTest(connection)
           .then(() => setTestLoading(false))
           .catch(() => setTestLoading(false));
       } else {
         setLoading(true);
-        onComplete(connection)
-          .then(() => setLoading(false))
-          .catch(() => setLoading(false));
+        onComplete(connection);
       }
     }, 100);
   };

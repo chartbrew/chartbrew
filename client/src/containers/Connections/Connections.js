@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import moment from "moment";
@@ -24,32 +24,41 @@ import canAccess from "../../config/canAccess";
 import mysql from "../../assets/mysql.svg";
 import rest from "../../assets/api.png";
 import postgres from "../../assets/postgres.png";
+import { primary } from "../../config/colors";
 
 /*
   The page that contains all the connections
 */
-class Connections extends Component {
-  constructor(props) {
-    super(props);
+function Connections(props) {
+  const {
+    cleanErrors, addConnection, saveConnection, match, history, connections, testRequest,
+    removeConnection, getProjectConnections, user, team,
+  } = props;
 
-    this.state = {
-    };
-  }
+  const [newConnectionModal, setNewConnectionModal] = useState(false);
+  const [addError, setAddError] = useState(false);
+  const [formType, setFormType] = useState("");
+  const [editConnection, setEditConnection] = useState(null);
+  const [testResult, setTestResult] = useState(null);
+  const [selectedConnection, setSelectedConnection] = useState(null);
+  const [removeModal, setRemoveModal] = useState(false);
+  const [removeLoading, setRemoveLoading] = useState(false);
+  const [removeError, setRemoveError] = useState(false);
 
-  componentDidMount() {
-    const { cleanErrors } = this.props;
+  useEffect(() => {
     cleanErrors();
-  }
+  }, []);
 
-  _onOpenConnectionForm = () => {
-    this.setState({ newConnectionModal: true });
-  }
+  useEffect(() => {
+    setTestResult(null);
+  }, [selectedConnection, editConnection]);
 
-  _onAddNewConnection = (connection) => {
-    const {
-      addConnection, saveConnection, match, history, connections,
-    } = this.props;
+  const _onOpenConnectionForm = () => {
+    setNewConnectionModal(true);
+    setTestResult(null);
+  };
 
+  const _onAddNewConnection = (connection) => {
     let redirect = false;
     if (connections.length === 0) {
       redirect = true;
@@ -58,243 +67,233 @@ class Connections extends Component {
     if (!connection.id) {
       addConnection(match.params.projectId, connection)
         .then(() => {
-          this.setState({ formType: null, editConnection: null });
           if (redirect) {
             history.push(`/${match.params.teamId}/${match.params.projectId}/chart`);
           }
         })
         .catch((error) => {
-          this.setState({ addError: error });
+          setAddError(error);
         });
     } else {
       saveConnection(match.params.projectId, connection)
         .then(() => {
-          this.setState({ formType: null, editConnection: null });
+          setFormType(null);
+          setEditConnection(null);
         })
         .catch((error) => {
-          this.setState({ addError: error });
+          setAddError(error);
         });
     }
-  }
+  };
 
-  _onTestRequest = (data) => {
-    const { testRequest, match } = this.props;
-    const testResult = {};
+  const _onTestRequest = (data) => {
+    const newTestResult = {};
     return testRequest(match.params.projectId, data)
       .then(async (response) => {
-        testResult.status = response.status;
-        testResult.body = await response.text();
+        newTestResult.status = response.status;
+        newTestResult.body = await response.text();
 
         try {
-          testResult.body = JSON.parse(testResult.body);
-          testResult.body = JSON.stringify(testResult, null, 2);
+          newTestResult.body = JSON.parse(newTestResult.body);
+          newTestResult.body = JSON.stringify(newTestResult, null, 2);
         } catch (e) {
           // the response is not in JSON format
         }
 
-        this.setState({ testResult });
-        return Promise.resolve(testResult);
+        setTestResult(newTestResult);
+        return Promise.resolve(newTestResult);
       })
       .catch(() => {});
-  }
+  };
 
-  _onRemoveConfirmation = (connection) => {
-    this.setState({ selectedConnection: connection, removeModal: true });
-  }
+  const _onRemoveConfirmation = (connection) => {
+    setSelectedConnection(connection);
+    setRemoveModal(true);
+  };
 
-  _onRemoveConnection = () => {
-    const { removeConnection, getProjectConnections, match } = this.props;
-    const { selectedConnection } = this.state;
+  const _onRemoveConnection = () => {
+    setRemoveLoading(selectedConnection.id);
+    setRemoveError(false);
 
-    this.setState({ removeLoading: selectedConnection.id, removeError: false });
     removeConnection(match.params.projectId, selectedConnection.id)
       .then(() => {
         return getProjectConnections(match.params.projectId);
       })
       .then(() => {
-        this.setState({
-          removeLoading: false,
-          selectedConnection: false,
-          removeModal: false,
-        });
+        setRemoveLoading(false);
+        setSelectedConnection(false);
+        setRemoveModal(false);
       })
       .catch(() => {
-        this.setState({ removeError: true, removeModal: true, selectedConnection: false });
+        setRemoveError(true);
+        setRemoveModal(true);
+        setSelectedConnection(false);
       });
-  }
+  };
 
-  _onEditConnection = (connection) => {
-    this.setState({ editConnection: connection, formType: connection.type });
-  }
+  const _onEditConnection = (connection) => {
+    setEditConnection(connection);
+    setFormType(connection.type);
+  };
 
-  _closeConnectionForm = () => {
-    this.setState({
-      newConnectionModal: false, formType: null, editConnection: null,
-    });
-  }
+  const _closeConnectionForm = () => {
+    setNewConnectionModal(false);
+    setFormType(null);
+    setEditConnection(null);
+  };
 
-  _canAccess(role) {
-    const { user, team } = this.props;
+  const _canAccess = (role) => {
     return canAccess(role, user.id, team.TeamRoles);
-  }
+  };
 
-  renderComingSoon() {
-    return (
-      <Header textAlign="center" icon inverted>
-        <Icon size="huge" name="lock" />
-        Coming soon
-      </Header>
-    );
-  }
+  return (
+    <div style={styles.container}>
+      <Container style={styles.mainContent}>
+        {formType && (
+          <Container>
+            {removeError && (
+              <Message negative>
+                <Message.Header>Oups! A server error intrerruped the request</Message.Header>
+                <p>Please refresh the page and try again.</p>
+              </Message>
+            )}
 
-  render() {
-    const { connections, match } = this.props;
-    const {
-      statusChangeFailed, removeError, formType, newConnectionModal,
-      editConnection, removeLoading, removeModal, addError, testResult,
-    } = this.state;
-
-    return (
-      <div style={styles.container}>
-        <Container style={styles.mainContent}>
-          {formType && (
-            <Container>
-              {(statusChangeFailed || removeError)
-                && (
-                <Message negative>
-                  <Message.Header>Oups! A server error intrerruped the request</Message.Header>
-                  <p>Please refresh the page and try again.</p>
-                </Message>
-                )}
-
-              {formType
-                && (
-                <Button secondary icon labelPosition="left" onClick={this._closeConnectionForm}>
-                  <Icon name="chevron left" />
-                  Back
-                </Button>
-                )}
-
-              <Divider />
-            </Container>
-          )}
-
-          {connections.length > 0 && !formType && (
-            <Container>
-              <Button primary icon labelPosition="right" onClick={this._onOpenConnectionForm}>
-                <Icon name="plus" />
-                Add a new connection
+            {formType && (
+              <Button secondary icon labelPosition="left" onClick={_closeConnectionForm}>
+                <Icon name="chevron left" />
+                Back
               </Button>
-              <Divider />
-            </Container>
+            )}
+
+            <Divider />
+          </Container>
+        )}
+
+        {connections.length > 0 && !formType && (
+          <Container>
+            <Button primary icon labelPosition="right" onClick={_onOpenConnectionForm}>
+              <Icon name="plus" />
+              Add a new connection
+            </Button>
+            <Divider />
+          </Container>
+        )}
+
+        {(connections.length < 1 || newConnectionModal) && !formType
+          && (
+          <div>
+            <Divider hidden />
+            <Header as="h1" textAlign="center">
+              {"Let's connect and get some data ✨"}
+              <Header.Subheader>Select one of the connection types below</Header.Subheader>
+            </Header>
+            <Segment attached>
+              <Card.Group centered itemsPerRow={4} stackable>
+                <Card color="violet" raised link onClick={() => setFormType("api")}>
+                  <Image src={rest} />
+                  <Card.Content>
+                    <Card.Header>API</Card.Header>
+                  </Card.Content>
+                </Card>
+                <Card color="violet" raised link onClick={() => setFormType("mongodb")}>
+                  <Image src={mongoLogo} />
+                  <Card.Content>
+                    <Card.Header>MongoDB</Card.Header>
+                  </Card.Content>
+                </Card>
+                <Card color="violet" raised link onClick={() => setFormType("postgres")}>
+                  <Image src={postgres} />
+                  <Card.Content>
+                    <Card.Header>PostgreSQL</Card.Header>
+                  </Card.Content>
+                </Card>
+                <Card color="violet" raised link onClick={() => setFormType("mysql")}>
+                  <Image src={mysql} />
+                  <Card.Content>
+                    <Card.Header>MySQL</Card.Header>
+                  </Card.Content>
+                </Card>
+              </Card.Group>
+            </Segment>
+            <Segment attached="bottom">
+              <p>
+                {"Need access to another data source? "}
+                <a href="https://github.com/chartbrew/chartbrew/issues" target="_blank" rel="noopener noreferrer">
+                  {"Let us know 💬"}
+                </a>
+              </p>
+            </Segment>
+          </div>
           )}
 
-          {(connections.length < 1 || newConnectionModal) && !formType
+        <div id="connection-form-area">
+          {formType === "api"
             && (
-            <div>
-              <Divider hidden />
-              <Header as="h1" textAlign="center">
-                {"Let's connect and get some data ✨"}
-                <Header.Subheader>Select one of the connection types below</Header.Subheader>
-              </Header>
-              <Segment attached>
-                <Card.Group centered itemsPerRow={4} stackable>
-                  <Card color="violet" raised link onClick={() => this.setState({ formType: "api" })}>
-                    <Image src={rest} />
-                    <Card.Content>
-                      <Card.Header>API</Card.Header>
-                    </Card.Content>
-                  </Card>
-                  <Card color="violet" raised link onClick={() => this.setState({ formType: "mongodb" })}>
-                    <Image src={mongoLogo} />
-                    <Card.Content>
-                      <Card.Header>MongoDB</Card.Header>
-                    </Card.Content>
-                  </Card>
-                  <Card color="violet" raised link onClick={() => this.setState({ formType: "postgres" })}>
-                    <Image src={postgres} />
-                    <Card.Content>
-                      <Card.Header>PostgreSQL</Card.Header>
-                    </Card.Content>
-                  </Card>
-                  <Card color="violet" raised link onClick={() => this.setState({ formType: "mysql" })}>
-                    <Image src={mysql} />
-                    <Card.Content>
-                      <Card.Header>MySQL</Card.Header>
-                    </Card.Content>
-                  </Card>
-                </Card.Group>
-              </Segment>
-              <Segment attached="bottom">
-                <p>
-                  {"Need access to another data source? "}
-                  <a href="https://github.com/chartbrew/chartbrew/issues" target="_blank" rel="noopener noreferrer">
-                    {"Let us know 💬"}
-                  </a>
-                </p>
-              </Segment>
-            </div>
+              <ApiConnectionForm
+                projectId={match.params.projectId}
+                onTest={_onTestRequest}
+                onComplete={_onAddNewConnection}
+                editConnection={editConnection}
+                addError={addError}
+                testResult={testResult}
+              />
             )}
 
-          <div id="connection-form-area">
-            {formType === "api"
-              && (
-                <ApiConnectionForm
-                  projectId={match.params.projectId}
-                  onTest={this._onTestRequest}
-                  onComplete={this._onAddNewConnection}
-                  editConnection={editConnection}
-                  addError={addError}
-                  testResult={testResult}
-                />
-              )}
-
-            {formType === "mongodb"
-              && (
-              <MongoConnectionForm
-                projectId={match.params.projectId}
-                onTest={this._onTestRequest}
-                onComplete={this._onAddNewConnection}
-                editConnection={editConnection}
-                addError={addError}
-                testResult={testResult}
-              />
-              )}
-
-            {formType === "postgres"
-              && (
-              <PostgresConnectionForm
-                projectId={match.params.projectId}
-                onTest={this._onTestRequest}
-                onComplete={this._onAddNewConnection}
-                editConnection={editConnection}
-                addError={addError}
-                testResult={testResult}
-              />
-              )}
-
-            {formType === "mysql"
-              && (
-              <MysqlConnectionForm
-                projectId={match.params.projectId}
-                onTest={this._onTestRequest}
-                onComplete={this._onAddNewConnection}
-                editConnection={editConnection}
-                addError={addError}
-                testResult={testResult}
-              />
-              )}
-          </div>
-
-          {connections.length > 0
+          {formType === "mongodb"
             && (
-            <Header as="h2">
-              {"Your connections"}
-            </Header>
+            <MongoConnectionForm
+              projectId={match.params.projectId}
+              onTest={_onTestRequest}
+              onComplete={_onAddNewConnection}
+              editConnection={editConnection}
+              addError={addError}
+              testResult={testResult}
+            />
             )}
+
+          {formType === "postgres"
+            && (
+            <PostgresConnectionForm
+              projectId={match.params.projectId}
+              onTest={_onTestRequest}
+              onComplete={_onAddNewConnection}
+              editConnection={editConnection}
+              addError={addError}
+              testResult={testResult}
+            />
+            )}
+
+          {formType === "mysql"
+            && (
+            <MysqlConnectionForm
+              projectId={match.params.projectId}
+              onTest={_onTestRequest}
+              onComplete={_onAddNewConnection}
+              editConnection={editConnection}
+              addError={addError}
+              testResult={testResult}
+            />
+            )}
+        </div>
+
+        {connections.length > 0
+          && (
+          <Header as="h2">
+            {"Your connections"}
+          </Header>
+          )}
+        <Card.Group itemsPerRow={3} stackable>
           {connections.map(connection => {
             return (
-              <Card key={connection.id} fluid>
+              <Card
+                key={connection.id}
+                fluid
+                className="project-segment"
+                style={
+                  editConnection && connection.id === editConnection.id
+                    ? styles.selectedConnection : {}
+                }
+              >
                 <Card.Content>
                   <Image
                     floated="right"
@@ -307,75 +306,78 @@ class Connections extends Component {
                     }
                   />
                   <Card.Header>{connection.name}</Card.Header>
-                  <Card.Meta>{`Created on ${moment(connection.createdAt).format("LLL")}`}</Card.Meta>
+                  <Card.Meta style={styles.smallerText}>
+                    {`Created on ${moment(connection.createdAt).format("LLL")}`}
+                  </Card.Meta>
                   <Card.Description />
                 </Card.Content>
                 <Card.Content extra>
-                  <div className="ui three buttons">
-                    {this._canAccess("admin")
+                  <Button.Group widths={2}>
+                    {_canAccess("admin")
                       && (
                       <Button
+                        primary
                         basic
-                        secondary
-                        onClick={() => this._onEditConnection(connection)}
+                        onClick={() => _onEditConnection(connection)}
                       >
                         <Icon name="pencil" />
                         Edit
                       </Button>
                       )}
-                    {this._canAccess("admin")
+                    {_canAccess("admin")
                       && (
                       <Button
-                        basic
                         color="red"
+                        basic
                         loading={removeLoading === connection.id}
-                        onClick={() => this._onRemoveConfirmation(connection)}
+                        onClick={() => _onRemoveConfirmation(connection)}
                       >
                         <Icon name="x" />
                         Remove
                       </Button>
                       )}
-                  </div>
+                  </Button.Group>
                 </Card.Content>
               </Card>
             );
           })}
-        </Container>
+        </Card.Group>
+      </Container>
 
-        {/* REMOVE CONFIRMATION MODAL */}
-        <Modal open={removeModal} basic size="small" onClose={() => this.setState({ removeModal: false })}>
-          <Header
-            icon="exclamation triangle"
-            content="Are you sure you want to remove this connection?"
-          />
-          <Modal.Content>
-            <p>
-              {"All the charts that are using this connection will be removed as well. If you want to temporarily stop the connection without losing the charts, you can de-activate the connection instead of removing it completely."}
-            </p>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              basic
-              inverted
-              onClick={() => this.setState({ removeModal: false })}
-            >
-              Go back
-            </Button>
-            <Button
-              color="orange"
-              inverted
-              loading={!!removeLoading}
-              onClick={this._onRemoveConnection}
-            >
-              <Icon name="x" />
-              Remove completely
-            </Button>
-          </Modal.Actions>
-        </Modal>
-      </div>
-    );
-  }
+      {/* REMOVE CONFIRMATION MODAL */}
+      <Modal open={removeModal} basic size="small" onClose={() => setRemoveModal(false)}>
+        <Header
+          icon="exclamation triangle"
+          content="Are you sure you want to remove this connection?"
+        />
+        <Modal.Content>
+          <p>
+            {"All the charts that are using this connection will be removed as well. If you want to temporarily stop the connection without losing the charts, you can de-activate the connection instead of removing it completely."}
+          </p>
+        </Modal.Content>
+        <Modal.Actions>
+          <Button
+            basic
+            inverted
+            onClick={() => setRemoveModal(false)}
+          >
+            Go back
+          </Button>
+          <Button
+            color="orange"
+            inverted
+            loading={!!removeLoading}
+            onClick={_onRemoveConnection}
+          >
+            <Icon name="x" />
+            Remove completely
+          </Button>
+        </Modal.Actions>
+      </Modal>
+    </div>
+  );
 }
+
 const styles = {
   container: {
     flex: 1,
@@ -383,6 +385,12 @@ const styles = {
   mainContent: {
     padding: 20,
   },
+  selectedConnection: {
+    boxShadow: `${primary} 0 3px 3px 0, ${primary} 0 0 0 3px`,
+  },
+  smallerText: {
+    fontSize: 12,
+  }
 };
 
 Connections.propTypes = {

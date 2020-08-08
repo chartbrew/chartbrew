@@ -54,7 +54,7 @@ function ApiConnectionForm(props) {
     }
   };
 
-  const _onCreateConnection = () => {
+  const _onCreateConnection = (test = false) => {
     setErrors({});
 
     if (!connection.name || connection.name.length > 24) {
@@ -82,37 +82,22 @@ function ApiConnectionForm(props) {
     }
 
     // add the project ID
-    setLoading(true);
     setConnection({ ...connection, project_id: projectId, options: newOptions });
 
     setTimeout(() => {
       const newConnection = connection;
       if (!connection.id) newConnection.project_id = projectId;
       newConnection.options = newOptions;
-      onComplete(newConnection);
-    }, 100);
-  };
-
-  const _onTest = () => {
-    // prepare the options
-    const tempOptions = connection.optionsArray;
-    const newOptions = [];
-    if (tempOptions && tempOptions.length > 0) {
-      for (let i = 0; i < tempOptions.length; i++) {
-        if (tempOptions[i].key && tempOptions[i].value) {
-          newOptions.push({ [tempOptions[i].key]: tempOptions[i].value });
-        }
+      if (test === true) {
+        setTestLoading(true);
+        onTest(newConnection)
+          .then(() => setTestLoading(false))
+          .catch(() => setTestLoading(false));
+      } else {
+        setLoading(true);
+        onComplete(newConnection);
       }
-    }
-
-    const newConnection = connection;
-    if (!connection.id) newConnection.project_id = projectId;
-    newConnection.options = newOptions;
-
-    setTestLoading(true);
-    onTest(newConnection)
-      .then(() => setTestLoading(false))
-      .catch(() => setTestLoading(false));
+    }, 100);
   };
 
   const _addOption = () => {
@@ -242,7 +227,7 @@ function ApiConnectionForm(props) {
         <Button
           primary
           basic
-          onClick={_onTest}
+          onClick={() => _onCreateConnection(true)}
           loading={testLoading}
         >
           Test connection

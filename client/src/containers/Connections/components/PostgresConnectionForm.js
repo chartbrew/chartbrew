@@ -51,7 +51,7 @@ function PostgresConnectionForm(props) {
     setConnection({ ...connection, projectId });
 
     setTimeout(() => {
-      if (test) {
+      if (test === true) {
         setTestLoading(true);
         onTest(connection)
           .then(() => setTestLoading(false))
