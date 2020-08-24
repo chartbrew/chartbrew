@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Modal, Button, Loader, Container, Placeholder, Icon,
-  Input, Grid, Header,
+  Grid, Header, Label,
 } from "semantic-ui-react";
 import _ from "lodash";
 import { toast } from "react-toastify";
@@ -236,35 +236,35 @@ function DatarequestModal(props) {
             </Grid.Column>
             <Grid.Column width={9} className="objectexplorer-object-tut">
               <Header size="small" dividing>Select a field to visualize</Header>
-              <Input
-                placeholder="select a field below"
-                value={dataset.xAxis}
-                style={styles.fieldInput}
-              />
+              <div style={styles.fieldSelection}>
+                {"Selected field: "}
+                <Label color="blue">{dataset.xAxis && dataset.xAxis.replace("root[].", "")}</Label>
+              </div>
               <ObjectExplorer
                 objectData={result.data}
                 onChange={_onChangeField}
+                xAxisField={dataset.xAxis}
               />
             </Grid.Column>
           </Grid>
         )}
       </Modal.Content>
       <Modal.Actions>
-        {closeTrigger && <span>Are you sure? Your settings are not saved</span>}
         <Button
-          negative={closeTrigger}
-          onClick={_onClose}
-          basic
-        >
-          Close
-        </Button>
-        <Button
-          primary={!saved}
+          secondary={!saved}
           positive={saved}
           onClick={_onSaveRequest}
           loading={loading}
         >
           {saved ? "Saved" : "Save"}
+        </Button>
+        {closeTrigger && <span>Are you sure? Your settings are not saved</span>}
+        <Button
+          negative={closeTrigger}
+          onClick={_onClose}
+          primary
+        >
+          Done
         </Button>
 
         {!fieldsView && (
@@ -289,7 +289,7 @@ function DatarequestModal(props) {
             floated="left"
           >
             <Icon name="chevron left" />
-            Back to the builder
+            Back to the request
           </Button>
         )}
       </Modal.Actions>
@@ -298,7 +298,7 @@ function DatarequestModal(props) {
 }
 
 const styles = {
-  fieldInput: {
+  fieldSelection: {
     marginBottom: 20,
   },
 };

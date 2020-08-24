@@ -2,7 +2,6 @@ import compareVersions from "compare-versions";
 
 export default function showTutorial(type, userData) {
   if (!userData || !userData[type]) return true;
-  console.log("compare", compareVersions(userData[type], "1.0.0-beta.8.1"));
 
   switch (type) {
     case "addchart":

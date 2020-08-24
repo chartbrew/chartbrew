@@ -8,7 +8,32 @@ import {
 import moment from "moment";
 import _ from "lodash";
 
-import { secondaryTransparent } from "../../../config/colors";
+import { secondaryTransparent, secondary } from "../../../config/colors";
+
+function getDataType(data) {
+  let dataType;
+  if (data !== null && typeof data === "object" && data instanceof Array) {
+    dataType = "array";
+  }
+  if (data !== null && typeof data === "object" && !(data instanceof Array)) {
+    dataType = "object";
+  }
+  if (typeof data !== "object" && !(data instanceof Array) && typeof data === "boolean") {
+    dataType = "boolean";
+  }
+  if (typeof data !== "object" && !(data instanceof Array) && typeof data === "number") {
+    dataType = "number";
+  }
+  if (typeof data !== "object" && !(data instanceof Array) && typeof data === "string") {
+    dataType = "string";
+  }
+  if (typeof data !== "object" && !(data instanceof Array) && moment(data).isValid()
+    && ((typeof data === "number" && data.toString().length > 9) || (typeof data !== "number"))) {
+    dataType = "date";
+  }
+
+  return dataType;
+}
 
 /*
   Component used for displaying the object's attributes
@@ -20,11 +45,12 @@ function ObjectExplorer(props) {
   const [subType, setSubType] = useState("");
   const [arrayWarning, setArrayWarning] = useState(false);
   const [notDateWarning, setNotDateWarning] = useState(false);
+  const [autoSelect, setAutoSelect] = useState(false);
 
   const objectMapper = {};
 
   const {
-    onChange, objectData, charts, xAxisField, match
+    onChange, objectData, charts, xAxisField, match,
   } = props;
 
   useEffect(() => {
@@ -34,6 +60,35 @@ function ObjectExplorer(props) {
       setSubType(chart.subType);
     }
   }, []);
+
+  useEffect(() => {
+    if (!xAxisField) {
+      let autoKey;
+      if (objectData instanceof Array) {
+        Object.keys(objectData[0]).map((key) => {
+          const dataType = getDataType(objectData[0][key]);
+          if (dataType === "date" && key.toLowerCase().indexOf("created") > -1) {
+            autoKey = `root[].${key}`;
+            setAutoSelect(true);
+          }
+          return key;
+        });
+
+        if (autoKey) onChange(autoKey);
+      } else {
+        Object.keys(objectData).map((key) => {
+          const dataType = getDataType(objectData[key]);
+          if (dataType === "date" && key.toLowerCase().indexOf("created") > -1) {
+            autoKey = `root.${key}`;
+            setAutoSelect(true);
+          }
+          return key;
+        });
+
+        if (autoKey) onChange(autoKey);
+      }
+    }
+  }, [objectData]);
 
   const _onSelectXField = (key) => {
     // display a warning if the user didn't select a date field and subtype is timeseries
@@ -50,7 +105,7 @@ function ObjectExplorer(props) {
         setArrayWarning(false);
       }
     }
-
+    setAutoSelect(false);
     onChange(key);
   };
 
@@ -63,27 +118,7 @@ function ObjectExplorer(props) {
     }
 
     // save the uniqueKey along with the data type in the object mapper
-    let dataType;
-    if (data !== null && typeof data === "object" && data instanceof Array) {
-      dataType = "array";
-    }
-    if (data !== null && typeof data === "object" && !(data instanceof Array)) {
-      dataType = "object";
-    }
-    if (typeof data !== "object" && !(data instanceof Array) && typeof data === "boolean") {
-      dataType = "boolean";
-    }
-    if (typeof data !== "object" && !(data instanceof Array) && typeof data === "number") {
-      dataType = "number";
-    }
-    if (typeof data !== "object" && !(data instanceof Array) && typeof data === "string") {
-      dataType = "string";
-    }
-    if (typeof data !== "object" && !(data instanceof Array) && moment(data).isValid()
-      && ((typeof data === "number" && data.toString().length > 9) || (typeof data !== "number"))) {
-      dataType = "date";
-    }
-
+    const dataType = getDataType(data);
     objectMapper[newUniqueKey] = dataType;
 
     return (
@@ -180,6 +215,13 @@ function ObjectExplorer(props) {
 
   return (
     <div style={styles.container}>
+      {autoSelect && xAxisField && (
+        <div style={styles.autoSelectMessage}>
+          {"We selected the "}
+          <span style={styles.selectedField}>{xAxisField.replace("root[].", "").replace("root.", "")}</span>
+          {" field for you"}
+        </div>
+      )}
       <Accordion styled fluid style={{ maxHeight: "400px", overflow: "auto" }}>
         <Accordion.Title
           active={visualiseDataset}
@@ -223,6 +265,14 @@ function ObjectExplorer(props) {
 const styles = {
   container: {
     flex: 1,
+  },
+  selectedField: {
+    color: secondary,
+  },
+  autoSelectMessage: {
+    paddingLeft: 5,
+    borderLeft: `solid 3px ${secondary}`,
+    marginBottom: 10,
   },
 };
 
