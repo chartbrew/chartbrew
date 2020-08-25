@@ -1,10 +1,13 @@
 FROM node:10
 
 WORKDIR /code
-# COPY . .
+COPY . .
+
+# install rsync
+RUN apt-get update && apt-get install -y rsync
 
 RUN npm install
-run npm run setup
+RUN npm run setup
 RUN cd client && npm install
 RUN cd server && npm install
 
