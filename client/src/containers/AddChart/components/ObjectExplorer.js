@@ -64,17 +64,28 @@ function ObjectExplorer(props) {
   useEffect(() => {
     if (!xAxisField) {
       let autoKey;
+      let potentialKey;
       if (objectData instanceof Array) {
         Object.keys(objectData[0]).map((key) => {
           const dataType = getDataType(objectData[0][key]);
-          if (dataType === "date" && key.toLowerCase().indexOf("created") > -1) {
+          if (dataType === "date"
+            && (key.toLowerCase().indexOf("created") > -1
+              || key.toLowerCase().indexOf("timestamp") > -1)
+          ) {
             autoKey = `root[].${key}`;
             setAutoSelect(true);
+          }
+          if (dataType === "date") {
+            potentialKey = `root[].${key}`;
           }
           return key;
         });
 
         if (autoKey) onChange(autoKey);
+        if (!autoKey && potentialKey) {
+          setAutoSelect(true);
+          onChange(potentialKey);
+        }
       } else {
         Object.keys(objectData).map((key) => {
           const dataType = getDataType(objectData[key]);
@@ -82,10 +93,17 @@ function ObjectExplorer(props) {
             autoKey = `root.${key}`;
             setAutoSelect(true);
           }
+          if (dataType === "date") {
+            potentialKey = `root.${key}`;
+          }
           return key;
         });
 
         if (autoKey) onChange(autoKey);
+        if (!autoKey && potentialKey) {
+          setAutoSelect(true);
+          onChange(potentialKey);
+        }
       }
     }
   }, [objectData]);
