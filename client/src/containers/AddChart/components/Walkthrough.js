@@ -288,7 +288,24 @@ const steps = {
       content: ({ close }) => ( // eslint-disable-line
         <>
           <p>{"Once you identified your field, you can select it using the buttons below."}</p>
-          <p>{"Alternatively, you can write it manually in the input field, but make sure you use the right syntax. Click on a few fields to get accustomed to how it works."}</p>
+          <p>
+            You will need a
+            {" "}
+            <b>date</b>
+            {" "}
+            field for timeseries.
+          </p>
+          <p>
+            For pattern charts, you will probably want to select a
+            {" "}
+            <b>string</b>
+            {" "}
+            or
+            {" "}
+            <b>number</b>
+            {" "}
+            field.
+          </p>
           <Button
             content="Select a field"
             icon="checkmark"

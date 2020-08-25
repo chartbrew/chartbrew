@@ -26,12 +26,6 @@ function ChartSettings(props) {
   } = props;
 
   useEffect(() => {
-    if (pointRadius || pointRadius === 0) {
-      _onAddPoints(pointRadius);
-    } else {
-      _onAddPoints(3);
-    }
-
     if (startDate) {
       _onViewRange(true, true);
     }
