@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Modal, Button, Loader, Container, Placeholder, Icon,
-  Grid, Header, Label,
+  Grid, Header, Label, Popup,
 } from "semantic-ui-react";
 import _ from "lodash";
 import { toast } from "react-toastify";
@@ -235,7 +235,36 @@ function DatarequestModal(props) {
               />
             </Grid.Column>
             <Grid.Column width={9} className="objectexplorer-object-tut">
-              <Header size="small" dividing>Select a field to visualize</Header>
+              <Header size="small" dividing>
+                {"Select a field to visualize "}
+                <Popup
+                  content={(
+                    <div>
+                      <p>
+                        You will need a
+                        {" "}
+                        <b>date</b>
+                        {" "}
+                        field for timeseries.
+                      </p>
+                      <p>
+                        For pattern charts, you will probably want to select a
+                        {" "}
+                        <b>string</b>
+                        {" "}
+                        or
+                        {" "}
+                        <b>number</b>
+                        {" "}
+                        field.
+                      </p>
+                    </div>
+                  )}
+                  trigger={(
+                    <Icon name="info circle" style={styles.infoIcon} />
+                  )}
+                />
+              </Header>
               <div style={styles.fieldSelection}>
                 {"Selected field: "}
                 <Label color="blue">{dataset.xAxis && dataset.xAxis.replace("root[].", "")}</Label>
@@ -300,6 +329,9 @@ function DatarequestModal(props) {
 const styles = {
   fieldSelection: {
     marginBottom: 20,
+  },
+  infoIcon: {
+    fontSize: 16,
   },
 };
 

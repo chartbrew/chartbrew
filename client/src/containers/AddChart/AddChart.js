@@ -41,7 +41,10 @@ import {
 function AddChart(props) {
   const [activeDataset, setActiveDataset] = useState({});
   const [titleScreen, setTitleScreen] = useState(true);
-  const [newChart, setNewChart] = useState({});
+  const [newChart, setNewChart] = useState({
+    type: "line",
+    subType: "lcTimeseries",
+  });
   const [editingTitle, setEditingTitle] = useState(false);
   const [addingDataset, setAddingDataset] = useState(false);
   const [datasetName, setDatasetName] = useState("");
@@ -380,7 +383,7 @@ function AddChart(props) {
             </div>
           </div>
           <div style={styles.topBuffer}>
-            {newChart.type && newChart.subType && (
+            {match.params.chartId && newChart.type && newChart.subType && (
               <ChartSettings
                 type={newChart.type}
                 subType={newChart.subType}

@@ -5,7 +5,6 @@ export default function showTutorial(type, userData) {
 
   switch (type) {
     case "addchart":
-      console.log("compare", compareVersions(userData[type], "1.0.0-beta.8.1"));
       if (userData[type] && compareVersions(userData[type], "1.0.0-beta.8.1") < 0) {
         return true;
       }
