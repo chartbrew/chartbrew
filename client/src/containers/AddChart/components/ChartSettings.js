@@ -6,8 +6,13 @@ import {
 } from "semantic-ui-react";
 import moment from "moment";
 import { DateRangePicker } from "react-date-range";
+import { enGB } from "date-fns/locale";
+
+import "react-date-range/dist/styles.css"; // main style file
+import "react-date-range/dist/theme/default.css"; // theme css file
 
 import { secondary, primary } from "../../../config/colors";
+import { defaultStaticRanges, defaultInputRanges } from "../../../config/dateRanges";
 
 function ChartSettings(props) {
   const [initSelectionRange] = useState({
@@ -18,6 +23,8 @@ function ChartSettings(props) {
   const [dateRangeModal, setDateRangeModal] = useState(false);
   const [activeOption, setActiveOption] = useState(false);
   const [dateRange, setDateRange] = useState(initSelectionRange);
+  const [labelStartDate, setLabelStartDate] = useState("");
+  const [labelEndDate, setLabelEndDate] = useState("");
 
   const {
     type, pointRadius, displayLegend, subType,
@@ -34,6 +41,21 @@ function ChartSettings(props) {
   useEffect(() => {
     setDateRange({ startDate, endDate });
   }, [startDate, endDate]);
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      let newStartDate = moment(startDate);
+      let newEndDate = moment(endDate);
+      if (currentEndDate) {
+        const timeDiff = newEndDate.diff(newStartDate, "days");
+        newEndDate = moment().endOf("day");
+        newStartDate = newEndDate.clone().subtract(timeDiff, "days").startOf("day");
+      }
+
+      setLabelStartDate(newStartDate.format("ll"));
+      setLabelEndDate(newEndDate.format("ll"));
+    }
+  }, [currentEndDate]);
 
   const _onViewRange = (value, init) => {
     if (!value) {
@@ -123,7 +145,7 @@ function ChartSettings(props) {
                             as="a"
                             onClick={() => setDateRangeModal(true)}
                           >
-                            {moment(startDate).format("ll")}
+                            {labelStartDate}
                           </Label>
                         )}
                         {startDate && (<span> to </span>)}
@@ -133,14 +155,14 @@ function ChartSettings(props) {
                             as="a"
                             onClick={() => setDateRangeModal(true)}
                           >
-                            {moment(endDate).format("ll")}
+                            {labelEndDate}
                           </Label>
                         )}
                       </div>
                     </Form.Field>
                     <Form.Field>
                       <Checkbox
-                        label="Keep current date as end date"
+                        label="Automatically update the date range with current date"
                         toggle
                         checked={currentEndDate}
                         disabled={!dateRange.endDate}
@@ -244,6 +266,7 @@ function ChartSettings(props) {
           <Grid centered padded>
             <Segment textAlign="center" compact>
               <DateRangePicker
+                locale={enGB}
                 direction="horizontal"
                 rangeColors={[secondary, primary]}
                 ranges={[
@@ -254,6 +277,8 @@ function ChartSettings(props) {
                   } : initSelectionRange
                 ]}
                 onChange={_onChangeDateRange}
+                staticRanges={defaultStaticRanges}
+                inputRanges={defaultInputRanges}
               />
             </Segment>
           </Grid>
@@ -268,8 +293,7 @@ function ChartSettings(props) {
             onClick={() => setDateRangeModal(false)}
           />
           <Button
-            color="blue"
-            inverted
+            primary
             icon="checkmark"
             labelPosition="right"
             content="Apply date filter"

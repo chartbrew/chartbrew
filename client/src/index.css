@@ -76,3 +76,7 @@ a:hover {
   .ui.card.project-segment:hover {
     box-shadow: 0 3px 3px 0 #f69977, 0 0 0 3px #f69977 !important;
   }
+
+  .rdrInputRange span {
+    color: black;
+  }

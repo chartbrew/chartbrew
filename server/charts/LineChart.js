@@ -13,6 +13,12 @@ class LineChart {
     if (this.chart.endDate) {
       this.chart.endDate = moment(this.chart.endDate).endOf("day");
     }
+
+    // if (this.chart.currentEndDate) {
+    //   const timeDiff = this.chart.endDate.diff(this.chart.startDate, "days");
+    //   this.chart.endDate = moment();
+    //   this.chart.startDate = this.chart.endDate.subtract(timeDiff, "days");
+    // }
   }
 
   /*
@@ -58,12 +64,15 @@ class LineChart {
           const entityDate = moment(dataFinder.findField(obj, xFieldSelector, 1));
           // if there's a date range available, make sure to not include dates outside the range
           if (this.chart.startDate && this.chart.endDate) {
-            const startDate = moment(this.chart.startDate);
+            let startDate = moment(this.chart.startDate);
             let endDate = moment(this.chart.endDate);
 
             // check to see if the current date is set to be the endDate
+            // this means the startDate and endDate will move accross in time
             if (this.chart.currentEndDate) {
-              endDate = moment();
+              const timeDiff = endDate.diff(startDate, "days");
+              endDate = moment().endOf("day");
+              startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
             }
 
             if (entityDate.isAfter(moment(startDate)) && entityDate.isBefore(moment(endDate))) {
@@ -92,7 +101,11 @@ class LineChart {
           let endDate = axisData[axisData.length - 1];
           if (this.chart.startDate) startDate = moment(this.chart.startDate); // eslint-disable-line
           if (this.chart.endDate) endDate = moment(this.chart.endDate); // eslint-disable-line
-          if (this.chart.currentEndDate) endDate = moment(); // eslint-disable-line
+          if (this.chart.startDate && this.chart.endDate && this.chart.currentEndDate) {
+            const timeDiff = endDate.diff(startDate, "days");
+            endDate = moment().endOf("day");
+            startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+          }
 
           const newAxisData = [];
           let index = 0;
