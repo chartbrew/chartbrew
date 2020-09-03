@@ -241,8 +241,8 @@ function Chart(props) {
 
       <Grid stackable centered>
         {connections && charts.map((chart, index) => {
-          if (isPublic && !chart.public) return (<span key={chart.id} />);
-          if (isPublic && chart.draft) return (<span key={chart.id} />);
+          if (isPublic && !chart.public) return (<span style={{ display: "none" }} key={chart.id} />);
+          if (isPublic && chart.draft) return (<span style={{ display: "none" }} key={chart.id} />);
           if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
             if (!chart.id) return (<span key={`no_id_${index}`} />); // eslint-disable-line
 
