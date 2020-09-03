@@ -245,6 +245,7 @@ class LineChart {
           yAxes: [{
             ticks: {
               beginAtZero: true,
+              precision: 0,
             }
           }]
         }

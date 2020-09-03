@@ -163,6 +163,7 @@ class BarChart {
           yAxes: [{
             ticks: {
               beginAtZero: true,
+              precision: 0,
             }
           }]
         }
