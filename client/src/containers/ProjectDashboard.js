@@ -1,32 +1,34 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Message, Icon, Button, Container, Header, Image
+  Message, Icon, Button, Container, Header, Image, Popup
 } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 
 import Chart from "./Chart";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import dashboardImage from "../assets/290.png";
+
 /*
-  Description
+  Dashboard container (for the charts)
 */
-class ProjectDashboard extends Component {
-  componentDidMount() {
-    const { cleanErrors } = this.props;
+function ProjectDashboard(props) {
+  const {
+    cleanErrors, connections, charts, match, showDrafts
+  } = props;
+  const [refreshRequested, setRefreshRequested] = useState(false);
+
+  useEffect(() => {
     cleanErrors();
-  }
+  }, []);
 
-  render() {
-    const {
-      connections, charts, match, showDrafts,
-    } = this.props;
+  const _onCompleteRefresh = () => setRefreshRequested(false);
 
-    return (
-      <div style={styles.container}>
-        {connections.length === 0 && charts.length !== 0
+  return (
+    <div style={styles.container}>
+      {connections.length === 0 && charts.length !== 0
           && (
           <Message
             floating
@@ -44,7 +46,7 @@ class ProjectDashboard extends Component {
             </div>
           </Message>
           )}
-        {connections.length === 0 && charts.length === 0
+      {connections.length === 0 && charts.length === 0
           && (
           <Container text textAlign="center" style={{ paddingTop: 50 }}>
             <Header size="huge" textAlign="center">
@@ -70,22 +72,43 @@ class ProjectDashboard extends Component {
             </Link>
           </Container>
           )}
-        {connections.length > 0 && (
-          <Chart charts={charts} showDrafts={showDrafts} />
-        )}
-        {connections.length > 0 && charts.length > 0 && (
-          <Container textAlign="center" style={{ paddingTop: 50 }}>
-            <Link to={`/${match.params.teamId}/${match.params.projectId}/chart`}>
-              <Button secondary icon labelPosition="right" style={styles.addChartBtn}>
-                <Icon name="plus" />
-                Add a new chart
-              </Button>
-            </Link>
-          </Container>
-        )}
-      </div>
-    );
-  }
+      {connections.length > 0 && (
+        <Chart
+          charts={charts}
+          showDrafts={showDrafts}
+          refreshRequested={refreshRequested}
+          onCompleteRefresh={_onCompleteRefresh}
+        />
+      )}
+      {connections.length > 0 && charts.length > 0 && (
+      <Container textAlign="center" style={{ paddingTop: 50 }}>
+        <Link to={`/${match.params.teamId}/${match.params.projectId}/chart`}>
+          <Button secondary icon labelPosition="right" style={styles.addChartBtn}>
+            <Icon name="plus" />
+            Add a new chart
+          </Button>
+        </Link>
+      </Container>
+      )}
+
+      <Popup
+        trigger={(
+          <Button
+            primary
+            size="large"
+            circular
+            style={styles.refreshBtn}
+            icon="refresh"
+            onClick={() => setRefreshRequested(true)}
+            loading={refreshRequested}
+            />
+          )}
+        content="Refresh all charts"
+        position="left center"
+        />
+
+    </div>
+  );
 }
 
 const styles = {
@@ -96,6 +119,11 @@ const styles = {
   },
   addChartBtn: {
     boxShadow: "0 1px 10px 0 #d4d4d5, 0 0 0 1px #d4d4d5",
+  },
+  refreshBtn: {
+    position: "fixed",
+    bottom: 25,
+    right: 25,
   },
 };
 

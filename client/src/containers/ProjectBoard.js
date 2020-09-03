@@ -412,7 +412,6 @@ class ProjectBoard extends Component {
                       <Menu.Item onClick={() => this._setDraftsVisible(!showDrafts)}>
                         {menuSize === "small" && (
                           <>
-                            <Header as="h6" inverted textAlign="center" style={styles.draftsHeader}>Drafts</Header>
                             <Icon name={showDrafts ? "toggle on" : "toggle off"} size="large" />
                           </>
                         )}
@@ -420,7 +419,7 @@ class ProjectBoard extends Component {
                         {menuSize === "large" && "Show drafts"}
                       </Menu.Item>
                     )}
-                    content="Show or hide drafts"
+                    content={showDrafts ? "Hide drafts" : "Show drafts"}
                     position="right center"
                     inverted
                   />

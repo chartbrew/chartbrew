@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
@@ -22,122 +22,170 @@ import { SITE_HOST } from "../config/settings";
 /*
   This is the container that generates the Charts together with the menu
 */
-class Chart extends Component {
-  constructor(props) {
-    super(props);
+function Chart(props) {
+  const {
+    updateChart, match, changeOrder, runQuery, removeChart, refreshRequested,
+    team, user, charts, isPublic, connections, showDrafts, onCompleteRefresh,
+  } = props;
 
-    this.state = {
-      chartLoading: false,
-    };
-  }
+  const [chartLoading, setChartLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [selectedChart, setSelectedChart] = useState(null);
+  const [publicModal, setPublicModal] = useState(false);
+  const [embedModal, setEmbedModal] = useState(false);
+  const [updateModal, setUpdateModal] = useState(false);
+  const [updateFrequency, setUpdateFrequency] = useState(false);
+  const [autoUpdateLoading, setAutoUpdateLoading] = useState(false);
+  const [publicLoading, setPublicLoading] = useState(false);
 
-  _onChangeSize = (chartId, size) => {
-    const { updateChart, match } = this.props;
-    this.setState({ chartLoading: chartId });
+  useEffect(() => {
+    if (refreshRequested) {
+      _onRefreshAll();
+    }
+  }, [refreshRequested]);
+
+  const _onRefreshAll = () => {
+    const refreshPromises = [];
+    for (let i = 0; i < charts.length; i++) {
+      refreshPromises.push(
+        runQuery(match.params.projectId, charts[i].id)
+          .then(() => {
+            chartLoading(false);
+          })
+          .catch((error) => {
+            if (error === 413) {
+              setChartLoading(false);
+            } else {
+              setChartLoading(false);
+            }
+          })
+      );
+    }
+
+    return Promise.all(refreshPromises)
+      .then(() => {
+        onCompleteRefresh();
+      })
+      .catch(() => {
+        onCompleteRefresh();
+      });
+  };
+
+  const _onChangeSize = (chartId, size) => {
+    setChartLoading(chartId);
     updateChart(
       match.params.projectId,
       chartId,
       { chartSize: size }
     )
       .then(() => {
-        this.setState({ chartLoading: false });
+        setChartLoading(false);
       })
       .catch(() => {
-        this.setState({ chartLoading: false, error: true });
+        setChartLoading(false);
+        setError(true);
       });
-  }
+  };
 
-  _onChangeOrder = (chartId, otherId) => {
-    const { match, changeOrder } = this.props;
-
-    this.setState({ chartLoading: chartId });
+  const _onChangeOrder = (chartId, otherId) => {
+    setChartLoading(chartId);
     changeOrder(
       match.params.projectId,
       chartId,
       otherId
     )
       .then(() => {
-        this.setState({ chartLoading: false });
+        setChartLoading(false);
       })
       .catch(() => {
-        this.setState({ chartLoading: false, error: true });
+        setChartLoading(false);
+        setError(true);
       });
-  }
+  };
 
-  _onGetChartData = (chartId) => {
-    const { runQuery, match } = this.props;
-    this.setState({ chartLoading: chartId });
+  const _onGetChartData = (chartId) => {
+    setChartLoading(chartId);
     runQuery(match.params.projectId, chartId)
       .then(() => {
-        this.setState({ chartLoading: false });
+        chartLoading(false);
       })
       .catch((error) => {
         if (error === 413) {
-          this.setState({ chartLoading: false });
+          setChartLoading(false);
         } else {
-          this.setState({ chartLoading: false, error: true });
+          setChartLoading(false);
+          setError(true);
         }
       });
-  }
+  };
 
-  _onDeleteChartConfirmation = (chartId) => {
-    this.setState({ deleteModal: chartId });
-  }
+  const _onDeleteChartConfirmation = (chartId) => {
+    setDeleteModal(chartId);
+  };
 
-  _onDeleteChart = () => {
-    const { removeChart, match } = this.props;
-    const { deleteModal } = this.state;
-
-    this.setState({ chartLoading: deleteModal });
+  const _onDeleteChart = () => {
+    setChartLoading(deleteModal);
     removeChart(match.params.projectId, deleteModal)
       .then(() => {
-        this.setState({ chartLoading: false, deleteModal: false });
+        setChartLoading(false);
+        setDeleteModal(false);
       })
       .catch(() => {
-        this.setState({ chartLoading: false, error: true, deleteModal: false });
+        setChartLoading(false);
+        setError(true);
+        setDeleteModal(false);
       });
-  }
+  };
 
-  _onPublicConfirmation = (chart) => {
+  const _onPublicConfirmation = (chart) => {
     if (chart.public) {
-      this.setState({ selectedChart: chart }, () => {
-        this._onPublic();
-      });
+      setSelectedChart(chart);
+      setTimeout(() => {
+        _onPublic();
+      }, 100);
     } else {
-      this.setState({ publicModal: true, selectedChart: chart });
+      setPublicModal(true);
+      setSelectedChart(chart);
     }
-  }
+  };
 
-  _onPublic = () => {
-    const { updateChart, match } = this.props;
-    const { selectedChart } = this.state;
+  const _onPublic = () => {
+    setSelectedChart(selectedChart);
+    setPublicModal(false);
+    setPublicLoading(true);
 
-    this.setState({ chartLoading: selectedChart, publicModal: false });
     updateChart(
       match.params.projectId,
       selectedChart.id,
       { public: !selectedChart.public }
     )
       .then(() => {
-        this.setState({ chartLoading: false, selectedChart: false });
+        setChartLoading(false);
+        setSelectedChart(false);
+        setPublicLoading(false);
       })
       .catch(() => {
-        this.setState({ chartLoading: false, error: true, selectedChart: false });
+        setChartLoading(false);
+        setSelectedChart(false);
+        setError(true);
+        setPublicLoading(false);
       });
-  }
+  };
 
-  _onEmbed = (chart) => {
-    this.setState({ selectedChart: chart, embedModal: true });
-  }
+  const _onEmbed = (chart) => {
+    setSelectedChart(chart);
+    setEmbedModal(true);
+  };
 
-  _openUpdateModal = (chart) => {
-    this.setState({ updateModal: true, selectedChart: chart, updateFrequency: chart.autoUpdate });
-  }
+  const _openUpdateModal = (chart) => {
+    setUpdateModal(true);
+    setSelectedChart(chart);
+    setUpdateFrequency(chart.autoUpdate);
+  };
 
-  _onChangeAutoUpdate = () => {
-    const { updateChart, match } = this.props;
-    const { selectedChart, updateFrequency } = this.state;
-    this.setState({ autoUpdateLoading: true });
+  const _onChangeAutoUpdate = () => {
+    setAutoUpdateLoading(true);
 
     updateChart(
       match.params.projectId,
@@ -145,55 +193,36 @@ class Chart extends Component {
       { autoUpdate: updateFrequency }
     )
       .then(() => {
-        this.setState({ autoUpdateLoading: false, updateModal: false, selectedChart: false });
+        setAutoUpdateLoading(false);
+        setUpdateModal(false);
+        setSelectedChart(false);
       })
       .catch(() => {
-        this.setState({ autoUpdateLoading: false, error: true, selectedChart: false });
+        setAutoUpdateLoading(false);
+        setError(true);
+        setUpdateModal(false);
+        setSelectedChart(false);
       });
-  }
+  };
 
-  _getUserRole = () => {
-    const { team, user } = this.props;
-    if (!team.TeamRoles) return "guest";
-
-    let teamRole = "guest";
-    for (let i = 0; i < team.TeamRoles.length; i++) {
-      if (team.TeamRoles[i].user_id === user.id) {
-        teamRole = team.TeamRoles[i].role;
-        break;
-      }
-    }
-
-    return teamRole;
-  }
-
-  _canAccess = (role) => {
-    const { user, team } = this.props;
+  const _canAccess = (role) => {
     return canAccess(role, user.id, team.TeamRoles);
-  }
+  };
 
-  render() {
-    const {
-      charts, isPublic, match, connections, showDrafts,
-    } = this.props;
-    const { projectId } = match.params;
-    const {
-      error, chartLoading, deleteModal, publicModal, publicLoading, embedModal,
-      updateModal, updateFrequency, autoUpdateLoading, selectedChart,
-    } = this.state;
+  const { projectId } = match.params;
 
-    return (
-      <div style={styles.container}>
-        {error
+  return (
+    <div style={styles.container}>
+      {error
           && (
           <Message
             negative
-            onDismiss={() => this.setState({ error: false })}
+            onDismiss={() => setError(false)}
             header="There was a problem with your request"
             content="This is on us, we couldn't process your request. Try to refresh the page and try again."
           />
           )}
-        {charts.length < 1
+      {charts.length < 1
           && (
           <Grid centered style={styles.addCard}>
             <Card
@@ -210,40 +239,40 @@ class Chart extends Component {
           </Grid>
           )}
 
-        <Grid stackable centered>
-          {connections && charts.map((chart, index) => {
-            if (isPublic && !chart.public) return (<span key={chart.id} />);
-            if (isPublic && chart.draft) return (<span key={chart.id} />);
-            if (chart.draft && !showDrafts) return (<span key={chart.id} />);
+      <Grid stackable centered>
+        {connections && charts.map((chart, index) => {
+          if (isPublic && !chart.public) return (<span key={chart.id} />);
+          if (isPublic && chart.draft) return (<span key={chart.id} />);
+          if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
             if (!chart.id) return (<span key={`no_id_${index}`} />); // eslint-disable-line
 
-            // get connection
-            let connection;
-            for (let i = 0; i < connections.length; i++) {
-              if (connections[i].id === chart.connection_id) {
-                connection = connections[i];
-              }
+          // get connection
+          let connection;
+          for (let i = 0; i < connections.length; i++) {
+            if (connections[i].id === chart.connection_id) {
+              connection = connections[i];
             }
+          }
 
-            return (
-              <Grid.Column width={chart.chartSize * 4} key={chart.id}>
-                <Segment attached="top" clearing>
-                  {chart.draft && (
-                    <Label color="olive" size="large" style={styles.draft}>Draft</Label>
-                  )}
-                  {this._canAccess("editor") && projectId
+          return (
+            <Grid.Column width={chart.chartSize * 4} key={chart.id}>
+              <Segment attached="top" clearing>
+                {chart.draft && (
+                <Label color="olive" size="large" style={styles.draft}>Draft</Label>
+                )}
+                {_canAccess("editor") && projectId
                     && (
                     <Dropdown icon="ellipsis vertical" direction="left" button className="icon" style={{ float: "right" }}>
                       <Dropdown.Menu>
                         <Dropdown.Item
                           icon="refresh"
                           text="Refresh data"
-                          onClick={() => this._onGetChartData(chart.id)}
+                          onClick={() => _onGetChartData(chart.id)}
                         />
                         <Dropdown.Item
                           icon="clock"
                           text="Auto-update"
-                          onClick={() => this._openUpdateModal(chart)}
+                          onClick={() => _openUpdateModal(chart)}
                         />
                         <Dropdown.Item
                           icon="pencil"
@@ -254,7 +283,7 @@ class Chart extends Component {
                         {!chart.draft && (
                           <>
                             <Dropdown.Item
-                              onClick={() => this._onPublicConfirmation(chart)}
+                              onClick={() => _onPublicConfirmation(chart)}
                             >
                               <Icon name="world" color={chart.public ? "red" : "green"} />
                               {chart.public ? "Make private" : "Make public"}
@@ -262,7 +291,7 @@ class Chart extends Component {
                             <Dropdown.Item
                               icon="code"
                               text="Embed"
-                              onClick={() => this._onEmbed(chart)}
+                              onClick={() => _onEmbed(chart)}
                             />
                           </>
                         )}
@@ -282,22 +311,22 @@ class Chart extends Component {
                             <Dropdown.Item
                               text="Small"
                               icon={chart.chartSize === 1 ? "checkmark" : false}
-                              onClick={() => this._onChangeSize(chart.id, 1)}
+                              onClick={() => _onChangeSize(chart.id, 1)}
                             />
                             <Dropdown.Item
                               text="Medium"
                               icon={chart.chartSize === 2 ? "checkmark" : false}
-                              onClick={() => this._onChangeSize(chart.id, 2)}
+                              onClick={() => _onChangeSize(chart.id, 2)}
                             />
                             <Dropdown.Item
                               text="Large"
                               icon={chart.chartSize === 3 ? "checkmark" : false}
-                              onClick={() => this._onChangeSize(chart.id, 3)}
+                              onClick={() => _onChangeSize(chart.id, 3)}
                             />
                             <Dropdown.Item
                               text="Full width"
                               icon={chart.chartSize === 4 ? "checkmark" : false}
-                              onClick={() => this._onChangeSize(chart.id, 4)}
+                              onClick={() => _onChangeSize(chart.id, 4)}
                             />
                           </Dropdown.Menu>
                         </Dropdown>
@@ -317,26 +346,26 @@ class Chart extends Component {
                               text="Move to top"
                               icon="angle double up"
                               disabled={index === 0}
-                              onClick={() => this._onChangeOrder(chart.id, "top")}
+                              onClick={() => _onChangeOrder(chart.id, "top")}
                             />
                             <Dropdown.Item
                               text="Move up"
                               icon="chevron up"
                               disabled={index === 0}
-                              onClick={() => this._onChangeOrder(chart.id, charts[index - 1].id)}
+                              onClick={() => _onChangeOrder(chart.id, charts[index - 1].id)}
                             />
                             <Dropdown.Item
                               text="Move down"
                               icon="chevron down"
                               disabled={index === charts.length - 1}
-                              onClick={() => this._onChangeOrder(chart.id, charts[index + 1].id)}
+                              onClick={() => _onChangeOrder(chart.id, charts[index + 1].id)}
                             />
                             <Dropdown.Item
                               text="Move to bottom"
                               icon="angle double down"
                               disabled={index === charts.length - 1}
                               onClick={() => {
-                                this._onChangeOrder(chart.id, "bottom");
+                                _onChangeOrder(chart.id, "bottom");
                               }}
                             />
                           </Dropdown.Menu>
@@ -345,14 +374,14 @@ class Chart extends Component {
                         <Dropdown.Item
                           icon="trash"
                           text="Delete"
-                          onClick={() => this._onDeleteChartConfirmation(chart.id)}
+                          onClick={() => _onDeleteChartConfirmation(chart.id)}
                         />
                       </Dropdown.Menu>
                     </Dropdown>
                     )}
-                  <Header style={{ display: "contents" }}>
-                    <span>
-                      {chart.public && !isPublic
+                <Header style={{ display: "contents" }}>
+                  <span>
+                    {chart.public && !isPublic
                         && (
                         <Popup
                           trigger={<Icon name="world" />}
@@ -360,9 +389,9 @@ class Chart extends Component {
                           position="bottom center"
                         />
                         )}
-                      {chart.name}
-                    </span>
-                    {connection && this._canAccess("editor") && projectId
+                    {chart.name}
+                  </span>
+                  {connection && _canAccess("editor") && projectId
                       && (
                       <Popup
                         trigger={(
@@ -378,9 +407,9 @@ class Chart extends Component {
                         position="bottom left"
                       />
                       )}
-                  </Header>
-                </Segment>
-                {chart.chartData
+                </Header>
+              </Segment>
+              {chart.chartData
                   && (
                   <Segment attached>
                     <Dimmer inverted active={chartLoading === chart.id}>
@@ -439,211 +468,211 @@ class Chart extends Component {
                     <p><small><i>{`Last Updated ${moment(chart.chartDataUpdated).calendar()}`}</i></small></p>
                   </Segment>
                   )}
-              </Grid.Column>
-            );
-          })}
-        </Grid>
+            </Grid.Column>
+          );
+        })}
+      </Grid>
 
-        {/* DELETE CONFIRMATION MODAL */}
-        <Modal open={!!deleteModal} basic size="small" onClose={() => this.setState({ deleteModal: false })}>
-          <Header
-            icon="exclamation triangle"
-            content="Are you sure you want to remove this chart?"
+      {/* DELETE CONFIRMATION MODAL */}
+      <Modal open={!!deleteModal} basic size="small" onClose={() => setDeleteModal(false)}>
+        <Header
+          icon="exclamation triangle"
+          content="Are you sure you want to remove this chart?"
           />
-          <Modal.Content>
-            <p>
-              {"All the chart data will be removed and you won't be able to see it on your dashboard anymore if you proceed with the removal."}
-            </p>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              basic
-              inverted
-              onClick={() => this.setState({ deleteModal: false })}
-            >
-              Go back
-            </Button>
-            <Button
-              color="orange"
-              inverted
-              loading={!!chartLoading}
-              onClick={this._onDeleteChart}
-            >
-              <Icon name="x" />
-              Remove completely
-            </Button>
-          </Modal.Actions>
-        </Modal>
-
-        {/* MAKE CHART PUBLIC MODAL */}
-        <Modal
-          open={publicModal}
-          basic
-          size="small"
-          onClose={() => this.setState({ publicModal: false })}
-        >
-          <Header
-            icon="exclamation triangle"
-            content="Are you sure you want to make your chart public?"
-          />
-          <Modal.Content>
-            <p>
-              {"Public charts will show in your Public Dashboard page and it can be viewed by everyone that has access to your domain. Nobody other than you and your team will be able to edit or update the chart data."}
-            </p>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              basic
-              inverted
-              onClick={() => this.setState({ publicModal: false })}
-            >
-              Go back
-            </Button>
-            <Button
-              color="teal"
-              inverted
-              loading={publicLoading}
-              onClick={this._onPublic}
-            >
-              <Icon name="checkmark" />
-              Make the chart public
-            </Button>
-          </Modal.Actions>
-        </Modal>
-
-        {/* AUTO-UPDATE MODAL */}
-        <Modal
-          open={updateModal}
-          size="small"
-          onClose={() => this.setState({ updateModal: false })}
-        >
-          <Modal.Header>
-            Set up auto-update for your chart
-          </Modal.Header>
-          <Modal.Content>
-            <Form>
-              <Form.Field>
-                <label>Select the desired frequency</label>
-                <Dropdown
-                  placeholder="Select the frequency"
-                  selection
-                  options={[{
-                    text: "Don't auto update",
-                    value: 0,
-                  }, {
-                    text: "Every minute",
-                    value: 60,
-                  }, {
-                    text: "Every 5 minutes",
-                    value: 300,
-                  }, {
-                    text: "Every 15 minutes",
-                    value: 900,
-                  }, {
-                    text: "Every 30 minutes",
-                    value: 1800,
-                  }, {
-                    text: "Every hour",
-                    value: 3600,
-                  }, {
-                    text: "Every 3 hours",
-                    value: 10800,
-                  }, {
-                    text: "Every day",
-                    value: 86400,
-                  }, {
-                    text: "Every week",
-                    value: 604800,
-                  }, {
-                    text: "Every month",
-                    value: 2592000,
-                  }]}
-                  value={updateFrequency || 0}
-                  onChange={(e, data) => this.setState({ updateFrequency: data.value })}
-                />
-              </Form.Field>
-            </Form>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              onClick={() => this.setState({ updateModal: false })}
-            >
-              Cancel
-            </Button>
-            <Button
-              primary
-              loading={autoUpdateLoading}
-              onClick={this._onChangeAutoUpdate}
-            >
-              <Icon name="checkmark" />
-              Save
-            </Button>
-          </Modal.Actions>
-        </Modal>
-
-        {/* EMBED CHART MODAL */}
-        {selectedChart && (
-          <Modal
-            open={embedModal}
+        <Modal.Content>
+          <p>
+            {"All the chart data will be removed and you won't be able to see it on your dashboard anymore if you proceed with the removal."}
+          </p>
+        </Modal.Content>
+        <Modal.Actions>
+          <Button
             basic
-            size="small"
-            onClose={() => this.setState({ embedModal: false })}
-          >
-            <Header
-              icon="code"
-              content="Embed your chart on other websites"
-            />
-            <Modal.Content>
-              <p>
-                {"Copy the following code on the website you wish to add your chart in."}
-              </p>
-              <p>
-                {"You can customize the iframe in any way you wish, but leave the 'src' attribute the way it is below."}
-              </p>
-              <Form>
-                <TextArea
-                  value={`<iframe src="${SITE_HOST}/chart/${selectedChart.id}/embedded" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0"></iframe>`}
+            inverted
+            onClick={() => setDeleteModal(false)}
+            >
+            Go back
+          </Button>
+          <Button
+            color="orange"
+            inverted
+            loading={!!chartLoading}
+            onClick={_onDeleteChart}
+            >
+            <Icon name="x" />
+            Remove completely
+          </Button>
+        </Modal.Actions>
+      </Modal>
+
+      {/* MAKE CHART PUBLIC MODAL */}
+      <Modal
+        open={publicModal}
+        basic
+        size="small"
+        onClose={() => setPublicModal(false)}
+        >
+        <Header
+          icon="exclamation triangle"
+          content="Are you sure you want to make your chart public?"
+          />
+        <Modal.Content>
+          <p>
+            {"Public charts will show in your Public Dashboard page and it can be viewed by everyone that has access to your domain. Nobody other than you and your team will be able to edit or update the chart data."}
+          </p>
+        </Modal.Content>
+        <Modal.Actions>
+          <Button
+            basic
+            inverted
+            onClick={() => setPublicModal(false)}
+            >
+            Go back
+          </Button>
+          <Button
+            color="teal"
+            inverted
+            loading={publicLoading}
+            onClick={_onPublic}
+            >
+            <Icon name="checkmark" />
+            Make the chart public
+          </Button>
+        </Modal.Actions>
+      </Modal>
+
+      {/* AUTO-UPDATE MODAL */}
+      <Modal
+        open={updateModal}
+        size="small"
+        onClose={() => setUpdateModal(false)}
+        >
+        <Modal.Header>
+          Set up auto-update for your chart
+        </Modal.Header>
+        <Modal.Content>
+          <Form>
+            <Form.Field>
+              <label>Select the desired frequency</label>
+              <Dropdown
+                placeholder="Select the frequency"
+                selection
+                options={[{
+                  text: "Don't auto update",
+                  value: 0,
+                }, {
+                  text: "Every minute",
+                  value: 60,
+                }, {
+                  text: "Every 5 minutes",
+                  value: 300,
+                }, {
+                  text: "Every 15 minutes",
+                  value: 900,
+                }, {
+                  text: "Every 30 minutes",
+                  value: 1800,
+                }, {
+                  text: "Every hour",
+                  value: 3600,
+                }, {
+                  text: "Every 3 hours",
+                  value: 10800,
+                }, {
+                  text: "Every day",
+                  value: 86400,
+                }, {
+                  text: "Every week",
+                  value: 604800,
+                }, {
+                  text: "Every month",
+                  value: 2592000,
+                }]}
+                value={updateFrequency || 0}
+                onChange={(e, data) => setUpdateFrequency(data.value)}
                 />
-              </Form>
-            </Modal.Content>
-            <Modal.Actions>
-              {selectedChart.public && (
-                <Button
-                  basic
-                  inverted
-                  onClick={() => this.setState({ embedModal: false })}
+            </Form.Field>
+          </Form>
+        </Modal.Content>
+        <Modal.Actions>
+          <Button
+            onClick={() => setUpdateModal(false)}
+            >
+            Cancel
+          </Button>
+          <Button
+            primary
+            loading={autoUpdateLoading}
+            onClick={_onChangeAutoUpdate}
+            >
+            <Icon name="checkmark" />
+            Save
+          </Button>
+        </Modal.Actions>
+      </Modal>
+
+      {/* EMBED CHART MODAL */}
+      {selectedChart && (
+      <Modal
+        open={embedModal}
+        basic
+        size="small"
+        onClose={() => setEmbedModal(false)}
+          >
+        <Header
+          icon="code"
+          content="Embed your chart on other websites"
+            />
+        <Modal.Content>
+          <p>
+            {"Copy the following code on the website you wish to add your chart in."}
+          </p>
+          <p>
+            {"You can customize the iframe in any way you wish, but leave the 'src' attribute the way it is below."}
+          </p>
+          <Form>
+            <TextArea
+              value={`<iframe src="${SITE_HOST}/chart/${selectedChart.id}/embedded" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0"></iframe>`}
+                />
+          </Form>
+        </Modal.Content>
+        <Modal.Actions>
+          {selectedChart.public && (
+          <Button
+            basic
+            inverted
+            onClick={() => setEmbedModal(false)}
                 >
-                  Done
-                </Button>
-              )}
-              {!selectedChart.public && (
-                <Button
-                  basic
-                  inverted
-                  onClick={() => this.setState({ embedModal: false })}
+            Done
+          </Button>
+          )}
+          {!selectedChart.public && (
+          <Button
+            basic
+            inverted
+            onClick={() => setEmbedModal(false)}
                 >
-                  Cancel
-                </Button>
-              )}
-              {!selectedChart.public && (
-                <Button
-                  color="teal"
-                  inverted
-                  onClick={() => {
-                    this._onPublic();
-                    this.setState({ embedModal: false });
-                  }}
+            Cancel
+          </Button>
+          )}
+          {!selectedChart.public && (
+          <Button
+            color="teal"
+            inverted
+            onClick={() => {
+              _onPublic();
+              setEmbedModal(false);
+            }}
                 >
-                  Make public
-                </Button>
-              )}
-            </Modal.Actions>
-          </Modal>
-        )}
-      </div>
-    );
-  }
+            Make public
+          </Button>
+          )}
+        </Modal.Actions>
+      </Modal>
+      )}
+    </div>
+  );
 }
+
 const styles = {
   container: {
     flex: 1,
@@ -659,6 +688,8 @@ const styles = {
 Chart.defaultProps = {
   isPublic: false,
   showDrafts: true,
+  refreshRequested: false,
+  onCompleteRefresh: () => {},
 };
 
 Chart.propTypes = {
@@ -673,6 +704,8 @@ Chart.propTypes = {
   user: PropTypes.object.isRequired,
   isPublic: PropTypes.bool,
   showDrafts: PropTypes.bool,
+  refreshRequested: PropTypes.bool,
+  onCompleteRefresh: PropTypes.func,
 };
 
 const mapStateToProps = (state) => {
