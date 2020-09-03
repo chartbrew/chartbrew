@@ -1,6 +1,7 @@
 {
     "eslint.workingDirectories": [
         "server",
-        "client"
+        "client",
+        "client/src/config"
     ]
 }
