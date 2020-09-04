@@ -38,6 +38,7 @@ function Chart(props) {
   const [updateFrequency, setUpdateFrequency] = useState(false);
   const [autoUpdateLoading, setAutoUpdateLoading] = useState(false);
   const [publicLoading, setPublicLoading] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
     if (refreshRequested) {
@@ -209,6 +210,9 @@ function Chart(props) {
     return canAccess(role, user.id, team.TeamRoles);
   };
 
+  const _activateMenu = (chartId) => setMenuVisible(chartId);
+  const _deactivateMenu = () => setMenuVisible(false);
+
   const { projectId } = match.params;
 
   return (
@@ -256,218 +260,229 @@ function Chart(props) {
 
           return (
             <Grid.Column width={chart.chartSize * 4} key={chart.id}>
-              <Segment attached="top" clearing>
-                {chart.draft && (
-                <Label color="olive" size="large" style={styles.draft}>Draft</Label>
-                )}
+              <Segment
+                style={styles.chartContainer}
+                onMouseEnter={() => _activateMenu(chart.id)}
+                onMouseLeave={() => _deactivateMenu()}
+              >
                 {_canAccess("editor") && projectId
                     && (
-                    <Dropdown icon="ellipsis vertical" direction="left" button className="icon" style={{ float: "right" }}>
-                      <Dropdown.Menu>
-                        <Dropdown.Item
-                          icon="refresh"
-                          text="Refresh data"
-                          onClick={() => _onGetChartData(chart.id)}
-                        />
-                        <Dropdown.Item
-                          icon="clock"
-                          text="Auto-update"
-                          onClick={() => _openUpdateModal(chart)}
-                        />
-                        <Dropdown.Item
-                          icon="pencil"
-                          text="Edit"
-                          as={Link}
-                          to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}
-                        />
-                        {!chart.draft && (
-                          <>
-                            <Dropdown.Item
-                              onClick={() => _onPublicConfirmation(chart)}
-                            >
-                              <Icon name="world" color={chart.public ? "red" : "green"} />
-                              {chart.public ? "Make private" : "Make public"}
-                            </Dropdown.Item>
-                            <Dropdown.Item
-                              icon="code"
-                              text="Embed"
-                              onClick={() => _onEmbed(chart)}
-                            />
-                          </>
-                        )}
-                        <Dropdown.Divider />
-                        <Dropdown
-                          item
-                          icon={false}
-                          trigger={(
-                            <p style={{ marginBottom: 0 }}>
-                              <Icon name="caret left" />
-                              {" "}
-                              Size
-                            </p>
+                      <Dropdown
+                        icon={menuVisible === chart.id ? "ellipsis vertical" : ""}
+                        direction="left"
+                        button
+                        className="icon"
+                        style={styles.menuBtn}
+                      >
+                        <Dropdown.Menu>
+                          <Dropdown.Item
+                            icon="refresh"
+                            text="Refresh data"
+                            onClick={() => _onGetChartData(chart.id)}
+                          />
+                          <Dropdown.Item
+                            icon="clock"
+                            text="Auto-update"
+                            onClick={() => _openUpdateModal(chart)}
+                          />
+                          <Dropdown.Item
+                            icon="pencil"
+                            text="Edit"
+                            as={Link}
+                            to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}
+                          />
+                          {!chart.draft && (
+                            <>
+                              <Dropdown.Item
+                                onClick={() => _onPublicConfirmation(chart)}
+                              >
+                                <Icon name="world" color={chart.public ? "red" : "green"} />
+                                {chart.public ? "Make private" : "Make public"}
+                              </Dropdown.Item>
+                              <Dropdown.Item
+                                icon="code"
+                                text="Embed"
+                                onClick={() => _onEmbed(chart)}
+                              />
+                            </>
                           )}
-                        >
-                          <Dropdown.Menu>
-                            <Dropdown.Item
-                              text="Small"
-                              icon={chart.chartSize === 1 ? "checkmark" : false}
-                              onClick={() => _onChangeSize(chart.id, 1)}
-                            />
-                            <Dropdown.Item
-                              text="Medium"
-                              icon={chart.chartSize === 2 ? "checkmark" : false}
-                              onClick={() => _onChangeSize(chart.id, 2)}
-                            />
-                            <Dropdown.Item
-                              text="Large"
-                              icon={chart.chartSize === 3 ? "checkmark" : false}
-                              onClick={() => _onChangeSize(chart.id, 3)}
-                            />
-                            <Dropdown.Item
-                              text="Full width"
-                              icon={chart.chartSize === 4 ? "checkmark" : false}
-                              onClick={() => _onChangeSize(chart.id, 4)}
-                            />
-                          </Dropdown.Menu>
-                        </Dropdown>
-                        <Dropdown
-                          item
-                          icon={false}
-                          trigger={(
-                            <p style={{ marginBottom: 0 }}>
-                              <Icon name="caret left" />
-                              {" "}
-                              Order
-                            </p>
-                          )}
-                        >
-                          <Dropdown.Menu>
-                            <Dropdown.Item
-                              text="Move to top"
-                              icon="angle double up"
-                              disabled={index === 0}
-                              onClick={() => _onChangeOrder(chart.id, "top")}
-                            />
-                            <Dropdown.Item
-                              text="Move up"
-                              icon="chevron up"
-                              disabled={index === 0}
-                              onClick={() => _onChangeOrder(chart.id, charts[index - 1].id)}
-                            />
-                            <Dropdown.Item
-                              text="Move down"
-                              icon="chevron down"
-                              disabled={index === charts.length - 1}
-                              onClick={() => _onChangeOrder(chart.id, charts[index + 1].id)}
-                            />
-                            <Dropdown.Item
-                              text="Move to bottom"
-                              icon="angle double down"
-                              disabled={index === charts.length - 1}
-                              onClick={() => {
-                                _onChangeOrder(chart.id, "bottom");
-                              }}
-                            />
-                          </Dropdown.Menu>
-                        </Dropdown>
-                        <Dropdown.Divider />
-                        <Dropdown.Item
-                          icon="trash"
-                          text="Delete"
-                          onClick={() => _onDeleteChartConfirmation(chart.id)}
-                        />
-                      </Dropdown.Menu>
-                    </Dropdown>
+                          <Dropdown.Divider />
+                          <Dropdown
+                            item
+                            icon={false}
+                            trigger={(
+                              <p style={{ marginBottom: 0 }}>
+                                <Icon name="caret left" />
+                                {" "}
+                                Size
+                              </p>
+                            )}
+                          >
+                            <Dropdown.Menu>
+                              <Dropdown.Item
+                                text="Small"
+                                icon={chart.chartSize === 1 ? "checkmark" : false}
+                                onClick={() => _onChangeSize(chart.id, 1)}
+                              />
+                              <Dropdown.Item
+                                text="Medium"
+                                icon={chart.chartSize === 2 ? "checkmark" : false}
+                                onClick={() => _onChangeSize(chart.id, 2)}
+                              />
+                              <Dropdown.Item
+                                text="Large"
+                                icon={chart.chartSize === 3 ? "checkmark" : false}
+                                onClick={() => _onChangeSize(chart.id, 3)}
+                              />
+                              <Dropdown.Item
+                                text="Full width"
+                                icon={chart.chartSize === 4 ? "checkmark" : false}
+                                onClick={() => _onChangeSize(chart.id, 4)}
+                              />
+                            </Dropdown.Menu>
+                          </Dropdown>
+                          <Dropdown
+                            item
+                            icon={false}
+                            trigger={(
+                              <p style={{ marginBottom: 0 }}>
+                                <Icon name="caret left" />
+                                {" "}
+                                Order
+                              </p>
+                            )}
+                          >
+                            <Dropdown.Menu>
+                              <Dropdown.Item
+                                text="Move to top"
+                                icon="angle double up"
+                                disabled={index === 0}
+                                onClick={() => _onChangeOrder(chart.id, "top")}
+                              />
+                              <Dropdown.Item
+                                text="Move up"
+                                icon="chevron up"
+                                disabled={index === 0}
+                                onClick={() => _onChangeOrder(chart.id, charts[index - 1].id)}
+                              />
+                              <Dropdown.Item
+                                text="Move down"
+                                icon="chevron down"
+                                disabled={index === charts.length - 1}
+                                onClick={() => _onChangeOrder(chart.id, charts[index + 1].id)}
+                              />
+                              <Dropdown.Item
+                                text="Move to bottom"
+                                icon="angle double down"
+                                disabled={index === charts.length - 1}
+                                onClick={() => {
+                                  _onChangeOrder(chart.id, "bottom");
+                                }}
+                              />
+                            </Dropdown.Menu>
+                          </Dropdown>
+                          <Dropdown.Divider />
+                          <Dropdown.Item
+                            icon="trash"
+                            text="Delete"
+                            onClick={() => _onDeleteChartConfirmation(chart.id)}
+                          />
+                        </Dropdown.Menu>
+                      </Dropdown>
                     )}
                 <Header style={{ display: "contents" }}>
+                  {chart.draft && (
+                    <Label color="olive" style={styles.draft}>Draft</Label>
+                  )}
                   <span>
                     {chart.public && !isPublic
                         && (
-                        <Popup
-                          trigger={<Icon name="world" />}
-                          content="This chart is public"
-                          position="bottom center"
-                        />
+                          <Popup
+                            trigger={<Icon name="world" />}
+                            content="This chart is public"
+                            position="bottom center"
+                          />
                         )}
                     {chart.name}
                   </span>
                   {connection && _canAccess("editor") && projectId
                       && (
-                      <Popup
-                        trigger={(
-                          <Header.Subheader>
-                            {connection.name}
-                            <Icon
-                              name={connection.active ? "plug" : "pause"}
-                              color={connection.active ? "green" : "orange"}
-                            />
-                          </Header.Subheader>
-                        )}
-                        content={connection.active ? "Connection active" : "Connection not active"}
-                        position="bottom left"
-                      />
+                        <Popup
+                          trigger={(
+                            <Header.Subheader>
+                              {connection.name}
+                              <Icon
+                                name={connection.active ? "plug" : "pause"}
+                                color={connection.active ? "green" : "orange"}
+                              />
+                            </Header.Subheader>
+                          )}
+                          content={connection.active ? "Connection active" : "Connection not active"}
+                          position="bottom left"
+                        />
                       )}
                 </Header>
-              </Segment>
-              {chart.chartData
-                  && (
-                  <Segment attached>
+                {chart.chartData && (
+                  <>
                     <Dimmer inverted active={chartLoading === chart.id}>
                       <Loader inverted />
                     </Dimmer>
-                    <div style={{ maxHeight: "30em" }}>
+                    <div style={styles.mainChartArea}>
                       {chart.type === "line"
-                        && (
-                        <Line
-                          data={chart.chartData.data}
-                          options={chart.chartData.options}
-                          height={300}
-                        />
-                        )}
+                              && (
+                              <Line
+                                data={chart.chartData.data}
+                                options={chart.chartData.options}
+                                height={300}
+                              />
+                              )}
                       {chart.type === "bar"
-                        && (
-                        <Bar
-                          data={chart.chartData.data}
-                          options={chart.chartData.options}
-                          height={300}
-                        />
-                        )}
+                              && (
+                              <Bar
+                                data={chart.chartData.data}
+                                options={chart.chartData.options}
+                                height={300}
+                              />
+                              )}
                       {chart.type === "pie"
-                        && (
-                        <Pie
-                          data={chart.chartData.data}
-                          options={chart.chartData.options}
-                          height={300}
-                        />
-                        )}
+                              && (
+                              <Pie
+                                data={chart.chartData.data}
+                                options={chart.chartData.options}
+                                height={300}
+                              />
+                              )}
                       {chart.type === "doughnut"
-                        && (
-                        <Doughnut
-                          data={chart.chartData.data}
-                          options={chart.chartData.options}
-                          height={300}
-                        />
-                        )}
+                              && (
+                              <Doughnut
+                                data={chart.chartData.data}
+                                options={chart.chartData.options}
+                                height={300}
+                              />
+                              )}
                       {chart.type === "radar"
-                        && (
-                        <Radar
-                          data={chart.chartData.data}
-                          options={chart.chartData.options}
-                          height={300}
-                        />
-                        )}
+                              && (
+                              <Radar
+                                data={chart.chartData.data}
+                                options={chart.chartData.options}
+                                height={300}
+                              />
+                              )}
                       {chart.type === "polar"
-                        && (
-                        <Polar
-                          data={chart.chartData.data}
-                          options={chart.chartData.options}
-                          height={300}
-                        />
-                        )}
+                              && (
+                              <Polar
+                                data={chart.chartData.data}
+                                options={chart.chartData.options}
+                                height={300}
+                              />
+                              )}
                     </div>
-                    <p><small><i>{`Last Updated ${moment(chart.chartDataUpdated).calendar()}`}</i></small></p>
-                  </Segment>
-                  )}
+                    <div style={styles.chartFooter}>
+                      <p><small><i>{`Last Updated ${moment(chart.chartDataUpdated).calendar()}`}</i></small></p>
+                    </div>
+                  </>
+                )}
+              </Segment>
             </Grid.Column>
           );
         })}
@@ -682,6 +697,26 @@ const styles = {
   },
   draft: {
     marginRight: 10,
+  },
+  chartContainer: {
+    borderRadius: 6,
+    boxShadow: "0 2px 5px 0 rgba(51, 51, 79, .07)",
+    border: "none",
+    padding: 15,
+  },
+  chartFooter: {
+    paddingTop: 10,
+  },
+  mainChartArea: {
+    paddingTop: 10,
+    paddingBottom: 10,
+    height: "25em",
+  },
+  menuBtn: {
+    position: "absolute",
+    right: 10,
+    top: 10,
+    backgroundColor: "transparent",
   },
 };
 
