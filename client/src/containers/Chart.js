@@ -109,7 +109,7 @@ function Chart(props) {
     setChartLoading(chartId);
     runQuery(match.params.projectId, chartId)
       .then(() => {
-        chartLoading(false);
+        setChartLoading(false);
       })
       .catch((error) => {
         if (error === 413) {
