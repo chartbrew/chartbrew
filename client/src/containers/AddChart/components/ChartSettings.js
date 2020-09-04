@@ -162,7 +162,7 @@ function ChartSettings(props) {
                     </Form.Field>
                     <Form.Field>
                       <Checkbox
-                        label="Automatically update the date range with current date"
+                        label="Keep the date range updated with current dates"
                         toggle
                         checked={currentEndDate}
                         disabled={!dateRange.endDate}
