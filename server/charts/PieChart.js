@@ -1,4 +1,5 @@
 const BarChart = require("./BarChart");
+const tooltipsStyle = require("./tooltipsStyle");
 
 class PieChart {
   constructor(data) {
@@ -14,6 +15,7 @@ class PieChart {
       xAxes: [{ display: false }],
       yAxes: [{ display: false }],
     };
+    config.options.tooltips = tooltipsStyle;
 
     return new Promise((resolve) => resolve(config));
   }

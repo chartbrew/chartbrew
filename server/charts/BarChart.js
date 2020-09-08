@@ -1,5 +1,6 @@
 const LineChart = require("./LineChart");
 const dataFinder = require("../modules/dataFinder");
+const tooltipsStyle = require("./tooltipsStyle");
 
 // HELPER FUNCTIONS
 function isDuplicate(key, dataset) {
@@ -164,9 +165,16 @@ class BarChart {
             ticks: {
               beginAtZero: true,
               precision: 0,
-            }
-          }]
-        }
+              fontFamily: "Inter",
+            },
+          }],
+          xAxes: [{
+            ticks: {
+              fontFamily: "Inter",
+            },
+          }],
+        },
+        tooltips: tooltipsStyle,
       }
     };
 

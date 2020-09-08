@@ -1,5 +1,6 @@
 const moment = require("moment");
 const dataFinder = require("../modules/dataFinder");
+const tooltipsStyle = require("./tooltipsStyle");
 
 class LineChart {
   constructor(data) {
@@ -246,9 +247,16 @@ class LineChart {
             ticks: {
               beginAtZero: true,
               precision: 0,
+              fontFamily: "Inter",
             }
-          }]
-        }
+          }],
+          xAxes: [{
+            ticks: {
+              fontFamily: "Inter",
+            },
+          }],
+        },
+        tooltips: tooltipsStyle,
       }
     };
 
