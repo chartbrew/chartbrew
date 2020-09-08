@@ -268,11 +268,12 @@ function Chart(props) {
                 {_canAccess("editor") && projectId
                     && (
                       <Dropdown
-                        icon={menuVisible === chart.id ? "ellipsis vertical" : ""}
+                        icon={menuVisible === chart.id ? "ellipsis horizontal" : ""}
                         direction="left"
                         button
-                        className="icon"
-                        style={styles.menuBtn}
+                        basic
+                        className="circular icon"
+                        style={styles.menuBtn(menuVisible === chart.id)}
                       >
                         <Dropdown.Menu>
                           <Dropdown.Item
@@ -712,12 +713,13 @@ const styles = {
     paddingBottom: 10,
     height: "25em",
   },
-  menuBtn: {
+  menuBtn: (hovered) => ({
     position: "absolute",
     right: 10,
     top: 10,
-    backgroundColor: "transparent",
-  },
+    backgroundColor: !hovered && "transparent",
+    boxShadow: !hovered && "none",
+  }),
 };
 
 Chart.defaultProps = {
