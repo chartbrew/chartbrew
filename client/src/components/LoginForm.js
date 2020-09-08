@@ -27,6 +27,14 @@ class LoginForm extends Component {
     };
   }
 
+  componentDidMount() {
+    document.addEventListener("oneaccount-authenticated", this.authenticateOneaccount);
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener("oneaccount-authenticated", this.authenticateOneaccount);
+  }
+
   _onSendResetRequest = () => {
     const { requestPasswordReset } = this.props;
     const { resetEmail } = this.state;
@@ -56,24 +64,18 @@ class LoginForm extends Component {
       });
   }
 
-  socialSignin() {
-    if (window.oneaccount) {
-      window.oneaccount.setOnAuth((token, uuid) => {
-        const values = { token, uuid };
-        const { oneaccountAuth, history } = this.props;
-
-        this.setState({ oaloading: true });
-        oneaccountAuth(values)
-          .then(() => {
-            this.setState({ oaloading: false });
-
-            history.push("/user");
-          })
-          .catch(() => {
-            this.setState({ oaloading: false });
-          });
+  authenticateOneaccount = (event) => {
+    const { oneaccountAuth, history } = this.props;
+    const data = event.detail;
+    this.setState({ oaloading: true });
+    oneaccountAuth(data)
+      .then(() => {
+        this.setState({ oaloading: false });
+        history.push("/user");
       });
-    }
+  }
+
+  socialSignin() {
     const { oaloading } = this.state;
     return (
       <Container>

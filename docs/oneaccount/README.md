@@ -16,7 +16,7 @@ Click the “Sign in/up” button on the top right on [oneaccount.app ](https://
 
 Fill in the required fields:
   - App logo & App name
-  - Callback URL - `{API_HOST}/user/oneaccount-callback`
+  - Callback URL - `{API_HOST}/oneaccountauth`
     - `API_HOST` is the address where you're hosting the Node app from `/server`
   - Requested data
     - Email (required)
@@ -31,7 +31,7 @@ Fill in the required fields:
   Only request the data that's absolutely required. The less data you request the more users are likely to provide it. If you need extra data, make it `not required` so users can use your system even without providing some data. 
 :::
 
-**Save it and press on the integrate button** and copy the `externalId` value
+**Save it** and copy the `externalId` value (press `Copy external id` button)
 
 ## App integration
 

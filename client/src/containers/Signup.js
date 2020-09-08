@@ -32,8 +32,13 @@ class Signup extends Component {
   }
 
   componentDidMount() {
+    document.addEventListener("oneaccount-authenticated", this.authenticateOneaccount);
     const { cleanErrors } = this.props;
     cleanErrors();
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener("oneaccount-authenticated", this.authenticateOneaccount);
   }
 
   submitUser = (values) => {
@@ -74,30 +79,26 @@ class Signup extends Component {
       });
   }
 
-  socialSignup() {
-    if (window.oneaccount) {
-      window.oneaccount.setOnAuth((token, uuid) => {
-        const values = { token, uuid };
-        const { oneaccountAuth, history } = this.props;
+  authenticateOneaccount = (event) => {
+    const { oneaccountAuth, history } = this.props;
+    const data = event.detail;
 
-        const parsedParams = queryString.parse(document.location.search.slice(1));
-        this.setState({ oaloading: true });
-        if (parsedParams.inviteToken) {
-          this._createInvitedUser(values, parsedParams.inviteToken);
-        } else {
-          oneaccountAuth(values)
-            .then(() => {
-              this.setState({ oaloading: false });
-
-              history.push("/user");
-            })
-            .catch(() => {
-              this.setState({ oaloading: false });
-            });
-        }
-      });
+    const parsedParams = queryString.parse(document.location.search.slice(1));
+    if (!this._isMounted) return;
+    this.setState({ oaloading: true });
+    if (parsedParams.inviteToken) {
+      this._createInvitedUser(data, parsedParams.inviteToken);
+    } else {
+      oneaccountAuth(data)
+        .then(() => {
+          if (!this._isMounted) return;
+          this.setState({ oaloading: false });
+          history.push("/user");
+        });
     }
+  }
 
+  socialSignup() {
     const { oaloading } = this.state;
     return (
       <Container>
