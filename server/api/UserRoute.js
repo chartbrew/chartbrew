@@ -203,12 +203,15 @@ module.exports = (app) => {
     return userController.findById(req.params.id)
       .then((foundUser) => {
         user = foundUser;
+        const deletePromises = [];
         // delete the team if user is owner
         user.TeamRoles.forEach((teamRole) => {
           if (teamRole.role === "owner") {
-            teamController.deleteTeam(teamRole.team_id);
+            deletePromises.push(teamController.deleteTeam(teamRole.team_id));
           }
         });
+
+        return Promise.all(deletePromises);
       })
       .then(() => {
         return userController.deleteUser(user.id);
