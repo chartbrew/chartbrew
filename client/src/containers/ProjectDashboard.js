@@ -91,22 +91,23 @@ function ProjectDashboard(props) {
       </Container>
       )}
 
-      <Popup
-        trigger={(
-          <Button
-            primary
-            size="large"
-            circular
-            style={styles.refreshBtn}
-            icon="refresh"
-            onClick={() => setRefreshRequested(true)}
-            loading={refreshRequested}
-            />
-          )}
-        content="Refresh all charts"
-        position="left center"
+      {charts && charts.length > 0 && (
+        <Popup
+          trigger={(
+            <Button
+              primary
+              size="large"
+              circular
+              style={styles.refreshBtn}
+              icon="refresh"
+              onClick={() => setRefreshRequested(true)}
+              loading={refreshRequested}
+              />
+            )}
+          content="Refresh all charts"
+          position="left center"
         />
-
+      )}
     </div>
   );
 }
