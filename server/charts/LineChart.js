@@ -121,11 +121,7 @@ class LineChart {
               }
             }
 
-            if (this.chart.timeInterval === "hour") {
-              startDate = startDate.add(1, "hour");
-            } else {
-              startDate = startDate.add(1, "day");
-            }
+            startDate = startDate.add(1, this.chart.timeInterval).startOf(this.chart.timeInterval);
           }
 
           axisData = newAxisData;
