@@ -95,6 +95,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
+    mode: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "chart",
+    },
   }, {
     freezeTableName: true,
   });

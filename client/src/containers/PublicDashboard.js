@@ -9,7 +9,7 @@ import {
 
 import { getPublicDashboard } from "../actions/project";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
-import Chart from "./Chart";
+import Chart from "./Chart/Chart";
 import { blue } from "../config/colors";
 import cbLogo from "../assets/logo_inverted.png";
 

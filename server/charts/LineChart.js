@@ -225,7 +225,33 @@ class LineChart {
         labels: selectedDatasetLabels,
         datasets,
       },
-      options: {
+    };
+
+    if (this.chart.mode === "kpi" && this.chart.subType.indexOf("AddTimeseries") > -1) {
+      chartJsData.options = {
+        maintainAspectRatio: false,
+        elements: {
+          point: {
+            radius: 0,
+          }
+        },
+        scales: {
+          yAxes: [{
+            display: false,
+          }],
+          xAxes: [{
+            display: false,
+          }],
+        },
+        tooltips: {
+          enabled: false,
+        },
+        legend: {
+          display: false,
+        },
+      };
+    } else {
+      chartJsData.options = {
         maintainAspectRatio: false,
         legend: {
           display: this.chart.displayLegend,
@@ -253,8 +279,8 @@ class LineChart {
           }],
         },
         tooltips: tooltipsStyle,
-      }
-    };
+      };
+    }
 
     return new Promise((resolve) => resolve(chartJsData));
   }

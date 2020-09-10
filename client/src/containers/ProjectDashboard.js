@@ -7,7 +7,7 @@ import {
 } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 
-import Chart from "./Chart";
+import Chart from "./Chart/Chart";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import dashboardImage from "../assets/290.png";
 

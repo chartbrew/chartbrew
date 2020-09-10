@@ -8,16 +8,18 @@ import {
   Dropdown, Message, Popup, Form, TextArea, Label,
 } from "semantic-ui-react";
 import {
-  Line, Bar, Pie, Doughnut, Radar, Polar
+  Pie, Doughnut, Radar, Polar
 } from "react-chartjs-2";
 import moment from "moment";
 import "chart.piecelabel.js";
 
+import LineChart from "./components/LineChart";
 import {
   removeChart, runQuery, updateChart, changeOrder
-} from "../actions/chart";
-import canAccess from "../config/canAccess";
-import { SITE_HOST } from "../config/settings";
+} from "../../actions/chart";
+import canAccess from "../../config/canAccess";
+import { SITE_HOST } from "../../config/settings";
+import BarChart from "./components/BarChart";
 
 /*
   This is the container that generates the Charts together with the menu
@@ -430,53 +432,45 @@ function Chart(props) {
                     </Dimmer>
                     <div style={styles.mainChartArea}>
                       {chart.type === "line"
-                              && (
-                              <Line
-                                data={chart.chartData.data}
-                                options={chart.chartData.options}
-                                height={300}
-                              />
-                              )}
+                        && (
+                          <LineChart chart={chart} />
+                        )}
                       {chart.type === "bar"
-                              && (
-                              <Bar
-                                data={chart.chartData.data}
-                                options={chart.chartData.options}
-                                height={300}
-                              />
-                              )}
+                        && (
+                          <BarChart chart={chart} />
+                        )}
                       {chart.type === "pie"
-                              && (
-                              <Pie
-                                data={chart.chartData.data}
-                                options={chart.chartData.options}
-                                height={300}
-                              />
-                              )}
+                        && (
+                        <Pie
+                          data={chart.chartData.data}
+                          options={chart.chartData.options}
+                          height={300}
+                        />
+                        )}
                       {chart.type === "doughnut"
-                              && (
-                              <Doughnut
-                                data={chart.chartData.data}
-                                options={chart.chartData.options}
-                                height={300}
-                              />
-                              )}
+                        && (
+                        <Doughnut
+                          data={chart.chartData.data}
+                          options={chart.chartData.options}
+                          height={300}
+                        />
+                        )}
                       {chart.type === "radar"
-                              && (
-                              <Radar
-                                data={chart.chartData.data}
-                                options={chart.chartData.options}
-                                height={300}
-                              />
-                              )}
+                        && (
+                        <Radar
+                          data={chart.chartData.data}
+                          options={chart.chartData.options}
+                          height={300}
+                        />
+                        )}
                       {chart.type === "polar"
-                              && (
-                              <Polar
-                                data={chart.chartData.data}
-                                options={chart.chartData.options}
-                                height={300}
-                              />
-                              )}
+                        && (
+                        <Polar
+                          data={chart.chartData.data}
+                          options={chart.chartData.options}
+                          height={300}
+                        />
+                        )}
                     </div>
                     <div style={styles.chartFooter}>
                       <p><small><i>{`Last Updated ${moment(chart.chartDataUpdated).calendar()}`}</i></small></p>

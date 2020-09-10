@@ -7,7 +7,7 @@ import {
   Button, Icon, Header, Input, Popup, Form, Container
 } from "semantic-ui-react";
 
-import Chart from "./Chart";
+import Chart from "./Chart/Chart";
 import { updateProject, changeActiveProject } from "../actions/project";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 

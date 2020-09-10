@@ -2,11 +2,12 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Container, Button, Icon, Header, Image, Dimmer,
+  Container, Button, Icon, Header, Image, Dimmer, Dropdown,
 } from "semantic-ui-react";
 import {
-  Line, Bar, Doughnut, Polar, Pie, Radar
+  Doughnut, Polar, Pie, Radar
 } from "react-chartjs-2";
+import BarChart from "../../Chart/components/BarChart";
 
 import ChartTypesSelector from "./ChartTypesSelector";
 import lineChartImage from "../../../assets/charts/lineChart.jpg";
@@ -15,6 +16,7 @@ import radarChartImage from "../../../assets/charts/radarChart.jpg";
 import polarChartImage from "../../../assets/charts/polarChart.jpg";
 import pieChartImage from "../../../assets/charts/pieChart.jpg";
 import doughnutChartImage from "../../../assets/charts/doughnutChart.jpg";
+import LineChart from "../../Chart/components/LineChart";
 
 function ChartPreview(props) {
   const [typesVisible, setTypesVisible] = useState(false);
@@ -22,29 +24,44 @@ function ChartPreview(props) {
     chart, onChange, onRefreshData, onRefreshPreview, chartLoading,
   } = props;
 
+  const chartModes = [{
+    key: "chart",
+    text: "Chart view",
+    value: "chart",
+  }, {
+    key: "kpi",
+    text: "KPI View",
+    value: "kpi",
+  }];
+
   const _onChangeChartType = (type) => {
     return onChange(type);
+  };
+
+  const _onChangeMode = (e, data) => {
+    return onChange({ mode: data.value });
   };
 
   return (
     <>
       {chart && chart.chartData && !typesVisible && (
         <Container>
+          {chart.subType.indexOf("AddTimeseries") > -1 && (
+            <Dropdown
+              options={chartModes}
+              selection
+              value={chart.mode}
+              onChange={_onChangeMode}
+              style={styles.modeSwitcher}
+            />
+          )}
           {chart.type === "line"
             && (
-              <Line
-                data={chart.chartData.data}
-                options={chart.chartData.options}
-                height={300}
-              />
+              <LineChart chart={chart} />
             )}
           {chart.type === "bar"
             && (
-              <Bar
-                data={chart.chartData.data}
-                options={chart.chartData.options}
-                height={300}
-              />
+              <BarChart chart={chart} />
             )}
           {chart.type === "pie"
             && (
@@ -137,26 +154,26 @@ function ChartPreview(props) {
 
       {chart && chart.type && !typesVisible && (
         <Container textAlign="center" style={styles.topBuffer}>
-          <Button.Group fluid size="small">
+          <Button
+            icon
+            labelPosition="left"
+            onClick={() => setTypesVisible(true)}
+            primary
+            size="small"
+          >
+            <Icon name="chart line" />
+            {"Chart type"}
+          </Button>
+          <Button.Group size="small">
             <Button
               icon
-              labelPosition="right"
-              onClick={() => setTypesVisible(true)}
-              primary
-              basic
-            >
-              <Icon name="chart line" />
-              {"Chart type"}
-            </Button>
-            <Button
-              icon
-              labelPosition="right"
+              labelPosition="left"
               onClick={onRefreshPreview}
               primary
               basic
               loading={chartLoading}
             >
-              <Icon name="eye" />
+              <Icon name="refresh" />
               {"Refresh style"}
             </Button>
             <Button
@@ -168,7 +185,7 @@ function ChartPreview(props) {
               loading={chartLoading}
             >
               <Icon name="angle double down" />
-              Refresh Data
+              Get new data
             </Button>
           </Button.Group>
         </Container>
@@ -180,6 +197,21 @@ function ChartPreview(props) {
 const styles = {
   topBuffer: {
     marginTop: 20,
+  },
+  modeSwitcher: {
+    marginBottom: 10,
+  },
+  kpiContainer: {
+    position: "absolute",
+    left: "50%",
+    top: "30%",
+    width: "100%",
+  },
+  kpiGroup: {
+    position: "relative",
+    left: "-50%",
+    top: "-30%",
+    width: "100%",
   },
 };
 
