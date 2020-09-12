@@ -94,7 +94,11 @@ npm run start-dev
 
 ### Run docker image
 
-Run the following command and configure the variables:
+Run the following commands and configure the variables:
+
+```sh
+docker pull razvanilin/chartbrew:docker
+```
 
 ```sh
 docker run --rm -p 3210:3210 -p 3000:3000 \
