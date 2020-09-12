@@ -49,7 +49,7 @@ _.each(routes, (controller, route) => {
   app.use(route, controller(app));
 });
 
-app.listen(app.settings.port, () => {
+app.listen(app.settings.port, app.settings.api, () => {
   // start CronJob, making sure the database is populated for the first time
   setTimeout(() => {
     updateChartsCron();
