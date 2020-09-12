@@ -3,7 +3,6 @@ FROM node:10
 WORKDIR /code
 COPY . .
 
-RUN npm run prepareDocker
 RUN npm run setup
 
 EXPOSE 3000

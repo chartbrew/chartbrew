@@ -1,7 +1,7 @@
 module.exports = {
   port: 3210,
   secret: process.env.CB_SECRET_DEV,
-  client: process.env.CB_CLIENT_DEV,
+  client: process.env.REACT_APP_CLIENT_HOST_DEV,
   api: process.env.CB_API_HOST_DEV,
   adminMail: process.env.CB_ADMIN_MAIL,
   mailSettings: {

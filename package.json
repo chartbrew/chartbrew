@@ -6,7 +6,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "setup": "npm run prepareSettings && npm install && cd client && npm install && cd ../server/ && npm install",
-    "prepareDocker": "echo n | cp -vipr .env-template-docker .env",
     "prepareSettings": "echo n | cp -vipr .env-template .env && cd client && echo n | cp -vipr src/config/settings.template.js src/config/settings.js",
     "client": "cd client && npm start",
     "server": "cd server && npm run start-dev",
