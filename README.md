@@ -90,9 +90,11 @@ cd server/
 npm run start-dev
 ```
 
-## Docker container
+## Run with Docker
 
-### Run docker image
+[Check the full guide in the docs.](https://docs.chartbrew.com/deployment/#run-the-application-with-docker)
+
+### Quickstart
 
 Run the following commands and configure the variables:
 
@@ -101,7 +103,7 @@ docker pull razvanilin/chartbrew:docker
 ```
 
 ```sh
-docker run --rm -p 3210:3210 -p 3000:3000 \
+docker run -p 3210:3210 -p 3000:3000 \
   -e CB_API_HOST=0.0.0.0 \
   -e CB_DB_HOST=host.docker.internal \
   -e CB_DB_NAME=chartbrew \
@@ -111,25 +113,6 @@ docker run --rm -p 3210:3210 -p 3000:3000 \
   -e REACT_APP_API_HOST=http://localhost:3210 \
   razvanilin/chartbrew:docker
 ```
-Check `.env-template` in the repository for extra variables for enabling `One account` or mail capabilities.
-
-
-### Run locally with docker-compose
-
-Open up `.env-template` in the root folder of the project and make sure that the database host var is set to `db` like so:
-
-`CB_DB_HOST=localhost` -> `CB_DB_HOST=db`
-
-Also make sure the other variables are set in a way that suits your setup.
-
-Then run the following commands:
-
-```sh
-npm run prepareSettings
-docker-compose up
-```
-
-For more information on how to configure, modify and deploy ChartBrew, [**read the full docs here**](https://docs.chartbrew.com)
 
 ## Acknowledgements
 
