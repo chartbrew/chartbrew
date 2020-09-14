@@ -104,6 +104,7 @@ docker pull razvanilin/chartbrew:docker
 
 ```sh
 docker run -p 3210:3210 -p 3000:3000 \
+  -e CB_SECRET=<enter_a_secure_string> \
   -e CB_API_HOST=0.0.0.0 \
   -e CB_DB_HOST=host.docker.internal \
   -e CB_DB_NAME=chartbrew \

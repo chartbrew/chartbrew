@@ -182,6 +182,7 @@ docker pull razvanilin/chartbrew:docker
 
 ```sh
 docker run -p 3210:3210 -p 3000:3000 \
+  -e CB_SECRET=<enter_a_secure_string> \
   -e CB_API_HOST=0.0.0.0 \
   -e CB_DB_HOST=host.docker.internal \
   -e CB_DB_NAME=chartbrew \
@@ -197,6 +198,8 @@ Check `.env-template` in the repository for extra environmental variables to ena
 **Now let's analyse what is needed for the docker image to run properly**.
 
 The `3210` port is used by the API and `3000` for the client app (UI). Feel free to map these to any other ports on your system (e.g `3210:4523`).
+
+* `CB_SECRET` this string will be used to encrypt passwords and tokens. Use [a secure string](https://passwordsgenerator.net/) if you're planning to host the app publicly.
 
 * `CB_API_HOST` needs to point to the home address of the system. Usually for a docker image this is `0.0.0.0`.
 
