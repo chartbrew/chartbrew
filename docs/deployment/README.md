@@ -177,7 +177,7 @@ This is already added in the example above, but if you create new virtual hosts 
 A [Chartbrew docker image](https://hub.docker.com/r/razvanilin/chartbrew) is automatically built from `master`. You can set it up using the commands below:
 
 ```sh
-docker pull razvanilin/chartbrew:docker
+docker pull razvanilin/chartbrew
 ```
 
 ```sh
@@ -190,14 +190,14 @@ docker run -p 3210:3210 -p 3000:3000 \
   -e CB_DB_PASSWORD=password \
   -e REACT_APP_CLIENT_HOST=http://localhost:3000 \
   -e REACT_APP_API_HOST=http://localhost:3210 \
-  razvanilin/chartbrew:docker
+  razvanilin/chartbrew
 ```
 
 Check `.env-template` in the repository for extra environmental variables to enable `One account` or emailing capabilities.
 
 **Now let's analyse what is needed for the docker image to run properly**.
 
-The `3210` port is used by the API and `3000` for the client app (UI). Feel free to map these to any other ports on your system (e.g `3210:4523`).
+The `3210` port is used by the API and `3000` for the client app (UI). Feel free to map these to any other ports on your system (e.g `4523:3210`).
 
 * `CB_SECRET` this string will be used to encrypt passwords and tokens. Use [a secure string](https://passwordsgenerator.net/) if you're planning to host the app publicly.
 

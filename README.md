@@ -99,7 +99,7 @@ npm run start-dev
 Run the following commands and configure the variables:
 
 ```sh
-docker pull razvanilin/chartbrew:docker
+docker pull razvanilin/chartbrew
 ```
 
 ```sh
@@ -112,7 +112,7 @@ docker run -p 3210:3210 -p 3000:3000 \
   -e CB_DB_PASSWORD=password \
   -e REACT_APP_CLIENT_HOST=http://localhost:3000 \
   -e REACT_APP_API_HOST=http://localhost:3210 \
-  razvanilin/chartbrew:docker
+  razvanilin/chartbrew
 ```
 
 ## Acknowledgements
