@@ -90,22 +90,30 @@ cd server/
 npm run start-dev
 ```
 
-## Docker container
+## Run with Docker
 
-Open up `.env-template` in the root folder of the project and make sure that the database host var is set to `db` like so:
+[Check the full guide in the docs.](https://docs.chartbrew.com/deployment/#run-the-application-with-docker)
 
-`CB_DB_HOST_DEV=localhost` -> `CB_DB_HOST_DEV=db`
+### Quickstart
 
-`CB_DB_HOST=localhost` -> `CB_DB_HOST=db`
-
-Then run the following commands:
+Run the following commands and configure the variables:
 
 ```sh
-npm run prepareSettings
-docker-compose up
+docker pull razvanilin/chartbrew
 ```
 
-For more information on how to configure, modify and deploy ChartBrew, [**read the full docs here**](https://docs.chartbrew.com)
+```sh
+docker run -p 3210:3210 -p 3000:3000 \
+  -e CB_SECRET=<enter_a_secure_string> \
+  -e CB_API_HOST=0.0.0.0 \
+  -e CB_DB_HOST=host.docker.internal \
+  -e CB_DB_NAME=chartbrew \
+  -e CB_DB_USERNAME=root \
+  -e CB_DB_PASSWORD=password \
+  -e REACT_APP_CLIENT_HOST=http://localhost:3000 \
+  -e REACT_APP_API_HOST=http://localhost:3210 \
+  razvanilin/chartbrew
+```
 
 ## Acknowledgements
 

@@ -23,7 +23,7 @@ The backend doesn't need to undergo a build process. You need the following thin
 - MySQL running
 - A database is created so that Chartbrew can use it (it must be empty if it wasn't used by Chartbrew before)
 - `npm install` ran in the server folder or `npm run setup` in the project root folder
-- Environmental variables are set for Production (check `server/settings.js` to see which)
+- Environmental variables are set for Production (check `.env-template` in the root folder to see which)
 
 Once all these are checked, we can either run `npm run start`, or use an external tool like [`pm2`](https://pm2.keymetrics.io) to monitor and manage Node apps better.
 
@@ -104,7 +104,7 @@ This configuration file will have everything necessary to serve the backend and 
 # /etc/apache2/sites-available/chartbrew.conf
 
 # FRONTEND
-<VirtualHost 0.0.0.0:80>
+<VirtualHost *:80>
     ServerAdmin admin@example.com
 
     # Important! use your own domain here
@@ -128,7 +128,7 @@ This configuration file will have everything necessary to serve the backend and 
 </VirtualHost>
 
 # BACKEND
-<VirtualHost 0.0.0.0:80>
+<VirtualHost *:80>
     ServerAdmin admin@example.com
 
     # Important! use your own domain here
@@ -171,3 +171,49 @@ A problem that might arrise with embedding charts on other website is to do with
 ```
 
 This is already added in the example above, but if you create new virtual hosts for `https`, for example, don't forget to add it there as well.
+
+## Run the application with Docker
+
+A [Chartbrew docker image](https://hub.docker.com/r/razvanilin/chartbrew) is automatically built from `master`. You can set it up using the commands below:
+
+```sh
+docker pull razvanilin/chartbrew
+```
+
+```sh
+docker run -p 3210:3210 -p 3000:3000 \
+  -e CB_SECRET=<enter_a_secure_string> \
+  -e CB_API_HOST=0.0.0.0 \
+  -e CB_DB_HOST=host.docker.internal \
+  -e CB_DB_NAME=chartbrew \
+  -e CB_DB_USERNAME=root \
+  -e CB_DB_PASSWORD=password \
+  -e REACT_APP_CLIENT_HOST=http://localhost:3000 \
+  -e REACT_APP_API_HOST=http://localhost:3210 \
+  razvanilin/chartbrew
+```
+
+Check `.env-template` in the repository for extra environmental variables to enable `One account` or emailing capabilities.
+
+**Now let's analyse what is needed for the docker image to run properly**.
+
+The `3210` port is used by the API and `3000` for the client app (UI). Feel free to map these to any other ports on your system (e.g `4523:3210`).
+
+* `CB_SECRET` this string will be used to encrypt passwords and tokens. Use [a secure string](https://passwordsgenerator.net/) if you're planning to host the app publicly.
+
+* `CB_API_HOST` needs to point to the home address of the system. Usually for a docker image this is `0.0.0.0`.
+
+* `CB_DB_HOST` is the host of your database and determines how the application can reach it. `host.docker.internal` is used when you want the container to connect to a service on your host such as a database running on your server already. If your MySQL database is running on a different port than `3306`, then specify the port as well: `host.docker.internal:3307`.
+
+* `CB_DB_NAME` the name of the database (make sure the database exists before running the image).
+
+* `CB_DB_USERNAME` and `CB_DB_PASSWORD` are used for authentication with the DB.
+
+* `REACT_APP_CLIENT_HOST` is the address of the client application and is used by the client to be aware of its own address (not as important)
+
+* `REACT_APP_API_HOST` this is used for the client application to know where to make the API requests. This is the address of the API (backend).
+
+If the setup fails in any way, please double-check that the environmental variables are set correctly. Check that both API and Client apps are running, and if you can't get it running, please [open a new issue](https://github.com/chartbrew/chartbrew/issues/new) with as much info as you can share (logs, vars).
+
+
+
