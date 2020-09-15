@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { Line } from "react-chartjs-2";
 import { Statistic } from "semantic-ui-react";
@@ -6,6 +6,16 @@ import uuid from "uuid/v4";
 
 function LineChart(props) {
   const { chart } = props;
+
+  const [redraw, setRedraw] = useState(false);
+
+  useEffect(() => {
+    setRedraw(true);
+
+    setTimeout(() => {
+      setRedraw(false);
+    });
+  }, [chart]);
 
   return (
     <>
@@ -18,7 +28,13 @@ function LineChart(props) {
                 <div style={styles.kpiContainer}>
                   <Statistic.Group
                     widths={chart.chartData.data.datasets.length}
-                    style={styles.kpiGroup}
+                    style={styles.kpiGroup(chart.chartSize)}
+                    size={
+                      (chart.chartSize > 1
+                      || (chart.chartSize === 1 && chart.chartData.data.datasets.length < 3))
+                      && "large"
+                    }
+                    horizontal={chart.chartSize === 1}
                   >
                     {chart.chartData.data.datasets.map((dataset) => (
                       <Statistic key={uuid()}>
@@ -41,6 +57,7 @@ function LineChart(props) {
           data={chart.chartData.data}
           options={chart.chartData.options}
           height={300}
+          redraw={redraw}
         />
       </div>
     </>
@@ -54,12 +71,12 @@ const styles = {
     top: "30%",
     width: "100%",
   },
-  kpiGroup: {
+  kpiGroup: (size) => ({
     position: "relative",
-    left: "-50%",
+    left: size === 1 ? "-20%" : "-50%",
     top: "-30%",
     width: "100%",
-  },
+  }),
 };
 
 LineChart.propTypes = {
