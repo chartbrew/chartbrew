@@ -28,10 +28,12 @@ function ChartPreview(props) {
     key: "chart",
     text: "Chart view",
     value: "chart",
+    icon: "chart bar",
   }, {
     key: "kpi",
     text: "KPI View",
     value: "kpi",
+    icon: "hashtag",
   }];
 
   const _onChangeChartType = (type) => {
@@ -200,18 +202,6 @@ const styles = {
   },
   modeSwitcher: {
     marginBottom: 10,
-  },
-  kpiContainer: {
-    position: "absolute",
-    left: "50%",
-    top: "30%",
-    width: "100%",
-  },
-  kpiGroup: {
-    position: "relative",
-    left: "-50%",
-    top: "-30%",
-    width: "100%",
   },
 };
 

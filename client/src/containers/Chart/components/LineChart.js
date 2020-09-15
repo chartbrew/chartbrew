@@ -21,7 +21,7 @@ function LineChart(props) {
     <>
       {chart.subType && chart.subType.indexOf("AddTimeseries") > -1 && chart.mode === "kpi"
         && (
-          <div style={styles.kpiArea}>
+          <div>
             {chart.chartData
               && chart.chartData.data
               && chart.chartData.data.datasets && (
