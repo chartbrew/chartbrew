@@ -5,11 +5,10 @@ import {
   Placeholder, Container,
 } from "semantic-ui-react";
 import uuid from "uuid/v4";
-import brace from "brace"; // eslint-disable-line
 import AceEditor from "react-ace";
 
-import "brace/mode/json";
-import "brace/theme/tomorrow";
+import "ace-builds/src-min-noconflict/mode-json";
+import "ace-builds/src-min-noconflict/theme-tomorrow";
 
 /*
   The MongoDB connection form

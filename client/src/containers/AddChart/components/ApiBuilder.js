@@ -6,14 +6,13 @@ import {
   Grid, Form, Dropdown, Input, Menu, Button, List, Icon, Checkbox,
   Divider, Label,
 } from "semantic-ui-react";
-import brace from "brace"; // eslint-disable-line
 import AceEditor from "react-ace";
 import uuid from "uuid/v4";
 import _ from "lodash";
 import { toast } from "react-toastify";
 
-import "brace/mode/json";
-import "brace/theme/tomorrow";
+import "ace-builds/src-min-noconflict/mode-json";
+import "ace-builds/src-min-noconflict/theme-tomorrow";
 
 import ApiPagination from "../../../components/ApiPagination";
 import {

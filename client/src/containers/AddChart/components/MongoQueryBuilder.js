@@ -6,12 +6,11 @@ import {
   Grid, Header, Button, Container, Icon, List,
   Modal, Input, Label, Popup,
 } from "semantic-ui-react";
-import brace from "brace"; // eslint-disable-line
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
 
-import "brace/mode/javascript";
-import "brace/theme/tomorrow";
+import "ace-builds/src-min-noconflict/mode-javascript";
+import "ace-builds/src-min-noconflict/theme-tomorrow";
 
 import { createSavedQuery, updateSavedQuery } from "../../../actions/savedQuery";
 import SavedQueries from "../../../components/SavedQueries";

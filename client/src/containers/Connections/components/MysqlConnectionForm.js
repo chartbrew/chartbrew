@@ -3,11 +3,10 @@ import PropTypes from "prop-types";
 import {
   Segment, Form, Button, Header, Label, Message, Placeholder, Container,
 } from "semantic-ui-react";
-import brace from "brace"; // eslint-disable-line
 import AceEditor from "react-ace";
 
-import "brace/mode/json";
-import "brace/theme/tomorrow";
+import "ace-builds/src-min-noconflict/mode-json";
+import "ace-builds/src-min-noconflict/theme-tomorrow";
 /*
   The Form for creating a new Mysql connection
 */

@@ -8,10 +8,9 @@ import {
 } from "semantic-ui-react";
 import _ from "lodash";
 import { toast } from "react-toastify";
-import brace from "brace"; // eslint-disable-line
 import AceEditor from "react-ace";
-import "brace/mode/json";
-import "brace/theme/tomorrow";
+import "ace-builds/src-min-noconflict/mode-json";
+import "ace-builds/src-min-noconflict/theme-tomorrow";
 
 import ApiBuilder from "./ApiBuilder";
 import SqlBuilder from "./SqlBuilder";
