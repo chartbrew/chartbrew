@@ -1,6 +1,6 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.addColumn("chart", "mode", {
+    await queryInterface.addColumn("Chart", "mode", {
       type: Sequelize.STRING,
       allowNull: false,
       defaultValue: "chart",
@@ -8,6 +8,6 @@ module.exports = {
   },
 
   down: async (queryInterface) => {
-    await queryInterface.removeColumn("chart", "mode");
+    await queryInterface.removeColumn("Chart", "mode");
   }
 };
