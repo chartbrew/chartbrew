@@ -41,7 +41,10 @@ function LineChart(props) {
                         </Statistic.Value>
                         <Statistic.Label>
                           <span
-                            style={styles.datasetLabelColor(chart.Datasets[index].datasetColor)}
+                            style={
+                              chart.Datasets
+                              && styles.datasetLabelColor(chart.Datasets[index].datasetColor)
+                            }
                           >
                             {dataset.label}
                           </span>
