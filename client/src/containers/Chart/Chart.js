@@ -212,7 +212,9 @@ function Chart(props) {
     return canAccess(role, user.id, team.TeamRoles);
   };
 
-  const _isKpi = (chart) => chart.subType.indexOf("AddTimeseries") > -1 && chart.mode === "kpi";
+  const _isKpi = (chart) => {
+    return chart.subType && chart.subType.indexOf("AddTimeseries") > -1 && chart.mode === "kpi";
+  };
 
   const _activateMenu = (chartId) => setMenuVisible(chartId);
   const _deactivateMenu = () => setMenuVisible(false);
