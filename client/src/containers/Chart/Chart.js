@@ -145,7 +145,7 @@ function Chart(props) {
     if (chart.public) {
       setSelectedChart(chart);
       setTimeout(() => {
-        _onPublic();
+        _onPublic(chart);
       }, 100);
     } else {
       setPublicModal(true);
@@ -153,15 +153,16 @@ function Chart(props) {
     }
   };
 
-  const _onPublic = () => {
-    setSelectedChart(selectedChart);
+  const _onPublic = (chart) => {
+    const publicChart = selectedChart || chart;
+    setSelectedChart(publicChart);
     setPublicModal(false);
     setPublicLoading(true);
 
     updateChart(
       match.params.projectId,
-      selectedChart.id,
-      { public: !selectedChart.public }
+      publicChart.id,
+      { public: !publicChart.public }
     )
       .then(() => {
         setChartLoading(false);
