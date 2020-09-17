@@ -18,7 +18,7 @@
 
 <p align="center">
   <a href="https://chartbrew.com">
-    <img src="https://docs.chartbrew.com/assets/flat_browser.jpg" alt="ChartBrew logo" width="600"/>
+    <img src="https://docs.chartbrew.com/assets/dashboard.jpg" alt="ChartBrew dashboard" width="600"/>
   </a>
 </a>
 
