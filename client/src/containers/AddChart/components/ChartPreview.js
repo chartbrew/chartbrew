@@ -19,10 +19,12 @@ import doughnutChartImage from "../../../assets/charts/doughnutChart.jpg";
 import LineChart from "../../Chart/components/LineChart";
 
 function ChartPreview(props) {
-  const [typesVisible, setTypesVisible] = useState(false);
   const {
     chart, onChange, onRefreshData, onRefreshPreview, chartLoading,
   } = props;
+
+  const [typesVisible, setTypesVisible] = useState(false);
+  const [redraw, setRedraw] = useState(false);
 
   const chartModes = [{
     key: "chart",
@@ -41,7 +43,15 @@ function ChartPreview(props) {
   };
 
   const _onChangeMode = (e, data) => {
+    if (data.value === "chart") {
+      setRedraw(true);
+    }
+
     return onChange({ mode: data.value });
+  };
+
+  const _redrawComplete = () => {
+    setRedraw(false);
   };
 
   return (
@@ -59,11 +69,11 @@ function ChartPreview(props) {
           )}
           {chart.type === "line"
             && (
-              <LineChart chart={chart} />
+              <LineChart chart={chart} redraw={redraw} redrawComplete={_redrawComplete} />
             )}
           {chart.type === "bar"
             && (
-              <BarChart chart={chart} />
+              <BarChart chart={chart} redraw={redraw} redrawComplete={_redrawComplete} />
             )}
           {chart.type === "pie"
             && (

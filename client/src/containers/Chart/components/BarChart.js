@@ -1,22 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Bar } from "react-chartjs-2";
 import { Statistic } from "semantic-ui-react";
 import uuid from "uuid/v4";
 
 function BarChart(props) {
-  const { chart } = props;
-
-  const [redraw, setRedraw] = useState(false);
+  const { chart, redraw, redrawComplete } = props;
 
   useEffect(() => {
-    // force chartjs to update since it doesn't all the time
-    setRedraw(true);
-
-    setTimeout(() => {
-      setRedraw(false);
-    });
-  }, [chart]);
+    if (redraw) {
+      setTimeout(() => {
+        redrawComplete();
+      }, 1000);
+    }
+  }, [redraw]);
 
   return (
     <>
@@ -80,8 +77,15 @@ const styles = {
   }),
 };
 
+BarChart.defaultProps = {
+  redraw: false,
+  redrawComplete: () => {},
+};
+
 BarChart.propTypes = {
   chart: PropTypes.object.isRequired,
+  redraw: PropTypes.bool,
+  redrawComplete: PropTypes.func,
 };
 
 export default BarChart;

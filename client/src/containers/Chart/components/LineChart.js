@@ -1,21 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Line } from "react-chartjs-2";
 import { Statistic } from "semantic-ui-react";
 import uuid from "uuid/v4";
 
 function LineChart(props) {
-  const { chart } = props;
-
-  const [redraw, setRedraw] = useState(false);
+  const { chart, redraw, redrawComplete } = props;
 
   useEffect(() => {
-    setRedraw(true);
-
-    setTimeout(() => {
-      setRedraw(false);
-    });
-  }, [chart]);
+    if (redraw) {
+      setTimeout(() => {
+        redrawComplete();
+      }, 1000);
+    }
+  }, [redraw]);
 
   return (
     <>
@@ -79,8 +77,15 @@ const styles = {
   }),
 };
 
+LineChart.defaultProps = {
+  redraw: false,
+  redrawComplete: () => {},
+};
+
 LineChart.propTypes = {
   chart: PropTypes.object.isRequired,
+  redraw: PropTypes.bool,
+  redrawComplete: PropTypes.func,
 };
 
 export default LineChart;
