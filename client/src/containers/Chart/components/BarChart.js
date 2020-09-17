@@ -34,12 +34,18 @@ function BarChart(props) {
                     }
                     horizontal={chart.chartSize === 1}
                   >
-                    {chart.chartData.data.datasets.map((dataset) => (
+                    {chart.chartData.data.datasets.map((dataset, index) => (
                       <Statistic key={uuid()}>
                         <Statistic.Value>
                           {dataset.data[dataset.data.length - 1]}
                         </Statistic.Value>
-                        <Statistic.Label>{dataset.label}</Statistic.Label>
+                        <Statistic.Label>
+                          <span
+                            style={styles.datasetLabelColor(chart.Datasets[index].datasetColor)}
+                          >
+                            {dataset.label}
+                          </span>
+                        </Statistic.Label>
                       </Statistic>
                     ))}
                   </Statistic.Group>
@@ -74,6 +80,9 @@ const styles = {
     left: size === 1 ? "-20%" : "-50%",
     top: "-30%",
     width: "100%",
+  }),
+  datasetLabelColor: (color) => ({
+    borderBottom: `solid 3px ${color}`,
   }),
 };
 
