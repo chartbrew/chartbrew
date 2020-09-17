@@ -143,7 +143,12 @@ class ProjectController {
     return db.Project.findOne({
       where: { brewName },
       include: [
-        { model: db.Chart, attributes: { exclude: ["query"] }, where: { public: true } },
+        {
+          model: db.Chart,
+          attributes: { exclude: ["query"] },
+          where: { public: true },
+          include: [{ model: db.Dataset }],
+        },
         { model: db.Team, attributes: ["name"] },
       ],
       order: [[db.Chart, "dashboardOrder", "ASC"]],
