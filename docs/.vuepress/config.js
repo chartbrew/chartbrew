@@ -2,7 +2,7 @@ module.exports = {
   title: 'Chartbrew',
   description: 'The official documentation of Chartbrew, a web app for generating charts from your data sources.',
   themeConfig: {
-    logo: '/assets/logo_blue.png',
+    logo: '/assets/logo_blue_2.png',
     displayAllHeaders: true,
     nav: [
       { text: 'Home', link: '/' },
