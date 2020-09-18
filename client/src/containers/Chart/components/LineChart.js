@@ -5,7 +5,9 @@ import { Statistic } from "semantic-ui-react";
 import uuid from "uuid/v4";
 
 function LineChart(props) {
-  const { chart, redraw, redrawComplete } = props;
+  const {
+    chart, redraw, redrawComplete, height
+  } = props;
 
   useEffect(() => {
     if (redraw) {
@@ -63,7 +65,7 @@ function LineChart(props) {
         <Line
           data={chart.chartData.data}
           options={chart.chartData.options}
-          height={300}
+          height={height}
           redraw={redraw}
         />
       </div>
@@ -92,12 +94,14 @@ const styles = {
 LineChart.defaultProps = {
   redraw: false,
   redrawComplete: () => {},
+  height: 300,
 };
 
 LineChart.propTypes = {
   chart: PropTypes.object.isRequired,
   redraw: PropTypes.bool,
   redrawComplete: PropTypes.func,
+  height: PropTypes.number,
 };
 
 export default LineChart;

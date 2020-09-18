@@ -317,7 +317,9 @@ module.exports = (app) => {
           type: chart.type,
           subType: chart.subType,
           chartDataUpdated: chart.chartDataUpdated,
-          chartData: chart.chartData
+          chartData: chart.chartData,
+          Datasets: chart.Datasets,
+          mode: chart.mode,
         });
       })
       .catch((error) => {

@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Line, Bar, Pie, Doughnut, Radar, Polar
+  Pie, Doughnut, Radar, Polar
 } from "react-chartjs-2";
 import {
   Container, Loader, Header, Image, Message,
@@ -11,6 +11,8 @@ import {
 import logo from "../assets/logo_blue.png";
 
 import { getEmbeddedChart as getEmbeddedChartAction } from "../actions/chart";
+import LineChart from "./Chart/components/LineChart";
+import BarChart from "./Chart/components/BarChart";
 
 const pageHeight = window.innerHeight;
 
@@ -88,21 +90,13 @@ class EmbeddedChart extends Component {
           {chart.type === "line"
           && (
           <Container fluid>
-            <Line
-              data={chart.chartData.data}
-              options={chart.chartData.options}
-              height={pageHeight - 100}
-            />
+            <LineChart chart={chart} height={pageHeight - 100} />
           </Container>
           )}
           {chart.type === "bar"
           && (
           <Container fluid>
-            <Bar
-              data={chart.chartData.data}
-              options={chart.chartData.options}
-              height={pageHeight - 100}
-            />
+            <BarChart chart={chart} height={pageHeight - 100} />
           </Container>
           )}
           {chart.type === "pie"
