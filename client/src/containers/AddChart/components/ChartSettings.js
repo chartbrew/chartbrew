@@ -227,11 +227,11 @@ function ChartSettings(props) {
                 && (
                   <Form.Field>
                     <Checkbox
-                      label="Add data points"
+                      label="Data points"
                       toggle
-                      checked={pointRadius > 0}
+                      checked={(!pointRadius && pointRadius !== 0) || pointRadius > 0}
                       onChange={() => {
-                        if (pointRadius > 0) {
+                        if ((!pointRadius && pointRadius !== 0) || pointRadius > 0) {
                           _onAddPoints(0);
                         } else {
                           _onAddPoints(3);
@@ -243,7 +243,7 @@ function ChartSettings(props) {
                 )}
               <Form.Field>
                 <Checkbox
-                  label="Add legend"
+                  label="Legend"
                   toggle
                   checked={displayLegend}
                   onChange={() => onChange({ displayLegend: !displayLegend })}
