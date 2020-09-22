@@ -16,7 +16,8 @@ import apiImg from "../../../assets/api.png";
 import postgresImg from "../../../assets/postgres.png";
 import DatarequestModal from "./DatarequestModal";
 import Filters from "./Filters";
-import DatasetPersonalisation from "./DatasetPersonalisation";
+import DatasetAppearance from "./DatasetAppearance";
+import DatasetData from "./DatasetData";
 
 function Dataset(props) {
   const {
@@ -33,6 +34,7 @@ function Dataset(props) {
   const [viewFilters, setViewFilters] = useState(false);
   const [dataItems, setDataItems] = useState([]);
   const [menuItem, setMenuItem] = useState("data");
+  const [requestResult, setRequestResult] = useState(null);
 
   useEffect(() => {
     const config = [];
@@ -54,7 +56,6 @@ function Dataset(props) {
       return connection;
     });
     setDropdownConfig(config);
-    // if (!dataset.id && connections[0]) setDataset(connections[0]);
   }, [connections]);
 
   // update the dataset with the active one
@@ -200,6 +201,10 @@ function Dataset(props) {
     }
   };
 
+  const _onNewResult = (result) => {
+    setRequestResult(result);
+  };
+
   if (!dataset || !dataset.id || !newDataset.id) return (<span />);
 
   return (
@@ -282,19 +287,29 @@ function Dataset(props) {
                 {"Data"}
               </Menu.Item>
               <Menu.Item
-                active={menuItem === "personalisation"}
-                onClick={() => setMenuItem("personalisation")}
+                active={menuItem === "appearance"}
+                onClick={() => setMenuItem("appearance")}
                 color="blue"
               >
-                {"Personalisation"}
+                {"Appearance"}
               </Menu.Item>
             </Menu>
           </Grid.Column>
         </Grid.Row>
-        {menuItem === "personalisation" && (
+        {menuItem === "data" && (
+          <Grid.Row>
+            <Grid.Column>
+              <DatasetData
+                dataset={newDataset}
+                requestResult={requestResult}
+              />
+            </Grid.Column>
+          </Grid.Row>
+        )}
+        {menuItem === "appearance" && (
           <Grid.Row>
             <Grid.Column className="dataset-colors-tut">
-              <DatasetPersonalisation
+              <DatasetAppearance
                 dataset={newDataset}
                 chart={chart}
                 onUpdate={_updateColors}
@@ -337,6 +352,7 @@ function Dataset(props) {
           open={configOpened}
           onClose={_onCloseConfig}
           onUpdateDataset={_onChangeField}
+          updateResult={_onNewResult}
         />
       )}
 

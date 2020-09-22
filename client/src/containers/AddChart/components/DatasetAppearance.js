@@ -7,7 +7,7 @@ import { SketchPicker } from "react-color";
 
 import { primary, chartColors } from "../../../config/colors";
 
-function DatasetPersonalisation(props) {
+function DatasetAppearance(props) {
   const {
     chart, dataItems, onUpdate, dataset,
   } = props;
@@ -133,11 +133,11 @@ const styles = {
   }),
 };
 
-DatasetPersonalisation.propTypes = {
+DatasetAppearance.propTypes = {
   dataset: PropTypes.object.isRequired,
   chart: PropTypes.object.isRequired,
   dataItems: PropTypes.array.isRequired,
   onUpdate: PropTypes.func.isRequired,
 };
 
-export default DatasetPersonalisation;
+export default DatasetAppearance;

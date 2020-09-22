@@ -27,7 +27,7 @@ function DatarequestModal(props) {
   const {
     open, onClose, connection, dataset, match, getDataRequestByDataset,
     createDataRequest, updateDataRequest, requests, onUpdateDataset,
-    changeTutorial,
+    changeTutorial, updateResult,
   } = props;
 
   const [dataRequest, setDataRequest] = useState(null);
@@ -100,6 +100,7 @@ function DatarequestModal(props) {
     if (!result && fieldsView) {
       setFieldsView(false);
     }
+    updateResult(result);
   }, [result]);
 
   const _onClose = () => {
@@ -350,6 +351,7 @@ DatarequestModal.propTypes = {
   onUpdateDataset: PropTypes.func.isRequired,
   requests: PropTypes.array.isRequired,
   changeTutorial: PropTypes.func.isRequired,
+  updateResult: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
