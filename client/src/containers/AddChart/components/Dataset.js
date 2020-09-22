@@ -5,18 +5,18 @@ import { withRouter } from "react-router";
 import _ from "lodash";
 import {
   Popup, Icon, Divider, Dropdown, Button, Grid,
-  Form, Input, Modal, Header, Label, Checkbox,
+  Form, Input, Modal, Header, Menu,
 } from "semantic-ui-react";
-import { SketchPicker } from "react-color";
 import moment from "moment";
 
-import { primary, chartColors } from "../../../config/colors";
+import { primary } from "../../../config/colors";
 import mongoImg from "../../../assets/mongodb-logo-1.png";
 import mysqlImg from "../../../assets/mysql.svg";
 import apiImg from "../../../assets/api.png";
 import postgresImg from "../../../assets/postgres.png";
 import DatarequestModal from "./DatarequestModal";
 import Filters from "./Filters";
+import DatasetPersonalisation from "./DatasetPersonalisation";
 
 function Dataset(props) {
   const {
@@ -32,6 +32,7 @@ function Dataset(props) {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [viewFilters, setViewFilters] = useState(false);
   const [dataItems, setDataItems] = useState([]);
+  const [menuItem, setMenuItem] = useState("data");
 
   useEffect(() => {
     const config = [];
@@ -192,39 +193,11 @@ function Dataset(props) {
     return `/${match.params.teamId}/${match.params.projectId}/connections`;
   };
 
-  const _renderColorPicker = (type, fillIndex) => {
-    let color = type === "dataset" ? newDataset.datasetColor
-      : (fillIndex || fillIndex === 0)
-        ? newDataset.fillColor[fillIndex] : newDataset.fillColor;
-
-    if (!newDataset.datasetColor && type === "dataset") {
-      color = chartColors[Math.floor(Math.random() * chartColors.length)];
+  const _updateColors = (data, forceUpdate) => {
+    setNewDataset(data);
+    if (forceUpdate) {
+      onUpdate(data);
     }
-
-    return (
-      <SketchPicker
-        color={color}
-        onChangeComplete={(color) => {
-          const rgba = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
-
-          if (type === "dataset") {
-            setNewDataset({ ...newDataset, datasetColor: rgba });
-          }
-
-          if (type === "fill") {
-            if (!fillIndex && fillIndex !== 0) {
-              setNewDataset({ ...newDataset, fillColor: rgba });
-            } else {
-              const { fillColor } = newDataset;
-              if (Array.isArray(fillColor) && fillColor[fillIndex]) {
-                fillColor[fillIndex] = rgba;
-              }
-              onUpdate({ ...newDataset, fillColor });
-            }
-          }
-        }}
-      />
-    );
   };
 
   if (!dataset || !dataset.id || !newDataset.id) return (<span />);
@@ -236,7 +209,6 @@ function Dataset(props) {
           <Grid.Column>
             <Form>
               <Form.Field>
-                <Header size="tiny">Dataset name</Header>
                 <Input
                   type="text"
                   placeholder="Enter the dataset name"
@@ -300,82 +272,37 @@ function Dataset(props) {
           </Grid.Row>
         )}
         <Grid.Row>
-          <Grid.Column className="dataset-colors-tut">
-            <Divider />
-            <Header size="tiny">Dataset Color</Header>
-            <div>
-              <Popup
-                content={() => _renderColorPicker("dataset")}
-                trigger={(
-                  <Label
-                    size="large"
-                    color="blue"
-                    style={styles.datasetColorBtn(newDataset.datasetColor)}
-                    content="Click to select"
-                  />
-                )}
-                style={{ padding: 0, margin: 0 }}
-                on="click"
-                offset="0, 10px"
-                position="right center"
-              />
-            </div>
-
-            <Header size="tiny">Fill Color</Header>
-            <div>
-              {chart.subType !== "pattern" && (
-                <>
-                  <Popup
-                    content={() => _renderColorPicker("fill")}
-                    trigger={(
-                      <Label
-                        size="large"
-                        color="blue"
-                        style={styles.datasetColorBtn(newDataset.fillColor)}
-                        content="Click to select"
-                      />
-                    )}
-                    style={{ padding: 0, margin: 0 }}
-                    on="click"
-                    offset="0, 10px"
-                    position="right center"
-                  />
-                  <Checkbox
-                    checked={newDataset.fill || false}
-                    onChange={(e, data) => {
-                      setNewDataset({ ...newDataset, fill: data.checked });
-                    }}
-                    style={{ verticalAlign: "middle", marginLeft: 10 }}
-                  />
-                </>
-              )}
-              {chart.subType === "pattern" && (
-                <Label.Group>
-                  {dataItems && dataItems.data && dataItems.data.map((val, fillIndex) => {
-                    return (
-                      <Popup
-                        key={dataItems.labels[fillIndex]}
-                        content={() => _renderColorPicker("fill", fillIndex)}
-                        trigger={(
-                          <Label
-                            size="large"
-                            color="blue"
-                            style={styles.datasetColorBtn(newDataset.fillColor[fillIndex])}
-                            content={dataItems.labels[fillIndex]}
-                          />
-                        )}
-                        style={{ padding: 0, margin: 0 }}
-                        on="click"
-                        offset="0, 10px"
-                        position="right center"
-                      />
-                    );
-                  })}
-                </Label.Group>
-              )}
-            </div>
+          <Grid.Column>
+            <Menu pointing secondary widths={2}>
+              <Menu.Item
+                active={menuItem === "data"}
+                onClick={() => setMenuItem("data")}
+                color="blue"
+              >
+                {"Data"}
+              </Menu.Item>
+              <Menu.Item
+                active={menuItem === "personalisation"}
+                onClick={() => setMenuItem("personalisation")}
+                color="blue"
+              >
+                {"Personalisation"}
+              </Menu.Item>
+            </Menu>
           </Grid.Column>
         </Grid.Row>
+        {menuItem === "personalisation" && (
+          <Grid.Row>
+            <Grid.Column className="dataset-colors-tut">
+              <DatasetPersonalisation
+                dataset={newDataset}
+                chart={chart}
+                onUpdate={_updateColors}
+                dataItems={dataItems}
+              />
+            </Grid.Column>
+          </Grid.Row>
+        )}
         <Grid.Row>
           <Grid.Column className="dataset-actions-tut">
             <Divider />
