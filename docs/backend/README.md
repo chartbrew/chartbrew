@@ -130,7 +130,7 @@ class BrewController { // The name of the controllers should always be <Model>Co
         return foundBrew;
       })
       .catch((error) => {
-        return new Promise((resolve, reject) => reject(error));
+        return new Promise((resolve, reject) => reject(error.message || error));
       });
   }
 }

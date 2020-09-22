@@ -34,6 +34,8 @@ If you never used [React Redux](https://react-redux.js.org/) before, it's strong
 
 The main point on future developments will be to always develop with the [props down, events up](https://jasonformat.com/props-down-events-up/) mentality. In Chartbrew this means that a container should send the props to a component and the component can call any events that were passed down by the container. The events will run in the parent component.
 
+**The new components should be functional and use [React Hooks.](https://reactjs.org/docs/hooks-intro.html)**
+
 ::: warning
 Currently, the containers are quite huge and some components are not as dumb as they should be. This will be improved with future updates.
 :::
@@ -73,7 +75,7 @@ export function getBrew(id) {
       })
       .then((brew) => {
         dispatch({ type: FETCHED_BREW, brew }); // dispatching the action together with the payload
-        return new Promise(resolve => resolve(brew));
+        return new Promise((resolve) => resolve(brew));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -94,7 +96,7 @@ import {
   FETCHED_BREW,
 } from "../actions/brew";
 
-export default function brew(state = {
+export default function brew((state) = {
   loading: false,
   data: {},
 }, action) {
@@ -119,24 +121,22 @@ This will be an example component to show the name and flavour of the brew and a
 ```javascript
 // components/BrewCard.js
 
-import React, { Component } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 import { Header } from "semantic-ui-react";
 
-class BrewCard extends Component {
-  render() {
-    const { brew, mixBrew } = this.props;
+function BrewCard(props) {
+  const { brew, mixBrew } = props;
 
-    return (
-      <div style={styles.container}>
-        <Header>{{brew.name}}</Header>
-        <p>{{brew.flavour}}</p>
-        <Button primary onClick={() => mixBrew()}>
-          Mix the Brew
-        </Button>
-      </div>
-    );
-  }
+  return (
+    <div style={styles.container}>
+      <Header>{{brew.name}}</Header>
+      <p>{{brew.flavour}}</p>
+      <Button primary onClick={mixBrew}>
+        Mix the Brew
+      </Button>
+    </div>
+  );
 }
 
 const styles = {
@@ -162,7 +162,7 @@ export default BrewCard;
 This will be a page showing the BrewCard component after getting calling the `getBrew` action.
 
 ```javascript
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
@@ -171,54 +171,43 @@ import {
 
 import { getBrew as getBrewAction } from "../actions/brew";
 
-class BrewPage extends Component {
-  constructor(props) {
-    super(props);
+function BrewPage(props) {
+  const { getBrew, brew, loading } = props;
+  const [mixed, setMixed] = useState(false);
 
-    this.state = {
-      mixed: false,
-    };
-  }
-
-  componentDidMount() {
-    const { getBrew } = this.props;
+  useEffect(() => {
     getBrew(1);
-  }
+  }, []);
 
   // container functionality should be prepended with a '_'
-  _onMixBrew = () => {
-    this.setState({ mixed: true });
-  }
+  const _onMixBrew = () => {
+    setMixed(true);
+  };
 
-  render() {
-    const { brew, loading } = this.props;
-    const { mixed } = this.state;
-
-    if (loading) {
-      return (
-        <div style={styles.container}>
-          <Dimmer active>
-            <Loader />
-          </Dimmer>
-        </div>
-      );
-    }
-
+  if (loading) {
     return (
       <div style={styles.container}>
-        <Header attached="top" as="h2">The Brew</Header>
-        <Segment raised attached>
-          <BrewCard brew={brew} mixBrew={this._onMixBrew} />
-
-          {mixed && (
-            <Message positive>
-              <p>The brew is mixed</p>
-            </Message>
-          )}
-        </Segment>
+        <Dimmer active>
+          <Loader />
+        </Dimmer>
       </div>
     );
   }
+
+  return (
+    <div style={styles.container}>
+      <Header attached="top" as="h2">The Brew</Header>
+      <Segment raised attached>
+        <BrewCard brew={brew} mixBrew={_onMixBrew} />
+
+        {mixed && (
+          <Message positive>
+            <p>The brew is mixed</p>
+          </Message>
+        )}
+      </Segment>
+    </div>
+  );
 }
 
 const styles = {
@@ -241,7 +230,7 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    getBrew: id => dispatch(getBrewAction(id)),
+    getBrew: (id) => dispatch(getBrewAction(id)),
   };
 };
 
@@ -250,6 +239,8 @@ export default connect(mapStateToProps, mapDispatchToProps)(BrewPage);
 
 ## Styling
 
-Chartbrew is using Fomantic UI as the CSS framework. This is a community maintained version of Semantic UI which is not really maintained anymore. The react components usable within Chartbrew can be found here: [react.semantic-ui.com](https://react.semantic-ui.com)
+Chartbrew is using Fomantic UI as the CSS framework. This is a community maintained version of Semantic UI which is not really maintained anymore. 
+
+[The react components usable within Chartbrew can be found here.](https://react.semantic-ui.com)
 
 For any changes to the general feel of the site you can modify Sematic's global variables in `src/semantic/src/site/globals`. You can check out the theming docs on [Fomantic's website](https://fomantic-ui.com/usage/theming.html).

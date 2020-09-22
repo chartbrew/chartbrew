@@ -57,6 +57,7 @@ For any model change in the database schema, [consult the documentation](https:/
 ### Frontend checks
 
 - [ ] The `client/components/` files are not using the Redux props, any such props should be sent from `client/containers`
+- [ ] The new components should be **functional** and use [React Hooks](https://reactjs.org/docs/hooks-intro.html)
 
 ### Backend checks
 
