@@ -305,7 +305,7 @@ function AddChart(props) {
         transition={Flip}
       />
       <Grid columns={2} divided centered stackable>
-        <Grid.Column width={9}>
+        <Grid.Column width={8}>
           <div>
             <div style={{ display: "flex" }}>
               <div style={{ flex: 0.5 }} className="chart-name-tut">
@@ -401,7 +401,7 @@ function AddChart(props) {
           </div>
         </Grid.Column>
 
-        <Grid.Column width={6} className="add-dataset-tut">
+        <Grid.Column width={7} className="add-dataset-tut">
           <Header>
             Datasets
             <Popup
