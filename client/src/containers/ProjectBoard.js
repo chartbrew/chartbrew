@@ -197,7 +197,7 @@ class ProjectBoard extends Component {
               inverted
               vertical
               icon={menuSize === "small"}
-              style={{ backgroundColor: blue, minHeight: pageHeight }}
+              style={styles.mainSideMenu}
             >
               <Menu.Item header>
                 <Dropdown
@@ -522,6 +522,7 @@ const styles = {
     boxShadow: "-5px 1px 10px #000",
     textAlign: "center",
     padding: 5,
+    borderRadius: 0,
   },
   cbVersion: {
     verticalAlign: "center",
@@ -550,6 +551,11 @@ const styles = {
   },
   centered: {
     textAlign: "center",
+  },
+  mainSideMenu: {
+    backgroundColor: blue,
+    minHeight: pageHeight,
+    borderRadius: 0,
   },
 };
 
