@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
-  Menu, Dropdown, Dimmer, Container, Loader, Icon, Modal, Button,
+  Menu, Dropdown, Dimmer, Container, Loader, Icon, Modal, Button, Image,
 } from "semantic-ui-react";
 import UserAvatar from "react-user-avatar";
 
@@ -92,9 +92,9 @@ class Navbar extends Component {
       );
     }
     return (
-      <Menu fixed="top" color="violet" inverted style={transparent ? styles.transparentMenu : { boxShadow: "0px 0px 5px" }}>
+      <Menu fixed="top" color="violet" inverted style={transparent ? styles.transparentMenu : { }}>
         <Menu.Item style={styles.logoContainer} as={Link} to="/user">
-          <img src={cbLogo} alt="Chartbrew logo" style={styles.logo} />
+          <Image centered as="img" src={cbLogo} alt="Chartbrew logo" style={styles.logo} />
         </Menu.Item>
         {!hideTeam
           && (
@@ -173,7 +173,7 @@ class Navbar extends Component {
           <Dropdown
             style={{ paddingTop: 0, paddingBottom: 0 }}
             item
-            pointing={transparent}
+            floating={transparent}
             trigger={user.icon
               ? <UserAvatar size="32" name={user.icon} color="purple" /> : <span />}
           >
@@ -259,6 +259,7 @@ const styles = {
   logoContainer: {
     paddingTop: 1,
     paddingBottom: 1,
+    width: 70,
   },
 };
 

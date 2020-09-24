@@ -250,7 +250,7 @@ function Chart(props) {
           </Grid>
           )}
 
-      <Grid stackable centered>
+      <Grid stackable centered style={styles.mainGrid}>
         {connections && charts.map((chart, index) => {
           if (isPublic && !chart.public) return (<span style={{ display: "none" }} key={chart.id} />);
           if (isPublic && chart.draft) return (<span style={{ display: "none" }} key={chart.id} />);
@@ -266,7 +266,7 @@ function Chart(props) {
           }
 
           return (
-            <Grid.Column width={chart.chartSize * 4} key={chart.id}>
+            <Grid.Column width={chart.chartSize * 4} key={chart.id} style={styles.chartGrid}>
               <Segment
                 style={styles.chartContainer(_isKpi(chart))}
                 onMouseEnter={() => _activateMenu(chart.id)}
@@ -723,6 +723,12 @@ const styles = {
     paddingLeft: isKpi ? 15 : 0,
     paddingTop: isKpi ? 15 : 0,
   }),
+  chartGrid: {
+    padding: 10,
+  },
+  mainGrid: {
+    padding: 10,
+  },
 };
 
 Chart.defaultProps = {
