@@ -484,17 +484,19 @@ function AddChart(props) {
           </div>
 
           <Divider />
-          {activeDataset.id && (
-            <div>
-              <Dataset
-                dataset={activeDataset}
-                onUpdate={_onUpdateDataset}
-                onDelete={_onDeleteDataset}
-                chart={newChart}
-                onRefresh={_onRefreshData}
+          {activeDataset.id && datasets.map((dataset) => {
+            return (
+              <div style={activeDataset.id !== dataset.id ? { display: "none" } : {}}>
+                <Dataset
+                  dataset={dataset}
+                  onUpdate={_onUpdateDataset}
+                  onDelete={_onDeleteDataset}
+                  chart={newChart}
+                  onRefresh={_onRefreshData}
               />
-            </div>
-          )}
+              </div>
+            );
+          })}
           {!activeDataset.id && (
             <Message
               content="Select or create a dataset above"
