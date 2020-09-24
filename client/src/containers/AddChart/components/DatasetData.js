@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { Dropdown } from "semantic-ui-react";
+import {
+  Dropdown, Icon, Input, Button
+} from "semantic-ui-react";
 
 function DatasetData(props) {
   const { requestResult } = props;
@@ -26,20 +28,19 @@ function DatasetData(props) {
     setSelectedField(data.value);
   };
 
-  if (!requestResult) {
-    return (
-      <div>
-        <p><i> - Fetch some data first - </i></p>
-      </div>
-    );
-  }
+  // if (!requestResult) {
+  //   return (
+  //     <div>
+  //       <p><i> - Fetch some data first - </i></p>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div>
-      <p><label>Select a date field</label></p>
       <Dropdown
         button
-        className="icon"
+        className="icon small button"
         floating
         labeled
         icon="calendar"
@@ -51,6 +52,8 @@ function DatasetData(props) {
       <div style={{ marginTop: 20 }}>
         <label>{"where "}</label>
         <Dropdown
+          icon={null}
+          className="small button"
           button
           options={fieldOptions}
           search
@@ -58,19 +61,24 @@ function DatasetData(props) {
           onChange={_selectField}
         />
         <Dropdown
+          icon={null}
           button
+          className="small button"
           options={fieldOptions}
           search
           text={">"}
           onChange={_selectField}
         />
-        <Dropdown
-          button
-          options={fieldOptions}
-          search
-          text={"45"}
-          onChange={_selectField}
+        <Input
+          placeholder="Enter a value"
+          size="small"
         />
+
+        <Button icon basic style={{ boxShadow: "none" }}>
+          <Icon name="plus" />
+        </Button>
+        {" "}
+
       </div>
     </div>
   );
