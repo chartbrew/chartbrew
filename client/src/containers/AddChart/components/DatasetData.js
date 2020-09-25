@@ -252,9 +252,13 @@ const styles = {
   },
 };
 
+DatasetData.defaultProps = {
+  requestResult: null,
+};
+
 DatasetData.propTypes = {
   dataset: PropTypes.object.isRequired,
-  requestResult: PropTypes.object.isRequired,
+  requestResult: PropTypes.object,
   onUpdate: PropTypes.func.isRequired,
   runRequest: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,

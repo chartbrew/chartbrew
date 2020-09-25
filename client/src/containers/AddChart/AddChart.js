@@ -486,7 +486,7 @@ function AddChart(props) {
           <Divider />
           {activeDataset.id && datasets.map((dataset) => {
             return (
-              <div style={activeDataset.id !== dataset.id ? { display: "none" } : {}}>
+              <div style={activeDataset.id !== dataset.id ? { display: "none" } : {}} key={dataset.id}>
                 <Dataset
                   dataset={dataset}
                   onUpdate={_onUpdateDataset}
