@@ -8,6 +8,7 @@ import {
 import uuid from "uuid/v4";
 
 import { runRequest as runRequestAction } from "../../../actions/dataset";
+import fieldFinder from "../../../modules/fieldFinder";
 
 const operators = [{
   key: "=",
@@ -59,12 +60,12 @@ function DatasetData(props) {
   }]);
 
   useEffect(() => {
-    if (requestResult && requestResult.data && requestResult.data[0]) {
+    if (requestResult && requestResult.data) {
       const tempFieldOptions = [];
-      Object.keys(requestResult.data[0]).forEach((field) => {
+      fieldFinder(requestResult.data).forEach((field) => {
         tempFieldOptions.push({
           key: field,
-          text: field,
+          text: field.replace("root[].", ""),
           value: field,
         });
       });
@@ -73,11 +74,11 @@ function DatasetData(props) {
   }, [requestResult]);
 
   const _selectXField = (e, data) => {
-    onUpdate({ xAxis: `root[].${data.value}` });
+    onUpdate({ xAxis: data.value });
   };
 
   const _selectYField = (e, data) => {
-    onUpdate({ yAxis: `root[].${data.value}` });
+    onUpdate({ yAxis: data.value });
   };
 
   const _updateCondition = (id, data, type) => {
@@ -167,7 +168,7 @@ function DatasetData(props) {
             className="small button"
             options={fieldOptions}
             search
-            text={(dataset.xAxis && dataset.xAxis.replace("root[].", "").replace("root.", "")) || "Select a field"}
+            text={(dataset.xAxis && dataset.xAxis.replace("root[].", "")) || "Select a field"}
             onChange={_selectXField}
             scrolling
           />
@@ -180,7 +181,7 @@ function DatasetData(props) {
             className="small button"
             options={fieldOptions}
             search
-            text={(dataset.yAxis && dataset.yAxis.replace("root[].", "").replace("root.", "")) || "Select a field"}
+            text={(dataset.yAxis && dataset.yAxis.replace("root[].", "")) || "Select a field"}
             onChange={_selectYField}
             scrolling
           />
