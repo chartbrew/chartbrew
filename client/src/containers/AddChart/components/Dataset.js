@@ -302,6 +302,7 @@ function Dataset(props) {
               <DatasetData
                 dataset={newDataset}
                 requestResult={requestResult}
+                onUpdate={(data) => onUpdate(data)}
               />
             </Grid.Column>
           </Grid.Row>

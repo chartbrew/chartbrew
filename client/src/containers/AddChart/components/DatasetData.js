@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
+import { connect } from "react-redux";
+import { withRouter } from "react-router";
 import {
-  Dropdown, Icon, Input, Button, Grid,
+  Dropdown, Icon, Input, Button, Grid, Message
 } from "semantic-ui-react";
 import uuid from "uuid/v4";
+
+import { runRequest as runRequestAction } from "../../../actions/dataset";
 
 const operators = [{
   key: "=",
@@ -40,10 +44,13 @@ const operators = [{
 }];
 
 function DatasetData(props) {
-  const { requestResult } = props;
+  const {
+    dataset, requestResult, onUpdate, runRequest, match,
+  } = props;
 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [fieldOptions, setFieldOptions] = useState([]);
-  const [selectedField, setSelectedField] = useState("");
   const [conditions, setConditions] = useState([{
     id: uuid(),
     field: "",
@@ -65,8 +72,12 @@ function DatasetData(props) {
     }
   }, [requestResult]);
 
-  const _selectField = (e, data) => {
-    setSelectedField(data.value);
+  const _selectXField = (e, data) => {
+    onUpdate({ xAxis: `root[].${data.value}` });
+  };
+
+  const _selectYField = (e, data) => {
+    onUpdate({ yAxis: `root[].${data.value}` });
   };
 
   const _updateCondition = (id, data, type) => {
@@ -109,13 +120,41 @@ function DatasetData(props) {
     setConditions(newConditions);
   };
 
-  // if (!requestResult) {
-  //   return (
-  //     <div>
-  //       <p><i> - Fetch some data first - </i></p>
-  //     </div>
-  //   );
-  // }
+  const _onRefreshData = () => {
+    setLoading(true);
+    return runRequest(match.params.projectId, match.params.chartId, dataset.id)
+      .then(() => {
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message || err);
+        setLoading(false);
+      });
+  };
+
+  if (!requestResult) {
+    return (
+      <div>
+        <Button
+          primary
+          size="small"
+          icon
+          labelPosition="right"
+          onClick={_onRefreshData}
+          loading={loading}
+        >
+          <Icon name="refresh" />
+          Fetch the data
+        </Button>
+        {error && (
+          <Message warning>
+            <Message.Header>Error fetching data</Message.Header>
+            <p>{error}</p>
+          </Message>
+        )}
+      </div>
+    );
+  }
 
   return (
     <Grid style={styles.mainGrid}>
@@ -128,8 +167,8 @@ function DatasetData(props) {
             className="small button"
             options={fieldOptions}
             search
-            text={selectedField || "Select a field"}
-            onChange={_selectField}
+            text={(dataset.xAxis && dataset.xAxis.replace("root[].", "").replace("root.", "")) || "Select a field"}
+            onChange={_selectXField}
             scrolling
           />
         </Grid.Column>
@@ -141,8 +180,8 @@ function DatasetData(props) {
             className="small button"
             options={fieldOptions}
             search
-            text={selectedField || "Select a field"}
-            onChange={_selectField}
+            text={(dataset.yAxis && dataset.yAxis.replace("root[].", "").replace("root.", "")) || "Select a field"}
+            onChange={_selectYField}
             scrolling
           />
         </Grid.Column>
@@ -214,7 +253,20 @@ const styles = {
 };
 
 DatasetData.propTypes = {
+  dataset: PropTypes.object.isRequired,
   requestResult: PropTypes.object.isRequired,
+  onUpdate: PropTypes.func.isRequired,
+  runRequest: PropTypes.func.isRequired,
+  match: PropTypes.object.isRequired,
 };
 
-export default DatasetData;
+const mapStateToProps = () => ({});
+const mapDispatchToProps = (dispatch) => {
+  return {
+    runRequest: (projectId, chartId, datasetId) => {
+      return dispatch(runRequestAction(projectId, chartId, datasetId));
+    },
+  };
+};
+
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(DatasetData));

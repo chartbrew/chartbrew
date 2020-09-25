@@ -29,16 +29,10 @@ module.exports = (sequelize, DataTypes) => {
     xAxis: {
       type: DataTypes.STRING,
     },
-    xAxisType: {
-      type: DataTypes.STRING,
-    },
     xAxisOperation: {
       type: DataTypes.STRING,
     },
     yAxis: {
-      type: DataTypes.STRING,
-    },
-    yAxisType: {
       type: DataTypes.STRING,
     },
     yAxisOperation: {
@@ -92,6 +86,19 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+    conditions: {
+      type: DataTypes.TEXT,
+      set(val) {
+        return this.setDataValue("conditions", JSON.stringify(val));
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("conditions"));
+        } catch (e) {
+          return this.getDataValue("conditions");
+        }
+      }
+    }
   }, {
     freezeTableName: true,
   });
