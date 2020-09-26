@@ -8,6 +8,7 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const _ = require("lodash");
 const { OneAccount } = require("oneaccount-express");
+const morgan = require("morgan");
 
 const settings = process.env.NODE_ENV === "production" ? require("./settings") : require("./settings-dev");
 const routes = require("./api");
@@ -21,6 +22,10 @@ const authCache = new AuthCacheController();
 const app = express();
 app.settings = settings;
 
+if (process.env.NODE_ENV !== "production") {
+  app.set("trust proxy", true);
+  app.use(morgan("dev"));
+}
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
