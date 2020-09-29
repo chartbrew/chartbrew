@@ -116,13 +116,14 @@ class AxisChart {
             yAxisData = this.count(xAxisData);
             break;
           case "avg":
-            yAxisData = this.average(yAxisData, xAxisData, yType);
+            yAxisData = this.sum(xAxisData, yAxisData, yType, true);
             break;
           case "sum":
-            yAxisData = this.sum(yAxisData, xAxisData, yType);
+            yAxisData = this.sum(xAxisData, yAxisData, yType);
             break;
           default:
-            yAxisData = this.count(xAxisData);
+            // yAxisData = this.count(xAxisData);
+            yAxisData = this.sum(xAxisData, yAxisData, yType, true);
             break;
         }
 
@@ -294,6 +295,35 @@ class AxisChart {
     });
 
     return yData;
+  }
+
+  sum(xData, yData, type, average) {
+    if (type !== "number") throw new Error("The Y axis field need to be numerical for averages.");
+
+    const formattedData = {};
+    for (let i = 0; i < xData.length; i++) {
+      if (i === 0 || xData[i] !== xData[i - 1]) {
+        formattedData[xData[i]] = [yData[i]];
+      } else {
+        formattedData[xData[i]].push(yData[i]);
+      }
+    }
+
+    const axisData = [];
+    Object.keys(formattedData).forEach((key) => {
+      let sum = 0;
+      for (let i = 0; i < formattedData[key].length; i++) {
+        sum += formattedData[key][i];
+      }
+
+      if (average) {
+        axisData.push(sum / formattedData[key].length);
+      } else {
+        axisData.push(sum);
+      }
+    });
+
+    return axisData;
   }
 }
 
