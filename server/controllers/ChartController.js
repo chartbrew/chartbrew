@@ -14,6 +14,7 @@ const ChartCacheController = require("./ChartCacheController");
 const LineChart = require("../charts/LineChart");
 const BarChart = require("../charts/BarChart");
 const PieChart = require("../charts/PieChart");
+const AxisChart = require("../charts/AxisChart");
 
 class ChartController {
   constructor() {
@@ -352,6 +353,8 @@ class ChartController {
           // BAR CHART
         } else if (gChart.type === "bar") {
           const barChart = new BarChart(chartData);
+          const axisChart = new AxisChart(chartData);
+          axisChart.plot();
 
           if (gChart.subType.toLowerCase().indexOf("timeseries") > -1) {
             return barChart.aggregateOverTime();
