@@ -402,23 +402,24 @@ function AddChart(props) {
         </Grid.Column>
 
         <Grid.Column width={7} className="add-dataset-tut">
-          <Header>
+          <Header size="small" dividing>
             Datasets
             <Popup
               trigger={(
                 <Button
                   basic
                   onClick={_onResetTutorial}
-                  icon="question circle outline"
+                  icon="student"
                   loading={resetingTutorial}
                   floated="right"
+                  style={styles.tutorialBtn}
+                  content="Tutorial"
                 />
               )}
               content="Start the chart builder tutorial"
               position="top right"
             />
           </Header>
-          <Divider />
 
           <div>
             {datasets && datasets.map((dataset) => {
@@ -568,6 +569,10 @@ const styles = {
   },
   editTitle: {
     cursor: "pointer",
+  },
+  tutorialBtn: {
+    boxShadow: "none",
+    marginTop: -10,
   },
 };
 
