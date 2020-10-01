@@ -88,6 +88,7 @@ class AxisChart {
           return item;
         });
 
+        // X AXIS data processing
         switch (xType) {
           case "date":
             xAxisData = this.processDate(xAxisData);
@@ -112,6 +113,7 @@ class AxisChart {
             break;
         }
 
+        // Y CHART data processing
         switch (yAxisOperation) {
           case "count":
             yAxisData = this.count(xAxisData);
@@ -265,20 +267,20 @@ class AxisChart {
     return axisData;
   }
 
-  processNumber() {
-
+  processNumber(data) {
+    return data;
   }
 
-  processString() {
-
+  processString(data) {
+    return data;
   }
 
-  processBoolean() {
-
+  processBoolean(data) {
+    return data;
   }
 
-  processObject() {
-
+  processObject(data) {
+    return data;
   }
 
   /* OPERATIONS */
@@ -293,7 +295,7 @@ class AxisChart {
       }
     }
 
-    if (this.chart.subType.indexOf("AddTimeseries") > -1) {
+    if (determineType(xData[0]) === "date" && this.chart.subType.indexOf("AddTimeseries") > -1) {
       let previousKey;
       Object.keys(formattedData).map((key) => {
         if (previousKey) {
@@ -314,7 +316,10 @@ class AxisChart {
   }
 
   sum(xData, yData, type, average) {
-    if (type !== "number") throw new Error("The Y axis field need to be numerical for averages.");
+    if (type !== "number") {
+      // use count instead
+      return this.count(xData);
+    }
 
     const formattedData = {};
     for (let i = 0; i < xData.length; i++) {
