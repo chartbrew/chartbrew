@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Container, Button, Icon, Header, Image, Dimmer, Dropdown,
+  Container, Button, Icon, Header, Image, Dimmer, Dropdown, Grid, Popup
 } from "semantic-ui-react";
 import {
   Doughnut, Polar, Pie, Radar
@@ -42,6 +42,14 @@ function ChartPreview(props) {
     return onChange(type);
   };
 
+  const _toggleAggregation = () => {
+    if (chart.subType.indexOf("AddTimeseries") > -1) {
+      return onChange({ subType: "timeseries" });
+    }
+
+    return onChange({ subType: "AddTimeseries" });
+  };
+
   const _onChangeMode = (e, data) => {
     if (data.value === "chart") {
       setRedraw(true);
@@ -58,15 +66,68 @@ function ChartPreview(props) {
     <>
       {chart && chart.chartData && !typesVisible && (
         <Container>
-          {chart.subType.indexOf("AddTimeseries") > -1 && (
-            <Dropdown
-              options={chartModes}
-              selection
-              value={chart.mode}
-              onChange={_onChangeMode}
-              style={styles.modeSwitcher}
-            />
-          )}
+          <Grid columns={2}>
+            <Grid.Column width={6}>
+              {chart.subType.indexOf("AddTimeseries") > -1 && (
+                <Dropdown
+                  options={chartModes}
+                  selection
+                  value={chart.mode}
+                  onChange={_onChangeMode}
+                  style={styles.modeSwitcher}
+                />
+              )}
+            </Grid.Column>
+            <Grid.Column width={10} textAlign="right" style={styles.modeSwitcher}>
+              <Popup
+                trigger={(
+                  <Button
+                    color={chart.subType.indexOf("AddTimeseries") > -1 && "olive"}
+                    basic={chart.subType.indexOf("AddTimeseries") < 0}
+                    icon="chart line"
+                    onClick={_toggleAggregation}
+                  />
+                )}
+                content={chart.subType.indexOf("AddTimeseries") > -1 ? "Turn aggregation off" : "Aggregate data"}
+                position="bottom center"
+              />
+              <Button.Group style={{ marginRight: 3.5 }}>
+                <Popup
+                  trigger={(
+                    <Button
+                      color={chart.type === "line" && "violet"}
+                      icon="chart area"
+                      onClick={() => _onChangeChartType({ type: "line" })}
+                    />
+                  )}
+                  content="Display line chart"
+                  position="bottom center"
+                />
+                <Popup
+                  trigger={(
+                    <Button
+                      color={chart.type === "bar" && "violet"}
+                      icon="chart bar"
+                      onClick={() => _onChangeChartType({ type: "bar" })}
+                    />
+                  )}
+                  content="Display bar chart"
+                  position="bottom center"
+                />
+                <Popup
+                  trigger={(
+                    <Button
+                      color={chart.type === "pie" && "violet"}
+                      icon="chart pie"
+                      onClick={() => _onChangeChartType({ type: "pie" })}
+                    />
+                  )}
+                  content="Display pie chart"
+                  position="bottom center"
+                />
+              </Button.Group>
+            </Grid.Column>
+          </Grid>
           {chart.type === "line"
             && (
               <LineChart chart={chart} redraw={redraw} redrawComplete={_redrawComplete} />
@@ -77,11 +138,13 @@ function ChartPreview(props) {
             )}
           {chart.type === "pie"
             && (
-              <Pie
-                data={chart.chartData.data}
-                options={chart.chartData.options}
-                height={300}
-              />
+              <div>
+                <Pie
+                  data={chart.chartData.data}
+                  options={chart.chartData.options}
+                  height={300}
+                />
+              </div>
             )}
           {chart.type === "doughnut"
             && (
