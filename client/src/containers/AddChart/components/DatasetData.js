@@ -191,7 +191,7 @@ function DatasetData(props) {
             scrolling
           />
         </Grid.Column>
-        <Grid.Column width={6}>
+        <Grid.Column width={6} textAlign="right">
           <label>{"Y Axis "}</label>
           <Dropdown
             icon={null}

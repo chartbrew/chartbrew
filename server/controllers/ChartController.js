@@ -11,9 +11,6 @@ const DataRequestController = require("./DataRequestController");
 const ChartCacheController = require("./ChartCacheController");
 
 // charts
-const LineChart = require("../charts/LineChart");
-const BarChart = require("../charts/BarChart");
-const PieChart = require("../charts/PieChart");
 const AxisChart = require("../charts/AxisChart");
 
 class ChartController {
@@ -345,28 +342,8 @@ class ChartController {
         return Promise.resolve(resolvingData);
       })
       .then((chartData) => {
-        // LINE CHART
-        if (gChart.type === "line") {
-          const lineChart = new LineChart(chartData);
-          return lineChart.aggregateOverTime();
-
-          // BAR CHART
-        } else if (gChart.type === "bar") {
-          const axisChart = new AxisChart(chartData);
-          return axisChart.plot();
-
-          // PIE CHART
-        } else if (gChart.type === "pie" || gChart.type === "doughnut"
-          || gChart.type === "radar" || gChart.type === "polar") {
-          const pieChart = new PieChart(chartData);
-          if (gChart.subType === "pattern") {
-            return pieChart.createPatterns();
-          } else {
-            return new Promise((resolve, reject) => reject(new Error("Could not find the chart type")));
-          }
-        } else {
-          return new Promise((resolve, reject) => reject(new Error("Could not find the chart type")));
-        }
+        const axisChart = new AxisChart(chartData);
+        return axisChart.plot();
       })
       .then((chartData) => {
         return this.update(id, { chartData, chartDataUpdated: moment() });
@@ -548,35 +525,8 @@ class ChartController {
   previewChart(chart, projectId, user, noSource) {
     return this.getPreviewData(chart, projectId, user, noSource)
       .then((data) => {
-        // LINE CHART
-        if (chart.type === "line") {
-          const lineChart = new LineChart(chart, data);
-          return lineChart.aggregateOverTime();
-
-        // BAR CHART
-        } else if (chart.type === "bar") {
-          const barChart = new BarChart(chart, data);
-
-          if (chart.subType.toLowerCase().indexOf("timeseries") > -1) {
-            return barChart.aggregateOverTime();
-          } else if (chart.subType === "pattern") {
-            return barChart.createPatterns();
-          } else {
-            return new Promise((resolve, reject) => reject(new Error("Could not find the chart type")));
-          }
-
-        // PIE CHART
-        } else if (chart.type === "pie" || chart.type === "doughnut"
-          || chart.type === "radar" || chart.type === "polar") {
-          const pieChart = new PieChart(chart, data);
-          if (chart.subType === "pattern") {
-            return pieChart.createPatterns();
-          } else {
-            return new Promise((resolve, reject) => reject(new Error("Could not find the chart type")));
-          }
-        } else {
-          return new Promise((resolve, reject) => reject(new Error("Could not find the chart type")));
-        }
+        const axisChart = new AxisChart(data);
+        return axisChart.plot();
       })
       .then((chartData) => {
         return new Promise((resolve) => resolve(chartData));
@@ -586,38 +536,12 @@ class ChartController {
       });
   }
 
-  getChartData(id, data) {
+  getChartData(id) {
     let gChartData;
     return this.findById(id)
       .then((chart) => {
-        // LINE CHART
-        if (chart.type === "line") {
-          const lineChart = new LineChart(chart, data);
-          return lineChart.aggregateOverTime();
-
-        // BAR CHART
-        } else if (chart.type === "bar") {
-          const barChart = new BarChart(chart, data);
-          if (chart.subType.toLowerCase().indexOf("timeseries") > -1) {
-            return barChart.aggregateOverTime();
-          } else if (chart.subType === "pattern") {
-            return barChart.createPatterns();
-          } else {
-            return new Promise((resolve, reject) => reject(new Error("Could not find the chart type")));
-          }
-
-        // PIE CHART
-        } else if (chart.type === "pie" || chart.type === "doughnut"
-          || chart.type === "radar" || chart.type === "polar") {
-          const pieChart = new PieChart(chart, data);
-          if (chart.subType === "pattern") {
-            return pieChart.createPatterns();
-          } else {
-            return new Promise((resolve, reject) => reject(new Error("Could not find the chart type")));
-          }
-        } else {
-          return new Promise((resolve, reject) => reject(new Error("Could not find the chart type")));
-        }
+        const axisChart = new AxisChart(chart);
+        return axisChart.plot();
       })
       .then((chartData) => {
         gChartData = chartData;

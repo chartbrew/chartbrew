@@ -119,7 +119,7 @@ function ChartPreview(props) {
                     <Button
                       color={chart.type === "pie" && "violet"}
                       icon="chart pie"
-                      onClick={() => _onChangeChartType({ type: "pie" })}
+                      onClick={() => _onChangeChartType({ type: "pie", subType: "pattern" })}
                     />
                   )}
                   content="Display pie chart"
@@ -229,16 +229,6 @@ function ChartPreview(props) {
 
       {chart && chart.type && !typesVisible && (
         <Container textAlign="center" style={styles.topBuffer}>
-          <Button
-            icon
-            labelPosition="left"
-            onClick={() => setTypesVisible(true)}
-            primary
-            size="small"
-          >
-            <Icon name="chart line" />
-            {"Chart type"}
-          </Button>
           <Button.Group size="small">
             <Button
               icon

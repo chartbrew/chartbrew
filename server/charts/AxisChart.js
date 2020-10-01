@@ -1,6 +1,8 @@
 const _ = require("lodash");
 const moment = require("moment");
 const NewBarChart = require("./NewBarChart");
+const NewLineChart = require("./NewLineChart");
+const NewPieChart = require("./NewPieChart");
 
 function determineType(data) {
   let dataType;
@@ -138,11 +140,14 @@ class AxisChart {
 
     let chart;
     switch (this.chart.type) {
+      case "line":
+        chart = new NewLineChart(this.chart, this.datasets, this.axisData);
+        break;
       case "bar":
         chart = new NewBarChart(this.chart, this.datasets, this.axisData);
         break;
       default:
-        chart = new NewBarChart(this.chart, this.datasets, this.axisData);
+        chart = new NewPieChart(this.chart, this.datasets, this.axisData);
         break;
     }
 
