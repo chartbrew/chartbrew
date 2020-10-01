@@ -1,5 +1,6 @@
 const _ = require("lodash");
 const moment = require("moment");
+const NewBarChart = require("./NewBarChart");
 
 function determineType(data) {
   let dataType;
@@ -122,17 +123,28 @@ class AxisChart {
             yAxisData = this.sum(xAxisData, yAxisData, yType);
             break;
           default:
-            // yAxisData = this.count(xAxisData);
             yAxisData = this.sum(xAxisData, yAxisData, yType, true);
             break;
         }
 
-        this.axisData.x.push(_.uniq(xAxisData));
+        this.axisData.x = _.uniq(xAxisData);
         this.axisData.y.push(yAxisData);
       }
     } catch (e) {
       // console.log(e);
     }
+
+    let chart;
+    switch (this.chart.type) {
+      case "bar":
+        chart = new NewBarChart(this.chart, this.datasets, this.axisData);
+        break;
+      default:
+        chart = new NewBarChart(this.chart, this.datasets, this.axisData);
+        break;
+    }
+
+    return chart.getConfiguration();
   }
 
   processDate(data) {
@@ -140,6 +152,10 @@ class AxisChart {
     // order the dates
     for (let i = 0; i < axisData.length - 1; i++) {
       for (let j = i + 1; j < axisData.length; j++) {
+        // make sure all dates are transformed into moment objects
+        axisData[i] = moment(axisData[i]);
+        axisData[j] = moment(axisData[j]);
+        // --
         if (axisData[i] > axisData[j]) {
           const temp = axisData[i];
           axisData[i] = axisData[j];
@@ -163,8 +179,8 @@ class AxisChart {
 
       const newAxisData = [];
       for (let i = 0; i < axisData.length; i++) {
-        const entityDate = moment(axisData[i]);
-        if (entityDate.isAfter(moment(startDate)) && entityDate.isBefore(moment(endDate))) {
+        const entityDate = axisData[i];
+        if (entityDate.isAfter(startDate) && entityDate.isBefore(endDate)) {
           newAxisData.push(entityDate);
         }
       }
@@ -188,12 +204,12 @@ class AxisChart {
       const newAxisData = [];
       let index = 0;
       // make a new array containing all the dates between startDate and endDate
-      while (moment(startDate).isBefore(moment(endDate))) {
-        newAxisData.push(moment(startDate));
+      while (startDate.isBefore(endDate)) {
+        newAxisData.push(startDate);
         if (axisData[index]) {
-          while (moment(axisData[index]).isSame(moment(startDate), this.chart.timeInterval)) {
+          while (axisData[index].isSame(startDate, this.chart.timeInterval)) {
             if (!axisData[index]) break;
-            newAxisData.push(moment(axisData[index]));
+            newAxisData.push(axisData[index]);
             index += 1;
           }
         }

@@ -44,6 +44,20 @@ const operators = [{
   value: "∉",
 }];
 
+const operations = [{
+  key: "count",
+  text: "Count",
+  value: "count",
+}, {
+  key: "sum",
+  text: "Sum",
+  value: "sum",
+}, {
+  key: "avg",
+  text: "Average",
+  value: "avg",
+}];
+
 function DatasetData(props) {
   const {
     dataset, requestResult, onUpdate, runRequest, match,
@@ -79,6 +93,10 @@ function DatasetData(props) {
 
   const _selectYField = (e, data) => {
     onUpdate({ yAxis: data.value });
+  };
+
+  const _selectYOp = (e, data) => {
+    onUpdate({ yAxisOperation: data.value });
   };
 
   const _updateCondition = (id, data, type) => {
@@ -159,8 +177,8 @@ function DatasetData(props) {
 
   return (
     <Grid style={styles.mainGrid}>
-      <Grid.Row columns={2}>
-        <Grid.Column>
+      <Grid.Row columns={3}>
+        <Grid.Column width={6}>
           <label>{"X Axis "}</label>
           <Dropdown
             icon={null}
@@ -173,7 +191,7 @@ function DatasetData(props) {
             scrolling
           />
         </Grid.Column>
-        <Grid.Column>
+        <Grid.Column width={6}>
           <label>{"Y Axis "}</label>
           <Dropdown
             icon={null}
@@ -183,6 +201,23 @@ function DatasetData(props) {
             search
             text={(dataset.yAxis && dataset.yAxis.replace("root[].", "")) || "Select a field"}
             onChange={_selectYField}
+            scrolling
+          />
+        </Grid.Column>
+        <Grid.Column width={3}>
+          <Dropdown
+            icon={null}
+            button
+            className="small button"
+            options={operations}
+            search
+            text={
+              (dataset.yAxisOperation
+                && operations.find((i) => i.value === dataset.yAxisOperation).text
+              )
+              || "Operation"
+            }
+            onChange={_selectYOp}
             scrolling
           />
         </Grid.Column>

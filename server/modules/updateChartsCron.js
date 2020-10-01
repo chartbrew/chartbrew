@@ -38,14 +38,14 @@ function updateCharts() {
 
 module.exports = () => {
   // run once initially to cover for server downtime
-  updateCharts();
+  // updateCharts();
 
   // now run the cron job
   const cron = new CronJob("0 */1 * * * *", () => {
     updateCharts();
   });
 
-  cron.start();
+  // cron.start();
 
   return cron;
 };

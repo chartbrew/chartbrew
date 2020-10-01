@@ -352,17 +352,8 @@ class ChartController {
 
           // BAR CHART
         } else if (gChart.type === "bar") {
-          const barChart = new BarChart(chartData);
           const axisChart = new AxisChart(chartData);
-          axisChart.plot();
-
-          if (gChart.subType.toLowerCase().indexOf("timeseries") > -1) {
-            return barChart.aggregateOverTime();
-          } else if (gChart.subType === "pattern") {
-            return barChart.createPatterns();
-          } else {
-            return new Promise((resolve, reject) => reject(new Error("Could not find the chart type")));
-          }
+          return axisChart.plot();
 
           // PIE CHART
         } else if (gChart.type === "pie" || gChart.type === "doughnut"
