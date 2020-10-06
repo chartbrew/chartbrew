@@ -62,6 +62,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    multiFill: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
     dateFormat: {
       type: DataTypes.STRING,
     },

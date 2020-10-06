@@ -109,7 +109,7 @@ function Dataset(props) {
 
   useEffect(() => {
     // reformat the fill color value based on the chart type
-    if (chart.subType === "pattern" && dataItems && dataItems.data) {
+    if (dataset.multiFill && dataItems && dataItems.data) {
       let { fillColor } = dataset;
       if (!Array.isArray(fillColor)) {
         fillColor = [fillColor];
@@ -120,7 +120,7 @@ function Dataset(props) {
       }
 
       setNewDataset({ ...newDataset, fillColor });
-    } else if (chart.subType !== "pattern") {
+    } else if (!dataset.multiFill) {
       let newFillColor = newDataset.fillColor;
       if (Array.isArray(newFillColor)) {
         newFillColor = newFillColor[0].replace("\"", "");

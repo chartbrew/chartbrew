@@ -59,18 +59,29 @@ function DatasetAppearance(props) {
               color="blue"
               style={styles.datasetColorBtn(dataset.datasetColor)}
               content="Click to select"
-                  />
-                )}
+            />
+          )}
           style={{ padding: 0, margin: 0 }}
           on="click"
           offset="0, 10px"
           position="right center"
-              />
+        />
       </div>
 
       <Header size="tiny">Fill Color</Header>
+      {chart.type !== "line" && (
+        <div style={{ paddingBottom: 10 }}>
+          <Checkbox
+            checked={dataset.multiFill || false}
+            onChange={(e, data) => {
+              onUpdate({ ...dataset, multiFill: data.checked });
+            }}
+            label="Multiple colors"
+          />
+        </div>
+      )}
       <div>
-        {chart.subType !== "pattern" && (
+        {(!dataset.multiFill || chart.type === "line") && (
         <>
           <Popup
             content={() => _renderColorPicker("fill")}
@@ -80,23 +91,23 @@ function DatasetAppearance(props) {
                 color="blue"
                 style={styles.datasetColorBtn(dataset.fillColor)}
                 content="Click to select"
-                      />
-                    )}
+              />
+            )}
             style={{ padding: 0, margin: 0 }}
             on="click"
             offset="0, 10px"
             position="right center"
-                  />
+          />
           <Checkbox
             checked={dataset.fill || false}
             onChange={(e, data) => {
               onUpdate({ ...dataset, fill: data.checked });
             }}
             style={{ verticalAlign: "middle", marginLeft: 10 }}
-                  />
+          />
         </>
         )}
-        {chart.subType === "pattern" && (
+        {dataset.multiFill && chart.type !== "line" && (
         <Label.Group>
           {dataItems && dataItems.data && dataItems.data.map((val, fillIndex) => {
             return (
@@ -109,13 +120,13 @@ function DatasetAppearance(props) {
                     color="blue"
                     style={styles.datasetColorBtn(dataset.fillColor[fillIndex])}
                     content={dataItems.labels[fillIndex]}
-                          />
-                        )}
+                  />
+                )}
                 style={{ padding: 0, margin: 0 }}
                 on="click"
                 offset="0, 10px"
                 position="right center"
-                      />
+              />
             );
           })}
         </Label.Group>
