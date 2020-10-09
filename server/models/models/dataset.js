@@ -37,6 +37,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     yAxisOperation: {
       type: DataTypes.STRING,
+      defaultValue: "none",
     },
     datasetColor: {
       type: DataTypes.TEXT,

@@ -121,7 +121,7 @@ class AxisChart {
             yAxisData = this.sum(xAxisData.formatted, yAxisData, yType);
             break;
           default:
-            yAxisData = this.noOp(xAxisData.filtered);
+            yAxisData = this.noOp(xAxisData.filtered, yAxisData);
             break;
         }
 
@@ -199,7 +199,6 @@ class AxisChart {
     if (this.chart.includeZeros) {
       // get the start date
       let startDate = axisData[0];
-      // console.log("axisData", axisData);
       let endDate = axisData[axisData.length - 1];
       if (this.chart.startDate) startDate = moment(this.chart.startDate); // eslint-disable-line
       if (this.chart.endDate) endDate = moment(this.chart.endDate); // eslint-disable-line
@@ -305,7 +304,29 @@ class AxisChart {
 
   /* OPERATIONS */
   noOp(xData, yData) {
-    return yData;
+    const formattedData = [];
+    const alreadyProcessed = [];
+    for (let i = 0; i < yData.length; i++) {
+      if (
+        determineType(yData[i].x) !== "date"
+        && _.indexOf(xData, yData[i].x) > -1
+        && _.indexOf(alreadyProcessed, yData[i].x) === -1
+      ) {
+        formattedData.push(yData[i].y);
+        alreadyProcessed.push(yData[i].x);
+      }
+
+      if (determineType(yData[i].x) === "date") {
+        xData.forEach((date) => {
+          if (moment(date).isSame(yData[i].x) && _.indexOf(alreadyProcessed, yData[i].x) === -1) {
+            formattedData.push(yData[i].y);
+            alreadyProcessed.push(yData[i].x);
+          }
+        });
+      }
+    }
+
+    return formattedData;
   }
 
   count(xData) {

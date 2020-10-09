@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Dropdown, Icon, Input, Button, Grid, Message
+  Dropdown, Icon, Input, Button, Grid, Message,
 } from "semantic-ui-react";
 import uuid from "uuid/v4";
 
@@ -45,6 +45,10 @@ const operators = [{
 }];
 
 const operations = [{
+  key: "none",
+  text: "No operation",
+  value: "none",
+}, {
   key: "count",
   text: "Count",
   value: "count",
@@ -168,7 +172,7 @@ function DatasetData(props) {
         {error && (
           <Message warning>
             <Message.Header>Error fetching data</Message.Header>
-            <p>{error}</p>
+            <p>{error.message}</p>
           </Message>
         )}
       </div>
@@ -176,8 +180,8 @@ function DatasetData(props) {
   }
 
   return (
-    <Grid style={styles.mainGrid}>
-      <Grid.Row columns={3}>
+    <Grid style={styles.mainGrid} centered stackable>
+      <Grid.Row columns={2}>
         <Grid.Column width={6}>
           <label>{"X Axis "}</label>
           <Dropdown
@@ -191,7 +195,7 @@ function DatasetData(props) {
             scrolling
           />
         </Grid.Column>
-        <Grid.Column width={6} textAlign="right">
+        <Grid.Column width={10}>
           <label>{"Y Axis "}</label>
           <Dropdown
             icon={null}
@@ -203,8 +207,6 @@ function DatasetData(props) {
             onChange={_selectYField}
             scrolling
           />
-        </Grid.Column>
-        <Grid.Column width={3}>
           <Dropdown
             icon={null}
             button
@@ -222,7 +224,6 @@ function DatasetData(props) {
           />
         </Grid.Column>
       </Grid.Row>
-
       {conditions.map((condition, index) => {
         return (
           <Grid.Row key={condition.id} style={styles.conditionRow}>
