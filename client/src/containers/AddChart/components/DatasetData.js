@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Dropdown, Icon, Input, Button, Grid, Message,
+  Dropdown, Icon, Input, Button, Grid, Message, Popup,
 } from "semantic-ui-react";
 import uuid from "uuid/v4";
 
@@ -77,6 +77,7 @@ function DatasetData(props) {
     value: "",
   }]);
 
+  // Update the content when there is some data to work with
   useEffect(() => {
     if (requestResult && requestResult.data) {
       const tempFieldOptions = [];
@@ -90,6 +91,33 @@ function DatasetData(props) {
       setFieldOptions(tempFieldOptions);
     }
   }, [requestResult]);
+
+  // Update the conditions
+  useEffect(() => {
+    if (dataset.conditions && dataset.conditions.length > 0) {
+      let newConditions = [...conditions];
+
+      // in case of initialisation, remove the first empty condition
+      if (newConditions.length === 1 && !newConditions[0].saved && !newConditions[0].value) {
+        newConditions = [];
+      }
+
+      const toAddConditions = [];
+      for (let i = 0; i < dataset.conditions.length; i++) {
+        let found = false;
+        for (let j = 0; j < newConditions.length; j++) {
+          if (newConditions[j].id === dataset.conditions[i].id) {
+            newConditions[j] = dataset.conditions[i];
+            found = true;
+          }
+        }
+
+        if (!found) toAddConditions.push(dataset.conditions[i]);
+      }
+
+      setConditions(newConditions.concat(toAddConditions));
+    }
+  }, [dataset]);
 
   const _selectXField = (e, data) => {
     onUpdate({ xAxis: data.value });
@@ -108,6 +136,7 @@ function DatasetData(props) {
       const newCondition = condition;
       if (condition.id === id) {
         newCondition[type] = data.value;
+        newCondition.saved = false;
       }
 
       return newCondition;
@@ -116,12 +145,24 @@ function DatasetData(props) {
     setConditions(newConditions);
   };
 
+  const _onApplyCondition = (id) => {
+    const newConditions = conditions.map((item) => {
+      const newItem = { ...item };
+      if (item.id === id) newItem.saved = true;
+
+      return newItem;
+    });
+
+    _onSaveConditions(newConditions);
+  };
+
   const _onAddCondition = () => {
     const newConditions = [...conditions, {
       id: uuid(),
       field: "",
       operator: "=",
       value: "",
+      saved: false,
     }];
 
     setConditions(newConditions);
@@ -137,10 +178,17 @@ function DatasetData(props) {
         field: "",
         operator: "=",
         value: "",
+        saved: false,
       });
     }
 
     setConditions(newConditions);
+    _onSaveConditions(newConditions);
+  };
+
+  const _onSaveConditions = (newConditions) => {
+    const savedConditions = newConditions.filter((item) => item.saved);
+    onUpdate({ conditions: savedConditions });
   };
 
   const _onRefreshData = () => {
@@ -236,7 +284,7 @@ function DatasetData(props) {
                 button
                 options={fieldOptions}
                 search
-                text={condition.field || "field"}
+                text={(condition.field && condition.field.replace("root[].", "")) || "field"}
                 onChange={(e, data) => _updateCondition(condition.id, data, "field")}
               />
               <Dropdown
@@ -251,25 +299,58 @@ function DatasetData(props) {
               <Input
                 placeholder="Enter a value"
                 size="small"
+                value={condition.value}
                 onChange={(e, data) => _updateCondition(condition.id, data, "value")}
               />
 
-              <Button
-                icon
-                basic
-                style={styles.addConditionBtn}
-                onClick={_onAddCondition}
-              >
-                <Icon name="plus" />
-              </Button>
-              <Button
-                icon
-                basic
-                style={styles.addConditionBtn}
-                onClick={() => _onRemoveCondition(condition.id)}
-              >
-                <Icon name="minus" />
-              </Button>
+              <Popup
+                trigger={(
+                  <Button
+                    icon
+                    basic
+                    style={styles.addConditionBtn}
+                    onClick={() => _onRemoveCondition(condition.id)}
+                  >
+                    <Icon name="minus" />
+                  </Button>
+                )}
+                content="Remove condition"
+                position="top center"
+              />
+
+              {index === conditions.length - 1 && (
+                <Popup
+                  trigger={(
+                    <Button
+                      icon
+                      basic
+                      style={styles.addConditionBtn}
+                      onClick={_onAddCondition}
+                    >
+                      <Icon name="plus" />
+                    </Button>
+                  )}
+                  content="Add a new condition"
+                  position="top center"
+                />
+              )}
+
+              {!condition.saved && condition.value && (
+                <Popup
+                  trigger={(
+                    <Button
+                      icon
+                      basic
+                      style={styles.addConditionBtn}
+                      onClick={() => _onApplyCondition(condition.id)}
+                    >
+                      <Icon name="checkmark" color="green" />
+                    </Button>
+                  )}
+                  content="Apply this condition"
+                  position="top center"
+                />
+              )}
             </Grid.Column>
 
           </Grid.Row>
