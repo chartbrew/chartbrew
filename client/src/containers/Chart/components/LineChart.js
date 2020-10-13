@@ -39,7 +39,7 @@ function LineChart(props) {
                     {chart.chartData.data.datasets.map((dataset, index) => (
                       <Statistic key={uuid()}>
                         <Statistic.Value>
-                          {dataset.data[dataset.data.length - 1]}
+                          {dataset.data && dataset.data[dataset.data.length - 1]}
                         </Statistic.Value>
                         <Statistic.Label>
                           <span
