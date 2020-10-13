@@ -6,6 +6,7 @@ import {
   Dropdown, Icon, Input, Button, Grid, Message, Popup,
 } from "semantic-ui-react";
 import uuid from "uuid/v4";
+import _ from "lodash";
 
 import { runRequest as runRequestAction } from "../../../actions/dataset";
 import fieldFinder from "../../../modules/fieldFinder";
@@ -13,35 +14,35 @@ import fieldFinder from "../../../modules/fieldFinder";
 const operators = [{
   key: "=",
   text: "= (is)",
-  value: "=",
+  value: "is",
 }, {
   key: "≠",
   text: "≠ (is not)",
-  value: "≠",
+  value: "isNot",
 }, {
   key: ">",
   text: "> (greater than)",
-  value: ">",
+  value: "greaterThan",
 }, {
   key: "≥",
   text: "≥ (greater or equal)",
-  value: "≥",
+  value: "greaterOrEqual",
 }, {
   key: "<",
   text: "< (less than)",
-  value: "<",
+  value: "lessThan",
 }, {
   key: "≤",
   text: "≤ (less or equal)",
-  value: "≤",
+  value: "lessOrEqual",
 }, {
   key: "∈",
   text: "∈ (contains)",
-  value: "∈",
+  value: "contains",
 }, {
   key: "∉",
   text: "∉ (does not contain)",
-  value: "∉",
+  value: "notContains",
 }];
 
 const operations = [{
@@ -293,7 +294,13 @@ function DatasetData(props) {
                 className="small button"
                 options={operators}
                 search
-                text={condition.operator || "="}
+                text={
+                  (
+                    _.find(operators, { value: condition.operator })
+                    && _.find(operators, { value: condition.operator }).key
+                  )
+                  || "="
+                }
                 onChange={(e, data) => _updateCondition(condition.id, data, "operator")}
               />
               <Input

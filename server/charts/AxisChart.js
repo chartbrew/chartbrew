@@ -4,6 +4,9 @@ const NewBarChart = require("./NewBarChart");
 const NewLineChart = require("./NewLineChart");
 const NewPieChart = require("./NewPieChart");
 const determineType = require("../modules/determineType");
+const dataFilter = require("./dataFilter");
+
+moment.suppressDeprecationWarnings = true;
 
 class AxisChart {
   constructor(data) {
@@ -19,7 +22,6 @@ class AxisChart {
     try {
       for (let i = 0; i < this.datasets.length; i++) {
         const dataset = this.datasets[i];
-        const { data } = dataset;
         const { yAxisOperation } = dataset.options;
         let { xAxis, yAxis } = dataset.options;
         let xData;
@@ -29,14 +31,16 @@ class AxisChart {
         let xAxisData = [];
         let yAxisData = [];
 
+        const filteredData = dataFilter(dataset);
+
         // first, handle the xAxis
         if (xAxis.indexOf("root[]") > -1) {
           xAxis = xAxis.replace("root[].", "");
           // and data stays the same
-          xData = data;
+          xData = filteredData;
         } else {
           const arrayFinder = xAxis.substring(0, xAxis.indexOf("]") - 1);
-          xData = _.get(data, arrayFinder);
+          xData = _.get(filteredData, arrayFinder);
         }
 
         let xAxisFieldName = xAxis;
@@ -81,11 +85,11 @@ class AxisChart {
         if (yAxis.indexOf("root[]") > -1) {
           yAxis = yAxis.replace("root[].", "");
           // and data stays the same
-          yData = data;
+          yData = filteredData;
         } else {
           const arrayFinder = yAxis.substring(0, yAxis.indexOf("]") - 1);
           yAxis = yAxis.substring(yAxis.indexOf("]") + 1);
-          yData = _.get(data, arrayFinder);
+          yData = _.get(filteredData, arrayFinder);
         }
 
         if (!(yData instanceof Array)) throw new Error("The Y field is not part of an Array");
