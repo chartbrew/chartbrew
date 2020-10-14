@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
@@ -20,39 +20,36 @@ import { DOCUMENTATION_HOST } from "../config/settings";
   Description
 */
 
-class Navbar extends Component {
-  constructor(props) {
-    super(props);
+function Navbar(props) {
+  const [loading, setLoading] = useState(true);
+  const [changelogPadding, setChangelogPadding] = useState(true);
+  const [feedbackModal, setFeedbackModal] = useState();
 
-    this.state = {
-      loading: true,
-      changelogPadding: true,
+  useEffect(() => {
+    return () => {
+      const { match } = props;
+      _onTeamChange(match.params.teamId, match.params.projectId);
+
+      setTimeout(() => {
+        try {
+          Headway.init(HW_config);
+          setChangelogPadding(false);
+        } catch (e) {
+          // ---
+        }
+      }, 1000);
     };
-  }
+  }, []);
 
-  componentDidMount() {
-    const { match } = this.props;
-    this._onTeamChange(match.params.teamId, match.params.projectId);
-
-    setTimeout(() => {
-      try {
-        Headway.init(HW_config);
-        this.setState({ changelogPadding: false });
-      } catch (e) {
-        // ---
-      }
-    }, 1000);
-  }
-
-  _onTeamChange = (teamId, projectId) => {
+  const _onTeamChange = (teamId, projectId) => {
     const {
       getTeam, getProject, changeActiveProject, getProjectCharts,
-    } = this.props;
+    } = props;
 
-    this.setState({ loading: true });
+    setLoading(true);
     getTeam(teamId)
       .then(() => {
-        this.setState({ loading: false });
+        setLoading(false);
         return new Promise(resolve => resolve(true));
       })
       .then(() => {
@@ -65,180 +62,181 @@ class Navbar extends Component {
         return getProjectCharts(projectId);
       })
       .then(() => {
-        // this.props.history.push(`/${teamId}/${projectId}/dashboard`);
-        this.setState({ loading: false });
+        // props.history.push(`/${teamId}/${projectId}/dashboard`);
+        setLoading(false);
       })
       .catch(() => {});
-  }
+  };
 
-  _canAccess(role) {
-    const { user, team } = this.props;
+  const _canAccess = (role) => {
+    const { user, team } = props;
     return canAccess(role, user.id, team.TeamRoles);
-  }
+  };
 
-  render() {
-    const {
-      hideTeam, transparent, team, teams, projectProp, user, logout,
-    } = this.props;
-    const { loading, feedbackModal, changelogPadding } = this.state;
+  const handleItemClick = () => {
+    // TODO
+  };
 
-    if (!team.id && !teams) {
-      return (
-        <Container text style={styles.container}>
-          <Dimmer active={loading}>
-            <Loader />
-          </Dimmer>
-        </Container>
-      );
-    }
+  const {
+    hideTeam, transparent, team, teams, projectProp, user, logout,
+  } = props;
+
+  if (!team.id && !teams) {
     return (
-      <Menu fixed="top" color="violet" inverted style={transparent ? styles.transparentMenu : { }}>
-        <Menu.Item style={styles.logoContainer} as={Link} to="/user">
-          <Image centered as="img" src={cbLogo} alt="Chartbrew logo" style={styles.logo} />
-        </Menu.Item>
-        {!hideTeam
-          && (
-          <Menu.Menu
-            onClick={this.handleItemClick}
-          >
-            <Dropdown text={team.name} item style={styles.centeredDropdown}>
-              <Dropdown.Menu>
-                <Dropdown.Header>{"Select a team"}</Dropdown.Header>
-                <Dropdown.Divider />
-                {teams && teams.map((team) => {
-                  return (
-                    team.Projects.length > 0
-                     && (
-                     <Dropdown
-                       disabled={team.Projects.length < 1}
-                       item
-                       key={team.id}
-                       text={team.name}>
-                       <Dropdown.Menu>
-                         {team.Projects.map((project) => {
-                           return (
-                             <Dropdown.Item
-                               onClick={() => this._onTeamChange(team.id, project.id)}
-                               disabled={project.id === projectProp.id}
-                               key={project.id}>
-                               {project.id === projectProp.id
-                              && (
-                              <span className="label">
-                                Active
-                              </span>
-                              )}
-                               <span>
-                                 {" "}
-                                 {project.name}
-                                 {" "}
-                               </span>
-                             </Dropdown.Item>
-                           );
-                         })}
-                       </Dropdown.Menu>
-                     </Dropdown>
-                     )
-                  );
-                }) }
-              </Dropdown.Menu>
-            </Dropdown>
-          </Menu.Menu>
-          )}
-
-        <Menu.Menu position="right">
-          <Menu.Item
-            className="changelog-trigger"
-            as="a"
-            style={{ paddingTop: 0, paddingBottom: 0, paddingLeft: 0 }}
-            title="Changelog"
-          >
-            <div className="changelog-badge">
-              {changelogPadding && <span style={{ paddingLeft: 16, paddingRight: 16 }} />}
-            </div>
-            Updates
-          </Menu.Item>
-          <Menu.Item
-            as="a"
-            href={DOCUMENTATION_HOST}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Icon name="book" />
-            Documentation
-          </Menu.Item>
-          <Menu.Item onClick={() => this.setState({ feedbackModal: true })}>
-            <Icon name="lightbulb outline" />
-            Suggestions
-          </Menu.Item>
-          <Dropdown
-            style={{ paddingTop: 0, paddingBottom: 0 }}
-            item
-            floating={transparent}
-            trigger={user.icon
-              ? <UserAvatar size="32" name={user.icon} color="purple" /> : <span />}
-          >
+      <Container text style={styles.container}>
+        <Dimmer active={loading}>
+          <Loader />
+        </Dimmer>
+      </Container>
+    );
+  }
+  return (
+    <Menu fixed="top" color="violet" inverted style={transparent ? styles.transparentMenu : { }}>
+      <Menu.Item style={styles.logoContainer} as={Link} to="/user">
+        <Image centered as="img" src={cbLogo} alt="Chartbrew logo" style={styles.logo} />
+      </Menu.Item>
+      {!hideTeam
+        && (
+        <Menu.Menu
+          onClick={handleItemClick}
+        >
+          <Dropdown text={team.name} item style={styles.centeredDropdown}>
             <Dropdown.Menu>
-              <Dropdown.Item as={Link} to="/user">My space</Dropdown.Item>
-              <Dropdown.Item as={Link} to="/edit">Profile</Dropdown.Item>
-
-              {!hideTeam && this._canAccess("admin") && <Dropdown.Divider />}
-              {!hideTeam && this._canAccess("admin") && <Dropdown.Item as={Link} to={`/manage/${team.id}/settings`}>Team settings</Dropdown.Item>}
-
+              <Dropdown.Header>{"Select a team"}</Dropdown.Header>
               <Dropdown.Divider />
-              <Dropdown.Item
-                as="a"
-                href="https://github.com/razvanilin/chartbrew"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Icon name="github" />
-                GitHub
-              </Dropdown.Item>
-              <Dropdown.Item
-                as="a"
-                href="https://discord.gg/KwGEbFk"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Icon name="discord" />
-                Discord
-              </Dropdown.Item>
-              <Dropdown.Item
-                as="a"
-                href="https://join.slack.com/t/chartbrew/shared_invite/enQtODU3MzYzNTkwOTMwLTZiOTA5YzczODUzZGFiZmQyMGI1ZGVmZGI4YTVmOTBkMTI0YzQ2ZjJjOGI5NzQ0NmNmYzRmMDk3MmY4YmI4MTI"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Icon name="slack" />
-                Slack
-              </Dropdown.Item>
-
-              <Dropdown.Divider />
-              <Dropdown.Item onClick={logout}>
-                <Icon name="sign out" />
-                Sign out
-              </Dropdown.Item>
+              {teams && teams.map((team) => {
+                return (
+                  team.Projects.length > 0
+                   && (
+                   <Dropdown
+                     disabled={team.Projects.length < 1}
+                     item
+                     key={team.id}
+                     text={team.name}>
+                     <Dropdown.Menu>
+                       {team.Projects.map((project) => {
+                         return (
+                           <Dropdown.Item
+                             onClick={() => _onTeamChange(team.id, project.id)}
+                             disabled={project.id === projectProp.id}
+                             key={project.id}>
+                             {project.id === projectProp.id
+                            && (
+                            <span className="label">
+                              Active
+                            </span>
+                            )}
+                             <span>
+                               {" "}
+                               {project.name}
+                               {" "}
+                             </span>
+                           </Dropdown.Item>
+                         );
+                       })}
+                     </Dropdown.Menu>
+                   </Dropdown>
+                   )
+                );
+              }) }
             </Dropdown.Menu>
           </Dropdown>
         </Menu.Menu>
+        )}
 
-        <Modal
-          open={feedbackModal}
-          size="small"
-          onClose={() => this.setState({ feedbackModal: false })}
+      <Menu.Menu position="right">
+        <Menu.Item
+          className="changelog-trigger"
+          as="a"
+          style={{ paddingTop: 0, paddingBottom: 0, paddingLeft: 0 }}
+          title="Changelog"
         >
-          <Modal.Content>
-            <FeedbackForm />
-          </Modal.Content>
-          <Modal.Actions>
-            <Button onClick={() => this.setState({ feedbackModal: false })}>
-              Cancel
-            </Button>
-          </Modal.Actions>
-        </Modal>
-      </Menu>
-    );
-  }
+          <div className="changelog-badge">
+            {changelogPadding && <span style={{ paddingLeft: 16, paddingRight: 16 }} />}
+          </div>
+          Updates
+        </Menu.Item>
+        <Menu.Item
+          as="a"
+          href={DOCUMENTATION_HOST}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Icon name="book" />
+          Documentation
+        </Menu.Item>
+        <Menu.Item onClick={() => setFeedbackModal(true)}>
+          <Icon name="lightbulb outline" />
+          Suggestions
+        </Menu.Item>
+        <Dropdown
+          style={{ paddingTop: 0, paddingBottom: 0 }}
+          item
+          floating={transparent}
+          trigger={user.icon
+            ? <UserAvatar size="32" name={user.icon} color="purple" /> : <span />}
+        >
+          <Dropdown.Menu>
+            <Dropdown.Item as={Link} to="/user">My space</Dropdown.Item>
+            <Dropdown.Item as={Link} to="/edit">Profile</Dropdown.Item>
+
+            {!hideTeam && _canAccess("admin") && <Dropdown.Divider />}
+            {!hideTeam && _canAccess("admin") && <Dropdown.Item as={Link} to={`/manage/${team.id}/settings`}>Team settings</Dropdown.Item>}
+
+            <Dropdown.Divider />
+            <Dropdown.Item
+              as="a"
+              href="https://github.com/razvanilin/chartbrew"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Icon name="github" />
+              GitHub
+            </Dropdown.Item>
+            <Dropdown.Item
+              as="a"
+              href="https://discord.gg/KwGEbFk"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Icon name="discord" />
+              Discord
+            </Dropdown.Item>
+            <Dropdown.Item
+              as="a"
+              href="https://join.slack.com/t/chartbrew/shared_invite/enQtODU3MzYzNTkwOTMwLTZiOTA5YzczODUzZGFiZmQyMGI1ZGVmZGI4YTVmOTBkMTI0YzQ2ZjJjOGI5NzQ0NmNmYzRmMDk3MmY4YmI4MTI"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Icon name="slack" />
+              Slack
+            </Dropdown.Item>
+
+            <Dropdown.Divider />
+            <Dropdown.Item onClick={logout}>
+              <Icon name="sign out" />
+              Sign out
+            </Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown>
+      </Menu.Menu>
+
+      <Modal
+        open={feedbackModal}
+        size="small"
+        onClose={() => setFeedbackModal(false)}
+      >
+        <Modal.Content>
+          <FeedbackForm />
+        </Modal.Content>
+        <Modal.Actions>
+          <Button onClick={() => setFeedbackModal(false)}>
+            Cancel
+          </Button>
+        </Modal.Actions>
+      </Modal>
+    </Menu>
+  );
 }
 
 const styles = {
