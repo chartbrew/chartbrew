@@ -1,4 +1,4 @@
-import { isValid } from "date-fns";
+import moment from "moment";
 
 export default function determineType(data) {
   let dataType;
@@ -17,7 +17,7 @@ export default function determineType(data) {
   if (typeof data !== "object" && !(data instanceof Array) && typeof data === "string") {
     dataType = "string";
   }
-  if (typeof data !== "object" && !(data instanceof Array) && isValid(data)
+  if (typeof data !== "object" && !(data instanceof Array) && moment(data).isValid()
     && ((typeof data === "number" && data.toString().length > 9) || (typeof data !== "number"))) {
     dataType = "date";
   }

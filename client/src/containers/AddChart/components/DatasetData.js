@@ -5,8 +5,10 @@ import { withRouter } from "react-router";
 import {
   Dropdown, Icon, Input, Button, Grid, Message, Popup,
 } from "semantic-ui-react";
+import { Calendar } from "react-date-range";
 import uuid from "uuid/v4";
 import _ from "lodash";
+import { formatISO, format } from "date-fns";
 
 import { runRequest as runRequestAction } from "../../../actions/dataset";
 import fieldFinder from "../../../modules/fieldFinder";
@@ -82,11 +84,12 @@ function DatasetData(props) {
   useEffect(() => {
     if (requestResult && requestResult.data) {
       const tempFieldOptions = [];
-      fieldFinder(requestResult.data).forEach((field) => {
+      fieldFinder(requestResult.data).forEach((o) => {
         tempFieldOptions.push({
-          key: field,
-          text: field.replace("root[].", ""),
-          value: field,
+          key: o.field,
+          text: o.field.replace("root[].", ""),
+          value: o.field,
+          type: o.type,
         });
       });
       setFieldOptions(tempFieldOptions);
@@ -108,7 +111,7 @@ function DatasetData(props) {
         let found = false;
         for (let j = 0; j < newConditions.length; j++) {
           if (newConditions[j].id === dataset.conditions[i].id) {
-            newConditions[j] = dataset.conditions[i];
+            newConditions[j] = _.clone(dataset.conditions[i]);
             found = true;
           }
         }
@@ -136,7 +139,7 @@ function DatasetData(props) {
     const newConditions = conditions.map((condition) => {
       const newCondition = condition;
       if (condition.id === id) {
-        newCondition[type] = data.value;
+        newCondition[type] = data;
         newCondition.saved = false;
       }
 
@@ -155,6 +158,20 @@ function DatasetData(props) {
     });
 
     _onSaveConditions(newConditions);
+  };
+
+  const _onRevertCondition = (id) => {
+    const newConditions = conditions.map((item) => {
+      let newItem = { ...item };
+      if (item.id === id) {
+        const previousItem = _.find(dataset.conditions, { id });
+        newItem = { ...previousItem };
+      }
+
+      return newItem;
+    });
+
+    setConditions(newConditions);
   };
 
   const _onAddCondition = () => {
@@ -286,7 +303,7 @@ function DatasetData(props) {
                 options={fieldOptions}
                 search
                 text={(condition.field && condition.field.replace("root[].", "")) || "field"}
-                onChange={(e, data) => _updateCondition(condition.id, data, "field")}
+                onChange={(e, data) => _updateCondition(condition.id, data.value, "field")}
               />
               <Dropdown
                 icon={null}
@@ -301,63 +318,107 @@ function DatasetData(props) {
                   )
                   || "="
                 }
-                onChange={(e, data) => _updateCondition(condition.id, data, "operator")}
-              />
-              <Input
-                placeholder="Enter a value"
-                size="small"
-                value={condition.value}
-                onChange={(e, data) => _updateCondition(condition.id, data, "value")}
+                onChange={(e, data) => _updateCondition(condition.id, data.value, "operator")}
               />
 
-              <Popup
-                trigger={(
-                  <Button
-                    icon
-                    basic
-                    style={styles.addConditionBtn}
-                    onClick={() => _onRemoveCondition(condition.id)}
-                  >
-                    <Icon name="minus" />
-                  </Button>
+              { _.find(fieldOptions, { value: condition.field })
+                 && _.find(fieldOptions, { value: condition.field }).type !== "date" && (
+                 <Input
+                   placeholder="Enter a value"
+                   size="small"
+                   value={condition.value}
+                   onChange={(e, data) => _updateCondition(condition.id, data.value, "value")}
+                />
+              )}
+              {_.find(fieldOptions, { value: condition.field })
+                && _.find(fieldOptions, { value: condition.field }).type === "date" && (
+                <Popup
+                  on="click"
+                  pinned
+                  position="top center"
+                  trigger={(
+                    <Input
+                      placeholder="Enter a value"
+                      size="small"
+                      value={condition.value && format(new Date(condition.value), "Pp")}
+                    />
+                  )}
+                  content={(
+                    <Calendar
+                      date={(condition.value && new Date(condition.value)) || new Date()}
+                      onChange={(date) => _updateCondition(condition.id, formatISO(date), "value")}
+                    />
+                  )}
+                />
+              )}
+
+              <Button.Group size="small">
+                <Popup
+                  trigger={(
+                    <Button
+                      icon
+                      basic
+                      style={styles.addConditionBtn}
+                      onClick={() => _onRemoveCondition(condition.id)}
+                    >
+                      <Icon name="minus" />
+                    </Button>
+                  )}
+                  content="Remove condition"
+                  position="top center"
+                />
+
+                {index === conditions.length - 1 && (
+                  <Popup
+                    trigger={(
+                      <Button
+                        icon
+                        basic
+                        style={styles.addConditionBtn}
+                        onClick={_onAddCondition}
+                      >
+                        <Icon name="plus" />
+                      </Button>
+                    )}
+                    content="Add a new condition"
+                    position="top center"
+                  />
                 )}
-                content="Remove condition"
-                position="top center"
-              />
 
-              {index === conditions.length - 1 && (
-                <Popup
-                  trigger={(
-                    <Button
-                      icon
-                      basic
-                      style={styles.addConditionBtn}
-                      onClick={_onAddCondition}
-                    >
-                      <Icon name="plus" />
-                    </Button>
-                  )}
-                  content="Add a new condition"
-                  position="top center"
-                />
-              )}
+                {!condition.saved && condition.value && (
+                  <Popup
+                    trigger={(
+                      <Button
+                        icon
+                        basic
+                        style={styles.addConditionBtn}
+                        onClick={() => _onApplyCondition(condition.id)}
+                      >
+                        <Icon name="checkmark" color="green" />
+                      </Button>
+                    )}
+                    content="Apply this condition"
+                    position="top center"
+                  />
+                )}
 
-              {!condition.saved && condition.value && (
-                <Popup
-                  trigger={(
-                    <Button
-                      icon
-                      basic
-                      style={styles.addConditionBtn}
-                      onClick={() => _onApplyCondition(condition.id)}
-                    >
-                      <Icon name="checkmark" color="green" />
-                    </Button>
-                  )}
-                  content="Apply this condition"
-                  position="top center"
-                />
-              )}
+                {!condition.saved && condition.value && (
+                  <Popup
+                    trigger={(
+                      <Button
+                        icon
+                        basic
+                        style={styles.addConditionBtn}
+                        onClick={() => _onRevertCondition(condition.id)}
+                      >
+                        <Icon name="undo alternate" color="olive" />
+                      </Button>
+                    )}
+                    content="Undo changes"
+                    position="top center"
+                  />
+                )}
+              </Button.Group>
             </Grid.Column>
 
           </Grid.Row>

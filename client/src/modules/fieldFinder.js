@@ -1,3 +1,5 @@
+import determineType from "./determineType";
+
 function findFields(coll, currentKey, first, fields) {
   let newFields = fields;
   Object.keys(coll).map((field) => {
@@ -11,7 +13,11 @@ function findFields(coll, currentKey, first, fields) {
       newFields.push(newKey);
     } else {
       if (first) newKey = `root[].${newKey}`;
-      newFields.push(newKey);
+      newFields.push({
+        field: newKey,
+        value: coll[field],
+        type: determineType(coll[field]),
+      });
     }
 
     if (data !== null && typeof data === "object" && !(data instanceof Array)) {
@@ -31,7 +37,11 @@ export default function init(collection) {
   if (!(collection instanceof Array)) {
     Object.keys(collection).forEach((field) => {
       if (collection[field] instanceof Array) {
-        explorationSet.push(field);
+        explorationSet.push({
+          field,
+          value: collection[field],
+          type: determineType(collection[field]),
+        });
       }
     });
   }
