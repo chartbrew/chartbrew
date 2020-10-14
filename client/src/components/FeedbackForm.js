@@ -13,7 +13,7 @@ function FeedbackForm(props) {
   const [feedback, setFeedback] = useState("");
   const [name, setName] = useState("");
 
-  const { sendFeedback, user } = props
+  const { sendFeedback, user } = props;
 
   const _onSendFeedback = () => {
     setLoading(true);
