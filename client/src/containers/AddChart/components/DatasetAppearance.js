@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {
-  Header, Popup, Checkbox, Label,
+  Header, Popup, Checkbox, Label, Grid,
 } from "semantic-ui-react";
 import { SketchPicker } from "react-color";
 
@@ -48,9 +48,9 @@ function DatasetAppearance(props) {
   };
 
   return (
-    <div>
-      <Header size="tiny">Dataset Color</Header>
-      <div>
+    <Grid columns={2}>
+      <Grid.Column width={8}>
+        <Header size="tiny">Dataset Color</Header>
         <Popup
           content={() => _renderColorPicker("dataset")}
           trigger={(
@@ -66,73 +66,75 @@ function DatasetAppearance(props) {
           offset="0, 10px"
           position="right center"
         />
-      </div>
+      </Grid.Column>
 
-      <Header size="tiny">Fill Color</Header>
-      {chart.type !== "line" && (
-        <div style={{ paddingBottom: 10 }}>
-          <Checkbox
-            checked={dataset.multiFill || false}
-            onChange={(e, data) => {
-              onUpdate({ ...dataset, multiFill: data.checked });
-            }}
-            label="Multiple colors"
-          />
+      <Grid.Column width={8}>
+        <Header size="tiny">Fill Color</Header>
+        {chart.type !== "line" && (
+          <div style={{ paddingBottom: 10 }}>
+            <Checkbox
+              checked={dataset.multiFill || false}
+              onChange={(e, data) => {
+                onUpdate({ ...dataset, multiFill: data.checked });
+              }}
+              label="Multiple colors"
+            />
+          </div>
+        )}
+        <div>
+          {(!dataset.multiFill || chart.type === "line") && (
+          <>
+            <Popup
+              content={() => _renderColorPicker("fill")}
+              trigger={(
+                <Label
+                  size="large"
+                  color="blue"
+                  style={styles.datasetColorBtn(dataset.fillColor)}
+                  content="Click to select"
+                />
+              )}
+              style={{ padding: 0, margin: 0 }}
+              on="click"
+              offset="0, 10px"
+              position="right center"
+            />
+            <Checkbox
+              checked={dataset.fill || false}
+              onChange={(e, data) => {
+                onUpdate({ ...dataset, fill: data.checked });
+              }}
+              style={{ verticalAlign: "middle", marginLeft: 10 }}
+            />
+          </>
+          )}
+          {dataset.multiFill && chart.type !== "line" && (
+          <Label.Group>
+            {dataItems && dataItems.data && dataItems.data.map((val, fillIndex) => {
+              return (
+                <Popup
+                  key={dataItems.labels[fillIndex]}
+                  content={() => _renderColorPicker("fill", fillIndex)}
+                  trigger={(
+                    <Label
+                      size="large"
+                      color="blue"
+                      style={styles.datasetColorBtn(dataset.fillColor[fillIndex])}
+                      content={dataItems.labels[fillIndex]}
+                    />
+                  )}
+                  style={{ padding: 0, margin: 0 }}
+                  on="click"
+                  offset="0, 10px"
+                  position="right center"
+                />
+              );
+            })}
+          </Label.Group>
+          )}
         </div>
-      )}
-      <div>
-        {(!dataset.multiFill || chart.type === "line") && (
-        <>
-          <Popup
-            content={() => _renderColorPicker("fill")}
-            trigger={(
-              <Label
-                size="large"
-                color="blue"
-                style={styles.datasetColorBtn(dataset.fillColor)}
-                content="Click to select"
-              />
-            )}
-            style={{ padding: 0, margin: 0 }}
-            on="click"
-            offset="0, 10px"
-            position="right center"
-          />
-          <Checkbox
-            checked={dataset.fill || false}
-            onChange={(e, data) => {
-              onUpdate({ ...dataset, fill: data.checked });
-            }}
-            style={{ verticalAlign: "middle", marginLeft: 10 }}
-          />
-        </>
-        )}
-        {dataset.multiFill && chart.type !== "line" && (
-        <Label.Group>
-          {dataItems && dataItems.data && dataItems.data.map((val, fillIndex) => {
-            return (
-              <Popup
-                key={dataItems.labels[fillIndex]}
-                content={() => _renderColorPicker("fill", fillIndex)}
-                trigger={(
-                  <Label
-                    size="large"
-                    color="blue"
-                    style={styles.datasetColorBtn(dataset.fillColor[fillIndex])}
-                    content={dataItems.labels[fillIndex]}
-                  />
-                )}
-                style={{ padding: 0, margin: 0 }}
-                on="click"
-                offset="0, 10px"
-                position="right center"
-              />
-            );
-          })}
-        </Label.Group>
-        )}
-      </div>
-    </div>
+      </Grid.Column>
+    </Grid>
   );
 }
 
