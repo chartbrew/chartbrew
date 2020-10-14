@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
@@ -15,74 +15,72 @@ import { primary } from "../config/colors";
 /*
   Contains the project creation functionality
 */
-class Invites extends Component {
-  constructor(props) {
-    super(props);
+function Invites({
+  match, user, resendTeamInvite, declineTeamInvite, showHeader, addTeamMember,
+  getTeamInvites, getPendingInvites
+}) {
+  const [showpendings, setShowpendings] = useState(false);
+  const [error, setError] = useState(false);
+  const [successResend, setSuccessResend] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [sentInviteId, setSentInviteId] = useState("");
 
-    this.state = {
-      error: false,
-      successResend: false,
-      showpendings: false,
-    };
-  }
-
-  componentDidMount() {
-    const {
-      match, getTeamInvites, showHeader, getPendingInvites, user
-    } = this.props;
+  useEffect(() => {
     // get pending Invites for the team
     if (match.params.teamId) {
       getTeamInvites(match.params.teamId)
         .then((invites) => {
           if (invites && invites[0].length > 0) {
             showHeader();
-            this.setState({ showpendings: true });
+            setShowpendings(true);
           }
         });
     } else {
       // get pending invites for the specific user
       getPendingInvites(user.data.id);
     }
-  }
+  }, []);
 
-  _addTeamMember(userId, token) {
-    const { addTeamMember } = this.props;
+  const _addTeamMember = (userId, token) => {
     addTeamMember(userId, token)
       .then(() => {
-        this.setState({ loading: false, error: false });
+        setLoading(false);
+        setError(false);
       }).catch(() => {
-        this.setState({ error: true, loading: false });
+        setLoading(false);
+        setError(true);
       });
-  }
+  };
 
-  _removeTeamInvite(teamId, token) {
-    const { declineTeamInvite, user, showHeader } = this.props;
+  const _removeTeamInvite = (teamId, token) => {
     declineTeamInvite(teamId, token)
       .then(() => {
         if (user.pendingInvites && user.pendingInvites[0]) {
           showHeader();
-          this.setState({ showpendings: true });
+          setShowpendings(true);
         }
-        this.setState({ loading: false, error: false });
+        setLoading(false);
+        setError(false);
       }).catch(() => {
-        this.setState({ error: true, loading: false });
+        setLoading(false);
+        setError(true);
       });
-  }
+  };
 
-  _resendTeamInvite(invite) {
-    const { resendTeamInvite } = this.props;
+  const _resendTeamInvite = (invite) => {
     resendTeamInvite(invite)
       .then((invite) => {
-        this.setState({
-          loading: false, error: false, successResend: true, sentInviteId: invite.id
-        });
+        setLoading(false);
+        setError(false);
+        setSuccessResend(true);
+        setSentInviteId(invite.id);
       }).catch(() => {
-        this.setState({ error: true, loading: false });
+        setError(true);
+        setLoading(false);
       });
-  }
+  };
 
-  renderManageTeamInvites(invite) {
-    const { sentInviteId, loading, successResend } = this.state;
+  const renderManageTeamInvites = (invite) => {
     return (
       <Card fluid color={invite.id === sentInviteId ? "" : "blue"} key={invite.id}>
         <Card.Content>
@@ -94,8 +92,8 @@ class Invites extends Component {
               size="medium"
               loading={loading}
               onClick={() => {
-                this.setState({ loading: true });
-                this._removeTeamInvite(invite.team_id, invite.token);
+                setLoading(true);
+                _removeTeamInvite(invite.team_id, invite.token);
               }}
               floated="right"
               compact
@@ -106,8 +104,8 @@ class Invites extends Component {
               size="medium"
               loading={loading}
               onClick={() => {
-                this.setState({ loading: true });
-                this._resendTeamInvite(invite);
+                setLoading(true);
+                _resendTeamInvite(invite);
               }}
               floated="right"
               compact
@@ -121,18 +119,18 @@ class Invites extends Component {
             <Message
               content="Team invite was resent!"
               positive
-              onDismiss={() => this.setState({ successResend: false, sentInviteId: "" })}
+              onDismiss={() => {
+                setSuccessResend(false);
+                setSentInviteId("");
+              }}
             />
           </Container>
         )}
       </Card>
     );
-  }
+  };
 
-  renderUserPendingInvite(invite) {
-    const { user } = this.props;
-    const { loading } = this.state;
-
+  const renderUserPendingInvite = (invite) => {
     return (
       <Message key={invite.id} styles={{ padding: "1em" }}>
         <Icon name="attention" color="violet" />
@@ -142,8 +140,8 @@ class Invites extends Component {
           size="small"
           loading={loading}
           onClick={() => {
-            this.setState({ loading: true });
-            this._removeTeamInvite(invite.team_id, invite.token);
+            setLoading(true);
+            _removeTeamInvite(invite.team_id, invite.token);
           }}
           floated="right"
           compact
@@ -157,8 +155,8 @@ class Invites extends Component {
           size="small"
           loading={loading}
           onClick={() => {
-            this.setState({ loading: true });
-            this._addTeamMember(user.data.id, invite.token);
+            setLoading(true);
+            _addTeamMember(user.data.id, invite.token);
           }}
           floated="right"
           compact
@@ -170,51 +168,47 @@ class Invites extends Component {
         </Button>
       </Message>
     );
-  }
+  };
 
-  render() {
-    const { match, user } = this.props;
-    const { showpendings, error } = this.state;
-    return (
-      <div style={styles.container}>
-        {match.params.teamId
-          ? (
-            <Segment attached="top">
-              <Header as="h3" style={{ borderBottom: "1px solid #d4d4d5", paddingBottom: 10, top: 0 }}> Pending team invites </Header>
-              <Container>
-                { !showpendings
-                && (
-                <Container textAlign="center" text>
-                  <i> There are no pending invites </i>
-                  <Divider hidden />
-                </Container>
-                )}
-                <Card.Group centered>
-                  {user.pendingInvites && user.pendingInvites[0]
-                    && user.pendingInvites[0].map((invite) => {
-                      return this.renderManageTeamInvites(invite);
-                    })}
-                </Card.Group>
+  return (
+    <div style={styles.container}>
+      {match.params.teamId
+        ? (
+          <Segment attached="top">
+            <Header as="h3" style={{ borderBottom: "1px solid #d4d4d5", paddingBottom: 10, top: 0 }}> Pending team invites </Header>
+            <Container>
+              { !showpendings
+              && (
+              <Container textAlign="center" text>
+                <i> There are no pending invites </i>
+                <Divider hidden />
               </Container>
-            </Segment>
-          )
-          : (
-            <Container text textAlign="left">
-              {user.pendingInvites && user.pendingInvites[0]
-            && user.pendingInvites[0].map((invite, index) => {
-              return this.renderUserPendingInvite(invite, index);
-            })}
+              )}
+              <Card.Group centered>
+                {user.pendingInvites && user.pendingInvites[0]
+                  && user.pendingInvites[0].map((invite) => {
+                    return renderManageTeamInvites(invite);
+                  })}
+              </Card.Group>
             </Container>
-          )}
-        {error
-          && (
-          <Message negative>
-            Oups, could not perform the request, please try again
-          </Message>
-          )}
-      </div>
-    );
-  }
+          </Segment>
+        )
+        : (
+          <Container text textAlign="left">
+            {user.pendingInvites && user.pendingInvites[0]
+          && user.pendingInvites[0].map((invite, index) => {
+            return renderUserPendingInvite(invite, index);
+          })}
+          </Container>
+        )}
+      {error
+        && (
+        <Message negative>
+          Oups, could not perform the request, please try again
+        </Message>
+        )}
+    </div>
+  );
 }
 
 const styles = {
