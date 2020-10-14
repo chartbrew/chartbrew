@@ -19,7 +19,9 @@ function EditUserForm(props) {
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [deleteUserError, setDeleteUserError] = useState(false);
 
-  const { userProp, updateUser, deleteUser, history } = props
+  const {
+    userProp, updateUser, deleteUser, history
+  } = props;
 
   useEffect(() => {
     if (userProp.name && !user.name) {
