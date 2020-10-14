@@ -38,28 +38,28 @@ function compareNumbers(data, field, condition) {
 
   switch (condition.operator) {
     case "is":
-      newData = _.filter(newData, (o) => o[field] === condition.value);
+      newData = _.filter(newData, (o) => o[field] === parseFloat(condition.value));
       break;
     case "isNot":
-      newData = _.filter(newData, (o) => o[field] !== condition.value);
+      newData = _.filter(newData, (o) => o[field] !== parseFloat(condition.value));
       break;
     case "contains":
-      newData = _.filter(newData, (o) => o[field] === condition.value);
+      newData = _.filter(newData, (o) => o[field] === parseFloat(condition.value));
       break;
     case "notContains":
-      newData = _.filter(newData, (o) => o[field] !== condition.value);
+      newData = _.filter(newData, (o) => o[field] !== parseFloat(condition.value));
       break;
     case "greaterThan":
-      newData = _.filter(newData, (o) => o[field] > condition.value);
+      newData = _.filter(newData, (o) => o[field] > parseFloat(condition.value));
       break;
     case "greaterOrEqual":
-      newData = _.filter(newData, (o) => o[field] >= condition.value);
+      newData = _.filter(newData, (o) => o[field] >= parseFloat(condition.value));
       break;
     case "lessThan":
-      newData = _.filter(newData, (o) => o[field] < condition.value);
+      newData = _.filter(newData, (o) => o[field] < parseFloat(condition.value));
       break;
     case "lessOrEqual":
-      newData = _.filter(newData, (o) => o[field] <= condition.value);
+      newData = _.filter(newData, (o) => o[field] <= parseFloat(condition.value));
       break;
     default:
       break;
