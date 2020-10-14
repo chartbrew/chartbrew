@@ -74,7 +74,7 @@ function DatasetData(props) {
   const [conditions, setConditions] = useState([{
     id: uuid(),
     field: "",
-    operator: "=",
+    operator: "is",
     value: "",
   }]);
 
@@ -161,7 +161,7 @@ function DatasetData(props) {
     const newConditions = [...conditions, {
       id: uuid(),
       field: "",
-      operator: "=",
+      operator: "is",
       value: "",
       saved: false,
     }];
@@ -177,7 +177,7 @@ function DatasetData(props) {
       newConditions.push({
         id: uuid(),
         field: "",
-        operator: "=",
+        operator: "is",
         value: "",
         saved: false,
       });

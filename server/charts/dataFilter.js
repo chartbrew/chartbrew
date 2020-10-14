@@ -148,23 +148,14 @@ module.exports = (dataset) => {
     const { field } = condition;
 
     let exactField = field;
-    let foundData;
-    // first, handle the xAxis
-    if (field.indexOf("root[]") > -1) {
-      exactField = field.replace("root[].", "");
-      // and data stays the same
-      foundData = finalData;
-    } else {
-      const arrayFinder = field.substring(0, field.indexOf("]") - 1);
-      exactField = field.substring(field.indexOf("]") + 2);
-      foundData = _.get(finalData, arrayFinder);
-    }
+    let foundData = finalData;
+    exactField = field.substring(field.indexOf("]") + 2);
 
     const dataType = determineType(_.find(foundData, exactField)[exactField]);
 
     switch (dataType) {
       case "string":
-        foundData = compareStrings(foundData, exactField, condition);
+        foundData = compareStrings(_.clone(foundData), exactField, condition);
         break;
       case "number":
         foundData = compareNumbers(foundData, exactField, condition);
