@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
@@ -11,24 +11,19 @@ import { secondaryTransparent } from "../config/colors";
 /*
   Contains the project creation functionality
 */
-class SavedQueries extends Component {
-  constructor(props) {
-    super(props);
+function SavedQueries(props) {
 
-    this.state = {
-      loading: false,
-      error: "",
-    };
-  }
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
-  componentDidMount() {
-    this._getSavedQueries();
-  }
+  useEffect(()=> {
+    _getSavedQueries();
+  })
 
   _getSavedQueries = () => {
     const { getSavedQueries } = this.props;
 
-    this.setState({ loading: true });
+    setLoading(true);
     const { project, type } = this.props;
     getSavedQueries(project.id, type)
       .then(() => {
