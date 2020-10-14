@@ -13,9 +13,7 @@ import { inviteMembers } from "../actions/team";
 /*
   Contains the team members invitation functionality
 */
-function InviteMembersForm({
-  style, match, skipTeamInvite, team, inviteMembers, user
-}) {
+function InviteMembersForm(props) {
   const [members, setMembers] = useState([]);
   const [currentValues, setCurrentValues] = useState([]);
   const [incorrectMail, setIncorrectMail] = useState(false);
@@ -24,6 +22,10 @@ function InviteMembersForm({
   const [inviteError, setInviteError] = useState(false);
   const [undeliveredInvites, setUndeliveredInvites] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const {
+    style, match, skipTeamInvite, team, inviteMembers, user
+  } = props;
 
   const onInviteMembers = () => {
     const teamId = team.id
