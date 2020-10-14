@@ -15,15 +15,17 @@ import { primary } from "../config/colors";
 /*
   Contains the project creation functionality
 */
-function Invites({
-  match, user, resendTeamInvite, declineTeamInvite, showHeader, addTeamMember,
-  getTeamInvites, getPendingInvites
-}) {
+function Invites(props) {
   const [showpendings, setShowpendings] = useState(false);
   const [error, setError] = useState(false);
   const [successResend, setSuccessResend] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sentInviteId, setSentInviteId] = useState("");
+
+  const {
+    match, user, resendTeamInvite, declineTeamInvite, showHeader, addTeamMember,
+    getTeamInvites, getPendingInvites
+  } = props;
 
   useEffect(() => {
     // get pending Invites for the team
