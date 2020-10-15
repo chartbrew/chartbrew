@@ -170,7 +170,10 @@ module.exports = (app) => {
         return res.status(200).send(result);
       })
       .catch((err) => {
-        return res.status(400).send(err);
+        if (err && err.message === "404") {
+          return res.status(404).send(err.message || err);
+        }
+        return res.status(400).send(err.message || err);
       });
   });
   // ----------------------------------------------------

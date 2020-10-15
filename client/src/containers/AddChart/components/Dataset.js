@@ -245,7 +245,7 @@ function Dataset(props) {
               onClick={_openConfigModal}
             >
               <Icon name="wifi" />
-              Get data
+              Make request
             </Button>
             <Popup
               trigger={(
@@ -284,7 +284,7 @@ function Dataset(props) {
                 onClick={() => setMenuItem("data")}
                 color="blue"
               >
-                {"Data"}
+                {"Chart data"}
               </Menu.Item>
               <Menu.Item
                 active={menuItem === "appearance"}

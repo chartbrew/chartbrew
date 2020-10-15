@@ -136,6 +136,10 @@ module.exports = (dataset) => {
   const { conditions, xAxis } = dataset.options;
   const { data } = dataset;
 
+  if (!conditions || conditions.length < 1) {
+    return data;
+  }
+
   let finalData;
   if (xAxis.indexOf("root[]") > -1) {
     finalData = data;

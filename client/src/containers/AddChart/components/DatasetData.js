@@ -3,7 +3,8 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Dropdown, Icon, Input, Button, Grid, Message, Popup, Divider, Header,
+  Dropdown, Icon, Input, Button, Grid, Message, Popup, Divider,
+  Header, Container,
 } from "semantic-ui-react";
 import { Calendar } from "react-date-range";
 import uuid from "uuid/v4";
@@ -87,21 +88,23 @@ function DatasetData(props) {
     if (requestResult && requestResult.data) {
       const tempFieldOptions = [];
       fieldFinder(requestResult.data).forEach((o) => {
-        tempFieldOptions.push({
-          key: o.field,
-          text: o.field.replace("root[].", ""),
-          value: o.field,
-          type: o.type,
-          label: {
-            content: o.type,
-            size: "small",
-            color: o.type === "date" ? "olive"
-              : o.type === "number" ? "blue"
-                : o.type === "string" ? "teal"
-                  : o.type === "boolean" ? "purple"
-                    : "grey"
-          },
-        });
+        if (o.field) {
+          tempFieldOptions.push({
+            key: o.field,
+            text: o.field && o.field.replace("root[].", ""),
+            value: o.field,
+            type: o.type,
+            label: {
+              content: o.type || "unknown",
+              size: "mini",
+              color: o.type === "date" ? "olive"
+                : o.type === "number" ? "blue"
+                  : o.type === "string" ? "teal"
+                    : o.type === "boolean" ? "purple"
+                      : "grey"
+            },
+          });
+        }
       });
       setFieldOptions(tempFieldOptions);
     }
@@ -156,6 +159,10 @@ function DatasetData(props) {
       if (condition.id === id) {
         newCondition[type] = data;
         newCondition.saved = false;
+
+        if (type === "field") {
+          newCondition.value = "";
+        }
       }
 
       return newCondition;
@@ -231,17 +238,21 @@ function DatasetData(props) {
         setLoading(false);
       })
       .catch((err) => {
-        setError(err.message || err);
+        if (err.statusCode === 404) {
+          setError("Please configure the request above first");
+        } else {
+          setError(err.statusText || err);
+        }
         setLoading(false);
       });
   };
 
   if (!requestResult) {
     return (
-      <div>
+      <Container textAlign="center">
         <Button
-          primary
-          size="small"
+          basic
+          color="blue"
           icon
           labelPosition="right"
           onClick={_onRefreshData}
@@ -252,11 +263,10 @@ function DatasetData(props) {
         </Button>
         {error && (
           <Message warning>
-            <Message.Header>Error fetching data</Message.Header>
-            <p>{error.message}</p>
+            <p>{error}</p>
           </Message>
         )}
-      </div>
+      </Container>
     );
   }
 
@@ -273,6 +283,7 @@ function DatasetData(props) {
             options={fieldOptions}
             search
             text={(dataset.xAxis && dataset.xAxis.replace("root[].", "")) || "Select a field"}
+            value={dataset.xAxis}
             onChange={_selectXField}
             scrolling
           />
@@ -287,6 +298,7 @@ function DatasetData(props) {
             options={fieldOptions}
             search
             text={(dataset.yAxis && dataset.yAxis.replace("root[].", "")) || "Select a field"}
+            value={dataset.yAxis}
             onChange={_selectYField}
             scrolling
           />
@@ -302,6 +314,7 @@ function DatasetData(props) {
               )
               || "Operation"
             }
+            value={dataset.yAxisOperation}
             onChange={_selectYOp}
             scrolling
           />
@@ -321,6 +334,7 @@ function DatasetData(props) {
                 options={fieldOptions}
                 search
                 text={(condition.field && condition.field.replace("root[].", "")) || "field"}
+                value={condition.field}
                 onChange={(e, data) => _updateCondition(condition.id, data.value, "field")}
               />
               <Dropdown
@@ -336,6 +350,7 @@ function DatasetData(props) {
                   )
                   || "="
                 }
+                value={condition.operator}
                 onChange={(e, data) => _updateCondition(condition.id, data.value, "operator")}
               />
 
@@ -460,6 +475,7 @@ function DatasetData(props) {
               options={fieldOptions}
               search
               text={(dataset.dateField && dataset.dateField.replace("root[].", "")) || "Select a field"}
+              value={dataset.dateField}
               onChange={_selectDateField}
               scrolling
             />

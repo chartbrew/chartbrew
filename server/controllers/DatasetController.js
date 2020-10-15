@@ -82,6 +82,10 @@ class DatasetController {
         const connection = dataset.Connection;
         const dataRequest = dataset.DataRequest;
 
+        if (!dataRequest || (dataRequest && dataRequest.length === 0)) {
+          throw new Error("404");
+        }
+
         if (noSource === true) {
           return new Promise((resolve) => resolve({}));
         }
@@ -103,7 +107,7 @@ class DatasetController {
         });
       })
       .catch((err) => {
-        return err;
+        return Promise.reject(err);
       });
   }
 }
