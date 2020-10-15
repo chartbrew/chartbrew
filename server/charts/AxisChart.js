@@ -215,14 +215,16 @@ class AxisChart {
       const newAxisData = [];
       // make a new array containing all the dates between startDate and endDate
       while (startDate.isBefore(endDate)) {
-        newAxisData.push(startDate.clone());
+        const newStartDate = startDate.clone();
+        // console.log("newStartDate", newStartDate);
+        newAxisData.push(newStartDate);
         for (let d = 0; d < axisData.length; d++) {
-          if (axisData[d].isSame(startDate, this.chart.timeInterval)) {
+          if (axisData[d].isSame(newStartDate, this.chart.timeInterval)) {
             newAxisData.push(axisData[d]);
           }
         }
 
-        startDate.add(1, this.chart.timeInterval).startOf(this.chart.timeInterval);
+        startDate = newStartDate.add(1, this.chart.timeInterval).startOf(this.chart.timeInterval);
       }
 
       axisData = newAxisData;
