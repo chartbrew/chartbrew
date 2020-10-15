@@ -25,11 +25,14 @@ function Navbar(props) {
   const [changelogPadding, setChangelogPadding] = useState(true);
   const [feedbackModal, setFeedbackModal] = useState();
 
+  const {
+    match, getTeam, getProject, changeActiveProject, getProjectCharts,
+    hideTeam, transparent, team, teams, projectProp, user, logout,
+  } = props;
+
   useEffect(() => {
     return () => {
-      const { match } = props;
       _onTeamChange(match.params.teamId, match.params.projectId);
-
       setTimeout(() => {
         try {
           Headway.init(HW_config);
@@ -42,10 +45,6 @@ function Navbar(props) {
   }, []);
 
   const _onTeamChange = (teamId, projectId) => {
-    const {
-      getTeam, getProject, changeActiveProject, getProjectCharts,
-    } = props;
-
     setLoading(true);
     getTeam(teamId)
       .then(() => {
@@ -69,17 +68,12 @@ function Navbar(props) {
   };
 
   const _canAccess = (role) => {
-    const { user, team } = props;
     return canAccess(role, user.id, team.TeamRoles);
   };
 
   const handleItemClick = () => {
     // TODO
   };
-
-  const {
-    hideTeam, transparent, team, teams, projectProp, user, logout,
-  } = props;
 
   if (!team.id && !teams) {
     return (
