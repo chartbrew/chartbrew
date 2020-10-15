@@ -39,6 +39,9 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       defaultValue: "none",
     },
+    dateField: {
+      type: DataTypes.STRING,
+    },
     datasetColor: {
       type: DataTypes.TEXT,
     },
