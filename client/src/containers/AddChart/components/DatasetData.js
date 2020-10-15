@@ -9,9 +9,11 @@ import { Calendar } from "react-date-range";
 import uuid from "uuid/v4";
 import _ from "lodash";
 import { formatISO, format } from "date-fns";
+import { enGB } from "date-fns/locale";
 
 import { runRequest as runRequestAction } from "../../../actions/dataset";
 import fieldFinder from "../../../modules/fieldFinder";
+import { secondary } from "../../../config/colors";
 
 const operators = [{
   key: "=",
@@ -321,13 +323,14 @@ function DatasetData(props) {
                 onChange={(e, data) => _updateCondition(condition.id, data.value, "operator")}
               />
 
-              { _.find(fieldOptions, { value: condition.field })
-                 && _.find(fieldOptions, { value: condition.field }).type !== "date" && (
-                 <Input
-                   placeholder="Enter a value"
-                   size="small"
-                   value={condition.value}
-                   onChange={(e, data) => _updateCondition(condition.id, data.value, "value")}
+              {(!condition.field
+                || (_.find(fieldOptions, { value: condition.field })
+                && _.find(fieldOptions, { value: condition.field }).type !== "date")) && (
+                <Input
+                  placeholder="Enter a value"
+                  size="small"
+                  value={condition.value}
+                  onChange={(e, data) => _updateCondition(condition.id, data.value, "value")}
                 />
               )}
               {_.find(fieldOptions, { value: condition.field })
@@ -340,13 +343,15 @@ function DatasetData(props) {
                     <Input
                       placeholder="Enter a value"
                       size="small"
-                      value={condition.value && format(new Date(condition.value), "Pp")}
+                      value={condition.value && format(new Date(condition.value), "Pp", { locale: enGB })}
                     />
                   )}
                   content={(
                     <Calendar
                       date={(condition.value && new Date(condition.value)) || new Date()}
                       onChange={(date) => _updateCondition(condition.id, formatISO(date), "value")}
+                      locale={enGB}
+                      color={secondary}
                     />
                   )}
                 />
