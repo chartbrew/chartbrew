@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Dropdown, Icon, Input, Button, Grid, Message, Popup,
+  Dropdown, Icon, Input, Button, Grid, Message, Popup, Divider, Header,
 } from "semantic-ui-react";
 import { Calendar } from "react-date-range";
 import uuid from "uuid/v4";
@@ -92,6 +92,15 @@ function DatasetData(props) {
           text: o.field.replace("root[].", ""),
           value: o.field,
           type: o.type,
+          label: {
+            content: o.type,
+            size: "small",
+            color: o.type === "date" ? "olive"
+              : o.type === "number" ? "blue"
+                : o.type === "string" ? "teal"
+                  : o.type === "boolean" ? "purple"
+                    : "grey"
+          },
         });
       });
       setFieldOptions(tempFieldOptions);
@@ -135,6 +144,10 @@ function DatasetData(props) {
 
   const _selectYOp = (e, data) => {
     onUpdate({ yAxisOperation: data.value });
+  };
+
+  const _selectDateField = (e, data) => {
+    onUpdate({ dateField: data.value });
   };
 
   const _updateCondition = (id, data, type) => {
@@ -251,9 +264,10 @@ function DatasetData(props) {
     <Grid style={styles.mainGrid} centered stackable>
       <Grid.Row columns={2}>
         <Grid.Column width={6}>
-          <label>{"X Axis "}</label>
+          <label><strong>{"X Axis "}</strong></label>
           <Dropdown
             icon={null}
+            header="Type to search"
             button
             className="small button"
             options={fieldOptions}
@@ -264,9 +278,10 @@ function DatasetData(props) {
           />
         </Grid.Column>
         <Grid.Column width={10}>
-          <label>{"Y Axis "}</label>
+          <label><strong>{"Y Axis "}</strong></label>
           <Dropdown
             icon={null}
+            header="Type to search"
             button
             className="small button"
             options={fieldOptions}
@@ -300,6 +315,7 @@ function DatasetData(props) {
               {index > 0 && (<label>{"and "}</label>)}
               <Dropdown
                 icon={null}
+                header="Type to search"
                 className="small button"
                 button
                 options={fieldOptions}
@@ -342,6 +358,8 @@ function DatasetData(props) {
                   trigger={(
                     <Input
                       placeholder="Enter a value"
+                      icon="calendar alternate"
+                      iconPosition="left"
                       size="small"
                       value={condition.value && format(new Date(condition.value), "Pp", { locale: enGB })}
                     />
@@ -429,6 +447,41 @@ function DatasetData(props) {
           </Grid.Row>
         );
       })}
+      <Grid.Row>
+        <Grid.Column>
+          <Divider hidden />
+          <Header size="small" dividing>{"👈 Select a date field for date settings filtering (optional)"}</Header>
+          <div>
+            <Dropdown
+              icon={null}
+              header="Type to search"
+              button
+              className="small button"
+              options={fieldOptions}
+              search
+              text={(dataset.dateField && dataset.dateField.replace("root[].", "")) || "Select a field"}
+              onChange={_selectDateField}
+              scrolling
+            />
+            {dataset.dateField && (
+              <Popup
+                trigger={(
+                  <Button
+                    icon
+                    basic
+                    style={styles.addConditionBtn}
+                    onClick={() => onUpdate({ dateField: "" })}
+                  >
+                    <Icon name="x" color="red" />
+                  </Button>
+                )}
+                content="Clear field"
+                position="top center"
+              />
+            )}
+          </div>
+        </Grid.Column>
+      </Grid.Row>
     </Grid>
   );
 }
