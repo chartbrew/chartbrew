@@ -20,15 +20,17 @@ function SavedQueries(props) {
   const [removeQuery, setRemoveQuery] = useState();
   const [removeLoading, setRemoveLoading] = useState();
 
+  const {
+    project, type, getSavedQueries, updateSavedQuery, deleteSavedQuery,
+    savedQueries, onSelectQuery, selectedQuery, style
+  } = props;
+
   useEffect(() => {
     _getSavedQueries();
   }, []);
 
   const _getSavedQueries = () => {
-    const { getSavedQueries } = props;
-
     setLoading(true);
-    const { project, type } = props;
     getSavedQueries(project.id, type)
       .then(() => {
         setLoading(false);
@@ -44,8 +46,6 @@ function SavedQueries(props) {
   };
 
   const _onEditQuery = () => {
-    const { updateSavedQuery, project } = props;
-
     setEditLoading(true);
     updateSavedQuery(project.id, editQuery.id, {
       summary: savedQuerySummary,
@@ -67,7 +67,6 @@ function SavedQueries(props) {
   };
 
   const _onRemoveQuery = () => {
-    const { deleteSavedQuery, project } = props;
     setRemoveLoading(true);
     deleteSavedQuery(project.id, removeQuery)
       .then(() => {
@@ -79,9 +78,7 @@ function SavedQueries(props) {
         setRemoveLoading(false);
       });
   };
-  const {
-    savedQueries, onSelectQuery, selectedQuery, style
-  } = props;
+
   return (
     <div style={{ ...styles.container, ...style }}>
       <Loader active={loading} />
