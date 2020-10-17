@@ -106,7 +106,15 @@ function LoginForm(props) {
     });
   };
 
-  const renderField = ({ input, type, meta: { touched, error }, ...custom }) => {
+  const renderField = ({
+    input,
+    type,
+    meta: {
+      touched,
+      error
+    },
+    ...custom
+  }) => {
     const hasError = touched && error !== undefined;
     return (
       <Form.Field>
