@@ -89,7 +89,8 @@
     "test": "node scripts/test.js --env=jsdom",
     "lint": "npm run setup && eslint src/",
     "lint-fix": "eslint src/ --fix",
-    "setup": "echo n | cp -vipr src/config/settings.template.js src/config/settings.js"
+    "setup": "echo n | cp -vipr src/config/settings.template.js src/config/settings.js",
+    "precommit": "lint-staged"
   },
   "jest": {
     "roots": [
@@ -170,7 +171,8 @@
     "jest": "24.9.0",
     "jest-environment-jsdom-fourteen": "1.0.1",
     "jest-resolve": "24.9.0",
-    "jest-watch-typeahead": "0.4.2"
+    "jest-watch-typeahead": "0.4.2",
+    "lint-staged": "^10.4.2"
   },
   "browserslist": {
     "production": [
