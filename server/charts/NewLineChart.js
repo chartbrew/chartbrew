@@ -12,7 +12,7 @@ class NewLineChart {
     let selectedDatasetLabels = 0;
     const formattedDatasets = [];
     for (let i = 0; i < this.datasets.length; i++) {
-      const dataset = this.datasets[0];
+      const dataset = this.datasets[i];
 
       const formattedDataset = {
         label: dataset.options.legend,
@@ -41,6 +41,8 @@ class NewLineChart {
         datasets: formattedDatasets,
       },
     };
+
+    console.log("chartJsData", chartJsData.data.datasets);
 
     if (this.chart.mode === "kpi" && this.chart.subType.indexOf("AddTimeseries") > -1) {
       chartJsData.options = {

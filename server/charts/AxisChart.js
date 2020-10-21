@@ -16,6 +16,7 @@ class AxisChart {
       x: [],
       y: [],
     };
+    this.dateFormat = "";
   }
 
   plot() {
@@ -163,6 +164,10 @@ class AxisChart {
 
     if (gXType === "number") {
       allKeys = _.uniq(allKeys).sort();
+    } else if (gXType === "date") {
+      allKeys = _.uniq(allKeys).sort((a, b) => {
+        return moment(a, this.dateFormat) - moment(b, this.dateFormat);
+      });
     } else {
       allKeys = _.uniq(allKeys);
     }
@@ -175,7 +180,7 @@ class AxisChart {
         if (logObj[i][key]) {
           this.axisData.y[i].push(logObj[i][key][0]);
         } else {
-          this.axisData.y[i].push(null);
+          this.axisData.y[i].push(0);
         }
       }
     }
@@ -284,37 +289,47 @@ class AxisChart {
       switch (this.chart.timeInterval) {
         case "hour":
           if (startDate.year() !== endDate.year()) {
-            axisData[i] = axisData[i].format("YYYY/MM/DD hA");
+            this.dateFormat = "YYYY/MM/DD hA";
+            axisData[i] = axisData[i].format(this.dateFormat);
           } else {
-            axisData[i] = axisData[i].format("MMM Do hA");
+            this.dateFormat = "MMM Do hA";
+            axisData[i] = axisData[i].format(this.dateFormat);
           }
           break;
         case "day":
           if (startDate.year() !== endDate.year()) {
-            axisData[i] = axisData[i].format("YYYY MMM D");
+            this.dateFormat = "YYYY MMM D";
+            axisData[i] = axisData[i].format(this.dateFormat);
           } else {
-            axisData[i] = axisData[i].format("MMM D");
+            this.dateFormat = "MMM D";
+            axisData[i] = axisData[i].format(this.dateFormat);
           }
           break;
         case "week":
           if (startDate.year() !== endDate.year()) {
-            axisData[i] = axisData[i].format("YYYY MMM [w] w");
+            this.dateFormat = "YYYY MMM [w] w";
+            axisData[i] = axisData[i].format(this.dateFormat);
           } else {
-            axisData[i] = axisData[i].format("MMM [w] w");
+            this.dateFormat = "MMM [w] w";
+            axisData[i] = axisData[i].format(this.dateFormat);
           }
           break;
         case "month":
           if (startDate.year() !== endDate.year()) {
-            axisData[i] = axisData[i].format("MMM YYYY");
+            this.dateFormat = "MMM YYYY";
+            axisData[i] = axisData[i].format(this.dateFormat);
           } else {
-            axisData[i] = axisData[i].format("MMM");
+            this.dateFormat = "MMM";
+            axisData[i] = axisData[i].format(this.dateFormat);
           }
           break;
         case "year":
-          axisData[i] = axisData[i].format("YYYY");
+          this.dateFormat = "YYYY";
+          axisData[i] = axisData[i].format(this.dateFormat);
           break;
         default:
-          axisData[i] = axisData[i].format("MMM D");
+          this.dateFormat = "MMM D";
+          axisData[i] = axisData[i].format(this.dateFormat);
           break;
       }
     }
