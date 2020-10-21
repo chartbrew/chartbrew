@@ -27,7 +27,7 @@ function ChartSettings(props) {
   const [labelEndDate, setLabelEndDate] = useState("");
 
   const {
-    type, pointRadius, displayLegend, subType,
+    type, pointRadius, displayLegend,
     endDate, currentEndDate, timeInterval,
     includeZeros, startDate, onChange, onComplete,
   } = props;
@@ -112,107 +112,102 @@ function ChartSettings(props) {
     <div style={styles.container}>
       <Header dividing size="small">Chart Settings</Header>
       <Accordion fluid styled>
-        {subType && subType.toLowerCase().indexOf("timeseries") > -1
-          && (
-            <>
-              <Accordion.Title
-                active={activeOption === "daterange"}
-                onClick={() => _onChangeActiveOption("daterange")}
+        <Accordion.Title
+          active={activeOption === "daterange"}
+          onClick={() => _onChangeActiveOption("daterange")}
               >
-                <Icon name="dropdown" />
-                Date settings
-              </Accordion.Title>
-              <Accordion.Content active={activeOption === "daterange"}>
-                <Form>
-                  <Form.Group widths="equal" style={{ paddingBottom: 20 }}>
-                    <Form.Field>
-                      <Button
-                        content="Date filter"
-                        primary
-                        icon="calendar"
-                        labelPosition="right"
-                        onClick={() => _onViewRange(true)}
+          <Icon name="dropdown" />
+          Date settings
+        </Accordion.Title>
+        <Accordion.Content active={activeOption === "daterange"}>
+          <Form>
+            <Form.Group widths="equal" style={{ paddingBottom: 20 }}>
+              <Form.Field>
+                <Button
+                  content="Date filter"
+                  primary
+                  icon="calendar"
+                  labelPosition="right"
+                  onClick={() => _onViewRange(true)}
                       />
-                      <Checkbox
-                        checked={startDate != null || endDate != null}
-                        onChange={(e, data) => _onActivateRange(data.checked)}
-                        style={{ ...styles.accordionToggle, ...styles.inlineCheckbox }}
+                <Checkbox
+                  checked={startDate != null || endDate != null}
+                  onChange={(e, data) => _onActivateRange(data.checked)}
+                  style={{ ...styles.accordionToggle, ...styles.inlineCheckbox }}
                       />
-                      <div style={{ marginTop: 5 }}>
-                        {startDate && (
-                          <Label
-                            color="olive"
-                            as="a"
-                            onClick={() => setDateRangeModal(true)}
+                <div style={{ marginTop: 5 }}>
+                  {startDate && (
+                    <Label
+                      color="olive"
+                      as="a"
+                      onClick={() => setDateRangeModal(true)}
                           >
-                            {labelStartDate}
-                          </Label>
-                        )}
-                        {startDate && (<span> to </span>)}
-                        {endDate && (
-                          <Label
-                            color="olive"
-                            as="a"
-                            onClick={() => setDateRangeModal(true)}
+                      {labelStartDate}
+                    </Label>
+                  )}
+                  {startDate && (<span> to </span>)}
+                  {endDate && (
+                    <Label
+                      color="olive"
+                      as="a"
+                      onClick={() => setDateRangeModal(true)}
                           >
-                            {labelEndDate}
-                          </Label>
-                        )}
-                      </div>
-                    </Form.Field>
-                    <Form.Field>
-                      <Checkbox
-                        label="Keep the date range updated with current dates"
-                        toggle
-                        checked={currentEndDate}
-                        disabled={!dateRange.endDate}
-                        onChange={() => {
-                          onChange({ currentEndDate: !currentEndDate });
-                        }}
-                        style={styles.accordionToggle}
+                      {labelEndDate}
+                    </Label>
+                  )}
+                </div>
+              </Form.Field>
+              <Form.Field>
+                <Checkbox
+                  label="Keep the date range updated with current dates"
+                  toggle
+                  checked={currentEndDate}
+                  disabled={!dateRange.endDate}
+                  onChange={() => {
+                    onChange({ currentEndDate: !currentEndDate });
+                  }}
+                  style={styles.accordionToggle}
                       />
-                    </Form.Field>
-                  </Form.Group>
-                  <Form.Group widths="equal">
-                    <Form.Field>
-                      <label>Time interval</label>
-                      <Dropdown
-                        placeholder="Select the frequency"
-                        selection
-                        options={[{
-                          text: "Hourly",
-                          value: "hour",
-                        }, {
-                          text: "Daily",
-                          value: "day",
-                        }, {
-                          text: "Weekly",
-                          value: "week",
-                        }, {
-                          text: "Monthly",
-                          value: "month",
-                        }, {
-                          text: "Yearly",
-                          value: "year",
-                        }]}
-                        value={timeInterval || "day"}
-                        onChange={(e, data) => onChange({ timeInterval: data.value })}
+              </Form.Field>
+            </Form.Group>
+            <Form.Group widths="equal">
+              <Form.Field>
+                <label>Time interval</label>
+                <Dropdown
+                  placeholder="Select the frequency"
+                  selection
+                  options={[{
+                    text: "Hourly",
+                    value: "hour",
+                  }, {
+                    text: "Daily",
+                    value: "day",
+                  }, {
+                    text: "Weekly",
+                    value: "week",
+                  }, {
+                    text: "Monthly",
+                    value: "month",
+                  }, {
+                    text: "Yearly",
+                    value: "year",
+                  }]}
+                  value={timeInterval || "day"}
+                  onChange={(e, data) => onChange({ timeInterval: data.value })}
                       />
-                    </Form.Field>
-                    <Form.Field>
-                      <label>Show zeros</label>
-                      <Checkbox
-                        label="Allow zero dates"
-                        toggle
-                        checked={includeZeros}
-                        onChange={() => onChange({ includeZeros: !includeZeros })}
+              </Form.Field>
+              <Form.Field>
+                <label>Show zeros</label>
+                <Checkbox
+                  label="Allow zero dates"
+                  toggle
+                  checked={includeZeros}
+                  onChange={() => onChange({ includeZeros: !includeZeros })}
                       />
-                    </Form.Field>
-                  </Form.Group>
-                </Form>
-              </Accordion.Content>
-            </>
-          )}
+              </Form.Field>
+            </Form.Group>
+          </Form>
+        </Accordion.Content>
         <Accordion.Title
           active={activeOption === "dataset"}
           onClick={() => _onChangeActiveOption("dataset")}
@@ -319,7 +314,6 @@ const styles = {
 };
 
 ChartSettings.defaultProps = {
-  subType: "",
   displayLegend: false,
   pointRadius: 0,
   startDate: null,
@@ -333,7 +327,6 @@ ChartSettings.defaultProps = {
 
 ChartSettings.propTypes = {
   type: PropTypes.string.isRequired,
-  subType: PropTypes.string,
   displayLegend: PropTypes.bool,
   pointRadius: PropTypes.number,
   startDate: PropTypes.object,

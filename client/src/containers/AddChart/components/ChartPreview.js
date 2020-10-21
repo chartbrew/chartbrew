@@ -9,7 +9,6 @@ import {
 } from "react-chartjs-2";
 import BarChart from "../../Chart/components/BarChart";
 
-import ChartTypesSelector from "./ChartTypesSelector";
 import lineChartImage from "../../../assets/charts/lineChart.jpg";
 import barChartImage from "../../../assets/charts/barChart.jpg";
 import radarChartImage from "../../../assets/charts/radarChart.jpg";
@@ -79,18 +78,20 @@ function ChartPreview(props) {
               )}
             </Grid.Column>
             <Grid.Column width={10} textAlign="right" style={styles.modeSwitcher}>
-              <Popup
-                trigger={(
-                  <Button
-                    color={chart.subType.indexOf("AddTimeseries") > -1 && "olive"}
-                    basic={chart.subType.indexOf("AddTimeseries") < 0}
-                    icon="chart line"
-                    onClick={_toggleAggregation}
-                  />
-                )}
-                content={chart.subType.indexOf("AddTimeseries") > -1 ? "Turn aggregation off" : "Aggregate data"}
-                position="bottom center"
-              />
+              {(chart.type === "line" || chart.type === "bar") && (
+                <Popup
+                  trigger={(
+                    <Button
+                      color={chart.subType.indexOf("AddTimeseries") > -1 && "olive"}
+                      basic={chart.subType.indexOf("AddTimeseries") < 0}
+                      icon="chart line"
+                      onClick={_toggleAggregation}
+                    />
+                  )}
+                  content={chart.subType.indexOf("AddTimeseries") > -1 ? "Turn aggregation off" : "Aggregate data"}
+                  position="bottom center"
+                />
+              )}
               <Button.Group style={{ marginRight: 3.5 }}>
                 <Popup
                   trigger={(
@@ -119,7 +120,7 @@ function ChartPreview(props) {
                     <Button
                       color={chart.type === "pie" && "violet"}
                       icon="chart pie"
-                      onClick={() => _onChangeChartType({ type: "pie", subType: "pattern" })}
+                      onClick={() => _onChangeChartType({ type: "pie" })}
                     />
                   )}
                   content="Display pie chart"
@@ -218,14 +219,6 @@ function ChartPreview(props) {
           </Dimmer.Dimmable>
         )}
       </Container>
-      {typesVisible && (
-        <ChartTypesSelector
-          type={chart.type}
-          subType={chart.subType}
-          onChange={_onChangeChartType}
-          onClose={() => setTypesVisible(false)}
-        />
-      )}
 
       {chart && chart.type && !typesVisible && (
         <Container textAlign="center" style={styles.topBuffer}>

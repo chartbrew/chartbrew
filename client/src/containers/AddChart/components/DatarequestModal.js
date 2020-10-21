@@ -3,19 +3,14 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Modal, Button, Loader, Container, Placeholder, Icon,
-  Grid, Header, Label, Popup,
+  Modal, Button, Loader, Container, Placeholder,
 } from "semantic-ui-react";
 import _ from "lodash";
 import { toast } from "react-toastify";
-import AceEditor from "react-ace";
-import "ace-builds/src-min-noconflict/mode-json";
-import "ace-builds/src-min-noconflict/theme-tomorrow";
 
 import ApiBuilder from "./ApiBuilder";
 import SqlBuilder from "./SqlBuilder";
 import MongoQueryBuilder from "./MongoQueryBuilder";
-import ObjectExplorer from "./ObjectExplorer";
 import {
   getDataRequestByDataset as getDataRequestByDatasetAction,
   createDataRequest as createDataRequestAction,
@@ -26,8 +21,7 @@ import { changeTutorial as changeTutorialAction } from "../../../actions/tutoria
 function DatarequestModal(props) {
   const {
     open, onClose, connection, dataset, match, getDataRequestByDataset,
-    createDataRequest, updateDataRequest, requests, onUpdateDataset,
-    changeTutorial, updateResult,
+    createDataRequest, updateDataRequest, requests, changeTutorial, updateResult,
   } = props;
 
   const [dataRequest, setDataRequest] = useState(null);
@@ -36,7 +30,6 @@ function DatarequestModal(props) {
   const [error, setError] = useState(null);
   const [closeTrigger, setCloseTrigger] = useState(false);
   const [result, setResult] = useState(null);
-  const [fieldsView, setFieldsView] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -97,9 +90,6 @@ function DatarequestModal(props) {
   }, [error]);
 
   useEffect(() => {
-    if (!result && fieldsView) {
-      setFieldsView(false);
-    }
     updateResult(result);
   }, [result]);
 
@@ -156,17 +146,6 @@ function DatarequestModal(props) {
       });
   };
 
-  const _onChangeField = (field) => {
-    onUpdateDataset(field);
-  };
-
-  const _onFieldsClicked = () => {
-    setFieldsView(true);
-    setTimeout(() => {
-      changeTutorial("objectexplorer");
-    }, 1000);
-  };
-
   return (
     <Modal
       open={open}
@@ -189,7 +168,7 @@ function DatarequestModal(props) {
             </Placeholder>
           </Container>
         )}
-        {!fieldsView && connection.type === "api" && dataRequest && (
+        {connection.type === "api" && dataRequest && (
           <ApiBuilder
             dataset={dataset}
             dataRequest={dataRequest}
@@ -199,7 +178,7 @@ function DatarequestModal(props) {
             exploreData={result && JSON.stringify(result.data, null, 2)}
           />
         )}
-        {!fieldsView && (connection.type === "mysql" || connection.type === "postgres") && dataRequest && (
+        {(connection.type === "mysql" || connection.type === "postgres") && dataRequest && (
           <SqlBuilder
             dataset={dataset}
             dataRequest={dataRequest}
@@ -209,7 +188,7 @@ function DatarequestModal(props) {
             exploreData={result && JSON.stringify(result.data, null, 2)}
           />
         )}
-        {!fieldsView && connection.type === "mongodb" && dataRequest && (
+        {connection.type === "mongodb" && dataRequest && (
           <MongoQueryBuilder
             dataset={dataset}
             dataRequest={dataRequest}
@@ -217,65 +196,6 @@ function DatarequestModal(props) {
             onSave={_onSaveRequest}
             exploreData={result && JSON.stringify(result.data, null, 2)}
           />
-        )}
-
-        {fieldsView && result && (
-          <Grid columns={2}>
-            <Grid.Column width={7} className="objectexplorer-data-tut">
-              <Header size="small" dividing>Explore your data</Header>
-              <AceEditor
-                mode="json"
-                theme="tomorrow"
-                height="450px"
-                width="none"
-                value={JSON.stringify(result.data, null, 2) || ""}
-                name="resultEditor"
-                readOnly
-                editorProps={{ $blockScrolling: false }}
-              />
-            </Grid.Column>
-            <Grid.Column width={9} className="objectexplorer-object-tut">
-              <Header size="small" dividing>
-                {"Select a field to visualize "}
-                <Popup
-                  content={(
-                    <div>
-                      <p>
-                        You will need a
-                        {" "}
-                        <b>date</b>
-                        {" "}
-                        field for timeseries.
-                      </p>
-                      <p>
-                        For pattern charts, you will probably want to select a
-                        {" "}
-                        <b>string</b>
-                        {" "}
-                        or
-                        {" "}
-                        <b>number</b>
-                        {" "}
-                        field.
-                      </p>
-                    </div>
-                  )}
-                  trigger={(
-                    <Icon name="info circle" style={styles.infoIcon} />
-                  )}
-                />
-              </Header>
-              <div style={styles.fieldSelection}>
-                {"Selected field: "}
-                <Label color="blue">{dataset.xAxis && dataset.xAxis.replace("root[].", "")}</Label>
-              </div>
-              <ObjectExplorer
-                objectData={result.data}
-                onChange={_onChangeField}
-                xAxisField={dataset.xAxis}
-              />
-            </Grid.Column>
-          </Grid>
         )}
       </Modal.Content>
       <Modal.Actions>
@@ -295,45 +215,10 @@ function DatarequestModal(props) {
         >
           Done
         </Button>
-
-        {!fieldsView && (
-          <Button
-            secondary
-            icon
-            labelPosition="right"
-            disabled={!result}
-            onClick={_onFieldsClicked}
-            className="requestmodal-fields-tut"
-          >
-            <Icon name="chevron right" />
-            Set up the fields
-          </Button>
-        )}
-        {fieldsView && (
-          <Button
-            secondary
-            icon
-            labelPosition="left"
-            onClick={() => setFieldsView(false)}
-            floated="left"
-          >
-            <Icon name="chevron left" />
-            Back to the request
-          </Button>
-        )}
       </Modal.Actions>
     </Modal>
   );
 }
-
-const styles = {
-  fieldSelection: {
-    marginBottom: 20,
-  },
-  infoIcon: {
-    fontSize: 16,
-  },
-};
 
 DatarequestModal.defaultProps = {
   open: false,
@@ -348,7 +233,6 @@ DatarequestModal.propTypes = {
   match: PropTypes.object.isRequired,
   createDataRequest: PropTypes.func.isRequired,
   updateDataRequest: PropTypes.func.isRequired,
-  onUpdateDataset: PropTypes.func.isRequired,
   requests: PropTypes.array.isRequired,
   changeTutorial: PropTypes.func.isRequired,
   updateResult: PropTypes.func.isRequired,

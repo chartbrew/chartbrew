@@ -42,8 +42,6 @@ class NewLineChart {
       },
     };
 
-    console.log("chartJsData", chartJsData.data.datasets);
-
     if (this.chart.mode === "kpi" && this.chart.subType.indexOf("AddTimeseries") > -1) {
       chartJsData.options = {
         maintainAspectRatio: false,
