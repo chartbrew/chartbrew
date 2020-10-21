@@ -383,7 +383,7 @@ function AddChart(props) {
             </div>
           </div>
           <div style={styles.topBuffer}>
-            {match.params.chartId && newChart.type && newChart.subType && (
+            {match.params.chartId && newChart.type && datasets.length > 0 && (
               <ChartSettings
                 type={newChart.type}
                 subType={newChart.subType}
@@ -438,7 +438,7 @@ function AddChart(props) {
           </div>
 
           <div style={styles.addDataset}>
-            {!addingDataset && (
+            {!addingDataset && datasets.length > 0 && (
               <List>
                 <List.Item as="a" onClick={() => setAddingDataset(true)}>
                   <Icon name="plus" />
@@ -447,6 +447,19 @@ function AddChart(props) {
                   </List.Content>
                 </List.Item>
               </List>
+            )}
+
+            {!addingDataset && datasets.length === 0 && (
+              <Button
+                primary
+                icon
+                labelPosition="right"
+                size="large"
+                onClick={() => setAddingDataset(true)}
+              >
+                <Icon name="plus" />
+                Add the first dataset
+              </Button>
             )}
 
             {addingDataset && (
@@ -462,7 +475,7 @@ function AddChart(props) {
                   <Form.Field>
                     <Button
                       icon
-                      secondary
+                      primary
                       onClick={_onSaveNewDataset}
                       loading={savingDataset}
                     >

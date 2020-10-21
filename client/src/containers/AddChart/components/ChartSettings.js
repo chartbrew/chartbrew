@@ -117,7 +117,7 @@ function ChartSettings(props) {
           onClick={() => _onChangeActiveOption("daterange")}
               >
           <Icon name="dropdown" />
-          Date settings
+          Global date settings
         </Accordion.Title>
         <Accordion.Content active={activeOption === "daterange"}>
           <Form>
@@ -213,7 +213,7 @@ function ChartSettings(props) {
           onClick={() => _onChangeActiveOption("dataset")}
         >
           <Icon name="dropdown" />
-          Dataset global settings
+          Appearance settings
         </Accordion.Title>
         <Accordion.Content active={activeOption === "dataset"}>
           <Form>

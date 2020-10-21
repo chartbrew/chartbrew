@@ -245,6 +245,7 @@ function Dataset(props) {
                 />
               )}
               content="Manage connections"
+              position="top center"
             />
           </Grid.Column>
         </Grid.Row>

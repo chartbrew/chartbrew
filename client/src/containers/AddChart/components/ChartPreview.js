@@ -201,7 +201,7 @@ function ChartPreview(props) {
             <Dimmer active inverted>
               <Header icon>
                 <Icon name="database" />
-                {"Let's create some datasets and fetch some data"}
+                {"Let's create a datasets and fetch some data"}
               </Header>
             </Dimmer>
             <Image

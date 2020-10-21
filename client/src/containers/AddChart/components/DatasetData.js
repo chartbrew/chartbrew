@@ -239,7 +239,7 @@ function DatasetData(props) {
       })
       .catch((err) => {
         if (err.statusCode === 404) {
-          setError("Please configure the request above first");
+          setError("Please select a connection above and configure the data request first");
         } else {
           setError(err.statusText || err);
         }
