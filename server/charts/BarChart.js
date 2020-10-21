@@ -1,151 +1,40 @@
-const LineChart = require("./LineChart");
-const dataFinder = require("../modules/dataFinder");
 const tooltipsStyle = require("./tooltipsStyle");
 
-// HELPER FUNCTIONS
-function isDuplicate(key, dataset) {
-  for (const value of dataset) {
-    if (value === key) {
-      return true;
-    }
+class NewBarChart {
+  constructor(chart, datasets, axisData) {
+    this.chart = chart;
+    this.datasets = datasets;
+    this.axisData = axisData;
   }
 
-  return false;
-}
+  getConfiguration() {
+    // configure chartjs datasets
+    const formattedDatasets = [];
+    for (let i = 0; i < this.datasets.length; i++) {
+      const dataset = this.datasets[i];
 
-function getLabelOffset(key, labels) {
-  let offset = 0;
+      const formattedDataset = {
+        label: dataset.options.legend,
+        data: this.axisData.y[i],
+        borderWidth: 2,
+        hoverBorderWidth: 3,
+      };
 
-  for (let i = 0; i < labels.length; i++) {
-    if (labels[i] == key) { // eslint-disable-line
-      break;
-    }
-    offset += 1;
-  }
-
-  return offset;
-}
-// ------------------------------------------
-
-/*
-** A class for generating chartjs data for a Bar Chart
-*/
-class BarChart {
-  constructor(data) {
-    this.chart = data.chart;
-    this.datasets = data.datasets;
-  }
-
-  async aggregateOverTime() {
-    const lineChart = new LineChart({ chart: this.chart, datasets: this.datasets });
-
-    // reuse the code for aggregation from the line chart
-    const chartConf = await lineChart.aggregateOverTime();
-
-    // modify the data to fit the bar chart api
-    for (const dataset of chartConf.data.datasets) {
-      dataset.borderWidth = 2;
-      dataset.hoverBorderWidth = 3;
-    }
-
-    return new Promise((resolve) => resolve(chartConf));
-  }
-
-  createPatterns() {
-    const labels = [];
-    const datasets = [];
-
-    for (const dataset of this.datasets) {
-      if (!dataset.deleted) {
-        const arrayFieldSelector = [];
-        for (const value of dataset.options.xAxis.split(".")) {
-          if (value.indexOf("[]") > -1) {
-            arrayFieldSelector.push(value.replace("[]", ""));
-            break;
-          } else {
-            arrayFieldSelector.push(value);
-          }
-        }
-
-        // the connector data will be used as the main array where to look for the date
-        let connectorData;
-        if (arrayFieldSelector.length === 1) {
-          connectorData = dataset.data;
-        } else {
-          connectorData = dataFinder.findField(dataset.data, arrayFieldSelector, 1);
-        }
-
-        // build up the selector array which is used to show the way to the date value
-        let xFieldSelector = dataset.options.xAxis;
-        if (xFieldSelector.length < 2) {
-          return new Promise((resolve, reject) => reject(new Error("The X selector is not formatted correctly")));
-        }
-        xFieldSelector = `root.${xFieldSelector.substring(xFieldSelector.lastIndexOf("]") + 2)}`.split(".");
-
-        const axisData = {};
-        // extract the values and count the repetitions
-        for (const obj of connectorData) {
-          const foundValue = dataFinder.findField(obj, xFieldSelector, 1);
-          if (!axisData[foundValue]) {
-            axisData[foundValue] = 1;
-          } else {
-            axisData[foundValue] += 1;
-          }
-        }
-
-        const chartDatasetData = [];
-        // populate the labels
-        Object.keys(axisData).forEach((key) => {
-          if (dataset.options.patterns && dataset.options.patterns.length > 0) {
-            let insertingLabel = key;
-            if (key.toLowerCase() === "true" || key.toLowerCase() === "false") {
-              insertingLabel = key.toLowerCase();
-            }
-            for (const pattern of dataset.options.patterns) {
-              if (pattern.value == insertingLabel) { // eslint-disable-line
-                if (!isDuplicate(insertingLabel, labels)) {
-                  labels.push(insertingLabel);
-                }
-
-                // make sure to add zero values in case other datasets added other labels before
-                const offset = getLabelOffset(key, labels) - chartDatasetData.length;
-                if (offset > 0) {
-                  for (let i = 0; i < offset; i++) {
-                    chartDatasetData.push(0);
-                  }
-                }
-                chartDatasetData.push(axisData[key]);
-              }
-            }
-          } else {
-            if (!isDuplicate(key, labels)) labels.push(key);
-            chartDatasetData.push(axisData[key]);
-          }
-        });
-
-        const formattedDataset = {
-          label: dataset.options.legend,
-          data: chartDatasetData,
-          borderWidth: 2,
-          hoverBorderWidth: 3,
-        };
-
-        if (dataset.options.datasetColor) {
-          formattedDataset.borderColor = dataset.options.datasetColor;
-        }
-        if (dataset.options.fillColor) {
-          formattedDataset.backgroundColor = dataset.options.fillColor;
-        }
-        formattedDataset.fill = dataset.options.fill;
-
-        datasets.push(formattedDataset);
+      if (dataset.options.datasetColor) {
+        formattedDataset.borderColor = dataset.options.datasetColor;
       }
+      if (dataset.options.fillColor) {
+        formattedDataset.backgroundColor = dataset.options.fillColor;
+      }
+      formattedDataset.fill = dataset.options.fill;
+
+      formattedDatasets.push(formattedDataset);
     }
 
-    const chartJsData = {
+    return {
       data: {
-        labels,
-        datasets,
+        labels: this.axisData.x,
+        datasets: formattedDatasets,
       },
       options: {
         maintainAspectRatio: false,
@@ -177,9 +66,7 @@ class BarChart {
         tooltips: tooltipsStyle,
       }
     };
-
-    return new Promise((resolve) => resolve(chartJsData));
   }
 }
 
-module.exports = BarChart;
+module.exports = NewBarChart;

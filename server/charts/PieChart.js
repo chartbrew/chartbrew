@@ -1,24 +1,25 @@
-const BarChart = require("./BarChart");
-const tooltipsStyle = require("./tooltipsStyle");
+const NewBarChart = require("./BarChart");
 
-class PieChart {
-  constructor(data) {
-    this.chartData = data;
+class NewPieChart {
+  constructor(chart, datasets, axisData) {
+    this.chart = chart;
+    this.datasets = datasets;
+    this.axisData = axisData;
   }
 
-  async createPatterns() {
-    const barChart = new BarChart(this.chartData);
+  getConfiguration() {
+    // The pie chart works like the bar chart - so just extend the configuration
+    const barChart = new NewBarChart(this.chart, this.datasets, this.axisData);
+    const config = barChart.getConfiguration();
 
-    const config = await barChart.createPatterns();
     config.options.pieceLabel = { render: "value", fontStyle: "bold" };
     config.options.scales = {
       xAxes: [{ display: false }],
       yAxes: [{ display: false }],
     };
-    config.options.tooltips = tooltipsStyle;
 
-    return new Promise((resolve) => resolve(config));
+    return config;
   }
 }
 
-module.exports = PieChart;
+module.exports = NewPieChart;
