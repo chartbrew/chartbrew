@@ -34,3 +34,5 @@ yarn-error.log*
 
 # settings
 /src/config/settings.js
+
+.eslintcache 

@@ -3,6 +3,10 @@
   "version": "1.0.0-beta.12",
   "description": "",
   "main": "index.js",
+  "workspaces": [
+    "client",
+    "server"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "setup": "npm run prepareSettings && npm install && cd client && npm install && cd ../server/ && npm install",
@@ -26,7 +30,13 @@
   },
   "homepage": "https://github.com/chartbrew/chartbrew",
   "devDependencies": {
-    "vuepress": "^1.5.4"
+    "lerna": "^3.22.1",
+    "vuepress": "^1.5.4",
+    "husky": "^4.3.0"
   },
-  "dependencies": {}
+  "husky": {
+    "hooks": {
+      "pre-commit": "lerna run --concurrency 1 --stream precommit --since HEAD --exclude-dependents"
+    }
+  }
 }
