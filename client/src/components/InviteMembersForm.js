@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
@@ -13,171 +13,153 @@ import { inviteMembers } from "../actions/team";
 /*
   Contains the team members invitation functionality
 */
-class InviteMembersForm extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      loading: false,
-      currentValues: [],
-      members: [],
-      incorrectMail: false,
-      success: false,
-      inviteError: false,
-      sentInvites: [],
-      undeliveredInvites: [],
-    };
-  }
+function InviteMembersForm(props) {
+  const [members, setMembers] = useState([]);
+  const [currentValues, setCurrentValues] = useState([]);
+  const [incorrectMail, setIncorrectMail] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [sentInvites, setSentInvites] = useState([]);
+  const [inviteError, setInviteError] = useState(false);
+  const [undeliveredInvites, setUndeliveredInvites] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  inviteMembers = () => {
-    const {
-      team, match, inviteMembers, user,
-    } = this.props;
-    const { members, sentInvites, undeliveredInvites } = this.state;
+  const {
+    style, match, skipTeamInvite, team, inviteMembers, user
+  } = props;
+
+  const onInviteMembers = () => {
     const teamId = team.id
       ? team.id : match.params.teamId;
-    this.setState({
-      incorrectMail: false, inviteError: false, success: false
-    });
-    this.setState({ loading: true, sentInvites: [], undeliveredInvites: [] });
+
+    setIncorrectMail(false);
+    setInviteError(false);
+    setSuccess(false);
+    setLoading(true);
+    setSentInvites([]);
+    setUndeliveredInvites([]);
+
     members.forEach((email) => {
       inviteMembers(
         user.data.id,
         email.value,
         teamId
       ).then(() => {
-        this.setState({
-          loading: false,
-          incorrectMail: false,
-          success: true,
-          members: [],
-          sentInvites: [...sentInvites, email.value]
-        });
+        setLoading(false);
+        setIncorrectMail(false);
+        setSuccess(true);
+        setMembers([]);
+        setSentInvites([...sentInvites, email.value]);
       }).catch(() => {
-        this.setState({
-          inviteError: true,
-          loading: false,
-          undeliveredInvites: [...undeliveredInvites, email.value]
-        });
+        setInviteError(true);
+        setLoading(false);
+        setUndeliveredInvites([...undeliveredInvites, email.value]);
       });
     });
-  }
+  };
 
-  handleEmail = (e, { value }) => this.setState({ currentValues: value })
+  const handleEmail = (e, { value }) => setCurrentValues(value);
 
-  handleAddition = (e, { value }) => {
-    const { members } = this.state;
-
+  const handleAddition = (e, { value }) => {
     // check if email is correct
     if (email(value)) {
-      this.setState({ incorrectMail: true });
+      setIncorrectMail(true);
     } else {
-      this.setState({
-        incorrectMail: false,
-        members: [{ text: value, value }, ...members],
-      });
+      setIncorrectMail(false);
+      setMembers([{ text: value, value }, ...members]);
     }
-  }
+  };
 
-  render() {
-    const {
-      style, match, skipTeamInvite,
-    } = this.props;
-    const {
-      members, currentValues, incorrectMail, success, sentInvites,
-      inviteError, undeliveredInvites, loading,
-    } = this.state;
-
-    return (
-      <div style={style}>
-        <Header attached="top" as="h3">Invite New Members</Header>
-        <Segment attached>
-          <Form onSubmit={this.inviteMembers}>
-            <Form.Field style={{ paddingTop: 10 }}>
-              <Dropdown
-                options={members}
-                placeholder="Enter emails"
-                search
-                selection
-                fluid
-                multiple
-                allowAdditions
-                value={currentValues}
-                onAddItem={this.handleAddition}
-                onChange={this.handleEmail}
-              />
-            </Form.Field>
-            {incorrectMail
-              && (
-              <Container textAlign="center" style={{ margin: "1em" }}>
-                <Message negative> Make sure the email is valid </Message>
-              </Container>
-              )}
-            {success
-              && (
-              <Container style={{ margin: "1em" }}>
-                <Message positive>
-                  <Message.List>
-                    {sentInvites.map((invite) => {
-                      return (
-                        <Message.Content key={invite}>
-                          <Icon name="checkmark" circular />
-                          {invite}
-                        </Message.Content>
-                      );
-                    })}
-                  </Message.List>
-                </Message>
-              </Container>
-              )}
-            {inviteError && (
-              <Container style={{ margin: "1em" }}>
-                <Message negative>
-                  <Message.List>
-                    {undeliveredInvites.map((invite) => {
-                      return (
-                        <Message.Content key={invite}>
-                          <Icon name="delete" circular />
-                          {invite}
-                        </Message.Content>
-                      );
-                    })}
-                  </Message.List>
-                </Message>
-              </Container>
+  return (
+    <div style={style}>
+      <Header attached="top" as="h3">Invite New Members</Header>
+      <Segment attached>
+        <Form onSubmit={onInviteMembers}>
+          <Form.Field style={{ paddingTop: 10 }}>
+            <Dropdown
+              options={members}
+              placeholder="Enter emails"
+              search
+              selection
+              fluid
+              multiple
+              allowAdditions
+              value={currentValues}
+              onAddItem={handleAddition}
+              onChange={handleEmail}
+            />
+          </Form.Field>
+          {incorrectMail
+            && (
+            <Container textAlign="center" style={{ margin: "1em" }}>
+              <Message negative> Make sure the email is valid </Message>
+            </Container>
             )}
-            <Form.Field>
-              {!match.params.teamId
-                && (
-                <Button
-                  floated="left"
-                  compact
-                  size="large"
-                  basic
-                  onClick={() => skipTeamInvite()}
-                >
-                  Skip for now
-                </Button>
-                )}
+          {success
+            && (
+            <Container style={{ margin: "1em" }}>
+              <Message positive>
+                <Message.List>
+                  {sentInvites.map((invite) => {
+                    return (
+                      <Message.Content key={invite}>
+                        <Icon name="checkmark" circular />
+                        {invite}
+                      </Message.Content>
+                    );
+                  })}
+                </Message.List>
+              </Message>
+            </Container>
+            )}
+          {inviteError && (
+            <Container style={{ margin: "1em" }}>
+              <Message negative>
+                <Message.List>
+                  {undeliveredInvites.map((invite) => {
+                    return (
+                      <Message.Content key={invite}>
+                        <Icon name="delete" circular />
+                        {invite}
+                      </Message.Content>
+                    );
+                  })}
+                </Message.List>
+              </Message>
+            </Container>
+          )}
+          <Form.Field>
+            {!match.params.teamId
+              && (
               <Button
-                loading={loading}
-                disabled={!members[0]}
+                floated="left"
                 compact
                 size="large"
-                type="submit"
-                floated="right"
-                primary
+                basic
+                onClick={() => skipTeamInvite()}
               >
-                Send Invites
+                Skip for now
               </Button>
-            </Form.Field>
-            <Divider hidden />
-            <Divider hidden />
-          </Form>
-        </Segment>
-      </div>
-    );
-  }
+              )}
+            <Button
+              loading={loading}
+              disabled={!members[0]}
+              compact
+              size="large"
+              type="submit"
+              floated="right"
+              primary
+            >
+              Send Invites
+            </Button>
+          </Form.Field>
+          <Divider hidden />
+          <Divider hidden />
+        </Form>
+      </Segment>
+    </div>
+  );
 }
+
 //
 // const styles = {
 //   container: {
