@@ -31,17 +31,15 @@ function Navbar(props) {
   } = props;
 
   useEffect(() => {
-    return () => {
-      _onTeamChange(match.params.teamId, match.params.projectId);
-      setTimeout(() => {
-        try {
-          Headway.init(HW_config);
-          setChangelogPadding(false);
-        } catch (e) {
-          // ---
-        }
-      }, 1000);
-    };
+    _onTeamChange(match.params.teamId, match.params.projectId);
+    setTimeout(() => {
+      try {
+        Headway.init(HW_config);
+        setChangelogPadding(false);
+      } catch (e) {
+        // ---
+      }
+    }, 1000);
   }, []);
 
   const _onTeamChange = (teamId, projectId) => {
