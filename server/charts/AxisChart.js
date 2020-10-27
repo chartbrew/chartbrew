@@ -192,15 +192,23 @@ class AxisChart {
     // now build each dataset matching keys from logObj and allKeys
     for (let i = 0; i < logObj.length; i++) {
       this.axisData.y[i] = [];
+      let previousValue;
       for (const key of allKeys) {
         // add just the first element for now
         if (logObj[i][key]) {
           this.axisData.y[i].push(logObj[i][key][0]);
+        } else if (this.chart.subType.indexOf("AddTimeseries") > -1 && previousValue) {
+          this.axisData.y[i].push(previousValue);
         } else {
           this.axisData.y[i].push(0);
         }
+
+        if (logObj[i][key]) {
+          [previousValue] = logObj[i][key];
+        }
       }
     }
+
     this.axisData.x = allKeys;
 
     let chart;
