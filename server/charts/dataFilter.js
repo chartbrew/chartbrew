@@ -132,19 +132,16 @@ function compareBooleans(data, field, condition) {
   return newData;
 }
 
-module.exports = (dataset) => {
-  const { conditions, xAxis } = dataset.options;
-  const { data } = dataset;
-
+module.exports = (data, selectedField, conditions) => {
   if (!conditions || conditions.length < 1) {
     return data;
   }
 
   let finalData;
-  if (xAxis.indexOf("root[]") > -1) {
+  if (selectedField.indexOf("root[]") > -1) {
     finalData = data;
   } else {
-    const arrayFinder = xAxis.substring(0, xAxis.indexOf("]") - 1);
+    const arrayFinder = selectedField.substring(0, selectedField.indexOf("]") - 1);
     finalData = _.get(data, arrayFinder);
   }
 

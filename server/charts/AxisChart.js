@@ -33,7 +33,24 @@ class AxisChart {
       let xAxisData = [];
       let yAxisData = [];
 
-      const filteredData = dataFilter(dataset);
+      let filteredData = dataFilter(dataset.data, xAxis, dataset.options.conditions);
+
+      if (dataset.dateField && this.chart.startDate && this.chart.endDate) {
+        const startDate = moment(this.chart.startDate).startOf(this.chart.timeInterval);
+        const endDate = moment(this.chart.endDate).endOf(this.chart.timeInterval);
+
+        const dateConditions = [{
+          field: dataset.dateField,
+          value: startDate,
+          operator: "greaterOrEqual",
+        }, {
+          field: dataset.dateField,
+          value: endDate,
+          operator: "lessOrEqual",
+        }];
+
+        filteredData = dataFilter(filteredData, dataset.dateField, dateConditions);
+      }
 
       // first, handle the xAxis
       if (xAxis.indexOf("root[]") > -1) {
