@@ -24,7 +24,7 @@ class AxisChart {
     let gXType;
     for (let i = 0; i < this.datasets.length; i++) {
       const dataset = this.datasets[i];
-      const { yAxisOperation } = dataset.options;
+      const { yAxisOperation, dateField } = dataset.options;
       let { xAxis, yAxis } = dataset.options;
       let xData;
       let yData;
@@ -35,21 +35,27 @@ class AxisChart {
 
       let filteredData = dataFilter(dataset.data, xAxis, dataset.options.conditions);
 
-      if (dataset.dateField && this.chart.startDate && this.chart.endDate) {
-        const startDate = moment(this.chart.startDate).startOf(this.chart.timeInterval);
-        const endDate = moment(this.chart.endDate).endOf(this.chart.timeInterval);
+      if (dateField && this.chart.startDate && this.chart.endDate) {
+        let startDate = moment(this.chart.startDate);
+        let endDate = moment(this.chart.endDate);
+
+        if (this.chart.currentEndDate) {
+          const timeDiff = endDate.diff(startDate, "days");
+          endDate = moment().endOf("day");
+          startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+        }
 
         const dateConditions = [{
-          field: dataset.dateField,
+          field: dateField,
           value: startDate,
           operator: "greaterOrEqual",
         }, {
-          field: dataset.dateField,
+          field: dateField,
           value: endDate,
           operator: "lessOrEqual",
         }];
 
-        filteredData = dataFilter(filteredData, dataset.dateField, dateConditions);
+        filteredData = dataFilter(filteredData, dateField, dateConditions);
       }
 
       // first, handle the xAxis
@@ -249,42 +255,11 @@ class AxisChart {
       }
     }
 
-    // if there's a date range available, make sure to not include dates outside the range
-    if (this.chart.startDate && this.chart.endDate) {
-      let startDate = moment(this.chart.startDate);
-      let endDate = moment(this.chart.endDate);
-
-      // check to see if the current date is set to be the endDate
-      // this means the startDate and endDate will move accross in time
-      if (this.chart.currentEndDate) {
-        const timeDiff = endDate.diff(startDate, "days");
-        endDate = moment().endOf("day");
-        startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
-      }
-
-      const newAxisData = [];
-      for (let i = 0; i < axisData.length; i++) {
-        const entityDate = axisData[i];
-        if (entityDate.isAfter(startDate) && entityDate.isBefore(endDate)) {
-          newAxisData.push(entityDate);
-        }
-      }
-
-      axisData = newAxisData;
-    }
-
     // include all the missing dates when includeZeros is true
     if (this.chart.includeZeros) {
       // get the start date
       let startDate = axisData[0];
-      let endDate = axisData[axisData.length - 1];
-      if (this.chart.startDate) startDate = moment(this.chart.startDate); // eslint-disable-line
-      if (this.chart.endDate) endDate = moment(this.chart.endDate); // eslint-disable-line
-      if (this.chart.startDate && this.chart.endDate && this.chart.currentEndDate) {
-        const timeDiff = endDate.diff(startDate, "days");
-        endDate = moment().endOf("day");
-        startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
-      }
+      const endDate = axisData[axisData.length - 1];
 
       const newAxisData = [];
       // make a new array containing all the dates between startDate and endDate
@@ -313,7 +288,9 @@ class AxisChart {
     for (let i = 0; i < axisData.length; i++) {
       switch (this.chart.timeInterval) {
         case "hour":
-          if (startDate.year() !== endDate.year()) {
+          if (this.dateFormat) {
+            axisData[i] = axisData[i].format(this.dateFormat);
+          } else if (startDate.year() !== endDate.year()) {
             this.dateFormat = "YYYY/MM/DD hA";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else {
@@ -322,7 +299,9 @@ class AxisChart {
           }
           break;
         case "day":
-          if (startDate.year() !== endDate.year()) {
+          if (this.dateFormat) {
+            axisData[i] = axisData[i].format(this.dateFormat);
+          } else if (startDate.year() !== endDate.year()) {
             this.dateFormat = "YYYY MMM D";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else {
@@ -331,7 +310,9 @@ class AxisChart {
           }
           break;
         case "week":
-          if (startDate.year() !== endDate.year()) {
+          if (this.dateFormat) {
+            axisData[i] = axisData[i].format(this.dateFormat);
+          } else if (startDate.year() !== endDate.year()) {
             this.dateFormat = "YYYY MMM [w] w";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else {
@@ -340,7 +321,9 @@ class AxisChart {
           }
           break;
         case "month":
-          if (startDate.year() !== endDate.year()) {
+          if (this.dateFormat) {
+            axisData[i] = axisData[i].format(this.dateFormat);
+          } else if (startDate.year() !== endDate.year()) {
             this.dateFormat = "MMM YYYY";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else {
@@ -410,7 +393,7 @@ class AxisChart {
       }
     }
 
-    if (determineType(xData[0]) === "date" && this.chart.subType.indexOf("AddTimeseries") > -1) {
+    if (this.dateFormat && this.chart.subType.indexOf("AddTimeseries") > -1) {
       let previousKey;
       Object.keys(formattedData).map((key) => {
         if (previousKey) {

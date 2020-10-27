@@ -6,7 +6,6 @@ const determineType = require("../modules/determineType");
 // TODO: deal with nested objects when field = "fieldParent.fieldChild"
 function compareDates(data, field, condition) {
   let newData = data;
-
   switch (condition.operator) {
     case "is":
       newData = _.filter(newData, (o) => moment(o[field]).isSame(condition.value));
