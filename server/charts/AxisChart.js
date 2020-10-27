@@ -22,6 +22,17 @@ class AxisChart {
   plot() {
     const finalXAxisData = [];
     let gXType;
+
+    // check if the global date filter should be on or off
+    // the filter should work only if all the datasets have a dateField
+    let canDateFilter = true;
+    this.datasets.map((dataset) => {
+      if (!dataset.options || !dataset.options.dateField) {
+        canDateFilter = false;
+      }
+      return dataset;
+    });
+
     for (let i = 0; i < this.datasets.length; i++) {
       const dataset = this.datasets[i];
       const { yAxisOperation, dateField } = dataset.options;
@@ -35,7 +46,7 @@ class AxisChart {
 
       let filteredData = dataFilter(dataset.data, xAxis, dataset.options.conditions);
 
-      if (dateField && this.chart.startDate && this.chart.endDate) {
+      if (dateField && this.chart.startDate && this.chart.endDate && canDateFilter) {
         let startDate = moment(this.chart.startDate);
         let endDate = moment(this.chart.endDate);
 
