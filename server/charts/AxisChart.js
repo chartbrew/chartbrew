@@ -416,9 +416,16 @@ class AxisChart {
       });
     }
 
+    const axisData = [];
+    const uniqX = _.uniq(xData);
+    for (let i = 0; i < uniqX.length; i++) {
+      axisData.push({ x: uniqX[i], finalY: formattedData[uniqX[i]] });
+    }
+
     const yData = [];
-    Object.keys(formattedData).forEach((key) => {
-      yData.push(formattedData[key]);
+    axisData.map((item) => {
+      yData.push(item.finalY);
+      return item;
     });
 
     return yData;
