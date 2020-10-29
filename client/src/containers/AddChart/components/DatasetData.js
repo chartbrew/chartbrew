@@ -465,7 +465,7 @@ function DatasetData(props) {
       <Grid.Row>
         <Grid.Column>
           <Divider hidden />
-          <Header size="small" dividing>{"👈 Select a date field for date settings filtering (optional)"}</Header>
+          <Header size="small" dividing>{"Select a date for global filtering (optional)"}</Header>
           <div>
             <Dropdown
               icon={null}
@@ -485,10 +485,10 @@ function DatasetData(props) {
                   <Button
                     icon
                     basic
-                    style={styles.addConditionBtn}
                     onClick={() => onUpdate({ dateField: "" })}
+                    size="small"
                   >
-                    <Icon name="x" color="red" />
+                    <Icon name="x" />
                   </Button>
                 )}
                 content="Clear field"

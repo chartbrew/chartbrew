@@ -226,6 +226,19 @@ class AxisChart {
       }
     }
 
+    if (!this.dateFormat && this.chart.subType.indexOf("AddTimeseries") > -1) {
+      for (let i = 0; i < this.axisData.y.length; i++) {
+        let yAxisData = this.axisData.y[i];
+        yAxisData = _.clone(yAxisData).map((item, index) => {
+          let newItem = item;
+          if (index > 0) newItem += yAxisData[index - 1];
+          return newItem;
+        });
+
+        this.axisData.y[i] = yAxisData;
+      }
+    }
+
     this.axisData.x = allKeys;
 
     let chart;

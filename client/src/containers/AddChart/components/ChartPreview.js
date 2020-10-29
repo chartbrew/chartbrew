@@ -98,7 +98,7 @@ function ChartPreview(props) {
                       onClick={_toggleAccumulation}
                     />
                   )}
-                  content={chart.subType.indexOf("AddTimeseries") > -1 ? "Turn accumulation off" : "Accumulate time series"}
+                  content={chart.subType.indexOf("AddTimeseries") > -1 ? "Turn accumulation off" : "Accumulate datasets"}
                   position="bottom center"
                 />
               )}
