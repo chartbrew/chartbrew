@@ -77,13 +77,15 @@ function ChartPreview(props) {
         <Container>
           <Grid columns={2}>
             <Grid.Column width={6}>
-              <Dropdown
-                options={chartModes}
-                selection
-                value={chart.mode}
-                onChange={_onChangeMode}
-                style={styles.modeSwitcher}
-              />
+              {chart.type !== "pie" && (
+                <Dropdown
+                  options={chartModes}
+                  selection
+                  value={chart.mode}
+                  onChange={_onChangeMode}
+                  style={styles.modeSwitcher}
+                />
+              )}
             </Grid.Column>
             <Grid.Column width={10} textAlign="right" style={styles.modeSwitcher}>
               {(chart.type === "line" || chart.type === "bar") && (
