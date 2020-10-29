@@ -31,12 +31,38 @@ class NewBarChart {
       formattedDatasets.push(formattedDataset);
     }
 
-    return {
+    const chartJsData = {
       data: {
         labels: this.axisData.x,
         datasets: formattedDatasets,
       },
-      options: {
+    };
+
+    if (this.chart.mode === "kpi") {
+      chartJsData.options = {
+        maintainAspectRatio: false,
+        legend: {
+          display: false,
+        },
+        elements: {
+          point: {
+            radius: 0,
+          },
+        },
+        scales: {
+          yAxes: [{
+            display: false,
+          }],
+          xAxes: [{
+            display: false,
+          }],
+        },
+        tooltips: {
+          enabled: false,
+        },
+      };
+    } else {
+      chartJsData.options = {
         maintainAspectRatio: false,
         legend: {
           display: this.chart.displayLegend,
@@ -44,7 +70,7 @@ class NewBarChart {
         elements: {
           point: {
             radius:
-              !this.chart.pointRadius && this.chart.pointRadius !== 0 ? 3 : this.chart.pointRadius,
+            !this.chart.pointRadius && this.chart.pointRadius !== 0 ? 3 : this.chart.pointRadius,
             hitRadius: 8,
             hoverRadius: 8,
           },
@@ -64,8 +90,10 @@ class NewBarChart {
           }],
         },
         tooltips: tooltipsStyle,
-      }
-    };
+      };
+    }
+
+    return chartJsData;
   }
 }
 

@@ -42,7 +42,7 @@ class NewLineChart {
       },
     };
 
-    if (this.chart.mode === "kpi" && this.chart.subType.indexOf("AddTimeseries") > -1) {
+    if (this.chart.mode === "kpi") {
       chartJsData.options = {
         maintainAspectRatio: false,
         elements: {

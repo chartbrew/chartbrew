@@ -61,6 +61,16 @@ function ChartPreview(props) {
     setRedraw(false);
   };
 
+  const _onRefreshPreview = () => {
+    setRedraw(true);
+    onRefreshPreview();
+  };
+
+  const _onRefreshData = () => {
+    setRedraw(true);
+    onRefreshData();
+  };
+
   return (
     <>
       {chart && chart.chartData && !typesVisible && (
@@ -224,7 +234,7 @@ function ChartPreview(props) {
             <Button
               icon
               labelPosition="left"
-              onClick={onRefreshPreview}
+              onClick={_onRefreshPreview}
               primary
               basic
               loading={chartLoading}
@@ -235,7 +245,7 @@ function ChartPreview(props) {
             <Button
               icon
               labelPosition="right"
-              onClick={onRefreshData}
+              onClick={_onRefreshData}
               primary
               basic
               loading={chartLoading}
