@@ -19,7 +19,7 @@ function BarChart(props) {
 
   return (
     <>
-      {chart.subType && chart.subType.indexOf("AddTimeseries") > -1 && chart.mode === "kpi"
+      {chart.mode === "kpi"
         && (
           <div>
             {chart.chartData
@@ -58,10 +58,7 @@ function BarChart(props) {
             )}
           </div>
         )}
-      <div className={
-        (chart.subType.indexOf("AddTimeseries") > -1 && chart.mode === "kpi")
-          && "chart-kpi"
-      }>
+      <div className={chart.mode === "kpi" && "chart-kpi"}>
         <Bar
           data={chart.chartData.data}
           options={chart.chartData.options}

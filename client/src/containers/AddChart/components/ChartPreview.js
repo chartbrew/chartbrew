@@ -41,7 +41,7 @@ function ChartPreview(props) {
     return onChange(type);
   };
 
-  const _toggleAggregation = () => {
+  const _toggleAccumulation = () => {
     if (chart.subType.indexOf("AddTimeseries") > -1) {
       return onChange({ subType: "timeseries" });
     }
@@ -67,15 +67,13 @@ function ChartPreview(props) {
         <Container>
           <Grid columns={2}>
             <Grid.Column width={6}>
-              {chart.subType.indexOf("AddTimeseries") > -1 && (
-                <Dropdown
-                  options={chartModes}
-                  selection
-                  value={chart.mode}
-                  onChange={_onChangeMode}
-                  style={styles.modeSwitcher}
-                />
-              )}
+              <Dropdown
+                options={chartModes}
+                selection
+                value={chart.mode}
+                onChange={_onChangeMode}
+                style={styles.modeSwitcher}
+              />
             </Grid.Column>
             <Grid.Column width={10} textAlign="right" style={styles.modeSwitcher}>
               {(chart.type === "line" || chart.type === "bar") && (
@@ -85,10 +83,10 @@ function ChartPreview(props) {
                       color={chart.subType.indexOf("AddTimeseries") > -1 && "olive"}
                       basic={chart.subType.indexOf("AddTimeseries") < 0}
                       icon="chart line"
-                      onClick={_toggleAggregation}
+                      onClick={_toggleAccumulation}
                     />
                   )}
-                  content={chart.subType.indexOf("AddTimeseries") > -1 ? "Turn aggregation off" : "Aggregate data"}
+                  content={chart.subType.indexOf("AddTimeseries") > -1 ? "Turn accumulation off" : "Accumulate time series"}
                   position="bottom center"
                 />
               )}

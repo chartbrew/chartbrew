@@ -214,7 +214,7 @@ function Chart(props) {
   };
 
   const _isKpi = (chart) => {
-    return chart.subType && chart.subType.indexOf("AddTimeseries") > -1 && chart.mode === "kpi";
+    return chart.mode === "kpi";
   };
 
   const _activateMenu = (chartId) => setMenuVisible(chartId);

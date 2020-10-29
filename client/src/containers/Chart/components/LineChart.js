@@ -19,7 +19,7 @@ function LineChart(props) {
 
   return (
     <>
-      {chart.subType && chart.subType.indexOf("AddTimeseries") > -1 && chart.mode === "kpi"
+      {chart.mode === "kpi"
         && (
           <div>
             {chart.chartData
@@ -58,10 +58,7 @@ function LineChart(props) {
             )}
           </div>
         )}
-      <div className={
-        (chart.subType.indexOf("AddTimeseries") > -1 && chart.mode === "kpi")
-        && "chart-kpi"
-      }>
+      <div className={chart.mode === "kpi" && "chart-kpi"}>
         <Line
           data={chart.chartData.data}
           options={chart.chartData.options}
