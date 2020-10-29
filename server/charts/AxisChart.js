@@ -150,7 +150,7 @@ class AxisChart {
       // Y CHART data processing
       switch (yAxisOperation) {
         case "none":
-          yAxisData = this.noOp(xAxisData.filtered, yAxisData);
+          yAxisData = this.noOp(yAxisData);
           break;
         case "count":
           yAxisData = this.count(xAxisData.formatted);
@@ -162,7 +162,7 @@ class AxisChart {
           yAxisData = this.sum(xAxisData.formatted, yAxisData, yType);
           break;
         default:
-          yAxisData = this.noOp(xAxisData.filtered, yAxisData);
+          yAxisData = this.noOp(yAxisData);
           break;
       }
 
@@ -387,7 +387,7 @@ class AxisChart {
   }
 
   /* OPERATIONS */
-  noOp(xData, yData) {
+  noOp(yData) {
     const finalData = [];
     yData.map((item) => finalData.push(item.y));
     return finalData;
@@ -442,18 +442,28 @@ class AxisChart {
       }
     }
 
-    const axisData = [];
+    const axisData = _.clone(yData);
     if (average) {
       Object.keys(formattedData).forEach((key) => {
         let avgValue = _.sum(formattedData[key]) / formattedData[key].length;
         if (Math.round(avgValue) !== avgValue) avgValue = avgValue.toFixed(2);
-        axisData.push(avgValue);
+        axisData.find((item) => item.x == key).finalY = avgValue; // eslint-disable-line
       });
     } else {
-      Object.values(formattedData).forEach((value) => axisData.push(value));
+      Object.keys(formattedData).forEach((key) => {
+        axisData.find((item) => item.x == key).finalY = formattedData[key]; // eslint-disable-line
+      });
     }
 
-    return axisData;
+    const finalAxisData = [];
+    axisData.map((item) => {
+      if (item.finalY) {
+        finalAxisData.push(item.finalY);
+      }
+      return item;
+    });
+
+    return finalAxisData;
   }
 }
 
