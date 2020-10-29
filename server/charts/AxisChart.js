@@ -445,7 +445,9 @@ class AxisChart {
     const axisData = [];
     if (average) {
       Object.keys(formattedData).forEach((key) => {
-        axisData.push(_.sum(formattedData[key]) / formattedData[key].length);
+        let avgValue = _.sum(formattedData[key]) / formattedData[key].length;
+        if (Math.round(avgValue) !== avgValue) avgValue = avgValue.toFixed(2);
+        axisData.push(avgValue);
       });
     } else {
       Object.values(formattedData).forEach((value) => axisData.push(value));

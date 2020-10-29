@@ -275,6 +275,7 @@ function Dataset(props) {
               <DatasetData
                 dataset={newDataset}
                 requestResult={requestResult}
+                chartType={chart.type}
                 onUpdate={(data) => onUpdate(data)}
               />
             </Grid.Column>

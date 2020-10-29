@@ -70,7 +70,7 @@ const operations = [{
 
 function DatasetData(props) {
   const {
-    dataset, requestResult, onUpdate, runRequest, match,
+    dataset, requestResult, onUpdate, runRequest, match, chartType,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -274,7 +274,7 @@ function DatasetData(props) {
     <Grid style={styles.mainGrid} centered stackable>
       <Grid.Row columns={2}>
         <Grid.Column width={6}>
-          <label><strong>{"X Axis "}</strong></label>
+          <label><strong>{chartType === "pie" ? "Segment " : "X Axis "}</strong></label>
           <Dropdown
             icon={null}
             header="Type to search"
@@ -289,7 +289,7 @@ function DatasetData(props) {
           />
         </Grid.Column>
         <Grid.Column width={10}>
-          <label><strong>{"Y Axis "}</strong></label>
+          <label><strong>{chartType === "pie" ? "Data " : "Y Axis "}</strong></label>
           <Dropdown
             icon={null}
             header="Type to search"
@@ -514,11 +514,13 @@ const styles = {
 
 DatasetData.defaultProps = {
   requestResult: null,
+  chartType: "",
 };
 
 DatasetData.propTypes = {
   dataset: PropTypes.object.isRequired,
   requestResult: PropTypes.object,
+  chartType: PropTypes.string,
   onUpdate: PropTypes.func.isRequired,
   runRequest: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
