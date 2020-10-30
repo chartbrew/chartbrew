@@ -14,8 +14,10 @@ import { cleanErrors as cleanErrorsAction } from "../actions/error";
   Component for inviting user to the team
 */
 function ManageUser(props) {
+  const { cleanErrors } = props;
+
   useEffect(() => {
-    props.cleanErrors();
+    cleanErrors();
   }, []);
 
   const check = (path) => {
