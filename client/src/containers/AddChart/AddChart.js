@@ -166,14 +166,24 @@ function AddChart(props) {
       newDataset
     )
       .then((dataset) => {
-        setActiveDataset(dataset);
         if (!toastOpen) {
           toast.success("Updated the dataset 👌", {
             onClose: () => setToastOpen(false),
             onOpen: () => setToastOpen(true),
           });
         }
-        _onRefreshPreview();
+
+        // determine wether to do a full refresh or not
+        if (activeDataset.xAxis !== dataset.xAxis
+          || activeDataset.yAxis !== dataset.yAxis
+          || activeDataset.yAxisOperation !== dataset.yAxisOperation
+          || activeDataset.dateField !== dataset.dateField) {
+          _onRefreshData();
+        } else {
+          _onRefreshPreview();
+        }
+
+        setActiveDataset(dataset);
       })
       .catch(() => {
         toast.error("Cannot update the dataset 😫 Please try again", {

@@ -15,6 +15,7 @@ import { enGB } from "date-fns/locale";
 import { runRequest as runRequestAction } from "../../../actions/dataset";
 import fieldFinder from "../../../modules/fieldFinder";
 import { secondary } from "../../../config/colors";
+import autoFieldSelector from "../../../modules/autoFieldSelector";
 
 const operators = [{
   key: "=",
@@ -95,6 +96,7 @@ function DatasetData(props) {
             value: o.field,
             type: o.type,
             label: {
+              style: { width: 55, textAlign: "center" },
               content: o.type || "unknown",
               size: "mini",
               color: o.type === "date" ? "olive"
@@ -107,6 +109,22 @@ function DatasetData(props) {
         }
       });
       setFieldOptions(tempFieldOptions);
+
+      // initialise values for the user if there were no prior selections
+      const autoFields = autoFieldSelector(tempFieldOptions);
+      const updateObj = {};
+      Object.keys(autoFields).forEach((key) => {
+        if (!dataset[key]) updateObj[key] = autoFields[key];
+      });
+
+      // update the operation only if the xAxis and yAxis were not set initially
+      if (!dataset.xAxis && !dataset.yAxis && autoFields.yAxisOperation) {
+        updateObj.yAxisOperation = autoFields.yAxisOperation;
+      }
+
+      if (Object.keys(updateObj).length > 0) {
+        onUpdate(updateObj);
+      }
     }
   }, [requestResult]);
 
