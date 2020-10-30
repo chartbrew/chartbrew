@@ -81,11 +81,13 @@ class NewBarChart {
               beginAtZero: true,
               precision: 0,
               fontFamily: "Inter",
+              maxTicksLimit: 15,
             },
           }],
           xAxes: [{
             ticks: {
               fontFamily: "Inter",
+              maxTicksLimit: 25,
             },
           }],
         },
