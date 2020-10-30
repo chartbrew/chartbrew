@@ -209,8 +209,9 @@ function ChartPreview(props) {
         {chart && chart.type && !chart.chartData && !typesVisible && (
           <Dimmer.Dimmable active>
             <Dimmer active inverted>
-              <Header>
-                {"Create a dataset and fetch some data"}
+              <Header as="h2">
+                {"Just a few steps away from the perfect visualisation"}
+                <Header.Subheader className="large">{"Create a dataset to get started"}</Header.Subheader>
               </Header>
             </Dimmer>
             <Image
@@ -239,6 +240,7 @@ function ChartPreview(props) {
               primary
               basic
               loading={chartLoading}
+              disabled={!chart.chartData}
             >
               <Icon name="refresh" />
               {"Refresh style"}
@@ -250,6 +252,7 @@ function ChartPreview(props) {
               primary
               basic
               loading={chartLoading}
+              disabled={!chart.chartData}
             >
               <Icon name="angle double down" />
               Get new data
