@@ -1,4 +1,4 @@
-import React, { Component, lazy, Suspense } from "react";
+import React, { useEffect, lazy, Suspense } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Route, Switch, withRouter } from "react-router";
@@ -27,12 +27,17 @@ const EmbeddedChart = lazy(() => import("./EmbeddedChart"));
 /*
   Description
 */
-class Main extends Component {
-  componentDidMount() {
-    const {
-      relog, getUser, getTeams, getAllProjects, location, cleanErrors,
-    } = this.props;
+function Main(props) {
+  const {
+    relog,
+    getUser,
+    getTeams,
+    getAllProjects,
+    location,
+    cleanErrors,
+  } = props;
 
+  useEffect(() => {
     cleanErrors();
     if (!location.pathname.match(/\/chart\/\d+\/embedded/g)) {
       relog().then((data) => {
@@ -41,55 +46,96 @@ class Main extends Component {
         return getAllProjects();
       });
     }
-  }
+  }, []);
 
-  render() {
-    return (
-      <div style={styles.container}>
-        <div>
-          <Suspense fallback={<SuspenseLoader />}>
-            <Switch>
-              <Route exact path="/" component={UserDashboard} />
-              <Route exact path="/b/:brewName" component={PublicDashboard} />
-              <Route
-                exact
-                path="/feedback"
-                render={() => (
-                  <Grid centered padded>
-                    <Container textAlign="left" text>
-                      <FeedbackForm />
-                    </Container>
-                  </Grid>
-                )}
+  return (
+    <div style={styles.container}>
+      <div>
+        <Suspense fallback={<SuspenseLoader />}>
+          <Switch>
+            <Route exact path="/" component={UserDashboard} />
+            <Route exact path="/b/:brewName" component={PublicDashboard} />
+            <Route
+              exact
+              path="/feedback"
+              render={() => (
+                <Grid centered padded>
+                  <Container textAlign="left" text>
+                    <FeedbackForm />
+                  </Container>
+                </Grid>
+              )}
             />
-              <Route exact path="/manage/:teamId" component={ManageTeam} />
-              <Route exact path="/:teamId/:projectId" component={ProjectBoard} />
-              <Route exact path="/signup" component={Signup} />
-              <Route exact path="/verify" component={VerifyUser} />
-              <Route exact path="/login" component={Login} />
-              <Route exact path="/user" component={UserDashboard} />
-              <Route exact path="/profile" component={ManageUser} />
-              <Route exact path="/edit" component={ManageUser} />
-              <Route exact path="/passwordReset" component={PasswordReset} />
-              <Route exact path="/manage/:teamId/members" component={ManageTeam} />
-              <Route exact path="/manage/:teamId/settings" component={ManageTeam} />
-              <Route exact path="/:teamId/:projectId/dashboard" component={ProjectBoard} />
-              <Route exact path="/:teamId/:projectId/connections" component={ProjectBoard} />
-              <Route exact path="/:teamId/:projectId/chart" component={ProjectBoard} />
-              <Route exact path="/:teamId/:projectId/chart/:chartId/edit" component={ProjectBoard} />
-              <Route exact path="/invite" component={UserInvite} />
-              <Route exact path="/:teamId/:projectId/projectSettings" component={ProjectBoard} />
-              <Route exact path="/:teamId/:projectId/members" component={ProjectBoard} />
-              <Route exact path="/:teamId/:projectId/settings" component={ProjectBoard} />
-              <Route exact path="/:teamId/:projectId/public" component={ProjectBoard} />
-              <Route exact path="/chart/:chartId/embedded" component={EmbeddedChart} />
-            </Switch>
-          </Suspense>
-
-        </div>
+            <Route exact path="/manage/:teamId" component={ManageTeam} />
+            <Route exact path="/:teamId/:projectId" component={ProjectBoard} />
+            <Route exact path="/signup" component={Signup} />
+            <Route exact path="/verify" component={VerifyUser} />
+            <Route exact path="/login" component={Login} />
+            <Route exact path="/user" component={UserDashboard} />
+            <Route exact path="/profile" component={ManageUser} />
+            <Route exact path="/edit" component={ManageUser} />
+            <Route exact path="/passwordReset" component={PasswordReset} />
+            <Route
+              exact
+              path="/manage/:teamId/members"
+              component={ManageTeam}
+            />
+            <Route
+              exact
+              path="/manage/:teamId/settings"
+              component={ManageTeam}
+            />
+            <Route
+              exact
+              path="/:teamId/:projectId/dashboard"
+              component={ProjectBoard}
+            />
+            <Route
+              exact
+              path="/:teamId/:projectId/connections"
+              component={ProjectBoard}
+            />
+            <Route
+              exact
+              path="/:teamId/:projectId/chart"
+              component={ProjectBoard}
+            />
+            <Route
+              exact
+              path="/:teamId/:projectId/chart/:chartId/edit"
+              component={ProjectBoard}
+            />
+            <Route exact path="/invite" component={UserInvite} />
+            <Route
+              exact
+              path="/:teamId/:projectId/projectSettings"
+              component={ProjectBoard}
+            />
+            <Route
+              exact
+              path="/:teamId/:projectId/members"
+              component={ProjectBoard}
+            />
+            <Route
+              exact
+              path="/:teamId/:projectId/settings"
+              component={ProjectBoard}
+            />
+            <Route
+              exact
+              path="/:teamId/:projectId/public"
+              component={ProjectBoard}
+            />
+            <Route
+              exact
+              path="/chart/:chartId/embedded"
+              component={EmbeddedChart}
+            />
+          </Switch>
+        </Suspense>
       </div>
-    );
-  }
+    </div>
+  );
 }
 
 const styles = {
