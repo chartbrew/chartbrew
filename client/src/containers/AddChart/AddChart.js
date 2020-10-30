@@ -266,8 +266,8 @@ function AddChart(props) {
       .then(() => completeTutorial("apibuilder"))
       .then(() => completeTutorial("mongobuilder"))
       .then(() => completeTutorial("sqlbuilder"))
-      .then(() => completeTutorial("objectexplorer"))
-      .then(() => completeTutorial("requestmodal"));
+      .then(() => completeTutorial("requestmodal"))
+      .then(() => completeTutorial("datasetdata"));
   };
 
   const _onResetTutorial = () => {
@@ -278,9 +278,8 @@ function AddChart(props) {
       "apibuilder",
       "mongobuilder",
       "sqlbuilder",
-      "objectexplorer",
       "requestmodal",
-      "addchart"
+      "datasetdata",
     ])
       .then(() => {
         changeTutorial("addchart");

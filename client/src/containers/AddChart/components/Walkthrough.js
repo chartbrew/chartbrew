@@ -264,51 +264,6 @@ const steps = {
       ),
     },
   ],
-  objectexplorer: [
-    {
-      selector: ".objectexplorer-data-tut",
-      content: () => (
-        <>
-          <p>{"Here you can see the data you just received from your connection."}</p>
-          <p>{"The main goal here is to identify the key field you want to use for the visualisation."}</p>
-          <p>{"For example, if you want to see the user signups, you'd look for a 'createdAt' field with the date the user was created."}</p>
-        </>
-      ),
-    },
-    {
-      selector: ".objectexplorer-object-tut",
-      content: ({ close }) => ( // eslint-disable-line
-        <>
-          <p>{"Once you identified your field, you can select it using the buttons below."}</p>
-          <p>
-            You will need a
-            {" "}
-            <b>date</b>
-            {" "}
-            field for timeseries.
-          </p>
-          <p>
-            For pattern charts, you will probably want to select a
-            {" "}
-            <b>string</b>
-            {" "}
-            or
-            {" "}
-            <b>number</b>
-            {" "}
-            field.
-          </p>
-          <Button
-            content="Select a field"
-            icon="checkmark"
-            labelPosition="right"
-            positive
-            onClick={close}
-          />
-        </>
-      )
-    }
-  ],
   requestmodal: [
     {
       selector: ".requestmodal-fields-tut",
@@ -327,7 +282,7 @@ const steps = {
       ),
     },
   ],
-  datasetData: [
+  datasetdata: [
     {
       selector: ".datasetdata-axes-tut",
       content: () => (

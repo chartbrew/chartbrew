@@ -29,17 +29,12 @@ export default function showTutorial(type, userData) {
         return true;
       }
       break;
-    case "objectexplorer":
-      if (userData[type] && compareVersions(userData[type], "1.0.0-beta.12") < 0) {
-        return true;
-      }
-      break;
     case "requestmodal":
       if (userData[type] && compareVersions(userData[type], "1.0.0-beta.12") < 0) {
         return true;
       }
       break;
-    case "datasetData":
+    case "datasetdata":
       if (userData[type] && compareVersions(userData[type], "1.0.0-beta.12") < 0) {
         return true;
       }

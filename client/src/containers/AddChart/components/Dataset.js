@@ -140,7 +140,7 @@ function Dataset(props) {
 
   const _onCloseConfig = () => {
     if (requestResult) {
-      changeTutorial("datasetData");
+      changeTutorial("datasetdata");
     }
     setConfigOpened(false);
   };
