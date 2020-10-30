@@ -536,7 +536,7 @@ function AddChart(props) {
       />
 
       <Modal open={startTutorial} onClose={() => setStartTutorial(false)}>
-        <Modal.Header>Welcome to the brewery</Modal.Header>
+        <Modal.Header>Welcome to the chart builder!</Modal.Header>
         <Modal.Content>
           <Header>{"This is the place where your charts will take shape."}</Header>
           <p>

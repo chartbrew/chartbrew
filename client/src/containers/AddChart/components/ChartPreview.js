@@ -209,9 +209,8 @@ function ChartPreview(props) {
         {chart && chart.type && !chart.chartData && !typesVisible && (
           <Dimmer.Dimmable active>
             <Dimmer active inverted>
-              <Header icon>
-                <Icon name="database" />
-                {"Let's create a datasets and fetch some data"}
+              <Header>
+                {"Create a dataset and fetch some data"}
               </Header>
             </Dimmer>
             <Image

@@ -35,7 +35,10 @@ const steps = {
     {
       selector: ".chart-name-tut",
       content: () => (
-        <p>{"You can change the summary of the chart at any time by clicking on the text."}</p>
+        <>
+          <p>{"You can change the summary of the chart at any time by clicking on the text."}</p>
+          <p>{"This will be displayed above your chart in the dashboard."}</p>
+        </>
       ),
     },
     {
@@ -51,8 +54,7 @@ const steps = {
       selector: ".chart-type-tut",
       content: () => (
         <>
-          <p>{"When you know how you'd like the chart to look like, you can choose a chart type from here."}</p>
-          <p>{"You can always query for some data first and choose a type later. And speaking about queries..."}</p>
+          <p>{"When you have the data set up, your chart will appear here. You can also query for new data or refresh the style at any time."}</p>
         </>
       ),
     },
@@ -78,18 +80,9 @@ const steps = {
       selector: ".dataset-manage-tut",
       content: () => (
         <>
-          <p>{"Here you can change your dataset name at any time. The name will appear in the chart legend as well."}</p>
-          <p>{"Most importantly, you can select which connection should the dataset get the data from by using the dropdown field."}</p>
+          <p>{"Each dataset will need to be connected to one of your data sources. Chartbrew will then know where to fetch the data from."}</p>
           <p>{"You can always create new connections by clicking the 'Manage connections' button."}</p>
-        </>
-      ),
-    },
-    {
-      selector: ".dataset-colors-tut",
-      content: () => (
-        <>
-          <p>{"After you get some data, it will be time to give your chart some color"}</p>
-          <p>{"You can choose any color for your dataset, including the line and fill color."}</p>
+          <p>{"Select one of your connections from the dropdown list to get started."}</p>
         </>
       ),
     },
@@ -115,7 +108,6 @@ const steps = {
       selector: ".apibuilder-route-tut",
       content: () => (
         <>
-          <p>{"The host address was already set when you created the connection."}</p>
           <p>{"Here, you will have to enter the route and query parameters that you need for your API request."}</p>
         </>
       ),
@@ -157,7 +149,7 @@ const steps = {
       content: ({ close }) => ( // eslint-disable-line
         <>
           <p>{"If the request is successful you will see the JSON data in this section."}</p>
-          <p>{"If the API supports it, you will also get the error message here in case the request is not successful. On the right, you will also see the HTTP error code in red."}</p>
+          <p>{"If the API supports it, you will also get the error message in case the request is not successful."}</p>
           <Button
             content="Start configuring"
             icon="cog"
@@ -323,7 +315,7 @@ const steps = {
       content: ({ close }) => ( // eslint-disable-line
         <>
           <p>{"Great! You have some data now."}</p>
-          <p>{"Next, you will have to select a field that you want to visualise on your chart. You can switch to the fields explorer from here."}</p>
+          <p>{"You can explore your data and press 'Done' to continue configuring your chart."}</p>
           <Button
             content="Gotcha"
             icon="checkmark"
@@ -334,6 +326,46 @@ const steps = {
         </>
       ),
     },
+  ],
+  datasetData: [
+    {
+      selector: ".datasetdata-axes-tut",
+      content: () => (
+        <>
+          <p>{"This is the place where you can configure what data appears on the chart axes. You will notice that the chart preview will update automatically when you change these."}</p>
+          <p>{"You can also apply an operation on the Y axis, like count, sum and average."}</p>
+        </>
+      )
+    },
+    {
+      selector: ".datasetdata-filters-tut",
+      content: () => (
+        <>
+          <p>{"To give you more flexibility, Chartbrew also supprts a wide range of filters."}</p>
+          <p>{"You can select any field from your dataset and filter based on the given values and operations."}</p>
+        </>
+      )
+    },
+    {
+      selector: ".datasetdata-date-tut",
+      content: ({ close }) => ( // eslint-disable-line
+        <>
+          <p>{"To simplify the date filtering across datasets, Chartbrew allows you to select date ranges to filter your data."}</p>
+          <p>
+            {"If this is your use-case, select a date field here and then you can use the"}
+            <strong>{" global date settings "}</strong>
+            {"on the right to filter your data."}
+          </p>
+          <Button
+            content="All done"
+            icon="checkmark"
+            labelPosition="right"
+            positive
+            onClick={close}
+          />
+        </>
+      )
+    }
   ]
 };
 

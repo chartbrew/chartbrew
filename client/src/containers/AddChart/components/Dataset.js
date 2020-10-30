@@ -17,10 +17,12 @@ import postgresImg from "../../../assets/postgres.png";
 import DatarequestModal from "./DatarequestModal";
 import DatasetAppearance from "./DatasetAppearance";
 import DatasetData from "./DatasetData";
+import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 
 function Dataset(props) {
   const {
     dataset, connections, onUpdate, onDelete, chart, match, onRefresh,
+    changeTutorial,
   } = props;
 
   const [newDataset, setNewDataset] = useState(dataset);
@@ -137,6 +139,9 @@ function Dataset(props) {
   };
 
   const _onCloseConfig = () => {
+    if (requestResult) {
+      changeTutorial("datasetData");
+    }
     setConfigOpened(false);
   };
 
@@ -277,6 +282,7 @@ function Dataset(props) {
                 requestResult={requestResult}
                 chartType={chart.type}
                 onUpdate={(data) => onUpdate(data)}
+                onNoRequest={_openConfigModal}
               />
             </Grid.Column>
           </Grid.Row>
@@ -373,6 +379,7 @@ Dataset.propTypes = {
   chart: PropTypes.object.isRequired,
   match: PropTypes.object.isRequired,
   onRefresh: PropTypes.func.isRequired,
+  changeTutorial: PropTypes.func.isRequired,
 };
 
 const styles = {
@@ -402,4 +409,10 @@ const mapStateToProps = (state) => {
   };
 };
 
-export default withRouter(connect(mapStateToProps)(Dataset));
+const mapDispatchToProps = (dispatch) => {
+  return {
+    changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
+  };
+};
+
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Dataset));

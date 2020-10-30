@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Dropdown, Icon, Input, Button, Grid, Message, Popup, Divider,
+  Dropdown, Icon, Input, Button, Grid, Popup, Divider,
   Header, Container,
 } from "semantic-ui-react";
 import { Calendar } from "react-date-range";
@@ -14,7 +14,7 @@ import { enGB } from "date-fns/locale";
 
 import { runRequest as runRequestAction } from "../../../actions/dataset";
 import fieldFinder from "../../../modules/fieldFinder";
-import { secondary } from "../../../config/colors";
+import { blackTransparent, secondary } from "../../../config/colors";
 import autoFieldSelector from "../../../modules/autoFieldSelector";
 
 const operators = [{
@@ -71,7 +71,7 @@ const operations = [{
 
 function DatasetData(props) {
   const {
-    dataset, requestResult, onUpdate, runRequest, match, chartType,
+    dataset, requestResult, onUpdate, runRequest, match, chartType, onNoRequest,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -257,7 +257,8 @@ function DatasetData(props) {
       })
       .catch((err) => {
         if (err.statusCode === 404) {
-          setError("Please select a connection above and configure the data request first");
+          setError("Click on 'Make request' to create a new configuration first.");
+          onNoRequest();
         } else {
           setError(err.statusText || err);
         }
@@ -265,7 +266,7 @@ function DatasetData(props) {
       });
   };
 
-  if (!requestResult) {
+  if (!requestResult && dataset.connection_id) {
     return (
       <Container textAlign="center">
         <Button
@@ -280,17 +281,29 @@ function DatasetData(props) {
           Fetch the data
         </Button>
         {error && (
-          <Message warning>
-            <p>{error}</p>
-          </Message>
+          <p>
+            <br />
+            <i>{error}</i>
+          </p>
         )}
+      </Container>
+    );
+  }
+
+  if (!dataset.connection_id) {
+    return (
+      <Container textAlign="center">
+        <Header icon size="small" style={styles.connectionNotice}>
+          <Icon name="plug" />
+          <span>{" Connect your dataset and fetch some data."}</span>
+        </Header>
       </Container>
     );
   }
 
   return (
     <Grid style={styles.mainGrid} centered stackable>
-      <Grid.Row columns={2}>
+      <Grid.Row columns={2} className="datasetdata-axes-tut">
         <Grid.Column width={6}>
           <label><strong>{chartType === "pie" ? "Segment " : "X Axis "}</strong></label>
           <Dropdown
@@ -340,7 +353,7 @@ function DatasetData(props) {
       </Grid.Row>
       {conditions.map((condition, index) => {
         return (
-          <Grid.Row key={condition.id} style={styles.conditionRow}>
+          <Grid.Row key={condition.id} style={styles.conditionRow} className="datasetdata-filters-tut">
             <Grid.Column>
               {index === 0 && (<label>{"where "}</label>)}
               {index > 0 && (<label>{"and "}</label>)}
@@ -481,7 +494,7 @@ function DatasetData(props) {
         );
       })}
       <Grid.Row>
-        <Grid.Column>
+        <Grid.Column className="datasetdata-date-tut">
           <Divider hidden />
           <Header size="small" dividing>{"Select a date for global filtering (optional)"}</Header>
           <div>
@@ -528,6 +541,9 @@ const styles = {
     paddingTop: 5,
     paddingBottom: 5,
   },
+  connectionNotice: {
+    color: blackTransparent(0.6),
+  },
 };
 
 DatasetData.defaultProps = {
@@ -541,6 +557,7 @@ DatasetData.propTypes = {
   chartType: PropTypes.string,
   onUpdate: PropTypes.func.isRequired,
   runRequest: PropTypes.func.isRequired,
+  onNoRequest: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
 };
 
