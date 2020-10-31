@@ -137,12 +137,14 @@ class AxisChart {
         // only add the yValue if it corresponds to one of the x values found above
         if (_.indexOf(xAxisData.filtered, yData[index][xAxisFieldName]) > -1) {
           yAxisData.push({ x: yData[index][xAxisFieldName], y: yValue });
-        } else if (xType === "date") {
-          xAxisData.filtered.forEach((dateValue) => {
-            if (moment(dateValue).isSame(yData[index][xAxisFieldName])) {
-              yAxisData.push({ x: yData[index][xAxisFieldName], y: yValue });
-            }
-          });
+        } else if (xType === "date"
+          && _.findIndex(
+            xAxisData.filtered,
+            (dateValue) => (
+              new Date(dateValue).getTime() === new Date(yData[index][xAxisFieldName]).getTime()
+            )
+          )) {
+          yAxisData.push({ x: yData[index][xAxisFieldName], y: yValue });
         }
         return item;
       });
@@ -264,20 +266,10 @@ class AxisChart {
     };
 
     let axisData = data;
-    // order the dates
-    for (let i = 0; i < axisData.length - 1; i++) {
-      for (let j = i + 1; j < axisData.length; j++) {
-        // make sure all dates are transformed into moment objects
-        axisData[i] = moment(axisData[i]);
-        axisData[j] = moment(axisData[j]);
-        // --
-        if (axisData[i] > axisData[j]) {
-          const temp = axisData[i];
-          axisData[i] = axisData[j];
-          axisData[j] = temp;
-        }
-      }
+    for (let i = 0; i < axisData.length; i++) {
+      axisData[i] = moment(axisData[i]);
     }
+    axisData = axisData.sort((a, b) => a.diff(b));
 
     // include all the missing dates when includeZeros is true
     if (this.chart.includeZeros) {
