@@ -68,6 +68,18 @@ export default function autoFieldSelector(fields) {
     }
   }
 
+  // if yAxis still not chosen, try selecting an object
+  // only yAxis, because X will make objects appear as a label...might explode
+  if (!yAxis) {
+    fields.map((field) => {
+      if (field.type === "object") {
+        yAxis = field.value;
+        yAxisOperation = "count";
+      }
+      return field;
+    });
+  }
+
   return {
     xAxis,
     yAxis,
