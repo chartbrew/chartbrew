@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import Tour from "reactour";
-import { Button } from "semantic-ui-react";
+import { Button, Icon } from "semantic-ui-react";
 
 import { secondary } from "../../../config/colors";
 import showTutorial from "../../../config/tutorials";
@@ -81,7 +81,11 @@ const steps = {
       content: () => (
         <>
           <p>{"Each dataset will need to be connected to one of your data sources. Chartbrew will then know where to fetch the data from."}</p>
-          <p>{"You can always create new connections by clicking the 'Manage connections' button."}</p>
+          <p>
+            {"You can always create new connections by clicking the "}
+            <Icon name="plug" />
+            {" button."}
+          </p>
           <p>{"Select one of your connections from the dropdown list to get started."}</p>
         </>
       ),
