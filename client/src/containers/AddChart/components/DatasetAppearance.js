@@ -12,47 +12,14 @@ function DatasetAppearance(props) {
     chart, dataItems, onUpdate, dataset,
   } = props;
 
-  const _renderColorPicker = (type, fillIndex) => {
-    let color = type === "dataset" ? dataset.datasetColor
-      : (fillIndex || fillIndex === 0)
-        ? dataset.fillColor[fillIndex] : dataset.fillColor;
-
-    if (!dataset.datasetColor && type === "dataset") {
-      color = chartColors[Math.floor(Math.random() * chartColors.length)];
-    }
-
-    return (
-      <SketchPicker
-        color={color}
-        onChangeComplete={(color) => {
-          const rgba = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
-
-          if (type === "dataset") {
-            onUpdate({ ...dataset, datasetColor: rgba });
-          }
-
-          if (type === "fill") {
-            if (!fillIndex && fillIndex !== 0) {
-              onUpdate({ ...dataset, fillColor: rgba });
-            } else {
-              const { fillColor } = dataset;
-              if (Array.isArray(fillColor) && fillColor[fillIndex]) {
-                fillColor[fillIndex] = rgba;
-              }
-              onUpdate({ ...dataset, fillColor }, true);
-            }
-          }
-        }}
-      />
-    );
-  };
-
   return (
     <Grid columns={2}>
       <Grid.Column width={8}>
         <Header size="tiny">Dataset Color</Header>
         <Popup
-          content={() => _renderColorPicker("dataset")}
+          content={() => (
+            <ColorPicker type="dataset" onUpdate={onUpdate} dataset={dataset} />
+          )}
           trigger={(
             <Label
               size="large"
@@ -85,7 +52,9 @@ function DatasetAppearance(props) {
           {(!dataset.multiFill || chart.type === "line") && (
           <>
             <Popup
-              content={() => _renderColorPicker("fill")}
+              content={() => (
+                <ColorPicker type="fill" onUpdate={onUpdate} dataset={dataset} />
+              )}
               trigger={(
                 <Label
                   size="large"
@@ -114,7 +83,9 @@ function DatasetAppearance(props) {
               return (
                 <Popup
                   key={dataItems.labels[fillIndex]}
-                  content={() => _renderColorPicker("fill", fillIndex)}
+                  content={() => (
+                    <ColorPicker type="fill" fillIndex={fillIndex} onUpdate={onUpdate} dataset={dataset} />
+                  )}
                   trigger={(
                     <Label
                       size="large"
@@ -147,9 +118,58 @@ const styles = {
 };
 
 DatasetAppearance.propTypes = {
-  dataset: PropTypes.object.isRequired,
   chart: PropTypes.object.isRequired,
   dataItems: PropTypes.array.isRequired,
+  onUpdate: PropTypes.func.isRequired,
+  dataset: PropTypes.object.isRequired,
+};
+
+function ColorPicker(props) {
+  const {
+    fillIndex, type, dataset, onUpdate
+  } = props;
+  let color = type === "dataset" ? dataset.datasetColor
+    : (fillIndex || fillIndex === 0)
+      ? dataset.fillColor[fillIndex] : dataset.fillColor;
+
+  if (!dataset.datasetColor && type === "dataset") {
+    color = chartColors[Math.floor(Math.random() * chartColors.length)];
+  }
+
+  return (
+    <SketchPicker
+      color={color}
+      onChangeComplete={(color) => {
+        const rgba = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
+
+        if (type === "dataset") {
+          onUpdate({ ...dataset, datasetColor: rgba });
+        }
+
+        if (type === "fill") {
+          if (!fillIndex && fillIndex !== 0) {
+            onUpdate({ ...dataset, fillColor: rgba });
+          } else {
+            const { fillColor } = dataset;
+            if (Array.isArray(fillColor) && fillColor[fillIndex]) {
+              fillColor[fillIndex] = rgba;
+            }
+            onUpdate({ ...dataset, fillColor }, true);
+          }
+        }
+      }}
+    />
+  );
+}
+
+ColorPicker.defaultProps = {
+  fillIndex: null,
+};
+
+ColorPicker.propTypes = {
+  dataset: PropTypes.object.isRequired,
+  type: PropTypes.string.isRequired,
+  fillIndex: PropTypes.oneOfType([PropTypes.number, PropTypes.object]),
   onUpdate: PropTypes.func.isRequired,
 };
 
