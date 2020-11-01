@@ -18,9 +18,9 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - v6-dependencies-{{ checksum "package.json" }}
+            - v7-dependencies-{{ checksum "package.json" }}
             # fallback to using the latest cache if no exact match is found
-            - v6-dependencies-
+            - v7-dependencies-
 
       - run: npm run setup
 
@@ -29,7 +29,7 @@ jobs:
             - node_modules
             - client/node_modules
             - server/node_modules
-          key: v6-dependencies-{{ checksum "package.json" }}
+          key: v7-dependencies-{{ checksum "package.json" }}
 
   # lint the server project
   lint_server:
@@ -42,9 +42,9 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - v6-dependencies-{{ checksum "package.json" }}
+            - v7-dependencies-{{ checksum "package.json" }}
             # fallback to using the latest cache if no exact match is found
-            - v6-dependencies-
+            - v7-dependencies-
       - run:
           name: Linting server code
           command: cd server && npm install && npm run lint
@@ -60,9 +60,9 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - v6-dependencies-{{ checksum "package.json" }}
+            - v7-dependencies-{{ checksum "package.json" }}
             # fallback to using the latest cache if no exact match is found
-            - v6-dependencies-
+            - v7-dependencies-
 
       - run:
           name: Linting client code
@@ -79,9 +79,9 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - v6-dependencies-{{ checksum "package.json" }}
+            - v7-dependencies-{{ checksum "package.json" }}
             # fallback to using the latest cache if no exact match is found
-            - v6-dependencies-
+            - v7-dependencies-
  
       - run:
           name: Building the client
@@ -98,9 +98,9 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - v6-dependencies-{{ checksum "package.json" }}
+            - v7-dependencies-{{ checksum "package.json" }}
             # fallback to using the latest cache if no exact match is found
-            - v6-dependencies-
+            - v7-dependencies-
       - run:
           name: Building the docs
           command: npm install && npm run docs:build
