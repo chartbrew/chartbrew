@@ -25,11 +25,11 @@
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.20",
     "method-override": "^3.0.0",
-    "moment": "^2.28.0",
-    "mongoose": "^5.10.5",
+    "moment": "^2.29.1",
+    "mongoose": "^5.10.11",
     "morgan": "^1.10.0",
     "mysql2": "^1.7.0",
-    "nodemailer": "^6.4.11",
+    "nodemailer": "^6.4.14",
     "oneaccount-express": "^1.0.3",
     "pg": "^7.18.2",
     "pg-hstore": "^2.3.3",
@@ -43,8 +43,8 @@
     "babel-eslint": "^10.1.0",
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.2.0",
-    "eslint-plugin-import": "^2.22.0",
-    "nodemon": "^2.0.4",
-    "lint-staged": "^10.4.2"
+    "eslint-plugin-import": "^2.22.1",
+    "lint-staged": "^10.5.1",
+    "nodemon": "^2.0.6"
   }
 }
