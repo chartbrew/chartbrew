@@ -32,12 +32,14 @@ class Signup extends Component {
   }
 
   componentDidMount() {
+    this._isMounted = true;
     document.addEventListener("oneaccount-authenticated", this.authenticateOneaccount);
     const { cleanErrors } = this.props;
     cleanErrors();
   }
 
   componentWillUnmount() {
+    this._isMounted = false;
     document.removeEventListener("oneaccount-authenticated", this.authenticateOneaccount);
   }
 
