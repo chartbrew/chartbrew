@@ -17,7 +17,7 @@ export default function determineType(data) {
   if (typeof data !== "object" && !(data instanceof Array) && typeof data === "string") {
     dataType = "string";
   }
-  if (moment(data).isValid() && ((typeof data === "number" && data.toString().length > 9)
+  if (moment(`${data}`).isValid() && ((typeof data === "number" && data.toString().length > 9)
     || (typeof data !== "number"))
   ) {
     dataType = "date";
