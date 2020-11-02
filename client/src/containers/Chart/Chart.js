@@ -13,6 +13,9 @@ import {
 import moment from "moment";
 import "chart.piecelabel.js";
 
+import jsPDF from "jspdf";
+import html2canvas from 'html2canvas';
+
 import LineChart from "./components/LineChart";
 import {
   removeChart, runQuery, updateChart, changeOrder
@@ -182,6 +185,18 @@ function Chart(props) {
     setEmbedModal(true);
   };
 
+  const _exportPDF = (chart) => {
+    const input = document.getElementById('export_as_pdf');
+    html2canvas(input)
+      .then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('landscape');
+        pdf.text(20, 20, `Chart Name: ${chart.name}`);
+        pdf.addImage(imgData, 'JPEG', 15, 40);
+        pdf.save("chart.pdf");
+      });
+  };
+
   const _openUpdateModal = (chart) => {
     setUpdateModal(true);
     setSelectedChart(chart);
@@ -313,6 +328,11 @@ function Chart(props) {
                                   text="Embed"
                                   onClick={() => _onEmbed(chart)}
                                 />
+                                <Dropdown.Item
+                                  icon="download"
+                                  text="Export as PDF"
+                                  onClick={() => _exportPDF(chart)}
+                                />
                               </>
                             )}
                             <Dropdown.Divider />
@@ -442,7 +462,7 @@ function Chart(props) {
                     <Dimmer inverted active={chartLoading === chart.id}>
                       <Loader inverted />
                     </Dimmer>
-                    <div style={styles.mainChartArea(_isKpi(chart))}>
+                    <div id="export_as_pdf" style={styles.mainChartArea(_isKpi(chart))}>
                       {chart.type === "line"
                         && (
                           <LineChart chart={chart} />
