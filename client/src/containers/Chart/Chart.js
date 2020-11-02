@@ -14,7 +14,7 @@ import moment from "moment";
 import "chart.piecelabel.js";
 
 import jsPDF from "jspdf";
-import html2canvas from 'html2canvas';
+import html2canvas from "html2canvas";
 
 import LineChart from "./components/LineChart";
 import {
@@ -186,14 +186,14 @@ function Chart(props) {
   };
 
   const _exportPDF = (chart) => {
-    const input = document.getElementById('export_as_pdf');
+    const input = document.getElementById("export_as_pdf");
     html2canvas(input)
       .then((canvas) => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('landscape');
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF("landscape");
         pdf.text(20, 20, `Chart Name: ${chart.name}`);
-        pdf.addImage(imgData, 'JPEG', 15, 40);
-        pdf.save("chart.pdf");
+        pdf.addImage(imgData, "JPEG", 15, 40);
+        pdf.save(`chart-${chart.name}.pdf`);
       });
   };
 
