@@ -5,7 +5,6 @@ const { Op } = require("sequelize");
 const ChartController = require("../controllers/ChartController");
 
 function updateCharts() {
-  console.log("updateCharts", updateCharts);
   const chartController = new ChartController();
 
   const conditions = {
@@ -16,7 +15,6 @@ function updateCharts() {
 
   return chartController.findAll(conditions)
     .then((charts) => {
-      console.log("charts", charts.length);
       const promises = [];
       if (!charts || charts.length === 0) {
         return new Promise((resolve) => resolve({ completed: true }));
@@ -29,14 +27,11 @@ function updateCharts() {
         }
       }
 
-      console.log("promises.length", promises.length);
-
       if (promises.length === 0) return new Promise((resolve) => resolve({ completed: true }));
 
       return Promise.all(promises);
     })
     .catch((error) => {
-      console.log("error", error);
       return new Promise((resolve, reject) => reject(error));
     });
 }
