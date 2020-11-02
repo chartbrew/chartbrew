@@ -96,7 +96,7 @@ class AxisChart {
       // X AXIS data processing
       switch (xType) {
         case "date":
-          xAxisData = this.processDate(xAxisData);
+          xAxisData = this.processDate(xAxisData, canDateFilter);
           break;
         case "number":
           xAxisData = this.processNumber(xAxisData);
@@ -259,7 +259,7 @@ class AxisChart {
     return chart.getConfiguration();
   }
 
-  processDate(data) {
+  processDate(data, canDateFilter) {
     const finalData = {
       filtered: [],
       formatted: [],
@@ -275,7 +275,18 @@ class AxisChart {
     if (this.chart.includeZeros) {
       // get the start date
       let startDate = axisData[0];
-      const endDate = axisData[axisData.length - 1];
+      let endDate = axisData[axisData.length - 1];
+
+      if (canDateFilter && this.chart.startDate && this.chart.endDate) {
+        startDate = moment(this.chart.startDate);
+        endDate = moment(this.chart.endDate);
+
+        if (this.chart.currentEndDate) {
+          const timeDiff = endDate.diff(startDate, "days");
+          endDate = moment().endOf("day");
+          startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+        }
+      }
 
       const newAxisData = [];
       // make a new array containing all the dates between startDate and endDate
