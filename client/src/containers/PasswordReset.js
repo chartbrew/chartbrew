@@ -42,7 +42,7 @@ function PasswordReset(props) {
       return;
     }
     setLoading(true);
-    setSuccess(true);
+    setSuccess(false);
     setError(false);
     changePasswordWithToken({
       token: parsedParams.token,
