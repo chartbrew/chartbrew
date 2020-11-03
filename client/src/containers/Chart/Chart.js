@@ -13,7 +13,7 @@ import {
 import moment from "moment";
 import "chart.piecelabel.js";
 
-import jsPDF from "jspdf";
+import JsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
 import LineChart from "./components/LineChart";
@@ -190,7 +190,7 @@ function Chart(props) {
     html2canvas(input)
       .then((canvas) => {
         const imgData = canvas.toDataURL("image/png");
-        const pdf = new jsPDF("landscape");
+        const pdf = new JsPDF("landscape");
         pdf.text(20, 20, `Chart Name: ${chart.name}`);
         pdf.addImage(imgData, "JPEG", 15, 40);
         pdf.save(`chart-${chart.name}.pdf`);
