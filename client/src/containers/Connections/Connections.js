@@ -70,6 +70,8 @@ function Connections(props) {
           if (redirect) {
             history.push(`/${match.params.teamId}/${match.params.projectId}/chart`);
           }
+          setFormType(null);
+          setNewConnectionModal(false);
         })
         .catch((error) => {
           setAddError(error);
