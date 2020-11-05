@@ -120,9 +120,13 @@ class TeamMembers extends Component {
           )}
 
         {this._canAccess("admin")
-          && <InviteMembersForm />}
+          && (
+          <div>
+            <InviteMembersForm />
+            <Divider hidden />
+          </div>
+          )}
 
-        <Divider hidden />
         <Header as="h3" attached="top">{"Team members"}</Header>
         <Segment attached>
           <Container fluid>
