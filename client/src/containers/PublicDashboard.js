@@ -1,11 +1,12 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
-  Segment, Loader, Header, Message, List, Image, Responsive
+  Segment, Loader, Header, Message, List, Image,
 } from "semantic-ui-react";
+import { createMedia } from "@artsy/fresnel";
 
 import { getPublicDashboard } from "../actions/project";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
@@ -13,42 +14,41 @@ import Chart from "./Chart/Chart";
 import { blue } from "../config/colors";
 import cbLogo from "../assets/logo_inverted.png";
 
+const AppMedia = createMedia({
+  breakpoints: {
+    mobile: 0,
+    tablet: 768,
+    computer: 1024,
+  },
+});
+const mediaStyles = AppMedia.createMediaStyle();
+const { Media, MediaContextProvider } = AppMedia;
+
 /*
-  Description
+  The dashboard page that can be shared with the public
 */
-class PublicDashboard extends Component {
-  constructor(props) {
-    super(props);
+function PublicDashboard(props) {
+  const { getPublicDashboard, match, cleanErrors } = props;
 
-    this.state = {
-      dashboard: null,
-      loading: true,
-    };
-  }
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  componentDidMount() {
-    const { getPublicDashboard, match, cleanErrors } = this.props;
+  useEffect(() => {
     cleanErrors();
     getPublicDashboard(match.params.brewName)
-      .then((dashboard) => {
-        this.setState({ dashboard, loading: false });
+      .then((dashboardData) => {
+        setDashboard(dashboardData);
+        setLoading(false);
       })
       .catch(() => {
-        this.setState({ error: true, loading: false });
+        setError(true);
+        setLoading(false);
       });
-  }
+  }, []);
 
-  _screenUpdate = (e, { width }) => {
-    if (width < 639) {
-      this.setState({ mobile: true });
-    } else {
-      this.setState({ mobile: false });
-    }
-  }
-
-  _isPublic() {
-    const { dashboard } = this.state;
-    if (!dashboard.Charts) return false;
+  const _isPublic = () => {
+    if (!dashboard || (dashboard && !dashboard.Charts)) return false;
 
     let isPublic = false;
     for (let i = 0; i < dashboard.Charts.length; i++) {
@@ -59,64 +59,70 @@ class PublicDashboard extends Component {
     }
 
     return isPublic;
-  }
+  };
 
-  render() {
-    const {
-      dashboard, mobile, loading, error,
-    } = this.state;
+  return (
+    <div style={styles.container}>
+      <style>{mediaStyles}</style>
+      <MediaContextProvider>
+        <Segment inverted color="blue" style={styles.mainContent}>
+          {loading
+            && (
+            <Loader inverted active={loading} size="huge" style={{ marginTop: 100 }}>
+              Preparing the dashboard
+            </Loader>
+            )}
 
-    return (
-      <div style={styles.container}>
-        <Responsive
-          as="div"
-          textAlign="center"
-          fireOnMount
-          onUpdate={this._screenUpdate}
-        >
-          <Segment inverted color="blue" style={styles.mainContent}>
-            {loading
-              && (
-              <Loader inverted active={loading} size="huge" style={{ marginTop: 30 }}>
-                Preparing the dashboard
-              </Loader>
-              )}
+          {error
+            && (
+            <Message warning>
+              <Message.Header>{"This dashboard might not exist or it's not made public"}</Message.Header>
+            </Message>
+            )}
 
-            {error
-              && (
-              <Message warning>
-                <Message.Header>{"This dashboard might not exist or it's not made public"}</Message.Header>
-              </Message>
-              )}
-
-            {dashboard && dashboard.Charts.length > 0 && this._isPublic()
-              && (
-              <div>
-                <div style={mobile ? styles.brewBadgeMobile : styles.brewBadge}>
-                  <List selection verticalAlign="middle" inverted size={mobile ? "small" : "normal"}>
-                    <List.Item as={Link} to="/">
-                      <Image size="mini" src={cbLogo} alt="Chartbrew Chart Dasboard" />
-                    </List.Item>
-                  </List>
-                </div>
-                <Header inverted textAlign="center" size="huge" style={{ paddingBottom: 30 }}>
-                  {dashboard.dashboardTitle || dashboard.name}
-                </Header>
-                <Chart isPublic charts={dashboard.Charts} />
+          {dashboard && dashboard.Charts.length > 0 && _isPublic()
+            && (
+            <div>
+              <div style={styles.brewBadge}>
+                <Media at="mobile">
+                  <LogoContainer size="small" />
+                </Media>
+                <Media greaterThan="mobile">
+                  <LogoContainer size="normal" />
+                </Media>
               </div>
-              )}
-            {dashboard && !this._isPublic()
-              && (
-              <Header>
-                Sorry, this dashboard is not public
+              <Header inverted textAlign="center" size="huge" style={{ paddingBottom: 30 }}>
+                {dashboard.dashboardTitle || dashboard.name}
               </Header>
-              )}
-          </Segment>
-        </Responsive>
-      </div>
-    );
-  }
+              <Chart isPublic charts={dashboard.Charts} />
+            </div>
+            )}
+          {dashboard && !_isPublic()
+            && (
+            <Header>
+              Sorry, this dashboard is not public
+            </Header>
+            )}
+        </Segment>
+      </MediaContextProvider>
+    </div>
+  );
 }
+
+function LogoContainer({ size }) {
+  return (
+    <List selection verticalAlign="middle" inverted size={size}>
+      <List.Item as={Link} to="/">
+        <Image size="mini" src={cbLogo} alt="Chartbrew Chart Dasboard" />
+      </List.Item>
+    </List>
+  );
+}
+
+LogoContainer.propTypes = {
+  size: PropTypes.string.isRequired,
+};
+
 const styles = {
   container: {
     flex: 1,
@@ -126,16 +132,12 @@ const styles = {
     paddingBottom: 100,
   },
   brewBadge: {
-    paddingLeft: 5,
-    paddingRight: 5,
-    position: "absolute",
-    top: 10,
-    right: 10,
-  },
-  brewBadgeMobile: {
     position: "absolute",
     top: 5,
     left: 5,
+  },
+  mainContent: {
+    marginTop: 0,
   },
 };
 
