@@ -30,7 +30,6 @@ function DatasetAppearance(props) {
           )}
           style={{ padding: 0, margin: 0 }}
           on="click"
-          offset="0, 10px"
           position="right center"
         />
       </Grid.Column>
@@ -65,7 +64,6 @@ function DatasetAppearance(props) {
               )}
               style={{ padding: 0, margin: 0 }}
               on="click"
-              offset="0, 10px"
               position="right center"
             />
             <Checkbox
@@ -96,7 +94,6 @@ function DatasetAppearance(props) {
                   )}
                   style={{ padding: 0, margin: 0 }}
                   on="click"
-                  offset="0, 10px"
                   position="right center"
                 />
               );
