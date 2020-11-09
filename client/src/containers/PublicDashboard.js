@@ -21,8 +21,7 @@ const AppMedia = createMedia({
     computer: 1024,
   },
 });
-const mediaStyles = AppMedia.createMediaStyle();
-const { Media, MediaContextProvider } = AppMedia;
+const { Media } = AppMedia;
 
 /*
   The dashboard page that can be shared with the public
@@ -63,48 +62,45 @@ function PublicDashboard(props) {
 
   return (
     <div style={styles.container}>
-      <style>{mediaStyles}</style>
-      <MediaContextProvider>
-        <Segment inverted color="blue" style={styles.mainContent}>
-          {loading
-            && (
-            <Loader inverted active={loading} size="huge" style={{ marginTop: 100 }}>
-              Preparing the dashboard
-            </Loader>
-            )}
+      <Segment inverted color="blue" style={styles.mainContent}>
+        {loading
+          && (
+          <Loader inverted active={loading} size="huge" style={{ marginTop: 100 }}>
+            Preparing the dashboard
+          </Loader>
+          )}
 
-          {error
-            && (
-            <Message warning>
-              <Message.Header>{"This dashboard might not exist or it's not made public"}</Message.Header>
-            </Message>
-            )}
+        {error
+          && (
+          <Message warning>
+            <Message.Header>{"This dashboard might not exist or it's not made public"}</Message.Header>
+          </Message>
+          )}
 
-          {dashboard && dashboard.Charts.length > 0 && _isPublic()
-            && (
-            <div>
-              <div style={styles.brewBadge}>
-                <Media at="mobile">
-                  <LogoContainer size="small" />
-                </Media>
-                <Media greaterThan="mobile">
-                  <LogoContainer size="normal" />
-                </Media>
-              </div>
-              <Header inverted textAlign="center" size="huge" style={{ paddingBottom: 30 }}>
-                {dashboard.dashboardTitle || dashboard.name}
-              </Header>
-              <Chart isPublic charts={dashboard.Charts} />
+        {dashboard && dashboard.Charts.length > 0 && _isPublic()
+          && (
+          <div>
+            <div style={styles.brewBadge}>
+              <Media at="mobile">
+                <LogoContainer size="small" />
+              </Media>
+              <Media greaterThan="mobile">
+                <LogoContainer size="normal" />
+              </Media>
             </div>
-            )}
-          {dashboard && !_isPublic()
-            && (
-            <Header>
-              Sorry, this dashboard is not public
+            <Header inverted textAlign="center" size="huge" style={{ paddingBottom: 30 }}>
+              {dashboard.dashboardTitle || dashboard.name}
             </Header>
-            )}
-        </Segment>
-      </MediaContextProvider>
+            <Chart isPublic charts={dashboard.Charts} />
+          </div>
+          )}
+        {dashboard && !_isPublic()
+          && (
+          <Header>
+            Sorry, this dashboard is not public
+          </Header>
+          )}
+      </Segment>
     </div>
   );
 }
