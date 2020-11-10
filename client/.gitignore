@@ -9,6 +9,7 @@ src/semantic/tasks
 !/src/semantic/src/site
 /src/semantic/src/site/*
 !/src/semantic/src/site/globals
+!/src/semantic/src/site/elements
 
 # dependencies
 /node_modules
