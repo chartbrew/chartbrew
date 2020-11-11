@@ -127,6 +127,19 @@ module.exports = (sequelize, DataTypes) => {
         }
       },
     },
+    connectionString: {
+      type: DataTypes.TEXT,
+      set(val) {
+        return this.setDataValue("connectionString", sc.encrypt(val));
+      },
+      get() {
+        try {
+          return sc.decrypt(this.getDataValue("connectionString"));
+        } catch (e) {
+          return this.getDataValue("connectionString");
+        }
+      },
+    }
   }, {
     freezeTableName: true,
   });
@@ -140,6 +153,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Connection.prototype.getMongoConnectionUrl = (connection) => {
+    if (connection.connectionString) return connection.connectionString;
     return assembleMongoUrl(connection);
   };
 

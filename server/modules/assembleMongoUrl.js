@@ -11,6 +11,8 @@ module.exports = (data) => {
   // check if encrypted first
   const connection = data;
 
+  if (connection.connectionString) return connection.connectionString;
+
   try {
     connection.dbName = sc.decrypt(connection.dbName);
     connection.host = sc.decrypt(connection.host);

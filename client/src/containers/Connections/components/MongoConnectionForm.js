@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Segment, Form, Button, Icon, Header, Label, Divider, Message, Checkbox, Popup,
-  Placeholder, Container,
+  Placeholder, Container, List,
 } from "semantic-ui-react";
 import uuid from "uuid/v4";
 import AceEditor from "react-ace";
@@ -18,12 +18,12 @@ function MongoConnectionForm(props) {
     editConnection, projectId, onComplete, addError, testResult, onTest,
   } = props;
 
-  const [showTutorial, setShowTutorial] = useState(true);
   const [showIp, setShowIp] = useState(true);
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
   const [connection, setConnection] = useState({ type: "mongodb", optionsArray: [], srv: false });
   const [errors, setErrors] = useState({});
+  const [formStyle, setFormStyle] = useState("string");
 
   useEffect(() => {
     _init();
@@ -63,29 +63,55 @@ function MongoConnectionForm(props) {
 
   const _onCreateConnection = (test = false) => {
     setErrors({});
-    if (!connection.name || connection.name.length > 24) {
-      setTimeout(() => {
-        setErrors({ ...errors, name: "Please enter a name which is less than 24 characters" });
-      }, 100);
-      return;
+
+    if (formStyle === "form") {
+      if (!connection.name || connection.name.length > 24) {
+        setTimeout(() => {
+          setErrors({ ...errors, name: "Please enter a name which is less than 24 characters" });
+        }, 100);
+        return;
+      }
+      if (!connection.host) {
+        setTimeout(() => {
+          setErrors({ ...errors, host: "Please enter a host name or IP address for your database" });
+        }, 100);
+        return;
+      }
+      if (!connection.dbName) {
+        setTimeout(() => {
+          setErrors({ ...errors, dbName: "Please enter your database name" });
+        }, 100);
+        return;
+      }
     }
-    if (!connection.host) {
-      setTimeout(() => {
-        setErrors({ ...errors, host: "Please enter a host name or IP address for your database" });
-      }, 100);
-      return;
+
+    if (formStyle === "string") {
+      if (!connection.name || connection.name.length > 24) {
+        setTimeout(() => {
+          setErrors({ ...errors, name: "Please enter a name which is less than 24 characters" });
+        }, 100);
+        return;
+      }
+
+      if (!connection.connectionString) {
+        setTimeout(() => {
+          setErrors({ ...errors, connectionString: "Please enter a connection string first" });
+        }, 100);
+        return;
+      }
     }
-    if (!connection.dbName) {
-      setTimeout(() => {
-        setErrors({ ...errors, dbName: "Please enter your database name" });
-      }, 100);
-      return;
+
+    const newConnection = connection;
+
+    // Clean the connection string if the form style is Form
+    if (formStyle === "form") {
+      newConnection.connectionString = "";
     }
 
     // prepare the options
-    const tempOptions = connection.optionsArray;
+    const tempOptions = newConnection.optionsArray;
     const newOptions = [];
-    if (connection.optionsArray.length > 0) {
+    if (newConnection.optionsArray.length > 0) {
       for (let i = 0; i < tempOptions.length; i++) {
         if (tempOptions[i].key && tempOptions[i].value) {
           newOptions.push({ [tempOptions[i].key]: tempOptions[i].value });
@@ -93,19 +119,18 @@ function MongoConnectionForm(props) {
       }
     }
 
-    // add the project ID
-    setConnection({
-      ...connection, project_id: projectId, options: newOptions,
-    });
+    newConnection.options = newOptions;
+    newConnection.project_id = projectId;
+
     setTimeout(() => {
       if (test === true) {
         setTestLoading(true);
-        onTest(connection)
+        onTest(newConnection)
           .then(() => setTestLoading(false))
           .catch(() => setTestLoading(false));
       } else {
         setLoading(true);
-        onComplete(connection);
+        onComplete(newConnection);
       }
     }, 100);
   };
@@ -156,24 +181,242 @@ function MongoConnectionForm(props) {
 
   return (
     <div style={styles.container}>
-      <Header attached="top" as="h2">Connect to a MongoDB database</Header>
+      <Header attached="top" as="h3">Connect to a MongoDB database</Header>
       <Segment attached>
-        {showTutorial && (
-          <Message onDismiss={() => setShowTutorial(false)}>
-            <Message.Header>How to complete the fields?</Message.Header>
-            <p>{"Whenever you connect to a MongoDB database you usually use a connection string. The string is automatically built from the information you provide below."}</p>
-            <p>
-              <a href="https://docs.mongodb.com/manual/reference/connection-string/" target="_blank" rel="noopener noreferrer">
-                {"Refer to this link for more information or get in touch with us if you need help."}
-              </a>
-            </p>
-            <p>
-              <a href="https://www.youtube.com/watch?v=Ej05tq1220A" target="_blank" rel="noopener noreferrer">
-                {"Here's a tutorial on how you can find the connection string if you're using MongoDB Atlas."}
-              </a>
-            </p>
-          </Message>
+        <Container textAlign="center">
+          <Button.Group>
+            <Button
+              basic
+              color={formStyle === "string" ? "blue" : null}
+              onClick={() => setFormStyle("string")}
+            >
+              Connection string
+            </Button>
+            <Button
+              basic
+              color={formStyle === "form" ? "blue" : null}
+              onClick={() => setFormStyle("form")}
+            >
+              Connection form
+            </Button>
+          </Button.Group>
+        </Container>
+
+        {formStyle === "string" && (
+          <div style={styles.formStyle}>
+            <Form>
+              <Form.Field>
+                <label>Name your connection</label>
+                <Form.Input
+                  placeholder="Enter a name that you can recognise later"
+                  value={connection.name || ""}
+                  onChange={(e, data) => {
+                    setConnection({ ...connection, name: data.value });
+                  }}
+                />
+                {errors.name
+                  && (
+                    <Label basic color="red" pointing>
+                      {errors.name}
+                    </Label>
+                  )}
+              </Form.Field>
+              <Form.Field>
+                <label>Enter your MongoDB connection string</label>
+                <Form.Input
+                  placeholder="mongodb://username:password@mongodb.example.com:27017/dbname"
+                  value={connection.connectionString || ""}
+                  onChange={(e, data) => {
+                    setConnection({ ...connection, connectionString: data.value });
+                  }}
+                />
+                {errors.connectionString && (
+                  <Label basic color="red" pointing>
+                    {errors.connectionString}
+                  </Label>
+                )}
+              </Form.Field>
+            </Form>
+          </div>
         )}
+
+        {formStyle === "form" && (
+          <div style={styles.formStyle}>
+            <Form>
+              <Form.Field error={!!errors.name} required>
+                <label>Name your connection</label>
+                <Form.Input
+                  placeholder="Enter a name that you can recognise later"
+                  value={connection.name || ""}
+                  onChange={(e, data) => {
+                    setConnection({ ...connection, name: data.value });
+                  }}
+                />
+                {errors.name
+                  && (
+                  <Label basic color="red" pointing>
+                    {errors.name}
+                  </Label>
+                  )}
+              </Form.Field>
+
+              <Form.Group widths={2}>
+                <Form.Field error={!!errors.host} required width={10}>
+                  <label>Hostname or IP address</label>
+                  <Form.Input
+                    placeholder="'yourmongodomain.com' or '0.0.0.0' "
+                    value={connection.host || ""}
+                    onChange={(e, data) => {
+                      setConnection({ ...connection, host: data.value });
+                    }}
+                  />
+                  {errors.host && (
+                    <Label basic color="red" pointing>
+                      {errors.host}
+                    </Label>
+                  )}
+                </Form.Field>
+                <Form.Field error={!!errors.port} width={6}>
+                  <label>Port</label>
+                  <Form.Input
+                    placeholder="Leave empty if using the default"
+                    value={connection.port || ""}
+                    onChange={(e, data) => {
+                      setConnection({ ...connection, port: data.value });
+                    }}
+                  />
+                  {errors.port && (
+                    <Label basic color="red" pointing>
+                      {errors.port}
+                    </Label>
+                  )}
+                </Form.Field>
+              </Form.Group>
+
+              <Form.Group widths={3}>
+                <Form.Field error={!!errors.dbName} required width={6}>
+                  <label>Database name</label>
+                  <Form.Input
+                    placeholder="Enter your database name"
+                    value={connection.dbName || ""}
+                    onChange={(e, data) => {
+                      setConnection({ ...connection, dbName: data.value });
+                    }}
+                  />
+                  {errors.dbName && (
+                    <Label basic color="red" pointing>
+                      {errors.dbName}
+                    </Label>
+                  )}
+                </Form.Field>
+
+                <Form.Field error={!!errors.username} width={5}>
+                  <label>Database username</label>
+                  <Form.Input
+                    placeholder="Username"
+                    value={connection.username || ""}
+                    onChange={(e, data) => {
+                      setConnection({ ...connection, username: data.value });
+                    }}
+                  />
+                  {errors.username && (
+                    <Label basic color="red" pointing>
+                      {errors.username}
+                    </Label>
+                  )}
+                </Form.Field>
+
+                <Form.Field error={!!errors.password} width={5}>
+                  {!editConnection && <label>Database password</label>}
+                  {editConnection && <label>New database password</label>}
+                  <Form.Input
+                    placeholder="Database user password"
+                    type="password"
+                    onChange={(e, data) => {
+                      setConnection({ ...connection, password: data.value });
+                    }}
+                  />
+                  {errors.password && (
+                    <Label basic color="red" pointing>
+                      {errors.password}
+                    </Label>
+                  )}
+                </Form.Field>
+              </Form.Group>
+
+              <Form.Field>
+                <Checkbox
+                  label="Use MongoDB 3.6 SRV URI connection string "
+                  defaultChecked={connection.srv}
+                  onChange={_onChangeSrv}
+                />
+                <Popup
+                  trigger={<Icon name="question circle outline" />}
+                  content="Tick this if your connection URI contains 'mongodb+srv://'"
+                />
+              </Form.Field>
+
+              <Message info>
+                <Message.Header>Avoid using users that can write data</Message.Header>
+                <p>{"Out of abundance of caution, we recommend all our users to connect only with read permissions. Don't use mongo users with readWrite permissions."}</p>
+                <a href="https://docs.mongodb.com/manual/reference/method/db.createUser/" target="_blank" rel="noopener noreferrer">
+                  Check this link on how to do it
+                </a>
+              </Message>
+
+              <Divider />
+              {connection.optionsArray.length > 0
+                && <Header as="h5">Connection options</Header>}
+              {connection.optionsArray.map((option) => {
+                return (
+                  <Form.Group widths="equal" key={option.id}>
+                    <Form.Input
+                      placeholder="Key"
+                      onChange={(e, data) => _onChangeOption(option.id, data.value, "key")}
+                    />
+                    <Form.Input
+                      onChange={(e, data) => _onChangeOption(option.id, data.value, "value")}
+                      placeholder="Value"
+                    />
+                    <Form.Button icon onClick={() => _removeOption(option.id)}>
+                      <Icon name="close" />
+                    </Form.Button>
+                  </Form.Group>
+                );
+              })}
+              <Form.Field>
+                <Button
+                  size="small"
+                  icon
+                  labelPosition="right"
+                  onClick={_addOption}
+                >
+                  <Icon name="plus" />
+                  Add options
+                </Button>
+              </Form.Field>
+            </Form>
+          </div>
+        )}
+
+        <List style={styles.helpList} relaxed animated>
+          <List.Item
+            icon="chevron right"
+            content="Find out more about MongoDB connection strings"
+            as="a"
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://docs.mongodb.com/manual/reference/connection-string/"
+          />
+          <List.Item
+            icon="chevron right"
+            content="Find out how to get your MongoDB Atlas connection string"
+            as="a"
+            href="https://docs.mongodb.com/guides/cloud/connectionstring/"
+            target="_blank"
+            rel="noopener noreferrer"
+          />
+        </List>
 
         {showIp && (
           <Message onDismiss={() => setShowIp(false)}>
@@ -181,158 +424,6 @@ function MongoConnectionForm(props) {
             <p>{"This is sometimes required when the database and the Chartbrew app are running on separate servers."}</p>
           </Message>
         )}
-        <Form>
-          <Form.Field error={!!errors.name} required>
-            <label>Name your connection</label>
-            <Form.Input
-              placeholder="Enter a name that you can recognise later"
-              value={connection.name || ""}
-              onChange={(e, data) => {
-                setConnection({ ...connection, name: data.value });
-              }}
-            />
-            {errors.name
-              && (
-              <Label basic color="red" pointing>
-                {errors.name}
-              </Label>
-              )}
-          </Form.Field>
-
-          <Form.Field error={!!errors.host} required>
-            <label>Hostname or IP address</label>
-            <Form.Input
-              placeholder="'yourmongodomain.com' or '0.0.0.0' "
-              value={connection.host || ""}
-              onChange={(e, data) => {
-                setConnection({ ...connection, host: data.value });
-              }}
-            />
-            {errors.host && (
-              <Label basic color="red" pointing>
-                {errors.host}
-              </Label>
-            )}
-          </Form.Field>
-
-          <Form.Field error={!!errors.dbName} required>
-            <label>Database name</label>
-            <Form.Input
-              placeholder="Enter your database name"
-              value={connection.dbName || ""}
-              onChange={(e, data) => {
-                setConnection({ ...connection, dbName: data.value });
-              }}
-            />
-            {errors.dbName && (
-              <Label basic color="red" pointing>
-                {errors.dbName}
-              </Label>
-            )}
-          </Form.Field>
-
-          <Form.Field error={!!errors.port}>
-            <label>Port</label>
-            <Form.Input
-              placeholder="Leave empty if using the default"
-              value={connection.port || ""}
-              onChange={(e, data) => {
-                setConnection({ ...connection, port: data.value });
-              }}
-            />
-            {errors.port && (
-              <Label basic color="red" pointing>
-                {errors.port}
-              </Label>
-            )}
-          </Form.Field>
-
-          <Form.Field error={!!errors.username}>
-            <label>Database username</label>
-            <Form.Input
-              placeholder="Username"
-              value={connection.username || ""}
-              onChange={(e, data) => {
-                setConnection({ ...connection, username: data.value });
-              }}
-            />
-            {errors.username && (
-              <Label basic color="red" pointing>
-                {errors.username}
-              </Label>
-            )}
-          </Form.Field>
-
-          <Form.Field error={!!errors.password}>
-            {!editConnection && <label>Database password</label>}
-            {editConnection && <label>New database password</label>}
-            <Form.Input
-              placeholder="Database user password"
-              type="password"
-              onChange={(e, data) => {
-                setConnection({ ...connection, password: data.value });
-              }}
-            />
-            {errors.password && (
-              <Label basic color="red" pointing>
-                {errors.password}
-              </Label>
-            )}
-          </Form.Field>
-
-          <Form.Field>
-            <Checkbox
-              label="Use MongoDB 3.6 SRV URI connection string "
-              defaultChecked={connection.srv}
-              onChange={_onChangeSrv}
-            />
-            <Popup
-              trigger={<Icon name="question circle outline" />}
-              content="Tick this if your connection URI contains 'mongodb+srv://'"
-            />
-          </Form.Field>
-
-          <Message info>
-            <Message.Header>Avoid using users that can write data</Message.Header>
-            <p>{"Out of abundance of caution, we recommend all our users to connect only with read permissions. Don't use mongo users with readWrite permissions."}</p>
-            <a href="https://docs.mongodb.com/manual/reference/method/db.createUser/" target="_blank" rel="noopener noreferrer">
-              Check this link on how to do it
-            </a>
-          </Message>
-
-          <Divider />
-          {connection.optionsArray.length > 0
-            && <Header as="h5">Connection options</Header>}
-          {connection.optionsArray.map((option) => {
-            return (
-              <Form.Group widths="equal" key={option.id}>
-                <Form.Input
-                  placeholder="Key"
-                  onChange={(e, data) => _onChangeOption(option.id, data.value, "key")}
-                />
-                <Form.Input
-                  onChange={(e, data) => _onChangeOption(option.id, data.value, "value")}
-                  placeholder="Value"
-                />
-                <Form.Button icon onClick={() => _removeOption(option.id)}>
-                  <Icon name="close" />
-                </Form.Button>
-              </Form.Group>
-            );
-          })}
-          <Form.Field>
-            <Button
-              size="small"
-              icon
-              labelPosition="right"
-              onClick={_addOption}
-            >
-              <Icon name="plus" />
-              Add options
-            </Button>
-          </Form.Field>
-        </Form>
-
         {addError && (
           <Message negative>
             <Message.Header>{"Server error while trying to save your connection"}</Message.Header>
@@ -415,6 +506,17 @@ function MongoConnectionForm(props) {
 const styles = {
   container: {
     flex: 1,
+  },
+  formStyle: {
+    marginTop: 20,
+    padding: 10,
+    marginBottom: 20,
+  },
+  helpList: {
+    marginBottom: 20,
+    paddingRight: 10,
+    paddingLeft: 10,
+    display: "inline-block",
   },
 };
 
