@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Segment, Form, Button, Icon, Header, Label, Divider, Message, Checkbox, Popup,
-  Placeholder, Container, List,
+  Placeholder, Container, List, Menu,
 } from "semantic-ui-react";
 import uuid from "uuid/v4";
 import AceEditor from "react-ace";
@@ -18,12 +18,13 @@ function MongoConnectionForm(props) {
     editConnection, projectId, onComplete, addError, testResult, onTest,
   } = props;
 
-  const [showIp, setShowIp] = useState(true);
+  const [showIp, setShowIp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
   const [connection, setConnection] = useState({ type: "mongodb", optionsArray: [], srv: false });
   const [errors, setErrors] = useState({});
   const [formStyle, setFormStyle] = useState("string");
+  const [hideString, setHideString] = useState(true);
 
   useEffect(() => {
     _init();
@@ -181,46 +182,43 @@ function MongoConnectionForm(props) {
 
   return (
     <div style={styles.container}>
-      <Header attached="top" as="h3">Connect to a MongoDB database</Header>
-      <Segment attached>
-        <Container textAlign="center">
-          <Button.Group>
-            <Button
-              basic
-              color={formStyle === "string" ? "blue" : null}
-              onClick={() => setFormStyle("string")}
-            >
-              Connection string
-            </Button>
-            <Button
-              basic
-              color={formStyle === "form" ? "blue" : null}
-              onClick={() => setFormStyle("form")}
-            >
-              Connection form
-            </Button>
-          </Button.Group>
-        </Container>
+      <Segment style={styles.mainSegment}>
+        <Header as="h3" style={{ marginBottom: 20 }}>Connect to a MongoDB database</Header>
+
+        <Menu secondary>
+          <Menu.Item
+            name="Connection string"
+            active={formStyle === "string"}
+            onClick={() => setFormStyle("string")}
+          />
+          <Menu.Item
+            name="Connection form"
+            active={formStyle === "form"}
+            onClick={() => setFormStyle("form")}
+          />
+        </Menu>
 
         {formStyle === "string" && (
           <div style={styles.formStyle}>
             <Form>
-              <Form.Field>
-                <label>Name your connection</label>
-                <Form.Input
-                  placeholder="Enter a name that you can recognise later"
-                  value={connection.name || ""}
-                  onChange={(e, data) => {
-                    setConnection({ ...connection, name: data.value });
-                  }}
-                />
-                {errors.name
-                  && (
-                    <Label basic color="red" pointing>
-                      {errors.name}
-                    </Label>
-                  )}
-              </Form.Field>
+              <Form.Group>
+                <Form.Field width={6}>
+                  <label>Name your connection</label>
+                  <Form.Input
+                    placeholder="Enter a name that you can recognise later"
+                    value={connection.name || ""}
+                    onChange={(e, data) => {
+                      setConnection({ ...connection, name: data.value });
+                    }}
+                  />
+                  {errors.name
+                    && (
+                      <Label basic color="red" pointing>
+                        {errors.name}
+                      </Label>
+                    )}
+                </Form.Field>
+              </Form.Group>
               <Form.Field>
                 <label>Enter your MongoDB connection string</label>
                 <Form.Input
@@ -228,6 +226,13 @@ function MongoConnectionForm(props) {
                   value={connection.connectionString || ""}
                   onChange={(e, data) => {
                     setConnection({ ...connection, connectionString: data.value });
+                  }}
+                  type={hideString ? "password" : "text"}
+                  action={{
+                    content: hideString ? "Show string" : "Hide String",
+                    labelPosition: "right",
+                    icon: hideString ? "eye" : "eye slash",
+                    onClick: () => setHideString(!hideString),
                   }}
                 />
                 {errors.connectionString && (
@@ -401,7 +406,7 @@ function MongoConnectionForm(props) {
 
         <List style={styles.helpList} relaxed animated>
           <List.Item
-            icon="chevron right"
+            icon="linkify"
             content="Find out more about MongoDB connection strings"
             as="a"
             target="_blank"
@@ -409,18 +414,24 @@ function MongoConnectionForm(props) {
             href="https://docs.mongodb.com/manual/reference/connection-string/"
           />
           <List.Item
-            icon="chevron right"
+            icon="linkify"
             content="Find out how to get your MongoDB Atlas connection string"
             as="a"
             href="https://docs.mongodb.com/guides/cloud/connectionstring/"
             target="_blank"
             rel="noopener noreferrer"
           />
+          <List.Item
+            icon="chevron right"
+            content="Front-end and back-end on different servers?"
+            as="a"
+            onClick={() => setShowIp(!showIp)}
+          />
         </List>
 
         {showIp && (
           <Message onDismiss={() => setShowIp(false)}>
-            <Message.Header>{"Whitelist the IP of the server the app is running from"}</Message.Header>
+            <Message.Header>{"You might need to whitelist the front-end IP in the back-end"}</Message.Header>
             <p>{"This is sometimes required when the database and the Chartbrew app are running on separate servers."}</p>
           </Message>
         )}
@@ -430,39 +441,43 @@ function MongoConnectionForm(props) {
             <p>Please try adding your connection again.</p>
           </Message>
         )}
-      </Segment>
-      <Button.Group attached="bottom">
-        <Button
-          primary
-          basic
-          onClick={() => _onCreateConnection(true)}
-          loading={testLoading}
-        >
-          Test connection
-        </Button>
-        {!editConnection
-          && (
+
+        <Container fluid textAlign="right">
           <Button
             primary
-            attached="bottom"
-            loading={loading}
-            onClick={_onCreateConnection}
+            basic
+            onClick={() => _onCreateConnection(true)}
+            loading={testLoading}
           >
-            Save connection
+            Test connection
           </Button>
+          {!editConnection && (
+            <Button
+              primary
+              loading={loading}
+              onClick={_onCreateConnection}
+              icon
+              labelPosition="right"
+            >
+              <Icon name="checkmark" />
+              Save connection
+            </Button>
           )}
-        {editConnection
-          && (
-          <Button
-            secondary
-            attached="bottom"
-            loading={loading}
-            onClick={_onCreateConnection}
-          >
-            Save changes
-          </Button>
+          {editConnection && (
+            <Button
+              secondary
+              loading={loading}
+              onClick={_onCreateConnection}
+              icon
+              labelPosition="right"
+            >
+              <Icon name="checkmark" />
+              Save changes
+            </Button>
           )}
-      </Button.Group>
+        </Container>
+      </Segment>
+
       {testLoading && (
         <Segment>
           <Placeholder>
@@ -507,15 +522,14 @@ const styles = {
   container: {
     flex: 1,
   },
+  mainSegment: {
+    padding: 20,
+  },
   formStyle: {
     marginTop: 20,
-    padding: 10,
     marginBottom: 20,
   },
   helpList: {
-    marginBottom: 20,
-    paddingRight: 10,
-    paddingLeft: 10,
     display: "inline-block",
   },
 };
