@@ -133,7 +133,7 @@ class TeamController {
           .then((teamRoles) => {
             if (teamRoles.length < 1) return [];
             teamRoles.forEach((teamRole) => {
-              if (teamRole.team_id === parseInt(teamId, 0)) idsArray.push(teamRole.team_id);
+              if (teamRole.team_id === parseInt(teamId, 10)) idsArray.push(teamRole.team_id);
             });
             return idsArray;
           });

@@ -153,7 +153,7 @@ module.exports = (app) => {
   ** Route to delete a user
   */
   app.delete("/user/:id", verifyToken, (req, res) => {
-    if (req.user.id !== parseInt(req.params.id, 0)) return res.status(401).send("Unauthorised user");
+    if (req.user.id !== parseInt(req.params.id, 10)) return res.status(401).send("Unauthorised user");
     let user = {};
     return userController.findById(req.params.id)
       .then((foundUser) => {
@@ -288,7 +288,7 @@ module.exports = (app) => {
   ** Route to get all team invites for the user
   */
   app.get("/user/:id/teamInvites", verifyToken, (req, res) => {
-    if (req.user.id !== parseInt(req.params.id, 0)) return res.status(401).send("unauthorised user");
+    if (req.user.id !== parseInt(req.params.id, 10)) return res.status(401).send("unauthorised user");
     return userController.findById(req.params.id)
       .then((user) => {
         return userController.getTeamInvitesByUser(user.email);
