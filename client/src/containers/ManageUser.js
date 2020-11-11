@@ -11,7 +11,7 @@ import Navbar from "../components/Navbar";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 
 /*
-  Component for inviting user to the team
+  User Profile Settings main screen
 */
 function ManageUser(props) {
   const { cleanErrors } = props;
