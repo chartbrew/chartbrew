@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Segment, Form, Button, Icon, Header, Label, Divider, Message, Checkbox, Popup,
+  Segment, Form, Button, Icon, Header, Label, Message, Checkbox, Popup,
   Placeholder, Container, List, Menu,
 } from "semantic-ui-react";
 import uuid from "uuid/v4";
@@ -59,6 +59,10 @@ function MongoConnectionForm(props) {
       }
 
       setConnection(newConnection);
+
+      if (!newConnection.connectionString && newConnection.host) {
+        setFormStyle("form");
+      }
     }
   };
 
@@ -369,7 +373,6 @@ function MongoConnectionForm(props) {
                 </a>
               </Message>
 
-              <Divider />
               {connection.optionsArray.length > 0
                 && <Header as="h5">Connection options</Header>}
               {connection.optionsArray.map((option) => {
