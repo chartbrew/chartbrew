@@ -135,84 +135,87 @@ function ApiConnectionForm(props) {
 
   return (
     <div style={styles.container}>
-      <Header attached="top" as="h2">
-        {!editConnection && "Add a new API host"}
-        {editConnection && `Edit ${editConnection.name}`}
-      </Header>
-      <Segment attached>
-        <Form>
-          <Form.Field error={!!errors.name} required>
-            <label>Name your connection</label>
-            <Form.Input
-              placeholder="Enter a name that you can recognise later"
-              value={connection.name || ""}
-              onChange={(e, data) => {
-                setConnection({ ...connection, name: data.value });
-              }}
-            />
-            {errors.name
-              && (
-              <Label basic color="red" pointing>
-                {errors.name}
-              </Label>
+      <Segment style={styles.mainSegment}>
+        <Header as="h3" style={{ marginBottom: 20 }}>
+          {!editConnection && "Add a new API host"}
+          {editConnection && `Edit ${editConnection.name}`}
+        </Header>
+
+        <div style={styles.formStyle}>
+          <Form>
+            <Form.Field error={!!errors.name} required>
+              <label>Name your connection</label>
+              <Form.Input
+                placeholder="Enter a name that you can recognise later"
+                value={connection.name || ""}
+                onChange={(e, data) => {
+                  setConnection({ ...connection, name: data.value });
+                }}
+              />
+              {errors.name
+                && (
+                <Label basic color="red" pointing>
+                  {errors.name}
+                </Label>
+                )}
+            </Form.Field>
+
+            <Form.Field error={!!errors.host} required>
+              <label>The hostname of your API</label>
+              <Form.Input
+                placeholder="https://api.example.com"
+                value={connection.host || ""}
+                onChange={(e, data) => {
+                  setConnection({ ...connection, host: data.value });
+                }}
+              />
+              {errors.host && (
+                <Label basic color="red" pointing>
+                  {errors.host}
+                </Label>
               )}
-          </Form.Field>
+            </Form.Field>
 
-          <Form.Field error={!!errors.host} required>
-            <label>The hostname of your API</label>
-            <Form.Input
-              placeholder="https://api.example.com"
-              value={connection.host || ""}
-              onChange={(e, data) => {
-                setConnection({ ...connection, host: data.value });
-              }}
-            />
-            {errors.host && (
-              <Label basic color="red" pointing>
-                {errors.host}
-              </Label>
+            {connection.optionsArray && connection.optionsArray.length > 0 && (
+              <Header as="h5">
+                Global headers to send with the requests
+                <Header.Subheader>
+                  {"This is the place where you can put your API authentication headers"}
+                </Header.Subheader>
+              </Header>
             )}
-          </Form.Field>
-
-          {connection.optionsArray && connection.optionsArray.length > 0 && (
-            <Header as="h5">
-              Global headers to send with requests
-              <Header.Subheader>
-                {"This is the place where you can put your API authentication headers"}
-              </Header.Subheader>
-            </Header>
-          )}
-          {connection.optionsArray && connection.optionsArray.map((option) => {
-            return (
-              <Form.Group widths="equal" key={option.id}>
-                <Form.Input
-                  placeholder="Header name"
-                  value={option.key}
-                  onChange={(e, data) => _onChangeOption(option.id, data.value, "key")}
-                />
-                <Form.Input
-                  onChange={(e, data) => _onChangeOption(option.id, data.value, "value")}
-                  value={option.value}
-                  placeholder="Value"
-                />
-                <Form.Button icon onClick={() => _removeOption(option.id)}>
-                  <Icon name="close" />
-                </Form.Button>
-              </Form.Group>
-            );
-          })}
-          <Form.Field>
-            <Button
-              size="small"
-              icon
-              labelPosition="right"
-              onClick={_addOption}
-            >
-              <Icon name="plus" />
-              Add more headers
-            </Button>
-          </Form.Field>
-        </Form>
+            {connection.optionsArray && connection.optionsArray.map((option) => {
+              return (
+                <Form.Group widths="equal" key={option.id}>
+                  <Form.Input
+                    placeholder="Header name"
+                    value={option.key}
+                    onChange={(e, data) => _onChangeOption(option.id, data.value, "key")}
+                  />
+                  <Form.Input
+                    onChange={(e, data) => _onChangeOption(option.id, data.value, "value")}
+                    value={option.value}
+                    placeholder="Value"
+                  />
+                  <Form.Button icon onClick={() => _removeOption(option.id)}>
+                    <Icon name="close" />
+                  </Form.Button>
+                </Form.Group>
+              );
+            })}
+            <Form.Field>
+              <Button
+                size="small"
+                icon
+                labelPosition="right"
+                onClick={_addOption}
+              >
+                <Icon name="plus" />
+                Add more headers
+              </Button>
+            </Form.Field>
+          </Form>
+        </div>
 
         {addError
           && (
@@ -221,37 +224,42 @@ function ApiConnectionForm(props) {
             <p>Please try adding your connection again.</p>
           </Message>
           )}
-      </Segment>
-      <Button.Group attached="bottom">
-        <Button
-          primary
-          basic
-          onClick={() => _onCreateConnection(true)}
-          loading={testLoading}
-        >
-          Test connection
-        </Button>
-        {!editConnection && (
+
+        <Container textAlign="right">
           <Button
             primary
-            attached="bottom"
-            loading={loading}
-            onClick={_onCreateConnection}
+            basic
+            onClick={() => _onCreateConnection(true)}
+            loading={testLoading}
           >
-            Save connection
+            Test connection
           </Button>
-        )}
-        {editConnection && (
-          <Button
-            secondary
-            attached="bottom"
-            loading={loading}
-            onClick={_onCreateConnection}
-          >
-            Save changes
-          </Button>
-        )}
-      </Button.Group>
+          {!editConnection && (
+            <Button
+              primary
+              loading={loading}
+              onClick={_onCreateConnection}
+              icon
+              labelPosition="right"
+            >
+              <Icon name="checkmark" />
+              Save connection
+            </Button>
+          )}
+          {editConnection && (
+            <Button
+              secondary
+              loading={loading}
+              onClick={_onCreateConnection}
+              icon
+              labelPosition="right"
+            >
+              <Icon name="checkmark" />
+              Save changes
+            </Button>
+          )}
+        </Container>
+      </Segment>
 
       {testLoading && (
         <Segment>
@@ -295,6 +303,13 @@ function ApiConnectionForm(props) {
 const styles = {
   container: {
     flex: 1,
+  },
+  mainSegment: {
+    padding: 20,
+  },
+  formStyle: {
+    marginTop: 20,
+    marginBottom: 20,
   },
 };
 
