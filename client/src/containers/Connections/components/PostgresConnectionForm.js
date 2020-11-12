@@ -132,7 +132,7 @@ function PostgresConnectionForm(props) {
                   }}
                   type={hideString ? "password" : "text"}
                   action={{
-                    content: hideString ? "Show string" : "Hide String",
+                    content: hideString ? "Show string" : "Hide string",
                     labelPosition: "right",
                     icon: hideString ? "eye" : "eye slash",
                     onClick: () => setHideString(!hideString),

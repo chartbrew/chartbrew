@@ -139,7 +139,7 @@ function Connections(props) {
   };
 
   const _closeConnectionForm = () => {
-    setNewConnectionModal(false);
+    setNewConnectionModal(true);
     setFormType(null);
     setEditConnection(null);
   };
@@ -185,10 +185,17 @@ function Connections(props) {
           && (
           <div>
             <Divider hidden />
-            <Header as="h1" textAlign="center">
-              {"Let's connect and get some data"}
-              <Header.Subheader>Select one of the connection types below</Header.Subheader>
-            </Header>
+            {connections.length < 1 && (
+              <Header as="h1" textAlign="center">
+                {"Let's connect and get some data"}
+                <Header.Subheader>Select one of the connection types below</Header.Subheader>
+              </Header>
+            )}
+            {connections.length > 0 && (
+              <Header as="h2" textAlign="left">
+                Select one of the connection types below
+              </Header>
+            )}
             <Segment attached>
               <Card.Group centered itemsPerRow={4} stackable>
                 <Card className="project-segment" onClick={() => setFormType("api")}>
