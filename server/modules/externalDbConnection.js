@@ -5,15 +5,26 @@ module.exports = (connection) => {
   const username = connection.username || "";
   const password = connection.password || "";
   const host = connection.host || "localhost";
-  const { port } = connection;
+  const { port, connectionString } = connection;
   const dialect = connection.type;
 
-  const sequelize = new Sequelize(name, username, password, {
-    host,
-    port,
-    dialect,
-    logging: false,
-  });
+  let sequelize;
+
+  if (connectionString) {
+    sequelize = new Sequelize(connectionString, {
+      host,
+      port,
+      dialect,
+      logging: false,
+    });
+  } else {
+    sequelize = new Sequelize(name, username, password, {
+      host,
+      port,
+      dialect,
+      logging: false,
+    });
+  }
 
   return sequelize
     .authenticate()

@@ -461,6 +461,7 @@ function MongoConnectionForm(props) {
               onClick={_onCreateConnection}
               icon
               labelPosition="right"
+              style={styles.saveBtn}
             >
               <Icon name="checkmark" />
               Save connection
@@ -473,6 +474,7 @@ function MongoConnectionForm(props) {
               onClick={_onCreateConnection}
               icon
               labelPosition="right"
+              style={styles.saveBtn}
             >
               <Icon name="checkmark" />
               Save changes
@@ -534,6 +536,9 @@ const styles = {
   },
   helpList: {
     display: "inline-block",
+  },
+  saveBtn: {
+    marginRight: 0,
   },
 };
 

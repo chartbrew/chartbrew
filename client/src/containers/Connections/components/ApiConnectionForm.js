@@ -225,7 +225,7 @@ function ApiConnectionForm(props) {
           </Message>
           )}
 
-        <Container textAlign="right">
+        <Container fluid textAlign="right">
           <Button
             primary
             basic
@@ -241,6 +241,7 @@ function ApiConnectionForm(props) {
               onClick={_onCreateConnection}
               icon
               labelPosition="right"
+              style={styles.saveBtn}
             >
               <Icon name="checkmark" />
               Save connection
@@ -253,6 +254,7 @@ function ApiConnectionForm(props) {
               onClick={_onCreateConnection}
               icon
               labelPosition="right"
+              style={styles.saveBtn}
             >
               <Icon name="checkmark" />
               Save changes
@@ -310,6 +312,9 @@ const styles = {
   formStyle: {
     marginTop: 20,
     marginBottom: 20,
+  },
+  saveBtn: {
+    marginRight: 0,
   },
 };
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Segment, Form, Button, Header, Label, Message, Placeholder, Container,
+  Segment, Form, Button, Header, Label, Message, Placeholder, Container, Menu, List, Icon,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
 
@@ -19,8 +19,8 @@ function MysqlConnectionForm(props) {
   const [testLoading, setTestLoading] = useState(false);
   const [connection, setConnection] = useState({ type: "mysql" });
   const [errors, setErrors] = useState({});
-  const [showUsersTut, setShowUsersTut] = useState(true);
-  const [showIpTut, setShowIpTut] = useState(true);
+  const [formStyle, setFormStyle] = useState("string");
+  const [hideString, setHideString] = useState(true);
 
   useEffect(() => {
     _init();
@@ -29,6 +29,11 @@ function MysqlConnectionForm(props) {
   const _init = () => {
     if (editConnection) {
       const newConnection = editConnection;
+
+      if (!newConnection.connectionString && newConnection.host) {
+        setFormStyle("form");
+      }
+
       setConnection(newConnection);
     }
   };
@@ -65,140 +70,213 @@ function MysqlConnectionForm(props) {
 
   return (
     <div style={styles.container}>
-      <Header attached="top" as="h2">Add a new MySQL connection</Header>
-      <Segment attached>
-        <Form>
-          <Form.Field error={!!errors.name} required>
-            <label>Name your connection</label>
-            <Form.Input
-              placeholder="Enter a name that you can recognise later"
-              value={connection.name || ""}
-              onChange={(e, data) => {
-                setConnection({ ...connection, name: data.value });
-              }}
-              />
-            {errors.name
-                && (
-                <Label basic color="red" pointing>
-                  {errors.name}
-                </Label>
-                )}
-          </Form.Field>
+      <Segment style={styles.mainSegment}>
+        <Header as="h3" style={{ marginBottom: 20 }}>Add a new MySQL connection</Header>
 
-          <Form.Group widths={2}>
-            <Form.Field error={!!errors.host} required width={10}>
-              <label>The hostname of your API</label>
-              <Form.Input
-                placeholder="mysql.example.com"
-                value={connection.host || ""}
-                onChange={(e, data) => {
-                  setConnection({ ...connection, host: data.value });
-                }}
+        <Menu secondary>
+          <Menu.Item
+            name="Connection string"
+            active={formStyle === "string"}
+            onClick={() => setFormStyle("string")}
+          />
+          <Menu.Item
+            name="Connection form"
+            active={formStyle === "form"}
+            onClick={() => setFormStyle("form")}
+          />
+        </Menu>
+
+        {formStyle === "string" && (
+          <div style={styles.formStyle}>
+            <Form>
+              <Form.Group>
+                <Form.Field width={6}>
+                  <label>Name your connection</label>
+                  <Form.Input
+                    placeholder="Enter a name that you can recognise later"
+                    value={connection.name || ""}
+                    onChange={(e, data) => {
+                      setConnection({ ...connection, name: data.value });
+                    }}
+                  />
+                  {errors.name
+                    && (
+                      <Label basic color="red" pointing>
+                        {errors.name}
+                      </Label>
+                    )}
+                </Form.Field>
+              </Form.Group>
+              <Form.Field>
+                <label>Enter your MySQL connection string</label>
+                <Form.Input
+                  placeholder="mysql://username:password@mysql.example.com:3306/dbname"
+                  value={connection.connectionString || ""}
+                  onChange={(e, data) => {
+                    setConnection({ ...connection, connectionString: data.value });
+                  }}
+                  type={hideString ? "password" : "text"}
+                  action={{
+                    content: hideString ? "Show string" : "Hide String",
+                    labelPosition: "right",
+                    icon: hideString ? "eye" : "eye slash",
+                    onClick: () => setHideString(!hideString),
+                  }}
                 />
-              {errors.host
-                  && (
+                {errors.connectionString && (
                   <Label basic color="red" pointing>
-                    {errors.host}
+                    {errors.connectionString}
                   </Label>
-                  )}
-            </Form.Field>
-            <Form.Field width={6}>
-              <label>Port</label>
-              <Form.Input
-                placeholder="Optional, defaults to 3306"
-                value={connection.port}
-                onChange={(e, data) => {
-                  setConnection({ ...connection, port: data.value });
-                }}
-                />
-            </Form.Field>
-          </Form.Group>
+                )}
+              </Form.Field>
+            </Form>
+          </div>
+        )}
+        {formStyle === "form" && (
+          <div style={styles.formStyle}>
+            <Form>
+              <Form.Field error={!!errors.name} required>
+                <label>Name your connection</label>
+                <Form.Input
+                  placeholder="Enter a name that you can recognise later"
+                  value={connection.name || ""}
+                  onChange={(e, data) => {
+                    setConnection({ ...connection, name: data.value });
+                  }}
+                  />
+                {errors.name
+                    && (
+                    <Label basic color="red" pointing>
+                      {errors.name}
+                    </Label>
+                    )}
+              </Form.Field>
 
-          <Form.Group widths={3}>
-            <Form.Field width={6}>
-              <label>Database name</label>
-              <Form.Input
-                placeholder="Enter your database name"
-                value={connection.dbName}
-                onChange={(e, data) => setConnection({ ...connection, dbName: data.value })}
-                />
-            </Form.Field>
-            <Form.Field width={5}>
-              <label>Username</label>
-              <Form.Input
-                placeholder="Enter your database username"
-                value={connection.username}
-                onChange={(e, data) => setConnection({ ...connection, username: data.value })}
-                />
-            </Form.Field>
-            <Form.Field width={5}>
-              <label>Password</label>
-              <Form.Input
-                placeholder="Enter your database password"
-                type="password"
-                onChange={(e, data) => setConnection({ ...connection, password: data.value })}
-              />
-            </Form.Field>
-          </Form.Group>
-        </Form>
+              <Form.Group widths={2}>
+                <Form.Field error={!!errors.host} required width={10}>
+                  <label>The hostname of your API</label>
+                  <Form.Input
+                    placeholder="mysql.example.com"
+                    value={connection.host || ""}
+                    onChange={(e, data) => {
+                      setConnection({ ...connection, host: data.value });
+                    }}
+                    />
+                  {errors.host
+                      && (
+                      <Label basic color="red" pointing>
+                        {errors.host}
+                      </Label>
+                      )}
+                </Form.Field>
+                <Form.Field width={6}>
+                  <label>Port</label>
+                  <Form.Input
+                    placeholder="Optional, defaults to 3306"
+                    value={connection.port}
+                    onChange={(e, data) => {
+                      setConnection({ ...connection, port: data.value });
+                    }}
+                    />
+                </Form.Field>
+              </Form.Group>
 
-        {addError
-            && (
-            <Message negative>
-              <Message.Header>{"Server error while trying to save your connection"}</Message.Header>
-              <p>Please try adding your connection again.</p>
-            </Message>
-            )}
-        {showUsersTut && (
-          <Message info onDismiss={() => setShowUsersTut(false)}>
-            <Message.Header>Avoid using users that can write data</Message.Header>
-            <p>{"Out of abundance of caution, we recommend all our users to connect read-only permissions to their MySQL database."}</p>
-            <a href="https://www.digitalocean.com/community/tutorials/how-to-create-a-new-user-and-grant-permissions-in-mysql" target="_blank" rel="noopener noreferrer">
-              Check this link on how to do it
-            </a>
+              <Form.Group widths={3}>
+                <Form.Field width={6}>
+                  <label>Database name</label>
+                  <Form.Input
+                    placeholder="Enter your database name"
+                    value={connection.dbName}
+                    onChange={(e, data) => setConnection({ ...connection, dbName: data.value })}
+                    />
+                </Form.Field>
+                <Form.Field width={5}>
+                  <label>Username</label>
+                  <Form.Input
+                    placeholder="Enter your database username"
+                    value={connection.username}
+                    onChange={(e, data) => setConnection({ ...connection, username: data.value })}
+                    />
+                </Form.Field>
+                <Form.Field width={5}>
+                  <label>Password</label>
+                  <Form.Input
+                    placeholder="Enter your database password"
+                    type="password"
+                    onChange={(e, data) => setConnection({ ...connection, password: data.value })}
+                  />
+                </Form.Field>
+              </Form.Group>
+            </Form>
+          </div>
+        )}
+
+        <List style={styles.helpList} relaxed animated>
+          <List.Item
+            icon="linkify"
+            content="For security reasons, connect to your MySQL database with read-only credentials"
+            as="a"
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://www.digitalocean.com/community/tutorials/how-to-create-a-new-user-and-grant-permissions-in-mysql"
+          />
+          <List.Item
+            icon="linkify"
+            content="Find out how to allow remote connections to your MySQL database"
+            as="a"
+            href="https://www.cyberciti.biz/tips/how-do-i-enable-remote-access-to-mysql-database-server.html"
+            target="_blank"
+            rel="noopener noreferrer"
+          />
+        </List>
+
+        {addError && (
+          <Message negative>
+            <Message.Header>{"Server error while trying to save your connection"}</Message.Header>
+            <p>Please try adding your connection again.</p>
           </Message>
         )}
 
-        {showIpTut && (
-          <Message info onDismiss={() => setShowIpTut(false)}>
-            <Message.Header>{"You need to allow remote connections to your MySQL database"}</Message.Header>
-            <p>{"When you grant user privileges you might have to grant access to the server Chartbrew is running from (if the app is running on a separate server than the database)."}</p>
-            <a href="https://www.cyberciti.biz/tips/how-do-i-enable-remote-access-to-mysql-database-server.html" target="_blank" rel="noopener noreferrer">
-              Check this link on how to do it
-            </a>
-          </Message>
-        )}
-      </Segment>
-      <Button.Group attached="bottom">
-        <Button
-          primary
-          basic
-          onClick={() => _onCreateConnection(true)}
-          loading={testLoading}
-        >
-          Test connection
-        </Button>
-        {!editConnection
-          && (
+        <Container fluid textAlign="right">
           <Button
             primary
-            loading={loading}
-            onClick={_onCreateConnection}
+            basic
+            onClick={() => _onCreateConnection(true)}
+            loading={testLoading}
           >
-            Connect
+            Test connection
           </Button>
-          )}
-        {editConnection
-          && (
-          <Button
-            secondary
-            loading={loading}
-            onClick={_onCreateConnection}
-          >
-            Save changes
-          </Button>
-          )}
-      </Button.Group>
+          {!editConnection
+            && (
+              <Button
+                primary
+                loading={loading}
+                onClick={_onCreateConnection}
+                icon
+                labelPosition="right"
+                style={styles.saveBtn}
+              >
+                <Icon name="checkmark" />
+                Save connection
+              </Button>
+            )}
+          {editConnection
+            && (
+              <Button
+                secondary
+                loading={loading}
+                onClick={_onCreateConnection}
+                icon
+                labelPosition="right"
+                style={styles.saveBtn}
+              >
+                <Icon name="checkmark" />
+                Save changes
+              </Button>
+            )}
+        </Container>
+      </Segment>
+
       {testLoading && (
         <Segment>
           <Placeholder>
@@ -241,6 +319,19 @@ function MysqlConnectionForm(props) {
 const styles = {
   container: {
     flex: 1,
+  },
+  mainSegment: {
+    padding: 20,
+  },
+  formStyle: {
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  helpList: {
+    display: "inline-block",
+  },
+  saveBtn: {
+    marginRight: 0,
   },
 };
 
