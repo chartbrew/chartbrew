@@ -186,30 +186,30 @@ function Connections(props) {
           <div>
             <Divider hidden />
             <Header as="h1" textAlign="center">
-              {"Let's connect and get some data ✨"}
+              {"Let's connect and get some data"}
               <Header.Subheader>Select one of the connection types below</Header.Subheader>
             </Header>
             <Segment attached>
               <Card.Group centered itemsPerRow={4} stackable>
-                <Card color="violet" raised link onClick={() => setFormType("api")}>
+                <Card className="project-segment" onClick={() => setFormType("api")}>
                   <Image src={rest} />
                   <Card.Content>
                     <Card.Header>API</Card.Header>
                   </Card.Content>
                 </Card>
-                <Card color="violet" raised link onClick={() => setFormType("mongodb")}>
+                <Card className="project-segment" onClick={() => setFormType("mongodb")}>
                   <Image src={mongoLogo} />
                   <Card.Content>
                     <Card.Header>MongoDB</Card.Header>
                   </Card.Content>
                 </Card>
-                <Card color="violet" raised link onClick={() => setFormType("postgres")}>
+                <Card className="project-segment" onClick={() => setFormType("postgres")}>
                   <Image src={postgres} />
                   <Card.Content>
                     <Card.Header>PostgreSQL</Card.Header>
                   </Card.Content>
                 </Card>
-                <Card color="violet" raised link onClick={() => setFormType("mysql")}>
+                <Card className="project-segment" onClick={() => setFormType("mysql")}>
                   <Image src={mysql} />
                   <Card.Content>
                     <Card.Header>MySQL</Card.Header>
