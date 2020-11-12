@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Segment, Form, Button, Header, Label, Message, Placeholder, Container,
+  Segment, Form, Button, Header, Label, Message, Placeholder,
+  Container, Menu, List, Icon,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
 
@@ -19,6 +20,8 @@ function PostgresConnectionForm(props) {
   const [testLoading, setTestLoading] = useState(false);
   const [connection, setConnection] = useState({ type: "postgres" });
   const [errors, setErrors] = useState({});
+  const [formStyle, setFormStyle] = useState("string");
+  const [hideString, setHideString] = useState(true);
 
   useEffect(() => {
     _init();
@@ -27,6 +30,11 @@ function PostgresConnectionForm(props) {
   const _init = () => {
     if (editConnection) {
       const newConnection = editConnection;
+
+      if (!newConnection.connectionString && newConnection.host) {
+        setFormStyle("form");
+      }
+
       setConnection(newConnection);
     }
   };
@@ -64,82 +72,166 @@ function PostgresConnectionForm(props) {
 
   return (
     <div style={styles.container}>
-      <Header attached="top" as="h2">Add a new PostgreSQL connection</Header>
-      <Segment attached>
-        <Form>
-          <Form.Field error={!!errors.name} required>
-            <label>Name your connection</label>
-            <Form.Input
-              placeholder="Enter a name that you can recognise later"
-              value={connection.name || ""}
-              onChange={(e, data) => {
-                setConnection({ ...connection, name: data.value });
-              }}
-            />
-            {errors.name
-              && (
-              <Label basic color="red" pointing>
-                {errors.name}
-              </Label>
-              )}
-          </Form.Field>
+      <Segment style={styles.mainSegment}>
+        <Header as="h3" style={{ marginBottom: 20 }}>Add a new PostgreSQL connection</Header>
 
-          <Form.Group widths={2}>
-            <Form.Field error={!!errors.host} required width={10}>
-              <label>The hostname of your API</label>
-              <Form.Input
-                placeholder="postgres.example.com"
-                value={connection.host || ""}
-                onChange={(e, data) => {
-                  setConnection({ ...connection, host: data.value });
-                }}
-              />
-              {errors.host
-                && (
-                <Label basic color="red" pointing>
-                  {errors.host}
-                </Label>
+        <Menu secondary>
+          <Menu.Item
+            name="Connection string"
+            active={formStyle === "string"}
+            onClick={() => setFormStyle("string")}
+          />
+          <Menu.Item
+            name="Connection form"
+            active={formStyle === "form"}
+            onClick={() => setFormStyle("form")}
+          />
+        </Menu>
+
+        {formStyle === "string" && (
+          <div style={styles.formStyle}>
+            <Form>
+              <Form.Group>
+                <Form.Field width={6}>
+                  <label>Name your PostgreSQL connection</label>
+                  <Form.Input
+                    placeholder="Enter a name that you can recognise later"
+                    value={connection.name || ""}
+                    onChange={(e, data) => {
+                      setConnection({ ...connection, name: data.value });
+                    }}
+                  />
+                  {errors.name
+                    && (
+                      <Label basic color="red" pointing>
+                        {errors.name}
+                      </Label>
+                    )}
+                </Form.Field>
+              </Form.Group>
+              <Form.Field>
+                <label>Enter your MySQL connection string</label>
+                <Form.Input
+                  placeholder="postgres://username:password@postgres.example.com:5432/dbname"
+                  value={connection.connectionString || ""}
+                  onChange={(e, data) => {
+                    setConnection({ ...connection, connectionString: data.value });
+                  }}
+                  type={hideString ? "password" : "text"}
+                  action={{
+                    content: hideString ? "Show string" : "Hide String",
+                    labelPosition: "right",
+                    icon: hideString ? "eye" : "eye slash",
+                    onClick: () => setHideString(!hideString),
+                  }}
+                />
+                {errors.connectionString && (
+                  <Label basic color="red" pointing>
+                    {errors.connectionString}
+                  </Label>
                 )}
-            </Form.Field>
-            <Form.Field width={6}>
-              <label>Port</label>
-              <Form.Input
-                placeholder="Optional, defaults to 5432"
-                value={connection.port}
-                onChange={(e, data) => {
-                  setConnection({ ...connection, port: data.value });
-                }}
-              />
-            </Form.Field>
-          </Form.Group>
+              </Form.Field>
+            </Form>
+          </div>
+        )}
 
-          <Form.Group widths={3}>
-            <Form.Field width={6}>
-              <label>Database name</label>
-              <Form.Input
-                placeholder="Enter your database name"
-                value={connection.dbName}
-                onChange={(e, data) => setConnection({ ...connection, dbName: data.value })}
-              />
-            </Form.Field>
-            <Form.Field width={5}>
-              <label>Username</label>
-              <Form.Input
-                placeholder="Enter your database username"
-                value={connection.username}
-                onChange={(e, data) => setConnection({ ...connection, username: data.value })}
-              />
-            </Form.Field>
-            <Form.Field width={5}>
-              <label>Password</label>
-              <Form.Input
-                placeholder="Enter your database password"
-                type="password"
-                onChange={(e, data) => setConnection({ ...connection, password: data.value })}
-              />
-            </Form.Field>
-          </Form.Group>
-        </Form>
+        {formStyle === "form" && (
+          <div style={styles.formStyle}>
+            <Form>
+              <Form.Field error={!!errors.name} required>
+                <label>Name your connection</label>
+                <Form.Input
+                  placeholder="Enter a name that you can recognise later"
+                  value={connection.name || ""}
+                  onChange={(e, data) => {
+                    setConnection({ ...connection, name: data.value });
+                  }}
+                />
+                {errors.name
+                  && (
+                  <Label basic color="red" pointing>
+                    {errors.name}
+                  </Label>
+                  )}
+              </Form.Field>
+
+              <Form.Group widths={2}>
+                <Form.Field error={!!errors.host} required width={10}>
+                  <label>The hostname of your API</label>
+                  <Form.Input
+                    placeholder="postgres.example.com"
+                    value={connection.host || ""}
+                    onChange={(e, data) => {
+                      setConnection({ ...connection, host: data.value });
+                    }}
+                  />
+                  {errors.host
+                    && (
+                    <Label basic color="red" pointing>
+                      {errors.host}
+                    </Label>
+                    )}
+                </Form.Field>
+                <Form.Field width={6}>
+                  <label>Port</label>
+                  <Form.Input
+                    placeholder="Optional, defaults to 5432"
+                    value={connection.port}
+                    onChange={(e, data) => {
+                      setConnection({ ...connection, port: data.value });
+                    }}
+                  />
+                </Form.Field>
+              </Form.Group>
+
+              <Form.Group widths={3}>
+                <Form.Field width={6}>
+                  <label>Database name</label>
+                  <Form.Input
+                    placeholder="Enter your database name"
+                    value={connection.dbName}
+                    onChange={(e, data) => setConnection({ ...connection, dbName: data.value })}
+                  />
+                </Form.Field>
+                <Form.Field width={5}>
+                  <label>Username</label>
+                  <Form.Input
+                    placeholder="Enter your database username"
+                    value={connection.username}
+                    onChange={(e, data) => setConnection({ ...connection, username: data.value })}
+                  />
+                </Form.Field>
+                <Form.Field width={5}>
+                  <label>Password</label>
+                  <Form.Input
+                    placeholder="Enter your database password"
+                    type="password"
+                    onChange={(e, data) => setConnection({ ...connection, password: data.value })}
+                  />
+                </Form.Field>
+              </Form.Group>
+            </Form>
+          </div>
+        )}
+
+        <List style={styles.helpList} relaxed animated>
+          <List.Item
+            icon="linkify"
+            content="For security reasons, connect to your PostgreSQL database with read-only credentials"
+            as="a"
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://gist.github.com/oinopion/4a207726edba8b99fd0be31cb28124d0"
+          />
+          <List.Item
+            icon="linkify"
+            content="Find out how to allow remote connections to your PostgreSQL database"
+            as="a"
+            href="https://coderwall.com/p/cr2a1a/allowing-remote-connections-to-your-postgresql-vps-installation"
+            target="_blank"
+            rel="noopener noreferrer"
+          />
+        </List>
 
         {addError
           && (
@@ -148,46 +240,47 @@ function PostgresConnectionForm(props) {
             <p>Please try adding your connection again.</p>
           </Message>
           )}
-        <Message info>
-          <Message.Header>Avoid using users that can write data</Message.Header>
-          <p>{"Out of abundance of caution, we recommend all our users to connect read-only permissions to their PostgreSQL database."}</p>
-          <a href="https://gist.github.com/oinopion/4a207726edba8b99fd0be31cb28124d0" target="_blank" rel="noopener noreferrer">
-            Check this link on how to do it
-          </a>
-        </Message>
-      </Segment>
-      <Button.Group attached="bottom">
-        <Button
-          primary
-          basic
-          onClick={() => _onCreateConnection(true)}
-          loading={testLoading}
-        >
-          Test connection
-        </Button>
-        {!editConnection
-          && (
+
+        <Container fluid textAlign="right">
           <Button
             primary
-            attached="bottom"
-            loading={loading}
-            onClick={_onCreateConnection}
+            basic
+            onClick={() => _onCreateConnection(true)}
+            loading={testLoading}
           >
-            Connect
+            Test connection
           </Button>
-          )}
-        {editConnection
-          && (
-          <Button
-            secondary
-            attached="bottom"
-            loading={loading}
-            onClick={_onCreateConnection}
-          >
-            Save changes
-          </Button>
-          )}
-      </Button.Group>
+          {!editConnection
+            && (
+              <Button
+                primary
+                loading={loading}
+                onClick={_onCreateConnection}
+                icon
+                labelPosition="right"
+                style={styles.saveBtn}
+              >
+                <Icon name="checkmark" />
+                Save connection
+              </Button>
+            )}
+          {editConnection
+            && (
+              <Button
+                secondary
+                loading={loading}
+                onClick={_onCreateConnection}
+                icon
+                labelPosition="right"
+                style={styles.saveBtn}
+              >
+                <Icon name="checkmark" />
+                Save changes
+              </Button>
+            )}
+        </Container>
+      </Segment>
+
       {testLoading && (
         <Segment>
           <Placeholder>
@@ -231,6 +324,19 @@ function PostgresConnectionForm(props) {
 const styles = {
   container: {
     flex: 1,
+  },
+  mainSegment: {
+    padding: 20,
+  },
+  formStyle: {
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  helpList: {
+    display: "inline-block",
+  },
+  saveBtn: {
+    marginRight: 0,
   },
 };
 

@@ -329,7 +329,7 @@ ApiConnectionForm.propTypes = {
   onTest: PropTypes.func.isRequired,
   projectId: PropTypes.string.isRequired,
   editConnection: PropTypes.object,
-  addError: PropTypes.object,
+  addError: PropTypes.bool,
   testResult: PropTypes.object,
 };
 
