@@ -47,25 +47,38 @@ function PostgresConnectionForm(props) {
       }, 100);
       return;
     }
-    if (!connection.host) {
+    if (formStyle === "form" && !connection.host) {
       setTimeout(() => {
         setErrors({ ...errors, host: "Please enter a host name or IP address for your database" });
       }, 100);
       return;
     }
+    if (formStyle === "string" && !connection.connectionString) {
+      setTimeout(() => {
+        setErrors({ ...errors, connectionString: "Please enter a connection string first" });
+      }, 100);
+      return;
+    }
+
+    const newConnection = connection;
+    // Clean the connection string if the form style is Form
+    if (formStyle === "form") {
+      newConnection.connectionString = "";
+    }
 
     // add the project ID
-    setConnection({ ...connection, projectId });
+    newConnection.project_id = projectId;
+    setConnection(newConnection);
 
     setTimeout(() => {
       if (test === true) {
         setTestLoading(true);
-        onTest(connection)
+        onTest(newConnection)
           .then(() => setTestLoading(false))
           .catch(() => setTestLoading(false));
       } else {
         setLoading(true);
-        onComplete(connection);
+        onComplete(newConnection);
       }
     }, 100);
   };

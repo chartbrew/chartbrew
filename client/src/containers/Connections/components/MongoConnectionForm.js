@@ -127,6 +127,7 @@ function MongoConnectionForm(props) {
     newConnection.options = newOptions;
     newConnection.project_id = projectId;
 
+    setConnection(newConnection);
     setTimeout(() => {
       if (test === true) {
         setTestLoading(true);
