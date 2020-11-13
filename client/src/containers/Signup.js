@@ -159,12 +159,11 @@ class Signup extends Component {
 
           <Segment color="olive" raised style={styles.verticalPadding} padded>
             <Form size="large">
-              <Header as="h5" style={styles.leftAligned}>{"What's your name?"}</Header>
               <Field
                 name="name"
                 component={this.renderField}
                 validate={required}
-                placeholder="John Doe"
+                placeholder="What's your name?"
                 icon="user"
                 style={styles.leftAligned}
               />
@@ -316,8 +315,8 @@ const styles = {
     textAlign: "left",
   },
   verticalPadding: {
-    paddingRight: 40,
-    paddingLeft: 40
+    paddingRight: 20,
+    paddingLeft: 20
   },
 };
 

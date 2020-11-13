@@ -65,8 +65,8 @@ const styles = {
     color: "white",
   },
   verticalPadding: {
-    paddingRight: 40,
-    paddingLeft: 40
+    paddingRight: 20,
+    paddingLeft: 20
   },
 };
 
