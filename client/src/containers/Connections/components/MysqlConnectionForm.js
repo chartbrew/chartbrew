@@ -77,7 +77,9 @@ function MysqlConnectionForm(props) {
           .catch(() => setTestLoading(false));
       } else {
         setLoading(true);
-        onComplete(newConnection);
+        onComplete(newConnection)
+          .then(() => setLoading(false))
+          .catch(() => setLoading(false));
       }
     }, 100);
   };

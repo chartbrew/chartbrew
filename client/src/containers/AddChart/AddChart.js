@@ -134,8 +134,10 @@ function AddChart(props) {
         setNewChart(createdChart);
         setTitleScreen(false);
         history.push(`chart/${createdChart.id}/edit`);
+        return true;
       })
       .catch(() => {
+        return false;
       });
   };
 

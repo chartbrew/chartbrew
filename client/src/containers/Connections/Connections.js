@@ -72,18 +72,22 @@ function Connections(props) {
           }
           setFormType(null);
           setNewConnectionModal(false);
+          return true;
         })
         .catch((error) => {
           setAddError(error);
+          return false;
         });
     } else {
       saveConnection(match.params.projectId, connection)
         .then(() => {
           setFormType(null);
           setEditConnection(null);
+          return true;
         })
         .catch((error) => {
           setAddError(error);
+          return false;
         });
     }
   };

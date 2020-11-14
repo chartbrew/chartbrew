@@ -21,7 +21,9 @@ function ChartDescription(props) {
       return;
     }
     setLoading(true);
-    onCreate();
+    onCreate()
+      .then(() => setLoading(false))
+      .catch(() => setLoading(false));
   };
 
   return (
