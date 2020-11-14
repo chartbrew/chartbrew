@@ -11,6 +11,15 @@ module.exports = (app) => {
   const userController = new UserController();
   const teamController = new TeamController();
 
+  const userResponse = (user) => ({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    icon: user.icon,
+    active: user.active,
+    tutorials: user.tutorials,
+  });
+
   const tokenizeUser = ((user, res) => {
     const userToken = {
       id: user.id,
@@ -20,14 +29,9 @@ module.exports = (app) => {
       expiresIn: 2592000 // a month
     }, (err, token) => {
       if (err) res.status(400).send(err);
-      const userResponse = {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        icon: user.icon,
-        token,
-      };
-      return res.status(200).send(userResponse);
+      const tokenizedResponse = userResponse(user);
+      tokenizedResponse.token = token;
+      return res.status(200).send(tokenizedResponse);
     });
   });
 
@@ -55,7 +59,7 @@ module.exports = (app) => {
   app.get("/user/:id", (req, res) => {
     userController.findById(req.params.id)
       .then((user) => {
-        return res.status(200).send(user);
+        return res.status(200).send(userResponse(user));
       })
       .catch((error) => {
         if (error === "404") return res.status(404).send("The user is not found");
@@ -276,7 +280,7 @@ module.exports = (app) => {
     if (!req.body || !req.params.id) return res.status(400).send("Missing fields");
     return userController.update(req.params.id, req.body)
       .then((user) => {
-        return res.status(200).send(user);
+        return res.status(200).send(userResponse(user));
       })
       .catch((error) => {
         return res.status(400).send(error);
