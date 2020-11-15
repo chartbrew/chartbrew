@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 
 const db = require("../models/models");
+const userResponse = require("./userResponse");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -13,16 +14,13 @@ module.exports = (req, res, next) => {
       return db.User.findByPk(decoded.id).then((user) => {
         if (!user) return res.status(400).send("Could not process the request. Please try again.");
 
-        const userObj = {
-          "id": user.id,
-          "name": user.name,
-          "email": user.email,
-          "token": token,
-          "admin": user.admin,
-        };
+        const userObj = userResponse(user);
+        userObj.token = token;
+
         req.user = userObj;
         return next();
-      }).catch((error) => { return res.status(400).send(error); });
+      })
+        .catch((error) => { return res.status(400).send(error); });
     });
   } else {
     return res.status(400).send("Token is missing.");

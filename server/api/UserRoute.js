@@ -6,19 +6,11 @@ const UserController = require("../controllers/UserController");
 const TeamController = require("../controllers/TeamController");
 const verifyUser = require("../modules/verifyUser");
 const verifyToken = require("../modules/verifyToken");
+const userResponse = require("../modules/userResponse");
 
 module.exports = (app) => {
   const userController = new UserController();
   const teamController = new TeamController();
-
-  const userResponse = (user) => ({
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    icon: user.icon,
-    active: user.active,
-    tutorials: user.tutorials,
-  });
 
   const tokenizeUser = ((user, res) => {
     const userToken = {
