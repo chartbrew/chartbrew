@@ -4,12 +4,13 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Grid, Button, Icon, Header, Divider, Popup,
-  Form, Input, List, Message, Checkbox, Modal,
+  Form, Input, List, Message, Checkbox, Modal, Step,
 } from "semantic-ui-react";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import _ from "lodash";
 import { useWindowSize } from "react-use";
+import { Link } from "react-router-dom";
 
 import ChartPreview from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
@@ -62,7 +63,7 @@ function AddChart(props) {
   const {
     match, createChart, history, charts, saveNewDataset, getChartDatasets, tutorial,
     datasets, updateDataset, deleteDataset, updateChart, runQuery, user,
-    changeTutorial, completeTutorial, clearDatasets, resetTutorial,
+    changeTutorial, completeTutorial, clearDatasets, resetTutorial, connections,
   } = props;
 
   useEffect(() => {
@@ -295,12 +296,49 @@ function AddChart(props) {
 
   if (titleScreen) {
     return (
-      <ChartDescription
-        name={chartName}
-        onChange={_onNameChange}
-        onCreate={_onCreateClicked}
-        history={history}
-      />
+      <div style={{ textAlign: "center" }}>
+        <Divider hidden />
+        {charts.length === 0 && (
+          <Step.Group style={{ textAlign: "left" }}>
+            <Step completed>
+              <Icon name="checkmark" />
+              <Step.Content>
+                <Step.Title>Project</Step.Title>
+                <Step.Description>Create your first project</Step.Description>
+              </Step.Content>
+            </Step>
+            <Step
+              completed={connections.length > 0}
+              as={
+                connections.length > 0
+                  ? "div"
+                  : Link
+              }
+              to={`/${match.params.teamId}/${match.params.projectId}/connections`}
+            >
+              {connections.length > 0 && <Icon name="checkmark" />}
+              {connections.length === 0 && <Icon name="x" color="red" />}
+              <Step.Content>
+                <Step.Title>Connect</Step.Title>
+                <Step.Description>Connect to your data source</Step.Description>
+              </Step.Content>
+            </Step>
+            <Step active>
+              <Icon name="hand point down outline" />
+              <Step.Content>
+                <Step.Title>Visualize</Step.Title>
+                <Step.Description>Create your first chart</Step.Description>
+              </Step.Content>
+            </Step>
+          </Step.Group>
+        )}
+        <ChartDescription
+          name={chartName}
+          onChange={_onNameChange}
+          onCreate={_onCreateClicked}
+          history={history}
+        />
+      </div>
     );
   }
 
@@ -622,6 +660,7 @@ AddChart.propTypes = {
   completeTutorial: PropTypes.func.isRequired,
   resetTutorial: PropTypes.func.isRequired,
   clearDatasets: PropTypes.func.isRequired,
+  connections: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -630,6 +669,7 @@ const mapStateToProps = (state) => {
     datasets: state.dataset.data,
     user: state.user.data,
     tutorial: state.tutorial,
+    connections: state.connection.data,
   };
 };
 

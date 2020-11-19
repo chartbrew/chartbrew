@@ -3,13 +3,13 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Message, Icon, Button, Container, Header, Image, Popup
+  Message, Icon, Button, Container, Header, Popup, Divider
 } from "semantic-ui-react";
 import { Link } from "react-router-dom";
+import { useWindowSize } from "react-use";
 
 import Chart from "./Chart/Chart";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
-import dashboardImage from "../assets/290.png";
 
 /*
   Dashboard container (for the charts)
@@ -19,6 +19,8 @@ function ProjectDashboard(props) {
     cleanErrors, connections, charts, match, showDrafts
   } = props;
   const [refreshRequested, setRefreshRequested] = useState(false);
+
+  const { height } = useWindowSize();
 
   useEffect(() => {
     cleanErrors();
@@ -48,17 +50,14 @@ function ProjectDashboard(props) {
           )}
       {connections.length === 0 && charts.length === 0
           && (
-          <Container text textAlign="center" style={{ paddingTop: 50 }}>
-            <Header size="huge" textAlign="center">
-              <span role="img" aria-label="wave">👋</span>
-              {" "}
-              Welcome to Chartbrew
+          <Container text textAlign="center" style={{ paddingTop: height / 3 }}>
+            <Header size="huge" textAlign="center" icon>
+              Welcome to your dashboard
               <Header.Subheader>
-                {"Why not jump right into it? Create a new database connection and start visualizing your data. "}
+                {"Create a new database connection and start visualizing your data. "}
               </Header.Subheader>
             </Header>
-            <Image centered size="large" src={dashboardImage} alt="Chartbrew create chart" />
-            <br />
+            <Divider hidden />
             <Link
               to={{
                 pathname: `/${match.params.teamId}/${match.params.projectId}/connections`,

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Segment, Header, Form, Button, Icon, Label
+  Header, Form, Button, Icon, Label
 } from "semantic-ui-react";
 
 import { createProject } from "../actions/project";
@@ -35,40 +35,39 @@ function ProjectForm(props) {
 
   return (
     <div style={styles.container}>
-      <Header attached="top" as="h2">Create a new project</Header>
-      <Segment raised attached>
-        <Form size="large">
-          <Form.Field error={!!error}>
-            <label>Name your project</label>
-            <Form.Input
-              onChange={(e, data) => setNewProject({
-                ...newProject,
-                name: data.value,
-                team_id: team.active.id,
-              })}
-            />
-            {error
-              && (
-              <Label basic color="red" pointing>
-                {error}
-              </Label>
-              )}
-          </Form.Field>
-          <Form.Field>
-            <Button
-              primary
-              icon
-              labelPosition="right"
-              loading={loading}
-              disabled={!newProject.name}
-              onClick={_onCreateProject}
-            >
-              <Icon name="right arrow" />
-              Create
-            </Button>
-          </Form.Field>
-        </Form>
-      </Segment>
+      <Header as="h3">Create a new project</Header>
+      <Form size="large">
+        <Form.Field error={!!error}>
+          <Form.Input
+            onChange={(e, data) => setNewProject({
+              ...newProject,
+              name: data.value,
+              team_id: team.active.id,
+            })}
+            placeholder="Enter a name for your project"
+          />
+          {error
+            && (
+            <Label basic color="red" pointing>
+              {error}
+            </Label>
+            )}
+        </Form.Field>
+        <Form.Field>
+          <Button
+            primary
+            icon
+            labelPosition="right"
+            loading={loading}
+            disabled={!newProject.name}
+            onClick={_onCreateProject}
+            size="large"
+          >
+            <Icon name="right arrow" />
+            Create
+          </Button>
+        </Form.Field>
+      </Form>
     </div>
   );
 }

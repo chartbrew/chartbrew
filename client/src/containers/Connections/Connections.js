@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import moment from "moment";
 import {
   Card, Image, Button, Icon, Container, Divider,
-  Modal, Header, Message, Segment,
+  Modal, Header, Message, Segment, Step,
 } from "semantic-ui-react";
 
 import MongoConnectionForm from "./components/MongoConnectionForm";
@@ -190,10 +190,35 @@ function Connections(props) {
           <div>
             <Divider hidden />
             {connections.length < 1 && (
-              <Header as="h1" textAlign="center">
-                {"Let's connect and get some data"}
-                <Header.Subheader>Select one of the connection types below</Header.Subheader>
-              </Header>
+              <div style={{ textAlign: "center" }}>
+                <Step.Group style={{ textAlign: "left" }}>
+                  <Step completed>
+                    <Icon name="checkmark" />
+                    <Step.Content>
+                      <Step.Title>Project</Step.Title>
+                      <Step.Description>Create your first project</Step.Description>
+                    </Step.Content>
+                  </Step>
+                  <Step active>
+                    <Icon name="hand point down outline" />
+                    <Step.Content>
+                      <Step.Title>Connect</Step.Title>
+                      <Step.Description>Connect to your data source</Step.Description>
+                    </Step.Content>
+                  </Step>
+                  <Step disabled>
+                    <Step.Content>
+                      <Step.Title>Visualize</Step.Title>
+                      <Step.Description>Create your first chart</Step.Description>
+                    </Step.Content>
+                  </Step>
+                </Step.Group>
+                <Header as="h1" textAlign="center">
+                  {"How would you like to get your data?"}
+                  <Header.Subheader>Select one of the connection types below</Header.Subheader>
+                </Header>
+                <Divider hidden />
+              </div>
             )}
             {connections.length > 0 && (
               <Header as="h2" textAlign="left">
@@ -365,7 +390,7 @@ function Connections(props) {
         />
         <Modal.Content>
           <p>
-            {"All the charts that are using this connection will be removed as well. If you want to temporarily stop the connection without losing the charts, you can de-activate the connection instead of removing it completely."}
+            {"All the charts that are using this connection will stop working."}
           </p>
         </Modal.Content>
         <Modal.Actions>
