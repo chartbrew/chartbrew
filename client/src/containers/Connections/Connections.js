@@ -65,7 +65,7 @@ function Connections(props) {
     }
 
     if (!connection.id) {
-      addConnection(match.params.projectId, connection)
+      return addConnection(match.params.projectId, connection)
         .then(() => {
           if (redirect) {
             history.push(`/${match.params.teamId}/${match.params.projectId}/chart`);
@@ -79,7 +79,7 @@ function Connections(props) {
           return false;
         });
     } else {
-      saveConnection(match.params.projectId, connection)
+      return saveConnection(match.params.projectId, connection)
         .then(() => {
           setFormType(null);
           setEditConnection(null);
