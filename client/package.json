@@ -60,6 +60,7 @@
     "react-router-redux": "^5.0.0-alpha.9",
     "react-split-pane": "^0.1.92",
     "react-toastify": "^5.5.0",
+    "react-use": "^15.3.4",
     "react-user-avatar": "^1.10.0",
     "reactour": "^1.18.0",
     "redux": "^4.0.5",

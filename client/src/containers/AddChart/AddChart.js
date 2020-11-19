@@ -9,6 +9,7 @@ import {
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import _ from "lodash";
+import { useWindowSize } from "react-use";
 
 import ChartPreview from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
@@ -55,6 +56,8 @@ function AddChart(props) {
   const [loading, setLoading] = useState(false);
   const [startTutorial, setStartTutorial] = useState(false);
   const [resetingTutorial, setResetingTutorial] = useState(false);
+
+  const { height } = useWindowSize();
 
   const {
     match, createChart, history, charts, saveNewDataset, getChartDatasets, tutorial,
@@ -302,7 +305,7 @@ function AddChart(props) {
   }
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container(height)}>
       <ToastContainer
         position="top-right"
         autoClose={1500}
@@ -570,11 +573,12 @@ function AddChart(props) {
 }
 
 const styles = {
-  container: {
+  container: (height) => ({
     flex: 1,
     paddingTop: 20,
     backgroundColor: "white",
-  },
+    minHeight: height,
+  }),
   mainContent: {
     paddingLeft: 20,
     paddingRight: 20,
