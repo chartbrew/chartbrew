@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Route, Switch, withRouter } from "react-router";
@@ -33,45 +33,37 @@ const sideMaxSize = 220;
 /*
   The project screen where the dashboard, builder, etc. are
 */
-class ProjectBoard extends Component {
-  constructor(props) {
-    super(props);
+function ProjectBoard(props) {
+  const {
+    cleanErrors, history, getProjectCharts, getProjectConnections, match,
+    getProject, changeActiveProject, getTeam, project, user, team, projects,
+  } = props;
 
-    this.state = {
-      loading: true,
-      menuSize: "large",
-      showDrafts: true,
-    };
-  }
+  const [loading, setLoading] = useState(true);
+  const [menuSize, setMenuSize] = useState("large");
+  const [showDrafts, setShowDrafts] = useState(true);
 
-  componentDidMount() {
-    const { cleanErrors, history } = this.props;
-
+  useEffect(() => {
     const parsedParams = queryString.parse(document.location.search.slice(1));
     if (parsedParams.new) history.push("connections");
 
     cleanErrors();
-    this._init();
+    _init();
     if (window.localStorage.getItem("_cb_menu_size")) {
-      this._setMenuSize(window.localStorage.getItem("_cb_menu_size"), true);
+      _setMenuSize(window.localStorage.getItem("_cb_menu_size"), true);
     }
     if (window.localStorage.getItem("_cb_drafts")) {
-      this._setDraftsVisible(window.localStorage.getItem("_cb_drafts") === "true");
+      _setDraftsVisible(window.localStorage.getItem("_cb_drafts") === "true");
     }
-  }
+  }, []);
 
-  _init = () => {
-    const { getProjectCharts, getProjectConnections, match } = this.props;
-
-    this._getProject();
+  const _init = () => {
+    _getProject();
     getProjectCharts(match.params.projectId);
     getProjectConnections(match.params.projectId);
-  }
+  };
 
-  _getProject = (id) => {
-    const {
-      match, getProject, changeActiveProject, getTeam, project,
-    } = this.props;
+  const _getProject = (id) => {
     let { projectId } = match.params;
     if (id) projectId = id;
 
@@ -86,14 +78,14 @@ class ProjectBoard extends Component {
         return getProjectCharts(projectId);
       })
       .then(() => {
-        this.setState({ loading: false });
+        setLoading(false);
       })
       .catch(() => {
-        this.setState({ loading: false });
+        setLoading(false);
       });
-  }
+  };
 
-  _checkIfActive = (path) => {
+  const _checkIfActive = (path) => {
     switch (path) {
       case "dashboard":
         if (window.location.pathname.indexOf("dashboard") > -1) return true;
@@ -124,30 +116,27 @@ class ProjectBoard extends Component {
     }
 
     return false;
-  }
+  };
 
-  _setMenuSize = (size, init) => {
+  const _setMenuSize = (size, init) => {
     if (init) {
-      this.setState({ menuSize: size });
+      setMenuSize(size);
       return;
     }
-
-    let menuSize = "large";
+    let newMenuSize = "large";
     if (size < sideMaxSize) {
-      menuSize = "small";
+      newMenuSize = "small";
     }
+    setMenuSize(newMenuSize);
+    window.localStorage.setItem("_cb_menu_size", newMenuSize);
+  };
 
-    this.setState({ menuSize });
-    window.localStorage.setItem("_cb_menu_size", menuSize);
-  }
-
-  _setDraftsVisible = (isShowing) => {
-    this.setState({ showDrafts: isShowing });
+  const _setDraftsVisible = (isShowing) => {
+    setShowDrafts(isShowing);
     window.localStorage.setItem("_cb_drafts", isShowing);
-  }
+  };
 
-  _getDefaultMenuSize() {
-    const { menuSize } = this.state;
+  const _getDefaultMenuSize = () => {
     if (menuSize === "small") return 70;
     if (menuSize === "large") return sideMaxSize;
     if (window.localStorage.getItem("_cb_menu_size") === "small") {
@@ -155,354 +144,348 @@ class ProjectBoard extends Component {
     } else {
       return sideMaxSize;
     }
-  }
+  };
 
-  _canAccess(role) {
-    const { user, team } = this.props;
+  const _canAccess = (role) => {
     return canAccess(role, user.id, team.TeamRoles);
+  };
+
+  if (!project.id) {
+    return (
+      <Container text style={styles.container}>
+        <Dimmer active={loading}>
+          <Loader />
+        </Dimmer>
+      </Container>
+    );
   }
 
-  render() {
-    const { project, projects, match } = this.props;
-    const { loading, menuSize, showDrafts } = this.state;
-
-    if (!project.id) {
-      return (
-        <Container text style={styles.container}>
-          <Dimmer active={loading}>
-            <Loader />
-          </Dimmer>
-        </Container>
-      );
-    }
-
-    return (
-      <div style={styles.container}>
-        <Navbar />
-        <SplitPane
-          split="vertical"
-          minSize={this._getDefaultMenuSize()}
-          defaultSize={this._getDefaultMenuSize()}
-          maxSize={this._getDefaultMenuSize()}
-          step={180}
-          style={{ paddingTop: 40 }}
-          onChange={() => {}}
+  return (
+    <div style={styles.container}>
+      <Navbar />
+      <SplitPane
+        split="vertical"
+        minSize={_getDefaultMenuSize()}
+        defaultSize={_getDefaultMenuSize()}
+        maxSize={_getDefaultMenuSize()}
+        step={180}
+        style={{ paddingTop: 40 }}
+        onChange={() => {}}
+      >
+        <div
+          style={{ backgroundColor: primary, width: menuSize === "small" ? 70 : sideMaxSize }}
         >
-          <div
-            style={{ backgroundColor: primary, width: menuSize === "small" ? 70 : sideMaxSize }}
+          <Menu
+            size={menuSize === "small" ? "large" : "huge"}
+            fluid
+            inverted
+            vertical
+            icon={menuSize === "small"}
+            style={styles.mainSideMenu}
           >
-            <Menu
-              size={menuSize === "small" ? "large" : "huge"}
-              fluid
-              inverted
-              vertical
-              icon={menuSize === "small"}
-              style={styles.mainSideMenu}
-            >
-              <Menu.Item header>
-                <Dropdown
-                  text={menuSize === "large" ? project.name : null}
-                  button={menuSize === "small"}
-                  labeled={menuSize === "small"}
-                  icon={menuSize === "small"
-                    && (
-                      <Popup
-                        trigger={<Icon name="list ul" size="large" />}
-                        content="Switch projects"
-                        position="right center"
-                        inverted
-                    />
-                    )}
-                  item
+            <Menu.Item header>
+              <Dropdown
+                text={menuSize === "large" ? project.name : null}
+                button={menuSize === "small"}
+                labeled={menuSize === "small"}
+                icon={menuSize === "small"
+                  && (
+                    <Popup
+                      trigger={<Icon name="list ul" size="large" />}
+                      content="Switch projects"
+                      position="right center"
+                      inverted
+                  />
+                  )}
+                item
+                style={styles.centered}
+              >
+                <Dropdown.Menu>
+                  <Dropdown.Header>Select another project</Dropdown.Header>
+                  <Dropdown.Divider />
+                  {projects.map((project) => {
+                    return (
+                      <Dropdown.Item
+                        key={project.id}
+                        as={Link}
+                        to={`/${project.team_id}/${project.id}/dashboard`}
+                        onClick={() => {
+                          setTimeout(() => { _init(); });
+                        }}
+                      >
+                        {project.name}
+                      </Dropdown.Item>
+                    );
+                  })}
+                </Dropdown.Menu>
+              </Dropdown>
+            </Menu.Item>
+
+            {_canAccess("editor")
+              && (
+                <Menu.Item
+                  active={_checkIfActive("chart")}
                   style={styles.centered}
                 >
-                  <Dropdown.Menu>
-                    <Dropdown.Header>Select another project</Dropdown.Header>
-                    <Dropdown.Divider />
-                    {projects.map((project) => {
-                      return (
-                        <Dropdown.Item
-                          key={project.id}
-                          as={Link}
-                          to={`/${project.team_id}/${project.id}/dashboard`}
-                          onClick={() => {
-                            setTimeout(() => { this._init(); });
-                          }}
-                        >
-                          {project.name}
-                        </Dropdown.Item>
-                      );
-                    })}
-                  </Dropdown.Menu>
-                </Dropdown>
-              </Menu.Item>
-
-              {this._canAccess("editor")
-                && (
-                  <Menu.Item
-                    active={this._checkIfActive("chart")}
-                    style={styles.centered}
-                  >
-                    {menuSize === "small"
-                      && (
-                        <Popup
-                          trigger={(
-                            <Button
-                              primary
-                              icon
-                              as={Link}
-                              to={`/${match.params.teamId}/${match.params.projectId}/chart`}
-                              size="small"
-                            >
-                              <Icon name="plus" />
-                            </Button>
-                          )}
-                          content="Create a new chart"
-                          position="right center"
-                          inverted
-                        />
-                      )}
-                    {menuSize === "large" && (
-                      <Button
-                        primary
-                        icon
-                        labelPosition="right"
-                        as={Link}
-                        to={`/${match.params.teamId}/${match.params.projectId}/chart`}
-                        fluid
-                      >
-                        <Icon name="plus" />
-                        Create a chart
-                      </Button>
+                  {menuSize === "small"
+                    && (
+                      <Popup
+                        trigger={(
+                          <Button
+                            primary
+                            icon
+                            as={Link}
+                            to={`/${match.params.teamId}/${match.params.projectId}/chart`}
+                            size="small"
+                          >
+                            <Icon name="plus" />
+                          </Button>
+                        )}
+                        content="Create a new chart"
+                        position="right center"
+                        inverted
+                      />
                     )}
-                  </Menu.Item>
-                )}
-
-              <Menu.Item>
-                {menuSize === "large"
-                  && (
-                  <Menu.Header>
-                    Project
-                  </Menu.Header>
+                  {menuSize === "large" && (
+                    <Button
+                      primary
+                      icon
+                      labelPosition="right"
+                      as={Link}
+                      to={`/${match.params.teamId}/${match.params.projectId}/chart`}
+                      fluid
+                    >
+                      <Icon name="plus" />
+                      Create a chart
+                    </Button>
                   )}
-                <Menu.Menu>
-                  <Menu.Item
-                    active={this._checkIfActive("dashboard")}
-                    as={Link}
-                    to={`/${match.params.teamId}/${match.params.projectId}/dashboard`}
-                  >
-                    {menuSize === "small"
-                      && (
-                      <Popup
-                        trigger={<Icon name="line graph" size="large" />}
-                        content="Dashboard"
-                        position="right center"
-                        inverted
-                      />
-                      )}
-                    {menuSize === "large" && <Icon name="line graph" />}
-                    {menuSize === "large" && "Dashboard"}
-                  </Menu.Item>
+                </Menu.Item>
+              )}
 
-                  {this._canAccess("editor")
-                    && (
-                    <Menu.Item
-                      active={this._checkIfActive("connections")}
-                      as={Link}
-                      to={`/${match.params.teamId}/${match.params.projectId}/connections`}
-                    >
-                      {menuSize === "small"
-                        && (
-                        <Popup
-                          trigger={<Icon name="power cord" size="large" />}
-                          content="Connections"
-                          position="right center"
-                          inverted
-                        />
-                        )}
-                      {menuSize === "large" && <Icon name="power cord" />}
-                      {menuSize === "large" && "Connections"}
-                    </Menu.Item>
-                    )}
-
-                  {this._canAccess("admin")
-                    && (
-                    <Menu.Item
-                      active={this._checkIfActive("projectSettings")}
-                      as={Link}
-                      to={`/${match.params.teamId}/${match.params.projectId}/projectSettings`}
-                    >
-                      {menuSize === "small"
-                        && (
-                        <Popup
-                          trigger={<Icon name="cog" size="large" />}
-                          content="Project settings"
-                          position="right center"
-                          inverted
-                        />
-                        )}
-                      {menuSize === "large" && <Icon name="cog" />}
-                      {menuSize === "large" && "Settings"}
-                    </Menu.Item>
-                    )}
-                </Menu.Menu>
-              </Menu.Item>
-
-              <Menu.Item>
-                <Menu.Menu>
-                  <Menu.Item
-                    active={this._checkIfActive("public")}
-                    as={Link}
-                    to={`/${match.params.teamId}/${match.params.projectId}/public`}
-                  >
-                    {menuSize === "small"
-                      && (
-                      <Popup
-                        trigger={<Icon name="world" size="large" />}
-                        content="Public dashboard"
-                        position="right center"
-                        inverted
-                      />
-                      )}
-                    {menuSize === "large" && <Icon name="world" />}
-                    {menuSize === "large" && "Public dashboard"}
-                  </Menu.Item>
-                </Menu.Menu>
-              </Menu.Item>
-
-              <Menu.Item>
-                {menuSize === "large" && <Menu.Header>Team</Menu.Header>}
-                <Menu.Menu>
-                  <Menu.Item active={this._checkIfActive("members")} as={Link} to={`/${match.params.teamId}/${match.params.projectId}/members`}>
-                    {menuSize === "small"
-                      && (
-                      <Popup
-                        trigger={<Icon name="user" size="large" />}
-                        content="Members"
-                        position="right center"
-                        inverted
-                      />
-                      )}
-                    {menuSize === "large" && <Icon name="user" />}
-                    {menuSize === "large" && "Members"}
-                  </Menu.Item>
-
-                  {this._canAccess("owner")
-                    && (
-                    <Menu.Item active={this._checkIfActive("settings")} as={Link} to={`/${match.params.teamId}/${match.params.projectId}/settings`}>
-                      {menuSize === "small"
-                        && (
-                        <Popup
-                          trigger={<Icon name="settings" size="large" />}
-                          content="Settings"
-                          position="right center"
-                          inverted
-                        />
-                        )}
-                      {menuSize === "large" && <Icon name="settings" />}
-                      {menuSize === "large" && "Settings"}
-                    </Menu.Item>
-                    )}
-                </Menu.Menu>
-              </Menu.Item>
-              <Menu.Menu style={styles.absoluteDrafts}>
-                {this._checkIfActive("dashboard") && (
-                  <Popup
-                    trigger={(
-                      <Menu.Item onClick={() => this._setDraftsVisible(!showDrafts)}>
-                        {menuSize === "small" && (
-                          <>
-                            <Icon name={showDrafts ? "toggle on" : "toggle off"} size="large" />
-                          </>
-                        )}
-                        {menuSize === "large" && <Icon name={showDrafts ? "toggle on" : "toggle off"} />}
-                        {menuSize === "large" && "Show drafts"}
-                      </Menu.Item>
-                    )}
-                    content={showDrafts ? "Hide drafts" : "Show drafts"}
-                    position="right center"
-                    inverted
-                  />
-                )}
-              </Menu.Menu>
+            <Menu.Item>
               {menuSize === "large"
                 && (
+                <Menu.Header>
+                  Project
+                </Menu.Header>
+                )}
+              <Menu.Menu>
+                <Menu.Item
+                  active={_checkIfActive("dashboard")}
+                  as={Link}
+                  to={`/${match.params.teamId}/${match.params.projectId}/dashboard`}
+                >
+                  {menuSize === "small"
+                    && (
+                    <Popup
+                      trigger={<Icon name="line graph" size="large" />}
+                      content="Dashboard"
+                      position="right center"
+                      inverted
+                    />
+                    )}
+                  {menuSize === "large" && <Icon name="line graph" />}
+                  {menuSize === "large" && "Dashboard"}
+                </Menu.Item>
+
+                {_canAccess("editor")
+                  && (
+                  <Menu.Item
+                    active={_checkIfActive("connections")}
+                    as={Link}
+                    to={`/${match.params.teamId}/${match.params.projectId}/connections`}
+                  >
+                    {menuSize === "small"
+                      && (
+                      <Popup
+                        trigger={<Icon name="power cord" size="large" />}
+                        content="Connections"
+                        position="right center"
+                        inverted
+                      />
+                      )}
+                    {menuSize === "large" && <Icon name="power cord" />}
+                    {menuSize === "large" && "Connections"}
+                  </Menu.Item>
+                  )}
+
+                {_canAccess("admin")
+                  && (
+                  <Menu.Item
+                    active={_checkIfActive("projectSettings")}
+                    as={Link}
+                    to={`/${match.params.teamId}/${match.params.projectId}/projectSettings`}
+                  >
+                    {menuSize === "small"
+                      && (
+                      <Popup
+                        trigger={<Icon name="cog" size="large" />}
+                        content="Project settings"
+                        position="right center"
+                        inverted
+                      />
+                      )}
+                    {menuSize === "large" && <Icon name="cog" />}
+                    {menuSize === "large" && "Settings"}
+                  </Menu.Item>
+                  )}
+              </Menu.Menu>
+            </Menu.Item>
+
+            <Menu.Item>
+              <Menu.Menu>
+                <Menu.Item
+                  active={_checkIfActive("public")}
+                  as={Link}
+                  to={`/${match.params.teamId}/${match.params.projectId}/public`}
+                >
+                  {menuSize === "small"
+                    && (
+                    <Popup
+                      trigger={<Icon name="world" size="large" />}
+                      content="Public dashboard"
+                      position="right center"
+                      inverted
+                    />
+                    )}
+                  {menuSize === "large" && <Icon name="world" />}
+                  {menuSize === "large" && "Public dashboard"}
+                </Menu.Item>
+              </Menu.Menu>
+            </Menu.Item>
+
+            <Menu.Item>
+              {menuSize === "large" && <Menu.Header>Team</Menu.Header>}
+              <Menu.Menu>
+                <Menu.Item active={_checkIfActive("members")} as={Link} to={`/${match.params.teamId}/${match.params.projectId}/members`}>
+                  {menuSize === "small"
+                    && (
+                    <Popup
+                      trigger={<Icon name="user" size="large" />}
+                      content="Members"
+                      position="right center"
+                      inverted
+                    />
+                    )}
+                  {menuSize === "large" && <Icon name="user" />}
+                  {menuSize === "large" && "Members"}
+                </Menu.Item>
+
+                {_canAccess("owner")
+                  && (
+                  <Menu.Item active={_checkIfActive("settings")} as={Link} to={`/${match.params.teamId}/${match.params.projectId}/settings`}>
+                    {menuSize === "small"
+                      && (
+                      <Popup
+                        trigger={<Icon name="settings" size="large" />}
+                        content="Settings"
+                        position="right center"
+                        inverted
+                      />
+                      )}
+                    {menuSize === "large" && <Icon name="settings" />}
+                    {menuSize === "large" && "Settings"}
+                  </Menu.Item>
+                  )}
+              </Menu.Menu>
+            </Menu.Item>
+            <Menu.Menu style={styles.absoluteDrafts}>
+              {_checkIfActive("dashboard") && (
                 <Popup
                   trigger={(
-                    <Menu.Item
-                      onClick={() => this._setMenuSize(70)}
-                      style={styles.absoluteCollapse(menuSize)}
-                    >
-                      <Icon name="toggle left" size="large" />
+                    <Menu.Item onClick={() => _setDraftsVisible(!showDrafts)}>
+                      {menuSize === "small" && (
+                        <>
+                          <Icon name={showDrafts ? "toggle on" : "toggle off"} size="large" />
+                        </>
+                      )}
+                      {menuSize === "large" && <Icon name={showDrafts ? "toggle on" : "toggle off"} />}
+                      {menuSize === "large" && "Show drafts"}
                     </Menu.Item>
                   )}
-                  content="Collapse menu"
+                  content={showDrafts ? "Hide drafts" : "Show drafts"}
                   position="right center"
                   inverted
                 />
+              )}
+            </Menu.Menu>
+            {menuSize === "large"
+              && (
+              <Popup
+                trigger={(
+                  <Menu.Item
+                    onClick={() => _setMenuSize(70)}
+                    style={styles.absoluteCollapse(menuSize)}
+                  >
+                    <Icon name="toggle left" size="large" />
+                  </Menu.Item>
                 )}
-              {menuSize === "small"
-                && (
-                <Menu.Item
-                  onClick={() => this._setMenuSize(sideMaxSize)}
-                  style={styles.absoluteCollapse(menuSize)}
-                >
-                  <Popup
-                    trigger={<Icon name="toggle right" size="large" />}
-                    content="Expand menu"
-                    position="right center"
-                    inverted
-                  />
-                </Menu.Item>
-                )}
-              <Menu.Item style={styles.absoluteLogo}>
-                {/* <Image size="mini" centered src={cbLogo} alt="bottle" /> */}
-                <Header as="h6" inverted style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
-                  {menuSize !== "small" && (
-                    <span>
-                      Chartbrew
-                      { ` ${APP_VERSION}` }
-                    </span>
-                  )}
-                  {menuSize === "small" && (
-                    <span>{APP_VERSION}</span>
-                  )}
-                </Header>
+                content="Collapse menu"
+                position="right center"
+                inverted
+              />
+              )}
+            {menuSize === "small"
+              && (
+              <Menu.Item
+                onClick={() => _setMenuSize(sideMaxSize)}
+                style={styles.absoluteCollapse(menuSize)}
+              >
+                <Popup
+                  trigger={<Icon name="toggle right" size="large" />}
+                  content="Expand menu"
+                  position="right center"
+                  inverted
+                />
               </Menu.Item>
-            </Menu>
-          </div>
-          <div>
-            <Grid columns={1} centered stackable>
-              <Grid.Column computer={16} style={{ paddingLeft: 0 }}>
-                <Container fluid>
-                  <Switch>
-                    <Route path="/:teamId/:projectId/dashboard" render={() => (<ProjectDashboard showDrafts={showDrafts} />)} />
-                    {this._canAccess("editor") && <Route path="/:teamId/:projectId/connections" component={Connections} />}
-                    {this._canAccess("editor") && <Route path="/:teamId/:projectId/chart/:chartId/edit" component={AddChart} />}
-                    {this._canAccess("editor") && <Route path="/:teamId/:projectId/chart" component={AddChart} />}
-                    {this._canAccess("admin") && <Route path="/:teamId/:projectId/projectSettings" render={() => (<ProjectSettings style={styles.teamSettings} />)} /> }
-                    <Route path="/:teamId/:projectId/members" render={() => (<TeamMembers style={styles.teamSettings} />)} />
-                    {this._canAccess("owner")
-                      && (
-                      <Route
-                        path="/:teamId/:projectId/settings"
-                        render={() => (
-                          <div>
-                            <TeamSettings style={styles.teamSettings} />
-                          </div>
-                        )}
-                      />
+              )}
+            <Menu.Item style={styles.absoluteLogo}>
+              {/* <Image size="mini" centered src={cbLogo} alt="bottle" /> */}
+              <Header as="h6" inverted style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
+                {menuSize !== "small" && (
+                  <span>
+                    Chartbrew
+                    { ` ${APP_VERSION}` }
+                  </span>
+                )}
+                {menuSize === "small" && (
+                  <span>{APP_VERSION}</span>
+                )}
+              </Header>
+            </Menu.Item>
+          </Menu>
+        </div>
+        <div>
+          <Grid columns={1} centered stackable>
+            <Grid.Column computer={16} style={{ paddingLeft: 0 }}>
+              <Container fluid>
+                <Switch>
+                  <Route path="/:teamId/:projectId/dashboard" render={() => (<ProjectDashboard showDrafts={showDrafts} />)} />
+                  {_canAccess("editor") && <Route path="/:teamId/:projectId/connections" component={Connections} />}
+                  {_canAccess("editor") && <Route path="/:teamId/:projectId/chart/:chartId/edit" component={AddChart} />}
+                  {_canAccess("editor") && <Route path="/:teamId/:projectId/chart" component={AddChart} />}
+                  {_canAccess("admin") && <Route path="/:teamId/:projectId/projectSettings" render={() => (<ProjectSettings style={styles.teamSettings} />)} /> }
+                  <Route path="/:teamId/:projectId/members" render={() => (<TeamMembers style={styles.teamSettings} />)} />
+                  {_canAccess("owner")
+                    && (
+                    <Route
+                      path="/:teamId/:projectId/settings"
+                      render={() => (
+                        <div>
+                          <TeamSettings style={styles.teamSettings} />
+                        </div>
                       )}
-                    <Route path="/:teamId/:projectId/public" component={PublicDashboardEditor} />
-                  </Switch>
-                </Container>
-              </Grid.Column>
-            </Grid>
-          </div>
-        </SplitPane>
-      </div>
-    );
-  }
+                    />
+                    )}
+                  <Route path="/:teamId/:projectId/public" component={PublicDashboardEditor} />
+                </Switch>
+              </Container>
+            </Grid.Column>
+          </Grid>
+        </div>
+      </SplitPane>
+    </div>
+  );
 }
 
 const styles = {
