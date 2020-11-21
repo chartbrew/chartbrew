@@ -177,19 +177,15 @@ export function removeChart(projectId, chartId) {
   };
 }
 
-export function runQuery(projectId, chartId, noSource) {
+export function runQuery(projectId, chartId, noSource = false, skipParsing = false) {
   return (dispatch) => {
     const token = cookie.load("brewToken");
-    let url = `${API_HOST}/project/${projectId}/chart/${chartId}`;
+    const url = `${API_HOST}/project/${projectId}/chart/${chartId}?no_source=${noSource}&skip_parsing=${skipParsing}`;
     const method = "GET";
     const headers = new Headers({
       "Accept": "application/json",
       "authorization": `Bearer ${token}`,
     });
-
-    if (noSource) {
-      url += "?no_source=true";
-    }
 
     dispatch({ type: FETCH_CHART });
     return fetch(url, { method, headers })
@@ -210,10 +206,10 @@ export function runQuery(projectId, chartId, noSource) {
   };
 }
 
-export function getPreviewData(projectId, chart, noSource = false) {
+export function getPreviewData(projectId, chart, noSource = false, skipParsing = false) {
   return (dispatch) => {
     const token = cookie.load("brewToken");
-    const url = `${API_HOST}/project/${projectId}/chart/preview?no_source=${noSource}`;
+    const url = `${API_HOST}/project/${projectId}/chart/preview?no_source=${noSource}&skip_parsing=${skipParsing}`;
     const method = "POST";
     const body = JSON.stringify(chart);
     const headers = new Headers({

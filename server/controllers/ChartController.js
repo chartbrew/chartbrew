@@ -281,7 +281,7 @@ class ChartController {
       });
   }
 
-  updateChartData(id, user, noSource) {
+  updateChartData(id, user, noSource, skipParsing = false) {
     let gChart;
     let gCache;
     let skipCache = false;
@@ -343,7 +343,7 @@ class ChartController {
       })
       .then((chartData) => {
         const axisChart = new AxisChart(chartData);
-        return axisChart.plot();
+        return axisChart.plot(skipParsing);
       })
       .then((chartData) => {
         return this.update(id, { chartData, chartDataUpdated: moment() });

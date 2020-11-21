@@ -250,7 +250,8 @@ module.exports = (app) => {
           chart,
           req.params.project_id,
           req.user,
-          req.query.no_source
+          req.query.no_source,
+          req.query.skip_parsing,
         );
       })
       .then((chart) => {
@@ -287,6 +288,7 @@ module.exports = (app) => {
           req.params.id,
           req.user,
           req.query.no_source === "true",
+          req.query.skip_parsing === "true",
         );
       })
       .then((chart) => {

@@ -164,7 +164,7 @@ function AddChart(props) {
       });
   };
 
-  const _onUpdateDataset = (newDataset) => {
+  const _onUpdateDataset = (newDataset, skipParsing) => {
     return updateDataset(
       match.params.projectId,
       match.params.chartId,
@@ -186,7 +186,7 @@ function AddChart(props) {
           || activeDataset.dateField !== dataset.dateField) {
           _onRefreshData();
         } else {
-          _onRefreshPreview();
+          _onRefreshPreview(skipParsing);
         }
 
         setActiveDataset(dataset);
@@ -222,7 +222,7 @@ function AddChart(props) {
       includeZeros: typeof includeZeros !== "undefined" ? includeZeros : newChart.includeZeros,
       currentEndDate: typeof currentEndDate !== "undefined" ? currentEndDate : newChart.currentEndDate,
     };
-    _onChangeChart(tempChart);
+    _onChangeChart(tempChart, false);
   };
 
   const _onChangeChart = (data) => {
@@ -236,7 +236,21 @@ function AddChart(props) {
             onOpen: () => setToastOpen(true),
           });
         }
-        _onRefreshPreview();
+        let skipParsing = false;
+        if (data.pointRadius
+          || data.displayLegend
+          || data.datasetColor
+          || data.fillColor
+          || data.type
+        ) {
+          skipParsing = true;
+        }
+
+        // run the preview refresh only when it's needed
+        if (!data.name) {
+          _onRefreshPreview(skipParsing);
+        }
+
         setLoading(false);
         return Promise.resolve(newData);
       })
@@ -251,8 +265,8 @@ function AddChart(props) {
     runQuery(match.params.projectId, match.params.chartId);
   };
 
-  const _onRefreshPreview = () => {
-    runQuery(match.params.projectId, match.params.chartId, true);
+  const _onRefreshPreview = (skipParsing = false) => {
+    runQuery(match.params.projectId, match.params.chartId, true, skipParsing);
   };
 
   const _changeTour = (tut) => {
@@ -447,7 +461,7 @@ function AddChart(props) {
                 currentEndDate={newChart.currentEndDate}
                 timeInterval={newChart.timeInterval}
                 onChange={_onChangeGlobalSettings}
-                onComplete={_onRefreshPreview}
+                onComplete={(skipParsing = false) => _onRefreshPreview(skipParsing)}
               />
             )}
           </div>
@@ -555,7 +569,7 @@ function AddChart(props) {
               <div style={activeDataset.id !== dataset.id ? { display: "none" } : {}} key={dataset.id}>
                 <Dataset
                   dataset={dataset}
-                  onUpdate={_onUpdateDataset}
+                  onUpdate={(data, skipParsing = false) => _onUpdateDataset(data, skipParsing)}
                   onDelete={_onDeleteDataset}
                   chart={newChart}
                   onRefresh={_onRefreshData}
@@ -691,8 +705,8 @@ const mapDispatchToProps = (dispatch) => {
     updateChart: (projectId, chartId, data) => {
       return dispatch(updateChartAction(projectId, chartId, data));
     },
-    runQuery: (projectId, chartId, noSource) => {
-      return dispatch(runQueryAction(projectId, chartId, noSource));
+    runQuery: (projectId, chartId, noSource, skipParsing) => {
+      return dispatch(runQueryAction(projectId, chartId, noSource, skipParsing));
     },
     updateUser: (id, data) => dispatch(updateUserAction(id, data)),
     changeTutorial: (tut) => dispatch(changeTutorialAction(tut)),

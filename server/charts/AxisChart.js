@@ -19,229 +19,247 @@ class AxisChart {
     this.dateFormat = "";
   }
 
-  plot() {
-    const finalXAxisData = [];
-    let gXType;
+  plot(skipDataProcessing) {
+    // skip the data processing if required (this algorithm is time-expensive)
+    if (
+      !skipDataProcessing
+      || !this.chart.chartData
+      || !this.chart.chartData.data
+      || !this.chart.chartData.data.labels
+      || !this.chart.chartData.data.datasets
+    ) {
+      const finalXAxisData = [];
+      let gXType;
 
-    // check if the global date filter should be on or off
-    // the filter should work only if all the datasets have a dateField
-    let canDateFilter = true;
-    this.datasets.map((dataset) => {
-      if (!dataset.options || !dataset.options.dateField) {
-        canDateFilter = false;
-      }
-      return dataset;
-    });
+      // check if the global date filter should be on or off
+      // the filter should work only if all the datasets have a dateField
+      let canDateFilter = true;
+      this.datasets.map((dataset) => {
+        if (!dataset.options || !dataset.options.dateField) {
+          canDateFilter = false;
+        }
+        return dataset;
+      });
 
-    for (let i = 0; i < this.datasets.length; i++) {
-      const dataset = this.datasets[i];
-      const { yAxisOperation, dateField } = dataset.options;
-      let { xAxis, yAxis } = dataset.options;
-      let xData;
-      let yData;
-      let yType;
-      let xType;
-      let xAxisData = [];
-      let yAxisData = [];
+      for (let i = 0; i < this.datasets.length; i++) {
+        const dataset = this.datasets[i];
+        const { yAxisOperation, dateField } = dataset.options;
+        let { xAxis, yAxis } = dataset.options;
+        let xData;
+        let yData;
+        let yType;
+        let xType;
+        let xAxisData = [];
+        let yAxisData = [];
 
-      let filteredData = dataFilter(dataset.data, xAxis, dataset.options.conditions);
+        let filteredData = dataFilter(dataset.data, xAxis, dataset.options.conditions);
 
-      if (dateField && this.chart.startDate && this.chart.endDate && canDateFilter) {
-        let startDate = moment(this.chart.startDate);
-        let endDate = moment(this.chart.endDate);
+        if (dateField && this.chart.startDate && this.chart.endDate && canDateFilter) {
+          let startDate = moment(this.chart.startDate);
+          let endDate = moment(this.chart.endDate);
 
-        if (this.chart.currentEndDate) {
-          const timeDiff = endDate.diff(startDate, "days");
-          endDate = moment().endOf("day");
-          startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+          if (this.chart.currentEndDate) {
+            const timeDiff = endDate.diff(startDate, "days");
+            endDate = moment().endOf("day");
+            startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+          }
+
+          const dateConditions = [{
+            field: dateField,
+            value: startDate,
+            operator: "greaterOrEqual",
+          }, {
+            field: dateField,
+            value: endDate,
+            operator: "lessOrEqual",
+          }];
+
+          filteredData = dataFilter(filteredData, dateField, dateConditions);
         }
 
-        const dateConditions = [{
-          field: dateField,
-          value: startDate,
-          operator: "greaterOrEqual",
-        }, {
-          field: dateField,
-          value: endDate,
-          operator: "lessOrEqual",
-        }];
-
-        filteredData = dataFilter(filteredData, dateField, dateConditions);
-      }
-
-      // first, handle the xAxis
-      if (xAxis.indexOf("root[]") > -1) {
-        xAxis = xAxis.replace("root[].", "");
-        // and data stays the same
-        xData = filteredData;
-      } else {
-        const arrayFinder = xAxis.substring(0, xAxis.indexOf("]") - 1);
-        xData = _.get(filteredData, arrayFinder);
-      }
-
-      let xAxisFieldName = xAxis;
-      if (xAxisFieldName.indexOf(".") > -1) {
-        xAxisFieldName = xAxisFieldName.substring(xAxisFieldName.lastIndexOf(".") + 1);
-      }
-
-      if (!(xData instanceof Array)) throw new Error("The X field is not part of an Array");
-      xData.map((item) => {
-        const xValue = _.get(item, xAxis);
-        if (xValue) xType = determineType(xValue);
-        xAxisData.push(xValue);
-        return item;
-      });
-      gXType = xType;
-
-      // X AXIS data processing
-      switch (xType) {
-        case "date":
-          xAxisData = this.processDate(xAxisData, canDateFilter);
-          break;
-        case "number":
-          xAxisData = this.processNumber(xAxisData);
-          break;
-        case "string":
-          xAxisData = this.processString(xAxisData);
-          break;
-        case "boolean":
-          xAxisData = this.processBoolean(xAxisData);
-          break;
-        case "object":
-          xAxisData = this.processObject(xAxisData);
-          break;
-        case "array":
-          xAxisData = this.processObject(xAxisData);
-          break;
-        default:
-          xAxisData = this.processObject(xAxisData);
-          break;
-      }
-
-      // now the yAxis
-      if (yAxis.indexOf("root[]") > -1) {
-        yAxis = yAxis.replace("root[].", "");
-        // and data stays the same
-        yData = filteredData;
-      } else {
-        const arrayFinder = yAxis.substring(0, yAxis.indexOf("]") - 1);
-        yAxis = yAxis.substring(yAxis.indexOf("]") + 1);
-        yData = _.get(filteredData, arrayFinder);
-      }
-
-      if (!(yData instanceof Array)) throw new Error("The Y field is not part of an Array");
-      yData.map((item, index) => {
-        const yValue = _.get(item, yAxis);
-        if (yValue) yType = determineType(yValue);
-
-        // only add the yValue if it corresponds to one of the x values found above
-        if (_.indexOf(xAxisData.filtered, yData[index][xAxisFieldName]) > -1) {
-          yAxisData.push({ x: yData[index][xAxisFieldName], y: yValue });
-        } else if (xType === "date"
-          && _.findIndex(
-            xAxisData.filtered,
-            (dateValue) => (
-              new Date(dateValue).getTime() === new Date(yData[index][xAxisFieldName]).getTime()
-            )
-          )) {
-          yAxisData.push({ x: yData[index][xAxisFieldName], y: yValue });
-        }
-        return item;
-      });
-
-      // Y CHART data processing
-      switch (yAxisOperation) {
-        case "none":
-          yAxisData = this.noOp(yAxisData);
-          break;
-        case "count":
-          yAxisData = this.count(xAxisData.formatted);
-          break;
-        case "avg":
-          yAxisData = this.sum(xAxisData.formatted, yAxisData, yType, true);
-          break;
-        case "sum":
-          yAxisData = this.sum(xAxisData.formatted, yAxisData, yType);
-          break;
-        default:
-          yAxisData = this.noOp(yAxisData);
-          break;
-      }
-
-      // if the operation is count, make sure the xData has only unique values
-      if (yAxisOperation === "none") {
-        finalXAxisData.push(xAxisData.formatted);
-      } else {
-        finalXAxisData.push(_.uniq(xAxisData.formatted));
-      }
-      this.axisData.y.push(yAxisData);
-    }
-
-    const logObj = [];
-    // group x & y values and eliminate duplicates on the X axis
-    for (let i = 0; i < finalXAxisData.length; i++) {
-      logObj[i] = {};
-      for (let j = 0; j < finalXAxisData[i].length; j++) {
-        if (!logObj[i][finalXAxisData[i][j]]) logObj[i][finalXAxisData[i][j]] = [];
-
-        logObj[i][finalXAxisData[i][j]].push(this.axisData.y[i][j]);
-      }
-    }
-
-    // now get all the keys and merge them in one array - this will help map the final X Axis
-    let allKeys = [];
-    logObj.map((item) => {
-      Object.keys(item).forEach((key) => {
-        allKeys.push(key);
-      });
-
-      return item;
-    });
-
-    if (gXType === "number") {
-      allKeys = _.uniq(allKeys).sort();
-    } else if (gXType === "date") {
-      allKeys = _.uniq(allKeys).sort((a, b) => {
-        return moment(a, this.dateFormat) - moment(b, this.dateFormat);
-      });
-    } else {
-      allKeys = _.uniq(allKeys);
-    }
-
-    // now build each dataset matching keys from logObj and allKeys
-    for (let i = 0; i < logObj.length; i++) {
-      this.axisData.y[i] = [];
-      let previousValue;
-      for (const key of allKeys) {
-        // add just the first element for now
-        if (logObj[i][key]) {
-          this.axisData.y[i].push(logObj[i][key][0]);
-        } else if (this.chart.subType.indexOf("AddTimeseries") > -1 && previousValue) {
-          this.axisData.y[i].push(previousValue);
+        // first, handle the xAxis
+        if (xAxis.indexOf("root[]") > -1) {
+          xAxis = xAxis.replace("root[].", "");
+          // and data stays the same
+          xData = filteredData;
         } else {
-          this.axisData.y[i].push(0);
+          const arrayFinder = xAxis.substring(0, xAxis.indexOf("]") - 1);
+          xData = _.get(filteredData, arrayFinder);
         }
 
-        if (logObj[i][key]) {
-          [previousValue] = logObj[i][key];
+        let xAxisFieldName = xAxis;
+        if (xAxisFieldName.indexOf(".") > -1) {
+          xAxisFieldName = xAxisFieldName.substring(xAxisFieldName.lastIndexOf(".") + 1);
         }
-      }
-    }
 
-    if (!this.dateFormat && this.chart.subType.indexOf("AddTimeseries") > -1) {
-      for (let i = 0; i < this.axisData.y.length; i++) {
-        let yAxisData = this.axisData.y[i];
-        yAxisData = _.clone(yAxisData).map((item, index) => {
-          let newItem = item;
-          if (index > 0) newItem += yAxisData[index - 1];
-          return newItem;
+        if (!(xData instanceof Array)) throw new Error("The X field is not part of an Array");
+        xData.map((item) => {
+          const xValue = _.get(item, xAxis);
+          if (xValue) xType = determineType(xValue);
+          xAxisData.push(xValue);
+          return item;
+        });
+        gXType = xType;
+
+        // X AXIS data processing
+        switch (xType) {
+          case "date":
+            xAxisData = this.processDate(xAxisData, canDateFilter);
+            break;
+          case "number":
+            xAxisData = this.processNumber(xAxisData);
+            break;
+          case "string":
+            xAxisData = this.processString(xAxisData);
+            break;
+          case "boolean":
+            xAxisData = this.processBoolean(xAxisData);
+            break;
+          case "object":
+            xAxisData = this.processObject(xAxisData);
+            break;
+          case "array":
+            xAxisData = this.processObject(xAxisData);
+            break;
+          default:
+            xAxisData = this.processObject(xAxisData);
+            break;
+        }
+
+        // now the yAxis
+        if (yAxis.indexOf("root[]") > -1) {
+          yAxis = yAxis.replace("root[].", "");
+          // and data stays the same
+          yData = filteredData;
+        } else {
+          const arrayFinder = yAxis.substring(0, yAxis.indexOf("]") - 1);
+          yAxis = yAxis.substring(yAxis.indexOf("]") + 1);
+          yData = _.get(filteredData, arrayFinder);
+        }
+
+        if (!(yData instanceof Array)) throw new Error("The Y field is not part of an Array");
+        yData.map((item, index) => {
+          const yValue = _.get(item, yAxis);
+          if (yValue) yType = determineType(yValue);
+
+          // only add the yValue if it corresponds to one of the x values found above
+          if (_.indexOf(xAxisData.filtered, yData[index][xAxisFieldName]) > -1) {
+            yAxisData.push({ x: yData[index][xAxisFieldName], y: yValue });
+          } else if (xType === "date"
+            && _.findIndex(
+              xAxisData.filtered,
+              (dateValue) => (
+                new Date(dateValue).getTime() === new Date(yData[index][xAxisFieldName]).getTime()
+              )
+            )) {
+            yAxisData.push({ x: yData[index][xAxisFieldName], y: yValue });
+          }
+          return item;
         });
 
-        this.axisData.y[i] = yAxisData;
+        // Y CHART data processing
+        switch (yAxisOperation) {
+          case "none":
+            yAxisData = this.noOp(yAxisData);
+            break;
+          case "count":
+            yAxisData = this.count(xAxisData.formatted);
+            break;
+          case "avg":
+            yAxisData = this.sum(xAxisData.formatted, yAxisData, yType, true);
+            break;
+          case "sum":
+            yAxisData = this.sum(xAxisData.formatted, yAxisData, yType);
+            break;
+          default:
+            yAxisData = this.noOp(yAxisData);
+            break;
+        }
+
+        // if the operation is count, make sure the xData has only unique values
+        if (yAxisOperation === "none") {
+          finalXAxisData.push(xAxisData.formatted);
+        } else {
+          finalXAxisData.push(_.uniq(xAxisData.formatted));
+        }
+        this.axisData.y.push(yAxisData);
       }
+
+      const logObj = [];
+      // group x & y values and eliminate duplicates on the X axis
+      for (let i = 0; i < finalXAxisData.length; i++) {
+        logObj[i] = {};
+        for (let j = 0; j < finalXAxisData[i].length; j++) {
+          if (!logObj[i][finalXAxisData[i][j]]) logObj[i][finalXAxisData[i][j]] = [];
+
+          logObj[i][finalXAxisData[i][j]].push(this.axisData.y[i][j]);
+        }
+      }
+
+      // now get all the keys and merge them in one array - this will help map the final X Axis
+      let allKeys = [];
+      logObj.map((item) => {
+        Object.keys(item).forEach((key) => {
+          allKeys.push(key);
+        });
+
+        return item;
+      });
+
+      if (gXType === "number") {
+        allKeys = _.uniq(allKeys).sort();
+      } else if (gXType === "date") {
+        allKeys = _.uniq(allKeys).sort((a, b) => {
+          return moment(a, this.dateFormat) - moment(b, this.dateFormat);
+        });
+      } else {
+        allKeys = _.uniq(allKeys);
+      }
+
+      // now build each dataset matching keys from logObj and allKeys
+      for (let i = 0; i < logObj.length; i++) {
+        this.axisData.y[i] = [];
+        let previousValue;
+        for (const key of allKeys) {
+          // add just the first element for now
+          if (logObj[i][key]) {
+            this.axisData.y[i].push(logObj[i][key][0]);
+          } else if (this.chart.subType.indexOf("AddTimeseries") > -1 && previousValue) {
+            this.axisData.y[i].push(previousValue);
+          } else {
+            this.axisData.y[i].push(0);
+          }
+
+          if (logObj[i][key]) {
+            [previousValue] = logObj[i][key];
+          }
+        }
+      }
+
+      if (!this.dateFormat && this.chart.subType.indexOf("AddTimeseries") > -1) {
+        for (let i = 0; i < this.axisData.y.length; i++) {
+          let yAxisData = this.axisData.y[i];
+          yAxisData = _.clone(yAxisData).map((item, index) => {
+            let newItem = item;
+            if (index > 0) newItem += yAxisData[index - 1];
+            return newItem;
+          });
+
+          this.axisData.y[i] = yAxisData;
+        }
+      }
+
+      this.axisData.x = allKeys;
     }
 
-    this.axisData.x = allKeys;
+    if (skipDataProcessing) {
+      // this.axisData = this.chart.chartData.data;
+      this.axisData.x = this.chart.chartData.data.labels;
+      this.chart.chartData.data.datasets.map((dataset) => {
+        this.axisData.y.push(dataset.data);
+        return dataset;
+      });
+    }
 
     let chart;
     switch (this.chart.type) {

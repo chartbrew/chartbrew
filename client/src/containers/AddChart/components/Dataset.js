@@ -82,7 +82,7 @@ function Dataset(props) {
         setShouldSave(moment().add(2, "seconds"));
       }
     } else {
-      onUpdate(newDataset);
+      onUpdate(newDataset, true);
     }
   }, [newDataset]);
 
@@ -189,7 +189,7 @@ function Dataset(props) {
   const _updateColors = (data, forceUpdate) => {
     setNewDataset(data);
     if (forceUpdate) {
-      onUpdate(data);
+      onUpdate(data, true);
     }
   };
 
