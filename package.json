@@ -1,6 +1,6 @@
 {
   "name": "chartbrew",
-  "version": "1.0.0-beta.13",
+  "version": "v1.0.0",
   "description": "",
   "main": "index.js",
   "workspaces": [
@@ -22,7 +22,7 @@
   },
   "author": {
     "email": "hello@chartbrew.com",
-    "name": "ChartBrew"
+    "name": "Chartbrew"
   },
   "license": "MIT",
   "bugs": {

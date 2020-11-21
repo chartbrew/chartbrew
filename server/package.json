@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "v1.0.0-beta.13",
+  "version": "v1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,10 @@
     "db:migrate": "cd models && npx sequelize-cli db:migrate",
     "precommit": "lint-staged"
   },
-  "author": "",
+  "author": {
+    "email": "hello@chartbrew.com",
+    "name": "Chartbrew"
+  },
   "license": "MIT",
   "dependencies": {
     "accesscontrol": "^2.2.1",
