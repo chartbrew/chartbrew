@@ -8,10 +8,26 @@ const sc = simplecrypt({
 });
 
 module.exports = (data) => {
-  // check if encrypted first
   const connection = data;
 
-  if (connection.connectionString) return connection.connectionString;
+  if (connection.connectionString) {
+    const cs = connection.connectionString;
+    let newConnectionString = "";
+
+    const protocol = cs.substring(0, cs.indexOf("//") + 2);
+    newConnectionString = cs.replace(protocol, "");
+
+    const username = newConnectionString.substring(0, newConnectionString.indexOf(":"));
+    newConnectionString = cs.replace(protocol + username, "");
+
+    const password = encodeURIComponent(newConnectionString.substring(1, newConnectionString.lastIndexOf("@")));
+
+    const hostAndOpt = cs.substring(cs.lastIndexOf("@"));
+
+    newConnectionString = `${protocol}${username}:${password}${hostAndOpt}`;
+
+    return newConnectionString;
+  }
 
   try {
     connection.dbName = sc.decrypt(connection.dbName);

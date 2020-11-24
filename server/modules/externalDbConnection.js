@@ -11,12 +11,30 @@ module.exports = (connection) => {
   let sequelize;
 
   if (connectionString) {
-    sequelize = new Sequelize(connectionString, {
+    // extract each element from the string so that we can encode the password
+    // this is needed when the password contains symbols that are not URI-friendly
+    const cs = connectionString;
+    let newConnectionString = "";
+
+    const protocol = cs.substring(0, cs.indexOf("//") + 2);
+    newConnectionString = cs.replace(protocol, "");
+
+    const username = newConnectionString.substring(0, newConnectionString.indexOf(":"));
+    newConnectionString = cs.replace(protocol + username, "");
+
+    const password = encodeURIComponent(newConnectionString.substring(1, newConnectionString.lastIndexOf("@")));
+
+    const hostAndOpt = cs.substring(cs.lastIndexOf("@"));
+
+    newConnectionString = `${protocol}${username}:${password}${hostAndOpt}`;
+
+    sequelize = new Sequelize(newConnectionString, {
       host,
       port,
       dialect,
       logging: false,
     });
+  // else just connect with each field from the form
   } else {
     sequelize = new Sequelize(name, username, password, {
       host,
