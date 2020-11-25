@@ -16,6 +16,7 @@ module.exports = (req, res, next) => {
 
         const userObj = userResponse(user);
         userObj.token = token;
+        userObj.admin = user.admin;
 
         req.user = userObj;
         return next();

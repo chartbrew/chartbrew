@@ -3,21 +3,60 @@ const TeamController = require("../controllers/TeamController");
 const ProjectController = require("../controllers/ProjectController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
+const ChartController = require("../controllers/ChartController");
+const DatasetController = require("../controllers/DatasetController");
 
 module.exports = (app) => {
   const dataRequestController = new DataRequestController();
   const teamController = new TeamController();
   const projectController = new ProjectController();
+  const chartController = new ChartController();
+  const datasetController = new DatasetController();
+
   const root = "/project/:project_id/chart/:chart_id/dataRequest";
+
+  const checkAccess = (req) => {
+    let gProject;
+    let gChart;
+    return projectController.findById(req.params.project_id)
+      .then((project) => {
+        gProject = project;
+
+        return chartController.findById(req.params.chart_id);
+      })
+      .then((chart) => {
+        if (chart.project_id !== gProject.id) {
+          throw new Error(401);
+        }
+        gChart = chart;
+
+        if (req.params.id) {
+          return dataRequestController.findById(req.params.id);
+        }
+
+        return teamController.getTeamRole(gProject.team_id, req.user.id);
+      })
+      .then((data) => {
+        if (!req.params.id) return Promise.resolve(data);
+
+        return datasetController.findById(data.dataset_id);
+      })
+      .then((data) => {
+        if (!req.params.id) return Promise.resolve(data);
+
+        if (data.chart_id !== gChart.id) {
+          throw new Error(401);
+        }
+
+        return teamController.getTeamRole(gProject.team_id, req.user.id);
+      });
+  };
 
   /*
   ** Route to create a new Data request
   */
   app.post(`${root}`, verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).createAny("dataRequest");
         if (!permission.granted) {
@@ -43,10 +82,7 @@ module.exports = (app) => {
   ** Route to get Data request by ID
   */
   app.get(`${root}/:id`, verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("dataRequest");
         if (!permission.granted) {
@@ -72,10 +108,7 @@ module.exports = (app) => {
   ** Route to update the dataRequest
   */
   app.put(`${root}/:id`, verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("dataRequest");
         if (!permission.granted) {
@@ -101,10 +134,7 @@ module.exports = (app) => {
   ** Route to get the api request by the chartId
   */
   app.get(`${root}`, verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("dataRequest");
         if (!permission.granted) {
@@ -130,10 +160,7 @@ module.exports = (app) => {
   ** Route to get a Data Request by dataset ID
   */
   app.get(`${root}/dataset/:datasetId`, verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("dataRequest");
         if (!permission.granted) {

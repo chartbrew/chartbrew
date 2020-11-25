@@ -9,6 +9,29 @@ module.exports = (app) => {
   const projectController = new ProjectController();
   const teamController = new TeamController();
 
+  const checkAccess = (req) => {
+    let gProject;
+    return projectController.findById(req.params.project_id)
+      .then((project) => {
+        gProject = project;
+        if (req.params.id) {
+          return chartController.findById(req.params.id);
+        }
+        return teamController.getTeamRole(project.team_id, req.user.id);
+      })
+      .then((data) => {
+        if (!req.params.id) {
+          return Promise.resolve(data);
+        }
+
+        if (parseInt(data.project_id, 10) !== parseInt(gProject.id, 10)) {
+          throw new Error(401);
+        }
+
+        return teamController.getTeamRole(gProject.team_id, req.user.id);
+      });
+  };
+
   /*
   ** [MASTER] Route to get all the charts
   */
@@ -41,10 +64,7 @@ module.exports = (app) => {
   ** Route to get all the charts for a project
   */
   app.get("/project/:project_id/chart", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("chart");
         if (!permission.granted) {
@@ -66,10 +86,7 @@ module.exports = (app) => {
   ** Route to create a new chart
   */
   app.post("/project/:project_id/chart", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("chart");
         if (!permission.granted) {
@@ -96,10 +113,7 @@ module.exports = (app) => {
   ** Route to update a chart
   */
   app.put("/project/:project_id/chart/:id", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("chart");
         if (!permission.granted) {
@@ -125,10 +139,7 @@ module.exports = (app) => {
   app.post("/project/:project_id/chart/:id/connection", verifyToken, (req, res) => {
     if (!req.body.connection_id) return res.status(400).send({ error: "no connection_id" });
 
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("chart");
         if (!permission.granted) {
@@ -152,10 +163,7 @@ module.exports = (app) => {
   ** Route to update the order of the chart
   */
   app.put("/project/:project_id/chart/:id/order", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("chart");
         if (!permission.granted) {
@@ -176,10 +184,7 @@ module.exports = (app) => {
   ** Route to remove a chart
   */
   app.delete("/project/:project_id/chart/:id", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("chart");
         if (!permission.granted) {
@@ -204,10 +209,7 @@ module.exports = (app) => {
   ** Route to test a query before saving
   */
   app.post("/project/:project_id/chart/test", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("chart");
         if (!permission.granted) {
@@ -234,10 +236,7 @@ module.exports = (app) => {
   ** Route to test a query before saving
   */
   app.post("/project/:project_id/chart/preview", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("chart");
         if (!permission.granted) {
@@ -274,10 +273,7 @@ module.exports = (app) => {
   ** Route to run the query for a chart
   */
   app.get("/project/:project_id/chart/:id", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("chart");
         if (!permission.granted) {
@@ -292,6 +288,7 @@ module.exports = (app) => {
         );
       })
       .then((chart) => {
+        // console.log("chart", chart);
         return res.status(200).send(chart);
       })
       .catch((error) => {

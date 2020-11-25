@@ -9,6 +9,29 @@ module.exports = (app) => {
   const projectController = new ProjectController();
   const teamController = new TeamController();
 
+  const checkAccess = (req) => {
+    let gProject;
+    return projectController.findById(req.params.project_id)
+      .then((project) => {
+        gProject = project;
+        if (req.params.id) {
+          return savedQueryController.findById(req.params.id);
+        }
+        return teamController.getTeamRole(project.team_id, req.user.id);
+      })
+      .then((data) => {
+        if (!req.params.id) {
+          return Promise.resolve(data);
+        }
+
+        if (parseInt(data.project_id, 10) !== parseInt(gProject.id, 10)) {
+          throw new Error(401);
+        }
+
+        return teamController.getTeamRole(gProject.team_id, req.user.id);
+      });
+  };
+
   /**
    * [MASTER] Route to get all saved queries
    */
@@ -36,10 +59,7 @@ module.exports = (app) => {
   ** Route to get all the saved queries in a project
   */
   app.get("/project/:project_id/savedQuery", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("savedQuery");
         if (!permission.granted) {
@@ -64,10 +84,7 @@ module.exports = (app) => {
   ** Route to create a new savedQuery
   */
   app.post("/project/:project_id/savedQuery", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).createAny("savedQuery");
         if (!permission.granted) {
@@ -97,10 +114,7 @@ module.exports = (app) => {
   ** Route to update a savedQuery
   */
   app.put("/project/:project_id/savedQuery/:id", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("savedQuery");
         if (!permission.granted) {
@@ -129,10 +143,7 @@ module.exports = (app) => {
   ** Remove a savedQuery
   */
   app.delete("/project/:project_id/savedQuery/:id", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("savedQuery");
         if (!permission.granted) {

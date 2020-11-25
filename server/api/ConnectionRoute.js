@@ -9,6 +9,29 @@ module.exports = (app) => {
   const projectController = new ProjectController();
   const teamController = new TeamController();
 
+  const checkAccess = (req) => {
+    let gProject;
+    return projectController.findById(req.params.project_id)
+      .then((project) => {
+        gProject = project;
+
+        if (req.params.id) {
+          return connectionController.findById(req.params.id);
+        }
+
+        return teamController.getTeamRole(project.team_id, req.user.id);
+      })
+      .then((data) => {
+        if (!req.params.id) return Promise.resolve(data);
+
+        if (data.project_id !== gProject.id) {
+          throw new Error(401);
+        }
+
+        return teamController.getTeamRole(gProject.team_id, req.user.id);
+      });
+  };
+
   /*
   ** [MASTER] Route to get all the connections
   */
@@ -31,10 +54,7 @@ module.exports = (app) => {
   ** Route to create a connection
   */
   app.post("/project/:project_id/connection", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).createAny("connection");
         if (!permission.granted) {
@@ -61,10 +81,7 @@ module.exports = (app) => {
   ** Route to get a connection by ID
   */
   app.get("/project/:project_id/connection/:id", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("connection");
         if (!permission.granted) {
@@ -93,10 +110,7 @@ module.exports = (app) => {
   ** Route to get all the connections for a project
   */
   app.get("/project/:project_id/connection", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("connection");
         if (!permission.granted) {
@@ -120,10 +134,7 @@ module.exports = (app) => {
   ** Route to update a connection
   */
   app.put("/project/:project_id/connection/:id", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("connection");
         if (!permission.granted) {
@@ -144,40 +155,10 @@ module.exports = (app) => {
   // -------------------------------------------
 
   /*
-  ** Route to get the mongodb connection url
-  ** TODO: To be removed before going in production
-  */
-  app.get("/project/:project_id/connection/:id/url", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).createAny("connection");
-        if (!permission.granted) {
-          throw new Error(401);
-        }
-        // throw new Error(400);
-        return connectionController.getConnectionUrl(req.params.id);
-      })
-      .then((connectionUrl) => {
-        return res.status(200).send(connectionUrl);
-      })
-      .catch((error) => {
-        if (error === "404") return res.status(404).send({ error: "Not found" });
-        return res.status(400).send(error);
-      });
-  });
-  // -------------------------------------------
-
-  /*
   ** Route to remove a connection from a project
   */
   app.delete("/project/:project_id/connection/:id", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).deleteAny("connection");
         if (!permission.granted) {
@@ -205,10 +186,7 @@ module.exports = (app) => {
   ** Route to test a connection
   */
   app.get("/project/:project_id/connection/:id/test", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("connection");
         if (!permission.granted) {
@@ -232,10 +210,7 @@ module.exports = (app) => {
   ** Route to test a potential api request
   */
   app.post("/project/:project_id/connection/:connection_id/apiTest", verifyToken, (req, res) => {
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).createAny("dataRequest");
         if (!permission.granted) {

@@ -153,7 +153,6 @@ module.exports = (app) => {
   // --------------------------------------
 
   // route to resend existing team invite
-  // TODO: test
   app.post("/team/resendInvite", verifyToken, (req, res) => {
     const { invite } = req.body;
     let admin = {};
@@ -250,7 +249,6 @@ module.exports = (app) => {
   // --------------------------------------
 
   // route to delete a team invite by token
-  // // TODO: TEST
   app.post("/team/:id/declineInvite/user", verifyToken, (req, res) => {
     return teamController.getTeamRole(req.params.id, req.user.id)
       .then((teamRole) => {
