@@ -125,6 +125,11 @@ function MysqlConnectionForm(props) {
               </Form.Group>
               <Form.Field>
                 <label>Enter your MySQL connection string</label>
+                {connection.connectionString && (
+                  <label style={{ fontWeight: "normal" }}>
+                    {"mysql://username:password@mysql.example.com:3306/dbname"}
+                  </label>
+                )}
                 <Form.Input
                   placeholder="mysql://username:password@mysql.example.com:3306/dbname"
                   value={connection.connectionString || ""}

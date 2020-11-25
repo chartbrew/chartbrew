@@ -125,7 +125,12 @@ function PostgresConnectionForm(props) {
                 </Form.Field>
               </Form.Group>
               <Form.Field>
-                <label>Enter your MySQL connection string</label>
+                <label>Enter your Postgres connection string</label>
+                {connection.connectionString && (
+                  <label style={{ fontWeight: "normal" }}>
+                    {"postgres://username:password@postgres.example.com:5432/dbname"}
+                  </label>
+                )}
                 <Form.Input
                   placeholder="postgres://username:password@postgres.example.com:5432/dbname"
                   value={connection.connectionString || ""}

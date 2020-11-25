@@ -228,6 +228,11 @@ function MongoConnectionForm(props) {
               </Form.Group>
               <Form.Field>
                 <label>Enter your MongoDB connection string</label>
+                {connection.connectionString && (
+                  <label style={{ fontWeight: "normal" }}>
+                    {"mongodb://username:password@mongodb.example.com:27017/dbname"}
+                  </label>
+                )}
                 <Form.Input
                   placeholder="mongodb://username:password@mongodb.example.com:27017/dbname"
                   value={connection.connectionString || ""}
