@@ -40,7 +40,6 @@ function Chart(props) {
   const [updateFrequency, setUpdateFrequency] = useState(false);
   const [autoUpdateLoading, setAutoUpdateLoading] = useState(false);
   const [publicLoading, setPublicLoading] = useState(false);
-  const [menuVisible, setMenuVisible] = useState(false);
   const [iframeCopied, setIframeCopied] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
 
@@ -224,9 +223,6 @@ function Chart(props) {
     return chart.mode === "kpi";
   };
 
-  const _activateMenu = (chartId) => setMenuVisible(chartId);
-  const _deactivateMenu = () => setMenuVisible(false);
-
   const _onCopyIframe = () => {
     const iframeText = document.getElementById("iframe-text");
     iframeText.select();
@@ -290,19 +286,17 @@ function Chart(props) {
             <Grid.Column width={chart.chartSize * 4} key={chart.id} style={styles.chartGrid}>
               <Segment
                 style={styles.chartContainer(_isKpi(chart))}
-                onMouseEnter={() => _activateMenu(chart.id)}
-                onMouseLeave={() => _deactivateMenu()}
               >
                 <div style={styles.titleArea(_isKpi(chart))}>
                   {_canAccess("editor") && projectId
                       && (
                         <Dropdown
-                          icon={menuVisible === chart.id ? "ellipsis horizontal" : ""}
+                          icon="ellipsis horizontal"
                           direction="left"
                           button
                           basic
                           className="circular icon"
-                          style={styles.menuBtn(menuVisible === chart.id)}
+                          style={styles.menuBtn}
                         >
                           <Dropdown.Menu>
                             <Dropdown.Item
@@ -764,13 +758,13 @@ const styles = {
     paddingTop: 10,
     paddingBottom: noPadding ? 0 : 10,
   }),
-  menuBtn: (hovered) => ({
+  menuBtn: {
     position: "absolute",
     right: 10,
     top: 10,
-    backgroundColor: !hovered && "transparent",
-    boxShadow: !hovered && "none",
-  }),
+    backgroundColor: "transparent",
+    boxShadow: "none",
+  },
   titleArea: (isKpi) => ({
     paddingLeft: isKpi ? 15 : 0,
     paddingTop: isKpi ? 15 : 0,
