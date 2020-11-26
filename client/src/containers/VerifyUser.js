@@ -13,13 +13,13 @@ const queryString = require("qs"); // eslint-disable-line
   Component for verifying a new user
 */
 function VerifyUser(props) {
+  const { verify } = props;
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(false);
   const [name, setName] = useState("");
 
   useEffect(() => {
-    const { verify } = props;
     const parsedParams = queryString.parse(document.location.search.slice(1));
 
     verify(parsedParams.id, parsedParams.token)
