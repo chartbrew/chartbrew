@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import {
   Card, Icon, Header, Grid, Segment, Dimmer, Loader, Modal, Button,
-  Dropdown, Message, Popup, Form, TextArea, Label,
+  Dropdown, Message, Popup, Form, TextArea, Label, Input, Divider,
 } from "semantic-ui-react";
 import {
   Pie, Doughnut, Radar, Polar
@@ -41,12 +41,19 @@ function Chart(props) {
   const [autoUpdateLoading, setAutoUpdateLoading] = useState(false);
   const [publicLoading, setPublicLoading] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [iframeCopied, setIframeCopied] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
 
   useEffect(() => {
     if (refreshRequested) {
       _onRefreshAll();
     }
   }, [refreshRequested]);
+
+  useEffect(() => {
+    setIframeCopied(false);
+    setUrlCopied(false);
+  }, [embedModal]);
 
   const _onRefreshAll = () => {
     const refreshPromises = [];
@@ -219,6 +226,20 @@ function Chart(props) {
 
   const _activateMenu = (chartId) => setMenuVisible(chartId);
   const _deactivateMenu = () => setMenuVisible(false);
+
+  const _onCopyIframe = () => {
+    const iframeText = document.getElementById("iframe-text");
+    iframeText.select();
+    document.execCommand("copy");
+    setIframeCopied(true);
+  };
+
+  const _onCopyUrl = () => {
+    const urlText = document.getElementById("url-text");
+    urlText.select();
+    document.execCommand("copy");
+    setUrlCopied(true);
+  };
 
   const { projectId } = match.params;
 
@@ -633,55 +654,86 @@ function Chart(props) {
       {selectedChart && (
       <Modal
         open={embedModal}
-        basic
-        size="small"
         onClose={() => setEmbedModal(false)}
           >
-        <Header
-          icon="code"
-          content="Embed your chart on other websites"
-            />
+        <Modal.Header>
+          <Icon name="code" />
+          {" Embed your chart on other websites"}
+        </Modal.Header>
         <Modal.Content>
-          <p>
-            {"Copy the following code on the website you wish to add your chart in."}
-          </p>
-          <p>
-            {"You can customize the iframe in any way you wish, but leave the 'src' attribute the way it is below."}
-          </p>
           <Form>
-            <TextArea
-              value={`<iframe src="${SITE_HOST}/chart/${selectedChart.id}/embedded" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0"></iframe>`}
-                />
+            <Form.Field>
+              <label>
+                {"Copy the following code on the website you wish to add your chart in."}
+              </label>
+              <TextArea
+                id="iframe-text"
+                value={`<iframe src="${SITE_HOST}/chart/${selectedChart.id}/embedded" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0"></iframe>`}
+              />
+            </Form.Field>
+            <Form.Field>
+              <Button
+                primary={!iframeCopied}
+                positive={iframeCopied}
+                basic
+                icon
+                labelPosition="right"
+                onClick={_onCopyIframe}
+              >
+                {!iframeCopied && <Icon name="clipboard" />}
+                {iframeCopied && <Icon name="checkmark" />}
+                {!iframeCopied && "Copy iframe"}
+                {iframeCopied && "Copied to your clipboard"}
+              </Button>
+            </Form.Field>
+          </Form>
+
+          <Divider />
+          <Form>
+            <Form.Field>
+              <label>{"Or get just the URL"}</label>
+              <Input value={`${SITE_HOST}/chart/${selectedChart.id}/embedded`} id="url-text" />
+            </Form.Field>
+            <Form.Field>
+              <Button
+                primary={!urlCopied}
+                positive={urlCopied}
+                basic
+                icon
+                labelPosition="right"
+                onClick={_onCopyUrl}
+              >
+                {!urlCopied && <Icon name="clipboard" />}
+                {urlCopied && <Icon name="checkmark" />}
+                {!urlCopied && "Copy URL"}
+                {urlCopied && "Copied to your clipboard"}
+              </Button>
+            </Form.Field>
           </Form>
         </Modal.Content>
         <Modal.Actions>
           {selectedChart.public && (
           <Button
-            basic
-            inverted
             onClick={() => setEmbedModal(false)}
-                >
+          >
             Done
           </Button>
           )}
           {!selectedChart.public && (
           <Button
-            basic
-            inverted
             onClick={() => setEmbedModal(false)}
-                >
+          >
             Cancel
           </Button>
           )}
           {!selectedChart.public && (
           <Button
-            color="teal"
-            inverted
+            primary
             onClick={() => {
               _onPublic();
               setEmbedModal(false);
             }}
-                >
+          >
             Make public
           </Button>
           )}
