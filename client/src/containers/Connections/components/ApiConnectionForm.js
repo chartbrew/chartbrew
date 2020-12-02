@@ -3,12 +3,29 @@ import PropTypes from "prop-types";
 import {
   Segment, Form, Button, Icon, Header, Label, Message, Container,
   Placeholder,
+  Menu,
+  Dropdown,
+  Input,
 } from "semantic-ui-react";
 import uuid from "uuid/v4";
 import AceEditor from "react-ace";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+
+const authTypes = [{
+  key: "no_auth",
+  text: "No auth",
+  value: "no_auth",
+}, {
+  key: "basic_auth",
+  text: "Basic auth",
+  value: "basic_auth",
+}, {
+  key: "bearer_token",
+  text: "Bearer token",
+  value: "bearer_token",
+}];
 
 /*
   The Form used to create API connections
@@ -22,6 +39,7 @@ function ApiConnectionForm(props) {
   const [testLoading, setTestLoading] = useState(false);
   const [connection, setConnection] = useState({ type: "api", optionsArray: [] });
   const [errors, setErrors] = useState({});
+  const [menuType, setMenuType] = useState("authorization");
 
   useEffect(() => {
     _addOption();
@@ -178,15 +196,71 @@ function ApiConnectionForm(props) {
               )}
             </Form.Field>
 
-            {connection.optionsArray && connection.optionsArray.length > 0 && (
+            <Menu secondary>
+              <Menu.Item
+                name="Authorization"
+                active={menuType === "authorization"}
+                onClick={() => setMenuType("authorization")}
+              />
+              <Menu.Item
+                active={menuType === "headers"}
+                onClick={() => setMenuType("headers")}
+              >
+                Headers
+                <Label circular color="violet">{connection.optionsArray.length}</Label>
+              </Menu.Item>
+            </Menu>
+
+            {menuType === "authorization" && (
+              <Form>
+                <Form.Group widths={2}>
+                  <Form.Field width={4}>
+                    <label>Authentication type</label>
+                    <Dropdown
+                      options={authTypes}
+                      selection
+                      fluid
+                      defaultValue="no_auth"
+                      value={connection.authType}
+                      onChange={(e, data) => setConnection({ ...connection, authType: data.value })}
+                    />
+                  </Form.Field>
+                  {connection.authType === "basic_auth" && (
+                    <Form.Field width={12}>
+                      <Form.Group widths={1} grouped>
+                        <label>Username or API Key</label>
+                        <Form.Input
+                          placeholder="Enter a Username or API Key"
+                        />
+                        <label>Password or API Key Value</label>
+                        <Form.Input
+                          placeholder="Enter a Password or API Key Value"
+                          type="password"
+                        />
+                      </Form.Group>
+                    </Form.Field>
+                  )}
+                  {connection.authType === "bearer_token" && (
+                    <Form.Field width={12}>
+                      <label>Token</label>
+                      <Input
+                        placeholder="Enter your authentication token"
+                      />
+                    </Form.Field>
+                  )}
+                </Form.Group>
+              </Form>
+            )}
+
+            {menuType === "headers" && (
               <Header as="h5">
                 Global headers to send with the requests
                 <Header.Subheader>
-                  {"This is the place where you can put your API authentication headers"}
+                  {"These headers will be included with all the future requests"}
                 </Header.Subheader>
               </Header>
             )}
-            {connection.optionsArray && connection.optionsArray.map((option) => {
+            {menuType === "headers" && connection.optionsArray && connection.optionsArray.map((option) => {
               return (
                 <Form.Group widths="equal" key={option.id}>
                   <Form.Input
@@ -205,17 +279,19 @@ function ApiConnectionForm(props) {
                 </Form.Group>
               );
             })}
-            <Form.Field>
-              <Button
-                size="small"
-                icon
-                labelPosition="right"
-                onClick={_addOption}
-              >
-                <Icon name="plus" />
-                Add more headers
-              </Button>
-            </Form.Field>
+            {menuType === "headers" && (
+              <Form.Field>
+                <Button
+                  size="small"
+                  icon
+                  labelPosition="right"
+                  onClick={_addOption}
+                >
+                  <Icon name="plus" />
+                  Add more headers
+                </Button>
+              </Form.Field>
+            )}
           </Form>
         </div>
 
