@@ -6,6 +6,7 @@ import {
   Menu,
   Dropdown,
   Input,
+  Divider,
 } from "semantic-ui-react";
 import uuid from "uuid/v4";
 import AceEditor from "react-ace";
@@ -153,6 +154,20 @@ function ApiConnectionForm(props) {
     setConnection({ ...connection, optionsArray: tempOptions });
   };
 
+  const _onChangeAuthType = (e, data) => {
+    const auth = connection.authentication || {};
+    auth.type = data.value;
+
+    setConnection({ ...connection, authentication: auth });
+  };
+
+  const _onChangeToken = (e, data) => {
+    const auth = connection.authentication || {};
+    auth.token = data.value;
+
+    setConnection({ ...connection, authentication: auth });
+  };
+
   return (
     <div style={styles.container}>
       <Segment style={styles.mainSegment}>
@@ -196,20 +211,30 @@ function ApiConnectionForm(props) {
               )}
             </Form.Field>
 
+            <Divider hidden />
             <Menu secondary>
               <Menu.Item
-                name="Authorization"
                 active={menuType === "authorization"}
                 onClick={() => setMenuType("authorization")}
-              />
+              >
+                Authorization
+                <Label
+                  circular
+                  color={connection.authentication && connection.authentication.type !== "no_auth" ? "violet" : null}
+                  size="mini"
+                >
+                  {" "}
+                </Label>
+              </Menu.Item>
               <Menu.Item
                 active={menuType === "headers"}
                 onClick={() => setMenuType("headers")}
               >
                 Headers
-                <Label circular color="violet">{connection.optionsArray.length}</Label>
+                <Label circular color="violet" size="mini">{connection.optionsArray.length}</Label>
               </Menu.Item>
             </Menu>
+            <Divider />
 
             {menuType === "authorization" && (
               <Form>
@@ -221,11 +246,11 @@ function ApiConnectionForm(props) {
                       selection
                       fluid
                       defaultValue="no_auth"
-                      value={connection.authType}
-                      onChange={(e, data) => setConnection({ ...connection, authType: data.value })}
+                      value={connection.authentication && connection.authentication.type}
+                      onChange={_onChangeAuthType}
                     />
                   </Form.Field>
-                  {connection.authType === "basic_auth" && (
+                  {connection.authentication && connection.authentication.type === "basic_auth" && (
                     <Form.Field width={12}>
                       <Form.Group widths={1} grouped>
                         <label>Username or API Key</label>
@@ -240,11 +265,13 @@ function ApiConnectionForm(props) {
                       </Form.Group>
                     </Form.Field>
                   )}
-                  {connection.authType === "bearer_token" && (
+                  {connection.authentication && connection.authentication.type === "bearer_token" && (
                     <Form.Field width={12}>
                       <label>Token</label>
                       <Input
                         placeholder="Enter your authentication token"
+                        onChange={_onChangeToken}
+                        value={connection.authentication.token}
                       />
                     </Form.Field>
                   )}
@@ -288,7 +315,7 @@ function ApiConnectionForm(props) {
                   onClick={_addOption}
                 >
                   <Icon name="plus" />
-                  Add more headers
+                  Add a header
                 </Button>
               </Form.Field>
             )}

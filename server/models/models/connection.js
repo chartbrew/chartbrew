@@ -139,7 +139,24 @@ module.exports = (sequelize, DataTypes) => {
           return this.getDataValue("connectionString");
         }
       },
-    }
+    },
+    authentication: {
+      type: DataTypes.TEXT,
+      set(val) {
+        try {
+          return this.setDataValue("authentication", sc.encrypt(JSON.stringify(val)));
+        } catch (e) {
+          return this.setDataValue("authentication", val);
+        }
+      },
+      get() {
+        try {
+          return JSON.parse(sc.decrypt(this.getDataValue("authentication")));
+        } catch (e) {
+          return this.getDataValue("authentication");
+        }
+      },
+    },
   }, {
     freezeTableName: true,
   });
@@ -177,7 +194,23 @@ module.exports = (sequelize, DataTypes) => {
       headers = connection.decryptField(connection.getDataValue("options"));
     }
 
+    if (connection.authentication && connection.authentication.type === "bearer_token") {
+      const auth = {
+        "Authorization": `Bearer ${connection.authentication.token}`,
+      };
+
+      try {
+        headers = JSON.parse(headers);
+        headers.push(auth);
+      } catch (error) {
+        if (headers === "null" || headers === "[]") {
+          headers = [auth];
+        }
+      }
+    }
+
     if (headers === "null") return [];
+    if (typeof headers === "object") return headers;
 
     try {
       return JSON.parse(headers);

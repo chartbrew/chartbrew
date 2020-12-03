@@ -171,6 +171,8 @@ class ConnectionController {
     let globalHeaders = connection.options;
     if (connection.getHeaders) {
       globalHeaders = connection.getHeaders(connection);
+    } else if (connection.authentication && connection.authentication.type === "bearer_token") {
+      testOptions.headers.authorization = `Bearer ${connection.authentication.token}`;
     }
 
     if (globalHeaders && globalHeaders.length > 0) {
