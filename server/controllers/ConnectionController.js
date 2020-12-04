@@ -181,6 +181,14 @@ class ConnectionController {
       }
     }
 
+    // Basic Auth
+    if (connection.authentication && connection.authentication.type === "basic_auth") {
+      testOptions.auth = {
+        user: connection.authentication.user,
+        pass: connection.authentication.pass,
+      };
+    }
+
     return testOptions;
   }
 
@@ -420,6 +428,14 @@ class ConnectionController {
         if (dataRequest.body && dataRequest.method !== "GET") {
           options.body = dataRequest.body;
           options.headers["Content-Type"] = "application/json";
+        }
+
+        // Basic auth
+        if (connection.authentication && connection.authentication.type === "basic_auth") {
+          options.auth = {
+            user: connection.authentication.user,
+            pass: connection.authentication.pass,
+          };
         }
 
         if (dataRequest.pagination) {

@@ -41,6 +41,7 @@ function ApiConnectionForm(props) {
   const [connection, setConnection] = useState({ type: "api", optionsArray: [] });
   const [errors, setErrors] = useState({});
   const [menuType, setMenuType] = useState("authorization");
+  const [seePass, setSeePass] = useState(false);
 
   useEffect(() => {
     _addOption();
@@ -154,16 +155,9 @@ function ApiConnectionForm(props) {
     setConnection({ ...connection, optionsArray: tempOptions });
   };
 
-  const _onChangeAuthType = (e, data) => {
+  const _onChangeAuthParams = (type, value) => {
     const auth = connection.authentication || {};
-    auth.type = data.value;
-
-    setConnection({ ...connection, authentication: auth });
-  };
-
-  const _onChangeToken = (e, data) => {
-    const auth = connection.authentication || {};
-    auth.token = data.value;
+    auth[type] = value;
 
     setConnection({ ...connection, authentication: auth });
   };
@@ -247,7 +241,7 @@ function ApiConnectionForm(props) {
                       fluid
                       defaultValue="no_auth"
                       value={connection.authentication && connection.authentication.type}
-                      onChange={_onChangeAuthType}
+                      onChange={(e, data) => _onChangeAuthParams("type", data.value)}
                     />
                   </Form.Field>
                   {connection.authentication && connection.authentication.type === "basic_auth" && (
@@ -256,11 +250,21 @@ function ApiConnectionForm(props) {
                         <label>Username or API Key</label>
                         <Form.Input
                           placeholder="Enter a Username or API Key"
+                          onChange={(e, data) => _onChangeAuthParams("user", data.value)}
+                          value={connection.authentication.user}
                         />
                         <label>Password or API Key Value</label>
                         <Form.Input
                           placeholder="Enter a Password or API Key Value"
-                          type="password"
+                          type={seePass ? "text" : "password"}
+                          onChange={(e, data) => _onChangeAuthParams("pass", data.value)}
+                          value={connection.authentication.pass}
+                          action={{
+                            content: seePass ? "Hide" : "Show",
+                            labelPosition: "right",
+                            icon: seePass ? "eye slash" : "eye",
+                            onClick: () => setSeePass(!seePass),
+                          }}
                         />
                       </Form.Group>
                     </Form.Field>
@@ -270,8 +274,15 @@ function ApiConnectionForm(props) {
                       <label>Token</label>
                       <Input
                         placeholder="Enter your authentication token"
-                        onChange={_onChangeToken}
+                        type={seePass ? "text" : "password"}
+                        onChange={(e, data) => _onChangeAuthParams("token", data.value)}
                         value={connection.authentication.token}
+                        action={{
+                          content: seePass ? "Hide" : "Show",
+                          labelPosition: "right",
+                          icon: seePass ? "eye slash" : "eye",
+                          onClick: () => setSeePass(!seePass),
+                        }}
                       />
                     </Form.Field>
                   )}
@@ -330,6 +341,7 @@ function ApiConnectionForm(props) {
           </Message>
           )}
 
+        <Divider hidden />
         <Container fluid textAlign="right">
           <Button
             primary
