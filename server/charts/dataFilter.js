@@ -140,7 +140,7 @@ module.exports = (data, selectedField, conditions) => {
   if (selectedField.indexOf("root[]") > -1) {
     finalData = data;
   } else {
-    const arrayFinder = selectedField.substring(0, selectedField.indexOf("]") - 1);
+    const arrayFinder = selectedField.substring(0, selectedField.indexOf("]") - 1).replace("root.", "");
     finalData = _.get(data, arrayFinder);
   }
 

@@ -83,13 +83,16 @@ class AxisChart {
           // and data stays the same
           xData = filteredData;
         } else {
-          const arrayFinder = xAxis.substring(0, xAxis.indexOf("]") - 1);
+          const arrayFinder = xAxis.substring(0, xAxis.indexOf("]") - 1).replace("root.", "");
+          xAxis = xAxis.replace("[]", "").replace("root.", "");
           xData = _.get(filteredData, arrayFinder);
         }
 
         let xAxisFieldName = xAxis;
+
         if (xAxisFieldName.indexOf(".") > -1) {
           xAxisFieldName = xAxisFieldName.substring(xAxisFieldName.lastIndexOf(".") + 1);
+          xAxis = xAxisFieldName;
         }
 
         if (!(xData instanceof Array)) throw new Error("The X field is not part of an Array");
@@ -132,27 +135,33 @@ class AxisChart {
           // and data stays the same
           yData = filteredData;
         } else {
-          const arrayFinder = yAxis.substring(0, yAxis.indexOf("]") - 1);
-          yAxis = yAxis.substring(yAxis.indexOf("]") + 1);
+          const arrayFinder = yAxis.substring(0, yAxis.indexOf("]") - 1).replace("root.", "");
+          yAxis = yAxis.substring(yAxis.indexOf("]") + 2);
+
           yData = _.get(filteredData, arrayFinder);
+          yData = _.map(yData, yAxis);
         }
 
         if (!(yData instanceof Array)) throw new Error("The Y field is not part of an Array");
         yData.map((item, index) => {
           const yValue = _.get(item, yAxis);
-          if (yValue) yType = determineType(yValue);
-
-          // only add the yValue if it corresponds to one of the x values found above
-          if (_.indexOf(xAxisData.filtered, yData[index][xAxisFieldName]) > -1) {
-            yAxisData.push({ x: yData[index][xAxisFieldName], y: yValue });
-          } else if (xType === "date"
-            && _.findIndex(
-              xAxisData.filtered,
-              (dateValue) => (
-                new Date(dateValue).getTime() === new Date(yData[index][xAxisFieldName]).getTime()
-              )
-            )) {
-            yAxisData.push({ x: yData[index][xAxisFieldName], y: yValue });
+          if (yValue) {
+            yType = determineType(yValue);
+            // only add the yValue if it corresponds to one of the x values found above
+            if (_.indexOf(xAxisData.filtered, yData[index][xAxisFieldName]) > -1) {
+              yAxisData.push({ x: yData[index][xAxisFieldName], y: yValue });
+            } else if (xType === "date"
+              && _.findIndex(
+                xAxisData.filtered,
+                (dateValue) => (
+                  new Date(dateValue).getTime() === new Date(yData[index][xAxisFieldName]).getTime()
+                )
+              )) {
+              yAxisData.push({ x: yData[index][xAxisFieldName], y: yValue });
+            }
+          } else {
+            yType = determineType(item);
+            yAxisData.push({ x: xData[index][xAxisFieldName], y: item });
           }
           return item;
         });
@@ -177,7 +186,7 @@ class AxisChart {
         }
 
         // if the operation is count, make sure the xData has only unique values
-        if (yAxisOperation === "none") {
+        if (yAxisOperation === "none" && xType !== "date") {
           finalXAxisData.push(xAxisData.formatted);
         } else {
           finalXAxisData.push(_.uniq(xAxisData.formatted));
@@ -310,6 +319,7 @@ class AxisChart {
       // make a new array containing all the dates between startDate and endDate
       while (startDate.isBefore(endDate)) {
         newAxisData.push(startDate);
+
         for (let d = 0; d < axisData.length; d++) {
           if (axisData[d].isSame(startDate, this.chart.timeInterval)) {
             newAxisData.push(axisData[d]);
@@ -423,7 +433,10 @@ class AxisChart {
   /* OPERATIONS */
   noOp(yData) {
     const finalData = [];
-    yData.map((item) => finalData.push(item.y));
+    yData.map((item) => {
+      finalData.push(item.y);
+      return item;
+    });
     return finalData;
   }
 

@@ -8,9 +8,13 @@ function findFields(coll, currentKey, first, fields) {
     if (currentKey) {
       newKey = `${currentKey}.${field}`;
       if (first) {
-        newKey = `${currentKey}[].${field}`;
+        newKey = `root.${currentKey}[].${field}`;
       }
-      newFields.push(newKey);
+      newFields.push({
+        field: newKey,
+        value: coll[field],
+        type: determineType(coll[field]),
+      });
     } else {
       if (first) newKey = `root[].${newKey}`;
       newFields.push({
@@ -48,7 +52,12 @@ export default function init(collection) {
 
   if (explorationSet.length > 0) {
     for (let i = 0; i < explorationSet.length; i++) {
-      fields = findFields(collection[explorationSet[i]][0], explorationSet[i], true, fields);
+      fields = findFields(
+        collection[explorationSet[i].field][0],
+        explorationSet[i].field,
+        true,
+        fields
+      );
     }
   } else {
     fields = findFields(collection[0], "", true, fields);

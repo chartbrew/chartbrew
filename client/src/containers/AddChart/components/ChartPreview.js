@@ -252,7 +252,6 @@ function ChartPreview(props) {
               primary
               basic
               loading={chartLoading}
-              disabled={!chart.chartData}
             >
               <Icon name="angle double down" />
               Get new data
