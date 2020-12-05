@@ -6,24 +6,35 @@ const determineType = require("../modules/determineType");
 // TODO: deal with nested objects when field = "fieldParent.fieldChild"
 function compareDates(data, field, condition) {
   let newData = data;
+
+  // extract value
+  const getValue = (obj) => {
+    const selectors = field.split(".");
+    let value = obj;
+    for (let i = 0; i < selectors.length; i++) {
+      value = value[selectors[i]];
+    }
+    return value;
+  };
+
   switch (condition.operator) {
     case "is":
-      newData = _.filter(newData, (o) => moment(o[field]).isSame(condition.value));
+      newData = _.filter(newData, (o) => moment(getValue(o)).isSame(condition.value));
       break;
     case "isNot":
-      newData = _.filter(newData, (o) => !moment(o[field]).isSame(condition.value));
+      newData = _.filter(newData, (o) => !moment(getValue(o)).isSame(condition.value));
       break;
     case "greaterThan":
-      newData = _.filter(newData, (o) => moment(o[field]).isAfter(condition.value));
+      newData = _.filter(newData, (o) => moment(getValue(o)).isAfter(condition.value));
       break;
     case "greaterOrEqual":
-      newData = _.filter(newData, (o) => moment(o[field]).isSameOrAfter(condition.value));
+      newData = _.filter(newData, (o) => moment(getValue(o)).isSameOrAfter(condition.value));
       break;
     case "lessThan":
-      newData = _.filter(newData, (o) => moment(o[field]).isBefore(condition.value));
+      newData = _.filter(newData, (o) => moment(getValue(o)).isBefore(condition.value));
       break;
     case "lessThanOrEqual":
-      newData = _.filter(newData, (o) => moment(o[field]).isSameOrBefore(condition.value));
+      newData = _.filter(newData, (o) => moment(getValue(o)).isSameOrBefore(condition.value));
       break;
     default:
       break;
@@ -35,65 +46,84 @@ function compareDates(data, field, condition) {
 function compareNumbers(data, field, condition) {
   let newData = data;
 
+  // extract value
+  const getValue = (obj) => {
+    const selectors = field.split(".");
+    let value = obj;
+    for (let i = 0; i < selectors.length; i++) {
+      value = value[selectors[i]];
+    }
+    return value;
+  };
+
   switch (condition.operator) {
     case "is":
-      newData = _.filter(newData, (o) => o[field] === parseFloat(condition.value));
+      newData = _.filter(newData, (o) => getValue(o) === parseFloat(condition.value));
       break;
     case "isNot":
-      newData = _.filter(newData, (o) => o[field] !== parseFloat(condition.value));
+      newData = _.filter(newData, (o) => getValue(o) !== parseFloat(condition.value));
       break;
     case "contains":
-      newData = _.filter(newData, (o) => o[field] === parseFloat(condition.value));
+      newData = _.filter(newData, (o) => getValue(o) === parseFloat(condition.value));
       break;
     case "notContains":
-      newData = _.filter(newData, (o) => o[field] !== parseFloat(condition.value));
+      newData = _.filter(newData, (o) => getValue(o) !== parseFloat(condition.value));
       break;
     case "greaterThan":
-      newData = _.filter(newData, (o) => o[field] > parseFloat(condition.value));
+      newData = _.filter(newData, (o) => getValue(o) > parseFloat(condition.value));
       break;
     case "greaterOrEqual":
-      newData = _.filter(newData, (o) => o[field] >= parseFloat(condition.value));
+      newData = _.filter(newData, (o) => getValue(o) >= parseFloat(condition.value));
       break;
     case "lessThan":
-      newData = _.filter(newData, (o) => o[field] < parseFloat(condition.value));
+      newData = _.filter(newData, (o) => getValue(o) < parseFloat(condition.value));
       break;
     case "lessOrEqual":
-      newData = _.filter(newData, (o) => o[field] <= parseFloat(condition.value));
+      newData = _.filter(newData, (o) => getValue(o) <= parseFloat(condition.value));
       break;
     default:
       break;
   }
-
   return newData;
 }
 
 function compareStrings(data, field, condition) {
   let newData = data;
 
+  // extract value
+  const getValue = (obj) => {
+    const selectors = field.split(".");
+    let value = obj;
+    for (let i = 0; i < selectors.length; i++) {
+      value = value[selectors[i]];
+    }
+    return value;
+  };
+
   switch (condition.operator) {
     case "is":
-      newData = _.filter(newData, (o) => o[field] === condition.value);
+      newData = _.filter(newData, (o) => getValue(o) === condition.value);
       break;
     case "isNot":
-      newData = _.filter(newData, (o) => o[field] !== condition.value);
+      newData = _.filter(newData, (o) => getValue(o) !== condition.value);
       break;
     case "contains":
-      newData = _.filter(newData, (o) => o[field].indexOf(condition.value) > -1);
+      newData = _.filter(newData, (o) => getValue(o).indexOf(condition.value) > -1);
       break;
     case "notContains":
-      newData = _.filter(newData, (o) => o[field].indexOf(condition.value) === -1);
+      newData = _.filter(newData, (o) => getValue(o).indexOf(condition.value) === -1);
       break;
     case "greaterThan":
-      newData = _.filter(newData, (o) => o[field] > condition.value);
+      newData = _.filter(newData, (o) => getValue(o) > condition.value);
       break;
     case "greaterOrEqual":
-      newData = _.filter(newData, (o) => o[field] >= condition.value);
+      newData = _.filter(newData, (o) => getValue(o) >= condition.value);
       break;
     case "lessThan":
-      newData = _.filter(newData, (o) => o[field] < condition.value);
+      newData = _.filter(newData, (o) => getValue(o) < condition.value);
       break;
     case "lessOrEqual":
-      newData = _.filter(newData, (o) => o[field] <= condition.value);
+      newData = _.filter(newData, (o) => getValue(o) <= condition.value);
       break;
     default:
       break;
@@ -105,24 +135,34 @@ function compareStrings(data, field, condition) {
 function compareBooleans(data, field, condition) {
   let newData = data;
 
+  // extract value
+  const getValue = (obj) => {
+    const selectors = field.split(".");
+    let value = obj;
+    for (let i = 0; i < selectors.length; i++) {
+      value = value[selectors[i]];
+    }
+    return value;
+  };
+
   switch (condition.operator) {
     case "is":
-      newData = _.filter(newData, (o) => o[field] == condition.value); // eslint-disable-line
+      newData = _.filter(newData, (o) => getValue(o) == condition.value); // eslint-disable-line
       break;
     case "isNot":
-      newData = _.filter(newData, (o) => o[field] != condition.value); // eslint-disable-line
+      newData = _.filter(newData, (o) => getValue(o) != condition.value); // eslint-disable-line
       break;
     case "contains":
-      newData = _.filter(newData, (o) => o[field] == condition.value); // eslint-disable-line
+      newData = _.filter(newData, (o) => getValue(o) == condition.value); // eslint-disable-line
       break;
     case "notContains":
-      newData = _.filter(newData, (o) => o[field] != condition.value); // eslint-disable-line
+      newData = _.filter(newData, (o) => getValue(o) != condition.value); // eslint-disable-line
       break;
     case "greaterOrEqual":
-      newData = _.filter(newData, (o) => o[field] == condition.value); // eslint-disable-line
+      newData = _.filter(newData, (o) => getValue(o) == condition.value); // eslint-disable-line
       break;
     case "lessOrEqual":
-      newData = _.filter(newData, (o) => o[field] != condition.value); // eslint-disable-line
+      newData = _.filter(newData, (o) => getValue(o) != condition.value); // eslint-disable-line
       break;
     default:
       break;
@@ -137,10 +177,13 @@ module.exports = (data, selectedField, conditions) => {
   }
 
   let finalData;
+  let arrayField;
   if (selectedField.indexOf("root[]") > -1) {
     finalData = data;
   } else {
     const arrayFinder = selectedField.substring(0, selectedField.indexOf("]") - 1).replace("root.", "");
+    arrayField = selectedField.substring(0, selectedField.indexOf("["));
+    arrayField = arrayField.substring(arrayField.lastIndexOf(".") + 1);
     finalData = _.get(data, arrayFinder);
   }
 
@@ -151,7 +194,13 @@ module.exports = (data, selectedField, conditions) => {
     let foundData = finalData;
     exactField = field.substring(field.indexOf("]") + 2);
 
-    const dataType = determineType(_.find(foundData, exactField)[exactField]);
+    const foundObj = _.find(foundData, exactField);
+    const selectors = exactField.split(".");
+    let value = foundObj;
+    for (let i = 0; i < selectors.length; i++) {
+      value = value[selectors[i]];
+    }
+    const dataType = determineType(value);
 
     switch (dataType) {
       case "string":
@@ -173,6 +222,12 @@ module.exports = (data, selectedField, conditions) => {
     finalData = foundData;
     return condition;
   });
+
+  if (arrayField) {
+    const oldFormattedData = data;
+    oldFormattedData[arrayField] = _.clone(finalData);
+    finalData = oldFormattedData;
+  }
 
   return finalData;
 };

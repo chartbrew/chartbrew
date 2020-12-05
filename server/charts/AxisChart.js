@@ -23,10 +23,10 @@ class AxisChart {
     // skip the data processing if required (this algorithm is time-expensive)
     if (
       !skipDataProcessing
-      || !this.chart.chartData
-      || !this.chart.chartData.data
-      || !this.chart.chartData.data.labels
-      || !this.chart.chartData.data.datasets
+        || !this.chart.chartData
+        || !this.chart.chartData.data
+        || !this.chart.chartData.data.labels
+        || !this.chart.chartData.data.datasets
     ) {
       const finalXAxisData = [];
       let gXType;
@@ -151,12 +151,13 @@ class AxisChart {
             if (_.indexOf(xAxisData.filtered, yData[index][xAxisFieldName]) > -1) {
               yAxisData.push({ x: yData[index][xAxisFieldName], y: yValue });
             } else if (xType === "date"
-              && _.findIndex(
-                xAxisData.filtered,
-                (dateValue) => (
-                  new Date(dateValue).getTime() === new Date(yData[index][xAxisFieldName]).getTime()
-                )
-              )) {
+                && _.findIndex(
+                  xAxisData.filtered,
+                  (dateValue) => (
+                    new Date(dateValue).getTime()
+                      === new Date(yData[index][xAxisFieldName]).getTime()
+                  )
+                )) {
               yAxisData.push({ x: yData[index][xAxisFieldName], y: yValue });
             }
           } else {
