@@ -313,7 +313,7 @@ function DatasetData(props) {
             className="small button"
             options={fieldOptions}
             search
-            text={(dataset.xAxis && dataset.xAxis.replace("root[].", "").replace("root.", "")) || "Select a field"}
+            text={(dataset.xAxis && dataset.xAxis.substring(dataset.xAxis.lastIndexOf(".") + 1)) || "Select a field"}
             value={dataset.xAxis}
             onChange={_selectXField}
             scrolling
@@ -328,7 +328,7 @@ function DatasetData(props) {
             className="small button"
             options={fieldOptions}
             search
-            text={(dataset.yAxis && dataset.yAxis.replace("root[].", "").replace("root.", "")) || "Select a field"}
+            text={(dataset.yAxis && dataset.xAxis.substring(dataset.xAxis.lastIndexOf(".") + 1)) || "Select a field"}
             value={dataset.yAxis}
             onChange={_selectYField}
             scrolling
@@ -364,7 +364,7 @@ function DatasetData(props) {
                 button
                 options={fieldOptions}
                 search
-                text={(condition.field && condition.field.replace("root[].", "").replace("root.", "")) || "field"}
+                text={(condition.field && condition.field.substring(condition.field.lastIndexOf(".") + 1)) || "field"}
                 value={condition.field}
                 onChange={(e, data) => _updateCondition(condition.id, data.value, "field")}
               />
@@ -505,7 +505,7 @@ function DatasetData(props) {
               className="small button"
               options={fieldOptions}
               search
-              text={(dataset.dateField && dataset.dateField.replace("root[].", "").replace("root.", "")) || "Select a field"}
+              text={(dataset.dateField && dataset.dateField.substring(dataset.dateField.lastIndexOf(".") + 1)) || "Select a field"}
               value={dataset.dateField}
               onChange={_selectDateField}
               scrolling
