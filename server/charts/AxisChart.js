@@ -511,7 +511,7 @@ class AxisChart {
 
     const finalAxisData = [];
     axisData.map((item) => {
-      if (item.finalY) {
+      if (item.finalY || item.finalY === 0) {
         finalAxisData.push(item.finalY);
       }
       return item;
