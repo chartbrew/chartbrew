@@ -433,8 +433,12 @@ class AxisChart {
   /* OPERATIONS */
   noOp(yData) {
     const finalData = [];
-    yData.map((item) => {
-      finalData.push(item.y);
+    yData.map((item, index) => {
+      if (index > 0 && this.chart.subType.indexOf("AddTimeseries") > -1) {
+        finalData.push(item.y + finalData[index - 1]);
+      } else {
+        finalData.push(item.y);
+      }
       return item;
     });
     return finalData;
@@ -510,9 +514,13 @@ class AxisChart {
     }
 
     const finalAxisData = [];
-    axisData.map((item) => {
+    axisData.map((item, index) => {
       if (item.finalY || item.finalY === 0) {
-        finalAxisData.push(item.finalY);
+        if (index > 0 && this.chart.subType.indexOf("AddTimeseries") > -1) {
+          finalAxisData.push(item.finalY + finalAxisData[index - 1]);
+        } else {
+          finalAxisData.push(item.finalY);
+        }
       }
       return item;
     });
