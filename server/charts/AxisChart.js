@@ -295,7 +295,11 @@ class AxisChart {
 
     let axisData = data;
     for (let i = 0; i < axisData.length; i++) {
-      axisData[i] = moment(axisData[i]);
+      if (axisData[i].toString().length === 10) {
+        axisData[i] = moment(axisData[i], "X");
+      } else {
+        axisData[i] = moment(axisData[i]);
+      }
     }
     axisData = axisData.sort((a, b) => a.diff(b));
 

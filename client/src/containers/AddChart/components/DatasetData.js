@@ -328,7 +328,7 @@ function DatasetData(props) {
             className="small button"
             options={fieldOptions}
             search
-            text={(dataset.yAxis && dataset.xAxis.substring(dataset.xAxis.lastIndexOf(".") + 1)) || "Select a field"}
+            text={(dataset.yAxis && dataset.yAxis.substring(dataset.yAxis.lastIndexOf(".") + 1)) || "Select a field"}
             value={dataset.yAxis}
             onChange={_selectYField}
             scrolling
