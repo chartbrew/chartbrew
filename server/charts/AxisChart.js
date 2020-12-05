@@ -435,6 +435,16 @@ class AxisChart {
   noOp(yData) {
     const finalData = [];
     yData.map((item, index) => {
+      if (index > 0 && this.chart.includeZeros) {
+        if (moment(item.x).diff(moment(yData[index - 1].x), this.chart.timeInterval) > 1) {
+          if (index > 0 && this.chart.subType.indexOf("AddTimeseries") > -1) {
+            finalData.push(finalData[index - 1]);
+          } else {
+            finalData.push(0);
+          }
+        }
+      }
+
       if (index > 0 && this.chart.subType.indexOf("AddTimeseries") > -1) {
         finalData.push(item.y + finalData[index - 1]);
       } else {
