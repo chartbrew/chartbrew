@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Dimmer, Message, Segment, Popup, Button, Divider,
-  Loader, Container, Header, Modal, List,
+  Loader, Container, Header, Modal, List, TransitionablePortal,
 } from "semantic-ui-react";
 import {
   getTeam, getTeamMembers, updateTeamRole, deleteTeamMember
@@ -240,33 +240,35 @@ class TeamMembers extends Component {
         </Segment>
 
         {/* Remove user modal */}
-        <Modal
-          open={!!deleteMember}
-          size="small"
-          basic
-          onClose={() => this.setState({ deleteMember: false })}
-        >
-          <Modal.Header>
-            Are you sure you want to remove the user from the team?
-          </Modal.Header>
-          <Modal.Content>
-            <p>{"This action will remove the user from the team and restrict them from accessing the dashboard again."}</p>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              onClick={() => this.setState({ deleteMember: false })}
-            >
-              Cancel
-            </Button>
-            <Button
-              negative
-              loading={loading}
-              onClick={() => this._onDeleteTeamMember(deleteMember)}
-            >
-              Remove
-            </Button>
-          </Modal.Actions>
-        </Modal>
+        <TransitionablePortal open={!!deleteMember}>
+          <Modal
+            open={!!deleteMember}
+            size="small"
+            basic
+            onClose={() => this.setState({ deleteMember: false })}
+          >
+            <Modal.Header>
+              Are you sure you want to remove the user from the team?
+            </Modal.Header>
+            <Modal.Content>
+              <p>{"This action will remove the user from the team and restrict them from accessing the dashboard again."}</p>
+            </Modal.Content>
+            <Modal.Actions>
+              <Button
+                onClick={() => this.setState({ deleteMember: false })}
+              >
+                Cancel
+              </Button>
+              <Button
+                negative
+                loading={loading}
+                onClick={() => this._onDeleteTeamMember(deleteMember)}
+              >
+                Remove
+              </Button>
+            </Modal.Actions>
+          </Modal>
+        </TransitionablePortal>
       </div>
     );
   }

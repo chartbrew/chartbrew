@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Grid, Header, Button, Container, Icon, List,
-  Modal, Input, Label, Popup,
+  Modal, Input, Label, Popup, TransitionablePortal,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
@@ -271,37 +271,39 @@ function MongoQueryBuilder(props) {
       </Grid>
 
       {/* Save query modal */}
-      <Modal open={saveQueryModal} size="small" onClose={() => setSaveQueryModal(false)}>
-        <Header
-          content="Save your query and use it later in this project"
-          inverted
-        />
-        <Modal.Content>
-          <Header size="small">Write a short description for your query</Header>
-          <Input
-            placeholder="Type a summary here"
-            fluid
-            onChange={(e, data) => setSavedQuerySummary(data.value)}
+      <TransitionablePortal open={saveQueryModal}>
+        <Modal open={saveQueryModal} size="small" onClose={() => setSaveQueryModal(false)}>
+          <Header
+            content="Save your query and use it later in this project"
+            inverted
           />
-        </Modal.Content>
-        <Modal.Actions>
-          <Button
-            onClick={() => setSaveQueryModal(false)}
-          >
-            Close
-          </Button>
-          <Button
-            primary
-            disabled={!savedQuerySummary}
-            icon
-            labelPosition="right"
-            onClick={_onSaveQuery}
-          >
-            <Icon name="checkmark" />
-            Save the query
-          </Button>
-        </Modal.Actions>
-      </Modal>
+          <Modal.Content>
+            <Header size="small">Write a short description for your query</Header>
+            <Input
+              placeholder="Type a summary here"
+              fluid
+              onChange={(e, data) => setSavedQuerySummary(data.value)}
+            />
+          </Modal.Content>
+          <Modal.Actions>
+            <Button
+              onClick={() => setSaveQueryModal(false)}
+            >
+              Close
+            </Button>
+            <Button
+              primary
+              disabled={!savedQuerySummary}
+              icon
+              labelPosition="right"
+              onClick={_onSaveQuery}
+            >
+              <Icon name="checkmark" />
+              Save the query
+            </Button>
+          </Modal.Actions>
+        </Modal>
+      </TransitionablePortal>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { connect } from "react-redux";
 import {
   Segment, Modal, Message, Divider, Form, Icon, Button, Loader, Container,
   Header,
+  TransitionablePortal,
 } from "semantic-ui-react";
 import { updateUser, deleteUser } from "../actions/user";
 /*
@@ -128,39 +129,41 @@ function EditUserForm(props) {
         <Divider hidden />
 
         <Container fluid>
-          <Modal
-            open={openDeleteModal}
-            onClose={() => setOpenDeleteModal(false)}
-            trigger={(
-              <Button onClick={() => setOpenDeleteModal(true)} compact size="tiny" color="orange" icon>
-                {" Delete Account"}
-                <Icon name="delete" />
-                {" "}
-              </Button>
-            )}
-            basic
-          >
-            <Header icon="exclamation triangle" content="Delete Account" />
-            <Modal.Content>
-              <p>
-                This action will delete your account permanently,
-                all teams, projects and charts that you created.
-              </p>
-              <p>
-                Are you sure you want to delete it?
-              </p>
-            </Modal.Content>
-            <Modal.Actions>
-              <Button onClick={() => setOpenDeleteModal(false)}>
-                <Icon name="chevron left" />
-                {" Go back"}
-              </Button>
-              <Button color="red" loading={loading} onClick={_onDeleteUser}>
-                <Icon name="checkmark" />
-                {" Delete forever"}
-              </Button>
-            </Modal.Actions>
-          </Modal>
+          <TransitionablePortal open={openDeleteModal}>
+            <Modal
+              open={openDeleteModal}
+              onClose={() => setOpenDeleteModal(false)}
+              trigger={(
+                <Button onClick={() => setOpenDeleteModal(true)} compact size="tiny" color="orange" icon>
+                  {" Delete Account"}
+                  <Icon name="delete" />
+                  {" "}
+                </Button>
+              )}
+              basic
+            >
+              <Header icon="exclamation triangle" content="Delete Account" />
+              <Modal.Content>
+                <p>
+                  This action will delete your account permanently,
+                  all teams, projects and charts that you created.
+                </p>
+                <p>
+                  Are you sure you want to delete it?
+                </p>
+              </Modal.Content>
+              <Modal.Actions>
+                <Button onClick={() => setOpenDeleteModal(false)}>
+                  <Icon name="chevron left" />
+                  {" Go back"}
+                </Button>
+                <Button color="red" loading={loading} onClick={_onDeleteUser}>
+                  <Icon name="checkmark" />
+                  {" Delete forever"}
+                </Button>
+              </Modal.Actions>
+            </Modal>
+          </TransitionablePortal>
         </Container>
         {deleteUserError && (
           <Container textAlign="center" text style={{ marginTop: 10 }}>

@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import {
   Divider, Dimmer, Loader, Form, Modal, Header, Message, Container,
-  Button, Icon, Grid, Card, Step,
+  Button, Icon, Grid, Card, Step, TransitionablePortal,
 } from "semantic-ui-react";
 
 import { getTeams, createTeam, saveActiveTeam } from "../actions/team";
@@ -159,45 +159,47 @@ function UserDashboard(props) {
 
   const newProjectModal = () => {
     return (
-      <Modal
-        open={addProject}
-        onClose={() => setAddProject(false)}
-        size="small"
-        closeIcon
-      >
-        <Modal.Content>
-          {teams[0] && teams[0].Projects && teams[0].Projects.length === 0 && (
-            <div>
-              <Step.Group fluid>
-                <Step active>
-                  <Icon name="hand point down outline" />
-                  <Step.Content>
-                    <Step.Title>Project</Step.Title>
-                    <Step.Description>Create your first project</Step.Description>
-                  </Step.Content>
-                </Step>
-                <Step disabled>
-                  <Step.Content>
-                    <Step.Title>Connect</Step.Title>
-                    <Step.Description>Connect to your data source</Step.Description>
-                  </Step.Content>
-                </Step>
-                <Step disabled>
-                  <Step.Content>
-                    <Step.Title>Visualize</Step.Title>
-                    <Step.Description>Create your first chart</Step.Description>
-                  </Step.Content>
-                </Step>
-              </Step.Group>
-              <Header as="h2">{"Let's get you started"}</Header>
-              <p>{"In Chartbrew you can have multiple projects and each one has a different dashboard and data source connections."}</p>
-              <p>{"To get started, name your first project below and then we'll move on to setting up your first data source connection."}</p>
-              <Divider hidden />
-            </div>
-          )}
-          <ProjectForm onComplete={_onProjectCreated} />
-        </Modal.Content>
-      </Modal>
+      <TransitionablePortal open={addProject}>
+        <Modal
+          open={addProject}
+          onClose={() => setAddProject(false)}
+          size="small"
+          closeIcon
+        >
+          <Modal.Content>
+            {teams[0] && teams[0].Projects && teams[0].Projects.length === 0 && (
+              <div>
+                <Step.Group fluid>
+                  <Step active>
+                    <Icon name="hand point down outline" />
+                    <Step.Content>
+                      <Step.Title>Project</Step.Title>
+                      <Step.Description>Create your first project</Step.Description>
+                    </Step.Content>
+                  </Step>
+                  <Step disabled>
+                    <Step.Content>
+                      <Step.Title>Connect</Step.Title>
+                      <Step.Description>Connect to your data source</Step.Description>
+                    </Step.Content>
+                  </Step>
+                  <Step disabled>
+                    <Step.Content>
+                      <Step.Title>Visualize</Step.Title>
+                      <Step.Description>Create your first chart</Step.Description>
+                    </Step.Content>
+                  </Step>
+                </Step.Group>
+                <Header as="h2">{"Let's get you started"}</Header>
+                <p>{"In Chartbrew you can have multiple projects and each one has a different dashboard and data source connections."}</p>
+                <p>{"To get started, name your first project below and then we'll move on to setting up your first data source connection."}</p>
+                <Divider hidden />
+              </div>
+            )}
+            <ProjectForm onComplete={_onProjectCreated} />
+          </Modal.Content>
+        </Modal>
+      </TransitionablePortal>
     );
   };
 

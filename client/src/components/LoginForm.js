@@ -4,7 +4,8 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { Field, reduxForm } from "redux-form";
 import {
-  Container, Form, Divider, Button, Message, Icon, Label, Item, Modal, Header, Input
+  Container, Form, Divider, Button, Message, Icon, Label, Item, Modal,
+  Header, Input, TransitionablePortal,
 } from "semantic-ui-react";
 
 import { login, requestPasswordReset, oneaccountAuth } from "../actions/user";
@@ -167,51 +168,53 @@ class LoginForm extends Component {
           <Button compact color="twitter" icon="twitter" content="Use Twitter" />
         */}
 
-        <Modal open={forgotModal} size="small" onClose={() => this.setState({ forgotModal: false })}>
-          <Header
-            content="Reset your password"
-            inverted
-          />
-          <Modal.Content>
-            <Header size="small">{"We will send you an email with further instructions on your email"}</Header>
-            <Input
-              placeholder="Enter your email here"
-              fluid
-              onChange={(e, data) => this.setState({ resetEmail: data.value })}
+        <TransitionablePortal open={forgotModal}>
+          <Modal open={forgotModal} size="small" onClose={() => this.setState({ forgotModal: false })}>
+            <Header
+              content="Reset your password"
+              inverted
             />
+            <Modal.Content>
+              <Header size="small">{"We will send you an email with further instructions on your email"}</Header>
+              <Input
+                placeholder="Enter your email here"
+                fluid
+                onChange={(e, data) => this.setState({ resetEmail: data.value })}
+              />
 
-            {resetSuccess
-              && (
-              <Message positive>
-                <Message.Header>{"Check your email for further instructions"}</Message.Header>
-              </Message>
-              )}
-            {resetError
-              && (
-              <Message negative>
-                <Message.Header>{resetError}</Message.Header>
-              </Message>
-              )}
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              onClick={() => this.setState({ forgotModal: false })}
-            >
-              Close
-            </Button>
-            <Button
-              primary
-              disabled={resetSuccess}
-              icon
-              labelPosition="right"
-              loading={resetLoading}
-              onClick={this._onSendResetRequest}
-            >
-              <Icon name="checkmark" />
-              Send password reset email
-            </Button>
-          </Modal.Actions>
-        </Modal>
+              {resetSuccess
+                && (
+                <Message positive>
+                  <Message.Header>{"Check your email for further instructions"}</Message.Header>
+                </Message>
+                )}
+              {resetError
+                && (
+                <Message negative>
+                  <Message.Header>{resetError}</Message.Header>
+                </Message>
+                )}
+            </Modal.Content>
+            <Modal.Actions>
+              <Button
+                onClick={() => this.setState({ forgotModal: false })}
+              >
+                Close
+              </Button>
+              <Button
+                primary
+                disabled={resetSuccess}
+                icon
+                labelPosition="right"
+                loading={resetLoading}
+                onClick={this._onSendResetRequest}
+              >
+                <Icon name="checkmark" />
+                Send password reset email
+              </Button>
+            </Modal.Actions>
+          </Modal>
+        </TransitionablePortal>
         {ONE_ACCOUNT_ENABLED
           && (
             <>

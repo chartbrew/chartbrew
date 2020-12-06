@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  List, Button, Icon, Popup, Loader, Message, Modal, Header, Input
+  List, Button, Icon, Popup, Loader, Message, Modal, Header, Input, TransitionablePortal
 } from "semantic-ui-react";
 
 import { getSavedQueries, updateSavedQuery, deleteSavedQuery } from "../actions/savedQuery";
@@ -162,69 +162,73 @@ function SavedQueries(props) {
         && <p><i>{"The project doesn't have any saved queries yet"}</i></p>}
 
       {/* Update query modal */}
-      <Modal open={!!editQuery} size="small" onClose={() => setEditQuery(null)}>
-        <Header
-          content="Edit the query"
-          inverted
-        />
-        <Modal.Content>
-          <Header size="small">Edit the description of the query</Header>
-          <Input
-            placeholder="Type a summary here"
-            value={savedQuerySummary ? savedQuerySummary /* eslint-disable-line */
-              : editQuery ? editQuery.summary : ""}
-            fluid
-            onChange={(e, data) => setSavedQuerySummary(data.value)}
+      <TransitionablePortal open={!!editQuery}>
+        <Modal open={!!editQuery} size="small" onClose={() => setEditQuery(null)}>
+          <Header
+            content="Edit the query"
+            inverted
           />
-        </Modal.Content>
-        <Modal.Actions>
-          <Button
-            onClick={() => setEditQuery(null)}
-          >
-            Close
-          </Button>
-          <Button
-            primary
-            disabled={!savedQuerySummary}
-            icon
-            labelPosition="right"
-            loading={editLoading}
-            onClick={_onEditQuery}
-          >
-            <Icon name="checkmark" />
-            Save the query
-          </Button>
-        </Modal.Actions>
-      </Modal>
+          <Modal.Content>
+            <Header size="small">Edit the description of the query</Header>
+            <Input
+              placeholder="Type a summary here"
+              value={savedQuerySummary ? savedQuerySummary /* eslint-disable-line */
+                : editQuery ? editQuery.summary : ""}
+              fluid
+              onChange={(e, data) => setSavedQuerySummary(data.value)}
+            />
+          </Modal.Content>
+          <Modal.Actions>
+            <Button
+              onClick={() => setEditQuery(null)}
+            >
+              Close
+            </Button>
+            <Button
+              primary
+              disabled={!savedQuerySummary}
+              icon
+              labelPosition="right"
+              loading={editLoading}
+              onClick={_onEditQuery}
+            >
+              <Icon name="checkmark" />
+              Save the query
+            </Button>
+          </Modal.Actions>
+        </Modal>
+      </TransitionablePortal>
 
       {/* Update query modal */}
-      <Modal open={!!removeQuery} size="small" basic onClose={() => setRemoveQuery(null)}>
-        <Header
-          icon="exclamation triangle"
-          content="Are you sure you want to remove the query?"
-          inverted
-        />
-        <Modal.Content>
-          <p>{"This action will be permanent."}</p>
-        </Modal.Content>
-        <Modal.Actions>
-          <Button
-            onClick={() => setRemoveQuery(null)}
-          >
-            Close
-          </Button>
-          <Button
-            negative
-            icon
-            labelPosition="right"
-            loading={removeLoading}
-            onClick={_onRemoveQuery}
-          >
-            <Icon name="x" />
-            Remove the query
-          </Button>
-        </Modal.Actions>
-      </Modal>
+      <TransitionablePortal open={!!removeQuery}>
+        <Modal open={!!removeQuery} size="small" basic onClose={() => setRemoveQuery(null)}>
+          <Header
+            icon="exclamation triangle"
+            content="Are you sure you want to remove the query?"
+            inverted
+          />
+          <Modal.Content>
+            <p>{"This action will be permanent."}</p>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button
+              onClick={() => setRemoveQuery(null)}
+            >
+              Close
+            </Button>
+            <Button
+              negative
+              icon
+              labelPosition="right"
+              loading={removeLoading}
+              onClick={_onRemoveQuery}
+            >
+              <Icon name="x" />
+              Remove the query
+            </Button>
+          </Modal.Actions>
+        </Modal>
+      </TransitionablePortal>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import { PropTypes } from "prop-types";
 import {
-  Segment, Loader, Divider, Form, Button, Header, Icon, Input, Modal, Message
+  Segment, Loader, Divider, Form, Button, Header, Icon, Input, Modal, Message, TransitionablePortal
 } from "semantic-ui-react";
 
 import canAccess from "../config/canAccess";
@@ -137,35 +137,37 @@ class ProjectSettings extends Component {
             )}
         </Segment>
 
-        <Modal open={removeModal} basic size="small" onClose={() => this.setState({ removeModal: false })}>
-          <Header
-            icon="exclamation triangle"
-            content="Are you sure you want to remove this project?"
-          />
-          <Modal.Content>
-            <p>
-              {"This action will be PERMANENT. All the charts, connections and saved queries associated with this project will be deleted as well."}
-            </p>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              basic
-              inverted
-              onClick={() => this.setState({ removeModal: false })}
-            >
-              Go back
-            </Button>
-            <Button
-              color="orange"
-              inverted
-              loading={removeLoading}
-              onClick={this._onRemove}
-            >
-              <Icon name="x" />
-              Remove completely
-            </Button>
-          </Modal.Actions>
-        </Modal>
+        <TransitionablePortal opne={removeModal}>
+          <Modal open={removeModal} basic size="small" onClose={() => this.setState({ removeModal: false })}>
+            <Header
+              icon="exclamation triangle"
+              content="Are you sure you want to remove this project?"
+            />
+            <Modal.Content>
+              <p>
+                {"This action will be PERMANENT. All the charts, connections and saved queries associated with this project will be deleted as well."}
+              </p>
+            </Modal.Content>
+            <Modal.Actions>
+              <Button
+                basic
+                inverted
+                onClick={() => this.setState({ removeModal: false })}
+              >
+                Go back
+              </Button>
+              <Button
+                color="orange"
+                inverted
+                loading={removeLoading}
+                onClick={this._onRemove}
+              >
+                <Icon name="x" />
+                Remove completely
+              </Button>
+            </Modal.Actions>
+          </Modal>
+        </TransitionablePortal>
       </div>
     );
   }

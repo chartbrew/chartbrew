@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
-  Menu, Dropdown, Dimmer, Container, Loader, Icon, Modal, Button, Image,
+  Menu, Dropdown, Dimmer, Container, Loader, Icon, Modal, Button, Image, TransitionablePortal,
 } from "semantic-ui-react";
 import UserAvatar from "react-user-avatar";
 
@@ -213,20 +213,22 @@ function Navbar(props) {
         </Dropdown>
       </Menu.Menu>
 
-      <Modal
-        open={feedbackModal}
-        size="small"
-        onClose={() => setFeedbackModal(false)}
-      >
-        <Modal.Content>
-          <FeedbackForm />
-        </Modal.Content>
-        <Modal.Actions>
-          <Button onClick={() => setFeedbackModal(false)}>
-            Cancel
-          </Button>
-        </Modal.Actions>
-      </Modal>
+      <TransitionablePortal open={feedbackModal}>
+        <Modal
+          open={feedbackModal}
+          size="small"
+          onClose={() => setFeedbackModal(false)}
+        >
+          <Modal.Content>
+            <FeedbackForm />
+          </Modal.Content>
+          <Modal.Actions>
+            <Button onClick={() => setFeedbackModal(false)}>
+              Cancel
+            </Button>
+          </Modal.Actions>
+        </Modal>
+      </TransitionablePortal>
     </Menu>
   );
 }

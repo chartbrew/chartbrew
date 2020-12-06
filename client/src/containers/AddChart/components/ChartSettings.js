@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Form, Segment, Checkbox, Grid, Modal, Button,
-  Accordion, Icon, Dropdown, Label, Header, Message,
+  Accordion, Icon, Dropdown, Label, Header, Message, TransitionablePortal,
 } from "semantic-ui-react";
 import moment from "moment";
 import { DateRangePicker } from "react-date-range";
@@ -279,52 +279,54 @@ function ChartSettings(props) {
         </Accordion.Content>
       </Accordion>
 
-      <Modal
-        size="small"
-        basic
-        open={dateRangeModal}
-        onClose={() => setDateRangeModal(false)}
-      >
-        <Modal.Header>Set a custom date range for your chart</Modal.Header>
-        <Modal.Content>
-          <Grid centered padded>
-            <Segment textAlign="center" compact>
-              <DateRangePicker
-                locale={enGB}
-                direction="horizontal"
-                rangeColors={[secondary, primary]}
-                ranges={[
-                  dateRange.startDate && dateRange.endDate ? {
-                    startDate: moment(dateRange.startDate).toDate(),
-                    endDate: moment(dateRange.endDate).toDate(),
-                    key: "selection",
-                  } : initSelectionRange
-                ]}
-                onChange={_onChangeDateRange}
-                staticRanges={defaultStaticRanges}
-                inputRanges={defaultInputRanges}
-              />
-            </Segment>
-          </Grid>
-        </Modal.Content>
-        <Modal.Actions>
-          <Button
-            basic
-            inverted
-            icon="x"
-            labelPosition="right"
-            content="Cancel"
-            onClick={() => setDateRangeModal(false)}
-          />
-          <Button
-            primary
-            icon="checkmark"
-            labelPosition="right"
-            content="Apply date filter"
-            onClick={_onComplete}
-          />
-        </Modal.Actions>
-      </Modal>
+      <TransitionablePortal open={dateRangeModal}>
+        <Modal
+          size="small"
+          basic
+          open={dateRangeModal}
+          onClose={() => setDateRangeModal(false)}
+        >
+          <Modal.Header>Set a custom date range for your chart</Modal.Header>
+          <Modal.Content>
+            <Grid centered padded>
+              <Segment textAlign="center" compact>
+                <DateRangePicker
+                  locale={enGB}
+                  direction="horizontal"
+                  rangeColors={[secondary, primary]}
+                  ranges={[
+                    dateRange.startDate && dateRange.endDate ? {
+                      startDate: moment(dateRange.startDate).toDate(),
+                      endDate: moment(dateRange.endDate).toDate(),
+                      key: "selection",
+                    } : initSelectionRange
+                  ]}
+                  onChange={_onChangeDateRange}
+                  staticRanges={defaultStaticRanges}
+                  inputRanges={defaultInputRanges}
+                />
+              </Segment>
+            </Grid>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button
+              basic
+              inverted
+              icon="x"
+              labelPosition="right"
+              content="Cancel"
+              onClick={() => setDateRangeModal(false)}
+            />
+            <Button
+              primary
+              icon="checkmark"
+              labelPosition="right"
+              content="Apply date filter"
+              onClick={_onComplete}
+            />
+          </Modal.Actions>
+        </Modal>
+      </TransitionablePortal>
     </div>
   );
 }

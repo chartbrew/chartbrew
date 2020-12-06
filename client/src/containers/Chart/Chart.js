@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import {
   Card, Icon, Header, Grid, Segment, Dimmer, Loader, Modal, Button,
-  Dropdown, Message, Popup, Form, TextArea, Label, Input, Divider,
+  Dropdown, Message, Popup, Form, TextArea, Label, Input, Divider, TransitionablePortal,
 } from "semantic-ui-react";
 import {
   Pie, Doughnut, Radar, Polar
@@ -508,231 +508,239 @@ function Chart(props) {
       </Grid>
 
       {/* DELETE CONFIRMATION MODAL */}
-      <Modal open={!!deleteModal} basic size="small" onClose={() => setDeleteModal(false)}>
-        <Header
-          icon="exclamation triangle"
-          content="Are you sure you want to remove this chart?"
-          />
-        <Modal.Content>
-          <p>
-            {"All the chart data will be removed and you won't be able to see it on your dashboard anymore if you proceed with the removal."}
-          </p>
-        </Modal.Content>
-        <Modal.Actions>
-          <Button
-            basic
-            inverted
-            onClick={() => setDeleteModal(false)}
-            >
-            Go back
-          </Button>
-          <Button
-            color="orange"
-            inverted
-            loading={!!chartLoading}
-            onClick={_onDeleteChart}
-            >
-            <Icon name="x" />
-            Remove completely
-          </Button>
-        </Modal.Actions>
-      </Modal>
+      <TransitionablePortal open={!!deleteModal}>
+        <Modal open={!!deleteModal} basic size="small" onClose={() => setDeleteModal(false)}>
+          <Header
+            icon="exclamation triangle"
+            content="Are you sure you want to remove this chart?"
+            />
+          <Modal.Content>
+            <p>
+              {"All the chart data will be removed and you won't be able to see it on your dashboard anymore if you proceed with the removal."}
+            </p>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button
+              basic
+              inverted
+              onClick={() => setDeleteModal(false)}
+              >
+              Go back
+            </Button>
+            <Button
+              color="orange"
+              inverted
+              loading={!!chartLoading}
+              onClick={_onDeleteChart}
+              >
+              <Icon name="x" />
+              Remove completely
+            </Button>
+          </Modal.Actions>
+        </Modal>
+      </TransitionablePortal>
 
       {/* MAKE CHART PUBLIC MODAL */}
-      <Modal
-        open={publicModal}
-        basic
-        size="small"
-        onClose={() => setPublicModal(false)}
-        >
-        <Header
-          icon="exclamation triangle"
-          content="Are you sure you want to make your chart public?"
-          />
-        <Modal.Content>
-          <p>
-            {"Public charts will show in your Public Dashboard page and it can be viewed by everyone that has access to your domain. Nobody other than you and your team will be able to edit or update the chart data."}
-          </p>
-        </Modal.Content>
-        <Modal.Actions>
-          <Button
-            basic
-            inverted
-            onClick={() => setPublicModal(false)}
-            >
-            Go back
-          </Button>
-          <Button
-            color="teal"
-            inverted
-            loading={publicLoading}
-            onClick={_onPublic}
-            >
-            <Icon name="checkmark" />
-            Make the chart public
-          </Button>
-        </Modal.Actions>
-      </Modal>
+      <TransitionablePortal open={publicModal}>
+        <Modal
+          open={publicModal}
+          basic
+          size="small"
+          onClose={() => setPublicModal(false)}
+          >
+          <Header
+            icon="exclamation triangle"
+            content="Are you sure you want to make your chart public?"
+            />
+          <Modal.Content>
+            <p>
+              {"Public charts will show in your Public Dashboard page and it can be viewed by everyone that has access to your domain. Nobody other than you and your team will be able to edit or update the chart data."}
+            </p>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button
+              basic
+              inverted
+              onClick={() => setPublicModal(false)}
+              >
+              Go back
+            </Button>
+            <Button
+              color="teal"
+              inverted
+              loading={publicLoading}
+              onClick={_onPublic}
+              >
+              <Icon name="checkmark" />
+              Make the chart public
+            </Button>
+          </Modal.Actions>
+        </Modal>
+      </TransitionablePortal>
 
       {/* AUTO-UPDATE MODAL */}
-      <Modal
-        open={updateModal}
-        size="small"
-        onClose={() => setUpdateModal(false)}
-        >
-        <Modal.Header>
-          Set up auto-update for your chart
-        </Modal.Header>
-        <Modal.Content>
-          <Form>
-            <Form.Field>
-              <label>Select the desired frequency</label>
-              <Dropdown
-                placeholder="Select the frequency"
-                selection
-                options={[{
-                  text: "Don't auto update",
-                  value: 0,
-                }, {
-                  text: "Every minute",
-                  value: 60,
-                }, {
-                  text: "Every 5 minutes",
-                  value: 300,
-                }, {
-                  text: "Every 15 minutes",
-                  value: 900,
-                }, {
-                  text: "Every 30 minutes",
-                  value: 1800,
-                }, {
-                  text: "Every hour",
-                  value: 3600,
-                }, {
-                  text: "Every 3 hours",
-                  value: 10800,
-                }, {
-                  text: "Every day",
-                  value: 86400,
-                }, {
-                  text: "Every week",
-                  value: 604800,
-                }, {
-                  text: "Every month",
-                  value: 2592000,
-                }]}
-                value={updateFrequency || 0}
-                onChange={(e, data) => setUpdateFrequency(data.value)}
-                />
-            </Form.Field>
-          </Form>
-        </Modal.Content>
-        <Modal.Actions>
-          <Button
-            onClick={() => setUpdateModal(false)}
-            >
-            Cancel
-          </Button>
-          <Button
-            primary
-            loading={autoUpdateLoading}
-            onClick={_onChangeAutoUpdate}
-            >
-            <Icon name="checkmark" />
-            Save
-          </Button>
-        </Modal.Actions>
-      </Modal>
+      <TransitionablePortal open={updateModal}>
+        <Modal
+          open={updateModal}
+          size="small"
+          onClose={() => setUpdateModal(false)}
+          >
+          <Modal.Header>
+            Set up auto-update for your chart
+          </Modal.Header>
+          <Modal.Content>
+            <Form>
+              <Form.Field>
+                <label>Select the desired frequency</label>
+                <Dropdown
+                  placeholder="Select the frequency"
+                  selection
+                  options={[{
+                    text: "Don't auto update",
+                    value: 0,
+                  }, {
+                    text: "Every minute",
+                    value: 60,
+                  }, {
+                    text: "Every 5 minutes",
+                    value: 300,
+                  }, {
+                    text: "Every 15 minutes",
+                    value: 900,
+                  }, {
+                    text: "Every 30 minutes",
+                    value: 1800,
+                  }, {
+                    text: "Every hour",
+                    value: 3600,
+                  }, {
+                    text: "Every 3 hours",
+                    value: 10800,
+                  }, {
+                    text: "Every day",
+                    value: 86400,
+                  }, {
+                    text: "Every week",
+                    value: 604800,
+                  }, {
+                    text: "Every month",
+                    value: 2592000,
+                  }]}
+                  value={updateFrequency || 0}
+                  onChange={(e, data) => setUpdateFrequency(data.value)}
+                  />
+              </Form.Field>
+            </Form>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button
+              onClick={() => setUpdateModal(false)}
+              >
+              Cancel
+            </Button>
+            <Button
+              primary
+              loading={autoUpdateLoading}
+              onClick={_onChangeAutoUpdate}
+              >
+              <Icon name="checkmark" />
+              Save
+            </Button>
+          </Modal.Actions>
+        </Modal>
+      </TransitionablePortal>
 
       {/* EMBED CHART MODAL */}
       {selectedChart && (
-      <Modal
-        open={embedModal}
-        onClose={() => setEmbedModal(false)}
-          >
-        <Modal.Header>
-          <Icon name="code" />
-          {" Embed your chart on other websites"}
-        </Modal.Header>
-        <Modal.Content>
-          <Form>
-            <Form.Field>
-              <label>
-                {"Copy the following code on the website you wish to add your chart in."}
-              </label>
-              <TextArea
-                id="iframe-text"
-                value={`<iframe src="${SITE_HOST}/chart/${selectedChart.id}/embedded" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0"></iframe>`}
-              />
-            </Form.Field>
-            <Form.Field>
-              <Button
-                primary={!iframeCopied}
-                positive={iframeCopied}
-                basic
-                icon
-                labelPosition="right"
-                onClick={_onCopyIframe}
+        <TransitionablePortal open={embedModal}>
+          <Modal
+            open={embedModal}
+            onClose={() => setEmbedModal(false)}
               >
-                {!iframeCopied && <Icon name="clipboard" />}
-                {iframeCopied && <Icon name="checkmark" />}
-                {!iframeCopied && "Copy iframe"}
-                {iframeCopied && "Copied to your clipboard"}
-              </Button>
-            </Form.Field>
-          </Form>
+            <Modal.Header>
+              <Icon name="code" />
+              {" Embed your chart on other websites"}
+            </Modal.Header>
+            <Modal.Content>
+              <Form>
+                <Form.Field>
+                  <label>
+                    {"Copy the following code on the website you wish to add your chart in."}
+                  </label>
+                  <TextArea
+                    id="iframe-text"
+                    value={`<iframe src="${SITE_HOST}/chart/${selectedChart.id}/embedded" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0"></iframe>`}
+                  />
+                </Form.Field>
+                <Form.Field>
+                  <Button
+                    primary={!iframeCopied}
+                    positive={iframeCopied}
+                    basic
+                    icon
+                    labelPosition="right"
+                    onClick={_onCopyIframe}
+                  >
+                    {!iframeCopied && <Icon name="clipboard" />}
+                    {iframeCopied && <Icon name="checkmark" />}
+                    {!iframeCopied && "Copy iframe"}
+                    {iframeCopied && "Copied to your clipboard"}
+                  </Button>
+                </Form.Field>
+              </Form>
 
-          <Divider />
-          <Form>
-            <Form.Field>
-              <label>{"Or get just the URL"}</label>
-              <Input value={`${SITE_HOST}/chart/${selectedChart.id}/embedded`} id="url-text" />
-            </Form.Field>
-            <Form.Field>
+              <Divider />
+              <Form>
+                <Form.Field>
+                  <label>{"Or get just the URL"}</label>
+                  <Input value={`${SITE_HOST}/chart/${selectedChart.id}/embedded`} id="url-text" />
+                </Form.Field>
+                <Form.Field>
+                  <Button
+                    primary={!urlCopied}
+                    positive={urlCopied}
+                    basic
+                    icon
+                    labelPosition="right"
+                    onClick={_onCopyUrl}
+                  >
+                    {!urlCopied && <Icon name="clipboard" />}
+                    {urlCopied && <Icon name="checkmark" />}
+                    {!urlCopied && "Copy URL"}
+                    {urlCopied && "Copied to your clipboard"}
+                  </Button>
+                </Form.Field>
+              </Form>
+            </Modal.Content>
+            <Modal.Actions>
+              {selectedChart.public && (
               <Button
-                primary={!urlCopied}
-                positive={urlCopied}
-                basic
-                icon
-                labelPosition="right"
-                onClick={_onCopyUrl}
+                onClick={() => setEmbedModal(false)}
               >
-                {!urlCopied && <Icon name="clipboard" />}
-                {urlCopied && <Icon name="checkmark" />}
-                {!urlCopied && "Copy URL"}
-                {urlCopied && "Copied to your clipboard"}
+                Done
               </Button>
-            </Form.Field>
-          </Form>
-        </Modal.Content>
-        <Modal.Actions>
-          {selectedChart.public && (
-          <Button
-            onClick={() => setEmbedModal(false)}
-          >
-            Done
-          </Button>
-          )}
-          {!selectedChart.public && (
-          <Button
-            onClick={() => setEmbedModal(false)}
-          >
-            Cancel
-          </Button>
-          )}
-          {!selectedChart.public && (
-          <Button
-            primary
-            onClick={() => {
-              _onPublic();
-              setEmbedModal(false);
-            }}
-          >
-            Make public
-          </Button>
-          )}
-        </Modal.Actions>
-      </Modal>
+              )}
+              {!selectedChart.public && (
+              <Button
+                onClick={() => setEmbedModal(false)}
+              >
+                Cancel
+              </Button>
+              )}
+              {!selectedChart.public && (
+              <Button
+                primary
+                onClick={() => {
+                  _onPublic();
+                  setEmbedModal(false);
+                }}
+              >
+                Make public
+              </Button>
+              )}
+            </Modal.Actions>
+          </Modal>
+        </TransitionablePortal>
       )}
     </div>
   );

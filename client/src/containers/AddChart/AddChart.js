@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Grid, Button, Icon, Header, Divider, Popup,
-  Form, Input, List, Message, Checkbox, Modal, Step,
+  Form, Input, List, Message, Checkbox, Modal, Step, TransitionablePortal,
 } from "semantic-ui-react";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
@@ -591,35 +591,37 @@ function AddChart(props) {
         userTutorials={user.tutorials}
       />
 
-      <Modal open={startTutorial} onClose={() => setStartTutorial(false)}>
-        <Modal.Header>Welcome to the chart builder!</Modal.Header>
-        <Modal.Content>
-          <Header>{"This is the place where your charts will take shape."}</Header>
-          <p>
-            {"It is recommended that you read through the next steps to get familiar with the interface. "}
-            {"You can always restart the tutorial from the upper right corner at any later time."}
-          </p>
-          <p>{"But without further ado, let's get started"}</p>
-        </Modal.Content>
-        <Modal.Actions>
-          <Button
-            content="Cancel walkthrough"
-            onClick={_onCancelWalkthrough}
-          />
-          <Button
-            positive
-            icon
-            labelPosition="right"
-            onClick={() => {
-              setStartTutorial(false);
-              _changeTour("addchart");
-            }}
-          >
-            <Icon name="chevron right" />
-            Get started
-          </Button>
-        </Modal.Actions>
-      </Modal>
+      <TransitionablePortal open={startTutorial}>
+        <Modal open={startTutorial} onClose={() => setStartTutorial(false)}>
+          <Modal.Header>Welcome to the chart builder!</Modal.Header>
+          <Modal.Content>
+            <Header>{"This is the place where your charts will take shape."}</Header>
+            <p>
+              {"It is recommended that you read through the next steps to get familiar with the interface. "}
+              {"You can always restart the tutorial from the upper right corner at any later time."}
+            </p>
+            <p>{"But without further ado, let's get started"}</p>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button
+              content="Cancel walkthrough"
+              onClick={_onCancelWalkthrough}
+            />
+            <Button
+              positive
+              icon
+              labelPosition="right"
+              onClick={() => {
+                setStartTutorial(false);
+                _changeTour("addchart");
+              }}
+            >
+              <Icon name="chevron right" />
+              Get started
+            </Button>
+          </Modal.Actions>
+        </Modal>
+      </TransitionablePortal>
     </div>
   );
 }

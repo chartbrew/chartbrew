@@ -5,7 +5,7 @@ import { withRouter } from "react-router";
 import _ from "lodash";
 import {
   Popup, Icon, Divider, Dropdown, Button, Grid,
-  Form, Input, Modal, Header, Menu,
+  Form, Input, Modal, Header, Menu, TransitionablePortal,
 } from "semantic-ui-react";
 import moment from "moment";
 
@@ -337,36 +337,38 @@ function Dataset(props) {
       )}
 
       {/* DELETE CONFIRMATION MODAL */}
-      <Modal open={deleteModal} basic size="small" onClose={() => setDeleteModal(false)}>
-        <Header
-          icon="exclamation triangle"
-          content="Are you sure you want to remove this dataset?"
-        />
-        <Modal.Content>
-          <p>
-            {"This action cannot be reversed."}
-          </p>
-        </Modal.Content>
-        <Modal.Actions>
-          <Button
-            basic
-            inverted
-            onClick={() => setDeleteModal(false)}
-          >
-            Go back
-          </Button>
-          <Button
-            negative
-            loading={deleteLoading}
-            onClick={_onDeleteDataset}
-            icon
-            labelPosition="right"
-          >
-            <Icon name="trash" />
-            Remove dataset
-          </Button>
-        </Modal.Actions>
-      </Modal>
+      <TransitionablePortal open={deleteModal}>
+        <Modal open={deleteModal} basic size="small" onClose={() => setDeleteModal(false)}>
+          <Header
+            icon="exclamation triangle"
+            content="Are you sure you want to remove this dataset?"
+          />
+          <Modal.Content>
+            <p>
+              {"This action cannot be reversed."}
+            </p>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button
+              basic
+              inverted
+              onClick={() => setDeleteModal(false)}
+            >
+              Go back
+            </Button>
+            <Button
+              negative
+              loading={deleteLoading}
+              onClick={_onDeleteDataset}
+              icon
+              labelPosition="right"
+            >
+              <Icon name="trash" />
+              Remove dataset
+            </Button>
+          </Modal.Actions>
+        </Modal>
+      </TransitionablePortal>
     </div>
   );
 }

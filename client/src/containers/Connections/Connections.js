@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import moment from "moment";
 import {
   Card, Image, Button, Icon, Container, Divider,
-  Modal, Header, Message, Segment, Step,
+  Modal, Header, Message, Segment, Step, TransitionablePortal,
 } from "semantic-ui-react";
 
 import MongoConnectionForm from "./components/MongoConnectionForm";
@@ -383,35 +383,37 @@ function Connections(props) {
       </Container>
 
       {/* REMOVE CONFIRMATION MODAL */}
-      <Modal open={removeModal} basic size="small" onClose={() => setRemoveModal(false)}>
-        <Header
-          icon="exclamation triangle"
-          content="Are you sure you want to remove this connection?"
-        />
-        <Modal.Content>
-          <p>
-            {"All the charts that are using this connection will stop working."}
-          </p>
-        </Modal.Content>
-        <Modal.Actions>
-          <Button
-            basic
-            inverted
-            onClick={() => setRemoveModal(false)}
-          >
-            Go back
-          </Button>
-          <Button
-            color="orange"
-            inverted
-            loading={!!removeLoading}
-            onClick={_onRemoveConnection}
-          >
-            <Icon name="x" />
-            Remove completely
-          </Button>
-        </Modal.Actions>
-      </Modal>
+      <TransitionablePortal open={removeModal}>
+        <Modal open={removeModal} basic size="small" onClose={() => setRemoveModal(false)}>
+          <Header
+            icon="exclamation triangle"
+            content="Are you sure you want to remove this connection?"
+          />
+          <Modal.Content>
+            <p>
+              {"All the charts that are using this connection will stop working."}
+            </p>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button
+              basic
+              inverted
+              onClick={() => setRemoveModal(false)}
+            >
+              Go back
+            </Button>
+            <Button
+              color="orange"
+              inverted
+              loading={!!removeLoading}
+              onClick={_onRemoveConnection}
+            >
+              <Icon name="x" />
+              Remove completely
+            </Button>
+          </Modal.Actions>
+        </Modal>
+      </TransitionablePortal>
     </div>
   );
 }
