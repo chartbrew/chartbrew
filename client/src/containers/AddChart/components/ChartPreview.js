@@ -2,12 +2,11 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Container, Button, Icon, Header, Image, Dimmer, Dropdown, Grid, Popup
+  Container, Button, Icon, Header, Image, Dimmer, Dropdown, Grid, Popup, Segment,
 } from "semantic-ui-react";
 import {
   Doughnut, Polar, Pie, Radar
 } from "react-chartjs-2";
-import BarChart from "../../Chart/components/BarChart";
 
 import lineChartImage from "../../../assets/charts/lineChart.jpg";
 import barChartImage from "../../../assets/charts/barChart.jpg";
@@ -16,6 +15,7 @@ import polarChartImage from "../../../assets/charts/polarChart.jpg";
 import pieChartImage from "../../../assets/charts/pieChart.jpg";
 import doughnutChartImage from "../../../assets/charts/doughnutChart.jpg";
 import LineChart from "../../Chart/components/LineChart";
+import BarChart from "../../Chart/components/BarChart";
 
 function ChartPreview(props) {
   const {
@@ -74,7 +74,7 @@ function ChartPreview(props) {
   return (
     <>
       {chart && chart.chartData && !typesVisible && (
-        <Container>
+        <Segment>
           <Grid columns={2}>
             <Grid.Column width={6}>
               {chart.type !== "pie" && (
@@ -181,7 +181,7 @@ function ChartPreview(props) {
                 height={300}
               />
             )}
-        </Container>
+        </Segment>
       )}
 
       <Container textAlign="center">

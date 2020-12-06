@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Line } from "react-chartjs-2";
-import { Statistic } from "semantic-ui-react";
+import { Header } from "semantic-ui-react";
 import uuid from "uuid/v4";
 
 function LineChart(props) {
@@ -25,35 +25,31 @@ function LineChart(props) {
             {chart.chartData
               && chart.chartData.data
               && chart.chartData.data.datasets && (
-                <div style={styles.kpiContainer}>
-                  <Statistic.Group
-                    widths={chart.chartData.data.datasets.length}
-                    style={styles.kpiGroup(chart.chartSize)}
-                    size={
-                      (chart.chartSize > 1
-                      || (chart.chartSize === 1 && chart.chartData.data.datasets.length < 3))
-                      && "large"
-                    }
-                    horizontal={chart.chartSize === 1}
-                  >
-                    {chart.chartData.data.datasets.map((dataset, index) => (
-                      <Statistic key={uuid()}>
-                        <Statistic.Value>
-                          {dataset.data && dataset.data[dataset.data.length - 1]}
-                        </Statistic.Value>
-                        <Statistic.Label>
-                          <span
-                            style={
-                              chart.Datasets
-                              && styles.datasetLabelColor(chart.Datasets[index].datasetColor)
-                            }
-                          >
-                            {dataset.label}
-                          </span>
-                        </Statistic.Label>
-                      </Statistic>
-                    ))}
-                  </Statistic.Group>
+                <div style={styles.kpiContainer(chart.chartSize)}>
+                  {chart.chartData.data.datasets.map((dataset, index) => (
+                    <Header
+                      as="h1"
+                      size="massive"
+                      style={styles.kpiItem(
+                        chart.chartSize,
+                        chart.chartData.data.datasets.length,
+                        index
+                      )}
+                      key={uuid()}
+                    >
+                      {dataset.data && dataset.data[dataset.data.length - 1]}
+                      <Header.Subheader style={{ color: "black" }}>
+                        <span
+                          style={
+                            chart.Datasets
+                            && styles.datasetLabelColor(chart.Datasets[index].datasetColor)
+                          }
+                        >
+                          {dataset.label}
+                        </span>
+                      </Header.Subheader>
+                    </Header>
+                  ))}
                 </div>
             )}
           </div>
@@ -71,17 +67,20 @@ function LineChart(props) {
 }
 
 const styles = {
-  kpiContainer: {
+  kpiContainer: (size) => ({
     position: "absolute",
+    top: "50%",
     left: "50%",
-    top: "30%",
-    width: "100%",
-  },
-  kpiGroup: (size) => ({
-    position: "relative",
-    left: size === 1 ? "-20%" : "-50%",
-    top: "-30%",
-    width: "100%",
+    transform: "translate(-50%, -50%)",
+    display: "flex",
+    flexDirection: size === 1 ? "column" : "row",
+  }),
+  kpiItem: (size, items, index) => ({
+    fontSize: size === 1 ? "2.5em" : "4em",
+    textAlign: "center",
+    margin: 0,
+    marginBottom: size === 1 && index < items - 1 ? (50 - items * 10) : 0,
+    marginRight: items > 1 && index < items - 1 && size > 1 ? 50 : 0,
   }),
   datasetLabelColor: (color) => ({
     borderBottom: `solid 3px ${color}`,
