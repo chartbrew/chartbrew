@@ -40,7 +40,7 @@ function ApiConnectionForm(props) {
   const [testLoading, setTestLoading] = useState(false);
   const [connection, setConnection] = useState({ type: "api", optionsArray: [] });
   const [errors, setErrors] = useState({});
-  const [menuType, setMenuType] = useState("authorization");
+  const [menuType, setMenuType] = useState("authentication");
   const [seePass, setSeePass] = useState(false);
 
   useEffect(() => {
@@ -208,10 +208,10 @@ function ApiConnectionForm(props) {
             <Divider hidden />
             <Menu secondary>
               <Menu.Item
-                active={menuType === "authorization"}
-                onClick={() => setMenuType("authorization")}
+                active={menuType === "authentication"}
+                onClick={() => setMenuType("authentication")}
               >
-                Authorization
+                Authentication
                 <Label
                   circular
                   color={connection.authentication && connection.authentication.type !== "no_auth" ? "violet" : null}
@@ -230,7 +230,7 @@ function ApiConnectionForm(props) {
             </Menu>
             <Divider />
 
-            {menuType === "authorization" && (
+            {menuType === "authentication" && (
               <Form>
                 <Form.Group widths={2}>
                   <Form.Field width={4}>
