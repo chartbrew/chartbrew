@@ -311,6 +311,7 @@ module.exports = (app) => {
       .then((chart) => {
         if (!chart.public) throw new Error("401");
 
+        console.log("chart", chart);
         return res.status(200).send({
           name: chart.name,
           type: chart.type,
@@ -319,6 +320,7 @@ module.exports = (app) => {
           chartData: chart.chartData,
           Datasets: chart.Datasets,
           mode: chart.mode,
+          chartSize: chart.chartSize,
         });
       })
       .catch((error) => {
