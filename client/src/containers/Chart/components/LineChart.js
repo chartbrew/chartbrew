@@ -80,7 +80,7 @@ const styles = {
     textAlign: "center",
     margin: 0,
     marginBottom: size === 1 && index < items - 1 ? (50 - items * 10) : 0,
-    marginRight: index < items - 1 && size > 1 ? (50 * size) - (items * 8) : 0,
+    marginRight: index < items - 1 && size > 1 ? (40 * size) - (items * 8) : 0,
   }),
   datasetLabelColor: (color) => ({
     borderBottom: `solid 3px ${color}`,
