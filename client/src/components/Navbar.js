@@ -24,6 +24,7 @@ function Navbar(props) {
   const [loading, setLoading] = useState(true);
   const [changelogPadding, setChangelogPadding] = useState(true);
   const [feedbackModal, setFeedbackModal] = useState();
+  const [teamOwned, setTeamOwned] = useState({});
 
   const {
     match, getTeam, getProject, changeActiveProject, getProjectCharts,
@@ -41,6 +42,20 @@ function Navbar(props) {
       }
     }, 1000);
   }, []);
+
+  useEffect(() => {
+    if (teams.length > 0) {
+      teams.map((t) => {
+        t.TeamRoles.map((tr) => {
+          if (tr.user_id === user.id && tr.role === "owner") {
+            setTeamOwned(t);
+          }
+          return tr;
+        });
+        return t;
+      });
+    }
+  }, [teams]);
 
   const _onTeamChange = (teamId, projectId) => {
     setLoading(true);
@@ -65,7 +80,10 @@ function Navbar(props) {
       .catch(() => {});
   };
 
-  const _canAccess = (role) => {
+  const _canAccess = (role, teamData) => {
+    if (teamData) {
+      return canAccess(role, user.id, teamData.TeamRoles);
+    }
     return canAccess(role, user.id, team.TeamRoles);
   };
 
@@ -172,8 +190,8 @@ function Navbar(props) {
             <Dropdown.Item as={Link} to="/user">My space</Dropdown.Item>
             <Dropdown.Item as={Link} to="/edit">Profile</Dropdown.Item>
 
-            {!hideTeam && _canAccess("admin") && <Dropdown.Divider />}
-            {!hideTeam && _canAccess("admin") && <Dropdown.Item as={Link} to={`/manage/${team.id}/settings`}>Team settings</Dropdown.Item>}
+            {_canAccess("admin", teamOwned) && <Dropdown.Divider />}
+            {_canAccess("admin", teamOwned) && <Dropdown.Item as={Link} to={`/manage/${team.id || teamOwned.id}/settings`}>Team settings</Dropdown.Item>}
 
             <Dropdown.Divider />
             <Dropdown.Item

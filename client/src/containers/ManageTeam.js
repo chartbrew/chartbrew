@@ -94,13 +94,6 @@ class ManageTeam extends Component {
               Manage the team
             </Header>
             <Menu secondary vertical fluid>
-              <Menu.Item
-                active={this.checkIfActive("members")}
-                as={Link}
-                to={`/manage/${match.params.teamId}/members`}>
-                Members
-              </Menu.Item>
-
               {this._canAccess("owner")
                 && (
                 <Menu.Item
@@ -110,6 +103,12 @@ class ManageTeam extends Component {
                   Settings
                 </Menu.Item>
                 )}
+              <Menu.Item
+                active={this.checkIfActive("members")}
+                as={Link}
+                to={`/manage/${match.params.teamId}/members`}>
+                Members
+              </Menu.Item>
             </Menu>
           </Grid.Column>
 

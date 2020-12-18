@@ -253,7 +253,7 @@ function UserDashboard(props) {
                   floated="right"
                   labelPosition="right"
                   as={Link}
-                  to={`/manage/${key.id}/members`}
+                  to={`/manage/${key.id}/settings`}
                 >
                   <Icon name="settings" />
                   Team settings
