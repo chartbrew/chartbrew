@@ -66,7 +66,7 @@ function ChartSettings(props) {
       setLabelStartDate(newStartDate.format("ll"));
       setLabelEndDate(newEndDate.format("ll"));
     }
-  }, [currentEndDate]);
+  }, [currentEndDate, dateRange]);
 
   const _onViewRange = (value, init) => {
     if (!value) {
