@@ -196,6 +196,15 @@ function Navbar(props) {
             <Dropdown.Divider />
             <Dropdown.Item
               as="a"
+              href="https://blog.chartbrew.com/tag/tutorial/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Icon name="student" />
+              Tutorials
+            </Dropdown.Item>
+            <Dropdown.Item
+              as="a"
               href="https://github.com/razvanilin/chartbrew"
               target="_blank"
               rel="noopener noreferrer"
