@@ -222,10 +222,17 @@ function AddChart(props) {
       includeZeros: typeof includeZeros !== "undefined" ? includeZeros : newChart.includeZeros,
       currentEndDate: typeof currentEndDate !== "undefined" ? currentEndDate : newChart.currentEndDate,
     };
-    _onChangeChart(tempChart, false);
+
+    let skipParsing = false;
+    if (pointRadius || displayLegend) {
+      skipParsing = true;
+    }
+
+    _onChangeChart(tempChart, skipParsing);
   };
 
-  const _onChangeChart = (data) => {
+  const _onChangeChart = (data, skipParsing) => {
+    let shouldSkipParsing = skipParsing;
     setNewChart({ ...newChart, ...data });
     setLoading(true);
     return updateChart(match.params.projectId, match.params.chartId, data)
@@ -236,19 +243,14 @@ function AddChart(props) {
             onOpen: () => setToastOpen(true),
           });
         }
-        let skipParsing = false;
-        if (data.pointRadius
-          || data.displayLegend
-          || data.datasetColor
-          || data.fillColor
-          || data.type
-        ) {
-          skipParsing = true;
+
+        if (data.datasetColor || data.fillColor || data.type) {
+          shouldSkipParsing = true;
         }
 
         // run the preview refresh only when it's needed
         if (!data.name) {
-          _onRefreshPreview(skipParsing);
+          _onRefreshPreview(shouldSkipParsing);
         }
 
         setLoading(false);
