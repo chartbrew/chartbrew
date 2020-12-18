@@ -3,7 +3,6 @@ const moment = require("moment");
 
 const determineType = require("../modules/determineType");
 
-// TODO: deal with nested objects when field = "fieldParent.fieldChild"
 function compareDates(data, field, condition) {
   let newData = data;
 
@@ -14,27 +13,32 @@ function compareDates(data, field, condition) {
     for (let i = 0; i < selectors.length; i++) {
       value = value[selectors[i]];
     }
-    return value;
+
+    // check for a potential timestamp format
+    if (value.toString().length === 10) {
+      return moment(value, "X");
+    }
+    return moment(value);
   };
 
   switch (condition.operator) {
     case "is":
-      newData = _.filter(newData, (o) => moment(getValue(o)).isSame(condition.value));
+      newData = _.filter(newData, (o) => getValue(o).isSame(condition.value));
       break;
     case "isNot":
-      newData = _.filter(newData, (o) => !moment(getValue(o)).isSame(condition.value));
+      newData = _.filter(newData, (o) => getValue(o).isSame(condition.value));
       break;
     case "greaterThan":
-      newData = _.filter(newData, (o) => moment(getValue(o)).isAfter(condition.value));
+      newData = _.filter(newData, (o) => getValue(o).isAfter(condition.value));
       break;
     case "greaterOrEqual":
-      newData = _.filter(newData, (o) => moment(getValue(o)).isSameOrAfter(condition.value));
+      newData = _.filter(newData, (o) => getValue(o).isSameOrAfter(condition.value));
       break;
     case "lessThan":
-      newData = _.filter(newData, (o) => moment(getValue(o)).isBefore(condition.value));
+      newData = _.filter(newData, (o) => getValue(o).isBefore(condition.value));
       break;
     case "lessThanOrEqual":
-      newData = _.filter(newData, (o) => moment(getValue(o)).isSameOrBefore(condition.value));
+      newData = _.filter(newData, (o) => getValue(o).isSameOrBefore(condition.value));
       break;
     default:
       break;
