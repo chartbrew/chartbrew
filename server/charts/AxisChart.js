@@ -170,7 +170,7 @@ class AxisChart {
         // Y CHART data processing
         switch (yAxisOperation) {
           case "none":
-            yAxisData = this.noOp(yAxisData);
+            yAxisData = this.noOp(yAxisData, xAxisData.filtered, xType);
             break;
           case "count":
             yAxisData = this.count(xAxisData.formatted);
@@ -182,7 +182,7 @@ class AxisChart {
             yAxisData = this.sum(xAxisData.formatted, yAxisData, yType);
             break;
           default:
-            yAxisData = this.noOp(yAxisData);
+            yAxisData = this.noOp(yAxisData, xAxisData.filtered, xType);
             break;
         }
 
@@ -436,26 +436,61 @@ class AxisChart {
   }
 
   /* OPERATIONS */
-  noOp(yData) {
+  noOp(yData, xData, xType) {
     const finalData = [];
-    yData.map((item, index) => {
-      if (index > 0 && this.chart.includeZeros) {
-        if (moment(item.x).diff(moment(yData[index - 1].x), this.chart.timeInterval) > 1) {
-          if (index > 0 && this.chart.subType.indexOf("AddTimeseries") > -1) {
-            finalData.push(finalData[index - 1]);
-          } else {
-            finalData.push(0);
+
+    if (xType !== "date") {
+      yData.map((item, index) => {
+        if (index > 0 && this.chart.includeZeros) {
+          if (moment(item.x).diff(moment(yData[index - 1].x), this.chart.timeInterval) > 1) {
+            if (index > 0 && this.chart.subType.indexOf("AddTimeseries") > -1) {
+              finalData.push(finalData[index - 1]);
+            } else {
+              finalData.push(0);
+            }
           }
         }
-      }
 
-      if (index > 0 && this.chart.subType.indexOf("AddTimeseries") > -1) {
-        finalData.push(item.y + finalData[index - 1]);
-      } else {
-        finalData.push(item.y);
-      }
-      return item;
-    });
+        if (index > 0 && this.chart.subType.indexOf("AddTimeseries") > -1) {
+          finalData.push(item.y + finalData[index - 1]);
+        } else {
+          finalData.push(item.y);
+        }
+
+        return item;
+      });
+    } else {
+      let inserted = false;
+      xData.map((d) => {
+        if (inserted && this.chart.includeZeros) {
+          inserted = false;
+          return d;
+        }
+
+        const potentialVal = _
+          .find(yData, (o) => moment(o.x).isSame(moment(d), this.chart.timeInterval));
+
+        if (potentialVal && (finalData.length === 0 || this.chart.subType.indexOf("AddTimeseries") === -1)) {
+          finalData.push(potentialVal.y);
+          inserted = true;
+        }
+        if (potentialVal && finalData.length > 1 && this.chart.subType.indexOf("AddTimeseries") > -1) {
+          finalData.push(potentialVal.y + finalData[finalData.length - 2]);
+          inserted = true;
+        }
+        if (!potentialVal && this.chart.subType.indexOf("AddTimeseries") > -1) {
+          finalData.push(finalData[finalData.length - 2]);
+          inserted = true;
+        }
+        if (!potentialVal && this.chart.includeZeros) {
+          finalData.push(0);
+          // inserted = true;
+        }
+
+        return d;
+      });
+    }
+
     return finalData;
   }
 
