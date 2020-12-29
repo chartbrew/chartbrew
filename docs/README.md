@@ -23,10 +23,10 @@ The setup doesn't work in Windows PowerShell or cmd.exe. If you're using Windows
 #### Quickstart
 
 ```sh
-npx create-chartbrew-app myApp --dbname="chartbrew" --dbusername="root" --dbpassword="" --dbhost="localhost"
+npx create-chartbrew-app chartbrew
 ```
 
-The arguments are optional, but they set the environmental variables needed for the project to run. Check the section below to see what needs to be set.
+The CLI tool creates a `chartbrew/.env` file which you can configure at any time if you want to change the database, API & client host, etc. The file contains comments explaining what each environmental variable is for.
 
 #### Developing and extending the application
 
