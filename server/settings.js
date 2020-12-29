@@ -1,5 +1,5 @@
 module.exports = {
-  port: 3210,
+  port: process.env.CB_API_PORT,
   secret: process.env.CB_SECRET,
   client: process.env.REACT_APP_CLIENT_HOST,
   api: process.env.CB_API_HOST,
