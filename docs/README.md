@@ -54,16 +54,6 @@ cd server
 npm run db:migrate
 ```
 
-### Setting up the frontend settings
-
-Modify the constants to match your environment.
-
-`API_HOST` - where your API is running
-
-`DOCUMENTATION_HOST` - in case you're running the documentation somewhere on your server (you can also leave it to the live Chartbrew one)
-
-`SITE_HOST` - this is where your frontend is sitting
-
 ### Run the project in Development
 
 Open two terminals, one for front-end and the other for back-end.
