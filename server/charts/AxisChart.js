@@ -283,7 +283,8 @@ class AxisChart {
             this.axisData.x[i].splice(index, 0, x);
 
             if (this.chart.subType.indexOf("AddTimeseries") > -1) {
-              this.axisData.y[i].splice(index, 0, this.axisData.y[i][index]);
+              if (index > 0) this.axisData.y[i].splice(index, 0, this.axisData.y[i][index - 1]);
+              else this.axisData.y[i].splice(index, 0, this.axisData.y[i][index]);
             } else {
               this.axisData.y[i].splice(index, 0, 0);
             }
