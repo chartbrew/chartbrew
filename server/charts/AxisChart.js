@@ -39,6 +39,13 @@ class AxisChart {
         return dataset;
       });
 
+      let startDate;
+      let endDate;
+      if (this.chart.startDate && this.chart.endDate) {
+        startDate = moment(this.chart.startDate);
+        endDate = moment(this.chart.endDate);
+      }
+
       for (let i = 0; i < this.datasets.length; i++) {
         const dataset = this.datasets[i];
         const { yAxisOperation, dateField } = dataset.options;
@@ -53,9 +60,6 @@ class AxisChart {
         let filteredData = dataFilter(dataset.data, xAxis, dataset.options.conditions);
 
         if (dateField && this.chart.startDate && this.chart.endDate && canDateFilter) {
-          let startDate = moment(this.chart.startDate);
-          let endDate = moment(this.chart.endDate);
-
           if (this.chart.currentEndDate) {
             const timeDiff = endDate.diff(startDate, "days");
             endDate = moment().endOf("day");
@@ -277,14 +281,23 @@ class AxisChart {
       unifiedX = _.uniq(unifiedX)
         .sort((a, b) => moment(a, this.dateFormat).diff(moment(b, this.dateFormat)));
 
+      // if we're dealing with dates, make sure to add the missing ones at the end
+      if (gXType === "date" && startDate && endDate) {
+        const lastValue = moment(unifiedX[unifiedX.length - 1], this.dateFormat);
+        lastValue.add(1, this.chart.timeInterval);
+        while (lastValue.isBefore(endDate)) {
+          unifiedX.push(lastValue.clone().format(this.dateFormat));
+          lastValue.add(1, this.chart.timeInterval);
+        }
+      }
+
       unifiedX.map((x, index) => {
         for (let i = 0; i < this.axisData.x.length; i++) {
           if (_.indexOf(this.axisData.x[i], x) === -1) {
             this.axisData.x[i].splice(index, 0, x);
 
-            if (this.chart.subType.indexOf("AddTimeseries") > -1) {
-              if (index > 0) this.axisData.y[i].splice(index, 0, this.axisData.y[i][index - 1]);
-              else this.axisData.y[i].splice(index, 0, this.axisData.y[i][index]);
+            if (index > 0 && this.chart.subType.indexOf("AddTimeseries") > -1) {
+              this.axisData.y[i].splice(index, 0, this.axisData.y[i][index - 1]);
             } else {
               this.axisData.y[i].splice(index, 0, 0);
             }
@@ -326,18 +339,21 @@ class AxisChart {
       formatted: [],
     };
 
-    let axisData = data;
-    for (let i = 0; i < axisData.length; i++) {
+    let axisData = [];
+    data.map((item) => {
       if (
-        parseInt(axisData[i], 10).toString() === axisData[i].toString()
-        && axisData[i].toString().length === 10
+        item
+        && parseInt(item, 10).toString() === item.toString()
+        && item.toString().length === 10
       ) {
-        axisData[i] = moment(axisData[i], "X");
-      } else {
-        axisData[i] = moment(axisData[i]);
+        axisData.push(moment(item, "X"));
+      } else if (item) {
+        axisData.push(moment(item));
       }
-    }
-    axisData = axisData.sort((a, b) => a.diff(b));
+      return item;
+    });
+
+    axisData = axisData.sort((a, b) => a && b && a.diff(b));
 
     finalData.filtered = _.clone(axisData);
     finalData.filtered = finalData.filtered.map((item) => item.format());
