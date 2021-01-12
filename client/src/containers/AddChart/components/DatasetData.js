@@ -303,8 +303,8 @@ function DatasetData(props) {
 
   return (
     <Grid style={styles.mainGrid} centered stackable>
-      <Grid.Row columns={2} className="datasetdata-axes-tut">
-        <Grid.Column width={6}>
+      <Grid.Row columns={1} className="datasetdata-axes-tut">
+        <Grid.Column>
           <label><strong>{chartType === "pie" ? "Segment " : "X Axis "}</strong></label>
           <Dropdown
             icon={null}
@@ -319,7 +319,9 @@ function DatasetData(props) {
             scrolling
           />
         </Grid.Column>
-        <Grid.Column width={10}>
+      </Grid.Row>
+      <Grid.Row columns={1}>
+        <Grid.Column>
           <label><strong>{chartType === "pie" ? "Data " : "Y Axis "}</strong></label>
           <Dropdown
             icon={null}
@@ -349,6 +351,7 @@ function DatasetData(props) {
             onChange={_selectYOp}
             scrolling
           />
+          <Divider />
         </Grid.Column>
       </Grid.Row>
       {conditions.map((condition, index) => {

@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import _ from "lodash";
 import {
-  Popup, Icon, Divider, Dropdown, Button, Grid,
+  Popup, Icon, Dropdown, Button, Grid,
   Form, Input, Modal, Header, Menu, TransitionablePortal,
 } from "semantic-ui-react";
 import moment from "moment";
@@ -205,14 +205,36 @@ function Dataset(props) {
         <Grid.Row>
           <Grid.Column>
             <Form>
-              <Form.Field>
-                <Input
-                  type="text"
-                  placeholder="Enter the dataset name"
-                  value={newDataset.legend}
-                  onChange={_onChangeLegend}
-                />
-              </Form.Field>
+              <Form.Group widths="equal">
+                <Form.Field>
+                  <Input
+                    type="text"
+                    placeholder="Enter the dataset name"
+                    value={newDataset.legend}
+                    onChange={_onChangeLegend}
+                  />
+                </Form.Field>
+                <Form.Field>
+                  <Button
+                    primary
+                    icon
+                    labelPosition="right"
+                    onClick={_onSaveDataset}
+                    disabled={!saveRequired}
+                  >
+                    <Icon name="checkmark" />
+                    {saveRequired ? "Save" : "Saved"}
+                  </Button>
+                  <Button
+                    basic
+                    negative
+                    icon
+                    onClick={() => setDeleteModal(true)}
+                  >
+                    <Icon name="trash" />
+                  </Button>
+                </Form.Field>
+              </Form.Group>
             </Form>
           </Grid.Column>
         </Grid.Row>
@@ -299,31 +321,6 @@ function Dataset(props) {
             </Grid.Column>
           </Grid.Row>
         )}
-        <Grid.Row>
-          <Grid.Column className="dataset-actions-tut">
-            <Divider />
-            <Button
-              primary
-              icon
-              labelPosition="right"
-              onClick={_onSaveDataset}
-              disabled={!saveRequired}
-            >
-              <Icon name="checkmark" />
-              {saveRequired ? "Save" : "Saved"}
-            </Button>
-            <Button
-              basic
-              negative
-              icon
-              labelPosition="right"
-              onClick={() => setDeleteModal(true)}
-            >
-              <Icon name="trash" />
-              Remove dataset
-            </Button>
-          </Grid.Column>
-        </Grid.Row>
       </Grid>
 
       {newDataset.connection_id && (
