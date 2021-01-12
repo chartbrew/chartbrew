@@ -10,8 +10,8 @@ const db = {};
 
 const sequelize = new Sequelize(config.database, config.username, config.password, {
   host: config.host,
-  post: 3306,
-  dialect: "mysql",
+  port: config.port,
+  dialect: config.dialect,
   logging: false,
   pool: {
     max: 5,

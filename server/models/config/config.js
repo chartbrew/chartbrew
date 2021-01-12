@@ -7,20 +7,23 @@ module.exports = {
     password: process.env.CB_DB_PASSWORD_DEV,
     database: process.env.CB_DB_NAME_DEV,
     host: process.env.CB_DB_HOST_DEV,
-    dialect: "mysql"
+    dialect: process.env.CB_DB_DIALECT_DEV || "mysql",
+    port: process.env.CB_DB_PORT_DEV || 3306,
   },
   test: {
     username: process.env.CB_DB_USERNAME_DEV,
     password: process.env.CB_DB_PASSWORD_DEV,
     database: process.env.CB_DB_NAME_DEV,
     host: process.env.CB_DB_HOST_DEV,
-    dialect: "mysql"
+    dialect: process.env.CB_DB_DIALECT_DEV || "mysql",
+    port: process.env.CB_DB_PORT_DEV || 3306,
   },
   production: {
     username: process.env.CB_DB_USERNAME,
     password: process.env.CB_DB_PASSWORD,
     database: process.env.CB_DB_NAME,
     host: process.env.CB_DB_HOST,
-    dialect: "mysql",
+    dialect: process.env.CB_DB_DIALECT || "mysql",
+    port: process.env.CB_DB_PORT || 3306,
   }
 };
