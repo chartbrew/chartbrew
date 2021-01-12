@@ -6,7 +6,7 @@
 
 **NPM**
 
-**MySQL** v5+ Server running
+**MySQL** (v5+) or **PostgreSQL** (12.5+)
 
 ## Getting Started
 
@@ -16,9 +16,9 @@
 The setup doesn't work in Windows PowerShell or cmd.exe. If you're using Windows, please use a bash command line like [Git Bash](https://git-scm.com/downloads) or [cygwin](https://www.cygwin.com/install.html)
 :::
 
-#### Run MySQL service and create the chartbrew database
+#### Run your database instance and create the chartbrew database
 
-**Important!** Make sure you have a MySQL service running and you have created a database for Chartbrew. [Follow the instruction here >>](/database/#mysql)
+**Important!** Make sure you have a MySQL or PostgreSQL instance running and you have created a database for Chartbrew. [Follow the instruction here >>](/database/#mysql)
 
 #### Quickstart
 

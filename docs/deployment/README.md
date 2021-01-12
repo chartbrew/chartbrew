@@ -4,6 +4,10 @@
 With time, this guide will be updated with more ways of deploying. Any PR is welcome!
 :::
 
+::: warning WARNING
+**PostgreSQL** is not yet tested in production. If you try it out and it doesn't work, please [open an issue on GitHub](https://github.com/chartbrew/chartbrew/issues) and attach any info that can help debug the problem.
+:::
+
 ## Building the app
 
 Follow the [Getting Started](../#getting-started) guide to set up the project somewhere on your server.

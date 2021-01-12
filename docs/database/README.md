@@ -2,15 +2,18 @@
 
 ## MySQL
 
-In order to successfully start the server-side app you need to have MySQL running on your machine. Create a new database that will be used by Chartbrew.
-
-### Install MySQL and create a database
-
 You can install MySQL from multiple places. You can install it using Xampp, for example. [Download it from here >>](https://www.apachefriends.org/download.html)
 
 After you download it, make sure the MySQL and Apache services are running in the console, then head over to [localhost/phpmyadmin](http://localhost/phpmyadmin) or [127.0.0.1/phpmyadmin](http://127.0.0.1/phpmyadmin) and create a new database using the UI.
 
-### Set up the environmental variables
+## PostgreSQL
+
+An alternative to MySQL, Chartbrew now supports PostgreSQL. After you [download & install Postgres](https://www.enterprisedb.com/downloads/postgresql), you will have to create a new database that Chartbrew can use. You can create a new database using:
+
+* [pgAdmin4](https://www.pgadmin.org/)
+* [Using SQL language](https://www.postgresql.org/docs/current/sql-createdatabase.html)
+
+## Environmental variables
 
 The environmental variables below need to be set in the `.env` file in the root folder. If the file is not there, create it yourself and use the `.env-template` file as a guide.
 
@@ -21,6 +24,8 @@ CB_DB_NAME= # Database name
 CB_DB_USERNAME= # Database username
 CB_DB_PASSWORD= # Database password
 CB_DB_HOST= # Database host
+CB_DB_PORT= # The port on which your database server runs
+CB_DB_DIALECT= # 'mysql' or `postgres`
 
 ### DEVELOPMENT
 
@@ -28,10 +33,6 @@ CB_DB_NAME_DEV= # Database name
 CB_DB_USERNAME_DEV= # Database username
 CB_DB_PASSWORD_DEV= # Database password
 CB_DB_HOST_DEV= # Database host
+CB_DB_PORT_DEV= # The port on which your database server runs
+CB_DB_DIALECT_DEV= # 'mysql' or `postgres`
 ```
-
-## PostgreSQL
-
-::: tip
-Coming Soon!
-:::
