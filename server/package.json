@@ -29,25 +29,25 @@
     "lodash": "^4.17.20",
     "method-override": "^3.0.0",
     "moment": "^2.29.1",
-    "mongoose": "^5.11.9",
+    "mongoose": "^5.11.11",
     "morgan": "^1.10.0",
-    "mysql2": "^1.7.0",
+    "mysql2": "^2.2.5",
     "nodemailer": "^6.4.17",
     "oneaccount-express": "^1.0.3",
-    "pg": "^7.18.2",
+    "pg": "^8.5.1",
     "pg-hstore": "^2.3.3",
     "request": "^2.88.2",
     "request-promise": "^4.2.6",
-    "sequelize": "^5.22.3",
+    "sequelize": "^6.3.5",
     "simplecrypt": "^0.1.0",
     "uuid": "^3.4.0"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
-    "eslint": "^7.16.0",
+    "eslint": "^7.17.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.22.1",
     "lint-staged": "^10.5.3",
-    "nodemon": "^2.0.6"
+    "nodemon": "^2.0.7"
   }
 }

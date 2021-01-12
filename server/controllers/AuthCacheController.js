@@ -7,7 +7,7 @@ class AuthCacheController {
       key,
       user,
       type,
-    }, { returning: true })
+    }, { returning: ["*"] })
       .then((created) => {
         return new Promise((resolve) => resolve(created));
       })
