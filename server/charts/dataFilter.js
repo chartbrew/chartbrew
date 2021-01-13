@@ -173,22 +173,22 @@ function compareBooleans(data, field, condition) {
 
   switch (condition.operator) {
     case "is":
-      newData = _.filter(newData, (o) => getValue(o) == condition.value); // eslint-disable-line
+      newData = _.filter(newData, (o) => `${getValue(o)}` === `${condition.value}`);
       break;
     case "isNot":
-      newData = _.filter(newData, (o) => getValue(o) != condition.value); // eslint-disable-line
+      newData = _.filter(newData, (o) => `${getValue(o)}` !== `${condition.value}`);
       break;
     case "contains":
-      newData = _.filter(newData, (o) => getValue(o) == condition.value); // eslint-disable-line
+      newData = _.filter(newData, (o) => `${getValue(o)}` === `${condition.value}`);
       break;
     case "notContains":
-      newData = _.filter(newData, (o) => getValue(o) != condition.value); // eslint-disable-line
+      newData = _.filter(newData, (o) => `${getValue(o)}` !== `${condition.value}`);
       break;
     case "greaterOrEqual":
-      newData = _.filter(newData, (o) => getValue(o) == condition.value); // eslint-disable-line
+      newData = _.filter(newData, (o) => `${getValue(o)}` === `${condition.value}`);
       break;
     case "lessOrEqual":
-      newData = _.filter(newData, (o) => getValue(o) != condition.value); // eslint-disable-line
+      newData = _.filter(newData, (o) => `${getValue(o)}` !== `${condition.value}`);
       break;
     default:
       break;
@@ -221,6 +221,8 @@ module.exports = (data, selectedField, conditions) => {
     exactField = field.substring(field.indexOf("]") + 2);
 
     const foundObj = _.find(foundData, exactField);
+    if (!foundObj) return condition;
+
     const selectors = exactField.split(".");
     let value = foundObj;
     for (let i = 0; i < selectors.length; i++) {
