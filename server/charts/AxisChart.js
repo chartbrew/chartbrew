@@ -86,7 +86,8 @@ class AxisChart {
           xData = filteredData;
         } else {
           const arrayFinder = xAxis.substring(0, xAxis.indexOf("]") - 1).replace("root.", "");
-          xAxis = xAxis.replace("[]", "").replace("root.", "");
+          xAxis = xAxis.substring(xAxis.indexOf("]") + 2);
+
           xData = _.get(filteredData, arrayFinder);
         }
 
@@ -94,7 +95,6 @@ class AxisChart {
 
         if (xAxisFieldName.indexOf(".") > -1) {
           xAxisFieldName = xAxisFieldName.substring(xAxisFieldName.lastIndexOf(".") + 1);
-          xAxis = xAxisFieldName;
         }
 
         if (!(xData instanceof Array)) throw new Error("The X field is not part of an Array");
