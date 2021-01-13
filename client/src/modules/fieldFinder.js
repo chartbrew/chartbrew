@@ -2,6 +2,8 @@ import determineType from "./determineType";
 
 function findFields(coll, currentKey, first, fields) {
   let newFields = fields;
+  if (!coll) return newFields;
+
   Object.keys(coll).map((field) => {
     const data = coll[field];
     let newKey = field;
