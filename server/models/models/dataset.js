@@ -106,7 +106,10 @@ module.exports = (sequelize, DataTypes) => {
           return this.getDataValue("conditions");
         }
       }
-    }
+    },
+    formula: {
+      type: DataTypes.TEXT,
+    },
   }, {
     freezeTableName: true,
   });

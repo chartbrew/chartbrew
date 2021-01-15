@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Dropdown, Icon, Input, Button, Grid, Popup, Divider,
-  Header, Container,
+  Header, Container, Form,
 } from "semantic-ui-react";
 import { Calendar } from "react-date-range";
 import uuid from "uuid/v4";
@@ -83,6 +83,7 @@ function DatasetData(props) {
     operator: "is",
     value: "",
   }]);
+  const [formula, setFormula] = useState("");
 
   // Update the content when there is some data to work with
   useEffect(() => {
@@ -152,6 +153,10 @@ function DatasetData(props) {
       }
 
       setConditions(newConditions.concat(toAddConditions));
+    }
+
+    if (dataset.formula) {
+      setFormula(dataset.formula);
     }
   }, [dataset]);
 
@@ -247,6 +252,24 @@ function DatasetData(props) {
   const _onSaveConditions = (newConditions) => {
     const savedConditions = newConditions.filter((item) => item.saved);
     onUpdate({ conditions: savedConditions });
+  };
+
+  const _onAddFormula = () => {
+    setFormula("{val}");
+  };
+
+  const _onExampleFormula = () => {
+    setFormula("${val / 100}"); // eslint-disable-line
+    onUpdate({ formula: "${val / 100}" }); // eslint-disable-line
+  };
+
+  const _onRemoveFormula = () => {
+    setFormula("");
+    onUpdate({ formula: "" });
+  };
+
+  const _onApplyFormula = () => {
+    onUpdate({ formula });
   };
 
   const _onRefreshData = () => {
@@ -351,13 +374,93 @@ function DatasetData(props) {
             onChange={_selectYOp}
             scrolling
           />
-          <Divider />
+
+          {!formula && (
+            <Button
+              icon
+              basic
+              style={styles.addConditionBtn}
+              onClick={_onAddFormula}
+            >
+              <Icon name="plus" />
+              {" Add formula"}
+            </Button>
+          )}
         </Grid.Column>
       </Grid.Row>
+      {formula && (
+        <Grid.Row>
+          <Grid.Column>
+            <Form>
+              <Form.Group>
+                <Form.Field>
+                  <label>
+                    {"Formula "}
+                    <Popup
+                      trigger={<Icon name="question circle outline" />}
+                      content="'val' is the value on the Y axis and all the mathematical operations need to be done between the curly brackets '{}'. Everything outside of the brackets '{}' will be considered as strings."
+                    />
+                  </label>
+                  <Form.Input
+                    placeholder="Enter your formula here: {val}"
+                    value={formula}
+                    onChange={(e, data) => setFormula(data.value)}
+                  />
+                </Form.Field>
+                <Form.Field style={styles.formulaActions}>
+                  <Popup
+                    trigger={(
+                      <Button
+                        icon
+                        basic
+                        style={styles.addConditionBtn}
+                        onClick={_onApplyFormula}
+                      >
+                        <Icon name="checkmark" color="green" />
+                      </Button>
+                    )}
+                    content="Apply the formula"
+                    position="top center"
+                  />
+                  <Popup
+                    trigger={(
+                      <Button
+                        icon
+                        basic
+                        style={styles.addConditionBtn}
+                        onClick={_onRemoveFormula}
+                      >
+                        <Icon name="minus" color="red" />
+                      </Button>
+                    )}
+                    content="Remove formula"
+                    position="top center"
+                  />
+                  <Popup
+                    trigger={(
+                      <Button
+                        icon
+                        basic
+                        style={styles.addConditionBtn}
+                        onClick={_onExampleFormula}
+                      >
+                        <Icon name="magic" />
+                      </Button>
+                    )}
+                    content="Click for an example"
+                    position="top center"
+                  />
+                </Form.Field>
+              </Form.Group>
+            </Form>
+          </Grid.Column>
+        </Grid.Row>
+      )}
       {conditions.map((condition, index) => {
         return (
           <Grid.Row key={condition.id} style={styles.conditionRow} className="datasetdata-filters-tut">
             <Grid.Column>
+              {index === 0 && <Divider />}
               {index === 0 && (<label>{"where "}</label>)}
               {index > 0 && (<label>{"and "}</label>)}
               <Dropdown
@@ -546,6 +649,10 @@ const styles = {
   },
   connectionNotice: {
     color: blackTransparent(0.6),
+  },
+  formulaActions: {
+    display: "flex",
+    alignItems: "flex-end",
   },
 };
 

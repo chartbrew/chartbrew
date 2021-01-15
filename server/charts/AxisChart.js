@@ -1,5 +1,7 @@
 const _ = require("lodash");
 const moment = require("moment");
+const FormulaParser = require("hot-formula-parser").Parser;
+
 const BarChart = require("./BarChart");
 const LineChart = require("./LineChart");
 const PieChart = require("./PieChart");
@@ -7,6 +9,8 @@ const determineType = require("../modules/determineType");
 const dataFilter = require("./dataFilter");
 
 moment.suppressDeprecationWarnings = true;
+
+const parser = new FormulaParser();
 
 class AxisChart {
   constructor(data) {
@@ -315,6 +319,27 @@ class AxisChart {
         this.axisData.y.push(dataset.data);
         return dataset;
       });
+    }
+
+    for (let i = 0; i < this.datasets.length; i++) {
+      if (this.datasets[i].options && this.datasets[i].options.formula) {
+        const { formula } = this.datasets[i].options;
+        this.axisData.y[i] = this.axisData.y[i].map((val) => {
+          const before = formula.substring(0, formula.indexOf("{"));
+          const after = formula.substring(formula.indexOf("}") + 1);
+          const expressionString = formula.substring(formula.indexOf("{") + 1, formula.indexOf("}"));
+          const expression = expressionString.replace(/val/g, val);
+
+          const newVal = parser.parse(expression);
+
+          let finalVal = `${before}${newVal.result}${after}`;
+          if (this.chart.mode !== "kpi") {
+            finalVal = newVal.result;
+          }
+
+          return finalVal;
+        });
+      }
     }
 
     let chart;
