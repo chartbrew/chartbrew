@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Dropdown, Icon, Input, Button, Grid, Popup, Divider,
-  Header, Container, Form,
+  Header, Container, Form, List,
 } from "semantic-ui-react";
 import { Calendar } from "react-date-range";
 import uuid from "uuid/v4";
@@ -394,13 +394,16 @@ function DatasetData(props) {
             <Form>
               <Form.Group>
                 <Form.Field>
-                  <label>
-                    {"Formula "}
-                    <Popup
-                      trigger={<Icon name="question circle outline" />}
-                      content="'val' is the value on the Y axis and all the mathematical operations need to be done between the curly brackets '{}'. Everything outside of the brackets '{}' will be considered as strings."
-                    />
-                  </label>
+                  <Popup
+                    trigger={(
+                      <label>
+                        {"Formula "}
+                        <Icon name="question circle outline" />
+                      </label>
+                    )}
+                    content={<FormulaTips />}
+                    wide
+                  />
                   <Form.Input
                     placeholder="Enter your formula here: {val}"
                     value={formula}
@@ -414,12 +417,12 @@ function DatasetData(props) {
                         icon
                         basic
                         style={styles.addConditionBtn}
-                        onClick={_onApplyFormula}
+                        onClick={formula === dataset.formula ? () => { } : _onApplyFormula}
                       >
-                        <Icon name="checkmark" color="green" />
+                        <Icon name="checkmark" color={formula === dataset.formula ? null : "green"} />
                       </Button>
                     )}
-                    content="Apply the formula"
+                    content={formula === dataset.formula ? "The formula is already applied" : "Apply the formula"}
                     position="top center"
                   />
                   <Popup
@@ -639,6 +642,59 @@ function DatasetData(props) {
   );
 }
 
+DatasetData.defaultProps = {
+  requestResult: null,
+  chartType: "",
+};
+
+DatasetData.propTypes = {
+  dataset: PropTypes.object.isRequired,
+  requestResult: PropTypes.object,
+  chartType: PropTypes.string,
+  onUpdate: PropTypes.func.isRequired,
+  runRequest: PropTypes.func.isRequired,
+  onNoRequest: PropTypes.func.isRequired,
+  match: PropTypes.object.isRequired,
+};
+
+function FormulaTips() {
+  return (
+    <div>
+      <Header size="small">Formulas allow you to manipulate the final results on the Y Axis</Header>
+      <p>
+        {"For "}
+        <strong>{"val = 12345"}</strong>
+      </p>
+      <List>
+        <List.Item>
+          <Icon name="chevron right" />
+          <List.Content>
+            <p>{"{val} => 12345"}</p>
+          </List.Content>
+        </List.Item>
+        <List.Item>
+          <Icon name="chevron right" />
+          <List.Content>
+            <p>{"{val / 100} => 123.45"}</p>
+          </List.Content>
+        </List.Item>
+        <List.Item>
+          <Icon name="chevron right" />
+          <List.Content>
+            <p>{"$ {val / 100} => $ 123.45"}</p>
+          </List.Content>
+        </List.Item>
+        <List.Item>
+          <Icon name="chevron right" />
+          <List.Content>
+            <p>{"{val / 100} USD => 123.45 USD"}</p>
+          </List.Content>
+        </List.Item>
+      </List>
+    </div>
+  );
+}
+
 const styles = {
   addConditionBtn: {
     boxShadow: "none",
@@ -654,21 +710,6 @@ const styles = {
     display: "flex",
     alignItems: "flex-end",
   },
-};
-
-DatasetData.defaultProps = {
-  requestResult: null,
-  chartType: "",
-};
-
-DatasetData.propTypes = {
-  dataset: PropTypes.object.isRequired,
-  requestResult: PropTypes.object,
-  chartType: PropTypes.string,
-  onUpdate: PropTypes.func.isRequired,
-  runRequest: PropTypes.func.isRequired,
-  onNoRequest: PropTypes.func.isRequired,
-  match: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = () => ({});

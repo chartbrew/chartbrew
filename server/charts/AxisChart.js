@@ -331,6 +331,10 @@ class AxisChart {
           const expression = expressionString.replace(/val/g, val);
 
           const newVal = parser.parse(expression);
+          let parserResult = newVal.result;
+          if (parserResult % 1 !== 0) {
+            parserResult = parserResult.toFixed(2);
+          }
 
           let finalVal = `${before}${newVal.result}${after}`;
           if (this.chart.mode !== "kpi") {
