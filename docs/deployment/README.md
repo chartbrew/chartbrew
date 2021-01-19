@@ -102,20 +102,13 @@ sudo vim /etc/apache2/sites-available/chartbrew.conf
 
 This configuration file will have everything necessary to serve the backend and frontend on your domains. Since both apps are already running on different ports, we will use a reverse proxy method to serve these on a domain.
 
-**Replace all `http://0.0.0.0` with your actual server IP**
-
 ```xml
 # /etc/apache2/sites-available/chartbrew.conf
 
 # FRONTEND
 <VirtualHost *:80>
-    ServerAdmin admin@example.com
-
     # Important! use your own domain here
     ServerName  example.com  
-
-    # Index file and Document Root (where the public files are located)
-    DocumentRoot /var/www/html/chartbrew/client/src/build
 
     ProxyRequests off
     <Proxy *>
@@ -123,8 +116,8 @@ This configuration file will have everything necessary to serve the backend and 
         Allow from all
     </Proxy>
     <Location />
-        ProxyPass http://0.0.0.0:5400/
-        ProxyPassReverse http://0.0.0.0:5400/
+        ProxyPass http://localhost:5400/
+        ProxyPassReverse http://localhost:5400/
     </Location>
     <Location ~ "/chart/*">
       Header always unset X-Frame-Options
@@ -133,13 +126,8 @@ This configuration file will have everything necessary to serve the backend and 
 
 # BACKEND
 <VirtualHost *:80>
-    ServerAdmin admin@example.com
-
     # Important! use your own domain here
     ServerName  api.example.com
-
-    # Index file and Document Root (where the public files are located)
-    DocumentRoot /var/www/html/chartbrew/server
 
     ProxyRequests off
     <Proxy *>
@@ -147,10 +135,9 @@ This configuration file will have everything necessary to serve the backend and 
         Allow from all
     </Proxy>
     <Location />
-        ProxyPass http://0.0.0.0:3210/
-        ProxyPassReverse http://0.0.0.0:3210/
+        ProxyPass http://localhost:3210/
+        ProxyPassReverse http://localhost:3210/
     </Location>
-
 </VirtualHost>
 
 ```
@@ -177,6 +164,10 @@ A problem that might arrise with embedding charts on other website is to do with
 This is already added in the example above, but if you create new virtual hosts for `https`, for example, don't forget to add it there as well.
 
 ## Run the application with Docker
+
+::: warning WARNING
+The setup is not yet updated for PostgreSQL. Please [open a PR](https://github.com/chartbrew/chartbrew/compare) or [a new issue](https://github.com/chartbrew/chartbrew/issues/new) if you have a solution or encounter any problems that can help us with the support.
+:::
 
 A [Chartbrew docker image](https://hub.docker.com/r/razvanilin/chartbrew) is automatically built from `master`. You can set it up using the commands below:
 
