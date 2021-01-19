@@ -96,7 +96,7 @@
     "test": "node scripts/test.js --env=jsdom",
     "lint": "npm run setup && eslint src/",
     "lint-fix": "eslint src/ --fix",
-    "setup": "echo n | cp -vipr src/config/settings.template.js src/config/settings.js",
+    "setup": "echo n | cp -vipr src/config/settings.template.js src/config/settings.js | true",
     "precommit": "lint-staged"
   },
   "jest": {
