@@ -46,6 +46,7 @@ Currently, ChartBrew supports connections to these data sources.
 ## Prerequisites
 
 * NodeJS v12 (should also work with v10)
+  * For M1 Macs you might need the latest v14 or v15
 * NPM
 * MySQL (5+) or PostgreSQL (12.5+)
 
