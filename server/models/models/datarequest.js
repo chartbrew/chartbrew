@@ -79,6 +79,9 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       defaultValue: "offset",
     },
+    template: {
+      type: DataTypes.STRING,
+    },
   }, {
     freezeTableName: true,
   });

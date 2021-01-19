@@ -1,8 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Container, Form, Input, Checkbox, Icon, Popup, Divider, Label,
+  Container, Form, Input, Checkbox, Icon, Popup, Divider, Label, Dropdown,
 } from "semantic-ui-react";
+
+const templates = [{
+  key: "custom",
+  value: "custom",
+  text: "Custom template",
+}, {
+  key: "stripe",
+  value: "stripe",
+  text: "Stripe",
+}];
 
 /*
   Component used for creating an automated pagination for APIs
@@ -10,42 +20,54 @@ import {
 function ApiPagination(props) {
   const {
     items, itemsLimit, offset, pagination,
-    onPaginationChanged, apiRoute,
+    onPaginationChanged, apiRoute, template,
   } = props;
+
+  useEffect(() => {
+    if (!template) {
+      onPaginationChanged("template", "custom");
+    }
+  }, []);
 
   return (
     <Container>
-      <p>
-        {
-        `ChartBrew can paginate the request by making multiple requests automatically. 
-        It can get all the data you need based 
-        on the configuration below. Make sure your API supports pagination first.`
-        }
-      </p>
-      <p>{"Fill out your pagination query paramters' names and the max amount you want to get in total"}</p>
+      <Form>
+        <Form.Group widths="equal">
+          <Form.Field>
+            <label>Pagination template</label>
+            <Dropdown
+              placeholder="Select a template"
+              selection
+              defaultValue="custom"
+              value={template || "custom"}
+              onChange={(e, data) => onPaginationChanged("template", data.value)}
+              options={templates}
+              compact
+            />
+          </Form.Field>
+          <Form.Field>
+            <label>Enable pagination on this request</label>
+            <Checkbox
+              toggle
+              checked={pagination}
+              onChange={() => onPaginationChanged("pagination", !pagination)}
+            />
+          </Form.Field>
+        </Form.Group>
+      </Form>
       <Divider />
       <Form>
-        <Form.Field>
-          <Checkbox
-            label="Activate pagination"
-            toggle
-            checked={pagination}
-            onChange={() => onPaginationChanged("pagination", !pagination)}
-          />
-        </Form.Field>
-        <Form.Group widths={2}>
+        {template === "custom" && (
           <Form.Field width={6}>
             <Popup
               content={"The query parameter name that limits the number of item per request."}
               trigger={(
-                <p>
+                <label>
                   {"Items per page "}
                   <Icon name="info circle" />
-                </p>
+                </label>
               )}
             />
-          </Form.Field>
-          <Form.Field width={6}>
             <Input
               disabled={!pagination}
               placeholder="Items per page"
@@ -53,21 +75,18 @@ function ApiPagination(props) {
               onChange={(e, data) => onPaginationChanged("items", data.value)}
             />
           </Form.Field>
-        </Form.Group>
-
-        <Form.Group widths={2}>
+        )}
+        {template === "custom" && (
           <Form.Field width={6}>
             <Popup
               content={"The query parameter name used for the starting point of the first request. "}
               trigger={(
-                <p>
+                <label>
                   {"Offset "}
                   <Icon name="info circle" />
-                </p>
+                </label>
               )}
             />
-          </Form.Field>
-          <Form.Field width={6}>
             <Input
               disabled={!pagination}
               placeholder="Offset"
@@ -75,33 +94,31 @@ function ApiPagination(props) {
               onChange={(e, data) => onPaginationChanged("offset", data.value)}
             />
           </Form.Field>
-        </Form.Group>
-
-        <Form.Group widths={2}>
-          <Form.Field width={6}>
-            <Popup
-              content={"The total amount of items to get (all the paged items put together) - Leave empty or 0 for unlimited"}
-              trigger={(
-                <p>
-                  {"Total maximum number "}
-                  <Icon name="info circle" />
-                </p>
-              )}
-            />
-          </Form.Field>
-          <Form.Field width={6}>
-            <Input
-              disabled={!pagination}
-              placeholder="Limit"
-              type="number"
-              value={itemsLimit}
-              onChange={(e, data) => onPaginationChanged("itemsLimit", data.value)}
-            />
-          </Form.Field>
-        </Form.Group>
+        )}
+        {template === "stripe" && pagination && (
+          <p>Your request will now be paginated automatically</p>
+        )}
+        <Form.Field width={6}>
+          <Popup
+            content={"The total amount of items to get (all the paged items put together) - Leave empty or 0 for unlimited"}
+            trigger={(
+              <label>
+                {"Maximum number of items (0 = unlimited)"}
+                <Icon name="info circle" />
+              </label>
+            )}
+          />
+          <Input
+            disabled={!pagination}
+            placeholder="Limit"
+            type="number"
+            value={itemsLimit}
+            onChange={(e, data) => onPaginationChanged("itemsLimit", data.value)}
+          />
+        </Form.Field>
       </Form>
 
-      {pagination && (
+      {pagination && template === "custom" && (
         <>
           <Divider />
           <span>
@@ -133,6 +150,7 @@ function ApiPagination(props) {
 
 ApiPagination.defaultProps = {
   apiRoute: "",
+  template: "custom",
 };
 
 ApiPagination.propTypes = {
@@ -142,6 +160,7 @@ ApiPagination.propTypes = {
   pagination: PropTypes.bool.isRequired,
   onPaginationChanged: PropTypes.func.isRequired,
   apiRoute: PropTypes.string,
+  template: PropTypes.string,
 };
 
 export default ApiPagination;

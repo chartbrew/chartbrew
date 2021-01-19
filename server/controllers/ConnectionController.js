@@ -2,69 +2,12 @@ const mongoose = require("mongoose");
 const requestP = require("request-promise");
 const Sequelize = require("sequelize");
 const querystring = require("querystring");
-const _ = require("lodash");
 
 const db = require("../models/models");
 const ProjectController = require("./ProjectController");
 const externalDbConnection = require("../modules/externalDbConnection");
 const assembleMongoUrl = require("../modules/assembleMongoUrl");
-
-/*
-** Helper functions
-*/
-
-function paginateRequests(options, limit, items, offset, totalResults) {
-  return requestP(options)
-    .then((response) => {
-      responseCode = response.responseCode; // eslint-disable-line
-      let results;
-      try {
-        const parsedResponse = JSON.parse(response.body);
-
-        if (parsedResponse instanceof Array) {
-          results = parsedResponse;
-        } else {
-          Object.keys(parsedResponse).forEach((key) => {
-            if (parsedResponse[key] instanceof Array) {
-              results = parsedResponse[key];
-            }
-          });
-        }
-      } catch (error) {
-        return new Promise((resolve, reject) => reject(response.statusCode));
-      }
-
-      // check if results are the same as previous ones (infinite request loop?)
-      let skipping = false;
-
-      if (_.isEqual(results, totalResults)) {
-        skipping = true;
-      }
-
-      const tempResults = totalResults.concat(results);
-
-      if (skipping || results.length === 0 || (tempResults.length >= limit && limit !== 0)) {
-        let finalResults = skipping ? results : tempResults;
-
-        // check if it goes above the limit
-        if (tempResults.length > limit && limit !== 0) {
-          finalResults = tempResults.slice(0, limit);
-        }
-
-        return new Promise((resolve) => resolve(finalResults));
-      }
-
-      const newOptions = options;
-      newOptions.qs[offset] = parseInt(options.qs[offset], 10) + parseInt(options.qs[items], 10);
-
-      return paginateRequests(newOptions, limit, items, offset, tempResults);
-    })
-    .catch((e) => {
-      return Promise.reject(e);
-    });
-}
-
-// ----------------
+const paginateRequests = require("../modules/paginateRequests");
 
 class ConnectionController {
   constructor() {
@@ -322,7 +265,12 @@ class ConnectionController {
           if ((options.url.indexOf(`?${items}=`) || options.url.indexOf(`&${items}=`))
             && (options.url.indexOf(`?${offset}=`) || options.url.indexOf(`&${offset}=`))
           ) {
-            return paginateRequests(options, limit, items, offset, []);
+            return paginateRequests(dataRequest.template, {
+              options,
+              limit,
+              items,
+              offset
+            });
           }
         }
 
@@ -442,7 +390,12 @@ class ConnectionController {
           if ((options.url.indexOf(`?${dataRequest.items}=`) || options.url.indexOf(`&${dataRequest.items}=`))
             && (options.url.indexOf(`?${dataRequest.offset}=`) || options.url.indexOf(`&${dataRequest.offset}=`))
           ) {
-            return paginateRequests(options, limit, dataRequest.items, dataRequest.offset, []);
+            return paginateRequests(dataRequest.template, {
+              options,
+              limit,
+              items: dataRequest.items,
+              offset: dataRequest.offset,
+            });
           }
         }
 

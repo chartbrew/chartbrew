@@ -14,7 +14,7 @@ import { toast } from "react-toastify";
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 
-import ApiPagination from "../../../components/ApiPagination";
+import ApiPagination from "./ApiPagination";
 import {
   runRequest as runRequestAction,
 } from "../../../actions/dataset";
@@ -101,8 +101,17 @@ function ApiBuilder(props) {
   }, []);
 
   useEffect(() => {
-    onChangeRequest(apiRequest);
-  }, [apiRequest]);
+    const newApiRequest = apiRequest;
+
+    // automate the pagination template here (to a possible extent)
+    if (connection && apiRequest && !apiRequest.template) {
+      if (connection.host.indexOf("api.stripe.com") > -1) {
+        apiRequest.template = "stripe";
+      }
+    }
+
+    onChangeRequest(newApiRequest);
+  }, [apiRequest, connection]);
 
   const _addHeader = () => {
     const { formattedHeaders } = apiRequest;
@@ -389,6 +398,7 @@ function ApiBuilder(props) {
               pagination={apiRequest.pagination}
               onPaginationChanged={_onPaginationChanged}
               apiRoute={apiRequest.route || ""}
+              template={apiRequest.template}
             />
           )}
         </Grid.Column>
