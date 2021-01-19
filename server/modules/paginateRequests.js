@@ -64,7 +64,9 @@ function PaginateStripe(options, limit, totalResults) {
         if (!result.has_more
           || (tempResults.data && tempResults.data.length >= limit && limit !== 0)
         ) {
-          tempResults.data = tempResults.data.slice(0, limit);
+          if (tempResults.data.length > limit && limit !== 0) {
+            tempResults.data = tempResults.data.slice(0, limit);
+          }
           // the recursion ends here
           return new Promise((resolve) => resolve(tempResults));
         }
