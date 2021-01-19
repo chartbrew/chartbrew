@@ -17,6 +17,7 @@ class NewLineChart {
       const formattedDataset = {
         label: dataset.options.legend,
         data: this.axisData.y[i],
+        lineTension: 0,
       };
 
       if (dataset.options.datasetColor) {
@@ -48,7 +49,10 @@ class NewLineChart {
         elements: {
           point: {
             radius: 0,
-          }
+          },
+          line: {
+            tension: 0,
+          },
         },
         scales: {
           yAxes: [{
@@ -77,6 +81,9 @@ class NewLineChart {
               !this.chart.pointRadius && this.chart.pointRadius !== 0 ? 3 : this.chart.pointRadius,
             hitRadius: 8,
             hoverRadius: 8,
+          },
+          line: {
+            tension: 0,
           },
         },
         scales: {
