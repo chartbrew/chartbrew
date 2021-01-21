@@ -11,7 +11,8 @@ function clean() {
         const timeDiff = moment().diff(item.createdAt, "hours");
 
         if (timeDiff > 23) {
-          cleanPromises.push(db.ChartCache.destroy({ where: { id: item.id } }));
+          // clean the data field in each cache item
+          cleanPromises.push(db.ChartCache.update({ data: null }, { where: { id: item.id } }));
         }
       }
 

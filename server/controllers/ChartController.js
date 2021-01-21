@@ -56,7 +56,7 @@ class ChartController {
       .then(() => {
         // delete chart cache
         if (user) {
-          this.chartCache.deleteAll(user.id);
+          this.chartCache.update({ data: null }, user.id, chartId);
         }
 
         return this.findById(chartId);
@@ -135,7 +135,7 @@ class ChartController {
       .then(() => {
         // clear chart cache
         if (user) {
-          this.chartCache.deleteAll(user.id);
+          this.chartCache.update({ data: null }, user.id, id);
         }
 
         const updatePromises = [];
