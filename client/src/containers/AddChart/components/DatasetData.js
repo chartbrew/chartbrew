@@ -89,6 +89,9 @@ function DatasetData(props) {
   useEffect(() => {
     if (requestResult && requestResult.data) {
       const tempFieldOptions = [];
+      const fieldsSchema = {};
+      const updateObj = {};
+
       fieldFinder(requestResult.data).forEach((o) => {
         if (o.field) {
           tempFieldOptions.push({
@@ -108,12 +111,15 @@ function DatasetData(props) {
             },
           });
         }
+        fieldsSchema[o.field] = o.type;
       });
+
+      if (Object.keys(fieldsSchema).length > 0) updateObj.fieldsSchema = fieldsSchema;
+
       setFieldOptions(tempFieldOptions);
 
       // initialise values for the user if there were no prior selections
       const autoFields = autoFieldSelector(tempFieldOptions);
-      const updateObj = {};
       Object.keys(autoFields).forEach((key) => {
         if (!dataset[key]) updateObj[key] = autoFields[key];
       });
@@ -157,6 +163,31 @@ function DatasetData(props) {
 
     if (dataset.formula) {
       setFormula(dataset.formula);
+    }
+
+    if (dataset.fieldsSchema) {
+      const tempFieldOptions = [];
+      Object.keys(dataset.fieldsSchema).forEach((key) => {
+        const type = dataset.fieldsSchema[key];
+        tempFieldOptions.push({
+          key,
+          text: key && key.replace("root[].", "").replace("root.", ""),
+          value: key,
+          type,
+          label: {
+            style: { width: 55, textAlign: "center" },
+            content: type || "unknown",
+            size: "mini",
+            color: type === "date" ? "olive"
+              : type === "number" ? "blue"
+                : type === "string" ? "teal"
+                  : type === "boolean" ? "purple"
+                    : "grey"
+          },
+        });
+      });
+
+      setFieldOptions(tempFieldOptions);
     }
   }, [dataset]);
 
@@ -289,7 +320,7 @@ function DatasetData(props) {
       });
   };
 
-  if (!requestResult && dataset.connection_id) {
+  if (!fieldOptions && dataset.connection_id) {
     return (
       <Container textAlign="center">
         <Button
