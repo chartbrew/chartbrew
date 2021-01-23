@@ -3,13 +3,17 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Message, Icon, Button, Container, Header, Divider, Menu, Label
+  Message, Icon, Button, Container, Header, Divider, Menu,
+  Label, TransitionablePortal, Modal,
 } from "semantic-ui-react";
 import { Link } from "react-router-dom";
-import { useWindowSize } from "react-use";
+import { useLocalStorage, useWindowSize } from "react-use";
+import _ from "lodash";
 
-import Chart from "./Chart/Chart";
-import { cleanErrors as cleanErrorsAction } from "../actions/error";
+import Chart from "../Chart/Chart";
+import { cleanErrors as cleanErrorsAction } from "../../actions/error";
+import Filters from "./components/Filters";
+import { operators } from "../../modules/filterOperations";
 
 /*
   Dashboard container (for the charts)
@@ -18,7 +22,11 @@ function ProjectDashboard(props) {
   const {
     cleanErrors, connections, charts, match, showDrafts
   } = props;
+
+  const initialFilters = window.localStorage.getItem("_cb_filters");
   const [refreshRequested, setRefreshRequested] = useState(false);
+  const [filters, setFilters] = useLocalStorage("_cb_filters", initialFilters);
+  const [showFilters, setShowFilters] = useState(false);
 
   const { height } = useWindowSize();
 
@@ -27,6 +35,37 @@ function ProjectDashboard(props) {
   }, []);
 
   const _onCompleteRefresh = () => setRefreshRequested(false);
+
+  const _onAddFilter = (filter) => {
+    const newFilters = _.clone(filters) || [];
+    newFilters.push(filter);
+    setFilters(newFilters);
+    setShowFilters(false);
+  };
+
+  const _onRemoveFilter = (filterId) => {
+    if (filters.length === 1) {
+      setFilters([]);
+      return;
+    }
+
+    const index = _.findIndex(filters, { id: filterId });
+    if (!index) return;
+
+    const newFilters = _.clone(filters);
+    newFilters.splice(index, 1);
+
+    setFilters(newFilters);
+  };
+
+  const _getOperator = (operator) => {
+    const found = _.find(operators, (o) => o.value === operator);
+    return (found && found.key) || "";
+  };
+
+  const _onShowFilters = () => {
+    setShowFilters(true);
+  };
 
   return (
     <div>
@@ -43,23 +82,22 @@ function ProjectDashboard(props) {
                   size="small"
                   icon="filter"
                   content="Add filters"
+                  onClick={_onShowFilters}
                 />
               </Menu.Item>
               <Menu.Item style={{ borderLeft: "solid 1px #d4d4d5" }}>
                 <div>
                   <Label.Group>
-                    <Label color="violet" as="a">
-                      {"type = kpi"}
-                      <Label.Detail>
-                        <Icon name="x" />
-                      </Label.Detail>
-                    </Label>
-                    <Label color="violet" as="a">
-                      {"createdAt < 12-10-2020"}
-                      <Label.Detail>
-                        <Icon name="x" />
-                      </Label.Detail>
-                    </Label>
+                    {filters && filters.map((filter) => (
+                      <Label color="violet" as="a" key={filter.id}>
+                        <span>{`${filter.field.substring(filter.field.lastIndexOf(".") + 1)}`}</span>
+                        <strong>{` ${_getOperator(filter.operator)} `}</strong>
+                        <span>{`${filter.value}`}</span>
+                        <Label.Detail>
+                          <Icon name="x" onClick={() => _onRemoveFilter(filter.id)} />
+                        </Label.Detail>
+                      </Label>
+                    ))}
                   </Label.Group>
                 </div>
               </Menu.Item>
@@ -140,6 +178,19 @@ function ProjectDashboard(props) {
         </Container>
         )}
       </div>
+
+      <TransitionablePortal open={showFilters}>
+        <Modal open={showFilters} closeIcon onClose={() => setShowFilters(false)}>
+          <Modal.Header>Dashboard filters</Modal.Header>
+          <Modal.Content>
+            <Filters
+              charts={charts}
+              projectId={match.params.projectId}
+              onAddFilter={_onAddFilter}
+            />
+          </Modal.Content>
+        </Modal>
+      </TransitionablePortal>
     </div>
   );
 }
