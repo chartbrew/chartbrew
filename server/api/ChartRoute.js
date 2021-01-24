@@ -304,6 +304,44 @@ module.exports = (app) => {
   // --------------------------------------------------------
 
   /*
+  ** Route to filter the charts from the dashboard
+  */
+  app.post("/project/:project_id/chart/:id/filter", verifyToken, (req, res) => {
+    if (!req.body.filters) return res.status(400).send("No filters selected");
+
+    return checkAccess(req)
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).readAny("chart");
+        if (!permission.granted) {
+          throw new Error(401);
+        }
+
+        // filters are being passed, so the chart is not updated in the database
+        return chartController.updateChartData(
+          req.params.id,
+          req.user,
+          req.query.no_source === "true",
+          req.query.skip_parsing === "true",
+          req.body.filters,
+        );
+      })
+      .then((chart) => {
+        // console.log("chart", chart);
+        return res.status(200).send(chart);
+      })
+      .catch((error) => {
+        if (error === "401" || error.message === "401") {
+          return res.status(401).send({ error: "Not authorized" });
+        }
+        if (error === "413" && error.message === "413") {
+          return res.status(413).send(error);
+        }
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------------------------
+
+  /*
   ** Route to get a chart for embedding (must be public for success)
   */
   app.get("/chart/:id/embedded", (req, res) => {

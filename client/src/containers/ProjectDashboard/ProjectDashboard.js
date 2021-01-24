@@ -25,6 +25,7 @@ function ProjectDashboard(props) {
 
   const initialFilters = window.localStorage.getItem("_cb_filters");
   const [refreshRequested, setRefreshRequested] = useState(false);
+  const [filteringRequested, setFilteringRequested] = useState(false);
   const [filters, setFilters] = useLocalStorage("_cb_filters", initialFilters);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -34,13 +35,17 @@ function ProjectDashboard(props) {
     cleanErrors();
   }, []);
 
-  const _onCompleteRefresh = () => setRefreshRequested(false);
+  const _onCompleteRefresh = () => {
+    setRefreshRequested(false);
+    setFilteringRequested(false);
+  };
 
   const _onAddFilter = (filter) => {
     const newFilters = _.clone(filters) || [];
     newFilters.push(filter);
     setFilters(newFilters);
     setShowFilters(false);
+    setFilteringRequested(true);
   };
 
   const _onRemoveFilter = (filterId) => {
@@ -164,6 +169,7 @@ function ProjectDashboard(props) {
             charts={charts}
             showDrafts={showDrafts}
             refreshRequested={refreshRequested}
+            filteringRequested={filteringRequested}
             onCompleteRefresh={_onCompleteRefresh}
           />
         )}

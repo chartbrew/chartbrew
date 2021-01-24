@@ -10,16 +10,24 @@ import {
 import {
   Pie, Doughnut, Radar, Polar
 } from "react-chartjs-2";
+import { useLocalStorage } from "react-use";
 import moment from "moment";
+import _ from "lodash";
 import "chart.piecelabel.js";
 
 import LineChart from "./components/LineChart";
 import {
-  removeChart, runQuery, updateChart, changeOrder
+  removeChart as removeChartAction,
+  runQuery as runQueryAction,
+  updateChart as updateChartAction,
+  changeOrder as changeOrderAction,
+  runQueryWithFilters as runQueryWithFiltersAction,
 } from "../../actions/chart";
 import canAccess from "../../config/canAccess";
 import { SITE_HOST } from "../../config/settings";
 import BarChart from "./components/BarChart";
+
+const initialFilters = window.localStorage.getItem("_cb_filters");
 
 /*
   This is the container that generates the Charts together with the menu
@@ -28,6 +36,7 @@ function Chart(props) {
   const {
     updateChart, match, changeOrder, runQuery, removeChart, refreshRequested,
     team, user, charts, isPublic, connections, showDrafts, onCompleteRefresh,
+    filteringRequested, runQueryWithFilters,
   } = props;
 
   const [chartLoading, setChartLoading] = useState(false);
@@ -42,6 +51,13 @@ function Chart(props) {
   const [publicLoading, setPublicLoading] = useState(false);
   const [iframeCopied, setIframeCopied] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
+  const [dashboardFilters] = useLocalStorage("_cb_filters", initialFilters);
+
+  useEffect(() => {
+    if (dashboardFilters) {
+      _onRefreshAll(dashboardFilters);
+    }
+  }, [dashboardFilters]);
 
   useEffect(() => {
     if (refreshRequested) {
@@ -50,26 +66,43 @@ function Chart(props) {
   }, [refreshRequested]);
 
   useEffect(() => {
+    if (filteringRequested) {
+      _onRefreshAll(dashboardFilters);
+    }
+  }, [filteringRequested]);
+
+  useEffect(() => {
     setIframeCopied(false);
     setUrlCopied(false);
   }, [embedModal]);
 
-  const _onRefreshAll = () => {
+  const _onRefreshAll = (filters) => {
     const refreshPromises = [];
     for (let i = 0; i < charts.length; i++) {
-      refreshPromises.push(
-        runQuery(match.params.projectId, charts[i].id)
-          .then(() => {
-            chartLoading(false);
-          })
-          .catch((error) => {
-            if (error === 413) {
+      if (filters) {
+        // first, discard the charts on which the filters don't apply
+        if (_chartHasFilter(charts[i])) {
+          refreshPromises.push(
+            runQueryWithFilters(match.params.projectId, charts[i].id, filters)
+              .then(() => {
+                setChartLoading(false);
+              })
+              .catch(() => {
+                setChartLoading(false);
+              })
+          );
+        }
+      } else {
+        refreshPromises.push(
+          runQuery(match.params.projectId, charts[i].id)
+            .then(() => {
               setChartLoading(false);
-            } else {
+            })
+            .catch(() => {
               setChartLoading(false);
-            }
-          })
-      );
+            })
+        );
+      }
     }
 
     return Promise.all(refreshPromises)
@@ -213,6 +246,24 @@ function Chart(props) {
         setUpdateModal(false);
         setSelectedChart(false);
       });
+  };
+
+  const _chartHasFilter = (chart) => {
+    let found = false;
+    if (chart.Datasets) {
+      chart.Datasets.map((dataset) => {
+        if (dataset.fieldsSchema) {
+          Object.keys(dataset.fieldsSchema).forEach((key) => {
+            if (_.find(dashboardFilters, (o) => o.field === key)) {
+              found = true;
+            }
+          });
+        }
+        return dataset;
+      });
+    }
+
+    return found;
   };
 
   const _canAccess = (role) => {
@@ -789,6 +840,7 @@ Chart.defaultProps = {
   isPublic: false,
   showDrafts: true,
   refreshRequested: false,
+  filteringRequested: false,
   onCompleteRefresh: () => {},
 };
 
@@ -800,11 +852,13 @@ Chart.propTypes = {
   runQuery: PropTypes.func.isRequired,
   updateChart: PropTypes.func.isRequired,
   changeOrder: PropTypes.func.isRequired,
+  runQueryWithFilters: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
   isPublic: PropTypes.bool,
   showDrafts: PropTypes.bool,
   refreshRequested: PropTypes.bool,
+  filteringRequested: PropTypes.bool,
   onCompleteRefresh: PropTypes.func,
 };
 
@@ -818,11 +872,16 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    removeChart: (projectId, chartId) => dispatch(removeChart(projectId, chartId)),
-    runQuery: (projectId, chartId) => dispatch(runQuery(projectId, chartId)),
-    updateChart: (projectId, chartId, data) => dispatch(updateChart(projectId, chartId, data)),
+    removeChart: (projectId, chartId) => dispatch(removeChartAction(projectId, chartId)),
+    runQuery: (projectId, chartId) => dispatch(runQueryAction(projectId, chartId)),
+    updateChart: (projectId, chartId, data) => (
+      dispatch(updateChartAction(projectId, chartId, data))
+    ),
     changeOrder: (projectId, chartId, otherId) => (
-      dispatch(changeOrder(projectId, chartId, otherId))
+      dispatch(changeOrderAction(projectId, chartId, otherId))
+    ),
+    runQueryWithFilters: (projectId, chartId, filters) => (
+      dispatch(runQueryWithFiltersAction(projectId, chartId, filters))
     ),
   };
 };

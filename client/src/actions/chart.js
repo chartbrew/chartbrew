@@ -206,6 +206,37 @@ export function runQuery(projectId, chartId, noSource = false, skipParsing = fal
   };
 }
 
+export function runQueryWithFilters(projectId, chartId, filters) {
+  return (dispatch) => {
+    const token = cookie.load("brewToken");
+    const url = `${API_HOST}/project/${projectId}/chart/${chartId}/filter?no_source=true`;
+    const method = "POST";
+    const body = JSON.stringify({ filters });
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+      "content-type": "application/json",
+    });
+
+    dispatch({ type: FETCH_CHART });
+    return fetch(url, { method, body, headers })
+      .then((response) => {
+        if (!response.ok) {
+          dispatch(addError(response.status));
+          return new Promise((resolve, reject) => reject(response.status));
+        }
+
+        return response.json();
+      })
+      .then((chart) => {
+        dispatch({ type: FETCH_CHART_SUCCESS, chart });
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  };
+}
+
 export function getPreviewData(projectId, chart, noSource = false, skipParsing = false) {
   return (dispatch) => {
     const token = cookie.load("brewToken");

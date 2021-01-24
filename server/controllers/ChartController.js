@@ -281,9 +281,10 @@ class ChartController {
       });
   }
 
-  updateChartData(id, user, noSource, skipParsing = false) {
+  updateChartData(id, user, noSource, skipParsing = false, filters) {
     let gChart;
     let gCache;
+    let gChartData;
     let skipCache = false;
     return this.findById(id)
       .then((chart) => {
@@ -346,9 +347,18 @@ class ChartController {
         return axisChart.plot(skipParsing);
       })
       .then((chartData) => {
+        gChartData = chartData;
+        if (filters) {
+          return filters;
+        }
         return this.update(id, { chartData, chartDataUpdated: moment() });
       })
       .then(() => {
+        if (filters) {
+          const filteredChart = gChart;
+          filteredChart.chartData = gChartData;
+          return filteredChart;
+        }
         return this.findById(id);
       })
       .catch((err) => {
