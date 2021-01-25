@@ -85,13 +85,7 @@ class AxisChart {
 
         if (filters && filters.length > 0) {
           filters.map((filter) => {
-            console.log("filter", filter);
-            try {
-              filteredData = dataFilter(filteredData, filter.field, filters);
-            } catch (e) {
-              console.log("e", e);
-            }
-            console.log("filteredData", filteredData);
+            filteredData = dataFilter(filteredData, filter.field, filters);
             return filter;
           });
         }
