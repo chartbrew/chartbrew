@@ -46,19 +46,6 @@ module.exports = (sequelize, DataTypes) => {
         return this.setDataValue("data", sc.encrypt(JSON.stringify(val)));
       },
     },
-    fields: {
-      type: DataTypes.TEXT("long"),
-      get() {
-        try {
-          return JSON.parse(sc.decrypt(this.getDataValue("fields")));
-        } catch (e) {
-          return this.getDataValue("fields");
-        }
-      },
-      set(val) {
-        return this.setDataValue("fields", sc.encrypt(JSON.stringify(val)));
-      },
-    }
   }, {
     freezeTableName: true,
   });
