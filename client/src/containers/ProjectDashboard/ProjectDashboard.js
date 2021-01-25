@@ -14,13 +14,18 @@ import Chart from "../Chart/Chart";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import Filters from "./components/Filters";
 import { operators } from "../../modules/filterOperations";
+import {
+  getProjectCharts as getProjectChartsAction,
+  runQueryWithFilters as runQueryWithFiltersAction
+} from "../../actions/chart";
 
 /*
   Dashboard container (for the charts)
 */
 function ProjectDashboard(props) {
   const {
-    cleanErrors, connections, charts, match, showDrafts
+    cleanErrors, connections, charts, match, showDrafts, runQueryWithFilters,
+    getProjectCharts,
   } = props;
 
   const initialFilters = window.localStorage.getItem("_cb_filters");
@@ -28,12 +33,25 @@ function ProjectDashboard(props) {
   const [filteringRequested, setFilteringRequested] = useState(false);
   const [filters, setFilters] = useLocalStorage("_cb_filters", initialFilters);
   const [showFilters, setShowFilters] = useState(false);
+  const [filterLoading, setFilterLoading] = useState(false);
+  const [alreadyFiltered, setAlreadyFiltered] = useState(true);
 
   const { height } = useWindowSize();
 
   useEffect(() => {
     cleanErrors();
   }, []);
+
+  useEffect(() => {
+    if (!alreadyFiltered && charts && charts.length > 0) {
+      setAlreadyFiltered(true);
+      _runFiltering();
+    }
+  }, [charts]);
+
+  useEffect(() => {
+    setAlreadyFiltered(false);
+  }, [filters]);
 
   const _onCompleteRefresh = () => {
     setRefreshRequested(false);
@@ -45,12 +63,13 @@ function ProjectDashboard(props) {
     newFilters.push(filter);
     setFilters(newFilters);
     setShowFilters(false);
-    setFilteringRequested(true);
+    _runFiltering();
   };
 
   const _onRemoveFilter = (filterId) => {
+    _runFiltering();
     if (filters.length === 1) {
-      setFilters([]);
+      setFilters(null);
       return;
     }
 
@@ -61,6 +80,57 @@ function ProjectDashboard(props) {
     newFilters.splice(index, 1);
 
     setFilters(newFilters);
+  };
+
+  const _runFiltering = () => {
+    setFilterLoading(true);
+    setTimeout(() => {
+      _onRefreshCharts();
+    }, 500);
+  };
+
+  const _onRefreshCharts = () => {
+    if (!filters) {
+      getProjectCharts(match.params.projectId);
+      setFilterLoading(false);
+      return;
+    }
+
+    const refreshPromises = [];
+    for (let i = 0; i < charts.length; i++) {
+      if (filters) {
+        // first, discard the charts on which the filters don't apply
+        if (_chartHasFilter(charts[i])) {
+          refreshPromises.push(
+            runQueryWithFilters(match.params.projectId, charts[i].id, filters)
+              .then(() => {
+                setFilterLoading(false);
+              })
+              .catch(() => {
+                setFilterLoading(false);
+              })
+          );
+        }
+      }
+    }
+  };
+
+  const _chartHasFilter = (chart) => {
+    let found = false;
+    if (chart.Datasets) {
+      chart.Datasets.map((dataset) => {
+        if (dataset.fieldsSchema) {
+          Object.keys(dataset.fieldsSchema).forEach((key) => {
+            if (_.find(filters, (o) => o.field === key)) {
+              found = true;
+            }
+          });
+        }
+        return dataset;
+      });
+    }
+
+    return found;
   };
 
   const _getOperator = (operator) => {
@@ -87,6 +157,7 @@ function ProjectDashboard(props) {
                   size="small"
                   icon="filter"
                   content="Add filters"
+                  loading={filterLoading}
                   onClick={_onShowFilters}
                 />
               </Menu.Item>
@@ -233,6 +304,8 @@ ProjectDashboard.propTypes = {
   charts: PropTypes.array.isRequired,
   match: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
+  runQueryWithFilters: PropTypes.func.isRequired,
+  getProjectCharts: PropTypes.func.isRequired,
   showDrafts: PropTypes.bool,
 };
 
@@ -246,6 +319,10 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
   return {
     cleanErrors: () => dispatch(cleanErrorsAction()),
+    runQueryWithFilters: (projectId, chartId, filters) => (
+      dispatch(runQueryWithFiltersAction(projectId, chartId, filters))
+    ),
+    getProjectCharts: (projectId) => dispatch(getProjectChartsAction(projectId)),
   };
 };
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ProjectDashboard));

@@ -344,7 +344,7 @@ class ChartController {
       })
       .then((chartData) => {
         const axisChart = new AxisChart(chartData);
-        return axisChart.plot(skipParsing);
+        return axisChart.plot(skipParsing, filters);
       })
       .then((chartData) => {
         gChartData = chartData;

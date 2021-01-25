@@ -23,7 +23,7 @@ class AxisChart {
     this.dateFormat = "";
   }
 
-  plot(skipDataProcessing) {
+  plot(skipDataProcessing, filters) {
     // skip the data processing if required (this algorithm is time-expensive)
     if (
       !skipDataProcessing
@@ -81,6 +81,19 @@ class AxisChart {
           }];
 
           filteredData = dataFilter(filteredData, dateField, dateConditions);
+        }
+
+        if (filters && filters.length > 0) {
+          filters.map((filter) => {
+            console.log("filter", filter);
+            try {
+              filteredData = dataFilter(filteredData, filter.field, filters);
+            } catch (e) {
+              console.log("e", e);
+            }
+            console.log("filteredData", filteredData);
+            return filter;
+          });
         }
 
         // first, handle the xAxis
