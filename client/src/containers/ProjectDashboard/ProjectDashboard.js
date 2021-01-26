@@ -258,7 +258,10 @@ function ProjectDashboard(props) {
 
       <TransitionablePortal open={showFilters}>
         <Modal open={showFilters} closeIcon onClose={() => setShowFilters(false)}>
-          <Modal.Header>Dashboard filters</Modal.Header>
+          <Modal.Header>
+            <span style={{ verticalAlign: "middle" }}>{" Dashboard filters "}</span>
+            <Label style={{ verticalAlign: "middle" }} color="olive">New!</Label>
+          </Modal.Header>
           <Modal.Content>
             <Filters
               charts={charts}
