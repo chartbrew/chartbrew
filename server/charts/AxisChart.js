@@ -84,10 +84,21 @@ class AxisChart {
         }
 
         if (filters && filters.length > 0) {
-          filters.map((filter) => {
-            filteredData = dataFilter(filteredData, filter.field, filters);
-            return filter;
-          });
+          if (dataset.options && dataset.options.fieldsSchema) {
+            let found = false;
+            Object.keys(dataset.options.fieldsSchema).forEach((key) => {
+              if (_.find(filters, (o) => o.field === key)) {
+                found = true;
+              }
+            });
+
+            if (found) {
+              filters.map((filter) => {
+                filteredData = dataFilter(filteredData, filter.field, filters);
+                return filter;
+              });
+            }
+          }
         }
 
         // first, handle the xAxis
