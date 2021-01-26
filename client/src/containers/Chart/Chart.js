@@ -27,9 +27,10 @@ import { SITE_HOST } from "../../config/settings";
 import BarChart from "./components/BarChart";
 import { blackTransparent } from "../../config/colors";
 
-const getFiltersFromStorage = () => {
+const getFiltersFromStorage = (projectId) => {
   try {
-    return JSON.parse(window.localStorage.getItem("_cb_filters"));
+    const filters = JSON.parse(window.localStorage.getItem("_cb_filters"));
+    return filters[projectId] || null;
   } catch (e) {
     return null;
   }
@@ -56,7 +57,9 @@ function Chart(props) {
   const [publicLoading, setPublicLoading] = useState(false);
   const [iframeCopied, setIframeCopied] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
-  const [dashboardFilters, setDashboardFilters] = useState(getFiltersFromStorage());
+  const [dashboardFilters, setDashboardFilters] = useState(
+    getFiltersFromStorage(match.params.projectId)
+  );
 
   useEffect(() => {
     setIframeCopied(false);
@@ -96,15 +99,17 @@ function Chart(props) {
   };
 
   const _onGetChartData = (chartId) => {
+    const { projectId } = match.params;
+
     setChartLoading(chartId);
-    runQuery(match.params.projectId, chartId)
+    runQuery(projectId, chartId)
       .then(() => {
         setChartLoading(false);
 
-        setDashboardFilters(getFiltersFromStorage());
+        setDashboardFilters(getFiltersFromStorage(projectId));
         setTimeout(() => {
           if (dashboardFilters && _chartHasFilter(_.find(charts, { id: chartId }))) {
-            runQueryWithFilters(match.params.projectId, chartId, dashboardFilters);
+            runQueryWithFilters(projectId, chartId, dashboardFilters);
           }
         }, 100);
       })

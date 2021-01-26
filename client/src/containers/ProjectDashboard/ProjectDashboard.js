@@ -54,25 +54,31 @@ function ProjectDashboard(props) {
   }, [filters]);
 
   const _onAddFilter = (filter) => {
-    const newFilters = _.clone(filters) || [];
-    newFilters.push(filter);
+    const { projectId } = match.params;
+
+    const newFilters = _.clone(filters) || {};
+    if (!newFilters[projectId]) newFilters[projectId] = [];
+    newFilters[projectId].push(filter);
     setFilters(newFilters);
     setShowFilters(false);
     _runFiltering();
   };
 
   const _onRemoveFilter = (filterId) => {
+    const { projectId } = match.params;
     _runFiltering();
-    if (filters.length === 1) {
-      setFilters(null);
+    if (filters && filters[projectId].length === 1) {
+      const newFilters = _.clone(filters);
+      delete newFilters[projectId];
+      setFilters(newFilters);
       return;
     }
 
-    const index = _.findIndex(filters, { id: filterId });
+    const index = _.findIndex(filters[projectId], { id: filterId });
     if (!index) return;
 
     const newFilters = _.clone(filters);
-    newFilters.splice(index, 1);
+    newFilters[projectId].splice(index, 1);
 
     setFilters(newFilters);
   };
@@ -85,20 +91,22 @@ function ProjectDashboard(props) {
   };
 
   const _onFilterCharts = () => {
-    if (!filters) {
-      getProjectCharts(match.params.projectId);
+    const { projectId } = match.params;
+
+    if (!filters || !filters[projectId]) {
+      getProjectCharts(projectId);
       setFilterLoading(false);
       return Promise.resolve("done");
     }
 
     const refreshPromises = [];
     for (let i = 0; i < charts.length; i++) {
-      if (filters) {
+      if (filters && filters[projectId]) {
         setFilterLoading(true);
         // first, discard the charts on which the filters don't apply
         if (_chartHasFilter(charts[i])) {
           refreshPromises.push(
-            runQueryWithFilters(match.params.projectId, charts[i].id, filters)
+            runQueryWithFilters(projectId, charts[i].id, filters[projectId])
           );
         }
       }
@@ -114,18 +122,20 @@ function ProjectDashboard(props) {
   };
 
   const _onRefreshData = () => {
+    const { projectId } = match.params;
+
     setRefreshLoading(true);
     const refreshPromises = [];
 
     for (let i = 0; i < charts.length; i++) {
       refreshPromises.push(
-        runQuery(match.params.projectId, charts[i].id)
+        runQuery(projectId, charts[i].id)
       );
     }
 
     return Promise.all(refreshPromises)
       .then(() => {
-        if (filters) {
+        if (filters && filters[projectId]) {
           _onFilterCharts();
         }
         setRefreshLoading(false);
@@ -141,7 +151,7 @@ function ProjectDashboard(props) {
       chart.Datasets.map((dataset) => {
         if (dataset.fieldsSchema) {
           Object.keys(dataset.fieldsSchema).forEach((key) => {
-            if (_.find(filters, (o) => o.field === key)) {
+            if (_.find(filters[match.params.projectId], (o) => o.field === key)) {
               found = true;
             }
           });
@@ -183,16 +193,18 @@ function ProjectDashboard(props) {
               <Menu.Item style={{ borderLeft: "solid 1px #d4d4d5" }}>
                 <div>
                   <Label.Group size="small">
-                    {filters && filters.map((filter) => (
-                      <Label color="violet" as="a" key={filter.id} style={{ marginBottom: 0 }}>
-                        <span>{`${filter.field.substring(filter.field.lastIndexOf(".") + 1)}`}</span>
-                        <strong>{` ${_getOperator(filter.operator)} `}</strong>
-                        <span>{`${filter.value}`}</span>
-                        <Label.Detail>
-                          <Icon name="x" onClick={() => _onRemoveFilter(filter.id)} />
-                        </Label.Detail>
-                      </Label>
-                    ))}
+                    {filters
+                      && filters[match.params.projectId]
+                      && filters[match.params.projectId].map((filter) => (
+                        <Label color="violet" as="a" key={filter.id} style={{ marginBottom: 0 }}>
+                          <span>{`${filter.field.substring(filter.field.lastIndexOf(".") + 1)}`}</span>
+                          <strong>{` ${_getOperator(filter.operator)} `}</strong>
+                          <span>{`${filter.value}`}</span>
+                          <Label.Detail>
+                            <Icon name="x" onClick={() => _onRemoveFilter(filter.id)} />
+                          </Label.Detail>
+                        </Label>
+                      ))}
                   </Label.Group>
                 </div>
               </Menu.Item>
