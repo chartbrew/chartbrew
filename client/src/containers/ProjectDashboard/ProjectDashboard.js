@@ -99,12 +99,6 @@ function ProjectDashboard(props) {
         if (_chartHasFilter(charts[i])) {
           refreshPromises.push(
             runQueryWithFilters(match.params.projectId, charts[i].id, filters)
-              .then(() => {
-                setFilterLoading(false);
-              })
-              .catch(() => {
-                setFilterLoading(false);
-              })
           );
         }
       }
