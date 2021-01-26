@@ -180,7 +180,7 @@ function Filters(props) {
             <Popup
               trigger={<Icon style={{ marginLeft: 15 }} size="large" name="question circle outline" />}
               content={
-                "If you can't see your fields here, please go in each chart and re-run the queries. Chartbrew will then index the fields."
+                "If you can't see your fields, please go in each chart and re-run the queries. Chartbrew will then index the fields and then they will appear here."
               }
             />
           </div>

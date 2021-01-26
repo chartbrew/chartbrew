@@ -10,7 +10,6 @@ import {
 import {
   Pie, Doughnut, Radar, Polar
 } from "react-chartjs-2";
-import { useLocalStorage } from "react-use";
 import moment from "moment";
 import _ from "lodash";
 import "chart.piecelabel.js";
@@ -28,16 +27,21 @@ import { SITE_HOST } from "../../config/settings";
 import BarChart from "./components/BarChart";
 import { blackTransparent } from "../../config/colors";
 
-const initialFilters = window.localStorage.getItem("_cb_filters");
+const getFiltersFromStorage = () => {
+  try {
+    return JSON.parse(window.localStorage.getItem("_cb_filters"));
+  } catch (e) {
+    return null;
+  }
+};
 
 /*
   This is the container that generates the Charts together with the menu
 */
 function Chart(props) {
   const {
-    updateChart, match, changeOrder, runQuery, removeChart, refreshRequested,
-    team, user, charts, isPublic, connections, showDrafts, onCompleteRefresh,
-    filteringRequested, runQueryWithFilters,
+    updateChart, match, changeOrder, runQuery, removeChart, runQueryWithFilters,
+    team, user, charts, isPublic, connections, showDrafts,
   } = props;
 
   const [chartLoading, setChartLoading] = useState(false);
@@ -52,68 +56,12 @@ function Chart(props) {
   const [publicLoading, setPublicLoading] = useState(false);
   const [iframeCopied, setIframeCopied] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
-  const [dashboardFilters] = useLocalStorage("_cb_filters", initialFilters);
-
-  useEffect(() => {
-    if (dashboardFilters) {
-      _onRefreshAll(dashboardFilters);
-    }
-  }, [dashboardFilters]);
-
-  useEffect(() => {
-    if (refreshRequested) {
-      _onRefreshAll();
-    }
-  }, [refreshRequested]);
-
-  useEffect(() => {
-    if (filteringRequested) {
-      _onRefreshAll(dashboardFilters);
-    }
-  }, [filteringRequested]);
+  const [dashboardFilters, setDashboardFilters] = useState(getFiltersFromStorage());
 
   useEffect(() => {
     setIframeCopied(false);
     setUrlCopied(false);
   }, [embedModal]);
-
-  const _onRefreshAll = (filters) => {
-    const refreshPromises = [];
-    for (let i = 0; i < charts.length; i++) {
-      if (filters) {
-        // first, discard the charts on which the filters don't apply
-        if (_chartHasFilter(charts[i])) {
-          refreshPromises.push(
-            runQueryWithFilters(match.params.projectId, charts[i].id, filters)
-              .then(() => {
-                setChartLoading(false);
-              })
-              .catch(() => {
-                setChartLoading(false);
-              })
-          );
-        }
-      } else {
-        refreshPromises.push(
-          runQuery(match.params.projectId, charts[i].id)
-            .then(() => {
-              setChartLoading(false);
-            })
-            .catch(() => {
-              setChartLoading(false);
-            })
-        );
-      }
-    }
-
-    return Promise.all(refreshPromises)
-      .then(() => {
-        onCompleteRefresh();
-      })
-      .catch(() => {
-        onCompleteRefresh();
-      });
-  };
 
   const _onChangeSize = (chartId, size) => {
     setChartLoading(chartId);
@@ -152,6 +100,13 @@ function Chart(props) {
     runQuery(match.params.projectId, chartId)
       .then(() => {
         setChartLoading(false);
+
+        setDashboardFilters(getFiltersFromStorage());
+        setTimeout(() => {
+          if (dashboardFilters && _chartHasFilter(_.find(charts, { id: chartId }))) {
+            runQueryWithFilters(match.params.projectId, chartId, dashboardFilters);
+          }
+        }, 100);
       })
       .catch((error) => {
         if (error === 413) {
@@ -847,9 +802,6 @@ const styles = {
 Chart.defaultProps = {
   isPublic: false,
   showDrafts: true,
-  refreshRequested: false,
-  filteringRequested: false,
-  onCompleteRefresh: () => {},
 };
 
 Chart.propTypes = {
@@ -858,16 +810,13 @@ Chart.propTypes = {
   match: PropTypes.object.isRequired,
   removeChart: PropTypes.func.isRequired,
   runQuery: PropTypes.func.isRequired,
+  runQueryWithFilters: PropTypes.func.isRequired,
   updateChart: PropTypes.func.isRequired,
   changeOrder: PropTypes.func.isRequired,
-  runQueryWithFilters: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
   isPublic: PropTypes.bool,
   showDrafts: PropTypes.bool,
-  refreshRequested: PropTypes.bool,
-  filteringRequested: PropTypes.bool,
-  onCompleteRefresh: PropTypes.func,
 };
 
 const mapStateToProps = (state) => {

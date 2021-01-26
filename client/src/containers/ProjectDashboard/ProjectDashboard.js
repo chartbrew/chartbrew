@@ -16,7 +16,8 @@ import Filters from "./components/Filters";
 import { operators } from "../../modules/filterOperations";
 import {
   getProjectCharts as getProjectChartsAction,
-  runQueryWithFilters as runQueryWithFiltersAction
+  runQueryWithFilters as runQueryWithFiltersAction,
+  runQuery as runQueryAction,
 } from "../../actions/chart";
 
 /*
@@ -25,16 +26,15 @@ import {
 function ProjectDashboard(props) {
   const {
     cleanErrors, connections, charts, match, showDrafts, runQueryWithFilters,
-    getProjectCharts,
+    getProjectCharts, runQuery,
   } = props;
 
   const initialFilters = window.localStorage.getItem("_cb_filters");
-  const [refreshRequested, setRefreshRequested] = useState(false);
-  const [filteringRequested, setFilteringRequested] = useState(false);
   const [filters, setFilters] = useLocalStorage("_cb_filters", initialFilters);
   const [showFilters, setShowFilters] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
   const [alreadyFiltered, setAlreadyFiltered] = useState(true);
+  const [refreshLoading, setRefreshLoading] = useState(false);
 
   const { height } = useWindowSize();
 
@@ -52,11 +52,6 @@ function ProjectDashboard(props) {
   useEffect(() => {
     setAlreadyFiltered(false);
   }, [filters]);
-
-  const _onCompleteRefresh = () => {
-    setRefreshRequested(false);
-    setFilteringRequested(false);
-  };
 
   const _onAddFilter = (filter) => {
     const newFilters = _.clone(filters) || [];
@@ -85,20 +80,21 @@ function ProjectDashboard(props) {
   const _runFiltering = () => {
     setFilterLoading(true);
     setTimeout(() => {
-      _onRefreshCharts();
+      _onFilterCharts();
     }, 500);
   };
 
-  const _onRefreshCharts = () => {
+  const _onFilterCharts = () => {
     if (!filters) {
       getProjectCharts(match.params.projectId);
       setFilterLoading(false);
-      return;
+      return Promise.resolve("done");
     }
 
     const refreshPromises = [];
     for (let i = 0; i < charts.length; i++) {
       if (filters) {
+        setFilterLoading(true);
         // first, discard the charts on which the filters don't apply
         if (_chartHasFilter(charts[i])) {
           refreshPromises.push(
@@ -113,6 +109,36 @@ function ProjectDashboard(props) {
         }
       }
     }
+
+    return Promise.all(refreshPromises)
+      .then(() => {
+        setFilterLoading(false);
+      })
+      .catch(() => {
+        setFilterLoading(false);
+      });
+  };
+
+  const _onRefreshData = () => {
+    setRefreshLoading(true);
+    const refreshPromises = [];
+
+    for (let i = 0; i < charts.length; i++) {
+      refreshPromises.push(
+        runQuery(match.params.projectId, charts[i].id)
+      );
+    }
+
+    return Promise.all(refreshPromises)
+      .then(() => {
+        if (filters) {
+          _onFilterCharts();
+        }
+        setRefreshLoading(false);
+      })
+      .catch(() => {
+        setRefreshLoading(false);
+      });
   };
 
   const _chartHasFilter = (chart) => {
@@ -147,25 +173,24 @@ function ProjectDashboard(props) {
       {charts && charts.length > 0
         && (
           <div>
-            <Menu tabular fluid compact style={styles.actionBar}>
+            <Menu tabular fluid compact style={styles.actionBar} size="small">
               <Menu.Item
                 name="filters"
               >
                 <Button
                   basic
                   primary
-                  size="small"
                   icon="filter"
-                  content="Add filters"
+                  content="Add filter"
                   loading={filterLoading}
                   onClick={_onShowFilters}
                 />
               </Menu.Item>
               <Menu.Item style={{ borderLeft: "solid 1px #d4d4d5" }}>
                 <div>
-                  <Label.Group>
+                  <Label.Group size="small">
                     {filters && filters.map((filter) => (
-                      <Label color="violet" as="a" key={filter.id}>
+                      <Label color="violet" as="a" key={filter.id} style={{ marginBottom: 0 }}>
                         <span>{`${filter.field.substring(filter.field.lastIndexOf(".") + 1)}`}</span>
                         <strong>{` ${_getOperator(filter.operator)} `}</strong>
                         <span>{`${filter.value}`}</span>
@@ -182,11 +207,10 @@ function ProjectDashboard(props) {
                   <Button
                     basic
                     primary
-                    size="small"
                     icon="refresh"
-                    onClick={() => setRefreshRequested(true)}
-                    loading={refreshRequested}
-                    content="Refresh charts"
+                    onClick={() => _onRefreshData()}
+                    loading={refreshLoading}
+                    content="Run all queries"
                   />
                 </Menu.Item>
               </Menu.Menu>
@@ -239,9 +263,6 @@ function ProjectDashboard(props) {
           <Chart
             charts={charts}
             showDrafts={showDrafts}
-            refreshRequested={refreshRequested}
-            filteringRequested={filteringRequested}
-            onCompleteRefresh={_onCompleteRefresh}
           />
         )}
         {connections.length > 0 && charts.length > 0 && (
@@ -308,6 +329,7 @@ ProjectDashboard.propTypes = {
   match: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
   runQueryWithFilters: PropTypes.func.isRequired,
+  runQuery: PropTypes.func.isRequired,
   getProjectCharts: PropTypes.func.isRequired,
   showDrafts: PropTypes.bool,
 };
@@ -325,6 +347,7 @@ const mapDispatchToProps = (dispatch) => {
     runQueryWithFilters: (projectId, chartId, filters) => (
       dispatch(runQueryWithFiltersAction(projectId, chartId, filters))
     ),
+    runQuery: (projectId, chartId) => dispatch(runQueryAction(projectId, chartId)),
     getProjectCharts: (projectId) => dispatch(getProjectChartsAction(projectId)),
   };
 };
