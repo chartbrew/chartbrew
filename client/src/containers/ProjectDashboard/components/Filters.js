@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import _ from "lodash";
 import uuid from "uuid/v4";
 import {
-  Button, Container, Divider, Dropdown, Grid, Header, Input, Label, Popup,
+  Button, Container, Divider, Dropdown, Grid, Header, Icon, Input, Label, Popup,
 } from "semantic-ui-react";
 import { formatISO, format } from "date-fns";
 import { Calendar } from "react-date-range";
@@ -113,7 +113,9 @@ function Filters(props) {
     <Container>
       <Grid columns={1} relaxed>
         <Grid.Column>
-          <Header as="h4">Filters</Header>
+          <Header as="h4">
+            Configure your filter
+          </Header>
           <div>
             <Dropdown
               icon={null}
@@ -175,6 +177,12 @@ function Filters(props) {
                   )}
                 />
             )}
+            <Popup
+              trigger={<Icon style={{ marginLeft: 15 }} size="large" name="question circle outline" />}
+              content={
+                "If you can't see your fields here, please go in each chart and re-run the queries. Chartbrew will then index the fields."
+              }
+            />
           </div>
         </Grid.Column>
 
