@@ -269,7 +269,7 @@ function DatasetData(props) {
       });
   };
 
-  if (!fieldOptions && dataset.connection_id) {
+  if ((!fieldOptions || !dataset.fieldsSchema) && dataset.connection_id) {
     return (
       <Container textAlign="center">
         <Button
