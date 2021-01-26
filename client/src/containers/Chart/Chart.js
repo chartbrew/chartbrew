@@ -26,6 +26,7 @@ import {
 import canAccess from "../../config/canAccess";
 import { SITE_HOST } from "../../config/settings";
 import BarChart from "./components/BarChart";
+import { blackTransparent } from "../../config/colors";
 
 const initialFilters = window.localStorage.getItem("_cb_filters");
 
@@ -478,7 +479,14 @@ function Chart(props) {
                               position="bottom center"
                             />
                           )}
-                      {chart.name}
+                      {_canAccess("editor") && (
+                        <Link to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}>
+                          <span style={{ color: blackTransparent(0.9) }}>{chart.name}</span>
+                        </Link>
+                      )}
+                      {!_canAccess("editor") && (
+                        <span>{chart.name}</span>
+                      )}
                     </span>
                     {connection && _canAccess("editor") && projectId
                         && (
