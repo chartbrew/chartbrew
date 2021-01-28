@@ -21,6 +21,19 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "cascade",
       },
     },
+    projects: {
+      type: DataTypes.TEXT,
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("projects"));
+        } catch (e) {
+          return this.getDataValue("projects");
+        }
+      },
+      set(val) {
+        return this.setDataValue("projects", JSON.stringify(val));
+      }
+    },
     role: {
       type: DataTypes.STRING,
       defaultValue: "admin",

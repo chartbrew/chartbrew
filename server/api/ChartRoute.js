@@ -17,6 +17,7 @@ module.exports = (app) => {
         if (req.params.id) {
           return chartController.findById(req.params.id);
         }
+
         return teamController.getTeamRole(project.team_id, req.user.id);
       })
       .then((data) => {
@@ -24,11 +25,25 @@ module.exports = (app) => {
           return Promise.resolve(data);
         }
 
+        // check if the project_id matches in the database records
         if (parseInt(data.project_id, 10) !== parseInt(gProject.id, 10)) {
           throw new Error(401);
         }
 
         return teamController.getTeamRole(gProject.team_id, req.user.id);
+      })
+      .then((teamRole) => {
+        // the owner has access to all the projects
+        if (teamRole.role === "owner") return teamRole;
+
+        // otherwise, check if the team role contains access to the right project
+        if (!teamRole.projects) return Promise.reject(401);
+        const filteredProjects = teamRole.projects.filter((o) => `${o}` === `${req.params.project_id}`);
+        if (filteredProjects.length === 0) {
+          return Promise.reject(401);
+        }
+
+        return teamRole;
       });
   };
 
@@ -236,7 +251,7 @@ module.exports = (app) => {
   ** Route to test a query before saving
   */
   app.post("/project/:project_id/chart/preview", verifyToken, (req, res) => {
-    checkAccess(req)
+    return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("chart");
         if (!permission.granted) {

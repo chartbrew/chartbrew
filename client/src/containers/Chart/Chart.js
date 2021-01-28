@@ -262,7 +262,7 @@ function Chart(props) {
             content="This is on us, we couldn't process your request. Try to refresh the page and try again."
           />
           )}
-      {charts.length < 1
+      {_canAccess("editor") && charts.length < 1
           && (
           <Grid centered style={styles.addCard}>
             <Card
