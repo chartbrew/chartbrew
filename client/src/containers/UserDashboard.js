@@ -6,6 +6,7 @@ import {
   Divider, Dimmer, Loader, Form, Modal, Header, Message, Container,
   Button, Icon, Grid, Card, Step, TransitionablePortal,
 } from "semantic-ui-react";
+import _ from "lodash";
 
 import {
   getTeams as getTeamsAction,
@@ -52,8 +53,20 @@ function UserDashboard(props) {
 
   useEffect(() => {
     if (teams.length > 0) {
-      if (teams[0].Projects && teams[0].Projects.length === 0) {
-        _onNewProject(teams[0]);
+      let shouldOpenNewProject = false;
+      let teamOwned;
+      teams.map((team) => {
+        if (team.TeamRoles && _.find(team.TeamRoles, { user_id: user.data.id, role: "owner" })) {
+          teamOwned = team;
+        }
+        if (teams.Projects && teams.Projects.length > 0) {
+          shouldOpenNewProject = true;
+        }
+        return team;
+      });
+
+      if (shouldOpenNewProject) {
+        _onNewProject(teamOwned);
       }
     }
   }, [teams]);
@@ -328,7 +341,7 @@ function UserDashboard(props) {
                 && (
                   <Message>
                     <p>
-                      {"This team doesn't have any projects yet."}
+                      {"No project over here"}
                     </p>
                   </Message>
                 )}
