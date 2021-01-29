@@ -48,6 +48,19 @@ module.exports = (sequelize, DataTypes) => {
         return this.setDataValue("email", sc.encrypt(value));
       },
     },
+    projects: {
+      type: DataTypes.TEXT,
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("projects"));
+        } catch (e) {
+          return this.getDataValue("projects");
+        }
+      },
+      set(value) {
+        return this.setDataValue("projects", JSON.stringify(value));
+      },
+    },
   }, {
     freezeTableName: true,
   });

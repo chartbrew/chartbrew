@@ -161,7 +161,7 @@ export function updateTeam(teamId, data) {
   };
 }
 
-export function inviteMembers(userId, email, teamId) {
+export function inviteMembers(userId, email, teamId, projects) {
   return (dispatch) => {
     if (!cookie.load("brewToken")) {
       return new Promise((resolve, reject) => reject(new Error("No Token")));
@@ -174,7 +174,8 @@ export function inviteMembers(userId, email, teamId) {
     });
     const body = JSON.stringify({
       "user_id": userId,
-      "email": email
+      email,
+      projects,
     });
     return fetch(`${API_HOST}/team/${teamId}/invite`, { method: "POST", headers, body })
       .then((response) => {

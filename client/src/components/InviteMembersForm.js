@@ -3,12 +3,13 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Segment, Dropdown, Container, Message, Header, Divider, Form, Button, Icon
+  Segment, Dropdown, Message, Header, Divider, Form, Button, Icon, Grid, Checkbox
 } from "semantic-ui-react";
+import _ from "lodash";
 
 import { email } from "../config/validations";
 
-import { inviteMembers } from "../actions/team";
+import { inviteMembers as inviteMembersAction } from "../actions/team";
 
 /*
   Contains the team members invitation functionality
@@ -22,9 +23,10 @@ function InviteMembersForm(props) {
   const [inviteError, setInviteError] = useState(false);
   const [undeliveredInvites, setUndeliveredInvites] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [projectAccess, setProjectAccess] = useState([]);
 
   const {
-    style, match, skipTeamInvite, team, inviteMembers, user
+    style, match, projects, team, inviteMembers, user
   } = props;
 
   const onInviteMembers = () => {
@@ -42,7 +44,8 @@ function InviteMembersForm(props) {
       inviteMembers(
         user.data.id,
         email.value,
-        teamId
+        teamId,
+        projectAccess,
       ).then(() => {
         setLoading(false);
         setIncorrectMail(false);
@@ -69,11 +72,24 @@ function InviteMembersForm(props) {
     }
   };
 
+  const _onChangeProjectAccess = (projectId) => {
+    const newAccess = [].concat(projectAccess) || [];
+    const isFound = _.indexOf(projectAccess, projectId);
+
+    if (isFound === -1) {
+      newAccess.push(projectId);
+    } else {
+      newAccess.splice(isFound, 1);
+    }
+
+    setProjectAccess(newAccess);
+  };
+
   return (
     <div style={style}>
       <Segment>
-        <Header as="h3">Invite New Members</Header>
-        <Form onSubmit={onInviteMembers}>
+        <Header as="h3">Invite new members</Header>
+        <Form>
           <Form.Field style={{ paddingTop: 10 }}>
             <Dropdown
               options={members}
@@ -90,13 +106,13 @@ function InviteMembersForm(props) {
           </Form.Field>
           {incorrectMail
             && (
-            <Container textAlign="center" style={{ margin: "1em" }}>
+            <Form.Field textAlign="center">
               <Message negative> Make sure the email is valid </Message>
-            </Container>
+            </Form.Field>
             )}
           {success
             && (
-            <Container style={{ margin: "1em" }}>
+            <Form.Field>
               <Message positive>
                 <Message.List>
                   {sentInvites.map((invite) => {
@@ -109,10 +125,10 @@ function InviteMembersForm(props) {
                   })}
                 </Message.List>
               </Message>
-            </Container>
+            </Form.Field>
             )}
           {inviteError && (
-            <Container style={{ margin: "1em" }}>
+            <Form.Field>
               <Message negative>
                 <Message.List>
                   {undeliveredInvites.map((invite) => {
@@ -125,63 +141,55 @@ function InviteMembersForm(props) {
                   })}
                 </Message.List>
               </Message>
-            </Container>
+            </Form.Field>
           )}
-          <Form.Field>
-            {!match.params.teamId
-              && (
-              <Button
-                floated="left"
-                compact
-                size="large"
-                basic
-                onClick={() => skipTeamInvite()}
-              >
-                Skip for now
-              </Button>
-              )}
-            <Button
-              loading={loading}
-              disabled={!members[0]}
-              compact
-              size="large"
-              type="submit"
-              floated="right"
-              primary
-            >
-              Send Invites
-            </Button>
-          </Form.Field>
-          <Divider hidden />
-          <Divider hidden />
         </Form>
+
+        <Header as="h4">Select which projects the user will be part of:</Header>
+
+        <Grid columns={2} stackable>
+          {projects && projects.map((project) => (
+            <Grid.Column key={project.id}>
+              <Checkbox
+                toggle
+                label={project.name}
+                checked={
+                  _.indexOf(projectAccess, project.id) > -1
+                }
+                onClick={() => _onChangeProjectAccess(project.id)}
+              />
+            </Grid.Column>
+          ))}
+        </Grid>
+
+        <Button
+          loading={loading}
+          disabled={!members[0]}
+          compact
+          size="large"
+          onClick={onInviteMembers}
+          floated="right"
+          primary
+        >
+          Send Invites
+        </Button>
+        <Divider hidden />
+        <Divider hidden />
       </Segment>
     </div>
   );
 }
 
-//
-// const styles = {
-//   container: {
-//     flex: 1,
-//   },
-//   addPadding: {
-//     padding: 20,
-//     paddingLeft: 30,
-//   }
-// };
-
 InviteMembersForm.defaultProps = {
-  skipTeamInvite: () => {},
   style: {},
 };
 
 InviteMembersForm.propTypes = {
-  skipTeamInvite: PropTypes.func,
   inviteMembers: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
   match: PropTypes.object.isRequired,
+  projects: PropTypes.array.isRequired,
   style: PropTypes.object,
 };
 
@@ -189,12 +197,15 @@ const mapStateToProps = (state) => {
   return {
     team: state.team.active,
     user: state.user,
+    projects: state.project.data,
   };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    inviteMembers: (userId, email, teamId) => dispatch(inviteMembers(userId, email, teamId)),
+    inviteMembers: (userId, email, teamId, projects) => (
+      dispatch(inviteMembersAction(userId, email, teamId, projects))
+    ),
   };
 };
 

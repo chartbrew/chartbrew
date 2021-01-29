@@ -48,8 +48,13 @@ class TeamController {
   }
 
   // add a new team role
-  addTeamRole(teamId, userId, roleName) {
-    return db.TeamRole.create({ "team_id": teamId, "user_id": userId, "role": roleName })
+  addTeamRole(teamId, userId, roleName, projects) {
+    const teamRoleObj = { "team_id": teamId, "user_id": userId, "role": roleName };
+    if (projects) {
+      teamRoleObj.projects = projects;
+    }
+
+    return db.TeamRole.create(teamRoleObj)
       .then((role) => {
         return role;
       })
@@ -231,7 +236,7 @@ class TeamController {
   saveTeamInvite(teamId, data) {
     const token = uuidv4();
     return db.TeamInvitation.create({
-      "team_id": teamId, "email": data.email, "user_id": data.user_id, token
+      "team_id": teamId, "email": data.email, "user_id": data.user_id, token, projects: data.projects,
     })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

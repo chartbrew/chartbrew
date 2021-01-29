@@ -46,7 +46,7 @@ module.exports = (app) => {
       })
       .then((team) => {
         const modTeam = team;
-        if (team.Projects) modTeam.Projects = filterProjects(team.Projects, gTeamRole);
+        if (team.Projects) modTeam.setDataValue("Projects", filterProjects(team.Projects, gTeamRole));
         return res.status(200).send(modTeam);
       })
       .catch((error) => {
@@ -93,7 +93,7 @@ module.exports = (app) => {
       })
       .then((team) => {
         const modTeam = team;
-        if (team.Projects) modTeam.Projects = filterProjects(team.Projects, gTeamRole);
+        if (team.Projects) modTeam.setDataValue("Projects", filterProjects(team.Projects, gTeamRole));
         return res.status(200).send(modTeam);
       })
       .catch((error) => {
@@ -125,6 +125,7 @@ module.exports = (app) => {
     if (!req.params.id || !req.body) return res.status(400).send("Missing params");
     let invite = {};
     let admin = {};
+    let completed = false;
     return teamController.getTeamRole(req.params.id, req.user.id)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("teamInvite");
@@ -153,6 +154,7 @@ module.exports = (app) => {
         return teamController.findById(req.params.id);
       })
       .then((teamName) => {
+        completed = true;
         return sendInviteEmail(invite, admin, teamName);
       })
       .then(() => {
@@ -161,6 +163,13 @@ module.exports = (app) => {
       .catch((error) => {
         if (error.message === "406") return res.status(406).send(error);
         if (error.message === "401") return res.status(401).send({ error: "Not authorized" });
+
+        if (completed) {
+          return res.status(200).send({
+            completed: true,
+            email: false,
+          });
+        }
         return res.status(400).send(error);
       });
   });
@@ -201,7 +210,7 @@ module.exports = (app) => {
     let newRole = {};
     return teamController.getTeamInvite(req.body.token)
       .then((invite) => {
-        return teamController.addTeamRole(invite.team_id, req.params.user_id, "member");
+        return teamController.addTeamRole(invite.team_id, req.params.user_id, "member", invite.projects);
       })
       .then((role) => {
         newRole = role;
@@ -211,7 +220,9 @@ module.exports = (app) => {
         return teamController.findById(newRole.team_id);
       })
       .then((team) => {
-        return res.status(200).send(team);
+        const modTeam = team;
+        if (team.Projects) modTeam.setDataValue("Projects", filterProjects(team.Projects, newRole));
+        return res.status(200).send(modTeam);
       })
       .catch((error) => {
         if (error === "404") return res.status(404).send("The invitation is not found");
@@ -264,6 +275,7 @@ module.exports = (app) => {
 
   // route to delete a team invite by token
   app.post("/team/:id/declineInvite/user", verifyToken, (req, res) => {
+    let requestFinished = false;
     return teamController.getTeamRole(req.params.id, req.user.id)
       .then((teamRole) => {
         if (!teamRole) throw new Error("norole");
@@ -274,28 +286,35 @@ module.exports = (app) => {
         return teamController.deleteTeamInvite(req.body.token);
       })
       .then(() => {
-        return res.status(200).send({});
+        res.status(200).send({});
+        requestFinished = true;
+        return Promise.resolve({});
       })
       .catch((error) => {
         if (error.message === "norole") {
           return teamController.getInviteByEmail(req.params.id, req.user.email);
         }
-        if (error.message === "401") {
-          return res.status(401).send(error);
-        }
-        return res.status(400).send(error);
+
+        return Promise.reject(error);
       })
       .then((invite) => {
         if (!invite) {
-          return res.status(401).send({ error: "Not authorized" });
+          return Promise.reject({ error: "Not authorized" });
         }
 
         return teamController.deleteTeamInvite(req.body.token);
       })
       .then(() => {
-        return res.status(200).send({});
+        if (!requestFinished) {
+          return res.status(200).send({});
+        }
+
+        return Promise.resolve({});
       })
       .catch((error) => {
+        if (error.message && error.message.indexOf("401") > -1) {
+          return res.status(401).send(error);
+        }
         return res.status(400).send(error);
       });
   });
