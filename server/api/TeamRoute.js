@@ -315,7 +315,7 @@ module.exports = (app) => {
         if (!permission.granted) {
           throw new Error(401);
         }
-        return teamController.updateTeamRole(req.params.id, req.body.user_id, req.body.role);
+        return teamController.updateTeamRole(req.params.id, req.body.user_id, req.body);
       })
       .then((updated) => {
         return res.status(200).send(updated);

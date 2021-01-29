@@ -176,8 +176,8 @@ function Invites(props) {
     <div style={styles.container}>
       {match.params.teamId
         ? (
-          <Segment attached="top">
-            <Header as="h3" style={{ borderBottom: "1px solid #d4d4d5", paddingBottom: 10, top: 0 }}> Pending team invites </Header>
+          <Segment>
+            <Header as="h3" style={{ paddingBottom: 10 }}> Pending team invites </Header>
             <Container>
               { !showpendings
               && (

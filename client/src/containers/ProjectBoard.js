@@ -19,7 +19,7 @@ import ProjectDashboard from "./ProjectDashboard/ProjectDashboard";
 import AddChart from "./AddChart/AddChart";
 import Navbar from "../components/Navbar";
 import { primary, blue, lightGray } from "../config/colors";
-import TeamMembers from "./TeamMembers";
+import TeamMembers from "./TeamMembers/TeamMembers";
 import TeamSettings from "./TeamSettings";
 import PublicDashboardEditor from "./PublicDashboardEditor";
 import ProjectSettings from "./ProjectSettings";

@@ -248,7 +248,7 @@ export function getTeamMembers(teamId) {
   };
 }
 
-export function updateTeamRole(role, memberId, teamId) {
+export function updateTeamRole(data, memberId, teamId) {
   return (dispatch) => {
     if (!cookie.load("brewToken")) {
       return new Promise((resolve, reject) => reject(new Error("No Token")));
@@ -259,10 +259,11 @@ export function updateTeamRole(role, memberId, teamId) {
       "Content-Type": "application/json",
       "authorization": `Bearer ${token}`,
     });
-    const body = JSON.stringify({
-      "user_id": memberId,
-      "role": role
-    });
+
+    const updateData = data;
+    updateData.user_id = memberId;
+    const body = JSON.stringify(updateData);
+
     return fetch(`${API_HOST}/team/${teamId}/role`, { method: "PUT", headers, body })
       .then((response) => {
         if (!response.ok) {

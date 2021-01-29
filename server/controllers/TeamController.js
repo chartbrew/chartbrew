@@ -98,8 +98,8 @@ class TeamController {
     });
   }
 
-  updateTeamRole(teamId, userId, newRole) {
-    return db.TeamRole.update({ role: newRole }, { where: { "team_id": teamId, "user_id": userId } })
+  updateTeamRole(teamId, userId, data) {
+    return db.TeamRole.update(data, { where: { "team_id": teamId, "user_id": userId } })
       .then(() => {
         return this.getTeamRole(teamId, userId);
       })

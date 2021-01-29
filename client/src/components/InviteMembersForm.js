@@ -71,8 +71,8 @@ function InviteMembersForm(props) {
 
   return (
     <div style={style}>
-      <Header attached="top" as="h3">Invite New Members</Header>
-      <Segment attached>
+      <Segment>
+        <Header as="h3">Invite New Members</Header>
         <Form onSubmit={onInviteMembers}>
           <Form.Field style={{ paddingTop: 10 }}>
             <Dropdown

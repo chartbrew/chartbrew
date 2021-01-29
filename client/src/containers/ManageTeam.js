@@ -11,7 +11,7 @@ import {
 
 import { getTeam, saveActiveTeam } from "../actions/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
-import TeamMembers from "./TeamMembers";
+import TeamMembers from "./TeamMembers/TeamMembers";
 import TeamSettings from "./TeamSettings";
 import Navbar from "../components/Navbar";
 import canAccess from "../config/canAccess";
