@@ -7,7 +7,11 @@ import {
   Button, Icon, Grid, Card, Step, TransitionablePortal,
 } from "semantic-ui-react";
 
-import { getTeams, createTeam, saveActiveTeam } from "../actions/team";
+import {
+  getTeams as getTeamsAction,
+  createTeam as createTeamAction,
+  saveActiveTeam as saveActiveTeamAction,
+} from "../actions/team";
 import { getUser, relog as relogAction } from "../actions/user";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import ProjectForm from "../components/ProjectForm";
@@ -418,9 +422,9 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
   return {
     getUser: (id) => dispatch(getUser(id)),
-    getTeams: (userId) => dispatch(getTeams(userId)),
-    createTeam: (userId, name) => dispatch(createTeam(userId, name)),
-    saveActiveTeam: (team) => dispatch(saveActiveTeam(team)),
+    getTeams: (userId) => dispatch(getTeamsAction(userId)),
+    createTeam: (userId, name) => dispatch(createTeamAction(userId, name)),
+    saveActiveTeam: (team) => dispatch(saveActiveTeamAction(team)),
     relog: () => dispatch(relogAction()),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };

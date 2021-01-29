@@ -1,8 +1,14 @@
+const _ = require("lodash");
+
 const TeamController = require("../controllers/TeamController");
 const UserController = require("../controllers/UserController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
 const mail = require("../modules/mail");
+
+function filterProjects(projects, teamRole) {
+  return projects.filter((p) => _.indexOf(teamRole.projects, p.id) > -1);
+}
 
 module.exports = (app) => {
   const teamController = new TeamController();
@@ -28,8 +34,10 @@ module.exports = (app) => {
 
   // route to get a team by its id
   app.get("/team/:id", verifyToken, (req, res) => {
+    let gTeamRole;
     return teamController.getTeamRole(req.params.id, req.user.id)
       .then((teamRole) => {
+        gTeamRole = teamRole;
         const permission = accessControl.can(teamRole.role).readOwn("team");
         if (!permission.granted) {
           throw new Error(401);
@@ -37,7 +45,9 @@ module.exports = (app) => {
         return teamController.findById(req.params.id);
       })
       .then((team) => {
-        return res.status(200).send(team);
+        const modTeam = team;
+        if (team.Projects) modTeam.Projects = filterProjects(team.Projects, gTeamRole);
+        return res.status(200).send(modTeam);
       })
       .catch((error) => {
         if (error.message === "401") return res.status(401).send({ error: "Not authorized" });
@@ -71,8 +81,10 @@ module.exports = (app) => {
   // route to update a team
   app.put("/team/:id", verifyToken, (req, res) => {
     if (!req.params || !req.body) return res.status(400).send("Missing fields");
+    let gTeamRole;
     return teamController.getTeamRole(req.params.id, req.user.id)
       .then((teamRole) => {
+        gTeamRole = teamRole;
         const permission = accessControl.can(teamRole.role).updateOwn("team");
         if (!permission.granted) {
           throw new Error(401);
@@ -80,7 +92,9 @@ module.exports = (app) => {
         return teamController.update(req.params.id, req.body);
       })
       .then((team) => {
-        return res.status(200).send(team);
+        const modTeam = team;
+        if (team.Projects) modTeam.Projects = filterProjects(team.Projects, gTeamRole);
+        return res.status(200).send(modTeam);
       })
       .catch((error) => {
         if (error.message === "401") return res.status(401).send({ error: "Not authorized" });

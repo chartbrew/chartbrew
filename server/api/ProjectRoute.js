@@ -17,7 +17,20 @@ module.exports = (app) => {
         });
     }
 
-    return teamController.getTeamRole(teamId, req.user.id);
+    return teamController.getTeamRole(teamId, req.user.id)
+      .then((teamRole) => {
+        // the owner has access to all the projects
+        if (teamRole.role === "owner") return teamRole;
+
+        // otherwise, check if the team role contains access to the right project
+        if (!teamRole.projects) return Promise.reject(401);
+        const filteredProjects = teamRole.projects.filter((o) => `${o}` === `${req.params.project_id}`);
+        if (filteredProjects.length === 0) {
+          return Promise.reject(401);
+        }
+
+        return teamRole;
+      });
   };
 
   /*

@@ -1,5 +1,6 @@
 const simplecrypt = require("simplecrypt");
 const uuidv4 = require("uuid/v4");
+const _ = require("lodash");
 
 const db = require("../models/models");
 const UserController = require("./UserController");
@@ -191,6 +192,36 @@ class TeamController {
             },
           ],
         });
+      })
+      .then((teams) => {
+        // filter the projects
+        const newTeams = teams.map((team) => {
+          const newTeam = team;
+          const allowedProjects = [];
+          let projectsRole = [];
+          if (team.TeamRoles) {
+            team.TeamRoles.map((role) => {
+              if (role.user_id === parseInt(userId, 10)) {
+                projectsRole = role.projects;
+              }
+              return role;
+            });
+          }
+
+          if (team.Projects) {
+            team.Projects.map((project) => {
+              if (_.indexOf(projectsRole, project.id) > -1) {
+                allowedProjects.push(project);
+              }
+              return project;
+            });
+          }
+
+          newTeam.setDataValue("Projects", allowedProjects);
+          return newTeam;
+        });
+
+        return newTeams;
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

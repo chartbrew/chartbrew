@@ -9,7 +9,10 @@ import {
 import _ from "lodash";
 
 import {
-  getTeam, getTeamMembers, updateTeamRole, deleteTeamMember
+  getTeam as getTeamAction,
+  getTeamMembers as getTeamMembersAction,
+  updateTeamRole as updateTeamRoleAction,
+  deleteTeamMember as deleteTeamMemberAction,
 } from "../../actions/team";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import Invites from "../../components/Invites";
@@ -300,7 +303,7 @@ function TeamMembers(props) {
             Assign project access
           </Modal.Header>
           <Modal.Content>
-            {changedMember && (
+            {changedMember && projectAccess[changedMember.id] && (
               <div>
                 <p>{"Tick the projects you want to give the user access to. The unticked projects cannot be accessed by this user."}</p>
                 <p>
@@ -310,7 +313,7 @@ function TeamMembers(props) {
                   <strong>{` ${changedMember.name} `}</strong>
                   {"for the following projects:"}
                 </p>
-                <Grid columns={2} stackable centered>
+                <Grid columns={2} stackable>
                   {projects && projects.map((project) => (
                     <Grid.Column key={project.id}>
                       <Checkbox
@@ -376,10 +379,14 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    getTeam: id => dispatch(getTeam(id)),
-    getTeamMembers: teamId => dispatch(getTeamMembers(teamId)),
-    updateTeamRole: (role, memberId, teamId) => dispatch(updateTeamRole(role, memberId, teamId)),
-    deleteTeamMember: (memberId, teamId) => dispatch(deleteTeamMember(memberId, teamId)),
+    getTeam: id => dispatch(getTeamAction(id)),
+    getTeamMembers: teamId => dispatch(getTeamMembersAction(teamId)),
+    updateTeamRole: (role, memberId, teamId) => (
+      dispatch(updateTeamRoleAction(role, memberId, teamId))
+    ),
+    deleteTeamMember: (memberId, teamId) => (
+      dispatch(deleteTeamMemberAction(memberId, teamId))
+    ),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };

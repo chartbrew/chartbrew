@@ -10,7 +10,6 @@ import UserDashboard from "./UserDashboard";
 
 import { relog, getUser } from "../actions/user";
 import { getTeams } from "../actions/team";
-import { getAllProjects } from "../actions/project";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard"));
@@ -40,7 +39,7 @@ const { MediaContextProvider } = AppMedia;
 */
 function Main(props) {
   const {
-    relog, getUser, getTeams, getAllProjects, location, cleanErrors,
+    relog, getUser, getTeams, location, cleanErrors,
   } = props;
 
   useEffect(() => {
@@ -49,7 +48,6 @@ function Main(props) {
       relog().then((data) => {
         getUser(data.id);
         getTeams(data.id);
-        return getAllProjects();
       });
     }
   }, []);
@@ -157,7 +155,6 @@ Main.propTypes = {
   relog: PropTypes.func.isRequired,
   getUser: PropTypes.func.isRequired,
   getTeams: PropTypes.func.isRequired,
-  getAllProjects: PropTypes.func.isRequired,
   location: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
 };
@@ -172,7 +169,6 @@ const mapDispatchToProps = (dispatch) => {
   return {
     relog: () => dispatch(relog()),
     getUser: (id) => dispatch(getUser(id)),
-    getAllProjects: () => dispatch(getAllProjects()),
     getTeams: (id) => dispatch(getTeams(id)),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };

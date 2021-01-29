@@ -2,6 +2,7 @@ import cookie from "react-cookies";
 import { API_HOST } from "../config/settings";
 import { removeTeamInvite, saveTeamInvites } from "./user";
 import { addError } from "./error";
+import { FETCHING_ALL_PROJECTS } from "./project";
 
 export const SAVE_ACTIVE_TEAM = "SAVE_ACTIVE_TEAM";
 export const ADD_TEAM = "ADD_TEAM";
@@ -83,6 +84,12 @@ export function getTeam(teamId) {
       })
       .then(team => {
         dispatch(saveActiveTeam(team));
+        if (team.Projects) {
+          dispatch({
+            type: FETCHING_ALL_PROJECTS,
+            projects: team.Projects,
+          });
+        }
         return new Promise(resolve => resolve(team));
       })
       .catch(err => {

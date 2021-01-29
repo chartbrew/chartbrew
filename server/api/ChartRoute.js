@@ -116,7 +116,7 @@ module.exports = (app) => {
         return res.status(200).send(chart);
       })
       .catch((error) => {
-        if (error.message.indexOf("406") > -1) {
+        if (error.message && error.message.indexOf("406") > -1) {
           return res.status(406).send(error);
         }
         return res.status(400).send(error);
