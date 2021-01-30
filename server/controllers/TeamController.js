@@ -63,6 +63,49 @@ class TeamController {
       });
   }
 
+  addProjectAccess(teamId, userId, projectId) {
+    let gTeamRole;
+    return db.TeamRole.findOne({ where: { team_id: teamId, user_id: userId } })
+      .then((teamRole) => {
+        gTeamRole = teamRole;
+
+        const newProjects = teamRole.projects || [];
+        if (_.indexOf(newProjects, parseInt(projectId, 10)) > -1) return teamRole;
+
+        newProjects.push(parseInt(projectId, 10));
+        return db.TeamRole.update({ projects: newProjects }, { where: { id: teamRole.id } });
+      })
+      .then(() => {
+        return db.TeamRole.findByPk(gTeamRole.id);
+      })
+      .catch((err) => {
+        return new Promise((resolve, reject) => reject(err));
+      });
+  }
+
+  removeProjectAccess(teamId, userId, projectId) {
+    let gTeamRole;
+    return db.TeamRole.findOne({ where: { team_id: teamId, user_id: userId } })
+      .then((teamRole) => {
+        gTeamRole = teamRole;
+
+        const newProjects = teamRole.projects;
+        if (!newProjects || newProjects.length < 1) return teamRole;
+        const index = _.indexOf(newProjects, parseInt(projectId, 10));
+        if (index === -1) return teamRole;
+
+        newProjects.splice(index, 1);
+
+        return db.TeamRole.update({ projects: newProjects }, { where: { id: teamRole.id } });
+      })
+      .then(() => {
+        return db.TeamRole.findByPk(gTeamRole.id);
+      })
+      .catch((err) => {
+        return new Promise((resolve, reject) => reject(err));
+      });
+  }
+
   getTeamRole(teamId, userId) {
     return db.TeamRole.findOne({
       where: {

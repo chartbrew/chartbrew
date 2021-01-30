@@ -1,8 +1,13 @@
 const { Op } = require("sequelize");
 
 const db = require("../models/models");
+const TeamController = require("./TeamController");
 
 class ProjectController {
+  constructor() {
+    this.teamController = new TeamController();
+  }
+
   findAll() {
     return db.Project.findAll()
       .then((projects) => {
@@ -77,6 +82,10 @@ class ProjectController {
         return this.update(newProject.id, { brewName });
       })
       .then(() => {
+        // now update the projects access in TeamRole
+        return this.teamController.addProjectAccess(data.team_id, userId, newProject.id);
+      })
+      .then(() => {
         return newProject;
       })
       .catch((error) => {
@@ -94,11 +103,20 @@ class ProjectController {
       });
   }
 
-  remove(id) {
+  remove(id, userId) {
+    let gProject;
     // remove the project and any associated items alongs with that
-    return db.Project.destroy({ where: { id } })
-      .then((result) => {
-        return result;
+    return db.Project.findByPk(id)
+      .then((project) => {
+        gProject = project;
+        return db.Project.destroy({ where: { id } });
+      })
+      .then(() => {
+        // update the user's teamRole
+        return this.teamController.removeProjectAccess(gProject.team_id, userId, gProject.id);
+      })
+      .then(() => {
+        return { removed: true };
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

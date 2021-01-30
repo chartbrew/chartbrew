@@ -154,7 +154,7 @@ module.exports = (app) => {
           throw new Error(401);
         }
 
-        return projectController.remove(req.params.id);
+        return projectController.remove(req.params.id, req.user.id);
       })
       .then(() => {
         return res.status(200).send({ removed: true });
