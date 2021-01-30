@@ -137,7 +137,7 @@ class ProjectSettings extends Component {
             )}
         </Segment>
 
-        <TransitionablePortal opne={removeModal}>
+        <TransitionablePortal open={removeModal}>
           <Modal open={removeModal} basic size="small" onClose={() => this.setState({ removeModal: false })}>
             <Header
               icon="exclamation triangle"
