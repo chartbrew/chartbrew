@@ -57,11 +57,14 @@ function UserDashboard(props) {
       let teamOwned;
       teams.map((team) => {
         if (team.TeamRoles && _.find(team.TeamRoles, { user_id: user.data.id, role: "owner" })) {
+          console.log("team", team);
           teamOwned = team;
+
+          if (teamOwned.Projects && teamOwned.Projects.length === 0) {
+            shouldOpenNewProject = true;
+          }
         }
-        if (teams.Projects && teams.Projects.length > 0) {
-          shouldOpenNewProject = true;
-        }
+
         return team;
       });
 
