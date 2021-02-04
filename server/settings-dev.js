@@ -13,4 +13,5 @@ module.exports = {
       pass: process.env.CB_MAIL_PASS_DEV,
     },
   },
+  teamRestricted: process.env.CB_RESTRICT_TEAMS_DEV,
 };

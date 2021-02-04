@@ -27,7 +27,7 @@ import canAccess from "../config/canAccess";
 function UserDashboard(props) {
   const {
     relog, cleanErrors, user, getTeams, createTeam, saveActiveTeam,
-    history, teams,
+    history, teams, teamLoading,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -244,6 +244,15 @@ function UserDashboard(props) {
         {invitationModal()}
         {newProjectModal()}
 
+        {teams && teams.length === 0 && !teamLoading && (
+          <Header as="h1" inverted style={{ marginTop: 100 }}>
+            You are not part of any team yet
+            <Header.Subheader>
+              You can join a team when after you receive an accept an invitation
+            </Header.Subheader>
+          </Header>
+        )}
+
         {teams && teams.map((key) => {
           return (
             <Container
@@ -425,12 +434,14 @@ UserDashboard.propTypes = {
   history: PropTypes.object.isRequired,
   relog: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
+  teamLoading: PropTypes.bool.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
     user: state.user,
     teams: state.team.data,
+    teamLoading: state.team.loading,
   };
 };
 

@@ -75,21 +75,9 @@ module.exports = (app) => {
       icon: icon.toUpperCase(),
     };
 
-    let user = {};
     return userController.createUser(userObj)
       .then((newUser) => {
-        user = newUser;
-        const newTeam = {
-          user_id: user.id,
-          name: `${user.name}'s space`
-        };
-        return teamController.createTeam(newTeam);
-      })
-      .then((team) => {
-        return teamController.addTeamRole(team.id, user.id, "owner");
-      })
-      .then(() => {
-        return tokenizeUser(user, res);
+        return tokenizeUser(newUser, res);
       })
       .catch((error) => {
         if (error.message === "409") return res.status(409).send("The email is already used");
@@ -131,12 +119,6 @@ module.exports = (app) => {
     try {
       if (!userObj || !userObj.email) throw new Error("no email is provided");
       const user = await userController.createUser(userObj);
-      const newTeam = {
-        user_id: user.id,
-        name: `${user.name}'s space`
-      };
-      const team = await teamController.createTeam(newTeam);
-      await teamController.addTeamRole(team.id, user.id, "owner");
       return tokenizeUser(user, res);
     } catch (error) {
       if (error.message === "409") return res.status(409).send("The email is already used");
@@ -192,22 +174,9 @@ module.exports = (app) => {
       active: true,
     };
 
-    let user = {};
-
     return userController.createUser(userObj)
       .then((newUser) => {
-        user = newUser;
-        const newTeam = {
-          user_id: user.id,
-          name: `${user.name}'s space`
-        };
-        return teamController.createTeam(newTeam);
-      })
-      .then((team) => {
-        return teamController.addTeamRole(team.id, user.id, "owner");
-      })
-      .then(() => {
-        return tokenizeUser(user, res);
+        return tokenizeUser(newUser, res);
       })
       .catch((error) => {
         if (error.message === "409") return res.status(409).send("The email is already used");

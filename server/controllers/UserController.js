@@ -13,6 +13,7 @@ const sc = simplecrypt({
 
 class UserController {
   createUser(user) {
+    let gNewUser;
     return db.User.findOne({ where: { email: user.email } })
       .then((foundUser) => {
         if (foundUser) return new Promise((resolve, reject) => reject(new Error(409)));
@@ -26,7 +27,33 @@ class UserController {
           "admin": true,
         });
       })
-      .then((newUser) => { return newUser; })
+      .then((newUser) => {
+        gNewUser = newUser;
+
+        if (settings.teamRestricted) {
+          return newUser;
+        }
+
+        const newTeam = {
+          name: `${newUser.name}'s space`
+        };
+        return db.Team.create(newTeam);
+      })
+      .then((data) => {
+        if (settings.teamRestricted) {
+          return data;
+        }
+
+        const teamRole = {
+          team_id: data.id,
+          user_id: gNewUser.id,
+          role: "owner",
+        };
+        return db.TeamRole.create(teamRole);
+      })
+      .then(() => {
+        return gNewUser;
+      })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(new Error(error.message)));
       });
