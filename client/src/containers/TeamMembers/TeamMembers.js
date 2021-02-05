@@ -167,52 +167,56 @@ function TeamMembers(props) {
               return (
                 <List.Item key={member.id}>
                   <List.Content floated="right">
-                    <Button
-                      content="Project access"
-                      onClick={() => _openProjectAccess(member)}
-                    />
-                    <Dropdown
-                      text="Edit role"
-                      floating
-                      labeled
-                      button
-                      icon="eye"
-                      className="icon"
-                      direction="left"
-                    >
-                      <Dropdown.Menu>
-                        {user.id !== member.id && memberRole !== "member"
-                          && (_canAccess("owner") || (_canAccess("admin") && memberRole !== "owner"))
-                          && (
-                          <Dropdown.Item
-                            onClick={() => _onChangeRole("member", member)}
-                          >
-                            <strong>Member</strong>
-                            <p>{"Can only view projects and charts. Cannot update chart or connection data."}</p>
-                          </Dropdown.Item>
-                          )}
-                        {user.id !== member.id && memberRole !== "editor"
-                          && (_canAccess("owner") || (_canAccess("admin") && memberRole !== "owner"))
-                          && (
-                          <Dropdown.Item
-                            onClick={() => _onChangeRole("editor", member)}
-                          >
-                            <strong>Editor</strong>
-                            <p>{"Create, edit, remove charts. Can also create new connections."}</p>
-                          </Dropdown.Item>
-                          )}
-                        {user.id !== member.id && memberRole !== "admin"
-                          && (_canAccess("owner") || (_canAccess("admin") && memberRole !== "owner"))
-                          && (
-                          <Dropdown.Item
-                            onClick={() => _onChangeRole("admin", member)}
-                          >
-                            <strong>Admin</strong>
-                            <p>{"Full access, but can't delete the team."}</p>
-                          </Dropdown.Item>
-                          )}
-                      </Dropdown.Menu>
-                    </Dropdown>
+                    {_canAccess("admin") && (
+                      <Button
+                        content="Project access"
+                        onClick={() => _openProjectAccess(member)}
+                      />
+                    )}
+                    {_canAccess("admin") && (
+                      <Dropdown
+                        text="Edit role"
+                        floating
+                        labeled
+                        button
+                        icon="eye"
+                        className="icon"
+                        direction="left"
+                      >
+                        <Dropdown.Menu>
+                          {user.id !== member.id && memberRole !== "member"
+                            && (_canAccess("owner") || (_canAccess("admin") && memberRole !== "owner"))
+                            && (
+                            <Dropdown.Item
+                              onClick={() => _onChangeRole("member", member)}
+                            >
+                              <strong>Member</strong>
+                              <p>{"Can only view projects and charts. Cannot update chart or connection data."}</p>
+                            </Dropdown.Item>
+                            )}
+                          {user.id !== member.id && memberRole !== "editor"
+                            && (_canAccess("owner") || (_canAccess("admin") && memberRole !== "owner"))
+                            && (
+                            <Dropdown.Item
+                              onClick={() => _onChangeRole("editor", member)}
+                            >
+                              <strong>Editor</strong>
+                              <p>{"Create, edit, remove charts. Can also create new connections."}</p>
+                            </Dropdown.Item>
+                            )}
+                          {user.id !== member.id && memberRole !== "admin"
+                            && (_canAccess("owner") || (_canAccess("admin") && memberRole !== "owner"))
+                            && (
+                            <Dropdown.Item
+                              onClick={() => _onChangeRole("admin", member)}
+                            >
+                              <strong>Admin</strong>
+                              <p>{"Full access, but can't delete the team."}</p>
+                            </Dropdown.Item>
+                            )}
+                        </Dropdown.Menu>
+                      </Dropdown>
+                    )}
                     {user.id !== member.id
                       && (_canAccess("owner") || (_canAccess("admin") && memberRole !== "owner"))
                       && (
