@@ -58,6 +58,12 @@ Copy the following in the `build.sh` file
 cd ../ && npm run build && cp -rf build/* dist/
 ```
 
+Make sure the script can be executed after you save the file:
+
+```sh
+chmod +x build.sh
+```
+
 Create the `pm2` configuration file:
 
 ```sh
@@ -116,8 +122,8 @@ This configuration file will have everything necessary to serve the backend and 
         Allow from all
     </Proxy>
     <Location />
-        ProxyPass http://localhost:5400/
-        ProxyPassReverse http://localhost:5400/
+        ProxyPass http://localhost:5100/
+        ProxyPassReverse http://localhost:5100/
     </Location>
     <Location ~ "/chart/*">
       Header always unset X-Frame-Options
