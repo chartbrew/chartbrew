@@ -4,12 +4,13 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 
 import {
-  Button, Icon, Header, Input, Popup, Form, Container
+  Button, Icon, Header, Input, Popup, Form, Container, Grid
 } from "semantic-ui-react";
 
 import Chart from "./Chart/Chart";
 import { updateProject, changeActiveProject } from "../actions/project";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
+import { changeOrder as changeOrderAction } from "../actions/chart";
 
 /*
   Description
@@ -71,6 +72,33 @@ class PublicDashboardEditor extends Component {
       .catch(() => {
         this.setState({ editingTitle: false, titleLoading: false });
       });
+  }
+
+  _onChangeOrder = (chartId, type, index) => {
+    const { charts, changeOrder, match } = this.props;
+    let otherId;
+    switch (type) {
+      case "up":
+        otherId = charts[index - 1].id;
+        break;
+      case "down":
+        otherId = charts[index + 1].id;
+        break;
+      case "top":
+        otherId = "top";
+        break;
+      case "bottom":
+        otherId = "bottom";
+        break;
+      default:
+        break;
+    }
+
+    changeOrder(
+      match.params.projectId,
+      chartId,
+      otherId
+    );
   }
 
   render() {
@@ -161,7 +189,23 @@ class PublicDashboardEditor extends Component {
           </Container>
           )}
 
-        <Chart isPublic charts={charts} />
+        <Grid stackable centered style={styles.mainGrid}>
+          {charts.map((chart, index) => {
+            if (chart.draft) return (<span style={{ display: "none" }} key={chart.id} />);
+            if (!chart.public) return (<span style={{ display: "none" }} key={chart.id} />);
+
+            return (
+              <Grid.Column width={chart.chartSize * 4} key={chart.id} style={styles.chartGrid}>
+                <Chart
+                  isPublic
+                  chart={chart}
+                  charts={charts}
+                  onChangeOrder={(chartId, type) => this._onChangeOrder(chartId, type, index)}
+                />
+              </Grid.Column>
+            );
+          })}
+        </Grid>
       </div>
     );
   }
@@ -176,6 +220,12 @@ const styles = {
     padding: 10,
     paddingBottom: 0,
   },
+  chartGrid: {
+    padding: 10,
+  },
+  mainGrid: {
+    padding: 10,
+  },
 };
 PublicDashboardEditor.propTypes = {
   charts: PropTypes.array.isRequired,
@@ -184,6 +234,7 @@ PublicDashboardEditor.propTypes = {
   updateProject: PropTypes.func.isRequired,
   changeActiveProject: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
+  changeOrder: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -198,6 +249,7 @@ const mapDispatchToProps = (dispatch) => {
     updateProject: (projectId, data) => dispatch(updateProject(projectId, data)),
     changeActiveProject: (projectId) => dispatch(changeActiveProject(projectId)),
     cleanErrors: () => dispatch(cleanErrorsAction()),
+    changeOrder: (chartId, otherId) => dispatch(changeOrderAction(chartId, otherId)),
   };
 };
 

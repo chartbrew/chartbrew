@@ -4,8 +4,8 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import {
-  Card, Icon, Header, Grid, Segment, Dimmer, Loader, Modal, Button,
-  Dropdown, Message, Popup, Form, TextArea, Label, Input, Divider, TransitionablePortal,
+  Icon, Header, Segment, Dimmer, Loader, Modal, Button, TransitionablePortal,
+  Dropdown, Message, Popup, Form, TextArea, Label, Input, Divider,
 } from "semantic-ui-react";
 import {
   Pie, Doughnut, Radar, Polar
@@ -19,7 +19,6 @@ import {
   removeChart as removeChartAction,
   runQuery as runQueryAction,
   updateChart as updateChartAction,
-  changeOrder as changeOrderAction,
   runQueryWithFilters as runQueryWithFiltersAction,
 } from "../../actions/chart";
 import canAccess from "../../config/canAccess";
@@ -41,14 +40,13 @@ const getFiltersFromStorage = (projectId) => {
 */
 function Chart(props) {
   const {
-    updateChart, match, changeOrder, runQuery, removeChart, runQueryWithFilters,
-    team, user, charts, isPublic, connections, showDrafts,
+    updateChart, match, runQuery, removeChart, runQueryWithFilters,
+    team, user, chart, isPublic, charts, onChangeOrder,
   } = props;
 
   const [chartLoading, setChartLoading] = useState(false);
   const [error, setError] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
-  const [selectedChart, setSelectedChart] = useState(null);
   const [publicModal, setPublicModal] = useState(false);
   const [embedModal, setEmbedModal] = useState(false);
   const [updateModal, setUpdateModal] = useState(false);
@@ -66,11 +64,11 @@ function Chart(props) {
     setUrlCopied(false);
   }, [embedModal]);
 
-  const _onChangeSize = (chartId, size) => {
-    setChartLoading(chartId);
+  const _onChangeSize = (size) => {
+    setChartLoading(true);
     updateChart(
       match.params.projectId,
-      chartId,
+      chart.id,
       { chartSize: size }
     )
       .then(() => {
@@ -82,34 +80,18 @@ function Chart(props) {
       });
   };
 
-  const _onChangeOrder = (chartId, otherId) => {
-    setChartLoading(chartId);
-    changeOrder(
-      match.params.projectId,
-      chartId,
-      otherId
-    )
-      .then(() => {
-        setChartLoading(false);
-      })
-      .catch(() => {
-        setChartLoading(false);
-        setError(true);
-      });
-  };
-
-  const _onGetChartData = (chartId) => {
+  const _onGetChartData = () => {
     const { projectId } = match.params;
 
-    setChartLoading(chartId);
-    runQuery(projectId, chartId)
+    setChartLoading(true);
+    runQuery(projectId, chart.id)
       .then(() => {
         setChartLoading(false);
 
         setDashboardFilters(getFiltersFromStorage(projectId));
         setTimeout(() => {
-          if (dashboardFilters && _chartHasFilter(_.find(charts, { id: chartId }))) {
-            runQueryWithFilters(projectId, chartId, dashboardFilters);
+          if (dashboardFilters && _chartHasFilter()) {
+            runQueryWithFilters(projectId, chart.id, dashboardFilters);
           }
         }, 100);
       })
@@ -123,13 +105,13 @@ function Chart(props) {
       });
   };
 
-  const _onDeleteChartConfirmation = (chartId) => {
-    setDeleteModal(chartId);
+  const _onDeleteChartConfirmation = () => {
+    setDeleteModal(true);
   };
 
   const _onDeleteChart = () => {
-    setChartLoading(deleteModal);
-    removeChart(match.params.projectId, deleteModal)
+    setChartLoading(true);
+    removeChart(match.params.projectId, chart.id)
       .then(() => {
         setChartLoading(false);
         setDeleteModal(false);
@@ -141,50 +123,42 @@ function Chart(props) {
       });
   };
 
-  const _onPublicConfirmation = (chart) => {
+  const _onPublicConfirmation = () => {
     if (chart.public) {
-      setSelectedChart(chart);
       setTimeout(() => {
         _onPublic(chart);
       }, 100);
     } else {
       setPublicModal(true);
-      setSelectedChart(chart);
     }
   };
 
-  const _onPublic = (chart) => {
-    const publicChart = selectedChart || chart;
-    setSelectedChart(publicChart);
+  const _onPublic = () => {
     setPublicModal(false);
     setPublicLoading(true);
 
     updateChart(
       match.params.projectId,
-      publicChart.id,
-      { public: !publicChart.public }
+      chart.id,
+      { public: !chart.public }
     )
       .then(() => {
         setChartLoading(false);
-        setSelectedChart(false);
         setPublicLoading(false);
       })
       .catch(() => {
         setChartLoading(false);
-        setSelectedChart(false);
         setError(true);
         setPublicLoading(false);
       });
   };
 
-  const _onEmbed = (chart) => {
-    setSelectedChart(chart);
+  const _onEmbed = () => {
     setEmbedModal(true);
   };
 
   const _openUpdateModal = (chart) => {
     setUpdateModal(true);
-    setSelectedChart(chart);
     setUpdateFrequency(chart.autoUpdate);
   };
 
@@ -193,23 +167,21 @@ function Chart(props) {
 
     updateChart(
       match.params.projectId,
-      selectedChart.id,
+      chart.id,
       { autoUpdate: updateFrequency }
     )
       .then(() => {
         setAutoUpdateLoading(false);
         setUpdateModal(false);
-        setSelectedChart(false);
       })
       .catch(() => {
         setAutoUpdateLoading(false);
         setError(true);
         setUpdateModal(false);
-        setSelectedChart(false);
       });
   };
 
-  const _chartHasFilter = (chart) => {
+  const _chartHasFilter = () => {
     let found = false;
     if (chart.Datasets) {
       chart.Datasets.map((dataset) => {
@@ -249,286 +221,236 @@ function Chart(props) {
     setUrlCopied(true);
   };
 
+  const _getChartIndex = () => {
+    return _.findIndex(charts, (c) => c.id === chart.id);
+  };
+
   const { projectId } = match.params;
 
   return (
     <div style={styles.container}>
-      {error
-          && (
-          <Message
-            negative
-            onDismiss={() => setError(false)}
-            header="There was a problem with your request"
-            content="This is on us, we couldn't process your request. Try to refresh the page and try again."
-          />
-          )}
-      {_canAccess("editor") && charts.length < 1
-          && (
-          <Grid centered style={styles.addCard}>
-            <Card
-              raised
-              as={Link}
-              to={`/${match.params.teamId}/${match.params.projectId}/chart`}
-              color="olive"
-            >
-              <Header as="h2" textAlign="center" icon>
-                <Icon name="plus" color="blue" />
-                Add your first chart
-              </Header>
-            </Card>
-          </Grid>
-          )}
+      {error && (
+        <Message
+          negative
+          onDismiss={() => setError(false)}
+          header="There was a problem with your request"
+          content="This is on us, we couldn't process your request. Try to refresh the page and try again."
+        />
+      )}
 
-      <Grid stackable centered style={styles.mainGrid}>
-        {connections && charts.map((chart, index) => {
-          if (isPublic && !chart.public) return (<span style={{ display: "none" }} key={chart.id} />);
-          if (isPublic && chart.draft) return (<span style={{ display: "none" }} key={chart.id} />);
-          if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
-            if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />); // eslint-disable-line
-
-          // get connection
-          let connection;
-          for (let i = 0; i < connections.length; i++) {
-            if (connections[i].id === chart.connection_id) {
-              connection = connections[i];
-            }
-          }
-
-          return (
-            <Grid.Column width={chart.chartSize * 4} key={chart.id} style={styles.chartGrid}>
-              <Segment
-                style={styles.chartContainer(_isKpi(chart))}
-              >
-                <div style={styles.titleArea(_isKpi(chart))}>
-                  {_canAccess("editor") && projectId
-                      && (
-                        <Dropdown
-                          icon="ellipsis horizontal"
-                          direction="left"
-                          button
-                          basic
-                          className="circular icon"
-                          style={styles.menuBtn}
-                        >
-                          <Dropdown.Menu>
-                            <Dropdown.Item
-                              icon="refresh"
-                              text="Refresh data"
-                              onClick={() => _onGetChartData(chart.id)}
-                            />
-                            <Dropdown.Item
-                              icon="clock"
-                              text="Auto-update"
-                              onClick={() => _openUpdateModal(chart)}
-                            />
-                            <Dropdown.Item
-                              icon="pencil"
-                              text="Edit"
-                              as={Link}
-                              to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}
-                            />
-                            {!chart.draft && (
-                              <>
-                                <Dropdown.Item
-                                  onClick={() => _onPublicConfirmation(chart)}
-                                >
-                                  <Icon name="world" color={chart.public ? "red" : "green"} />
-                                  {chart.public ? "Make private" : "Make public"}
-                                </Dropdown.Item>
-                                <Dropdown.Item
-                                  icon="code"
-                                  text="Embed"
-                                  onClick={() => _onEmbed(chart)}
-                                />
-                              </>
-                            )}
-                            <Dropdown.Divider />
-                            <Dropdown
-                              item
-                              icon={false}
-                              trigger={(
-                                <p style={{ marginBottom: 0 }}>
-                                  <Icon name="caret left" />
-                                  {" "}
-                                  Size
-                                </p>
-                              )}
-                            >
-                              <Dropdown.Menu>
-                                <Dropdown.Item
-                                  text="Small"
-                                  icon={chart.chartSize === 1 ? "checkmark" : false}
-                                  onClick={() => _onChangeSize(chart.id, 1)}
-                                />
-                                <Dropdown.Item
-                                  text="Medium"
-                                  icon={chart.chartSize === 2 ? "checkmark" : false}
-                                  onClick={() => _onChangeSize(chart.id, 2)}
-                                />
-                                <Dropdown.Item
-                                  text="Large"
-                                  icon={chart.chartSize === 3 ? "checkmark" : false}
-                                  onClick={() => _onChangeSize(chart.id, 3)}
-                                />
-                                <Dropdown.Item
-                                  text="Full width"
-                                  icon={chart.chartSize === 4 ? "checkmark" : false}
-                                  onClick={() => _onChangeSize(chart.id, 4)}
-                                />
-                              </Dropdown.Menu>
-                            </Dropdown>
-                            <Dropdown
-                              item
-                              icon={false}
-                              trigger={(
-                                <p style={{ marginBottom: 0 }}>
-                                  <Icon name="caret left" />
-                                  {" "}
-                                  Order
-                                </p>
-                              )}
-                            >
-                              <Dropdown.Menu>
-                                <Dropdown.Item
-                                  text="Move to top"
-                                  icon="angle double up"
-                                  disabled={index === 0}
-                                  onClick={() => _onChangeOrder(chart.id, "top")}
-                                />
-                                <Dropdown.Item
-                                  text="Move up"
-                                  icon="chevron up"
-                                  disabled={index === 0}
-                                  onClick={() => _onChangeOrder(chart.id, charts[index - 1].id)}
-                                />
-                                <Dropdown.Item
-                                  text="Move down"
-                                  icon="chevron down"
-                                  disabled={index === charts.length - 1}
-                                  onClick={() => _onChangeOrder(chart.id, charts[index + 1].id)}
-                                />
-                                <Dropdown.Item
-                                  text="Move to bottom"
-                                  icon="angle double down"
-                                  disabled={index === charts.length - 1}
-                                  onClick={() => {
-                                    _onChangeOrder(chart.id, "bottom");
-                                  }}
-                                />
-                              </Dropdown.Menu>
-                            </Dropdown>
-                            <Dropdown.Divider />
-                            <Dropdown.Item
-                              icon="trash"
-                              text="Delete"
-                              onClick={() => _onDeleteChartConfirmation(chart.id)}
-                            />
-                          </Dropdown.Menu>
-                        </Dropdown>
-                      )}
-                  <Header style={{ display: "contents" }}>
-                    {chart.draft && (
-                      <Label color="olive" style={styles.draft}>Draft</Label>
-                    )}
-                    <span>
-                      {chart.public && !isPublic
-                          && (
-                            <Popup
-                              trigger={<Icon name="world" />}
-                              content="This chart is public"
-                              position="bottom center"
-                            />
-                          )}
-                      {_canAccess("editor") && (
-                        <Link to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}>
-                          <span style={{ color: blackTransparent(0.9) }}>{chart.name}</span>
-                        </Link>
-                      )}
-                      {!_canAccess("editor") && (
-                        <span>{chart.name}</span>
-                      )}
-                    </span>
-                    {connection && _canAccess("editor") && projectId
-                        && (
-                          <Popup
-                            trigger={(
-                              <Header.Subheader>
-                                {connection.name}
-                                <Icon
-                                  name={connection.active ? "plug" : "pause"}
-                                  color={connection.active ? "green" : "orange"}
-                                />
-                              </Header.Subheader>
-                            )}
-                            content={connection.active ? "Connection active" : "Connection not active"}
-                            position="bottom left"
+      {chart && (
+        <Segment
+          style={styles.chartContainer(_isKpi(chart))}
+        >
+          <div style={styles.titleArea(_isKpi(chart))}>
+            {_canAccess("editor") && projectId
+                && (
+                  <Dropdown
+                    icon="ellipsis horizontal"
+                    direction="left"
+                    button
+                    basic
+                    className="circular icon"
+                    style={styles.menuBtn}
+                  >
+                    <Dropdown.Menu>
+                      <Dropdown.Item
+                        icon="refresh"
+                        text="Refresh data"
+                        onClick={_onGetChartData}
+                      />
+                      <Dropdown.Item
+                        icon="clock"
+                        text="Auto-update"
+                        onClick={_openUpdateModal}
+                      />
+                      <Dropdown.Item
+                        icon="pencil"
+                        text="Edit"
+                        as={Link}
+                        to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}
+                      />
+                      {!chart.draft && (
+                        <>
+                          <Dropdown.Item
+                            onClick={_onPublicConfirmation}
+                          >
+                            <Icon name="world" color={chart.public ? "red" : "green"} />
+                            {chart.public ? "Make private" : "Make public"}
+                          </Dropdown.Item>
+                          <Dropdown.Item
+                            icon="code"
+                            text="Embed"
+                            onClick={_onEmbed}
                           />
+                        </>
+                      )}
+                      <Dropdown.Divider />
+                      <Dropdown
+                        item
+                        icon={false}
+                        trigger={(
+                          <p style={{ marginBottom: 0 }}>
+                            <Icon name="caret left" />
+                            {" "}
+                            Size
+                          </p>
                         )}
-                  </Header>
-                  {chart.chartData && (
-                    <div>
-                      <p><small><i>{`Last Updated ${moment(chart.chartDataUpdated).calendar()}`}</i></small></p>
-                    </div>
-                  )}
-                </div>
-                {chart.chartData && (
-                  <>
-                    <Dimmer inverted active={chartLoading === chart.id}>
-                      <Loader inverted />
-                    </Dimmer>
-                    <div style={styles.mainChartArea(_isKpi(chart))}>
-                      {chart.type === "line"
-                        && (
-                          <LineChart chart={chart} />
+                      >
+                        <Dropdown.Menu>
+                          <Dropdown.Item
+                            text="Small"
+                            icon={chart.chartSize === 1 ? "checkmark" : false}
+                            onClick={() => _onChangeSize(1)}
+                          />
+                          <Dropdown.Item
+                            text="Medium"
+                            icon={chart.chartSize === 2 ? "checkmark" : false}
+                            onClick={() => _onChangeSize(2)}
+                          />
+                          <Dropdown.Item
+                            text="Large"
+                            icon={chart.chartSize === 3 ? "checkmark" : false}
+                            onClick={() => _onChangeSize(3)}
+                          />
+                          <Dropdown.Item
+                            text="Full width"
+                            icon={chart.chartSize === 4 ? "checkmark" : false}
+                            onClick={() => _onChangeSize(4)}
+                          />
+                        </Dropdown.Menu>
+                      </Dropdown>
+                      <Dropdown
+                        item
+                        icon={false}
+                        trigger={(
+                          <p style={{ marginBottom: 0 }}>
+                            <Icon name="caret left" />
+                            {" "}
+                            Order
+                          </p>
                         )}
-                      {chart.type === "bar"
-                        && (
-                          <BarChart chart={chart} />
-                        )}
-                      {chart.type === "pie"
-                        && (
-                        <Pie
-                          data={chart.chartData.data}
-                          options={chart.chartData.options}
-                          height={300}
-                        />
-                        )}
-                      {chart.type === "doughnut"
-                        && (
-                        <Doughnut
-                          data={chart.chartData.data}
-                          options={chart.chartData.options}
-                          height={300}
-                        />
-                        )}
-                      {chart.type === "radar"
-                        && (
-                        <Radar
-                          data={chart.chartData.data}
-                          options={chart.chartData.options}
-                          height={300}
-                        />
-                        )}
-                      {chart.type === "polar"
-                        && (
-                        <Polar
-                          data={chart.chartData.data}
-                          options={chart.chartData.options}
-                          height={300}
-                        />
-                        )}
-                    </div>
-                  </>
+                      >
+                        <Dropdown.Menu>
+                          <Dropdown.Item
+                            text="Move to top"
+                            icon="angle double up"
+                            disabled={_getChartIndex() === 0}
+                            onClick={() => onChangeOrder(chart.id, "top")}
+                          />
+                          <Dropdown.Item
+                            text="Move up"
+                            icon="chevron up"
+                            disabled={_getChartIndex() === 0}
+                            onClick={() => onChangeOrder(chart.id, "up")}
+                          />
+                          <Dropdown.Item
+                            text="Move down"
+                            icon="chevron down"
+                            disabled={_getChartIndex() === charts.length - 1}
+                            onClick={() => onChangeOrder(chart.id, "down")}
+                          />
+                          <Dropdown.Item
+                            text="Move to bottom"
+                            icon="angle double down"
+                            disabled={_getChartIndex() === charts.length - 1}
+                            onClick={() => onChangeOrder(chart.id, "bottom")}
+                          />
+                        </Dropdown.Menu>
+                      </Dropdown>
+                      <Dropdown.Divider />
+                      <Dropdown.Item
+                        icon="trash"
+                        text="Delete"
+                        onClick={_onDeleteChartConfirmation}
+                      />
+                    </Dropdown.Menu>
+                  </Dropdown>
                 )}
-              </Segment>
-            </Grid.Column>
-          );
-        })}
-      </Grid>
+            <Header style={{ display: "contents" }}>
+              {chart.draft && (
+                <Label color="olive" style={styles.draft}>Draft</Label>
+              )}
+              <span>
+                {chart.public && !isPublic
+                    && (
+                      <Popup
+                        trigger={<Icon name="world" />}
+                        content="This chart is public"
+                        position="bottom center"
+                      />
+                    )}
+                {_canAccess("editor") && (
+                  <Link to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}>
+                    <span style={{ color: blackTransparent(0.9) }}>{chart.name}</span>
+                  </Link>
+                )}
+                {!_canAccess("editor") && (
+                  <span>{chart.name}</span>
+                )}
+              </span>
+            </Header>
+            {chart.chartData && (
+              <div>
+                <p><small><i>{`Last Updated ${moment(chart.chartDataUpdated).calendar()}`}</i></small></p>
+              </div>
+            )}
+          </div>
+          {chart.chartData && (
+            <>
+              <Dimmer inverted active={chartLoading}>
+                <Loader inverted />
+              </Dimmer>
+              <div style={styles.mainChartArea(_isKpi(chart))}>
+                {chart.type === "line"
+                  && (
+                    <LineChart chart={chart} />
+                  )}
+                {chart.type === "bar"
+                  && (
+                    <BarChart chart={chart} />
+                  )}
+                {chart.type === "pie"
+                  && (
+                  <Pie
+                    data={chart.chartData.data}
+                    options={chart.chartData.options}
+                    height={300}
+                  />
+                  )}
+                {chart.type === "doughnut"
+                  && (
+                  <Doughnut
+                    data={chart.chartData.data}
+                    options={chart.chartData.options}
+                    height={300}
+                  />
+                  )}
+                {chart.type === "radar"
+                  && (
+                  <Radar
+                    data={chart.chartData.data}
+                    options={chart.chartData.options}
+                    height={300}
+                  />
+                  )}
+                {chart.type === "polar"
+                  && (
+                  <Polar
+                    data={chart.chartData.data}
+                    options={chart.chartData.options}
+                    height={300}
+                  />
+                  )}
+              </div>
+            </>
+          )}
+        </Segment>
+      )}
 
       {/* DELETE CONFIRMATION MODAL */}
-      <TransitionablePortal open={!!deleteModal}>
-        <Modal open={!!deleteModal} basic size="small" onClose={() => setDeleteModal(false)}>
+      <TransitionablePortal open={deleteModal}>
+        <Modal open={deleteModal} basic size="small" onClose={() => setDeleteModal(false)}>
           <Header
             icon="exclamation triangle"
             content="Are you sure you want to remove this chart?"
@@ -549,7 +471,7 @@ function Chart(props) {
             <Button
               color="orange"
               inverted
-              loading={!!chartLoading}
+              loading={chartLoading}
               onClick={_onDeleteChart}
               >
               <Icon name="x" />
@@ -670,7 +592,7 @@ function Chart(props) {
       </TransitionablePortal>
 
       {/* EMBED CHART MODAL */}
-      {selectedChart && (
+      {chart && (
         <TransitionablePortal open={embedModal}>
           <Modal
             open={embedModal}
@@ -688,7 +610,7 @@ function Chart(props) {
                   </label>
                   <TextArea
                     id="iframe-text"
-                    value={`<iframe src="${SITE_HOST}/chart/${selectedChart.id}/embedded" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0"></iframe>`}
+                    value={`<iframe src="${SITE_HOST}/chart/${chart.id}/embedded" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0"></iframe>`}
                   />
                 </Form.Field>
                 <Form.Field>
@@ -712,7 +634,7 @@ function Chart(props) {
               <Form>
                 <Form.Field>
                   <label>{"Or get just the URL"}</label>
-                  <Input value={`${SITE_HOST}/chart/${selectedChart.id}/embedded`} id="url-text" />
+                  <Input value={`${SITE_HOST}/chart/${chart.id}/embedded`} id="url-text" />
                 </Form.Field>
                 <Form.Field>
                   <Button
@@ -732,21 +654,21 @@ function Chart(props) {
               </Form>
             </Modal.Content>
             <Modal.Actions>
-              {selectedChart.public && (
+              {chart.public && (
               <Button
                 onClick={() => setEmbedModal(false)}
               >
                 Done
               </Button>
               )}
-              {!selectedChart.public && (
+              {!chart.public && (
               <Button
                 onClick={() => setEmbedModal(false)}
               >
                 Cancel
               </Button>
               )}
-              {!selectedChart.public && (
+              {!chart.public && (
               <Button
                 primary
                 onClick={() => {
@@ -768,9 +690,6 @@ function Chart(props) {
 const styles = {
   container: {
     flex: 1,
-  },
-  addCard: {
-    paddingTop: 50,
   },
   draft: {
     marginRight: 10,
@@ -796,32 +715,25 @@ const styles = {
     paddingLeft: isKpi ? 15 : 0,
     paddingTop: isKpi ? 15 : 0,
   }),
-  chartGrid: {
-    padding: 10,
-  },
-  mainGrid: {
-    padding: 10,
-  },
 };
 
 Chart.defaultProps = {
   isPublic: false,
-  showDrafts: true,
+  onChangeOrder: () => {},
 };
 
 Chart.propTypes = {
+  chart: PropTypes.object.isRequired,
   charts: PropTypes.array.isRequired,
-  connections: PropTypes.array.isRequired,
   match: PropTypes.object.isRequired,
   removeChart: PropTypes.func.isRequired,
   runQuery: PropTypes.func.isRequired,
   runQueryWithFilters: PropTypes.func.isRequired,
   updateChart: PropTypes.func.isRequired,
-  changeOrder: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
   isPublic: PropTypes.bool,
-  showDrafts: PropTypes.bool,
+  onChangeOrder: PropTypes.func,
 };
 
 const mapStateToProps = (state) => {
@@ -838,9 +750,6 @@ const mapDispatchToProps = (dispatch) => {
     runQuery: (projectId, chartId) => dispatch(runQueryAction(projectId, chartId)),
     updateChart: (projectId, chartId, data) => (
       dispatch(updateChartAction(projectId, chartId, data))
-    ),
-    changeOrder: (projectId, chartId, otherId) => (
-      dispatch(changeOrderAction(projectId, chartId, otherId))
     ),
     runQueryWithFilters: (projectId, chartId, filters) => (
       dispatch(runQueryWithFiltersAction(projectId, chartId, filters))
