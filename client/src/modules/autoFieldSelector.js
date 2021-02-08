@@ -17,6 +17,7 @@ export default function autoFieldSelector(fields) {
       xAxis = field.value;
       dateField = field.value;
     }
+
     return field;
   });
 
@@ -56,7 +57,7 @@ export default function autoFieldSelector(fields) {
     if (!xAxis || !yAxis) {
       fields.map((field) => {
         if (!xAxis && field.type === "number") {
-          xAxis = field;
+          xAxis = field.value;
         }
 
         if (!yAxis && field.type === "string") {

@@ -20,7 +20,7 @@ export default function determineType(data) {
   if (data
     && ((!Number.isNaN(new Date(data).getTime()) && `${data}`.length > 9)
     || (moment(`${data})`).isValid() && ((typeof data === "number" && data.toString().length === 10) || typeof data !== "number"))
-    || (data && `${data}`.length === 10 && moment(data, "X").isValid()))) {
+    || (data && `${data}`.length === 10 && `${data}`[0] === "1" && moment(data, "X").isValid()))) {
     dataType = "date";
   }
 
