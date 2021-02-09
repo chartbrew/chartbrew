@@ -26,7 +26,7 @@ import {
 function ProjectDashboard(props) {
   const {
     cleanErrors, connections, charts, match, showDrafts, runQueryWithFilters,
-    getProjectCharts, runQuery,
+    getProjectCharts, runQuery, onPrint,
   } = props;
 
   const initialFilters = window.localStorage.getItem("_cb_filters");
@@ -209,7 +209,15 @@ function ProjectDashboard(props) {
                 </div>
               </Menu.Item>
               <Menu.Menu position="right">
-                <Menu.Item>
+                <Menu.Item style={{ padding: 0 }}>
+                  <Button
+                    basic
+                    primary
+                    icon="print"
+                    onClick={() => onPrint()}
+                  />
+                </Menu.Item>
+                <Menu.Item style={{ padding: 0 }}>
                   <Button
                     basic
                     primary
@@ -337,6 +345,7 @@ ProjectDashboard.propTypes = {
   runQueryWithFilters: PropTypes.func.isRequired,
   runQuery: PropTypes.func.isRequired,
   getProjectCharts: PropTypes.func.isRequired,
+  onPrint: PropTypes.func.isRequired,
   showDrafts: PropTypes.bool,
 };
 
