@@ -248,7 +248,7 @@ function UserDashboard(props) {
           <Header as="h1" inverted style={{ marginTop: 100 }}>
             You are not part of any team yet
             <Header.Subheader>
-              You can join a team when after you receive an accept an invitation
+              You can join a team when you receive and accept an invitation
             </Header.Subheader>
           </Header>
         )}
