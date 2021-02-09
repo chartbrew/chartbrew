@@ -157,7 +157,7 @@ function Chart(props) {
     setEmbedModal(true);
   };
 
-  const _openUpdateModal = (chart) => {
+  const _openUpdateModal = () => {
     setUpdateModal(true);
     setUpdateFrequency(chart.autoUpdate);
   };
