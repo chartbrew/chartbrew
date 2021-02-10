@@ -245,7 +245,7 @@ function ProjectDashboard(props) {
                     basic
                     primary
                     icon="print"
-                    onClick={() => onPrint()}
+                    onClick={onPrint}
                   />
                 </Menu.Item>
                 <Menu.Item style={{ padding: 0 }}>
