@@ -196,7 +196,7 @@ function Navbar(props) {
             <Dropdown.Divider />
             <Dropdown.Item
               as="a"
-              href="https://blog.chartbrew.com/tag/tutorial/"
+              href="https://chartbrew.com/blog/tag/tutorial/"
               target="_blank"
               rel="noopener noreferrer"
             >
