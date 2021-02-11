@@ -240,7 +240,7 @@ function Chart(props) {
 
       {chart && (
         <Segment
-          style={styles.chartContainer(_isKpi(chart))}
+          style={styles.chartContainer(_isKpi(chart), print)}
         >
           <div style={styles.titleArea(_isKpi(chart))}>
             {_canAccess("editor") && projectId && !print
@@ -707,10 +707,10 @@ const styles = {
   draft: {
     marginRight: 10,
   },
-  chartContainer: (noPadding) => ({
+  chartContainer: (noPadding, print) => ({
     borderRadius: 6,
-    boxShadow: "0 2px 5px 0 rgba(51, 51, 79, .07)",
-    border: "none",
+    boxShadow: print ? "none" : "0 2px 5px 0 rgba(51, 51, 79, .07)",
+    border: print ? "solid 1px rgba(34,36,38,.15)" : "none",
     padding: noPadding ? 0 : 15,
   }),
   mainChartArea: (noPadding) => ({

@@ -5,36 +5,47 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Button, Grid, Icon, Image, Popup
+  Button, Container, Form, Grid, Header, Icon, Input, Popup
 } from "semantic-ui-react";
 import { Helmet } from "react-helmet";
+import uuid from "uuid/v4";
 
 import {
   runQueryWithFilters as runQueryWithFiltersAction,
 } from "../../actions/chart";
 import Chart from "../Chart/Chart";
-import cbLogo from "../../assets/logo_blue.png";
 
 function PrintView(props) {
   const {
-    charts, onPrint, isPrinting,
+    charts, onPrint, isPrinting, project,
   } = props;
 
   const [orientation, setOrientation] = useState("portrait");
-  const [showMenu, setShowMenu] = useState(false);
+  const [showMenu, setShowMenu] = useState(true);
   const [showTheme, setShowTheme] = useState(false);
   const [printCharts, setPrintCharts] = useState([]);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [printTitle, setPrintTitle] = useState("");
 
   useEffect(() => {
     if (charts && charts.length > 0) {
-      const newCharts = charts.map((chart) => {
-        const newChart = chart;
-        if (newChart && newChart.chartData && newChart.chartData.options) {
-          // newChart.chartData.options.maintainAspectRatio = true;
-          newChart.chartData.options.responsive = true;
+      let rowCounter = 0;
+      let sizeCalc = 0;
+      const newCharts = [];
+      charts.map((chart, index) => {
+        newCharts.push(chart);
+        sizeCalc += chart.chartSize;
+        if (charts[index + 1] && sizeCalc + charts[index + 1].chartSize > 4) {
+          sizeCalc = 0;
+          rowCounter++;
         }
 
-        return newChart;
+        if (rowCounter === 2) {
+          newCharts.push("row");
+          rowCounter = 0;
+        }
+
+        return chart;
       });
 
       setPrintCharts(newCharts);
@@ -47,10 +58,6 @@ function PrintView(props) {
 
   const _onDisplayMenu = () => {
     setShowMenu(true);
-  };
-
-  const _onHideMenu = () => {
-    setShowMenu(false);
   };
 
   const _changeOrientation = () => {
@@ -99,9 +106,9 @@ function PrintView(props) {
           </style>
         </Helmet>
       )}
-      <div style={styles.logoContainer} onMouseEnter={_onDisplayMenu} onMouseLeave={_onHideMenu}>
+      <div style={styles.logoContainer} onMouseEnter={_onDisplayMenu}>
         {showMenu && (
-          <div style={styles.orientationBtn(orientation)}>
+          <div style={styles.orientationBtn}>
             <Button
               icon="arrow left"
               basic
@@ -128,20 +135,64 @@ function PrintView(props) {
             </Button>
           </div>
         )}
-        <Popup
-          trigger={(
-            <Image size="small" src={cbLogo} style={styles.logo} centered onClick={_togglePrint} />
+      </div>
+      <div onMouseEnter={_onDisplayMenu}>
+        <Header textAlign="center" size="huge" onClick={() => setEditingTitle(true)}>
+          <Popup
+            trigger={(
+              <a style={styles.editTitle}>
+                { printTitle || project.name}
+              </a>
+            )}
+            content="Edit your public dashboard title"
+          />
+        </Header>
+
+        {editingTitle
+          && (
+            <Container fluid textAlign="center">
+              <Form style={{ display: "inline-block" }} size="big">
+                <Form.Group>
+                  <Form.Field>
+                    <Input
+                      placeholder="Enter a title"
+                      value={printTitle || project.name}
+                      onChange={(e, data) => setPrintTitle(data.value)}
+                    />
+                  </Form.Field>
+                  <Form.Field>
+                    <Button
+                      secondary
+                      icon
+                      labelPosition="right"
+                      type="submit"
+                      onClick={() => setEditingTitle(false)}
+                      size="big"
+                    >
+                      <Icon name="checkmark" />
+                      Save
+                    </Button>
+                  </Form.Field>
+                </Form.Group>
+              </Form>
+            </Container>
           )}
-          content="Click to return to the dashboard"
-        />
       </div>
       <Grid stackable centered style={styles.mainGrid}>
         {orientation && printCharts && printCharts.map((chart) => {
+          if (chart === "row") {
+            return (
+              <Grid.Row style={{ marginTop: orientation === "landscape" ? 50 : 230 }} key={uuid()} />
+            );
+          }
           if (chart.draft) return (<span style={{ display: "none" }} key={chart.id} />);
           return (
-            <Grid.Column width={chart.chartSize * 4} key={chart.id} style={styles.chartGrid}>
+            <Grid.Column
+              width={chart.chartSize * 4}
+              key={chart.id}
+              style={styles.chartGrid}
+            >
               <Chart
-                key={chart.id}
                 chart={chart}
                 charts={printCharts}
                 showDrafts={false}
@@ -160,14 +211,15 @@ PrintView.propTypes = {
   charts: PropTypes.array.isRequired,
   onPrint: PropTypes.func.isRequired,
   isPrinting: PropTypes.bool.isRequired,
+  project: PropTypes.object.isRequired,
 };
 
 const styles = {
   page: (orientation) => ({
     width: orientation === "landscape" ? "9.25in" : "7in",
     height: orientation === "landscape" ? "7in" : "9.25in",
-    marginTop: orientation === "landscape" ? "0.2in" : "1in",
-    marginBottom: orientation === "landscape" ? "0.5in" : "1in",
+    marginTop: orientation === "landscape" ? "0.2in" : "0.9in",
+    marginBottom: orientation === "landscape" ? "0.5in" : "0.9in",
     marginRight: orientation === "landscape" ? "1in" : "auto",
     marginLeft: orientation === "landscape" ? "1in" : "auto",
     backgroundColor: "white",
@@ -178,11 +230,11 @@ const styles = {
   mainGrid: {
     paddingTop: 15,
   },
-  orientationBtn: (orientation) => ({
+  orientationBtn: {
     position: "absolute",
-    top: orientation === "landscape" ? "0.2in" : "1in",
+    top: "0.1in",
     left: 20,
-  }),
+  },
   logo: {
     width: 40,
   },
@@ -190,11 +242,15 @@ const styles = {
     padding: 5,
     marginTop: 10,
   },
+  editTitle: {
+    color: "black",
+  },
 };
 
 const mapStateToProps = (state) => {
   return {
     charts: state.chart.data,
+    project: state.project.active,
   };
 };
 
