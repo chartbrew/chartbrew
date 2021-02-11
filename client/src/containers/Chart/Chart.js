@@ -41,7 +41,7 @@ const getFiltersFromStorage = (projectId) => {
 function Chart(props) {
   const {
     updateChart, match, runQuery, removeChart, runQueryWithFilters,
-    team, user, chart, isPublic, charts, onChangeOrder,
+    team, user, chart, isPublic, charts, onChangeOrder, print, height,
   } = props;
 
   const [chartLoading, setChartLoading] = useState(false);
@@ -243,7 +243,7 @@ function Chart(props) {
           style={styles.chartContainer(_isKpi(chart))}
         >
           <div style={styles.titleArea(_isKpi(chart))}>
-            {_canAccess("editor") && projectId
+            {_canAccess("editor") && projectId && !print
                 && (
                   <Dropdown
                     icon="ellipsis horizontal"
@@ -372,7 +372,7 @@ function Chart(props) {
                 <Label color="olive" style={styles.draft}>Draft</Label>
               )}
               <span>
-                {chart.public && !isPublic
+                {chart.public && !isPublic && !print
                     && (
                       <Popup
                         trigger={<Icon name="world" />}
@@ -392,7 +392,14 @@ function Chart(props) {
             </Header>
             {chart.chartData && (
               <div>
-                <p><small><i>{`Last Updated ${moment(chart.chartDataUpdated).calendar()}`}</i></small></p>
+                <p>
+                  <small>
+                    <i>
+                      {!print && `Last Updated ${moment(chart.chartDataUpdated).calendar()}`}
+                      {print && <small>{`${moment(chart.chartDataUpdated).format("LLL")}`}</small>}
+                    </i>
+                  </small>
+                </p>
               </div>
             )}
           </div>
@@ -404,18 +411,24 @@ function Chart(props) {
               <div style={styles.mainChartArea(_isKpi(chart))}>
                 {chart.type === "line"
                   && (
-                    <LineChart chart={chart} />
+                    <LineChart
+                      chart={chart}
+                      height={height}
+                    />
                   )}
                 {chart.type === "bar"
                   && (
-                    <BarChart chart={chart} />
+                    <BarChart
+                      chart={chart}
+                      height={height}
+                    />
                   )}
                 {chart.type === "pie"
                   && (
                   <Pie
                     data={chart.chartData.data}
                     options={chart.chartData.options}
-                    height={300}
+                    height={height}
                   />
                   )}
                 {chart.type === "doughnut"
@@ -423,7 +436,7 @@ function Chart(props) {
                   <Doughnut
                     data={chart.chartData.data}
                     options={chart.chartData.options}
-                    height={300}
+                    height={height}
                   />
                   )}
                 {chart.type === "radar"
@@ -431,7 +444,7 @@ function Chart(props) {
                   <Radar
                     data={chart.chartData.data}
                     options={chart.chartData.options}
-                    height={300}
+                    height={print === "landscape" ? 230 : 300}
                   />
                   )}
                 {chart.type === "polar"
@@ -439,7 +452,7 @@ function Chart(props) {
                   <Polar
                     data={chart.chartData.data}
                     options={chart.chartData.options}
-                    height={300}
+                    height={height}
                   />
                   )}
               </div>
@@ -720,6 +733,8 @@ const styles = {
 Chart.defaultProps = {
   isPublic: false,
   onChangeOrder: () => {},
+  print: "",
+  height: 300,
 };
 
 Chart.propTypes = {
@@ -734,6 +749,8 @@ Chart.propTypes = {
   user: PropTypes.object.isRequired,
   isPublic: PropTypes.bool,
   onChangeOrder: PropTypes.func,
+  print: PropTypes.string,
+  height: PropTypes.number,
 };
 
 const mapStateToProps = (state) => {

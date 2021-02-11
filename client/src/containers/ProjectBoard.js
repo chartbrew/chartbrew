@@ -25,7 +25,7 @@ import PublicDashboardEditor from "./PublicDashboardEditor";
 import ProjectSettings from "./ProjectSettings";
 import canAccess from "../config/canAccess";
 import { APP_VERSION } from "../config/settings";
-import PrintView from "./PrintView";
+import PrintView from "./PrintView/PrintView";
 
 const queryString = require("qs"); // eslint-disable-line
 
@@ -174,7 +174,7 @@ function ProjectBoard(props) {
             path="/:teamId/:projectId/dashboard"
             render={() => (
               <div style={{ textAlign: "center", width: "21cm" }}>
-                <PrintView onPrint={_onPrint} />
+                <PrintView onPrint={_onPrint} isPrinting={isPrinting} />
               </div>
             )} />
         </Switch>
