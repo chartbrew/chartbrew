@@ -318,6 +318,7 @@ function ProjectDashboard(props) {
           <Grid stackable centered style={styles.mainGrid}>
             {charts.map((chart, index) => {
               if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
+              if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />); // eslint-disable-line
               return (
                 <Grid.Column width={chart.chartSize * 4} key={chart.id} style={styles.chartGrid}>
                   <Chart
