@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Message, Icon, Button, Container, Header, Divider, Menu,
-  Label, TransitionablePortal, Modal, Grid, Card,
+  Label, TransitionablePortal, Modal, Grid, Card, Popup,
 } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 import { useLocalStorage, useWindowSize } from "react-use";
@@ -241,11 +241,17 @@ function ProjectDashboard(props) {
               </Menu.Item>
               <Menu.Menu position="right">
                 <Menu.Item style={{ padding: 0 }}>
-                  <Button
-                    basic
-                    primary
-                    icon="print"
-                    onClick={onPrint}
+                  <Popup
+                    trigger={(
+                      <Button
+                        basic
+                        primary
+                        icon="print"
+                        onClick={onPrint}
+                      />
+                    )}
+                    content="Open print view"
+                    position="bottom center"
                   />
                 </Menu.Item>
                 <Menu.Item style={{ padding: 0 }}>
