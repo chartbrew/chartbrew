@@ -122,7 +122,7 @@ function PrintView(props) {
               onClick={_changeOrientation}
             >
               <Icon name="redo" />
-              {orientation === "portrait" ? "Landscape" : "Portrait"}
+              {orientation === "portrait" ? "Switch to Landscape" : "Switch to Portrait"}
             </Button>
             <Button
               icon
