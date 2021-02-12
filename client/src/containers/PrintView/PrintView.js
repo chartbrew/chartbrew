@@ -33,6 +33,7 @@ function PrintView(props) {
       let sizeCalc = 0;
       const newCharts = [];
       charts.map((chart, index) => {
+        if (chart.draft) return chart;
         newCharts.push(chart);
         sizeCalc += chart.chartSize;
         if (charts[index + 1] && sizeCalc + charts[index + 1].chartSize > 4) {
