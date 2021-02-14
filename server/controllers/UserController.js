@@ -30,7 +30,7 @@ class UserController {
       .then((newUser) => {
         gNewUser = newUser;
 
-        if (settings.teamRestricted) {
+        if (settings.teamRestricted === "1") {
           return newUser;
         }
 
@@ -40,7 +40,7 @@ class UserController {
         return db.Team.create(newTeam);
       })
       .then((data) => {
-        if (settings.teamRestricted) {
+        if (settings.teamRestricted === "1") {
           return data;
         }
 
