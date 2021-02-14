@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Message, Icon, Button, Container, Header, Divider, Menu,
-  Label, TransitionablePortal, Modal,
+  Label, TransitionablePortal, Modal, Grid, Card, Popup,
 } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 import { useLocalStorage, useWindowSize } from "react-use";
@@ -18,7 +18,9 @@ import {
   getProjectCharts as getProjectChartsAction,
   runQueryWithFilters as runQueryWithFiltersAction,
   runQuery as runQueryAction,
+  changeOrder as changeOrderAction,
 } from "../../actions/chart";
+import canAccess from "../../config/canAccess";
 
 /*
   Dashboard container (for the charts)
@@ -26,7 +28,7 @@ import {
 function ProjectDashboard(props) {
   const {
     cleanErrors, connections, charts, match, showDrafts, runQueryWithFilters,
-    getProjectCharts, runQuery,
+    getProjectCharts, runQuery, changeOrder, user, team, onPrint,
   } = props;
 
   const initialFilters = window.localStorage.getItem("_cb_filters");
@@ -172,6 +174,35 @@ function ProjectDashboard(props) {
     setShowFilters(true);
   };
 
+  const _onChangeOrder = (chartId, type, index) => {
+    let otherId;
+    switch (type) {
+      case "up":
+        otherId = charts[index - 1].id;
+        break;
+      case "down":
+        otherId = charts[index + 1].id;
+        break;
+      case "top":
+        otherId = "top";
+        break;
+      case "bottom":
+        otherId = "bottom";
+        break;
+      default:
+        break;
+    }
+    changeOrder(
+      match.params.projectId,
+      chartId,
+      otherId
+    );
+  };
+
+  const _canAccess = (role) => {
+    return canAccess(role, user.id, team.TeamRoles);
+  };
+
   return (
     <div>
       {charts && charts.length > 0
@@ -209,7 +240,21 @@ function ProjectDashboard(props) {
                 </div>
               </Menu.Item>
               <Menu.Menu position="right">
-                <Menu.Item>
+                <Menu.Item style={{ padding: 0 }}>
+                  <Popup
+                    trigger={(
+                      <Button
+                        basic
+                        primary
+                        icon="print"
+                        onClick={onPrint}
+                      />
+                    )}
+                    content="Open print view"
+                    position="bottom center"
+                  />
+                </Menu.Item>
+                <Menu.Item style={{ padding: 0 }}>
                   <Button
                     basic
                     primary
@@ -265,11 +310,42 @@ function ProjectDashboard(props) {
               </Link>
             </Container>
           )}
+
+        {_canAccess("editor") && charts.length < 1
+          && (
+            <Grid centered style={styles.addCard}>
+              <Card
+                raised
+                as={Link}
+                to={`/${match.params.teamId}/${match.params.projectId}/chart`}
+                color="olive"
+              >
+                <Header as="h2" textAlign="center" icon>
+                  <Icon name="plus" color="blue" />
+                  Add your first chart
+                </Header>
+              </Card>
+            </Grid>
+          )}
+
         {connections.length > 0 && (
-          <Chart
-            charts={charts}
-            showDrafts={showDrafts}
-          />
+          <Grid stackable centered style={styles.mainGrid}>
+            {charts.map((chart, index) => {
+              if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
+              if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />); // eslint-disable-line
+              return (
+                <Grid.Column width={chart.chartSize * 4} key={chart.id} style={styles.chartGrid}>
+                  <Chart
+                    key={chart.id}
+                    chart={chart}
+                    charts={charts}
+                    showDrafts={showDrafts}
+                    onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
+                  />
+                </Grid.Column>
+              );
+            })}
+          </Grid>
         )}
         {connections.length > 0 && charts.length > 0 && (
         <Container textAlign="center" style={{ paddingTop: 50 }}>
@@ -323,6 +399,15 @@ const styles = {
     bottom: 25,
     right: 25,
   },
+  chartGrid: {
+    padding: 10,
+  },
+  mainGrid: {
+    padding: 10,
+  },
+  addCard: {
+    paddingTop: 50,
+  },
 };
 
 ProjectDashboard.defaultProps = {
@@ -332,11 +417,15 @@ ProjectDashboard.defaultProps = {
 ProjectDashboard.propTypes = {
   connections: PropTypes.array.isRequired,
   charts: PropTypes.array.isRequired,
+  user: PropTypes.object.isRequired,
+  team: PropTypes.object.isRequired,
   match: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
   runQueryWithFilters: PropTypes.func.isRequired,
   runQuery: PropTypes.func.isRequired,
   getProjectCharts: PropTypes.func.isRequired,
+  onPrint: PropTypes.func.isRequired,
+  changeOrder: PropTypes.func.isRequired,
   showDrafts: PropTypes.bool,
 };
 
@@ -344,6 +433,8 @@ const mapStateToProps = (state) => {
   return {
     connections: state.connection.data,
     charts: state.chart.data,
+    user: state.user.data,
+    team: state.team.active,
   };
 };
 
@@ -355,6 +446,9 @@ const mapDispatchToProps = (dispatch) => {
     ),
     runQuery: (projectId, chartId) => dispatch(runQueryAction(projectId, chartId)),
     getProjectCharts: (projectId) => dispatch(getProjectChartsAction(projectId)),
+    changeOrder: (projectId, chartId, otherId) => (
+      dispatch(changeOrderAction(projectId, chartId, otherId))
+    ),
   };
 };
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ProjectDashboard));

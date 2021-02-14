@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
-  Segment, Loader, Header, Message, List, Image,
+  Segment, Loader, Header, Message, List, Image, Grid,
 } from "semantic-ui-react";
 import { createMedia } from "@artsy/fresnel";
 
@@ -91,7 +91,23 @@ function PublicDashboard(props) {
             <Header inverted textAlign="center" size="huge" style={{ paddingBottom: 30 }}>
               {dashboard.dashboardTitle || dashboard.name}
             </Header>
-            <Chart isPublic charts={dashboard.Charts} />
+
+            <Grid stackable centered style={styles.mainGrid}>
+              {dashboard.Charts.map((chart) => {
+                if (chart.draft) return (<span style={{ display: "none" }} key={chart.id} />);
+                if (!chart.public) return (<span style={{ display: "none" }} key={chart.id} />);
+
+                return (
+                  <Grid.Column width={chart.chartSize * 4} key={chart.id} style={styles.chartGrid}>
+                    <Chart
+                      isPublic
+                      chart={chart}
+                      charts={dashboard.Charts}
+                    />
+                  </Grid.Column>
+                );
+              })}
+            </Grid>
           </div>
           )}
         {dashboard && !_isPublic()
