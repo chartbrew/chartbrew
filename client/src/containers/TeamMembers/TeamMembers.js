@@ -7,6 +7,8 @@ import {
   Loader, Container, Header, Modal, List, TransitionablePortal,
 } from "semantic-ui-react";
 import _ from "lodash";
+import { ToastContainer, toast, Flip } from "react-toastify";
+import "react-toastify/dist/ReactToastify.min.css";
 
 import {
   getTeam as getTeamAction,
@@ -95,7 +97,13 @@ function TeamMembers(props) {
 
     updateTeamRole({
       projects: newAccess,
-    }, changedMember.id, team.id);
+    }, changedMember.id, team.id)
+      .then(() => {
+        toast.success("Updated the user access 👨‍🎓");
+      })
+      .catch(() => {
+        toast.error("Oh no! There's a server issue 🙈 Please try again");
+      });
   };
 
   const _onDeleteConfirmation = (memberId) => {
@@ -342,6 +350,19 @@ function TeamMembers(props) {
           </Modal.Actions>
         </Modal>
       </TransitionablePortal>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={1500}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnVisibilityChange
+        draggable
+        pauseOnHover
+        transition={Flip}
+      />
     </div>
   );
 }
