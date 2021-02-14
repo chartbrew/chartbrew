@@ -40,11 +40,13 @@ cd chartbrew && npm run setup
 
 If you submit any PRs, please [follow the guidelines here](https://github.com/chartbrew/chartbrew/blob/master/CONTRIBUTING.md).
 
-### Set up environmental variables
+### Set up the environmental variables
 
 All the environmental variables that need to be set are found in the `.env-template` file in the root folder of the project. If you ran the setup above, you should already have a `.env` file there as well. If not, copy the template file and rename it `.env`.
 
-Make sure you fill out the `Production` and `Development` sections accordingly.
+Make sure you fill out the `production` and `development` sections accordingly.
+
+[See the full list of variables here](/#environmental-variables)
 
 ### Run the database migrations
 
@@ -98,3 +100,26 @@ npm run docs:dev
 **Docs**
 
 * [Vuepress](https://vuepress.vuejs.org/)
+
+## Environmental variables
+
+The table below shows the `production` variables. The `development` variables have the same naming, but they are appended with `_DEV` (example: `CB_DB_NAME` -> `CB_DB_NAME_DEV`)
+
+| Variable      | Default value | Description  |
+| ------------- |:-------------:| ------------ |
+| CB_DB_NAME      | `chartbrew` | The name of the database <br /><br /> `required` |
+| CB_DB_USERNAME | No default | The username of the user that has access to the database <br /><br /> `required` |
+| CB_DB_PASSWORD | No default | The password associated with the database user |
+| CB_DB_HOST | `localhost` | The host address where the database is located <br /><br /> `required` |
+| CB_DB_PORT | `3306` | The port of the hosting address |
+| CB_DB_DIALECT | `mysql` | Which database to use between `mysql` and `postgres` <br /><br /> `required` |
+| CB_SECRET | `change_to_random_string` | A secure string which is used to encrypt the data in the database <br /><br /> `required` |
+| CB_API_HOST | `localhost` | The address where the `server` app is running from. This variable is used internally by the `server` app. <br /><br /> `required` |
+| CB_API_PORT | `3210` | The port where the `server` app is running from. This variable is used internally by the `server` app <br /><br /> `required` |
+| REACT_APP_CLIENT_HOST | `http://localhost:3000` | The full address where the `client` app is running from. This variable is used in the `client` app and it's populated during the building process.<br /><br />`Note` The app needs to be restarted/rebuilt when this value is changed. <br /><br /> `required` |
+| REACT_APP_API_HOST | `http://localhost:3210` | The full address where the `server` app is running. This variable is used by the `client` app.<br /><br />`Note` The app needs to be restarted/rebuilt when this value is changed. <br /><br /> `required` |
+| CB_MAIL_HOST | `smtp.gmail.com` | The server host of the email provider |
+| CB_MAIL_USER | No default | The username used to log in on the email server |
+| CB_MAIL_PASS | No deafult | The password used to log in on the email server |
+| CB_ADMIN_MAIL | `hello@example.com` | The email address used to send the emails from |
+| CB_RESTRICT_TEAMS | `0` | `0` - New users will have their own team created on sign-up. <br /><br />`1` - New users don't have a team on signup and can't create their own. |
