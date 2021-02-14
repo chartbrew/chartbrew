@@ -3,7 +3,7 @@ module.exports = {
   secret: process.env.CB_SECRET_DEV,
   client: process.env.REACT_APP_CLIENT_HOST_DEV,
   api: process.env.CB_API_HOST_DEV,
-  adminMail: process.env.CB_ADMIN_MAIL,
+  adminMail: process.env.CB_ADMIN_MAIL_DEV,
   mailSettings: {
     host: process.env.CB_MAIL_HOST_DEV,
     port: 465,
