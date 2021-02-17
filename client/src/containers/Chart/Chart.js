@@ -20,6 +20,7 @@ import {
   runQuery as runQueryAction,
   updateChart as updateChartAction,
   runQueryWithFilters as runQueryWithFiltersAction,
+  exportChart,
 } from "../../actions/chart";
 import canAccess from "../../config/canAccess";
 import { SITE_HOST } from "../../config/settings";
@@ -225,6 +226,10 @@ function Chart(props) {
     return _.findIndex(charts, (c) => c.id === chart.id);
   };
 
+  const _onExport = () => {
+    return exportChart(match.params.projectId, [chart.id], dashboardFilters);
+  };
+
   const { projectId } = match.params;
 
   return (
@@ -285,6 +290,11 @@ function Chart(props) {
                           />
                         </>
                       )}
+                      <Dropdown.Item
+                        icon="file excel"
+                        text="Export to XLSX"
+                        onClick={_onExport}
+                      />
                       <Dropdown.Divider />
                       <Dropdown
                         item

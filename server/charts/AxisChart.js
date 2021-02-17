@@ -23,7 +23,7 @@ class AxisChart {
     this.dateFormat = "";
   }
 
-  plot(skipDataProcessing, filters) {
+  plot(skipDataProcessing, filters, isExport) {
     // skip the data processing if required (this algorithm is time-expensive)
     if (
       !skipDataProcessing
@@ -100,6 +100,10 @@ class AxisChart {
             }
           }
         }
+
+        // console.log("filtered data", filteredData);
+        // console.log("filteredData.length", filteredData.length);
+        if (isExport) return filteredData;
 
         // first, handle the xAxis
         if (xAxis.indexOf("root[]") > -1) {

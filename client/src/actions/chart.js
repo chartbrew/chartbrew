@@ -319,3 +319,38 @@ export function getEmbeddedChart(id) {
       });
   };
 }
+
+export function exportChart(projectId, chartIds, filters) {
+  const token = cookie.load("brewToken");
+  const url = `${API_HOST}/project/${projectId}/chart/export`;
+  const method = "POST";
+  const body = JSON.stringify({ chartIds, filters });
+  const headers = new Headers({
+    "Content-Type": "application/json",
+    "authorization": `Bearer ${token}`,
+  });
+
+  return fetch(url, { method, body, headers })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(response.status);
+      }
+
+      return response.blob();
+    })
+    .then((file) => {
+      const url = window.URL.createObjectURL(new Blob([file])); // eslint-disable-line
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "chart-export.xlsx");
+
+      // 3. Append to html page
+      document.body.appendChild(link);
+      // 4. Force download
+      link.click();
+      // 5. Clean up and remove the link
+      link.parentNode.removeChild(link);
+
+      return file;
+    });
+}
