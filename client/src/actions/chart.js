@@ -352,5 +352,8 @@ export function exportChart(projectId, chartIds, filters) {
       link.parentNode.removeChild(link);
 
       return file;
+    })
+    .catch((err) => {
+      return err;
     });
 }

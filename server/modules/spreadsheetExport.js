@@ -1,22 +1,32 @@
 const xlsx = require("node-xlsx");
 
-module.exports = (data) => {
+module.exports = (sheetsData) => {
   const formattedData = [];
 
-  data.map((set) => {
+  sheetsData.map((data) => {
     const formattedSet = [];
-    set.map((item, index) => {
-      if (index === 0) {
-        formattedSet.push(Object.keys(item));
-      }
+    let addKeys = true;
+    Object.keys(data).map((dataset, index) => {
+      // push the name of the dataset in the first line of each set
+      if (index !== 0) formattedSet.push([""]);
+      formattedSet.push([dataset]);
 
-      formattedSet.push(Object.values(item));
+      const set = data[dataset];
+      set.map((item) => {
+        if (addKeys) {
+          formattedSet.push(Object.keys(item));
+          addKeys = false;
+        }
+        formattedSet.push(Object.values(item));
+        return item;
+      });
 
-      return item;
+      addKeys = true;
+      return set;
     });
-
     formattedData.push(formattedSet);
-    return set;
+
+    return data;
   });
 
   const options = {
