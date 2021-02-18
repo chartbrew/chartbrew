@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const moment = require("moment");
 const Sequelize = require("sequelize");
+const { nanoid } = require("nanoid");
 
 const externalDbConnection = require("../modules/externalDbConnection");
 
@@ -576,6 +577,12 @@ class ChartController {
             this.updateChartData(
               chart.id, { id: userId }, false, false, filters, true
             )
+              .then((data) => {
+                return {
+                  name: `${chart.name} - ${nanoid(5)}`,
+                  data,
+                };
+              })
           );
           return chart;
         });

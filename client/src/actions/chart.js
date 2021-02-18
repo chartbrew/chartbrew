@@ -342,7 +342,7 @@ export function exportChart(projectId, chartIds, filters) {
       const url = window.URL.createObjectURL(new Blob([file])); // eslint-disable-line
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", "chart-export.xlsx");
+      link.setAttribute("download", "chartbrew-export.xlsx");
 
       // 3. Append to html page
       document.body.appendChild(link);

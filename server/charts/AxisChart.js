@@ -104,13 +104,6 @@ class AxisChart {
           }
         }
 
-        // console.log("filtered data", filteredData);
-        // console.log("filteredData.length", filteredData.length);
-        if (isExport) {
-          exportData[dataset.options.legend] = filteredData;
-          continue; // eslint-disable-line
-        }
-
         // first, handle the xAxis
         if (xAxis.indexOf("root[]") > -1) {
           xAxis = xAxis.replace("root[].", "");
@@ -121,6 +114,11 @@ class AxisChart {
           xAxis = xAxis.substring(xAxis.indexOf("]") + 2);
 
           xData = _.get(filteredData, arrayFinder);
+        }
+
+        if (isExport) {
+          exportData[dataset.options.legend] = xData;
+          continue; // eslint-disable-line
         }
 
         let xAxisFieldName = xAxis;

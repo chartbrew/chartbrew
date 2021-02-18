@@ -19,8 +19,10 @@ import {
   runQueryWithFilters as runQueryWithFiltersAction,
   runQuery as runQueryAction,
   changeOrder as changeOrderAction,
+  exportChart,
 } from "../../actions/chart";
 import canAccess from "../../config/canAccess";
+import ChartExport from "./components/ChartExport";
 
 /*
   Dashboard container (for the charts)
@@ -37,6 +39,9 @@ function ProjectDashboard(props) {
   const [filterLoading, setFilterLoading] = useState(false);
   const [alreadyFiltered, setAlreadyFiltered] = useState(true);
   const [refreshLoading, setRefreshLoading] = useState(false);
+  const [viewExport, setViewExport] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportError, setExportError] = useState(false);
 
   const { height } = useWindowSize();
 
@@ -203,6 +208,24 @@ function ProjectDashboard(props) {
     return canAccess(role, user.id, team.TeamRoles);
   };
 
+  const _openExport = () => {
+    setViewExport(true);
+  };
+
+  const _onExport = (ids) => {
+    setExportLoading(true);
+    setExportError(false);
+    return exportChart(match.params.projectId, ids, filters[match.params.projectId])
+      .then(() => {
+        setExportLoading(false);
+        setViewExport(false);
+      })
+      .catch(() => {
+        setExportLoading(false);
+        setExportError(true);
+      });
+  };
+
   return (
     <div>
       {charts && charts.length > 0
@@ -240,6 +263,22 @@ function ProjectDashboard(props) {
                 </div>
               </Menu.Item>
               <Menu.Menu position="right">
+                <Menu.Item style={{ padding: 0 }}>
+                  <Popup
+                    trigger={(
+                      <Button
+                        button
+                        basic
+                        primary
+                        icon="file excel"
+                        className="icon"
+                        onClick={_openExport}
+                      />
+                    )}
+                    content="Export charts to Excel (.XLSX)"
+                    position="bottom center"
+                  />
+                </Menu.Item>
                 <Menu.Item style={{ padding: 0 }}>
                   <Popup
                     trigger={(
@@ -370,6 +409,23 @@ function ProjectDashboard(props) {
               charts={charts}
               projectId={match.params.projectId}
               onAddFilter={_onAddFilter}
+            />
+          </Modal.Content>
+        </Modal>
+      </TransitionablePortal>
+
+      <TransitionablePortal open={viewExport}>
+        <Modal open={viewExport} closeIcon onClose={() => setViewExport(false)}>
+          <Modal.Header>
+            <span style={{ verticalAlign: "middle" }}>{" Export to Excel (.xlsx) "}</span>
+            <Label style={{ verticalAlign: "middle" }} color="olive">New!</Label>
+          </Modal.Header>
+          <Modal.Content>
+            <ChartExport
+              charts={charts}
+              onExport={_onExport}
+              loading={exportLoading}
+              error={exportError}
             />
           </Modal.Content>
         </Modal>

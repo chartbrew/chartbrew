@@ -33,6 +33,7 @@
     "mongoose": "^5.11.11",
     "morgan": "^1.10.0",
     "mysql2": "^2.2.5",
+    "nanoid": "^3.1.20",
     "node-xlsx": "^0.16.1",
     "nodemailer": "^6.4.17",
     "oneaccount-express": "^1.0.3",
