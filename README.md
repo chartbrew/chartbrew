@@ -30,9 +30,7 @@
 
 🚙 [**Public feature roadmap over here**](https://trello.com/b/IQ7eiDqZ/chartbrew-roadmap)
 
-💬 [**Join our Slack workspace**](https://join.slack.com/t/chartbrew/shared_invite/enQtODU3MzYzNTkwOTMwLTZiOTA5YzczODUzZGFiZmQyMGI1ZGVmZGI4YTVmOTBkMTI0YzQ2ZjJjOGI5NzQ0NmNmYzRmMDk3MmY4YmI4MTI)
-
-🤟 [**Join our Discord**](https://discord.gg/KwGEbFk)
+💬 [**Join our Discord**](https://discord.gg/KwGEbFk)
 
 ## Data sources
 
