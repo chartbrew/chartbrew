@@ -20,7 +20,7 @@ module.exports = (sheetsData) => {
         }
         formattedSet.push(
           Object.values(item).map((val) => {
-            if (determineType(val) === "object") return JSON.stringify(val);
+            if (determineType(val) === "object" || determineType(val) === "array") return JSON.stringify(val);
             return val;
           })
         );
