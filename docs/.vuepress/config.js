@@ -8,7 +8,6 @@ module.exports = {
       { text: 'Home', link: '/' },
       { text: '🍺 Chartbrew website', link: 'https://chartbrew.com' },
       { text: '🤘 Join our Discord', link: 'https://discord.gg/KwGEbFk' },
-      { text: '👋 Join our Slack', link: 'https://join.slack.com/t/chartbrew/shared_invite/enQtODU3MzYzNTkwOTMwLTZiOTA5YzczODUzZGFiZmQyMGI1ZGVmZGI4YTVmOTBkMTI0YzQ2ZjJjOGI5NzQ0NmNmYzRmMDk3MmY4YmI4MTI' },
       { text: '👨‍💻 GitHub', link: 'https://github.com/chartbrew/chartbrew' },
     ],
     sidebar: [

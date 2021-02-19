@@ -7,7 +7,6 @@ function PaginateRequests(options, limit, items, offset, totalResults = []) {
       let results;
       try {
         const parsedResponse = JSON.parse(response.body);
-
         if (parsedResponse instanceof Array) {
           results = parsedResponse;
         } else {
@@ -89,9 +88,8 @@ module.exports = (template = "custom", {
   options, limit, items, offset,
 }) => {
   let results;
-
   // make sure stripe's query parameters include the max limit value
-  const stripeOpt = options;
+  const stripeOpt = _.cloneDeep(options);
   stripeOpt.qs.limit = 100;
 
   switch (template) {

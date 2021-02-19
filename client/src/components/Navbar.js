@@ -166,15 +166,6 @@ function Navbar(props) {
           </div>
           Updates
         </Menu.Item>
-        <Menu.Item
-          as="a"
-          href={DOCUMENTATION_HOST}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Icon name="book" />
-          Documentation
-        </Menu.Item>
         <Menu.Item onClick={() => setFeedbackModal(true)}>
           <Icon name="lightbulb outline" />
           Suggestions
@@ -203,6 +194,15 @@ function Navbar(props) {
               <Icon name="student" />
               Tutorials
             </Dropdown.Item>
+            <Menu.Item
+              as="a"
+              href={DOCUMENTATION_HOST}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Icon name="book" />
+              Documentation
+            </Menu.Item>
             <Dropdown.Item
               as="a"
               href="https://github.com/razvanilin/chartbrew"
@@ -220,15 +220,6 @@ function Navbar(props) {
             >
               <Icon name="discord" />
               Discord
-            </Dropdown.Item>
-            <Dropdown.Item
-              as="a"
-              href="https://join.slack.com/t/chartbrew/shared_invite/enQtODU3MzYzNTkwOTMwLTZiOTA5YzczODUzZGFiZmQyMGI1ZGVmZGI4YTVmOTBkMTI0YzQ2ZjJjOGI5NzQ0NmNmYzRmMDk3MmY4YmI4MTI"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Icon name="slack" />
-              Slack
             </Dropdown.Item>
 
             <Dropdown.Divider />
