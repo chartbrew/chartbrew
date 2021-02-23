@@ -292,7 +292,7 @@ function Chart(props) {
                       )}
                       <Dropdown.Item
                         icon="file excel"
-                        text="Export to XLSX"
+                        text="Export to Excel"
                         onClick={_onExport}
                       />
                       <Dropdown.Divider />
