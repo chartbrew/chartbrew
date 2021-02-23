@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Segment, Dropdown, Message, Header, Divider, Form, Button, Icon, Grid, Checkbox
+  Segment, Dropdown, Message, Header, Divider, Form, Button, Icon, Grid, Checkbox, Popup
 } from "semantic-ui-react";
 import _ from "lodash";
 
@@ -24,6 +24,7 @@ function InviteMembersForm(props) {
   const [undeliveredInvites, setUndeliveredInvites] = useState([]);
   const [loading, setLoading] = useState(false);
   const [projectAccess, setProjectAccess] = useState([]);
+  const [exportAllowed, setExportAllowed] = useState(false);
 
   const {
     style, match, projects, team, inviteMembers, user
@@ -46,6 +47,7 @@ function InviteMembersForm(props) {
         email.value,
         teamId,
         projectAccess,
+        exportAllowed,
       ).then(() => {
         setLoading(false);
         setIncorrectMail(false);
@@ -83,6 +85,16 @@ function InviteMembersForm(props) {
     }
 
     setProjectAccess(newAccess);
+  };
+
+  const _onSelectAllProjects = () => {
+    const newProjects = projects.map((project) => project.id);
+
+    setProjectAccess(newProjects);
+  };
+
+  const _onDeselectAllProjects = () => {
+    setProjectAccess([]);
   };
 
   return (
@@ -145,13 +157,32 @@ function InviteMembersForm(props) {
           )}
         </Form>
 
-        <Header as="h4">Select which projects the user will be part of:</Header>
+        <Header as="h4">
+          {"Project access "}
+          <Popup
+            trigger={<Icon style={{ fontSize: 16, verticalAlign: "baseline" }} name="question circle" />}
+            content="The newly invited users will only be able to access the projects you select below. The project access can be changed later as well."
+          />
+        </Header>
 
+        <div style={{ marginBottom: 15 }}>
+          <Button
+            content="Select all"
+            size="small"
+            basic
+            onClick={_onSelectAllProjects}
+          />
+          <Button
+            content="Deselect all"
+            size="small"
+            basic
+            onClick={_onDeselectAllProjects}
+          />
+        </div>
         <Grid columns={2} stackable>
           {projects && projects.map((project) => (
             <Grid.Column key={project.id}>
               <Checkbox
-                toggle
                 label={project.name}
                 checked={
                   _.indexOf(projectAccess, project.id) > -1
@@ -161,6 +192,20 @@ function InviteMembersForm(props) {
             </Grid.Column>
           ))}
         </Grid>
+
+        <Header as="h4">
+          {"Data export permissions "}
+          <Popup
+            trigger={<Icon style={{ fontSize: 16, verticalAlign: "baseline" }} name="question circle" />}
+            content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
+          />
+        </Header>
+
+        <Checkbox
+          label="Allow data export"
+          checked={exportAllowed}
+          onClick={() => setExportAllowed(!exportAllowed)}
+        />
 
         <Button
           loading={loading}
@@ -203,8 +248,8 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    inviteMembers: (userId, email, teamId, projects) => (
-      dispatch(inviteMembersAction(userId, email, teamId, projects))
+    inviteMembers: (userId, email, teamId, projects, canExport) => (
+      dispatch(inviteMembersAction(userId, email, teamId, projects, canExport))
     ),
   };
 };

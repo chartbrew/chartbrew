@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Dimmer, Message, Segment, Button, Divider, Dropdown, Checkbox, Grid,
-  Loader, Container, Header, Modal, List, TransitionablePortal,
+  Loader, Container, Header, Modal, List, TransitionablePortal, Popup, Icon,
 } from "semantic-ui-react";
 import _ from "lodash";
 import { ToastContainer, toast, Flip } from "react-toastify";
@@ -36,6 +36,7 @@ function TeamMembers(props) {
   const [deleteMember, setDeleteMember] = useState("");
   const [projectModal, setProjectModal] = useState(false);
   const [projectAccess, setProjectAccess] = useState({});
+  const [changedRole, setChangedRole] = useState({});
 
   useEffect(() => {
     cleanErrors();
@@ -81,6 +82,17 @@ function TeamMembers(props) {
   };
 
   const _openProjectAccess = (member) => {
+    if (member.TeamRoles) {
+      let selectedTeamRole;
+      member.TeamRoles.map((teamRole) => {
+        if (teamRole.team_id === team.id) {
+          selectedTeamRole = teamRole;
+        }
+        return teamRole;
+      });
+      if (selectedTeamRole) setChangedRole(selectedTeamRole);
+    }
+
     setChangedMember(member);
     setProjectModal(true);
   };
@@ -100,6 +112,22 @@ function TeamMembers(props) {
     }, changedMember.id, team.id)
       .then(() => {
         toast.success("Updated the user access 👨‍🎓");
+      })
+      .catch(() => {
+        toast.error("Oh no! There's a server issue 🙈 Please try again");
+      });
+  };
+
+  const _onChangeExport = () => {
+    updateTeamRole({
+      canExport: !changedRole.canExport,
+    }, changedMember.id, team.id)
+      .then(() => {
+        const newChangedRole = _.clone(changedRole);
+        newChangedRole.canExport = !changedRole.canExport;
+        setChangedRole(newChangedRole);
+        _getTeam();
+        toast.success("Updated export settings 📊");
       })
       .catch(() => {
         toast.error("Oh no! There's a server issue 🙈 Please try again");
@@ -175,13 +203,13 @@ function TeamMembers(props) {
               return (
                 <List.Item key={member.id}>
                   <List.Content floated="right">
-                    {_canAccess("admin") && (
+                    {_canAccess("admin") && user.id !== member.id && (
                       <Button
                         content="Project access"
                         onClick={() => _openProjectAccess(member)}
                       />
                     )}
-                    {_canAccess("admin") && (
+                    {_canAccess("admin") && user.id !== member.id && (
                       <Dropdown
                         text="Edit role"
                         floating
@@ -339,6 +367,21 @@ function TeamMembers(props) {
                     </Grid.Column>
                   ))}
                 </Grid>
+
+                <Divider />
+                <Header as="h4">
+                  {"Data export permissions "}
+                  <Popup
+                    trigger={<Icon style={{ fontSize: 16, verticalAlign: "baseline" }} name="question circle" />}
+                    content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
+                  />
+                </Header>
+                <Checkbox
+                  toggle
+                  label="Allow data export"
+                  checked={changedRole.canExport}
+                  onClick={_onChangeExport}
+                />
               </div>
             )}
           </Modal.Content>

@@ -61,6 +61,9 @@ module.exports = (sequelize, DataTypes) => {
         return this.setDataValue("projects", JSON.stringify(value));
       },
     },
+    canExport: {
+      type: DataTypes.BOOLEAN,
+    },
   }, {
     freezeTableName: true,
   });

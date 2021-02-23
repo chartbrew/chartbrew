@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const moment = require("moment");
 const Sequelize = require("sequelize");
+const { nanoid } = require("nanoid");
 
 const externalDbConnection = require("../modules/externalDbConnection");
 
@@ -281,7 +282,7 @@ class ChartController {
       });
   }
 
-  updateChartData(id, user, noSource, skipParsing = false, filters) {
+  updateChartData(id, user, noSource, skipParsing = false, filters, isExport) {
     let gChart;
     let gCache;
     let gChartData;
@@ -344,21 +345,26 @@ class ChartController {
       })
       .then((chartData) => {
         const axisChart = new AxisChart(chartData);
-        return axisChart.plot(skipParsing, filters);
+        return axisChart.plot(skipParsing, filters, isExport);
       })
       .then((chartData) => {
         gChartData = chartData;
-        if (filters) {
+        if (filters || isExport) {
           return filters;
         }
         return this.update(id, { chartData, chartDataUpdated: moment() });
       })
       .then(() => {
-        if (filters) {
+        if (filters && !isExport) {
           const filteredChart = gChart;
           filteredChart.chartData = gChartData;
           return filteredChart;
         }
+
+        if (isExport) {
+          return gChartData;
+        }
+
         return this.findById(id);
       })
       .catch((err) => {
@@ -559,6 +565,35 @@ class ChartController {
       })
       .then(() => {
         return new Promise((resolve) => resolve(gChartData));
+      });
+  }
+
+  exportChartData(userId, chartIds, filters) {
+    return db.Chart.findAll({ where: { id: chartIds } })
+      .then((charts) => {
+        const dataPromises = [];
+        charts.map((chart) => {
+          dataPromises.push(
+            this.updateChartData(
+              chart.id, { id: userId }, false, false, filters, true
+            )
+              .then((data) => {
+                return {
+                  name: `${chart.name} - ${nanoid(5)}`,
+                  data,
+                };
+              })
+          );
+          return chart;
+        });
+
+        return Promise.all(dataPromises);
+      })
+      .then((result) => {
+        return result;
+      })
+      .catch((err) => {
+        return new Promise((resolve, reject) => reject(err));
       });
   }
 }

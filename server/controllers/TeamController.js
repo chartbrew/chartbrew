@@ -48,11 +48,10 @@ class TeamController {
   }
 
   // add a new team role
-  addTeamRole(teamId, userId, roleName, projects) {
+  addTeamRole(teamId, userId, roleName, projects, canExport) {
     const teamRoleObj = { "team_id": teamId, "user_id": userId, "role": roleName };
-    if (projects) {
-      teamRoleObj.projects = projects;
-    }
+    if (projects) teamRoleObj.projects = projects;
+    if (canExport) teamRoleObj.canExport = canExport;
 
     return db.TeamRole.create(teamRoleObj)
       .then((role) => {
@@ -151,6 +150,9 @@ class TeamController {
     return db.TeamRole.update(data, { where: { "team_id": teamId, "user_id": userId } })
       .then(() => {
         return this.getTeamRole(teamId, userId);
+      })
+      .then((teamRole) => {
+        return teamRole;
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -279,7 +281,12 @@ class TeamController {
   saveTeamInvite(teamId, data) {
     const token = uuidv4();
     return db.TeamInvitation.create({
-      "team_id": teamId, "email": data.email, "user_id": data.user_id, token, projects: data.projects,
+      "team_id": teamId,
+      "email": data.email,
+      "user_id": data.user_id,
+      token,
+      projects: data.projects,
+      canExport: data.canExport
     })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

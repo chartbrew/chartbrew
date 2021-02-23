@@ -3,6 +3,7 @@ const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
+const spreadsheetExport = require("../modules/spreadsheetExport");
 
 module.exports = (app) => {
   const chartController = new ChartController();
@@ -383,6 +384,31 @@ module.exports = (app) => {
           return res.status(413).send(error);
         }
         return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------------------------
+
+  /*
+  ** Route used to export data in spreadsheet format
+  */
+  app.post("/project/:project_id/chart/export", verifyToken, (req, res) => {
+    return checkAccess(req)
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).readAny("chart");
+        if (!permission.granted || (!teamRole.canExport && teamRole.role !== "owner")) {
+          throw new Error(401);
+        }
+
+        return chartController.exportChartData(req.user.id, req.body.chartIds, req.body.filters);
+      })
+      .then((data) => {
+        return spreadsheetExport(data);
+      })
+      .then((fileBuffer) => {
+        return res.status(200).send(fileBuffer);
+      })
+      .catch((err) => {
+        return res.status(400).send(err);
       });
   });
   // --------------------------------------------------------
