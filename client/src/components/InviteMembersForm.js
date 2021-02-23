@@ -157,18 +157,24 @@ function InviteMembersForm(props) {
           )}
         </Form>
 
-        <Header as="h4">Project access</Header>
+        <Header as="h4">
+          {"Project access "}
+          <Popup
+            trigger={<Icon style={{ fontSize: 16, verticalAlign: "baseline" }} name="question circle" />}
+            content="The newly invited users will only be able to access the projects you select below. The project access can be changed later as well."
+          />
+        </Header>
 
         <div style={{ marginBottom: 15 }}>
           <Button
             content="Select all"
-            size="tiny"
+            size="small"
             basic
             onClick={_onSelectAllProjects}
           />
           <Button
             content="Deselect all"
-            size="tiny"
+            size="small"
             basic
             onClick={_onDeselectAllProjects}
           />

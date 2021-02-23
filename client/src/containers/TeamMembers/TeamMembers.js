@@ -203,13 +203,13 @@ function TeamMembers(props) {
               return (
                 <List.Item key={member.id}>
                   <List.Content floated="right">
-                    {_canAccess("admin") && (
+                    {_canAccess("admin") && user.id !== member.id && (
                       <Button
                         content="Project access"
                         onClick={() => _openProjectAccess(member)}
                       />
                     )}
-                    {_canAccess("admin") && (
+                    {_canAccess("admin") && user.id !== member.id && (
                       <Dropdown
                         text="Edit role"
                         floating

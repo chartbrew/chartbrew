@@ -215,7 +215,8 @@ function ProjectDashboard(props) {
   const _onExport = (ids) => {
     setExportLoading(true);
     setExportError(false);
-    return exportChart(match.params.projectId, ids, filters[match.params.projectId])
+    const appliedFilters = (filters && filters[match.params.projectId]) || null;
+    return exportChart(match.params.projectId, ids, appliedFilters)
       .then(() => {
         setExportLoading(false);
         setViewExport(false);
@@ -224,6 +225,23 @@ function ProjectDashboard(props) {
         setExportLoading(false);
         setExportError(true);
       });
+  };
+
+  const _canExport = () => {
+    if (!team || !team.TeamRoles) return false;
+
+    let canExport = false;
+    team.TeamRoles.map((teamRole) => {
+      if (teamRole.team_id === parseInt(match.params.teamId, 10)
+        && teamRole.user_id === user.id
+        && (teamRole.canExport || teamRole.role === "owner")
+      ) {
+        canExport = true;
+      }
+      return teamRole;
+    });
+
+    return canExport;
   };
 
   return (
@@ -263,22 +281,24 @@ function ProjectDashboard(props) {
                 </div>
               </Menu.Item>
               <Menu.Menu position="right">
-                <Menu.Item style={{ padding: 0 }}>
-                  <Popup
-                    trigger={(
-                      <Button
-                        button
-                        basic
-                        primary
-                        icon="file excel"
-                        className="icon"
-                        onClick={_openExport}
-                      />
-                    )}
-                    content="Export charts to Excel (.XLSX)"
-                    position="bottom center"
-                  />
-                </Menu.Item>
+                {_canExport() && (
+                  <Menu.Item style={{ padding: 0 }}>
+                    <Popup
+                      trigger={(
+                        <Button
+                          button
+                          basic
+                          primary
+                          icon="file excel"
+                          className="icon"
+                          onClick={_openExport}
+                        />
+                      )}
+                      content="Export charts to Excel (.xlsx)"
+                      position="bottom center"
+                    />
+                  </Menu.Item>
+                )}
                 <Menu.Item style={{ padding: 0 }}>
                   <Popup
                     trigger={(
