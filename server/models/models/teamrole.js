@@ -41,6 +41,9 @@ module.exports = (sequelize, DataTypes) => {
     canExport: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+      set(val) {
+        return this.setDataValue("canExport", val);
+      }
     },
   }, {
     freezeTableName: true,
@@ -51,13 +54,13 @@ module.exports = (sequelize, DataTypes) => {
     models.TeamRole.belongsTo(models.Team, { foreignKey: "team_id" });
   };
 
-  TeamRole.beforeValidate((teamRole) => {
-    if (teamRole.role === "owner" || teamRole.role === "admin") {
-      teamRole.canExport = true; // eslint-disable-line
-    }
+  // TeamRole.beforeValidate((teamRole) => {
+  //   if (teamRole.role === "owner" || teamRole.role === "admin") {
+  //     teamRole.canExport = true; // eslint-disable-line
+  //   }
 
-    return new Promise((resolve) => resolve(teamRole));
-  });
+  //   return new Promise((resolve) => resolve(teamRole));
+  // });
 
   return TeamRole;
 };

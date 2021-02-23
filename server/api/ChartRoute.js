@@ -395,7 +395,7 @@ module.exports = (app) => {
     return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("chart");
-        if (!permission.granted || !teamRole.canExport) {
+        if (!permission.granted || (!teamRole.canExport && teamRole.role !== "owner")) {
           throw new Error(401);
         }
 

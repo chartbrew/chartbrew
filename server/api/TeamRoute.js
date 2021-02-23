@@ -210,7 +210,7 @@ module.exports = (app) => {
     let newRole = {};
     return teamController.getTeamInvite(req.body.token)
       .then((invite) => {
-        return teamController.addTeamRole(invite.team_id, req.params.user_id, "member", invite.projects);
+        return teamController.addTeamRole(invite.team_id, req.params.user_id, "member", invite.projects, invite.canExport);
       })
       .then((role) => {
         newRole = role;
