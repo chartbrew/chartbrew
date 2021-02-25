@@ -111,7 +111,7 @@ This configuration file will have everything necessary to serve the backend and 
 ```xml
 # /etc/apache2/sites-available/chartbrew.conf
 
-# FRONTEND
+### FRONTEND
 <VirtualHost *:80>
     # Important! use your own domain here
     ServerName  example.com  
@@ -130,7 +130,7 @@ This configuration file will have everything necessary to serve the backend and 
     </Location>
 </VirtualHost>
 
-# BACKEND
+### BACKEND
 <VirtualHost *:80>
     # Important! use your own domain here
     ServerName  api.example.com
@@ -151,6 +151,8 @@ This configuration file will have everything necessary to serve the backend and 
 Make sure you type your domain correctly and all the subdomains that you use are registered in your DNS configuration ([Cloudflare example](https://support.cloudflare.com/hc/en-us/articles/360019093151-Managing-DNS-records-in-Cloudflare)). Now activate the site and you will be able to access Chartbrew using your domain:
 
 ```sh
+sudo a2enmod proxy
+sudo a2enmod proxy_http
 sudo a2ensite chartbrew
 sudo service apache2 reload
 ```

@@ -3,7 +3,8 @@
 ## Prerequisites
 
 **NodeJS** v12.17.0+
-  * For M1 Macs you might need the latest v14 or v15
+  * For M1 Macs you might need the latest v14
+  * v15 is not fully supported
 
 **NPM**
 
