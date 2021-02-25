@@ -2,11 +2,9 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Container, Button, Icon, Header, Image, Dimmer, Dropdown, Grid, Popup, Segment,
+  Container, Button, Icon, Header, Image, Dimmer, Dropdown,
+  Popup, Segment,
 } from "semantic-ui-react";
-import {
-  Doughnut, Polar, Pie, Radar
-} from "react-chartjs-2";
 
 import lineChartImage from "../../../assets/charts/lineChart.jpg";
 import barChartImage from "../../../assets/charts/barChart.jpg";
@@ -16,6 +14,18 @@ import pieChartImage from "../../../assets/charts/pieChart.jpg";
 import doughnutChartImage from "../../../assets/charts/doughnutChart.jpg";
 import LineChart from "../../Chart/components/LineChart";
 import BarChart from "../../Chart/components/BarChart";
+import RadarChart from "../../Chart/components/RadarChart";
+import DoughnutChart from "../../Chart/components/DoughnutChart";
+import PolarChart from "../../Chart/components/PolarChart";
+import PieChart from "../../Chart/components/PieChart";
+
+import radarSvg from "../../../assets/chart-icons/svg/014-analytics-56.svg";
+import lineSvg from "../../../assets/chart-icons/svg/034-analytics-36.svg";
+import barSvg from "../../../assets/chart-icons/svg/042-analytics-28.svg";
+import pieSvg from "../../../assets/chart-icons/svg/027-analytics-43.svg";
+import accumulateSvg from "../../../assets/chart-icons/svg/004-analytics-66.svg";
+import polarSvg from "../../../assets/chart-icons/svg/009-analytics-61.svg";
+import doughnutSvg from "../../../assets/chart-icons/svg/011-analytics-59.svg";
 
 function ChartPreview(props) {
   const {
@@ -37,8 +47,13 @@ function ChartPreview(props) {
     icon: "hashtag",
   }];
 
-  const _onChangeChartType = (type) => {
-    return onChange(type);
+  const _onChangeChartType = (data) => {
+    const newType = data;
+    if (data.type === "polar" || data.type === "pie" || data.type === "doughnut" || data.type === "radar") {
+      newType.subType = "timeseries";
+      newType.mode = "chart";
+    }
+    return onChange(newType);
   };
 
   const _toggleAccumulation = () => {
@@ -74,114 +89,147 @@ function ChartPreview(props) {
   return (
     <>
       {chart && chart.chartData && !typesVisible && (
-        <Segment>
-          <Grid columns={2}>
-            <Grid.Column width={6}>
-              {chart.type !== "pie" && (
-                <Dropdown
-                  options={chartModes}
-                  selection
-                  value={chart.mode}
-                  onChange={_onChangeMode}
-                  style={styles.modeSwitcher}
-                />
+        <>
+          <Segment>
+            {chart.type === "line"
+              && (
+                <LineChart chart={chart} redraw={redraw} redrawComplete={_redrawComplete} />
               )}
-            </Grid.Column>
-            <Grid.Column width={10} textAlign="right" style={styles.modeSwitcher}>
-              {(chart.type === "line" || chart.type === "bar") && (
-                <Popup
-                  trigger={(
-                    <Button
-                      color={chart.subType.indexOf("AddTimeseries") > -1 && "olive"}
-                      basic={chart.subType.indexOf("AddTimeseries") < 0}
-                      icon="chart line"
-                      onClick={_toggleAccumulation}
-                    />
-                  )}
-                  content={chart.subType.indexOf("AddTimeseries") > -1 ? "Turn accumulation off" : "Accumulate datasets"}
-                  position="bottom center"
-                />
+            {chart.type === "bar"
+              && (
+                <BarChart chart={chart} redraw={redraw} redrawComplete={_redrawComplete} />
               )}
-              <Button.Group style={{ marginRight: 3.5 }}>
-                <Popup
-                  trigger={(
-                    <Button
-                      color={chart.type === "line" && "violet"}
-                      icon="chart area"
-                      onClick={() => _onChangeChartType({ type: "line" })}
-                    />
-                  )}
-                  content="Display line chart"
-                  position="bottom center"
-                />
-                <Popup
-                  trigger={(
-                    <Button
-                      color={chart.type === "bar" && "violet"}
-                      icon="chart bar"
-                      onClick={() => _onChangeChartType({ type: "bar" })}
-                    />
-                  )}
-                  content="Display bar chart"
-                  position="bottom center"
-                />
-                <Popup
-                  trigger={(
-                    <Button
-                      color={chart.type === "pie" && "violet"}
-                      icon="chart pie"
-                      onClick={() => _onChangeChartType({ type: "pie" })}
-                    />
-                  )}
-                  content="Display pie chart"
-                  position="bottom center"
-                />
-              </Button.Group>
-            </Grid.Column>
-          </Grid>
-          {chart.type === "line"
-            && (
-              <LineChart chart={chart} redraw={redraw} redrawComplete={_redrawComplete} />
-            )}
-          {chart.type === "bar"
-            && (
-              <BarChart chart={chart} redraw={redraw} redrawComplete={_redrawComplete} />
-            )}
-          {chart.type === "pie"
-            && (
-              <div>
-                <Pie
-                  data={chart.chartData.data}
-                  options={chart.chartData.options}
+            {chart.type === "pie"
+              && (
+                <div>
+                  <PieChart
+                    chart={chart}
+                    height={300}
+                  />
+                </div>
+              )}
+            {chart.type === "doughnut"
+              && (
+                <DoughnutChart
+                  chart={chart}
                   height={300}
                 />
-              </div>
-            )}
-          {chart.type === "doughnut"
-            && (
-              <Doughnut
-                data={chart.chartData.data}
-                options={chart.chartData.options}
-                height={300}
+              )}
+            {chart.type === "radar"
+              && (
+                <RadarChart
+                  chart={chart}
+                  height={300}
+                />
+              )}
+            {chart.type === "polar"
+              && (
+                <PolarChart
+                  chart={chart}
+                  height={300}
+                />
+              )}
+          </Segment>
+
+          <Container textAlign="center">
+            <Popup
+              trigger={(
+                <Button
+                  basic
+                  secondary={chart.subType.indexOf("AddTimeseries") > -1}
+                  onClick={_toggleAccumulation}
+                  disabled={chart.type !== "line" && chart.type !== "bar"}
+                >
+                  <Image centered src={accumulateSvg} style={styles.chartCard} />
+                </Button>
+              )}
+              content={chart.subType.indexOf("AddTimeseries") > -1 ? "Turn accumulation off" : "Accumulate datasets"}
+              position="bottom center"
+            />
+            <Button.Group style={{ marginRight: 4 }}>
+              <Popup
+                trigger={(
+                  <Button
+                    basic
+                    primary={chart.type === "line"}
+                    onClick={() => _onChangeChartType({ type: "line" })}
+                  >
+                    <Image centered src={lineSvg} style={styles.chartCard} />
+                  </Button>
+                )}
+                content="Display as line chart"
+                position="bottom center"
               />
-            )}
-          {chart.type === "radar"
-            && (
-              <Radar
-                data={chart.chartData.data}
-                options={chart.chartData.options}
-                height={300}
+              <Popup
+                trigger={(
+                  <Button
+                    basic
+                    primary={chart.type === "bar"}
+                    onClick={() => _onChangeChartType({ type: "bar" })}
+                  >
+                    <Image centered src={barSvg} style={styles.chartCard} />
+                  </Button>
+                )}
+                content="Display as bar chart"
+                position="bottom center"
               />
-            )}
-          {chart.type === "polar"
-            && (
-              <Polar
-                data={chart.chartData.data}
-                options={chart.chartData.options}
-                height={300}
+            </Button.Group>
+            <Button.Group>
+              <Popup
+                trigger={(
+                  <Button
+                    basic
+                    primary={chart.type === "pie"}
+                    onClick={() => _onChangeChartType({ type: "pie" })}
+                  >
+                    <Image centered src={pieSvg} style={styles.chartCard} />
+                  </Button>
+                )}
+                content="Display as pie chart"
+                position="bottom center"
               />
-            )}
-        </Segment>
+              <Popup
+                trigger={(
+                  <Button
+                    basic
+                    primary={chart.type === "radar"}
+                    onClick={() => _onChangeChartType({ type: "radar" })}
+                  >
+                    <Image centered src={radarSvg} style={styles.chartCard} />
+                  </Button>
+                )}
+                content="Display as radar chart"
+                position="bottom center"
+              />
+              <Popup
+                trigger={(
+                  <Button
+                    basic
+                    primary={chart.type === "doughnut"}
+                    onClick={() => _onChangeChartType({ type: "doughnut" })}
+                  >
+                    <Image centered src={doughnutSvg} style={styles.chartCard} />
+                  </Button>
+                )}
+                content="Display as doughnut chart"
+                position="bottom center"
+              />
+              <Popup
+                trigger={(
+                  <Button
+                    basic
+                    primary={chart.type === "polar"}
+                    onClick={() => _onChangeChartType({ type: "polar" })}
+                  >
+                    <Image centered src={polarSvg} style={styles.chartCard} />
+                  </Button>
+                )}
+                content="Display as polar chart"
+                position="bottom center"
+              />
+            </Button.Group>
+          </Container>
+        </>
       )}
 
       <Container textAlign="center">
@@ -232,7 +280,15 @@ function ChartPreview(props) {
 
       {chart && chart.type && !typesVisible && (
         <Container textAlign="center" style={styles.topBuffer}>
-          <Button.Group size="small">
+          <Dropdown
+            options={chartModes}
+            selection
+            value={chart.mode}
+            onChange={_onChangeMode}
+            style={styles.modeSwitcher}
+            disabled={chart.type !== "line" && chart.type !== "bar"}
+          />
+          <Button.Group>
             <Button
               icon
               labelPosition="left"
@@ -268,7 +324,34 @@ const styles = {
     marginTop: 20,
   },
   modeSwitcher: {
-    marginBottom: 10,
+    marginRight: 10,
+  },
+  chartCard: {
+    height: 25,
+  },
+  chartCardContainer: {
+    background: "white",
+    padding: 5,
+    border: "1px solid rgba(34,36,38,.15)",
+    boxShadow: "0 1px 2px 0 rgb(34 36 38 / 15%)",
+    borderRadius: 4,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
+  },
+  chartCardContainerSeparator: {
+    background: "white",
+    padding: 5,
+    border: "1px solid rgba(34,36,38,.15)",
+    marginRight: 10,
+    marginLeft: -1,
+    boxShadow: "0 1px 2px 0 rgb(34 36 38 / 15%)",
+    borderRadius: 4,
+    borderTopLeftRadius: 0,
+    borderBottomLeftRadius: 0,
+  },
+  segmentContainer: {
+    border: "none",
+    boxShadow: "none",
   },
 };
 

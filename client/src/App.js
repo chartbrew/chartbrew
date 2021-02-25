@@ -2,9 +2,7 @@ import React from "react";
 import { Provider } from "react-redux";
 
 import { createBrowserHistory } from "history";
-
 import { ConnectedRouter, routerMiddleware } from "react-router-redux";
-
 import { createStore, applyMiddleware, compose } from "redux";
 import thunk from "redux-thunk";
 import logger from "redux-logger";

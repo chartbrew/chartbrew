@@ -308,7 +308,15 @@ function DatasetData(props) {
     <Grid style={styles.mainGrid} centered stackable>
       <Grid.Row columns={1} className="datasetdata-axes-tut">
         <Grid.Column>
-          <label><strong>{chartType === "pie" ? "Segment " : "X Axis "}</strong></label>
+          <label>
+            <strong>
+              {chartType === "pie"
+                || chartType === "radar"
+                || chartType === "polar"
+                || chartType === "doughnut"
+                ? "Segment " : "X Axis "}
+            </strong>
+          </label>
           <Dropdown
             icon={null}
             header="Type to search"
@@ -325,7 +333,15 @@ function DatasetData(props) {
       </Grid.Row>
       <Grid.Row columns={1}>
         <Grid.Column>
-          <label><strong>{chartType === "pie" ? "Data " : "Y Axis "}</strong></label>
+          <label>
+            <strong>
+              {chartType === "pie"
+                || chartType === "radar"
+                || chartType === "polar"
+                || chartType === "doughnut"
+                ? "Data " : "Y Axis "}
+            </strong>
+          </label>
           <Dropdown
             icon={null}
             header="Type to search"

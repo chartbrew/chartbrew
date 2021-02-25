@@ -7,14 +7,9 @@ import {
   Icon, Header, Segment, Dimmer, Loader, Modal, Button, TransitionablePortal,
   Dropdown, Message, Popup, Form, TextArea, Label, Input, Divider,
 } from "semantic-ui-react";
-import {
-  Pie, Doughnut, Radar, Polar
-} from "react-chartjs-2";
 import moment from "moment";
 import _ from "lodash";
-import "chart.piecelabel.js";
 
-import LineChart from "./components/LineChart";
 import {
   removeChart as removeChartAction,
   runQuery as runQueryAction,
@@ -24,7 +19,12 @@ import {
 } from "../../actions/chart";
 import canAccess from "../../config/canAccess";
 import { SITE_HOST } from "../../config/settings";
+import LineChart from "./components/LineChart";
 import BarChart from "./components/BarChart";
+import RadarChart from "./components/RadarChart";
+import PolarChart from "./components/PolarChart";
+import DoughnutChart from "./components/DoughnutChart";
+import PieChart from "./components/PieChart";
 import { blackTransparent } from "../../config/colors";
 
 const getFiltersFromStorage = (projectId) => {
@@ -435,35 +435,35 @@ function Chart(props) {
                   )}
                 {chart.type === "pie"
                   && (
-                  <Pie
-                    data={chart.chartData.data}
-                    options={chart.chartData.options}
+                  <PieChart
+                    chart={chart}
                     height={height}
                   />
                   )}
                 {chart.type === "doughnut"
                   && (
-                  <Doughnut
-                    data={chart.chartData.data}
-                    options={chart.chartData.options}
-                    height={height}
-                  />
+                  <div>
+                    <DoughnutChart
+                      chart={chart}
+                      height={height}
+                    />
+                  </div>
                   )}
                 {chart.type === "radar"
                   && (
-                  <Radar
-                    data={chart.chartData.data}
-                    options={chart.chartData.options}
-                    height={print === "landscape" ? 230 : 300}
+                  <RadarChart
+                    chart={chart}
+                    height={height}
                   />
                   )}
                 {chart.type === "polar"
                   && (
-                  <Polar
-                    data={chart.chartData.data}
-                    options={chart.chartData.options}
-                    height={height}
-                  />
+                  <div>
+                    <PolarChart
+                      chart={chart}
+                      height={height}
+                    />
+                  </div>
                   )}
               </div>
             </>
