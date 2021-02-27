@@ -374,7 +374,7 @@ const grantList = [
   },
   // resource: teamRole ---> Team Perspective
   {
-    role: "member", resource: "teamRole", action: "read:any", attributes: "*",
+    role: "member", resource: "teamRole", action: "read:own", attributes: "*",
   },
   // resource: teamInvite ---> Team Perspective
   {

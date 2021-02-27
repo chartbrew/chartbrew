@@ -373,41 +373,43 @@ function ProjectBoard(props) {
                   </Menu.Menu>
                 </Menu.Item>
 
-                <Menu.Item>
-                  {menuSize === "large" && <Menu.Header>Team</Menu.Header>}
-                  <Menu.Menu>
-                    <Menu.Item active={_checkIfActive("members")} as={Link} to={`/${match.params.teamId}/${match.params.projectId}/members`}>
-                      {menuSize === "small"
-                        && (
-                        <Popup
-                          trigger={<Icon name="user" size="large" />}
-                          content="Members"
-                          position="right center"
-                          inverted
-                        />
-                        )}
-                      {menuSize === "large" && <Icon name="user" />}
-                      {menuSize === "large" && "Members"}
-                    </Menu.Item>
-
-                    {_canAccess("owner")
-                      && (
-                      <Menu.Item active={_checkIfActive("settings")} as={Link} to={`/${match.params.teamId}/${match.params.projectId}/settings`}>
+                {_canAccess("editor") && (
+                  <Menu.Item>
+                    {menuSize === "large" && <Menu.Header>Team</Menu.Header>}
+                    <Menu.Menu>
+                      <Menu.Item active={_checkIfActive("members")} as={Link} to={`/${match.params.teamId}/${match.params.projectId}/members`}>
                         {menuSize === "small"
                           && (
                           <Popup
-                            trigger={<Icon name="settings" size="large" />}
-                            content="Settings"
+                            trigger={<Icon name="user" size="large" />}
+                            content="Members"
                             position="right center"
                             inverted
                           />
                           )}
-                        {menuSize === "large" && <Icon name="settings" />}
-                        {menuSize === "large" && "Settings"}
+                        {menuSize === "large" && <Icon name="user" />}
+                        {menuSize === "large" && "Members"}
                       </Menu.Item>
-                      )}
-                  </Menu.Menu>
-                </Menu.Item>
+
+                      {_canAccess("owner")
+                        && (
+                        <Menu.Item active={_checkIfActive("settings")} as={Link} to={`/${match.params.teamId}/${match.params.projectId}/settings`}>
+                          {menuSize === "small"
+                            && (
+                            <Popup
+                              trigger={<Icon name="settings" size="large" />}
+                              content="Settings"
+                              position="right center"
+                              inverted
+                            />
+                            )}
+                          {menuSize === "large" && <Icon name="settings" />}
+                          {menuSize === "large" && "Settings"}
+                        </Menu.Item>
+                        )}
+                    </Menu.Menu>
+                  </Menu.Item>
+                )}
                 <Menu.Menu style={styles.absoluteDrafts}>
                   {_checkIfActive("dashboard") && (
                     <Popup
