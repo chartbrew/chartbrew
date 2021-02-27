@@ -406,7 +406,7 @@ function ProjectDashboard(props) {
             })}
           </Grid>
         )}
-        {connections.length > 0 && charts.length > 0 && (
+        {connections.length > 0 && charts.length > 0 && _canAccess("editor") && (
         <Container textAlign="center" style={{ paddingTop: 50 }}>
           <Link to={`/${match.params.teamId}/${match.params.projectId}/chart`}>
             <Button secondary icon labelPosition="right" style={styles.addChartBtn}>
