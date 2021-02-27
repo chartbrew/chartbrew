@@ -365,9 +365,9 @@ class AxisChart {
             parserResult = parserResult.toFixed(2);
           }
 
-          let finalVal = `${before}${newVal.result}${after}`;
+          let finalVal = `${before}${parserResult}${after}`;
           if (this.chart.mode !== "kpi") {
-            finalVal = newVal.result;
+            finalVal = parserResult;
           }
 
           return finalVal;
