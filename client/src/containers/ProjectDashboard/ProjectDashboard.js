@@ -75,16 +75,16 @@ function ProjectDashboard(props) {
     const { projectId } = match.params;
     _runFiltering();
     if (filters && filters[projectId].length === 1) {
-      const newFilters = _.clone(filters);
+      const newFilters = _.cloneDeep(filters);
       delete newFilters[projectId];
       setFilters(newFilters);
       return;
     }
 
     const index = _.findIndex(filters[projectId], { id: filterId });
-    if (!index) return;
+    if (!index && index !== 0) return;
 
-    const newFilters = _.clone(filters);
+    const newFilters = _.cloneDeep(filters);
     newFilters[projectId].splice(index, 1);
 
     setFilters(newFilters);
