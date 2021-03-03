@@ -248,135 +248,145 @@ function Chart(props) {
           style={styles.chartContainer(_isKpi(chart), print)}
         >
           <div style={styles.titleArea(_isKpi(chart))}>
-            {_canAccess("editor") && projectId && !print
-                && (
-                  <Dropdown
-                    icon="ellipsis horizontal"
-                    direction="left"
-                    button
-                    basic
-                    className="circular icon"
-                    style={styles.menuBtn}
-                  >
-                    <Dropdown.Menu>
-                      <Dropdown.Item
-                        icon="refresh"
-                        text="Refresh data"
-                        onClick={_onGetChartData}
-                      />
-                      <Dropdown.Item
-                        icon="clock"
-                        text="Auto-update"
-                        onClick={_openUpdateModal}
-                      />
-                      <Dropdown.Item
-                        icon="pencil"
-                        text="Edit"
-                        as={Link}
-                        to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}
-                      />
-                      {!chart.draft && (
-                        <>
+            {projectId && !print
+              && (
+                <Dropdown
+                  icon="ellipsis horizontal"
+                  direction="left"
+                  button
+                  basic
+                  className="circular icon"
+                  style={styles.menuBtn}
+                >
+                  <Dropdown.Menu>
+                    {_canAccess("editor") && (
+                      <>
+                        <Dropdown.Item
+                          icon="refresh"
+                          text="Refresh data"
+                          onClick={_onGetChartData}
+                        />
+                        <Dropdown.Item
+                          icon="clock"
+                          text="Auto-update"
+                          onClick={_openUpdateModal}
+                        />
+                        <Dropdown.Item
+                          icon="pencil"
+                          text="Edit"
+                          as={Link}
+                          to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}
+                        />
+                      </>
+                    )}
+                    {!chart.draft && (
+                      <>
+                        {_canAccess("editor") && (
                           <Dropdown.Item
                             onClick={_onPublicConfirmation}
                           >
                             <Icon name="world" color={chart.public ? "red" : "green"} />
                             {chart.public ? "Make private" : "Make public"}
                           </Dropdown.Item>
-                          <Dropdown.Item
-                            icon="code"
-                            text="Embed"
-                            onClick={_onEmbed}
-                          />
-                        </>
-                      )}
-                      <Dropdown.Item
-                        icon="file excel"
-                        text="Export to Excel"
-                        onClick={_onExport}
-                      />
-                      <Dropdown.Divider />
-                      <Dropdown
-                        item
-                        icon={false}
-                        trigger={(
-                          <p style={{ marginBottom: 0 }}>
-                            <Icon name="caret left" />
-                            {" "}
-                            Size
-                          </p>
                         )}
-                      >
-                        <Dropdown.Menu>
-                          <Dropdown.Item
-                            text="Small"
-                            icon={chart.chartSize === 1 ? "checkmark" : false}
-                            onClick={() => _onChangeSize(1)}
-                          />
-                          <Dropdown.Item
-                            text="Medium"
-                            icon={chart.chartSize === 2 ? "checkmark" : false}
-                            onClick={() => _onChangeSize(2)}
-                          />
-                          <Dropdown.Item
-                            text="Large"
-                            icon={chart.chartSize === 3 ? "checkmark" : false}
-                            onClick={() => _onChangeSize(3)}
-                          />
-                          <Dropdown.Item
-                            text="Full width"
-                            icon={chart.chartSize === 4 ? "checkmark" : false}
-                            onClick={() => _onChangeSize(4)}
-                          />
-                        </Dropdown.Menu>
-                      </Dropdown>
-                      <Dropdown
-                        item
-                        icon={false}
-                        trigger={(
-                          <p style={{ marginBottom: 0 }}>
-                            <Icon name="caret left" />
-                            {" "}
-                            Order
-                          </p>
-                        )}
-                      >
-                        <Dropdown.Menu>
-                          <Dropdown.Item
-                            text="Move to top"
-                            icon="angle double up"
-                            disabled={_getChartIndex() === 0}
-                            onClick={() => onChangeOrder(chart.id, "top")}
-                          />
-                          <Dropdown.Item
-                            text="Move up"
-                            icon="chevron up"
-                            disabled={_getChartIndex() === 0}
-                            onClick={() => onChangeOrder(chart.id, "up")}
-                          />
-                          <Dropdown.Item
-                            text="Move down"
-                            icon="chevron down"
-                            disabled={_getChartIndex() === charts.length - 1}
-                            onClick={() => onChangeOrder(chart.id, "down")}
-                          />
-                          <Dropdown.Item
-                            text="Move to bottom"
-                            icon="angle double down"
-                            disabled={_getChartIndex() === charts.length - 1}
-                            onClick={() => onChangeOrder(chart.id, "bottom")}
-                          />
-                        </Dropdown.Menu>
-                      </Dropdown>
-                      <Dropdown.Divider />
-                      <Dropdown.Item
-                        icon="trash"
-                        text="Delete"
-                        onClick={_onDeleteChartConfirmation}
-                      />
-                    </Dropdown.Menu>
-                  </Dropdown>
-                )}
+                        <Dropdown.Item
+                          icon="code"
+                          text="Embed"
+                          onClick={_onEmbed}
+                        />
+                      </>
+                    )}
+                    <Dropdown.Item
+                      icon="file excel"
+                      text="Export to Excel"
+                      onClick={_onExport}
+                    />
+                    {_canAccess("editor") && (
+                      <>
+                        <Dropdown.Divider />
+                        <Dropdown
+                          item
+                          icon={false}
+                          trigger={(
+                            <p style={{ marginBottom: 0 }}>
+                              <Icon name="caret left" />
+                              {" "}
+                              Size
+                            </p>
+                          )}
+                        >
+                          <Dropdown.Menu>
+                            <Dropdown.Item
+                              text="Small"
+                              icon={chart.chartSize === 1 ? "checkmark" : false}
+                              onClick={() => _onChangeSize(1)}
+                            />
+                            <Dropdown.Item
+                              text="Medium"
+                              icon={chart.chartSize === 2 ? "checkmark" : false}
+                              onClick={() => _onChangeSize(2)}
+                            />
+                            <Dropdown.Item
+                              text="Large"
+                              icon={chart.chartSize === 3 ? "checkmark" : false}
+                              onClick={() => _onChangeSize(3)}
+                            />
+                            <Dropdown.Item
+                              text="Full width"
+                              icon={chart.chartSize === 4 ? "checkmark" : false}
+                              onClick={() => _onChangeSize(4)}
+                            />
+                          </Dropdown.Menu>
+                        </Dropdown>
+                        <Dropdown
+                          item
+                          icon={false}
+                          trigger={(
+                            <p style={{ marginBottom: 0 }}>
+                              <Icon name="caret left" />
+                              {" "}
+                              Order
+                            </p>
+                          )}
+                        >
+                          <Dropdown.Menu>
+                            <Dropdown.Item
+                              text="Move to top"
+                              icon="angle double up"
+                              disabled={_getChartIndex() === 0}
+                              onClick={() => onChangeOrder(chart.id, "top")}
+                            />
+                            <Dropdown.Item
+                              text="Move up"
+                              icon="chevron up"
+                              disabled={_getChartIndex() === 0}
+                              onClick={() => onChangeOrder(chart.id, "up")}
+                            />
+                            <Dropdown.Item
+                              text="Move down"
+                              icon="chevron down"
+                              disabled={_getChartIndex() === charts.length - 1}
+                              onClick={() => onChangeOrder(chart.id, "down")}
+                            />
+                            <Dropdown.Item
+                              text="Move to bottom"
+                              icon="angle double down"
+                              disabled={_getChartIndex() === charts.length - 1}
+                              onClick={() => onChangeOrder(chart.id, "bottom")}
+                            />
+                          </Dropdown.Menu>
+                        </Dropdown>
+                        <Dropdown.Divider />
+                        <Dropdown.Item
+                          icon="trash"
+                          text="Delete"
+                          onClick={_onDeleteChartConfirmation}
+                        />
+                      </>
+                    )}
+                  </Dropdown.Menu>
+                </Dropdown>
+              )}
             <Header style={{ display: "contents" }}>
               {chart.draft && (
                 <Label color="olive" style={styles.draft}>Draft</Label>
