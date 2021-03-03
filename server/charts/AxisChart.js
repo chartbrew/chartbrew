@@ -173,7 +173,6 @@ class AxisChart {
           const arrayFinder = yAxis.substring(0, yAxis.indexOf("]") - 1).replace("root.", "");
           yAxis = yAxis.substring(yAxis.indexOf("]") + 2);
           yData = _.get(filteredData, arrayFinder);
-          // yData = _.map(yData, yAxis);
         }
 
         // make sure the y results are ordered according to the x results for date types
@@ -198,7 +197,7 @@ class AxisChart {
         if (!(yData instanceof Array)) throw new Error("The Y field is not part of an Array");
         yData.map((item, index) => {
           const yValue = _.get(item, yAxis);
-          if (yValue) {
+          if (yValue || yValue === 0) {
             yType = determineType(yValue);
             // only add the yValue if it corresponds to one of the x values found above
             if (_.indexOf(xAxisData.filtered, yData[index][xAxisFieldName]) > -1) {
