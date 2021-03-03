@@ -295,7 +295,7 @@ function ProjectDashboard(props) {
                         />
                       )}
                       content="Export charts to Excel (.xlsx)"
-                      position="bottom center"
+                      position="bottom right"
                     />
                   </Menu.Item>
                 )}
@@ -310,19 +310,27 @@ function ProjectDashboard(props) {
                       />
                     )}
                     content="Open print view"
-                    position="bottom center"
+                    position="bottom right"
                   />
                 </Menu.Item>
-                <Menu.Item style={{ padding: 0 }}>
-                  <Button
-                    basic
-                    primary
-                    icon="refresh"
-                    onClick={() => _onRefreshData()}
-                    loading={refreshLoading}
-                    content="Run all queries"
+                {_canAccess("editor") && (
+                  <Popup
+                    trigger={(
+                      <Menu.Item style={{ padding: 0 }}>
+                        <Button
+                          basic
+                          primary
+                          icon="refresh"
+                          onClick={() => _onRefreshData()}
+                          loading={refreshLoading}
+                          content="Refresh all charts"
+                        />
+                      </Menu.Item>
+                    )}
+                    content="This function will re-run the queries for all the charts and get fresh data from your data sources."
+                    position="bottom right"
                   />
-                </Menu.Item>
+                )}
               </Menu.Menu>
             </Menu>
           </div>
