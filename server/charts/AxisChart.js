@@ -128,39 +128,39 @@ class AxisChart {
         }
 
         if (!(xData instanceof Array)) throw new Error("The X field is not part of an Array");
+        const unprocessedX = [];
         xData.map((item) => {
           const xValue = _.get(item, xAxis);
           if (xValue) {
             xType = determineType(xValue);
           }
-          xAxisData.push(xValue);
+          unprocessedX.push(xValue);
           return item;
         });
 
         gXType = xType;
-
         // X AXIS data processing
         switch (xType) {
           case "date":
-            xAxisData = this.processDate(xAxisData, canDateFilter);
+            xAxisData = this.processDate(unprocessedX, canDateFilter);
             break;
           case "number":
-            xAxisData = this.processNumber(xAxisData);
+            xAxisData = this.processNumber(unprocessedX);
             break;
           case "string":
-            xAxisData = this.processString(xAxisData);
+            xAxisData = this.processString(unprocessedX);
             break;
           case "boolean":
-            xAxisData = this.processBoolean(xAxisData);
+            xAxisData = this.processBoolean(unprocessedX);
             break;
           case "object":
-            xAxisData = this.processObject(xAxisData);
+            xAxisData = this.processObject(unprocessedX);
             break;
           case "array":
-            xAxisData = this.processObject(xAxisData);
+            xAxisData = this.processObject(unprocessedX);
             break;
           default:
-            xAxisData = this.processObject(xAxisData);
+            xAxisData = this.processObject(unprocessedX);
             break;
         }
 
@@ -172,9 +172,27 @@ class AxisChart {
         } else {
           const arrayFinder = yAxis.substring(0, yAxis.indexOf("]") - 1).replace("root.", "");
           yAxis = yAxis.substring(yAxis.indexOf("]") + 2);
-
           yData = _.get(filteredData, arrayFinder);
-          yData = _.map(yData, yAxis);
+          // yData = _.map(yData, yAxis);
+        }
+
+        // make sure the y results are ordered according to the x results for date types
+        if (gXType === "date") {
+          const orderHelper = [];
+          const yDataTemp = _.cloneDeep(yData);
+          xAxisData.filtered.forEach((xItem) => {
+            // go through each y item in the yData array to make sure they are ordered correctly
+            for (let y = 0; y < yDataTemp.length; y++) {
+              const valToCompare = _.get(yDataTemp[y], xAxis);
+              if ((valToCompare.toString().length === 10 && moment(valToCompare, "X").isSame(moment(xItem)))
+               || moment(valToCompare).isSame(moment(xItem))) {
+                orderHelper.push(yDataTemp[y]);
+                yDataTemp.splice(y, 1);
+              }
+            }
+          });
+
+          yData = orderHelper;
         }
 
         if (!(yData instanceof Array)) throw new Error("The Y field is not part of an Array");
