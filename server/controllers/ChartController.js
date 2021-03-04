@@ -10,6 +10,7 @@ const DatasetController = require("./DatasetController");
 const ConnectionController = require("./ConnectionController");
 const DataRequestController = require("./DataRequestController");
 const ChartCacheController = require("./ChartCacheController");
+const dataExtractor = require("../charts/DataExtractor");
 
 // charts
 const AxisChart = require("../charts/AxisChart");
@@ -344,6 +345,10 @@ class ChartController {
         return Promise.resolve(resolvingData);
       })
       .then((chartData) => {
+        if (isExport) {
+          return dataExtractor(chartData, filters);
+        }
+
         const axisChart = new AxisChart(chartData);
         return axisChart.plot(skipParsing, filters, isExport);
       })

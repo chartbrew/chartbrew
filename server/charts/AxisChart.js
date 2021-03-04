@@ -23,7 +23,7 @@ class AxisChart {
     this.dateFormat = "";
   }
 
-  plot(skipDataProcessing, filters, isExport) {
+  plot(skipDataProcessing, filters) {
     // skip the data processing if required (this algorithm is time-expensive)
     if (
       !skipDataProcessing
@@ -49,9 +49,6 @@ class AxisChart {
         startDate = moment(this.chart.startDate);
         endDate = moment(this.chart.endDate);
       }
-
-      // this is only used when exporting data
-      const exportData = [];
 
       for (let i = 0; i < this.datasets.length; i++) {
         const dataset = this.datasets[i];
@@ -114,11 +111,6 @@ class AxisChart {
           xAxis = xAxis.substring(xAxis.indexOf("]") + 2);
 
           xData = _.get(filteredData, arrayFinder);
-        }
-
-        if (isExport) {
-          exportData[dataset.options.legend] = xData;
-          continue; // eslint-disable-line
         }
 
         let xAxisFieldName = xAxis;
@@ -317,9 +309,6 @@ class AxisChart {
           this.axisData.y[yLength] = newY;
         }
       }
-
-      // if it's an export, just return the data
-      if (isExport) return exportData;
 
       // now unify all the datasets
       // all the arrays on the Y Axis must correspond with only one array on X
