@@ -24,7 +24,7 @@ module.exports = (data, filters) => {
   }
 
   // this is only used when exporting data
-  const exportData = [];
+  const exportData = {};
 
   for (let i = 0; i < datasets.length; i++) {
     const dataset = datasets[i];

@@ -345,7 +345,7 @@ class ChartController {
         return Promise.resolve(resolvingData);
       })
       .then((chartData) => {
-        if (isExport) {
+        if (isExport || gChart.type === "table") {
           return dataExtractor(chartData, filters);
         }
 
@@ -357,6 +357,7 @@ class ChartController {
         if (filters || isExport) {
           return filters;
         }
+
         return this.update(id, { chartData, chartDataUpdated: moment() });
       })
       .then(() => {
@@ -546,6 +547,10 @@ class ChartController {
   previewChart(chart, projectId, user, noSource) {
     return this.getPreviewData(chart, projectId, user, noSource)
       .then((data) => {
+        if (chart.type === "table") {
+          return dataExtractor(chart);
+        }
+
         const axisChart = new AxisChart(data);
         return axisChart.plot();
       })
@@ -561,6 +566,10 @@ class ChartController {
     let gChartData;
     return this.findById(id)
       .then((chart) => {
+        if (chart.type === "table") {
+          return dataExtractor(chart);
+        }
+
         const axisChart = new AxisChart(chart);
         return axisChart.plot();
       })
