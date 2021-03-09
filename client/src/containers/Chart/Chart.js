@@ -259,13 +259,13 @@ function Chart(props) {
                   style={styles.menuBtn}
                 >
                   <Dropdown.Menu>
+                    <Dropdown.Item
+                      icon="refresh"
+                      text="Refresh chart"
+                      onClick={_onGetChartData}
+                    />
                     {_canAccess("editor") && (
                       <>
-                        <Dropdown.Item
-                          icon="refresh"
-                          text="Refresh data"
-                          onClick={_onGetChartData}
-                        />
                         <Dropdown.Item
                           icon="clock"
                           text="Auto-update"

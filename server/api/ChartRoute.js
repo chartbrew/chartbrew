@@ -291,7 +291,7 @@ module.exports = (app) => {
   app.get("/project/:project_id/chart/:id", verifyToken, (req, res) => {
     return checkAccess(req)
       .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("chart");
+        const permission = accessControl.can(teamRole.role).readAny("chart");
         if (!permission.granted) {
           throw new Error(401);
         }

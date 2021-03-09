@@ -313,24 +313,22 @@ function ProjectDashboard(props) {
                     position="bottom right"
                   />
                 </Menu.Item>
-                {_canAccess("editor") && (
-                  <Popup
-                    trigger={(
-                      <Menu.Item style={{ padding: 0 }}>
-                        <Button
-                          basic
-                          primary
-                          icon="refresh"
-                          onClick={() => _onRefreshData()}
-                          loading={refreshLoading}
-                          content="Refresh all charts"
-                        />
-                      </Menu.Item>
-                    )}
-                    content="This function will re-run the queries for all the charts and get fresh data from your data sources."
-                    position="bottom right"
-                  />
-                )}
+                <Popup
+                  trigger={(
+                    <Menu.Item style={{ padding: 0 }}>
+                      <Button
+                        basic
+                        primary
+                        icon="refresh"
+                        onClick={() => _onRefreshData()}
+                        loading={refreshLoading}
+                        content="Refresh all charts"
+                      />
+                    </Menu.Item>
+                  )}
+                  content="This function will get fresh data from all the data sources."
+                  position="bottom right"
+                />
               </Menu.Menu>
             </Menu>
           </div>
