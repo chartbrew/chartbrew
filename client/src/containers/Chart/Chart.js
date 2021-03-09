@@ -433,21 +433,21 @@ function Chart(props) {
                   && (
                     <LineChart
                       chart={chart}
-                      height={height}
+                      height={chart.mode === "kpi" ? height + 25 : height}
                     />
                   )}
                 {chart.type === "bar"
                   && (
                     <BarChart
                       chart={chart}
-                      height={height}
+                      height={chart.mode === "kpi" ? height + 25 : height}
                     />
                   )}
                 {chart.type === "pie"
                   && (
                   <PieChart
                     chart={chart}
-                    height={height}
+                    height={chart.mode === "kpi" ? height + 25 : height}
                   />
                   )}
                 {chart.type === "doughnut"
@@ -455,7 +455,7 @@ function Chart(props) {
                   <div>
                     <DoughnutChart
                       chart={chart}
-                      height={height}
+                      height={chart.mode === "kpi" ? height + 25 : height}
                     />
                   </div>
                   )}
@@ -463,7 +463,7 @@ function Chart(props) {
                   && (
                   <RadarChart
                     chart={chart}
-                    height={height}
+                    height={chart.mode === "kpi" ? height + 25 : height}
                   />
                   )}
                 {chart.type === "polar"
@@ -471,7 +471,7 @@ function Chart(props) {
                   <div>
                     <PolarChart
                       chart={chart}
-                      height={height}
+                      height={chart.mode === "kpi" ? height + 25 : height}
                     />
                   </div>
                   )}
