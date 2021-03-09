@@ -1,6 +1,38 @@
 const xlsx = require("node-xlsx");
 const determineType = require("./determineType");
 
+function normalizeKeys(level, finalKey, finalResult) {
+  let newFinalResult = finalResult;
+  Object.keys(level).forEach((key) => {
+    const newFinalKey = finalKey ? `${finalKey}.${key}` : key;
+    const value = level[key];
+    if (determineType(value) === "object" && Object.keys(value).length > 0) {
+      newFinalResult = normalizeKeys(value, newFinalKey, newFinalResult);
+    } else {
+      newFinalResult.push(newFinalKey);
+    }
+  });
+
+  return newFinalResult;
+}
+
+function normalizeValues(level, finalResult) {
+  let newFinalResult = finalResult;
+  Object.values(level).forEach((value) => {
+    if (determineType(value) === "object" && value !== null && Object.values(value).length > 0) {
+      newFinalResult = normalizeValues(value, newFinalResult);
+    } else if (determineType(value) === "object" && value !== null && Object.values(value).length === 0) {
+      newFinalResult.push(JSON.stringify(value));
+    } else if (determineType(value) === "array") {
+      newFinalResult.push(JSON.stringify(value));
+    } else {
+      newFinalResult.push(value);
+    }
+  });
+
+  return newFinalResult;
+}
+
 module.exports = (sheetsData) => {
   const formattedData = [];
 
@@ -15,15 +47,12 @@ module.exports = (sheetsData) => {
       const set = data.data[dataset];
       set.map((item) => {
         if (addKeys) {
-          formattedSet.push(Object.keys(item));
+          formattedSet.push(normalizeKeys(item, null, []));
           addKeys = false;
         }
-        formattedSet.push(
-          Object.values(item).map((val) => {
-            if (determineType(val) === "object" || determineType(val) === "array") return JSON.stringify(val);
-            return val;
-          })
-        );
+
+        formattedSet.push(normalizeValues(item, []));
+
         return item;
       });
 
