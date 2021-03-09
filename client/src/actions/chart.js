@@ -187,7 +187,7 @@ export function runQuery(projectId, chartId, noSource = false, skipParsing = fal
       "authorization": `Bearer ${token}`,
     });
 
-    dispatch({ type: FETCH_CHART });
+    dispatch({ type: FETCH_CHART, chartId });
     return fetch(url, { method, headers })
       .then((response) => {
         if (!response.ok) {
@@ -199,6 +199,7 @@ export function runQuery(projectId, chartId, noSource = false, skipParsing = fal
       })
       .then((chart) => {
         dispatch({ type: FETCH_CHART_SUCCESS, chart });
+        return chart;
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

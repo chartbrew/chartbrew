@@ -133,7 +133,6 @@ function ProjectDashboard(props) {
 
     setRefreshLoading(true);
     const refreshPromises = [];
-
     for (let i = 0; i < charts.length; i++) {
       refreshPromises.push(
         runQuery(projectId, charts[i].id)

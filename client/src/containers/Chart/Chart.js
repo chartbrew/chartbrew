@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import {
-  Icon, Header, Segment, Dimmer, Loader, Modal, Button, TransitionablePortal,
+  Icon, Header, Segment, Modal, Button, TransitionablePortal,
   Dropdown, Message, Popup, Form, TextArea, Label, Input, Divider,
 } from "semantic-ui-react";
 import moment from "moment";
@@ -414,10 +414,18 @@ function Chart(props) {
               <div>
                 <p>
                   <small>
-                    <i>
-                      {!print && `Last Updated ${moment(chart.chartDataUpdated).calendar()}`}
-                      {print && <small>{`${moment(chart.chartDataUpdated).format("LLL")}`}</small>}
-                    </i>
+                    {!chartLoading && !chart.loading && (
+                      <i>
+                        {!print && `Last Updated ${moment(chart.chartDataUpdated).calendar()}`}
+                        {print && <small>{`${moment(chart.chartDataUpdated).format("LLL")}`}</small>}
+                      </i>
+                    )}
+                    {(chartLoading || chart.loading) && (
+                      <>
+                        <Icon name="spinner" loading />
+                        <span>{" Updating..."}</span>
+                      </>
+                    )}
                   </small>
                 </p>
               </div>
@@ -425,9 +433,6 @@ function Chart(props) {
           </div>
           {chart.chartData && (
             <>
-              <Dimmer inverted active={chartLoading}>
-                <Loader inverted />
-              </Dimmer>
               <div style={styles.mainChartArea(_isKpi(chart))}>
                 {chart.type === "line"
                   && (

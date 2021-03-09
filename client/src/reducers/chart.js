@@ -12,7 +12,21 @@ export default function chart(state = {
 }, action) {
   switch (action.type) {
     case FETCH_CHART:
-      return { ...state, loading: true };
+      if (action.chartId) {
+        const newData = [...state.data];
+        let indexFound = false;
+        for (let i = 0; i < state.data.length; i++) {
+          if (state.data[i].id === parseInt(action.chartId, 10)) {
+            indexFound = i;
+          }
+        }
+
+        if (indexFound) newData[indexFound].loading = true;
+
+        return { ...state, loading: true, data: newData };
+      } else {
+        return { ...state, loading: true };
+      }
     case FETCH_ALL_CHARTS:
       return { ...state, loading: false, data: action.charts };
     case FETCH_CHART_SUCCESS:
