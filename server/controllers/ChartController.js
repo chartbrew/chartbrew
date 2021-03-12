@@ -14,6 +14,7 @@ const dataExtractor = require("../charts/DataExtractor");
 
 // charts
 const AxisChart = require("../charts/AxisChart");
+const TableView = require("../charts/TableView");
 
 class ChartController {
   constructor() {
@@ -345,8 +346,14 @@ class ChartController {
         return Promise.resolve(resolvingData);
       })
       .then((chartData) => {
-        if (isExport || gChart.type === "table") {
+        if (isExport) {
           return dataExtractor(chartData, filters);
+        }
+
+        if (gChart.type === "table") {
+          const extractedData = dataExtractor(chartData, filters);
+          const tableView = new TableView();
+          return tableView.getTableData(extractedData);
         }
 
         const axisChart = new AxisChart(chartData);

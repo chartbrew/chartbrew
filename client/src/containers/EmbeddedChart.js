@@ -13,6 +13,7 @@ import logo from "../assets/logo_blue.png";
 import { getEmbeddedChart as getEmbeddedChartAction } from "../actions/chart";
 import LineChart from "./Chart/components/LineChart";
 import BarChart from "./Chart/components/BarChart";
+import TableContainer from "./Chart/components/TableView/TableContainer";
 
 const pageHeight = window.innerHeight;
 
@@ -81,7 +82,7 @@ class EmbeddedChart extends Component {
     return (
       <div style={styles.container}>
         <Container>
-          <Container fluid style={styles.header}>
+          <Container fluid style={styles.header(chart.type)}>
             <a href="https://chartbrew.com" target="_parent" title="Powered by ChartBrew">
               <Image src={logo} size="mini" style={styles.logo} />
             </a>
@@ -139,6 +140,15 @@ class EmbeddedChart extends Component {
             />
           </Container>
           )}
+          {chart.type === "table"
+          && (
+          <Container fluid>
+            <TableContainer
+              height={pageHeight - 100}
+              tabularData={chart.chartData}
+            />
+          </Container>
+          )}
         </Container>
       </div>
     );
@@ -150,10 +160,11 @@ const styles = {
     flex: 1,
     backgroundColor: "transparent",
   },
-  header: {
-    paddingRight: 20,
-    paddingLeft: 20,
-  },
+  header: (type) => ({
+    paddingRight: type === "table" ? 0 : 20,
+    paddingLeft: type === "table" ? 0 : 20,
+    paddingBottom: type === "table" ? 10 : 0,
+  }),
   loaderContainer: {
     minHeight: 100,
     minWidth: 100,

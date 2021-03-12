@@ -26,6 +26,7 @@ import PolarChart from "./components/PolarChart";
 import DoughnutChart from "./components/DoughnutChart";
 import PieChart from "./components/PieChart";
 import { blackTransparent } from "../../config/colors";
+import TableContainer from "./components/TableView/TableContainer";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -479,6 +480,15 @@ function Chart(props) {
                       height={chart.mode === "kpi" ? height + 25 : height}
                     />
                   </div>
+                  )}
+                {chart.type === "table"
+                  && (
+                    <div>
+                      <TableContainer
+                        height={chart.mode === "kpi" ? height + 25 : height}
+                        tabularData={chart.chartData}
+                      />
+                    </div>
                   )}
               </div>
             </>

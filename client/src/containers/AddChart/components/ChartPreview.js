@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
@@ -20,12 +20,26 @@ import PolarChart from "../../Chart/components/PolarChart";
 import PieChart from "../../Chart/components/PieChart";
 
 import radarSvg from "../../../assets/chart-icons/svg/014-analytics-56.svg";
-import lineSvg from "../../../assets/chart-icons/svg/034-analytics-36.svg";
+import lineSvg from "../../../assets/chart-icons/svg/line.svg";
 import barSvg from "../../../assets/chart-icons/svg/042-analytics-28.svg";
 import pieSvg from "../../../assets/chart-icons/svg/027-analytics-43.svg";
 import accumulateSvg from "../../../assets/chart-icons/svg/004-analytics-66.svg";
 import polarSvg from "../../../assets/chart-icons/svg/009-analytics-61.svg";
 import doughnutSvg from "../../../assets/chart-icons/svg/011-analytics-59.svg";
+import tableSvg from "../../../assets/chart-icons/svg/table.svg";
+import TableContainer from "../../Chart/components/TableView/TableContainer";
+
+const chartModes = [{
+  key: "chart",
+  text: "Chart view",
+  value: "chart",
+  icon: "chart bar",
+}, {
+  key: "kpi",
+  text: "KPI View",
+  value: "kpi",
+  icon: "hashtag",
+}];
 
 function ChartPreview(props) {
   const {
@@ -35,17 +49,9 @@ function ChartPreview(props) {
   const [typesVisible, setTypesVisible] = useState(false);
   const [redraw, setRedraw] = useState(false);
 
-  const chartModes = [{
-    key: "chart",
-    text: "Chart view",
-    value: "chart",
-    icon: "chart bar",
-  }, {
-    key: "kpi",
-    text: "KPI View",
-    value: "kpi",
-    icon: "hashtag",
-  }];
+  useEffect(() => {
+    _onRefreshPreview();
+  }, [chart.type]);
 
   const _onChangeChartType = (data) => {
     const newType = data;
@@ -129,8 +135,16 @@ function ChartPreview(props) {
                   height={300}
                 />
               )}
+            {chart.type === "table"
+              && (
+                <div>
+                  <TableContainer
+                    tabularData={chart.chartData}
+                    height={400}
+                  />
+                </div>
+              )}
           </Segment>
-
           <Container textAlign="center">
             <Popup
               trigger={(
@@ -144,6 +158,20 @@ function ChartPreview(props) {
                 </Button>
               )}
               content={chart.subType.indexOf("AddTimeseries") > -1 ? "Turn accumulation off" : "Accumulate datasets"}
+              position="bottom center"
+            />
+            <Popup
+              trigger={(
+                <Button
+                  basic
+                  primary={chart.type === "table"}
+                  onClick={() => _onChangeChartType({ type: "table" })}
+                  icon
+                >
+                  <Image centered src={tableSvg} style={styles.chartCard} />
+                </Button>
+              )}
+              content="Display data in a table view"
               position="bottom center"
             />
             <Button.Group style={{ marginRight: 4 }}>
