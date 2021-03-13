@@ -55,7 +55,7 @@ function ChartPreview(props) {
 
   const _onChangeChartType = (data) => {
     const newType = data;
-    if (data.type === "polar" || data.type === "pie" || data.type === "doughnut" || data.type === "radar") {
+    if (data.type === "polar" || data.type === "pie" || data.type === "doughnut" || data.type === "radar" || data.type === "table") {
       newType.subType = "timeseries";
       newType.mode = "chart";
     }

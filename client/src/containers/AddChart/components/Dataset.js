@@ -290,6 +290,7 @@ function Dataset(props) {
                 active={menuItem === "appearance"}
                 onClick={() => setMenuItem("appearance")}
                 color="blue"
+                disabled={chart.type === "table"}
               >
                 {"Appearance"}
               </Menu.Item>

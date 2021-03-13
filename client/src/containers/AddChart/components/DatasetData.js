@@ -306,84 +306,88 @@ function DatasetData(props) {
 
   return (
     <Grid style={styles.mainGrid} centered stackable>
-      <Grid.Row columns={1} className="datasetdata-axes-tut">
-        <Grid.Column>
-          <label>
-            <strong>
-              {chartType === "pie"
-                || chartType === "radar"
-                || chartType === "polar"
-                || chartType === "doughnut"
-                ? "Segment " : "X Axis "}
-            </strong>
-          </label>
-          <Dropdown
-            icon={null}
-            header="Type to search"
-            button
-            className="small button"
-            options={fieldOptions}
-            search
-            text={(dataset.xAxis && dataset.xAxis.substring(dataset.xAxis.lastIndexOf(".") + 1)) || "Select a field"}
-            value={dataset.xAxis}
-            onChange={_selectXField}
-            scrolling
-          />
-        </Grid.Column>
-      </Grid.Row>
-      <Grid.Row columns={1}>
-        <Grid.Column>
-          <label>
-            <strong>
-              {chartType === "pie"
-                || chartType === "radar"
-                || chartType === "polar"
-                || chartType === "doughnut"
-                ? "Data " : "Y Axis "}
-            </strong>
-          </label>
-          <Dropdown
-            icon={null}
-            header="Type to search"
-            button
-            className="small button"
-            options={fieldOptions}
-            search
-            text={(dataset.yAxis && dataset.yAxis.substring(dataset.yAxis.lastIndexOf(".") + 1)) || "Select a field"}
-            value={dataset.yAxis}
-            onChange={_selectYField}
-            scrolling
-          />
-          <Dropdown
-            icon={null}
-            button
-            className="small button"
-            options={operations}
-            search
-            text={
-              (dataset.yAxisOperation
-                && operations.find((i) => i.value === dataset.yAxisOperation).text
-              )
-              || "Operation"
-            }
-            value={dataset.yAxisOperation}
-            onChange={_selectYOp}
-            scrolling
-          />
+      {chartType !== "table" && (
+        <Grid.Row columns={1} className="datasetdata-axes-tut">
+          <Grid.Column>
+            <label>
+              <strong>
+                {chartType === "pie"
+                  || chartType === "radar"
+                  || chartType === "polar"
+                  || chartType === "doughnut"
+                  ? "Segment " : "X Axis "}
+              </strong>
+            </label>
+            <Dropdown
+              icon={null}
+              header="Type to search"
+              button
+              className="small button"
+              options={fieldOptions}
+              search
+              text={(dataset.xAxis && dataset.xAxis.substring(dataset.xAxis.lastIndexOf(".") + 1)) || "Select a field"}
+              value={dataset.xAxis}
+              onChange={_selectXField}
+              scrolling
+            />
+          </Grid.Column>
+        </Grid.Row>
+      )}
+      {chartType !== "table" && (
+        <Grid.Row columns={1}>
+          <Grid.Column>
+            <label>
+              <strong>
+                {chartType === "pie"
+                  || chartType === "radar"
+                  || chartType === "polar"
+                  || chartType === "doughnut"
+                  ? "Data " : "Y Axis "}
+              </strong>
+            </label>
+            <Dropdown
+              icon={null}
+              header="Type to search"
+              button
+              className="small button"
+              options={fieldOptions}
+              search
+              text={(dataset.yAxis && dataset.yAxis.substring(dataset.yAxis.lastIndexOf(".") + 1)) || "Select a field"}
+              value={dataset.yAxis}
+              onChange={_selectYField}
+              scrolling
+            />
+            <Dropdown
+              icon={null}
+              button
+              className="small button"
+              options={operations}
+              search
+              text={
+                (dataset.yAxisOperation
+                  && operations.find((i) => i.value === dataset.yAxisOperation).text
+                )
+                || "Operation"
+              }
+              value={dataset.yAxisOperation}
+              onChange={_selectYOp}
+              scrolling
+            />
 
-          {!formula && (
-            <Button
-              icon
-              basic
-              style={styles.addConditionBtn}
-              onClick={_onAddFormula}
-            >
-              <Icon name="plus" />
-              {" Add formula"}
-            </Button>
-          )}
-        </Grid.Column>
-      </Grid.Row>
+            {!formula && (
+              <Button
+                icon
+                basic
+                style={styles.addConditionBtn}
+                onClick={_onAddFormula}
+              >
+                <Icon name="plus" />
+                {" Add formula"}
+              </Button>
+            )}
+          </Grid.Column>
+        </Grid.Row>
+      )}
       {formula && (
         <Grid.Row>
           <Grid.Column>
