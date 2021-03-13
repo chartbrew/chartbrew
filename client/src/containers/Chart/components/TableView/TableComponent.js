@@ -20,7 +20,7 @@ function TableComponent(props) {
   });
 
   return (
-    <div style={{ overflowY: "auto", overflowX: "auto", height }}>
+    <div style={styles.mainBody(height)}>
       <Table sortable celled striped structured selectable unstackable {...getTableProps()}>
         <Table.Header>
           {headerGroups.map(headerGroup => (
@@ -47,6 +47,15 @@ function TableComponent(props) {
     </div>
   );
 }
+
+const styles = {
+  mainBody: (height) => ({
+    overflowY: "auto",
+    overflowX: "auto",
+    height,
+    transition: "height .5s ease-in",
+  }),
+};
 
 TableComponent.defaultProps = {
   height: 300,

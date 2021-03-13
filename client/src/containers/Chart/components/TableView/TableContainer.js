@@ -7,6 +7,7 @@ function TableContainer(props) {
   const { tabularData, height } = props;
 
   const [activeDataset, setActiveDataset] = useState("");
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     if (tabularData && !activeDataset) {
@@ -15,6 +16,10 @@ function TableContainer(props) {
       setActiveDataset(Object.keys(tabularData)[0]);
     }
   }, [tabularData]);
+
+  const _onExpand = () => {
+    setExpanded(!expanded);
+  };
 
   return (
     <div>
@@ -29,11 +34,16 @@ function TableContainer(props) {
               />
             );
           })}
+          <Menu.Item
+            name={expanded ? "See less" : "See more"}
+            icon={expanded ? "arrow up" : "arrow down"}
+            onClick={() => _onExpand()}
+          />
         </Menu>
       )}
       {activeDataset && tabularData[activeDataset] && tabularData[activeDataset].columns && (
         <TableComponent
-          height={height}
+          height={expanded ? height + 200 : height}
           columns={tabularData[activeDataset].columns}
           data={tabularData[activeDataset].data}
         />

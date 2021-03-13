@@ -485,7 +485,7 @@ function Chart(props) {
                   && (
                     <div>
                       <TableContainer
-                        height={chart.mode === "kpi" ? height + 25 : height}
+                        height={height - 55}
                         tabularData={chart.chartData}
                       />
                     </div>
