@@ -38,6 +38,7 @@ function TableContainer(props) {
             name={expanded ? "See less" : "See more"}
             icon={expanded ? "arrow up" : "arrow down"}
             onClick={() => _onExpand()}
+            style={styles.seeMore}
           />
         </Menu>
       )}
@@ -51,6 +52,12 @@ function TableContainer(props) {
     </div>
   );
 }
+
+const styles = {
+  seeMore: {
+    border: "solid 1px #e8e8e8",
+  },
+};
 
 TableContainer.defaultProps = {
   height: 300,
