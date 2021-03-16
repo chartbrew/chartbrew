@@ -4,7 +4,7 @@ import { Menu } from "semantic-ui-react";
 import TableComponent from "./TableComponent";
 
 function TableContainer(props) {
-  const { tabularData, height } = props;
+  const { tabularData, height, embedded } = props;
 
   const [activeDataset, setActiveDataset] = useState("");
   const [expanded, setExpanded] = useState(false);
@@ -33,18 +33,21 @@ function TableContainer(props) {
             />
           );
         })}
-        <Menu.Item
-          name={expanded ? "See less" : "See more"}
-          icon={expanded ? "arrow up" : "arrow down"}
-          onClick={() => _onExpand()}
-          style={styles.seeMore}
-        />
+        {!embedded && (
+          <Menu.Item
+            name={expanded ? "See less" : "See more"}
+            icon={expanded ? "arrow up" : "arrow down"}
+            onClick={() => _onExpand()}
+            style={styles.seeMore}
+          />
+        )}
       </Menu>
       {activeDataset && tabularData[activeDataset] && tabularData[activeDataset].columns && (
         <TableComponent
           height={expanded ? height + 200 : height}
           columns={tabularData[activeDataset].columns}
           data={tabularData[activeDataset].data}
+          embedded={embedded}
         />
       )}
     </div>
@@ -59,11 +62,13 @@ const styles = {
 
 TableContainer.defaultProps = {
   height: 300,
+  embedded: false,
 };
 
 TableContainer.propTypes = {
   tabularData: PropTypes.object.isRequired,
   height: PropTypes.number,
+  embedded: PropTypes.bool,
 };
 
 export default TableContainer;

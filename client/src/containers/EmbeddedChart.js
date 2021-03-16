@@ -83,7 +83,7 @@ class EmbeddedChart extends Component {
       <div style={styles.container}>
         <Container>
           <Container fluid style={styles.header(chart.type)}>
-            <a href="https://chartbrew.com" target="_parent" title="Powered by ChartBrew">
+            <a href="https://chartbrew.com" target="_parent" title="Powered by Chartbrew">
               <Image src={logo} size="mini" style={styles.logo} />
             </a>
             <Header>{chart.name}</Header>
@@ -146,6 +146,7 @@ class EmbeddedChart extends Component {
             <TableContainer
               height={pageHeight - 100}
               tabularData={chart.chartData}
+              embedded
             />
           </Container>
           )}

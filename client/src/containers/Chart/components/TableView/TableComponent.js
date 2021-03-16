@@ -14,7 +14,9 @@ const paginationOptions = [5, 10, 20, 30, 40, 50].map((pageSize) => ({
 }));
 
 function TableComponent(props) {
-  const { columns, data, height } = props;
+  const {
+    columns, data, height, embedded
+  } = props;
 
   const {
     getTableProps,
@@ -50,7 +52,7 @@ function TableComponent(props) {
   };
 
   return (
-    <div style={styles.mainBody(height)}>
+    <div style={styles.mainBody(height, embedded)}>
       <Table sortable celled striped unstackable fixed {...getTableProps()} style={styles.table}>
         <Table.Header>
           {headerGroups.map(headerGroup => (
@@ -94,7 +96,7 @@ function TableComponent(props) {
                   const isShort = isObject && Object.keys(objDetails).length === 1;
 
                   return (
-                    <Table.Cell collapsing {...cell.getCellProps()} style={{ maxWidth: 300, overflowWrap: "break-word" }}>
+                    <Table.Cell collapsing {...cell.getCellProps()} style={{ maxWidth: 300 }}>
                       {(!isObject && !isArray) && (
                         <span title={cellObj.props.value}>{cellObj}</span>
                       )}
@@ -113,7 +115,7 @@ function TableComponent(props) {
         </Table.Body>
         <Table.Footer className="pagination">
           <Table.Row>
-            <Table.HeaderCell colSpan={getColumnsRealSize()}>
+            <Table.HeaderCell colSpan={getColumnsRealSize()} style={{ overflow: "visible" }}>
               <Button size="small" icon="angle double left" onClick={() => gotoPage(0)} disabled={!canPreviousPage} />
               <Button size="small" icon="angle left" onClick={() => previousPage()} disabled={!canPreviousPage} />
               <Button size="small" icon="angle right" onClick={() => nextPage()} disabled={!canNextPage} />
@@ -148,7 +150,7 @@ function TableComponent(props) {
                 options={paginationOptions}
                 selection
                 compact
-                size="small"
+                upward
               />
             </Table.HeaderCell>
           </Table.Row>
@@ -159,11 +161,12 @@ function TableComponent(props) {
 }
 
 const styles = {
-  mainBody: (height) => ({
+  mainBody: (height, embedded) => ({
     overflowY: "auto",
     overflowX: "auto",
     height,
     transition: "height .5s ease-in",
+    paddingBottom: embedded ? 30 : 0,
   }),
   table: {
     tableLayout: "auto",
@@ -172,12 +175,14 @@ const styles = {
 
 TableComponent.defaultProps = {
   height: 300,
+  embedded: false,
 };
 
 TableComponent.propTypes = {
   columns: PropTypes.array.isRequired,
   data: PropTypes.array.isRequired,
   height: PropTypes.number,
+  embedded: PropTypes.bool,
 };
 
 export default TableComponent;
