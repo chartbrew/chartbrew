@@ -4,7 +4,7 @@ import React from "react";
 import { usePagination, useSortBy, useTable } from "react-table";
 import PropTypes from "prop-types";
 import {
-  Button, Dropdown, Icon, Input, Label, Popup, Table
+  Button, Dropdown, Form, Icon, Input, Label, Popup, Table
 } from "semantic-ui-react";
 
 const paginationOptions = [5, 10, 20, 30, 40, 50].map((pageSize) => ({
@@ -116,42 +116,51 @@ function TableComponent(props) {
         <Table.Footer className="pagination">
           <Table.Row>
             <Table.HeaderCell colSpan={getColumnsRealSize()} style={{ overflow: "visible" }}>
-              <Button size="small" icon="angle double left" onClick={() => gotoPage(0)} disabled={!canPreviousPage} />
-              <Button size="small" icon="angle left" onClick={() => previousPage()} disabled={!canPreviousPage} />
-              <Button size="small" icon="angle right" onClick={() => nextPage()} disabled={!canNextPage} />
-              <Button size="small" icon="angle double right" onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} />
-              <span>
-                {"Page "}
-                <strong>
-                  {pageIndex + 1}
-                  {" of "}
-                  {pageOptions.length}
-                </strong>
-              </span>
-              <span>
-                {" | Go to page: "}
-                <Input
-                  type="number"
-                  size="small"
-                  defaultValue={pageIndex + 1}
-                  onChange={e => {
-                    const page = e.target.value ? Number(e.target.value) - 1 : 0;
-                    gotoPage(page);
-                  }}
-                  style={{ width: 100 }}
-                />
-              </span>
-              {" "}
-              <Dropdown
-                value={pageSize}
-                onChange={(e, data) => {
-                  setPageSize(Number(data.value));
-                }}
-                options={paginationOptions}
-                selection
-                compact
-                upward
-              />
+              <Form size="small">
+                <Form.Group style={{ marginBottom: 0 }}>
+                  <Form.Field>
+                    <Button icon="angle double left" onClick={() => gotoPage(0)} disabled={!canPreviousPage} />
+                    <Button icon="angle left" onClick={() => previousPage()} disabled={!canPreviousPage} />
+                    <Button icon="angle right" onClick={() => nextPage()} disabled={!canNextPage} />
+                    <Button icon="angle double right" onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} />
+                  </Form.Field>
+                  <Form.Field>
+                    <span>
+                      {"Page "}
+                      <strong>
+                        {pageIndex + 1}
+                        {" of "}
+                        {pageOptions.length}
+                      </strong>
+                    </span>
+                    <span>
+                      {" "}
+                      <Input
+                        type="number"
+                        defaultValue={pageIndex + 1}
+                        onChange={e => {
+                          const page = e.target.value ? Number(e.target.value) - 1 : 0;
+                          gotoPage(page);
+                        }}
+                        style={{ width: 70 }}
+                      />
+                    </span>
+                    {" "}
+                  </Form.Field>
+                  <Form.Field>
+                    <Dropdown
+                      value={pageSize}
+                      onChange={(e, data) => {
+                        setPageSize(Number(data.value));
+                      }}
+                      options={paginationOptions}
+                      selection
+                      compact
+                      upward
+                    />
+                  </Form.Field>
+                </Form.Group>
+              </Form>
             </Table.HeaderCell>
           </Table.Row>
         </Table.Footer>
