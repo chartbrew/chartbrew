@@ -4,7 +4,7 @@ import React from "react";
 import { usePagination, useTable } from "react-table";
 import PropTypes from "prop-types";
 import {
-  Button, Dropdown, Input, Table
+  Button, Dropdown, Input, Label, Popup, Table
 } from "semantic-ui-react";
 
 const paginationOptions = [5, 10, 20, 30, 40, 50].map((pageSize) => ({
@@ -55,8 +55,29 @@ function TableComponent(props) {
             prepareRow(row);
             return (
               <Table.Row {...row.getRowProps()}>
-                {row.cells.map(cell => {
-                  return <Table.Cell collapsing {...cell.getCellProps()}>{cell.render("Cell")}</Table.Cell>;
+                {row.cells.map((cell) => {
+                  // identify collections to render them differently
+                  const cellObj = cell.render("Cell");
+
+                  const isObject = (cellObj.props.value && cellObj.props.value.indexOf && cellObj.props.value.indexOf("__cb_object") > -1) || false;
+                  const isArray = (cellObj.props.value && cellObj.props.value.indexOf && cellObj.props.value.indexOf("__cb_array") > -1) || false;
+                  const objDetails = (isObject || isArray)
+                    && JSON.parse(cellObj.props.value.replace("__cb_object", "").replace("__cb_array", ""));
+
+                  // this is to check if the object has only one key to display the value directly
+                  const isShort = isObject && Object.keys(objDetails).length === 1;
+
+                  return (
+                    <Table.Cell collapsing {...cell.getCellProps()}>
+                      {(!isObject && !isArray) && cell.render("Cell")}
+                      {(isObject || isArray) && (
+                        <Popup
+                          trigger={(<Label>{(isShort && Object.values(objDetails)[0]) || "Collection"}</Label>)}
+                          content={(<pre><code>{JSON.stringify(objDetails, null, 4)}</code></pre>)}
+                        />
+                      )}
+                    </Table.Cell>
+                  );
                 })}
               </Table.Row>
             );
