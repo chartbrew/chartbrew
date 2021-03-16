@@ -463,7 +463,8 @@ function DatasetData(props) {
         return (
           <Grid.Row key={condition.id} style={styles.conditionRow} className="datasetdata-filters-tut">
             <Grid.Column>
-              {index === 0 && <Divider />}
+              {index === 0 && chartType !== "table" && <Divider />}
+              {index === 0 && chartType === "table" && (<Header as="h4">Filter the data</Header>)}
               {index === 0 && (<label>{"where "}</label>)}
               {index > 0 && (<label>{"and "}</label>)}
               <Dropdown

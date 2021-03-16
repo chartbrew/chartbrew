@@ -51,7 +51,7 @@ function TableComponent(props) {
 
   return (
     <div style={styles.mainBody(height)}>
-      <Table sortable celled striped structured unstackable {...getTableProps()}>
+      <Table sortable celled striped unstackable fixed {...getTableProps()} style={styles.table}>
         <Table.Header>
           {headerGroups.map(headerGroup => (
             <Table.Row {...headerGroup.getHeaderGroupProps()}>
@@ -72,6 +72,11 @@ function TableComponent(props) {
           ))}
         </Table.Header>
         <Table.Body {...getTableBodyProps()}>
+          {page.length < 1 && (
+            <Table.Row>
+              <Table.Cell>No Results</Table.Cell>
+            </Table.Row>
+          )}
           {page.map((row) => {
             prepareRow(row);
             return (
@@ -89,11 +94,13 @@ function TableComponent(props) {
                   const isShort = isObject && Object.keys(objDetails).length === 1;
 
                   return (
-                    <Table.Cell collapsing {...cell.getCellProps()}>
-                      {(!isObject && !isArray) && cell.render("Cell")}
+                    <Table.Cell collapsing {...cell.getCellProps()} style={{ maxWidth: 300, overflowWrap: "break-word" }}>
+                      {(!isObject && !isArray) && (
+                        <span title={cellObj.props.value}>{cellObj}</span>
+                      )}
                       {(isObject || isArray) && (
                         <Popup
-                          trigger={(<Label>{(isShort && Object.values(objDetails)[0]) || "Collection"}</Label>)}
+                          trigger={(<Label>{(isShort && `${Object.values(objDetails)[0]}`) || "Collection"}</Label>)}
                           content={(<pre><code>{JSON.stringify(objDetails, null, 4)}</code></pre>)}
                         />
                       )}
@@ -158,6 +165,9 @@ const styles = {
     height,
     transition: "height .5s ease-in",
   }),
+  table: {
+    tableLayout: "auto",
+  },
 };
 
 TableComponent.defaultProps = {
