@@ -1,10 +1,10 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
 import React from "react";
-import { usePagination, useTable } from "react-table";
+import { usePagination, useSortBy, useTable } from "react-table";
 import PropTypes from "prop-types";
 import {
-  Button, Dropdown, Input, Label, Popup, Table
+  Button, Dropdown, Icon, Input, Label, Popup, Table
 } from "semantic-ui-react";
 
 const paginationOptions = [5, 10, 20, 30, 40, 50].map((pageSize) => ({
@@ -36,6 +36,7 @@ function TableComponent(props) {
     data,
     initialState: { pageIndex: 0 }
   },
+  useSortBy,
   usePagination);
 
   return (
@@ -45,7 +46,17 @@ function TableComponent(props) {
           {headerGroups.map(headerGroup => (
             <Table.Row {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map(column => (
-                <Table.HeaderCell {...column.getHeaderProps()}>{column.render("Header")}</Table.HeaderCell>
+                <Table.HeaderCell {...column.getHeaderProps(column.getSortByToggleProps())}>
+                  {column.render("Header")}
+                  <span>
+                    {" "}
+                    {column.isSorted
+                      ? column.isSortedDesc
+                        ? (<Icon name="chevron down" />)
+                        : (<Icon name="chevron up" />)
+                      : ""}
+                  </span>
+                </Table.HeaderCell>
               ))}
             </Table.Row>
           ))}
