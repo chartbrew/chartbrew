@@ -23,25 +23,23 @@ function TableContainer(props) {
 
   return (
     <div>
-      {Object.keys(tabularData).length > 1 && (
-        <Menu secondary>
-          {Object.keys(tabularData).map((dataset) => {
-            return (
-              <Menu.Item
-                name={dataset}
-                onClick={() => setActiveDataset(dataset)}
-                active={activeDataset === dataset}
-              />
-            );
-          })}
-          <Menu.Item
-            name={expanded ? "See less" : "See more"}
-            icon={expanded ? "arrow up" : "arrow down"}
-            onClick={() => _onExpand()}
-            style={styles.seeMore}
-          />
-        </Menu>
-      )}
+      <Menu secondary>
+        {Object.keys(tabularData).map((dataset) => {
+          return (
+            <Menu.Item
+              name={dataset}
+              onClick={() => setActiveDataset(dataset)}
+              active={activeDataset === dataset}
+            />
+          );
+        })}
+        <Menu.Item
+          name={expanded ? "See less" : "See more"}
+          icon={expanded ? "arrow up" : "arrow down"}
+          onClick={() => _onExpand()}
+          style={styles.seeMore}
+        />
+      </Menu>
       {activeDataset && tabularData[activeDataset] && tabularData[activeDataset].columns && (
         <TableComponent
           height={expanded ? height + 200 : height}
