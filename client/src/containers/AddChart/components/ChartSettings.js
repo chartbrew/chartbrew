@@ -129,6 +129,14 @@ function ChartSettings(props) {
               >
           <Icon name="dropdown" />
           Global date settings
+          {startDate && endDate && activeOption !== "daterange" && (
+            <span>
+              {" "}
+              <Label size="small" color="olive">{labelStartDate}</Label>
+              {" - "}
+              <Label size="small" color="olive">{labelEndDate}</Label>
+            </span>
+          )}
         </Accordion.Title>
         <Accordion.Content active={activeOption === "daterange"}>
           {dateBlocked && (
