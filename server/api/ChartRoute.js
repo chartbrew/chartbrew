@@ -80,8 +80,10 @@ module.exports = (app) => {
   ** Route to get all the charts for a project
   */
   app.get("/project/:project_id/chart", verifyToken, (req, res) => {
+    let gRole;
     return checkAccess(req)
       .then((teamRole) => {
+        gRole = teamRole.role;
         const permission = accessControl.can(teamRole.role).readAny("chart");
         if (!permission.granted) {
           throw new Error(401);
@@ -90,7 +92,11 @@ module.exports = (app) => {
         return chartController.findByProject(req.params.project_id);
       })
       .then((charts) => {
-        return res.status(200).send(charts);
+        let filteredCharts = charts;
+        if (gRole === "member") {
+          filteredCharts = charts.filter((c) => !c.draft);
+        }
+        return res.status(200).send(filteredCharts);
       })
       .catch((error) => {
         return res.status(400).send(error);

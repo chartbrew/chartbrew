@@ -411,7 +411,7 @@ function ProjectBoard(props) {
                   </Menu.Item>
                 )}
                 <Menu.Menu style={styles.absoluteDrafts}>
-                  {_checkIfActive("dashboard") && (
+                  {_checkIfActive("dashboard") && _canAccess("editor") && (
                     <Popup
                       trigger={(
                         <Menu.Item onClick={() => _setDraftsVisible(!showDrafts)}>
