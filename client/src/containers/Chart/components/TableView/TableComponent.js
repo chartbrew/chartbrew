@@ -39,9 +39,19 @@ function TableComponent(props) {
   useSortBy,
   usePagination);
 
+  const getColumnsRealSize = () => {
+    let realSize = 0;
+    columns.forEach((column) => {
+      realSize++;
+      if (column.columns) realSize += column.columns.length;
+    });
+
+    return realSize;
+  };
+
   return (
     <div style={styles.mainBody(height)}>
-      <Table sortable celled striped structured selectable unstackable {...getTableProps()}>
+      <Table sortable celled striped structured unstackable {...getTableProps()}>
         <Table.Header>
           {headerGroups.map(headerGroup => (
             <Table.Row {...headerGroup.getHeaderGroupProps()}>
@@ -96,7 +106,7 @@ function TableComponent(props) {
         </Table.Body>
         <Table.Footer className="pagination">
           <Table.Row>
-            <Table.HeaderCell colSpan={columns.length}>
+            <Table.HeaderCell colSpan={getColumnsRealSize()}>
               <Button size="small" icon="angle double left" onClick={() => gotoPage(0)} disabled={!canPreviousPage} />
               <Button size="small" icon="angle left" onClick={() => previousPage()} disabled={!canPreviousPage} />
               <Button size="small" icon="angle right" onClick={() => nextPage()} disabled={!canNextPage} />
