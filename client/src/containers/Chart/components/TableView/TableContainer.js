@@ -59,7 +59,7 @@ function TableContainer(props) {
                 name={expanded ? "See less" : "See more"}
                 icon={expanded ? "arrow up" : "arrow down"}
                 onClick={() => _onExpand()}
-                style={{ ...styles.seeMore, ...{ margin: 0 } }}
+                style={{ margin: 0, marginTop: 5 }}
               />
             </Media>
           </>
