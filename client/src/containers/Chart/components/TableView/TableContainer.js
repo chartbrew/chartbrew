@@ -41,6 +41,7 @@ function TableContainer(props) {
               name={dataset}
               onClick={() => setActiveDataset(dataset)}
               active={activeDataset === dataset}
+              key={dataset}
             />
           );
         })}
