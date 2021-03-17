@@ -157,6 +157,7 @@ function TableComponent(props) {
                       selection
                       compact
                       upward
+                      style={styles.itemsDropdown}
                     />
                   </Form.Field>
                 </Form.Group>
@@ -180,6 +181,9 @@ const styles = {
   table: {
     tableLayout: "auto",
   },
+  itemsDropdown: {
+    maxWidth: 200,
+  }
 };
 
 TableComponent.defaultProps = {

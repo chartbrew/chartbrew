@@ -1,7 +1,18 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { Menu } from "semantic-ui-react";
+import { createMedia } from "@artsy/fresnel";
+
 import TableComponent from "./TableComponent";
+
+const AppMedia = createMedia({
+  breakpoints: {
+    mobile: 0,
+    tablet: 768,
+    computer: 1024,
+  },
+});
+const { Media } = AppMedia;
 
 function TableContainer(props) {
   const { tabularData, height, embedded } = props;
@@ -23,7 +34,7 @@ function TableContainer(props) {
 
   return (
     <div>
-      <Menu secondary>
+      <Menu secondary stackable>
         {Object.keys(tabularData).map((dataset) => {
           return (
             <Menu.Item
@@ -34,12 +45,24 @@ function TableContainer(props) {
           );
         })}
         {!embedded && (
-          <Menu.Item
-            name={expanded ? "See less" : "See more"}
-            icon={expanded ? "arrow up" : "arrow down"}
-            onClick={() => _onExpand()}
-            style={styles.seeMore}
-          />
+          <>
+            <Media greaterThan="mobile">
+              <Menu.Item
+                name={expanded ? "See less" : "See more"}
+                icon={expanded ? "arrow up" : "arrow down"}
+                onClick={() => _onExpand()}
+                style={styles.seeMore}
+              />
+            </Media>
+            <Media at="mobile">
+              <Menu.Item
+                name={expanded ? "See less" : "See more"}
+                icon={expanded ? "arrow up" : "arrow down"}
+                onClick={() => _onExpand()}
+                style={{ ...styles.seeMore, ...{ margin: 0 } }}
+              />
+            </Media>
+          </>
         )}
       </Menu>
       {activeDataset && tabularData[activeDataset] && tabularData[activeDataset].columns && (
