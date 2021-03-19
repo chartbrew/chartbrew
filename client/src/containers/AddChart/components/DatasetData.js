@@ -503,6 +503,7 @@ function DatasetData(props) {
                   size="small"
                   value={condition.value}
                   onChange={(e, data) => _updateCondition(condition.id, data.value, "value")}
+                  disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                 />
               )}
               {_.find(fieldOptions, { value: condition.field })
@@ -518,6 +519,7 @@ function DatasetData(props) {
                       iconPosition="left"
                       size="small"
                       value={condition.value && format(new Date(condition.value), "Pp", { locale: enGB })}
+                      disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                     />
                   )}
                   content={(
@@ -564,7 +566,7 @@ function DatasetData(props) {
                   />
                 )}
 
-                {!condition.saved && condition.value && (
+                {!condition.saved && (condition.value || condition.operator === "isNotNull" || condition.operator === "isNull") && (
                   <Popup
                     trigger={(
                       <Button

@@ -62,6 +62,12 @@ function compareDates(data, field, condition) {
         return val ? val.isSameOrBefore(condition.value) : false;
       });
       break;
+    case "isNotNull":
+      newData = _.filter(newData, (o) => getValue(o) !== null);
+      break;
+    case "isNull":
+      newData = _.filter(newData, (o) => getValue(o) === null);
+      break;
     default:
       break;
   }
@@ -79,6 +85,11 @@ function compareNumbers(data, field, condition) {
     for (let i = 0; i < selectors.length; i++) {
       value = value[selectors[i]];
     }
+
+    if (!value && (value !== 0 || value !== "0")) {
+      return null;
+    }
+
     return value;
   };
 
@@ -107,6 +118,12 @@ function compareNumbers(data, field, condition) {
     case "lessOrEqual":
       newData = _.filter(newData, (o) => getValue(o) <= parseFloat(condition.value));
       break;
+    case "isNotNull":
+      newData = _.filter(newData, (o) => getValue(o) !== null);
+      break;
+    case "isNull":
+      newData = _.filter(newData, (o) => getValue(o) === null);
+      break;
     default:
       break;
   }
@@ -123,6 +140,11 @@ function compareStrings(data, field, condition) {
     for (let i = 0; i < selectors.length; i++) {
       value = value[selectors[i]];
     }
+
+    if (!value && (value !== 0 || value !== "0")) {
+      return null;
+    }
+
     return value;
   };
 
@@ -151,6 +173,12 @@ function compareStrings(data, field, condition) {
     case "lessOrEqual":
       newData = _.filter(newData, (o) => getValue(o) <= condition.value);
       break;
+    case "isNotNull":
+      newData = _.filter(newData, (o) => getValue(o) !== null);
+      break;
+    case "isNull":
+      newData = _.filter(newData, (o) => getValue(o) === null);
+      break;
     default:
       break;
   }
@@ -168,6 +196,11 @@ function compareBooleans(data, field, condition) {
     for (let i = 0; i < selectors.length; i++) {
       value = value[selectors[i]];
     }
+
+    if (!value && (value !== 0 || value !== "0")) {
+      return null;
+    }
+
     return value;
   };
 
@@ -189,6 +222,12 @@ function compareBooleans(data, field, condition) {
       break;
     case "lessOrEqual":
       newData = _.filter(newData, (o) => `${getValue(o)}` !== `${condition.value}`);
+      break;
+    case "isNotNull":
+      newData = _.filter(newData, (o) => getValue(o) !== null);
+      break;
+    case "isNull":
+      newData = _.filter(newData, (o) => getValue(o) === null);
       break;
     default:
       break;

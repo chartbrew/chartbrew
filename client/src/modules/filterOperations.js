@@ -7,6 +7,14 @@ export const operators = [{
   text: "≠ (is not)",
   value: "isNot",
 }, {
+  key: "!∅",
+  text: "!∅ (is not null)",
+  value: "isNotNull",
+}, {
+  key: "∅",
+  text: "∅ (is null)",
+  value: "isNull",
+}, {
   key: ">",
   text: "> (greater than)",
   value: "greaterThan",
