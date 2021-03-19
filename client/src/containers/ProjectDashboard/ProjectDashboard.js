@@ -375,7 +375,7 @@ function ProjectDashboard(props) {
             </Container>
           )}
 
-        {_canAccess("editor") && charts.length < 1
+        {_canAccess("editor") && charts.length < 1 && connections.length > 0
           && (
             <Grid centered style={styles.addCard}>
               <Card
