@@ -3,12 +3,13 @@ require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
 const express = require("express");
 const methodOverride = require("method-override");
-const bodyParser = require("body-parser");
+const { urlencoded, json } = require("body-parser");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const _ = require("lodash");
 const { OneAccount } = require("oneaccount-express");
 const morgan = require("morgan");
+const helmet = require("helmet");
 
 const settings = process.env.NODE_ENV === "production" ? require("./settings") : require("./settings-dev");
 const routes = require("./api");
@@ -27,10 +28,10 @@ if (process.env.NODE_ENV !== "production") {
   app.use(morgan("dev"));
 }
 app.use(cookieParser());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(urlencoded({ extended: true }));
+app.use(json());
 app.use(methodOverride("X-HTTP-Method-Override"));
-
+app.use(helmet());
 app.use(cors());
 app.use(new OneAccount({
   engine: {
