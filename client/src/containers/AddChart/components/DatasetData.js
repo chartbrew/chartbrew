@@ -504,7 +504,7 @@ function DatasetData(props) {
                         color="violet"
                         key={field.accessor}
                         onClick={() => _onExcludeField(field.accessor)}
-                        style={styles.tableFields}
+                        as="a"
                       >
                         {field.accessor.replace("?", ".")}
                       </Label>
@@ -517,8 +517,9 @@ function DatasetData(props) {
                       key={field}
                       basic
                       onClick={() => _onShowField(field)}
-                      style={styles.tableFields}
+                      as="a"
                     >
+                      <Icon name="eye slash outline" />
                       {field.replace("?", ".")}
                     </Label>
                   ))}
