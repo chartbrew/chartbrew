@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Dropdown, Icon, Input, Button, Grid, Popup, Divider,
-  Header, Container, Form, List,
+  Header, Container, Form, List, Label, Transition,
 } from "semantic-ui-react";
 import { Calendar } from "react-date-range";
 import uuid from "uuid/v4";
@@ -20,7 +20,7 @@ import { operations, operators } from "../../../modules/filterOperations";
 
 function DatasetData(props) {
   const {
-    dataset, requestResult, onUpdate, runRequest, match, chartType, onNoRequest,
+    dataset, requestResult, onUpdate, runRequest, match, chartType, onNoRequest, chartData,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -33,6 +33,8 @@ function DatasetData(props) {
     value: "",
   }]);
   const [formula, setFormula] = useState("");
+  const [tableFields, setTableFields] = useState([]);
+  const [showTableFields, setShowTableFields] = useState(true);
 
   // Update the content when there is some data to work with
   useEffect(() => {
@@ -139,6 +141,18 @@ function DatasetData(props) {
       setFieldOptions(tempFieldOptions);
     }
   }, [dataset]);
+
+  useEffect(() => {
+    // extract the table fields if table view is selected
+    if (chartType === "table" && chartData && chartData[dataset.legend]) {
+      const datasetData = chartData[dataset.legend];
+      const flatColumns = _.flatMap(datasetData.columns, (f) => {
+        if (f.columns) return [f, ...f.columns];
+        return f;
+      });
+      setTableFields(flatColumns);
+    }
+  }, [chartData]);
 
   const _selectXField = (e, data) => {
     onUpdate({ xAxis: data.value });
@@ -267,6 +281,19 @@ function DatasetData(props) {
         }
         setLoading(false);
       });
+  };
+
+  const _onExcludeField = (field) => {
+    const excludedFields = dataset.excludedFields || [];
+    const newExcludedFields = [...excludedFields, field];
+    onUpdate({ excludedFields: newExcludedFields });
+  };
+
+  const _onShowField = (field) => {
+    const excludedFields = dataset.excludedFields || [];
+    const index = _.indexOf(excludedFields, field);
+    excludedFields.splice(index, 1);
+    onUpdate({ excludedFields });
   };
 
   if ((!fieldOptions || !dataset.fieldsSchema) && dataset.connection_id) {
@@ -459,6 +486,48 @@ function DatasetData(props) {
           </Grid.Column>
         </Grid.Row>
       )}
+      {chartType === "table" && (
+        <Grid.Row>
+          <Grid.Column>
+            <Header as="h4" onClick={() => setShowTableFields(!showTableFields)} style={styles.tableFields}>
+              {"Select visible columns "}
+              {!showTableFields && (<Icon size="small" name="chevron down" />)}
+              {showTableFields && (<Icon size="small" name="chevron up" />)}
+            </Header>
+            <Transition animation="fade down" visible={showTableFields}>
+              <div>
+                <Label.Group>
+                  {tableFields.map((field) => {
+                    if (!field || !field.accessor) return (<span />);
+                    return (
+                      <Label
+                        color="violet"
+                        key={field.accessor}
+                        onClick={() => _onExcludeField(field.accessor)}
+                        style={styles.tableFields}
+                      >
+                        {field.accessor.replace("?", ".")}
+                      </Label>
+                    );
+                  })}
+                </Label.Group>
+                <Label.Group>
+                  {dataset.excludedFields && dataset.excludedFields.map((field) => (
+                    <Label
+                      key={field}
+                      basic
+                      onClick={() => _onShowField(field)}
+                      style={styles.tableFields}
+                    >
+                      {field.replace("?", ".")}
+                    </Label>
+                  ))}
+                </Label.Group>
+              </div>
+            </Transition>
+          </Grid.Column>
+        </Grid.Row>
+      )}
       {conditions.map((condition, index) => {
         return (
           <Grid.Row key={condition.id} style={styles.conditionRow} className="datasetdata-filters-tut">
@@ -648,12 +717,14 @@ function DatasetData(props) {
 DatasetData.defaultProps = {
   requestResult: null,
   chartType: "",
+  chartData: null,
 };
 
 DatasetData.propTypes = {
   dataset: PropTypes.object.isRequired,
   requestResult: PropTypes.object,
   chartType: PropTypes.string,
+  chartData: PropTypes.object,
   onUpdate: PropTypes.func.isRequired,
   runRequest: PropTypes.func.isRequired,
   onNoRequest: PropTypes.func.isRequired,
@@ -712,6 +783,9 @@ const styles = {
   formulaActions: {
     display: "flex",
     alignItems: "flex-end",
+  },
+  tableFields: {
+    cursor: "pointer",
   },
 };
 

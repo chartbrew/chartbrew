@@ -304,6 +304,7 @@ function Dataset(props) {
                 dataset={newDataset}
                 requestResult={requestResult}
                 chartType={chart.type}
+                chartData={chart.chartData}
                 onUpdate={(data) => onUpdate(data)}
                 onNoRequest={_openConfigModal}
               />

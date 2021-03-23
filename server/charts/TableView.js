@@ -3,24 +3,34 @@ const _ = require("lodash");
 const determineType = require("../modules/determineType");
 
 class TableView {
-  getTableData(rawData) {
+  getTableData(rawData, datasets) {
     const tabularData = {};
 
-    Object.keys(rawData).forEach((key) => {
+    Object.keys(rawData).forEach((key, datasetIndex) => {
       const tab = { columns: [], data: [] };
       const dataset = rawData[key];
+      const excludedFields = datasets[datasetIndex].options.excludedFields || [];
+
       dataset.forEach((item, index) => {
         if (index === 0) {
           Object.keys(item).forEach((k) => {
+            if (_.indexOf(excludedFields, k) !== -1) return;
+
             if (determineType(item[k]) === "object") {
               // handle nested objects (only one level)
               const nested = item[k];
               Object.keys(nested).forEach((n) => {
                 const headerIndex = _.findIndex(tab.columns, { Header: k });
+                const headerKey = `${k}?${n}`;
+
+                if (_.indexOf(excludedFields, headerKey) !== -1) return;
+
                 if (headerIndex === -1) {
-                  tab.columns.push({ Header: k, columns: [{ Header: n, accessor: `${k}?${n}` }] });
+                  tab.columns.push({
+                    Header: k, accessor: k, columns: [{ Header: n, accessor: headerKey }]
+                  });
                 } else {
-                  tab.columns[headerIndex].columns.push({ Header: n, accessor: `${k}?${n}` });
+                  tab.columns[headerIndex].columns.push({ Header: n, accessor: headerKey });
                 }
               });
             } else {
@@ -31,9 +41,15 @@ class TableView {
 
         const dataItem = {};
         Object.keys(item).forEach((k) => {
+          if (_.indexOf(excludedFields, k) !== -1) return;
+
           if (determineType(item[k]) === "object") {
             Object.keys(item[k]).forEach((n) => {
               const nestedType = determineType(item[k][n]);
+              const headerKey = `${k}?${n}`;
+
+              if (_.indexOf(excludedFields, headerKey) !== -1) return;
+
               if (nestedType === "object") {
                 dataItem[`${k}?${n}`] = `__cb_object${JSON.stringify(item[k][n])}`;
               } else if (nestedType === "array") {

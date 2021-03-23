@@ -131,7 +131,20 @@ module.exports = (sequelize, DataTypes) => {
       set(val) {
         return this.setDataValue("fieldsSchema", sc.encrypt(JSON.stringify(val)));
       },
-    }
+    },
+    excludedFields: {
+      type: DataTypes.TEXT,
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("excludedFields"));
+        } catch (e) {
+          return this.getDataValue("excludedFields");
+        }
+      },
+      set(val) {
+        return this.setDataValue("excludedFields", JSON.stringify(val));
+      },
+    },
   }, {
     freezeTableName: true,
   });
