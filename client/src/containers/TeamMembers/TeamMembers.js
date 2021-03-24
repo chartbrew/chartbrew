@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Dimmer, Message, Segment, Button, Divider, Dropdown, Checkbox, Grid,
-  Loader, Container, Header, Modal, List, TransitionablePortal, Popup, Icon,
+  Loader, Container, Header, Modal, List, TransitionablePortal, Popup, Icon, Label,
 } from "semantic-ui-react";
 import _ from "lodash";
 import { ToastContainer, toast, Flip } from "react-toastify";
@@ -207,6 +207,7 @@ function TeamMembers(props) {
                       <Button
                         content="Project access"
                         onClick={() => _openProjectAccess(member)}
+                        size="small"
                       />
                     )}
                     {_canAccess("admin") && user.id !== member.id && (
@@ -216,7 +217,7 @@ function TeamMembers(props) {
                         labeled
                         button
                         icon="eye"
-                        className="icon"
+                        className="small icon"
                         direction="left"
                       >
                         <Dropdown.Menu>
@@ -273,6 +274,8 @@ function TeamMembers(props) {
                           {member.name}
                           {" "}
                           {member.surname}
+                          {" "}
+                          <Label size="small">{`${memberRole}`}</Label>
                         </List.Header>
                       )
                       : (
@@ -282,9 +285,10 @@ function TeamMembers(props) {
                           {" "}
                           {member.surname}
                           {" "}
+                          <Label size="small">{`${memberRole}`}</Label>
                         </List.Header>
                       )}
-                    <List.Description>{memberRole}</List.Description>
+                    <List.Description>{member.email}</List.Description>
                   </List.Content>
                   {error && changedMember && member.id === changedMember.id
                     && (
@@ -318,7 +322,7 @@ function TeamMembers(props) {
             Are you sure you want to remove the user from the team?
           </Modal.Header>
           <Modal.Content>
-            <p>{"This action will remove the user from the team and restrict them from accessing the dashboard again."}</p>
+            <p>{"This action will remove the user from the team and restrict them from accessing the dashboards."}</p>
           </Modal.Content>
           <Modal.Actions>
             <Button
