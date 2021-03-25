@@ -38,16 +38,18 @@ function LineChart(props) {
                       key={uuid()}
                     >
                       {dataset.data && dataset.data[dataset.data.length - 1]}
-                      <Header.Subheader style={{ color: "black" }}>
-                        <span
-                          style={
-                            chart.Datasets
-                            && styles.datasetLabelColor(chart.Datasets[index].datasetColor)
-                          }
-                        >
-                          {dataset.label}
-                        </span>
-                      </Header.Subheader>
+                      {chart.Datasets[index] && (
+                        <Header.Subheader style={{ color: "black" }}>
+                          <span
+                            style={
+                              chart.Datasets
+                              && styles.datasetLabelColor(chart.Datasets[index].datasetColor)
+                            }
+                          >
+                            {dataset.label}
+                          </span>
+                        </Header.Subheader>
+                      )}
                     </Header>
                   ))}
                 </div>
