@@ -157,6 +157,24 @@ module.exports = (sequelize, DataTypes) => {
         }
       },
     },
+    firebaseServiceAccount: {
+      type: DataTypes.TEXT,
+      set(val) {
+        try {
+          const parsedString = val.replace(/\r?\n|\r/, "");
+          return this.setDataValue("firebaseServiceAccount", sc.encrypt(parsedString));
+        } catch (e) {
+          return this.setDataValue("firebaseServiceAccount", val);
+        }
+      },
+      get() {
+        try {
+          return JSON.parse(sc.decrypt(this.getDataValue("firebaseServiceAccount")));
+        } catch (e) {
+          return this.getDataValue("firebaseServiceAccount");
+        }
+      },
+    },
   }, {
     freezeTableName: true,
   });

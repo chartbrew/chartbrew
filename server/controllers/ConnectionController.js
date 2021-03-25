@@ -8,6 +8,7 @@ const ProjectController = require("./ProjectController");
 const externalDbConnection = require("../modules/externalDbConnection");
 const assembleMongoUrl = require("../modules/assembleMongoUrl");
 const paginateRequests = require("../modules/paginateRequests");
+const firebaseConnector = require("../modules/firebaseConnector");
 
 class ConnectionController {
   constructor() {
@@ -194,6 +195,8 @@ class ConnectionController {
           return requestP(this.getApiTestOptions(connection));
         } else if (connection.type === "postgres" || connection.type === "mysql") {
           return externalDbConnection(connection);
+        } else if (connection.type === "firebase") {
+          return firebaseConnector.getAuthToken(connection);
         } else {
           throw new Error(400);
         }
@@ -205,6 +208,8 @@ class ConnectionController {
           return new Promise((resolve) => resolve({ success: true }));
         } else if (gConnection.type === "postgres" || gConnection.type === "mysql") {
           return new Promise((resolve) => resolve({ success: true }));
+        } else if (gConnection.type === "firebase") {
+          return new Promise((resolve) => resolve(response));
         } else {
           throw new Error(400);
         }
