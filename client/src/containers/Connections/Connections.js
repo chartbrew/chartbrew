@@ -24,7 +24,9 @@ import canAccess from "../../config/canAccess";
 import mysql from "../../assets/mysql.svg";
 import rest from "../../assets/api.png";
 import postgres from "../../assets/postgres.png";
+import firebaseLogo from "../../assets/google_firebase.png";
 import { primary } from "../../config/colors";
+import FirebaseConnectionForm from "./Firebase/FirebaseConnectionForm";
 
 /*
   The page that contains all the connections
@@ -226,7 +228,7 @@ function Connections(props) {
               </Header>
             )}
             <Segment attached>
-              <Card.Group centered itemsPerRow={4} stackable>
+              <Card.Group centered itemsPerRow={5} stackable>
                 <Card className="project-segment" onClick={() => setFormType("api")}>
                   <Image src={rest} />
                   <Card.Content>
@@ -249,6 +251,12 @@ function Connections(props) {
                   <Image src={mysql} />
                   <Card.Content>
                     <Card.Header>MySQL</Card.Header>
+                  </Card.Content>
+                </Card>
+                <Card className="project-segment" onClick={() => setFormType("firebase")}>
+                  <Image src={firebaseLogo} />
+                  <Card.Content>
+                    <Card.Header>Firebase</Card.Header>
                   </Card.Content>
                 </Card>
               </Card.Group>
@@ -312,6 +320,18 @@ function Connections(props) {
               testResult={testResult}
             />
             )}
+
+          {formType === "firebase"
+            && (
+            <FirebaseConnectionForm
+              projectId={match.params.projectId}
+              onTest={_onTestRequest}
+              onComplete={_onAddNewConnection}
+              editConnection={editConnection}
+              addError={addError}
+              testResult={testResult}
+            />
+            )}
         </div>
 
         {connections.length > 0
@@ -340,7 +360,8 @@ function Connections(props) {
                       connection.type === "mongodb" ? mongoLogo
                         : connection.type === "api" ? rest
                           : connection.type === "postgres" ? postgres
-                            : connection.type === "mysql" ? mysql : mongoLogo
+                            : connection.type === "mysql" ? mysql
+                              : connection.type === "firebase" ? firebaseLogo : mongoLogo
                     }
                   />
                   <Card.Header>{connection.name}</Card.Header>

@@ -143,6 +143,8 @@ class ConnectionController {
       return this.testMongo(data);
     } else if (data.type === "mysql" || data.type === "postgres") {
       return this.testMysql(data);
+    } else if (data.type === "firebase") {
+      return this.testFirebase(data);
     }
 
     return new Promise((resolve, reject) => reject(new Error("No request type specified")));
@@ -182,6 +184,23 @@ class ConnectionController {
         });
       })
       .catch((err) => Promise.reject(err.message || err));
+  }
+
+  testFirebase(data) {
+    const parsedData = data;
+    try {
+      parsedData.firebaseServiceAccount = JSON.parse(data.firebaseServiceAccount);
+    } catch (e) {
+      return Promise.reject("The authentication JSON is not formatted correctly.");
+    }
+
+    return firebaseConnector.getAuthToken(parsedData)
+      .then(() => {
+        return Promise.resolve("The Firebase gods granted us access. The connection was successful 🙌");
+      })
+      .catch((err) => {
+        return Promise.reject(err.message || err);
+      });
   }
 
   testConnection(id) {
