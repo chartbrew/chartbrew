@@ -425,7 +425,7 @@ function Chart(props) {
                   <small>
                     {!chartLoading && !chart.loading && (
                       <i>
-                        {!print && `${_getUpdatedTime(chart.chartDataUpdated)}`}
+                        {!print && <span title="Last updated">{`${_getUpdatedTime(chart.chartDataUpdated)}`}</span>}
                         {print && <small>{`${moment(chart.chartDataUpdated).format("LLL")}`}</small>}
                       </i>
                     )}
