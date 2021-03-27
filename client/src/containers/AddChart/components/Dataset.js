@@ -14,6 +14,8 @@ import mongoImg from "../../../assets/mongodb-logo-1.png";
 import mysqlImg from "../../../assets/mysql.svg";
 import apiImg from "../../../assets/api.png";
 import postgresImg from "../../../assets/postgres.png";
+import firebaseImg from "../../../assets/firebase-real-time-database.png";
+import firestoreImg from "../../../assets/firebase-firestore.png";
 import DatarequestModal from "./DatarequestModal";
 import DatasetAppearance from "./DatasetAppearance";
 import DatasetData from "./DatasetData";
@@ -42,7 +44,9 @@ function Dataset(props) {
       const image = connection.type === "mongodb"
         ? mongoImg : connection.type === "api"
           ? apiImg : connection.type === "mysql"
-            ? mysqlImg : postgresImg;
+            ? mysqlImg : connection.type === "firebase"
+              ? firebaseImg : connection.type === "firestore"
+                ? firestoreImg : postgresImg;
 
       config.push({
         key: connection.id,

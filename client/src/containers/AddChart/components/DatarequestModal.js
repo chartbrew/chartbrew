@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 import ApiBuilder from "./ApiBuilder";
 import SqlBuilder from "./SqlBuilder";
 import MongoQueryBuilder from "./MongoQueryBuilder";
+import FirebaseBuilder from "../../Connections/Firebase/FirebaseBuilder";
 import {
   getDataRequestByDataset as getDataRequestByDatasetAction,
   createDataRequest as createDataRequestAction,
@@ -192,6 +193,16 @@ function DatarequestModal(props) {
           <MongoQueryBuilder
             dataset={dataset}
             dataRequest={dataRequest}
+            onChangeRequest={_updateDataRequest}
+            onSave={_onSaveRequest}
+            exploreData={result && JSON.stringify(result.data, null, 2)}
+          />
+        )}
+        {connection.type === "firebase" && dataRequest && (
+          <FirebaseBuilder
+            dataset={dataset}
+            dataRequest={dataRequest}
+            connection={connection}
             onChangeRequest={_updateDataRequest}
             onSave={_onSaveRequest}
             exploreData={result && JSON.stringify(result.data, null, 2)}

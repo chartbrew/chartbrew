@@ -143,7 +143,7 @@ class ConnectionController {
       return this.testMongo(data);
     } else if (data.type === "mysql" || data.type === "postgres") {
       return this.testMysql(data);
-    } else if (data.type === "firebase") {
+    } else if (data.type === "firebase" || data.type === "firestore") {
       return this.testFirebase(data);
     }
 
@@ -214,7 +214,7 @@ class ConnectionController {
           return requestP(this.getApiTestOptions(connection));
         } else if (connection.type === "postgres" || connection.type === "mysql") {
           return externalDbConnection(connection);
-        } else if (connection.type === "firebase") {
+        } else if (connection.type === "firebase" || connection.type === "firestore") {
           return firebaseConnector.getAuthToken(connection);
         } else {
           throw new Error(400);
@@ -227,7 +227,7 @@ class ConnectionController {
           return new Promise((resolve) => resolve({ success: true }));
         } else if (gConnection.type === "postgres" || gConnection.type === "mysql") {
           return new Promise((resolve) => resolve({ success: true }));
-        } else if (gConnection.type === "firebase") {
+        } else if (gConnection.type === "firebase" || gConnection.type === "firestore") {
           return new Promise((resolve) => resolve(response));
         } else {
           throw new Error(400);
