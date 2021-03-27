@@ -203,7 +203,7 @@ function TeamMembers(props) {
               return (
                 <List.Item key={member.id}>
                   <List.Content floated="right">
-                    {_canAccess("admin") && user.id !== member.id && (
+                    {_canAccess("admin") && (
                       <Button
                         content="Project access"
                         onClick={() => _openProjectAccess(member)}

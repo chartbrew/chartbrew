@@ -82,6 +82,16 @@ class TeamController {
       });
   }
 
+  addProjectAccessToOwner(teamId, projectId) {
+    return db.TeamRole.findOne({ where: { team_id: teamId, role: "owner" } })
+      .then((teamRole) => {
+        return this.addProjectAccess(teamId, teamRole.user_id, projectId);
+      })
+      .catch((err) => {
+        return new Promise((resolve, reject) => reject(err));
+      });
+  }
+
   removeProjectAccess(teamId, userId, projectId) {
     let gTeamRole;
     return db.TeamRole.findOne({ where: { team_id: teamId, user_id: userId } })

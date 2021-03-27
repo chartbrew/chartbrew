@@ -86,6 +86,9 @@ class ProjectController {
         return this.teamController.addProjectAccess(data.team_id, userId, newProject.id);
       })
       .then(() => {
+        return this.teamController.addProjectAccessToOwner(data.team_id, newProject.id);
+      })
+      .then(() => {
         return newProject;
       })
       .catch((error) => {
