@@ -255,7 +255,7 @@ function FirestoreConnectionForm(props) {
             <AceEditor
               mode="json"
               theme="tomorrow"
-              height="150px"
+              height="250px"
               width="none"
               value={testResult.body}
               readOnly

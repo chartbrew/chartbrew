@@ -10,6 +10,8 @@ const assembleMongoUrl = require("../modules/assembleMongoUrl");
 const paginateRequests = require("../modules/paginateRequests");
 const firebaseConnector = require("../modules/firebaseConnector");
 
+const FirestoreConnection = require("../connections/FirestoreConnection");
+
 class ConnectionController {
   constructor() {
     this.projectController = new ProjectController();
@@ -143,8 +145,10 @@ class ConnectionController {
       return this.testMongo(data);
     } else if (data.type === "mysql" || data.type === "postgres") {
       return this.testMysql(data);
-    } else if (data.type === "firebase" || data.type === "firestore") {
+    } else if (data.type === "firebase") {
       return this.testFirebase(data);
+    } else if (data.type === "firestore") {
+      return this.testFirestore(data);
     }
 
     return new Promise((resolve, reject) => reject(new Error("No request type specified")));
@@ -197,6 +201,25 @@ class ConnectionController {
     return firebaseConnector.getAuthToken(parsedData)
       .then(() => {
         return Promise.resolve("The Firebase gods granted us access. The connection was successful 🙌");
+      })
+      .catch((err) => {
+        return Promise.reject(err.message || err);
+      });
+  }
+
+  testFirestore(data) {
+    const parsedData = data;
+    try {
+      parsedData.firebaseServiceAccount = JSON.parse(data.firebaseServiceAccount);
+    } catch (e) {
+      return Promise.reject("The authentication JSON is not formatted correctly.");
+    }
+
+    const firestore = new FirestoreConnection(parsedData);
+
+    return firestore.listCollections()
+      .then((data) => {
+        return Promise.resolve(data);
       })
       .catch((err) => {
         return Promise.reject(err.message || err);
