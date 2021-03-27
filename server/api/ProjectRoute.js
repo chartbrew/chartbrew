@@ -14,23 +14,23 @@ module.exports = (app) => {
       return projectController.findById(req.params.id)
         .then((project) => {
           return teamController.getTeamRole(project.team_id, req.user.id);
+        })
+        .then((teamRole) => {
+          // the owner has access to all the projects
+          if (teamRole.role === "owner") return teamRole;
+
+          // otherwise, check if the team role contains access to the right project
+          if (!teamRole.projects) return Promise.reject(401);
+          const filteredProjects = teamRole.projects.filter((o) => `${o}` === `${req.params.id}`);
+          if (filteredProjects.length === 0) {
+            return Promise.reject(401);
+          }
+
+          return teamRole;
         });
     }
 
-    return teamController.getTeamRole(teamId, req.user.id)
-      .then((teamRole) => {
-        // the owner has access to all the projects
-        if (teamRole.role === "owner") return teamRole;
-
-        // otherwise, check if the team role contains access to the right project
-        if (!teamRole.projects) return Promise.reject(401);
-        const filteredProjects = teamRole.projects.filter((o) => `${o}` === `${req.params.project_id}`);
-        if (filteredProjects.length === 0) {
-          return Promise.reject(401);
-        }
-
-        return teamRole;
-      });
+    return teamController.getTeamRole(teamId, req.user.id);
   };
 
   /*
@@ -68,7 +68,7 @@ module.exports = (app) => {
         return res.status(200).send(project);
       })
       .catch((error) => {
-        if (error.message.indexOf("401") > -1) {
+        if (error.message && error.message.indexOf("401") > -1) {
           return res.status(401).send({ error: "Not authorized" });
         }
         return res.status(400).send(error);
