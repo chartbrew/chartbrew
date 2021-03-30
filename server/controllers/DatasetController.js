@@ -96,6 +96,8 @@ class DatasetController {
           return this.connectionController.runApiRequest(connection.id, dataRequest);
         } else if (connection.type === "postgres" || connection.type === "mysql") {
           return this.connectionController.runMysqlOrPostgres(connection.id, dataRequest);
+        } else if (connection.type === "firestore") {
+          return this.connectionController.runFirestore(connection.id, dataRequest);
         } else {
           throw new Error("Invalid connection type");
         }

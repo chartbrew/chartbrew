@@ -1,8 +1,8 @@
 const firebase = require("firebase-admin");
 
 class FirestoreConnection {
-  constructor(dataset) {
-    const firebaseAppName = `${dataset.name}_${dataset.project_id}_${dataset.id}`;
+  constructor(connection, dataRequestId) {
+    const firebaseAppName = `${connection.name}_${connection.project_id}_${connection.id}_${dataRequestId}`;
     // first check if there is a firebase app already created for this dataset
     firebase.apps.forEach((firebaseApp) => {
       if (firebaseApp.name === firebaseAppName) {
@@ -12,15 +12,21 @@ class FirestoreConnection {
 
     if (!this.admin) {
       this.admin = firebase.initializeApp({
-        credential: firebase.credential.cert(dataset.firebaseServiceAccount),
+        credential: firebase.credential.cert(connection.firebaseServiceAccount),
       }, firebaseAppName);
     }
 
     this.db = this.admin.firestore();
   }
 
-  get(collection) {
-    return this.db.collection(collection).get();
+  async get(collection) {
+    const docs = await this.db.collection(collection).get();
+    const formattedDocs = [];
+    docs.forEach((doc) => {
+      formattedDocs.push(doc.data());
+    });
+
+    return formattedDocs;
   }
 
   listCollections() {

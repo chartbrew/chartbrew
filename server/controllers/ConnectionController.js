@@ -209,10 +209,16 @@ class ConnectionController {
 
   testFirestore(data) {
     const parsedData = data;
-    try {
-      parsedData.firebaseServiceAccount = JSON.parse(data.firebaseServiceAccount);
-    } catch (e) {
-      return Promise.reject("The authentication JSON is not formatted correctly.");
+    if (typeof data.firebaseServiceAccount !== "object") {
+      try {
+        parsedData.firebaseServiceAccount = JSON.parse(data.firebaseServiceAccount);
+      } catch (e) {
+        return Promise.reject("The authentication JSON is not formatted correctly.");
+      }
+    } else if (data.firebaseServiceAccount) {
+      parsedData.firebaseServiceAccount = data.firebaseServiceAccount;
+    } else {
+      return Promise.reject("The firebase authentication is missing");
     }
 
     const firestore = new FirestoreConnection(parsedData);
@@ -465,6 +471,18 @@ class ConnectionController {
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
+  runFirestore(id, dataRequest) {
+    return this.findById(id)
+      .then((connection) => {
+        const firestoreConnection = new FirestoreConnection(connection);
+
+        return firestoreConnection.get(dataRequest.query);
+      })
+      .catch((err) => {
+        return new Promise((resolve, reject) => reject(err));
       });
   }
 }
