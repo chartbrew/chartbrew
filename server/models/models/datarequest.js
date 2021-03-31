@@ -82,6 +82,19 @@ module.exports = (sequelize, DataTypes) => {
     template: {
       type: DataTypes.STRING,
     },
+    conditions: {
+      type: DataTypes.TEXT,
+      set(val) {
+        return this.setDataValue("conditions", JSON.stringify(val));
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("conditions"));
+        } catch (e) {
+          return this.getDataValue("conditions");
+        }
+      }
+    },
   }, {
     freezeTableName: true,
   });
