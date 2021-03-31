@@ -599,8 +599,17 @@ class ChartController {
               chart.id, { id: userId }, false, false, filters, true
             )
               .then((data) => {
+                // first, make sure the sheet name is no longer than 31 characters
+                let sheetName = `${chart.name} - ${nanoid(5)}`;
+                if (chart.name.length > 26) {
+                  let newChartName = chart.name.substring(0, 23);
+                  if (newChartName.lastIndexOf(" ") > 10) {
+                    newChartName = newChartName.substring(0, newChartName.lastIndexOf(" "));
+                  }
+                  sheetName = `${newChartName} - ${nanoid(5)}`;
+                }
                 return {
-                  name: `${chart.name} - ${nanoid(5)}`,
+                  name: sheetName,
                   data,
                 };
               })
