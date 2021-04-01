@@ -80,17 +80,18 @@ export const operators = [{
   The API Data Request builder
 */
 function FirestoreBuilder(props) {
-  const [firestoreRequest, setfirestoreRequest] = useState({
+  const [firestoreRequest, setFirestoreRequest] = useState({
     query: "",
   });
   const [result, setResult] = useState("");
   const [requestLoading, setRequestLoading] = useState(false);
   const [collectionData, setCollectionData] = useState([]);
   const [fieldOptions, setFieldOptions] = useState([]);
+  const [collectionsLoading, setCollectionsLoading] = useState(false);
   const [conditions, setConditions] = useState([{
     id: uuid(),
     field: "",
-    operator: "is",
+    operator: "==",
     value: "",
   }]);
 
@@ -129,10 +130,20 @@ function FirestoreBuilder(props) {
           if (!found) toAddConditions.push(dataRequest.conditions[i]);
         }
 
-        setConditions(newConditions.concat(toAddConditions));
+        const finalConditions = newConditions.concat(toAddConditions);
+        if (finalConditions.length === 0) {
+          setConditions([{
+            id: uuid(),
+            field: "",
+            operator: "==",
+            value: "",
+          }]);
+        } else {
+          setConditions(finalConditions);
+        }
       }
 
-      setfirestoreRequest(dataRequest);
+      setFirestoreRequest(dataRequest);
       _onFetchCollections();
 
       // setTimeout(() => {
@@ -140,36 +151,10 @@ function FirestoreBuilder(props) {
       // }, 1000);
 
       if (dataRequest.query) {
-        _onTest();
+        _onRunRequest();
       }
     }
   }, []);
-
-  // useEffect(() => {
-  //   if (dataRequest && dataRequest.conditions) {
-  //     let newConditions = [...conditions];
-
-  //     // in case of initialisation, remove the first empty condition
-  //     if (newConditions.length === 1 && !newConditions[0].saved && !newConditions[0].value) {
-  //       newConditions = [];
-  //     }
-
-  //     const toAddConditions = [];
-  //     for (let i = 0; i < dataRequest.conditions.length; i++) {
-  //       let found = false;
-  //       for (let j = 0; j < newConditions.length; j++) {
-  //         if (newConditions[j].id === dataRequest.conditions[i].id) {
-  //           newConditions[j] = _.clone(dataRequest.conditions[i]);
-  //           found = true;
-  //         }
-  //       }
-
-  //       if (!found) toAddConditions.push(dataRequest.conditions[i]);
-  //     }
-
-  //     setConditions(newConditions.concat(toAddConditions));
-  //   }
-  // }, [dataRequest]);
 
   useEffect(() => {
     onChangeRequest(firestoreRequest);
@@ -211,35 +196,45 @@ function FirestoreBuilder(props) {
     }
   }, [result]);
 
-  const _onTest = () => {
+  const _onTest = (request = firestoreRequest) => {
     setRequestLoading(true);
 
-    onSave().then(() => {
-      runRequest(match.params.projectId, match.params.chartId, dataset.id)
-        .then((result) => {
-          setRequestLoading(false);
-          setResult(JSON.stringify(result.data, null, 2));
-        })
-        .catch((error) => {
-          setRequestLoading(false);
-          toast.error("The request failed. Please check your request 🕵️‍♂️");
-          setResult(JSON.stringify(error, null, 2));
-        });
+    const requestToSave = _.cloneDeep(request);
+    onSave(requestToSave).then(() => {
+      _onRunRequest();
     });
   };
 
+  const _onRunRequest = () => {
+    runRequest(match.params.projectId, match.params.chartId, dataset.id)
+      .then((result) => {
+        setRequestLoading(false);
+        setResult(JSON.stringify(result.data, null, 2));
+      })
+      .catch((error) => {
+        setRequestLoading(false);
+        toast.error("The request failed. Please check your request 🕵️‍♂️");
+        setResult(JSON.stringify(error, null, 2));
+      });
+  };
+
   const _onFetchCollections = () => {
+    setCollectionsLoading(true);
     return testRequest(match.params.projectId, connection)
       .then((data) => {
         return data.json();
       })
       .then((data) => {
+        setCollectionsLoading(false);
         setCollectionData(data);
+      })
+      .catch(() => {
+        setCollectionsLoading(false);
       });
   };
 
   const _onChangeQuery = (query) => {
-    setfirestoreRequest({ ...firestoreRequest, query });
+    setFirestoreRequest({ ...firestoreRequest, query });
   };
 
   const _updateCondition = (id, data, type) => {
@@ -290,7 +285,7 @@ function FirestoreBuilder(props) {
     const newConditions = [...conditions, {
       id: uuid(),
       field: "",
-      operator: "=",
+      operator: "==",
       value: "",
       saved: false,
     }];
@@ -306,7 +301,7 @@ function FirestoreBuilder(props) {
       newConditions.push({
         id: uuid(),
         field: "",
-        operator: "=",
+        operator: "==",
         value: "",
         saved: false,
       });
@@ -318,8 +313,9 @@ function FirestoreBuilder(props) {
 
   const _onSaveConditions = (newConditions) => {
     const savedConditions = newConditions.filter((item) => item.saved);
-    // onChangeRequest({ ...firestoreRequest, conditions: savedConditions });
-    setfirestoreRequest({ ...firestoreRequest, conditions: savedConditions });
+    const newRequest = { ...firestoreRequest, conditions: savedConditions };
+    setFirestoreRequest(newRequest);
+    _onTest(newRequest);
   };
 
   return (
@@ -347,6 +343,7 @@ function FirestoreBuilder(props) {
               icon
               labelPosition="right"
               onClick={_onFetchCollections}
+              loading={collectionsLoading}
             >
               <Icon name="refresh" />
               Refresh collections
@@ -358,10 +355,10 @@ function FirestoreBuilder(props) {
             return (
               <Grid.Row key={condition.id} style={styles.conditionRow} className="datasetdata-filters-tut">
                 <Grid.Column>
-                  {!_.find(fieldOptions, { value: condition.field }) && (
+                  {!_.find(fieldOptions, { value: condition.field }) && condition.saved && (
                     <Popup
                       trigger={<Icon name="exclamation triangle" color="orange" />}
-                      content="This condition will not work on the current collection."
+                      content="This condition might not work on the current collection."
                     />
                   )}
                   {index === 0 && (<label>{"where "}</label>)}
@@ -388,7 +385,7 @@ function FirestoreBuilder(props) {
                         _.find(operators, { value: condition.operator })
                         && _.find(operators, { value: condition.operator }).key
                       )
-                      || "="
+                      || "=="
                     }
                     value={condition.operator}
                     onChange={(e, data) => _updateCondition(condition.id, data.value, "operator")}
@@ -513,26 +510,28 @@ function FirestoreBuilder(props) {
                 icon
                 labelPosition="right"
                 loading={requestLoading}
-                onClick={_onTest}
+                onClick={() => _onTest()}
                 fluid
               >
                 <Icon name="play" />
                 Make the request
               </Button>
             </Form.Field>
+            <Form.Field>
+              <AceEditor
+                mode="json"
+                theme="tomorrow"
+                height="450px"
+                width="none"
+                value={result || ""}
+                onChange={() => setResult(result)}
+                name="resultEditor"
+                readOnly
+                editorProps={{ $blockScrolling: false }}
+                className="FirestoreBuilder-result-tut"
+              />
+            </Form.Field>
           </Form>
-          <AceEditor
-            mode="json"
-            theme="tomorrow"
-            height="450px"
-            width="none"
-            value={result || ""}
-            onChange={() => setResult(result)}
-            name="resultEditor"
-            readOnly
-            editorProps={{ $blockScrolling: false }}
-            className="FirestoreBuilder-result-tut"
-          />
         </Grid.Column>
       </Grid>
     </div>

@@ -19,9 +19,48 @@ class FirestoreConnection {
     this.db = this.admin.firestore();
   }
 
-  async get(collection) {
-    const docs = await this.db.collection(collection).get();
+  async get(dataRequest) {
+    let docsRef = await this.db.collection(dataRequest.query);
+
+    if (dataRequest.conditions) {
+      dataRequest.conditions.forEach((c) => {
+        const condition = c;
+        if (condition.value === "true") condition.value = true;
+        if (condition.value === "false") condition.value = false;
+
+        const field = condition.field.replace("root[].", "");
+        switch (condition.operator) {
+          case "==":
+            docsRef = docsRef.where(field, "==", condition.value);
+            break;
+          case "!=":
+            docsRef = docsRef.where(field, "!=", condition.value);
+            break;
+          case "isNull":
+            docsRef = docsRef.where(field, "==", null);
+            break;
+          case "isNotNull":
+            docsRef = docsRef.where(field, "!=", null);
+            break;
+          case ">":
+            docsRef = docsRef.where(field, ">", condition.value);
+            break;
+          case ">=":
+            docsRef = docsRef.where(field, ">=", condition.value);
+            break;
+          case "<":
+            docsRef = docsRef.where(field, "<", condition.value);
+            break;
+          case "<=":
+            docsRef = docsRef.where(field, "<=", condition.value);
+            break;
+          default:
+            break;
+        }
+      });
+    }
     const formattedDocs = [];
+    const docs = await docsRef.get();
     docs.forEach((doc) => {
       formattedDocs.push(doc.data());
     });

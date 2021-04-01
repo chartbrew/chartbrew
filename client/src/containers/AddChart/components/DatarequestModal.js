@@ -126,24 +126,24 @@ function DatarequestModal(props) {
     setDataRequest(newDr);
   };
 
-  const _onSaveRequest = () => {
+  const _onSaveRequest = (dr = dataRequest) => {
     setLoading(true);
-
+    const newDr = _.cloneDeep(dr);
     return updateDataRequest(
       match.params.projectId,
       match.params.chartId,
-      dataRequest.id,
-      dataRequest
+      newDr.id,
+      newDr
     )
-      .then((newDr) => {
+      .then((savedDr) => {
         setLoading(false);
-        setDataRequest(newDr);
+        setDataRequest(savedDr);
 
         setTimeout(() => {
           setSaved(true);
         }, 100);
 
-        return newDr;
+        return savedDr;
       })
       .catch((e) => {
         setLoading(false);

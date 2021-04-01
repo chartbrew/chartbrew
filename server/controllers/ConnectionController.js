@@ -479,7 +479,7 @@ class ConnectionController {
       .then((connection) => {
         const firestoreConnection = new FirestoreConnection(connection);
 
-        return firestoreConnection.get(dataRequest.query);
+        return firestoreConnection.get(dataRequest);
       })
       .catch((err) => {
         return new Promise((resolve, reject) => reject(err));
