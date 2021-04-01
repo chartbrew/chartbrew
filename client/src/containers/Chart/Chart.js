@@ -231,6 +231,14 @@ function Chart(props) {
     return exportChart(match.params.projectId, [chart.id], dashboardFilters);
   };
 
+  const _getUpdatedTime = (updatedAt) => {
+    if (moment().diff(moment(updatedAt), "days") > 1) {
+      return moment(updatedAt).calendar();
+    }
+
+    return moment(updatedAt).fromNow();
+  };
+
   const { projectId } = match.params;
 
   return (
@@ -417,7 +425,7 @@ function Chart(props) {
                   <small>
                     {!chartLoading && !chart.loading && (
                       <i>
-                        {!print && `Last Updated ${moment(chart.chartDataUpdated).calendar()}`}
+                        {!print && <span title="Last updated">{`${_getUpdatedTime(chart.chartDataUpdated)}`}</span>}
                         {print && <small>{`${moment(chart.chartDataUpdated).format("LLL")}`}</small>}
                       </i>
                     )}
