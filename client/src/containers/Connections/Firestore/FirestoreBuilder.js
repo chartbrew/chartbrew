@@ -108,14 +108,68 @@ function FirestoreBuilder(props) {
         setResult(JSON.stringify(requestBody.data, null, 2));
       }
 
+      if (dataRequest && dataRequest.conditions) {
+        let newConditions = [...conditions];
+
+        // in case of initialisation, remove the first empty condition
+        if (newConditions.length === 1 && !newConditions[0].saved && !newConditions[0].value) {
+          newConditions = [];
+        }
+
+        const toAddConditions = [];
+        for (let i = 0; i < dataRequest.conditions.length; i++) {
+          let found = false;
+          for (let j = 0; j < newConditions.length; j++) {
+            if (newConditions[j].id === dataRequest.conditions[i].id) {
+              newConditions[j] = _.clone(dataRequest.conditions[i]);
+              found = true;
+            }
+          }
+
+          if (!found) toAddConditions.push(dataRequest.conditions[i]);
+        }
+
+        setConditions(newConditions.concat(toAddConditions));
+      }
+
       setfirestoreRequest(dataRequest);
       _onFetchCollections();
 
       // setTimeout(() => {
       //   changeTutorial("FirestoreBuilder");
       // }, 1000);
+
+      if (dataRequest.query) {
+        _onTest();
+      }
     }
   }, []);
+
+  // useEffect(() => {
+  //   if (dataRequest && dataRequest.conditions) {
+  //     let newConditions = [...conditions];
+
+  //     // in case of initialisation, remove the first empty condition
+  //     if (newConditions.length === 1 && !newConditions[0].saved && !newConditions[0].value) {
+  //       newConditions = [];
+  //     }
+
+  //     const toAddConditions = [];
+  //     for (let i = 0; i < dataRequest.conditions.length; i++) {
+  //       let found = false;
+  //       for (let j = 0; j < newConditions.length; j++) {
+  //         if (newConditions[j].id === dataRequest.conditions[i].id) {
+  //           newConditions[j] = _.clone(dataRequest.conditions[i]);
+  //           found = true;
+  //         }
+  //       }
+
+  //       if (!found) toAddConditions.push(dataRequest.conditions[i]);
+  //     }
+
+  //     setConditions(newConditions.concat(toAddConditions));
+  //   }
+  // }, [dataRequest]);
 
   useEffect(() => {
     onChangeRequest(firestoreRequest);
@@ -214,6 +268,7 @@ function FirestoreBuilder(props) {
       return newItem;
     });
 
+    setConditions(newConditions);
     _onSaveConditions(newConditions);
   };
 
@@ -235,7 +290,7 @@ function FirestoreBuilder(props) {
     const newConditions = [...conditions, {
       id: uuid(),
       field: "",
-      operator: "is",
+      operator: "=",
       value: "",
       saved: false,
     }];
@@ -251,7 +306,7 @@ function FirestoreBuilder(props) {
       newConditions.push({
         id: uuid(),
         field: "",
-        operator: "is",
+        operator: "=",
         value: "",
         saved: false,
       });
@@ -263,7 +318,8 @@ function FirestoreBuilder(props) {
 
   const _onSaveConditions = (newConditions) => {
     const savedConditions = newConditions.filter((item) => item.saved);
-    onChangeRequest({ ...firestoreRequest, conditions: savedConditions });
+    // onChangeRequest({ ...firestoreRequest, conditions: savedConditions });
+    setfirestoreRequest({ ...firestoreRequest, conditions: savedConditions });
   };
 
   return (
@@ -271,7 +327,7 @@ function FirestoreBuilder(props) {
       <Grid columns={2} stackable centered>
         <Grid.Column width={10}>
           <Header as="h4">Select one of your collections:</Header>
-          <Label.Group>
+          <Label.Group size="large">
             {collectionData.map((collection) => (
               <Label
                 key={collection._queryOptions.collectionId}
@@ -302,6 +358,12 @@ function FirestoreBuilder(props) {
             return (
               <Grid.Row key={condition.id} style={styles.conditionRow} className="datasetdata-filters-tut">
                 <Grid.Column>
+                  {!_.find(fieldOptions, { value: condition.field }) && (
+                    <Popup
+                      trigger={<Icon name="exclamation triangle" color="orange" />}
+                      content="This condition will not work on the current collection."
+                    />
+                  )}
                   {index === 0 && (<label>{"where "}</label>)}
                   {index > 0 && (<label>{"and "}</label>)}
                   <Dropdown

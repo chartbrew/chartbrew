@@ -95,6 +95,10 @@ function DatarequestModal(props) {
     updateResult(result);
   }, [result]);
 
+  useEffect(() => {
+    if (saved) setCloseTrigger(false);
+  }, [saved]);
+
   const _onClose = () => {
     if (saved || closeTrigger) {
       setCloseTrigger(false);
