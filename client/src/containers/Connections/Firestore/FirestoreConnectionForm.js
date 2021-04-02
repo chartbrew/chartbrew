@@ -1,13 +1,19 @@
-import React, { useState, useEffect } from "react";
+/* eslint-disable react/jsx-props-no-spreading */
+
+import React, {
+  useState, useEffect, useCallback, useMemo
+} from "react";
 import PropTypes from "prop-types";
 import {
   Segment, Form, Button, Icon, Header, Label, Message, Container,
   Placeholder, Divider, List, Transition,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
+import { useDropzone } from "react-dropzone";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+
 import { secondary } from "../../../config/colors";
 
 const sampleAuth = `{
@@ -40,6 +46,74 @@ function FirestoreConnectionForm(props) {
   useEffect(() => {
     _init();
   }, []);
+
+  const baseStyle = {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    padding: "20px",
+    borderWidth: 2,
+    borderRadius: 2,
+    borderColor: "#eeeeee",
+    borderStyle: "dashed",
+    backgroundColor: "#fafafa",
+    color: "#bdbdbd",
+    outline: "none",
+    transition: "border .24s ease-in-out"
+  };
+
+  const activeStyle = {
+    borderColor: "#2196f3"
+  };
+
+  const acceptStyle = {
+    borderColor: "#00e676"
+  };
+
+  const rejectStyle = {
+    borderColor: "#ff1744"
+  };
+
+  function StyledDropzone() {
+    const onDrop = useCallback((acceptedFiles) => {
+      const reader = new FileReader(); // eslint-disable-line
+      reader.readAsText(acceptedFiles[0]);
+      reader.onload = () => {
+        let jsonData = reader.result;
+        jsonData = JSON.stringify(JSON.parse(reader.result), null, 4);
+        setConnection({ ...connection, firebaseServiceAccount: jsonData });
+      };
+    }, []);
+
+    const {
+      getRootProps,
+      getInputProps,
+      isDragActive,
+      isDragAccept,
+      isDragReject
+    } = useDropzone({ accept: "application/json", onDrop });
+
+    const style = useMemo(() => ({
+      ...baseStyle,
+      ...(isDragActive ? activeStyle : {}),
+      ...(isDragAccept ? acceptStyle : {}),
+      ...(isDragReject ? rejectStyle : {})
+    }), [
+      isDragActive,
+      isDragReject,
+      isDragAccept
+    ]);
+
+    return (
+      <div className="container">
+        <div {...getRootProps({ style })}>
+          <input {...getInputProps()} />
+          <p>{"Drag and drop your JSON authentication file here"}</p>
+        </div>
+      </div>
+    );
+  }
 
   const _init = () => {
     if (editConnection) {
@@ -151,7 +225,7 @@ function FirestoreConnectionForm(props) {
 
                     <List.Item>
                       <List.Content>
-                        <List.Header>{"3. Open the JSON file and copy the contents below."}</List.Header>
+                        <List.Header>{"3. Drag and drop the file below or copy the contents in the text editor."}</List.Header>
                         <List.Description>{"The JSON file contains authentication details that Chartbrew needs in order to connect to your Firebase."}</List.Description>
                       </List.Content>
                     </List.Item>
@@ -160,6 +234,10 @@ function FirestoreConnectionForm(props) {
               </Transition>
               <Divider hidden />
 
+            </Form.Field>
+
+            <Form.Field>
+              <StyledDropzone />
             </Form.Field>
 
             <Form.Field>
@@ -281,6 +359,30 @@ const styles = {
   },
   saveBtn: {
     marginRight: 0,
+  },
+  baseStyle: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    padding: "20px",
+    borderWidth: 2,
+    borderRadius: 2,
+    borderColor: "#eeeeee",
+    borderStyle: "dashed",
+    backgroundColor: "#fafafa",
+    color: "#bdbdbd",
+    outline: "none",
+    transition: "border .24s ease-in-out"
+  },
+  activeStyle: {
+    borderColor: "#2196f3"
+  },
+  acceptStyle: {
+    borderColor: "#00e676"
+  },
+  rejectStyle: {
+    borderColor: "#ff1744"
   },
 };
 
