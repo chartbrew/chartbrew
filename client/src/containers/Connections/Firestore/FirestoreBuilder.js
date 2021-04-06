@@ -25,6 +25,7 @@ import {
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import fieldFinder from "../../../modules/fieldFinder";
 import { secondary } from "../../../config/colors";
+import determineType from "../../../modules/determineType";
 
 export const operators = [{
   key: "=",
@@ -165,40 +166,44 @@ function FirestoreBuilder(props) {
   }, [firestoreRequest, connection]);
 
   useEffect(() => {
-    if (result) {
-      const tempFieldOptions = [];
-
-      let resultJSON;
-      try {
-        resultJSON = JSON.parse(result);
-      } catch (err) {
-        return;
-      }
-
-      fieldFinder(resultJSON).forEach((o) => {
-        if (o.field) {
-          tempFieldOptions.push({
-            key: o.field,
-            text: o.field && o.field.replace("root[].", "").replace("root.", ""),
-            value: o.field,
-            type: o.type,
-            label: {
-              style: { width: 55, textAlign: "center" },
-              content: o.type || "unknown",
-              size: "mini",
-              color: o.type === "date" ? "olive"
-                : o.type === "number" ? "blue"
-                  : o.type === "string" ? "teal"
-                    : o.type === "boolean" ? "purple"
-                      : "grey"
-            },
-          });
-        }
-      });
-
-      setFieldOptions(tempFieldOptions);
+    if (result && fieldOptions.length === 0) {
+      _populateFieldOptions();
     }
   }, [result]);
+
+  const _populateFieldOptions = () => {
+    const tempFieldOptions = [];
+
+    let resultJSON;
+    try {
+      resultJSON = JSON.parse(result);
+    } catch (err) {
+      return;
+    }
+
+    fieldFinder(resultJSON).forEach((o) => {
+      if (o.field) {
+        tempFieldOptions.push({
+          key: o.field,
+          text: o.field && o.field.replace("root[].", "").replace("root.", ""),
+          value: o.field,
+          type: o.type,
+          label: {
+            style: { width: 55, textAlign: "center" },
+            content: o.type || "unknown",
+            size: "mini",
+            color: o.type === "date" ? "olive"
+              : o.type === "number" ? "blue"
+                : o.type === "string" ? "teal"
+                  : o.type === "boolean" ? "purple"
+                    : "grey"
+          },
+        });
+      }
+    });
+
+    setFieldOptions(tempFieldOptions);
+  };
 
   const _onTest = (request = firestoreRequest) => {
     setRequestLoading(true);
@@ -262,7 +267,35 @@ function FirestoreBuilder(props) {
   const _onApplyCondition = (id) => {
     const newConditions = conditions.map((item) => {
       const newItem = { ...item };
-      if (item.id === id) newItem.saved = true;
+      if (item.id === id) {
+        newItem.saved = true;
+
+        let jsonResult;
+        try {
+          jsonResult = JSON.parse(result);
+          if (jsonResult && jsonResult.length === 0) return newItem;
+        } catch (e) {
+          return newItem;
+        }
+
+        // now check to see if the values need to be converted to numbers
+        const selectedField = _.find(fieldOptions, (o) => o.value === newItem.field);
+        if (selectedField && selectedField.type === "array") {
+          const selector = newItem.field.substring(newItem.field.indexOf("].") + 2);
+          const arrayValues = _.find(
+            jsonResult,
+            (o) => o[selector] && o[selector].length > 0
+          )[selector];
+          if (newItem.operator !== "array-contains" && determineType(arrayValues[0]) === "number") {
+            newItem.values = newItem.values.map((v) => parseInt(v, 10));
+            newItem.items = newItem.items.map((i) => (
+              { text: i.text, value: parseInt(i.value, 10) }
+            ));
+          } else if (newItem.operator === "array-contains" && determineType(arrayValues[0]) === "number") {
+            newItem.value = parseInt(newItem.value, 10);
+          }
+        }
+      }
 
       return newItem;
     });
@@ -577,7 +610,6 @@ function FirestoreBuilder(props) {
                 height="450px"
                 width="none"
                 value={result || ""}
-                onChange={() => setResult(result)}
                 name="resultEditor"
                 readOnly
                 editorProps={{ $blockScrolling: false }}

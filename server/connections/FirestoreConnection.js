@@ -29,6 +29,7 @@ class FirestoreConnection {
         if (condition.value === "false") condition.value = false;
 
         const field = condition.field.replace("root[].", "");
+
         switch (condition.operator) {
           case "==":
             docsRef = docsRef.where(field, "==", condition.value);
@@ -55,16 +56,16 @@ class FirestoreConnection {
             docsRef = docsRef.where(field, "<=", condition.value);
             break;
           case "array-contains":
-            docsRef = docsRef.where(field, "array-contains", parseInt(condition.value, 10));
+            docsRef = docsRef.where(field, "array-contains", condition.value);
             break;
           case "array-contains-any":
-            docsRef = docsRef.where(field, "array-contains-any", condition.value);
+            docsRef = docsRef.where(field, "array-contains-any", condition.values);
             break;
           case "in":
-            docsRef = docsRef.where(field, "in", condition.value);
+            docsRef = docsRef.where(field, "in", condition.values);
             break;
           case "not-in":
-            docsRef = docsRef.where(field, "not-in", condition.value);
+            docsRef = docsRef.where(field, "not-in", condition.values);
             break;
           default:
             break;
