@@ -54,6 +54,18 @@ class FirestoreConnection {
           case "<=":
             docsRef = docsRef.where(field, "<=", condition.value);
             break;
+          case "array-contains":
+            docsRef = docsRef.where(field, "array-contains", parseInt(condition.value, 10));
+            break;
+          case "array-contains-any":
+            docsRef = docsRef.where(field, "array-contains-any", condition.value);
+            break;
+          case "in":
+            docsRef = docsRef.where(field, "in", condition.value);
+            break;
+          case "not-in":
+            docsRef = docsRef.where(field, "not-in", condition.value);
+            break;
           default:
             break;
         }

@@ -14,20 +14,7 @@ import { useDropzone } from "react-dropzone";
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 
-import { secondary } from "../../../config/colors";
-
-const sampleAuth = `{
-  "type": "service_account",
-  "project_id": "your-project",
-  "private_key_id": "example",
-  "private_key": "-----BEGIN PRIVATE KEY-----example-----END PRIVATE KEY-----",
-  "client_email": "firebase-adminsdk@example.iam.gserviceaccount.com",
-  "client_id": "00000000000000000000",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk%40example.iam.gserviceaccount.com"
-}`;
+import { blue, secondary } from "../../../config/colors";
 
 /*
   The Form used to create API connections
@@ -39,13 +26,20 @@ function FirestoreConnectionForm(props) {
 
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
-  const [connection, setConnection] = useState({ type: "firestore", optionsArray: [], firebaseServiceAccount: sampleAuth });
+  const [connection, setConnection] = useState({ type: "firestore", optionsArray: [], firebaseServiceAccount: "" });
   const [errors, setErrors] = useState({});
-  const [showInstructions, setShowInstructions] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(true);
+  const [jsonVisible, setJsonVisible] = useState(false);
 
   useEffect(() => {
     _init();
   }, []);
+
+  useEffect(() => {
+    if (connection && connection.firebaseServiceAccount) {
+      setJsonVisible(true);
+    }
+  }, [connection]);
 
   const baseStyle = {
     flex: 1,
@@ -58,7 +52,7 @@ function FirestoreConnectionForm(props) {
     borderColor: "#eeeeee",
     borderStyle: "dashed",
     backgroundColor: "#fafafa",
-    color: "#bdbdbd",
+    color: blue,
     outline: "none",
     transition: "border .24s ease-in-out"
   };
@@ -109,7 +103,10 @@ function FirestoreConnectionForm(props) {
       <div className="container">
         <div {...getRootProps({ style })}>
           <input {...getInputProps()} />
-          <p>{"Drag and drop your JSON authentication file here"}</p>
+          <p>
+            <Icon size="big" name="file code outline" />
+            {"Drag and drop your JSON authentication file here"}
+          </p>
         </div>
       </div>
     );
@@ -160,11 +157,11 @@ function FirestoreConnectionForm(props) {
   };
 
   const _getFirebaseAuth = (data) => {
-    if (!data.firebaseServiceAccount) return sampleAuth;
+    if (!data.firebaseServiceAccount) return "";
     try {
       return JSON.stringify(data.firebaseServiceAccount, null, 4);
     } catch (e) {
-      return data.firebaseServiceAccount || sampleAuth;
+      return data.firebaseServiceAccount || "";
     }
   };
 
@@ -199,7 +196,7 @@ function FirestoreConnectionForm(props) {
               <Divider />
 
               <Header as="h4" onClick={() => setShowInstructions(!showInstructions)} style={styles.tableFields}>
-                {"See connection instructions "}
+                {"How to authenticate "}
                 {!showInstructions && (<Icon size="small" name="chevron down" />)}
                 {showInstructions && (<Icon size="small" name="chevron up" />)}
               </Header>
@@ -240,21 +237,35 @@ function FirestoreConnectionForm(props) {
               <StyledDropzone />
             </Form.Field>
 
-            <Form.Field>
-              <label>Add your Service Account details here</label>
-              <AceEditor
-                mode="json"
-                theme="tomorrow"
-                height="250px"
-                width="none"
-                value={connection.firebaseServiceAccount || ""}
-                name="queryEditor"
-                onChange={(value) => {
-                  setConnection({ ...connection, firebaseServiceAccount: value });
-                }}
-                editorProps={{ $blockScrolling: true }}
-              />
-            </Form.Field>
+            {!jsonVisible && (
+              <Form.Field>
+                <Button
+                  basic
+                  color="olive"
+                  className="tertiary"
+                  content="Or copy the JSON manually"
+                  onClick={() => setJsonVisible(true)}
+                />
+              </Form.Field>
+            )}
+
+            {jsonVisible && (
+              <Form.Field>
+                <label>Add your Service Account details here</label>
+                <AceEditor
+                  mode="json"
+                  theme="tomorrow"
+                  height="250px"
+                  width="none"
+                  value={connection.firebaseServiceAccount || ""}
+                  name="queryEditor"
+                  onChange={(value) => {
+                    setConnection({ ...connection, firebaseServiceAccount: value });
+                  }}
+                  editorProps={{ $blockScrolling: true }}
+                />
+              </Form.Field>
+            )}
 
             <Divider hidden />
           </Form>

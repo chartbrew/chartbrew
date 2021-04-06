@@ -93,6 +93,8 @@ function FirestoreBuilder(props) {
     field: "",
     operator: "==",
     value: "",
+    items: [],
+    values: [],
   }]);
 
   const {
@@ -137,6 +139,8 @@ function FirestoreBuilder(props) {
             field: "",
             operator: "==",
             value: "",
+            items: [],
+            values: [],
           }]);
         } else {
           setConditions(finalConditions);
@@ -271,7 +275,7 @@ function FirestoreBuilder(props) {
     const newConditions = conditions.map((item) => {
       let newItem = { ...item };
       if (item.id === id) {
-        const previousItem = _.find(dataset.conditions, { id });
+        const previousItem = _.find(dataRequest.conditions, { id });
         newItem = { ...previousItem };
       }
 
@@ -288,6 +292,8 @@ function FirestoreBuilder(props) {
       operator: "==",
       value: "",
       saved: false,
+      items: [],
+      values: [],
     }];
 
     setConditions(newConditions);
@@ -304,6 +310,8 @@ function FirestoreBuilder(props) {
         operator: "==",
         value: "",
         saved: false,
+        items: [],
+        values: [],
       });
     }
 
@@ -316,6 +324,29 @@ function FirestoreBuilder(props) {
     const newRequest = { ...firestoreRequest, conditions: savedConditions };
     setFirestoreRequest(newRequest);
     _onTest(newRequest);
+  };
+
+  const _onAddConditionValue = (id, { value }) => {
+    const newConditions = conditions.map((c) => {
+      const newC = c;
+      if (newC.id === id) {
+        newC.items = [{ text: value, value }, ...newC.items];
+      }
+      return newC;
+    });
+    setConditions(newConditions);
+  };
+
+  const _onChangeConditionValues = (id, { value }) => {
+    const newConditions = conditions.map((c) => {
+      const newC = c;
+      if (newC.id === id) {
+        newC.values = value;
+        newC.saved = false;
+      }
+      return newC;
+    });
+    setConditions(newConditions);
   };
 
   return (
@@ -393,15 +424,19 @@ function FirestoreBuilder(props) {
 
                   {(!condition.field
                     || (_.find(fieldOptions, { value: condition.field })
-                      && _.find(fieldOptions, { value: condition.field }).type !== "date")) && (
-                      <Input
-                        placeholder="Enter a value"
-                        size="small"
-                        value={condition.value}
-                        onChange={(e, data) => _updateCondition(condition.id, data.value, "value")}
-                        disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
-                      />
-                  )}
+                      && _.find(fieldOptions, { value: condition.field }).type !== "date"))
+                      && (condition.operator !== "array-contains-any"
+                        && condition.operator !== "in"
+                        && condition.operator !== "not-in")
+                        && (
+                        <Input
+                          placeholder="Enter a value"
+                          size="small"
+                          value={condition.value}
+                          onChange={(e, data) => _updateCondition(condition.id, data.value, "value")}
+                          disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
+                        />
+                        )}
                   {_.find(fieldOptions, { value: condition.field })
                     && _.find(fieldOptions, { value: condition.field }).type === "date" && (
                       <Popup
@@ -428,6 +463,24 @@ function FirestoreBuilder(props) {
                         )}
                       />
                   )}
+
+                  {(condition.operator === "array-contains-any"
+                    || condition.operator === "in"
+                    || condition.operator === "not-in")
+                    && (
+                    <Dropdown
+                      options={condition.items}
+                      placeholder="Enter values"
+                      search
+                      selection
+                      multiple
+                      allowAdditions
+                      value={condition.values}
+                      onAddItem={(e, data) => _onAddConditionValue(condition.id, data)}
+                      onChange={(e, data) => _onChangeConditionValues(condition.id, data)}
+                      className="small"
+                    />
+                    )}
 
                   <Button.Group size="small">
                     <Popup
@@ -462,7 +515,7 @@ function FirestoreBuilder(props) {
                       />
                     )}
 
-                    {!condition.saved && (condition.value || condition.operator === "isNotNull" || condition.operator === "isNull") && (
+                    {!condition.saved && (condition.value || condition.operator === "isNotNull" || condition.operator === "isNull" || condition.values.length > 0) && (
                       <Popup
                         trigger={(
                           <Button
@@ -479,7 +532,7 @@ function FirestoreBuilder(props) {
                       />
                     )}
 
-                    {!condition.saved && condition.value && (
+                    {!condition.saved && (condition.value || condition.values.length > 0) && (
                       <Popup
                         trigger={(
                           <Button
