@@ -45,9 +45,11 @@ function DatasetData(props) {
 
       fieldFinder(requestResult.data).forEach((o) => {
         if (o.field) {
+          let text = o.field && o.field.replace("root[].", "").replace("root.", "");
+          if (o.type === "array") text += "(get element count)";
           tempFieldOptions.push({
             key: o.field,
-            text: o.field && o.field.replace("root[].", "").replace("root.", ""),
+            text: o.field && text,
             value: o.field,
             type: o.type,
             label: {
@@ -404,8 +406,7 @@ function DatasetData(props) {
             {!formula && (
               <Button
                 icon
-                basic
-                style={styles.addConditionBtn}
+                className="tertiary"
                 onClick={_onAddFormula}
               >
                 <Icon name="plus" />

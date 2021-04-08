@@ -217,13 +217,21 @@ class AxisChart {
             yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType);
             break;
           case "count":
-            yAxisData = this.count(xAxisData.formatted);
+            yAxisData = this.count(xAxisData.formatted, yType, yAxisData);
             break;
           case "avg":
-            yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, "avg");
+            if (yType === "array") {
+              yAxisData = this.count(xAxisData.formatted, yType, yAxisData, true);
+            } else {
+              yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, "avg");
+            }
             break;
           case "sum":
-            yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, "sum");
+            if (yType === "array") {
+              yAxisData = this.count(xAxisData.formatted, yType, yAxisData);
+            } else {
+              yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, "sum");
+            }
             break;
           default:
             yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType);
@@ -548,14 +556,31 @@ class AxisChart {
     return finalData;
   }
 
-  count(xData) {
+  // average is used for the mean number of elements in arrays (if type == array)
+  count(xData, type, yData, average) {
     const countData = {};
-    xData.map((item) => {
-      if (!countData[item]) countData[item] = 1;
-      else countData[item]++;
 
-      return item;
-    });
+    if (type === "array") {
+      const avgCounter = {};
+      yData.forEach((item) => {
+        if (!countData[item.x] && item.y) countData[item.x] = item.y.length;
+        else if (item.y) countData[item.x] += item.y.length;
+
+        if (!avgCounter[item.x]) avgCounter[item.x] = 1;
+        else avgCounter[item.x]++;
+      });
+
+      if (average) {
+        Object.keys(avgCounter).forEach((key) => {
+          countData[key] /= avgCounter[key];
+        });
+      }
+    } else {
+      xData.forEach((item) => {
+        if (!countData[item]) countData[item] = 1;
+        else countData[item]++;
+      });
+    }
 
     return countData;
   }
