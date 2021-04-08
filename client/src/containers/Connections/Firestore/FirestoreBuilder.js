@@ -208,6 +208,7 @@ function FirestoreBuilder(props) {
   const _onTest = (request = firestoreRequest) => {
     setRequestLoading(true);
 
+    if (request === null) request = firestoreRequest; // eslint-disable-line
     const requestToSave = _.cloneDeep(request);
     onSave(requestToSave).then(() => {
       _onRunRequest();
@@ -218,7 +219,8 @@ function FirestoreBuilder(props) {
     runRequest(match.params.projectId, match.params.chartId, dataset.id)
       .then((result) => {
         setRequestLoading(false);
-        setResult(JSON.stringify(result.data, null, 2));
+        const jsonString = JSON.stringify(result.data, null, 2);
+        setResult(jsonString);
       })
       .catch((error) => {
         setRequestLoading(false);
@@ -400,21 +402,21 @@ function FirestoreBuilder(props) {
               </Label>
             ))}
           </Label.Group>
-          <div>
-            <Divider />
-            <Button
-              size="small"
-              icon
-              labelPosition="right"
-              onClick={_onFetchCollections}
-              loading={collectionsLoading}
-            >
-              <Icon name="refresh" />
-              Refresh collections
-            </Button>
-          </div>
+          <Button
+            primary
+            size="small"
+            icon="refresh"
+            className="tertiary"
+            onClick={_onFetchCollections}
+            loading={collectionsLoading}
+            content="Refresh collections"
+          />
 
-          <Header as="h4">Filter the data</Header>
+          <Divider />
+
+          <Header as="h4">
+            {"Filter the data"}
+          </Header>
           {conditions.map((condition, index) => {
             return (
               <Grid.Row key={condition.id} style={styles.conditionRow} className="datasetdata-filters-tut">
@@ -587,6 +589,14 @@ function FirestoreBuilder(props) {
               </Grid.Row>
             );
           })}
+          <Button
+            size="small"
+            primary
+            className="tertiary"
+            content="Refresh fields"
+            icon="refresh"
+            onClick={_populateFieldOptions}
+          />
         </Grid.Column>
         <Grid.Column width={6}>
           <Form>

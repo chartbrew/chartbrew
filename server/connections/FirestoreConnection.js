@@ -1,4 +1,5 @@
 const firebase = require("firebase-admin");
+const determineType = require("../modules/determineType");
 
 class FirestoreConnection {
   constructor(connection, dataRequestId) {
@@ -17,6 +18,9 @@ class FirestoreConnection {
     }
 
     this.db = this.admin.firestore();
+
+    // seed data
+    // firestoreSeed(this.db, "client");
   }
 
   async get(dataRequest) {
@@ -78,7 +82,33 @@ class FirestoreConnection {
       formattedDocs.push(doc.data());
     });
 
-    return formattedDocs;
+    const nestedCheckedDocs = [];
+    let index = -1;
+    formattedDocs.forEach((doc) => {
+      nestedCheckedDocs.push(doc);
+      index++;
+      Object.keys(doc).forEach((key) => {
+        if (determineType(doc[key]) === "array") {
+          doc[key].forEach((subDoc, subIndex) => {
+            if (determineType(subDoc) === "object") {
+              if (subDoc._firestore) {
+                nestedCheckedDocs[index][key][subIndex] = subDoc.id;
+              } else {
+                Object.keys(subDoc).forEach((subKey) => {
+                  if (subDoc[subKey] && subDoc[subKey]._firestore) {
+                    nestedCheckedDocs[index][key][subIndex][subKey] = subDoc[subKey].id;
+                  }
+                });
+              }
+            }
+          });
+        } else if (doc[key] && doc[key]._firestore) {
+          nestedCheckedDocs[index][key] = doc[key].id;
+        }
+      });
+    });
+
+    return nestedCheckedDocs;
   }
 
   listCollections() {
