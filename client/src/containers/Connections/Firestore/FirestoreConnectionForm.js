@@ -100,7 +100,7 @@ function FirestoreConnectionForm(props) {
     ]);
 
     return (
-      <div className="container">
+      <div className="container" style={{ cursor: "pointer" }}>
         <div {...getRootProps({ style })}>
           <input {...getInputProps()} />
           <p>
@@ -240,10 +240,9 @@ function FirestoreConnectionForm(props) {
             {!jsonVisible && (
               <Form.Field>
                 <Button
-                  basic
-                  color="olive"
+                  primary
                   className="tertiary"
-                  content="Or copy the JSON manually"
+                  content="Click here to copy the JSON manually"
                   onClick={() => setJsonVisible(true)}
                 />
               </Form.Field>
@@ -279,6 +278,15 @@ function FirestoreConnectionForm(props) {
             </Message>
           )}
 
+        <Message icon>
+          <Icon name="wrench" />
+          <Message.Content>
+            <Message.Header>Firestore has just arrived</Message.Header>
+            {"The Firestore functionality was just implemented on Chartbrew. If you spot any issues, please let me know at "}
+            <a href="mailto:raz@chartbrew.com?subject=Firestore feedback">raz@chartbrew.com</a>
+          </Message.Content>
+        </Message>
+
         <Divider hidden />
         <Container fluid textAlign="right">
           <Button
@@ -286,6 +294,7 @@ function FirestoreConnectionForm(props) {
             basic
             onClick={() => _onCreateConnection(true)}
             loading={testLoading}
+            disabled={!connection.name || !connection.firebaseServiceAccount}
           >
             Test connection
           </Button>
@@ -297,6 +306,7 @@ function FirestoreConnectionForm(props) {
               icon
               labelPosition="right"
               style={styles.saveBtn}
+              disabled={!connection.name || !connection.firebaseServiceAccount}
             >
               <Icon name="checkmark" />
               Save connection
@@ -310,6 +320,7 @@ function FirestoreConnectionForm(props) {
               icon
               labelPosition="right"
               style={styles.saveBtn}
+              disabled={!connection.name || !connection.firebaseServiceAccount}
             >
               <Icon name="checkmark" />
               Save changes

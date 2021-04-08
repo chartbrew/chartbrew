@@ -268,6 +268,58 @@ const steps = {
       ),
     },
   ],
+  firestoreBuilder: [
+    {
+      selector: ".firestorebuilder-collections-tut",
+      content: () => (
+        <>
+          <p>
+            {"You Firestore collections will appear here."}
+          </p>
+          <p>
+            {"In case you can't see them or you added a new collection just now, press the refresh link to get the latest data."}
+          </p>
+          <p>
+            {"Once you see the collection you want to use, just click on it to select it."}
+          </p>
+        </>
+      ),
+    },
+    {
+      selector: ".firestorebuilder-request-tut",
+      content: () => (
+        <>
+          <p>{"Once you select a collection, click here to get data from your Firestore database."}</p>
+        </>
+      ),
+    },
+    {
+      selector: ".firestorebuilder-result-tut",
+      content: () => (
+        <>
+          <p>{"You can see the results of your query in JSON format over here."}</p>
+        </>
+      ),
+    },
+    {
+      selector: ".firestorebuilder-query-tut",
+      content: ({ close }) => ( // eslint-disable-line
+        <>
+          <p>{"One last thing!"}</p>
+          <p>{"You can query the data from your Firestore database using the built-in query editor here."}</p>
+          <p>{"You will have to select which field you want to query on, the operation, and value(s)."}</p>
+          <p>{"Chartbrew supports all Firestore operations, but more custom query options will be added soon."}</p>
+          <Button
+            content="Awesome!"
+            icon="checkmark"
+            labelPosition="right"
+            positive
+            onClick={close}
+          />
+        </>
+      ),
+    },
+  ],
   requestmodal: [
     {
       selector: ".requestmodal-fields-tut",

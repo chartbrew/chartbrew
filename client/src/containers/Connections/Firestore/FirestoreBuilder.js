@@ -151,9 +151,9 @@ function FirestoreBuilder(props) {
       setFirestoreRequest(dataRequest);
       _onFetchCollections();
 
-      // setTimeout(() => {
-      //   changeTutorial("FirestoreBuilder");
-      // }, 1000);
+      setTimeout(() => {
+        changeTutorial("firestoreBuilder");
+      }, 1000);
 
       if (dataRequest.query) {
         _onRunRequest();
@@ -388,219 +388,226 @@ function FirestoreBuilder(props) {
     <div style={styles.container}>
       <Grid columns={2} stackable centered>
         <Grid.Column width={10}>
-          <Header as="h4">Select one of your collections:</Header>
-          <Label.Group size="large">
-            {collectionData.map((collection) => (
-              <Label
-                key={collection._queryOptions.collectionId}
-                basic={firestoreRequest.query !== collection._queryOptions.collectionId}
-                color="blue"
-                onClick={() => _onChangeQuery(collection._queryOptions.collectionId)}
-                as="a"
-              >
-                {collection._queryOptions.collectionId}
-              </Label>
-            ))}
-          </Label.Group>
-          <Button
-            primary
-            size="small"
-            icon="refresh"
-            className="tertiary"
-            onClick={_onFetchCollections}
-            loading={collectionsLoading}
-            content="Refresh collections"
-          />
-
+          <div className="firestorebuilder-collections-tut">
+            <Header as="h4">Select one of your collections:</Header>
+            <Label.Group size="large">
+              {collectionData.map((collection) => (
+                <Label
+                  key={collection._queryOptions.collectionId}
+                  basic={firestoreRequest.query !== collection._queryOptions.collectionId}
+                  color="blue"
+                  onClick={() => _onChangeQuery(collection._queryOptions.collectionId)}
+                  as="a"
+                >
+                  {collection._queryOptions.collectionId}
+                </Label>
+              ))}
+            </Label.Group>
+            <Button
+              primary
+              size="small"
+              icon="refresh"
+              className="tertiary"
+              onClick={_onFetchCollections}
+              loading={collectionsLoading}
+              content="Refresh collections"
+            />
+          </div>
           <Divider />
 
-          <Header as="h4">
-            {"Filter the data"}
-          </Header>
-          {conditions.map((condition, index) => {
-            return (
-              <Grid.Row key={condition.id} style={styles.conditionRow} className="datasetdata-filters-tut">
-                <Grid.Column>
-                  {!_.find(fieldOptions, { value: condition.field }) && condition.saved && (
-                    <Popup
-                      trigger={<Icon name="exclamation triangle" color="orange" />}
-                      content="This condition might not work on the current collection."
-                    />
-                  )}
-                  {index === 0 && (<label>{"where "}</label>)}
-                  {index > 0 && (<label>{"and "}</label>)}
-                  <Dropdown
-                    icon={null}
-                    header="Type to search"
-                    className="small button"
-                    button
-                    options={fieldOptions}
-                    search
-                    text={(condition.field && condition.field.substring(condition.field.lastIndexOf(".") + 1)) || "field"}
-                    value={condition.field}
-                    onChange={(e, data) => _updateCondition(condition.id, data.value, "field")}
-                  />
-                  <Dropdown
-                    icon={null}
-                    button
-                    className="small button"
-                    options={operators}
-                    search
-                    text={
-                      (
-                        _.find(operators, { value: condition.operator })
-                        && _.find(operators, { value: condition.operator }).key
-                      )
-                      || "=="
-                    }
-                    value={condition.operator}
-                    onChange={(e, data) => _updateCondition(condition.id, data.value, "operator")}
-                  />
-
-                  {(!condition.field
-                    || (_.find(fieldOptions, { value: condition.field })
-                      && _.find(fieldOptions, { value: condition.field }).type !== "date"))
-                      && (condition.operator !== "array-contains-any"
-                        && condition.operator !== "in"
-                        && condition.operator !== "not-in")
-                        && (
-                        <Input
-                          placeholder="Enter a value"
-                          size="small"
-                          value={condition.value}
-                          onChange={(e, data) => _updateCondition(condition.id, data.value, "value")}
-                          disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
-                        />
-                        )}
-                  {_.find(fieldOptions, { value: condition.field })
-                    && _.find(fieldOptions, { value: condition.field }).type === "date" && (
+          <div className="firestorebuilder-query-tut">
+            <Header as="h4">
+              {"Filter the data "}
+              <Popup
+                trigger={<Icon style={{ fontSize: 16, verticalAlign: "baseline" }} name="question circle" />}
+                content="These filters are applied directly on your firestore connection. You can further filter the data on Chartbrew's side when you configure your chart."
+              />
+            </Header>
+            {conditions.map((condition, index) => {
+              return (
+                <Grid.Row key={condition.id} style={styles.conditionRow} className="datasetdata-filters-tut">
+                  <Grid.Column>
+                    {!_.find(fieldOptions, { value: condition.field }) && condition.saved && (
                       <Popup
-                        on="click"
-                        pinned
-                        position="top center"
-                        trigger={(
+                        trigger={<Icon name="exclamation triangle" color="orange" />}
+                        content="This condition might not work on the current collection."
+                      />
+                    )}
+                    {index === 0 && (<label>{"where "}</label>)}
+                    {index > 0 && (<label>{"and "}</label>)}
+                    <Dropdown
+                      icon={null}
+                      header="Type to search"
+                      className="small button"
+                      button
+                      options={fieldOptions}
+                      search
+                      text={(condition.field && condition.field.substring(condition.field.lastIndexOf(".") + 1)) || "field"}
+                      value={condition.field}
+                      onChange={(e, data) => _updateCondition(condition.id, data.value, "field")}
+                    />
+                    <Dropdown
+                      icon={null}
+                      button
+                      className="small button"
+                      options={operators}
+                      search
+                      text={
+                        (
+                          _.find(operators, { value: condition.operator })
+                          && _.find(operators, { value: condition.operator }).key
+                        )
+                        || "=="
+                      }
+                      value={condition.operator}
+                      onChange={(e, data) => _updateCondition(condition.id, data.value, "operator")}
+                    />
+
+                    {(!condition.field
+                      || (_.find(fieldOptions, { value: condition.field })
+                        && _.find(fieldOptions, { value: condition.field }).type !== "date"))
+                        && (condition.operator !== "array-contains-any"
+                          && condition.operator !== "in"
+                          && condition.operator !== "not-in")
+                          && (
                           <Input
                             placeholder="Enter a value"
-                            icon="calendar alternate"
-                            iconPosition="left"
                             size="small"
-                            value={condition.value && format(new Date(condition.value), "Pp", { locale: enGB })}
+                            value={condition.value}
+                            onChange={(e, data) => _updateCondition(condition.id, data.value, "value")}
                             disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                           />
-                        )}
-                        content={(
-                          <Calendar
-                            date={(condition.value && new Date(condition.value)) || new Date()}
-                            onChange={(date) => _updateCondition(condition.id, formatISO(date), "value")}
-                            locale={enGB}
-                            color={secondary}
-                          />
-                        )}
-                      />
-                  )}
-
-                  {(condition.operator === "array-contains-any"
-                    || condition.operator === "in"
-                    || condition.operator === "not-in")
-                    && (
-                    <Dropdown
-                      options={condition.items}
-                      placeholder="Enter values"
-                      search
-                      selection
-                      multiple
-                      allowAdditions
-                      value={condition.values}
-                      onAddItem={(e, data) => _onAddConditionValue(condition.id, data)}
-                      onChange={(e, data) => _onChangeConditionValues(condition.id, data)}
-                      className="small"
-                    />
+                          )}
+                    {_.find(fieldOptions, { value: condition.field })
+                      && _.find(fieldOptions, { value: condition.field }).type === "date" && (
+                        <Popup
+                          on="click"
+                          pinned
+                          position="top center"
+                          trigger={(
+                            <Input
+                              placeholder="Enter a value"
+                              icon="calendar alternate"
+                              iconPosition="left"
+                              size="small"
+                              value={condition.value && format(new Date(condition.value), "Pp", { locale: enGB })}
+                              disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
+                            />
+                          )}
+                          content={(
+                            <Calendar
+                              date={(condition.value && new Date(condition.value)) || new Date()}
+                              onChange={(date) => _updateCondition(condition.id, formatISO(date), "value")}
+                              locale={enGB}
+                              color={secondary}
+                            />
+                          )}
+                        />
                     )}
 
-                  <Button.Group size="small">
-                    <Popup
-                      trigger={(
-                        <Button
-                          icon
-                          basic
-                          style={styles.addConditionBtn}
-                          onClick={() => _onRemoveCondition(condition.id)}
-                        >
-                          <Icon name="minus" />
-                        </Button>
+                    {(condition.operator === "array-contains-any"
+                      || condition.operator === "in"
+                      || condition.operator === "not-in")
+                      && (
+                      <Dropdown
+                        options={condition.items}
+                        placeholder="Enter values"
+                        search
+                        selection
+                        multiple
+                        allowAdditions
+                        value={condition.values}
+                        onAddItem={(e, data) => _onAddConditionValue(condition.id, data)}
+                        onChange={(e, data) => _onChangeConditionValues(condition.id, data)}
+                        className="small"
+                      />
                       )}
-                      content="Remove condition"
-                      position="top center"
-                    />
 
-                    {index === conditions.length - 1 && (
+                    <Button.Group size="small">
                       <Popup
                         trigger={(
                           <Button
                             icon
                             basic
                             style={styles.addConditionBtn}
-                            onClick={_onAddCondition}
+                            onClick={() => _onRemoveCondition(condition.id)}
                           >
-                            <Icon name="plus" />
+                            <Icon name="minus" />
                           </Button>
                         )}
-                        content="Add a new condition"
+                        content="Remove condition"
                         position="top center"
                       />
-                    )}
 
-                    {!condition.saved && (condition.value || condition.operator === "isNotNull" || condition.operator === "isNull" || condition.values.length > 0) && (
-                      <Popup
-                        trigger={(
-                          <Button
-                            icon
-                            basic
-                            style={styles.addConditionBtn}
-                            onClick={() => _onApplyCondition(condition.id)}
-                          >
-                            <Icon name="checkmark" color="green" />
-                          </Button>
-                        )}
-                        content="Apply this condition"
-                        position="top center"
-                      />
-                    )}
+                      {index === conditions.length - 1 && (
+                        <Popup
+                          trigger={(
+                            <Button
+                              icon
+                              basic
+                              style={styles.addConditionBtn}
+                              onClick={_onAddCondition}
+                            >
+                              <Icon name="plus" />
+                            </Button>
+                          )}
+                          content="Add a new condition"
+                          position="top center"
+                        />
+                      )}
 
-                    {!condition.saved && (condition.value || condition.values.length > 0) && (
-                      <Popup
-                        trigger={(
-                          <Button
-                            icon
-                            basic
-                            style={styles.addConditionBtn}
-                            onClick={() => _onRevertCondition(condition.id)}
-                          >
-                            <Icon name="undo alternate" color="olive" />
-                          </Button>
-                        )}
-                        content="Undo changes"
-                        position="top center"
-                      />
-                    )}
-                  </Button.Group>
-                </Grid.Column>
+                      {!condition.saved && (condition.value || condition.operator === "isNotNull" || condition.operator === "isNull" || condition.values.length > 0) && (
+                        <Popup
+                          trigger={(
+                            <Button
+                              icon
+                              basic
+                              style={styles.addConditionBtn}
+                              onClick={() => _onApplyCondition(condition.id)}
+                            >
+                              <Icon name="checkmark" color="green" />
+                            </Button>
+                          )}
+                          content="Apply this condition"
+                          position="top center"
+                        />
+                      )}
 
-              </Grid.Row>
-            );
-          })}
-          <Button
-            size="small"
-            primary
-            className="tertiary"
-            content="Refresh fields"
-            icon="refresh"
-            onClick={_populateFieldOptions}
-          />
+                      {!condition.saved && (condition.value || condition.values.length > 0) && (
+                        <Popup
+                          trigger={(
+                            <Button
+                              icon
+                              basic
+                              style={styles.addConditionBtn}
+                              onClick={() => _onRevertCondition(condition.id)}
+                            >
+                              <Icon name="undo alternate" color="olive" />
+                            </Button>
+                          )}
+                          content="Undo changes"
+                          position="top center"
+                        />
+                      )}
+                    </Button.Group>
+                  </Grid.Column>
+
+                </Grid.Row>
+              );
+            })}
+            <Button
+              size="small"
+              primary
+              className="tertiary"
+              content="Refresh fields"
+              icon="refresh"
+              onClick={_populateFieldOptions}
+            />
+          </div>
         </Grid.Column>
         <Grid.Column width={6}>
           <Form>
-            <Form.Field className="FirestoreBuilder-request-tut">
+            <Form.Field className="firestorebuilder-request-tut">
               <Button
                 primary
                 icon
@@ -610,10 +617,10 @@ function FirestoreBuilder(props) {
                 fluid
               >
                 <Icon name="play" />
-                Make the request
+                Get Firestore data
               </Button>
             </Form.Field>
-            <Form.Field>
+            <Form.Field className="firestorebuilder-result-tut">
               <AceEditor
                 mode="json"
                 theme="tomorrow"
@@ -623,7 +630,6 @@ function FirestoreBuilder(props) {
                 name="resultEditor"
                 readOnly
                 editorProps={{ $blockScrolling: false }}
-                className="FirestoreBuilder-result-tut"
               />
             </Form.Field>
           </Form>

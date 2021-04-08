@@ -230,7 +230,7 @@ function Connections(props) {
               </Header>
             )}
             <Segment attached>
-              <Card.Group itemsPerRow={4} stackable>
+              <Card.Group itemsPerRow={5} stackable>
                 <Card className="project-segment" onClick={() => setFormType("api")}>
                   <Image src={rest} />
                   <Card.Content>
@@ -255,14 +255,13 @@ function Connections(props) {
                     <Card.Header>MySQL</Card.Header>
                   </Card.Content>
                 </Card>
-                <Card className="project-segment" onClick={() => setFormType("firebase")}>
-                  <Image src={firebaseLogo} />
-                  <Card.Content>
-                    <Card.Header>Realtime Database</Card.Header>
-                  </Card.Content>
-                </Card>
                 <Card className="project-segment" onClick={() => setFormType("firestore")}>
-                  <Image src={firestoreLogo} />
+                  <Image
+                    src={firestoreLogo}
+                    label={{
+                      as: "a", color: "olive", title: "Freshly released", corner: "left", icon: "wrench"
+                    }}
+                  />
                   <Card.Content>
                     <Card.Header>Firestore</Card.Header>
                   </Card.Content>

@@ -39,6 +39,11 @@ export default function showTutorial(type, userData) {
         return true;
       }
       break;
+    case "firestorebuilder":
+      if (userData[type] && compareVersions(userData[type], "1.8.0") < 0) {
+        return true;
+      }
+      break;
     default:
       break;
   }

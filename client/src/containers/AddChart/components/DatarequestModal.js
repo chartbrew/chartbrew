@@ -77,7 +77,7 @@ function DatarequestModal(props) {
   useEffect(() => {
     const request = _.find(requests, { options: { id: dataset.id } });
     setResult(request);
-    if (open) changeTutorial("requestmodal");
+    if (open && connection.type !== "firestore") changeTutorial("requestmodal");
   }, [requests, dataset]);
 
   useEffect(() => {
@@ -239,7 +239,7 @@ function DatarequestModal(props) {
           onClick={_onClose}
           primary
         >
-          Done
+          Build the chart
         </Button>
       </Modal.Actions>
     </Modal>
