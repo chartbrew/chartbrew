@@ -127,6 +127,10 @@ function UserDashboard(props) {
     return canAccess(role, user.data.id, teamRoles);
   };
 
+  const _getTeamRole = (teamRoles) => {
+    return teamRoles.filter((o) => o.user_id === user.data.id)[0].role;
+  };
+
   /* Modal to invite team members  */
   const invitationModal = () => {
     return (
@@ -287,16 +291,11 @@ function UserDashboard(props) {
                   Team settings
                 </Button>
                 )}
-              {key.TeamRoles[0] && key.TeamRoles.map((teamRole) => {
-                return (
-                  teamRole.user_id === user.data.id
-                    && (
-                      <span key={teamRole.user_id}>
-                        <Header style={styles.listRole} content={teamRole.role} />
-                      </span>
-                    )
-                );
-              })}
+              {key.TeamRoles[0] && (
+                <span>
+                  <Header style={styles.listRole} content={_getTeamRole(key.TeamRoles)} />
+                </span>
+              )}
 
               <Card.Group itemsPerRow={4} style={styles.cardsContainer}>
                 {key.Projects && key.Projects.map((project) => {
