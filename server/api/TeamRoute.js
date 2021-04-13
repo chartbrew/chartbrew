@@ -135,7 +135,7 @@ module.exports = (app) => {
         return teamController.isUserInTeam(req.params.id, req.body.email);
       })
       .then((arr) => {
-        if (arr && arr.includes(parseInt(req.params.id, 10))) return res.status(409).send("user is in this team");
+        if (arr && arr.includes(parseInt(req.params.id, 10))) throw new Error("409");
         return teamController.getInviteByEmail(req.params.id, req.body.email);
       })
       .then((existingInvite) => {
@@ -163,6 +163,7 @@ module.exports = (app) => {
       .catch((error) => {
         if (error.message === "406") return res.status(406).send(error);
         if (error.message === "401") return res.status(401).send({ error: "Not authorized" });
+        if (error.message === "409") return res.status(409).send({ error: "The user is already in this team" });
 
         if (completed) {
           return res.status(200).send({
