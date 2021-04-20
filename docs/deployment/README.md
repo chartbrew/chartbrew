@@ -39,6 +39,12 @@ cd chartbrew/server
 NODE_ENV=production pm2 start index.js --name "chartbrew-server"
 ```
 
+You can also start [pm2 as a cluster](https://pm2.keymetrics.io/docs/usage/cluster-mode/) to take advantage of your server's multi-threading capabilities and 0-downtime reloads. If you wish to do this, replace the last command above with:
+
+```sh
+NODE_ENV=production pm2 start index.js --name "chartbrew-server" -i max
+```
+
 This will then run the server on the `port` specified in `server/settings.js`.
 
 ### Frontend
