@@ -190,11 +190,9 @@ class ProjectController {
   generateTemplate(projectId, data, template) {
     return templateModels[template].build(projectId, data)
       .then((result) => {
-        console.log("result", result);
         return result;
       })
       .catch((err) => {
-        console.log("err", err);
         return Promise.reject(err);
       });
   }

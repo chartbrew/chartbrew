@@ -209,12 +209,19 @@ module.exports = (app) => {
   /*
   ** Route to generate a dashboard template
   */
-  app.post("/project/:project_id/template/:template", (req, res) => {
-    return projectController.generateTemplate(
-      req.params.project_id,
-      req.body,
-      req.params.template,
-    )
+  app.post("/project/:project_id/template/:template", verifyToken, (req, res) => {
+    return checkAccess(req)
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).createAny("project");
+        if (!permission.granted) {
+          throw new Error(401);
+        }
+        return projectController.generateTemplate(
+          req.params.project_id,
+          req.body,
+          req.params.template,
+        );
+      })
       .then((result) => {
         // refresh the charts
         result.forEach((r) => {
@@ -227,15 +234,12 @@ module.exports = (app) => {
             },
             json: true,
           };
-          console.log("updateOpt", updateOpt);
-          request(updateOpt)
-            .catch((err) => console.log("err", err));
+          request(updateOpt);
         });
 
         return res.status(200).send(result);
       })
       .catch((err) => {
-        console.log("err final", err);
         return res.status(400).send(err);
       });
   });

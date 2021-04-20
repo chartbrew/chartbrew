@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import moment from "moment";
 import {
   Card, Image, Button, Icon, Container, Divider,
-  Modal, Header, Message, Segment, Step, TransitionablePortal,
+  Modal, Header, Message, Segment, Step, TransitionablePortal, Menu, Label,
 } from "semantic-ui-react";
 
 import MongoConnectionForm from "./components/MongoConnectionForm";
@@ -13,6 +13,7 @@ import PostgresConnectionForm from "./components/PostgresConnectionForm";
 import MysqlConnectionForm from "./components/MysqlConnectionForm";
 import FirebaseConnectionForm from "./Firebase/FirebaseConnectionForm";
 import FirestoreConnectionForm from "./Firestore/FirestoreConnectionForm";
+import SimpleAnalyticsTemplate from "./SimpleAnalytics/SimpleAnalyticsTemplate";
 import {
   testRequest as testRequestAction,
   removeConnection as removeConnectionAction,
@@ -21,13 +22,16 @@ import {
   saveConnection as saveConnectionAction,
 } from "../../actions/connection";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
+import { getProjectCharts as getProjectChartsAction } from "../../actions/chart";
 import mongoLogo from "../../assets/mongodb-logo-1.png";
 import canAccess from "../../config/canAccess";
-import mysql from "../../assets/mysql.svg";
+import mysql from "../../assets/mysql.png";
 import rest from "../../assets/api.png";
 import postgres from "../../assets/postgres.png";
 import firebaseLogo from "../../assets/firebase-real-time-database.png";
 import firestoreLogo from "../../assets/firebase-firestore.png";
+import simpleAnalyticsLogo from "../../assets/simpleAnalytics.png";
+import moreLogo from "../../assets/moreComingSoon.png";
 import { primary } from "../../config/colors";
 
 /*
@@ -36,7 +40,7 @@ import { primary } from "../../config/colors";
 function Connections(props) {
   const {
     cleanErrors, addConnection, saveConnection, match, history, connections, testRequest,
-    removeConnection, getProjectConnections, user, team,
+    removeConnection, getProjectConnections, user, team, getProjectCharts,
   } = props;
 
   const [newConnectionModal, setNewConnectionModal] = useState(false);
@@ -48,6 +52,7 @@ function Connections(props) {
   const [removeModal, setRemoveModal] = useState(false);
   const [removeLoading, setRemoveLoading] = useState(false);
   const [removeError, setRemoveError] = useState(false);
+  const [selectedMenu, setSelectedMenu] = useState("connections");
 
   useEffect(() => {
     cleanErrors();
@@ -152,6 +157,14 @@ function Connections(props) {
     setEditConnection(null);
   };
 
+  const _onCompleteTemplate = () => {
+    getProjectCharts(match.params.projectId)
+      .then(() => {
+        history.push(`/${match.params.teamId}/${match.params.projectId}/dashboard`);
+        window.location.reload();
+      });
+  };
+
   const _canAccess = (role) => {
     return canAccess(role, user.id, team.TeamRoles);
   };
@@ -218,8 +231,7 @@ function Connections(props) {
                   </Step>
                 </Step.Group>
                 <Header as="h1" textAlign="center">
-                  {"How would you like to get your data?"}
-                  <Header.Subheader>Select one of the connection types below</Header.Subheader>
+                  {"Create a connection or start with a template"}
                 </Header>
                 <Divider hidden />
               </div>
@@ -229,44 +241,78 @@ function Connections(props) {
                 Select one of the connection types below
               </Header>
             )}
+            <Menu attached="top" size="big" tabular>
+              <Menu.Item
+                active={selectedMenu === "connections"}
+                name="Connections"
+                onClick={() => setSelectedMenu("connections")}
+                icon="plug"
+              />
+              <Menu.Item
+                active={selectedMenu === "templates"}
+                onClick={() => setSelectedMenu("templates")}
+              >
+                <Icon name="magic" />
+                Templates
+                <Label color="olive">New!</Label>
+              </Menu.Item>
+            </Menu>
             <Segment attached>
-              <Card.Group itemsPerRow={5} stackable>
-                <Card className="project-segment" onClick={() => setFormType("api")}>
-                  <Image src={rest} />
-                  <Card.Content>
-                    <Card.Header>API</Card.Header>
-                  </Card.Content>
-                </Card>
-                <Card className="project-segment" onClick={() => setFormType("mongodb")}>
-                  <Image src={mongoLogo} />
-                  <Card.Content>
-                    <Card.Header>MongoDB</Card.Header>
-                  </Card.Content>
-                </Card>
-                <Card className="project-segment" onClick={() => setFormType("postgres")}>
-                  <Image src={postgres} />
-                  <Card.Content>
-                    <Card.Header>PostgreSQL</Card.Header>
-                  </Card.Content>
-                </Card>
-                <Card className="project-segment" onClick={() => setFormType("mysql")}>
-                  <Image src={mysql} />
-                  <Card.Content>
-                    <Card.Header>MySQL</Card.Header>
-                  </Card.Content>
-                </Card>
-                <Card className="project-segment" onClick={() => setFormType("firestore")}>
-                  <Image
-                    src={firestoreLogo}
-                    label={{
-                      as: "a", color: "olive", title: "Freshly released", corner: "left", icon: "wrench"
-                    }}
-                  />
-                  <Card.Content>
-                    <Card.Header>Firestore</Card.Header>
-                  </Card.Content>
-                </Card>
-              </Card.Group>
+              {selectedMenu === "connections" && (
+                <Card.Group itemsPerRow={5} stackable>
+                  <Card className="project-segment" onClick={() => setFormType("api")}>
+                    <Image src={rest} />
+                    <Card.Content textAlign="center">
+                      <Card.Header>API</Card.Header>
+                    </Card.Content>
+                  </Card>
+                  <Card className="project-segment" onClick={() => setFormType("mongodb")}>
+                    <Image src={mongoLogo} />
+                    <Card.Content textAlign="center">
+                      <Card.Header>MongoDB</Card.Header>
+                    </Card.Content>
+                  </Card>
+                  <Card className="project-segment" onClick={() => setFormType("postgres")}>
+                    <Image src={postgres} />
+                    <Card.Content textAlign="center">
+                      <Card.Header>PostgreSQL</Card.Header>
+                    </Card.Content>
+                  </Card>
+                  <Card className="project-segment" onClick={() => setFormType("mysql")}>
+                    <Image src={mysql} />
+                    <Card.Content textAlign="center">
+                      <Card.Header>MySQL</Card.Header>
+                    </Card.Content>
+                  </Card>
+                  <Card className="project-segment" onClick={() => setFormType("firestore")}>
+                    <Image
+                      src={firestoreLogo}
+                      label={{
+                        as: "a", color: "olive", title: "Freshly released", corner: "left", icon: "wrench"
+                      }}
+                    />
+                    <Card.Content textAlign="center">
+                      <Card.Header>Firestore</Card.Header>
+                    </Card.Content>
+                  </Card>
+                </Card.Group>
+              )}
+              {selectedMenu === "templates" && (
+                <Card.Group itemsPerRow={5} stackable>
+                  <Card className="project-segment" onClick={() => setFormType("saTemplate")}>
+                    <Image src={simpleAnalyticsLogo} />
+                    <Card.Content textAlign="center">
+                      <Card.Header>Simple Analytics</Card.Header>
+                    </Card.Content>
+                  </Card>
+                  <Card>
+                    <Image src={moreLogo} />
+                    <Card.Content textAlign="center">
+                      <Card.Header>More coming soon</Card.Header>
+                    </Card.Content>
+                  </Card>
+                </Card.Group>
+              )}
             </Segment>
             <Segment attached="bottom">
               <p>
@@ -349,6 +395,15 @@ function Connections(props) {
                 editConnection={editConnection}
                 addError={addError}
                 testResult={testResult}
+              />
+            )}
+          {formType === "saTemplate"
+            && (
+              <SimpleAnalyticsTemplate
+                teamId={match.params.teamId}
+                projectId={match.params.projectId}
+                onComplete={_onCompleteTemplate}
+                addError={addError}
               />
             )}
         </div>
@@ -486,6 +541,7 @@ Connections.propTypes = {
   saveConnection: PropTypes.func.isRequired,
   addConnection: PropTypes.func.isRequired,
   testRequest: PropTypes.func.isRequired,
+  getProjectCharts: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -506,6 +562,7 @@ const mapDispatchToProps = (dispatch) => {
       return dispatch(saveConnectionAction(projectId, connection));
     },
     cleanErrors: () => dispatch(cleanErrorsAction()),
+    getProjectCharts: (projectId) => dispatch(getProjectChartsAction(projectId)),
   };
 };
 
