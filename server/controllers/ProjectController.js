@@ -2,6 +2,7 @@ const { Op } = require("sequelize");
 
 const db = require("../models/models");
 const TeamController = require("./TeamController");
+const templateModels = require("../templates");
 
 class ProjectController {
   constructor() {
@@ -183,6 +184,18 @@ class ProjectController {
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
+  generateTemplate(projectId, data, template) {
+    return templateModels[template].build(projectId, data)
+      .then((result) => {
+        console.log("result", result);
+        return result;
+      })
+      .catch((err) => {
+        console.log("err", err);
+        return Promise.reject(err);
       });
   }
 }

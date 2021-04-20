@@ -1,3 +1,5 @@
+const request = require("request-promise");
+
 const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
 const verifyToken = require("../modules/verifyToken");
@@ -200,6 +202,41 @@ module.exports = (app) => {
       })
       .catch((error) => {
         return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------
+
+  /*
+  ** Route to generate a dashboard template
+  */
+  app.post("/project/:project_id/template/:template", (req, res) => {
+    return projectController.generateTemplate(
+      req.params.project_id,
+      req.body,
+      req.params.template,
+    )
+      .then((result) => {
+        // refresh the charts
+        result.forEach((r) => {
+          const updateOpt = {
+            url: `http://${app.settings.api}:${app.settings.port}/project/${req.params.project_id}/chart/${r.chart.id}`,
+            method: "GET",
+            headers: {
+              authorization: req.headers.authorization,
+              accept: "application/json",
+            },
+            json: true,
+          };
+          console.log("updateOpt", updateOpt);
+          request(updateOpt)
+            .catch((err) => console.log("err", err));
+        });
+
+        return res.status(200).send(result);
+      })
+      .catch((err) => {
+        console.log("err final", err);
+        return res.status(400).send(err);
       });
   });
   // -------------------------------------------
