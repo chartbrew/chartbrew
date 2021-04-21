@@ -1,10 +1,15 @@
+const request = require("request-promise");
+
 const builder = require("./builder");
 
-const template = (website) => ({
+const template = (website, apiKey) => ({
   Connection: {
     name: "SimpleAnalyticsAPI",
     type: "api",
     host: "https://simpleanalytics.com",
+    options: [{
+      "Api-Key": apiKey || "none",
+    }]
   },
   Charts: [{
     name: "30-day Stats",
@@ -179,7 +184,33 @@ const template = (website) => ({
 
 module.exports.template = template;
 
-module.exports.build = (projectId, { website }) => {
+module.exports.build = (projectId, { website, apiKey }) => {
   if (!website) return Promise.reject("Missing required 'website' argument");
-  return builder(projectId, website, template);
+
+  const checkWebsiteOpt = {
+    url: `https://simpleanalytics.com/${website}.json?version=5&fields=histogram`,
+    method: "GET",
+    headers: {
+      accept: "application/json",
+    },
+    json: true,
+  };
+
+  if (apiKey) {
+    checkWebsiteOpt.headers = {
+      "Api-Key": apiKey,
+    };
+  }
+
+  return request(checkWebsiteOpt)
+    .then((data) => {
+      if (!data.histogram) return Promise.reject(new Error(403));
+      return builder(projectId, website, apiKey, template);
+    })
+    .catch((err) => {
+      if (err && err.message) {
+        return Promise.reject(err.message);
+      }
+      return Promise.reject(err);
+    });
 };

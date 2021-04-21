@@ -1,7 +1,7 @@
 const db = require("../../models/models");
 
-module.exports = (projectId, website, modelTemplate) => {
-  const model = modelTemplate(website);
+module.exports = (projectId, website, apiKey, modelTemplate) => {
+  const model = modelTemplate(website, apiKey);
 
   model.Connection.project_id = projectId;
 

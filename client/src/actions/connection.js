@@ -249,7 +249,7 @@ export function generateDashboard(projectId, data, template) {
 
   return fetch(url, { method, body, headers })
     .then((response) => {
-      if (!response.ok) throw new Error(response.statusText);
+      if (!response.ok) throw new Error(response.status);
 
       return response.json();
     })

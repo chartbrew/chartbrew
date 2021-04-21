@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Segment, Form, Button, Icon, Header, Label, Message, Container, Divider,
+  Segment, Form, Button, Icon, Header, Label, Message, Container, Divider, List,
 } from "semantic-ui-react";
 
 import { generateDashboard } from "../../../actions/connection";
@@ -17,6 +17,8 @@ function SimpleAnalyticsTemplate(props) {
   const [loading, setLoading] = useState(false);
   const [connection, setConnection] = useState({});
   const [errors, setErrors] = useState({});
+  const [notPublic, setNotPublic] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
   const _onGenerateDashboard = () => {
     setErrors({});
@@ -30,6 +32,8 @@ function SimpleAnalyticsTemplate(props) {
 
     const data = { ...connection, team_id: teamId };
     setLoading(true);
+    setNotPublic(false);
+    setNotFound(false);
 
     generateDashboard(projectId, data, "simpleanalytics")
       .then(() => {
@@ -37,7 +41,9 @@ function SimpleAnalyticsTemplate(props) {
           onComplete();
         }, 2000);
       })
-      .catch(() => {
+      .catch((err) => {
+        if (err && err.message === "403") setNotPublic(true);
+        if (err && err.message === "404") setNotFound(true);
         setLoading(false);
       });
   };
@@ -54,7 +60,7 @@ function SimpleAnalyticsTemplate(props) {
             <Form.Field error={!!errors.name} required>
               <label>Enter your Simple Analytics website</label>
               <Form.Input
-                placeholder="Which is the website you want to see the stats for?"
+                placeholder="chartbrew.com"
                 value={connection.website || ""}
                 onChange={(e, data) => {
                   setConnection({ ...connection, website: data.value });
@@ -69,15 +75,65 @@ function SimpleAnalyticsTemplate(props) {
             </Form.Field>
 
             <Form.Field>
-              <label>Enter your Simple Analytics API key (if the website is private)</label>
+              <label>
+                {"Enter your Simple Analytics API key (if the website is private). "}
+                <a href="https://simpleanalytics.com/account#api" target="_blank" rel="noreferrer">
+                  {"Get your API key here "}
+                  <Icon name="external" />
+                </a>
+              </label>
               <Form.Input
-                placeholder="sa-api-key-*"
+                placeholder="sa_api_key_*"
                 value={connection.apiKey || ""}
                 onChange={(e, data) => {
                   setConnection({ ...connection, apiKey: data.value });
                 }}
               />
             </Form.Field>
+            {notPublic && (
+              <Form.Field>
+                <Message negative>
+                  <Message.Header>{"Your site appears to be set to private"}</Message.Header>
+                  <div>
+                    <p>{"In order to be able to get the stats from Simple Analytics, please do one of the following:"}</p>
+                    <List bulleted>
+                      <List.Item>
+                        {"Enter your Simple Analytics API key in the field above. "}
+                        <a href="https://simpleanalytics.com/account#api" target="_blank" rel="noreferrer">
+                          {"Click here to find your API key. "}
+                          <Icon name="external" />
+                        </a>
+                      </List.Item>
+                      <List.Item>
+                        {"Alternatively, "}
+                        <a href={`https://simpleanalytics.com/${connection.website}/settings#visibility`} target="_blank" rel="noreferrer">
+                          {"make your site stats public here. "}
+                          <Icon name="external" />
+                        </a>
+                      </List.Item>
+                    </List>
+                  </div>
+                </Message>
+              </Form.Field>
+            )}
+
+            {notFound && (
+              <Form.Field>
+                <Message negative>
+                  <Message.Header>{"Your site could not be found"}</Message.Header>
+                  <div>
+                    <p>{"Make sure your website is spelt correctly and that it is registered with Simple Analytics."}</p>
+                    <p>
+                      {"You can check if it exists here: "}
+                      <a href={`https://simpleanalytics.com/${connection.website}`} target="_blank" rel="noreferrer">
+                        {`https://simpleanalytics.com/${connection.website} `}
+                        <Icon name="external" />
+                      </a>
+                    </p>
+                  </div>
+                </Message>
+              </Form.Field>
+            )}
           </Form>
         </div>
 
