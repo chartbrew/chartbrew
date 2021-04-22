@@ -1,9 +1,8 @@
-const request = require("request-promise");
-
 const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
+const refreshChartsApi = require("../modules/refreshChartsApi");
 
 module.exports = (app) => {
   const projectController = new ProjectController();
@@ -224,18 +223,11 @@ module.exports = (app) => {
       })
       .then((result) => {
         // refresh the charts
+        const charts = [];
         result.forEach((r) => {
-          const updateOpt = {
-            url: `http://${app.settings.api}:${app.settings.port}/project/${req.params.project_id}/chart/${r.chart.id}`,
-            method: "GET",
-            headers: {
-              authorization: req.headers.authorization,
-              accept: "application/json",
-            },
-            json: true,
-          };
-          request(updateOpt);
+          charts.push(r.chart);
         });
+        refreshChartsApi(req.params.project_id, charts, req.headers.authorization);
 
         return res.status(200).send(result);
       })
