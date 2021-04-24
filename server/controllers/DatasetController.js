@@ -86,6 +86,10 @@ class DatasetController {
           throw new Error("404");
         }
 
+        if (!connection) {
+          throw new Error("404");
+        }
+
         if (noSource === true) {
           return new Promise((resolve) => resolve({}));
         }
