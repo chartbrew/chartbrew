@@ -297,7 +297,7 @@ function UserDashboard(props) {
                 </span>
               )}
 
-              <Card.Group itemsPerRow={4} style={styles.cardsContainer}>
+              <Card.Group itemsPerRow={4} style={styles.cardsContainer} stackable>
                 {key.Projects && key.Projects.map((project) => {
                   return (
                     <Card
