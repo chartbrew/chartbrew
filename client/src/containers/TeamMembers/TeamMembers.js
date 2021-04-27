@@ -9,6 +9,8 @@ import {
 import _ from "lodash";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
+import { useWindowSize } from "react-use";
+import { createMedia } from "@artsy/fresnel";
 
 import {
   getTeam as getTeamAction,
@@ -20,6 +22,15 @@ import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import Invites from "../../components/Invites";
 import InviteMembersForm from "../../components/InviteMembersForm";
 import canAccess from "../../config/canAccess";
+
+const AppMedia = createMedia({
+  breakpoints: {
+    mobile: 0,
+    tablet: 768,
+    computer: 1024,
+  },
+});
+const { Media } = AppMedia;
 
 /*
   Contains Pending Invites and All team members with functionality to delete/change role
@@ -37,6 +48,8 @@ function TeamMembers(props) {
   const [projectModal, setProjectModal] = useState(false);
   const [projectAccess, setProjectAccess] = useState({});
   const [changedRole, setChangedRole] = useState({});
+
+  const { width } = useWindowSize();
 
   useEffect(() => {
     cleanErrors();
@@ -205,16 +218,17 @@ function TeamMembers(props) {
                   <List.Content floated="right">
                     {_canAccess("admin") && (
                       <Button
-                        content="Project access"
+                        icon={width < 768 ? "key" : null}
+                        content={width < 768 ? null : "Project access"}
                         onClick={() => _openProjectAccess(member)}
                         size="small"
                       />
                     )}
                     {_canAccess("admin") && user.id !== member.id && (
                       <Dropdown
-                        text="Edit role"
-                        floating
-                        labeled
+                        text={width < 768 ? null : "Edit role"}
+                        floating={width >= 768}
+                        labeled={width >= 768}
                         button
                         icon="eye"
                         className="small icon"
@@ -228,7 +242,9 @@ function TeamMembers(props) {
                               onClick={() => _onChangeRole("member", member)}
                             >
                               <strong>Member</strong>
-                              <p>{"Can only view projects and charts. Cannot update chart or connection data."}</p>
+                              <Media greaterThan="mobile">
+                                <p>{"Can only view projects and charts. Cannot update chart or connection data."}</p>
+                              </Media>
                             </Dropdown.Item>
                             )}
                           {user.id !== member.id && memberRole !== "editor"
@@ -238,7 +254,9 @@ function TeamMembers(props) {
                               onClick={() => _onChangeRole("editor", member)}
                             >
                               <strong>Editor</strong>
-                              <p>{"Create, edit, remove charts. Can also create new connections."}</p>
+                              <Media greaterThan="mobile">
+                                <p>{"Create, edit, remove charts. Can also create new connections."}</p>
+                              </Media>
                             </Dropdown.Item>
                             )}
                           {user.id !== member.id && memberRole !== "admin"
@@ -248,7 +266,9 @@ function TeamMembers(props) {
                               onClick={() => _onChangeRole("admin", member)}
                             >
                               <strong>Admin</strong>
-                              <p>{"Full access, but can't delete the team."}</p>
+                              <Media greaterThan="mobile">
+                                <p>{"Full access, but can't delete the team."}</p>
+                              </Media>
                             </Dropdown.Item>
                             )}
                         </Dropdown.Menu>
@@ -262,6 +282,7 @@ function TeamMembers(props) {
                         floated="right"
                         icon="trash"
                         basic
+                        size="small"
                       />
                       )}
                   </List.Content>
