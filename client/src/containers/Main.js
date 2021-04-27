@@ -12,7 +12,7 @@ import { relog, getUser } from "../actions/user";
 import { getTeams } from "../actions/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 
-const ProjectBoard = lazy(() => import("./ProjectBoard"));
+const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
 const VerifyUser = lazy(() => import("./VerifyUser"));
 const Login = lazy(() => import("./Login"));

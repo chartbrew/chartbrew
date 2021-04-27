@@ -9,6 +9,7 @@ import {
 import { Link } from "react-router-dom";
 import { useLocalStorage, useWindowSize } from "react-use";
 import _ from "lodash";
+import { createMedia } from "@artsy/fresnel";
 
 import Chart from "../Chart/Chart";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
@@ -24,13 +25,22 @@ import {
 import canAccess from "../../config/canAccess";
 import ChartExport from "./components/ChartExport";
 
+const AppMedia = createMedia({
+  breakpoints: {
+    mobile: 0,
+    tablet: 768,
+    computer: 1024,
+  },
+});
+const { Media } = AppMedia;
+
 /*
   Dashboard container (for the charts)
 */
 function ProjectDashboard(props) {
   const {
     cleanErrors, connections, charts, match, showDrafts, runQueryWithFilters,
-    getProjectCharts, runQuery, changeOrder, user, team, onPrint,
+    getProjectCharts, runQuery, changeOrder, user, team, onPrint, mobile,
   } = props;
 
   const initialFilters = window.localStorage.getItem("_cb_filters");
@@ -248,20 +258,39 @@ function ProjectDashboard(props) {
       {charts && charts.length > 0
         && (
           <div>
-            <Menu tabular fluid compact style={styles.actionBar} size="small">
+            <Menu
+              tabular
+              fluid
+              compact
+              style={mobile ? styles.actionBarMobile : styles.actionBar}
+              size="small"
+            >
               <Menu.Item
                 name="filters"
               >
-                <Button
-                  basic
-                  primary
-                  icon="filter"
-                  content="Add filter"
-                  loading={filterLoading}
-                  onClick={_onShowFilters}
-                />
+                <Media greaterThan="mobile">
+                  <Button
+                    basic
+                    primary
+                    icon="filter"
+                    content="Add filter"
+                    loading={filterLoading}
+                    onClick={_onShowFilters}
+                    size="small"
+                  />
+                </Media>
+                <Media at="mobile">
+                  <Button
+                    basic
+                    primary
+                    icon="filter"
+                    loading={filterLoading}
+                    onClick={_onShowFilters}
+                    size="small"
+                  />
+                </Media>
               </Menu.Item>
-              <Menu.Item style={{ borderLeft: "solid 1px #d4d4d5" }}>
+              <Menu.Item style={mobile ? {} : { borderLeft: "solid 1px #d4d4d5" }}>
                 <div>
                   <Label.Group size="small">
                     {filters
@@ -298,31 +327,48 @@ function ProjectDashboard(props) {
                     />
                   </Menu.Item>
                 )}
-                <Menu.Item style={{ padding: 0 }}>
-                  <Popup
-                    trigger={(
-                      <Button
-                        basic
-                        primary
-                        icon="print"
-                        onClick={onPrint}
-                      />
-                    )}
-                    content="Open print view"
-                    position="bottom right"
-                  />
-                </Menu.Item>
+                {!mobile && (
+                  <Menu.Item style={{ padding: 0 }}>
+                    <Popup
+                      trigger={(
+                        <Button
+                          basic
+                          primary
+                          icon="print"
+                          onClick={onPrint}
+                        />
+                      )}
+                      content="Open print view"
+                      position="bottom right"
+                    />
+                  </Menu.Item>
+                )}
                 <Popup
                   trigger={(
                     <Menu.Item style={{ padding: 0 }}>
-                      <Button
-                        basic
-                        primary
-                        icon="refresh"
-                        onClick={() => _onRefreshData()}
-                        loading={refreshLoading}
-                        content="Refresh all charts"
-                      />
+                      <Media greaterThan="mobile">
+                        <Button
+                          basic
+                          primary
+                          icon="refresh"
+                          onClick={() => _onRefreshData()}
+                          loading={refreshLoading}
+                          content="Refresh all charts"
+                          size="small"
+                        />
+                      </Media>
+                      <Media at="mobile">
+                        <Button
+                          basic
+                          primary
+                          icon
+                          onClick={() => _onRefreshData()}
+                          loading={refreshLoading}
+                          size="small"
+                        >
+                          <Icon name="refresh" />
+                        </Button>
+                      </Media>
                     </Menu.Item>
                   )}
                   content="This function will get fresh data from all the data sources."
@@ -472,6 +518,9 @@ const styles = {
     backgroundColor: "transparent",
     boxShadow: "none",
   },
+  actionBarMobile: {
+    boxShadow: "none",
+  },
   addChartBtn: {
     boxShadow: "0 1px 10px 0 #d4d4d5, 0 0 0 1px #d4d4d5",
   },
@@ -493,6 +542,7 @@ const styles = {
 
 ProjectDashboard.defaultProps = {
   showDrafts: true,
+  mobile: false,
 };
 
 ProjectDashboard.propTypes = {
@@ -508,6 +558,7 @@ ProjectDashboard.propTypes = {
   onPrint: PropTypes.func.isRequired,
   changeOrder: PropTypes.func.isRequired,
   showDrafts: PropTypes.bool,
+  mobile: PropTypes.bool,
 };
 
 const mapStateToProps = (state) => {
