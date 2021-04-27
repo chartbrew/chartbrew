@@ -12,7 +12,7 @@ import { createMedia } from "@artsy/fresnel";
 import { getProject, changeActiveProject } from "../../actions/project";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import { getTeam } from "../../actions/team";
-import { getProjectCharts } from "../../actions/chart";
+import { getProjectCharts as getProjectChartsAction } from "../../actions/chart";
 import { getProjectConnections } from "../../actions/connection";
 import Connections from "../Connections/Connections";
 import ProjectDashboard from "../ProjectDashboard/ProjectDashboard";
@@ -65,14 +65,10 @@ function ProjectBoard(props) {
     }
   }, []);
 
-  useEffect(() => {
-    _init();
-  }, [match.params.projectId]);
-
-  const _init = () => {
-    _getProject();
-    getProjectCharts(match.params.projectId);
-    getProjectConnections(match.params.projectId);
+  const _init = (id) => {
+    _getProject(id);
+    getProjectCharts(id || match.params.projectId);
+    getProjectConnections(id || match.params.projectId);
   };
 
   const _getProject = (id) => {
@@ -85,9 +81,6 @@ function ProjectBoard(props) {
       })
       .then(() => {
         return getTeam(project.team_id);
-      })
-      .then(() => {
-        return getProjectCharts(projectId);
       })
       .then(() => {
         setLoading(false);
@@ -135,6 +128,7 @@ function ProjectBoard(props) {
 
   const _onChangeProject = (id) => {
     history.push(`/${match.params.teamId}/${id}/dashboard`);
+    _init(id);
   };
 
   if (!project.id) {
@@ -323,7 +317,7 @@ const mapDispatchToProps = (dispatch) => {
   return {
     getProject: id => dispatch(getProject(id)),
     changeActiveProject: id => dispatch(changeActiveProject(id)),
-    getProjectCharts: (projectId) => dispatch(getProjectCharts(projectId)),
+    getProjectCharts: (projectId) => dispatch(getProjectChartsAction(projectId)),
     getProjectConnections: (projectId) => dispatch(getProjectConnections(projectId)),
     getTeam: (teamId) => dispatch(getTeam(teamId)),
     cleanErrors: () => dispatch(cleanErrorsAction()),
