@@ -7,6 +7,8 @@ import {
   Menu, Dropdown, Dimmer, Container, Loader, Icon, Modal, Button, Image, TransitionablePortal,
 } from "semantic-ui-react";
 import UserAvatar from "react-user-avatar";
+import { createMedia } from "@artsy/fresnel";
+import { useWindowSize } from "react-use";
 
 import { getTeam } from "../actions/team";
 import { logout } from "../actions/user";
@@ -16,10 +18,20 @@ import FeedbackForm from "./FeedbackForm";
 import cbLogo from "../assets/logo_inverted.png";
 import canAccess from "../config/canAccess";
 import { DOCUMENTATION_HOST } from "../config/settings";
-/*
-  Description
-*/
+import { blue } from "../config/colors";
 
+const AppMedia = createMedia({
+  breakpoints: {
+    mobile: 0,
+    tablet: 768,
+    computer: 1024,
+  },
+});
+const { Media } = AppMedia;
+
+/*
+  The navbar component used throughout the app
+*/
 function Navbar(props) {
   const [loading, setLoading] = useState(true);
   const [changelogPadding, setChangelogPadding] = useState(true);
@@ -30,6 +42,8 @@ function Navbar(props) {
     match, getTeam, getProject, changeActiveProject, getProjectCharts,
     hideTeam, transparent, team, teams, projectProp, user, logout,
   } = props;
+
+  const { width } = useWindowSize();
 
   useEffect(() => {
     _onTeamChange(match.params.teamId, match.params.projectId);
@@ -101,7 +115,7 @@ function Navbar(props) {
     );
   }
   return (
-    <Menu fixed="top" color="violet" inverted style={transparent ? styles.transparentMenu : { }}>
+    <Menu fixed="top" color="violet" inverted secondary={width < 768} style={transparent ? styles.transparentMenu : { }}>
       <Menu.Item style={styles.logoContainer} as={Link} to="/user">
         <Image centered as="img" src={cbLogo} alt="Chartbrew logo" style={styles.logo} />
       </Menu.Item>
@@ -110,47 +124,59 @@ function Navbar(props) {
         <Menu.Menu
           onClick={handleItemClick}
         >
-          <Dropdown text={team.name} item style={styles.centeredDropdown}>
-            <Dropdown.Menu>
-              <Dropdown.Header>{"Select a team"}</Dropdown.Header>
-              <Dropdown.Divider />
-              {teams && teams.map((team) => {
-                return (
-                  team.Projects.length > 0
-                   && (
-                   <Dropdown
-                     disabled={team.Projects.length < 1}
-                     item
-                     key={team.id}
-                     text={team.name}>
-                     <Dropdown.Menu>
-                       {team.Projects.map((project) => {
-                         return (
-                           <Dropdown.Item
-                             onClick={() => _onTeamChange(team.id, project.id)}
-                             disabled={project.id === projectProp.id}
-                             key={project.id}>
-                             {project.id === projectProp.id
-                            && (
-                            <span className="label">
-                              Active
-                            </span>
-                            )}
-                             <span>
-                               {" "}
-                               {project.name}
-                               {" "}
-                             </span>
-                           </Dropdown.Item>
-                         );
-                       })}
-                     </Dropdown.Menu>
-                   </Dropdown>
-                   )
-                );
-              }) }
-            </Dropdown.Menu>
-          </Dropdown>
+          <Media greaterThan="mobile">
+            <Dropdown
+              text={(
+                <span>
+                  <Icon name="window restore outline" />
+                  {team.name}
+                </span>
+              )}
+              item
+              style={styles.centeredDropdown}
+            >
+              <Dropdown.Menu>
+                <Dropdown.Header>{"Select a team"}</Dropdown.Header>
+                <Dropdown.Divider />
+                {teams && teams.map((t) => {
+                  return (
+                    t.Projects.length > 0
+                    && (
+                    <Dropdown
+                      disabled={t.Projects.length < 1}
+                      item
+                      key={t.id}
+                      text={t.name}
+                      >
+                      <Dropdown.Menu>
+                        {t.Projects.map((project) => {
+                          return (
+                            <Dropdown.Item
+                              onClick={() => _onTeamChange(t.id, project.id)}
+                              disabled={project.id === projectProp.id}
+                              key={project.id}>
+                              {project.id === projectProp.id
+                              && (
+                              <span className="label">
+                                Active
+                              </span>
+                              )}
+                              <span>
+                                {" "}
+                                {project.name}
+                                {" "}
+                              </span>
+                            </Dropdown.Item>
+                          );
+                        })}
+                      </Dropdown.Menu>
+                    </Dropdown>
+                    )
+                  );
+                }) }
+              </Dropdown.Menu>
+            </Dropdown>
+          </Media>
         </Menu.Menu>
         )}
 
@@ -164,18 +190,26 @@ function Navbar(props) {
           <div className="changelog-badge">
             {changelogPadding && <span style={{ paddingLeft: 16, paddingRight: 16 }} />}
           </div>
-          Updates
+          <Media greaterThan="mobile">
+            <span>Updates</span>
+          </Media>
+          <Media at="mobile">
+            <Icon name="wifi" />
+          </Media>
         </Menu.Item>
         <Menu.Item onClick={() => setFeedbackModal(true)}>
           <Icon name="lightbulb outline" />
-          Suggestions
+          <Media greaterThan="mobile">
+            Suggestions
+          </Media>
         </Menu.Item>
         <Dropdown
           style={{ paddingTop: 0, paddingBottom: 0 }}
           item
           floating={transparent}
+          icon={width < 768 ? null : "dropdown"}
           trigger={user.icon
-            ? <UserAvatar size="32" name={user.icon} color="purple" /> : <span />}
+            ? <UserAvatar size={width < 768 ? "24" : "30"} name={user.icon} color="purple" /> : <span />}
         >
           <Dropdown.Menu>
             <Dropdown.Item as={Link} to="/user">My space</Dropdown.Item>
@@ -258,10 +292,10 @@ const styles = {
   centeredDropdown: {
     display: "block",
     textAlign: "center",
-    width: 250,
+    // width: 250,
   },
   transparentMenu: {
-    backgroundColor: "transparent",
+    backgroundColor: blue,
   },
   logo: {
     width: 30,
