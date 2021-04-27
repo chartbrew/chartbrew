@@ -7,6 +7,7 @@ import {
   Button, Icon, Grid, Card, Step, TransitionablePortal,
 } from "semantic-ui-react";
 import _ from "lodash";
+import { useWindowSize } from "react-use";
 
 import {
   getTeams as getTeamsAction,
@@ -38,6 +39,8 @@ function UserDashboard(props) {
   const [addProject, setAddProject] = useState(false);
   const [fetched, setFetched] = useState(false);
   const [retried, setRetried] = useState(false);
+
+  const { width, height } = useWindowSize();
 
   useEffect(() => {
     cleanErrors();
@@ -228,7 +231,7 @@ function UserDashboard(props) {
 
   if (!user.data.id) {
     return (
-      <div style={styles.container}>
+      <div style={styles.container(height)}>
         <Dimmer active={loading}>
           <Loader />
         </Dimmer>
@@ -237,7 +240,7 @@ function UserDashboard(props) {
   }
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container(height)}>
       <Navbar hideTeam transparent />
       <Container textAlign="center" style={styles.mainContent}>
         <Divider hidden />
@@ -277,12 +280,12 @@ function UserDashboard(props) {
               {_canAccess("admin", key.TeamRoles)
                 && (
                 <Button
-                  style={styles.settingsBtn}
+                  style={width >= 768 ? styles.settingsBtn : {}}
                   size="small"
                   basic
                   inverted
                   icon
-                  floated="right"
+                  floated={width >= 768 ? "right" : false}
                   labelPosition="right"
                   as={Link}
                   to={`/manage/${key.id}/settings`}
@@ -364,11 +367,11 @@ function UserDashboard(props) {
 }
 
 const styles = {
-  container: {
+  container: (height) => ({
     flex: 1,
     backgroundColor: "#103751",
-    minHeight: window.innerHeight,
-  },
+    minHeight: height,
+  }),
   listContent: {
     cursor: "pointer",
   },
