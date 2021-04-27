@@ -88,7 +88,7 @@ class ManageTeam extends Component {
     return (
       <div style={styles.container}>
         <Navbar />
-        <Grid centered padded columns={2}>
+        <Grid centered padded columns={2} stackable>
           <Grid.Column width={3}>
             <Header as="h3" style={{ paddingTop: 20 }}>
               Manage the team
