@@ -40,7 +40,7 @@ module.exports = (app) => {
         gTeamRole = teamRole;
         const permission = accessControl.can(teamRole.role).readOwn("team");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return teamController.findById(req.params.id);
       })
@@ -87,7 +87,7 @@ module.exports = (app) => {
         gTeamRole = teamRole;
         const permission = accessControl.can(teamRole.role).updateOwn("team");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return teamController.update(req.params.id, req.body);
       })
@@ -130,12 +130,12 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("teamInvite");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return teamController.isUserInTeam(req.params.id, req.body.email);
       })
       .then((arr) => {
-        if (arr && arr.includes(parseInt(req.params.id, 10))) throw new Error("409");
+        if (arr && arr.includes(parseInt(req.params.id, 10))) return new Promise((resolve, reject) => reject(new Error("409")));
         return teamController.getInviteByEmail(req.params.id, req.body.email);
       })
       .then((existingInvite) => {
@@ -184,7 +184,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("teamInvite");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return userController.findById(invite.user_id);
       })
@@ -239,7 +239,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("teamRole");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return teamController.getTeamMembersId(teamId);
       })
@@ -279,10 +279,12 @@ module.exports = (app) => {
     let requestFinished = false;
     return teamController.getTeamRole(req.params.id, req.user.id)
       .then((teamRole) => {
-        if (!teamRole) throw new Error("norole");
+        if (!teamRole) {
+          return new Promise((resolve, reject) => reject(new Error("norole")));
+        }
         const permission = accessControl.can(teamRole.role).deleteAny("teamInvite");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return teamController.deleteTeamInvite(req.body.token);
       })
@@ -327,7 +329,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("teamInvite");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return teamController.getTeamInvitesById(req.params.id);
       })
@@ -347,7 +349,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("teamRole");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return teamController.updateTeamRole(req.params.id, req.body.user_id, req.body);
       })
@@ -367,7 +369,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).deleteAny("teamRole");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return teamController.getTeamRole(req.params.id, req.params.userId);
       })
@@ -379,7 +381,7 @@ module.exports = (app) => {
         if (success) {
           return res.status(200).send({ removed: success });
         }
-        throw new Error(400);
+        return new Promise((resolve, reject) => reject(new Error(400)));
       })
       .catch((error) => {
         if (error.message === "401") return res.status(401).send({ error: "Not authorized" });

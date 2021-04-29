@@ -25,7 +25,7 @@ module.exports = (app) => {
         }
 
         if (parseInt(data.project_id, 10) !== parseInt(gProject.id, 10)) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return teamController.getTeamRole(gProject.team_id, req.user.id);
@@ -63,7 +63,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("savedQuery");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return savedQueryController.findByProject(req.params.project_id, req.query.type);
       })
@@ -88,7 +88,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).createAny("savedQuery");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         const newSavedQuery = req.body;
@@ -118,7 +118,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("savedQuery");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         const newSavedQuery = req.body;
@@ -147,7 +147,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("savedQuery");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return savedQueryController.remove(req.params.id);

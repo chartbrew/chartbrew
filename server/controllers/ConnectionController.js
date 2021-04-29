@@ -246,7 +246,7 @@ class ConnectionController {
         } else if (connection.type === "firebase" || connection.type === "firestore") {
           return firebaseConnector.getAuthToken(connection);
         } else {
-          throw new Error(400);
+          return new Promise((resolve, reject) => reject(new Error(400)));
         }
       })
       .then((response) => {
@@ -259,7 +259,7 @@ class ConnectionController {
         } else if (gConnection.type === "firebase" || gConnection.type === "firestore") {
           return new Promise((resolve) => resolve(response));
         } else {
-          throw new Error(400);
+          return new Promise((resolve, reject) => reject(new Error(400)));
         }
       })
       .then(() => {

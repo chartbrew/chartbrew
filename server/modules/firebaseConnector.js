@@ -22,7 +22,7 @@ module.exports.getAuthToken = (connection) => {
   return jwtClient.authorize()
     .then((tokens) => {
       if (!tokens) {
-        throw new Error("Provided service account does not have permission to generate access tokens");
+        return new Promise((resolve, reject) => reject(new Error("Provided service account does not have permission to generate access tokens")));
       }
 
       const accessToken = tokens.access_token;

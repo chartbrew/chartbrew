@@ -28,7 +28,7 @@ module.exports = (app) => {
 
         // check if the project_id matches in the database records
         if (parseInt(data.project_id, 10) !== parseInt(gProject.id, 10)) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return teamController.getTeamRole(gProject.team_id, req.user.id);
@@ -86,7 +86,7 @@ module.exports = (app) => {
         gRole = teamRole.role;
         const permission = accessControl.can(teamRole.role).readAny("chart");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return chartController.findByProject(req.params.project_id);
@@ -112,7 +112,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("chart");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         // assign the project id to the new chart
@@ -139,7 +139,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("chart");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return chartController.update(req.params.id, req.body, req.user);
       })
@@ -165,7 +165,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("chart");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return chartController.addConnection(req.params.id, req.body);
       })
@@ -189,7 +189,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("chart");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return chartController.changeDashboardOrder(req.params.id, req.body.otherId);
       })
@@ -210,7 +210,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("chart");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return chartController.remove(req.params.id);
@@ -235,7 +235,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("chart");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return chartController.testQuery(req.body, req.params.project_id);
       })
@@ -262,7 +262,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("chart");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         let chart = req.body;
@@ -299,7 +299,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("chart");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return chartController.updateChartData(
@@ -335,7 +335,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("chart");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         // filters are being passed, so the chart is not updated in the database
@@ -369,7 +369,9 @@ module.exports = (app) => {
   app.get("/chart/:id/embedded", (req, res) => {
     return chartController.findById(req.params.id)
       .then((chart) => {
-        if (!chart.public) throw new Error("401");
+        if (!chart.public) {
+          return new Promise((resolve, reject) => reject(new Error("401")));
+        }
 
         return res.status(200).send({
           name: chart.name,
@@ -402,7 +404,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("chart");
         if (!permission.granted || (!teamRole.canExport && teamRole.role !== "owner")) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return chartController.exportChartData(req.user.id, req.body.chartIds, req.body.filters);

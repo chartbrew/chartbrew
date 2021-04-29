@@ -83,11 +83,11 @@ class DatasetController {
         const dataRequest = dataset.DataRequest;
 
         if (!dataRequest || (dataRequest && dataRequest.length === 0)) {
-          throw new Error("404");
+          return new Promise((resolve, reject) => reject(new Error("404")));
         }
 
         if (!connection) {
-          throw new Error("404");
+          return new Promise((resolve, reject) => reject(new Error("404")));
         }
 
         if (noSource === true) {
@@ -103,7 +103,7 @@ class DatasetController {
         } else if (connection.type === "firestore") {
           return this.connectionController.runFirestore(connection.id, dataRequest);
         } else {
-          throw new Error("Invalid connection type");
+          return new Promise((resolve, reject) => reject(new Error("Invalid connection type")));
         }
       })
       .then((data) => {

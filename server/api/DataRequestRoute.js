@@ -26,7 +26,7 @@ module.exports = (app) => {
       })
       .then((chart) => {
         if (chart.project_id !== gProject.id) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         gChart = chart;
 
@@ -45,7 +45,7 @@ module.exports = (app) => {
         if (!req.params.id) return Promise.resolve(data);
 
         if (data.chart_id !== gChart.id) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return teamController.getTeamRole(gProject.team_id, req.user.id);
@@ -60,7 +60,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).createAny("dataRequest");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return dataRequestController.create(req.body);
@@ -86,7 +86,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("dataRequest");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return dataRequestController.findById();
@@ -112,7 +112,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("dataRequest");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return dataRequestController.update(req.params.id, req.body);
@@ -138,7 +138,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("dataRequest");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return dataRequestController.findByChart(req.params.chart_id);
@@ -164,7 +164,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("dataRequest");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return dataRequestController.findByDataset(req.params.datasetId);

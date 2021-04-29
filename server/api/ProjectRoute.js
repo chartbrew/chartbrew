@@ -60,7 +60,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).createAny("project");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return projectController.create(req.user.id, req.body);
@@ -99,7 +99,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("project");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return projectController.findById(req.params.id);
@@ -127,7 +127,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("project");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return projectController.update(req.params.id, req.body);
@@ -152,7 +152,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).deleteAny("project");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return projectController.remove(req.params.id, req.user.id);
@@ -174,7 +174,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("project");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return projectController.getTeamProjects(req.params.team_id);
@@ -213,7 +213,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).createAny("project");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return projectController.generateTemplate(
           req.params.project_id,

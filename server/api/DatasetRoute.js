@@ -18,14 +18,14 @@ module.exports = (app) => {
     return chartController.findById(req.params.chart_id)
       .then((chart) => {
         if (chart.project_id !== parseInt(req.params.project_id, 10)) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         gChart = chart;
         return projectController.findById(req.params.project_id);
       })
       .then((project) => {
         if (gChart.project_id !== project.id) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         gProject = project;
 
@@ -41,7 +41,7 @@ module.exports = (app) => {
         }
 
         if (data.chart_id !== gChart.id) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return teamController.getTeamRole(gProject.team_id, req.user.id);
@@ -56,7 +56,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("dataset");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return datasetController.findById(req.params.id);
@@ -82,7 +82,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).createAny("dataset");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return datasetController.create(req.body);
@@ -108,7 +108,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("dataset");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return datasetController.findByChart(req.params.chart_id);
@@ -134,7 +134,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("dataset");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return datasetController.update(req.params.id, req.body);
@@ -160,7 +160,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).deleteAny("dataset");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return datasetController.remove(req.params.id);
       })
@@ -181,7 +181,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("dataset");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return datasetController.runRequest(req.params.id);

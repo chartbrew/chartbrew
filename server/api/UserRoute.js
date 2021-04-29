@@ -117,7 +117,9 @@ module.exports = (app) => {
     }
     // otherwise register
     try {
-      if (!userObj || !userObj.email) throw new Error("no email is provided");
+      if (!userObj || !userObj.email) {
+        return new Promise((resolve, reject) => reject(new Error("no email is provided")));
+      }
       const user = await userController.createUser(userObj);
       return tokenizeUser(user, res);
     } catch (error) {

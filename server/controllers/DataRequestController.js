@@ -27,7 +27,7 @@ class RequestController {
     return db.DataRequest.findByPk(id)
       .then((dataRequest) => {
         if (!dataRequest) {
-          throw new Error(404);
+          return new Promise((resolve, reject) => reject(new Error(404)));
         }
         return new Promise((resolve) => resolve(dataRequest));
       })
@@ -40,7 +40,7 @@ class RequestController {
     return db.DataRequest.findOne({ where: { chart_id: chartId } })
       .then((dataRequest) => {
         if (!dataRequest) {
-          throw new Error(404);
+          return new Promise((resolve, reject) => reject(new Error(404)));
         }
         return new Promise((resolve) => resolve(dataRequest));
       })
@@ -53,7 +53,7 @@ class RequestController {
     return db.DataRequest.findOne({ where: { dataset_id: datasetId } })
       .then((dataRequest) => {
         if (!dataRequest) {
-          throw new Error(404);
+          return new Promise((resolve, reject) => reject(new Error(404)));
         }
         return Promise.resolve(dataRequest);
       })
@@ -78,7 +78,7 @@ class RequestController {
     let gDataRequest;
     return this.findByChart(chartId)
       .then((dataRequest) => {
-        if (!dataRequest) throw new Error(404);
+        if (!dataRequest) return new Promise((resolve, reject) => reject(new Error(404)));
         gDataRequest = JSON.parse(JSON.stringify(dataRequest));
 
         return db.Chart.findByPk(chartId);

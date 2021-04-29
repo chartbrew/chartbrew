@@ -179,7 +179,7 @@ class ProjectController {
       order: [[db.Chart, "dashboardOrder", "ASC"]],
     })
       .then((dashboard) => {
-        if (!dashboard) throw new Error(404);
+        if (!dashboard) return new Promise((resolve, reject) => reject(new Error(404)));
         return dashboard;
       })
       .catch((error) => {

@@ -181,7 +181,7 @@ class UserController {
     return db.User.findOne({ where: { email: sc.encrypt(email) } })
       .then((user) => {
         if (!user) {
-          throw new Error(404);
+          return new Promise((resolve, reject) => reject(new Error(404)));
         }
 
         return this.update(user.id, { passwordResetToken: newToken });
@@ -223,7 +223,7 @@ class UserController {
     return this.findById(user.id)
       .then((existingUser) => {
         if (existingUser.passwordResetToken !== token) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return this.update(user.id, userUpdate);

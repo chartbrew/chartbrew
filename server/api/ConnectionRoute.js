@@ -25,7 +25,7 @@ module.exports = (app) => {
         if (!req.params.id) return Promise.resolve(data);
 
         if (data.project_id !== gProject.id) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         return teamController.getTeamRole(gProject.team_id, req.user.id);
@@ -58,7 +58,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).createAny("connection");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         // set the project id for the connection
@@ -85,7 +85,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("connection");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return connectionController.findById(req.params.id);
       })
@@ -114,7 +114,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("connection");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return connectionController.findByProject(req.params.project_id);
       })
@@ -138,7 +138,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("connection");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return connectionController.update(req.params.id, req.body);
       })
@@ -162,7 +162,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).deleteAny("connection");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return connectionController.removeConnection(req.params.id);
       })
@@ -171,7 +171,7 @@ module.exports = (app) => {
           return res.status(200).send({ removed: success });
         }
 
-        throw new Error(400);
+        return new Promise((resolve, reject) => reject(new Error(400)));
       })
       .catch((error) => {
         if (error.message === "401") {
@@ -190,7 +190,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("connection");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return connectionController.testConnection(req.params.id);
       })
@@ -214,7 +214,7 @@ module.exports = (app) => {
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).createAny("dataRequest");
         if (!permission.granted) {
-          throw new Error(401);
+          return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
         const requestData = req.body;
