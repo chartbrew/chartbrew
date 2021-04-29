@@ -53,6 +53,10 @@ function PaginateRequests(options, limit, items, offset, totalResults = []) {
 function PaginateStripe(options, limit, totalResults) {
   return request(options)
     .then((response) => {
+      // introduce a delay so Stripe doesn't shut down the request
+      return new Promise((resolve) => setTimeout(() => resolve(response), 1200));
+    })
+    .then((response) => {
       try {
         const result = JSON.parse(response.body);
         const tempResults = result;
