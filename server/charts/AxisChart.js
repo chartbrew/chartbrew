@@ -176,7 +176,7 @@ class AxisChart {
             for (let y = 0; y < yDataTemp.length; y++) {
               const valToCompare = _.get(yDataTemp[y], xAxis);
               if ((valToCompare.toString().length === 10 && moment(valToCompare, "X").isSame(moment(xItem)))
-               || moment(valToCompare).isSame(moment(xItem))) {
+               || new Date(valToCompare).getTime() === new Date(xItem).getTime()) {
                 orderHelper.push(yDataTemp[y]);
                 yDataTemp.splice(y, 1);
               }
