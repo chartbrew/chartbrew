@@ -1,5 +1,8 @@
 const _ = require("lodash");
 const moment = require("moment");
+const {
+  isSameDay, isSameHour, isSameWeek, isSameMonth, isSameYear,
+} = require("date-fns");
 const FormulaParser = require("hot-formula-parser").Parser;
 
 const BarChart = require("./BarChart");
@@ -11,6 +14,23 @@ const dataFilter = require("./dataFilter");
 moment.suppressDeprecationWarnings = true;
 
 const parser = new FormulaParser();
+
+const areDatesTheSame = (first, second, interval) => {
+  switch (interval) {
+    case "hour":
+      return isSameHour(new Date(first), new Date(second));
+    case "day":
+      return isSameDay(new Date(first), new Date(second));
+    case "week":
+      return isSameWeek(new Date(first), new Date(second));
+    case "month":
+      return isSameMonth(new Date(first), new Date(second));
+    case "year":
+      return isSameYear(new Date(first), new Date(second));
+    default:
+      return false;
+  }
+};
 
 class AxisChart {
   constructor(data) {
@@ -176,7 +196,8 @@ class AxisChart {
             for (let y = 0; y < yDataTemp.length; y++) {
               const valToCompare = _.get(yDataTemp[y], xAxis);
               if ((valToCompare.toString().length === 10 && moment(valToCompare, "X").isSame(moment(xItem)))
-               || new Date(valToCompare).getTime() === new Date(xItem).getTime()) {
+                || areDatesTheSame(valToCompare, xItem, this.chart.timeInterval)
+              ) {
                 orderHelper.push(yDataTemp[y]);
                 yDataTemp.splice(y, 1);
               }
