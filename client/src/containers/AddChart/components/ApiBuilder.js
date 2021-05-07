@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Grid, Form, Dropdown, Input, Menu, Button, List, Icon, Checkbox,
-  Divider, Label,
+  Divider, Label, Popup,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
 import uuid from "uuid/v4";
@@ -64,7 +64,7 @@ function ApiBuilder(props) {
 
   const {
     dataRequest, match, onChangeRequest, runRequest, dataset,
-    connection, onSave, requests, changeTutorial,
+    connection, onSave, requests, changeTutorial, chart,
   } = props;
 
   // on init effect
@@ -249,6 +249,27 @@ function ApiBuilder(props) {
                 onChange={(e, data) => _onChangeRoute(data.value)}
               />
             </Form.Field>
+            <Form.Field>
+              {"Available variables: "}
+              <Popup
+                trigger={(
+                  <Label basic as="a" onClick={() => chart.startDate && _onChangeRoute(`${apiRequest.route}{{start_date}}`)}>
+                    {"{{start_date}}"}
+                  </Label>
+                )}
+                content={chart.startDate || "Set this value in chart date settings first"}
+                position="bottom center"
+              />
+              <Popup
+                trigger={(
+                  <Label basic as="a" onClick={() => chart.endDate && _onChangeRoute(`${apiRequest.route}{{end_date}}`)}>
+                    {"{{end_date}}"}
+                  </Label>
+                )}
+                content={chart.endDate || "Set this value in chart date settings first"}
+                position="bottom center"
+              />
+            </Form.Field>
           </Form>
 
           <Menu pointing secondary className="apibuilder-menu-tut">
@@ -424,7 +445,7 @@ function ApiBuilder(props) {
                   fluid
                 >
                   <Icon name="play" />
-                  Make the request
+                  Run the request
                 </Button>
               </Form.Field>
             </Form.Group>
@@ -466,6 +487,7 @@ ApiBuilder.propTypes = {
   requests: PropTypes.array.isRequired,
   dataRequest: PropTypes.object,
   changeTutorial: PropTypes.func.isRequired,
+  chart: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {

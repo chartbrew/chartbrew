@@ -184,7 +184,7 @@ module.exports = (app) => {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
-        return datasetController.runRequest(req.params.id);
+        return datasetController.runRequest(req.params.id, req.params.chart_id);
       })
       .then((result) => {
         return res.status(200).send(result);

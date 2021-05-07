@@ -71,7 +71,7 @@ class DatasetController {
       });
   }
 
-  runRequest(id, noSource) {
+  runRequest(id, chartId, noSource) {
     let gDataset;
     return db.Dataset.findOne({
       where: { id },
@@ -97,7 +97,7 @@ class DatasetController {
         if (connection.type === "mongodb") {
           return this.connectionController.runMongo(connection.id, dataRequest);
         } else if (connection.type === "api") {
-          return this.connectionController.runApiRequest(connection.id, dataRequest);
+          return this.connectionController.runApiRequest(connection.id, chartId, dataRequest);
         } else if (connection.type === "postgres" || connection.type === "mysql") {
           return this.connectionController.runMysqlOrPostgres(connection.id, dataRequest);
         } else if (connection.type === "firestore") {

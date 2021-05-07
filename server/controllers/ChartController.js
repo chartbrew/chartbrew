@@ -311,9 +311,9 @@ class ChartController {
         const requestPromises = [];
         gChart.Datasets.map((dataset) => {
           if (noSource && gCache && gCache.data) {
-            requestPromises.push(this.datasetController.runRequest(dataset.id, true));
+            requestPromises.push(this.datasetController.runRequest(dataset.id, gChart.id, true));
           } else {
-            requestPromises.push(this.datasetController.runRequest(dataset.id));
+            requestPromises.push(this.datasetController.runRequest(dataset.id, gChart.id));
           }
           return dataset;
         });

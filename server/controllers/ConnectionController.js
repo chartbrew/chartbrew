@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const requestP = require("request-promise");
 const Sequelize = require("sequelize");
 const querystring = require("querystring");
+const moment = require("moment");
 
 const db = require("../models/models");
 const ProjectController = require("./ProjectController");
@@ -389,13 +390,49 @@ class ConnectionController {
       });
   }
 
-  runApiRequest(id, dataRequest) {
+  runApiRequest(id, chartId, dataRequest) {
     const limit = dataRequest.itemsLimit
       ? parseInt(dataRequest.itemsLimit, 10) : 0;
     return this.findById(id)
-      .then((connection) => {
+      .then(async (connection) => {
         const tempUrl = `${connection.getApiUrl(connection)}${dataRequest.route || ""}`;
         const queryParams = querystring.parse(tempUrl.split("?")[1]);
+
+        // if any queryParams has variables, modify them here
+        if (queryParams && Object.keys(queryParams).length > 0) {
+          // first, check for the keys to avoid making an unnecessary query to the DB
+          const keysFound = {};
+          Object.keys(queryParams).forEach((q) => {
+            if (queryParams[q] === "{{start_date}}") keysFound[q] = "startDate";
+            if (queryParams[q] === "{{end_date}}") keysFound[q] = "endDate";
+          });
+
+          // something was found, go through all and replace the variables
+          if (Object.keys(keysFound).length > 0) {
+            const chart = await db.Chart.findByPk(chartId);
+            if (chart.startDate && chart.endDate) {
+              Object.keys(keysFound).forEach((q) => {
+                const value = keysFound[q];
+                let startDate = moment(chart.startDate);
+                let endDate = moment(chart.endDate);
+
+                if (value === "startDate" && chart.currentEndDate) {
+                  const timeDiff = endDate.diff(startDate, "days");
+                  endDate = moment().endOf("day");
+                  startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+                  queryParams[q] = startDate.format();
+                } else if (value === "endDate" && chart.currentEndDate) {
+                  const timeDiff = endDate.diff(startDate, "days");
+                  endDate = moment().endOf("day");
+                  startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+                  queryParams[q] = endDate.format();
+                } else {
+                  queryParams[q] = chart[value];
+                }
+              });
+            }
+          }
+        }
 
         let url = tempUrl;
         if (url.indexOf("?") > -1) {

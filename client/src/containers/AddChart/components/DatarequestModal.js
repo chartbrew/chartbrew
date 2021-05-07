@@ -23,7 +23,7 @@ import { changeTutorial as changeTutorialAction } from "../../../actions/tutoria
 function DatarequestModal(props) {
   const {
     open, onClose, connection, dataset, match, getDataRequestByDataset,
-    createDataRequest, updateDataRequest, requests, changeTutorial, updateResult,
+    createDataRequest, updateDataRequest, requests, changeTutorial, updateResult, chart,
   } = props;
 
   const [dataRequest, setDataRequest] = useState(null);
@@ -182,6 +182,7 @@ function DatarequestModal(props) {
             onChangeRequest={_updateDataRequest}
             onSave={_onSaveRequest}
             exploreData={result && JSON.stringify(result.data, null, 2)}
+            chart={chart}
           />
         )}
         {(connection.type === "mysql" || connection.type === "postgres") && dataRequest && (
@@ -262,6 +263,7 @@ DatarequestModal.propTypes = {
   requests: PropTypes.array.isRequired,
   changeTutorial: PropTypes.func.isRequired,
   updateResult: PropTypes.func.isRequired,
+  chart: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {

@@ -336,6 +336,7 @@ function Dataset(props) {
           open={configOpened}
           onClose={_onCloseConfig}
           updateResult={_onNewResult}
+          chart={chart}
         />
       )}
 
