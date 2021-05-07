@@ -6,6 +6,7 @@ const chart = require("./ChartRoute");
 const savedQuery = require("./SavedQueryRoute");
 const dataRequest = require("./DataRequestRoute");
 const dataset = require("./DatasetRoute");
+const template = require("./TemplateRoute");
 
 module.exports = {
   team,
@@ -16,4 +17,5 @@ module.exports = {
   savedQuery,
   dataRequest,
   dataset,
+  template,
 };
