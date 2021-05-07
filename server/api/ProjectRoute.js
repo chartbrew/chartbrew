@@ -208,7 +208,7 @@ module.exports = (app) => {
   /*
   ** Route to generate a dashboard template
   */
-  app.post("/project/:project_id/template/:template", verifyToken, (req, res) => {
+  app.post("/project/:id/template/:template", verifyToken, (req, res) => {
     return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).createAny("project");
@@ -216,7 +216,7 @@ module.exports = (app) => {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }
         return projectController.generateTemplate(
-          req.params.project_id,
+          req.params.id,
           req.body,
           req.params.template,
         );
@@ -227,7 +227,7 @@ module.exports = (app) => {
         result.forEach((r) => {
           charts.push(r.chart);
         });
-        refreshChartsApi(req.params.project_id, charts, req.headers.authorization);
+        refreshChartsApi(req.params.id, charts, req.headers.authorization);
 
         return res.status(200).send(result);
       })

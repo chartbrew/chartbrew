@@ -20,7 +20,8 @@
     "class-methods-use-this": "off",
     "prefer-promise-reject-errors": "off",
     "camelcase": "off",
-    "import/extensions": "off"
+    "import/extensions": "off",
+    "no-template-curly-in-string": "off"
   },
   "parser": "babel-eslint",
   "globals": {

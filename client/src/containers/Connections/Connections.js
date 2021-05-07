@@ -14,6 +14,7 @@ import MysqlConnectionForm from "./components/MysqlConnectionForm";
 import FirebaseConnectionForm from "./Firebase/FirebaseConnectionForm";
 import FirestoreConnectionForm from "./Firestore/FirestoreConnectionForm";
 import SimpleAnalyticsTemplate from "./SimpleAnalytics/SimpleAnalyticsTemplate";
+import ChartMogulTemplate from "./ChartMogul/ChartMogulTemplate";
 import {
   testRequest as testRequestAction,
   removeConnection as removeConnectionAction,
@@ -32,6 +33,7 @@ import firebaseLogo from "../../assets/firebase-real-time-database.png";
 import firestoreLogo from "../../assets/firebase-firestore.png";
 import simpleAnalyticsLogo from "../../assets/simpleAnalytics.png";
 import moreLogo from "../../assets/moreComingSoon.png";
+import chartmogulLogo from "../../assets/ChartMogul.webp";
 import { primary } from "../../config/colors";
 
 /*
@@ -305,6 +307,12 @@ function Connections(props) {
                       <Card.Header>Simple Analytics</Card.Header>
                     </Card.Content>
                   </Card>
+                  <Card className="project-segment" onClick={() => setFormType("cmTemplate")}>
+                    <Image src={chartmogulLogo} />
+                    <Card.Content textAlign="center">
+                      <Card.Header>ChartMogul</Card.Header>
+                    </Card.Content>
+                  </Card>
                   <Card>
                     <Image src={moreLogo} />
                     <Card.Content textAlign="center">
@@ -400,6 +408,15 @@ function Connections(props) {
           {formType === "saTemplate"
             && (
               <SimpleAnalyticsTemplate
+                teamId={match.params.teamId}
+                projectId={match.params.projectId}
+                onComplete={_onCompleteTemplate}
+                addError={addError}
+              />
+            )}
+          {formType === "cmTemplate"
+            && (
+              <ChartMogulTemplate
                 teamId={match.params.teamId}
                 projectId={match.params.projectId}
                 onComplete={_onCompleteTemplate}
