@@ -34,7 +34,7 @@ import firestoreLogo from "../../assets/firebase-firestore.png";
 import simpleAnalyticsLogo from "../../assets/simpleAnalytics.png";
 import moreLogo from "../../assets/moreComingSoon.png";
 import chartmogulLogo from "../../assets/ChartMogul.webp";
-import { primary } from "../../config/colors";
+import { lightGray, primary } from "../../config/colors";
 
 /*
   The page that contains all the connections
@@ -443,7 +443,7 @@ function Connections(props) {
                     ? styles.selectedConnection : {}
                 }
               >
-                <Card.Content>
+                <Card.Content onClick={() => _onEditConnection(connection)} style={{ cursor: "pointer" }}>
                   <Image
                     floated="right"
                     size="tiny"
@@ -462,33 +462,28 @@ function Connections(props) {
                   </Card.Meta>
                   <Card.Description />
                 </Card.Content>
-                <Card.Content extra>
-                  <Button.Group widths={2}>
-                    {_canAccess("admin")
-                      && (
+                {_canAccess("admin") && (
+                  <Card.Content extra>
+                    <Button.Group widths={2}>
                       <Button
                         primary
-                        basic
                         onClick={() => _onEditConnection(connection)}
+                        className="tertiary"
+                        style={{ borderRight: `0.2px solid ${lightGray}` }}
                       >
-                        <Icon name="pencil" />
                         Edit
                       </Button>
-                      )}
-                    {_canAccess("admin")
-                      && (
                       <Button
                         color="red"
-                        basic
                         loading={removeLoading === connection.id}
                         onClick={() => _onRemoveConfirmation(connection)}
+                        className="tertiary"
                       >
-                        <Icon name="x" />
                         Remove
                       </Button>
-                      )}
-                  </Button.Group>
-                </Card.Content>
+                    </Button.Group>
+                  </Card.Content>
+                )}
               </Card>
             );
           })}
