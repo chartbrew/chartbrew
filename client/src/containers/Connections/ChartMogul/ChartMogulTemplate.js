@@ -66,7 +66,7 @@ function ChartMogulTemplate(props) {
                 <p>
                   {"You can get your account token and API key "}
                   <a href="https://app.chartmogul.com/#/admin/api" target="_blank" rel="noreferrer">
-                    {"from your ChartMogul dashboard."}
+                    {"from your ChartMogul dashboard. "}
                     <Icon name="external" />
                   </a>
                 </p>
@@ -114,7 +114,7 @@ function ChartMogulTemplate(props) {
                     <p>{"Please make sure you copied the right token and API key from your ChartMogul dashboard."}</p>
                     <p>
                       <a href="https://app.chartmogul.com/#/admin/api" target="_blank" rel="noreferrer">
-                        {"Click here to go to the dashboard"}
+                        {"Click here to go to the dashboard "}
                         <Icon name="external" />
                       </a>
                     </p>

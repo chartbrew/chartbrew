@@ -188,7 +188,18 @@ class ProjectController {
   }
 
   generateTemplate(projectId, data, template) {
-    return templateModels[template].build(projectId, data)
+    return db.Chart.findAll({
+      where: { project_id: projectId },
+      order: [["dashboardOrder", "DESC"]],
+      limit: 1,
+    })
+      .then((charts) => {
+        let dashboardOrder = 0;
+        if (charts && charts.length > 0) {
+          dashboardOrder = charts[0].dashboardOrder;
+        }
+        return templateModels[template].build(projectId, data, dashboardOrder);
+      })
       .then((result) => {
         return result;
       })

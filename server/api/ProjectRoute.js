@@ -232,6 +232,7 @@ module.exports = (app) => {
         return res.status(200).send(result);
       })
       .catch((err) => {
+        if (err && err.message) return res.status(400).send(err.message);
         if (err && err.indexOf("404") > -1) return res.status(404).send(err);
         if (err && err.indexOf("403") > -1) return res.status(403).send(err);
         return res.status(400).send(err);
