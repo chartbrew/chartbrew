@@ -62,7 +62,7 @@ function ChartMogulTemplate(props) {
         <div style={styles.formStyle}>
           <Form>
             <Form.Field>
-              <Message>
+              <Message compact>
                 <p>
                   {"You can get your account token and API key "}
                   <a href="https://app.chartmogul.com/#/admin/api" target="_blank" rel="noreferrer">
@@ -79,6 +79,7 @@ function ChartMogulTemplate(props) {
                 onChange={(e, data) => {
                   setConnection({ ...connection, token: data.value });
                 }}
+                placeholder="487cd43d3656609a32e92d1e7d17cd25"
               />
               {errors.token
                 && (
@@ -90,13 +91,14 @@ function ChartMogulTemplate(props) {
 
             <Form.Field error={!!errors.key} required>
               <label>
-                {"Enter your ChartMogul API key "}
+                {"Enter your ChartMogul secret key "}
               </label>
               <Form.Input
                 value={connection.key || ""}
                 onChange={(e, data) => {
                   setConnection({ ...connection, key: data.value });
                 }}
+                placeholder="de2bf2bc6de5266d11ea6b918b674780"
               />
               {errors.key
                 && (
