@@ -2,7 +2,7 @@ const request = require("request-promise");
 
 const builder = require("./builder");
 
-const template = (website, apiKey) => ({
+const template = (website, apiKey, dashboardOrder) => ({
   Connection: {
     name: "SimpleAnalyticsAPI",
     type: "api",
@@ -15,7 +15,7 @@ const template = (website, apiKey) => ({
     name: "30-day Stats",
     chartSize: 1,
     currentEndDate: false,
-    dashboardOrder: 0,
+    dashboardOrder: dashboardOrder + 1,
     displayLegend: false,
     draft: false,
     includeZeros: true,
@@ -53,7 +53,7 @@ const template = (website, apiKey) => ({
     name: "Site Stats",
     chartSize: 2,
     currentEndDate: false,
-    dashboardOrder: 1,
+    dashboardOrder: dashboardOrder + 2,
     displayLegend: false,
     draft: false,
     includeZeros: true,
@@ -90,7 +90,7 @@ const template = (website, apiKey) => ({
   }, {
     name: "Devices",
     chartSize: 1,
-    dashboardOrder: 2,
+    dashboardOrder: dashboardOrder + 3,
     draft: false,
     includeZeros: true,
     mode: "chart",
@@ -114,7 +114,7 @@ const template = (website, apiKey) => ({
   }, {
     name: "Referrers Data",
     chartSize: 2,
-    dashboardOrder: 3,
+    dashboardOrder: dashboardOrder + 4,
     draft: false,
     includeZeros: true,
     mode: "chart",
@@ -148,7 +148,7 @@ const template = (website, apiKey) => ({
   }, {
     name: "Browsers & Countries",
     chartSize: 2,
-    dashboardOrder: 4,
+    dashboardOrder: dashboardOrder + 5,
     draft: false,
     includeZeros: true,
     mode: "chart",
@@ -184,7 +184,7 @@ const template = (website, apiKey) => ({
 
 module.exports.template = template;
 
-module.exports.build = (projectId, { website, apiKey }) => {
+module.exports.build = (projectId, { website, apiKey }, dashboardOrder) => {
   if (!website) return Promise.reject("Missing required 'website' argument");
 
   const checkWebsiteOpt = {
@@ -205,7 +205,7 @@ module.exports.build = (projectId, { website, apiKey }) => {
   return request(checkWebsiteOpt)
     .then((data) => {
       if (!data.histogram) return Promise.reject(new Error(403));
-      return builder(projectId, website, apiKey, template);
+      return builder(projectId, website, apiKey, dashboardOrder, template);
     })
     .catch((err) => {
       if (err && err.message) {
