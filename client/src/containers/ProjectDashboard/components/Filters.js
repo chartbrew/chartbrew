@@ -190,11 +190,13 @@ function Filters(props) {
           <Grid.Column>
             <Divider />
             <Header as="h4">The filter will affect the following charts:</Header>
-            {_getChartsWithField(filter.field).map((chart) => (
-              <Label key={chart.id}>
-                {chart.name}
-              </Label>
-            ))}
+            <Label.Group>
+              {_getChartsWithField(filter.field).map((chart) => (
+                <Label key={chart.id}>
+                  {chart.name}
+                </Label>
+              ))}
+            </Label.Group>
           </Grid.Column>
         )}
 
