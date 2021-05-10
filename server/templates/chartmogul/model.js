@@ -99,7 +99,7 @@ const template = (token, key, dashboardOrder = 0) => ({
       "endDate": moment().endOf("day"),
       "includeZeros": true,
       "currentEndDate": true,
-      "timeInterval": "day",
+      "timeInterval": "month",
       "autoUpdate": null,
       "draft": false,
       "mode": "kpi",
