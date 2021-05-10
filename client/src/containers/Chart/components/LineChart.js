@@ -4,6 +4,8 @@ import { Line } from "react-chartjs-2";
 import { Header } from "semantic-ui-react";
 import uuid from "uuid/v4";
 
+import determineType from "../../../modules/determineType";
+
 function LineChart(props) {
   const {
     chart, redraw, redrawComplete, height
@@ -16,6 +18,24 @@ function LineChart(props) {
       }, 1000);
     }
   }, [redraw]);
+
+  const _getKpi = (data) => {
+    if (data && Array.isArray(data)) {
+      for (let i = data.length - 1; i >= 0; i--) {
+        if (data[i]
+          && (determineType(data[i]) === "string"
+          || determineType(data[i]) === "number"
+          || determineType(data[i]) === "boolean")
+        ) {
+          return data[i];
+        }
+      }
+
+      return `${data[data.length - 1]}`;
+    }
+
+    return `${data}`;
+  };
 
   return (
     <>
@@ -37,7 +57,7 @@ function LineChart(props) {
                       )}
                       key={uuid()}
                     >
-                      {dataset.data && dataset.data[dataset.data.length - 1]}
+                      {dataset.data && _getKpi(dataset.data)}
                       {chart.Datasets[index] && (
                         <Header.Subheader style={{ color: "black" }}>
                           <span
