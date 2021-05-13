@@ -39,7 +39,7 @@ function SimpleAnalyticsTemplate(props) {
       return;
     }
 
-    const data = { ...connection, team_id: teamId };
+    const data = { ...connection, team_id: teamId, charts: selectedCharts };
     setLoading(true);
     setNotPublic(false);
     setNotFound(false);
