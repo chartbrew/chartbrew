@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Segment, Form, Button, Icon, Header, Label, Message, Container, Divider, List,
+  Segment, Form, Button, Icon, Header, Label, Message, Container, Divider, List, Grid, Checkbox,
 } from "semantic-ui-react";
+import _ from "lodash";
+import cookie from "react-cookies";
 
 import { generateDashboard } from "../../../actions/connection";
+import { API_HOST } from "../../../config/settings";
 
 /*
   The Form used to configure the SimpleAnalytics template
@@ -19,6 +22,12 @@ function SimpleAnalyticsTemplate(props) {
   const [errors, setErrors] = useState({});
   const [notPublic, setNotPublic] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [configuration, setConfiguration] = useState(null);
+  const [selectedCharts, setSelectedCharts] = useState(false);
+
+  useEffect(() => {
+    _getTemplateConfig();
+  }, []);
 
   const _onGenerateDashboard = () => {
     setErrors({});
@@ -46,6 +55,63 @@ function SimpleAnalyticsTemplate(props) {
         if (err && err.message === "404") setNotFound(true);
         setLoading(false);
       });
+  };
+
+  const _getTemplateConfig = () => {
+    const url = `${API_HOST}/template/simpleanalytics`;
+    const method = "GET";
+    const headers = new Headers({
+      accept: "application/json",
+      authorization: `Bearer ${cookie.load("brewToken")}`,
+    });
+
+    return fetch(url, { method, headers })
+      .then((response) => {
+        if (!response.ok) {
+          return Promise.reject(response.status);
+        }
+
+        return response.json();
+      })
+      .then((config) => {
+        setConfiguration(config);
+        if (config.Charts && config.Charts.length > 0) {
+          const charts = [];
+          config.Charts.forEach((chart) => {
+            charts.push(chart.tid);
+          });
+
+          setSelectedCharts(charts);
+        }
+      })
+      .catch(() => { });
+  };
+
+  const _onChangeSelectedCharts = (tid) => {
+    const newCharts = [].concat(selectedCharts) || [];
+    const isSelected = _.indexOf(selectedCharts, tid);
+
+    if (isSelected === -1) {
+      newCharts.push(tid);
+    } else {
+      newCharts.splice(isSelected, 1);
+    }
+
+    setSelectedCharts(newCharts);
+  };
+
+  const _onSelectAll = () => {
+    if (configuration && configuration.Charts) {
+      const newSelectedCharts = [];
+      configuration.Charts.forEach((chart) => {
+        newSelectedCharts.push(chart.tid);
+      });
+      setSelectedCharts(newSelectedCharts);
+    }
+  };
+
+  const _onDeselectAll = () => {
+    setSelectedCharts([]);
   };
 
   return (
@@ -135,6 +201,42 @@ function SimpleAnalyticsTemplate(props) {
               </Form.Field>
             )}
           </Form>
+
+          {configuration && (
+            <>
+              <Divider hidden />
+              <Header size="small">{"Select which charts you want Chartbrew to create for you"}</Header>
+              <Grid columns={2} stackable>
+                {configuration.Charts && configuration.Charts.map((chart) => (
+                  <Grid.Column key={chart.tid}>
+                    <Checkbox
+                      label={chart.name}
+                      checked={
+                        _.indexOf(selectedCharts, chart.tid) > -1
+                      }
+                      onClick={() => _onChangeSelectedCharts(chart.tid)}
+                    />
+                  </Grid.Column>
+                ))}
+              </Grid>
+
+              <Divider hidden />
+              <Button
+                icon="check"
+                content="Select all"
+                basic
+                onClick={_onSelectAll}
+                size="small"
+              />
+              <Button
+                icon="x"
+                content="Deselect all"
+                basic
+                onClick={_onDeselectAll}
+                size="small"
+              />
+            </>
+          )}
         </div>
 
         {addError

@@ -1,7 +1,20 @@
+const _ = require("lodash");
+
 const db = require("../../models/models");
 
-module.exports = (projectId, token, key, dashboardOrder, modelTemplate) => {
+module.exports = (projectId, token, key, dashboardOrder, modelTemplate, charts) => {
   const model = modelTemplate(token, key, dashboardOrder);
+
+  if (charts && Array.isArray(charts)) {
+    const newModelCharts = [];
+    model.Charts.forEach((chart) => {
+      if (_.indexOf(charts, chart.tid) > -1) {
+        newModelCharts.push(chart);
+      }
+    });
+
+    model.Charts = newModelCharts;
+  }
 
   model.Connection.project_id = projectId;
 

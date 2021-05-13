@@ -25,6 +25,7 @@ const template = (token, key, dashboardOrder = 0) => ({
   },
   "Charts": [
     {
+      "tid": 1,
       "name": "MRR Evolution",
       "type": "line",
       "subType": "lcTimeseries",
@@ -87,6 +88,7 @@ const template = (token, key, dashboardOrder = 0) => ({
       ]
     },
     {
+      "tid": 2,
       "name": "MRR",
       "type": "line",
       "subType": "lcTimeseries",
@@ -149,6 +151,7 @@ const template = (token, key, dashboardOrder = 0) => ({
       ]
     },
     {
+      "tid": 3,
       "name": "Churn Rate",
       "type": "line",
       "subType": "lcTimeseries",
@@ -243,6 +246,7 @@ const template = (token, key, dashboardOrder = 0) => ({
       ]
     },
     {
+      "tid": 4,
       "name": "Subscribers",
       "type": "line",
       "subType": "lcTimeseries",
@@ -300,6 +304,7 @@ const template = (token, key, dashboardOrder = 0) => ({
       ]
     },
     {
+      "tid": 5,
       "name": "MRR Breakdown in last 6 months",
       "type": "table",
       "subType": "timeseries",
@@ -362,6 +367,7 @@ const template = (token, key, dashboardOrder = 0) => ({
       ]
     },
     {
+      "tid": 6,
       "name": "Anual Recurring Revenue",
       "type": "line",
       "subType": "lcTimeseries",
@@ -419,6 +425,7 @@ const template = (token, key, dashboardOrder = 0) => ({
       ]
     },
     {
+      "tid": 7,
       "name": "Avg Revenue Per Account",
       "type": "line",
       "subType": "lcTimeseries",
@@ -480,7 +487,7 @@ const template = (token, key, dashboardOrder = 0) => ({
 
 module.exports.template = template;
 
-module.exports.build = (projectId, { token, key }, dashboardOrder) => {
+module.exports.build = (projectId, { token, key, charts }, dashboardOrder) => {
   if (!token || !key) return Promise.reject("Missing required authentication arguments");
 
   const checkOpt = {
@@ -498,7 +505,7 @@ module.exports.build = (projectId, { token, key }, dashboardOrder) => {
 
   return request(checkOpt)
     .then(() => {
-      return builder(projectId, token, key, dashboardOrder, template);
+      return builder(projectId, token, key, dashboardOrder, template, charts);
     })
     .catch((err) => {
       if (err && err.message) {

@@ -12,6 +12,7 @@ const template = (website, apiKey, dashboardOrder) => ({
     }]
   },
   Charts: [{
+    tid: 1,
     name: "30-day Stats",
     chartSize: 1,
     currentEndDate: false,
@@ -50,6 +51,7 @@ const template = (website, apiKey, dashboardOrder) => ({
       }
     }]
   }, {
+    tid: 2,
     name: "Site Stats",
     chartSize: 2,
     currentEndDate: false,
@@ -88,6 +90,7 @@ const template = (website, apiKey, dashboardOrder) => ({
       }
     }]
   }, {
+    tid: 3,
     name: "Devices",
     chartSize: 1,
     dashboardOrder: dashboardOrder + 3,
@@ -112,6 +115,7 @@ const template = (website, apiKey, dashboardOrder) => ({
       },
     }]
   }, {
+    tid: 5,
     name: "Referrers Data",
     chartSize: 2,
     dashboardOrder: dashboardOrder + 4,
@@ -146,6 +150,7 @@ const template = (website, apiKey, dashboardOrder) => ({
       },
     }]
   }, {
+    tid: 6,
     name: "Browsers & Countries",
     chartSize: 2,
     dashboardOrder: dashboardOrder + 5,
@@ -184,7 +189,7 @@ const template = (website, apiKey, dashboardOrder) => ({
 
 module.exports.template = template;
 
-module.exports.build = (projectId, { website, apiKey }, dashboardOrder) => {
+module.exports.build = (projectId, { website, apiKey, charts }, dashboardOrder) => {
   if (!website) return Promise.reject("Missing required 'website' argument");
 
   const checkWebsiteOpt = {
@@ -205,7 +210,7 @@ module.exports.build = (projectId, { website, apiKey }, dashboardOrder) => {
   return request(checkWebsiteOpt)
     .then((data) => {
       if (!data.histogram) return Promise.reject(new Error(403));
-      return builder(projectId, website, apiKey, dashboardOrder, template);
+      return builder(projectId, website, apiKey, dashboardOrder, template, charts);
     })
     .catch((err) => {
       if (err && err.message) {

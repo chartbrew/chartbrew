@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Segment, Form, Button, Icon, Header, Label, Message, Container, Divider,
+  Segment, Form, Button, Icon, Header, Label, Message, Container, Divider, Grid, Checkbox,
 } from "semantic-ui-react";
+import cookie from "react-cookies";
+import _ from "lodash";
 
 import { generateDashboard } from "../../../actions/connection";
+import { API_HOST } from "../../../config/settings";
 
 /*
   The Form used to configure the ChartMogul template
@@ -18,6 +21,12 @@ function ChartMogulTemplate(props) {
   const [connection, setConnection] = useState({});
   const [errors, setErrors] = useState({});
   const [testError, setTestError] = useState(false);
+  const [configuration, setConfiguration] = useState(null);
+  const [selectedCharts, setSelectedCharts] = useState([]);
+
+  useEffect(() => {
+    _getTemplateConfig();
+  }, []);
 
   const _onGenerateDashboard = () => {
     setErrors({});
@@ -36,7 +45,7 @@ function ChartMogulTemplate(props) {
       return;
     }
 
-    const data = { ...connection, team_id: teamId };
+    const data = { ...connection, team_id: teamId, charts: selectedCharts };
     setLoading(true);
     setTestError(false);
 
@@ -50,6 +59,63 @@ function ChartMogulTemplate(props) {
         setTestError(true);
         setLoading(false);
       });
+  };
+
+  const _getTemplateConfig = () => {
+    const url = `${API_HOST}/template/chartmogul`;
+    const method = "GET";
+    const headers = new Headers({
+      accept: "application/json",
+      authorization: `Bearer ${cookie.load("brewToken")}`,
+    });
+
+    return fetch(url, { method, headers })
+      .then((response) => {
+        if (!response.ok) {
+          return Promise.reject(response.status);
+        }
+
+        return response.json();
+      })
+      .then((config) => {
+        setConfiguration(config);
+        if (config.Charts && config.Charts.length > 0) {
+          const charts = [];
+          config.Charts.forEach((chart) => {
+            charts.push(chart.tid);
+          });
+
+          setSelectedCharts(charts);
+        }
+      })
+      .catch(() => {});
+  };
+
+  const _onChangeSelectedCharts = (tid) => {
+    const newCharts = [].concat(selectedCharts) || [];
+    const isSelected = _.indexOf(selectedCharts, tid);
+
+    if (isSelected === -1) {
+      newCharts.push(tid);
+    } else {
+      newCharts.splice(isSelected, 1);
+    }
+
+    setSelectedCharts(newCharts);
+  };
+
+  const _onSelectAll = () => {
+    if (configuration && configuration.Charts) {
+      const newSelectedCharts = [];
+      configuration.Charts.forEach((chart) => {
+        newSelectedCharts.push(chart.tid);
+      });
+      setSelectedCharts(newSelectedCharts);
+    }
+  };
+
+  const _onDeselectAll = () => {
+    setSelectedCharts([]);
   };
 
   return (
@@ -125,6 +191,42 @@ function ChartMogulTemplate(props) {
               </Form.Field>
             )}
           </Form>
+
+          {configuration && (
+            <>
+              <Divider hidden />
+              <Header size="small">{"Select which charts you want Chartbrew to create for you"}</Header>
+              <Grid columns={2} stackable>
+                {configuration.Charts && configuration.Charts.map((chart) => (
+                  <Grid.Column key={chart.tid}>
+                    <Checkbox
+                      label={chart.name}
+                      checked={
+                        _.indexOf(selectedCharts, chart.tid) > -1
+                      }
+                      onClick={() => _onChangeSelectedCharts(chart.tid)}
+                    />
+                  </Grid.Column>
+                ))}
+              </Grid>
+
+              <Divider hidden />
+              <Button
+                icon="check"
+                content="Select all"
+                basic
+                onClick={_onSelectAll}
+                size="small"
+              />
+              <Button
+                icon="x"
+                content="Deselect all"
+                basic
+                onClick={_onDeselectAll}
+                size="small"
+              />
+            </>
+          )}
         </div>
 
         {addError
@@ -136,7 +238,7 @@ function ChartMogulTemplate(props) {
           )}
 
         <Divider hidden />
-        <Container fluid textAlign="right">
+        <Container fluid>
           <Button
             primary
             loading={loading}
@@ -144,9 +246,10 @@ function ChartMogulTemplate(props) {
             icon
             labelPosition="right"
             style={styles.saveBtn}
+            disabled={!connection.token || !connection.key || selectedCharts.length === 0}
           >
             <Icon name="magic" />
-            Create your dashboard
+            Create the charts
           </Button>
         </Container>
       </Segment>

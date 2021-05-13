@@ -1,7 +1,16 @@
 const db = require("../models/models");
 const verifyToken = require("../modules/verifyToken");
+const templates = require("../templates/index");
 
 module.exports = (app) => {
+  /*
+  ** Route to get the configuration of a template
+  */
+  app.get("/template/:template", verifyToken, (req, res) => {
+    return res.status(200).send(templates[req.params.template].template());
+  });
+  // -------------------------------------
+
   /*
   ** Route to templatize a project and get the generation JSON
   */
@@ -45,6 +54,7 @@ module.exports = (app) => {
         return err;
       });
   });
+  // -------------------------------------
 
   return (req, res, next) => {
     next();
