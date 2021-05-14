@@ -353,6 +353,9 @@ function AddChart(props) {
           onChange={_onNameChange}
           onCreate={_onCreateClicked}
           history={history}
+          teamId={match.params.teamId}
+          projectId={match.params.projectId}
+          connections={connections}
         />
       </div>
     );

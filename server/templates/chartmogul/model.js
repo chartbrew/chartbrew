@@ -25,6 +25,7 @@ const template = (token, key, dashboardOrder = 0) => ({
   },
   "Charts": [
     {
+      "tid": 1,
       "name": "MRR Evolution",
       "type": "line",
       "subType": "lcTimeseries",
@@ -87,6 +88,7 @@ const template = (token, key, dashboardOrder = 0) => ({
       ]
     },
     {
+      "tid": 2,
       "name": "MRR",
       "type": "line",
       "subType": "lcTimeseries",
@@ -149,6 +151,7 @@ const template = (token, key, dashboardOrder = 0) => ({
       ]
     },
     {
+      "tid": 3,
       "name": "Churn Rate",
       "type": "line",
       "subType": "lcTimeseries",
@@ -243,6 +246,7 @@ const template = (token, key, dashboardOrder = 0) => ({
       ]
     },
     {
+      "tid": 4,
       "name": "Subscribers",
       "type": "line",
       "subType": "lcTimeseries",
@@ -300,6 +304,7 @@ const template = (token, key, dashboardOrder = 0) => ({
       ]
     },
     {
+      "tid": 5,
       "name": "MRR Breakdown in last 6 months",
       "type": "table",
       "subType": "timeseries",
@@ -362,6 +367,7 @@ const template = (token, key, dashboardOrder = 0) => ({
       ]
     },
     {
+      "tid": 6,
       "name": "Anual Recurring Revenue",
       "type": "line",
       "subType": "lcTimeseries",
@@ -419,6 +425,7 @@ const template = (token, key, dashboardOrder = 0) => ({
       ]
     },
     {
+      "tid": 7,
       "name": "Avg Revenue Per Account",
       "type": "line",
       "subType": "lcTimeseries",
@@ -480,26 +487,38 @@ const template = (token, key, dashboardOrder = 0) => ({
 
 module.exports.template = template;
 
-module.exports.build = (projectId, { token, key }, dashboardOrder) => {
-  if (!token || !key) return Promise.reject("Missing required authentication arguments");
+module.exports.build = async (projectId, {
+  token, key, charts, connection_id,
+}, dashboardOrder) => {
+  if ((!token || !key) && !connection_id) return Promise.reject("Missing required authentication arguments");
 
-  const checkOpt = {
-    url: `https://api.chartmogul.com/v1/metrics/all?interval=month&start-date=${moment().subtract(6, "month").startOf("month").format("YYYY-MM-DD")}&end-date=${moment().endOf("month").format("YYYY-MM-DD")}`,
-    method: "GET",
-    auth: {
-      user: token,
-      pass: key,
-    },
-    headers: {
-      accept: "application/json",
-    },
-    json: true,
-  };
+  let checkErrored = false;
+  if (!connection_id) {
+    const checkOpt = {
+      url: `https://api.chartmogul.com/v1/metrics/all?interval=month&start-date=${moment().subtract(6, "month").startOf("month").format("YYYY-MM-DD")}&end-date=${moment().endOf("month").format("YYYY-MM-DD")}`,
+      method: "GET",
+      auth: {
+        user: token,
+        pass: key,
+      },
+      headers: {
+        accept: "application/json",
+      },
+      json: true,
+    };
 
-  return request(checkOpt)
-    .then(() => {
-      return builder(projectId, token, key, dashboardOrder, template);
-    })
+    try {
+      const checkAuth = await request(checkOpt); // eslint-disable-line
+    } catch (e) {
+      checkErrored = true;
+    }
+  }
+
+  if (!connection_id && checkErrored) {
+    return Promise.reject(new Error("Request cannot be authenticated"));
+  }
+
+  return builder(projectId, token, key, dashboardOrder, template, charts, connection_id)
     .catch((err) => {
       if (err && err.message) {
         return Promise.reject(err.message);
