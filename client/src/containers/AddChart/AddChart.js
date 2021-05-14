@@ -333,7 +333,7 @@ function AddChart(props) {
               to={`/${match.params.teamId}/${match.params.projectId}/connections`}
             >
               {connections.length > 0 && <Icon name="checkmark" />}
-              {connections.length === 0 && <Icon name="x" color="red" />}
+              {connections.length === 0 && <Icon name="warning sign" color="yellow" />}
               <Step.Content>
                 <Step.Title>Connect</Step.Title>
                 <Step.Description>Connect to your data source</Step.Description>
