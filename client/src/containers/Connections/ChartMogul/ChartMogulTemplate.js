@@ -14,7 +14,7 @@ import { API_HOST } from "../../../config/settings";
 */
 function ChartMogulTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete, connections,
+    teamId, projectId, addError, onComplete, connections, onBack,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -315,6 +315,14 @@ function ChartMogulTemplate(props) {
 
         <Divider hidden />
         <Container fluid textAlign="right">
+          {onBack && (
+            <Button
+              basic
+              icon="chevron left"
+              content="Go back"
+              onClick={onBack}
+            />
+          )}
           <Button
             primary
             loading={loading}
@@ -352,6 +360,7 @@ const styles = {
 
 ChartMogulTemplate.defaultProps = {
   addError: null,
+  onBack: null,
 };
 
 ChartMogulTemplate.propTypes = {
@@ -360,6 +369,7 @@ ChartMogulTemplate.propTypes = {
   onComplete: PropTypes.func.isRequired,
   connections: PropTypes.array.isRequired,
   addError: PropTypes.bool,
+  onBack: PropTypes.func,
 };
 
 export default ChartMogulTemplate;
