@@ -15,7 +15,7 @@ import { API_HOST } from "../../../config/settings";
 */
 function SimpleAnalyticsTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete, connections,
+    teamId, projectId, addError, onComplete, connections, onBack,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -345,6 +345,14 @@ function SimpleAnalyticsTemplate(props) {
 
         <Divider hidden />
         <Container fluid textAlign="right">
+          {onBack && (
+            <Button
+              basic
+              icon="chevron left"
+              content="Go back"
+              onClick={onBack}
+            />
+          )}
           <Button
             primary
             loading={loading}
@@ -384,6 +392,7 @@ const styles = {
 
 SimpleAnalyticsTemplate.defaultProps = {
   addError: null,
+  onBack: null,
 };
 
 SimpleAnalyticsTemplate.propTypes = {
@@ -392,6 +401,7 @@ SimpleAnalyticsTemplate.propTypes = {
   onComplete: PropTypes.func.isRequired,
   connections: PropTypes.array.isRequired,
   addError: PropTypes.bool,
+  onBack: PropTypes.func,
 };
 
 export default SimpleAnalyticsTemplate;
