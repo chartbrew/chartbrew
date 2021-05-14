@@ -2,7 +2,9 @@ const _ = require("lodash");
 
 const db = require("../../models/models");
 
-module.exports = (projectId, website, apiKey, dashboardOrder, modelTemplate, charts) => {
+module.exports = async (
+  projectId, website, apiKey, dashboardOrder, modelTemplate, charts, connection_id
+) => {
   const model = modelTemplate(website, apiKey, dashboardOrder);
 
   if (charts && Array.isArray(charts)) {
@@ -18,11 +20,11 @@ module.exports = (projectId, website, apiKey, dashboardOrder, modelTemplate, cha
 
   model.Connection.project_id = projectId;
 
-  const createDatasets = (datasets, connectionId, chartId) => {
+  const createDatasets = (datasets, cId, chartId) => {
     const datasetPromises = [];
     // now go through the datasets
     const newDatasets = datasets.map(
-      (d) => ({ ...d, chart_id: chartId, connection_id: connectionId })
+      (d) => ({ ...d, chart_id: chartId, connection_id: cId })
     );
 
     newDatasets.forEach((d) => {
@@ -39,33 +41,34 @@ module.exports = (projectId, website, apiKey, dashboardOrder, modelTemplate, cha
     return Promise.all(datasetPromises);
   };
 
-  return db.Connection.create(model.Connection)
-    .then((connection) => {
-      const chartPromises = [];
-      // now go through all the charts
-      model.Charts.forEach((chart) => {
-        const newChart = chart;
-        newChart.project_id = projectId;
+  let connection;
+  if (connection_id) connection = await db.Connection.findByPk(connection_id);
+  else connection = await db.Connection.create(model.Connection);
 
-        chartPromises.push(
-          db.Chart.create(newChart)
-            .then(async (createdChart) => {
-              const createdDatasets = await createDatasets(
-                chart.Datasets,
-                connection.id,
-                createdChart.id
-              );
+  const chartPromises = [];
+  // now go through all the charts
+  model.Charts.forEach((chart) => {
+    const newChart = chart;
+    newChart.project_id = projectId;
 
-              return {
-                chart: createdChart,
-                datasets: createdDatasets,
-              };
-            })
-        );
-      });
+    chartPromises.push(
+      db.Chart.create(newChart)
+        .then(async (createdChart) => {
+          const createdDatasets = await createDatasets(
+            chart.Datasets,
+            connection.id,
+            createdChart.id
+          );
 
-      return Promise.all(chartPromises);
-    })
+          return {
+            chart: createdChart,
+            datasets: createdDatasets,
+          };
+        })
+    );
+  });
+
+  return Promise.all(chartPromises)
     .catch((err) => {
       return err;
     });

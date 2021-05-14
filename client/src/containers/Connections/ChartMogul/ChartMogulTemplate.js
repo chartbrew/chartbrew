@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Segment, Form, Button, Icon, Header, Label, Message, Container, Divider, Grid, Checkbox,
+  Segment, Form, Button, Icon, Header, Label, Message, Container, Divider, Grid, Checkbox, Dropdown,
 } from "semantic-ui-react";
 import cookie from "react-cookies";
 import _ from "lodash";
@@ -14,7 +14,7 @@ import { API_HOST } from "../../../config/settings";
 */
 function ChartMogulTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete,
+    teamId, projectId, addError, onComplete, connections,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -23,22 +23,31 @@ function ChartMogulTemplate(props) {
   const [testError, setTestError] = useState(false);
   const [configuration, setConfiguration] = useState(null);
   const [selectedCharts, setSelectedCharts] = useState([]);
+  const [availableConnections, setAvailableConnections] = useState([]);
+  const [selectedConnection, setSelectedConnection] = useState(null);
+  const [formVisible, setFormVisible] = useState(true);
 
   useEffect(() => {
     _getTemplateConfig();
   }, []);
 
+  useEffect(() => {
+    if (connections && connections.length > 0) {
+      _getAvailableConnections();
+    }
+  }, [connections]);
+
   const _onGenerateDashboard = () => {
     setErrors({});
 
-    if (!connection.token) {
+    if (formVisible && !connection.token) {
       setTimeout(() => {
         setErrors({ ...errors, token: "Please enter your ChartMogul account token" });
       }, 100);
       return;
     }
 
-    if (!connection.key) {
+    if (formVisible && !connection.key) {
       setTimeout(() => {
         setErrors({ ...errors, key: "Please enter your ChartMogul account API key" });
       }, 100);
@@ -46,6 +55,11 @@ function ChartMogulTemplate(props) {
     }
 
     const data = { ...connection, team_id: teamId, charts: selectedCharts };
+
+    if (!formVisible && selectedConnection) {
+      data.connection_id = selectedConnection;
+    }
+
     setLoading(true);
     setTestError(false);
 
@@ -59,6 +73,26 @@ function ChartMogulTemplate(props) {
         setTestError(true);
         setLoading(false);
       });
+  };
+
+  const _getAvailableConnections = () => {
+    const foundConnections = [];
+    connections.forEach((connection) => {
+      if (connection.host === "https://api.chartmogul.com/v1" && connection.type === "api") {
+        foundConnections.push({
+          key: connection.id,
+          value: connection.id,
+          text: connection.name,
+        });
+      }
+    });
+
+    setAvailableConnections(foundConnections);
+
+    if (!selectedConnection && foundConnections.length > 0) {
+      setSelectedConnection(foundConnections[0].value);
+      setFormVisible(false);
+    }
   };
 
   const _getTemplateConfig = () => {
@@ -126,71 +160,97 @@ function ChartMogulTemplate(props) {
         </Header>
 
         <div style={styles.formStyle}>
-          <Form>
-            <Form.Field>
-              <Message compact>
-                <p>
-                  {"You can get your account token and API key "}
-                  <a href="https://app.chartmogul.com/#/admin/api" target="_blank" rel="noreferrer">
-                    {"from your ChartMogul dashboard. "}
-                    <Icon name="external" />
-                  </a>
-                </p>
-              </Message>
-            </Form.Field>
-            <Form.Field error={!!errors.token} required>
-              <label>Enter your ChartMogul account token</label>
-              <Form.Input
-                value={connection.token || ""}
-                onChange={(e, data) => {
-                  setConnection({ ...connection, token: data.value });
-                }}
-                placeholder="487cd43d3656609a32e92d1e7d17cd25"
+          {availableConnections && availableConnections.length > 0 && (
+            <>
+              <Header size="small">
+                {"Select an existing connection"}
+              </Header>
+              <Dropdown
+                options={availableConnections}
+                value={selectedConnection || ""}
+                placeholder="Click to select a connection"
+                onChange={(e, data) => setSelectedConnection(data.value)}
+                selection
+                style={{ marginRight: 20 }}
+                disabled={formVisible}
               />
-              {errors.token
-                && (
-                  <Label basic color="red" pointing>
-                    {errors.token}
-                  </Label>
-                )}
-            </Form.Field>
 
-            <Form.Field error={!!errors.key} required>
-              <label>
-                {"Enter your ChartMogul secret key "}
-              </label>
-              <Form.Input
-                value={connection.key || ""}
-                onChange={(e, data) => {
-                  setConnection({ ...connection, key: data.value });
-                }}
-                placeholder="de2bf2bc6de5266d11ea6b918b674780"
-              />
-              {errors.key
-                && (
-                  <Label basic color="red" pointing>
-                    {errors.key}
-                  </Label>
-                )}
-            </Form.Field>
+              {!formVisible && (
+                <Button
+                  primary
+                  className="tertiary"
+                  icon="plus"
+                  content="Or create a new one"
+                  onClick={() => setFormVisible(true)}
+                />
+              )}
 
-            {testError && (
-              <Form.Field>
-                <Message negative>
-                  <Message.Header>{"Cannot make the connection"}</Message.Header>
-                  <div>
-                    <p>{"Please make sure you copied the right token and API key from your ChartMogul dashboard."}</p>
+              {formVisible && (
+                <Button
+                  primary
+                  className="tertiary"
+                  icon="arrow left"
+                  content="Use an existing connection instead"
+                  onClick={() => setFormVisible(false)}
+                />
+              )}
+            </>
+          )}
+
+          {formVisible && (
+            <>
+              {availableConnections && availableConnections.length > 0 && <Divider />}
+              <Form>
+                <Form.Field error={!!errors.token} required>
+                  <label>Enter your ChartMogul account token</label>
+                  <Form.Input
+                    value={connection.token || ""}
+                    onChange={(e, data) => {
+                      setConnection({ ...connection, token: data.value });
+                    }}
+                    placeholder="487cd43d3656609a32e92d1e7d17cd25"
+                  />
+                  {errors.token
+                    && (
+                      <Label basic color="red" pointing>
+                        {errors.token}
+                      </Label>
+                    )}
+                </Form.Field>
+
+                <Form.Field error={!!errors.key} required>
+                  <label>
+                    {"Enter your ChartMogul secret key "}
+                  </label>
+                  <Form.Input
+                    value={connection.key || ""}
+                    onChange={(e, data) => {
+                      setConnection({ ...connection, key: data.value });
+                    }}
+                    placeholder="de2bf2bc6de5266d11ea6b918b674780"
+                  />
+                  {errors.key
+                    && (
+                      <Label basic color="red" pointing>
+                        {errors.key}
+                      </Label>
+                    )}
+                </Form.Field>
+
+                <Form.Field>
+                  <Message compact>
                     <p>
+                      {"You can get your account token and API key "}
                       <a href="https://app.chartmogul.com/#/admin/api" target="_blank" rel="noreferrer">
-                        {"Click here to go to the dashboard "}
+                        {"from your ChartMogul dashboard. "}
                         <Icon name="external" />
                       </a>
                     </p>
-                  </div>
-                </Message>
-              </Form.Field>
-            )}
-          </Form>
+                  </Message>
+                </Form.Field>
+              </Form>
+            </>
+          )}
 
           {configuration && (
             <>
@@ -236,9 +296,25 @@ function ChartMogulTemplate(props) {
               <p>Please try adding your connection again.</p>
             </Message>
           )}
+        {testError && (
+          <Container>
+            <Message negative>
+              <Message.Header>{"Cannot make the connection"}</Message.Header>
+              <div>
+                <p>{"Please make sure you copied the right token and API key from your ChartMogul dashboard."}</p>
+                <p>
+                  <a href="https://app.chartmogul.com/#/admin/api" target="_blank" rel="noreferrer">
+                    {"Click here to go to the dashboard "}
+                    <Icon name="external" />
+                  </a>
+                </p>
+              </div>
+            </Message>
+          </Container>
+        )}
 
         <Divider hidden />
-        <Container fluid>
+        <Container fluid textAlign="right">
           <Button
             primary
             loading={loading}
@@ -246,7 +322,9 @@ function ChartMogulTemplate(props) {
             icon
             labelPosition="right"
             style={styles.saveBtn}
-            disabled={!connection.token || !connection.key || selectedCharts.length === 0}
+            disabled={(
+              (!connection.token || !connection.key) && formVisible)
+              || selectedCharts.length === 0}
           >
             <Icon name="magic" />
             Create the charts
@@ -280,6 +358,7 @@ ChartMogulTemplate.propTypes = {
   teamId: PropTypes.string.isRequired,
   projectId: PropTypes.string.isRequired,
   onComplete: PropTypes.func.isRequired,
+  connections: PropTypes.array.isRequired,
   addError: PropTypes.bool,
 };
 

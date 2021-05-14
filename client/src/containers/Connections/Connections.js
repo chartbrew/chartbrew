@@ -412,6 +412,7 @@ function Connections(props) {
                 projectId={match.params.projectId}
                 onComplete={_onCompleteTemplate}
                 addError={addError}
+                connections={connections}
               />
             )}
           {formType === "cmTemplate"
@@ -421,6 +422,7 @@ function Connections(props) {
                 projectId={match.params.projectId}
                 onComplete={_onCompleteTemplate}
                 addError={addError}
+                connections={connections}
               />
             )}
         </div>
