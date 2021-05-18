@@ -36,9 +36,14 @@ function findFields(coll, currentKey, first, fields) {
   return newFields;
 }
 
-export default function init(collection) {
+export default function init(collection, checkObjects) {
   let fields = [];
   const explorationSet = [];
+
+  if (checkObjects) {
+    fields = findFields(collection, "", true, fields);
+    return fields;
+  }
 
   if (!(collection instanceof Array)) {
     Object.keys(collection).forEach((field) => {

@@ -1,13 +1,19 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Container, Form, Input, Checkbox, Icon, Popup, Divider, Label, Dropdown,
+  Container, Form, Input, Checkbox, Icon, Popup, Divider, Label, Dropdown, Message,
 } from "semantic-ui-react";
+
+import fieldFinder from "../../../modules/fieldFinder";
 
 const templates = [{
   key: "custom",
   value: "custom",
   text: "Custom template",
+}, {
+  key: "url",
+  value: "url",
+  text: "Pagination URL",
 }, {
   key: "stripe",
   value: "stripe",
@@ -19,15 +25,50 @@ const templates = [{
 */
 function ApiPagination(props) {
   const {
-    items, itemsLimit, offset, pagination,
-    onPaginationChanged, apiRoute, template,
+    items, itemsLimit, offset, paginationField, pagination,
+    onPaginationChanged, apiRoute, template, result,
   } = props;
 
+  const [fieldOptions, setFieldOptions] = useState([]);
   useEffect(() => {
     if (!template) {
       onPaginationChanged("template", "custom");
     }
   }, []);
+
+  useEffect(() => {
+    if (result) {
+      const tempFieldOptions = [];
+      fieldFinder(result, true).forEach((o) => {
+        if (o.field && o.type === "string") {
+          let text = o.field && o.field.replace("root[].", "").replace("root.", "");
+          if (o.type === "array") text += "(get element count)";
+          tempFieldOptions.push({
+            key: o.field,
+            text: o.field && text,
+            value: o.field && text,
+            type: o.type,
+            label: {
+              style: { width: 55, textAlign: "center" },
+              content: o.type || "unknown",
+              size: "mini",
+              color: o.type === "date" ? "olive"
+                : o.type === "number" ? "blue"
+                  : o.type === "string" ? "teal"
+                    : o.type === "boolean" ? "purple"
+                      : "grey"
+            },
+          });
+        }
+      });
+
+      setFieldOptions(tempFieldOptions);
+    }
+  }, [result]);
+
+  const _onChangePaginationField = (e, data) => {
+    onPaginationChanged("paginationField", data.value);
+  };
 
   return (
     <Container>
@@ -95,8 +136,36 @@ function ApiPagination(props) {
             />
           </Form.Field>
         )}
+        {template === "url" && pagination && (
+          <Form.Field>
+            <label>{"Click here to select a field that contains the pagination URL"}</label>
+            <Dropdown
+              icon={null}
+              header="Type to search"
+              button
+              className="small button"
+              options={fieldOptions}
+              search
+              text={paginationField || "Select a field"}
+              value={paginationField}
+              onChange={_onChangePaginationField}
+              scrolling
+              disabled={!result}
+            />
+            {!result && (
+              <>
+                <Message compact>
+                  <p>You will have to run a request and get some data first</p>
+                </Message>
+              </>
+            )}
+            <Divider hidden />
+          </Form.Field>
+        )}
         {template === "stripe" && pagination && (
-          <p>Your request will now be paginated automatically</p>
+          <Form.Field>
+            <p>Your request will now be paginated automatically</p>
+          </Form.Field>
         )}
         <Form.Field width={6}>
           <Popup
@@ -151,16 +220,20 @@ function ApiPagination(props) {
 ApiPagination.defaultProps = {
   apiRoute: "",
   template: "custom",
+  result: null,
+  paginationField: "",
 };
 
 ApiPagination.propTypes = {
   items: PropTypes.string.isRequired,
   itemsLimit: PropTypes.number.isRequired,
   offset: PropTypes.string.isRequired,
+  paginationField: PropTypes.string,
   pagination: PropTypes.bool.isRequired,
   onPaginationChanged: PropTypes.func.isRequired,
   apiRoute: PropTypes.string,
   template: PropTypes.string,
+  result: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
 };
 
 export default ApiPagination;

@@ -416,10 +416,12 @@ function ApiBuilder(props) {
               items={apiRequest.items}
               itemsLimit={apiRequest.itemsLimit}
               offset={apiRequest.offset}
+              paginationField={apiRequest.paginationField}
               pagination={apiRequest.pagination}
               onPaginationChanged={_onPaginationChanged}
               apiRoute={apiRequest.route || ""}
               template={apiRequest.template}
+              result={result && JSON.parse(result)}
             />
           )}
         </Grid.Column>

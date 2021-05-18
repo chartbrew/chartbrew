@@ -88,20 +88,75 @@ function PaginateStripe(options, limit, totalResults) {
     });
 }
 
+function PaginateUrl(options, paginationField, limit, totalResults = []) {
+  return request(options)
+    .then((response) => {
+      let results;
+      let paginationURL;
+      let resultsKey;
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(response.body);
+        paginationURL = _.get(parsedResponse, paginationField);
+        Object.keys(parsedResponse).forEach((key) => {
+          if (parsedResponse[key] instanceof Array) {
+            results = parsedResponse[key];
+            resultsKey = key;
+          }
+        });
+      } catch (error) {
+        return new Promise((resolve, reject) => reject(response.statusCode));
+      }
+
+      // check if results are the same as previous ones (infinite request loop?)
+      let skipping = false;
+
+      if (_.isEqual(results, totalResults)) {
+        skipping = true;
+      }
+
+      const tempResults = totalResults.concat(results);
+
+      if (skipping || results.length === 0 || (tempResults.length >= limit && limit !== 0)) {
+        let finalResults = skipping ? results : tempResults;
+
+        // check if it goes above the limit
+        if (tempResults.length > limit && limit !== 0) {
+          finalResults = tempResults.slice(0, limit);
+        }
+
+        parsedResponse[resultsKey] = finalResults;
+        return new Promise((resolve) => resolve(parsedResponse));
+      }
+
+      const newOptions = options;
+      newOptions.url = paginationURL;
+
+      return PaginateUrl(newOptions, paginationField, limit, tempResults);
+    })
+    .catch((err) => {
+      return Promise.reject(err);
+    });
+}
+
 module.exports = (template = "custom", {
-  options, limit, items, offset,
+  options, limit, items, offset, paginationField,
 }) => {
   let results;
-  // make sure stripe's query parameters include the max limit value
-  const stripeOpt = _.cloneDeep(options);
-  stripeOpt.qs.limit = 100;
 
   switch (template) {
     case "custom":
       results = PaginateRequests(options, limit, items, offset);
       break;
-    case "stripe":
+    case "stripe": {
+      // make sure stripe's query parameters include the max limit value
+      const stripeOpt = _.cloneDeep(options);
+      stripeOpt.qs.limit = 100;
       results = PaginateStripe(stripeOpt, limit);
+      break;
+    }
+    case "url":
+      results = PaginateUrl(options, paginationField, limit);
       break;
     default:
       results = PaginateRequests(options, limit, items, offset);

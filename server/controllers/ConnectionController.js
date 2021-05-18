@@ -272,7 +272,7 @@ class ConnectionController {
   }
 
   testApiRequest({
-    connection_id, dataRequest, itemsLimit, items, offset, pagination,
+    connection_id, dataRequest, itemsLimit, items, offset, pagination, paginationField,
   }) {
     const limit = itemsLimit
       ? parseInt(itemsLimit, 10) : 0;
@@ -323,7 +323,8 @@ class ConnectionController {
               options,
               limit,
               items,
-              offset
+              offset,
+              paginationField,
             });
           }
         }
@@ -485,6 +486,7 @@ class ConnectionController {
               limit,
               items: dataRequest.items,
               offset: dataRequest.offset,
+              paginationField: dataRequest.paginationField,
             });
           }
         }

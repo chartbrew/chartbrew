@@ -79,6 +79,9 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       defaultValue: "offset",
     },
+    paginationField: {
+      type: DataTypes.STRING,
+    },
     template: {
       type: DataTypes.STRING,
     },
