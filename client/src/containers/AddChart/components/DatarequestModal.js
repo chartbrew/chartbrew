@@ -229,7 +229,7 @@ function DatarequestModal(props) {
         <Button
           secondary={!saved}
           positive={saved}
-          onClick={_onSaveRequest}
+          onClick={() => _onSaveRequest()}
           loading={loading}
         >
           {saved ? "Saved" : "Save"}
