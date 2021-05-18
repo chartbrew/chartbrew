@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Container, Form, Input, Checkbox, Icon, Popup, Divider, Label, Dropdown, Message,
+  Container, Form, Input, Checkbox, Icon, Popup, Divider, Label, Dropdown,
 } from "semantic-ui-react";
 
 import fieldFinder from "../../../modules/fieldFinder";
@@ -137,30 +137,36 @@ function ApiPagination(props) {
           </Form.Field>
         )}
         {template === "url" && pagination && (
-          <Form.Field>
-            <label>{"Click here to select a field that contains the pagination URL"}</label>
-            <Dropdown
-              icon={null}
-              header="Type to search"
-              button
-              className="small button"
-              options={fieldOptions}
-              search
-              text={paginationField || "Select a field"}
-              value={paginationField}
-              onChange={_onChangePaginationField}
-              scrolling
-              disabled={!result}
-            />
-            {!result && (
-              <>
-                <Message compact>
-                  <p>You will have to run a request and get some data first</p>
-                </Message>
-              </>
-            )}
-            <Divider hidden />
-          </Form.Field>
+          <>
+            <Form.Field>
+              <label>{"Click here to select a field that contains the pagination URL"}</label>
+              <Dropdown
+                icon={null}
+                header="Type to search"
+                button
+                className="small button"
+                options={fieldOptions}
+                search
+                text={paginationField || "Select a field"}
+                value={paginationField}
+                onChange={_onChangePaginationField}
+                scrolling
+                disabled={!result}
+              />
+              {!result && (
+                <i>{" You will have to run a request before you can use this feature"}</i>
+              )}
+            </Form.Field>
+            <Form.Field>
+              <label>Or enter the object path manually here</label>
+              <Input
+                placeholder="pagination.next"
+                value={paginationField || ""}
+                onChange={_onChangePaginationField}
+              />
+              <Divider hidden />
+            </Form.Field>
+          </>
         )}
         {template === "stripe" && pagination && (
           <Form.Field>

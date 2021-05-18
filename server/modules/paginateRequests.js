@@ -98,6 +98,8 @@ function PaginateUrl(options, paginationField, limit, totalResults = []) {
       try {
         parsedResponse = JSON.parse(response.body);
         paginationURL = _.get(parsedResponse, paginationField);
+        if (!paginationURL) return new Promise((resolve) => resolve(parsedResponse));
+
         Object.keys(parsedResponse).forEach((key) => {
           if (parsedResponse[key] instanceof Array) {
             results = parsedResponse[key];
