@@ -2,9 +2,9 @@ const request = require("request-promise");
 
 const builder = require("./builder");
 
-const template = (apiKey, domain, dashboardOrder = 0) => ({
+const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
   "Connection": {
-    "host": "https://api.eu.mailgun.net/v3",
+    "host": `${apiRoot}/v3`,
     "dbName": null,
     "port": null,
     "username": null,
@@ -732,14 +732,16 @@ const template = (apiKey, domain, dashboardOrder = 0) => ({
 module.exports.template = template;
 
 module.exports.build = async (projectId, {
-  apiKey, domain, charts, connection_id,
+  apiKey, domain, domainLocation, charts, connection_id,
 }, dashboardOrder) => {
   if ((!apiKey || !domain) && !connection_id) return Promise.reject("Missing required authentication arguments");
+
+  const apiRoot = domainLocation === "eu" ? "https://api.eu.mailgun.net" : "https://api.mailgun.net/";
 
   let checkErrored = false;
   if (!connection_id) {
     const checkOpt = {
-      url: `https://api.eu.mailgun.net/v3/${domain}/stats/total?event=delivered&limit=10`,
+      url: `${apiRoot}/v3/${domain}/stats/total?event=delivered&limit=10`,
       method: "GET",
       auth: {
         user: "api",
@@ -762,7 +764,9 @@ module.exports.build = async (projectId, {
     return Promise.reject(new Error("Request cannot be authenticated"));
   }
 
-  return builder(projectId, apiKey, domain, dashboardOrder, template, charts, connection_id)
+  return builder(
+    projectId, apiKey, domain, apiRoot, dashboardOrder, template, charts, connection_id
+  )
     .catch((err) => {
       if (err && err.message) {
         return Promise.reject(err.message);

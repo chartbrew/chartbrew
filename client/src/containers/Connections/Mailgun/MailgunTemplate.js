@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Segment, Form, Button, Icon, Header, Label, Message,
-  Container, Divider, List, Grid, Checkbox, Dropdown,
+  Container, Divider, Grid, Checkbox, Dropdown,
 } from "semantic-ui-react";
 import _ from "lodash";
 import cookie from "react-cookies";
@@ -10,10 +10,16 @@ import cookie from "react-cookies";
 import { generateDashboard } from "../../../actions/connection";
 import { API_HOST } from "../../../config/settings";
 
+const countryOptions = [{
+  key: "eu", value: "eu", text: "Europe", flag: "eu"
+}, {
+  key: "us", value: "us", text: "US", flag: "us"
+}];
+
 /*
-  The Form used to configure the SimpleAnalytics template
+  The Form used to configure the Mailgun template
 */
-function SimpleAnalyticsTemplate(props) {
+function MailgunTemplate(props) {
   const {
     teamId, projectId, addError, onComplete, connections, onBack,
   } = props;
@@ -21,8 +27,7 @@ function SimpleAnalyticsTemplate(props) {
   const [loading, setLoading] = useState(false);
   const [connection, setConnection] = useState({});
   const [errors, setErrors] = useState({});
-  const [notPublic, setNotPublic] = useState(false);
-  const [notFound, setNotFound] = useState(false);
+  const [testError, setTestError] = useState(false);
   const [configuration, setConfiguration] = useState(null);
   const [selectedCharts, setSelectedCharts] = useState(false);
   const [availableConnections, setAvailableConnections] = useState([]);
@@ -31,6 +36,7 @@ function SimpleAnalyticsTemplate(props) {
 
   useEffect(() => {
     _getTemplateConfig();
+    setConnection({ ...connection, domainLocation: countryOptions[0].value });
   }, []);
 
   useEffect(() => {
@@ -42,9 +48,23 @@ function SimpleAnalyticsTemplate(props) {
   const _onGenerateDashboard = () => {
     setErrors({});
 
-    if (formVisible && !connection.website) {
+    if (formVisible && !connection.domain) {
       setTimeout(() => {
-        setErrors({ ...errors, website: "Please enter your website" });
+        setErrors({ ...errors, domain: "Please enter your website" });
+      }, 100);
+      return;
+    }
+
+    if (formVisible && !connection.domainLocation) {
+      setTimeout(() => {
+        setErrors({ ...errors, domainLocation: "Please select a domain location" });
+      }, 100);
+      return;
+    }
+
+    if (formVisible && !connection.apiKey) {
+      setTimeout(() => {
+        setErrors({ ...errors, apiKey: "Please enter your API Key" });
       }, 100);
       return;
     }
@@ -55,18 +75,16 @@ function SimpleAnalyticsTemplate(props) {
     }
 
     setLoading(true);
-    setNotPublic(false);
-    setNotFound(false);
+    setTestError(false);
 
-    generateDashboard(projectId, data, "simpleanalytics")
+    generateDashboard(projectId, data, "mailgun")
       .then(() => {
         setTimeout(() => {
           onComplete();
         }, 2000);
       })
-      .catch((err) => {
-        if (err && err.message === "403") setNotPublic(true);
-        if (err && err.message === "404") setNotFound(true);
+      .catch(() => {
+        setTestError(true);
         setLoading(false);
       });
   };
@@ -74,7 +92,10 @@ function SimpleAnalyticsTemplate(props) {
   const _getAvailableConnections = () => {
     const foundConnections = [];
     connections.forEach((connection) => {
-      if (connection.host === "https://simpleanalytics.com" && connection.type === "api") {
+      if ((connection.host.indexOf("https://api.mailgun.net") > -1
+        || connection.host.indexOf("https://api.eu.mailgun.net") > -1)
+        && connection.type === "api"
+      ) {
         foundConnections.push({
           key: connection.id,
           value: connection.id,
@@ -92,7 +113,7 @@ function SimpleAnalyticsTemplate(props) {
   };
 
   const _getTemplateConfig = () => {
-    const url = `${API_HOST}/template/simpleanalytics`;
+    const url = `${API_HOST}/template/mailgun`;
     const method = "GET";
     const headers = new Headers({
       accept: "application/json",
@@ -171,19 +192,19 @@ function SimpleAnalyticsTemplate(props) {
                       style={{ marginRight: 20 }}
                     />
                   </Form.Field>
-                  <Form.Field error={!!errors.name} required disabled={formVisible}>
-                    <label>Enter your Simple Analytics website</label>
+                  <Form.Field error={!!errors.domain} required disabled={formVisible}>
+                    <label>Enter your Mailgun domain</label>
                     <Form.Input
-                      placeholder="chartbrew.com"
-                      value={(!formVisible && connection.website) || ""}
+                      placeholder="mg.example.com"
+                      value={(!formVisible && connection.domain) || ""}
                       onChange={(e, data) => {
-                        setConnection({ ...connection, website: data.value });
+                        setConnection({ ...connection, domain: data.value });
                       }}
                     />
-                    {errors.website
+                    {errors.domain
                       && (
                         <Label basic color="red" pointing>
-                          {errors.website}
+                          {errors.domain}
                         </Label>
                       )}
                   </Form.Field>
@@ -216,33 +237,45 @@ function SimpleAnalyticsTemplate(props) {
             <>
               {availableConnections && availableConnections.length > 0 && <Divider />}
               <Form>
-                <Form.Field error={!!errors.website} required>
-                  <label>Enter your Simple Analytics website</label>
-                  <Form.Input
-                    placeholder="chartbrew.com"
-                    value={connection.website || ""}
+                <Form.Field>
+                  <label>Select your Mailgun domain location</label>
+                  <Dropdown
+                    options={countryOptions}
+                    selection
+                    value={connection.domainLocation || countryOptions[0].value}
                     onChange={(e, data) => {
-                      setConnection({ ...connection, website: data.value });
+                      setConnection({ ...connection, domainLocation: data.value });
+                    }}
+                    compact
+                  />
+                </Form.Field>
+                <Form.Field error={!!errors.domain} required>
+                  <label>Enter your Mailgun domain</label>
+                  <Form.Input
+                    placeholder="mg.example.com"
+                    value={connection.domain || ""}
+                    onChange={(e, data) => {
+                      setConnection({ ...connection, domain: data.value });
                     }}
                   />
-                  {errors.website
+                  {errors.domain
                     && (
                       <Label basic color="red" pointing>
-                        {errors.website}
+                        {errors.domain}
                       </Label>
                     )}
                 </Form.Field>
 
                 <Form.Field>
                   <label>
-                    {"Enter your Simple Analytics API key (if the website is private). "}
-                    <a href="https://simpleanalytics.com/account#api" target="_blank" rel="noreferrer">
-                      {"Get your API key here "}
+                    {"Enter your Mailgun Private API Key. "}
+                    <a href="https://app.mailgun.com/app/account/security/api_keys" target="_blank" rel="noreferrer">
+                      {"Get your Private API Key from here "}
                       <Icon name="external" />
                     </a>
                   </label>
                   <Form.Input
-                    placeholder="sa_api_key_*"
+                    placeholder="**********2bPvT"
                     value={connection.apiKey || ""}
                     onChange={(e, data) => {
                       setConnection({ ...connection, apiKey: data.value });
@@ -298,43 +331,15 @@ function SimpleAnalyticsTemplate(props) {
             </Message>
           )}
 
-        {notPublic && (
+        {testError && (
           <Container>
             <Message negative>
-              <Message.Header>{"Your site appears to be set to private"}</Message.Header>
+              <Message.Header>{"Cannot make the connection"}</Message.Header>
               <div>
-                <p>{"In order to be able to get the stats from Simple Analytics, please do one of the following:"}</p>
-                <List bulleted>
-                  <List.Item>
-                    {"Enter your Simple Analytics API key in the field above. "}
-                    <a href="https://simpleanalytics.com/account#api" target="_blank" rel="noreferrer">
-                      {"Click here to find your API key. "}
-                      <Icon name="external" />
-                    </a>
-                  </List.Item>
-                  <List.Item>
-                    {"Alternatively, "}
-                    <a href={`https://simpleanalytics.com/${connection.website}/settings#visibility`} target="_blank" rel="noreferrer">
-                      {"make your site stats public here. "}
-                      <Icon name="external" />
-                    </a>
-                  </List.Item>
-                </List>
-              </div>
-            </Message>
-          </Container>
-        )}
-
-        {notFound && (
-          <Container>
-            <Message negative>
-              <Message.Header>{"Your site could not be found"}</Message.Header>
-              <div>
-                <p>{"Make sure your website is spelt correctly and that it is registered with Simple Analytics."}</p>
+                <p>{"Please make sure you copied the right token and API key from your Mailgun dashboard."}</p>
                 <p>
-                  {"You can check if it exists here: "}
-                  <a href={`https://simpleanalytics.com/${connection.website}`} target="_blank" rel="noreferrer">
-                    {`https://simpleanalytics.com/${connection.website} `}
+                  <a href="https://app.mailgun.com/app/account/security/api_keys" target="_blank" rel="noreferrer">
+                    {"Click here to go to the dashboard "}
                     <Icon name="external" />
                   </a>
                 </p>
@@ -361,8 +366,10 @@ function SimpleAnalyticsTemplate(props) {
             labelPosition="right"
             style={styles.saveBtn}
             disabled={
-              (!formVisible && !selectedConnection)
-              || !connection.website
+              (!formVisible && (!selectedConnection || (selectedConnection && !connection.domain)))
+              || (formVisible
+                && (!connection.domainLocation || !connection.domain || !connection.apiKey)
+              )
               || (!selectedCharts || selectedCharts.length < 1)
             }
           >
@@ -390,12 +397,12 @@ const styles = {
   },
 };
 
-SimpleAnalyticsTemplate.defaultProps = {
+MailgunTemplate.defaultProps = {
   addError: null,
   onBack: null,
 };
 
-SimpleAnalyticsTemplate.propTypes = {
+MailgunTemplate.propTypes = {
   teamId: PropTypes.string.isRequired,
   projectId: PropTypes.string.isRequired,
   onComplete: PropTypes.func.isRequired,
@@ -404,4 +411,4 @@ SimpleAnalyticsTemplate.propTypes = {
   onBack: PropTypes.func,
 };
 
-export default SimpleAnalyticsTemplate;
+export default MailgunTemplate;

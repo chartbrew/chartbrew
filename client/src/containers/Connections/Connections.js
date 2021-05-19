@@ -15,6 +15,7 @@ import FirebaseConnectionForm from "./Firebase/FirebaseConnectionForm";
 import FirestoreConnectionForm from "./Firestore/FirestoreConnectionForm";
 import SimpleAnalyticsTemplate from "./SimpleAnalytics/SimpleAnalyticsTemplate";
 import ChartMogulTemplate from "./ChartMogul/ChartMogulTemplate";
+import MailgunTemplate from "./Mailgun/MailgunTemplate";
 import {
   testRequest as testRequestAction,
   removeConnection as removeConnectionAction,
@@ -34,6 +35,7 @@ import firestoreLogo from "../../assets/firebase-firestore.png";
 import simpleAnalyticsLogo from "../../assets/simpleAnalytics.png";
 import moreLogo from "../../assets/moreComingSoon.png";
 import chartmogulLogo from "../../assets/ChartMogul.webp";
+import mailgunLogo from "../../assets/mailgun_logo.webp";
 import { lightGray, primary } from "../../config/colors";
 
 /*
@@ -313,6 +315,12 @@ function Connections(props) {
                       <Card.Header>ChartMogul</Card.Header>
                     </Card.Content>
                   </Card>
+                  <Card className="project-segment" onClick={() => setFormType("mailgunTemplate")}>
+                    <Image src={mailgunLogo} />
+                    <Card.Content textAlign="center">
+                      <Card.Header>Mailgun</Card.Header>
+                    </Card.Content>
+                  </Card>
                   <Card>
                     <Image src={moreLogo} />
                     <Card.Content textAlign="center">
@@ -418,6 +426,16 @@ function Connections(props) {
           {formType === "cmTemplate"
             && (
               <ChartMogulTemplate
+                teamId={match.params.teamId}
+                projectId={match.params.projectId}
+                onComplete={_onCompleteTemplate}
+                addError={addError}
+                connections={connections}
+              />
+            )}
+          {formType === "mailgunTemplate"
+            && (
+              <MailgunTemplate
                 teamId={match.params.teamId}
                 projectId={match.params.projectId}
                 onComplete={_onCompleteTemplate}

@@ -3,9 +3,9 @@ const _ = require("lodash");
 const db = require("../../models/models");
 
 module.exports = async (
-  projectId, apiKey, domain, dashboardOrder, modelTemplate, charts, connection_id
+  projectId, apiKey, domain, apiRoot, dashboardOrder, modelTemplate, charts, connection_id
 ) => {
-  const model = modelTemplate(apiKey, domain, dashboardOrder);
+  const model = modelTemplate(apiKey, domain, apiRoot, dashboardOrder);
 
   if (charts && Array.isArray(charts)) {
     const newModelCharts = [];

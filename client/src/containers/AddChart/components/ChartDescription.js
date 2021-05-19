@@ -7,8 +7,10 @@ import {
 import simpleAnalyticsLogo from "../../../assets/simpleAnalytics.png";
 import moreLogo from "../../../assets/moreComingSoon.png";
 import chartmogulLogo from "../../../assets/ChartMogul.webp";
+import mailgunLogo from "../../../assets/mailgun_logo.webp";
 import SimpleAnalyticsTemplate from "../../Connections/SimpleAnalytics/SimpleAnalyticsTemplate";
 import ChartMogulTemplate from "../../Connections/ChartMogul/ChartMogulTemplate";
+import MailgunTemplate from "../../Connections/Mailgun/MailgunTemplate";
 
 function ChartDescription(props) {
   const {
@@ -130,6 +132,12 @@ function ChartDescription(props) {
                     <Card.Header>ChartMogul</Card.Header>
                   </Card.Content>
                 </Card>
+                <Card className="project-segment" onClick={() => setFormType("mailgunTemplate")}>
+                  <Image src={mailgunLogo} />
+                  <Card.Content textAlign="center">
+                    <Card.Header>Mailgun</Card.Header>
+                  </Card.Content>
+                </Card>
                 <Card>
                   <Image src={moreLogo} />
                   <Card.Content textAlign="center">
@@ -153,6 +161,16 @@ function ChartDescription(props) {
           {formType === "cmTemplate"
             && (
               <ChartMogulTemplate
+                teamId={teamId}
+                projectId={projectId}
+                onComplete={_onCompleteTemplate}
+                connections={connections}
+                onBack={() => setFormType("")}
+              />
+            )}
+          {formType === "mailgunTemplate"
+            && (
+              <MailgunTemplate
                 teamId={teamId}
                 projectId={projectId}
                 onComplete={_onCompleteTemplate}
