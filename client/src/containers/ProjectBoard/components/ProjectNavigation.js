@@ -377,13 +377,25 @@ function ProjectNavigation(props) {
         {/* <Image size="mini" centered src={cbLogo} alt="bottle" /> */}
         <Header as="h6" inverted style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
           {menuSize !== "small" && (
-            <span>
+            <a
+              href={`https://github.com/chartbrew/chartbrew/releases/tag/${APP_VERSION}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "white" }}
+            >
               Chartbrew
               { ` ${APP_VERSION}`}
-            </span>
+            </a>
           )}
           {menuSize === "small" && (
-            <span>{APP_VERSION}</span>
+            <a
+              href={`https://github.com/chartbrew/chartbrew/releases/tag/${APP_VERSION}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "white" }}
+            >
+              {APP_VERSION}
+            </a>
           )}
         </Header>
       </Menu.Item>
