@@ -92,7 +92,8 @@ function MailgunTemplate(props) {
   const _getAvailableConnections = () => {
     const foundConnections = [];
     connections.forEach((connection) => {
-      if ((connection.host.indexOf("https://api.mailgun.net") > -1
+      if (connection.host
+        && (connection.host.indexOf("https://api.mailgun.net") > -1
         || connection.host.indexOf("https://api.eu.mailgun.net") > -1)
         && connection.type === "api"
       ) {
