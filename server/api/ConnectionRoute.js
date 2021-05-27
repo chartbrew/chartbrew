@@ -3,6 +3,7 @@ const TeamController = require("../controllers/TeamController");
 const ProjectController = require("../controllers/ProjectController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
+const googleConnector = require("../modules/googleConnector");
 
 module.exports = (app) => {
   const connectionController = new ConnectionController();
@@ -249,6 +250,13 @@ module.exports = (app) => {
       });
   });
   // -------------------------------------------------
+
+  /*
+  ** Route to authenticate with google
+  */
+  app.get("/project/:project_id/connection/auth/google", (req, res) => {
+    return res.status(200).send(googleConnector.getAuthUrl());
+  });
 
   return (req, res, next) => {
     next();

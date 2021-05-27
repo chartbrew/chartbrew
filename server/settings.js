@@ -13,5 +13,10 @@ module.exports = {
       pass: process.env.CB_MAIL_PASS,
     },
   },
+  google: {
+    client_id: process.env.CB_GOOGLE_CLIENT_ID,
+    client_secret: process.env.CB_GOOGLE_CLIENT_SECRET,
+    redirect_url: "/google-auth",
+  },
   teamRestricted: process.env.CB_RESTRICT_TEAMS,
 };

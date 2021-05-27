@@ -13,6 +13,7 @@ import PostgresConnectionForm from "./components/PostgresConnectionForm";
 import MysqlConnectionForm from "./components/MysqlConnectionForm";
 import FirebaseConnectionForm from "./Firebase/FirebaseConnectionForm";
 import FirestoreConnectionForm from "./Firestore/FirestoreConnectionForm";
+import GaConnectionForm from "./GoogleAnalytics/GaConnectionForm";
 import SimpleAnalyticsTemplate from "./SimpleAnalytics/SimpleAnalyticsTemplate";
 import ChartMogulTemplate from "./ChartMogul/ChartMogulTemplate";
 import MailgunTemplate from "./Mailgun/MailgunTemplate";
@@ -36,6 +37,7 @@ import simpleAnalyticsLogo from "../../assets/simpleAnalytics.png";
 import moreLogo from "../../assets/moreComingSoon.png";
 import chartmogulLogo from "../../assets/ChartMogul.webp";
 import mailgunLogo from "../../assets/mailgun_logo.webp";
+import gAnalyticsLogo from "../../assets/GoogleAnalytics.webp";
 import { lightGray, primary } from "../../config/colors";
 
 /*
@@ -71,7 +73,7 @@ function Connections(props) {
     setTestResult(null);
   };
 
-  const _onAddNewConnection = (connection) => {
+  const _onAddNewConnection = (connection, switchToEdit) => {
     let redirect = false;
     if (connections.length === 0) {
       redirect = true;
@@ -79,11 +81,12 @@ function Connections(props) {
 
     if (!connection.id) {
       return addConnection(match.params.projectId, connection)
-        .then(() => {
+        .then((newConnection) => {
           if (redirect) {
             history.push(`/${match.params.teamId}/${match.params.projectId}/chart`);
           }
-          setFormType(null);
+          setFormType((switchToEdit && newConnection.type) || null);
+          setEditConnection((switchToEdit && newConnection) || null);
           setNewConnectionModal(false);
           return true;
         })
@@ -299,6 +302,17 @@ function Connections(props) {
                       <Card.Header>Firestore</Card.Header>
                     </Card.Content>
                   </Card>
+                  <Card className="project-segment" onClick={() => setFormType("googleAnalytics")}>
+                    <Image
+                      src={gAnalyticsLogo}
+                      label={{
+                        as: "a", color: "olive", title: "Freshly released", corner: "left", icon: "wrench"
+                      }}
+                    />
+                    <Card.Content textAlign="center">
+                      <Card.Header>Google Analytics</Card.Header>
+                    </Card.Content>
+                  </Card>
                 </Card.Group>
               )}
               {selectedMenu === "templates" && (
@@ -413,6 +427,19 @@ function Connections(props) {
                 testResult={testResult}
               />
             )}
+          {formType === "googleAnalytics"
+            && (
+              <GaConnectionForm
+                projectId={match.params.projectId}
+                onTest={_onTestRequest}
+                onComplete={_onAddNewConnection}
+                editConnection={editConnection}
+                addError={addError}
+                testResult={testResult}
+              />
+            )}
+
+          {/* ADD TEMPLATES BELOW */}
           {formType === "saTemplate"
             && (
               <SimpleAnalyticsTemplate
@@ -473,7 +500,8 @@ function Connections(props) {
                           : connection.type === "postgres" ? postgres
                             : connection.type === "mysql" ? mysql
                               : connection.type === "firebase" ? firebaseLogo
-                                : connection.type === "firestore" ? firestoreLogo : mongoLogo
+                                : connection.type === "firestore" ? firestoreLogo
+                                  : connection.type === "googleAnalytics" ? gAnalyticsLogo : mongoLogo
                     }
                   />
                   <Card.Header>{connection.name}</Card.Header>
