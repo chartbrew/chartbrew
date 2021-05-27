@@ -213,7 +213,8 @@ class AxisChart {
           if (yValue || yValue === 0) {
             yType = determineType(yValue);
             // only add the yValue if it corresponds to one of the x values found above
-            if (_.indexOf(xAxisData.filtered, yData[index][xAxisFieldName]) > -1) {
+            const selectorValue = xAxis.indexOf(".") > -1 ? _.get(yData[index], xAxis) : yData[index][xAxisFieldName];
+            if (_.indexOf(xAxisData.filtered, selectorValue) > -1) {
               yAxisData.push({ x: xAxisData.filtered[index], y: yValue });
             } else if (xType === "date"
                 && _.findIndex(
