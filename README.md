@@ -26,9 +26,11 @@
 
 📚 [**Read the full docs here**](https://docs.chartbrew.com)
 
-🔧 [**Development roadmap**](https://github.com/orgs/chartbrew/projects/1) - start here if you want to contribute
+🔧 [**Issues ready to be tackled**](https://github.com/orgs/chartbrew/projects/1)
 
-🚙 [**Public feature roadmap over here**](https://trello.com/b/IQ7eiDqZ/chartbrew-roadmap)
+🚙 [**Public roadmap over here**](https://trello.com/b/IQ7eiDqZ/chartbrew-roadmap)
+
+💡 [**Have any ideas or discussion topics?**](https://github.com/chartbrew/chartbrew/discussions)
 
 💬 [**Join our Discord**](https://discord.gg/KwGEbFk)
 
