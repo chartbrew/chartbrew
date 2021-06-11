@@ -16,6 +16,7 @@ import apiImg from "../../../assets/api.png";
 import postgresImg from "../../../assets/postgres.png";
 import firebaseImg from "../../../assets/firebase-real-time-database.png";
 import firestoreImg from "../../../assets/firebase-firestore.png";
+import gAnalyticsLogo from "../../../assets/GoogleAnalytics.webp";
 import DatarequestModal from "./DatarequestModal";
 import DatasetAppearance from "./DatasetAppearance";
 import DatasetData from "./DatasetData";
@@ -46,7 +47,8 @@ function Dataset(props) {
           ? apiImg : connection.type === "mysql"
             ? mysqlImg : connection.type === "firebase"
               ? firebaseImg : connection.type === "firestore"
-                ? firestoreImg : postgresImg;
+                ? firestoreImg : connection.type === "googleAnalytics"
+                  ? gAnalyticsLogo : postgresImg;
 
       config.push({
         key: connection.id,

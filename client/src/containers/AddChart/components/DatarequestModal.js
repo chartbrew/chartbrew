@@ -13,6 +13,8 @@ import SqlBuilder from "./SqlBuilder";
 import MongoQueryBuilder from "./MongoQueryBuilder";
 import FirebaseBuilder from "../../Connections/Firebase/FirebaseBuilder";
 import FirestoreBuilder from "../../Connections/Firestore/FirestoreBuilder";
+import GaBuilder from "../../Connections/GoogleAnalytics/GaBuilder";
+
 import {
   getDataRequestByDataset as getDataRequestByDatasetAction,
   createDataRequest as createDataRequestAction,
@@ -216,6 +218,16 @@ function DatarequestModal(props) {
         )}
         {connection.type === "firestore" && dataRequest && (
           <FirestoreBuilder
+            dataset={dataset}
+            dataRequest={dataRequest}
+            connection={connection}
+            onChangeRequest={_updateDataRequest}
+            onSave={_onSaveRequest}
+            exploreData={result && JSON.stringify(result.data, null, 2)}
+          />
+        )}
+        {connection.type === "googleAnalytics" && dataRequest && (
+          <GaBuilder
             dataset={dataset}
             dataRequest={dataRequest}
             connection={connection}
