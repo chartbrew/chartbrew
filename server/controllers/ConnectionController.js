@@ -10,8 +10,9 @@ const externalDbConnection = require("../modules/externalDbConnection");
 const assembleMongoUrl = require("../modules/assembleMongoUrl");
 const paginateRequests = require("../modules/paginateRequests");
 const firebaseConnector = require("../modules/firebaseConnector");
-
+const googleConnector = require("../modules/googleConnector");
 const FirestoreConnection = require("../connections/FirestoreConnection");
+const oauthController = require("./OAuthController");
 
 class ConnectionController {
   constructor() {
@@ -152,6 +153,8 @@ class ConnectionController {
       return this.testFirebase(data);
     } else if (data.type === "firestore") {
       return this.testFirestore(data);
+    } else if (data.type === "googleAnalytics") {
+      return this.testGoogleAnalytics(data);
     }
 
     return new Promise((resolve, reject) => reject(new Error("No request type specified")));
@@ -240,29 +243,42 @@ class ConnectionController {
     return db.Connection.findByPk(id)
       .then((connection) => {
         gConnection = connection;
-        if (connection.type === "mongodb") {
-          return this.getConnectionUrl(id);
-        } else if (connection.type === "api") {
-          return requestP(this.getApiTestOptions(connection));
-        } else if (connection.type === "postgres" || connection.type === "mysql") {
-          return externalDbConnection(connection);
-        } else if (connection.type === "firebase" || connection.type === "firestore") {
-          return firebaseConnector.getAuthToken(connection);
-        } else {
-          return new Promise((resolve, reject) => reject(new Error(400)));
+        switch (connection.type) {
+          case "mongodb":
+            return this.getConnectionUrl(id);
+          case "api":
+            return requestP(this.getApiTestOptions(connection));
+          case "postgres":
+          case "mysql":
+            return externalDbConnection(connection);
+          case "firebase":
+          case "firestore":
+            return firebaseConnector.getAuthToken(connection);
+          case "googleAnalytics":
+            return this.testGoogleAnalytics(connection);
+          default:
+            return new Promise((resolve, reject) => reject(new Error(400)));
         }
       })
       .then((response) => {
-        if (gConnection.type === "mongodb") {
-          return mongoose.connect(response);
-        } else if (gConnection.type === "api" && response.statusCode < 300) {
-          return new Promise((resolve) => resolve({ success: true }));
-        } else if (gConnection.type === "postgres" || gConnection.type === "mysql") {
-          return new Promise((resolve) => resolve({ success: true }));
-        } else if (gConnection.type === "firebase" || gConnection.type === "firestore") {
-          return new Promise((resolve) => resolve(response));
-        } else {
-          return new Promise((resolve, reject) => reject(new Error(400)));
+        switch (gConnection.type) {
+          case "mongodb":
+            return mongoose.connect(response);
+          case "api":
+            if (response.statusCode < 300) {
+              return new Promise((resolve) => resolve({ success: true }));
+            }
+            return new Promise((resolve, reject) => reject(new Error(400)));
+          case "postgres":
+          case "mysql":
+            return new Promise((resolve) => resolve({ success: true }));
+          case "firebase":
+          case "firestore":
+            return new Promise((resolve) => resolve(response));
+          case "googleAnalytics":
+            return new Promise((resolve) => resolve(response));
+          default:
+            return new Promise((resolve, reject) => reject(new Error(400)));
         }
       })
       .then(() => {
@@ -525,6 +541,13 @@ class ConnectionController {
       .catch((err) => {
         return new Promise((resolve, reject) => reject(err));
       });
+  }
+
+  async testGoogleAnalytics(connection) {
+    if (!connection.oauth_id) return Promise.reject({ error: "Not oauth token" });
+
+    const oauth = await oauthController.findById(connection.oauth_id);
+    return googleConnector.getAccounts(oauth.refreshToken);
   }
 }
 

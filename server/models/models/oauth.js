@@ -42,7 +42,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       get() {
         try {
-          return JSON.parse(sc.decrypt(this.getDataValue("refreshToken")));
+          return sc.decrypt(this.getDataValue("refreshToken"));
         } catch (e) {
           return this.getDataValue("refreshToken");
         }

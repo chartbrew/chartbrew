@@ -2,12 +2,16 @@ const { google } = require("googleapis");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
-module.exports.getAuthUrl = (project_id, connection_id) => {
-  const oauth2Client = new google.auth.OAuth2(
+const getOAuthClient = () => {
+  return new google.auth.OAuth2(
     settings.google.client_id,
     settings.google.client_secret,
     `http://${settings.client}${settings.google.redirect_url}`,
   );
+};
+
+module.exports.getAuthUrl = (project_id, connection_id) => {
+  const oauth2Client = getOAuthClient();
 
   // generate a url that asks permissions for Google analytics and user email
   const scopes = [
@@ -25,11 +29,7 @@ module.exports.getAuthUrl = (project_id, connection_id) => {
 };
 
 module.exports.getToken = async (code) => {
-  const oauth2Client = new google.auth.OAuth2(
-    settings.google.client_id,
-    settings.google.client_secret,
-    `http://${settings.client}${settings.google.redirect_url}`,
-  );
+  const oauth2Client = getOAuthClient();
 
   try {
     const { tokens } = await oauth2Client.getToken(code);
@@ -47,5 +47,21 @@ module.exports.getToken = async (code) => {
     };
   } catch (err) {
     return Promise.reject(err);
+  }
+};
+
+module.exports.getAccounts = async (refreshToken) => {
+  const oauth2Client = getOAuthClient();
+
+  try {
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    google.options({ auth: oauth2Client });
+
+    const admin = google.analytics("v3");
+    const accounts = await admin.management.accountSummaries.list();
+
+    return accounts.data;
+  } catch (e) {
+    return Promise.reject(e);
   }
 };

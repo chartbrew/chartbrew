@@ -179,6 +179,15 @@ function GaConnectionForm(props) {
 
         <Divider hidden />
         <Container fluid textAlign="right">
+          <Button
+            primary
+            basic
+            onClick={() => onTest(connection)}
+            loading={testLoading}
+            disabled={!connection.name || !connection.oauth_id}
+          >
+            Test connection
+          </Button>
           {editConnection && (
             <Button
               secondary
