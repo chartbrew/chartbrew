@@ -89,7 +89,7 @@ function Connections(props) {
 
   const _onAddNewConnection = (connection, switchToEdit) => {
     let redirect = false;
-    if (connections.length === 0) {
+    if (connections.length === 0 && !switchToEdit) {
       redirect = true;
     }
 
@@ -99,8 +99,14 @@ function Connections(props) {
           if (redirect) {
             history.push(`/${match.params.teamId}/${match.params.projectId}/chart`);
           }
-          setFormType((switchToEdit && newConnection.type) || null);
-          setEditConnection((switchToEdit && newConnection) || null);
+
+          if (!switchToEdit) {
+            setFormType(null);
+            setEditConnection(null);
+          } else {
+            _onEditConnection(newConnection);
+          }
+
           setNewConnectionModal(false);
           return true;
         })

@@ -256,13 +256,13 @@ module.exports = (app) => {
   ** Route to get the Google authentication URL
   */
   app.get("/project/:project_id/connection/:connection_id/auth/google", verifyToken, async (req, res) => {
-    const teamRole = await checkAccess(req);
-    const permission = accessControl.can(teamRole.role).createAny("connection");
-    if (!permission.granted) {
-      return res.status(401).send({ error: "Not authorized" });
-    }
-
     try {
+      const teamRole = await checkAccess(req);
+      const permission = accessControl.can(teamRole.role).createAny("connection");
+      if (!permission.granted) {
+        return res.status(401).send({ error: "Not authorized" });
+      }
+
       return res.status(200).send({
         url: googleConnector.getAuthUrl(req.params.project_id, req.params.connection_id)
       });
