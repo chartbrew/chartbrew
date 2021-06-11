@@ -21,6 +21,7 @@ class ConnectionController {
   findAll() {
     return db.Connection.findAll({
       attributes: { exclude: ["dbName", "password", "username", "options", "port", "host"] },
+      include: [{ model: db.OAuth, attributes: { exclude: ["refreshToken"] } }],
     })
       .then((connections) => {
         return Promise.resolve(connections);
@@ -47,6 +48,7 @@ class ConnectionController {
     return db.Connection.findAll({
       where: { project_id: projectId },
       attributes: { exclude: ["password"] },
+      include: [{ model: db.OAuth, attributes: { exclude: ["refreshToken"] } }],
     })
       .then((connections) => {
         return connections;

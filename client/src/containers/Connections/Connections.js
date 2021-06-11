@@ -6,6 +6,7 @@ import {
   Card, Image, Button, Icon, Container, Divider,
   Modal, Header, Message, Segment, Step, TransitionablePortal, Menu, Label,
 } from "semantic-ui-react";
+import queryString from "query-string";
 
 import MongoConnectionForm from "./components/MongoConnectionForm";
 import ApiConnectionForm from "./components/ApiConnectionForm";
@@ -63,6 +64,19 @@ function Connections(props) {
   useEffect(() => {
     cleanErrors();
   }, []);
+
+  useEffect(() => {
+    if (connections && connections.length > 0 && !selectedConnection && !editConnection) {
+      const parsedParams = queryString.parse(document.location.search);
+      if (parsedParams.edit) {
+        const foundConnection = connections.filter((c) => `${c.id}` === parsedParams.edit)[0];
+        if (foundConnection) {
+          setEditConnection(foundConnection);
+          setFormType(foundConnection.type);
+        }
+      }
+    }
+  }, [connections]);
 
   useEffect(() => {
     setTestResult(null);
@@ -154,8 +168,12 @@ function Connections(props) {
   };
 
   const _onEditConnection = (connection) => {
-    setEditConnection(connection);
-    setFormType(connection.type);
+    setEditConnection(null);
+    setFormType("");
+    setTimeout(() => {
+      setEditConnection(connection);
+      setFormType(connection.type);
+    }, 100);
   };
 
   const _closeConnectionForm = () => {

@@ -1,6 +1,7 @@
 const ConnectionController = require("../controllers/ConnectionController");
 const TeamController = require("../controllers/TeamController");
 const ProjectController = require("../controllers/ProjectController");
+const oauthController = require("../controllers/OAuthController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
 const googleConnector = require("../modules/googleConnector");
@@ -16,14 +17,14 @@ module.exports = (app) => {
       .then((project) => {
         gProject = project;
 
-        if (req.params.id) {
-          return connectionController.findById(req.params.id);
+        if (req.params.connection_id) {
+          return connectionController.findById(req.params.connection_id);
         }
 
         return teamController.getTeamRole(project.team_id, req.user.id);
       })
       .then((data) => {
-        if (!req.params.id) return Promise.resolve(data);
+        if (!req.params.connection_id) return Promise.resolve(data);
 
         if (data.project_id !== gProject.id) {
           return new Promise((resolve, reject) => reject(new Error(401)));
@@ -81,14 +82,14 @@ module.exports = (app) => {
   /*
   ** Route to get a connection by ID
   */
-  app.get("/project/:project_id/connection/:id", verifyToken, (req, res) => {
+  app.get("/project/:project_id/connection/:connection_id", verifyToken, (req, res) => {
     return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("connection");
         if (!permission.granted) {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }
-        return connectionController.findById(req.params.id);
+        return connectionController.findById(req.params.connection_id);
       })
       .then((connection) => {
         const newConnection = connection;
@@ -134,14 +135,14 @@ module.exports = (app) => {
   /*
   ** Route to update a connection
   */
-  app.put("/project/:project_id/connection/:id", verifyToken, (req, res) => {
+  app.put("/project/:project_id/connection/:connection_id", verifyToken, (req, res) => {
     return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("connection");
         if (!permission.granted) {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }
-        return connectionController.update(req.params.id, req.body);
+        return connectionController.update(req.params.connection_id, req.body);
       })
       .then((connection) => {
         return res.status(200).send(connection);
@@ -158,14 +159,14 @@ module.exports = (app) => {
   /*
   ** Route to remove a connection from a project
   */
-  app.delete("/project/:project_id/connection/:id", verifyToken, (req, res) => {
+  app.delete("/project/:project_id/connection/:connection_id", verifyToken, (req, res) => {
     return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).deleteAny("connection");
         if (!permission.granted) {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }
-        return connectionController.removeConnection(req.params.id);
+        return connectionController.removeConnection(req.params.connection_id);
       })
       .then((success) => {
         if (success) {
@@ -186,14 +187,14 @@ module.exports = (app) => {
   /*
   ** Route to test a connection
   */
-  app.get("/project/:project_id/connection/:id/test", verifyToken, (req, res) => {
+  app.get("/project/:project_id/connection/:connection_id/test", verifyToken, (req, res) => {
     checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("connection");
         if (!permission.granted) {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }
-        return connectionController.testConnection(req.params.id);
+        return connectionController.testConnection(req.params.connection_id);
       })
       .then((response) => {
         return res.status(200).send(response);
@@ -252,10 +253,64 @@ module.exports = (app) => {
   // -------------------------------------------------
 
   /*
-  ** Route to authenticate with google
+  ** Route to get the Google authentication URL
   */
-  app.get("/project/:project_id/connection/auth/google", (req, res) => {
-    return res.status(200).send(googleConnector.getAuthUrl());
+  app.get("/project/:project_id/connection/:connection_id/auth/google", verifyToken, async (req, res) => {
+    const teamRole = await checkAccess(req);
+    const permission = accessControl.can(teamRole.role).createAny("connection");
+    if (!permission.granted) {
+      return res.status(401).send({ error: "Not authorized" });
+    }
+
+    try {
+      return res.status(200).send({
+        url: googleConnector.getAuthUrl(req.params.project_id, req.params.connection_id)
+      });
+    } catch (e) {
+      return res.status(400).send({ error: e });
+    }
+  });
+
+  /*
+  ** Route to authenticate a Google connection and save the refresh token
+  */
+  app.put("/project/:project_id/connection/:connection_id/auth/google", verifyToken, async (req, res) => {
+    const { code } = req.body;
+    const teamRole = await checkAccess(req);
+    const permission = accessControl.can(teamRole.role).createAny("connection");
+    if (!permission.granted) {
+      return res.status(401).send({ error: "Not authorized" });
+    }
+
+    let gConnection;
+    return googleConnector.getToken(code)
+      .then((data) => {
+        return oauthController.create({
+          team_id: teamRole.team_id,
+          email: data.user.email,
+          refreshToken: data.tokens.refresh_token,
+          type: "google",
+        });
+      })
+      .then((oauth) => {
+        return connectionController.update(
+          req.params.connection_id,
+          { oauth_id: oauth.id }
+        );
+      })
+      .then((connection) => {
+        gConnection = connection;
+        return projectController.findById(connection.project_id);
+      })
+      .then((project) => {
+        return res.status(200).send({
+          team_id: project.team_id,
+          connection: gConnection,
+        });
+      })
+      .catch((err) => {
+        return res.status(400).send(err);
+      });
   });
 
   return (req, res, next) => {

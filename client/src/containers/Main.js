@@ -23,6 +23,7 @@ const FeedbackForm = lazy(() => import("../components/FeedbackForm"));
 const PublicDashboard = lazy(() => import("./PublicDashboard"));
 const PasswordReset = lazy(() => import("./PasswordReset"));
 const EmbeddedChart = lazy(() => import("./EmbeddedChart"));
+const GoogleAuth = lazy(() => import("./GoogleAuth"));
 
 const AppMedia = createMedia({
   breakpoints: {
@@ -76,6 +77,7 @@ function Main(props) {
               <Route exact path="/:teamId/:projectId" component={ProjectBoard} />
               <Route exact path="/signup" component={Signup} />
               <Route exact path="/verify" component={VerifyUser} />
+              <Route exact path="/google-auth" component={GoogleAuth} />
               <Route exact path="/login" component={Login} />
               <Route exact path="/user" component={UserDashboard} />
               <Route exact path="/profile" component={ManageUser} />

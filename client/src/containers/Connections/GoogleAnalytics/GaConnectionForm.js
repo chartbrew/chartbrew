@@ -71,7 +71,7 @@ function GaConnectionForm(props) {
 
   const _onGoogleAuth = () => {
     const url = `${API_HOST}/project/${projectId}/connection/${connection.id}/auth/google`;
-    const method = "PUT";
+    const method = "GET";
     const headers = new Headers({
       "Accept": "application/json",
       "Authorization": cookie.load("brewToken"),
@@ -85,9 +85,9 @@ function GaConnectionForm(props) {
       })
       .then((result) => {
         if (result.url) {
-          return window.open(result.url);
+          window.location.href = result.url;
         } else {
-          return Promise.reject("No URL found");
+          Promise.reject("No URL found");
         }
       })
       .catch(() => {
@@ -121,9 +121,25 @@ function GaConnectionForm(props) {
                   </Label>
                 )}
             </Form.Field>
-            {editConnection && !connection.refresh_token && (
+            {!editConnection && (
               <Form.Field>
                 <Button
+                  primary
+                  loading={loading}
+                  onClick={_onCreateConnection}
+                  icon
+                  style={styles.saveBtn}
+                  disabled={!connection.name}
+                >
+                  {"Create connection "}
+                  <Icon name="arrow right" />
+                </Button>
+              </Form.Field>
+            )}
+            {editConnection && !connection.OAuth && (
+              <Form.Field>
+                <Button
+                  primary
                   icon="google"
                   labelPosition="right"
                   content="Authenticate with Google"
@@ -134,6 +150,20 @@ function GaConnectionForm(props) {
                     {errors.auth}
                   </Label>
                 )}
+              </Form.Field>
+            )}
+            {editConnection && connection.OAuth && (
+              <Form.Field>
+                <Header color="green" size="small">
+                  {`Authenticated as ${connection.OAuth.email}`}
+                </Header>
+                <Button
+                  className="tertiary"
+                  primary
+                  icon="refresh"
+                  content="Click here to re-authenticate"
+                  onClick={_onGoogleAuth}
+                />
               </Form.Field>
             )}
           </Form>
@@ -149,19 +179,6 @@ function GaConnectionForm(props) {
 
         <Divider hidden />
         <Container fluid textAlign="right">
-          {!editConnection && (
-            <Button
-              primary
-              loading={loading}
-              onClick={_onCreateConnection}
-              icon
-              style={styles.saveBtn}
-              disabled={!connection.name}
-            >
-              {"Create connection "}
-              <Icon name="arrow right" />
-            </Button>
-          )}
           {editConnection && (
             <Button
               secondary

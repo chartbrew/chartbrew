@@ -24,6 +24,15 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "cascade",
       },
     },
+    oauth_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      reference: {
+        model: "OAuth",
+        key: "id",
+        onDelete: "cascade",
+      },
+    },
     name: {
       type: DataTypes.STRING,
     },
@@ -181,6 +190,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Connection.associate = (models) => {
     models.Connection.hasMany(models.Dataset, { foreignKey: "connection_id" });
+    models.Connection.belongsTo(models.OAuth, { foreignKey: "oauth_id" });
   };
 
   Connection.prototype.decryptField = (val) => {
