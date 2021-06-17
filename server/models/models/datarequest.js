@@ -98,6 +98,19 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+    configuration: {
+      type: DataTypes.TEXT,
+      set(val) {
+        return this.setDataValue("configuration", JSON.stringify(val));
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("configuration"));
+        } catch (e) {
+          return this.getDataValue("configuration");
+        }
+      }
+    },
   }, {
     freezeTableName: true,
   });
