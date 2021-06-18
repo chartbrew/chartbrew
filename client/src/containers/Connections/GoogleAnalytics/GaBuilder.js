@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Form, Button, Icon, Header, Divider, Popup, Dropdown,
+  Grid, Form, Button, Icon, Header, Divider, Dropdown, Label,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -19,6 +19,7 @@ import {
 import {
   testRequest as testRequestAction,
 } from "../../../actions/connection";
+import { getMetadata } from "./apiBoilerplate";
 
 /*
   The API Data Request builder
@@ -45,9 +46,15 @@ function GaBuilder(props) {
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [viewOptions, setViewOptions] = useState([]);
 
+  const [metricsOptions, setMetricsOptions] = useState([]);
+  const [dimensionsOptions, setDimensionsOptions] = useState([]);
+  const [metricsSearch, setMetricsSearch] = useState("");
+  const [dimensionsSearch, setDimensionsSearch] = useState("");
+
   // on init effect
   useEffect(() => {
     _onFetchAccountData();
+    _populateMetadata();
   }, []);
 
   useEffect(() => {
@@ -135,6 +142,22 @@ function GaBuilder(props) {
     }
   }, [configuration.propertyId]);
 
+  useEffect(() => {
+    if (metricsOptions.length > 0
+      && gaRequest.configuration
+      && gaRequest.configuration.metrics
+    ) {
+      setConfiguration({ ...configuration, metrics: gaRequest.configuration.metrics });
+    }
+
+    if (dimensionsOptions.length > 0
+      && gaRequest.configuration
+      && gaRequest.configuration.dimensions
+    ) {
+      setConfiguration({ ...configuration, dimensions: gaRequest.configuration.dimensions });
+    }
+  }, [metricsOptions, dimensionsOptions]);
+
   const _initRequest = () => {
     if (dataRequest) {
       // get the request data if it exists
@@ -145,6 +168,31 @@ function GaBuilder(props) {
 
       setGaRequest(dataRequest);
     }
+  };
+
+  const _populateMetadata = () => {
+    getMetadata(connection.project_id, connection.id)
+      .then((metadata) => {
+        if (metadata && metadata.items) {
+          const metrics = [];
+          const dimensions = [];
+          metadata.items.forEach((m) => {
+            if (m.attributes && m.attributes.type === "METRIC") {
+              metrics.push({
+                ...m, text: m.attributes.uiName, key: m.id, value: m.id
+              });
+            }
+            if (m.attributes && m.attributes.type === "DIMENSION") {
+              dimensions.push({
+                ...m, text: m.attributes.uiName, key: m.id, value: m.id
+              });
+            }
+          });
+
+          setMetricsOptions(metrics);
+          setDimensionsOptions(dimensions);
+        }
+      });
   };
 
   const _onTest = (request = gaRequest) => {
@@ -264,20 +312,104 @@ function GaBuilder(props) {
           <Divider />
 
           <div className="gabuilder-query-tut">
-            <Header as="h4">
-              {"Filter the data "}
-              <Popup
-                trigger={<Icon style={{ fontSize: 16, verticalAlign: "baseline" }} name="question circle" />}
-                content="These filters are applied directly on your firestore connection. You can further filter the data on Chartbrew's side when you configure your chart."
-              />
-            </Header>
+            <Form>
+              <Form.Field>
+                <label>Choose a metric</label>
+                <Dropdown
+                  selection
+                  options={metricsOptions}
+                  loading={collectionsLoading}
+                  search
+                  value={configuration.metrics}
+                  onSearchChange={(e, data) => {
+                    setMetricsSearch(data.searchQuery);
+                  }}
+                  searchQuery={metricsSearch}
+                  scrolling
+                >
+                  <Dropdown.Menu>
+                    {metricsOptions.map((item) => {
+                      if (metricsSearch
+                        && item.value.toLowerCase().indexOf(metricsSearch.toLowerCase()) === -1
+                        && item.text.toLowerCase().indexOf(metricsSearch.toLowerCase()) === -1
+                      ) {
+                        return (<span key={item.key} />);
+                      }
 
-            <Button
-              primary
-              content="Save configuration"
-              icon="save"
-              onClick={() => _onChangeRequest({ configuration })}
-            />
+                      return (
+                        <Dropdown.Item
+                          key={item.key}
+                          onClick={() => {
+                            setConfiguration({ ...configuration, metrics: item.value });
+                            setMetricsSearch("");
+                          }}
+                        >
+                          <Dropdown.Header style={{ paddingBottom: 10 }}>
+                            {item.text}
+                            <Label size="small" style={{ float: "right" }}>
+                              {item.attributes.group}
+                            </Label>
+                          </Dropdown.Header>
+                          <div><small>{item.value}</small></div>
+                        </Dropdown.Item>
+                      );
+                    })}
+                  </Dropdown.Menu>
+                </Dropdown>
+              </Form.Field>
+              <Form.Field>
+                <label>Choose a dimension</label>
+                <Dropdown
+                  selection
+                  options={dimensionsOptions}
+                  loading={collectionsLoading}
+                  value={configuration.dimensions}
+                  scrolling
+                  search
+                  onSearchChange={(e, data) => {
+                    setDimensionsSearch(data.searchQuery);
+                  }}
+                  searchQuery={dimensionsSearch}
+                >
+                  <Dropdown.Menu>
+                    {dimensionsOptions.map((item) => {
+                      if (dimensionsSearch
+                        && item.value.toLowerCase().indexOf(dimensionsSearch.toLowerCase()) === -1
+                        && item.text.toLowerCase().indexOf(dimensionsSearch.toLowerCase()) === -1
+                      ) {
+                        return (<span key={item.key} />);
+                      }
+
+                      return (
+                        <Dropdown.Item
+                          key={item.key}
+                          onClick={() => {
+                            setConfiguration({ ...configuration, dimensions: item.value });
+                            setDimensionsSearch("");
+                          }}
+                        >
+                          <Dropdown.Header style={{ paddingBottom: 10 }}>
+                            {item.text}
+                            <Label size="small" style={{ float: "right" }}>
+                              {item.attributes.group}
+                            </Label>
+                          </Dropdown.Header>
+                          <div><small>{item.value}</small></div>
+                        </Dropdown.Item>
+                      );
+                    })}
+                  </Dropdown.Menu>
+                </Dropdown>
+              </Form.Field>
+              <Form.Field>
+                <Button
+                  primary
+                  content="Save configuration"
+                  icon="save"
+                  onClick={() => _onChangeRequest({ configuration })}
+                />
+              </Form.Field>
+            </Form>
           </div>
         </Grid.Column>
         <Grid.Column width={6}>

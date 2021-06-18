@@ -65,3 +65,19 @@ module.exports.getAccounts = async (refreshToken) => {
     return Promise.reject(e);
   }
 };
+
+module.exports.getMetadata = async (refreshToken) => {
+  const oauth2Client = getOAuthClient();
+
+  try {
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    google.options({ auth: oauth2Client });
+
+    const admin = google.analytics("v3");
+    const metadata = await admin.metadata.columns.list({ reportType: "ga" });
+
+    return metadata.data;
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};

@@ -1,10 +1,8 @@
 const ConnectionController = require("../controllers/ConnectionController");
 const TeamController = require("../controllers/TeamController");
 const ProjectController = require("../controllers/ProjectController");
-const oauthController = require("../controllers/OAuthController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
-const googleConnector = require("../modules/googleConnector");
 
 module.exports = (app) => {
   const connectionController = new ConnectionController();
@@ -251,67 +249,6 @@ module.exports = (app) => {
       });
   });
   // -------------------------------------------------
-
-  /*
-  ** Route to get the Google authentication URL
-  */
-  app.get("/project/:project_id/connection/:connection_id/auth/google", verifyToken, async (req, res) => {
-    try {
-      const teamRole = await checkAccess(req);
-      const permission = accessControl.can(teamRole.role).createAny("connection");
-      if (!permission.granted) {
-        return res.status(401).send({ error: "Not authorized" });
-      }
-
-      return res.status(200).send({
-        url: googleConnector.getAuthUrl(req.params.project_id, req.params.connection_id)
-      });
-    } catch (e) {
-      return res.status(400).send({ error: e });
-    }
-  });
-
-  /*
-  ** Route to authenticate a Google connection and save the refresh token
-  */
-  app.put("/project/:project_id/connection/:connection_id/auth/google", verifyToken, async (req, res) => {
-    const { code } = req.body;
-    const teamRole = await checkAccess(req);
-    const permission = accessControl.can(teamRole.role).createAny("connection");
-    if (!permission.granted) {
-      return res.status(401).send({ error: "Not authorized" });
-    }
-
-    let gConnection;
-    return googleConnector.getToken(code)
-      .then((data) => {
-        return oauthController.create({
-          team_id: teamRole.team_id,
-          email: data.user.email,
-          refreshToken: data.tokens.refresh_token,
-          type: "google",
-        });
-      })
-      .then((oauth) => {
-        return connectionController.update(
-          req.params.connection_id,
-          { oauth_id: oauth.id }
-        );
-      })
-      .then((connection) => {
-        gConnection = connection;
-        return projectController.findById(connection.project_id);
-      })
-      .then((project) => {
-        return res.status(200).send({
-          team_id: project.team_id,
-          connection: gConnection,
-        });
-      })
-      .catch((err) => {
-        return res.status(400).send(err);
-      });
-  });
 
   return (req, res, next) => {
     next();

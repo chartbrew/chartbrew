@@ -7,6 +7,7 @@ const savedQuery = require("./SavedQueryRoute");
 const dataRequest = require("./DataRequestRoute");
 const dataset = require("./DatasetRoute");
 const template = require("./TemplateRoute");
+const google = require("./GoogleRoute");
 
 module.exports = {
   team,
@@ -18,4 +19,5 @@ module.exports = {
   dataRequest,
   dataset,
   template,
+  google,
 };
