@@ -22,7 +22,20 @@ const findOne = (condition) => {
 
 const create = async (data) => {
   const oauth = await findOne({ team_id: data.team_id, email: data.email });
-  if (oauth) return oauth;
+  if (oauth) {
+    if (!data.refreshToken) return oauth;
+
+    return db.OAuth.update(
+      { refreshToken: data.refreshToken },
+      { where: { id: oauth.id } },
+    )
+      .then(() => {
+        return findById(oauth.id);
+      })
+      .catch((err) => {
+        return Promise.reject(err);
+      });
+  }
 
   return db.OAuth.create(data)
     .then((created) => {

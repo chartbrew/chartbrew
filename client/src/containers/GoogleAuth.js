@@ -33,7 +33,7 @@ function GoogleAuth(props) {
     }
     const ids = state.split(",");
 
-    const url = `${API_HOST}/project/${ids[0]}/connection/${ids[1]}/auth/google`;
+    const url = `${API_HOST}/project/${ids[0]}/connection/${ids[1]}/google/auth`;
     const method = "PUT";
     const body = JSON.stringify({ code });
     const headers = new Headers({

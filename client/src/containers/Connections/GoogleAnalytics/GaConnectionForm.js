@@ -70,7 +70,7 @@ function GaConnectionForm(props) {
   };
 
   const _onGoogleAuth = () => {
-    const url = `${API_HOST}/project/${projectId}/connection/${connection.id}/auth/google`;
+    const url = `${API_HOST}/project/${projectId}/connection/${connection.id}/google/auth`;
     const method = "GET";
     const headers = new Headers({
       "Accept": "application/json",
