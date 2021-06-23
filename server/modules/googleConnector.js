@@ -81,3 +81,37 @@ module.exports.getMetadata = async (refreshToken) => {
     return Promise.reject(e);
   }
 };
+
+module.exports.getAnalytics = async (refreshToken, dataRequest) => {
+  const oauth2Client = getOAuthClient();
+
+  const { configuration } = dataRequest;
+
+  try {
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    google.options({ auth: oauth2Client });
+
+    const reporting = google.analyticsreporting("v4");
+    const res = await reporting.reports.batchGet({
+      requestBody: {
+        reportRequests: [{
+          viewId: configuration.viewId,
+          dateRanges: [{
+            startDate: configuration.startDate,
+            endDate: configuration.endDate,
+          }],
+          metrics: [{
+            expression: configuration.metrics,
+          }],
+          dimensions: [{
+            name: configuration.dimensions,
+          }],
+        }],
+      },
+    });
+
+    return res.data;
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};

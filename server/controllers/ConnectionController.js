@@ -543,8 +543,15 @@ class ConnectionController {
       });
   }
 
+  async runGoogleAnalytics(connection, dataRequest) {
+    if (!connection.oauth_id) return Promise.reject({ error: "No oauth token" });
+
+    const oauth = await oauthController.findById(connection.oauth_id);
+    return googleConnector.getAnalytics(oauth.refreshToken, dataRequest);
+  }
+
   async testGoogleAnalytics(connection) {
-    if (!connection.oauth_id) return Promise.reject({ error: "Not oauth token" });
+    if (!connection.oauth_id) return Promise.reject({ error: "No oauth token" });
 
     const oauth = await oauthController.findById(connection.oauth_id);
     return googleConnector.getAccounts(oauth.refreshToken);

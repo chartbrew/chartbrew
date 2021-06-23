@@ -3,11 +3,14 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Form, Button, Icon, Header, Divider, Dropdown, Label,
+  Grid, Form, Button, Icon, Header, Divider, Dropdown, Label, Input, Popup,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
 import _ from "lodash";
 import { toast } from "react-toastify";
+import { Calendar } from "react-date-range";
+import { format, sub } from "date-fns";
+import { enGB } from "date-fns/locale";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -20,6 +23,10 @@ import {
   testRequest as testRequestAction,
 } from "../../../actions/connection";
 import { getMetadata } from "./apiBoilerplate";
+import { secondary } from "../../../config/colors";
+
+const validDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)/g;
+const validEndDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)/g;
 
 /*
   The API Data Request builder
@@ -45,6 +52,7 @@ function GaBuilder(props) {
   const [accountOptions, setAccountOptions] = useState([]);
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [viewOptions, setViewOptions] = useState([]);
+  const [formErrors, setFormErrors] = useState({});
 
   const [metricsOptions, setMetricsOptions] = useState([]);
   const [dimensionsOptions, setDimensionsOptions] = useState([]);
@@ -167,6 +175,14 @@ function GaBuilder(props) {
       }
 
       setGaRequest(dataRequest);
+
+      if (dataRequest.configuration.startDate && dataRequest.configuration.endDate) {
+        setConfiguration({
+          ...configuration,
+          startDate: dataRequest.configuration.startDate,
+          endDate: dataRequest.configuration.endDate,
+        });
+      }
     }
   };
 
@@ -197,9 +213,10 @@ function GaBuilder(props) {
 
   const _onTest = (request = gaRequest) => {
     setRequestLoading(true);
+    _onChangeRequest({ configuration });
 
     if (request === null) request = gaRequest; // eslint-disable-line
-    const requestToSave = _.cloneDeep(request);
+    const requestToSave = { ...request, configuration };
     onSave(requestToSave).then(() => {
       _onRunRequest();
     });
@@ -236,6 +253,27 @@ function GaBuilder(props) {
   };
 
   const _onChangeRequest = (data) => {
+    const changeErrors = {};
+    // validation
+    if (!configuration.startDate
+      || (configuration.startDate && !validDate.test(configuration.startDate))
+    ) {
+      changeErrors.startDate = true;
+    }
+    if (!configuration.endDate
+      || (configuration.endDate && !validEndDate.test(configuration.endDate))
+    ) {
+      changeErrors.endDate = true;
+    }
+    if (!configuration.metrics) {
+      changeErrors.metrics = true;
+    }
+    setFormErrors(changeErrors);
+
+    if (Object.keys(changeErrors).length > 0) {
+      return;
+    }
+
     onSave({ ...gaRequest, ...data });
   };
 
@@ -263,6 +301,53 @@ function GaBuilder(props) {
 
   const _onViewSelected = (value) => {
     setConfiguration({ ...configuration, viewId: value });
+  };
+
+  const _renderCalendar = (type) => (
+    <Popup
+      trigger={(
+        <Button
+          icon="calendar alternate"
+        />
+      )}
+      on="click"
+    >
+      <Popup.Content>
+        <Calendar
+          date={_getDateForCalendar(configuration[type])}
+          onChange={(date) => {
+            setConfiguration({ ...configuration, [type]: format(date, "yyyy-MM-dd") });
+          }}
+          locale={enGB}
+          color={secondary}
+        />
+      </Popup.Content>
+    </Popup>
+  );
+
+  const _getDateForCalendar = (value) => {
+    const checkDaysAgo = /[0-9]+daysAgo/g;
+    const shortDateFormat = /[0-9]{4}-[0-9]{2}-[0-9]{2}/g;
+
+    if (checkDaysAgo.test(value)) {
+      const days = value.substring(0, value.indexOf("days"));
+      const newDate = sub(new Date(), { days });
+      return newDate;
+    }
+
+    if (shortDateFormat.test(value)) {
+      return new Date(value);
+    }
+
+    if (value === "yesterday") {
+      return sub(new Date(), { days: 1 });
+    }
+
+    if (value === "today" || !value) {
+      return new Date();
+    }
+
+    return false;
   };
 
   return (
@@ -312,8 +397,8 @@ function GaBuilder(props) {
           <Divider />
 
           <div className="gabuilder-query-tut">
-            <Form>
-              <Form.Field>
+            <Form disabled={!configuration.viewId}>
+              <Form.Field required error={formErrors.metrics}>
                 <label>Choose a metric</label>
                 <Dropdown
                   selection
@@ -372,6 +457,19 @@ function GaBuilder(props) {
                   searchQuery={dimensionsSearch}
                 >
                   <Dropdown.Menu>
+                    <Dropdown.Item>
+                      <Button
+                        secondary
+                        icon="x"
+                        content="Clear Field"
+                        onClick={() => {
+                          setDimensionsSearch("");
+                          setConfiguration({ ...configuration, dimensions: "" });
+                        }}
+                        fluid
+                        size="small"
+                      />
+                    </Dropdown.Item>
                     {dimensionsOptions.map((item) => {
                       if (dimensionsSearch
                         && item.value.toLowerCase().indexOf(dimensionsSearch.toLowerCase()) === -1
@@ -401,6 +499,70 @@ function GaBuilder(props) {
                   </Dropdown.Menu>
                 </Dropdown>
               </Form.Field>
+              <Form.Group widths="2">
+                <Form.Field
+                  error={formErrors.startDate}
+                  required
+                >
+                  <label>Start date</label>
+                  <Input
+                    action={_renderCalendar("startDate")}
+                    placeholder="YYYY-MM-DD"
+                    value={configuration.startDate}
+                    onChange={(e, data) => {
+                      setConfiguration({ ...configuration, startDate: data.value });
+                    }}
+                  />
+                  <Label.Group style={{ marginTop: 10 }}>
+                    <Label
+                      as="a"
+                      onClick={() => setConfiguration({ ...configuration, startDate: "today" })}
+                      content="today"
+                    />
+                    <Label
+                      as="a"
+                      onClick={() => setConfiguration({ ...configuration, startDate: "yesterday" })}
+                      content="yesterday"
+                    />
+                    <Label
+                      as="a"
+                      onClick={() => setConfiguration({ ...configuration, startDate: "30daysAgo" })}
+                      content="30daysAgo"
+                    />
+                  </Label.Group>
+                </Form.Field>
+                <Form.Field
+                  error={formErrors.endDate}
+                  required
+                >
+                  <label>End date</label>
+                  <Input
+                    action={_renderCalendar("endDate")}
+                    placeholder="YYYY-MM-DD"
+                    value={configuration.endDate}
+                    onChange={(e, data) => {
+                      setConfiguration({ ...configuration, endDate: data.value });
+                    }}
+                  />
+                  <Label.Group style={{ marginTop: 10 }}>
+                    <Label
+                      as="a"
+                      onClick={() => setConfiguration({ ...configuration, endDate: "today" })}
+                      content="today"
+                    />
+                    <Label
+                      as="a"
+                      onClick={() => setConfiguration({ ...configuration, endDate: "yesterday" })}
+                      content="yesterday"
+                    />
+                    <Label
+                      as="a"
+                      onClick={() => setConfiguration({ ...configuration, endDate: "30daysAgo" })}
+                      content="30daysAgo"
+                    />
+                  </Label.Group>
+                </Form.Field>
+              </Form.Group>
               <Form.Field>
                 <Button
                   primary
