@@ -147,6 +147,7 @@ export function runRequest(projectId, chartId, datasetId) {
       statusCode: 500,
       statusText: "Internal Server Error",
     };
+    let ok = true;
     return fetch(url, { method, headers })
       .then((response) => {
         status = {
@@ -156,17 +157,22 @@ export function runRequest(projectId, chartId, datasetId) {
 
         if (!response.ok) {
           dispatch(addError(response.status, "Error while making the request"));
-          throw new Error(response.status);
+          ok = false;
+          return response.text();
         }
 
         return response.json();
       })
       .then((result) => {
+        if (!ok) {
+          return Promise.reject({ ...status, message: result });
+        }
+
         dispatch({ type: FETCH_REQUESTED_DATA, request: result, id: datasetId });
         return Promise.resolve({ ...result, status });
       })
-      .catch(() => {
-        return Promise.reject(status);
+      .catch((err) => {
+        return Promise.reject(err);
       });
   };
 }

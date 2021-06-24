@@ -76,12 +76,13 @@ function GaBuilder(props) {
     ) {
       setConfiguration({ ...configuration, accountId: dataRequest.configuration.accountId });
     }
-  }, [accountOptions]);
+  }, [accountOptions, configuration.accountId]);
 
   useEffect(() => {
     if (propertyOptions.length > 0
       && dataRequest.configuration
       && dataRequest.configuration.propertyId
+      && configuration.accountId
     ) {
       setConfiguration({ ...configuration, propertyId: dataRequest.configuration.propertyId });
     }
@@ -91,10 +92,11 @@ function GaBuilder(props) {
     if (accountOptions.length > 0
       && dataRequest.configuration
       && dataRequest.configuration.viewId
+      && configuration.propertyId
     ) {
       setConfiguration({ ...configuration, viewId: dataRequest.configuration.viewId });
     }
-  }, [viewOptions]);
+  }, [viewOptions, configuration.propertyId]);
 
   useEffect(() => {
     if (analyticsData && analyticsData.username) {
@@ -117,7 +119,7 @@ function GaBuilder(props) {
     if (configuration.accountId) {
       const acc = _.findLast(analyticsData.items, { id: configuration.accountId });
       const propertyOpt = [];
-      if (acc.webProperties) {
+      if (acc && acc.webProperties) {
         acc.webProperties.forEach((prop) => {
           propertyOpt.push({
             key: prop.id,
@@ -132,23 +134,26 @@ function GaBuilder(props) {
   }, [configuration.accountId]);
 
   useEffect(() => {
-    if (configuration.propertyId) {
+    if (configuration.propertyId && configuration.accountId) {
       const acc = _.findLast(analyticsData.items, { id: configuration.accountId });
-      const prop = _.findLast(acc.webProperties, { id: configuration.propertyId });
-      const viewOpt = [];
-      if (prop.profiles) {
-        prop.profiles.forEach((view) => {
-          viewOpt.push({
-            key: view.id,
-            value: view.id,
-            text: view.name,
-          });
-        });
-      }
 
-      setViewOptions(viewOpt);
+      if (acc) {
+        const prop = _.findLast(acc.webProperties, { id: configuration.propertyId });
+        const viewOpt = [];
+        if (prop.profiles) {
+          prop.profiles.forEach((view) => {
+            viewOpt.push({
+              key: view.id,
+              value: view.id,
+              text: view.name,
+            });
+          });
+        }
+
+        setViewOptions(viewOpt);
+      }
     }
-  }, [configuration.propertyId]);
+  }, [configuration.propertyId, configuration.accountId]);
 
   useEffect(() => {
     if (metricsOptions.length > 0
@@ -563,14 +568,6 @@ function GaBuilder(props) {
                   </Label.Group>
                 </Form.Field>
               </Form.Group>
-              <Form.Field>
-                <Button
-                  primary
-                  content="Save configuration"
-                  icon="save"
-                  onClick={() => _onChangeRequest({ configuration })}
-                />
-              </Form.Field>
             </Form>
           </div>
         </Grid.Column>

@@ -92,7 +92,8 @@ module.exports.getAnalytics = async (refreshToken, dataRequest) => {
     google.options({ auth: oauth2Client });
 
     const reporting = google.analyticsreporting("v4");
-    const res = await reporting.reports.batchGet({
+
+    const getOptions = {
       requestBody: {
         reportRequests: [{
           viewId: configuration.viewId,
@@ -103,15 +104,43 @@ module.exports.getAnalytics = async (refreshToken, dataRequest) => {
           metrics: [{
             expression: configuration.metrics,
           }],
-          dimensions: [{
-            name: configuration.dimensions,
-          }],
         }],
       },
-    });
+    };
+    if (configuration.dimensions) {
+      getOptions.requestBody.reportRequests[0].dimensions = [{
+        name: configuration.dimensions,
+      }];
+    }
+    const res = await reporting.reports.batchGet(getOptions);
 
-    return res.data;
+    return this.formatGaData(res.data);
   } catch (e) {
     return Promise.reject(e);
+  }
+};
+
+module.exports.formatGaData = (data) => {
+  try {
+    const { rows } = data.reports[0].data;
+    const newRows = [];
+
+    const headers = data.reports[0].columnHeader;
+    const xAxis = headers.dimensions && headers.dimensions[0];
+    const yAxis = headers.metricHeader.metricHeaderEntries[0].name;
+
+    rows.forEach((row) => {
+      const newRow = {};
+      if (row.dimensions) {
+        [newRow[xAxis]] = row.dimensions;
+      }
+      [newRow[yAxis]] = row.metrics[0].values;
+
+      newRows.push(newRow);
+    });
+
+    return newRows;
+  } catch (error) {
+    return Promise.reject(error);
   }
 };
