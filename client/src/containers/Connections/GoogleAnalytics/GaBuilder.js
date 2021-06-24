@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Form, Button, Icon, Header, Divider, Dropdown, Label, Input, Popup,
+  Grid, Form, Button, Icon, Header, Divider, Dropdown, Label, Input, Popup, Message,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -53,6 +53,7 @@ function GaBuilder(props) {
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [viewOptions, setViewOptions] = useState([]);
   const [formErrors, setFormErrors] = useState({});
+  const [dateHelp, setDateHelp] = useState(false);
 
   const [metricsOptions, setMetricsOptions] = useState([]);
   const [dimensionsOptions, setDimensionsOptions] = useState([]);
@@ -181,7 +182,10 @@ function GaBuilder(props) {
 
       setGaRequest(dataRequest);
 
-      if (dataRequest.configuration.startDate && dataRequest.configuration.endDate) {
+      if (dataRequest.configuration
+        && dataRequest.configuration.startDate
+        && dataRequest.configuration.endDate
+      ) {
         setConfiguration({
           ...configuration,
           startDate: dataRequest.configuration.startDate,
@@ -260,19 +264,16 @@ function GaBuilder(props) {
   const _onChangeRequest = (data) => {
     const changeErrors = {};
     // validation
-    if (!configuration.startDate
-      || (configuration.startDate && !validDate.test(configuration.startDate))
-    ) {
+    if (data.configuration.startDate && !validDate.test(data.configuration.startDate)) {
       changeErrors.startDate = true;
     }
-    if (!configuration.endDate
-      || (configuration.endDate && !validEndDate.test(configuration.endDate))
-    ) {
+    if (data.configuration.endDate && !validEndDate.test(data.configuration.endDate)) {
       changeErrors.endDate = true;
     }
-    if (!configuration.metrics) {
+    if (!data.configuration.metrics) {
       changeErrors.metrics = true;
     }
+
     setFormErrors(changeErrors);
 
     if (Object.keys(changeErrors).length > 0) {
@@ -404,7 +405,15 @@ function GaBuilder(props) {
           <div className="gabuilder-query-tut">
             <Form disabled={!configuration.viewId}>
               <Form.Field required error={formErrors.metrics}>
-                <label>Choose a metric</label>
+                <label>
+                  {"Choose a metric "}
+                  <Popup
+                    trigger={(
+                      <Icon name="question circle" />
+                    )}
+                    content="You can add multiple metrics by creating another dataset for this chart. Click on 'Build chart', then 'Add new dataset' on the right."
+                  />
+                </label>
                 <Dropdown
                   selection
                   options={metricsOptions}
@@ -505,10 +514,7 @@ function GaBuilder(props) {
                 </Dropdown>
               </Form.Field>
               <Form.Group widths="2">
-                <Form.Field
-                  error={formErrors.startDate}
-                  required
-                >
+                <Form.Field required>
                   <label>Start date</label>
                   <Input
                     action={_renderCalendar("startDate")}
@@ -534,12 +540,17 @@ function GaBuilder(props) {
                       onClick={() => setConfiguration({ ...configuration, startDate: "30daysAgo" })}
                       content="30daysAgo"
                     />
+                    <Label
+                      as="a"
+                      onClick={() => setDateHelp(!dateHelp)}
+                      icon="question circle"
+                      content="info"
+                      basic
+                      color={(dateHelp && "olive") || null}
+                    />
                   </Label.Group>
                 </Form.Field>
-                <Form.Field
-                  error={formErrors.endDate}
-                  required
-                >
+                <Form.Field required>
                   <label>End date</label>
                   <Input
                     action={_renderCalendar("endDate")}
@@ -565,9 +576,34 @@ function GaBuilder(props) {
                       onClick={() => setConfiguration({ ...configuration, endDate: "30daysAgo" })}
                       content="30daysAgo"
                     />
+                    <Label
+                      as="a"
+                      onClick={() => setDateHelp(!dateHelp)}
+                      icon="question circle"
+                      content="info"
+                      basic
+                      color={(dateHelp && "olive") || null}
+                    />
                   </Label.Group>
                 </Form.Field>
               </Form.Group>
+              {dateHelp && (
+                <Form.Field>
+                  <Message>
+                    <p>
+                      {"You can use relative dates such as "}
+                      <Label>today</Label>
+                      {", "}
+                      <Label>yesterday</Label>
+                      {", and "}
+                      <Label>NdaysAgo</Label>
+                    </p>
+                    <p>
+                      {"Alternatively, you can type in any date in YYYY-MM-DD format or use the calendar picker next to each field."}
+                    </p>
+                  </Message>
+                </Form.Field>
+              )}
             </Form>
           </div>
         </Grid.Column>
