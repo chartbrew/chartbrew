@@ -1,4 +1,5 @@
 const { google } = require("googleapis");
+const { formatISO } = require("date-fns");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -132,7 +133,35 @@ module.exports.formatGaData = (data) => {
     rows.forEach((row) => {
       const newRow = {};
       if (row.dimensions) {
-        [newRow[xAxis]] = row.dimensions;
+        let [dimension] = row.dimensions;
+        if (xAxis === "ga:date") {
+          dimension = new Date(
+            dimension.substring(0, 4),
+            parseInt(dimension.substring(4, 6), 10) - 1,
+            dimension.substring(6, 8)
+          );
+          dimension = formatISO(dimension);
+        }
+        if (xAxis === "ga:dateHour") {
+          dimension = new Date(
+            dimension.substring(0, 4),
+            parseInt(dimension.substring(4, 6), 10) - 1,
+            dimension.substring(6, 8),
+            dimension.substring(8, 10),
+          );
+          dimension = formatISO(dimension);
+        }
+        if (xAxis === "ga:dateHourMinute") {
+          dimension = new Date(
+            dimension.substring(0, 4),
+            parseInt(dimension.substring(4, 6), 10) - 1,
+            dimension.substring(6, 8),
+            dimension.substring(8, 10),
+            dimension.substring(10, 12),
+          );
+          dimension = formatISO(dimension);
+        }
+        newRow[xAxis] = dimension;
       }
       [newRow[yAxis]] = row.metrics[0].values;
 
