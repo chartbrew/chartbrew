@@ -130,6 +130,8 @@ module.exports.formatGaData = (data) => {
     const xAxis = headers.dimensions && headers.dimensions[0];
     const yAxis = headers.metricHeader.metricHeaderEntries[0].name;
 
+    if (!rows) return Promise.reject("No data found");
+
     rows.forEach((row) => {
       const newRow = {};
       if (row.dimensions) {

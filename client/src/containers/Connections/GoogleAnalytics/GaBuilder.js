@@ -43,7 +43,9 @@ function GaBuilder(props) {
     propertyId: "",
     viewId: "",
     filters: [],
-    metrics: ""
+    metrics: "",
+    startDate: "30daysAgo",
+    endDate: "yesterday",
   });
   const [result, setResult] = useState("");
   const [requestLoading, setRequestLoading] = useState(false);
@@ -141,7 +143,7 @@ function GaBuilder(props) {
       if (acc) {
         const prop = _.findLast(acc.webProperties, { id: configuration.propertyId });
         const viewOpt = [];
-        if (prop.profiles) {
+        if (prop && prop.profiles) {
           prop.profiles.forEach((view) => {
             viewOpt.push({
               key: view.id,
