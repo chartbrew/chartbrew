@@ -3,11 +3,12 @@ const { formatISO } = require("date-fns");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
+const protocol = settings.client.indexOf("localhost:") > -1 ? "http://" : "https://";
 const getOAuthClient = () => {
   return new google.auth.OAuth2(
     settings.google.client_id,
     settings.google.client_secret,
-    `http://${settings.client}${settings.google.redirect_url}`,
+    `${protocol}${settings.client}${settings.google.redirect_url}`,
   );
 };
 
