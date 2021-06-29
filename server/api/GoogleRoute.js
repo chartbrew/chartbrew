@@ -49,7 +49,9 @@ module.exports = (app) => {
       }
 
       return res.status(200).send({
-        url: googleConnector.getAuthUrl(req.params.project_id, req.params.connection_id)
+        url: googleConnector.getAuthUrl(
+          req.params.project_id, req.params.connection_id, req.query.type
+        ),
       });
     } catch (e) {
       return res.status(400).send({ error: e });

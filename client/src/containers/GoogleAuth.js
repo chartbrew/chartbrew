@@ -52,7 +52,11 @@ function GoogleAuth(props) {
       .then((result) => {
         setLoading(false);
         setSuccess(true);
-        history.push(`/${result.team_id}/${result.connection.project_id}/connections?edit=${result.connection.id}`);
+
+        let finalUrl = `/${result.team_id}/${result.connection.project_id}/connections?edit=${result.connection.id}`;
+        if (ids[2]) finalUrl += `&type=${ids[2]}`;
+
+        history.push(finalUrl);
       })
       .catch(() => {
         setError(true);

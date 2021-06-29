@@ -11,7 +11,7 @@ const getOAuthClient = () => {
   );
 };
 
-module.exports.getAuthUrl = (project_id, connection_id) => {
+module.exports.getAuthUrl = (project_id, connection_id, type) => {
   const oauth2Client = getOAuthClient();
 
   // generate a url that asks permissions for Google analytics and user email
@@ -20,11 +20,14 @@ module.exports.getAuthUrl = (project_id, connection_id) => {
     "https://www.googleapis.com/auth/userinfo.email"
   ];
 
-  const url = oauth2Client.generateAuthUrl({
+  const authParams = {
     access_type: "offline",
     scope: scopes,
     state: `${project_id},${connection_id}`,
-  });
+  };
+  if (type) authParams.state = `${authParams.state},${type}`;
+
+  const url = oauth2Client.generateAuthUrl(authParams);
 
   return url;
 };

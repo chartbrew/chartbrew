@@ -2,7 +2,7 @@ const builder = require("./builder");
 const googleConnector = require("../../modules/googleConnector");
 const db = require("../../models/models");
 
-const template = (configuration, dashboardOrder = 0) => ({
+const template = (configuration = {}, dashboardOrder = 0) => ({
   "Charts": [
     {
       "name": "New users",

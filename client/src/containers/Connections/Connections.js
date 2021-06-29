@@ -18,6 +18,8 @@ import GaConnectionForm from "./GoogleAnalytics/GaConnectionForm";
 import SimpleAnalyticsTemplate from "./SimpleAnalytics/SimpleAnalyticsTemplate";
 import ChartMogulTemplate from "./ChartMogul/ChartMogulTemplate";
 import MailgunTemplate from "./Mailgun/MailgunTemplate";
+import GaTemplate from "./GoogleAnalytics/GaTemplate";
+
 import {
   testRequest as testRequestAction,
   removeConnection as removeConnectionAction,
@@ -27,19 +29,13 @@ import {
 } from "../../actions/connection";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import { getProjectCharts as getProjectChartsAction } from "../../actions/chart";
-import mongoLogo from "../../assets/mongodb-logo-1.png";
 import canAccess from "../../config/canAccess";
-import mysql from "../../assets/mysql.png";
-import rest from "../../assets/api.png";
-import postgres from "../../assets/postgres.png";
-import firebaseLogo from "../../assets/firebase-real-time-database.png";
-import firestoreLogo from "../../assets/firebase-firestore.png";
 import simpleAnalyticsLogo from "../../assets/simpleAnalytics.png";
 import moreLogo from "../../assets/moreComingSoon.png";
 import chartmogulLogo from "../../assets/ChartMogul.webp";
 import mailgunLogo from "../../assets/mailgun_logo.webp";
-import gAnalyticsLogo from "../../assets/GoogleAnalytics.webp";
 import { lightGray, primary } from "../../config/colors";
+import connectionImages from "../../config/connectionImages";
 
 /*
   The page that contains all the connections
@@ -60,6 +56,7 @@ function Connections(props) {
   const [removeLoading, setRemoveLoading] = useState(false);
   const [removeError, setRemoveError] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState("connections");
+  const [templateConnection, setTemplateConnection] = useState(-1);
 
   useEffect(() => {
     cleanErrors();
@@ -68,7 +65,10 @@ function Connections(props) {
   useEffect(() => {
     if (connections && connections.length > 0 && !selectedConnection && !editConnection) {
       const parsedParams = queryString.parse(document.location.search);
-      if (parsedParams.edit) {
+      if (parsedParams.edit && parsedParams.type) {
+        setTemplateConnection(parseInt(parsedParams.edit, 10));
+        setFormType(parsedParams.type);
+      } else if (parsedParams.edit) {
         const foundConnection = connections.filter((c) => `${c.id}` === parsedParams.edit)[0];
         if (foundConnection) {
           setEditConnection(foundConnection);
@@ -292,32 +292,32 @@ function Connections(props) {
               {selectedMenu === "connections" && (
                 <Card.Group itemsPerRow={5} stackable>
                   <Card className="project-segment" onClick={() => setFormType("api")}>
-                    <Image src={rest} />
+                    <Image src={connectionImages.api} />
                     <Card.Content textAlign="center">
                       <Card.Header>API</Card.Header>
                     </Card.Content>
                   </Card>
                   <Card className="project-segment" onClick={() => setFormType("mongodb")}>
-                    <Image src={mongoLogo} />
+                    <Image src={connectionImages.mongodb} />
                     <Card.Content textAlign="center">
                       <Card.Header>MongoDB</Card.Header>
                     </Card.Content>
                   </Card>
                   <Card className="project-segment" onClick={() => setFormType("postgres")}>
-                    <Image src={postgres} />
+                    <Image src={connectionImages.postgres} />
                     <Card.Content textAlign="center">
                       <Card.Header>PostgreSQL</Card.Header>
                     </Card.Content>
                   </Card>
                   <Card className="project-segment" onClick={() => setFormType("mysql")}>
-                    <Image src={mysql} />
+                    <Image src={connectionImages.mysql} />
                     <Card.Content textAlign="center">
                       <Card.Header>MySQL</Card.Header>
                     </Card.Content>
                   </Card>
                   <Card className="project-segment" onClick={() => setFormType("firestore")}>
                     <Image
-                      src={firestoreLogo}
+                      src={connectionImages.firestore}
                       label={{
                         as: "a", color: "olive", title: "Freshly released", corner: "left", icon: "wrench"
                       }}
@@ -328,7 +328,7 @@ function Connections(props) {
                   </Card>
                   <Card className="project-segment" onClick={() => setFormType("googleAnalytics")}>
                     <Image
-                      src={gAnalyticsLogo}
+                      src={connectionImages.googleAnalytics}
                       label={{
                         as: "a", color: "olive", title: "Freshly released", corner: "left", icon: "wrench"
                       }}
@@ -359,6 +359,12 @@ function Connections(props) {
                       <Card.Header>Mailgun</Card.Header>
                     </Card.Content>
                   </Card>
+                  <Card className="project-segment" onClick={() => setFormType("googleAnalyticsTemplate")}>
+                    <Image src={connectionImages.googleAnalytics} />
+                    <Card.Content textAlign="center">
+                      <Card.Header>Google Analytics</Card.Header>
+                    </Card.Content>
+                  </Card>
                   <Card>
                     <Image src={moreLogo} />
                     <Card.Content textAlign="center">
@@ -380,20 +386,17 @@ function Connections(props) {
           )}
 
         <div id="connection-form-area">
-          {formType === "api"
-            && (
-              <ApiConnectionForm
-                projectId={match.params.projectId}
-                onTest={_onTestRequest}
-                onComplete={_onAddNewConnection}
-                editConnection={editConnection}
-                addError={addError}
-                testResult={testResult}
-              />
-            )}
-
-          {formType === "mongodb"
-            && (
+          {formType === "api" && (
+            <ApiConnectionForm
+              projectId={match.params.projectId}
+              onTest={_onTestRequest}
+              onComplete={_onAddNewConnection}
+              editConnection={editConnection}
+              addError={addError}
+              testResult={testResult}
+            />
+          )}
+          {formType === "mongodb" && (
             <MongoConnectionForm
               projectId={match.params.projectId}
               onTest={_onTestRequest}
@@ -402,10 +405,8 @@ function Connections(props) {
               addError={addError}
               testResult={testResult}
             />
-            )}
-
-          {formType === "postgres"
-            && (
+          )}
+          {formType === "postgres" && (
             <PostgresConnectionForm
               projectId={match.params.projectId}
               onTest={_onTestRequest}
@@ -414,10 +415,8 @@ function Connections(props) {
               addError={addError}
               testResult={testResult}
             />
-            )}
-
-          {formType === "mysql"
-            && (
+          )}
+          {formType === "mysql" && (
             <MysqlConnectionForm
               projectId={match.params.projectId}
               onTest={_onTestRequest}
@@ -426,10 +425,8 @@ function Connections(props) {
               addError={addError}
               testResult={testResult}
             />
-            )}
-
-          {formType === "firebase"
-            && (
+          )}
+          {formType === "firebase" && (
             <FirebaseConnectionForm
               projectId={match.params.projectId}
               onTest={_onTestRequest}
@@ -438,62 +435,66 @@ function Connections(props) {
               addError={addError}
               testResult={testResult}
             />
-            )}
-
-          {formType === "firestore"
-            && (
-              <FirestoreConnectionForm
-                projectId={match.params.projectId}
-                onTest={_onTestRequest}
-                onComplete={_onAddNewConnection}
-                editConnection={editConnection}
-                addError={addError}
-                testResult={testResult}
-              />
-            )}
-          {formType === "googleAnalytics"
-            && (
-              <GaConnectionForm
-                projectId={match.params.projectId}
-                onTest={_onTestRequest}
-                onComplete={_onAddNewConnection}
-                editConnection={editConnection}
-                addError={addError}
-                testResult={testResult}
-              />
-            )}
+          )}
+          {formType === "firestore" && (
+            <FirestoreConnectionForm
+              projectId={match.params.projectId}
+              onTest={_onTestRequest}
+              onComplete={_onAddNewConnection}
+              editConnection={editConnection}
+              addError={addError}
+              testResult={testResult}
+            />
+          )}
+          {formType === "googleAnalytics" && (
+            <GaConnectionForm
+              projectId={match.params.projectId}
+              onTest={_onTestRequest}
+              onComplete={_onAddNewConnection}
+              editConnection={editConnection}
+              addError={addError}
+              testResult={testResult}
+            />
+          )}
 
           {/* ADD TEMPLATES BELOW */}
-          {formType === "saTemplate"
-            && (
-              <SimpleAnalyticsTemplate
-                teamId={match.params.teamId}
-                projectId={match.params.projectId}
-                onComplete={_onCompleteTemplate}
-                addError={addError}
-                connections={connections}
-              />
-            )}
-          {formType === "cmTemplate"
-            && (
-              <ChartMogulTemplate
-                teamId={match.params.teamId}
-                projectId={match.params.projectId}
-                onComplete={_onCompleteTemplate}
-                addError={addError}
-                connections={connections}
-              />
-            )}
-          {formType === "mailgunTemplate"
-            && (
-              <MailgunTemplate
-                teamId={match.params.teamId}
-                projectId={match.params.projectId}
-                onComplete={_onCompleteTemplate}
-                addError={addError}
-                connections={connections}
-              />
-            )}
+          {formType === "saTemplate" && (
+            <SimpleAnalyticsTemplate
+              teamId={match.params.teamId}
+              projectId={match.params.projectId}
+              onComplete={_onCompleteTemplate}
+              addError={addError}
+              connections={connections}
+            />
+          )}
+          {formType === "cmTemplate" && (
+            <ChartMogulTemplate
+              teamId={match.params.teamId}
+              projectId={match.params.projectId}
+              onComplete={_onCompleteTemplate}
+              addError={addError}
+              connections={connections}
+            />
+          )}
+          {formType === "mailgunTemplate" && (
+            <MailgunTemplate
+              teamId={match.params.teamId}
+              projectId={match.params.projectId}
+              onComplete={_onCompleteTemplate}
+              addError={addError}
+              connections={connections}
+            />
+          )}
+          {formType === "googleAnalyticsTemplate" && (
+            <GaTemplate
+              teamId={match.params.teamId}
+              projectId={match.params.projectId}
+              onComplete={_onCompleteTemplate}
+              addError={addError}
+              connections={connections}
+              selection={templateConnection}
+            />
+          )}
         </div>
 
         {connections.length > 0
@@ -518,15 +519,7 @@ function Connections(props) {
                   <Image
                     floated="right"
                     size="tiny"
-                    src={
-                      connection.type === "mongodb" ? mongoLogo
-                        : connection.type === "api" ? rest
-                          : connection.type === "postgres" ? postgres
-                            : connection.type === "mysql" ? mysql
-                              : connection.type === "firebase" ? firebaseLogo
-                                : connection.type === "firestore" ? firestoreLogo
-                                  : connection.type === "googleAnalytics" ? gAnalyticsLogo : mongoLogo
-                    }
+                    src={connectionImages[connection.type]}
                   />
                   <Card.Header>{connection.name}</Card.Header>
                   <Card.Meta style={styles.smallerText}>
