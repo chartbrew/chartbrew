@@ -31,21 +31,32 @@ module.exports = (app) => {
           attributes: { exclude: ["id", "dataset_id", "createdAt", "updatedAt"] },
         }, {
           model: db.Connection,
-          attributes: { exclude: ["id", "project_id", "createdAt", "updatedAt"] },
+          attributes: { exclude: ["id", "project_id", "oauth_id", "createdAt", "updatedAt"] },
         }],
       }],
     })
       .then((charts) => {
-        charts.forEach((chart) => {
+        charts.forEach((chart, dIndex) => {
+          const newChart = chart;
+          // set a template ID for each chart
+          newChart.setDataValue("tid", dIndex);
+
           if (!template.Connection
-            && chart.Datasets
-            && chart.Datasets.length > 0
-            && chart.Datasets[0].Connection
+            && newChart.Datasets
+            && newChart.Datasets.length > 0
+            && newChart.Datasets[0].Connection
           ) {
-            template.Connection = chart.Datasets[0].Connection;
+            template.Connection = newChart.Datasets[0].Connection;
+
+            // remove the connection objects
+            newChart.Datasets = chart.Datasets.map((d) => {
+              const newDataset = d;
+              newDataset.setDataValue("Connection", null);
+              return newDataset;
+            });
           }
 
-          template.Charts.push(chart);
+          template.Charts.push(newChart);
         });
 
         return res.status(200).send(template);
