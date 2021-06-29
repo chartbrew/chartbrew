@@ -124,3 +124,5 @@ The table below shows the `production` variables. The `development` variables ha
 | CB_MAIL_PASS | No deafult | The password used to log in on the email server |
 | CB_ADMIN_MAIL | `hello@example.com` | The email address used to send the emails from |
 | CB_RESTRICT_TEAMS | `0` | `0` - New users will have their own team created on sign-up. <br /><br />`1` - New users don't have a team on signup and can't create their own. |
+| CB_GOOGLE_CLIENT_ID | No default | Google app Client ID generated from the <a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer noopener">Console</a> <br /><br />(Needed for Google integrations) |
+| CB_GOOGLE_CLIENT_SECRET | No default | Google app Client Secret generated from the <a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer noopener">Console</a> <br /><br />(Needed for Google integrations) |
