@@ -430,7 +430,7 @@ function GaTemplate(props) {
                     placeholder="Google analytics"
                     value={connection.name || ""}
                     onChange={(e, data) => {
-                      setConnection({ ...connection, website: data.value });
+                      setConnection({ ...connection, name: data.value });
                     }}
                   />
                   {errors.name

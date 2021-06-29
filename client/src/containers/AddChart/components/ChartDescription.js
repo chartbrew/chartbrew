@@ -11,6 +11,8 @@ import mailgunLogo from "../../../assets/mailgun_logo.webp";
 import SimpleAnalyticsTemplate from "../../Connections/SimpleAnalytics/SimpleAnalyticsTemplate";
 import ChartMogulTemplate from "../../Connections/ChartMogul/ChartMogulTemplate";
 import MailgunTemplate from "../../Connections/Mailgun/MailgunTemplate";
+import connectionImages from "../../../config/connectionImages";
+import GaTemplate from "../../Connections/GoogleAnalytics/GaTemplate";
 
 function ChartDescription(props) {
   const {
@@ -138,6 +140,12 @@ function ChartDescription(props) {
                     <Card.Header>Mailgun</Card.Header>
                   </Card.Content>
                 </Card>
+                <Card className="project-segment" onClick={() => setFormType("googleAnalyticsTemplate")}>
+                  <Image src={connectionImages.googleAnalytics} />
+                  <Card.Content textAlign="center">
+                    <Card.Header>Google Analytics</Card.Header>
+                  </Card.Content>
+                </Card>
                 <Card>
                   <Image src={moreLogo} />
                   <Card.Content textAlign="center">
@@ -178,6 +186,15 @@ function ChartDescription(props) {
                 onBack={() => setFormType("")}
               />
             )}
+          {formType === "googleAnalyticsTemplate" && (
+            <GaTemplate
+              teamId={teamId}
+              projectId={projectId}
+              onComplete={_onCompleteTemplate}
+              connections={connections}
+              onBack={() => setFormType("")}
+            />
+          )}
         </Container>
       )}
 
