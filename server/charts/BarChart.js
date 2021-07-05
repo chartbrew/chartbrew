@@ -96,7 +96,6 @@ class NewBarChart {
 
       if (this.chart.maxValue) {
         chartJsData.options.scales.yAxes[0].ticks.max = this.chart.maxValue;
-        console.log("chartJsData.options.scales.yAxes[0].max", chartJsData.options.scales.yAxes[0].max);
       }
       if (this.chart.minValue) {
         chartJsData.options.scales.yAxes[0].ticks.min = this.chart.minValue;
