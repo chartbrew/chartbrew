@@ -49,14 +49,6 @@ Make sure you fill out the `production` and `development` sections accordingly.
 
 [See the full list of variables here](/#environmental-variables)
 
-### Run the database migrations
-
-Running the migrations will ensure that you have the most up-to-date database schema. Ensure that all environmental variables are set before running the following command in the `server` folder:
-
-```sh
-cd server
-npm run db:migrate
-```
 
 ### Run the project in Development
 

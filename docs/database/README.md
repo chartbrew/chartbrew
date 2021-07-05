@@ -8,10 +8,10 @@ After you download it, make sure the MySQL and Apache services are running in th
 
 ## PostgreSQL
 
-An alternative to MySQL, Chartbrew now supports PostgreSQL. After you [download & install Postgres](https://www.enterprisedb.com/downloads/postgresql), you will have to create a new database that Chartbrew can use. You can create a new database using:
+As an alternative to MySQL, Chartbrew now supports PostgreSQL. After you [download & install Postgres](https://www.enterprisedb.com/downloads/postgresql), you will have to create a new database that Chartbrew can use. You can create a new database using:
 
 * [pgAdmin4](https://www.pgadmin.org/)
-* [Using SQL language](https://www.postgresql.org/docs/current/sql-createdatabase.html)
+* [SQL language](https://www.postgresql.org/docs/current/sql-createdatabase.html)
 
 ## Environmental variables
 

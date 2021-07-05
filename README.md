@@ -68,15 +68,6 @@ npx create-chartbrew-app chartbrew
 
 The CLI tool creates a `chartbrew/.env` file which you can configure at any time if you want to change the database, API & client host, etc. The file contains comments explaining what each environmental variable is for. [Check out which need to be set here.](https://docs.chartbrew.com/#set-up-environmental-variables)
 
-**Run the database migrations**
-
-If the database parameters are correct, the migrations should run automatically. If the new database wasn't populated with tables, ensure all the environmental variables are set, then run the following command in the `server` folder:
-
-```sh
-cd server
-npm run db:migrate
-```
-
 ### Run the project in Development
 
 Open two terminals, one for front-end and the other for back-end.

@@ -17,11 +17,20 @@ module.exports = {
       },
       {
         path: '/database/',
-        title: '🔌 Database configuration',
+        title: '💾 Database configuration',
       },
       {
         path: '/deployment/',
         title: '🌍 Deployment',
+      },
+      {
+        path: '/integrations/',
+        title: '🔌 Integrations',
+        collapsable: false,
+        sidebarDepth: 0,
+        children: [
+          ["/integrations/google-analytics/", "Google Analytics"]
+        ],
       },
       {
         path: '/backend/',
