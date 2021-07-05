@@ -78,7 +78,7 @@ class NewBarChart {
         scales: {
           yAxes: [{
             ticks: {
-              beginAtZero: true,
+              beginAtZero: !this.chart.minValue && true,
               precision: 0,
               fontFamily: "Inter",
               maxTicksLimit: 15,
@@ -93,6 +93,14 @@ class NewBarChart {
         },
         tooltips: tooltipsStyle,
       };
+
+      if (this.chart.maxValue) {
+        chartJsData.options.scales.yAxes[0].ticks.max = this.chart.maxValue;
+        console.log("chartJsData.options.scales.yAxes[0].max", chartJsData.options.scales.yAxes[0].max);
+      }
+      if (this.chart.minValue) {
+        chartJsData.options.scales.yAxes[0].ticks.min = this.chart.minValue;
+      }
     }
 
     return chartJsData;

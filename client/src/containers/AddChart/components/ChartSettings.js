@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Form, Segment, Checkbox, Grid, Modal, Button,
-  Accordion, Icon, Dropdown, Label, Header, Message, TransitionablePortal,
+  Accordion, Icon, Dropdown, Label, Header, Message, TransitionablePortal, Popup,
 } from "semantic-ui-react";
 import moment from "moment";
 import { DateRangePicker } from "react-date-range";
@@ -26,11 +26,14 @@ function ChartSettings(props) {
   const [labelStartDate, setLabelStartDate] = useState("");
   const [labelEndDate, setLabelEndDate] = useState("");
   const [dateBlocked, setDateBlocked] = useState(false);
+  const [max, setMax] = useState("");
+  const [min, setMin] = useState("");
 
   const {
     type, pointRadius, displayLegend, datasets,
     endDate, currentEndDate, timeInterval,
     includeZeros, startDate, onChange, onComplete,
+    maxValue, minValue,
   } = props;
 
   useEffect(() => {
@@ -38,6 +41,21 @@ function ChartSettings(props) {
       _onViewRange(true, true);
     }
   }, []);
+
+  useEffect(() => {
+    if (maxValue || maxValue === 0) {
+      setMax(maxValue);
+    }
+    if (maxValue === null) {
+      setMax("");
+    }
+    if (minValue || minValue === 0) {
+      setMin(minValue);
+    }
+    if (minValue === null) {
+      setMin("");
+    }
+  }, [maxValue, minValue]);
 
   useEffect(() => {
     let noDateFieldFound = false;
@@ -283,6 +301,61 @@ function ChartSettings(props) {
                 />
               </Form.Field>
             </Form.Group>
+
+            <Form.Group widths="equal">
+              <Form.Field>
+                <label>Max Y value</label>
+                <Form.Input
+                  placeholder="Enter a number"
+                  value={max}
+                  onChange={(e, data) => setMax(data.value)}
+                  action
+                >
+                  <input />
+                  <Button
+                    disabled={!max || (max === maxValue)}
+                    onClick={() => onChange({ maxValue: max })}
+                    icon="checkmark"
+                    color="green"
+                  />
+                  <Popup
+                    trigger={(
+                      <Button
+                        onClick={() => onChange({ maxValue: null })}
+                        icon="x"
+                      />
+                    )}
+                    content="Clear value"
+                  />
+                </Form.Input>
+              </Form.Field>
+              <Form.Field>
+                <label>Min Y value</label>
+                <Form.Input
+                  placeholder="Enter a number"
+                  value={min}
+                  onChange={(e, data) => setMin(data.value)}
+                  action
+                >
+                  <input />
+                  <Button
+                    disabled={!min || (min === minValue)}
+                    onClick={() => onChange({ minValue: min })}
+                    icon="checkmark"
+                    color="green"
+                  />
+                  <Popup
+                    trigger={(
+                      <Button
+                        onClick={() => onChange({ minValue: null })}
+                        icon="x"
+                      />
+                    )}
+                    content="Clear value"
+                  />
+                </Form.Input>
+              </Form.Field>
+            </Form.Group>
           </Form>
         </Accordion.Content>
       </Accordion>
@@ -362,6 +435,8 @@ ChartSettings.defaultProps = {
   timeInterval: "day",
   onChange: () => { },
   onComplete: () => { },
+  maxValue: null,
+  minValue: null,
 };
 
 ChartSettings.propTypes = {
@@ -376,6 +451,8 @@ ChartSettings.propTypes = {
   timeInterval: PropTypes.string,
   onChange: PropTypes.func,
   onComplete: PropTypes.func,
+  maxValue: PropTypes.number,
+  minValue: PropTypes.number,
 };
 
 export default ChartSettings;

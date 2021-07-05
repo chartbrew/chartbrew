@@ -100,6 +100,12 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: "chart",
     },
+    maxValue: {
+      type: DataTypes.INTEGER
+    },
+    minValue: {
+      type: DataTypes.INTEGER,
+    },
   }, {
     freezeTableName: true,
   });
