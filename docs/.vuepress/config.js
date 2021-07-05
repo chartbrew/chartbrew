@@ -1,6 +1,16 @@
+let ogprefix = 'og: http://ogp.me/ns#';
+
 module.exports = {
-  title: 'Chartbrew',
-  description: 'The official documentation of Chartbrew, a web app for generating charts from your data sources.',
+  title: 'Chartbrew Documentation',
+  description: 'The official documentation of Chartbrew, a platform that lets you create powerful dashboards and interactive data reports by connecting all your services in one place',
+  head: [
+    ['link', { rel: 'icon', href: '/assets/logo_blue_2.png' }],
+    ['meta', { prefix: ogprefix, property: 'og:title', content: 'Chartbrew Documentation' }],
+    ['meta', { prefix: ogprefix, property: 'og:description', content: 'The official documentation of Chartbrew, a platform that lets you create powerful dashboards and interactive data reports by connecting all your services in one place' }],
+    ['meta', { prefix: ogprefix, property: 'og:image', content: 'https://cdn2.chartbrew.com/chartbrew_visualize_banner_3.png' }],
+    ['meta', { prefix: ogprefix, property: 'og:type', content: 'article' }],
+    ['meta', { prefix: ogprefix, property: 'og:article:author', content: 'Razvan Ilin' }],
+  ],
   themeConfig: {
     logo: '/assets/logo_blue_2.png',
     displayAllHeaders: true,
