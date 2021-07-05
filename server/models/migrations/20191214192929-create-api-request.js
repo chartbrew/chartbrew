@@ -1,3 +1,4 @@
+const Sequelize = require("sequelize");
 const simplecrypt = require("simplecrypt");
 
 const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
@@ -8,15 +9,15 @@ const sc = simplecrypt({
 });
 
 module.exports = {
-  up: (queryInterface, DataTypes) => {
+  up: (queryInterface) => {
     return queryInterface.createTable("ApiRequest", {
       id: {
-        type: DataTypes.INTEGER,
+        type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
       },
       chart_id: {
-        type: DataTypes.INTEGER,
+        type: Sequelize.INTEGER,
         allowNull: false,
         reference: {
           model: "Chart",
@@ -25,13 +26,13 @@ module.exports = {
         },
       },
       method: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
       },
       route: {
-        type: DataTypes.TEXT,
+        type: Sequelize.TEXT,
       },
       headers: {
-        type: DataTypes.TEXT,
+        type: Sequelize.TEXT,
         set(val) {
           return this.setDataValue("headers", sc.encrypt(JSON.stringify(val)));
         },
@@ -44,7 +45,7 @@ module.exports = {
         }
       },
       body: {
-        type: DataTypes.TEXT,
+        type: Sequelize.TEXT,
         set(val) {
           return this.setDataValue("body", sc.encrypt(val));
         },
@@ -57,21 +58,21 @@ module.exports = {
         }
       },
       useGlobalHeaders: {
-        type: DataTypes.BOOLEAN,
+        type: Sequelize.BOOLEAN,
         required: true,
         defaultValue: true,
       },
       createdAt: {
         allowNull: false,
-        type: DataTypes.DATE
+        type: Sequelize.DATE
       },
       updatedAt: {
         allowNull: false,
-        type: DataTypes.DATE
+        type: Sequelize.DATE
       },
     });
   },
-  down: (queryInterface, Sequelize) => { // eslint-disable-line
+  down: (queryInterface) => {
     return queryInterface.dropTable("ApiRequest");
   }
 };

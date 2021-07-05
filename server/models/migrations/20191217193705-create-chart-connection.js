@@ -1,5 +1,7 @@
+const Sequelize = require("sequelize");
+
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  up: (queryInterface) => {
     return queryInterface.createTable("ChartConnection", {
       id: {
         allowNull: false,

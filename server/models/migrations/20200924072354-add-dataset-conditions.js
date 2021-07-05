@@ -1,5 +1,7 @@
+const Sequelize = require("sequelize");
+
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
+  up: async (queryInterface) => {
     return queryInterface.sequelize.transaction((t) => {
       return Promise.all([
         queryInterface.addColumn("Dataset", "conditions", {
@@ -22,7 +24,7 @@ module.exports = {
     });
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     return queryInterface.sequelize.transaction((t) => {
       return Promise.all([
         queryInterface.removeColumn("Dataset", "conditions", { transaction: t }),

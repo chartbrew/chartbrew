@@ -1,7 +1,9 @@
+const Sequelize = require("sequelize");
+
 const db = require("../models");
 
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  up: (queryInterface) => {
     return db.ChartCache.destroy({ truncate: true })
       .then(() => {
         return queryInterface.addColumn("ChartCache", "chart_id", {

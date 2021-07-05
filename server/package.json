@@ -47,6 +47,7 @@
     "request-promise": "^4.2.6",
     "sequelize": "^6.3.5",
     "simplecrypt": "^0.1.0",
+    "umzug": "^2.3.0",
     "uuid": "^3.4.0"
   },
   "devDependencies": {

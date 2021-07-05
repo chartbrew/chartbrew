@@ -1,7 +1,9 @@
+const Sequelize = require("sequelize");
+
 const migrateProjectsToTeamRole = require("../scripts/migrateProjectsToTeamRole");
 
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
+  up: async (queryInterface) => {
     await queryInterface.addColumn("TeamRole", "projects", {
       type: Sequelize.TEXT,
       get() {

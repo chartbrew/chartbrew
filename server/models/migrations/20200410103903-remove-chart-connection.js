@@ -1,9 +1,11 @@
+const Sequelize = require("sequelize");
+
 module.exports = {
   up: (queryInterface) => {
     return queryInterface.dropTable("ChartConnection");
   },
 
-  down: (queryInterface, Sequelize) => {
+  down: (queryInterface) => {
     return queryInterface.createTable("ChartConnection", {
       id: {
         allowNull: false,

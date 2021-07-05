@@ -1,7 +1,9 @@
+const Sequelize = require("sequelize");
+
 const migrateFields = require("../scripts/migrateFieldsToDataRequest");
 
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  up: (queryInterface) => {
     return queryInterface.renameTable("ApiRequest", "DataRequest")
       .then(() => {
         return Promise.all([
@@ -54,7 +56,7 @@ module.exports = {
       .catch(() => Promise.resolve("done"));
   },
 
-  down: (queryInterface, Sequelize) => {
+  down: (queryInterface) => {
     return Promise.all([
       queryInterface.addColumn("Chart", "query", {
         type: Sequelize.TEXT,

@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { Sequelize, DataTypes } = require("sequelize");
+const Umzug = require("umzug");
 
 const basename = path.basename(__filename);
 const config = process.env.NODE_ENV === "production"
@@ -45,5 +46,25 @@ Object.keys(db).forEach((modelName) => {
 });
 
 db.sequelize = sequelize;
+
+const umzug = new Umzug({
+  migrations: {
+    // indicates the folder containing the migration .js files
+    path: path.join(__dirname, "../migrations"),
+    // inject sequelize's QueryInterface in the migrations
+    params: [
+      sequelize.getQueryInterface()
+    ]
+  },
+  storage: "sequelize",
+  storageOptions: {
+    sequelize,
+  }
+});
+
+db.migrate = () => umzug.up();
+db.migrate()
+  .then(() => {})
+  .catch((err) => console.error(err)); // eslint-disable-line
 
 module.exports = db;

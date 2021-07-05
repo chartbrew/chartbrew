@@ -1,3 +1,4 @@
+const Sequelize = require("sequelize");
 const simplecrypt = require("simplecrypt");
 
 const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
@@ -8,7 +9,7 @@ const sc = simplecrypt({
 });
 
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  up: (queryInterface) => {
     return queryInterface.createTable("ChartCache", {
       id: {
         type: Sequelize.INTEGER,
@@ -48,7 +49,7 @@ module.exports = {
       }
     });
   },
-  down: (queryInterface, Sequelize) => { // eslint-disable-line
+  down: (queryInterface) => {
     return queryInterface.dropTable("ChartCache");
   }
 };

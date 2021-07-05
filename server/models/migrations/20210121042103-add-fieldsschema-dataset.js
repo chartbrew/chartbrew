@@ -1,3 +1,4 @@
+const Sequelize = require("sequelize");
 const simplecrypt = require("simplecrypt");
 
 const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
@@ -8,7 +9,7 @@ const sc = simplecrypt({
 });
 
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
+  up: async (queryInterface) => {
     await queryInterface.addColumn("Dataset", "fieldsSchema", {
       type: Sequelize.TEXT("long"),
       get() {

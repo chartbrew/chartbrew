@@ -1,7 +1,9 @@
+const Sequelize = require("sequelize");
+
 const addExportPermission = require("../scripts/addExportPermission");
 
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
+  up: async (queryInterface) => {
     await queryInterface.addColumn("TeamRole", "canExport", {
       type: Sequelize.BOOLEAN,
       defaultValue: false,

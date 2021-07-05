@@ -1,7 +1,9 @@
+const Sequelize = require("sequelize");
+
 const migrateConnections = require("../scripts/migrateConnectionsOnDatasets");
 
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  up: (queryInterface) => {
     return queryInterface.sequelize.transaction((t) => {
       return Promise.all([
         queryInterface.addColumn("Dataset", "connection_id", {
@@ -24,7 +26,7 @@ module.exports = {
     });
   },
 
-  down: (queryInterface, Sequelize) => {
+  down: (queryInterface) => {
     return queryInterface.sequelize.transaction((t) => {
       return queryInterface.addColumn("Chart", "connection_id", {
         connection_id: {

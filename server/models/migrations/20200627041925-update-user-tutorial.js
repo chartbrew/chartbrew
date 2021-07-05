@@ -1,5 +1,7 @@
+const Sequelize = require("sequelize");
+
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
+  up: async (queryInterface) => {
     return queryInterface.addColumn("User", "tutorials", {
       type: Sequelize.TEXT,
       allowNull: false,

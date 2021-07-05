@@ -1,12 +1,14 @@
+const Sequelize = require("sequelize");
+
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  up: (queryInterface) => {
     return queryInterface.changeColumn("Chart", "draft", {
       type: Sequelize.BOOLEAN,
       defaultValue: true,
     });
   },
 
-  down: (queryInterface, Sequelize) => {
+  down: (queryInterface) => {
     return queryInterface.changeColumn("Chart", "draft", {
       type: Sequelize.BOOLEAN,
       defaultValue: false,

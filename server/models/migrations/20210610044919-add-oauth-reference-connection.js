@@ -1,5 +1,7 @@
+const Sequelize = require("sequelize");
+
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
+  up: async (queryInterface) => {
     await queryInterface.addColumn("Connection", "oauth_id", {
       type: Sequelize.UUID,
       allowNull: true,

@@ -1,5 +1,7 @@
+const Sequelize = require("sequelize");
+
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  up: (queryInterface) => {
     return queryInterface.createTable("Team", {
       id: {
         type: Sequelize.INTEGER,
@@ -21,7 +23,7 @@ module.exports = {
     });
   },
 
-  down: (queryInterface, Sequelize) => { // eslint-disable-line
+  down: (queryInterface) => {
     return queryInterface.dropTable("Team");
   }
 };

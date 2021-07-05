@@ -1,3 +1,5 @@
+const Sequelize = require("sequelize");
+
 const migrateSurname = require("../scripts/migrateSurname");
 
 module.exports = {
@@ -8,7 +10,7 @@ module.exports = {
       });
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     return queryInterface.addColumn("User", "surname", {
       type: Sequelize.STRING,
       allowNull: false,

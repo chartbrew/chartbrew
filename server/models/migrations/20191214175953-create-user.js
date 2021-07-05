@@ -9,23 +9,23 @@ const sc = simplecrypt({
 });
 
 module.exports = {
-  up: (queryInterface, DataTypes) => {
+  up: (queryInterface) => {
     return queryInterface.createTable("User", {
       id: {
-        type: DataTypes.INTEGER,
+        type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
       },
       name: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: false,
       },
       surname: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: false,
       },
       email: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: false,
         unique: true,
         get() {
@@ -40,28 +40,28 @@ module.exports = {
         },
       },
       lastLogin: {
-        type: DataTypes.DATE,
+        type: Sequelize.DATE,
       },
       active: {
-        type: DataTypes.BOOLEAN,
+        type: Sequelize.BOOLEAN,
         defaultValue: false,
         required: true,
       },
       password: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
         allowNull: false,
         set(val) {
           return this.setDataValue("password", sc.encrypt(val));
         },
       },
       icon: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
       },
       passwordResetToken: {
-        type: DataTypes.STRING,
+        type: Sequelize.STRING,
       },
       createdAt: {
-        type: DataTypes.DATE,
+        type: Sequelize.DATE,
         defaultValue: Sequelize.literal("CURRENT_TIMESTAMP")
       },
       updatedAt: {
@@ -70,7 +70,7 @@ module.exports = {
       }
     });
   },
-  down: (queryInterface, Sequelize) => { // eslint-disable-line
+  down: (queryInterface) => {
     return queryInterface.dropTable("User");
   }
 };
