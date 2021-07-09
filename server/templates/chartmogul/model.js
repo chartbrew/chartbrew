@@ -4,7 +4,7 @@ const moment = require("moment");
 const builder = require("./builder");
 
 const template = (token, key, dashboardOrder = 0) => ({
-  "Connection": {
+  "Connections": [{
     "host": "https://api.chartmogul.com/v1",
     "dbName": null,
     "port": null,
@@ -22,7 +22,7 @@ const template = (token, key, dashboardOrder = 0) => ({
     "type": "api",
     "active": true,
     "srv": false
-  },
+  }],
   "Charts": [
     {
       "tid": 1,

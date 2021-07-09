@@ -18,7 +18,7 @@ module.exports = async (
     model.Charts = newModelCharts;
   }
 
-  model.Connection.project_id = projectId;
+  model.Connections[0].project_id = projectId;
 
   const createDatasets = (datasets, cId, chartId) => {
     const datasetPromises = [];
@@ -43,7 +43,7 @@ module.exports = async (
 
   let connection;
   if (connection_id) connection = await db.Connection.findByPk(connection_id);
-  else connection = await db.Connection.create(model.Connection);
+  else connection = await db.Connection.create(model.Connections[0]);
 
   const chartPromises = [];
   // now go through all the charts

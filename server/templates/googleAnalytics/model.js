@@ -188,21 +188,6 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "paginationField": null,
             "template": null
           },
-          "Connection": {
-            "host": null,
-            "dbName": null,
-            "port": null,
-            "username": null,
-            "password": null,
-            "options": null,
-            "connectionString": null,
-            "authentication": null,
-            "firebaseServiceAccount": null,
-            "name": "Google Analytics",
-            "type": "googleAnalytics",
-            "active": true,
-            "srv": false
-          }
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -251,22 +236,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "paginationField": null,
             "template": null
           },
-          "Connection": {
-            "host": null,
-            "dbName": null,
-            "port": null,
-            "username": null,
-            "password": null,
-            "options": null,
-            "connectionString": null,
-            "authentication": null,
-            "firebaseServiceAccount": null,
-            "name": "Google Analytics",
-            "type": "googleAnalytics",
-            "active": true,
-            "srv": false
-          }
-        }
+        },
       ],
       "tid": 1
     },
@@ -339,22 +309,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "paginationField": null,
             "template": null
           },
-          "Connection": {
-            "host": null,
-            "dbName": null,
-            "port": null,
-            "username": null,
-            "password": null,
-            "options": null,
-            "connectionString": null,
-            "authentication": null,
-            "firebaseServiceAccount": null,
-            "name": "Google Analytics",
-            "type": "googleAnalytics",
-            "active": true,
-            "srv": false
-          }
-        }
+        },
       ],
       "tid": 2
     },
@@ -423,21 +378,6 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "paginationField": null,
             "template": null
           },
-          "Connection": {
-            "host": null,
-            "dbName": null,
-            "port": null,
-            "username": null,
-            "password": null,
-            "options": null,
-            "connectionString": null,
-            "authentication": null,
-            "firebaseServiceAccount": null,
-            "name": "Google Analytics",
-            "type": "googleAnalytics",
-            "active": true,
-            "srv": false
-          }
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -486,21 +426,6 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "paginationField": null,
             "template": null
           },
-          "Connection": {
-            "host": null,
-            "dbName": null,
-            "port": null,
-            "username": null,
-            "password": null,
-            "options": null,
-            "connectionString": null,
-            "authentication": null,
-            "firebaseServiceAccount": null,
-            "name": "Google Analytics",
-            "type": "googleAnalytics",
-            "active": true,
-            "srv": false
-          }
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -549,22 +474,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "paginationField": null,
             "template": null
           },
-          "Connection": {
-            "host": null,
-            "dbName": null,
-            "port": null,
-            "username": null,
-            "password": null,
-            "options": null,
-            "connectionString": null,
-            "authentication": null,
-            "firebaseServiceAccount": null,
-            "name": "Google Analytics",
-            "type": "googleAnalytics",
-            "active": true,
-            "srv": false
-          }
-        }
+        },
       ],
       "tid": 3
     },
@@ -636,22 +546,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "paginationField": null,
             "template": null
           },
-          "Connection": {
-            "host": null,
-            "dbName": null,
-            "port": null,
-            "username": null,
-            "password": null,
-            "options": null,
-            "connectionString": null,
-            "authentication": null,
-            "firebaseServiceAccount": null,
-            "name": "Google Analytics",
-            "type": "googleAnalytics",
-            "active": true,
-            "srv": false
-          }
-        }
+        },
       ],
       "tid": 4
     },
@@ -720,22 +615,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "paginationField": null,
             "template": null
           },
-          "Connection": {
-            "host": null,
-            "dbName": null,
-            "port": null,
-            "username": null,
-            "password": null,
-            "options": null,
-            "connectionString": null,
-            "authentication": null,
-            "firebaseServiceAccount": null,
-            "name": "Google Analytics",
-            "type": "googleAnalytics",
-            "active": true,
-            "srv": false
-          }
-        }
+        },
       ],
       "tid": 5
     },
@@ -803,22 +683,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "paginationField": null,
             "template": null
           },
-          "Connection": {
-            "host": null,
-            "dbName": null,
-            "port": null,
-            "username": null,
-            "password": null,
-            "options": null,
-            "connectionString": null,
-            "authentication": null,
-            "firebaseServiceAccount": null,
-            "name": "Google Analytics",
-            "type": "googleAnalytics",
-            "active": true,
-            "srv": false
-          }
-        }
+        },
       ],
       "tid": 6
     },
@@ -885,27 +750,12 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "paginationField": null,
             "template": null
           },
-          "Connection": {
-            "host": null,
-            "dbName": null,
-            "port": null,
-            "username": null,
-            "password": null,
-            "options": null,
-            "connectionString": null,
-            "authentication": null,
-            "firebaseServiceAccount": null,
-            "name": "Google Analytics",
-            "type": "googleAnalytics",
-            "active": true,
-            "srv": false
-          }
-        }
+        },
       ],
       "tid": 7
     }
   ],
-  "Connection": {
+  "Connections": [{
     "host": null,
     "dbName": null,
     "port": null,
@@ -919,7 +769,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
     "type": "googleAnalytics",
     "active": true,
     "srv": false
-  }
+  }],
 });
 
 module.exports.template = template;

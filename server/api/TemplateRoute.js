@@ -31,11 +31,12 @@ module.exports = (app) => {
           attributes: { exclude: ["id", "dataset_id", "createdAt", "updatedAt"] },
         }, {
           model: db.Connection,
-          attributes: { exclude: ["id", "project_id", "oauth_id", "createdAt", "updatedAt"] },
+          attributes: { exclude: ["project_id", "oauth_id", "createdAt", "updatedAt"] },
         }],
       }],
     })
       .then((charts) => {
+        const connections = [];
         charts.forEach((chart, dIndex) => {
           const newChart = chart;
           // set a template ID for each chart
@@ -44,18 +45,25 @@ module.exports = (app) => {
           if (!template.Connection
             && newChart.Datasets
             && newChart.Datasets.length > 0
-            && newChart.Datasets[0].Connection
           ) {
-            template.Connection = newChart.Datasets[0].Connection;
+            newChart.Datasets.forEach((d) => {
+              let found = false;
+              connections.forEach((c) => {
+                if (d.Connection.id === c.id) found = true;
+              });
+
+              if (!found) connections.push(d.Connection);
+            });
 
             // remove the connection objects
             newChart.Datasets = chart.Datasets.map((d) => {
               const newDataset = d;
-              newDataset.setDataValue("Connection", null);
+              newDataset.setDataValue("Connection", d.Connection.id);
               return newDataset;
             });
           }
 
+          template.Connections = connections;
           template.Charts.push(newChart);
         });
 

@@ -18,7 +18,7 @@ module.exports = async (
     model.Charts = newModelCharts;
   }
 
-  model.Connection.project_id = projectId;
+  model.Connections[0].project_id = projectId;
 
   const createDatasets = (datasets, cId, chartId) => {
     const datasetPromises = [];

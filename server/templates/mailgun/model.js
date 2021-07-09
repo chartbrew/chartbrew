@@ -3,7 +3,7 @@ const request = require("request-promise");
 const builder = require("./builder");
 
 const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
-  "Connection": {
+  "Connections": [{
     "host": `${apiRoot}/v3`,
     "dbName": null,
     "port": null,
@@ -21,7 +21,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
     "type": "api",
     "active": true,
     "srv": false
-  },
+  }],
   "Charts": [
     {
       "tid": 0,

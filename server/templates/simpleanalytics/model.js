@@ -3,14 +3,14 @@ const request = require("request-promise");
 const builder = require("./builder");
 
 const template = (website, apiKey, dashboardOrder) => ({
-  Connection: {
+  Connections: [{
     name: "SimpleAnalyticsAPI",
     type: "api",
     host: "https://simpleanalytics.com",
     options: [{
       "Api-Key": apiKey || "none",
     }]
-  },
+  }],
   Charts: [{
     tid: 1,
     name: "30-day Stats",
