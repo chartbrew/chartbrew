@@ -252,7 +252,7 @@ function GaTemplate(props) {
   };
 
   const _getTemplateConfig = () => {
-    const url = `${API_HOST}/template/googleAnalytics`;
+    const url = `${API_HOST}/team/${teamId}/template/community/googleAnalytics`;
     const method = "GET";
     const headers = new Headers({
       accept: "application/json",

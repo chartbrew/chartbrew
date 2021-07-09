@@ -92,7 +92,7 @@ function SimpleAnalyticsTemplate(props) {
   };
 
   const _getTemplateConfig = () => {
-    const url = `${API_HOST}/template/simpleanalytics`;
+    const url = `${API_HOST}/team/${teamId}/template/community/simpleanalytics`;
     const method = "GET";
     const headers = new Headers({
       accept: "application/json",

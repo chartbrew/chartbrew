@@ -64,7 +64,7 @@ const umzug = new Umzug({
 
 db.migrate = () => umzug.up();
 db.migrate()
-  .then(() => {})
+  .then((migration) => { console.log(migration); })
   .catch((err) => console.error(err)); // eslint-disable-line
 
 module.exports = db;
