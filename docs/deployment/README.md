@@ -1,3 +1,13 @@
+---
+
+canonicalUrl: https://docs.chartbrew.com/deployment/
+
+meta: 
+    - property: og:url
+      content: https://docs.chartbrew.com/deployment/
+
+---
+
 # Deploy Chartbrew on your server
 
 ::: tip INFO

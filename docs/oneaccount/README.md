@@ -1,3 +1,13 @@
+---
+
+canonicalUrl: https://docs.chartbrew.com/oneaccount/
+
+meta: 
+    - property: og:url
+      content: https://docs.chartbrew.com/oneaccount/
+
+---
+
 # One account Docs
 
 ::: tip

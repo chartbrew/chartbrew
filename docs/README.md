@@ -1,3 +1,15 @@
+---
+
+meta: 
+    - property: og:url
+      content: Page description text
+
+link:
+    - href: https://docs.chartbrew.com
+      rel: canonical
+
+---
+
 # Chartbrew Docs
 
 ## Prerequisites

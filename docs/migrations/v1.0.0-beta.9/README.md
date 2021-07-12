@@ -1,3 +1,13 @@
+---
+
+canonicalUrl: https://docs.chartbrew.com/migrations/v1.0.0-beta.9/
+
+meta: 
+    - property: og:url
+      content: https://docs.chartbrew.com/migrations/v1.0.0-beta.9/
+
+---
+
 # Migrate to v1.0.0-beta.9.x
 
 This is a big update on top of the previous versions, but the migration is mainly automated. Since the architecture and database schema changes dramatically, you should first back-up your database before continuing.
