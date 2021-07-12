@@ -94,7 +94,7 @@ module.exports = (app) => {
       return formatError(error, res);
     }
 
-    return templateController.create(req.body)
+    return templateController.create(req.params.team_id, req.body)
       .catch((err) => {
         return formatError(err, res);
       });

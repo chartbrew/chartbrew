@@ -24,6 +24,7 @@ import {
 } from "../../actions/chart";
 import canAccess from "../../config/canAccess";
 import ChartExport from "./components/ChartExport";
+import CreateTemplateForm from "../../components/CreateTemplateForm";
 
 const AppMedia = createMedia({
   breakpoints: {
@@ -52,6 +53,7 @@ function ProjectDashboard(props) {
   const [viewExport, setViewExport] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [exportError, setExportError] = useState(false);
+  const [templateVisible, setTemplateVisible] = useState(false);
 
   const { height } = useWindowSize();
 
@@ -309,6 +311,22 @@ function ProjectDashboard(props) {
                 </div>
               </Menu.Item>
               <Menu.Menu position="right">
+                <Menu.Item style={{ padding: 0 }}>
+                  <Popup
+                    trigger={(
+                      <Button
+                        button
+                        basic
+                        primary
+                        icon="clone"
+                        className="icon"
+                        onClick={() => setTemplateVisible(true)}
+                      />
+                    )}
+                    content="Create a template from this dashboard"
+                    position="bottom right"
+                  />
+                </Menu.Item>
                 {_canExport() && (
                   <Menu.Item style={{ padding: 0 }}>
                     <Popup
@@ -501,6 +519,13 @@ function ProjectDashboard(props) {
           </Modal.Content>
         </Modal>
       </TransitionablePortal>
+
+      <CreateTemplateForm
+        teamId={match.params.teamId}
+        projectId={match.params.projectId}
+        onClose={() => setTemplateVisible(false)}
+        visible={templateVisible}
+      />
     </div>
   );
 }

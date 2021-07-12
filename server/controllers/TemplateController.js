@@ -9,7 +9,7 @@ module.exports.update = (id, data) => {
     .then(() => this.findById(id));
 };
 
-module.exports.create = (data) => {
-  return db.Template.create(data)
+module.exports.create = (teamId, data) => {
+  return db.Template.create({ team_id: teamId, model: data })
     .then((template) => this.findById(template.id));
 };
