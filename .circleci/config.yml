@@ -82,6 +82,10 @@ jobs:
             - v7-dependencies-{{ checksum "package.json" }}
             # fallback to using the latest cache if no exact match is found
             - v7-dependencies-
+
+      - run:
+          name: Prepare Semantic files
+          command: cd client && npm run prepareSemantic
  
       - run:
           name: Building the client

@@ -1,3 +1,13 @@
+---
+
+canonicalUrl: https://docs.chartbrew.com/database/
+
+meta: 
+    - property: og:url
+      content: https://docs.chartbrew.com/database/
+
+---
+
 # Chartbrew's backend
 
 ## Structure

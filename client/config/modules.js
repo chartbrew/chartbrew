@@ -14,15 +14,8 @@ const resolve = require('resolve');
 function getAdditionalModulePaths(options = {}) {
   const baseUrl = options.baseUrl;
 
-  // We need to explicitly check for null and undefined (and not a falsy value) because
-  // TypeScript treats an empty string as `.`.
-  if (baseUrl == null) {
-    // If there's no baseUrl set we respect NODE_PATH
-    // Note that NODE_PATH is deprecated and will be removed
-    // in the next major release of create-react-app.
-
-    const nodePath = process.env.NODE_PATH || '';
-    return nodePath.split(path.delimiter).filter(Boolean);
+  if (!baseUrl) {
+    return '';
   }
 
   const baseUrlResolved = path.resolve(paths.appPath, baseUrl);
@@ -51,7 +44,7 @@ function getAdditionalModulePaths(options = {}) {
   throw new Error(
     chalk.red.bold(
       "Your project's `baseUrl` can only be set to `src` or `node_modules`." +
-      ' Create React App does not support other values at this time.'
+        ' Create React App does not support other values at this time.'
     )
   );
 }

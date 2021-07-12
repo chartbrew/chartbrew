@@ -1,3 +1,13 @@
+---
+
+canonicalUrl: https://docs.chartbrew.com/integrations/google-analytics/
+
+meta: 
+    - property: og:url
+      content: https://docs.chartbrew.com/integrations/google-analytics/
+
+---
+
 # Google Analytics
 
 The Google Analytics integration can be used once a new project is created and configured in Google Console.
