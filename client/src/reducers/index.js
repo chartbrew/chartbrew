@@ -13,6 +13,7 @@ import error from "./error";
 import dataset from "./dataset";
 import dataRequest from "./dataRequest";
 import tutorial from "./tutorial";
+import template from "./template";
 
 const AppReducer = combineReducers({
   user,
@@ -26,6 +27,7 @@ const AppReducer = combineReducers({
   dataRequest,
   error,
   tutorial,
+  template,
   route: routerReducer,
 });
 

@@ -4,6 +4,12 @@ module.exports.findById = (id) => {
   return db.Template.findByPk(id);
 };
 
+module.exports.find = (condition) => {
+  return db.Template.findAll({
+    where: condition,
+  });
+};
+
 module.exports.update = (id, data) => {
   return db.Template.update(data, { where: { id } })
     .then(() => this.findById(id));

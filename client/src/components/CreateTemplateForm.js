@@ -40,7 +40,7 @@ function CreateTemplateForm(props) {
 
   return (
     <TransitionablePortal open={visible}>
-      <Modal open={visible} closeIcon onClose={onClose}>
+      <Modal open={visible} closeIcon onClose={onClose} size="small">
         <Modal.Header>Create a template</Modal.Header>
         <Modal.Content>
           <Form>

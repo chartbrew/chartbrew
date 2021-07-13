@@ -7,6 +7,7 @@ import {
   Modal, Header, Message, Segment, Step, TransitionablePortal, Menu, Label,
 } from "semantic-ui-react";
 import queryString from "query-string";
+import { useWindowSize } from "react-use";
 
 import MongoConnectionForm from "./components/MongoConnectionForm";
 import ApiConnectionForm from "./components/ApiConnectionForm";
@@ -19,6 +20,7 @@ import SimpleAnalyticsTemplate from "./SimpleAnalytics/SimpleAnalyticsTemplate";
 import ChartMogulTemplate from "./ChartMogul/ChartMogulTemplate";
 import MailgunTemplate from "./Mailgun/MailgunTemplate";
 import GaTemplate from "./GoogleAnalytics/GaTemplate";
+import CustomTemplates from "./CustomTemplates/CustomTemplates";
 
 import {
   testRequest as testRequestAction,
@@ -27,6 +29,9 @@ import {
   addConnection as addConnectionAction,
   saveConnection as saveConnectionAction,
 } from "../../actions/connection";
+import {
+  getTemplates as getTemplatesAction
+} from "../../actions/template";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import { getProjectCharts as getProjectChartsAction } from "../../actions/chart";
 import canAccess from "../../config/canAccess";
@@ -43,8 +48,11 @@ import connectionImages from "../../config/connectionImages";
 function Connections(props) {
   const {
     cleanErrors, addConnection, saveConnection, match, history, connections, testRequest,
-    removeConnection, getProjectConnections, user, team, getProjectCharts,
+    removeConnection, getProjectConnections, user, team, getProjectCharts, getTemplates,
+    templates,
   } = props;
+
+  const { width } = useWindowSize();
 
   const [newConnectionModal, setNewConnectionModal] = useState(false);
   const [addError, setAddError] = useState(false);
@@ -60,6 +68,7 @@ function Connections(props) {
 
   useEffect(() => {
     cleanErrors();
+    getTemplates(match.params.teamId);
   }, []);
 
   useEffect(() => {
@@ -272,7 +281,13 @@ function Connections(props) {
                 Select one of the connection types below
               </Header>
             )}
-            <Menu attached="top" size="big" tabular>
+            <Menu
+              size="big"
+              tabular={width >= 768 ? true : null}
+              stackable
+              attached={width >= 768 ? "top" : null}
+              secondary={width < 768 ? true : null}
+            >
               <Menu.Item
                 active={selectedMenu === "connections"}
                 name="Connections"
@@ -284,7 +299,14 @@ function Connections(props) {
                 onClick={() => setSelectedMenu("templates")}
               >
                 <Icon name="magic" />
-                Templates
+                Community templates
+              </Menu.Item>
+              <Menu.Item
+                active={selectedMenu === "customTemplates"}
+                onClick={() => setSelectedMenu("customTemplates")}
+              >
+                <Icon name="clone" />
+                Custom templates
                 <Label color="olive">New!</Label>
               </Menu.Item>
             </Menu>
@@ -372,6 +394,15 @@ function Connections(props) {
                     </Card.Content>
                   </Card>
                 </Card.Group>
+              )}
+
+              {selectedMenu === "customTemplates" && (
+                <CustomTemplates
+                  templates={templates.data}
+                  loading={templates.loading}
+                  teamId={match.params.teamId}
+                  projectId={match.params.projectId}
+                />
               )}
             </Segment>
             <Segment attached="bottom">
@@ -619,6 +650,8 @@ Connections.propTypes = {
   addConnection: PropTypes.func.isRequired,
   testRequest: PropTypes.func.isRequired,
   getProjectCharts: PropTypes.func.isRequired,
+  getTemplates: PropTypes.func.isRequired,
+  templates: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -626,6 +659,7 @@ const mapStateToProps = (state) => {
     connections: state.connection.data,
     team: state.team.active,
     user: state.user.data,
+    templates: state.template,
   };
 };
 
@@ -640,6 +674,7 @@ const mapDispatchToProps = (dispatch) => {
     },
     cleanErrors: () => dispatch(cleanErrorsAction()),
     getProjectCharts: (projectId) => dispatch(getProjectChartsAction(projectId)),
+    getTemplates: (teamId) => dispatch(getTemplatesAction(teamId)),
   };
 };
 

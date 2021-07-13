@@ -33,6 +33,26 @@ module.exports = (app) => {
   };
 
   /*
+  ** Route to get all the templates from a team
+  */
+  app.get(`${url}`, verifyToken, (req, res) => {
+    try {
+      checkAccess(req, "updateAny", "chart");
+    } catch (error) {
+      return formatError(error, res);
+    }
+
+    return templateController.find({ team_id: req.params.team_id })
+      .then((templates) => {
+        return res.status(200).send(templates);
+      })
+      .catch((err) => {
+        return formatError(err, res);
+      });
+  });
+  // -------------------------------------
+
+  /*
   ** Route to get a community template configuration
   */
   app.get(`${url}/community/:template`, verifyToken, (req, res) => {
