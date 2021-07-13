@@ -7,7 +7,6 @@ import {
 } from "semantic-ui-react";
 
 import {
-  getProjectTemplate,
   createTemplate as createTemplateAction,
 } from "../actions/template";
 
@@ -29,10 +28,7 @@ function CreateTemplateForm(props) {
     setValidationError(false);
     setLoading(true);
 
-    return getProjectTemplate(teamId, projectId)
-      .then((configuration) => {
-        return createTemplate(teamId, { model: configuration });
-      })
+    return createTemplate(teamId, projectId, templateName)
       .then(() => {
         setLoading(false);
         return true;
@@ -90,7 +86,9 @@ CreateTemplateForm.defaultProps = {
 const mapStateToProps = () => {};
 const mapDispatchToProps = (dispatch) => {
   return {
-    createTemplate: (teamId, data) => dispatch(createTemplateAction(teamId, data)),
+    createTemplate: (teamId, projectId, name) => (
+      dispatch(createTemplateAction(teamId, projectId, name))
+    ),
   };
 };
 

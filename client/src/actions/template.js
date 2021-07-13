@@ -37,12 +37,12 @@ export function getTemplates(teamId) {
   };
 }
 
-export function createTemplate(teamId, data) {
+export function createTemplate(teamId, projectId, templateName) {
   return (dispatch) => {
     const token = cookies.load("brewToken");
     const url = `${API_HOST}/team/${teamId}/template`;
     const method = "POST";
-    const body = JSON.stringify(data);
+    const body = JSON.stringify({ project_id: projectId, name: templateName });
     const headers = new Headers({
       "Accept": "application/json",
       "Content-Type": "application/json",

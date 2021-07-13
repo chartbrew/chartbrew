@@ -1,4 +1,3 @@
-const db = require("../models/models");
 const verifyToken = require("../modules/verifyToken");
 const templates = require("../templates/index");
 const accessControl = require("../modules/accessControl");
@@ -85,7 +84,7 @@ module.exports = (app) => {
   // -------------------------------------
 
   /*
-  ** Route to create a template
+  ** Route to create a template with a model
   */
   app.post(`${url}`, verifyToken, async (req, res) => {
     try {
@@ -94,7 +93,20 @@ module.exports = (app) => {
       return formatError(error, res);
     }
 
-    return templateController.create(req.params.team_id, req.body)
+    const data = req.body;
+
+    if (req.body.project_id) {
+      try {
+        data.model = await templateController.getDashboardModel(req.body.project_id);
+      } catch (error) {
+        return formatError(error, res);
+      }
+    }
+
+    return templateController.create(req.params.team_id, data)
+      .then((template) => {
+        return res.status(200).send(template);
+      })
       .catch((err) => {
         return formatError(err, res);
       });
@@ -111,60 +123,12 @@ module.exports = (app) => {
       return formatError(error, res);
     }
 
-    const template = {
-      Charts: [],
-    };
-    return db.Chart.findAll({
-      where: { project_id: req.params.project_id },
-      attributes: { exclude: ["id", "project_id", "chartData", "createdAt", "updatedAt", "lastAutoUpdate", "chartDataUpdated"] },
-      include: [{
-        model: db.Dataset,
-        attributes: { exclude: ["id", "chart_id", "connection_id", "createdAt", "updatedAt"] },
-        include: [{
-          model: db.DataRequest,
-          attributes: { exclude: ["id", "dataset_id", "createdAt", "updatedAt"] },
-        }, {
-          model: db.Connection,
-          attributes: { exclude: ["project_id", "oauth_id", "createdAt", "updatedAt"] },
-        }],
-      }],
-    })
-      .then((charts) => {
-        const connections = [];
-        charts.forEach((chart, dIndex) => {
-          const newChart = chart;
-          // set a template ID for each chart
-          newChart.setDataValue("tid", dIndex);
-
-          if (!template.Connection
-            && newChart.Datasets
-            && newChart.Datasets.length > 0
-          ) {
-            newChart.Datasets.forEach((d) => {
-              let found = false;
-              connections.forEach((c) => {
-                if (d.Connection.id === c.id) found = true;
-              });
-
-              if (!found) connections.push(d.Connection);
-            });
-
-            // remove the connection objects
-            newChart.Datasets = chart.Datasets.map((d) => {
-              const newDataset = d;
-              newDataset.setDataValue("Connection", d.Connection.id);
-              return newDataset;
-            });
-          }
-
-          template.Connections = connections;
-          template.Charts.push(newChart);
-        });
-
+    return templateController.getDashboardModel(req.params.project_id)
+      .then((template) => {
         return res.status(200).send(template);
       })
       .catch((err) => {
-        return err;
+        return formatError(err, res);
       });
   });
   // -------------------------------------
