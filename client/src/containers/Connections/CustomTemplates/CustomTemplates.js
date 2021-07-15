@@ -7,13 +7,23 @@ import moment from "moment";
 
 import CreateTemplateForm from "../../../components/CreateTemplateForm";
 import connectionImages from "../../../config/connectionImages";
+import CustomTemplateForm from "./CustomTemplateForm";
 
 function CustomTemplates(props) {
   const {
-    loading, templates, teamId, projectId
+    loading, templates, teamId, projectId, connections,
   } = props;
 
   const [createTemplate, setCreateTemplate] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+
+  const _getUpdatedTime = (updatedAt) => {
+    if (moment().diff(moment(updatedAt), "hours") < 24) {
+      return moment(updatedAt).calendar();
+    }
+
+    return moment(updatedAt).fromNow();
+  };
 
   if (loading) {
     return (
@@ -54,12 +64,22 @@ function CustomTemplates(props) {
     );
   }
 
+  if (selectedTemplate) {
+    return (
+      <CustomTemplateForm
+        template={selectedTemplate}
+        connections={connections}
+        onBack={() => setSelectedTemplate(null)}
+      />
+    );
+  }
+
   return (
     <div>
       <Grid widths={4}>
         {templates && templates.map((template) => (
           <Grid.Column key={template.id} width="4">
-            <Card className="project-segment" onClick={() => {}}>
+            <Card className="project-segment" onClick={() => setSelectedTemplate(template)}>
               <Card.Content header={template.name} />
               <Card.Content>
                 <Card.Group itemsPerRow={4}>
@@ -76,7 +96,7 @@ function CustomTemplates(props) {
                   {` ${template.model.Connections.length} connections`}
                 </Card.Description>
               </Card.Content>
-              <Card.Content extra>{`Last updated ${moment(template.updatedAt).calendar()}`}</Card.Content>
+              <Card.Content extra>{`Updated ${_getUpdatedTime(template.updatedAt)}`}</Card.Content>
             </Card>
           </Grid.Column>
         ))}
@@ -90,6 +110,7 @@ CustomTemplates.propTypes = {
   loading: PropTypes.bool,
   teamId: PropTypes.string.isRequired,
   projectId: PropTypes.string.isRequired,
+  connections: PropTypes.array.isRequired,
 };
 
 CustomTemplates.defaultProps = {

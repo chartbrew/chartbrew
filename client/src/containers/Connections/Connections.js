@@ -402,6 +402,7 @@ function Connections(props) {
                   loading={templates.loading}
                   teamId={match.params.teamId}
                   projectId={match.params.projectId}
+                  connections={connections}
                 />
               )}
             </Segment>
