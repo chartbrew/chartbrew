@@ -143,6 +143,10 @@ function CustomTemplateForm(props) {
       }
     }
 
+    if (dependency && _.indexOf(selectedCharts, chart.tid) > -1) {
+      _onChangeSelectedCharts(chart.tid);
+    }
+
     return dependency;
   };
 
