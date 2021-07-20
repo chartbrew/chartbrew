@@ -84,10 +84,6 @@ jobs:
             - v7-dependencies-
 
       - run:
-          name: Prepare Semantic files
-          command: cd client && npm run prepareSemantic
- 
-      - run:
           name: Building the client
           command: cd client && npm install && npm run build
 
