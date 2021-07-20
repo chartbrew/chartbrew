@@ -1,6 +1,13 @@
 # semantic ui
 
-src/semantic/dist
+!/src/semantic/dist
+/src/semantic/dist/*
+!/src/semantic/dist/semantic.min.css
+!/src/semantic/dist/semantic.min.js
+!/src/semantic/dist/themes/
+/src/semantic/dist/themes/*
+!/src/semantic/dist/themes/default/
+
 src/semantic/tasks
 
 !/src/semantic/src/
