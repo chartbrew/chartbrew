@@ -36,12 +36,21 @@
 
 ## Data sources
 
-Currently, ChartBrew supports connections to these data sources.
+Currently, Chartbrew supports connections to these data sources.
 
 * MySQL
 * PostgreSQL
 * MongoDB
-* APIs that support JSON data
+* Firestore
+* Google Analytics
+* REST APIs
+
+Chartbrew also features dashboard templates with charts already prepared:
+
+* Simple Analytics
+* ChartMogul
+* Mailgun
+* Google Analytics
 
 ## Prerequisites
 
