@@ -7,9 +7,12 @@ import {
 import _ from "lodash";
 
 import connectionImages from "../../../config/connectionImages";
+import { generateDashboard } from "../../../actions/project";
 
 function CustomTemplateForm(props) {
-  const { template, connections, onBack } = props;
+  const {
+    template, connections, onBack, projectId, onComplete,
+  } = props;
   const { width } = useWindowSize();
 
   const [selectedConnections, setSelectedConnections] = useState({});
@@ -99,8 +102,11 @@ function CustomTemplateForm(props) {
 
   const _onToggleCreateNew = (cid) => {
     const newList = _.clone(selectedConnections);
-    newList[cid].createNew = !newList[cid].createNew;
-    setSelectedConnections(newList);
+
+    if (newList[cid]) {
+      newList[cid].createNew = !newList[cid].createNew;
+      setSelectedConnections(newList);
+    }
   };
 
   const _onChangeSelectedCharts = (tid) => {
@@ -148,6 +154,22 @@ function CustomTemplateForm(props) {
     }
 
     return dependency;
+  };
+
+  const _generateTemplate = () => {
+    const data = {
+      template_id: template.id,
+      charts: selectedCharts,
+      connections: selectedConnections,
+    };
+
+    generateDashboard(projectId, data, "custom")
+      .then(() => {
+        setTimeout(() => {
+          onComplete();
+        }, 2000);
+      })
+      .catch(() => {});
   };
 
   return (
@@ -252,6 +274,7 @@ function CustomTemplateForm(props) {
       <Button
         primary
         content="Create charts"
+        onClick={_generateTemplate}
       />
     </div>
   );
@@ -261,6 +284,8 @@ CustomTemplateForm.propTypes = {
   template: PropTypes.object.isRequired,
   connections: PropTypes.array.isRequired,
   onBack: PropTypes.func.isRequired,
+  projectId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  onComplete: PropTypes.func.isRequired,
 };
 
 export default CustomTemplateForm;

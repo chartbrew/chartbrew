@@ -11,7 +11,7 @@ import CustomTemplateForm from "./CustomTemplateForm";
 
 function CustomTemplates(props) {
   const {
-    loading, templates, teamId, projectId, connections,
+    loading, templates, teamId, projectId, connections, onComplete,
   } = props;
 
   const [createTemplate, setCreateTemplate] = useState(false);
@@ -70,6 +70,8 @@ function CustomTemplates(props) {
         template={selectedTemplate}
         connections={connections}
         onBack={() => setSelectedTemplate(null)}
+        projectId={projectId}
+        onComplete={onComplete}
       />
     );
   }
@@ -111,6 +113,7 @@ CustomTemplates.propTypes = {
   teamId: PropTypes.string.isRequired,
   projectId: PropTypes.string.isRequired,
   connections: PropTypes.array.isRequired,
+  onComplete: PropTypes.func.isRequired,
 };
 
 CustomTemplates.defaultProps = {

@@ -6,7 +6,7 @@ import {
 import cookie from "react-cookies";
 import _ from "lodash";
 
-import { generateDashboard } from "../../../actions/connection";
+import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
 
 /*

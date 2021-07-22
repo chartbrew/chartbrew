@@ -403,6 +403,7 @@ function Connections(props) {
                   teamId={match.params.teamId}
                   projectId={match.params.projectId}
                   connections={connections}
+                  onComplete={_onCompleteTemplate}
                 />
               )}
             </Segment>

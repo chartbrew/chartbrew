@@ -235,28 +235,3 @@ export function removeConnection(projectId, id) {
       });
   };
 }
-
-export function generateDashboard(projectId, data, template) {
-  const token = cookie.load("brewToken");
-  const url = `${API_HOST}/project/${projectId}/template/${template}`;
-  const method = "POST";
-  const body = JSON.stringify(data);
-  const headers = new Headers({
-    "Content-Type": "application/json",
-    accept: "application/json",
-    authorization: `Bearer ${token}`
-  });
-
-  return fetch(url, { method, body, headers })
-    .then((response) => {
-      if (!response.ok) throw new Error(response.status);
-
-      return response.json();
-    })
-    .then((result) => {
-      return new Promise((resolve) => resolve(result));
-    })
-    .catch((err) => {
-      return new Promise((resolve, reject) => reject(err));
-    });
-}

@@ -7,7 +7,7 @@ import {
 import _ from "lodash";
 import cookie from "react-cookies";
 
-import { generateDashboard } from "../../../actions/connection";
+import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
 
 const countryOptions = [{

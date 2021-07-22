@@ -29,7 +29,7 @@ module.exports.getDashboardModel = (projectId) => {
     attributes: { exclude: ["id", "project_id", "chartData", "createdAt", "updatedAt", "lastAutoUpdate", "chartDataUpdated"] },
     include: [{
       model: db.Dataset,
-      attributes: { exclude: ["id", "chart_id", "connection_id", "createdAt", "updatedAt"] },
+      attributes: { exclude: ["id", "chart_id", "createdAt", "updatedAt"] },
       include: [{
         model: db.DataRequest,
         attributes: { exclude: ["id", "dataset_id", "createdAt", "updatedAt"] },
