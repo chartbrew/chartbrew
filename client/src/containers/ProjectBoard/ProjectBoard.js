@@ -73,14 +73,15 @@ function ProjectBoard(props) {
 
   const _getProject = (id) => {
     let { projectId } = match.params;
+    const { teamId } = match.params;
     if (id) projectId = id;
 
-    getProject(projectId)
+    getTeam(teamId)
       .then(() => {
-        return changeActiveProject(projectId);
+        return getProject(projectId);
       })
       .then(() => {
-        return getTeam(project.team_id);
+        return changeActiveProject(projectId);
       })
       .then(() => {
         setLoading(false);
@@ -127,15 +128,14 @@ function ProjectBoard(props) {
   };
 
   const _onChangeProject = (id) => {
-    history.push(`/${match.params.teamId}/${id}/dashboard`);
-    _init(id);
+    window.location.href = `/${match.params.teamId}/${id}/dashboard`;
   };
 
   if (!project.id) {
     return (
       <Container text style={styles.container}>
         <Dimmer active={loading}>
-          <Loader />
+          <Loader active={loading} content="Loading your dashboard" />
         </Dimmer>
       </Container>
     );

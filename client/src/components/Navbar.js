@@ -39,14 +39,14 @@ function Navbar(props) {
   const [teamOwned, setTeamOwned] = useState({});
 
   const {
-    match, getTeam, getProject, changeActiveProject, getProjectCharts,
+    getTeam, getProject, changeActiveProject,
     hideTeam, transparent, team, teams, projectProp, user, logout,
   } = props;
 
   const { width } = useWindowSize();
 
   useEffect(() => {
-    _onTeamChange(match.params.teamId, match.params.projectId);
+    // _onTeamChange(match.params.teamId, match.params.projectId);
     setTimeout(() => {
       try {
         Headway.init(HW_config);
@@ -85,11 +85,8 @@ function Navbar(props) {
         return changeActiveProject(projectId);
       })
       .then(() => {
-        return getProjectCharts(projectId);
-      })
-      .then(() => {
-        // props.history.push(`/${teamId}/${projectId}/dashboard`);
-        setLoading(false);
+        window.location.href = (`/${teamId}/${projectId}/dashboard`);
+        // window.reload();
       })
       .catch(() => {});
   };
@@ -317,11 +314,9 @@ Navbar.propTypes = {
   team: PropTypes.object.isRequired,
   teams: PropTypes.array.isRequired,
   projectProp: PropTypes.object.isRequired,
-  match: PropTypes.object.isRequired,
   getTeam: PropTypes.func.isRequired,
   getProject: PropTypes.func.isRequired,
   changeActiveProject: PropTypes.func.isRequired,
-  getProjectCharts: PropTypes.func.isRequired,
   logout: PropTypes.func.isRequired,
   hideTeam: PropTypes.bool,
   transparent: PropTypes.bool,
