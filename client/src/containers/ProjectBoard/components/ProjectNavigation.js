@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { useWindowSize } from "react-use";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
-  Button, Dropdown, Header, Icon, Menu, Popup,
+  Button, Dropdown, Header, Icon, Input, Menu, Popup,
 } from "semantic-ui-react";
 import { blue, lightGray, primary } from "../../../config/colors";
 import { APP_VERSION } from "../../../config/settings";
@@ -49,6 +49,8 @@ function ProjectNavigation(props) {
     menuSize, teamId, projectId, project, showDrafts, onSetMenuSize,
     canAccess, projects, onChangeDrafts, onChangeProject, mobile,
   } = props;
+
+  const [projectSearch, setProjectSearch] = useState("");
 
   const { height } = useWindowSize();
 
@@ -135,20 +137,37 @@ function ProjectNavigation(props) {
             )}
           item
           style={styles.centered}
+          closeOnChange={false}
         >
           <Dropdown.Menu>
+            <Input
+              icon="search"
+              iconPosition="left"
+              className="search"
+              onClick={(e) => e.stopPropagation()}
+              onFocus={(e) => e.stopPropagation()}
+              onChange={(e, data) => setProjectSearch(data.value)}
+            />
             <Dropdown.Header>Select another project</Dropdown.Header>
-            <Dropdown.Divider />
-            {projects.map((p) => {
-              return (
-                <Dropdown.Item
-                  key={p.id}
-                  onClick={() => onChangeProject(p.id)}
-                >
-                  {p.name}
-                </Dropdown.Item>
-              );
-            })}
+            <Dropdown.Menu scrolling>
+              <Dropdown.Divider />
+              {projects.map((p) => {
+                if (projectSearch
+                  && p.name.toLowerCase().indexOf(projectSearch.toLowerCase()) === -1
+                ) {
+                  return (<span key={p.id} />);
+                }
+
+                return (
+                  <Dropdown.Item
+                    key={p.id}
+                    onClick={() => onChangeProject(p.id)}
+                  >
+                    {p.name}
+                  </Dropdown.Item>
+                );
+              })}
+            </Dropdown.Menu>
           </Dropdown.Menu>
         </Dropdown>
       </Menu.Item>
