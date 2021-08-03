@@ -43,7 +43,9 @@ function DatasetData(props) {
       const fieldsSchema = {};
       const updateObj = {};
 
-      fieldFinder(requestResult.data).forEach((o) => {
+      const fields = fieldFinder(requestResult.data);
+
+      fields.forEach((o) => {
         if (o.field) {
           let text = o.field && o.field.replace("root[].", "").replace("root.", "");
           if (o.type === "array") text += "(get element count)";
@@ -298,6 +300,38 @@ function DatasetData(props) {
     onUpdate({ excludedFields });
   };
 
+  const _filterOptions = () => {
+    if (chartType !== "table") return fieldOptions;
+
+    let filteredOptions = fieldOptions.filter((f) => f.type === "array");
+    const rootObj = {
+      key: "root[]",
+      text: "Collection root",
+      value: "root[]",
+      type: "array",
+      label: {
+        style: { width: 55, textAlign: "center" },
+        content: "root",
+        size: "mini",
+      },
+    };
+
+    const [rootField] = fieldOptions.filter((f) => f.value.indexOf([]) > -1);
+    if (rootField) {
+      rootObj.text = rootField.value.substring(0, rootField.value.lastIndexOf("."));
+      rootObj.key = rootField.value.substring(0, rootField.value.lastIndexOf("."));
+      rootObj.value = rootField.value.substring(0, rootField.value.lastIndexOf("."));
+    }
+
+    if (!filteredOptions) {
+      filteredOptions = [rootObj];
+    } else {
+      filteredOptions.unshift(rootObj);
+    }
+
+    return filteredOptions;
+  };
+
   if ((!fieldOptions || !dataset.fieldsSchema) && dataset.connection_id) {
     return (
       <Container textAlign="center">
@@ -335,33 +369,38 @@ function DatasetData(props) {
 
   return (
     <Grid style={styles.mainGrid} centered stackable>
-      {chartType !== "table" && (
-        <Grid.Row columns={1} className="datasetdata-axes-tut">
-          <Grid.Column>
-            <label>
-              <strong>
-                {chartType === "pie"
-                  || chartType === "radar"
-                  || chartType === "polar"
-                  || chartType === "doughnut"
-                  ? "Segment " : "X Axis "}
-              </strong>
-            </label>
-            <Dropdown
-              icon={null}
-              header="Type to search"
-              button
-              className="small button"
-              options={fieldOptions}
-              search
-              text={(dataset.xAxis && dataset.xAxis.substring(dataset.xAxis.lastIndexOf(".") + 1)) || "Select a field"}
-              value={dataset.xAxis}
-              onChange={_selectXField}
-              scrolling
+      <Grid.Row columns={1} className="datasetdata-axes-tut">
+        <Grid.Column>
+          <label>
+            <strong>
+              {chartType === "pie"
+                || chartType === "radar"
+                || chartType === "polar"
+                || chartType === "doughnut"
+                ? "Segment "
+                : chartType === "table" ? "Collection " : "X Axis "}
+            </strong>
+          </label>
+          <Dropdown
+            icon={null}
+            header="Type to search"
+            button
+            className="small button"
+            options={_filterOptions()}
+            search
+            text={(dataset.xAxis && dataset.xAxis.substring(dataset.xAxis.lastIndexOf(".") + 1)) || "Select a field"}
+            value={dataset.xAxis}
+            onChange={_selectXField}
+            scrolling
+          />
+          {chartType === "table" && (
+            <Popup
+              trigger={<Icon name="question circle outline" />}
+              content="Select a collection (array) of objects to display in a table format. 'Root' means the first level of the collection."
             />
-          </Grid.Column>
-        </Grid.Row>
-      )}
+          )}
+        </Grid.Column>
+      </Grid.Row>
       {chartType !== "table" && (
         <Grid.Row columns={1}>
           <Grid.Column>
