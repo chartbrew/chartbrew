@@ -59,7 +59,7 @@ class ProjectController {
           where: {
             id: { [Op.in]: idArray },
           },
-          include: [{ model: db.ProjectRole }, { model: db.Chart }],
+          include: [{ model: db.ProjectRole }, { model: db.Chart, attributes: ["id"] }],
         });
       })
       .then((projects) => {
