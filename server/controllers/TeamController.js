@@ -209,7 +209,7 @@ class TeamController {
       where: { id },
       include: [
         { model: db.TeamRole },
-        { model: db.Project, include: [{ model: db.Chart }] }
+        { model: db.Project, include: [{ model: db.Chart, attributes: ["id"] }] }
       ],
     })
       .then((team) => {
