@@ -59,7 +59,8 @@ function TableComponent(props) {
             <Table.Row {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map(column => (
                 <Table.HeaderCell {...column.getHeaderProps(column.getSortByToggleProps())}>
-                  {column.render("Header")}
+                  {typeof column.render("Header") === "object"
+                    ? column.render("Header") : column.render("Header").replace("__cb_group", "")}
                   <span>
                     {" "}
                     {column.isSorted

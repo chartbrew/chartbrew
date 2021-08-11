@@ -35,6 +35,7 @@ function DatasetData(props) {
   const [formula, setFormula] = useState("");
   const [tableFields, setTableFields] = useState([]);
   const [showTableFields, setShowTableFields] = useState(true);
+  const [selectedField, setSelectedField] = useState("");
 
   // Update the content when there is some data to work with
   useEffect(() => {
@@ -290,6 +291,7 @@ function DatasetData(props) {
   const _onExcludeField = (field) => {
     const excludedFields = dataset.excludedFields || [];
     const newExcludedFields = [...excludedFields, field];
+    setTimeout(() => setSelectedField(""));
     onUpdate({ excludedFields: newExcludedFields });
   };
 
@@ -330,6 +332,11 @@ function DatasetData(props) {
     }
 
     return filteredOptions;
+  };
+
+  const _onSelectField = (field) => {
+    if (selectedField === field.accessor) return setSelectedField("");
+    return setSelectedField(field.accessor);
   };
 
   if ((!fieldOptions || !dataset.fieldsSchema) && dataset.connection_id) {
@@ -529,24 +536,38 @@ function DatasetData(props) {
       {chartType === "table" && (
         <Grid.Row>
           <Grid.Column>
-            <Header as="h4" onClick={() => setShowTableFields(!showTableFields)} style={styles.tableFields}>
-              {"Select visible columns "}
-              {!showTableFields && (<Icon size="small" name="chevron down" />)}
-              {showTableFields && (<Icon size="small" name="chevron up" />)}
-            </Header>
+            {!selectedField && (
+              <Header as="h4" onClick={() => setShowTableFields(!showTableFields)} style={styles.tableFields}>
+                {"Configure visible columns "}
+                {!showTableFields && (<Icon size="small" name="chevron down" />)}
+                {showTableFields && (<Icon size="small" name="chevron up" />)}
+              </Header>
+            )}
+            {selectedField && (
+              <Header as="h4">
+                Now click on another field to combine them
+              </Header>
+            )}
             <Transition animation="fade down" visible={showTableFields}>
               <div>
                 <Label.Group>
                   {tableFields.map((field) => {
-                    if (!field || !field.accessor) return (<span />);
+                    if (!field || !field.accessor || field.Header.indexOf("__cb_group") > -1) return (<span />);
                     return (
                       <Label
-                        color="violet"
+                        color={selectedField === field.accessor ? "olive" : "violet"}
                         key={field.accessor}
-                        onClick={() => _onExcludeField(field.accessor)}
                         as="a"
+                        onClick={() => _onSelectField(field)}
+                        style={
+                          selectedField && selectedField !== field.accessor ? styles.pulsating : {}
+                        }
                       >
-                        {field.accessor.replace("?", ".")}
+                        {!selectedField && (<Icon name="eye" onClick={() => _onExcludeField(field.accessor)} />)}
+                        {selectedField && selectedField !== field.accessor && (
+                          <Icon name="code branch" />
+                        )}
+                        {`${field.accessor.replace("?", ".")}  `}
                       </Label>
                     );
                   })}
@@ -827,6 +848,9 @@ const styles = {
   },
   tableFields: {
     cursor: "pointer",
+  },
+  pulsating: {
+    animation: "pulse 2s infinite",
   },
 };
 
