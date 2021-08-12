@@ -183,7 +183,9 @@ function AddChart(props) {
         if (activeDataset.xAxis !== dataset.xAxis
           || activeDataset.yAxis !== dataset.yAxis
           || activeDataset.yAxisOperation !== dataset.yAxisOperation
-          || activeDataset.dateField !== dataset.dateField) {
+          || activeDataset.dateField !== dataset.dateField
+          || activeDataset.groups !== dataset.groups
+        ) {
           _onRefreshData();
         } else {
           _onRefreshPreview(skipParsing);

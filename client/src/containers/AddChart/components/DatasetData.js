@@ -335,8 +335,32 @@ function DatasetData(props) {
   };
 
   const _onSelectField = (field) => {
-    if (selectedField === field.accessor) return setSelectedField("");
-    return setSelectedField(field.accessor);
+    if (selectedField === field.accessor) {
+      setSelectedField("");
+    } else if (selectedField && selectedField !== field.accessor) {
+      const groups = dataset.groups || {};
+      const newGroups = { ...groups, [selectedField.replace("?", ".")]: field.accessor.replace("?", ".") };
+      onUpdate({ groups: newGroups });
+      setSelectedField("");
+    } else {
+      setSelectedField(field.accessor);
+    }
+  };
+
+  const _onGroupFields = (e, data) => {
+    const groups = dataset.groups || {};
+    const newGroups = {
+      ...groups,
+      [selectedField.replace("?", ".")]: data.value.substring(data.value.lastIndexOf("].") + 2)
+    };
+    onUpdate({ groups: newGroups });
+    setSelectedField("");
+  };
+
+  const _onRemoveGroup = (key) => {
+    const newGroups = dataset.groups;
+    delete newGroups[key];
+    onUpdate({ groups: newGroups });
   };
 
   if ((!fieldOptions || !dataset.fieldsSchema) && dataset.connection_id) {
@@ -572,6 +596,26 @@ function DatasetData(props) {
                     );
                   })}
                 </Label.Group>
+
+                {selectedField && (
+                  <Form>
+                    <Form.Field>
+                      <label>Or select a specific field</label>
+                      <Dropdown
+                        icon={null}
+                        header="Type to search"
+                        button
+                        className="small button"
+                        options={fieldOptions}
+                        search
+                        text={"Select a field"}
+                        onChange={_onGroupFields}
+                        scrolling
+                      />
+                    </Form.Field>
+                  </Form>
+                )}
+
                 <Label.Group>
                   {dataset.excludedFields && dataset.excludedFields.map((field) => (
                     <Label
@@ -585,6 +629,26 @@ function DatasetData(props) {
                     </Label>
                   ))}
                 </Label.Group>
+
+                {dataset.groups && Object.keys(dataset.groups).length > 0 && (
+                  <>
+                    <Header as="h4">Grouped fields</Header>
+                    {Object.keys(dataset.groups).map((key) => (
+                      <div key={key}>
+                        <Label>{key}</Label>
+                        <span>{" - "}</span>
+                        <Label>{dataset.groups[key]}</Label>
+                        <Button
+                          icon="x"
+                          color="red"
+                          basic
+                          style={styles.addConditionBtn}
+                          onClick={() => _onRemoveGroup(key)}
+                        />
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             </Transition>
           </Grid.Column>

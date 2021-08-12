@@ -7,19 +7,26 @@ class TableView {
     const tabularData = {};
 
     const finalData = {};
+
     // transform the object in case there are any groupings
-    Object.keys(rawData).forEach((key) => {
+    Object.keys(rawData).forEach((key, datasetIndex) => {
       const dataset = rawData[key];
       finalData[key] = [];
 
       dataset.forEach((item) => {
         const newItem = item;
-        if (newItem.questions
-          && newItem.questions.title
-          && newItem.questions.response
-          && newItem.questions.response.text
+        if (datasets[datasetIndex].options.groups
+          && Object.keys(datasets[datasetIndex].options.groups).length > 0
         ) {
-          newItem[`__cb_group${newItem.questions.title}`] = newItem.questions.response.text;
+          Object.keys(datasets[datasetIndex].options.groups).forEach((groupKey) => {
+            const datasetGroupValue = datasets[datasetIndex].options.groups[groupKey];
+            // extract the data using the groups schema
+            const newKey = _.get(newItem, groupKey);
+            const newValue = _.get(newItem, datasetGroupValue);
+            if (newKey && newValue) {
+              newItem[`__cb_group${newKey}`] = newValue;
+            }
+          });
         }
 
         finalData[key].push(newItem);
