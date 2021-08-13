@@ -584,8 +584,10 @@ function DatasetData(props) {
                         as="a"
                         onClick={() => _onSelectField(field)}
                         style={
-                          selectedField && selectedField !== field.accessor ? styles.pulsating : {}
+                          selectedField && selectedField !== field.accessor
+                            ? { ...styles.pulsating, ...styles.fieldLabels } : styles.fieldLabels
                         }
+                        title={field.accessor.replace("?", ".")}
                       >
                         {!selectedField && (<Icon name="eye" onClick={() => _onExcludeField(field.accessor)} />)}
                         {selectedField && selectedField !== field.accessor && (
@@ -912,6 +914,12 @@ const styles = {
   },
   tableFields: {
     cursor: "pointer",
+  },
+  fieldLabels: {
+    maxWidth: 150,
+    whiteSpace: "nowrap",
+    textOverflow: "ellipsis",
+    overflow: "hidden",
   },
   pulsating: {
     animation: "pulse 2s infinite",

@@ -60,7 +60,7 @@ function TableComponent(props) {
               {headerGroup.headers.map(column => (
                 <Table.HeaderCell
                   {...column.getHeaderProps(column.getSortByToggleProps())}
-                  style={{ maxWidth: 300, whiteSpace: "unset" }}
+                  style={{ maxWidth: 400, whiteSpace: "unset" }}
                 >
                   {typeof column.render("Header") === "object"
                     ? column.render("Header") : column.render("Header").replace("__cb_group", "")}
