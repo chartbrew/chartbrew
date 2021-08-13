@@ -39,16 +39,16 @@ function normalizeValues(level, finalResult) {
 module.exports = (sheetsData) => {
   const formattedData = [];
 
-  sheetsData.map((data) => {
-    // console.log("data", data);
+  sheetsData.map((sheet) => {
     const formattedSet = [];
     let addKeys = true;
-    Object.keys(data.data).map((dataset, index) => {
+    Object.keys(sheet.data).map((dataKey, index) => {
+      const dataset = sheet.datasets[index];
       // push the name of the dataset in the first line of each set
       if (index !== 0) formattedSet.push([""]);
-      formattedSet.push([dataset]);
+      formattedSet.push([dataKey]);
 
-      const set = data.data[dataset];
+      const set = sheet.data[dataKey];
       let setHeadersIndex;
       set.map((item) => {
         if (addKeys) {
@@ -69,6 +69,30 @@ module.exports = (sheetsData) => {
         return item;
       });
 
+      // remove any headers based on the exclusions
+      const formattedExclusions = dataset.excludedFields ? dataset.excludedFields.map((field) => {
+        return field.replaceAll("?", ".");
+      }) : [];
+      const tempHeaders = [];
+      formattedSet[setHeadersIndex].forEach((header) => {
+        let exclude = false;
+
+        // check for exact match
+        if (_.indexOf(formattedExclusions, header) > -1) {
+          exclude = true;
+        }
+
+        // check for nested matches
+        formattedExclusions.forEach((exclusion) => {
+          if (header.indexOf(`${exclusion}.`) > -1) {
+            exclude = true;
+          }
+        });
+
+        if (!exclude) tempHeaders.push(header);
+      });
+      formattedSet[setHeadersIndex] = tempHeaders;
+
       set.forEach((item) => {
         const newItem = {};
         formattedSet[setHeadersIndex].forEach((header) => {
@@ -84,12 +108,13 @@ module.exports = (sheetsData) => {
       addKeys = true;
       return set;
     });
+
     formattedData.push({
-      name: data.name,
+      name: sheet.name,
       data: formattedSet,
     });
 
-    return data;
+    return sheet;
   });
 
   const options = {

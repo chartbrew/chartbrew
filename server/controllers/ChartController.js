@@ -590,10 +590,13 @@ class ChartController {
   }
 
   exportChartData(userId, chartIds, filters) {
-    return db.Chart.findAll({ where: { id: chartIds } })
+    return db.Chart.findAll({
+      where: { id: chartIds },
+      include: [{ model: db.Dataset }],
+    })
       .then((charts) => {
         const dataPromises = [];
-        charts.map((chart) => {
+        charts.forEach((chart) => {
           dataPromises.push(
             this.updateChartData(
               chart.id, { id: userId }, false, false, filters, true
@@ -610,11 +613,11 @@ class ChartController {
                 }
                 return {
                   name: sheetName,
+                  datasets: chart.Datasets,
                   data,
                 };
               })
           );
-          return chart;
         });
 
         return Promise.all(dataPromises);

@@ -72,7 +72,7 @@ module.exports = (data, filters) => {
       }
     }
 
-    // first, handle the xAxis
+    // get the data corresponding to the xAxis
     if (xAxis.indexOf("root[]") > -1) {
       xAxis = xAxis.replace("root[].", "");
       // and data stays the same
@@ -85,6 +85,7 @@ module.exports = (data, filters) => {
     }
 
     // transform the object in case there are any groupings
+    // also exclude any fields that are marked to be excluded
     const finalXData = [];
 
     xData.forEach((item) => {
