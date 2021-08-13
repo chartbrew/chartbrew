@@ -84,7 +84,29 @@ module.exports = (data, filters) => {
       xData = _.get(filteredData, arrayFinder);
     }
 
-    exportData[dataset.options.legend] = xData;
+    // transform the object in case there are any groupings
+    const finalXData = [];
+
+    xData.forEach((item) => {
+      const newItem = item;
+      if (dataset.options.groups
+          && Object.keys(dataset.options.groups).length > 0
+      ) {
+        Object.keys(dataset.options.groups).forEach((groupKey) => {
+          const datasetGroupValue = dataset.options.groups[groupKey];
+          // extract the data using the groups schema
+          const newKey = _.get(newItem, groupKey);
+          const newValue = _.get(newItem, datasetGroupValue);
+          if (newKey && newValue) {
+            newItem[`${newKey}`] = newValue;
+          }
+        });
+      }
+
+      finalXData.push(newItem);
+    });
+
+    exportData[dataset.options.legend] = finalXData;
   }
 
   return exportData;

@@ -1,3 +1,5 @@
+const _ = require("lodash");
+
 const xlsx = require("node-xlsx");
 const determineType = require("./determineType");
 
@@ -18,7 +20,8 @@ function normalizeKeys(level, finalKey, finalResult) {
 
 function normalizeValues(level, finalResult) {
   let newFinalResult = finalResult;
-  Object.values(level).forEach((value) => {
+  Object.keys(level).forEach((key) => {
+    const value = level[key];
     if (determineType(value) === "object" && value !== null && Object.values(value).length > 0) {
       newFinalResult = normalizeValues(value, newFinalResult);
     } else if (determineType(value) === "object" && value !== null && Object.values(value).length === 0) {
@@ -37,6 +40,7 @@ module.exports = (sheetsData) => {
   const formattedData = [];
 
   sheetsData.map((data) => {
+    // console.log("data", data);
     const formattedSet = [];
     let addKeys = true;
     Object.keys(data.data).map((dataset, index) => {
@@ -45,15 +49,36 @@ module.exports = (sheetsData) => {
       formattedSet.push([dataset]);
 
       const set = data.data[dataset];
+      let setHeadersIndex;
       set.map((item) => {
         if (addKeys) {
-          formattedSet.push(normalizeKeys(item, null, []));
+          setHeadersIndex = formattedSet.length;
+          if (!formattedSet[setHeadersIndex]) formattedSet.push(normalizeKeys(item, null, []));
           addKeys = false;
         }
 
-        formattedSet.push(normalizeValues(item, []));
+        // go through the headers to see if we need to add more as we explore the objects
+        const headersSet = normalizeKeys(item, null, []);
+        const existingHeaders = formattedSet[setHeadersIndex];
+        headersSet.forEach((header) => {
+          if (_.indexOf(existingHeaders, header) === -1) {
+            formattedSet[setHeadersIndex].push(header);
+          }
+        });
 
         return item;
+      });
+
+      set.forEach((item) => {
+        const newItem = {};
+        formattedSet[setHeadersIndex].forEach((header) => {
+          let formattedHeader = header;
+          if (header.indexOf(".") > -1) formattedHeader = header.substring(0, header.indexOf("."));
+
+          if (item[formattedHeader]) newItem[formattedHeader] = item[formattedHeader];
+          else newItem[formattedHeader] = null;
+        });
+        formattedSet.push(normalizeValues(newItem, []));
       });
 
       addKeys = true;

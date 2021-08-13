@@ -6,36 +6,36 @@ class TableView {
   getTableData(rawData, datasets) {
     const tabularData = {};
 
-    const finalData = {};
+    // const finalData = {};
 
-    // transform the object in case there are any groupings
+    // // transform the object in case there are any groupings
+    // Object.keys(rawData).forEach((key, datasetIndex) => {
+    //   const dataset = rawData[key];
+    //   finalData[key] = [];
+
+    //   dataset.forEach((item) => {
+    //     const newItem = item;
+    //     if (datasets[datasetIndex].options.groups
+    //       && Object.keys(datasets[datasetIndex].options.groups).length > 0
+    //     ) {
+    //       Object.keys(datasets[datasetIndex].options.groups).forEach((groupKey) => {
+    //         const datasetGroupValue = datasets[datasetIndex].options.groups[groupKey];
+    //         // extract the data using the groups schema
+    //         const newKey = _.get(newItem, groupKey);
+    //         const newValue = _.get(newItem, datasetGroupValue);
+    //         if (newKey && newValue) {
+    //           newItem[`__cb_group${newKey}`] = newValue;
+    //         }
+    //       });
+    //     }
+
+    //     finalData[key].push(newItem);
+    //   });
+    // });
+
     Object.keys(rawData).forEach((key, datasetIndex) => {
-      const dataset = rawData[key];
-      finalData[key] = [];
-
-      dataset.forEach((item) => {
-        const newItem = item;
-        if (datasets[datasetIndex].options.groups
-          && Object.keys(datasets[datasetIndex].options.groups).length > 0
-        ) {
-          Object.keys(datasets[datasetIndex].options.groups).forEach((groupKey) => {
-            const datasetGroupValue = datasets[datasetIndex].options.groups[groupKey];
-            // extract the data using the groups schema
-            const newKey = _.get(newItem, groupKey);
-            const newValue = _.get(newItem, datasetGroupValue);
-            if (newKey && newValue) {
-              newItem[`__cb_group${newKey}`] = newValue;
-            }
-          });
-        }
-
-        finalData[key].push(newItem);
-      });
-    });
-
-    Object.keys(finalData).forEach((key, datasetIndex) => {
       const tab = { columns: [], data: [] };
-      const dataset = finalData[key];
+      const dataset = rawData[key];
       const excludedFields = datasets[datasetIndex].options.excludedFields || [];
 
       dataset.forEach((item) => {
