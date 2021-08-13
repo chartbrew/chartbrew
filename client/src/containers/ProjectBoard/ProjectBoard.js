@@ -243,6 +243,7 @@ function MainContent(props) {
     <Container fluid>
       <Switch>
         <Route
+          exact
           path="/:teamId/:projectId/dashboard"
           render={() => (
             <ProjectDashboard showDrafts={showDrafts} onPrint={onPrint} mobile={mobile} />

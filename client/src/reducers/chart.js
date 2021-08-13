@@ -23,7 +23,7 @@ export default function chart(state = {
 
         if (indexFound) newData[indexFound].loading = true;
 
-        return { ...state, loading: true, data: newData };
+        return { ...state, data: newData };
       } else {
         return { ...state, loading: true };
       }

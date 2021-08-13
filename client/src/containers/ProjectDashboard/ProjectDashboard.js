@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Message, Icon, Button, Container, Header, Divider, Menu,
-  Label, TransitionablePortal, Modal, Grid, Card, Popup,
+  Label, TransitionablePortal, Modal, Grid, Card, Popup, Checkbox,
 } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 import { useLocalStorage, useWindowSize } from "react-use";
@@ -24,6 +24,7 @@ import {
 } from "../../actions/chart";
 import canAccess from "../../config/canAccess";
 import ChartExport from "./components/ChartExport";
+import { lightGray } from "../../config/colors";
 
 const AppMedia = createMedia({
   breakpoints: {
@@ -45,6 +46,8 @@ function ProjectDashboard(props) {
 
   const initialFilters = window.localStorage.getItem("_cb_filters");
   const [filters, setFilters] = useLocalStorage("_cb_filters", initialFilters);
+  const [autoRefresh, setAutoRefresh] = useLocalStorage("_cb_auto_refresh", []);
+  const [autoRefreshed, setAutoRefreshed] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
   const [alreadyFiltered, setAlreadyFiltered] = useState(true);
@@ -57,6 +60,9 @@ function ProjectDashboard(props) {
 
   useEffect(() => {
     cleanErrors();
+    setTimeout(() => {
+      setAutoRefreshed(false);
+    }, 100);
   }, []);
 
   useEffect(() => {
@@ -65,6 +71,12 @@ function ProjectDashboard(props) {
       _runFiltering();
     }
   }, [charts]);
+
+  useEffect(() => {
+    if (!autoRefreshed && _.indexOf(autoRefresh, match.params.projectId) > -1) {
+      _onRefreshData();
+    }
+  }, [autoRefreshed]);
 
   useEffect(() => {
     setAlreadyFiltered(false);
@@ -253,6 +265,18 @@ function ProjectDashboard(props) {
     return canExport;
   };
 
+  const _onChangeAutoRefresh = () => {
+    const tempAutoRefresh = autoRefresh || [];
+    const index = _.indexOf(autoRefresh, match.params.projectId);
+    if (index > -1) {
+      tempAutoRefresh.splice(index, 1);
+    } else {
+      tempAutoRefresh.push(match.params.projectId);
+    }
+
+    setAutoRefresh(tempAutoRefresh);
+  };
+
   return (
     <div>
       {charts && charts.length > 0
@@ -343,37 +367,59 @@ function ProjectDashboard(props) {
                     />
                   </Menu.Item>
                 )}
-                <Popup
-                  trigger={(
-                    <Menu.Item style={{ padding: 0 }}>
-                      <Media greaterThan="mobile">
-                        <Button
-                          basic
-                          primary
-                          icon="refresh"
-                          onClick={() => _onRefreshData()}
-                          loading={refreshLoading}
-                          content="Refresh all charts"
-                          size="small"
-                        />
-                      </Media>
-                      <Media at="mobile">
-                        <Button
-                          basic
-                          primary
-                          icon
-                          onClick={() => _onRefreshData()}
-                          loading={refreshLoading}
-                          size="small"
-                        >
-                          <Icon name="refresh" />
-                        </Button>
-                      </Media>
-                    </Menu.Item>
-                  )}
-                  content="This function will get fresh data from all the data sources."
-                  position="bottom right"
-                />
+
+                <Menu.Item style={{ padding: 0 }}>
+                  <Media greaterThan="mobile">
+                    <Button size="small" as="div" labelPosition="right">
+                      <Popup
+                        trigger={(
+                          <Button
+                            basic
+                            primary
+                            icon="refresh"
+                            onClick={() => _onRefreshData()}
+                            loading={refreshLoading}
+                            content="Refresh all charts"
+                            size="small"
+                          />
+                        )}
+                        content="This function will get fresh data from all the data sources."
+                        position="bottom right"
+                      />
+                      <Popup
+                        trigger={(
+                          <Label
+                            size="small"
+                            color="violet"
+                            basic
+                            as="a"
+                            pointing="left"
+                            style={{ backgroundColor: lightGray }}
+                          >
+                            <Checkbox
+                              toggle
+                              checked={_.indexOf(autoRefresh, match.params.projectId) > -1}
+                              onChange={_onChangeAutoRefresh}
+                            />
+                          </Label>
+                        )}
+                        content="Auto-refresh the charts when opening the dashboard"
+                      />
+                    </Button>
+                  </Media>
+                  <Media at="mobile">
+                    <Button
+                      basic
+                      primary
+                      icon
+                      onClick={() => _onRefreshData()}
+                      loading={refreshLoading}
+                      size="small"
+                    >
+                      <Icon name="refresh" />
+                    </Button>
+                  </Media>
+                </Menu.Item>
               </Menu.Menu>
             </Menu>
           </div>
@@ -583,4 +629,5 @@ const mapDispatchToProps = (dispatch) => {
     ),
   };
 };
+
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ProjectDashboard));
