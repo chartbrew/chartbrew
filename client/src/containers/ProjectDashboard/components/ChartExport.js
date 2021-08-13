@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Container, Divider, Grid, Header
+  Button, Checkbox, Container, Divider, Grid, Header, Popup
 } from "semantic-ui-react";
 import _ from "lodash";
 
 function ChartExport(props) {
   const {
-    charts, onExport, loading, error
+    charts, onExport, onUpdate, loading, error, showDisabled,
   } = props;
   const [selectedIds, setSelectedIds] = useState([]);
 
@@ -26,9 +26,9 @@ function ChartExport(props) {
 
   const _onSelectAll = () => {
     const ids = [];
-    charts.map((chart) => {
+    charts.forEach((chart) => {
+      if (chart.disabledExport) return;
       ids.push(chart.id);
-      return chart;
     });
     setSelectedIds(ids);
   };
@@ -58,7 +58,7 @@ function ChartExport(props) {
       />
       <Divider hidden />
       <Grid columns={2}>
-        {charts && charts.map((chart) => {
+        {charts && charts.filter((c) => !c.disabledExport).map((chart) => {
           return (
             <Grid.Column key={chart.id}>
               <Checkbox
@@ -66,11 +66,53 @@ function ChartExport(props) {
                 onChange={() => _onSelectChart(chart.id)}
                 label={chart.name}
               />
+              <Popup
+                trigger={(
+                  <Button
+                    icon="eye"
+                    basic
+                    style={styles.iconBtn}
+                    onClick={() => onUpdate(chart.id, true)}
+                  />
+                )}
+                content="Disable the export function for this chart"
+              />
             </Grid.Column>
           );
         })}
       </Grid>
       <Divider />
+
+      {showDisabled && (
+        <>
+          {charts && charts.filter((c) => c.disabledExport).length > 0 && (
+            <Header size="small">
+              Charts disabled for export
+            </Header>
+          )}
+          <Grid columns={2}>
+            {charts && charts.filter((c) => c.disabledExport).map((chart) => {
+              return (
+                <Grid.Column key={chart.id}>
+                  <Popup
+                    trigger={(
+                      <Button
+                        icon="eye slash outline"
+                        className="tertiary"
+                        style={styles.iconBtn}
+                        onClick={() => onUpdate(chart.id, false)}
+                        content={chart.name}
+                      />
+                    )}
+                    content="Enable the export function for this chart"
+                  />
+                </Grid.Column>
+              );
+            })}
+          </Grid>
+          <Divider />
+        </>
+      )}
       <Button
         primary
         onClick={() => onExport(selectedIds)}
@@ -89,13 +131,22 @@ function ChartExport(props) {
 ChartExport.defaultProps = {
   loading: false,
   error: false,
+  showDisabled: false,
 };
 
 ChartExport.propTypes = {
   charts: PropTypes.array.isRequired,
   onExport: PropTypes.func.isRequired,
+  onUpdate: PropTypes.func.isRequired,
   loading: PropTypes.bool,
   error: PropTypes.bool,
+  showDisabled: PropTypes.bool,
+};
+
+const styles = {
+  iconBtn: {
+    boxShadow: "none",
+  },
 };
 
 export default ChartExport;

@@ -106,6 +106,9 @@ module.exports = (sequelize, DataTypes) => {
     minValue: {
       type: DataTypes.INTEGER,
     },
+    disabledExport: {
+      type: DataTypes.BOOLEAN,
+    },
   }, {
     freezeTableName: true,
   });

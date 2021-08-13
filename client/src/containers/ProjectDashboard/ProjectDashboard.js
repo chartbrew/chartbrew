@@ -21,6 +21,7 @@ import {
   runQuery as runQueryAction,
   changeOrder as changeOrderAction,
   exportChart,
+  updateChart as updateChartAction,
 } from "../../actions/chart";
 import canAccess from "../../config/canAccess";
 import ChartExport from "./components/ChartExport";
@@ -41,7 +42,7 @@ const { Media } = AppMedia;
 function ProjectDashboard(props) {
   const {
     cleanErrors, connections, charts, match, showDrafts, runQueryWithFilters,
-    getProjectCharts, runQuery, changeOrder, user, team, onPrint, mobile,
+    getProjectCharts, runQuery, changeOrder, user, team, onPrint, mobile, updateChart,
   } = props;
 
   const initialFilters = window.localStorage.getItem("_cb_filters");
@@ -275,6 +276,10 @@ function ProjectDashboard(props) {
     }
 
     setAutoRefresh(tempAutoRefresh);
+  };
+
+  const _onUpdateExport = (chartId, disabled) => {
+    updateChart(match.params.projectId, chartId, { disabledExport: disabled });
   };
 
   return (
@@ -534,8 +539,7 @@ function ProjectDashboard(props) {
       <TransitionablePortal open={viewExport}>
         <Modal open={viewExport} closeIcon onClose={() => setViewExport(false)}>
           <Modal.Header>
-            <span style={{ verticalAlign: "middle" }}>{" Export to Excel (.xlsx) "}</span>
-            <Label style={{ verticalAlign: "middle" }} color="olive">New!</Label>
+            Export to Excel (.xlsx)
           </Modal.Header>
           <Modal.Content>
             <ChartExport
@@ -543,6 +547,8 @@ function ProjectDashboard(props) {
               onExport={_onExport}
               loading={exportLoading}
               error={exportError}
+              onUpdate={(chartId, disabled) => _onUpdateExport(chartId, disabled)}
+              showDisabled={_canAccess("admin")}
             />
           </Modal.Content>
         </Modal>
@@ -605,6 +611,7 @@ ProjectDashboard.propTypes = {
   changeOrder: PropTypes.func.isRequired,
   showDrafts: PropTypes.bool,
   mobile: PropTypes.bool,
+  updateChart: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -626,6 +633,9 @@ const mapDispatchToProps = (dispatch) => {
     getProjectCharts: (projectId) => dispatch(getProjectChartsAction(projectId)),
     changeOrder: (projectId, chartId, otherId) => (
       dispatch(changeOrderAction(projectId, chartId, otherId))
+    ),
+    updateChart: (projectId, chartId, data) => (
+      dispatch(updateChartAction(projectId, chartId, data))
     ),
   };
 };
