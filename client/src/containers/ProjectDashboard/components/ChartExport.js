@@ -66,17 +66,19 @@ function ChartExport(props) {
                 onChange={() => _onSelectChart(chart.id)}
                 label={chart.name}
               />
-              <Popup
-                trigger={(
-                  <Button
-                    icon="eye"
-                    basic
-                    style={styles.iconBtn}
-                    onClick={() => onUpdate(chart.id, true)}
-                  />
-                )}
-                content="Disable the export function for this chart"
-              />
+              {showDisabled && (
+                <Popup
+                  trigger={(
+                    <Button
+                      icon="eye"
+                      basic
+                      style={styles.iconBtn}
+                      onClick={() => onUpdate(chart.id, true)}
+                    />
+                  )}
+                  content="Disable the export function for this chart"
+                />
+              )}
             </Grid.Column>
           );
         })}

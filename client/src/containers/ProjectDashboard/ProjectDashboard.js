@@ -375,7 +375,7 @@ function ProjectDashboard(props) {
 
                 <Menu.Item style={{ padding: 0 }}>
                   <Media greaterThan="mobile">
-                    <Button size="small" as="div" labelPosition="right">
+                    <Button size="tiny" as="div" labelPosition="right">
                       <Popup
                         trigger={(
                           <Button
@@ -385,7 +385,7 @@ function ProjectDashboard(props) {
                             onClick={() => _onRefreshData()}
                             loading={refreshLoading}
                             content="Refresh all charts"
-                            size="small"
+                            size="tiny"
                           />
                         )}
                         content="This function will get fresh data from all the data sources."
