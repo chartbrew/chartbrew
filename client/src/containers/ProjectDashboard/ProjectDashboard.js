@@ -279,7 +279,7 @@ function ProjectDashboard(props) {
   };
 
   const _onUpdateExport = (chartId, disabled) => {
-    updateChart(match.params.projectId, chartId, { disabledExport: disabled });
+    updateChart(match.params.projectId, chartId, { disabledExport: disabled }, true);
   };
 
   return (
@@ -634,8 +634,8 @@ const mapDispatchToProps = (dispatch) => {
     changeOrder: (projectId, chartId, otherId) => (
       dispatch(changeOrderAction(projectId, chartId, otherId))
     ),
-    updateChart: (projectId, chartId, data) => (
-      dispatch(updateChartAction(projectId, chartId, data))
+    updateChart: (projectId, chartId, data, justUpdates) => (
+      dispatch(updateChartAction(projectId, chartId, data, justUpdates))
     ),
   };
 };

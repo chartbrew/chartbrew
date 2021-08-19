@@ -86,7 +86,7 @@ module.exports = (data, filters) => {
 
     // transform the object in case there are any groupings
     // also exclude any fields that are marked to be excluded
-    const finalXData = [];
+    const pairedXData = [];
 
     xData.forEach((item) => {
       const newItem = item;
@@ -104,10 +104,21 @@ module.exports = (data, filters) => {
         });
       }
 
-      finalXData.push(newItem);
+      pairedXData.push(newItem);
     });
 
-    exportData[dataset.options.legend] = finalXData;
+    const groupedXData = [];
+    // Apply groupBy on the data
+    pairedXData.forEach((item) => {
+      const foundIndex = _.findIndex(groupedXData, { "Date-Time": item["Date-Time"] });
+      if (foundIndex > -1) {
+        groupedXData[foundIndex] = { ...groupedXData[foundIndex], ...item };
+      } else {
+        groupedXData.push(item);
+      }
+    });
+
+    exportData[dataset.options.legend] = groupedXData;
   }
 
   return exportData;
