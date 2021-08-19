@@ -35,6 +35,7 @@ function DatasetData(props) {
   const [formula, setFormula] = useState("");
   const [tableFields, setTableFields] = useState([]);
   const [showTableFields, setShowTableFields] = useState(true);
+  const [selectedField, setSelectedField] = useState("");
 
   // Update the content when there is some data to work with
   useEffect(() => {
@@ -43,7 +44,9 @@ function DatasetData(props) {
       const fieldsSchema = {};
       const updateObj = {};
 
-      fieldFinder(requestResult.data).forEach((o) => {
+      const fields = fieldFinder(requestResult.data);
+
+      fields.forEach((o) => {
         if (o.field) {
           let text = o.field && o.field.replace("root[].", "").replace("root.", "");
           if (o.type === "array") text += "(get element count)";
@@ -288,6 +291,7 @@ function DatasetData(props) {
   const _onExcludeField = (field) => {
     const excludedFields = dataset.excludedFields || [];
     const newExcludedFields = [...excludedFields, field];
+    setTimeout(() => setSelectedField(""));
     onUpdate({ excludedFields: newExcludedFields });
   };
 
@@ -296,6 +300,67 @@ function DatasetData(props) {
     const index = _.indexOf(excludedFields, field);
     excludedFields.splice(index, 1);
     onUpdate({ excludedFields });
+  };
+
+  const _filterOptions = () => {
+    if (chartType !== "table") return fieldOptions;
+
+    let filteredOptions = fieldOptions.filter((f) => f.type === "array");
+    const rootObj = {
+      key: "root[]",
+      text: "Collection root",
+      value: "root[]",
+      type: "array",
+      label: {
+        style: { width: 55, textAlign: "center" },
+        content: "root",
+        size: "mini",
+      },
+    };
+
+    const [rootField] = fieldOptions.filter((f) => f.value.indexOf([]) > -1);
+    if (rootField) {
+      rootObj.text = rootField.value.substring(0, rootField.value.lastIndexOf("."));
+      rootObj.key = rootField.value.substring(0, rootField.value.lastIndexOf("."));
+      rootObj.value = rootField.value.substring(0, rootField.value.lastIndexOf("."));
+    }
+
+    if (!filteredOptions) {
+      filteredOptions = [rootObj];
+    } else {
+      filteredOptions.unshift(rootObj);
+    }
+
+    return filteredOptions;
+  };
+
+  const _onSelectField = (field) => {
+    if (selectedField === field.accessor) {
+      setSelectedField("");
+    } else if (selectedField && selectedField !== field.accessor) {
+      const groups = dataset.groups || {};
+      const newGroups = { ...groups, [selectedField.replace("?", ".")]: field.accessor.replace("?", ".") };
+      onUpdate({ groups: newGroups });
+      setSelectedField("");
+    } else {
+      setSelectedField(field.accessor);
+    }
+  };
+
+  const _onGroupFields = (e, data) => {
+    const groups = dataset.groups || {};
+    const newGroups = {
+      ...groups,
+      [selectedField.replace("?", ".")]: data.value.substring(data.value.lastIndexOf("].") + 2)
+    };
+    onUpdate({ groups: newGroups });
+    setSelectedField("");
+  };
+
+  const _onRemoveGroup = (key) => {
+    const newGroups = dataset.groups;
+    delete newGroups[key];
+    onUpdate({ groups: newGroups });
   };
 
   if ((!fieldOptions || !dataset.fieldsSchema) && dataset.connection_id) {
@@ -322,6 +387,20 @@ function DatasetData(props) {
     );
   }
 
+  const _getGroupByFields = () => {
+    return fieldOptions.filter((f) => {
+      if (f.type !== "object" && f.type !== "array") {
+        if (f.key.replace("root[].", "").indexOf(".") === -1) return true;
+      }
+
+      return false;
+    });
+  };
+
+  const _onChangeGroupBy = (e, data) => {
+    onUpdate({ groupBy: data.value });
+  };
+
   if (!dataset.connection_id) {
     return (
       <Container textAlign="center">
@@ -335,33 +414,38 @@ function DatasetData(props) {
 
   return (
     <Grid style={styles.mainGrid} centered stackable>
-      {chartType !== "table" && (
-        <Grid.Row columns={1} className="datasetdata-axes-tut">
-          <Grid.Column>
-            <label>
-              <strong>
-                {chartType === "pie"
-                  || chartType === "radar"
-                  || chartType === "polar"
-                  || chartType === "doughnut"
-                  ? "Segment " : "X Axis "}
-              </strong>
-            </label>
-            <Dropdown
-              icon={null}
-              header="Type to search"
-              button
-              className="small button"
-              options={fieldOptions}
-              search
-              text={(dataset.xAxis && dataset.xAxis.substring(dataset.xAxis.lastIndexOf(".") + 1)) || "Select a field"}
-              value={dataset.xAxis}
-              onChange={_selectXField}
-              scrolling
+      <Grid.Row columns={1} className="datasetdata-axes-tut">
+        <Grid.Column>
+          <label>
+            <strong>
+              {chartType === "pie"
+                || chartType === "radar"
+                || chartType === "polar"
+                || chartType === "doughnut"
+                ? "Segment "
+                : chartType === "table" ? "Collection " : "X Axis "}
+            </strong>
+          </label>
+          <Dropdown
+            icon={null}
+            header="Type to search"
+            button
+            className="small button"
+            options={_filterOptions()}
+            search
+            text={(dataset.xAxis && dataset.xAxis.substring(dataset.xAxis.lastIndexOf(".") + 1)) || "Select a field"}
+            value={dataset.xAxis}
+            onChange={_selectXField}
+            scrolling
+          />
+          {chartType === "table" && (
+            <Popup
+              trigger={<Icon name="question circle outline" />}
+              content="Select a collection (array) of objects to display in a table format. 'Root' means the first level of the collection."
             />
-          </Grid.Column>
-        </Grid.Row>
-      )}
+          )}
+        </Grid.Column>
+      </Grid.Row>
       {chartType !== "table" && (
         <Grid.Row columns={1}>
           <Grid.Column>
@@ -490,28 +574,64 @@ function DatasetData(props) {
       {chartType === "table" && (
         <Grid.Row>
           <Grid.Column>
-            <Header as="h4" onClick={() => setShowTableFields(!showTableFields)} style={styles.tableFields}>
-              {"Select visible columns "}
-              {!showTableFields && (<Icon size="small" name="chevron down" />)}
-              {showTableFields && (<Icon size="small" name="chevron up" />)}
-            </Header>
+            {!selectedField && (
+              <Header as="h4" onClick={() => setShowTableFields(!showTableFields)} style={styles.tableFields}>
+                {"Configure visible columns "}
+                {!showTableFields && (<Icon size="small" name="chevron down" />)}
+                {showTableFields && (<Icon size="small" name="chevron up" />)}
+              </Header>
+            )}
+            {selectedField && (
+              <Header as="h4">
+                Now click on another field to combine them
+              </Header>
+            )}
             <Transition animation="fade down" visible={showTableFields}>
               <div>
                 <Label.Group>
                   {tableFields.map((field) => {
-                    if (!field || !field.accessor) return (<span />);
+                    if (!field || !field.accessor || field.Header.indexOf("__cb_group") > -1) return (<span />);
                     return (
                       <Label
-                        color="violet"
+                        color={selectedField === field.accessor ? "olive" : "violet"}
                         key={field.accessor}
-                        onClick={() => _onExcludeField(field.accessor)}
                         as="a"
+                        onClick={() => _onSelectField(field)}
+                        style={
+                          selectedField && selectedField !== field.accessor
+                            ? { ...styles.pulsating, ...styles.fieldLabels } : styles.fieldLabels
+                        }
+                        title={field.accessor.replace("?", ".")}
                       >
-                        {field.accessor.replace("?", ".")}
+                        {!selectedField && (<Icon name="eye" onClick={() => _onExcludeField(field.accessor)} />)}
+                        {selectedField && selectedField !== field.accessor && (
+                          <Icon name="code branch" />
+                        )}
+                        {`${field.accessor.replace("?", ".")}  `}
                       </Label>
                     );
                   })}
                 </Label.Group>
+
+                {selectedField && (
+                  <Form>
+                    <Form.Field>
+                      <label>Or select a specific field</label>
+                      <Dropdown
+                        icon={null}
+                        header="Type to search"
+                        button
+                        className="small button"
+                        options={fieldOptions}
+                        search
+                        text={"Select a field"}
+                        onChange={_onGroupFields}
+                        scrolling
+                      />
+                    </Form.Field>
+                  </Form>
+                )}
+
                 <Label.Group>
                   {dataset.excludedFields && dataset.excludedFields.map((field) => (
                     <Label
@@ -525,8 +645,60 @@ function DatasetData(props) {
                     </Label>
                   ))}
                 </Label.Group>
+
+                {dataset.groups && Object.keys(dataset.groups).length > 0 && (
+                  <>
+                    <Divider />
+                    {Object.keys(dataset.groups).map((key) => (
+                      <div key={key}>
+                        <Label>{key}</Label>
+                        <span>{" - "}</span>
+                        <Label>{dataset.groups[key]}</Label>
+                        <Popup
+                          trigger={(
+                            <Button
+                              icon="x"
+                              basic
+                              style={styles.addConditionBtn}
+                              onClick={() => _onRemoveGroup(key)}
+                            />
+                          )}
+                          content="Remove combination"
+                        />
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             </Transition>
+
+            <Header as="h4">
+              Group final results by
+            </Header>
+
+            <Dropdown
+              icon={null}
+              header="Type to search"
+              button
+              className="small button"
+              options={_getGroupByFields()}
+              search
+              text={dataset.groupBy || "Select a field"}
+              onChange={_onChangeGroupBy}
+              value={dataset.groupBy}
+              scrolling
+            />
+            <Popup
+              trigger={(
+                <Button
+                  icon="x"
+                  basic
+                  style={styles.addConditionBtn}
+                  onClick={() => _onChangeGroupBy(null, { value: null })}
+                />
+              )}
+              content="Clear the grouping"
+            />
           </Grid.Column>
         </Grid.Row>
       )}
@@ -788,6 +960,15 @@ const styles = {
   },
   tableFields: {
     cursor: "pointer",
+  },
+  fieldLabels: {
+    maxWidth: 150,
+    whiteSpace: "nowrap",
+    textOverflow: "ellipsis",
+    overflow: "hidden",
+  },
+  pulsating: {
+    animation: "pulse 2s infinite",
   },
 };
 

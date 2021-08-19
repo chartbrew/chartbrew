@@ -3,6 +3,7 @@ import {
   FETCH_CHART_FAIL,
   FETCH_CHART_SUCCESS,
   FETCH_ALL_CHARTS,
+  UPDATE_CHART_FIELDS
 } from "../actions/chart";
 
 export default function chart(state = {
@@ -23,7 +24,7 @@ export default function chart(state = {
 
         if (indexFound) newData[indexFound].loading = true;
 
-        return { ...state, loading: true, data: newData };
+        return { ...state, data: newData };
       } else {
         return { ...state, loading: true };
       }
@@ -45,6 +46,22 @@ export default function chart(state = {
         newData.push(action.chart);
       }
       return { ...state, loading: false, data: newData };
+    case UPDATE_CHART_FIELDS:
+      // look for existing chart in the data array and replace it if it exists
+      let indexUpdate = -1;
+      for (let i = 0; i < state.data.length; i++) {
+        if (state.data[i].id === parseInt(action.chart.id, 10)) {
+          indexUpdate = i;
+          break;
+        }
+      }
+      const updateData = [...state.data];
+      if (indexUpdate > -1) {
+        updateData[indexUpdate] = { ...updateData[indexUpdate], ...action.chart };
+      } else {
+        updateData.push(action.chart);
+      }
+      return { ...state, loading: false, data: updateData };
     case FETCH_CHART_FAIL:
       return { ...state, loading: false, error: true };
     default:

@@ -1,3 +1,5 @@
+const _ = require("lodash");
+
 const xlsx = require("node-xlsx");
 const determineType = require("./determineType");
 
@@ -18,7 +20,8 @@ function normalizeKeys(level, finalKey, finalResult) {
 
 function normalizeValues(level, finalResult) {
   let newFinalResult = finalResult;
-  Object.values(level).forEach((value) => {
+  Object.keys(level).forEach((key) => {
+    const value = level[key];
     if (determineType(value) === "object" && value !== null && Object.values(value).length > 0) {
       newFinalResult = normalizeValues(value, newFinalResult);
     } else if (determineType(value) === "object" && value !== null && Object.values(value).length === 0) {
@@ -36,35 +39,82 @@ function normalizeValues(level, finalResult) {
 module.exports = (sheetsData) => {
   const formattedData = [];
 
-  sheetsData.map((data) => {
+  sheetsData.map((sheet) => {
     const formattedSet = [];
     let addKeys = true;
-    Object.keys(data.data).map((dataset, index) => {
+    Object.keys(sheet.data).map((dataKey, index) => {
+      const dataset = sheet.datasets[index];
       // push the name of the dataset in the first line of each set
       if (index !== 0) formattedSet.push([""]);
-      formattedSet.push([dataset]);
+      formattedSet.push([dataKey]);
 
-      const set = data.data[dataset];
+      const set = sheet.data[dataKey];
+      let setHeadersIndex;
       set.map((item) => {
         if (addKeys) {
-          formattedSet.push(normalizeKeys(item, null, []));
+          setHeadersIndex = formattedSet.length;
+          if (!formattedSet[setHeadersIndex]) formattedSet.push(normalizeKeys(item, null, []));
           addKeys = false;
         }
 
-        formattedSet.push(normalizeValues(item, []));
+        // go through the headers to see if we need to add more as we explore the objects
+        const headersSet = normalizeKeys(item, null, []);
+        const existingHeaders = formattedSet[setHeadersIndex];
+        headersSet.forEach((header) => {
+          if (_.indexOf(existingHeaders, header) === -1) {
+            formattedSet[setHeadersIndex].push(header);
+          }
+        });
 
         return item;
+      });
+
+      // remove any headers based on the exclusions
+      const formattedExclusions = dataset.excludedFields ? dataset.excludedFields.map((field) => {
+        return field.replaceAll("?", ".");
+      }) : [];
+      const tempHeaders = [];
+      formattedSet[setHeadersIndex].forEach((header) => {
+        let exclude = false;
+
+        // check for exact match
+        if (_.indexOf(formattedExclusions, header) > -1) {
+          exclude = true;
+        }
+
+        // check for nested matches
+        formattedExclusions.forEach((exclusion) => {
+          if (header.indexOf(`${exclusion}.`) > -1) {
+            exclude = true;
+          }
+        });
+
+        if (!exclude) tempHeaders.push(header);
+      });
+      formattedSet[setHeadersIndex] = tempHeaders;
+
+      set.forEach((item) => {
+        const newItem = {};
+        formattedSet[setHeadersIndex].forEach((header) => {
+          let formattedHeader = header;
+          if (header.indexOf(".") > -1) formattedHeader = header.substring(0, header.indexOf("."));
+
+          if (item[formattedHeader]) newItem[formattedHeader] = item[formattedHeader];
+          else newItem[formattedHeader] = null;
+        });
+        formattedSet.push(normalizeValues(newItem, []));
       });
 
       addKeys = true;
       return set;
     });
+
     formattedData.push({
-      name: data.name,
+      name: sheet.name,
       data: formattedSet,
     });
 
-    return data;
+    return sheet;
   });
 
   const options = {

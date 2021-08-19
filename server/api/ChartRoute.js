@@ -141,7 +141,7 @@ module.exports = (app) => {
         if (!permission.granted) {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }
-        return chartController.update(req.params.id, req.body, req.user);
+        return chartController.update(req.params.id, req.body, req.user, req.query.justUpdates);
       })
       .then((chart) => {
         return res.status(200).send(chart);

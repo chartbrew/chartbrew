@@ -8,6 +8,7 @@ export const FETCH_CHART = "FETCH_CHART";
 export const FETCH_ALL_CHARTS = "FETCH_ALL_CHARTS";
 export const FETCH_CHART_SUCCESS = "FETCH_CHART_SUCCESS";
 export const FETCH_CHART_FAIL = "FETCH_CHART_FAIL";
+export const UPDATE_CHART_FIELDS = "UPDATE_CHART_FIELDS";
 
 export function getProjectCharts(projectId) {
   return (dispatch) => {
@@ -72,7 +73,7 @@ export function createChart(projectId, data) {
   };
 }
 
-export function updateChart(projectId, chartId, data) {
+export function updateChart(projectId, chartId, data, justUpdates) {
   return (dispatch) => {
     const formattedData = data;
 
@@ -82,7 +83,7 @@ export function updateChart(projectId, chartId, data) {
     }
 
     const token = cookie.load("brewToken");
-    const url = `${API_HOST}/project/${projectId}/chart/${chartId}`;
+    let url = `${API_HOST}/project/${projectId}/chart/${chartId}`;
     const method = "PUT";
     const body = JSON.stringify(formattedData);
     const headers = new Headers({
@@ -90,6 +91,8 @@ export function updateChart(projectId, chartId, data) {
       "Content-Type": "application/json",
       "authorization": `Bearer ${token}`,
     });
+
+    if (justUpdates) url += "?justUpdates=true";
 
     dispatch({ type: FETCH_CHART });
     return fetch(url, { method, body, headers })
@@ -102,7 +105,11 @@ export function updateChart(projectId, chartId, data) {
         return response.json();
       })
       .then((chart) => {
-        dispatch({ type: FETCH_CHART_SUCCESS, chart });
+        if (justUpdates) {
+          dispatch({ type: UPDATE_CHART_FIELDS, chart });
+        } else {
+          dispatch({ type: FETCH_CHART_SUCCESS, chart });
+        }
         return new Promise(resolve => resolve(chart));
       })
       .catch((error) => {

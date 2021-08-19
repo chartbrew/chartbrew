@@ -4,7 +4,8 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
-  Menu, Dropdown, Dimmer, Container, Loader, Icon, Modal, Button, Image, TransitionablePortal,
+  Menu, Dropdown, Dimmer, Container, Loader, Icon, Modal, Button, Image,
+  TransitionablePortal, Input,
 } from "semantic-ui-react";
 import UserAvatar from "react-user-avatar";
 import { createMedia } from "@artsy/fresnel";
@@ -37,16 +38,17 @@ function Navbar(props) {
   const [changelogPadding, setChangelogPadding] = useState(true);
   const [feedbackModal, setFeedbackModal] = useState();
   const [teamOwned, setTeamOwned] = useState({});
+  const [projectSearch, setProjectSearch] = useState("");
 
   const {
-    match, getTeam, getProject, changeActiveProject, getProjectCharts,
+    getTeam, getProject, changeActiveProject,
     hideTeam, transparent, team, teams, projectProp, user, logout,
   } = props;
 
   const { width } = useWindowSize();
 
   useEffect(() => {
-    _onTeamChange(match.params.teamId, match.params.projectId);
+    // _onTeamChange(match.params.teamId, match.params.projectId);
     setTimeout(() => {
       try {
         Headway.init(HW_config);
@@ -85,11 +87,8 @@ function Navbar(props) {
         return changeActiveProject(projectId);
       })
       .then(() => {
-        return getProjectCharts(projectId);
-      })
-      .then(() => {
-        // props.history.push(`/${teamId}/${projectId}/dashboard`);
-        setLoading(false);
+        window.location.href = (`/${teamId}/${projectId}/dashboard`);
+        // window.reload();
       })
       .catch(() => {});
   };
@@ -149,26 +148,41 @@ function Navbar(props) {
                       text={t.name}
                       >
                       <Dropdown.Menu>
-                        {t.Projects.map((project) => {
-                          return (
-                            <Dropdown.Item
-                              onClick={() => _onTeamChange(t.id, project.id)}
-                              disabled={project.id === projectProp.id}
-                              key={project.id}>
-                              {project.id === projectProp.id
-                              && (
-                              <span className="label">
-                                Active
-                              </span>
-                              )}
-                              <span>
-                                {" "}
-                                {project.name}
-                                {" "}
-                              </span>
-                            </Dropdown.Item>
-                          );
-                        })}
+                        <Input
+                          icon="search"
+                          iconPosition="left"
+                          className="search"
+                          onClick={(e) => e.stopPropagation()}
+                          onFocus={(e) => e.stopPropagation()}
+                          onChange={(e, data) => setProjectSearch(data.value)}
+                        />
+                        <Dropdown.Menu scrolling>
+                          {t.Projects.map((project) => {
+                            if (projectSearch
+                              && project.name.toLowerCase()
+                                .indexOf(projectSearch.toLowerCase()) === -1) {
+                              return (<span key={project.id} />);
+                            }
+                            return (
+                              <Dropdown.Item
+                                onClick={() => _onTeamChange(t.id, project.id)}
+                                disabled={project.id === projectProp.id}
+                                key={project.id}>
+                                {project.id === projectProp.id
+                                && (
+                                <span className="label">
+                                  Active
+                                </span>
+                                )}
+                                <span>
+                                  {" "}
+                                  {project.name}
+                                  {" "}
+                                </span>
+                              </Dropdown.Item>
+                            );
+                          })}
+                        </Dropdown.Menu>
                       </Dropdown.Menu>
                     </Dropdown>
                     )
@@ -317,11 +331,9 @@ Navbar.propTypes = {
   team: PropTypes.object.isRequired,
   teams: PropTypes.array.isRequired,
   projectProp: PropTypes.object.isRequired,
-  match: PropTypes.object.isRequired,
   getTeam: PropTypes.func.isRequired,
   getProject: PropTypes.func.isRequired,
   changeActiveProject: PropTypes.func.isRequired,
-  getProjectCharts: PropTypes.func.isRequired,
   logout: PropTypes.func.isRequired,
   hideTeam: PropTypes.bool,
   transparent: PropTypes.bool,

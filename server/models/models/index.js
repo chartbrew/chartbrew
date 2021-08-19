@@ -64,7 +64,11 @@ const umzug = new Umzug({
 
 db.migrate = () => umzug.up();
 db.migrate()
-  .then((migration) => { console.log(migration); })
+  .then((data) => {
+    if (data && data.length > 0) {
+      console.info("Updated database schema to the latest version!"); // eslint-disable-line
+    }
+  })
   .catch((err) => console.error(err)); // eslint-disable-line
 
 module.exports = db;

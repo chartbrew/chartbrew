@@ -93,11 +93,13 @@ class ChartController {
       });
   }
 
-  findById(id) {
-    return db.Chart.findOne({
+  findById(id, customQuery) {
+    const query = {
       where: { id },
       include: [{ model: db.Dataset }],
-    })
+    };
+
+    return db.Chart.findOne(customQuery || query)
       .then((chart) => {
         return chart;
       })
@@ -106,7 +108,7 @@ class ChartController {
       });
   }
 
-  update(id, data, user) {
+  update(id, data, user, justUpdates) {
     if (data.autoUpdate) {
       return db.Chart.update(data, { where: { id } })
         .then(() => {
@@ -170,6 +172,11 @@ class ChartController {
           }
 
           return Promise.all(updatePromises).then(() => this.findById(id));
+        } else if (justUpdates) {
+          return this.findById(id, {
+            where: { id },
+            attributes: ["id"].concat(Object.keys(data)),
+          });
         } else {
           return this.findById(id);
         }
@@ -590,10 +597,13 @@ class ChartController {
   }
 
   exportChartData(userId, chartIds, filters) {
-    return db.Chart.findAll({ where: { id: chartIds } })
+    return db.Chart.findAll({
+      where: { id: chartIds },
+      include: [{ model: db.Dataset }],
+    })
       .then((charts) => {
         const dataPromises = [];
-        charts.map((chart) => {
+        charts.forEach((chart) => {
           dataPromises.push(
             this.updateChartData(
               chart.id, { id: userId }, false, false, filters, true
@@ -610,11 +620,11 @@ class ChartController {
                 }
                 return {
                   name: sheetName,
+                  datasets: chart.Datasets,
                   data,
                 };
               })
           );
-          return chart;
         });
 
         return Promise.all(dataPromises);

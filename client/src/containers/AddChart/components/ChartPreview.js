@@ -46,7 +46,6 @@ function ChartPreview(props) {
     chart, onChange, onRefreshData, onRefreshPreview, chartLoading,
   } = props;
 
-  const [typesVisible, setTypesVisible] = useState(false);
   const [redraw, setRedraw] = useState(false);
 
   useEffect(() => {
@@ -94,7 +93,7 @@ function ChartPreview(props) {
 
   return (
     <>
-      {chart && chart.chartData && !typesVisible && (
+      {chart && chart.chartData && chart.Datasets && (
         <>
           <Segment>
             {chart.type === "line"
@@ -261,28 +260,7 @@ function ChartPreview(props) {
       )}
 
       <Container textAlign="center">
-        {chart && !chart.type && !typesVisible && (
-          <Dimmer.Dimmable active>
-            <Dimmer active inverted>
-              <Header>
-                Create a dataset and select your visualisation type
-              </Header>
-              <Button
-                icon
-                labelPosition="right"
-                primary
-                onClick={() => setTypesVisible(true)}
-                basic
-              >
-                <Icon name="chart line" />
-                Select chart type
-              </Button>
-            </Dimmer>
-            <Image src={lineChartImage} centered size="big" />
-          </Dimmer.Dimmable>
-        )}
-
-        {chart && chart.type && !chart.chartData && !typesVisible && (
+        {chart && chart.type && !chart.chartData && (
           <Dimmer.Dimmable active>
             <Dimmer active inverted>
               <Header as="h2">
@@ -306,7 +284,7 @@ function ChartPreview(props) {
         )}
       </Container>
 
-      {chart && chart.type && !typesVisible && (
+      {chart && chart.type && chart.Datasets && chart.Datasets.length > 0 && (
         <Container textAlign="center" style={styles.topBuffer}>
           <Dropdown
             options={chartModes}

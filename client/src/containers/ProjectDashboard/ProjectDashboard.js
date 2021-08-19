@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Message, Icon, Button, Container, Header, Divider, Menu,
-  Label, TransitionablePortal, Modal, Grid, Card, Popup,
+  Label, TransitionablePortal, Modal, Grid, Card, Popup, Checkbox,
 } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 import { useLocalStorage, useWindowSize } from "react-use";
@@ -21,10 +21,12 @@ import {
   runQuery as runQueryAction,
   changeOrder as changeOrderAction,
   exportChart,
+  updateChart as updateChartAction,
 } from "../../actions/chart";
 import canAccess from "../../config/canAccess";
 import ChartExport from "./components/ChartExport";
 import CreateTemplateForm from "../../components/CreateTemplateForm";
+import { lightGray } from "../../config/colors";
 
 const AppMedia = createMedia({
   breakpoints: {
@@ -41,11 +43,13 @@ const { Media } = AppMedia;
 function ProjectDashboard(props) {
   const {
     cleanErrors, connections, charts, match, showDrafts, runQueryWithFilters,
-    getProjectCharts, runQuery, changeOrder, user, team, onPrint, mobile,
+    getProjectCharts, runQuery, changeOrder, user, team, onPrint, mobile, updateChart,
   } = props;
 
   const initialFilters = window.localStorage.getItem("_cb_filters");
   const [filters, setFilters] = useLocalStorage("_cb_filters", initialFilters);
+  const [autoRefresh, setAutoRefresh] = useLocalStorage("_cb_auto_refresh", []);
+  const [autoRefreshed, setAutoRefreshed] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
   const [alreadyFiltered, setAlreadyFiltered] = useState(true);
@@ -59,6 +63,9 @@ function ProjectDashboard(props) {
 
   useEffect(() => {
     cleanErrors();
+    setTimeout(() => {
+      setAutoRefreshed(false);
+    }, 100);
   }, []);
 
   useEffect(() => {
@@ -67,6 +74,12 @@ function ProjectDashboard(props) {
       _runFiltering();
     }
   }, [charts]);
+
+  useEffect(() => {
+    if (!autoRefreshed && _.indexOf(autoRefresh, match.params.projectId) > -1) {
+      _onRefreshData();
+    }
+  }, [autoRefreshed]);
 
   useEffect(() => {
     setAlreadyFiltered(false);
@@ -255,6 +268,22 @@ function ProjectDashboard(props) {
     return canExport;
   };
 
+  const _onChangeAutoRefresh = () => {
+    const tempAutoRefresh = autoRefresh || [];
+    const index = _.indexOf(autoRefresh, match.params.projectId);
+    if (index > -1) {
+      tempAutoRefresh.splice(index, 1);
+    } else {
+      tempAutoRefresh.push(match.params.projectId);
+    }
+
+    setAutoRefresh(tempAutoRefresh);
+  };
+
+  const _onUpdateExport = (chartId, disabled) => {
+    updateChart(match.params.projectId, chartId, { disabledExport: disabled }, true);
+  };
+
   return (
     <div>
       {charts && charts.length > 0
@@ -361,37 +390,59 @@ function ProjectDashboard(props) {
                     />
                   </Menu.Item>
                 )}
-                <Popup
-                  trigger={(
-                    <Menu.Item style={{ padding: 0 }}>
-                      <Media greaterThan="mobile">
-                        <Button
-                          basic
-                          primary
-                          icon="refresh"
-                          onClick={() => _onRefreshData()}
-                          loading={refreshLoading}
-                          content="Refresh all charts"
-                          size="small"
-                        />
-                      </Media>
-                      <Media at="mobile">
-                        <Button
-                          basic
-                          primary
-                          icon
-                          onClick={() => _onRefreshData()}
-                          loading={refreshLoading}
-                          size="small"
-                        >
-                          <Icon name="refresh" />
-                        </Button>
-                      </Media>
-                    </Menu.Item>
-                  )}
-                  content="This function will get fresh data from all the data sources."
-                  position="bottom right"
-                />
+
+                <Menu.Item style={{ padding: 0 }}>
+                  <Media greaterThan="mobile">
+                    <Button size="tiny" as="div" labelPosition="right">
+                      <Popup
+                        trigger={(
+                          <Button
+                            basic
+                            primary
+                            icon="refresh"
+                            onClick={() => _onRefreshData()}
+                            loading={refreshLoading}
+                            content="Refresh all charts"
+                            size="tiny"
+                          />
+                        )}
+                        content="This function will get fresh data from all the data sources."
+                        position="bottom right"
+                      />
+                      <Popup
+                        trigger={(
+                          <Label
+                            size="small"
+                            color="violet"
+                            basic
+                            as="a"
+                            pointing="left"
+                            style={{ backgroundColor: lightGray }}
+                          >
+                            <Checkbox
+                              toggle
+                              checked={_.indexOf(autoRefresh, match.params.projectId) > -1}
+                              onChange={_onChangeAutoRefresh}
+                            />
+                          </Label>
+                        )}
+                        content="Auto-refresh the charts when opening the dashboard"
+                      />
+                    </Button>
+                  </Media>
+                  <Media at="mobile">
+                    <Button
+                      basic
+                      primary
+                      icon
+                      onClick={() => _onRefreshData()}
+                      loading={refreshLoading}
+                      size="small"
+                    >
+                      <Icon name="refresh" />
+                    </Button>
+                  </Media>
+                </Menu.Item>
               </Menu.Menu>
             </Menu>
           </div>
@@ -506,8 +557,7 @@ function ProjectDashboard(props) {
       <TransitionablePortal open={viewExport}>
         <Modal open={viewExport} closeIcon onClose={() => setViewExport(false)}>
           <Modal.Header>
-            <span style={{ verticalAlign: "middle" }}>{" Export to Excel (.xlsx) "}</span>
-            <Label style={{ verticalAlign: "middle" }} color="olive">New!</Label>
+            Export to Excel (.xlsx)
           </Modal.Header>
           <Modal.Content>
             <ChartExport
@@ -515,6 +565,8 @@ function ProjectDashboard(props) {
               onExport={_onExport}
               loading={exportLoading}
               error={exportError}
+              onUpdate={(chartId, disabled) => _onUpdateExport(chartId, disabled)}
+              showDisabled={_canAccess("admin")}
             />
           </Modal.Content>
         </Modal>
@@ -584,6 +636,7 @@ ProjectDashboard.propTypes = {
   changeOrder: PropTypes.func.isRequired,
   showDrafts: PropTypes.bool,
   mobile: PropTypes.bool,
+  updateChart: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -606,6 +659,10 @@ const mapDispatchToProps = (dispatch) => {
     changeOrder: (projectId, chartId, otherId) => (
       dispatch(changeOrderAction(projectId, chartId, otherId))
     ),
+    updateChart: (projectId, chartId, data, justUpdates) => (
+      dispatch(updateChartAction(projectId, chartId, data, justUpdates))
+    ),
   };
 };
+
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ProjectDashboard));

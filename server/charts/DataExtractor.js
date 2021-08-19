@@ -72,7 +72,7 @@ module.exports = (data, filters) => {
       }
     }
 
-    // first, handle the xAxis
+    // get the data corresponding to the xAxis
     if (xAxis.indexOf("root[]") > -1) {
       xAxis = xAxis.replace("root[].", "");
       // and data stays the same
@@ -84,7 +84,45 @@ module.exports = (data, filters) => {
       xData = _.get(filteredData, arrayFinder);
     }
 
-    exportData[dataset.options.legend] = xData;
+    // transform the object in case there are any groupings
+    // also exclude any fields that are marked to be excluded
+    const pairedXData = [];
+
+    xData.forEach((item) => {
+      const newItem = item;
+      if (dataset.options.groups
+          && Object.keys(dataset.options.groups).length > 0
+      ) {
+        Object.keys(dataset.options.groups).forEach((groupKey) => {
+          const datasetGroupValue = dataset.options.groups[groupKey];
+          // extract the data using the groups schema
+          const newKey = _.get(newItem, groupKey);
+          const newValue = _.get(newItem, datasetGroupValue);
+          if (newKey && newValue) {
+            newItem[`${newKey}`] = newValue;
+          }
+        });
+      }
+
+      pairedXData.push(newItem);
+    });
+
+    const groupedXData = [];
+    let { groupBy } = dataset.options;
+    if (groupBy) {
+      groupBy = groupBy.replace("root[].", "");
+    }
+    // Apply groupBy on the data
+    pairedXData.forEach((item) => {
+      const foundIndex = _.findIndex(groupedXData, { [groupBy]: item[groupBy] });
+      if (foundIndex > -1) {
+        groupedXData[foundIndex] = { ...groupedXData[foundIndex], ...item };
+      } else {
+        groupedXData.push(item);
+      }
+    });
+
+    exportData[dataset.options.legend] = groupedXData;
   }
 
   return exportData;
