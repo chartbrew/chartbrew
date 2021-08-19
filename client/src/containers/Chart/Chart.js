@@ -71,7 +71,8 @@ function Chart(props) {
     updateChart(
       match.params.projectId,
       chart.id,
-      { chartSize: size }
+      { chartSize: size },
+      true
     )
       .then(() => {
         setChartLoading(false);
@@ -142,7 +143,8 @@ function Chart(props) {
     updateChart(
       match.params.projectId,
       chart.id,
-      { public: !chart.public }
+      { public: !chart.public },
+      true,
     )
       .then(() => {
         setChartLoading(false);
@@ -170,7 +172,8 @@ function Chart(props) {
     updateChart(
       match.params.projectId,
       chart.id,
-      { autoUpdate: updateFrequency }
+      { autoUpdate: updateFrequency },
+      true,
     )
       .then(() => {
         setAutoUpdateLoading(false);
@@ -808,8 +811,8 @@ const mapDispatchToProps = (dispatch) => {
   return {
     removeChart: (projectId, chartId) => dispatch(removeChartAction(projectId, chartId)),
     runQuery: (projectId, chartId) => dispatch(runQueryAction(projectId, chartId)),
-    updateChart: (projectId, chartId, data) => (
-      dispatch(updateChartAction(projectId, chartId, data))
+    updateChart: (projectId, chartId, data, justUpdates) => (
+      dispatch(updateChartAction(projectId, chartId, data, justUpdates))
     ),
     runQueryWithFilters: (projectId, chartId, filters) => (
       dispatch(runQueryWithFiltersAction(projectId, chartId, filters))
