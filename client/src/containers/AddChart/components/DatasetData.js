@@ -387,6 +387,20 @@ function DatasetData(props) {
     );
   }
 
+  const _getGroupByFields = () => {
+    return fieldOptions.filter((f) => {
+      if (f.type !== "object" && f.type !== "array") {
+        if (f.key.replace("root[].", "").indexOf(".") === -1) return true;
+      }
+
+      return false;
+    });
+  };
+
+  const _onChangeGroupBy = (e, data) => {
+    onUpdate({ groupBy: data.value });
+  };
+
   if (!dataset.connection_id) {
     return (
       <Container textAlign="center">
@@ -634,18 +648,22 @@ function DatasetData(props) {
 
                 {dataset.groups && Object.keys(dataset.groups).length > 0 && (
                   <>
-                    <Header as="h4">Grouped fields</Header>
+                    <Divider />
                     {Object.keys(dataset.groups).map((key) => (
                       <div key={key}>
                         <Label>{key}</Label>
                         <span>{" - "}</span>
                         <Label>{dataset.groups[key]}</Label>
-                        <Button
-                          icon="x"
-                          color="red"
-                          basic
-                          style={styles.addConditionBtn}
-                          onClick={() => _onRemoveGroup(key)}
+                        <Popup
+                          trigger={(
+                            <Button
+                              icon="x"
+                              basic
+                              style={styles.addConditionBtn}
+                              onClick={() => _onRemoveGroup(key)}
+                            />
+                          )}
+                          content="Remove combination"
                         />
                       </div>
                     ))}
@@ -653,6 +671,34 @@ function DatasetData(props) {
                 )}
               </div>
             </Transition>
+
+            <Header as="h4">
+              Group final results by
+            </Header>
+
+            <Dropdown
+              icon={null}
+              header="Type to search"
+              button
+              className="small button"
+              options={_getGroupByFields()}
+              search
+              text={dataset.groupBy || "Select a field"}
+              onChange={_onChangeGroupBy}
+              value={dataset.groupBy}
+              scrolling
+            />
+            <Popup
+              trigger={(
+                <Button
+                  icon="x"
+                  basic
+                  style={styles.addConditionBtn}
+                  onClick={() => _onChangeGroupBy(null, { value: null })}
+                />
+              )}
+              content="Clear the grouping"
+            />
           </Grid.Column>
         </Grid.Row>
       )}

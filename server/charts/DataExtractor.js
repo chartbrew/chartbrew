@@ -108,9 +108,13 @@ module.exports = (data, filters) => {
     });
 
     const groupedXData = [];
+    let { groupBy } = dataset.options;
+    if (groupBy) {
+      groupBy = groupBy.replace("root[].", "");
+    }
     // Apply groupBy on the data
     pairedXData.forEach((item) => {
-      const foundIndex = _.findIndex(groupedXData, { "Date-Time": item["Date-Time"] });
+      const foundIndex = _.findIndex(groupedXData, { [groupBy]: item[groupBy] });
       if (foundIndex > -1) {
         groupedXData[foundIndex] = { ...groupedXData[foundIndex], ...item };
       } else {

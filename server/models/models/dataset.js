@@ -158,6 +158,9 @@ module.exports = (sequelize, DataTypes) => {
         return this.setDataValue("groups", JSON.stringify(val));
       },
     },
+    groupBy: {
+      type: DataTypes.STRING,
+    },
   }, {
     freezeTableName: true,
   });
