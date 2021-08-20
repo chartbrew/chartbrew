@@ -288,12 +288,12 @@ class TeamController {
       });
   }
 
-  saveTeamInvite(teamId, data) {
+  saveTeamInvite(teamId, data, userId) {
     const token = uuidv4();
     return db.TeamInvitation.create({
       "team_id": teamId,
       "email": data.email,
-      "user_id": data.user_id,
+      "user_id": userId,
       token,
       projects: data.projects,
       canExport: data.canExport

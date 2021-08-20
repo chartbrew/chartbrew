@@ -27,7 +27,7 @@ function InviteMembersForm(props) {
   const [exportAllowed, setExportAllowed] = useState(false);
 
   const {
-    style, match, projects, team, inviteMembers, user
+    style, match, projects, team, inviteMembers,
   } = props;
 
   const onInviteMembers = () => {
@@ -43,7 +43,6 @@ function InviteMembersForm(props) {
 
     members.forEach((email) => {
       inviteMembers(
-        user.data.id,
         email.value,
         teamId,
         projectAccess,
@@ -232,7 +231,6 @@ InviteMembersForm.defaultProps = {
 InviteMembersForm.propTypes = {
   inviteMembers: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,
-  user: PropTypes.object.isRequired,
   match: PropTypes.object.isRequired,
   projects: PropTypes.array.isRequired,
   style: PropTypes.object,
@@ -248,8 +246,8 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    inviteMembers: (userId, email, teamId, projects, canExport) => (
-      dispatch(inviteMembersAction(userId, email, teamId, projects, canExport))
+    inviteMembers: (email, teamId, projects, canExport) => (
+      dispatch(inviteMembersAction(email, teamId, projects, canExport))
     ),
   };
 };

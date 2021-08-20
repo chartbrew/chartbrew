@@ -161,7 +161,7 @@ export function updateTeam(teamId, data) {
   };
 }
 
-export function inviteMembers(userId, email, teamId, projects, canExport) {
+export function inviteMembers(email, teamId, projects, canExport) {
   return (dispatch) => {
     if (!cookie.load("brewToken")) {
       return new Promise((resolve, reject) => reject(new Error("No Token")));
@@ -173,7 +173,6 @@ export function inviteMembers(userId, email, teamId, projects, canExport) {
       "authorization": `Bearer ${token}`,
     });
     const body = JSON.stringify({
-      "user_id": userId,
       email,
       projects,
       canExport,
