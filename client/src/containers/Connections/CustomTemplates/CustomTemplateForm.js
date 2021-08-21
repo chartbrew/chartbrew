@@ -17,6 +17,7 @@ function CustomTemplateForm(props) {
 
   const [selectedConnections, setSelectedConnections] = useState({});
   const [selectedCharts, setSelectedCharts] = useState([]);
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     if (template && template.model.Connections) {
@@ -163,13 +164,16 @@ function CustomTemplateForm(props) {
       connections: selectedConnections,
     };
 
+    setIsCreating(true);
+
     generateDashboard(projectId, data, "custom")
       .then(() => {
         setTimeout(() => {
+          setIsCreating(false);
           onComplete();
         }, 2000);
       })
-      .catch(() => {});
+      .catch(() => { setIsCreating(false); });
   };
 
   return (
@@ -275,6 +279,7 @@ function CustomTemplateForm(props) {
         primary
         content="Create charts"
         onClick={_generateTemplate}
+        loading={isCreating}
       />
     </div>
   );

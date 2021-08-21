@@ -22,8 +22,17 @@ module.exports = async (projectId, { template_id, charts, connections }) => {
     include: [{ model: db.Connection }],
   });
 
+  const createdConnections = {};
+  const testVar = {};
+
   // TODO: find a way to create the connections and attach the c_id to the right dataset
   const attachConnection = async (dataset, chartId) => {
+    if (createdConnections[dataset.connection_id]) {
+      return new Promise((resolve) => resolve({
+        ...dataset, connection_id: createdConnections[dataset.connection_id], chart_id: chartId,
+      }));
+    }
+
     // check wether the connections need to be re-used or created
     const projectConnection = _.findLast(project.Connections, { id: dataset.connection_id });
     const connectionOpt = connections[dataset.connection_id];
@@ -34,7 +43,11 @@ module.exports = async (projectId, { template_id, charts, connections }) => {
       newConnection.project_id = projectId;
       delete newConnection.id;
 
+      testVar[dataset.connection_id] = projectId;
       newConnection = await db.Connection.create(newConnection);
+
+      // update which connection have been created
+      createdConnections[dataset.connection_id] = newConnection.id;
     }
 
     const newDataset = { ...dataset, connection_id: newConnection.id, chart_id: chartId };
