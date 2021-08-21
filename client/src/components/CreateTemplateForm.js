@@ -31,6 +31,7 @@ function CreateTemplateForm(props) {
     return createTemplate(teamId, projectId, templateName)
       .then(() => {
         setLoading(false);
+        onClose(true);
         return true;
       })
       .catch(() => {

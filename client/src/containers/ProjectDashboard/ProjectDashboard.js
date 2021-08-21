@@ -10,6 +10,8 @@ import { Link } from "react-router-dom";
 import { useLocalStorage, useWindowSize } from "react-use";
 import _ from "lodash";
 import { createMedia } from "@artsy/fresnel";
+import { ToastContainer, toast, Flip } from "react-toastify";
+import "react-toastify/dist/ReactToastify.min.css";
 
 import Chart from "../Chart/Chart";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
@@ -575,8 +577,24 @@ function ProjectDashboard(props) {
       <CreateTemplateForm
         teamId={match.params.teamId}
         projectId={match.params.projectId}
-        onClose={() => setTemplateVisible(false)}
+        onClose={(isComplete) => {
+          if (isComplete) toast.success("✨ The template was saved successfully");
+          setTemplateVisible(false);
+        }}
         visible={templateVisible}
+      />
+
+      <ToastContainer
+        position="top-right"
+        autoClose={1500}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnVisibilityChange
+        draggable
+        pauseOnHover
+        transition={Flip}
       />
     </div>
   );
