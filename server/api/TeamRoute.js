@@ -143,7 +143,7 @@ module.exports = (app) => {
           invite = existingInvite;
           return new Promise((resolve) => resolve(invite));
         }
-        return teamController.saveTeamInvite(req.params.id, req.body);
+        return teamController.saveTeamInvite(req.params.id, req.body, req.user.id);
       })
       .then((createdInvite) => {
         invite = createdInvite;
