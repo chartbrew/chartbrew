@@ -113,6 +113,8 @@ module.exports = (app) => {
 
     const connection = await connectionController.findById(req.params.connection_id);
     const oauth = await oauthController.findById(connection.oauth_id);
+    if (!oauth) return res.status(400).send("OAuth is not registered properly");
+
     return googleConnector.getMetadata(oauth.refreshToken)
       .then((metadata) => {
         return res.status(200).send(metadata);
