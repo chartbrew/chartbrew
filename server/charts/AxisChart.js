@@ -195,8 +195,9 @@ class AxisChart {
             // go through each y item in the yData array to make sure they are ordered correctly
             for (let y = 0; y < yDataTemp.length; y++) {
               const valToCompare = _.get(yDataTemp[y], xAxis);
-              if ((valToCompare.toString().length === 10 && moment(valToCompare, "X").isSame(moment(xItem)))
-                || areDatesTheSame(valToCompare, xItem, this.chart.timeInterval)
+              if (valToCompare
+                && ((valToCompare.toString().length === 10 && moment(valToCompare, "X").isSame(moment(xItem)))
+                || areDatesTheSame(valToCompare, xItem, this.chart.timeInterval))
               ) {
                 orderHelper.push(yDataTemp[y]);
                 yDataTemp.splice(y, 1);

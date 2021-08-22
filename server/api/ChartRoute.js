@@ -310,7 +310,6 @@ module.exports = (app) => {
         );
       })
       .then((chart) => {
-        // console.log("chart", chart);
         return res.status(200).send(chart);
       })
       .catch((error) => {
