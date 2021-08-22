@@ -69,7 +69,7 @@ module.exports = (app) => {
   /*
   ** Route to get a custom template configuration
   */
-  app.get(`/${url}/custom/:template_id`, verifyToken, async (req, res) => {
+  app.get(`${url}/custom/:template_id`, verifyToken, async (req, res) => {
     try {
       checkAccess(req, "updateAny", "chart");
     } catch (error) {

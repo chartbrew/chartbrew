@@ -23,13 +23,13 @@ module.exports = async (projectId, { template_id, charts, connections }) => {
   });
 
   const createdConnections = {};
-  const testVar = {};
+  const avoidConnectionCreationList = [];
 
   // TODO: find a way to create the connections and attach the c_id to the right dataset
   const attachConnection = async (dataset, chartId) => {
-    if (createdConnections[dataset.connection_id]) {
+    if (_.indexOf(avoidConnectionCreationList, dataset.connection_id) > -1) {
       return new Promise((resolve) => resolve({
-        ...dataset, connection_id: createdConnections[dataset.connection_id], chart_id: chartId,
+        ...dataset, chart_id: chartId, connection_id: dataset.connection_id,
       }));
     }
 
@@ -43,9 +43,8 @@ module.exports = async (projectId, { template_id, charts, connections }) => {
       newConnection.project_id = projectId;
       delete newConnection.id;
 
-      testVar[dataset.connection_id] = projectId;
+      avoidConnectionCreationList.push(dataset.connection_id);
       newConnection = await db.Connection.create(newConnection);
-
       // update which connection have been created
       createdConnections[dataset.connection_id] = newConnection.id;
     }
@@ -59,13 +58,8 @@ module.exports = async (projectId, { template_id, charts, connections }) => {
     // now go through the datasets
     const formattedDatasets = datasets.map(async (d) => {
       const newDataset = await attachConnection(d, chartId)
-        .then((processedDataset) => {
-          return db.Dataset.create(processedDataset);
-        })
-        .then((createdDataset) => {
-          const newDr = d.DataRequest;
-          newDr.dataset_id = createdDataset.id;
-          return db.DataRequest.create(newDr);
+        .then((preparedDataset) => {
+          return preparedDataset;
         });
 
       return newDataset;
@@ -80,10 +74,23 @@ module.exports = async (projectId, { template_id, charts, connections }) => {
     newChart.project_id = projectId;
     const newPromise = await db.Chart.create(newChart)
       .then(async (createdChart) => {
-        const createdDatasets = await createDatasets(
+        const datasetsToCreate = await createDatasets(
           chart.Datasets,
           createdChart.id
         );
+
+        const createdDatasets = datasetsToCreate.map(async (d) => {
+          const dataset = d;
+          if (createdConnections[d.connection_id]) {
+            dataset.connection_id = createdConnections[d.connection_id];
+          }
+          return db.Dataset.create(dataset)
+            .then((createdDataset) => {
+              const newDr = dataset.DataRequest;
+              newDr.dataset_id = createdDataset.id;
+              return db.DataRequest.create(newDr);
+            });
+        });
 
         return {
           chart: createdChart,

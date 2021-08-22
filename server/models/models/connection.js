@@ -169,11 +169,18 @@ module.exports = (sequelize, DataTypes) => {
     firebaseServiceAccount: {
       type: DataTypes.TEXT,
       set(val) {
+        let newVal = val;
         try {
-          const parsedString = val.replace(/\r?\n|\r/, "");
+          newVal = JSON.stringify(val);
+        } catch (e) {
+          //
+        }
+
+        try {
+          const parsedString = newVal.replace(/\r?\n|\r/, "");
           return this.setDataValue("firebaseServiceAccount", sc.encrypt(parsedString));
         } catch (e) {
-          return this.setDataValue("firebaseServiceAccount", val);
+          return this.setDataValue("firebaseServiceAccount", newVal);
         }
       },
       get() {
