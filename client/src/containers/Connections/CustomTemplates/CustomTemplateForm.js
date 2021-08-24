@@ -12,6 +12,7 @@ import { generateDashboard } from "../../../actions/project";
 function CustomTemplateForm(props) {
   const {
     template, connections, onBack, projectId, onComplete, isAdmin, onDelete,
+    onCreateProject,
   } = props;
   const { width } = useWindowSize();
 
@@ -20,6 +21,7 @@ function CustomTemplateForm(props) {
   const [isCreating, setIsCreating] = useState(false);
   const [deleteConfirmation, setDeleteConfimation] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [formStatus, setFormStatus] = useState("");
 
   useEffect(() => {
     if (template && template.model.Connections) {
@@ -44,6 +46,12 @@ function CustomTemplateForm(props) {
       setSelectedCharts(charts);
     }
   }, [template]);
+
+  useEffect(() => {
+    if (projectId && formStatus === "waitingForProject") {
+      _generateTemplate();
+    }
+  }, [projectId]);
 
   const _getExistingConnections = (connection) => {
     // check existing connections
@@ -160,13 +168,19 @@ function CustomTemplateForm(props) {
   };
 
   const _generateTemplate = () => {
+    setIsCreating(true);
+
+    if (!projectId && !formStatus) {
+      setFormStatus("waitingForProject");
+      onCreateProject();
+      return;
+    }
+
     const data = {
       template_id: template.id,
       charts: selectedCharts,
       connections: selectedConnections,
     };
-
-    setIsCreating(true);
 
     generateDashboard(projectId, data, "custom")
       .then(() => {
@@ -279,7 +293,7 @@ function CustomTemplateForm(props) {
       />
       <Button
         primary
-        content="Create charts"
+        content="Generate from template"
         onClick={_generateTemplate}
         loading={isCreating}
       />
@@ -335,14 +349,17 @@ CustomTemplateForm.propTypes = {
   template: PropTypes.object.isRequired,
   connections: PropTypes.array.isRequired,
   onBack: PropTypes.func.isRequired,
-  projectId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  projectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onComplete: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   isAdmin: PropTypes.bool,
+  onCreateProject: PropTypes.func,
 };
 
 CustomTemplateForm.defaultProps = {
   isAdmin: false,
+  onCreateProject: () => {},
+  projectId: "",
 };
 
 export default CustomTemplateForm;

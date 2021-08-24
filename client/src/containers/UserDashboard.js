@@ -16,6 +16,9 @@ import {
 } from "../actions/team";
 import { getUser, relog as relogAction } from "../actions/user";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
+import {
+  getTemplates as getTemplatesAction
+} from "../actions/template";
 import ProjectForm from "../components/ProjectForm";
 import InviteMembersForm from "../components/InviteMembersForm";
 import Invites from "../components/Invites";
@@ -28,7 +31,7 @@ import canAccess from "../config/canAccess";
 function UserDashboard(props) {
   const {
     relog, cleanErrors, user, getTeams, createTeam, saveActiveTeam,
-    history, teams, teamLoading,
+    teams, teamLoading, getTemplates,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -113,12 +116,16 @@ function UserDashboard(props) {
   const _onNewProject = (team) => {
     setAddProject(true);
     saveActiveTeam(team);
+    getTemplates(team.id);
   };
 
-  const _onProjectCreated = (project) => {
+  const _onProjectCreated = (project, isNew = true) => {
     getTeams(user.data.id);
     setAddProject(false);
-    history.push(`/${project.team_id}/${project.id}/dashboard?new=true`);
+
+    let url = `/${project.team_id}/${project.id}/dashboard`;
+    if (isNew) url += "?new=true";
+    window.location.href = url;
   };
 
   const directToProject = (team, projectId) => {
@@ -158,7 +165,7 @@ function UserDashboard(props) {
         onClose={() => setCreateTeamModal(false)}
         size="mini"
         closeIcon
-        >
+      >
         <Modal.Header> Create a new Team </Modal.Header>
         <Modal.Content>
           <Form onSubmit={_createTeam}>
@@ -189,7 +196,7 @@ function UserDashboard(props) {
         <Modal
           open={addProject}
           onClose={() => setAddProject(false)}
-          size="small"
+          size="large"
           closeIcon
         >
           <Modal.Content>
@@ -339,7 +346,7 @@ function UserDashboard(props) {
                       className="project-segment"
                     >
                       <Card.Header textAlign="center" as="h3" style={styles.cardHeader}>
-                        Create new project
+                        Create a new project
                       </Card.Header>
                       <Card.Content>
                         <Header textAlign="center" as="h2">
@@ -433,10 +440,10 @@ UserDashboard.propTypes = {
   getTeams: PropTypes.func.isRequired,
   createTeam: PropTypes.func.isRequired,
   saveActiveTeam: PropTypes.func.isRequired,
-  history: PropTypes.object.isRequired,
   relog: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
   teamLoading: PropTypes.bool.isRequired,
+  getTemplates: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -455,6 +462,7 @@ const mapDispatchToProps = (dispatch) => {
     saveActiveTeam: (team) => dispatch(saveActiveTeamAction(team)),
     relog: () => dispatch(relogAction()),
     cleanErrors: () => dispatch(cleanErrorsAction()),
+    getTemplates: (teamId) => dispatch(getTemplatesAction(teamId)),
   };
 };
 

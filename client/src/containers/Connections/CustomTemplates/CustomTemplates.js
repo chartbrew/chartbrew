@@ -14,6 +14,7 @@ import { deleteTemplate as deleteTemplateAction } from "../../../actions/templat
 function CustomTemplates(props) {
   const {
     loading, templates, teamId, projectId, connections, onComplete, isAdmin, deleteTemplate,
+    onCreateProject,
   } = props;
 
   const [createTemplate, setCreateTemplate] = useState(false);
@@ -81,6 +82,7 @@ function CustomTemplates(props) {
         onComplete={onComplete}
         isAdmin={isAdmin}
         onDelete={(id) => _onDelete(id)}
+        onCreateProject={onCreateProject}
       />
     );
   }
@@ -120,16 +122,19 @@ CustomTemplates.propTypes = {
   templates: PropTypes.array.isRequired,
   loading: PropTypes.bool,
   teamId: PropTypes.string.isRequired,
-  projectId: PropTypes.string.isRequired,
+  projectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   connections: PropTypes.array.isRequired,
   onComplete: PropTypes.func.isRequired,
   deleteTemplate: PropTypes.func.isRequired,
   isAdmin: PropTypes.bool,
+  onCreateProject: PropTypes.func,
 };
 
 CustomTemplates.defaultProps = {
   loading: false,
   isAdmin: false,
+  projectId: "",
+  onCreateProject: () => {},
 };
 
 const mapStateToProps = () => ({});
