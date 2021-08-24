@@ -3,12 +3,14 @@ const templates = require("../templates/index");
 const accessControl = require("../modules/accessControl");
 
 const TeamController = require("../controllers/TeamController");
+const ProjectController = require("../controllers/ProjectController");
 const templateController = require("../controllers/TemplateController");
 
 const url = "/team/:team_id/template";
 
 module.exports = (app) => {
   const teamController = new TeamController();
+  const projectController = new ProjectController();
 
   const checkAccess = (req, level, model) => {
     return teamController.getTeamRole(req.params.team_id, req.user.id)
@@ -70,14 +72,20 @@ module.exports = (app) => {
   ** Route to get a custom template configuration
   */
   app.get(`${url}/custom/:template_id`, verifyToken, async (req, res) => {
+    let teamRole;
     try {
-      await checkAccess(req, "updateAny", "chart");
+      teamRole = await checkAccess(req, "updateAny", "chart");
     } catch (error) {
       return formatError(error, res);
     }
 
     return templateController.findById(req.params.template_id)
       .then((template) => {
+        // first, check if the template is part of the owner's team
+        if (template.team_id !== teamRole.team_id) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
         return res.status(200).send(template);
       })
       .catch((err) => {
@@ -90,13 +98,22 @@ module.exports = (app) => {
   ** Route to update a template
   */
   app.put(`${url}/:template_id`, verifyToken, async (req, res) => {
+    let teamRole;
     try {
-      await checkAccess(req, "updateAny", "chart");
+      teamRole = await checkAccess(req, "updateAny", "chart");
     } catch (error) {
       return formatError(error, res);
     }
 
-    return templateController.update(req.params.template_id, req.body)
+    return templateController.findById(req.params.template_id)
+      .then((template) => {
+        // first, check if the template is part of the owner's team
+        if (template.team_id !== teamRole.team_id) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
+        return templateController.update(req.params.template_id, req.body);
+      })
       .catch((err) => {
         return formatError(err, res);
       });
@@ -136,8 +153,9 @@ module.exports = (app) => {
   ** Route to create a template with a model
   */
   app.post(`${url}`, verifyToken, async (req, res) => {
+    let teamRole;
     try {
-      checkAccess(req, "updateAny", "chart");
+      teamRole = await checkAccess(req, "updateAny", "chart");
     } catch (error) {
       return formatError(error, res);
     }
@@ -146,6 +164,10 @@ module.exports = (app) => {
 
     if (req.body.project_id) {
       try {
+        const project = await projectController.findById(req.body.project_id);
+        // if the project is not in the same team, return unauthorized error
+        if (project.team_id !== teamRole.team_id) return formatError(new Error(401), res);
+
         data.model = await templateController.getDashboardModel(req.body.project_id);
       } catch (error) {
         return formatError(error, res);
