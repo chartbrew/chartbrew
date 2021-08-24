@@ -54,7 +54,7 @@ module.exports = async (projectId, { template_id, charts, connections }) => {
     return new Promise((resolve) => resolve(newDataset));
   };
 
-  const createDatasets = async (datasets, chartId) => {
+  const preparedDatasets = async (datasets, chartId) => {
     // now go through the datasets
     const formattedDatasets = datasets.map(async (d) => {
       const newDataset = await attachConnection(d, chartId)
@@ -68,29 +68,37 @@ module.exports = async (projectId, { template_id, charts, connections }) => {
     return Promise.all(formattedDatasets);
   };
 
+  const createDatasets = async (datasets) => {
+    const promises = datasets.map(async (d) => {
+      const dataset = d;
+      if (createdConnections[dataset.connection_id]) {
+        dataset.connection_id = createdConnections[dataset.connection_id];
+      }
+
+      return db.Dataset.create(dataset)
+        .then((createdDataset) => {
+          const newDr = dataset.DataRequest;
+          newDr.dataset_id = createdDataset.id;
+          db.DataRequest.create(newDr);
+          return createdDataset;
+        });
+    });
+
+    return Promise.all(promises);
+  };
+
   // now go through all the charts
   const chartPromises = model.Charts.map(async (chart) => {
     const newChart = chart;
     newChart.project_id = projectId;
     const newPromise = await db.Chart.create(newChart)
       .then(async (createdChart) => {
-        const datasetsToCreate = await createDatasets(
+        const datasetsToCreate = await preparedDatasets(
           chart.Datasets,
           createdChart.id
         );
 
-        const createdDatasets = datasetsToCreate.map(async (d) => {
-          const dataset = d;
-          if (createdConnections[d.connection_id]) {
-            dataset.connection_id = createdConnections[d.connection_id];
-          }
-          return db.Dataset.create(dataset)
-            .then((createdDataset) => {
-              const newDr = dataset.DataRequest;
-              newDr.dataset_id = createdDataset.id;
-              return db.DataRequest.create(newDr);
-            });
-        });
+        const createdDatasets = await createDatasets(datasetsToCreate);
 
         return {
           chart: createdChart,
@@ -101,7 +109,30 @@ module.exports = async (projectId, { template_id, charts, connections }) => {
     return newPromise;
   });
 
+  let gResult;
   return Promise.all(chartPromises)
+    .then((charts) => {
+      gResult = charts;
+
+      const updatePromises = [];
+      charts.forEach((chart) => {
+        chart.datasets.forEach((dataset) => {
+          if (createdConnections[dataset.connection_id]) {
+            updatePromises.push(
+              db.Dataset.update(
+                { connection_id: createdConnections[dataset.connection_id] },
+                { where: { id: dataset.id } }
+              )
+            );
+          }
+        });
+      });
+
+      return Promise.all(updatePromises);
+    })
+    .then(() => {
+      return gResult;
+    })
     .catch((err) => {
       return err;
     });
