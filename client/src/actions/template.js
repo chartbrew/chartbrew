@@ -68,6 +68,34 @@ export function createTemplate(teamId, projectId, templateName) {
   };
 }
 
+export function deleteTemplate(teamId, templateId) {
+  return (dispatch) => {
+    const token = cookies.load("brewToken");
+    const url = `${API_HOST}/team/${teamId}/template/${templateId}`;
+    const method = "DELETE";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`,
+    });
+
+    return fetch(url, { method, headers })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(response.status);
+        }
+
+        return response.json();
+      })
+      .then((configuration) => {
+        dispatch({ type: REMOVE_TEMPLATE, id: templateId });
+        return configuration;
+      })
+      .catch((err) => {
+        return new Promise((resolve, reject) => reject(err));
+      });
+  };
+}
+
 export function getProjectTemplate(teamId, projectId) {
   const token = cookies.load("brewToken");
   const url = `${API_HOST}/team/${teamId}/template/generate/${projectId}`;

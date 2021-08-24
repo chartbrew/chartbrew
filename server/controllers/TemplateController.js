@@ -20,6 +20,10 @@ module.exports.create = (teamId, data) => {
     .then((template) => this.findById(template.id));
 };
 
+module.exports.delete = (id) => {
+  return db.Template.destroy({ where: { id } });
+};
+
 module.exports.getDashboardModel = (projectId) => {
   const template = {
     Charts: [],

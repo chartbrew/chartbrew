@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useWindowSize } from "react-use";
 import {
-  Button, Card, Checkbox, Header, Image, Divider, Grid, Icon, Popup
+  Button, Card, Checkbox, Header, Image, Divider, Grid, Icon, Popup, TransitionablePortal, Modal
 } from "semantic-ui-react";
 import _ from "lodash";
 
@@ -11,13 +11,15 @@ import { generateDashboard } from "../../../actions/project";
 
 function CustomTemplateForm(props) {
   const {
-    template, connections, onBack, projectId, onComplete,
+    template, connections, onBack, projectId, onComplete, isAdmin, onDelete,
   } = props;
   const { width } = useWindowSize();
 
   const [selectedConnections, setSelectedConnections] = useState({});
   const [selectedCharts, setSelectedCharts] = useState([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [deleteConfirmation, setDeleteConfimation] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     if (template && template.model.Connections) {
@@ -178,7 +180,7 @@ function CustomTemplateForm(props) {
 
   return (
     <div>
-      <Header dividing>
+      <Header as="h2" dividing>
         {template.name}
       </Header>
 
@@ -281,6 +283,50 @@ function CustomTemplateForm(props) {
         onClick={_generateTemplate}
         loading={isCreating}
       />
+
+      {isAdmin && (
+        <Button
+          color="red"
+          className="tertiary"
+          icon="trash"
+          content="Delete template"
+          onClick={() => setDeleteConfimation(true)}
+        />
+      )}
+
+      {isAdmin && (
+        <TransitionablePortal open={deleteConfirmation}>
+          <Modal
+            open={deleteConfirmation}
+            closeIcon
+            onClose={() => setDeleteConfimation(false)}
+            basic
+          >
+            <Modal.Header>
+              Are you sure you want to delete this template?
+            </Modal.Header>
+            <Modal.Content>
+              {"After you delete this template you will not be able to create charts from it. Deleting the template will not affect any dashboards."}
+            </Modal.Content>
+            <Modal.Actions>
+              <Button
+                content="Cancel"
+                onClick={() => setDeleteConfimation(false)}
+              />
+              <Button
+                color="red"
+                icon="trash"
+                content="Delete template"
+                loading={deleteLoading}
+                onClick={() => {
+                  setDeleteLoading(true);
+                  onDelete(template.id);
+                }}
+              />
+            </Modal.Actions>
+          </Modal>
+        </TransitionablePortal>
+      )}
     </div>
   );
 }
@@ -291,6 +337,12 @@ CustomTemplateForm.propTypes = {
   onBack: PropTypes.func.isRequired,
   projectId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   onComplete: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  isAdmin: PropTypes.bool,
+};
+
+CustomTemplateForm.defaultProps = {
+  isAdmin: false,
 };
 
 export default CustomTemplateForm;

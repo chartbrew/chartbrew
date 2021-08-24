@@ -1,8 +1,11 @@
+import _ from "lodash";
+
 import {
   ADD_TEMPLATE,
   ADD_TEMPLATE_FAILED,
   FETCH_TEMPLATES,
   FETCHING_TEMPLATES,
+  REMOVE_TEMPLATE,
 } from "../actions/template";
 
 export default function template(state = {
@@ -34,6 +37,14 @@ export default function template(state = {
       return { ...state, loading: false, error: true };
     case FETCHING_TEMPLATES:
       return { ...state, loading: true, error: false };
+    case REMOVE_TEMPLATE:
+      const removeIndex = _.findIndex(state.data, { id: action.id });
+
+      if (removeIndex === -1) return state;
+
+      const tempData = [...state.data];
+      tempData.splice(removeIndex, 1);
+      return { ...state, data: tempData };
     default:
       return state;
   }

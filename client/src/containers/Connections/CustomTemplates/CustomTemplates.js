@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
+import { connect } from "react-redux";
 import {
   Button, Card, Grid, Header, Icon, Placeholder,
 } from "semantic-ui-react";
@@ -8,10 +9,11 @@ import moment from "moment";
 import CreateTemplateForm from "../../../components/CreateTemplateForm";
 import connectionImages from "../../../config/connectionImages";
 import CustomTemplateForm from "./CustomTemplateForm";
+import { deleteTemplate as deleteTemplateAction } from "../../../actions/template";
 
 function CustomTemplates(props) {
   const {
-    loading, templates, teamId, projectId, connections, onComplete,
+    loading, templates, teamId, projectId, connections, onComplete, isAdmin, deleteTemplate,
   } = props;
 
   const [createTemplate, setCreateTemplate] = useState(false);
@@ -23,6 +25,11 @@ function CustomTemplates(props) {
     }
 
     return moment(updatedAt).fromNow();
+  };
+
+  const _onDelete = (templateId) => {
+    return deleteTemplate(teamId, templateId)
+      .then(() => setSelectedTemplate(null));
   };
 
   if (loading) {
@@ -72,6 +79,8 @@ function CustomTemplates(props) {
         onBack={() => setSelectedTemplate(null)}
         projectId={projectId}
         onComplete={onComplete}
+        isAdmin={isAdmin}
+        onDelete={(id) => _onDelete(id)}
       />
     );
   }
@@ -114,10 +123,20 @@ CustomTemplates.propTypes = {
   projectId: PropTypes.string.isRequired,
   connections: PropTypes.array.isRequired,
   onComplete: PropTypes.func.isRequired,
+  deleteTemplate: PropTypes.func.isRequired,
+  isAdmin: PropTypes.bool,
 };
 
 CustomTemplates.defaultProps = {
   loading: false,
+  isAdmin: false,
 };
 
-export default CustomTemplates;
+const mapStateToProps = () => ({});
+const mapDispatchToProps = (dispatch) => {
+  return {
+    deleteTemplate: (teamId, templateId) => dispatch(deleteTemplateAction(teamId, templateId)),
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(CustomTemplates);

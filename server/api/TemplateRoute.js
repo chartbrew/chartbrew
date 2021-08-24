@@ -35,9 +35,9 @@ module.exports = (app) => {
   /*
   ** Route to get all the templates from a team
   */
-  app.get(`${url}`, verifyToken, (req, res) => {
+  app.get(`${url}`, verifyToken, async (req, res) => {
     try {
-      checkAccess(req, "updateAny", "chart");
+      await checkAccess(req, "updateAny", "chart");
     } catch (error) {
       return formatError(error, res);
     }
@@ -55,9 +55,9 @@ module.exports = (app) => {
   /*
   ** Route to get a community template configuration
   */
-  app.get(`${url}/community/:template`, verifyToken, (req, res) => {
+  app.get(`${url}/community/:template`, verifyToken, async (req, res) => {
     try {
-      checkAccess(req, "updateAny", "chart");
+      await checkAccess(req, "updateAny", "chart");
     } catch (error) {
       return formatError(error, res);
     }
@@ -71,7 +71,7 @@ module.exports = (app) => {
   */
   app.get(`${url}/custom/:template_id`, verifyToken, async (req, res) => {
     try {
-      checkAccess(req, "updateAny", "chart");
+      await checkAccess(req, "updateAny", "chart");
     } catch (error) {
       return formatError(error, res);
     }
@@ -91,12 +91,41 @@ module.exports = (app) => {
   */
   app.put(`${url}/:template_id`, verifyToken, async (req, res) => {
     try {
-      checkAccess(req, "updateAny", "chart");
+      await checkAccess(req, "updateAny", "chart");
     } catch (error) {
       return formatError(error, res);
     }
 
     return templateController.update(req.params.template_id, req.body)
+      .catch((err) => {
+        return formatError(err, res);
+      });
+  });
+  // -------------------------------------
+
+  /*
+  ** Route to delete a template
+  */
+  app.delete(`${url}/:template_id`, verifyToken, async (req, res) => {
+    let teamRole;
+    try {
+      teamRole = await checkAccess(req, "deleteAny", "chart");
+    } catch (error) {
+      return formatError(error, res);
+    }
+
+    return templateController.findById(req.params.template_id)
+      .then((template) => {
+        // first, check if the template is part of the owner's team
+        if (template.team_id !== teamRole.team_id) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
+        return templateController.delete(req.params.template_id, req.body);
+      })
+      .then(() => {
+        return res.status(200).send({ success: true });
+      })
       .catch((err) => {
         return formatError(err, res);
       });
