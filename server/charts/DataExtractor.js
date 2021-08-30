@@ -96,9 +96,12 @@ module.exports = (data, filters) => {
         Object.keys(dataset.options.groups).forEach((groupKey) => {
           const datasetGroupValue = dataset.options.groups[groupKey];
           // extract the data using the groups schema
-          const newKey = _.get(newItem, groupKey);
+          let newKey = _.get(newItem, groupKey);
           const newValue = _.get(newItem, datasetGroupValue);
           if (newKey && newValue) {
+            // make sure the new keys don't have dots "." in them
+            // the dots prevent the values from rendering properly
+            newKey = newKey.replaceAll(".", " ");
             newItem[`${newKey}`] = newValue;
           }
         });
