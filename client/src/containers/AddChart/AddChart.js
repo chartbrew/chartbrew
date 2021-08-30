@@ -30,6 +30,9 @@ import {
   clearDatasets as clearDatasetsAction,
 } from "../../actions/dataset";
 import { updateUser as updateUserAction } from "../../actions/user";
+import {
+  getTemplates as getTemplatesAction
+} from "../../actions/template";
 import { chartColors } from "../../config/colors";
 import {
   changeTutorial as changeTutorialAction,
@@ -62,8 +65,8 @@ function AddChart(props) {
 
   const {
     match, createChart, history, charts, saveNewDataset, getChartDatasets, tutorial,
-    datasets, updateDataset, deleteDataset, updateChart, runQuery, user,
-    changeTutorial, completeTutorial, clearDatasets, resetTutorial, connections,
+    datasets, updateDataset, deleteDataset, updateChart, runQuery, user, changeTutorial,
+    completeTutorial, clearDatasets, resetTutorial, connections, templates, getTemplates
   } = props;
 
   useEffect(() => {
@@ -87,6 +90,8 @@ function AddChart(props) {
         setStartTutorial(true);
       }, 1000);
     }
+
+    getTemplates(match.params.teamId);
   }, []);
 
   useEffect(() => {
@@ -361,6 +366,7 @@ function AddChart(props) {
           teamId={match.params.teamId}
           projectId={match.params.projectId}
           connections={connections}
+          templates={templates}
         />
       </div>
     );
@@ -689,6 +695,8 @@ AddChart.propTypes = {
   resetTutorial: PropTypes.func.isRequired,
   clearDatasets: PropTypes.func.isRequired,
   connections: PropTypes.array.isRequired,
+  getTemplates: PropTypes.func.isRequired,
+  templates: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -698,6 +706,7 @@ const mapStateToProps = (state) => {
     user: state.user.data,
     tutorial: state.tutorial,
     connections: state.connection.data,
+    templates: state.template,
   };
 };
 
@@ -727,6 +736,7 @@ const mapDispatchToProps = (dispatch) => {
     completeTutorial: (tut) => dispatch(completeTutorialAction(tut)),
     resetTutorial: (tut) => dispatch(resetTutorialAction(tut)),
     clearDatasets: () => dispatch(clearDatasetsAction()),
+    getTemplates: (teamId) => dispatch(getTemplatesAction(teamId)),
   };
 };
 
