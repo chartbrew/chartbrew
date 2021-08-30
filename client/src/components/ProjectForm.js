@@ -50,21 +50,6 @@ function ProjectForm(props) {
     <div style={styles.container}>
       <Header as="h3">Create a new project</Header>
 
-      <Menu secondary>
-        <Menu.Item
-          active={activeMenu === "empty"}
-          onClick={() => setActiveMenu("empty")}
-        >
-          Empty project
-        </Menu.Item>
-        <Menu.Item
-          active={activeMenu === "template"}
-          onClick={() => setActiveMenu("template")}
-        >
-          From template
-        </Menu.Item>
-      </Menu>
-
       <Form size="large">
         <Form.Field error={!!error}>
           <Form.Input
@@ -81,6 +66,23 @@ function ProjectForm(props) {
               {error}
             </Label>
             )}
+        </Form.Field>
+
+        <Form.Field>
+          <Menu secondary>
+            <Menu.Item
+              active={activeMenu === "empty"}
+              onClick={() => setActiveMenu("empty")}
+            >
+              Empty project
+            </Menu.Item>
+            <Menu.Item
+              active={activeMenu === "template"}
+              onClick={() => setActiveMenu("template")}
+            >
+              From template
+            </Menu.Item>
+          </Menu>
         </Form.Field>
 
         {activeMenu === "empty" && (
