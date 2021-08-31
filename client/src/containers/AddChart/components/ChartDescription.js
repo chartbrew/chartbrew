@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Header, Container, Button, Segment, Grid, Card, Image, Form, Icon, Label, Menu
@@ -27,11 +27,14 @@ function ChartDescription(props) {
 
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [viewTemplates, setViewTemplates] = useState(false);
   const [formType, setFormType] = useState("");
-  const [selectedMenu, setSelectedMenu] = useState("communityTemplates");
+  const [selectedMenu, setSelectedMenu] = useState("emptyChart");
 
   const { width } = useWindowSize();
+
+  useEffect(() => {
+    if (!name) _populateName();
+  }, []);
 
   const _onNameChange = (e, data) => {
     onChange(data.value);
@@ -65,177 +68,153 @@ function ChartDescription(props) {
 
   return (
     <Grid centered style={styles.container} stackable>
-      <Grid.Row centered columns={3}>
-        <Grid.Column width={viewTemplates ? 1 : 4} />
-        <Grid.Column width={viewTemplates ? 14 : 8}>
-          {!viewTemplates && (
-            <Segment color="olive" compact padded textAlign="left">
-              <Container text>
-                <Header as="h2" icon textAlign="left">
-                  {"What are you brewing today?"}
-                  <Header.Subheader>
-                    {"Write a short summary of your visualization"}
-                  </Header.Subheader>
-                </Header>
-              </Container>
-
-              <Container text style={styles.topBuffer}>
-                <Form id="create-chart" style={{ marginBottom: 0 }}>
-                  <Form.Input
-                    type="text"
-                    placeholder="'User growth in the last month'"
-                    error={error}
-                    value={name}
-                    onChange={_onNameChange}
-                    size="big"
-                    fluid
-                    autoFocus
-                  />
-                </Form>
-                <div>
-                  <Button
-                    className="tertiary"
-                    size="small"
-                    content="Can't think of something?"
-                    onClick={_populateName}
-                    style={{ marginTop: "-1em" }}
-                  />
-                </div>
-              </Container>
-
-              <div style={styles.topBuffer}>
-                <Button
-                  loading={loading}
-                  type="submit"
-                  primary
-                  onClick={_onCreatePressed}
+      <Grid.Row columns={2}>
+        <Grid.Column width={1} />
+        <Grid.Column width={14}>
+          <Header as="h1">Create new visualizations</Header>
+        </Grid.Column>
+      </Grid.Row>
+      <Grid.Row centered>
+        <Grid.Column width={14}>
+          <Container textAlign="left">
+            {!formType && (
+              <>
+                <Menu
                   size="big"
-                  form="create-chart"
-                  disabled={!name}
+                  tabular={width >= 768 ? true : null}
+                  stackable
+                  attached={width >= 768 ? "top" : null}
+                  secondary={width < 768 ? true : null}
                 >
-                  Create
-                </Button>
-                <Button
-                  secondary
-                  className="tertiary"
-                  onClick={() => history.goBack()}
-                  size="big"
-                  content="Go back"
-                />
-              </div>
-            </Segment>
-          )}
-
-          {viewTemplates && (
-            <Container textAlign="left">
-              {!formType && (
-                <>
-                  <Menu
-                    size="big"
-                    tabular={width >= 768 ? true : null}
-                    stackable
-                    attached={width >= 768 ? "top" : null}
-                    secondary={width < 768 ? true : null}
+                  <Menu.Item
+                    active={selectedMenu === "emptyChart"}
+                    onClick={() => setSelectedMenu("emptyChart")}
                   >
-                    <Menu.Item
-                      active={selectedMenu === "communityTemplates"}
-                      onClick={() => setSelectedMenu("communityTemplates")}
-                    >
-                      <Icon name="magic" />
-                      Community templates
-                    </Menu.Item>
-                    <Menu.Item
-                      active={selectedMenu === "customTemplates"}
-                      onClick={() => setSelectedMenu("customTemplates")}
-                    >
-                      <Icon name="clone" />
-                      Custom templates
-                      <Label color="olive">New!</Label>
-                    </Menu.Item>
-                  </Menu>
-                  <Segment compact padded attached>
-                    {selectedMenu === "communityTemplates" && (
-                      <Card.Group itemsPerRow={5} stackable centered>
-                        <Card className="project-segment" onClick={() => setFormType("saTemplate")}>
-                          <Image src={simpleAnalyticsLogo} />
-                          <Card.Content textAlign="center">
-                            <Card.Header>Simple Analytics</Card.Header>
-                          </Card.Content>
-                        </Card>
-                        <Card className="project-segment" onClick={() => setFormType("cmTemplate")}>
-                          <Image src={chartmogulLogo} />
-                          <Card.Content textAlign="center">
-                            <Card.Header>ChartMogul</Card.Header>
-                          </Card.Content>
-                        </Card>
-                        <Card className="project-segment" onClick={() => setFormType("mailgunTemplate")}>
-                          <Image src={mailgunLogo} />
-                          <Card.Content textAlign="center">
-                            <Card.Header>Mailgun</Card.Header>
-                          </Card.Content>
-                        </Card>
-                        <Card className="project-segment" onClick={() => setFormType("googleAnalyticsTemplate")}>
-                          <Image src={connectionImages.googleAnalytics} />
-                          <Card.Content textAlign="center">
-                            <Card.Header>Google Analytics</Card.Header>
-                          </Card.Content>
-                        </Card>
-                        <Card>
-                          <Image src={moreLogo} />
-                          <Card.Content textAlign="center">
-                            <Card.Header>More coming soon</Card.Header>
-                          </Card.Content>
-                        </Card>
-                      </Card.Group>
-                    )}
+                    <Icon name="pencil" />
+                    Create from scratch
+                  </Menu.Item>
+                  <Menu.Item
+                    active={selectedMenu === "communityTemplates"}
+                    onClick={() => setSelectedMenu("communityTemplates")}
+                  >
+                    <Icon name="magic" />
+                    Community templates
+                  </Menu.Item>
+                  <Menu.Item
+                    active={selectedMenu === "customTemplates"}
+                    onClick={() => setSelectedMenu("customTemplates")}
+                  >
+                    <Icon name="clone" />
+                    Custom templates
+                    <Label color="olive">New!</Label>
+                  </Menu.Item>
+                </Menu>
+                <Segment compact padded attached>
+                  {selectedMenu === "emptyChart" && (
+                    <>
+                      <Header as="h2" icon textAlign="left">
+                        {"What are you brewing today?"}
+                        <Header.Subheader>
+                          {"Write a short summary of your visualization"}
+                        </Header.Subheader>
+                      </Header>
 
-                    {selectedMenu === "customTemplates" && (
-                      <CustomTemplates
-                        templates={templates.data}
-                        loading={templates.loading}
-                        teamId={match.params.teamId}
-                        projectId={match.params.projectId}
-                        connections={connections}
-                        onComplete={_onCompleteTemplate}
-                        isAdmin={canAccess("admin", user.id, team.TeamRoles)}
-                      />
-                    )}
-                  </Segment>
-                </>
-              )}
+                      <Form id="create-chart" style={{ marginBottom: 0 }}>
+                        <Form.Input
+                          type="text"
+                          placeholder="'User growth in the last month'"
+                          error={error}
+                          value={name}
+                          onChange={_onNameChange}
+                          size="big"
+                          fluid
+                          autoFocus
+                        />
+                      </Form>
+                      <div>
+                        <Button
+                          className="tertiary"
+                          size="small"
+                          content="Can't think of something?"
+                          onClick={_populateName}
+                          style={{ marginTop: "-1em" }}
+                        />
+                      </div>
+                      <div style={styles.topBuffer}>
+                        <Button
+                          loading={loading}
+                          type="submit"
+                          primary
+                          onClick={_onCreatePressed}
+                          size="big"
+                          form="create-chart"
+                          disabled={!name}
+                        >
+                          Start editing
+                        </Button>
+                        <Button
+                          secondary
+                          className="tertiary"
+                          onClick={() => history.goBack()}
+                          size="big"
+                          content="Go back"
+                        />
+                      </div>
+                    </>
+                  )}
+                  {selectedMenu === "communityTemplates" && (
+                    <Card.Group itemsPerRow={5} stackable centered>
+                      <Card className="project-segment" onClick={() => setFormType("saTemplate")}>
+                        <Image src={simpleAnalyticsLogo} />
+                        <Card.Content textAlign="center">
+                          <Card.Header>Simple Analytics</Card.Header>
+                        </Card.Content>
+                      </Card>
+                      <Card className="project-segment" onClick={() => setFormType("cmTemplate")}>
+                        <Image src={chartmogulLogo} />
+                        <Card.Content textAlign="center">
+                          <Card.Header>ChartMogul</Card.Header>
+                        </Card.Content>
+                      </Card>
+                      <Card className="project-segment" onClick={() => setFormType("mailgunTemplate")}>
+                        <Image src={mailgunLogo} />
+                        <Card.Content textAlign="center">
+                          <Card.Header>Mailgun</Card.Header>
+                        </Card.Content>
+                      </Card>
+                      <Card className="project-segment" onClick={() => setFormType("googleAnalyticsTemplate")}>
+                        <Image src={connectionImages.googleAnalytics} />
+                        <Card.Content textAlign="center">
+                          <Card.Header>Google Analytics</Card.Header>
+                        </Card.Content>
+                      </Card>
+                      <Card>
+                        <Image src={moreLogo} />
+                        <Card.Content textAlign="center">
+                          <Card.Header>More coming soon</Card.Header>
+                        </Card.Content>
+                      </Card>
+                    </Card.Group>
+                  )}
 
-              {formType === "saTemplate"
-                && (
-                  <SimpleAnalyticsTemplate
-                    teamId={teamId}
-                    projectId={projectId}
-                    onComplete={_onCompleteTemplate}
-                    connections={connections}
-                    onBack={() => setFormType("")}
-                  />
-                )}
-              {formType === "cmTemplate"
-                && (
-                  <ChartMogulTemplate
-                    teamId={teamId}
-                    projectId={projectId}
-                    onComplete={_onCompleteTemplate}
-                    connections={connections}
-                    onBack={() => setFormType("")}
-                  />
-                )}
-              {formType === "mailgunTemplate"
-                && (
-                  <MailgunTemplate
-                    teamId={teamId}
-                    projectId={projectId}
-                    onComplete={_onCompleteTemplate}
-                    connections={connections}
-                    onBack={() => setFormType("")}
-                  />
-                )}
-              {formType === "googleAnalyticsTemplate" && (
-                <GaTemplate
+                  {selectedMenu === "customTemplates" && (
+                    <CustomTemplates
+                      templates={templates.data}
+                      loading={templates.loading}
+                      teamId={match.params.teamId}
+                      projectId={match.params.projectId}
+                      connections={connections}
+                      onComplete={_onCompleteTemplate}
+                      isAdmin={canAccess("admin", user.id, team.TeamRoles)}
+                    />
+                  )}
+                </Segment>
+              </>
+            )}
+
+            {formType === "saTemplate"
+              && (
+                <SimpleAnalyticsTemplate
                   teamId={teamId}
                   projectId={projectId}
                   onComplete={_onCompleteTemplate}
@@ -243,23 +222,35 @@ function ChartDescription(props) {
                   onBack={() => setFormType("")}
                 />
               )}
-            </Container>
-          )}
-        </Grid.Column>
-        <Grid.Column width={viewTemplates ? 1 : 4} />
-      </Grid.Row>
-
-      <Grid.Row>
-        <Grid.Column width={16}>
-          <Container textAlign="center">
-            <Button
-              primary
-              className="tertiary"
-              icon={viewTemplates ? "pencil" : "magic"}
-              content={viewTemplates ? "Create a chart from scratch instead" : "Or create from a template"}
-              size="big"
-              onClick={() => setViewTemplates(!viewTemplates)}
-            />
+            {formType === "cmTemplate"
+              && (
+                <ChartMogulTemplate
+                  teamId={teamId}
+                  projectId={projectId}
+                  onComplete={_onCompleteTemplate}
+                  connections={connections}
+                  onBack={() => setFormType("")}
+                />
+              )}
+            {formType === "mailgunTemplate"
+              && (
+                <MailgunTemplate
+                  teamId={teamId}
+                  projectId={projectId}
+                  onComplete={_onCompleteTemplate}
+                  connections={connections}
+                  onBack={() => setFormType("")}
+                />
+              )}
+            {formType === "googleAnalyticsTemplate" && (
+              <GaTemplate
+                teamId={teamId}
+                projectId={projectId}
+                onComplete={_onCompleteTemplate}
+                connections={connections}
+                onBack={() => setFormType("")}
+              />
+            )}
           </Container>
         </Grid.Column>
       </Grid.Row>
@@ -269,7 +260,7 @@ function ChartDescription(props) {
 
 const styles = {
   container: {
-    marginTop: 50,
+    // marginTop: 50,
   },
   topBuffer: {
     marginTop: 50,
