@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import moment from "moment";
 import {
   Card, Image, Button, Icon, Container, Divider,
-  Modal, Header, Message, Segment, Step, TransitionablePortal, Menu, Label,
+  Modal, Header, Message, Segment, TransitionablePortal, Menu, Label,
 } from "semantic-ui-react";
 import queryString from "query-string";
 import { useWindowSize } from "react-use";
@@ -248,29 +248,7 @@ function Connections(props) {
             <Divider hidden />
             {connections.length < 1 && (
               <div style={{ textAlign: "center" }}>
-                <Step.Group style={{ textAlign: "left" }}>
-                  <Step completed>
-                    <Icon name="checkmark" />
-                    <Step.Content>
-                      <Step.Title>Project</Step.Title>
-                      <Step.Description>Create your first project</Step.Description>
-                    </Step.Content>
-                  </Step>
-                  <Step active>
-                    <Icon name="hand point down outline" />
-                    <Step.Content>
-                      <Step.Title>Connect</Step.Title>
-                      <Step.Description>Connect to your data source</Step.Description>
-                    </Step.Content>
-                  </Step>
-                  <Step disabled>
-                    <Step.Content>
-                      <Step.Title>Visualize</Step.Title>
-                      <Step.Description>Create your first chart</Step.Description>
-                    </Step.Content>
-                  </Step>
-                </Step.Group>
-                <Header as="h1" textAlign="center">
+                <Header as="h1" textAlign="left">
                   {"Create a connection or start with a template"}
                 </Header>
                 <Divider hidden />

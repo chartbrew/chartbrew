@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Header, Container, Button, Segment, Grid, Card, Image, Form, Icon, Label, Menu
+  Header, Container, Button, Segment, Grid, Card, Image, Form, Icon, Label, Menu, Message
 } from "semantic-ui-react";
 import { useWindowSize } from "react-use";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
+import { Link } from "react-router-dom";
 
 import simpleAnalyticsLogo from "../../../assets/simpleAnalytics.png";
 import moreLogo from "../../../assets/moreComingSoon.png";
@@ -22,7 +23,7 @@ import canAccess from "../../../config/canAccess";
 function ChartDescription(props) {
   const {
     name, onChange, history, onCreate, teamId, projectId, connections, templates,
-    match, user, team,
+    match, user, team, noConnections,
   } = props;
 
   const [error, setError] = useState(false);
@@ -140,6 +141,19 @@ function ChartDescription(props) {
                           style={{ marginTop: "-1em" }}
                         />
                       </div>
+
+                      {noConnections && (
+                        <div>
+                          <Message warning>
+                            <Icon name="warning" />
+                            {"You haven't connected to any data source yet. Create charts from a template instead or "}
+                            <Link to={`/${match.params.teamId}/${match.params.projectId}/connections`}>
+                              {"create a data source first"}
+                            </Link>
+                          </Message>
+                        </div>
+                      )}
+
                       <div style={styles.topBuffer}>
                         <Button
                           loading={loading}
@@ -269,6 +283,7 @@ const styles = {
 
 ChartDescription.defaultProps = {
   name: "",
+  noConnections: false,
 };
 
 ChartDescription.propTypes = {
@@ -283,6 +298,7 @@ ChartDescription.propTypes = {
   team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
   templates: PropTypes.object.isRequired,
+  noConnections: PropTypes.bool,
 };
 
 const mapStateToProps = (state) => ({

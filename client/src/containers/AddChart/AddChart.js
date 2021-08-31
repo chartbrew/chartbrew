@@ -4,13 +4,12 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Grid, Button, Icon, Header, Divider, Popup,
-  Form, Input, List, Message, Checkbox, Modal, Step, TransitionablePortal,
+  Form, Input, List, Message, Checkbox, Modal, TransitionablePortal,
 } from "semantic-ui-react";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import _ from "lodash";
 import { useWindowSize } from "react-use";
-import { Link } from "react-router-dom";
 
 import ChartPreview from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
@@ -324,40 +323,6 @@ function AddChart(props) {
     return (
       <div style={{ textAlign: "center" }}>
         <Divider hidden />
-        {charts.length === 0 && (
-          <Step.Group style={{ textAlign: "left" }}>
-            <Step completed>
-              <Icon name="checkmark" />
-              <Step.Content>
-                <Step.Title>Project</Step.Title>
-                <Step.Description>Create your first project</Step.Description>
-              </Step.Content>
-            </Step>
-            <Step
-              completed={connections.length > 0}
-              as={
-                connections.length > 0
-                  ? "div"
-                  : Link
-              }
-              to={`/${match.params.teamId}/${match.params.projectId}/connections`}
-            >
-              {connections.length > 0 && <Icon name="checkmark" />}
-              {connections.length === 0 && <Icon name="warning sign" color="yellow" />}
-              <Step.Content>
-                <Step.Title>Connect</Step.Title>
-                <Step.Description>Connect to your data source</Step.Description>
-              </Step.Content>
-            </Step>
-            <Step active>
-              <Icon name="hand point down outline" />
-              <Step.Content>
-                <Step.Title>Visualize</Step.Title>
-                <Step.Description>Create your first chart</Step.Description>
-              </Step.Content>
-            </Step>
-          </Step.Group>
-        )}
         <ChartDescription
           name={chartName}
           onChange={_onNameChange}
@@ -367,6 +332,7 @@ function AddChart(props) {
           projectId={match.params.projectId}
           connections={connections}
           templates={templates}
+          noConnections={connections.length === 0}
         />
       </div>
     );

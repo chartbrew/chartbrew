@@ -400,6 +400,7 @@ const styles = {
     backgroundColor: "#103751",
     borderColor: "#103751",
     paddingTop: 50,
+    paddingBottom: 50,
   },
   violetSection: {
     backgroundColor: "#1a7fa0",
