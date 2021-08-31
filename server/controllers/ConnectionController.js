@@ -547,14 +547,14 @@ class ConnectionController {
     if (!connection.oauth_id) return Promise.reject({ error: "No oauth token" });
 
     const oauth = await oauthController.findById(connection.oauth_id);
-    return googleConnector.getAnalytics(oauth.refreshToken, dataRequest);
+    return googleConnector.getAnalytics(oauth, dataRequest);
   }
 
   async testGoogleAnalytics(connection) {
     if (!connection.oauth_id) return Promise.reject({ error: "No oauth token" });
 
     const oauth = await oauthController.findById(connection.oauth_id);
-    return googleConnector.getAccounts(oauth.refreshToken);
+    return googleConnector.getAccounts(oauth.refreshToken, connection.oauth_id);
   }
 }
 

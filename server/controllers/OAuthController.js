@@ -46,8 +46,19 @@ const create = async (data) => {
     });
 };
 
+const update = (id, data) => {
+  return db.OAuth.update(data, { where: { id } })
+    .then(() => {
+      return findById(id);
+    })
+    .catch((err) => {
+      return Promise.reject(err);
+    });
+};
+
 module.exports = {
   findById,
   findOne,
   create,
+  update,
 };

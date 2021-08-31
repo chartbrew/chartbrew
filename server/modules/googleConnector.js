@@ -1,6 +1,8 @@
 const { google } = require("googleapis");
 const { formatISO } = require("date-fns");
 
+const oauthController = require("../controllers/OAuthController");
+
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
 const getOAuthClient = () => {
@@ -54,7 +56,7 @@ module.exports.getToken = async (code) => {
   }
 };
 
-module.exports.getAccounts = async (refreshToken) => {
+module.exports.getAccounts = async (refreshToken, oauth_id) => {
   const oauth2Client = getOAuthClient();
 
   try {
@@ -63,6 +65,15 @@ module.exports.getAccounts = async (refreshToken) => {
 
     const admin = google.analytics("v3");
     const accounts = await admin.management.accountSummaries.list();
+
+    // record the new refresh token in the DB as it's created
+    if (oauth_id) {
+      oauth2Client.on("tokens", (tokens) => {
+        if (tokens.refresh_token) {
+          oauthController.update(oauth_id, { refreshToken: tokens.refresh_token });
+        }
+      });
+    }
 
     return accounts.data;
   } catch (e) {
@@ -86,14 +97,23 @@ module.exports.getMetadata = async (refreshToken) => {
   }
 };
 
-module.exports.getAnalytics = async (refreshToken, dataRequest) => {
+module.exports.getAnalytics = async (oauth, dataRequest) => {
   const oauth2Client = getOAuthClient();
 
   const { configuration } = dataRequest;
 
   try {
-    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    oauth2Client.setCredentials({ refresh_token: oauth.refreshToken });
     google.options({ auth: oauth2Client });
+
+    // record the new refresh token in the DB as it's created
+    if (oauth && oauth.id) {
+      oauth2Client.on("tokens", (tokens) => {
+        if (tokens.refresh_token) {
+          oauthController.update(oauth.id, { refreshToken: tokens.refresh_token });
+        }
+      });
+    }
 
     const reporting = google.analyticsreporting("v4");
 
