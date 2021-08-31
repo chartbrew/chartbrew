@@ -74,12 +74,14 @@ function ProjectForm(props) {
               active={activeMenu === "empty"}
               onClick={() => setActiveMenu("empty")}
             >
+              <Icon name="pencil" />
               Empty project
             </Menu.Item>
             <Menu.Item
               active={activeMenu === "template"}
               onClick={() => setActiveMenu("template")}
             >
+              <Icon name="clone" />
               From template
             </Menu.Item>
           </Menu>
@@ -93,7 +95,7 @@ function ProjectForm(props) {
               labelPosition="right"
               loading={loading}
               disabled={!newProject.name}
-              onClick={_onCreateProject}
+              onClick={() => _onCreateProject()}
               size="large"
             >
               <Icon name="right arrow" />
