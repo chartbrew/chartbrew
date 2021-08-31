@@ -342,22 +342,24 @@ function ProjectDashboard(props) {
                 </div>
               </Menu.Item>
               <Menu.Menu position="right">
-                <Menu.Item style={{ padding: 0 }}>
-                  <Popup
-                    trigger={(
-                      <Button
-                        button
-                        basic
-                        primary
-                        icon="clone"
-                        className="icon"
-                        onClick={() => setTemplateVisible(true)}
-                      />
-                    )}
-                    content="Create a template from this dashboard"
-                    position="bottom right"
-                  />
-                </Menu.Item>
+                {_canAccess("admin") && (
+                  <Menu.Item style={{ padding: 0 }}>
+                    <Popup
+                      trigger={(
+                        <Button
+                          button
+                          basic
+                          primary
+                          icon="clone"
+                          className="icon"
+                          onClick={() => setTemplateVisible(true)}
+                        />
+                      )}
+                      content="Create a template from this dashboard"
+                      position="bottom right"
+                    />
+                  </Menu.Item>
+                )}
                 {_canExport() && (
                   <Menu.Item style={{ padding: 0 }}>
                     <Popup
