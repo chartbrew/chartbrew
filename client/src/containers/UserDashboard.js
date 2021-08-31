@@ -282,6 +282,7 @@ function UserDashboard(props) {
                 title={`${key.TeamRoles.length} member${key.TeamRoles.length > 1 ? "s" : ""}`}
               >
                 <Icon name={key.TeamRoles.length > 1 ? "users" : "user"} size="small" />
+                <span>{" "}</span>
                 <Header.Content>{key.name}</Header.Content>
               </Header>
               {_canAccess("admin", key.TeamRoles)
