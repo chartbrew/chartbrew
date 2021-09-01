@@ -31,7 +31,7 @@
   "homepage": "https://github.com/chartbrew/chartbrew",
   "devDependencies": {
     "husky": "^7.0.2",
-    "lerna": "^3.22.1",
+    "lerna": "^4.0.0",
     "vuepress": "^1.8.2"
   },
   "husky": {
