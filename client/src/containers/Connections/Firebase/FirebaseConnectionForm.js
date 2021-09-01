@@ -86,7 +86,8 @@ function FirebaseConnectionForm(props) {
   };
 
   const _getFirebaseAuth = (data) => {
-    if (!data.firebaseServiceAccount) return sampleAuth;
+    const { firebaseServiceAccount } = data;
+    if (!firebaseServiceAccount) return sampleAuth;
     try {
       return JSON.stringify(data.firebaseServiceAccount, null, 4);
     } catch (e) {

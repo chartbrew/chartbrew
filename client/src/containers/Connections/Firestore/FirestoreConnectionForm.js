@@ -157,7 +157,8 @@ function FirestoreConnectionForm(props) {
   };
 
   const _getFirebaseAuth = (data) => {
-    if (!data.firebaseServiceAccount) return "";
+    const { firebaseServiceAccount } = data;
+    if (!firebaseServiceAccount) return "";
     try {
       return JSON.stringify(data.firebaseServiceAccount, null, 4);
     } catch (e) {
