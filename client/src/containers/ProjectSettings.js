@@ -10,7 +10,6 @@ import canAccess from "../config/canAccess";
 import { updateProject, changeActiveProject, removeProject } from "../actions/project";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 
-const queryString = require("qs"); // eslint-disable-line
 /*
   Component for verifying a new user
 */

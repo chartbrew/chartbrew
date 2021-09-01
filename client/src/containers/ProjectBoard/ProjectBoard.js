@@ -6,7 +6,6 @@ import {
   Dimmer, Loader, Container, Grid, Divider,
 } from "semantic-ui-react";
 import SplitPane from "react-split-pane";
-import queryString from "query-string";
 import { createMedia } from "@artsy/fresnel";
 
 import { getProject, changeActiveProject } from "../../actions/project";
@@ -52,8 +51,8 @@ function ProjectBoard(props) {
   const [isPrinting, setIsPrinting] = useState(false);
 
   useEffect(() => {
-    const parsedParams = queryString.parse(document.location.search.slice(1));
-    if (parsedParams.new) history.push("connections");
+    const params = new URLSearchParams(document.location.search);
+    if (params.has("new")) history.push("connections");
 
     cleanErrors();
     _init();

@@ -12,7 +12,6 @@ import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import { blue } from "../config/colors";
 import cbLogoSmall from "../assets/logo_inverted.png";
 
-const queryString = require("qs"); // eslint-disable-line
 /*
   Component for verifying a new user
 */
@@ -30,7 +29,7 @@ function PasswordReset(props) {
   }, []);
 
   const _onSubmit = () => {
-    const parsedParams = queryString.parse(document.location.search.slice(1));
+    const params = new URLSearchParams(document.location.search);
 
     if (!password || password.length < 6) {
       setError("Please enter at least 6 characters for your password");
@@ -45,8 +44,8 @@ function PasswordReset(props) {
     setSuccess(false);
     setError(false);
     changePasswordWithToken({
-      token: parsedParams.token,
-      hash: parsedParams.hash,
+      token: params.get("token"),
+      hash: params.get("hash"),
       password,
     })
       .then(() => {

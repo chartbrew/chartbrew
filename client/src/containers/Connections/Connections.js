@@ -6,7 +6,6 @@ import {
   Card, Image, Button, Icon, Container, Divider,
   Modal, Header, Message, Segment, TransitionablePortal, Menu, Label,
 } from "semantic-ui-react";
-import queryString from "query-string";
 import { useWindowSize } from "react-use";
 
 import MongoConnectionForm from "./components/MongoConnectionForm";
@@ -73,12 +72,12 @@ function Connections(props) {
 
   useEffect(() => {
     if (connections && connections.length > 0 && !selectedConnection && !editConnection) {
-      const parsedParams = queryString.parse(document.location.search);
-      if (parsedParams.edit && parsedParams.type) {
-        setTemplateConnection(parseInt(parsedParams.edit, 10));
-        setFormType(parsedParams.type);
-      } else if (parsedParams.edit) {
-        const foundConnection = connections.filter((c) => `${c.id}` === parsedParams.edit)[0];
+      const params = new URLSearchParams(document.location.search);
+      if (params.has("edit") && params.has("type")) {
+        setTemplateConnection(parseInt(params.get("edit"), 10));
+        setFormType(params.get("type"));
+      } else if (params.has("edit")) {
+        const foundConnection = connections.filter((c) => `${c.id}` === params.get("edit"))[0];
         if (foundConnection) {
           setEditConnection(foundConnection);
           setFormType(foundConnection.type);

@@ -10,7 +10,6 @@ import {
 import cookie from "react-cookies";
 import { addTeamMember, getUserByTeamInvite } from "../actions/team";
 
-const queryString = require("qs"); // eslint-disable-line
 /*
   Component for inviting user to the team
 */
@@ -32,12 +31,12 @@ class UserInvite extends Component {
   updateProps = (nextProps) => {
     const { addTeamMember } = this.props;
     const { fetched } = this.state;
-    const parsedParams = queryString.parse(document.location.search.slice(1));
+    const params = new URLSearchParams(document.location.search);
 
-    this.setState({ teamId: parsedParams.team_id });
+    this.setState({ teamId: params.get("team_id") });
     if (nextProps.user.data.id && !fetched) {
       this.setState({ fetched: true });
-      addTeamMember(nextProps.user.data.id, parsedParams.token)
+      addTeamMember(nextProps.user.data.id, params.get("token"))
         .then(() => {
           this.setState({ success: true, loading: false });
         })
@@ -49,15 +48,16 @@ class UserInvite extends Component {
 
   redirectUser() {
     const { getUserByTeamInvite, history } = this.props;
-    const parsedParams = queryString.parse(document.location.search);
+    const params = new URLSearchParams(document.location.search);
+    const token = params.get("token");
 
-    getUserByTeamInvite(parsedParams.token)
+    getUserByTeamInvite(token)
       .then((invitedUser) => {
         if (cookie.load("brewToken")) cookie.remove("brewToken");
         if (invitedUser) {
-          history.push(`/login?inviteToken=${parsedParams.token}`);
+          history.push(`/login?inviteToken=${token}`);
         } else {
-          history.push(`/signup?inviteToken=${parsedParams.token}`);
+          history.push(`/signup?inviteToken=${token}`);
         }
       })
       .catch(() => {

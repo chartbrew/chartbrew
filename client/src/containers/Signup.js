@@ -17,7 +17,6 @@ import { cleanErrors as cleanErrorsAction } from "../actions/error";
 
 import { ONE_ACCOUNT_ENABLED } from "../config/settings";
 
-const queryString = require("qs"); // eslint-disable-line
 /*
   Description
 */
@@ -46,10 +45,10 @@ class Signup extends Component {
   submitUser = (values) => {
     const { createUser, history } = this.props;
 
-    const parsedParams = queryString.parse(document.location.search.slice(1));
+    const params = new URLSearchParams(document.location.search);
     this.setState({ loading: true });
-    if (parsedParams.inviteToken) {
-      this._createInvitedUser(values, parsedParams.inviteToken);
+    if (params.has("inviteToken")) {
+      this._createInvitedUser(values, params.get("inviteToken"));
     } else {
       createUser(values)
         .then(() => {
@@ -85,11 +84,11 @@ class Signup extends Component {
     const { oneaccountAuth, history } = this.props;
     const data = event.detail;
 
-    const parsedParams = queryString.parse(document.location.search.slice(1));
+    const params = new URLSearchParams(document.location.search);
     if (!this._isMounted) return;
     this.setState({ oaloading: true });
-    if (parsedParams.inviteToken) {
-      this._createInvitedUser(data, parsedParams.inviteToken);
+    if (params.has("inviteToken")) {
+      this._createInvitedUser(data, params.get("inviteToken"));
     } else {
       oneaccountAuth(data)
         .then(() => {

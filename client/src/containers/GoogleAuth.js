@@ -6,7 +6,6 @@ import {
   Grid, Loader, Container, Dimmer, Button, Header, Icon
 } from "semantic-ui-react";
 import cookie from "react-cookies";
-import queryString from "query-string";
 
 import { API_HOST } from "../config/settings";
 
@@ -25,8 +24,10 @@ function GoogleAuth(props) {
   }, []);
 
   const _processAuth = () => {
-    const parsedParams = queryString.parse(document.location.search.slice(1));
-    const { state, code } = parsedParams;
+    const params = new URLSearchParams(document.location.search);
+    const state = params.get("state");
+    const code = params.get("code");
+
     if (!state || !code) {
       setError(true);
       return false;

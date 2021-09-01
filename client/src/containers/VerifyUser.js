@@ -8,7 +8,6 @@ import {
 
 import { verify } from "../actions/user";
 
-const queryString = require("qs"); // eslint-disable-line
 /*
   Component for verifying a new user
 */
@@ -20,9 +19,9 @@ function VerifyUser(props) {
   const [name, setName] = useState("");
 
   useEffect(() => {
-    const parsedParams = queryString.parse(document.location.search.slice(1));
+    const params = new URLSearchParams(document.location.search);
 
-    verify(parsedParams.id, parsedParams.token)
+    verify(params.get("id"), params.get("token"))
       .then((user) => {
         setSuccess(true);
         setLoading(false);

@@ -14,7 +14,6 @@ import { required, email } from "../config/validations";
 
 import { ONE_ACCOUNT_ENABLED } from "../config/settings";
 
-const queryString = require("qs"); // eslint-disable-line
 /*
   Contains login functionality
 */
@@ -95,12 +94,12 @@ class LoginForm extends Component {
 
   loginUser(values) {
     const { login, addTeamMember, history } = this.props;
-    const parsedParams = queryString.parse(document.location.search.slice(1));
+    const params = new URLSearchParams(document.location.search);
 
     this.setState({ loading: true });
     login(values).then((user) => {
-      if (parsedParams.inviteToken) {
-        addTeamMember(user.id, parsedParams.inviteToken);
+      if (params.has("inviteToken")) {
+        addTeamMember(user.id, params.get("inviteToken"));
       }
       this.setState({ loading: false });
       history.push("/user");
