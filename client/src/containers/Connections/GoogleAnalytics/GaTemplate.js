@@ -5,7 +5,6 @@ import {
   Segment, Form, Button, Icon, Header, Label, Message,
   Container, Divider, List, Grid, Checkbox, Dropdown,
 } from "semantic-ui-react";
-import _ from "lodash";
 import cookie from "react-cookies";
 
 import {
@@ -80,7 +79,9 @@ function GaTemplate(props) {
 
   useEffect(() => {
     if (configuration.accountId) {
-      const acc = _.findLast(accountsData.items, { id: configuration.accountId });
+      const acc = [...accountsData.items]
+        .reverse()
+        .find(item => item.id === configuration.accountId);
       const propertyOpt = [];
       if (acc && acc.webProperties) {
         acc.webProperties.forEach((prop) => {
@@ -98,10 +99,14 @@ function GaTemplate(props) {
 
   useEffect(() => {
     if (configuration.propertyId && configuration.accountId) {
-      const acc = _.findLast(accountsData.items, { id: configuration.accountId });
+      const acc = [...accountsData.items]
+        .reverse()
+        .find(item => item.id === configuration.accountId);
 
       if (acc) {
-        const prop = _.findLast(acc.webProperties, { id: configuration.propertyId });
+        const prop = [...acc.webProperties]
+          .reverse()
+          .find(property => property.id === configuration.propertyId);
         const viewOpt = [];
         if (prop && prop.profiles) {
           prop.profiles.forEach((view) => {
@@ -283,7 +288,7 @@ function GaTemplate(props) {
 
   const _onChangeSelectedCharts = (tid) => {
     const newCharts = [].concat(selectedCharts) || [];
-    const isSelected = _.indexOf(selectedCharts, tid);
+    const isSelected = selectedCharts.indexOf(tid);
 
     if (isSelected === -1) {
       newCharts.push(tid);
@@ -465,7 +470,7 @@ function GaTemplate(props) {
                     <Checkbox
                       label={chart.name}
                       checked={
-                        _.indexOf(selectedCharts, chart.tid) > -1
+                        selectedCharts.includes(chart.tid)
                       }
                       onClick={() => _onChangeSelectedCharts(chart.tid)}
                     />

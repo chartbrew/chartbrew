@@ -4,7 +4,7 @@ import { useWindowSize } from "react-use";
 import {
   Button, Card, Checkbox, Header, Image, Divider, Grid, Icon, Popup, TransitionablePortal, Modal
 } from "semantic-ui-react";
-import _ from "lodash";
+import clone from "lodash/clone";
 
 import connectionImages from "../../../config/connectionImages";
 import { generateDashboard } from "../../../actions/project";
@@ -106,13 +106,13 @@ function CustomTemplateForm(props) {
   };
 
   const _onToggleConnection = (cid) => {
-    const newList = _.clone(selectedConnections);
+    const newList = clone(selectedConnections);
     newList[cid].active = !newList[cid].active;
     setSelectedConnections(newList);
   };
 
   const _onToggleCreateNew = (cid) => {
-    const newList = _.clone(selectedConnections);
+    const newList = clone(selectedConnections);
 
     if (newList[cid]) {
       newList[cid].createNew = !newList[cid].createNew;
@@ -122,7 +122,7 @@ function CustomTemplateForm(props) {
 
   const _onChangeSelectedCharts = (tid) => {
     const newCharts = [].concat(selectedCharts) || [];
-    const isSelected = _.indexOf(selectedCharts, tid);
+    const isSelected = selectedCharts.indexOf(tid);
 
     if (isSelected === -1) {
       newCharts.push(tid);
@@ -160,7 +160,7 @@ function CustomTemplateForm(props) {
       }
     }
 
-    if (dependency && _.indexOf(selectedCharts, chart.tid) > -1) {
+    if (dependency && selectedCharts.includes(chart.tid)) {
       _onChangeSelectedCharts(chart.tid);
     }
 
@@ -249,7 +249,7 @@ function CustomTemplateForm(props) {
                 <Checkbox
                   label={chart.name}
                   checked={
-                    _.indexOf(selectedCharts, chart.tid) > -1
+                    selectedCharts.includes(chart.tid)
                   }
                   onClick={() => _onChangeSelectedCharts(chart.tid)}
                 />

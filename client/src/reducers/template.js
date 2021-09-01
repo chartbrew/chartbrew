@@ -1,5 +1,3 @@
-import _ from "lodash";
-
 import {
   ADD_TEMPLATE,
   ADD_TEMPLATE_FAILED,
@@ -38,7 +36,7 @@ export default function template(state = {
     case FETCHING_TEMPLATES:
       return { ...state, loading: true, error: false };
     case REMOVE_TEMPLATE:
-      const removeIndex = _.findIndex(state.data, { id: action.id });
+      const removeIndex = state.data.findIndex(item => item.id === action.id);
 
       if (removeIndex === -1) return state;
 

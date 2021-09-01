@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
-import _ from "lodash";
+import isEqual from "lodash/isEqual";
 import {
   Popup, Icon, Dropdown, Button, Grid,
   Form, Input, Modal, Header, Menu, TransitionablePortal,
@@ -71,7 +71,7 @@ function Dataset(props) {
 
   // update the dataset prop based on new changes
   useEffect(() => {
-    if (_.isEqual(dataset, newDataset)) {
+    if (isEqual(dataset, newDataset)) {
       setSaveRequired(false);
       return;
     }

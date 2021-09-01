@@ -5,7 +5,6 @@ import { Link } from "react-router-dom";
 import {
   Message, Container, Segment, Header
 } from "semantic-ui-react";
-import _ from "lodash";
 
 import LoginForm from "../components/LoginForm";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
@@ -23,7 +22,7 @@ class Login extends Component {
 
   render() {
     const { errors } = this.props;
-    const loginError = _.find(errors, { pathname: window.location.pathname });
+    const loginError = errors.find(error => error.pathname === window.location.pathname);
 
     return (
       <div style={styles.container}>

@@ -8,7 +8,8 @@ import {
 } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 import { useLocalStorage, useWindowSize } from "react-use";
-import _ from "lodash";
+import clone from "lodash/clone";
+import cloneDeep from "lodash/cloneDeep";
 import { createMedia } from "@artsy/fresnel";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
@@ -78,7 +79,7 @@ function ProjectDashboard(props) {
   }, [charts]);
 
   useEffect(() => {
-    if (!autoRefreshed && _.indexOf(autoRefresh, match.params.projectId) > -1) {
+    if (!autoRefreshed && autoRefresh.includes(match.params.projectId)) {
       _onRefreshData();
     }
   }, [autoRefreshed]);
@@ -90,7 +91,7 @@ function ProjectDashboard(props) {
   const _onAddFilter = (filter) => {
     const { projectId } = match.params;
 
-    const newFilters = _.clone(filters) || {};
+    const newFilters = clone(filters) || {};
     if (!newFilters[projectId]) newFilters[projectId] = [];
     newFilters[projectId].push(filter);
     setFilters(newFilters);
@@ -102,16 +103,16 @@ function ProjectDashboard(props) {
     const { projectId } = match.params;
     _runFiltering();
     if (filters && filters[projectId].length === 1) {
-      const newFilters = _.cloneDeep(filters);
+      const newFilters = cloneDeep(filters);
       delete newFilters[projectId];
       setFilters(newFilters);
       return;
     }
 
-    const index = _.findIndex(filters[projectId], { id: filterId });
+    const index = filters[projectId].findIndex(filter => filter.id === filterId);
     if (!index && index !== 0) return;
 
-    const newFilters = _.cloneDeep(filters);
+    const newFilters = cloneDeep(filters);
     newFilters[projectId].splice(index, 1);
 
     setFilters(newFilters);
@@ -184,7 +185,7 @@ function ProjectDashboard(props) {
       chart.Datasets.map((dataset) => {
         if (dataset.fieldsSchema) {
           Object.keys(dataset.fieldsSchema).forEach((key) => {
-            if (_.find(filters[match.params.projectId], (o) => o.field === key)) {
+            if (filters[match.params.projectId].find((o) => o.field === key)) {
               found = true;
             }
           });
@@ -197,7 +198,7 @@ function ProjectDashboard(props) {
   };
 
   const _getOperator = (operator) => {
-    const found = _.find(operators, (o) => o.value === operator);
+    const found = operators.find((o) => o.value === operator);
     return (found && found.key) || "";
   };
 
@@ -272,7 +273,7 @@ function ProjectDashboard(props) {
 
   const _onChangeAutoRefresh = () => {
     const tempAutoRefresh = autoRefresh || [];
-    const index = _.indexOf(autoRefresh, match.params.projectId);
+    const index = autoRefresh.indexOf(match.params.projectId);
     if (index > -1) {
       tempAutoRefresh.splice(index, 1);
     } else {
@@ -425,7 +426,7 @@ function ProjectDashboard(props) {
                           >
                             <Checkbox
                               toggle
-                              checked={_.indexOf(autoRefresh, match.params.projectId) > -1}
+                              checked={autoRefresh.includes(match.params.projectId)}
                               onChange={_onChangeAutoRefresh}
                             />
                           </Label>

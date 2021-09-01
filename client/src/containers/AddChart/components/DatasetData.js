@@ -8,7 +8,8 @@ import {
 } from "semantic-ui-react";
 import { Calendar } from "react-date-range";
 import uuid from "uuid/v4";
-import _ from "lodash";
+import clone from "lodash/clone";
+import flatMap from "lodash/flatMap";
 import { formatISO, format } from "date-fns";
 import { enGB } from "date-fns/locale";
 
@@ -106,7 +107,7 @@ function DatasetData(props) {
         let found = false;
         for (let j = 0; j < newConditions.length; j++) {
           if (newConditions[j].id === dataset.conditions[i].id) {
-            newConditions[j] = _.clone(dataset.conditions[i]);
+            newConditions[j] = clone(dataset.conditions[i]);
             found = true;
           }
         }
@@ -151,7 +152,7 @@ function DatasetData(props) {
     // extract the table fields if table view is selected
     if (chartType === "table" && chartData && chartData[dataset.legend]) {
       const datasetData = chartData[dataset.legend];
-      const flatColumns = _.flatMap(datasetData.columns, (f) => {
+      const flatColumns = flatMap(datasetData.columns, (f) => {
         if (f.columns) return [f, ...f.columns];
         return f;
       });
@@ -208,7 +209,7 @@ function DatasetData(props) {
     const newConditions = conditions.map((item) => {
       let newItem = { ...item };
       if (item.id === id) {
-        const previousItem = _.find(dataset.conditions, { id });
+        const previousItem = dataset.conditions.find(condition => condition.id === id);
         newItem = { ...previousItem };
       }
 
@@ -297,7 +298,7 @@ function DatasetData(props) {
 
   const _onShowField = (field) => {
     const excludedFields = dataset.excludedFields || [];
-    const index = _.indexOf(excludedFields, field);
+    const index = excludedFields.indexOf(field);
     excludedFields.splice(index, 1);
     onUpdate({ excludedFields });
   };
@@ -703,6 +704,8 @@ function DatasetData(props) {
         </Grid.Row>
       )}
       {conditions.map((condition, index) => {
+        const operator = operators.find(operator => operator.value === condition.operator);
+        const fieldOption = fieldOptions.find(o => o.value === condition.field);
         return (
           <Grid.Row key={condition.id} style={styles.conditionRow} className="datasetdata-filters-tut">
             <Grid.Column>
@@ -727,20 +730,13 @@ function DatasetData(props) {
                 className="small button"
                 options={operators}
                 search
-                text={
-                  (
-                    _.find(operators, { value: condition.operator })
-                    && _.find(operators, { value: condition.operator }).key
-                  )
-                  || "="
-                }
+                text={(operator && operator.key) || "="}
                 value={condition.operator}
                 onChange={(e, data) => _updateCondition(condition.id, data.value, "operator")}
               />
 
               {(!condition.field
-                || (_.find(fieldOptions, { value: condition.field })
-                && _.find(fieldOptions, { value: condition.field }).type !== "date")) && (
+                || (fieldOption && fieldOption.type !== "date")) && (
                 <Input
                   placeholder="Enter a value"
                   size="small"
@@ -749,8 +745,7 @@ function DatasetData(props) {
                   disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                 />
               )}
-              {_.find(fieldOptions, { value: condition.field })
-                && _.find(fieldOptions, { value: condition.field }).type === "date" && (
+              {fieldOption && fieldOption.type === "date" && (
                 <Popup
                   on="click"
                   pinned

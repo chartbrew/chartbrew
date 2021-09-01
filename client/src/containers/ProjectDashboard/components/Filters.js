@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import _ from "lodash";
+import clone from "lodash/clone";
 import uuid from "uuid/v4";
 import {
   Button, Container, Divider, Dropdown, Grid, Header, Icon, Input, Label, Popup,
@@ -33,7 +33,7 @@ function Filters(props) {
             if (dataset.fieldsSchema) {
               Object.keys(dataset.fieldsSchema).forEach((key) => {
                 const type = dataset.fieldsSchema[key];
-                if (_.findIndex(tempFieldOptions, { key }) !== -1) return;
+                if (tempFieldOptions.findIndex(option => option.key === key) !== -1) return;
                 tempFieldOptions.push({
                   key,
                   text: key && key.replace("root[].", "").replace("root.", ""),
@@ -64,7 +64,7 @@ function Filters(props) {
   }, [charts]);
 
   const _updateFilter = (value, type) => {
-    const newFilter = _.clone(filter);
+    const newFilter = clone(filter);
     newFilter[type] = value;
     newFilter.saved = false;
 
@@ -109,6 +109,9 @@ function Filters(props) {
     });
   };
 
+  const operator = operators.find(o => o.value === filter.operator);
+  const fieldOption = fieldOptions.find(o => o.value === filter.field);
+
   return (
     <Container>
       <Grid columns={1} relaxed>
@@ -134,48 +137,40 @@ function Filters(props) {
               className="button"
               options={operators}
               search
-              text={
-                (
-                  _.find(operators, { value: filter.operator })
-                  && _.find(operators, { value: filter.operator }).key
-                )
-                || "="
-              }
+              text={(operator && operator.key) || "="}
               value={filter.operator}
               onChange={(e, data) => _updateFilter(data.value, "operator")}
             />
 
             {(!filter.field
-              || (_.find(fieldOptions, { value: filter.field })
-                && _.find(fieldOptions, { value: filter.field }).type !== "date")) && (
+              || (fieldOption && fieldOption.type !== "date")) && (
                 <Input
                   placeholder="Enter a value"
                   value={filter.value}
                   onChange={(e, data) => _updateFilter(data.value, "value")}
                 />
             )}
-            {_.find(fieldOptions, { value: filter.field })
-              && _.find(fieldOptions, { value: filter.field }).type === "date" && (
-                <Popup
-                  on="click"
-                  position="bottom center"
-                  trigger={(
-                    <Input
-                      placeholder="Enter a value"
-                      icon="calendar alternate"
-                      iconPosition="left"
-                      value={filter.value && format(new Date(filter.value), "Pp", { locale: enGB })}
-                    />
-                  )}
-                  content={(
-                    <Calendar
-                      date={(filter.value && new Date(filter.value)) || new Date()}
-                      onChange={(date) => _updateFilter(formatISO(date), "value")}
-                      locale={enGB}
-                      color={secondary}
-                    />
-                  )}
-                />
+            {fieldOption && fieldOption.type === "date" && (
+            <Popup
+              on="click"
+              position="bottom center"
+              trigger={(
+                <Input
+                  placeholder="Enter a value"
+                  icon="calendar alternate"
+                  iconPosition="left"
+                  value={filter.value && format(new Date(filter.value), "Pp", { locale: enGB })}
+                  />
+              )}
+              content={(
+                <Calendar
+                  date={(filter.value && new Date(filter.value)) || new Date()}
+                  onChange={(date) => _updateFilter(formatISO(date), "value")}
+                  locale={enGB}
+                  color={secondary}
+                  />
+              )}
+              />
             )}
             <Popup
               trigger={<Icon style={{ marginLeft: 15 }} size="large" name="question circle outline" />}

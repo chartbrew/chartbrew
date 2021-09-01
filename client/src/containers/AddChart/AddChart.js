@@ -8,7 +8,7 @@ import {
 } from "semantic-ui-react";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
-import _ from "lodash";
+import isEqual from "lodash/isEqual";
 import { useWindowSize } from "react-use";
 
 import ChartPreview from "./components/ChartPreview";
@@ -96,7 +96,7 @@ function AddChart(props) {
   useEffect(() => {
     charts.map((chart) => {
       if (chart.id === parseInt(match.params.chartId, 10)) {
-        if (!_.isEqual(chart, newChart)) {
+        if (!isEqual(chart, newChart)) {
           setNewChart(chart);
           setChartName(chart.name);
         }
@@ -109,7 +109,7 @@ function AddChart(props) {
     let found = false;
     charts.map((chart) => {
       if (chart.id === parseInt(match.params.chartId, 10)) {
-        if (!_.isEqual(chart, newChart)) {
+        if (!isEqual(chart, newChart)) {
           setSaveRequired(true);
           found = true;
         }

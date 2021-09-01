@@ -6,7 +6,6 @@ import { Link } from "react-router-dom";
 import {
   Message, Divider, Container, Segment, Form, Button, Header, Icon, Label,
 } from "semantic-ui-react";
-import _ from "lodash";
 
 import { createUser, createInvitedUser, oneaccountAuth } from "../actions/user";
 import { addTeamMember } from "../actions/team";
@@ -147,7 +146,7 @@ class Signup extends Component {
       loading, addedToTeam,
     } = this.state;
 
-    const signupError = _.find(errors, { pathname: window.location.pathname });
+    const signupError = errors.find(error => error.pathname === window.location.pathname);
 
     return (
       <div style={styles.container}>

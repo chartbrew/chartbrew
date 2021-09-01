@@ -4,7 +4,6 @@ import {
   Segment, Form, Button, Icon, Header, Label, Message,
   Container, Divider, List, Grid, Checkbox, Dropdown,
 } from "semantic-ui-react";
-import _ from "lodash";
 import cookie from "react-cookies";
 
 import { generateDashboard } from "../../../actions/project";
@@ -123,7 +122,7 @@ function SimpleAnalyticsTemplate(props) {
 
   const _onChangeSelectedCharts = (tid) => {
     const newCharts = [].concat(selectedCharts) || [];
-    const isSelected = _.indexOf(selectedCharts, tid);
+    const isSelected = selectedCharts.indexOf(tid);
 
     if (isSelected === -1) {
       newCharts.push(tid);
@@ -263,7 +262,7 @@ function SimpleAnalyticsTemplate(props) {
                     <Checkbox
                       label={chart.name}
                       checked={
-                        _.indexOf(selectedCharts, chart.tid) > -1
+                        selectedCharts.includes(chart.tid)
                       }
                       onClick={() => _onChangeSelectedCharts(chart.tid)}
                     />

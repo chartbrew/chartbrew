@@ -6,7 +6,7 @@ import {
   Dimmer, Message, Segment, Button, Divider, Dropdown, Checkbox, Grid,
   Loader, Container, Header, Modal, List, TransitionablePortal, Popup, Icon, Label,
 } from "semantic-ui-react";
-import _ from "lodash";
+import clone from "lodash/clone";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import { useWindowSize } from "react-use";
@@ -112,7 +112,7 @@ function TeamMembers(props) {
 
   const _onChangeProjectAccess = (projectId) => {
     const newAccess = projectAccess[changedMember.id].projects || [];
-    const isFound = _.indexOf(projectAccess[changedMember.id].projects, projectId);
+    const isFound = projectAccess[changedMember.id].projects.indexOf(projectId);
 
     if (isFound === -1) {
       newAccess.push(projectId);
@@ -136,7 +136,7 @@ function TeamMembers(props) {
       canExport: !changedRole.canExport,
     }, changedMember.id, team.id)
       .then(() => {
-        const newChangedRole = _.clone(changedRole);
+        const newChangedRole = clone(changedRole);
         newChangedRole.canExport = !changedRole.canExport;
         setChangedRole(newChangedRole);
         _getTeam();
@@ -385,7 +385,7 @@ function TeamMembers(props) {
                         toggle
                         label={project.name}
                         checked={
-                          _.indexOf(projectAccess[changedMember.id].projects, project.id) > -1
+                          projectAccess[changedMember.id].projects.includes(project.id)
                         }
                         onClick={() => _onChangeProjectAccess(project.id)}
                       />

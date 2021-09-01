@@ -6,7 +6,8 @@ import {
   Grid, Form, Button, Icon, Label, Header, Divider, Popup, Input, Dropdown,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
-import _ from "lodash";
+import clone from "lodash/clone";
+import cloneDeep from "lodash/cloneDeep";
 import { toast } from "react-toastify";
 import uuid from "uuid/v4";
 import { Calendar } from "react-date-range";
@@ -107,7 +108,7 @@ function FirestoreBuilder(props) {
   useEffect(() => {
     if (dataRequest) {
       // get the request data if it exists
-      const requestBody = _.find(requests, { options: { id: dataset.id } });
+      const requestBody = requests.find(request => request.options.id === dataset.id);
       if (requestBody) {
         setResult(JSON.stringify(requestBody.data, null, 2));
       }
@@ -125,7 +126,7 @@ function FirestoreBuilder(props) {
           let found = false;
           for (let j = 0; j < newConditions.length; j++) {
             if (newConditions[j].id === dataRequest.conditions[i].id) {
-              newConditions[j] = _.clone(dataRequest.conditions[i]);
+              newConditions[j] = clone(dataRequest.conditions[i]);
               found = true;
             }
           }
@@ -209,7 +210,7 @@ function FirestoreBuilder(props) {
     setRequestLoading(true);
 
     if (request === null) request = firestoreRequest; // eslint-disable-line
-    const requestToSave = _.cloneDeep(request);
+    const requestToSave = cloneDeep(request);
     onSave(requestToSave).then(() => {
       _onRunRequest();
     });
@@ -281,11 +282,10 @@ function FirestoreBuilder(props) {
         }
 
         // now check to see if the values need to be converted to numbers
-        const selectedField = _.find(fieldOptions, (o) => o.value === newItem.field);
+        const selectedField = fieldOptions.find((o) => o.value === newItem.field);
         if (selectedField && selectedField.type === "array") {
           const selector = newItem.field.substring(newItem.field.indexOf("].") + 2);
-          const arrayValues = _.find(
-            jsonResult,
+          const arrayValues = jsonResult.find(
             (o) => o[selector] && o[selector].length > 0
           )[selector];
           if (newItem.operator !== "array-contains" && determineType(arrayValues[0]) === "number") {
@@ -310,7 +310,7 @@ function FirestoreBuilder(props) {
     const newConditions = conditions.map((item) => {
       let newItem = { ...item };
       if (item.id === id) {
-        const previousItem = _.find(dataRequest.conditions, { id });
+        const previousItem = dataRequest.conditions.find(condition => condition.id === id);
         newItem = { ...previousItem };
       }
 
@@ -424,10 +424,12 @@ function FirestoreBuilder(props) {
               />
             </Header>
             {conditions.map((condition, index) => {
+              const operator = operators.find(operator => operator.value === condition.operator);
+              const fieldOption = fieldOptions.find(option => option.value === condition.field);
               return (
                 <Grid.Row key={condition.id} style={styles.conditionRow} className="datasetdata-filters-tut">
                   <Grid.Column>
-                    {!_.find(fieldOptions, { value: condition.field }) && condition.saved && (
+                    {!fieldOption && condition.saved && (
                       <Popup
                         trigger={<Icon name="exclamation triangle" color="orange" />}
                         content="This condition might not work on the current collection."
@@ -452,20 +454,14 @@ function FirestoreBuilder(props) {
                       className="small button"
                       options={operators}
                       search
-                      text={
-                        (
-                          _.find(operators, { value: condition.operator })
-                          && _.find(operators, { value: condition.operator }).key
-                        )
-                        || "=="
-                      }
+                      text={(operator && operator.key) || "=="}
                       value={condition.operator}
                       onChange={(e, data) => _updateCondition(condition.id, data.value, "operator")}
                     />
 
                     {(!condition.field
-                      || (_.find(fieldOptions, { value: condition.field })
-                        && _.find(fieldOptions, { value: condition.field }).type !== "date"))
+                      || (fieldOption
+                        && fieldOption.type !== "date"))
                         && (condition.operator !== "array-contains-any"
                           && condition.operator !== "in"
                           && condition.operator !== "not-in")
@@ -478,8 +474,8 @@ function FirestoreBuilder(props) {
                             disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                           />
                           )}
-                    {_.find(fieldOptions, { value: condition.field })
-                      && _.find(fieldOptions, { value: condition.field }).type === "date" && (
+                    {fieldOption
+                      && fieldOption.type === "date" && (
                         <Popup
                           on="click"
                           pinned

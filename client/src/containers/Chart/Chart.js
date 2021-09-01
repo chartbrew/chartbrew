@@ -8,7 +8,6 @@ import {
   Dropdown, Message, Popup, Form, TextArea, Label, Input, Divider,
 } from "semantic-ui-react";
 import moment from "moment";
-import _ from "lodash";
 
 import {
   removeChart as removeChartAction,
@@ -192,7 +191,7 @@ function Chart(props) {
       chart.Datasets.map((dataset) => {
         if (dataset.fieldsSchema) {
           Object.keys(dataset.fieldsSchema).forEach((key) => {
-            if (_.find(dashboardFilters, (o) => o.field === key)) {
+            if (dashboardFilters.find((o) => o.field === key)) {
               found = true;
             }
           });
@@ -227,7 +226,7 @@ function Chart(props) {
   };
 
   const _getChartIndex = () => {
-    return _.findIndex(charts, (c) => c.id === chart.id);
+    return charts.findIndex((c) => c.id === chart.id);
   };
 
   const _onExport = () => {

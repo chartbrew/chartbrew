@@ -6,7 +6,6 @@ import {
   Divider, Dimmer, Loader, Form, Modal, Header, Message, Container,
   Button, Icon, Grid, Card, Step, TransitionablePortal,
 } from "semantic-ui-react";
-import _ from "lodash";
 import { useWindowSize } from "react-use";
 
 import {
@@ -62,7 +61,7 @@ function UserDashboard(props) {
       let shouldOpenNewProject = false;
       let teamOwned;
       teams.map((team) => {
-        if (team.TeamRoles && _.find(team.TeamRoles, { user_id: user.data.id, role: "owner" })) {
+        if (team.TeamRoles && team.TeamRoles.find(teamRole => teamRole.user_id === user.data.id && teamRole.role === "owner")) {
           teamOwned = team;
 
           if (teamOwned.Projects && teamOwned.Projects.length === 0) {

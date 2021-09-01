@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {
   Button, Checkbox, Container, Divider, Grid, Header, Popup
 } from "semantic-ui-react";
-import _ from "lodash";
+import clone from "lodash/clone";
 
 function ChartExport(props) {
   const {
@@ -12,8 +12,8 @@ function ChartExport(props) {
   const [selectedIds, setSelectedIds] = useState([]);
 
   const _onSelectChart = (id) => {
-    const foundIndex = _.indexOf(selectedIds, id);
-    const newSelectedIds = _.clone(selectedIds);
+    const foundIndex = selectedIds.indexOf(id);
+    const newSelectedIds = clone(selectedIds);
 
     if (foundIndex > -1) {
       newSelectedIds.splice(foundIndex, 1);
@@ -62,7 +62,7 @@ function ChartExport(props) {
           return (
             <Grid.Column key={chart.id}>
               <Checkbox
-                checked={_.indexOf(selectedIds, chart.id) > -1}
+                checked={selectedIds.includes(chart.id)}
                 onChange={() => _onSelectChart(chart.id)}
                 label={chart.name}
               />

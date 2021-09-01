@@ -4,7 +4,6 @@ import {
   Segment, Form, Button, Icon, Header, Label, Message, Container, Divider, Grid, Checkbox, Dropdown,
 } from "semantic-ui-react";
 import cookie from "react-cookies";
-import _ from "lodash";
 
 import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
@@ -127,7 +126,7 @@ function ChartMogulTemplate(props) {
 
   const _onChangeSelectedCharts = (tid) => {
     const newCharts = [].concat(selectedCharts) || [];
-    const isSelected = _.indexOf(selectedCharts, tid);
+    const isSelected = selectedCharts.indexOf(tid);
 
     if (isSelected === -1) {
       newCharts.push(tid);
@@ -262,7 +261,7 @@ function ChartMogulTemplate(props) {
                     <Checkbox
                       label={chart.name}
                       checked={
-                        _.indexOf(selectedCharts, chart.tid) > -1
+                        selectedCharts.includes(chart.tid)
                       }
                       onClick={() => _onChangeSelectedCharts(chart.tid)}
                     />

@@ -5,7 +5,7 @@ import { withRouter } from "react-router";
 import {
   Modal, Button, Loader, Container, Placeholder,
 } from "semantic-ui-react";
-import _ from "lodash";
+import cloneDeep from "lodash/cloneDeep";
 import { toast } from "react-toastify";
 
 import ApiBuilder from "./ApiBuilder";
@@ -77,7 +77,7 @@ function DatarequestModal(props) {
   }, [dataRequest]);
 
   useEffect(() => {
-    const request = _.find(requests, { options: { id: dataset.id } });
+    const request = requests.find(request === request.options.id === dataset.id);
     setResult(request);
     if (open && connection.type !== "firestore") changeTutorial("requestmodal");
   }, [requests, dataset]);
@@ -130,7 +130,7 @@ function DatarequestModal(props) {
 
   const _onSaveRequest = (dr = dataRequest) => {
     setLoading(true);
-    const newDr = _.cloneDeep(dr);
+    const newDr = cloneDeep(dr);
     return updateDataRequest(
       match.params.projectId,
       match.params.chartId,

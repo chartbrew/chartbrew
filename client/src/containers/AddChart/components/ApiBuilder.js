@@ -8,7 +8,6 @@ import {
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
 import uuid from "uuid/v4";
-import _ from "lodash";
 import { toast } from "react-toastify";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -89,7 +88,7 @@ function ApiBuilder(props) {
       setApiRequest(formattedApiRequest);
 
       // get the request data if it exists
-      const requestBody = _.find(requests, { options: { id: dataset.id } });
+      const requestBody = requests.find(request => request.options.id === dataset.id);
       if (requestBody) {
         setResult(JSON.stringify(requestBody.data, null, 2));
       }

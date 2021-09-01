@@ -6,7 +6,6 @@ import {
   Grid, Form, Button, Icon, Header, Divider, Dropdown, Label, Input, Popup, Message,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
-import _ from "lodash";
 import { toast } from "react-toastify";
 import { Calendar } from "react-date-range";
 import { format, sub } from "date-fns";
@@ -120,7 +119,9 @@ function GaBuilder(props) {
 
   useEffect(() => {
     if (configuration.accountId) {
-      const acc = _.findLast(analyticsData.items, { id: configuration.accountId });
+      const acc = [...analyticsData.items]
+        .reverse()
+        .find(item => item.id === configuration.accountId);
       const propertyOpt = [];
       if (acc && acc.webProperties) {
         acc.webProperties.forEach((prop) => {
@@ -138,10 +139,14 @@ function GaBuilder(props) {
 
   useEffect(() => {
     if (configuration.propertyId && configuration.accountId) {
-      const acc = _.findLast(analyticsData.items, { id: configuration.accountId });
+      const acc = [...analyticsData.items]
+        .reverse()
+        .find(item => item.id === configuration.accountId);
 
       if (acc) {
-        const prop = _.findLast(acc.webProperties, { id: configuration.propertyId });
+        const prop = [...acc.webProperties]
+          .reverse()
+          .find(property => property.id === configuration.propertyId);
         const viewOpt = [];
         if (prop && prop.profiles) {
           prop.profiles.forEach((view) => {
@@ -177,7 +182,7 @@ function GaBuilder(props) {
   const _initRequest = () => {
     if (dataRequest) {
       // get the request data if it exists
-      const requestBody = _.find(requests, { options: { id: dataset.id } });
+      const requestBody = requests.find(request => request.options.id === dataset.id);
       if (requestBody) {
         setResult(JSON.stringify(requestBody.data, null, 2));
       }

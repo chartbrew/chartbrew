@@ -5,7 +5,6 @@ import { withRouter } from "react-router";
 import {
   Segment, Dropdown, Message, Header, Divider, Form, Button, Icon, Grid, Checkbox, Popup
 } from "semantic-ui-react";
-import _ from "lodash";
 
 import { email } from "../config/validations";
 
@@ -75,7 +74,7 @@ function InviteMembersForm(props) {
 
   const _onChangeProjectAccess = (projectId) => {
     const newAccess = [].concat(projectAccess) || [];
-    const isFound = _.indexOf(projectAccess, projectId);
+    const isFound = projectAccess.indexOf(projectId);
 
     if (isFound === -1) {
       newAccess.push(projectId);
@@ -184,7 +183,7 @@ function InviteMembersForm(props) {
               <Checkbox
                 label={project.name}
                 checked={
-                  _.indexOf(projectAccess, project.id) > -1
+                  projectAccess.includes(project.id)
                 }
                 onClick={() => _onChangeProjectAccess(project.id)}
               />

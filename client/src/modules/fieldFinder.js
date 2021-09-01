@@ -1,5 +1,3 @@
-import _ from "lodash";
-
 import determineType from "./determineType";
 
 function findFields(coll, currentKey, first, fields) {
@@ -77,7 +75,7 @@ export default function init(collection, checkObjects) {
 
     multiFields.forEach((m) => {
       m.forEach((f) => {
-        if (_.findIndex(fields, { field: f.field }) === -1) {
+        if (fields.findIndex(field => field.field === f.field) === -1) {
           fields.push(f);
         }
       });
@@ -91,7 +89,7 @@ export default function init(collection, checkObjects) {
 
     multiFields.forEach((m) => {
       m.forEach((f) => {
-        if (_.findIndex(fields, { field: f.field }) === -1) {
+        if (fields.findIndex(field => field.field === f.field) === -1) {
           fields.push(f);
         }
       });
