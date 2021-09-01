@@ -20,7 +20,9 @@
   <a href="https://chartbrew.com">
     <img src="https://cdn2.chartbrew.com/newsletter/chartbrew-open-dashboard.jpeg" alt="ChartBrew dashboard" width="600"/>
   </a>
-</a>
+</p>
+
+<strong>If you are looking for Chartbrew as a service, <a href="https://chartbrew.com">it's available here</a>.</strong>
 
 <hr />
 
@@ -51,6 +53,8 @@ Chartbrew also features dashboard templates with charts already prepared:
 * ChartMogul
 * Mailgun
 * Google Analytics
+
+...or you can create your **custom templates** and replicate them across multiple dashboards.
 
 ## Prerequisites
 
