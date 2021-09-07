@@ -3,8 +3,9 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
   Container, Button, Icon, Header, Image, Dimmer, Dropdown,
-  Popup, Segment, Label,
+  Popup, Segment,
 } from "semantic-ui-react";
+import _ from "lodash";
 
 import lineChartImage from "../../../assets/charts/lineChart.jpg";
 import barChartImage from "../../../assets/charts/barChart.jpg";
@@ -91,14 +92,35 @@ function ChartPreview(props) {
     onRefreshData();
   };
 
+  const _getDropdownOptions = (datasetId, condition) => {
+    const { conditionsOptions } = chart;
+    const datasetConditions = _.find(conditionsOptions, { dataset_id: datasetId });
+    const conditionOpt = _.find(datasetConditions.conditions, { field: condition.field });
+
+    if (!conditionOpt) return [];
+
+    return conditionOpt.values.map((v) => {
+      return {
+        key: v,
+        value: v,
+        text: v,
+      };
+    });
+  };
+
   return (
     <>
       {chart && chart.chartData && chart.Datasets && (
         <>
           {chart.Datasets.filter((d) => d.conditions && d.conditions.length).map((dataset) => {
             return dataset.conditions.filter((c) => c.exposed).map((condition) => {
+              const filterOptions = _getDropdownOptions(dataset.id, condition);
               return (
-                <Label>{condition.field}</Label>
+                <Dropdown
+                  selection
+                  options={filterOptions}
+                  text={`${condition.field.replace("root[].", "")} ${condition.operator}`}
+                />
               );
             });
           })}

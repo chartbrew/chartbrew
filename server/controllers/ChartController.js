@@ -367,12 +367,16 @@ class ChartController {
         return axisChart.plot(skipParsing, filters, isExport);
       })
       .then((chartData) => {
-        gChartData = chartData;
+        gChartData = chartData.configuration;
+        if (chartData && chartData.conditionsOptions) {
+          gChartData.conditionsOptions = chartData.conditionsOptions;
+        }
+
         if (filters || isExport) {
           return filters;
         }
 
-        return this.update(id, { chartData, chartDataUpdated: moment() });
+        return this.update(id, { chartData: chartData.configuration, chartDataUpdated: moment() });
       })
       .then(() => {
         if (filters && !isExport) {
@@ -386,6 +390,12 @@ class ChartController {
         }
 
         return this.findById(id);
+      })
+      .then((chart) => {
+        if (gChartData.conditionsOptions) {
+          chart.setDataValue("conditionsOptions", gChartData.conditionsOptions);
+        }
+        return chart;
       })
       .catch((err) => {
         return err;

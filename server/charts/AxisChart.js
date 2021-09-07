@@ -45,6 +45,8 @@ class AxisChart {
 
   plot(skipDataProcessing, filters) {
     // skip the data processing if required (this algorithm is time-expensive)
+    const conditionsOptions = [];
+
     if (
       !skipDataProcessing
         || !this.chart.chartData
@@ -81,7 +83,14 @@ class AxisChart {
         let xAxisData = [];
         let yAxisData = [];
 
-        let filteredData = dataFilter(dataset.data, xAxis, dataset.options.conditions);
+        const filterData = dataFilter(dataset.data, xAxis, dataset.options.conditions);
+        if (filterData.conditionsOptions) {
+          conditionsOptions.push({
+            dataset_id: dataset.options.id,
+            conditions: filterData.conditionsOptions,
+          });
+        }
+        let filteredData = filterData.data;
 
         if (dateField && this.chart.startDate && this.chart.endDate && canDateFilter) {
           if (this.chart.currentEndDate) {
@@ -100,7 +109,7 @@ class AxisChart {
             operator: "lessOrEqual",
           }];
 
-          filteredData = dataFilter(filteredData, dateField, dateConditions);
+          filteredData = dataFilter(filteredData, dateField, dateConditions).data;
         }
 
         if (filters && filters.length > 0) {
@@ -114,7 +123,7 @@ class AxisChart {
 
             if (found) {
               filters.map((filter) => {
-                filteredData = dataFilter(filteredData, filter.field, filters);
+                filteredData = dataFilter(filteredData, filter.field, filters).data;
                 return filter;
               });
             }
@@ -425,7 +434,12 @@ class AxisChart {
         break;
     }
 
-    return chart.getConfiguration();
+    const configuration = chart.getConfiguration();
+
+    return {
+      configuration,
+      conditionsOptions,
+    };
   }
 
   processDate(data) {

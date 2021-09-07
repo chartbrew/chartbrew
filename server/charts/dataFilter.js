@@ -6,6 +6,11 @@ const determineType = require("../modules/determineType");
 function compareDates(data, field, condition) {
   let newData = data;
 
+  if (!condition.value
+    && (condition.operator !== "isNull" && condition.operator !== "isNotNull")) {
+    return data;
+  }
+
   // extract value
   const getValue = (obj) => {
     const selectors = field.split(".");
@@ -78,6 +83,11 @@ function compareDates(data, field, condition) {
 function compareNumbers(data, field, condition) {
   let newData = data;
 
+  if (!condition.value && condition.value !== 0
+    && (condition.operator !== "isNull" && condition.operator !== "isNotNull")) {
+    return data;
+  }
+
   // extract value
   const getValue = (obj) => {
     const selectors = field.split(".");
@@ -132,6 +142,11 @@ function compareNumbers(data, field, condition) {
 
 function compareStrings(data, field, condition) {
   let newData = data;
+
+  if (!condition.value
+      && (condition.operator !== "isNull" && condition.operator !== "isNotNull")) {
+    return data;
+  }
 
   // extract value
   const getValue = (obj) => {
@@ -189,6 +204,11 @@ function compareStrings(data, field, condition) {
 function compareBooleans(data, field, condition) {
   let newData = data;
 
+  if (!condition.value && condition.value !== false
+    && (condition.operator !== "isNull" && condition.operator !== "isNotNull")) {
+    return data;
+  }
+
   // extract value
   const getValue = (obj) => {
     const selectors = field.split(".");
@@ -238,7 +258,7 @@ function compareBooleans(data, field, condition) {
 
 module.exports = (data, selectedField, conditions) => {
   if (!conditions || conditions.length < 1) {
-    return data;
+    return { data };
   }
 
   let finalData;
@@ -252,8 +272,22 @@ module.exports = (data, selectedField, conditions) => {
     finalData = _.get(data, arrayFinder);
   }
 
+  const conditionsOptions = [];
   conditions.map((condition) => {
     const { field } = condition;
+
+    let fieldFinder;
+    if (selectedField.indexOf("root[]") > -1) {
+      fieldFinder = field.replace("root[].", "");
+    } else {
+      fieldFinder = field.substring(field.indexOf("]") + 2);
+    }
+
+    conditionsOptions.push({
+      field,
+      exposed: condition.exposed,
+      values: _.uniq(_.map(finalData, fieldFinder))
+    });
 
     let exactField = field;
     let foundData = finalData;
@@ -296,5 +330,8 @@ module.exports = (data, selectedField, conditions) => {
     finalData = oldFormattedData;
   }
 
-  return finalData;
+  return {
+    data: finalData,
+    conditionsOptions,
+  };
 };
