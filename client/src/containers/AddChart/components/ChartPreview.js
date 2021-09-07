@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
   Container, Button, Icon, Header, Image, Dimmer, Dropdown,
-  Popup, Segment,
+  Popup, Segment, Label,
 } from "semantic-ui-react";
 
 import lineChartImage from "../../../assets/charts/lineChart.jpg";
@@ -95,6 +95,13 @@ function ChartPreview(props) {
     <>
       {chart && chart.chartData && chart.Datasets && (
         <>
+          {chart.Datasets.filter((d) => d.conditions && d.conditions.length).map((dataset) => {
+            return dataset.conditions.filter((c) => c.exposed).map((condition) => {
+              return (
+                <Label>{condition.field}</Label>
+              );
+            });
+          })}
           <Segment>
             {chart.type === "line"
               && (

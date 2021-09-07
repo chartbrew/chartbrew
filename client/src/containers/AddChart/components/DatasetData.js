@@ -193,10 +193,26 @@ function DatasetData(props) {
     setConditions(newConditions);
   };
 
-  const _onApplyCondition = (id) => {
+  const _onHideCondition = (id) => {
+    const newConditions = conditions.map((condition) => {
+      const newCondition = condition;
+      if (condition.id === id) {
+        newCondition.exposed = false;
+      }
+
+      return newCondition;
+    });
+
+    onUpdate({ conditions: newConditions });
+  };
+
+  const _onApplyCondition = (id, exposed) => {
     const newConditions = conditions.map((item) => {
       const newItem = { ...item };
-      if (item.id === id) newItem.saved = true;
+      if (item.id === id) {
+        newItem.saved = true;
+        newItem.exposed = !!exposed;
+      }
 
       return newItem;
     });
@@ -809,6 +825,23 @@ function DatasetData(props) {
                   />
                 )}
 
+                {condition.field && condition.operator && !condition.exposed && (
+                  <Popup
+                    trigger={(
+                      <Button
+                        icon
+                        basic
+                        style={styles.addConditionBtn}
+                        onClick={() => _onApplyCondition(condition.id, true)}
+                      >
+                        <Icon name="eye" />
+                      </Button>
+                    )}
+                    content="Expose condition to viewers"
+                    position="top center"
+                  />
+                )}
+
                 {!condition.saved && (condition.value || condition.operator === "isNotNull" || condition.operator === "isNull") && (
                   <Popup
                     trigger={(
@@ -848,6 +881,27 @@ function DatasetData(props) {
           </Grid.Row>
         );
       })}
+      {conditions.filter((c) => c.exposed).length > 0 && (
+        <Grid.Row>
+          <Grid.Column>
+            <p>{"Exposed filters on the chart"}</p>
+            <Label.Group>
+              {conditions.filter((c) => c.exposed).map((condition) => {
+                return (
+                  <Label key={condition.id}>
+                    {condition.field.replace("root[].", "")}
+                    {` [${condition.operator}] [value]`}
+                    <Icon
+                      name="delete"
+                      onClick={() => _onHideCondition(condition.id)}
+                    />
+                  </Label>
+                );
+              })}
+            </Label.Group>
+          </Grid.Column>
+        </Grid.Row>
+      )}
       <Grid.Row>
         <Grid.Column className="datasetdata-date-tut">
           <Divider hidden />
