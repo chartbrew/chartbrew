@@ -120,6 +120,10 @@ class ProjectController {
         return this.teamController.removeProjectAccess(gProject.team_id, userId, gProject.id);
       })
       .then(() => {
+        // make sure all charts from this project are deleted as well
+        return db.Chart.destroy({ where: { project_id: id } });
+      })
+      .then(() => {
         return { removed: true };
       })
       .catch((error) => {
