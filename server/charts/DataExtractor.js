@@ -133,7 +133,7 @@ module.exports = (data, filters) => {
   }
 
   return {
-    data: exportData,
+    configuration: exportData,
     conditionsOptions,
   };
 };

@@ -367,10 +367,7 @@ class ChartController {
         return axisChart.plot(skipParsing, filters, isExport);
       })
       .then((chartData) => {
-        gChartData = chartData.configuration;
-        if (chartData && chartData.conditionsOptions) {
-          gChartData.conditionsOptions = chartData.conditionsOptions;
-        }
+        gChartData = chartData;
 
         if (filters || isExport) {
           return filters;
@@ -381,12 +378,12 @@ class ChartController {
       .then(() => {
         if (filters && !isExport) {
           const filteredChart = gChart;
-          filteredChart.chartData = gChartData;
+          filteredChart.chartData = gChartData.configuration;
           return filteredChart;
         }
 
         if (isExport) {
-          return gChartData;
+          return gChartData.configuration;
         }
 
         return this.findById(id);

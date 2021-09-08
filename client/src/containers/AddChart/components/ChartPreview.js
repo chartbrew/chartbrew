@@ -5,7 +5,6 @@ import {
   Container, Button, Icon, Header, Image, Dimmer, Dropdown,
   Popup, Segment,
 } from "semantic-ui-react";
-import _ from "lodash";
 
 import lineChartImage from "../../../assets/charts/lineChart.jpg";
 import barChartImage from "../../../assets/charts/barChart.jpg";
@@ -29,6 +28,7 @@ import polarSvg from "../../../assets/chart-icons/svg/009-analytics-61.svg";
 import doughnutSvg from "../../../assets/chart-icons/svg/011-analytics-59.svg";
 import tableSvg from "../../../assets/chart-icons/svg/table.svg";
 import TableContainer from "../../Chart/components/TableView/TableContainer";
+import ChartFilters from "../../Chart/components/ChartFilters";
 
 const chartModes = [{
   key: "chart",
@@ -44,7 +44,7 @@ const chartModes = [{
 
 function ChartPreview(props) {
   const {
-    chart, onChange, onRefreshData, onRefreshPreview, chartLoading,
+    chart, onChange, onRefreshData, onRefreshPreview, chartLoading, onAddFilter, onClearFilter,
   } = props;
 
   const [redraw, setRedraw] = useState(false);
@@ -92,38 +92,11 @@ function ChartPreview(props) {
     onRefreshData();
   };
 
-  const _getDropdownOptions = (datasetId, condition) => {
-    const { conditionsOptions } = chart;
-    const datasetConditions = _.find(conditionsOptions, { dataset_id: datasetId });
-    const conditionOpt = _.find(datasetConditions.conditions, { field: condition.field });
-
-    if (!conditionOpt) return [];
-
-    return conditionOpt.values.map((v) => {
-      return {
-        key: v,
-        value: v,
-        text: v,
-      };
-    });
-  };
-
   return (
     <>
       {chart && chart.chartData && chart.Datasets && (
         <>
-          {chart.Datasets.filter((d) => d.conditions && d.conditions.length).map((dataset) => {
-            return dataset.conditions.filter((c) => c.exposed).map((condition) => {
-              const filterOptions = _getDropdownOptions(dataset.id, condition);
-              return (
-                <Dropdown
-                  selection
-                  options={filterOptions}
-                  text={`${condition.field.replace("root[].", "")} ${condition.operator}`}
-                />
-              );
-            });
-          })}
+          <ChartFilters chart={chart} onAddFilter={onAddFilter} onClearFilter={onClearFilter} />
           <Segment>
             {chart.type === "line"
               && (
@@ -396,6 +369,8 @@ ChartPreview.propTypes = {
   onChange: PropTypes.func.isRequired,
   onRefreshData: PropTypes.func.isRequired,
   onRefreshPreview: PropTypes.func.isRequired,
+  onAddFilter: PropTypes.func.isRequired,
+  onClearFilter: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
