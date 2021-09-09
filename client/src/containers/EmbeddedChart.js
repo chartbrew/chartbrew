@@ -5,15 +5,21 @@ import {
   Pie, Doughnut, Radar, Polar
 } from "react-chartjs-2";
 import {
-  Container, Loader, Header, Message, Icon,
+  Container, Loader, Header, Message, Icon, Popup, Button, Label,
 } from "semantic-ui-react";
 import moment from "moment";
+import { format } from "date-fns";
+import { enGB } from "date-fns/locale";
 
-import { getEmbeddedChart as getEmbeddedChartAction } from "../actions/chart";
+import {
+  getEmbeddedChart as getEmbeddedChartAction,
+  runQueryWithFilters as runQueryWithFiltersAction,
+} from "../actions/chart";
 import LineChart from "./Chart/components/LineChart";
 import BarChart from "./Chart/components/BarChart";
 import TableContainer from "./Chart/components/TableView/TableContainer";
 import { blackTransparent } from "../config/colors";
+import ChartFilters from "./Chart/components/ChartFilters";
 
 const pageHeight = window.innerHeight;
 
@@ -21,11 +27,12 @@ const pageHeight = window.innerHeight;
   This container is used for embedding charts in other websites
 */
 function EmbeddedChart(props) {
-  const { getEmbeddedChart, match } = props;
+  const { getEmbeddedChart, match, runQueryWithFilters } = props;
 
   const [loading, setLoading] = useState(false);
   const [chart, setChart] = useState(null);
   const [error, setError] = useState(false);
+  const [conditions, setConditions] = useState([]);
 
   useEffect(() => {
     // change the background color to transparent
@@ -52,6 +59,43 @@ function EmbeddedChart(props) {
     }
 
     return moment(updatedAt).fromNow();
+  };
+
+  const _onAddFilter = (condition) => {
+    let found = false;
+    const newConditions = conditions.map((c) => {
+      let newCondition = c;
+      if (c.id === condition.id) {
+        newCondition = condition;
+        found = true;
+      }
+      return newCondition;
+    });
+    if (!found) newConditions.push(condition);
+    setConditions(newConditions);
+
+    runQueryWithFilters(chart.project_id, chart.id, newConditions)
+      .then((data) => {
+        setChart(data);
+      });
+  };
+
+  const _onClearFilter = (condition) => {
+    const newConditions = [...conditions];
+    let clearIndex;
+    for (let i = 0; i < conditions.length; i++) {
+      if (conditions[i].id === condition.id) {
+        clearIndex = i;
+        break;
+      }
+    }
+    if (clearIndex > -1) newConditions.splice(clearIndex, 1);
+
+    setConditions(newConditions);
+    runQueryWithFilters(chart.project_id, chart.id, newConditions)
+      .then((data) => {
+        setChart(data);
+      });
   };
 
   if (loading || !chart) {
@@ -83,19 +127,40 @@ function EmbeddedChart(props) {
           {chart.chartData && (
             <div>
               <p>
-                <small>
-                  {!loading && (
-                    <i>
-                      <span title="Last updated">{`${_getUpdatedTime(chart.chartDataUpdated)}`}</span>
-                    </i>
+                <Popup
+                  trigger={(
+                    <Button
+                      icon="filter"
+                      direction="left"
+                      basic
+                      className="circular icon"
+                      style={styles.filterBtn}
+                    />
                   )}
-                  {loading && (
-                    <>
-                      <Icon name="spinner" loading />
-                      <span>{" Updating..."}</span>
-                    </>
-                  )}
-                </small>
+                  on="click"
+                  flowing
+                  size="tiny"
+                >
+                  <ChartFilters
+                    chart={chart}
+                    onAddFilter={_onAddFilter}
+                    onClearFilter={_onClearFilter}
+                    conditions={conditions}
+                  />
+                </Popup>
+                {chart.Datasets && (
+                  <Label.Group style={{ display: "inline", marginLeft: 10 }} size="small">
+                    {conditions.map((c) => {
+                      return (
+                        <Label key={c.id} icon>
+                          {c.type !== "date" && c.value}
+                          {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
+                          <Icon name="delete" onClick={() => _onClearFilter(c)} />
+                        </Label>
+                      );
+                    })}
+                  </Label.Group>
+                )}
               </p>
             </div>
           )}
@@ -162,8 +227,21 @@ function EmbeddedChart(props) {
             />
           </Container>
           )}
-        <div style={{ float: "right" }}>
-          <small style={{ color: blackTransparent(0.5) }}>
+        <div>
+          <small>
+            {!loading && (
+              <i>
+                <span title="Last updated">{`${_getUpdatedTime(chart.chartDataUpdated)}`}</span>
+              </i>
+            )}
+            {loading && (
+              <>
+                <Icon name="spinner" loading />
+                <span>{" Updating..."}</span>
+              </>
+            )}
+          </small>
+          <small style={{ color: blackTransparent(0.5), float: "right" }}>
             {"Powered by "}
             <a href="https://chartbrew.com" target="_blank" rel="noreferrer">
               Chartbrew
@@ -193,11 +271,17 @@ const styles = {
   updatedText: {
     paddingLeft: 20,
   },
+  filterBtn: {
+    // marginLeft: 10,
+    backgroundColor: "transparent",
+    boxShadow: "none",
+  },
 };
 
 EmbeddedChart.propTypes = {
   getEmbeddedChart: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
+  runQueryWithFilters: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = () => {
@@ -208,6 +292,9 @@ const mapStateToProps = () => {
 const mapDispatchToProps = (dispatch) => {
   return {
     getEmbeddedChart: (id) => dispatch(getEmbeddedChartAction(id)),
+    runQueryWithFilters: (projectId, chartId, filters) => (
+      dispatch(runQueryWithFiltersAction(projectId, chartId, filters))
+    ),
   };
 };
 

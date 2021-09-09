@@ -921,7 +921,6 @@ function DatasetData(props) {
                 return (
                   <Label key={condition.id}>
                     {condition.field.replace("root[].", "")}
-                    {` [${condition.operator}] [value]`}
                     <Icon
                       name="delete"
                       onClick={() => _onHideCondition(condition.id)}

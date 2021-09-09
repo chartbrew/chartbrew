@@ -8,6 +8,9 @@ import { Calendar } from "react-date-range";
 import { enGB } from "date-fns/locale";
 import { format, formatISO } from "date-fns";
 
+import "react-date-range/dist/styles.css"; // main style file
+import "react-date-range/dist/theme/default.css"; // theme css file
+
 import { secondary } from "../../../config/colors";
 
 function ChartFilters(props) {
@@ -58,12 +61,13 @@ function ChartFilters(props) {
                     <Dropdown
                       selection
                       clearable
+                      search
                       placeholder={`${condition.field.replace("root[].", "")}`}
                       options={filterOptions}
                       onChange={(e, data) => _onOptionSelected(data.value, condition)}
                       value={_getConditionValue(condition.id) || ""}
                       scrolling
-                      fluid
+                      style={{ minWidth: 250 }}
                     />
                   )}
                   {condition.type === "date" && calendarOpen !== condition.id && (
