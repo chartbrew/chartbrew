@@ -45,6 +45,7 @@ const chartModes = [{
 function ChartPreview(props) {
   const {
     chart, onChange, onRefreshData, onRefreshPreview, chartLoading, onAddFilter, onClearFilter,
+    conditions,
   } = props;
 
   const [redraw, setRedraw] = useState(false);
@@ -96,7 +97,26 @@ function ChartPreview(props) {
     <>
       {chart && chart.chartData && chart.Datasets && (
         <>
-          <ChartFilters chart={chart} onAddFilter={onAddFilter} onClearFilter={onClearFilter} />
+          <Popup
+            trigger={(
+              <Button
+                icon="filter"
+                direction="left"
+                basic
+                className="circular icon"
+                style={styles.filterBtn}
+              />
+            )}
+            on="click"
+            position="left center"
+          >
+            <ChartFilters
+              chart={chart}
+              onAddFilter={onAddFilter}
+              onClearFilter={onClearFilter}
+              conditions={conditions}
+            />
+          </Popup>
           <Segment>
             {chart.type === "line"
               && (
@@ -371,6 +391,11 @@ ChartPreview.propTypes = {
   onRefreshPreview: PropTypes.func.isRequired,
   onAddFilter: PropTypes.func.isRequired,
   onClearFilter: PropTypes.func.isRequired,
+  conditions: PropTypes.array,
+};
+
+ChartPreview.defaultProps = {
+  conditions: [],
 };
 
 const mapStateToProps = (state) => {

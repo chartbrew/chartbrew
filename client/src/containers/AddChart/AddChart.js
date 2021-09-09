@@ -467,6 +467,7 @@ function AddChart(props) {
                 onRefreshPreview={_onRefreshPreview}
                 onAddFilter={_onAddFilter}
                 onClearFilter={_onClearFilter}
+                conditions={conditions}
               />
             </div>
           </div>

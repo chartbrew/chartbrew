@@ -366,12 +366,39 @@ class ChartController {
         const axisChart = new AxisChart(chartData);
         return axisChart.plot(skipParsing, filters, isExport);
       })
-      .then((chartData) => {
+      .then(async (chartData) => {
         gChartData = chartData;
 
         if (filters || isExport) {
           return filters;
         }
+
+        // update the datasets if needed
+        const datasetsPromises = [];
+        if (chartData.conditionsOptions) {
+          chartData.conditionsOptions.forEach((opt) => {
+            if (opt.dataset_id) {
+              const dataset = gChart.Datasets.find((d) => d.id === opt.dataset_id);
+              if (dataset && dataset.conditions) {
+                const newConditions = dataset.conditions.map((c) => {
+                  const optCondition = opt.conditions.find((o) => o.field === c.field);
+                  const values = (optCondition && optCondition.values) || [];
+
+                  return { ...c, values };
+                });
+
+                datasetsPromises.push(
+                  db.Dataset.update(
+                    { conditions: newConditions },
+                    { where: { id: opt.dataset_id } }
+                  )
+                );
+              }
+            }
+          });
+        }
+
+        await Promise.all(datasetsPromises);
 
         return this.update(id, { chartData: chartData.configuration, chartDataUpdated: moment() });
       })
@@ -387,12 +414,6 @@ class ChartController {
         }
 
         return this.findById(id);
-      })
-      .then((chart) => {
-        if (gChartData.conditionsOptions) {
-          chart.setDataValue("conditionsOptions", gChartData.conditionsOptions);
-        }
-        return chart;
       })
       .catch((err) => {
         return err;

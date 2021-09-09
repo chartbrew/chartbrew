@@ -1,106 +1,118 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
   Pie, Doughnut, Radar, Polar
 } from "react-chartjs-2";
 import {
-  Container, Loader, Header, Image, Message,
+  Container, Loader, Header, Message, Icon,
 } from "semantic-ui-react";
-
-import logo from "../assets/logo_blue.png";
+import moment from "moment";
 
 import { getEmbeddedChart as getEmbeddedChartAction } from "../actions/chart";
 import LineChart from "./Chart/components/LineChart";
 import BarChart from "./Chart/components/BarChart";
 import TableContainer from "./Chart/components/TableView/TableContainer";
+import { blackTransparent } from "../config/colors";
 
 const pageHeight = window.innerHeight;
 
 /*
   This container is used for embedding charts in other websites
 */
-class EmbeddedChart extends Component {
-  constructor(props) {
-    super(props);
+function EmbeddedChart(props) {
+  const { getEmbeddedChart, match } = props;
 
-    this.state = {
-      loading: false,
-      chart: null,
-    };
-  }
+  const [loading, setLoading] = useState(false);
+  const [chart, setChart] = useState(null);
+  const [error, setError] = useState(false);
 
-  componentDidMount() {
+  useEffect(() => {
     // change the background color to transparent
     document.body.style.backgroundColor = "transparent";
 
-    const { getEmbeddedChart, match } = this.props;
-
-    this.setState({ loading: true });
+    setLoading(true);
     setTimeout(() => {
       getEmbeddedChart(match.params.chartId)
         .then((chart) => {
-          this.setState({
-            chart,
-            loading: false,
-          });
+          setChart(chart);
+          setLoading(false);
         })
         .catch(() => {
-          this.setState({
-            error: true,
-            loading: false,
-            chart: { error: "no chart" },
-          });
+          setError(true);
+          setLoading(false);
+          setChart({ error: "no chart" });
         });
     }, 1000);
+  }, []);
+
+  const _getUpdatedTime = (updatedAt) => {
+    if (moment().diff(moment(updatedAt), "days") > 1) {
+      return moment(updatedAt).calendar();
+    }
+
+    return moment(updatedAt).fromNow();
+  };
+
+  if (loading || !chart) {
+    return (
+      <Container textAlign="center" text style={styles.loaderContainer}>
+        <Loader active inverted>Loading</Loader>
+      </Container>
+    );
   }
 
-  render() {
-    const { loading, error, chart } = this.state;
-
-    if (loading || !chart) {
-      return (
-        <Container textAlign="center" text style={styles.loaderContainer}>
-          <Loader active inverted>Loading</Loader>
-        </Container>
-      );
-    }
-
-    if (error) {
-      return (
-        <Container text>
-          <Message>
-            <Message.Header>Error loading the Chart</Message.Header>
-            <p>
-              The Chart might not be public in the ChartBrew dashboard.
-            </p>
-          </Message>
-        </Container>
-      );
-    }
-
+  if (error) {
     return (
-      <div style={styles.container}>
-        <Container>
-          <Container fluid style={styles.header(chart.type)}>
-            <a href="https://chartbrew.com" target="_parent" title="Powered by Chartbrew">
-              <Image src={logo} size="mini" style={styles.logo} />
-            </a>
-            <Header>{chart.name}</Header>
-          </Container>
-          {chart.type === "line"
+      <Container text>
+        <Message>
+          <Message.Header>Error loading the Chart</Message.Header>
+          <p>
+            The Chart might not be public in the ChartBrew dashboard.
+          </p>
+        </Message>
+      </Container>
+    );
+  }
+
+  return (
+    <div style={styles.container}>
+      <Container>
+        <Container fluid style={styles.header(chart.type)}>
+          <Header style={{ display: "contents" }}>{chart.name}</Header>
+          {chart.chartData && (
+            <div>
+              <p>
+                <small>
+                  {!loading && (
+                    <i>
+                      <span title="Last updated">{`${_getUpdatedTime(chart.chartDataUpdated)}`}</span>
+                    </i>
+                  )}
+                  {loading && (
+                    <>
+                      <Icon name="spinner" loading />
+                      <span>{" Updating..."}</span>
+                    </>
+                  )}
+                </small>
+              </p>
+            </div>
+          )}
+        </Container>
+        {chart.type === "line"
           && (
           <Container fluid>
             <LineChart chart={chart} height={pageHeight - 100} />
           </Container>
           )}
-          {chart.type === "bar"
+        {chart.type === "bar"
           && (
           <Container fluid>
             <BarChart chart={chart} height={pageHeight - 100} />
           </Container>
           )}
-          {chart.type === "pie"
+        {chart.type === "pie"
           && (
           <Container fluid>
             <Pie
@@ -110,7 +122,7 @@ class EmbeddedChart extends Component {
             />
           </Container>
           )}
-          {chart.type === "doughnut"
+        {chart.type === "doughnut"
           && (
           <Container fluid>
             <Doughnut
@@ -120,7 +132,7 @@ class EmbeddedChart extends Component {
             />
           </Container>
           )}
-          {chart.type === "radar"
+        {chart.type === "radar"
           && (
           <Container fluid>
             <Radar
@@ -130,7 +142,7 @@ class EmbeddedChart extends Component {
             />
           </Container>
           )}
-          {chart.type === "polar"
+        {chart.type === "polar"
           && (
           <Container fluid>
             <Polar
@@ -140,7 +152,7 @@ class EmbeddedChart extends Component {
             />
           </Container>
           )}
-          {chart.type === "table"
+        {chart.type === "table"
           && (
           <Container fluid>
             <TableContainer
@@ -150,16 +162,24 @@ class EmbeddedChart extends Component {
             />
           </Container>
           )}
-        </Container>
-      </div>
-    );
-  }
+        <div style={{ float: "right" }}>
+          <small style={{ color: blackTransparent(0.5) }}>
+            {"Powered by "}
+            <a href="https://chartbrew.com" target="_blank" rel="noreferrer">
+              Chartbrew
+            </a>
+          </small>
+        </div>
+      </Container>
+    </div>
+  );
 }
 
 const styles = {
   container: {
     flex: 1,
     backgroundColor: "transparent",
+    padding: 10,
   },
   header: (type) => ({
     paddingRight: type === "table" ? 0 : 20,
@@ -169,10 +189,6 @@ const styles = {
   loaderContainer: {
     minHeight: 100,
     minWidth: 100,
-  },
-  logo: {
-    float: "right",
-    opacity: 0.5,
   },
   updatedText: {
     paddingLeft: 20,
