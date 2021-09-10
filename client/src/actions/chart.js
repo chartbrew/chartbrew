@@ -238,6 +238,7 @@ export function runQueryWithFilters(projectId, chartId, filters) {
       })
       .then((chart) => {
         dispatch({ type: FETCH_CHART_SUCCESS, chart });
+        return chart;
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

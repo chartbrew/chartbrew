@@ -175,7 +175,7 @@ function DatasetData(props) {
     onUpdate({ dateField: data.value });
   };
 
-  const _updateCondition = (id, data, type) => {
+  const _updateCondition = (id, data, type, dataType) => {
     const newConditions = conditions.map((condition) => {
       const newCondition = condition;
       if (condition.id === id) {
@@ -185,6 +185,8 @@ function DatasetData(props) {
         if (type === "field") {
           newCondition.value = "";
         }
+
+        if (dataType) newCondition.type = dataType;
       }
 
       return newCondition;
@@ -193,10 +195,28 @@ function DatasetData(props) {
     setConditions(newConditions);
   };
 
-  const _onApplyCondition = (id) => {
+  const _onHideCondition = (id) => {
+    const newConditions = conditions.map((condition) => {
+      const newCondition = condition;
+      if (condition.id === id) {
+        newCondition.exposed = false;
+      }
+
+      return newCondition;
+    });
+
+    onUpdate({ conditions: newConditions });
+  };
+
+  const _onApplyCondition = (id, exposed, dataType) => {
     const newConditions = conditions.map((item) => {
       const newItem = { ...item };
-      if (item.id === id) newItem.saved = true;
+      if (item.id === id) {
+        newItem.saved = true;
+        newItem.exposed = !!exposed;
+
+        if (dataType) newItem.type = dataType;
+      }
 
       return newItem;
     });
@@ -745,7 +765,7 @@ function DatasetData(props) {
                   placeholder="Enter a value"
                   size="small"
                   value={condition.value}
-                  onChange={(e, data) => _updateCondition(condition.id, data.value, "value")}
+                  onChange={(e, data) => _updateCondition(condition.id, data.value, "value", _.find(fieldOptions, { value: condition.field }))}
                   disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                 />
               )}
@@ -768,7 +788,7 @@ function DatasetData(props) {
                   content={(
                     <Calendar
                       date={(condition.value && new Date(condition.value)) || new Date()}
-                      onChange={(date) => _updateCondition(condition.id, formatISO(date), "value")}
+                      onChange={(date) => _updateCondition(condition.id, formatISO(date), "value", _.find(fieldOptions, { value: condition.field }).type)}
                       locale={enGB}
                       color={secondary}
                     />
@@ -809,14 +829,58 @@ function DatasetData(props) {
                   />
                 )}
 
-                {!condition.saved && (condition.value || condition.operator === "isNotNull" || condition.operator === "isNull") && (
+                {condition.field && condition.operator && !condition.exposed && (
                   <Popup
                     trigger={(
                       <Button
                         icon
                         basic
                         style={styles.addConditionBtn}
-                        onClick={() => _onApplyCondition(condition.id)}
+                        onClick={() => _onApplyCondition(
+                          condition.id,
+                          true,
+                          _.find(fieldOptions, { value: condition.field })
+                            && _.find(fieldOptions, { value: condition.field }).type
+                        )}
+                      >
+                        <Icon name="eye" />
+                      </Button>
+                    )}
+                    content="Expose filter to viewers"
+                    position="top center"
+                  />
+                )}
+
+                {condition.field && condition.operator && condition.exposed && (
+                  <Popup
+                    trigger={(
+                      <Button
+                        icon
+                        basic
+                        style={styles.addConditionBtn}
+                        onClick={() => _onApplyCondition(
+                          condition.id,
+                          false,
+                          _.find(fieldOptions, { value: condition.field })
+                          && _.find(fieldOptions, { value: condition.field }).type
+                        )}
+                      >
+                        <Icon name="eye slash outline" />
+                      </Button>
+                    )}
+                    content="Hide this filter from viewers"
+                    position="top center"
+                  />
+                )}
+
+                {!condition.saved && condition.field && (
+                  <Popup
+                    trigger={(
+                      <Button
+                        icon
+                        basic
+                        style={styles.addConditionBtn}
+                        onClick={() => _onApplyCondition(condition.id, condition.exposed)}
                       >
                         <Icon name="checkmark" color="green" />
                       </Button>
@@ -848,6 +912,26 @@ function DatasetData(props) {
           </Grid.Row>
         );
       })}
+      {conditions.filter((c) => c.exposed).length > 0 && (
+        <Grid.Row>
+          <Grid.Column>
+            <p>{"Exposed filters on the chart"}</p>
+            <Label.Group>
+              {conditions.filter((c) => c.exposed).map((condition) => {
+                return (
+                  <Label key={condition.id}>
+                    {condition.field.replace("root[].", "")}
+                    <Icon
+                      name="delete"
+                      onClick={() => _onHideCondition(condition.id)}
+                    />
+                  </Label>
+                );
+              })}
+            </Label.Group>
+          </Grid.Column>
+        </Grid.Row>
+      )}
       <Grid.Row>
         <Grid.Column className="datasetdata-date-tut">
           <Divider hidden />

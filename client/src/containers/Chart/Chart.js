@@ -9,6 +9,8 @@ import {
 } from "semantic-ui-react";
 import moment from "moment";
 import _ from "lodash";
+import { enGB } from "date-fns/locale";
+import { format } from "date-fns";
 
 import {
   removeChart as removeChartAction,
@@ -27,6 +29,7 @@ import DoughnutChart from "./components/DoughnutChart";
 import PieChart from "./components/PieChart";
 import { blackTransparent } from "../../config/colors";
 import TableContainer from "./components/TableView/TableContainer";
+import ChartFilters from "./components/ChartFilters";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -60,6 +63,7 @@ function Chart(props) {
   const [dashboardFilters, setDashboardFilters] = useState(
     getFiltersFromStorage(match.params.projectId)
   );
+  const [conditions, setConditions] = useState([]);
 
   useEffect(() => {
     setIframeCopied(false);
@@ -242,6 +246,31 @@ function Chart(props) {
     return moment(updatedAt).fromNow();
   };
 
+  const _onAddFilter = (condition) => {
+    let found = false;
+    const newConditions = conditions.map((c) => {
+      let newCondition = c;
+      if (c.id === condition.id) {
+        newCondition = condition;
+        found = true;
+      }
+      return newCondition;
+    });
+    if (!found) newConditions.push(condition);
+    setConditions(newConditions);
+
+    runQueryWithFilters(match.params.projectId, chart.id, newConditions);
+  };
+
+  const _onClearFilter = (condition) => {
+    const newConditions = [...conditions];
+    const clearIndex = _.findIndex(conditions, { id: condition.id });
+    if (clearIndex > -1) newConditions.splice(clearIndex, 1);
+
+    setConditions(newConditions);
+    runQueryWithFilters(match.params.projectId, chart.id, newConditions);
+  };
+
   const { projectId } = match.params;
 
   return (
@@ -254,12 +283,38 @@ function Chart(props) {
           content="This is on us, we couldn't process your request. Try to refresh the page and try again."
         />
       )}
-
       {chart && (
         <Segment
           style={styles.chartContainer(_isKpi(chart), print)}
         >
           <div style={styles.titleArea(_isKpi(chart))}>
+            <Popup
+              trigger={(
+                <Button
+                  icon="filter"
+                  direction="left"
+                  basic
+                  className="circular icon"
+                  style={styles.filterBtn}
+                />
+              )}
+              on="click"
+              position="top right"
+              flowing
+              size="tiny"
+              popperModifiers={{
+                preventOverflow: {
+                  boundariesElement: "offsetParent"
+                }
+              }}
+            >
+              <ChartFilters
+                chart={chart}
+                onAddFilter={_onAddFilter}
+                onClearFilter={_onClearFilter}
+                conditions={conditions}
+              />
+            </Popup>
             {projectId && !print
               && (
                 <Dropdown
@@ -439,6 +494,19 @@ function Chart(props) {
                       </>
                     )}
                   </small>
+                  {chart.Datasets && (
+                    <Label.Group style={{ display: "inline", marginLeft: 10 }} size="small">
+                      {conditions.map((c) => {
+                        return (
+                          <Label key={c.id} icon>
+                            {c.type !== "date" && c.value}
+                            {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
+                            <Icon name="delete" onClick={() => _onClearFilter(c)} />
+                          </Label>
+                        );
+                      })}
+                    </Label.Group>
+                  )}
                 </p>
               </div>
             )}
@@ -766,6 +834,13 @@ const styles = {
   menuBtn: {
     position: "absolute",
     right: 10,
+    top: 10,
+    backgroundColor: "transparent",
+    boxShadow: "none",
+  },
+  filterBtn: {
+    position: "absolute",
+    right: 40,
     top: 10,
     backgroundColor: "transparent",
     boxShadow: "none",

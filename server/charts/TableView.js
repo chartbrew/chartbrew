@@ -3,7 +3,8 @@ const _ = require("lodash");
 const determineType = require("../modules/determineType");
 
 class TableView {
-  getTableData(rawData, datasets) {
+  getTableData(data, datasets) {
+    const rawData = data.configuration;
     const tabularData = {};
 
     Object.keys(rawData).forEach((key, datasetIndex) => {
@@ -68,7 +69,10 @@ class TableView {
       tabularData[key] = tab;
     });
 
-    return tabularData;
+    return {
+      configuration: tabularData,
+      conditionsOptions: data.conditionsOptions,
+    };
   }
 }
 

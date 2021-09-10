@@ -366,23 +366,51 @@ class ChartController {
         const axisChart = new AxisChart(chartData);
         return axisChart.plot(skipParsing, filters, isExport);
       })
-      .then((chartData) => {
+      .then(async (chartData) => {
         gChartData = chartData;
+
         if (filters || isExport) {
           return filters;
         }
 
-        return this.update(id, { chartData, chartDataUpdated: moment() });
+        // update the datasets if needed
+        const datasetsPromises = [];
+        if (chartData.conditionsOptions) {
+          chartData.conditionsOptions.forEach((opt) => {
+            if (opt.dataset_id) {
+              const dataset = gChart.Datasets.find((d) => d.id === opt.dataset_id);
+              if (dataset && dataset.conditions) {
+                const newConditions = dataset.conditions.map((c) => {
+                  const optCondition = opt.conditions.find((o) => o.field === c.field);
+                  const values = (optCondition && optCondition.values) || [];
+
+                  return { ...c, values };
+                });
+
+                datasetsPromises.push(
+                  db.Dataset.update(
+                    { conditions: newConditions },
+                    { where: { id: opt.dataset_id } }
+                  )
+                );
+              }
+            }
+          });
+        }
+
+        await Promise.all(datasetsPromises);
+
+        return this.update(id, { chartData: chartData.configuration, chartDataUpdated: moment() });
       })
       .then(() => {
         if (filters && !isExport) {
           const filteredChart = gChart;
-          filteredChart.chartData = gChartData;
+          filteredChart.chartData = gChartData.configuration;
           return filteredChart;
         }
 
         if (isExport) {
-          return gChartData;
+          return gChartData.configuration;
         }
 
         return this.findById(id);

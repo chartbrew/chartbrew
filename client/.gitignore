@@ -17,6 +17,7 @@ src/semantic/tasks
 /src/semantic/src/site/*
 !/src/semantic/src/site/globals
 !/src/semantic/src/site/elements
+!/src/semantic/src/site/modules
 
 # dependencies
 /node_modules

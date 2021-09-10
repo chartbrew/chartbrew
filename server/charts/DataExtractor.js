@@ -25,6 +25,7 @@ module.exports = (data, filters) => {
 
   // this is only used when exporting data
   const exportData = {};
+  let conditionsOptions;
 
   for (let i = 0; i < datasets.length; i++) {
     const dataset = datasets[i];
@@ -32,7 +33,10 @@ module.exports = (data, filters) => {
     let { xAxis } = dataset.options;
     let xData;
 
-    let filteredData = dataFilter(dataset.data, xAxis, dataset.options.conditions);
+    const filterData = dataFilter(dataset.data, xAxis, dataset.options.conditions);
+    conditionsOptions = filterData.conditionsOptions;
+
+    let filteredData = filterData.data;
 
     if (dateField && chart.startDate && chart.endDate && canDateFilter) {
       if (chart.currentEndDate) {
@@ -51,7 +55,7 @@ module.exports = (data, filters) => {
         operator: "lessOrEqual",
       }];
 
-      filteredData = dataFilter(filteredData, dateField, dateConditions);
+      filteredData = dataFilter(filteredData, dateField, dateConditions).data;
     }
 
     if (filters && filters.length > 0) {
@@ -65,7 +69,7 @@ module.exports = (data, filters) => {
 
         if (found) {
           filters.map((filter) => {
-            filteredData = dataFilter(filteredData, filter.field, filters);
+            filteredData = dataFilter(filteredData, filter.field, filters).data;
             return filter;
           });
         }
@@ -128,5 +132,8 @@ module.exports = (data, filters) => {
     exportData[dataset.options.legend] = groupedXData;
   }
 
-  return exportData;
+  return {
+    configuration: exportData,
+    conditionsOptions,
+  };
 };

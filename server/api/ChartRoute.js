@@ -327,25 +327,17 @@ module.exports = (app) => {
   /*
   ** Route to filter the charts from the dashboard
   */
-  app.post("/project/:project_id/chart/:id/filter", verifyToken, (req, res) => {
+  app.post("/project/:project_id/chart/:id/filter", (req, res) => {
     if (!req.body.filters) return res.status(400).send("No filters selected");
 
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).readAny("chart");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        // filters are being passed, so the chart is not updated in the database
-        return chartController.updateChartData(
-          req.params.id,
-          req.user,
-          req.query.no_source === "true",
-          req.query.skip_parsing === "true",
-          req.body.filters,
-        );
-      })
+    // filters are being passed, so the chart is not updated in the database
+    return chartController.updateChartData(
+      req.params.id,
+      req.user,
+      req.query.no_source === "true",
+      req.query.skip_parsing === "true",
+      req.body.filters,
+    )
       .then((chart) => {
         // console.log("chart", chart);
         return res.status(200).send(chart);
@@ -373,6 +365,7 @@ module.exports = (app) => {
         }
 
         return res.status(200).send({
+          id: chart.id,
           name: chart.name,
           type: chart.type,
           subType: chart.subType,
@@ -381,6 +374,7 @@ module.exports = (app) => {
           Datasets: chart.Datasets,
           mode: chart.mode,
           chartSize: chart.chartSize,
+          project_id: chart.project_id,
         });
       })
       .catch((error) => {
