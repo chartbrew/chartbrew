@@ -51,13 +51,17 @@ function ChartFilters(props) {
     <div>
       <Form>
         {chart
-          && chart.Datasets.filter((d) => d.conditions && d.conditions.length).map((dataset) => {
-            return dataset.conditions.filter((c) => c.exposed).map((condition) => {
-              const filterOptions = _getDropdownOptions(dataset, condition);
-              return (
-                <Form.Field key={condition.id}>
-                  <label>{`${condition.field.replace("root[].", "")} ${condition.operator}`}</label>
-                  {condition.type !== "date" && (
+          && chart.Datasets.filter((d) => d.conditions && d.conditions.length)
+            .map((dataset, index) => {
+              if (dataset.conditions.filter((c) => c.exposed).length === 0 && index === 0) {
+                return (<span key={dataset.id}>No filters available</span>);
+              }
+              return dataset.conditions.filter((c) => c.exposed).map((condition) => {
+                const filterOptions = _getDropdownOptions(dataset, condition);
+                return (
+                  <Form.Field key={condition.id}>
+                    <label>{`${condition.field.replace("root[].", "")} ${condition.operator}`}</label>
+                    {condition.type !== "date" && (
                     <Dropdown
                       selection
                       clearable
@@ -69,8 +73,8 @@ function ChartFilters(props) {
                       scrolling
                       style={{ minWidth: 250 }}
                     />
-                  )}
-                  {condition.type === "date" && calendarOpen !== condition.id && (
+                    )}
+                    {condition.type === "date" && calendarOpen !== condition.id && (
                     <>
                       <Button
                         basic
@@ -88,8 +92,8 @@ function ChartFilters(props) {
                         />
                       )}
                     </>
-                  )}
-                  {condition.type === "date" && calendarOpen === condition.id && (
+                    )}
+                    {condition.type === "date" && calendarOpen === condition.id && (
                     <Segment textAlign="left">
                       <Calendar
                         date={(
@@ -102,11 +106,11 @@ function ChartFilters(props) {
                         color={secondary}
                       />
                     </Segment>
-                  )}
-                </Form.Field>
-              );
-            });
-          })}
+                    )}
+                  </Form.Field>
+                );
+              });
+            })}
       </Form>
     </div>
   );
