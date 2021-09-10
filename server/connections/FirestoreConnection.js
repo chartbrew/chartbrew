@@ -12,8 +12,14 @@ class FirestoreConnection {
     });
 
     if (!this.admin) {
+      let serviceAccount = connection.firebaseServiceAccount;
+      try {
+        serviceAccount = JSON.parse(connection.firebaseServiceAccount);
+      } catch (e) {
+        // do nothing
+      }
       this.admin = firebase.initializeApp({
-        credential: firebase.credential.cert(connection.firebaseServiceAccount),
+        credential: firebase.credential.cert(serviceAccount),
       }, firebaseAppName);
     }
 
