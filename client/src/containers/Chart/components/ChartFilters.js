@@ -47,15 +47,28 @@ function ChartFilters(props) {
     return condition.value;
   };
 
+  const _checkIfFilters = () => {
+    let filterCount = 0;
+    chart.Datasets.forEach((d) => {
+      if (d.conditions) {
+        filterCount += d.conditions.filter((c) => c.exposed).length;
+      }
+    });
+
+    return filterCount;
+  };
+
   return (
     <div>
       <Form>
+        {!_checkIfFilters() && (
+          <Form.Field>
+            <p>No filters available</p>
+          </Form.Field>
+        )}
         {chart
           && chart.Datasets.filter((d) => d.conditions && d.conditions.length)
-            .map((dataset, index) => {
-              if (dataset.conditions.filter((c) => c.exposed).length === 0 && index === 0) {
-                return (<span key={dataset.id}>No filters available</span>);
-              }
+            .map((dataset) => {
               return dataset.conditions.filter((c) => c.exposed).map((condition) => {
                 const filterOptions = _getDropdownOptions(dataset, condition);
                 return (

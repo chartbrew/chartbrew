@@ -39,6 +39,7 @@ import {
   completeTutorial as completeTutorialAction,
   resetTutorial as resetTutorialAction,
 } from "../../actions/tutorial";
+import ChartFilters from "../Chart/components/ChartFilters";
 
 /*
   Container used for setting up a new chart
@@ -459,6 +460,29 @@ function AddChart(props) {
               </div>
             </div>
             <Divider />
+            <div>
+              <Popup
+                trigger={(
+                  <Button
+                    primary
+                    icon="filter"
+                    direction="left"
+                    className="tertiary"
+                    style={styles.filterBtn}
+                    content="Exposed filters"
+                  />
+                )}
+                on="click"
+                position="left center"
+              >
+                <ChartFilters
+                  chart={newChart}
+                  onAddFilter={_onAddFilter}
+                  onClearFilter={_onClearFilter}
+                  conditions={conditions}
+                />
+              </Popup>
+            </div>
             <div className="chart-type-tut">
               <ChartPreview
                 chart={newChart}

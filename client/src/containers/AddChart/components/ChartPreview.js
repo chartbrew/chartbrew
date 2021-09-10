@@ -28,7 +28,6 @@ import polarSvg from "../../../assets/chart-icons/svg/009-analytics-61.svg";
 import doughnutSvg from "../../../assets/chart-icons/svg/011-analytics-59.svg";
 import tableSvg from "../../../assets/chart-icons/svg/table.svg";
 import TableContainer from "../../Chart/components/TableView/TableContainer";
-import ChartFilters from "../../Chart/components/ChartFilters";
 
 const chartModes = [{
   key: "chart",
@@ -44,8 +43,7 @@ const chartModes = [{
 
 function ChartPreview(props) {
   const {
-    chart, onChange, onRefreshData, onRefreshPreview, chartLoading, onAddFilter, onClearFilter,
-    conditions,
+    chart, onChange, onRefreshData, onRefreshPreview, chartLoading,
   } = props;
 
   const [redraw, setRedraw] = useState(false);
@@ -97,26 +95,6 @@ function ChartPreview(props) {
     <>
       {chart && chart.chartData && chart.Datasets && (
         <>
-          <Popup
-            trigger={(
-              <Button
-                icon="filter"
-                direction="left"
-                basic
-                className="circular icon"
-                style={styles.filterBtn}
-              />
-            )}
-            on="click"
-            position="left center"
-          >
-            <ChartFilters
-              chart={chart}
-              onAddFilter={onAddFilter}
-              onClearFilter={onClearFilter}
-              conditions={conditions}
-            />
-          </Popup>
           <Segment>
             {chart.type === "line"
               && (
@@ -389,13 +367,6 @@ ChartPreview.propTypes = {
   onChange: PropTypes.func.isRequired,
   onRefreshData: PropTypes.func.isRequired,
   onRefreshPreview: PropTypes.func.isRequired,
-  onAddFilter: PropTypes.func.isRequired,
-  onClearFilter: PropTypes.func.isRequired,
-  conditions: PropTypes.array,
-};
-
-ChartPreview.defaultProps = {
-  conditions: [],
 };
 
 const mapStateToProps = (state) => {
