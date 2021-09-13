@@ -94,14 +94,11 @@ module.exports = (data, filters) => {
 
     xData.forEach((item) => {
       const newItem = item;
-      if (dataset.options.groups
-          && Object.keys(dataset.options.groups).length > 0
-      ) {
-        Object.keys(dataset.options.groups).forEach((groupKey) => {
-          const datasetGroupValue = dataset.options.groups[groupKey];
+      if (dataset.options.groups && dataset.options.groups.length > 0) {
+        dataset.options.groups.forEach((group) => {
           // extract the data using the groups schema
-          let newKey = _.get(newItem, groupKey);
-          const newValue = _.get(newItem, datasetGroupValue);
+          let newKey = _.get(newItem, group.key);
+          const newValue = _.get(newItem, group.value);
           if (newKey && newValue) {
             // make sure the new keys don't have dots "." in them
             // the dots prevent the values from rendering properly

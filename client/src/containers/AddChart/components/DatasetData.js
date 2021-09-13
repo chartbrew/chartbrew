@@ -358,9 +358,9 @@ function DatasetData(props) {
     if (selectedField === field.accessor) {
       setSelectedField("");
     } else if (selectedField && selectedField !== field.accessor) {
-      const groups = dataset.groups || {};
-      const newGroups = { ...groups, [selectedField.replace("?", ".")]: field.accessor.replace("?", ".") };
-      onUpdate({ groups: newGroups });
+      const groups = dataset.groups || [];
+      groups.push({ key: selectedField.replace("?", "."), value: field.accessor.replace("?", ".") });
+      onUpdate({ groups });
       setSelectedField("");
     } else {
       setSelectedField(field.accessor);
@@ -368,18 +368,18 @@ function DatasetData(props) {
   };
 
   const _onGroupFields = (e, data) => {
-    const groups = dataset.groups || {};
-    const newGroups = {
-      ...groups,
-      [selectedField.replace("?", ".")]: data.value.substring(data.value.lastIndexOf("].") + 2)
-    };
-    onUpdate({ groups: newGroups });
+    const groups = dataset.groups || [];
+    groups.push(
+      { key: selectedField.replace("?", "."), value: data.value.substring(data.value.lastIndexOf("].") + 2) }
+    );
+    onUpdate({ groups });
     setSelectedField("");
   };
 
   const _onRemoveGroup = (key) => {
-    const newGroups = dataset.groups;
-    delete newGroups[key];
+    const newGroups = [...dataset.groups];
+    const removeIndex = _.findIndex(newGroups, { key });
+    newGroups.splice(removeIndex, 1);
     onUpdate({ groups: newGroups });
   };
 
@@ -666,21 +666,21 @@ function DatasetData(props) {
                   ))}
                 </Label.Group>
 
-                {dataset.groups && Object.keys(dataset.groups).length > 0 && (
+                {dataset.groups && dataset.groups.length > 0 && (
                   <>
                     <Divider />
-                    {Object.keys(dataset.groups).map((key) => (
-                      <div key={key}>
-                        <Label>{key}</Label>
+                    {dataset.groups.map((group) => (
+                      <div key={`${group.key}`}>
+                        <Label>{group.key}</Label>
                         <span>{" - "}</span>
-                        <Label>{dataset.groups[key]}</Label>
+                        <Label>{group.value}</Label>
                         <Popup
                           trigger={(
                             <Button
                               icon="x"
                               basic
                               style={styles.addConditionBtn}
-                              onClick={() => _onRemoveGroup(key)}
+                              onClick={() => _onRemoveGroup(group.key)}
                             />
                           )}
                           content="Remove combination"
