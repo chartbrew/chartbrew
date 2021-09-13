@@ -106,8 +106,9 @@ function TableComponent(props) {
                       )}
                       {(isObject || isArray) && (
                         <Popup
-                          trigger={(<Label>{(isShort && `${Object.values(objDetails)[0]}`) || "Collection"}</Label>)}
+                          trigger={(<Label as="a">{(isShort && `${Object.values(objDetails)[0]}`) || "Collection"}</Label>)}
                           content={(<pre><code>{JSON.stringify(objDetails, null, 4)}</code></pre>)}
+                          on="click"
                         />
                       )}
                     </Table.Cell>
