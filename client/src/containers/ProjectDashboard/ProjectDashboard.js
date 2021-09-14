@@ -118,6 +118,7 @@ function ProjectDashboard(props) {
   };
 
   const _runFiltering = () => {
+    if (!filters || !filters[match.params.projectId]) return;
     setFilterLoading(true);
     setTimeout(() => {
       _onFilterCharts();
