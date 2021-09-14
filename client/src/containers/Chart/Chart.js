@@ -98,7 +98,7 @@ function Chart(props) {
         setDashboardFilters(getFiltersFromStorage(projectId));
         setTimeout(() => {
           if (dashboardFilters && _chartHasFilter()) {
-            runQueryWithFilters(projectId, chart.id, dashboardFilters);
+            runQueryWithFilters(chart.project_id, chart.id, dashboardFilters);
           }
         }, 100);
       })
@@ -259,7 +259,7 @@ function Chart(props) {
     if (!found) newConditions.push(condition);
     setConditions(newConditions);
 
-    runQueryWithFilters(match.params.projectId, chart.id, newConditions);
+    runQueryWithFilters(chart.project_id, chart.id, newConditions);
   };
 
   const _onClearFilter = (condition) => {
@@ -268,7 +268,7 @@ function Chart(props) {
     if (clearIndex > -1) newConditions.splice(clearIndex, 1);
 
     setConditions(newConditions);
-    runQueryWithFilters(match.params.projectId, chart.id, newConditions);
+    runQueryWithFilters(chart.project_id, chart.id, newConditions);
   };
 
   const { projectId } = match.params;
@@ -295,18 +295,13 @@ function Chart(props) {
                   direction="left"
                   basic
                   className="circular icon"
-                  style={styles.filterBtn}
+                  style={styles.filterBtn(projectId && !print)}
                 />
               )}
               on="click"
               position="top right"
               flowing
               size="tiny"
-              popperModifiers={{
-                preventOverflow: {
-                  boundariesElement: "offsetParent"
-                }
-              }}
             >
               <ChartFilters
                 chart={chart}
@@ -838,13 +833,13 @@ const styles = {
     backgroundColor: "transparent",
     boxShadow: "none",
   },
-  filterBtn: {
+  filterBtn: (addPadding) => ({
     position: "absolute",
-    right: 40,
+    right: addPadding ? 40 : 10,
     top: 10,
     backgroundColor: "transparent",
     boxShadow: "none",
-  },
+  }),
   titleArea: (isKpi) => ({
     paddingLeft: isKpi ? 15 : 0,
     paddingTop: isKpi ? 15 : 0,

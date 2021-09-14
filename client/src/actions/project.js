@@ -208,6 +208,7 @@ export function getPublicDashboard(brewName) {
         return response.json();
       })
       .then((project) => {
+        dispatch({ type: FETCH_ALL_CHARTS, charts: project.Charts });
         return new Promise(resolve => resolve(project));
       })
       .catch((error) => {

@@ -8,7 +8,7 @@ import {
 } from "semantic-ui-react";
 import { createMedia } from "@artsy/fresnel";
 
-import { getPublicDashboard } from "../actions/project";
+import { getPublicDashboard as getPublicDashboardAction } from "../actions/project";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import Chart from "./Chart/Chart";
 import { blue } from "../config/colors";
@@ -27,9 +27,11 @@ const { Media } = AppMedia;
   The dashboard page that can be shared with the public
 */
 function PublicDashboard(props) {
-  const { getPublicDashboard, match, cleanErrors } = props;
+  const {
+    getPublicDashboard, match, cleanErrors, charts
+  } = props;
 
-  const [dashboard, setDashboard] = useState(null);
+  const [dashboard, setDashboard] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -47,17 +49,7 @@ function PublicDashboard(props) {
   }, []);
 
   const _isPublic = () => {
-    if (!dashboard || (dashboard && !dashboard.Charts)) return false;
-
-    let isPublic = false;
-    for (let i = 0; i < dashboard.Charts.length; i++) {
-      if (dashboard.Charts[i].public) {
-        isPublic = true;
-        break;
-      }
-    }
-
-    return isPublic;
+    return charts.filter((c) => c.public).length > 0;
   };
 
   return (
@@ -77,7 +69,7 @@ function PublicDashboard(props) {
           </Message>
           )}
 
-        {dashboard && dashboard.Charts.length > 0 && _isPublic()
+        {charts.length > 0 && _isPublic()
           && (
           <div>
             <div style={styles.brewBadge}>
@@ -93,7 +85,7 @@ function PublicDashboard(props) {
             </Header>
 
             <Grid stackable centered style={styles.mainGrid}>
-              {dashboard.Charts.map((chart) => {
+              {charts.map((chart) => {
                 if (chart.draft) return (<span style={{ display: "none" }} key={chart.id} />);
                 if (!chart.public) return (<span style={{ display: "none" }} key={chart.id} />);
 
@@ -102,7 +94,7 @@ function PublicDashboard(props) {
                     <Chart
                       isPublic
                       chart={chart}
-                      charts={dashboard.Charts}
+                      charts={charts}
                     />
                   </Grid.Column>
                 );
@@ -157,16 +149,18 @@ PublicDashboard.propTypes = {
   getPublicDashboard: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
+  charts: PropTypes.array.isRequired,
 };
 
-const mapStateToProps = () => {
+const mapStateToProps = (state) => {
   return {
+    charts: state.chart.data,
   };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    getPublicDashboard: (brewName) => dispatch(getPublicDashboard(brewName)),
+    getPublicDashboard: (brewName) => dispatch(getPublicDashboardAction(brewName)),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
