@@ -1,7 +1,5 @@
 const Sequelize = require("sequelize");
 
-const createChartShares = require("../scripts/createChartShares");
-
 module.exports = {
   up: async (queryInterface) => {
     await queryInterface.createTable("Chartshare", {
@@ -32,9 +30,6 @@ module.exports = {
         type: Sequelize.DATE
       },
     });
-
-    // now create a new Chartshare for all the charts in the database
-    await createChartShares.up();
   },
 
   down: async (queryInterface) => {
