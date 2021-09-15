@@ -366,3 +366,35 @@ export function exportChart(projectId, chartIds, filters) {
       return err;
     });
 }
+
+export function createShareString(projectId, chartId) {
+  return (dispatch) => {
+    const token = cookie.load("brewToken");
+    const url = `${API_HOST}/project/${projectId}/chart/${chartId}/share`;
+    const method = "POST";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    dispatch({ type: FETCH_CHART });
+    return fetch(url, { method, headers })
+      .then((response) => {
+        if (!response.ok) {
+          dispatch(addError(response.status));
+          return new Promise((resolve, reject) => reject(response.statusText));
+        }
+
+        return response.json();
+      })
+      .then((chart) => {
+        dispatch({ type: FETCH_CHART_SUCCESS, chart });
+        return new Promise(resolve => resolve(chart));
+      })
+      .catch((error) => {
+        dispatch({ type: FETCH_CHART_FAIL });
+        return new Promise((resolve, reject) => reject(error));
+      });
+  };
+}

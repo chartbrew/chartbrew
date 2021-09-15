@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const moment = require("moment");
 const Sequelize = require("sequelize");
 const { nanoid } = require("nanoid");
+const uuid = require("uuid/v4");
 
 const externalDbConnection = require("../modules/externalDbConnection");
 
@@ -83,7 +84,7 @@ class ChartController {
     return db.Chart.findAll({
       where: { project_id: projectId },
       order: [["dashboardOrder", "ASC"]],
-      include: [{ model: db.Dataset }],
+      include: [{ model: db.Dataset }, { model: db.Chartshare }],
     })
       .then((charts) => {
         return charts;
@@ -96,7 +97,7 @@ class ChartController {
   findById(id, customQuery) {
     const query = {
       where: { id },
-      include: [{ model: db.Dataset }],
+      include: [{ model: db.Dataset }, { model: db.Chartshare }],
     };
 
     return db.Chart.findOne(customQuery || query)
@@ -662,6 +663,43 @@ class ChartController {
       })
       .catch((err) => {
         return new Promise((resolve, reject) => reject(err));
+      });
+  }
+
+  findByShareString(shareString) {
+    return db.Chartshare.findOne({ where: { shareString } })
+      .then((share) => {
+        return this.findById(share.chart_id);
+      })
+      .catch((err) => {
+        return Promise.reject(err);
+      });
+  }
+
+  createShare(chartId) {
+    return db.Chartshare.create({
+      chart_id: chartId,
+      shareString: uuid(),
+    })
+      .catch((err) => {
+        return Promise.reject(err);
+      });
+  }
+
+  updateShare(id, data) {
+    return db.Chartshare.update(data, { where: { id } })
+      .then(() => {
+        return db.Chartshare.findByPk(id);
+      })
+      .catch((err) => {
+        return Promise.reject(err);
+      });
+  }
+
+  removeShare(id) {
+    return db.Chartshare.destroy({ where: { id } })
+      .catch((err) => {
+        return Promise.reject(err);
       });
   }
 }

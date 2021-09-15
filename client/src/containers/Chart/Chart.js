@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import {
   Icon, Header, Segment, Modal, Button, TransitionablePortal,
-  Dropdown, Message, Popup, Form, TextArea, Label, Input, Divider,
+  Dropdown, Message, Popup, Form, TextArea, Label, Input, Divider, Checkbox, Placeholder,
 } from "semantic-ui-react";
 import moment from "moment";
 import _ from "lodash";
@@ -18,6 +18,7 @@ import {
   updateChart as updateChartAction,
   runQueryWithFilters as runQueryWithFiltersAction,
   exportChart,
+  createShareString as createShareStringAction,
 } from "../../actions/chart";
 import canAccess from "../../config/canAccess";
 import { SITE_HOST } from "../../config/settings";
@@ -47,6 +48,7 @@ function Chart(props) {
   const {
     updateChart, match, runQuery, removeChart, runQueryWithFilters,
     team, user, chart, isPublic, charts, onChangeOrder, print, height,
+    createShareString,
   } = props;
 
   const [chartLoading, setChartLoading] = useState(false);
@@ -64,6 +66,7 @@ function Chart(props) {
     getFiltersFromStorage(match.params.projectId)
   );
   const [conditions, setConditions] = useState([]);
+  const [shareLoading, setShareLoading] = useState(false);
 
   useEffect(() => {
     setIframeCopied(false);
@@ -190,6 +193,22 @@ function Chart(props) {
       });
   };
 
+  const _onToggleShareable = async () => {
+    // first, check if the chart has a share string
+    if (!chart.Chartshares || chart.Chartshares.length === 0) {
+      setShareLoading(true);
+      await createShareString(match.params.projectId, chart.id);
+    }
+
+    await updateChart(
+      match.params.projectId,
+      chart.id,
+      { shareable: !chart.shareable },
+      true,
+    );
+    setShareLoading(false);
+  };
+
   const _chartHasFilter = () => {
     let found = false;
     if (chart.Datasets) {
@@ -269,6 +288,24 @@ function Chart(props) {
 
     setConditions(newConditions);
     runQueryWithFilters(chart.project_id, chart.id, newConditions);
+  };
+
+  const _getEmbedUrl = () => {
+    if (!chart.Chartshares || !chart.Chartshares[0]) return "";
+    const shareString = chart.Chartshares && chart.Chartshares[0].shareString;
+    return `${SITE_HOST}/chart/${shareString}/embedded`;
+  };
+
+  const _getEmbedString = () => {
+    if (!chart.Chartshares || !chart.Chartshares[0]) return "";
+    const shareString = chart.Chartshares && chart.Chartshares[0].shareString;
+    return `<iframe src="${SITE_HOST}/chart/${shareString}/embedded" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0" style="background-color: #ffffff"></iframe>`;
+  };
+
+  const _onCreateSharingString = async () => {
+    setShareLoading(true);
+    await createShareString(match.params.projectId, chart.id);
+    setShareLoading(false);
   };
 
   const { projectId } = match.params;
@@ -617,7 +654,7 @@ function Chart(props) {
             />
           <Modal.Content>
             <p>
-              {"Public charts will show in your Public Dashboard page and it can be viewed by everyone that has access to your domain. Nobody other than you and your team will be able to edit or update the chart data."}
+              {"Public charts will show in your Public Dashboard page and it can be viewed by everyone that access to the unique sharing link. Nobody other than you and your team will be able to edit or update the chart data."}
             </p>
           </Modal.Content>
           <Modal.Actions>
@@ -629,12 +666,12 @@ function Chart(props) {
               Go back
             </Button>
             <Button
-              color="teal"
+              primary
               inverted
               loading={publicLoading}
               onClick={_onPublic}
               >
-              <Icon name="checkmark" />
+              <Icon name="globe" />
               Make the chart public
             </Button>
           </Modal.Actions>
@@ -727,80 +764,108 @@ function Chart(props) {
             <Modal.Content>
               <Form>
                 <Form.Field>
-                  <label>
-                    {"Copy the following code on the website you wish to add your chart in."}
-                  </label>
-                  <TextArea
-                    id="iframe-text"
-                    value={`<iframe src="${SITE_HOST}/chart/${chart.id}/embedded" allowTransparency="true" width="700" height="300" scrolling="no" frameborder="0"></iframe>`}
+                  <Checkbox
+                    toggle
+                    label={chart.shareable ? "Disable sharing" : "Enable sharing"}
+                    onChange={_onToggleShareable}
+                    checked={chart.shareable}
                   />
                 </Form.Field>
-                <Form.Field>
-                  <Button
-                    primary={!iframeCopied}
-                    positive={iframeCopied}
-                    basic
-                    icon
-                    labelPosition="right"
-                    onClick={_onCopyIframe}
-                  >
-                    {!iframeCopied && <Icon name="clipboard" />}
-                    {iframeCopied && <Icon name="checkmark" />}
-                    {!iframeCopied && "Copy iframe"}
-                    {iframeCopied && "Copied to your clipboard"}
-                  </Button>
-                </Form.Field>
               </Form>
+              {chart.public && !chart.shareable && (
+                <Message
+                  info
+                  icon="globe"
+                  header="The chart is public"
+                  content="A public chart can be shared even if the sharing toggle is disabled. This gives you more flexibility if you want to hide the chart from the public dashboard but you still want to individually share it."
+                  size="small"
+                />
+              )}
+              {(chart.public || chart.shareable)
+              && (!chart.Chartshares || chart.Chartshares.length === 0)
+              && (
+                <Button
+                  icon="plus"
+                  content="Create a sharing code"
+                  primary
+                  onClick={_onCreateSharingString}
+                />
+              )}
 
-              <Divider />
-              <Form>
-                <Form.Field>
-                  <label>{"Or get just the URL"}</label>
-                  <Input value={`${SITE_HOST}/chart/${chart.id}/embedded`} id="url-text" />
-                </Form.Field>
-                <Form.Field>
-                  <Button
-                    primary={!urlCopied}
-                    positive={urlCopied}
-                    basic
-                    icon
-                    labelPosition="right"
-                    onClick={_onCopyUrl}
-                  >
-                    {!urlCopied && <Icon name="clipboard" />}
-                    {urlCopied && <Icon name="checkmark" />}
-                    {!urlCopied && "Copy URL"}
-                    {urlCopied && "Copied to your clipboard"}
-                  </Button>
-                </Form.Field>
-              </Form>
+              {shareLoading && (
+                <Placeholder>
+                  <Placeholder.Line />
+                  <Placeholder.Line />
+                  <Placeholder.Line />
+                  <Placeholder.Line />
+                  <Placeholder.Line />
+                </Placeholder>
+              )}
+
+              {(chart.shareable || chart.public)
+              && !chartLoading
+              && (chart.Chartshares && chart.Chartshares.length > 0)
+              && (
+                <>
+                  <Divider />
+                  <Form>
+                    <Form.Field>
+                      <label>
+                        {"Copy the following code on the website you wish to add your chart in."}
+                      </label>
+                      <TextArea
+                        id="iframe-text"
+                        value={_getEmbedString()}
+                      />
+                    </Form.Field>
+                    <Form.Field>
+                      <Button
+                        primary={!iframeCopied}
+                        positive={iframeCopied}
+                        basic
+                        icon
+                        labelPosition="right"
+                        onClick={_onCopyIframe}
+                      >
+                        {!iframeCopied && <Icon name="clipboard" />}
+                        {iframeCopied && <Icon name="checkmark" />}
+                        {!iframeCopied && "Copy the code"}
+                        {iframeCopied && "Copied to your clipboard"}
+                      </Button>
+                    </Form.Field>
+                  </Form>
+
+                  <Divider />
+                  <Form>
+                    <Form.Field>
+                      <label>{"Or get just the URL"}</label>
+                      <Input value={_getEmbedUrl()} id="url-text" />
+                    </Form.Field>
+                    <Form.Field>
+                      <Button
+                        primary={!urlCopied}
+                        positive={urlCopied}
+                        basic
+                        icon
+                        labelPosition="right"
+                        onClick={_onCopyUrl}
+                      >
+                        {!urlCopied && <Icon name="clipboard" />}
+                        {urlCopied && <Icon name="checkmark" />}
+                        {!urlCopied && "Copy URL"}
+                        {urlCopied && "Copied to your clipboard"}
+                      </Button>
+                    </Form.Field>
+                  </Form>
+                </>
+              )}
             </Modal.Content>
             <Modal.Actions>
-              {chart.public && (
               <Button
                 onClick={() => setEmbedModal(false)}
               >
-                Done
+                Close
               </Button>
-              )}
-              {!chart.public && (
-              <Button
-                onClick={() => setEmbedModal(false)}
-              >
-                Cancel
-              </Button>
-              )}
-              {!chart.public && (
-              <Button
-                primary
-                onClick={() => {
-                  _onPublic();
-                  setEmbedModal(false);
-                }}
-              >
-                Make public
-              </Button>
-              )}
             </Modal.Actions>
           </Modal>
         </TransitionablePortal>
@@ -867,6 +932,7 @@ Chart.propTypes = {
   onChangeOrder: PropTypes.func,
   print: PropTypes.string,
   height: PropTypes.number,
+  createShareString: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -886,6 +952,9 @@ const mapDispatchToProps = (dispatch) => {
     ),
     runQueryWithFilters: (projectId, chartId, filters) => (
       dispatch(runQueryWithFiltersAction(projectId, chartId, filters))
+    ),
+    createShareString: (projectId, chartId) => (
+      dispatch(createShareStringAction(projectId, chartId))
     ),
   };
 };

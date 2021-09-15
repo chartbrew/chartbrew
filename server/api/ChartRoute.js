@@ -357,10 +357,44 @@ module.exports = (app) => {
   /*
   ** Route to get a chart for embedding (must be public for success)
   */
-  app.get("/chart/:id/embedded", (req, res) => {
-    return chartController.findById(req.params.id)
+  app.get("/chart/:share_string/embedded", (req, res) => {
+    // backwards-compatible code for public charts with ID-enabled embed
+    /* Deprecated */
+    if (req.params.share_string.length < 16) {
+      return chartController.findById(req.params.share_string)
+        .then((chart) => {
+          if (!chart.public) {
+            return new Promise((resolve, reject) => reject(new Error("401")));
+          }
+
+          return res.status(200).send({
+            id: chart.id,
+            name: chart.name,
+            type: chart.type,
+            subType: chart.subType,
+            chartDataUpdated: chart.chartDataUpdated,
+            chartData: chart.chartData,
+            Datasets: chart.Datasets,
+            mode: chart.mode,
+            chartSize: chart.chartSize,
+            project_id: chart.project_id,
+          });
+        })
+        .catch((error) => {
+          if (error.message === "401") {
+            return res.status(401).send({ error: "Not authorized" });
+          }
+          if (error.message.indexOf("413") > -1) {
+            return res.status(413).send(error);
+          }
+          return res.status(400).send(error);
+        });
+    }
+
+    // New! taking advantage of the share strings
+    return chartController.findByShareString(req.params.share_string)
       .then((chart) => {
-        if (!chart.public) {
+        if (!chart.public && !chart.shareable) {
           return new Promise((resolve, reject) => reject(new Error("401")));
         }
 
@@ -410,6 +444,62 @@ module.exports = (app) => {
       })
       .catch((err) => {
         return res.status(400).send(err);
+      });
+  });
+  // --------------------------------------------------------
+
+  /*
+  ** Route to create a new share link
+  */
+  app.post("/project/:project_id/chart/:id/share", verifyToken, (req, res) => {
+    return checkAccess(req)
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).updateAny("chart");
+        if (!permission.granted) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
+        return chartController.createShare(req.params.id);
+      })
+      .then(() => {
+        return chartController.findById(req.params.id);
+      })
+      .then((chart) => {
+        return res.status(200).send(chart);
+      })
+      .catch((error) => {
+        if (error === "401" || error.message === "401") {
+          return res.status(401).send({ error: "Not authorized" });
+        }
+        if (error === "413" && error.message === "413") {
+          return res.status(413).send(error);
+        }
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------------------------
+
+  /*
+  ** Route to delete a share link
+  */
+  app.delete("/project/:project_id/chart/:id/share/:share_id", verifyToken, (req, res) => {
+    return checkAccess(req)
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).updateAny("chart");
+        if (!permission.granted) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
+        return chartController.removeShare(req.params.share_id);
+      })
+      .catch((error) => {
+        if (error === "401" || error.message === "401") {
+          return res.status(401).send({ error: "Not authorized" });
+        }
+        if (error === "413" && error.message === "413") {
+          return res.status(413).send(error);
+        }
+        return res.status(400).send(error);
       });
   });
   // --------------------------------------------------------

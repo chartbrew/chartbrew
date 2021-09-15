@@ -30,6 +30,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: false,
     },
+    shareable: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
     chartData: {
       type: DataTypes.TEXT("long"),
       set(val) {
@@ -115,6 +120,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Chart.associate = (models) => {
     models.Chart.hasMany(models.Dataset, { foreignKey: "chart_id" });
+    models.Chart.hasMany(models.Chartshare, { foreignKey: "chart_id" });
   };
 
   return Chart;
