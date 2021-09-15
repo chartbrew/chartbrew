@@ -1,9 +1,9 @@
-import React, { Component } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Dimmer, Segment, Loader, Divider, Message, Icon, Form, Container, Header
+  Dimmer, Segment, Loader, Message, Form, Container, Header, Input, Checkbox, Divider
 } from "semantic-ui-react";
 import { getTeam, updateTeam } from "../actions/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
@@ -11,100 +11,92 @@ import { cleanErrors as cleanErrorsAction } from "../actions/error";
 /*
   Contains team update functionality
 */
-class TeamSettings extends Component {
-  constructor(props) {
-    super(props);
+function TeamSettings(props) {
+  const {
+    team, getTeam, match, cleanErrors, style, updateTeam,
+  } = props;
 
-    this.state = {
-      loading: false,
-      teamState: {
-        name: ""
-      },
-      success: false,
-      btnIcon: "arrow right",
-    };
-  }
+  const [loading, setLoading] = useState(false);
+  const [teamState, setTeamState] = useState({ name: "" });
+  const [success, setSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
 
-  componentDidMount() {
-    const { getTeam, match, cleanErrors } = this.props;
+  useEffect(() => {
     cleanErrors();
     getTeam(match.params.teamId)
-      .then((team) => {
-        this.setState({ teamState: { name: team.name } });
+      .then((teamData) => {
+        setTeamState({ name: teamData.name });
       });
-  }
+  }, []);
 
-  _onTeamUpdate = () => {
-    const { updateTeam, team } = this.props;
-    const { teamState } = this.state;
-    this.setState({
-      submitError: false, loading: true, success: false, btnIcon: "arrow right"
-    });
+  const _onTeamUpdate = () => {
+    setSubmitError(false);
+    setLoading(true);
+    setSuccess(false);
+
     updateTeam(team.id, teamState)
       .then(() => {
-        this.setState({ success: true, loading: false, btnIcon: "check" });
+        setSuccess(true);
+        setLoading(false);
       })
       .catch(() => {
-        this.setState({ submitError: true, loading: false });
+        setSubmitError(true);
+        setLoading(false);
       });
-  }
+  };
 
-  render() {
-    const { team, style } = this.props;
-    const {
-      teamState, submitError, btnIcon, loading, success,
-    } = this.state;
+  const _onToggleBranding = () => {
+    updateTeam(team.id, { showBranding: !team.showBranding });
+  };
 
-    if (!team) {
-      return (
-        <Container text style={styles.container}>
-          <Dimmer active>
-            <Loader />
-          </Dimmer>
-        </Container>
-      );
-    }
-
+  if (!team) {
     return (
-      <div style={style}>
-        <Header attached="top" as="h3">Team settings</Header>
-        <Segment attached>
-          <Container>
-            <Form onSubmit={this._onTeamUpdate}>
-              <Form.Input
-                label="Team name"
-                placeholder={team.name}
-                name="name"
-                value={teamState.name}
-                onChange={(e, data) => this.setState({
-                  teamState: { ...teamState, name: data.value }
-                })} />
-              {submitError
-              && (
-              <Container textAlign="center" style={{ margin: "1em" }}>
-                <Message negative> There was an error updating your team </Message>
-              </Container>
-              )}
-              <Form.Button
-                loading={loading}
-                icon
-                disabled={!teamState.name}
-                type="submit"
-                floated="right"
-                compact
-                size="large"
-                color={success ? "green" : "primary"}
-                labelPosition="right">
-                {success ? "Saved" : "Save" }
-                <Icon name={btnIcon} />
-              </Form.Button>
-              <Divider hidden section />
-            </Form>
-          </Container>
-        </Segment>
-      </div>
+      <Container text style={styles.container}>
+        <Dimmer active>
+          <Loader />
+        </Dimmer>
+      </Container>
     );
   }
+
+  return (
+    <div style={style}>
+      <Header attached="top" as="h3">Team settings</Header>
+      <Segment attached padded style={{ paddingBottom: 40 }}>
+        <Form>
+          <Form.Field>
+            <label>Team name</label>
+            <Input
+              placeholder={team.name}
+              name="name"
+              value={teamState.name}
+              onChange={(e, data) => {
+                setTeamState({ ...teamState, name: data.value });
+              }}
+              action={{
+                color: success ? "green" : "violet",
+                labelPosition: "right",
+                icon: "checkmark",
+                content: success ? "Done" : "Save",
+                loading,
+                onClick: () => _onTeamUpdate(),
+              }}
+              />
+            {submitError && (<Message negative> There was an error updating your team </Message>)}
+          </Form.Field>
+          <Form.Field>
+            <Divider section />
+            <Checkbox
+              label={team.showBranding ? "Chartbrew branding is shown on shared charts" : "Chartbrew branding is disabled"}
+              toggle
+              checked={team.showBranding}
+              onChange={_onToggleBranding}
+            />
+          </Form.Field>
+        </Form>
+      </Segment>
+    </div>
+  );
 }
 
 const styles = {

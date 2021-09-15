@@ -338,8 +338,12 @@ module.exports = (app) => {
       req.query.skip_parsing === "true",
       req.body.filters,
     )
-      .then((chart) => {
-        // console.log("chart", chart);
+      .then(async (chart) => {
+        // get the team's branding status
+        const project = await projectController.findById(chart.project_id);
+        const team = await teamController.findById(project.team_id);
+
+        chart.setDataValue("showBranding", team.showBranding);
         return res.status(200).send(chart);
       })
       .catch((error) => {
@@ -362,10 +366,14 @@ module.exports = (app) => {
     /* Deprecated */
     if (req.params.share_string.length < 16) {
       return chartController.findById(req.params.share_string)
-        .then((chart) => {
+        .then(async (chart) => {
           if (!chart.public) {
             return new Promise((resolve, reject) => reject(new Error("401")));
           }
+
+          // get the team's branding status
+          const project = await projectController.findById(chart.project_id);
+          const team = await teamController.findById(project.team_id);
 
           return res.status(200).send({
             id: chart.id,
@@ -378,6 +386,7 @@ module.exports = (app) => {
             mode: chart.mode,
             chartSize: chart.chartSize,
             project_id: chart.project_id,
+            showBranding: team.showBranding,
           });
         })
         .catch((error) => {
@@ -393,10 +402,14 @@ module.exports = (app) => {
 
     // New! taking advantage of the share strings
     return chartController.findByShareString(req.params.share_string)
-      .then((chart) => {
+      .then(async (chart) => {
         if (!chart.public && !chart.shareable) {
           return new Promise((resolve, reject) => reject(new Error("401")));
         }
+
+        // get the team's branding status
+        const project = await projectController.findById(chart.project_id);
+        const team = await teamController.findById(project.team_id);
 
         return res.status(200).send({
           id: chart.id,
@@ -409,6 +422,7 @@ module.exports = (app) => {
           mode: chart.mode,
           chartSize: chart.chartSize,
           project_id: chart.project_id,
+          showBranding: team.showBranding,
         });
       })
       .catch((error) => {

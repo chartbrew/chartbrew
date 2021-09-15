@@ -227,7 +227,7 @@ function EmbeddedChart(props) {
             />
           </Container>
           )}
-        <div>
+        <div style={{ marginTop: 5 }}>
           <small>
             {!loading && (
               <i>
@@ -241,12 +241,14 @@ function EmbeddedChart(props) {
               </>
             )}
           </small>
-          <small style={{ color: blackTransparent(0.5), float: "right" }}>
-            {"Powered by "}
-            <a href="https://chartbrew.com" target="_blank" rel="noreferrer">
-              Chartbrew
-            </a>
-          </small>
+          {chart.showBranding && (
+            <small style={{ color: blackTransparent(0.5), float: "right" }}>
+              {"Powered by "}
+              <a href="https://chartbrew.com" target="_blank" rel="noreferrer">
+                Chartbrew
+              </a>
+            </small>
+          )}
         </div>
       </Container>
     </div>

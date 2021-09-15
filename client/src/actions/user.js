@@ -28,6 +28,8 @@ function authenticatePage() {
     return false;
   } else if (window.location.pathname === "/feedback") {
     return false;
+  } else if (window.location.pathname.indexOf("embedded") > -1) {
+    return false;
   }
 
   window.location.pathname = "/login";
