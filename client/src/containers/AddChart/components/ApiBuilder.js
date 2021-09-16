@@ -295,9 +295,6 @@ function ApiBuilder(props) {
                   <Label color="green" style={{ marginBottom: 10 }}>
                     {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
                   </Label>
-                  <Label style={{ marginBottom: 10 }}>
-                    {`Length: ${result ? JSON.parse(result).length : 0}`}
-                  </Label>
                 </>
               )}
               {requestError && (

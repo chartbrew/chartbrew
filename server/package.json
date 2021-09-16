@@ -40,6 +40,7 @@
     "nanoid": "^3.1.20",
     "node-xlsx": "^0.16.1",
     "nodemailer": "^6.4.17",
+    "object-sizeof": "^1.6.1",
     "oneaccount-express": "^1.0.3",
     "pg": "^8.5.1",
     "pg-hstore": "^2.3.3",

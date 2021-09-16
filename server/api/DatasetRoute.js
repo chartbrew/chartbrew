@@ -187,7 +187,11 @@ module.exports = (app) => {
         return datasetController.runRequest(req.params.id, req.params.chart_id);
       })
       .then((result) => {
-        return res.status(200).send(result);
+        let data = result;
+        if (typeof data === "object" && data instanceof Array) {
+          data = result.slice(0, 20);
+        }
+        return res.status(200).send(data);
       })
       .catch((err) => {
         if (err && err.message === "404") {

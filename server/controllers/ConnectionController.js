@@ -374,7 +374,9 @@ class ConnectionController {
       .then((url) => {
         const options = {
           keepAlive: 1,
-          connectTimeoutMS: 30000,
+          connectTimeoutMS: 100000,
+          useNewUrlParser: true,
+          useUnifiedTopology: true,
         };
         return mongoose.connect(url, options);
       })

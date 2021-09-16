@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Grid, Header, Button, Container, Icon, List,
-  Modal, Input, Label, Popup, TransitionablePortal,
+  Modal, Input, Popup, TransitionablePortal,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
@@ -211,11 +211,6 @@ function MongoQueryBuilder(props) {
         <Grid.Column width={8}>
           <Header size="small">
             {"Query result"}
-            {result && (
-              <Label color="green">
-                {`Result length: ${result ? JSON.parse(result).length : 0}`}
-              </Label>
-            )}
           </Header>
 
           <AceEditor

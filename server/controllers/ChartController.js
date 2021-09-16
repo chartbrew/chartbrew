@@ -3,6 +3,7 @@ const moment = require("moment");
 const Sequelize = require("sequelize");
 const { nanoid } = require("nanoid");
 const uuid = require("uuid/v4");
+const sizeof = require("object-sizeof");
 
 const externalDbConnection = require("../modules/externalDbConnection");
 
@@ -111,7 +112,10 @@ class ChartController {
 
   update(id, data, user, justUpdates) {
     if (data.autoUpdate) {
-      return db.Chart.update(data, { where: { id } })
+      return db.Chart.update(data, {
+        where: { id },
+        attributes: { exclude: ["chartData"] },
+      })
         .then(() => {
           const updatePromises = [];
 
@@ -348,7 +352,10 @@ class ChartController {
           });
         } else if (!skipCache) {
           // create a new cache for the data that was fetched
-          this.chartCache.create(user.id, gChart.id, resolvingData);
+          // but only if the object data is less than 30mb in memory
+          if (sizeof(resolvingData) < 30000000) {
+            this.chartCache.create(user.id, gChart.id, resolvingData);
+          }
         }
 
         return Promise.resolve(resolvingData);
@@ -417,7 +424,7 @@ class ChartController {
         return this.findById(id);
       })
       .catch((err) => {
-        return err;
+        return new Promise((resolve, reject) => reject(err));
       });
   }
 
@@ -577,7 +584,10 @@ class ChartController {
       .then((data) => {
         if (noSource !== "true") {
           // cache, but do it async
-          this.chartCache.create(user.id, chart.id, data);
+          // only if the data is less than 30mb in memory
+          if (sizeof(data) < 30000000) {
+            this.chartCache.create(user.id, chart.id, data);
+          }
         }
 
         return new Promise((resolve) => resolve(data));

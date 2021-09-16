@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Header, Button, Icon, Label, Container,
+  Grid, Header, Button, Icon, Container,
   Modal, Input, TransitionablePortal,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
@@ -197,11 +197,6 @@ function SqlBuilder(props) {
         <Grid.Column width={8}>
           <Header size="small">
             {"Query result"}
-            {result && (
-              <Label color="green">
-                {`Result length: ${result ? JSON.parse(result).length : 0}`}
-              </Label>
-            )}
           </Header>
 
           <AceEditor

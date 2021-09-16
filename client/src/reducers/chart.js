@@ -24,7 +24,7 @@ export default function chart(state = {
 
         if (indexFound) newData[indexFound].loading = true;
 
-        return { ...state, data: newData };
+        return { ...state, data: newData, loading: true };
       } else {
         return { ...state, loading: true };
       }
@@ -41,7 +41,7 @@ export default function chart(state = {
       }
       const newData = [...state.data];
       if (indexFound > -1) {
-        newData[indexFound] = action.chart;
+        newData[indexFound] = { ...newData[indexFound], ...action.chart };
       } else {
         newData.push(action.chart);
       }
