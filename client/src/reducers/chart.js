@@ -41,7 +41,7 @@ export default function chart(state = {
       }
       const newData = [...state.data];
       if (indexFound > -1) {
-        newData[indexFound] = { ...newData[indexFound], ...action.chart };
+        newData[indexFound] = { ...newData[indexFound], ...action.chart, loading: false };
       } else {
         newData.push(action.chart);
       }
