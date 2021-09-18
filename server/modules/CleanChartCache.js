@@ -11,7 +11,7 @@ function clean() {
       for (const item of cache) {
         const timeDiff = moment().diff(item.createdAt, "hours");
 
-        if (timeDiff < 23) {
+        if (timeDiff < 23 || !item.filePath) {
           // clean the data field in each cache item
           try {
             if (item.filePath) fs.unlink(item.filePath, () => {});
