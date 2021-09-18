@@ -73,6 +73,7 @@ class DatasetController {
 
   runRequest(id, chartId, noSource) {
     let gDataset;
+    let gConnection;
     return db.Dataset.findOne({
       where: { id },
       include: [{ model: db.DataRequest }, { model: db.Connection }],
@@ -80,6 +81,7 @@ class DatasetController {
       .then((dataset) => {
         gDataset = dataset;
         const connection = dataset.Connection;
+        gConnection = connection;
         const dataRequest = dataset.DataRequest;
 
         if (!dataRequest || (dataRequest && dataRequest.length === 0)) {
@@ -108,7 +110,11 @@ class DatasetController {
           return new Promise((resolve, reject) => reject(new Error("Invalid connection type")));
         }
       })
-      .then((data) => {
+      .then((rawData) => {
+        let data = rawData;
+        if (gConnection.type === "mongodb") {
+          data = JSON.parse(JSON.stringify(data));
+        }
         return Promise.resolve({
           options: gDataset,
           data,
