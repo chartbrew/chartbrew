@@ -99,7 +99,7 @@ module.exports = (data, filters) => {
           // extract the data using the groups schema
           let newKey = _.get(newItem, group.key);
           const newValue = _.get(newItem, group.value);
-          if (newKey && newValue) {
+          if (newKey && newValue && typeof newKey.replaceAll === "function") {
             // make sure the new keys don't have dots "." in them
             // the dots prevent the values from rendering properly
             newKey = newKey.replaceAll(".", " ");
