@@ -186,12 +186,14 @@ module.exports = (app) => {
 
         return datasetController.runRequest(req.params.id, req.params.chart_id);
       })
-      .then((result) => {
-        let data = result;
-        if (typeof data === "object" && data instanceof Array) {
-          data = result.slice(0, 20);
+      .then((dataset) => {
+        const newDataset = dataset;
+
+        // reduce the size of the returned data. No point in showing thousands of objects
+        if (typeof dataset.data === "object" && dataset.data instanceof Array) {
+          newDataset.data = dataset.data.slice(0, 20);
         }
-        return res.status(200).send(data);
+        return res.status(200).send(newDataset);
       })
       .catch((err) => {
         if (err && err.message === "404") {

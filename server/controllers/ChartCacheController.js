@@ -1,19 +1,26 @@
+const fs = require("fs");
+const path = require("path");
+
 const db = require("../models/models");
 
 class ChartCacheController {
-  create(userId, chartId, data, type = "CHART_CACHE") {
+  create(userId, chartId, data) {
     return this.findLast(userId, chartId)
       .then((cache) => {
         if (!cache) {
+          const filePath = path.normalize(`${__dirname}/../.cache/chart-${chartId}.txt`);
+          try {
+            fs.writeFile(filePath, JSON.stringify(data), () => { });
+          } catch (e) { /**/ }
+
           return db.ChartCache.create({
             user_id: userId,
             chart_id: chartId,
-            data,
-            type,
+            filePath,
           });
         }
 
-        return this.update({ data }, userId, chartId);
+        return this.findLast(userId, chartId);
       })
       .then((cache) => {
         return new Promise((resolve) => resolve(cache));
@@ -23,18 +30,29 @@ class ChartCacheController {
       });
   }
 
-  findLast(userId, chartId) {
-    return db.ChartCache.findAll({
+  findLast(userId, chartId, includeData = true) {
+    return db.ChartCache.findOne({
       where: { user_id: userId, chart_id: chartId },
       order: [["createdAt", "DESC"]],
     })
-      .then((cache) => {
-        if (!cache || cache.length < 1) {
+      .then(async (cache) => {
+        if (!cache || !cache.filePath) {
           return new Promise((resolve) => resolve(false));
         }
 
-        // return only the last one
-        return new Promise((resolve) => resolve(cache[0]));
+        try {
+          if (includeData) {
+            if (fs.existsSync(cache.filePath)) {
+              const rawData = await fs.promises.readFile(cache.filePath);
+              const parsedData = JSON.parse(rawData);
+              // console.log("parsedData", parsedData.chart.chartData.test.data);
+              return new Promise((resolve) => resolve({ ...cache, data: parsedData }));
+            }
+          }
+          return cache;
+        } catch (e) {
+          return new Promise((resolve) => resolve(false));
+        }
       })
       .catch(() => {
         // this operation shouldn't stop what else is running
@@ -46,6 +64,20 @@ class ChartCacheController {
     return db.ChartCache.update(data, { where: { user_id: userId, chart_id: chartId } })
       .then(() => {
         return this.findLast(userId, chartId);
+      })
+      .catch((e) => {
+        return new Promise((resolve, reject) => reject(e));
+      });
+  }
+
+  remove(userId, chartId) {
+    return this.findLast(userId, chartId)
+      .then((cache) => {
+        if (cache.file) {
+          fs.unlink(cache.file, () => {});
+        }
+
+        return db.ChartCache.destroy({ where: { user_id: userId, chart_id: chartId } });
       })
       .catch((e) => {
         return new Promise((resolve, reject) => reject(e));

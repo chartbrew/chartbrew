@@ -3,7 +3,6 @@ const moment = require("moment");
 const Sequelize = require("sequelize");
 const { nanoid } = require("nanoid");
 const uuid = require("uuid/v4");
-const sizeof = require("object-sizeof");
 
 const externalDbConnection = require("../modules/externalDbConnection");
 
@@ -61,7 +60,7 @@ class ChartController {
       .then(() => {
         // delete chart cache
         if (user) {
-          this.chartCache.update({ data: null }, user.id, chartId);
+          this.chartCache.remove(user.id, chartId);
         }
 
         return this.findById(chartId);
@@ -145,7 +144,7 @@ class ChartController {
       .then(() => {
         // clear chart cache
         if (user) {
-          this.chartCache.update({ data: null }, user.id, id);
+          this.chartCache.remove(user.id, id);
         }
 
         const updatePromises = [];
@@ -332,11 +331,13 @@ class ChartController {
 
         return Promise.all(requestPromises);
       })
-      .then((datasets) => {
+      .then(async (datasets) => {
         const resolvingData = {
           chart: gChart,
           datasets,
         };
+
+        // console.log("gCache.data", gCache.data);
 
         // change the datasets data if the cache is called
         if (!skipCache && noSource === true && gCache && gCache.data && gCache.data.datasets) {
@@ -352,12 +353,10 @@ class ChartController {
           });
         } else if (!skipCache) {
           // create a new cache for the data that was fetched
-          // but only if the object data is less than 30mb in memory
-          if (sizeof(resolvingData) < 30000000) {
-            this.chartCache.create(user.id, gChart.id, resolvingData);
-          }
+          this.chartCache.create(user.id, gChart.id, resolvingData);
         }
 
+        // console.log("resolvingData", resolvingData);
         return Promise.resolve(resolvingData);
       })
       .then((chartData) => {
@@ -407,7 +406,6 @@ class ChartController {
         }
 
         await Promise.all(datasetsPromises);
-
         return this.update(id, { chartData: chartData.configuration, chartDataUpdated: moment() });
       })
       .then(() => {
@@ -568,7 +566,7 @@ class ChartController {
       })
       .then((connection) => {
         if (noSource === "true") {
-          return new Promise((resolve) => resolve(connection.data));
+          return new Promise((resolve) => resolve(connection));
         }
 
         if (connection.type === "mongodb") {
@@ -582,12 +580,12 @@ class ChartController {
         }
       })
       .then((data) => {
+        const previewData = data;
         if (noSource !== "true") {
           // cache, but do it async
-          // only if the data is less than 30mb in memory
-          if (sizeof(data) < 30000000) {
-            this.chartCache.create(user.id, chart.id, data);
-          }
+          this.chartCache.create(user.id, chart.id, data);
+        } else if (noSource) {
+          return new Promise((resolve) => resolve(previewData.data));
         }
 
         return new Promise((resolve) => resolve(data));

@@ -10,6 +10,7 @@ const _ = require("lodash");
 const { OneAccount } = require("oneaccount-express");
 const morgan = require("morgan");
 const helmet = require("helmet");
+const fs = require("fs");
 
 const settings = process.env.NODE_ENV === "production" ? require("./settings") : require("./settings-dev");
 const routes = require("./api");
@@ -19,6 +20,9 @@ const cleanAuthCache = require("./modules/CleanAuthCache");
 const AuthCacheController = require("./controllers/AuthCacheController");
 
 const authCache = new AuthCacheController();
+
+// set up the cache folder
+fs.mkdir(".cache", () => {});
 
 const app = express();
 app.settings = settings;
