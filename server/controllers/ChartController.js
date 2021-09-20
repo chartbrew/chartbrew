@@ -655,6 +655,10 @@ class ChartController {
                   }
                   sheetName = `${newChartName} - ${nanoid(5)}`;
                 }
+
+                // remove any special characters
+                sheetName = sheetName.replace(/[^a-zA-Z ]/g, "");
+
                 return {
                   name: sheetName,
                   datasets: chart.Datasets,
