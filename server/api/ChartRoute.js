@@ -458,7 +458,10 @@ module.exports = (app) => {
         return res.status(200).send(fileBuffer);
       })
       .catch((err) => {
-        return res.status(400).send(err);
+        return res.status(400).send({
+          message: (err && err.message) || err,
+          error: (err && err.toString()) || err,
+        });
       });
   });
   // --------------------------------------------------------
