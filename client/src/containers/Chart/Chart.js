@@ -601,6 +601,13 @@ function Chart(props) {
                       />
                     </div>
                   )}
+                {chart.type === "avg"
+                  && (
+                    <LineChart
+                      chart={chart}
+                      height={chart.mode === "kpi" ? height + 25 : height}
+                    />
+                  )}
               </div>
             </>
           )}

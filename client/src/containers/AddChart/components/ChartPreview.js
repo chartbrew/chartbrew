@@ -18,6 +18,7 @@ import RadarChart from "../../Chart/components/RadarChart";
 import DoughnutChart from "../../Chart/components/DoughnutChart";
 import PolarChart from "../../Chart/components/PolarChart";
 import PieChart from "../../Chart/components/PieChart";
+import TableContainer from "../../Chart/components/TableView/TableContainer";
 
 import radarSvg from "../../../assets/chart-icons/svg/014-analytics-56.svg";
 import lineSvg from "../../../assets/chart-icons/svg/line.svg";
@@ -27,7 +28,7 @@ import accumulateSvg from "../../../assets/chart-icons/svg/004-analytics-66.svg"
 import polarSvg from "../../../assets/chart-icons/svg/009-analytics-61.svg";
 import doughnutSvg from "../../../assets/chart-icons/svg/011-analytics-59.svg";
 import tableSvg from "../../../assets/chart-icons/svg/table.svg";
-import TableContainer from "../../Chart/components/TableView/TableContainer";
+import avgSvg from "../../../assets/chart-icons/svg/average_kpi.svg";
 
 const chartModes = [{
   key: "chart",
@@ -58,6 +59,12 @@ function ChartPreview(props) {
       newType.subType = "timeseries";
       newType.mode = "chart";
     }
+
+    if (data.type === "avg") {
+      newType.subType = "timeseries";
+      newType.mode = "kpi";
+    }
+
     return onChange(newType);
   };
 
@@ -66,7 +73,10 @@ function ChartPreview(props) {
       return onChange({ subType: "timeseries" });
     }
 
-    return onChange({ subType: "AddTimeseries" });
+    const updateData = { subType: "AddTimeseries" };
+    if (chart.type === "avg") updateData.type = "line";
+
+    return onChange(updateData);
   };
 
   const _onChangeMode = (e, data) => {
@@ -143,15 +153,34 @@ function ChartPreview(props) {
                   />
                 </div>
               )}
+            {chart.type === "avg"
+              && (
+                <LineChart chart={chart} redraw={redraw} redrawComplete={_redrawComplete} />
+              )}
           </Segment>
           <Container textAlign="center">
             <Popup
               trigger={(
                 <Button
                   basic
+                  secondary={chart.type === "avg"}
+                  onClick={() => _onChangeChartType({ type: "avg" })}
+                  icon
+                >
+                  <Image centered src={avgSvg} style={styles.chartCard} />
+                </Button>
+              )}
+              content={"Get the average value of all the points on the chart"}
+              position="bottom center"
+            />
+            <Popup
+              trigger={(
+                <Button
+                  basic
                   secondary={chart.subType.indexOf("AddTimeseries") > -1}
                   onClick={_toggleAccumulation}
-                  disabled={chart.type !== "line" && chart.type !== "bar"}
+                  disabled={chart.type !== "line" && chart.type !== "bar" && chart.type !== "avg"}
+                  icon
                 >
                   <Image centered src={accumulateSvg} style={styles.chartCard} />
                 </Button>
@@ -180,6 +209,7 @@ function ChartPreview(props) {
                     basic
                     primary={chart.type === "line"}
                     onClick={() => _onChangeChartType({ type: "line" })}
+                    icon
                   >
                     <Image centered src={lineSvg} style={styles.chartCard} />
                   </Button>
@@ -193,6 +223,7 @@ function ChartPreview(props) {
                     basic
                     primary={chart.type === "bar"}
                     onClick={() => _onChangeChartType({ type: "bar" })}
+                    icon
                   >
                     <Image centered src={barSvg} style={styles.chartCard} />
                   </Button>
@@ -208,6 +239,7 @@ function ChartPreview(props) {
                     basic
                     primary={chart.type === "pie"}
                     onClick={() => _onChangeChartType({ type: "pie" })}
+                    icon
                   >
                     <Image centered src={pieSvg} style={styles.chartCard} />
                   </Button>
@@ -221,6 +253,7 @@ function ChartPreview(props) {
                     basic
                     primary={chart.type === "radar"}
                     onClick={() => _onChangeChartType({ type: "radar" })}
+                    icon
                   >
                     <Image centered src={radarSvg} style={styles.chartCard} />
                   </Button>
@@ -234,6 +267,7 @@ function ChartPreview(props) {
                     basic
                     primary={chart.type === "doughnut"}
                     onClick={() => _onChangeChartType({ type: "doughnut" })}
+                    icon
                   >
                     <Image centered src={doughnutSvg} style={styles.chartCard} />
                   </Button>
@@ -247,6 +281,7 @@ function ChartPreview(props) {
                     basic
                     primary={chart.type === "polar"}
                     onClick={() => _onChangeChartType({ type: "polar" })}
+                    icon
                   >
                     <Image centered src={polarSvg} style={styles.chartCard} />
                   </Button>
@@ -337,7 +372,6 @@ const styles = {
   },
   chartCardContainer: {
     background: "white",
-    padding: 5,
     border: "1px solid rgba(34,36,38,.15)",
     boxShadow: "0 1px 2px 0 rgb(34 36 38 / 15%)",
     borderRadius: 4,
