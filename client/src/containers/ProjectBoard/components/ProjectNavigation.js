@@ -4,8 +4,10 @@ import { useWindowSize } from "react-use";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
-  Button, Dropdown, Header, Icon, Input, Menu, Popup,
+  Button, Dropdown, Header, Icon, Input, Menu, Modal, Popup, TransitionablePortal,
 } from "semantic-ui-react";
+import ReactMarkdown from "react-markdown";
+
 import { blue, lightGray, primary } from "../../../config/colors";
 import { APP_VERSION } from "../../../config/settings";
 
@@ -47,12 +49,19 @@ const _checkIfActive = (path) => {
 function ProjectNavigation(props) {
   const {
     menuSize, teamId, projectId, project, showDrafts, onSetMenuSize,
-    canAccess, projects, onChangeDrafts, onChangeProject, mobile,
+    canAccess, projects, onChangeDrafts, onChangeProject, mobile, update,
   } = props;
 
   const [projectSearch, setProjectSearch] = useState("");
+  const [showUpdate, setShowUpdate] = useState(false);
 
   const { height } = useWindowSize();
+
+  const _onVersionClicked = () => {
+    if (update && update.tag_name) {
+      setShowUpdate(true);
+    }
+  };
 
   if (mobile) {
     return (
@@ -113,312 +122,346 @@ function ProjectNavigation(props) {
   }
 
   return (
-    <Menu
-      size={menuSize === "small" ? "large" : "huge"}
-      fluid
-      inverted
-      vertical
-      icon={menuSize === "small"}
-      style={styles.mainSideMenu(height)}
-    >
-      <Menu.Item header>
-        <Dropdown
-          text={menuSize === "large" ? project.name : null}
-          button={menuSize === "small"}
-          labeled={menuSize === "small"}
-          icon={menuSize === "small"
-            && (
-              <Popup
-                trigger={<Icon name="list ul" size="large" />}
-                content="Switch projects"
-                position="right center"
-                inverted
-              />
-            )}
-          item
-          style={styles.centered}
-          closeOnChange={false}
-        >
-          <Dropdown.Menu>
-            <Input
-              icon="search"
-              iconPosition="left"
-              className="search"
-              onClick={(e) => e.stopPropagation()}
-              onFocus={(e) => e.stopPropagation()}
-              onChange={(e, data) => setProjectSearch(data.value)}
-            />
-            <Dropdown.Header>Select another project</Dropdown.Header>
-            <Dropdown.Menu scrolling>
-              <Dropdown.Divider />
-              {projects.map((p) => {
-                if (projectSearch
-                  && p.name.toLowerCase().indexOf(projectSearch.toLowerCase()) === -1
-                ) {
-                  return (<span key={p.id} />);
-                }
-
-                return (
-                  <Dropdown.Item
-                    key={p.id}
-                    onClick={() => onChangeProject(p.id)}
-                  >
-                    {p.name}
-                  </Dropdown.Item>
-                );
-              })}
-            </Dropdown.Menu>
-          </Dropdown.Menu>
-        </Dropdown>
-      </Menu.Item>
-
-      {canAccess("editor")
-        && (
-          <Menu.Item
-            active={_checkIfActive("chart")}
+    <>
+      <Menu
+        size={menuSize === "small" ? "large" : "huge"}
+        fluid
+        inverted
+        vertical
+        icon={menuSize === "small"}
+        style={styles.mainSideMenu(height)}
+      >
+        <Menu.Item header>
+          <Dropdown
+            text={menuSize === "large" ? project.name : null}
+            button={menuSize === "small"}
+            labeled={menuSize === "small"}
+            icon={menuSize === "small"
+              && (
+                <Popup
+                  trigger={<Icon name="list ul" size="large" />}
+                  content="Switch projects"
+                  position="right center"
+                  inverted
+                />
+              )}
+            item
             style={styles.centered}
+            closeOnChange={false}
           >
-            {menuSize === "small"
-              && (
-                <Popup
-                  trigger={(
-                    <Button
-                      primary
-                      icon
-                      as={Link}
-                      to={`/${teamId}/${projectId}/chart`}
-                      size="small"
+            <Dropdown.Menu>
+              <Input
+                icon="search"
+                iconPosition="left"
+                className="search"
+                onClick={(e) => e.stopPropagation()}
+                onFocus={(e) => e.stopPropagation()}
+                onChange={(e, data) => setProjectSearch(data.value)}
+              />
+              <Dropdown.Header>Select another project</Dropdown.Header>
+              <Dropdown.Menu scrolling>
+                <Dropdown.Divider />
+                {projects.map((p) => {
+                  if (projectSearch
+                    && p.name.toLowerCase().indexOf(projectSearch.toLowerCase()) === -1
+                  ) {
+                    return (<span key={p.id} />);
+                  }
+
+                  return (
+                    <Dropdown.Item
+                      key={p.id}
+                      onClick={() => onChangeProject(p.id)}
                     >
-                      <Icon name="plus" />
-                    </Button>
-                  )}
-                  content="Create a new chart"
-                  position="right center"
-                  inverted
-                />
-              )}
-            {menuSize === "large" && (
-              <Button
-                primary
-                icon
-                labelPosition="right"
-                as={Link}
-                to={`/${teamId}/${projectId}/chart`}
-                fluid
-              >
-                <Icon name="plus" />
-                Create a chart
-              </Button>
-            )}
-          </Menu.Item>
-        )}
+                      {p.name}
+                    </Dropdown.Item>
+                  );
+                })}
+              </Dropdown.Menu>
+            </Dropdown.Menu>
+          </Dropdown>
+        </Menu.Item>
 
-      <Menu.Item>
-        {menuSize === "large"
+        {canAccess("editor")
           && (
-            <Menu.Header>
-              Project
-            </Menu.Header>
-          )}
-        <Menu.Menu>
-          <Menu.Item
-            active={_checkIfActive("dashboard")}
-            as={Link}
-            to={`/${teamId}/${projectId}/dashboard`}
-          >
-            {menuSize === "small"
-              && (
-                <Popup
-                  trigger={<Icon name="line graph" size="large" />}
-                  content="Dashboard"
-                  position="right center"
-                  inverted
-                />
-              )}
-            {menuSize === "large" && <Icon name="line graph" />}
-            {menuSize === "large" && "Dashboard"}
-          </Menu.Item>
-
-          {canAccess("editor")
-            && (
-              <Menu.Item
-                active={_checkIfActive("connections")}
-                as={Link}
-                to={`/${teamId}/${projectId}/connections`}
-              >
-                {menuSize === "small"
-                  && (
-                    <Popup
-                      trigger={<Icon name="power cord" size="large" />}
-                      content="Connections"
-                      position="right center"
-                      inverted
-                    />
-                  )}
-                {menuSize === "large" && <Icon name="power cord" />}
-                {menuSize === "large" && "Connections"}
-              </Menu.Item>
-            )}
-
-          {canAccess("admin")
-            && (
-              <Menu.Item
-                active={_checkIfActive("projectSettings")}
-                as={Link}
-                to={`/${teamId}/${projectId}/projectSettings`}
-              >
-                {menuSize === "small"
-                  && (
-                    <Popup
-                      trigger={<Icon name="cog" size="large" />}
-                      content="Project settings"
-                      position="right center"
-                      inverted
-                    />
-                  )}
-                {menuSize === "large" && <Icon name="cog" />}
-                {menuSize === "large" && "Settings"}
-              </Menu.Item>
-            )}
-        </Menu.Menu>
-      </Menu.Item>
-
-      <Menu.Item>
-        <Menu.Menu>
-          <Menu.Item
-            active={_checkIfActive("public")}
-            as={Link}
-            to={`/${teamId}/${projectId}/public`}
-          >
-            {menuSize === "small"
-              && (
-                <Popup
-                  trigger={<Icon name="world" size="large" />}
-                  content="Public dashboard"
-                  position="right center"
-                  inverted
-                />
-              )}
-            {menuSize === "large" && <Icon name="world" />}
-            {menuSize === "large" && "Public dashboard"}
-          </Menu.Item>
-        </Menu.Menu>
-      </Menu.Item>
-
-      {canAccess("editor") && (
-        <Menu.Item>
-          {menuSize === "large" && <Menu.Header>Team</Menu.Header>}
-          <Menu.Menu>
-            <Menu.Item active={_checkIfActive("members")} as={Link} to={`/${teamId}/${projectId}/members`}>
+            <Menu.Item
+              active={_checkIfActive("chart")}
+              style={styles.centered}
+            >
               {menuSize === "small"
                 && (
                   <Popup
-                    trigger={<Icon name="user" size="large" />}
-                    content="Members"
+                    trigger={(
+                      <Button
+                        primary
+                        icon
+                        as={Link}
+                        to={`/${teamId}/${projectId}/chart`}
+                        size="small"
+                      >
+                        <Icon name="plus" />
+                      </Button>
+                    )}
+                    content="Create a new chart"
                     position="right center"
                     inverted
                   />
                 )}
-              {menuSize === "large" && <Icon name="user" />}
-              {menuSize === "large" && "Members"}
+              {menuSize === "large" && (
+                <Button
+                  primary
+                  icon
+                  labelPosition="right"
+                  as={Link}
+                  to={`/${teamId}/${projectId}/chart`}
+                  fluid
+                >
+                  <Icon name="plus" />
+                  Create a chart
+                </Button>
+              )}
+            </Menu.Item>
+          )}
+
+        <Menu.Item>
+          {menuSize === "large"
+            && (
+              <Menu.Header>
+                Project
+              </Menu.Header>
+            )}
+          <Menu.Menu>
+            <Menu.Item
+              active={_checkIfActive("dashboard")}
+              as={Link}
+              to={`/${teamId}/${projectId}/dashboard`}
+            >
+              {menuSize === "small"
+                && (
+                  <Popup
+                    trigger={<Icon name="line graph" size="large" />}
+                    content="Dashboard"
+                    position="right center"
+                    inverted
+                  />
+                )}
+              {menuSize === "large" && <Icon name="line graph" />}
+              {menuSize === "large" && "Dashboard"}
             </Menu.Item>
 
-            {canAccess("owner")
+            {canAccess("editor")
               && (
-                <Menu.Item active={_checkIfActive("settings")} as={Link} to={`/${teamId}/${projectId}/settings`}>
+                <Menu.Item
+                  active={_checkIfActive("connections")}
+                  as={Link}
+                  to={`/${teamId}/${projectId}/connections`}
+                >
                   {menuSize === "small"
                     && (
                       <Popup
-                        trigger={<Icon name="settings" size="large" />}
-                        content="Settings"
+                        trigger={<Icon name="power cord" size="large" />}
+                        content="Connections"
                         position="right center"
                         inverted
                       />
                     )}
-                  {menuSize === "large" && <Icon name="settings" />}
+                  {menuSize === "large" && <Icon name="power cord" />}
+                  {menuSize === "large" && "Connections"}
+                </Menu.Item>
+              )}
+
+            {canAccess("admin")
+              && (
+                <Menu.Item
+                  active={_checkIfActive("projectSettings")}
+                  as={Link}
+                  to={`/${teamId}/${projectId}/projectSettings`}
+                >
+                  {menuSize === "small"
+                    && (
+                      <Popup
+                        trigger={<Icon name="cog" size="large" />}
+                        content="Project settings"
+                        position="right center"
+                        inverted
+                      />
+                    )}
+                  {menuSize === "large" && <Icon name="cog" />}
                   {menuSize === "large" && "Settings"}
                 </Menu.Item>
               )}
           </Menu.Menu>
         </Menu.Item>
-      )}
-      <Menu.Menu style={styles.absoluteDrafts}>
-        {_checkIfActive("dashboard") && canAccess("editor") && (
-          <Popup
-            trigger={(
-              <Menu.Item onClick={() => onChangeDrafts(!showDrafts)}>
-                {menuSize === "small" && (
-                  <>
-                    <Icon name={showDrafts ? "toggle on" : "toggle off"} size="large" />
-                  </>
+
+        <Menu.Item>
+          <Menu.Menu>
+            <Menu.Item
+              active={_checkIfActive("public")}
+              as={Link}
+              to={`/${teamId}/${projectId}/public`}
+            >
+              {menuSize === "small"
+                && (
+                  <Popup
+                    trigger={<Icon name="world" size="large" />}
+                    content="Public dashboard"
+                    position="right center"
+                    inverted
+                  />
                 )}
-                {menuSize === "large" && <Icon name={showDrafts ? "toggle on" : "toggle off"} />}
-                {menuSize === "large" && "Show drafts"}
+              {menuSize === "large" && <Icon name="world" />}
+              {menuSize === "large" && "Public dashboard"}
+            </Menu.Item>
+          </Menu.Menu>
+        </Menu.Item>
+
+        {canAccess("editor") && (
+          <Menu.Item>
+            {menuSize === "large" && <Menu.Header>Team</Menu.Header>}
+            <Menu.Menu>
+              <Menu.Item active={_checkIfActive("members")} as={Link} to={`/${teamId}/${projectId}/members`}>
+                {menuSize === "small"
+                  && (
+                    <Popup
+                      trigger={<Icon name="user" size="large" />}
+                      content="Members"
+                      position="right center"
+                      inverted
+                    />
+                  )}
+                {menuSize === "large" && <Icon name="user" />}
+                {menuSize === "large" && "Members"}
               </Menu.Item>
-            )}
-            content={showDrafts ? "Hide drafts" : "Show drafts"}
-            position="right center"
-            inverted
-          />
+
+              {canAccess("owner")
+                && (
+                  <Menu.Item active={_checkIfActive("settings")} as={Link} to={`/${teamId}/${projectId}/settings`}>
+                    {menuSize === "small"
+                      && (
+                        <Popup
+                          trigger={<Icon name="settings" size="large" />}
+                          content="Settings"
+                          position="right center"
+                          inverted
+                        />
+                      )}
+                    {menuSize === "large" && <Icon name="settings" />}
+                    {menuSize === "large" && "Settings"}
+                  </Menu.Item>
+                )}
+            </Menu.Menu>
+          </Menu.Item>
         )}
-      </Menu.Menu>
-      {menuSize === "large"
-        && (
-          <Popup
-            trigger={(
-              <Menu.Item
-                onClick={() => onSetMenuSize(70)}
-                style={styles.absoluteCollapse(menuSize)}
-              >
-                <Icon name="toggle left" size="large" />
-              </Menu.Item>
-            )}
-            content="Collapse menu"
-            position="right center"
-            inverted
-          />
-        )}
-      {menuSize === "small"
-        && (
-          <Menu.Item
-            onClick={() => onSetMenuSize(sideMaxSize)}
-            style={styles.absoluteCollapse(menuSize)}
-          >
+        <Menu.Menu style={styles.absoluteDrafts}>
+          {_checkIfActive("dashboard") && canAccess("editor") && (
             <Popup
-              trigger={<Icon name="toggle right" size="large" />}
-              content="Expand menu"
+              trigger={(
+                <Menu.Item onClick={() => onChangeDrafts(!showDrafts)}>
+                  {menuSize === "small" && (
+                    <>
+                      <Icon name={showDrafts ? "toggle on" : "toggle off"} size="large" />
+                    </>
+                  )}
+                  {menuSize === "large" && <Icon name={showDrafts ? "toggle on" : "toggle off"} />}
+                  {menuSize === "large" && "Show drafts"}
+                </Menu.Item>
+              )}
+              content={showDrafts ? "Hide drafts" : "Show drafts"}
               position="right center"
               inverted
             />
-          </Menu.Item>
-        )}
-      <Menu.Item style={styles.absoluteLogo}>
-        {/* <Image size="mini" centered src={cbLogo} alt="bottle" /> */}
-        <Header as="h6" inverted style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
-          {menuSize !== "small" && (
-            <a
-              href={`https://github.com/chartbrew/chartbrew/releases/tag/${APP_VERSION}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: "white" }}
-            >
-              Chartbrew
-              { ` ${APP_VERSION}`}
-            </a>
           )}
-          {menuSize === "small" && (
-            <a
-              href={`https://github.com/chartbrew/chartbrew/releases/tag/${APP_VERSION}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: "white" }}
-            >
-              {APP_VERSION}
-            </a>
+        </Menu.Menu>
+        {menuSize === "large"
+          && (
+            <Popup
+              trigger={(
+                <Menu.Item
+                  onClick={() => onSetMenuSize(70)}
+                  style={styles.absoluteCollapse(menuSize)}
+                >
+                  <Icon name="toggle left" size="large" />
+                </Menu.Item>
+              )}
+              content="Collapse menu"
+              position="right center"
+              inverted
+            />
           )}
-        </Header>
-      </Menu.Item>
-    </Menu>
+        {menuSize === "small"
+          && (
+            <Menu.Item
+              onClick={() => onSetMenuSize(sideMaxSize)}
+              style={styles.absoluteCollapse(menuSize)}
+            >
+              <Popup
+                trigger={<Icon name="toggle right" size="large" />}
+                content="Expand menu"
+                position="right center"
+                inverted
+              />
+            </Menu.Item>
+          )}
+        <Menu.Item style={styles.absoluteLogo}>
+          <Header as="h6" inverted style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
+            {menuSize !== "small" && (
+              <a
+                href={((!update || !update.tag_name) && `https://github.com/chartbrew/chartbrew/releases/tag/${APP_VERSION}`) || "#"}
+                target={(!update || !update.tag_name) && "_blank"}
+                rel="noopener noreferrer"
+                onClick={_onVersionClicked}
+                style={{ color: "white" }}
+                title={(update && update.tag_name && "New version available") || "Current Chartbrew version"}
+              >
+                {update && update.tag_name && (
+                  <Icon name="circle" color="olive" />
+                )}
+                Chartbrew
+                { ` ${APP_VERSION}`}
+              </a>
+            )}
+            {menuSize === "small" && (
+              <a
+                href={((!update || !update.tag_name) && `https://github.com/chartbrew/chartbrew/releases/tag/${APP_VERSION}`) || "#"}
+                target={(!update || !update.tag_name) && "_blank"}
+                rel="noopener noreferrer"
+                onClick={_onVersionClicked}
+                style={{ color: "white" }}
+                title={(update && update.tag_name && "New version available") || "Current Chartbrew version"}
+              >
+                {update && update.tag_name && (
+                  <Icon name="circle" color="olive" />
+                )}
+                {APP_VERSION}
+              </a>
+            )}
+          </Header>
+        </Menu.Item>
+      </Menu>
+
+      <TransitionablePortal open={showUpdate}>
+        <Modal open={showUpdate} closeIcon onClose={() => setShowUpdate(false)}>
+          <Modal.Header>{`${update.tag_name} is available`}</Modal.Header>
+          <Modal.Content>
+            <ReactMarkdown>{update.body}</ReactMarkdown>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button
+              content="Close"
+              onClick={() => setShowUpdate(false)}
+            />
+            <Button
+              as="a"
+              primary
+              content="Check the release"
+              href={`https://github.com/chartbrew/chartbrew/releases/tag/${update.tag_name}`}
+              target="_blank"
+              rel="noreferrer"
+            />
+          </Modal.Actions>
+        </Modal>
+      </TransitionablePortal>
+    </>
   );
 }
 
@@ -434,12 +477,14 @@ ProjectNavigation.propTypes = {
   menuSize: PropTypes.string,
   showDrafts: PropTypes.bool,
   mobile: PropTypes.bool,
+  update: PropTypes.object,
 };
 
 ProjectNavigation.defaultProps = {
   menuSize: "large",
   showDrafts: true,
   mobile: false,
+  update: {},
 };
 
 const styles = {

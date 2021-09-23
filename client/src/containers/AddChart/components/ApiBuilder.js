@@ -187,10 +187,6 @@ function ApiBuilder(props) {
   };
 
   const _onChangeRoute = (value) => {
-    if (value[0] !== "/") {
-      value = `/${value}`; // eslint-disable-line
-    }
-
     setApiRequest({ ...apiRequest, route: value });
   };
 
