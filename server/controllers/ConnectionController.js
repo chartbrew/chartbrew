@@ -416,7 +416,14 @@ class ConnectionController {
       ? parseInt(dataRequest.itemsLimit, 10) : 0;
     return this.findById(id)
       .then(async (connection) => {
-        const tempUrl = `${connection.getApiUrl(connection)}${dataRequest.route || ""}`;
+        let tempUrl = connection.getApiUrl(connection);
+        let route = dataRequest.route || "";
+        if (route && (route[0] !== "/" && route[0] !== "?")) {
+          route = `/${route}`;
+        }
+
+        tempUrl += route;
+
         const queryParams = querystring.parse(tempUrl.split("?")[1]);
 
         // if any queryParams has variables, modify them here
