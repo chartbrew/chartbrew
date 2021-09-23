@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Form, Button, Icon, Label, Header, Divider, Popup, Input, Dropdown,
+  Grid, Form, Button, Icon, Label, Header, Divider, Popup, Input, Dropdown, Checkbox,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -384,6 +384,40 @@ function FirestoreBuilder(props) {
     setConditions(newConditions);
   };
 
+  const _toggleSubCollections = () => {
+    let newRequest = _.clone(dataRequest);
+    if (!dataRequest.configuration) {
+      newRequest = { ...newRequest, configuration: { subCollections: true } };
+    } else {
+      newRequest = {
+        ...newRequest,
+        configuration: {
+          ...newRequest.configuration,
+          subCollections: !newRequest.configuration.subCollections,
+        }
+      };
+    }
+
+    _onTest(newRequest);
+  };
+
+  const _toggleFlipSubCollections = () => {
+    let newRequest = _.clone(dataRequest);
+    if (!dataRequest.configuration) {
+      newRequest = { ...newRequest, configuration: { flipSubCollections: true } };
+    } else {
+      newRequest = {
+        ...newRequest,
+        configuration: {
+          ...newRequest.configuration,
+          flipSubCollections: !newRequest.configuration.flipSubCollections,
+        }
+      };
+    }
+
+    _onTest(newRequest);
+  };
+
   return (
     <div style={styles.container}>
       <Grid columns={2} stackable centered>
@@ -415,12 +449,40 @@ function FirestoreBuilder(props) {
           </div>
           <Divider />
 
+          <div className="firestorebuilder-settings-tut">
+            <Header as="h4">
+              {"Data settings"}
+            </Header>
+
+            <Form>
+              <Form.Field>
+                <Checkbox
+                  toggle
+                  label="Fetch sub-collections for your documents"
+                  onChange={_toggleSubCollections}
+                  checked={dataRequest.configuration && dataRequest.configuration.subCollections}
+                />
+              </Form.Field>
+              <Form.Field>
+                <Checkbox
+                  toggle
+                  label="Bring sub-collections on the first level"
+                  onChange={_toggleFlipSubCollections}
+                  checked={
+                    dataRequest.configuration && dataRequest.configuration.flipSubCollections
+                  }
+                />
+              </Form.Field>
+            </Form>
+          </div>
+          <Divider />
+
           <div className="firestorebuilder-query-tut">
             <Header as="h4">
               {"Filter the data "}
               <Popup
                 trigger={<Icon style={{ fontSize: 16, verticalAlign: "baseline" }} name="question circle" />}
-                content="These filters are applied directly on your firestore connection. You can further filter the data on Chartbrew's side when you configure your chart."
+                content="These filters are applied on the main collection only. If you want to filter the sub-collections, you can use the dataset filters after you close this window."
               />
             </Header>
             {conditions.map((condition, index) => {

@@ -26,6 +26,52 @@ class FirestoreConnection {
     this.db = this.admin.firestore();
   }
 
+  filter(docsRef, field, condition) {
+    let newRef = docsRef;
+    switch (condition.operator) {
+      case "==":
+        newRef = docsRef.where(field, "==", condition.value);
+        break;
+      case "!=":
+        newRef = docsRef.where(field, "!=", condition.value);
+        break;
+      case "isNull":
+        newRef = docsRef.where(field, "==", null);
+        break;
+      case "isNotNull":
+        newRef = docsRef.where(field, "!=", null);
+        break;
+      case ">":
+        newRef = docsRef.where(field, ">", condition.value);
+        break;
+      case ">=":
+        newRef = docsRef.where(field, ">=", condition.value);
+        break;
+      case "<":
+        newRef = docsRef.where(field, "<", condition.value);
+        break;
+      case "<=":
+        newRef = docsRef.where(field, "<=", condition.value);
+        break;
+      case "array-contains":
+        newRef = docsRef.where(field, "array-contains", condition.value);
+        break;
+      case "array-contains-any":
+        newRef = docsRef.where(field, "array-contains-any", condition.values);
+        break;
+      case "in":
+        newRef = docsRef.where(field, "in", condition.values);
+        break;
+      case "not-in":
+        newRef = docsRef.where(field, "not-in", condition.values);
+        break;
+      default:
+        break;
+    }
+
+    return newRef;
+  }
+
   async get(dataRequest) {
     let docsRef = await this.db.collection(dataRequest.query);
 
@@ -37,46 +83,7 @@ class FirestoreConnection {
 
         const field = condition.field.replace("root[].", "");
 
-        switch (condition.operator) {
-          case "==":
-            docsRef = docsRef.where(field, "==", condition.value);
-            break;
-          case "!=":
-            docsRef = docsRef.where(field, "!=", condition.value);
-            break;
-          case "isNull":
-            docsRef = docsRef.where(field, "==", null);
-            break;
-          case "isNotNull":
-            docsRef = docsRef.where(field, "!=", null);
-            break;
-          case ">":
-            docsRef = docsRef.where(field, ">", condition.value);
-            break;
-          case ">=":
-            docsRef = docsRef.where(field, ">=", condition.value);
-            break;
-          case "<":
-            docsRef = docsRef.where(field, "<", condition.value);
-            break;
-          case "<=":
-            docsRef = docsRef.where(field, "<=", condition.value);
-            break;
-          case "array-contains":
-            docsRef = docsRef.where(field, "array-contains", condition.value);
-            break;
-          case "array-contains-any":
-            docsRef = docsRef.where(field, "array-contains-any", condition.values);
-            break;
-          case "in":
-            docsRef = docsRef.where(field, "in", condition.values);
-            break;
-          case "not-in":
-            docsRef = docsRef.where(field, "not-in", condition.values);
-            break;
-          default:
-            break;
-        }
+        docsRef = this.filter(docsRef, field, condition);
       });
     }
     const formattedDocs = [];
@@ -84,7 +91,9 @@ class FirestoreConnection {
     const docs = await docsRef.get();
     const subCollectionsPromises = [];
     docs.forEach(async (doc) => {
-      subCollectionsPromises.push(doc.ref.listCollections());
+      if (dataRequest.configuration && dataRequest.configuration.subCollections) {
+        subCollectionsPromises.push(doc.ref.listCollections());
+      }
       formattedDocs.push({ ...doc.data(), _id: doc.id });
     });
 
