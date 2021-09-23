@@ -25,6 +25,7 @@ import ProjectSettings from "../ProjectSettings";
 import canAccess from "../../config/canAccess";
 import PrintView from "../PrintView/PrintView";
 import ProjectNavigation from "./components/ProjectNavigation";
+import checkForUpdates from "../../modules/checkForUpdates";
 
 const AppMedia = createMedia({
   breakpoints: {
@@ -49,6 +50,7 @@ function ProjectBoard(props) {
   const [menuSize, setMenuSize] = useState("large");
   const [showDrafts, setShowDrafts] = useState(true);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [update, setUpdate] = useState({});
 
   useEffect(() => {
     const params = new URLSearchParams(document.location.search);
@@ -62,6 +64,14 @@ function ProjectBoard(props) {
     if (window.localStorage.getItem("_cb_drafts")) {
       _setDraftsVisible(window.localStorage.getItem("_cb_drafts") === "true");
     }
+
+    checkForUpdates()
+      .then((release) => {
+        if (release && release.upToDate) return true;
+
+        setUpdate(release);
+        return release;
+      });
   }, []);
 
   const _init = (id) => {
@@ -180,6 +190,7 @@ function ProjectBoard(props) {
                   menuSize={menuSize}
                   showDrafts={showDrafts}
                   onChangeProject={_onChangeProject}
+                  update={update}
                 />
               </div>
               <div>

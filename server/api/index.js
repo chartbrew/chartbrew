@@ -8,6 +8,7 @@ const dataRequest = require("./DataRequestRoute");
 const dataset = require("./DatasetRoute");
 const template = require("./TemplateRoute");
 const google = require("./GoogleRoute");
+const update = require("./UpdateRoute");
 
 module.exports = {
   team,
@@ -20,4 +21,5 @@ module.exports = {
   dataset,
   template,
   google,
+  update,
 };
