@@ -468,6 +468,7 @@ function FirestoreBuilder(props) {
                   toggle
                   label="Bring sub-collections on the first level"
                   onChange={_toggleFlipSubCollections}
+                  disabled={!dataRequest.configuration || !dataRequest.configuration.subCollections}
                   checked={
                     dataRequest.configuration && dataRequest.configuration.flipSubCollections
                   }
