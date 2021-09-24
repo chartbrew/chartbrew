@@ -1,6 +1,46 @@
 const firebase = require("firebase-admin");
 const determineType = require("../modules/determineType");
 
+function populateReferences(docs, subData = []) {
+  const nestedCheckedDocs = [];
+  let index = -1;
+  docs.forEach((data) => {
+    const doc = data;
+
+    // populate sub collections
+    subData.forEach((sub) => {
+      if (doc._id === sub._parent) {
+        if (!doc[sub._collection]) doc[sub._collection] = [];
+        doc[sub._collection].push(sub);
+      }
+    });
+
+    nestedCheckedDocs.push({ ...doc });
+    index++;
+    Object.keys(doc).forEach((key) => {
+      if (determineType(doc[key]) === "array") {
+        doc[key].forEach((subDoc, subIndex) => {
+          if (determineType(subDoc) === "object") {
+            if (subDoc._firestore) {
+              nestedCheckedDocs[index][key][subIndex] = subDoc.id;
+            } else {
+              Object.keys(subDoc).forEach((subKey) => {
+                if (subDoc[subKey] && subDoc[subKey]._firestore) {
+                  nestedCheckedDocs[index][key][subIndex][subKey] = subDoc[subKey].id;
+                }
+              });
+            }
+          }
+        });
+      } else if (doc[key] && doc[key]._firestore) {
+        nestedCheckedDocs[index][key] = doc[key].id;
+      }
+    });
+  });
+
+  return nestedCheckedDocs;
+}
+
 class FirestoreConnection {
   constructor(connection, dataRequestId) {
     const firebaseAppName = `${connection.name}_${connection.project_id}_${connection.id}_${dataRequestId}`;
@@ -72,28 +112,11 @@ class FirestoreConnection {
     return newRef;
   }
 
-  async get(dataRequest) {
-    let docsRef = await this.db.collection(dataRequest.query);
-
-    if (dataRequest.conditions) {
-      dataRequest.conditions.forEach((c) => {
-        const condition = c;
-        if (condition.value === "true") condition.value = true;
-        if (condition.value === "false") condition.value = false;
-
-        const field = condition.field.replace("root[].", "");
-
-        docsRef = this.filter(docsRef, field, condition);
-      });
-    }
+  async getSubCollections(docs) {
     const formattedDocs = [];
-
-    const docs = await docsRef.get();
     const subCollectionsPromises = [];
     docs.forEach(async (doc) => {
-      if (dataRequest.configuration && dataRequest.configuration.subCollections) {
-        subCollectionsPromises.push(doc.ref.listCollections());
-      }
+      subCollectionsPromises.push(doc.ref.listCollections());
       formattedDocs.push({ ...doc.data(), _id: doc.id });
     });
 
@@ -117,43 +140,36 @@ class FirestoreConnection {
       });
     });
 
-    const nestedCheckedDocs = [];
-    let index = -1;
-    formattedDocs.forEach((data) => {
-      const doc = data;
+    return subData;
+  }
 
-      // populate sub collections
-      subData.forEach((sub) => {
-        if (doc._id === sub._parent) {
-          if (!doc[sub._collection]) doc[sub._collection] = [];
-          doc[sub._collection].push(sub);
-        }
-      });
+  async get(dataRequest) {
+    let docsRef = await this.db.collection(dataRequest.query);
 
-      nestedCheckedDocs.push({ ...doc });
-      index++;
-      Object.keys(doc).forEach((key) => {
-        if (determineType(doc[key]) === "array") {
-          doc[key].forEach((subDoc, subIndex) => {
-            if (determineType(subDoc) === "object") {
-              if (subDoc._firestore) {
-                nestedCheckedDocs[index][key][subIndex] = subDoc.id;
-              } else {
-                Object.keys(subDoc).forEach((subKey) => {
-                  if (subDoc[subKey] && subDoc[subKey]._firestore) {
-                    nestedCheckedDocs[index][key][subIndex][subKey] = subDoc[subKey].id;
-                  }
-                });
-              }
-            }
-          });
-        } else if (doc[key] && doc[key]._firestore) {
-          nestedCheckedDocs[index][key] = doc[key].id;
-        }
+    if (dataRequest.conditions) {
+      dataRequest.conditions.forEach((c) => {
+        const condition = c;
+        if (condition.value === "true") condition.value = true;
+        if (condition.value === "false") condition.value = false;
+
+        const field = condition.field.replace("root[].", "");
+
+        docsRef = this.filter(docsRef, field, condition);
       });
+    }
+    const formattedDocs = [];
+
+    const docs = await docsRef.get();
+    docs.forEach(async (doc) => {
+      formattedDocs.push({ ...doc.data(), _id: doc.id });
     });
 
-    return nestedCheckedDocs;
+    let subData = [];
+    if (dataRequest.configuration && dataRequest.configuration.subCollections) {
+      subData = await this.getSubCollections(docs);
+    }
+
+    return populateReferences(formattedDocs, subData);
   }
 
   listCollections() {

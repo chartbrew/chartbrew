@@ -420,8 +420,8 @@ function FirestoreBuilder(props) {
 
   return (
     <div style={styles.container}>
-      <Grid columns={2} stackable centered>
-        <Grid.Column width={10}>
+      <Grid columns={3} stackable centered>
+        <Grid.Column width={5}>
           <div className="firestorebuilder-collections-tut">
             <Header as="h4">Select one of your collections:</Header>
             <Label.Group size="large">
@@ -667,6 +667,9 @@ function FirestoreBuilder(props) {
               onClick={_populateFieldOptions}
             />
           </div>
+        </Grid.Column>
+        <Grid.Column width={5}>
+          <Header>Select your sub-collections</Header>
         </Grid.Column>
         <Grid.Column width={6}>
           <Form>
