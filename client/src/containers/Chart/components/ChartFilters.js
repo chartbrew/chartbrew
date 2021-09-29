@@ -23,7 +23,7 @@ function ChartFilters(props) {
   const _getDropdownOptions = (dataset, condition) => {
     const conditionOpt = dataset.conditions.find((c) => c.field === condition.field);
 
-    if (!conditionOpt) return [];
+    if (!conditionOpt || !conditionOpt.values) return [];
 
     return conditionOpt.values.map((v) => {
       return {

@@ -25,7 +25,7 @@ module.exports = (data, filters) => {
 
   // this is only used when exporting data
   const exportData = {};
-  let conditionsOptions;
+  const conditionsOptions = [];
 
   for (let i = 0; i < datasets.length; i++) {
     const dataset = datasets[i];
@@ -34,7 +34,12 @@ module.exports = (data, filters) => {
     let xData;
 
     const filterData = dataFilter(dataset.data, xAxis, dataset.options.conditions);
-    conditionsOptions = filterData.conditionsOptions;
+    if (filterData.conditionsOptions) {
+      conditionsOptions.push({
+        dataset_id: dataset.options.id,
+        conditions: filterData.conditionsOptions,
+      });
+    }
 
     let filteredData = filterData.data;
 
