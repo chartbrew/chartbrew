@@ -387,13 +387,13 @@ function FirestoreBuilder(props) {
   const _toggleSubCollections = () => {
     let newRequest = _.clone(dataRequest);
     if (!dataRequest.configuration) {
-      newRequest = { ...newRequest, configuration: { subCollections: true } };
+      newRequest = { ...newRequest, configuration: { showSubCollections: true } };
     } else {
       newRequest = {
         ...newRequest,
         configuration: {
           ...newRequest.configuration,
-          subCollections: !newRequest.configuration.subCollections,
+          showSubCollections: !newRequest.configuration.showSubCollections,
         }
       };
     }
@@ -401,19 +401,11 @@ function FirestoreBuilder(props) {
     _onTest(newRequest);
   };
 
-  const _toggleFlipSubCollections = () => {
-    let newRequest = _.clone(dataRequest);
-    if (!dataRequest.configuration) {
-      newRequest = { ...newRequest, configuration: { flipSubCollections: true } };
-    } else {
-      newRequest = {
-        ...newRequest,
-        configuration: {
-          ...newRequest.configuration,
-          flipSubCollections: !newRequest.configuration.flipSubCollections,
-        }
-      };
-    }
+  const _onSelectSubCollection = (subCollection) => {
+    const newRequest = {
+      ...dataRequest,
+      configuration: { ...dataRequest.configuration, selectedSubCollection: subCollection },
+    };
 
     _onTest(newRequest);
   };
@@ -458,19 +450,10 @@ function FirestoreBuilder(props) {
               <Form.Field>
                 <Checkbox
                   toggle
-                  label="Fetch sub-collections for your documents"
+                  label="Add sub-collections to the response"
                   onChange={_toggleSubCollections}
-                  checked={dataRequest.configuration && dataRequest.configuration.subCollections}
-                />
-              </Form.Field>
-              <Form.Field>
-                <Checkbox
-                  toggle
-                  label="Bring sub-collections on the first level"
-                  onChange={_toggleFlipSubCollections}
-                  disabled={!dataRequest.configuration || !dataRequest.configuration.subCollections}
                   checked={
-                    dataRequest.configuration && dataRequest.configuration.flipSubCollections
+                    dataRequest.configuration && dataRequest.configuration.showSubCollections
                   }
                 />
               </Form.Field>
@@ -669,7 +652,23 @@ function FirestoreBuilder(props) {
           </div>
         </Grid.Column>
         <Grid.Column width={5}>
-          <Header>Select your sub-collections</Header>
+          <Header as="h4">Fetch sub-collection data</Header>
+          {dataRequest.configuration && dataRequest.configuration.subCollections && (
+            <Label.Group>
+              {dataRequest.configuration.subCollections.map((subCollection) => (
+                <Label
+                  color="olive"
+                  basic={dataRequest.configuration.selectedSubCollection !== subCollection}
+                  key={subCollection}
+                  onClick={() => _onSelectSubCollection(subCollection)}
+                  as="a"
+                  size="large"
+                >
+                  {subCollection}
+                </Label>
+              ))}
+            </Label.Group>
+          )}
         </Grid.Column>
         <Grid.Column width={6}>
           <Form>

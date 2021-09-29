@@ -112,7 +112,37 @@ class FirestoreConnection {
     return newRef;
   }
 
-  async getSubCollections(docs) {
+  async getSubCollections(collectionName) {
+    const docsRef = await this.db.collectionGroup(collectionName);
+    const finalData = [];
+    const docs = await docsRef.get();
+    docs.forEach((doc) => {
+      finalData.push({ ...doc.data(), _id: doc.id });
+    });
+
+    return finalData;
+  }
+
+  async getSubCollectionsRefs(docs) {
+    const subCollectionsPromises = [];
+    docs.forEach((doc) => {
+      subCollectionsPromises.push(doc.ref.listCollections());
+    });
+
+    const subCollections = await Promise.all(subCollectionsPromises);
+    const collectionList = [];
+    subCollections.forEach((subs) => {
+      subs.forEach((sub) => {
+        if (collectionList.indexOf(sub.id) === -1) {
+          collectionList.push(sub.id);
+        }
+      });
+    });
+
+    return collectionList;
+  }
+
+  async getSubCollectionsData(docs) {
     const formattedDocs = [];
     const subCollectionsPromises = [];
     docs.forEach(async (doc) => {
@@ -157,19 +187,39 @@ class FirestoreConnection {
         docsRef = this.filter(docsRef, field, condition);
       });
     }
-    const formattedDocs = [];
+    const mainDocs = [];
 
     const docs = await docsRef.get();
     docs.forEach(async (doc) => {
-      formattedDocs.push({ ...doc.data(), _id: doc.id });
+      mainDocs.push({ ...doc.data(), _id: doc.id });
     });
 
     let subData = [];
-    if (dataRequest.configuration && dataRequest.configuration.subCollections) {
-      subData = await this.getSubCollections(docs);
+    if (dataRequest.configuration && dataRequest.configuration.showSubCollections) {
+      subData = await this.getSubCollectionsData(docs);
     }
 
-    return populateReferences(formattedDocs, subData);
+    let subDocData = [];
+    let finalDocs;
+    if (dataRequest.configuration && dataRequest.configuration.selectedSubCollection) {
+      subDocData = await this.getSubCollections(
+        dataRequest.configuration.selectedSubCollection,
+      );
+      finalDocs = populateReferences(subDocData);
+    } else {
+      finalDocs = populateReferences(mainDocs, subData);
+    }
+
+    const subRefs = await this.getSubCollectionsRefs(docs);
+
+    return {
+      data: finalDocs,
+      configuration: {
+        subCollections: subRefs,
+        mainCollectionSample: mainDocs.slice(0, 10),
+        subCollectionSample: subDocData.slice(0, 10),
+      },
+    };
   }
 
   listCollections() {
