@@ -112,8 +112,22 @@ class FirestoreConnection {
     return newRef;
   }
 
-  async getSubCollections(collectionName) {
-    const docsRef = await this.db.collectionGroup(collectionName);
+  async getSubCollections(dataRequest) {
+    let docsRef = await this.db.collectionGroup(dataRequest.configuration.selectedSubCollection);
+
+    if (dataRequest.conditions) {
+      dataRequest.conditions.forEach((c) => {
+        if (c.collection !== dataRequest.configuration.selectedSubCollection) return;
+        const condition = c;
+        if (condition.value === "true") condition.value = true;
+        if (condition.value === "false") condition.value = false;
+
+        const field = condition.field.replace("root[].", "");
+
+        docsRef = this.filter(docsRef, field, condition);
+      });
+    }
+
     const finalData = [];
     const docs = await docsRef.get();
     docs.forEach((doc) => {
@@ -178,6 +192,7 @@ class FirestoreConnection {
 
     if (dataRequest.conditions) {
       dataRequest.conditions.forEach((c) => {
+        if (c.collection && c.collection !== dataRequest.query) return;
         const condition = c;
         if (condition.value === "true") condition.value = true;
         if (condition.value === "false") condition.value = false;
@@ -202,9 +217,7 @@ class FirestoreConnection {
     let subDocData = [];
     let finalDocs;
     if (dataRequest.configuration && dataRequest.configuration.selectedSubCollection) {
-      subDocData = await this.getSubCollections(
-        dataRequest.configuration.selectedSubCollection,
-      );
+      subDocData = await this.getSubCollections(dataRequest);
       finalDocs = populateReferences(subDocData);
     } else {
       finalDocs = populateReferences(mainDocs, subData);
