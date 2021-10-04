@@ -317,7 +317,7 @@ module.exports = (app) => {
       })
       .catch((error) => {
         if (error.message === "404") {
-          return res.status(404).send(error);
+          return res.status(200).send(error);
         }
 
         return res.status(400).send(error);
