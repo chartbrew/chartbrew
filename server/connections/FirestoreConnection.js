@@ -131,7 +131,7 @@ class FirestoreConnection {
     const finalData = [];
     const docs = await docsRef.get();
     docs.forEach((doc) => {
-      finalData.push({ ...doc.data(), _id: doc.id });
+      finalData.push({ ...doc.data(), _id: doc.id, _parent: doc.ref.parent.parent.id });
     });
 
     return finalData;
@@ -219,6 +219,11 @@ class FirestoreConnection {
     if (dataRequest.configuration && dataRequest.configuration.selectedSubCollection) {
       subDocData = await this.getSubCollections(dataRequest);
       finalDocs = populateReferences(subDocData);
+      // filter the docs based on what docs from the main collection are available
+      finalDocs = finalDocs.filter((doc) => {
+        if (mainDocs.filter((m) => m._id === doc._parent).length > 0) return true;
+        return false;
+      });
     } else {
       finalDocs = populateReferences(mainDocs, subData);
     }
