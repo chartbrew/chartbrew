@@ -110,11 +110,32 @@ class DatasetController {
           return new Promise((resolve, reject) => reject(new Error("Invalid connection type")));
         }
       })
-      .then((rawData) => {
+      .then(async (rawData) => {
         let data = rawData;
         if (gConnection.type === "mongodb") {
           data = JSON.parse(JSON.stringify(data));
         }
+        if (gConnection.type === "firestore") {
+          data = rawData.data;
+
+          let newConfiguration = {};
+          if (gDataset.DataRequest.configuration && typeof gDataset.DataRequest.configuration === "object") {
+            newConfiguration = { ...gDataset.DataRequest.configuration };
+          }
+
+          if (rawData.configuration) {
+            newConfiguration = { ...newConfiguration, ...rawData.configuration };
+          }
+
+          const newDr = await db.DataRequest.update(
+            { configuration: newConfiguration },
+            { where: { id: gDataset.DataRequest.id } },
+          )
+            .then(() => db.DataRequest.findByPk(gDataset.DataRequest.id));
+
+          gDataset.DataRequest = newDr;
+        }
+
         return Promise.resolve({
           options: gDataset,
           data,

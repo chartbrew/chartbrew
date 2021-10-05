@@ -237,8 +237,13 @@ class AxisChart {
               yAxisData.push({ x: xAxisData.formatted[index], y: yValue });
             }
           } else {
-            yType = determineType(item);
-            yAxisData.push({ x: xAxisData.filtered[index], y: item });
+            let newItem = item;
+            if (yValue === 0) {
+              yType = "number";
+            } else if (yType === "array") {
+              newItem = [];
+            }
+            yAxisData.push({ x: xAxisData.filtered[index], y: newItem });
           }
           return item;
         });
@@ -428,6 +433,19 @@ class AxisChart {
         break;
       case "bar":
         chart = new BarChart(this.chart, this.datasets, this.axisData);
+        break;
+      case "avg":
+        this.axisData.y = this.axisData.y.map((dataset) => {
+          let newDataset = 0;
+          dataset.forEach((d) => { newDataset += d; });
+          newDataset /= dataset.length;
+          if (`${newDataset}`.indexOf(".") > -1) {
+            newDataset = newDataset.toFixed(2);
+          }
+
+          return [newDataset];
+        });
+        chart = new LineChart(this.chart, this.datasets, this.axisData);
         break;
       default:
         chart = new PieChart(this.chart, this.datasets, this.axisData);
