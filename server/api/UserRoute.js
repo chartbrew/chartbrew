@@ -311,17 +311,8 @@ module.exports = (app) => {
   ** Route to request a password reset email
   */
   app.post("/user/password/reset", (req, res) => {
-    return userController.requestPasswordReset(req.body.email)
-      .then((result) => {
-        return res.status(200).send(result);
-      })
-      .catch((error) => {
-        if (error.message === "404") {
-          return res.status(404).send(error);
-        }
-
-        return res.status(400).send(error);
-      });
+    userController.requestPasswordReset(req.body.email);
+    return res.status(200).send({ "success": true });
   });
   // --------------------------------------
 
