@@ -68,7 +68,6 @@ class AxisChart {
       let startDate;
       let endDate;
       if (this.chart.startDate && this.chart.endDate) {
-        console.log("this.chart.endDate", this.chart.endDate);
         startDate = moment(this.chart.startDate);
         endDate = moment(this.chart.endDate);
       }
@@ -100,7 +99,6 @@ class AxisChart {
             startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
           }
 
-          console.log("endDate", endDate);
           const dateConditions = [{
             field: dateField,
             value: startDate,
@@ -113,8 +111,6 @@ class AxisChart {
 
           filteredData = dataFilter(filteredData, dateField, dateConditions).data;
         }
-
-        console.log("filteredData", filteredData);
 
         if (filters && filters.length > 0) {
           if (dataset.options && dataset.options.fieldsSchema) {
