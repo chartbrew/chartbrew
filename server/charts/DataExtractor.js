@@ -57,7 +57,7 @@ module.exports = (data, filters) => {
       }, {
         field: dateField,
         value: endDate,
-        operator: "lessOrEqual",
+        operator: "lessThanOrEqual",
       }];
 
       filteredData = dataFilter(filteredData, dateField, dateConditions).data;
