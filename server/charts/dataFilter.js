@@ -61,7 +61,7 @@ function compareDates(data, field, condition) {
         return val ? val.isBefore(condition.value) : false;
       });
       break;
-    case "lessThanOrEqual":
+    case "lessOrEqual":
       newData = _.filter(newData, (o) => {
         const val = getValue(o);
         return val ? val.isSameOrBefore(condition.value) : false;

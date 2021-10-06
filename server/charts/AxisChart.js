@@ -106,7 +106,7 @@ class AxisChart {
           }, {
             field: dateField,
             value: endDate,
-            operator: "lessThanOrEqual",
+            operator: "lessOrEqual",
           }];
 
           filteredData = dataFilter(filteredData, dateField, dateConditions).data;
