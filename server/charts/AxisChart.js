@@ -218,7 +218,8 @@ class AxisChart {
         }
 
         if (!(yData instanceof Array)) throw new Error("The Y field is not part of an Array");
-        yData.map((item, index) => {
+
+        yData.forEach((item, index) => {
           const yValue = _.get(item, yAxis);
           if (yValue || yValue === 0) {
             yType = determineType(yValue);
@@ -229,11 +230,13 @@ class AxisChart {
             } else if (xType === "date"
                 && _.findIndex(
                   xAxisData.filtered,
-                  (dateValue) => (
-                    new Date(dateValue).getTime()
-                      === new Date(yData[index][xAxisFieldName]).getTime()
+                  (dateValue) => areDatesTheSame(
+                    new Date(dateValue),
+                    new Date(yData[index][xAxisFieldName]),
+                    this.chart.timeInterval
                   )
-                )) {
+                ) !== -1
+            ) {
               yAxisData.push({ x: xAxisData.formatted[index], y: yValue });
             }
           } else {
@@ -245,7 +248,6 @@ class AxisChart {
             }
             yAxisData.push({ x: xAxisData.filtered[index], y: newItem });
           }
-          return item;
         });
 
         // Y CHART data processing
@@ -581,7 +583,6 @@ class AxisChart {
   /* OPERATIONS */
   noOp(data, xData, xType, yType, op) {
     const yData = {};
-
     data.map((item, index) => {
       let key = item.x;
       if (xType === "date") key = xData[index];
