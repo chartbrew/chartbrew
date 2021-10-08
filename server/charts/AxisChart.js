@@ -225,18 +225,22 @@ class AxisChart {
             yType = determineType(yValue);
             // only add the yValue if it corresponds to one of the x values found above
             const selectorValue = xAxis.indexOf(".") > -1 ? _.get(yData[index], xAxis) : yData[index][xAxisFieldName];
+
+            // the index check is used only in case we're looking for dates
+            let indexCheck;
+            if (xType === "date") {
+              indexCheck = _.findIndex(
+                xAxisData.filtered,
+                (dateValue) => (
+                  new Date(dateValue).getTime()
+                      === new Date(yData[index][xAxisFieldName]).getTime()
+                )
+              );
+            }
+
             if (_.indexOf(xAxisData.filtered, selectorValue) > -1) {
               yAxisData.push({ x: xAxisData.filtered[index], y: yValue });
-            } else if (xType === "date"
-                && _.findIndex(
-                  xAxisData.filtered,
-                  (dateValue) => areDatesTheSame(
-                    new Date(dateValue),
-                    new Date(yData[index][xAxisFieldName]),
-                    this.chart.timeInterval
-                  )
-                ) !== -1
-            ) {
+            } else if (xType === "date" && (indexCheck !== -1 || indexCheck !== false)) {
               yAxisData.push({ x: xAxisData.formatted[index], y: yValue });
             }
           } else {
@@ -475,9 +479,9 @@ class AxisChart {
         && parseInt(item, 10).toString() === item.toString()
         && item.toString().length === 10
       ) {
-        axisData.push(moment(item, "X"));
+        axisData.push(moment.utc(item, "X"));
       } else if (item) {
-        axisData.push(moment(item));
+        axisData.push(moment.utc(item));
       }
       return item;
     });
