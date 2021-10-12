@@ -20,7 +20,7 @@ import Navbar from "../../components/Navbar";
 import { primary } from "../../config/colors";
 import TeamMembers from "../TeamMembers/TeamMembers";
 import TeamSettings from "../TeamSettings";
-import PublicDashboardEditor from "../PublicDashboardEditor";
+import PublicDashboard from "../PublicDashboardEditor";
 import ProjectSettings from "../ProjectSettings";
 import canAccess from "../../config/canAccess";
 import PrintView from "../PrintView/PrintView";
@@ -275,7 +275,7 @@ function MainContent(props) {
               )}
             />
           )}
-        <Route path="/:teamId/:projectId/public" component={PublicDashboardEditor} />
+        <Route path="/:teamId/:projectId/public" component={PublicDashboard} />
       </Switch>
     </Container>
   );
