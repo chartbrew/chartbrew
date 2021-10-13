@@ -352,7 +352,7 @@ const steps = {
       selector: ".datasetdata-filters-tut",
       content: () => (
         <>
-          <p>{"To give you more flexibility, Chartbrew also supprts a wide range of filters."}</p>
+          <p>{"To give you more flexibility, Chartbrew also supports a wide range of filters."}</p>
           <p>{"You can select any field from your dataset and filter based on the given values and operations."}</p>
         </>
       )
