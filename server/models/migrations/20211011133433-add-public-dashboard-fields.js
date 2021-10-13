@@ -2,6 +2,9 @@ const Sequelize = require("sequelize");
 
 module.exports = {
   up: async (queryInterface) => {
+    await queryInterface.addColumn("Project", "description", {
+      type: Sequelize.TEXT,
+    });
     await queryInterface.addColumn("Project", "backgroundColor", {
       type: Sequelize.STRING,
       defaultValue: "#103751",
@@ -22,6 +25,7 @@ module.exports = {
   },
 
   down: async (queryInterface) => {
+    await queryInterface.removeColumn("Project", "description");
     await queryInterface.removeColumn("Project", "backgroundColor");
     await queryInterface.removeColumn("Project", "titleColor");
     await queryInterface.removeColumn("Project", "headerCode");

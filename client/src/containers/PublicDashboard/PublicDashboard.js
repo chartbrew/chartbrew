@@ -2,9 +2,8 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import {
-  Button,
-  Container,
-  Dimmer, Divider, Form, Grid, Header, Icon, Input, Loader, Menu, Popup
+  Button, Container, Dimmer, Divider, Form, Grid, Header, Icon, Input,
+  Loader, Menu, Modal, Popup, TransitionablePortal,
 } from "semantic-ui-react";
 import { connect } from "react-redux";
 import { SketchPicker } from "react-color";
@@ -20,6 +19,7 @@ import {
 } from "../../actions/project";
 import { blue } from "../../config/colors";
 import Chart from "../Chart/Chart";
+import logo from "../../assets/logo_inverted.png";
 
 const AppMedia = createMedia({
   breakpoints: {
@@ -57,6 +57,7 @@ function PublicDashboard(props) {
         backgroundColor: project.backgroundColor || blue,
         titleColor: project.titleColor || "white",
         dashboardTitle: project.dashboardTitle || project.name,
+        description: project.description,
       });
     }
   }, [project]);
@@ -65,13 +66,15 @@ function PublicDashboard(props) {
     if (project.id
       && (newChanges.backgroundColor !== project.backgroundColor
       || newChanges.titleColor !== project.titleColor
-      || newChanges.dashboardTitle !== project.dashboardTitle)
+      || newChanges.dashboardTitle !== project.dashboardTitle
+      || newChanges.description !== project.description)
     ) {
       setIsSaved(false);
     }
   }, [newChanges]);
 
   const _fetchProject = () => {
+    setLoading(true);
     getPublicDashboard(match.params.brewName)
       .then((data) => {
         setProject(data);
@@ -123,16 +126,17 @@ function PublicDashboard(props) {
             body {
               background-color: ${newChanges.backgroundColor};
             }
+            
+            .dashboard-logo {
+              position: absolute;
+              top: 30px;
+              left: 20px;
+            }
           `}
         </style>
       </Helmet>
-      <Dimmer active={loading}>
-        <Loader active={loading}>
-          Preparing the dashboard...
-        </Loader>
-      </Dimmer>
       {editorVisible && (
-        <Menu fixed="top" color="blue" inverted size="large">
+        <Menu color="blue" inverted size="large">
           <Menu.Item icon as={Link} to={`/${project.team_id}/${project.id}/dashboard`}>
             <Popup
               trigger={(
@@ -166,14 +170,17 @@ function PublicDashboard(props) {
             </Menu.Item>
           )}
           <Menu.Menu position="right">
-            <Menu.Item icon>
-              <Popup
-                trigger={(
+            <Popup
+              trigger={(
+                <Menu.Item icon>
                   <Icon name="image" />
-                )}
-                on="click"
-                position="bottom right"
-              >
+                </Menu.Item>
+              )}
+              on="click"
+              position="bottom right"
+            >
+              <>
+                <Header size="small">Change background</Header>
                 <SketchPicker
                   color={newChanges.backgroundColor}
                   onChangeComplete={(color) => {
@@ -181,14 +188,14 @@ function PublicDashboard(props) {
                     setNewChanges({ ...newChanges, backgroundColor: rgba });
                   }}
                 />
-              </Popup>
-            </Menu.Item>
+              </>
+            </Popup>
             <Menu.Item icon onClick={() => setEditingTitle(true)}>
               <Popup
                 trigger={(
                   <Icon name="pencil" />
                 )}
-                content="Edit your public dashboard title"
+                content="Edit the dashboard title and description"
               />
             </Menu.Item>
             <Menu.Item icon onClick={_onChangeTitleColor}>
@@ -205,60 +212,35 @@ function PublicDashboard(props) {
 
       {project.Charts && project.Charts.length > 0 && _isPublic()
         && (
-          <div style={{ padding: 20, paddingTop: 50 }}>
-            {!editorVisible && (
-              <Header
-                textAlign="center"
-                size="huge"
-                style={styles.dashboardTitle(project.titleColor)}
-              >
-                {project.dashboardTitle || project.name}
-              </Header>
-            )}
+          <div style={{ padding: 20, position: "relative" }}>
+            <Dimmer active={loading}>
+              <Loader active={loading}>
+                Preparing the dashboard...
+              </Loader>
+            </Dimmer>
+            <Container text>
+              <img className="dashboard-logo" src={logo} height="50" alt={`${project.name} Logo`} />
 
-            {editorVisible && <Divider hidden />}
-            {!editingTitle && editorVisible && (
               <Header
                 textAlign="center"
                 size="huge"
-                style={styles.dashboardTitle(newChanges.titleColor)}
+                style={styles.dashboardTitle(newChanges.titleColor || project.titleColor)}
               >
                 {newChanges.dashboardTitle || project.dashboardTitle || project.name}
+                {!editorVisible && project.description && (
+                  <Header.Subheader style={styles.dashboardTitle(project.titleColor)}>
+                    {project.description}
+                  </Header.Subheader>
+                )}
+                {editorVisible && newChanges.description && (
+                <Header.Subheader style={styles.dashboardTitle(newChanges.titleColor)}>
+                  {newChanges.description}
+                </Header.Subheader>
+                )}
               </Header>
-            )}
-
-            {editingTitle && editorVisible && (
-              <Container fluid textAlign="center">
-                <Form style={{ display: "inline-block" }} size="big">
-                  <Form.Group>
-                    <Form.Field>
-                      <Input
-                        placeholder="Enter a title"
-                        value={newChanges.dashboardTitle || project.dashboardTitle || project.name}
-                        onChange={(e, data) => {
-                          setNewChanges({ ...newChanges, dashboardTitle: data.value });
-                        }}
-                      />
-                    </Form.Field>
-                    <Form.Field>
-                      <Button
-                        secondary
-                        icon
-                        labelPosition="right"
-                        type="submit"
-                        onClick={() => setEditingTitle(false)}
-                        size="big"
-                      >
-                        <Icon name="checkmark" />
-                        Save
-                      </Button>
-                    </Form.Field>
-                  </Form.Group>
-                </Form>
-              </Container>
-            )}
-
+            </Container>
             <Divider hidden />
+
             <Grid stackable centered style={styles.mainGrid}>
               {project.Charts.map((chart) => {
                 if (chart.draft) return (<span style={{ display: "none" }} key={chart.id} />);
@@ -281,6 +263,43 @@ function PublicDashboard(props) {
             </Grid>
           </div>
         )}
+
+      <TransitionablePortal open={editingTitle}>
+        <Modal open={editingTitle} onClose={() => setEditingTitle(false)}>
+          <Modal.Header>Edit the title and description</Modal.Header>
+          <Modal.Content>
+            <Form>
+              <Form.Field>
+                <label>Dashboard title</label>
+                <Input
+                  placeholder="Enter your dashboard title"
+                  value={newChanges.dashboardTitle}
+                  onChange={(e, data) => {
+                    setNewChanges({ ...newChanges, dashboardTitle: data.value });
+                  }}
+                />
+              </Form.Field>
+              <Form.Field>
+                <label>Dashboard description</label>
+                <Input
+                  placeholder="Enter a short description"
+                  value={newChanges.description}
+                  onChange={(e, data) => {
+                    setNewChanges({ ...newChanges, description: data.value });
+                  }}
+                />
+              </Form.Field>
+            </Form>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button
+              primary
+              content="Preview changes"
+              onClick={() => setEditingTitle(false)}
+            />
+          </Modal.Actions>
+        </Modal>
+      </TransitionablePortal>
       <ToastContainer
         position="top-right"
         autoClose={1500}
@@ -304,11 +323,6 @@ const styles = {
     backgroundColor: blue,
     height: window.innerHeight,
     paddingBottom: 100,
-  },
-  brewBadge: {
-    position: "absolute",
-    top: 5,
-    left: 5,
   },
   mainContent: {
     marginTop: 0,

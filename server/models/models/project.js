@@ -24,6 +24,9 @@ module.exports = (sequelize, DataTypes) => {
     dashboardTitle: {
       type: DataTypes.STRING,
     },
+    description: {
+      type: DataTypes.TEXT,
+    },
     backgroundColor: {
       type: DataTypes.STRING,
       defaultValue: "#103751",
