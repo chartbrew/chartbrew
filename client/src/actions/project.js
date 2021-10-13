@@ -156,6 +156,44 @@ export function updateProject(projectId, data) {
   };
 }
 
+export function updateProjectLogo(projectId, logo) {
+  return (dispatch) => {
+    if (!cookie.load("brewToken")) {
+      return new Promise((resolve, reject) => reject(new Error("No Token")));
+    }
+    const form = new FormData();
+    form.append("file", logo[0]);
+
+    const token = cookie.load("brewToken");
+    const url = `${API_HOST}/project/${projectId}/logo`;
+    const body = form;
+    const headers = new Headers({
+      // "Content-Type": "multipart/form-data; boundary=cb_uploads",
+      "authorization": `Bearer ${token}`,
+    });
+    const method = "POST";
+
+    dispatch({ type: FETCHING_PROJECT });
+    return fetch(url, { method, body, headers })
+      .then((response) => {
+        if (!response.ok) {
+          dispatch(addError(response.status));
+          return new Promise((resolve, reject) => reject(response.statusText));
+        }
+
+        return response.json();
+      })
+      .then((project) => {
+        dispatch({ type: FETCHING_PROJECT_SUCCESS, project });
+        return new Promise(resolve => resolve(project));
+      })
+      .catch((error) => {
+        dispatch({ type: FETCHING_PROJECT_FAILED, error });
+        return new Promise((resolve, reject) => reject(error));
+      });
+  };
+}
+
 export function removeProject(projectId) {
   return (dispatch) => {
     const token = cookie.load("brewToken");

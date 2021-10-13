@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+/* eslint-disable react/jsx-props-no-spreading */
+
+import React, { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import {
@@ -9,6 +11,8 @@ import { connect } from "react-redux";
 import { SketchPicker } from "react-color";
 import { createMedia } from "@artsy/fresnel";
 import { Helmet } from "react-helmet";
+import { clone } from "lodash";
+import { useDropzone } from "react-dropzone";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 
@@ -16,10 +20,12 @@ import {
   getPublicDashboard as getPublicDashboardAction,
   getProject as getProjectAction,
   updateProject as updateProjectAction,
+  updateProjectLogo as updateProjectLogoAction,
 } from "../../actions/project";
 import { blue } from "../../config/colors";
 import Chart from "../Chart/Chart";
 import logo from "../../assets/logo_inverted.png";
+import { API_HOST } from "../../config/settings";
 
 const AppMedia = createMedia({
   breakpoints: {
@@ -32,7 +38,7 @@ const { Media } = AppMedia;
 
 function PublicDashboard(props) {
   const {
-    getPublicDashboard, match, getProject, updateProject
+    getPublicDashboard, match, getProject, updateProject, updateProjectLogo, charts,
   } = props;
 
   const [project, setProject] = useState({});
@@ -44,6 +50,24 @@ function PublicDashboard(props) {
   const [newChanges, setNewChanges] = useState({
     backgroundColor: "#1F77B4",
     titleColor: "black",
+  });
+  const [logoPreview, setLogoPreview] = useState(null);
+
+  const onDrop = useCallback((acceptedFiles) => {
+    setNewChanges({ ...newChanges, logo: acceptedFiles });
+    setIsSaved(false);
+
+    const reader = new FileReader(); // eslint-disable-line
+    reader.onloadend = () => {
+      setLogoPreview(reader.result);
+    };
+
+    reader.readAsDataURL(acceptedFiles[0]);
+  });
+
+  const { getRootProps, getInputProps } = useDropzone({
+    accept: "image/*",
+    onDrop,
   });
 
   useEffect(() => {
@@ -58,6 +82,7 @@ function PublicDashboard(props) {
         titleColor: project.titleColor || "white",
         dashboardTitle: project.dashboardTitle || project.name,
         description: project.description,
+        logo: project.logo && `${API_HOST}/${project.logo}`,
       });
     }
   }, [project]);
@@ -93,7 +118,7 @@ function PublicDashboard(props) {
   };
 
   const _isPublic = () => {
-    return project.Charts.filter((c) => c.public).length > 0;
+    return charts.filter((c) => c.public).length > 0;
   };
 
   const _onChangeTitleColor = () => {
@@ -106,8 +131,15 @@ function PublicDashboard(props) {
 
   const _onSaveChanges = () => {
     setSaveLoading(true);
-    updateProject(project.id, newChanges)
-      .then(() => {
+    const updateData = clone(newChanges);
+    if (updateData.logo) delete updateData.logo;
+
+    updateProject(project.id, updateData)
+      .then(async () => {
+        if (typeof newChanges.logo === "object") {
+          await updateProjectLogo(project.id, newChanges.logo);
+        }
+
         setSaveLoading(false);
         _fetchProject();
         setIsSaved(true);
@@ -127,7 +159,7 @@ function PublicDashboard(props) {
               background-color: ${newChanges.backgroundColor};
             }
             
-            .dashboard-logo {
+            .dashboard-logo-container {
               position: absolute;
               top: 30px;
               left: 20px;
@@ -210,7 +242,7 @@ function PublicDashboard(props) {
         </Menu>
       )}
 
-      {project.Charts && project.Charts.length > 0 && _isPublic()
+      {charts && charts.length > 0 && _isPublic()
         && (
           <div style={{ padding: 20, position: "relative" }}>
             <Dimmer active={loading}>
@@ -219,7 +251,35 @@ function PublicDashboard(props) {
               </Loader>
             </Dimmer>
             <Container text>
-              <img className="dashboard-logo" src={logo} height="50" alt={`${project.name} Logo`} />
+              {editorVisible && (
+                <Popup
+                  trigger={(
+                    <div className="dashboard-logo-container" {...getRootProps()}>
+                      <input {...getInputProps()} />
+                      <img
+                        className="dashboard-logo"
+                        src={logoPreview || newChanges.logo}
+                        height="50"
+                        alt={`${project.name} Logo`}
+                        style={{ cursor: "pointer" }}
+                        />
+                    </div>
+                  )}
+                  content="Click here to add your own logo"
+                  position="bottom left"
+                />
+              )}
+
+              {!editorVisible && (
+                <div className="dashboard-logo-container">
+                  <img
+                    className="dashboard-logo"
+                    src={project.logo ? `${API_HOST}/${project.logo}` : logo}
+                    height="50"
+                    alt={`${project.name} Logo`}
+                  />
+                </div>
+              )}
 
               <Header
                 textAlign="center"
@@ -242,7 +302,7 @@ function PublicDashboard(props) {
             <Divider hidden />
 
             <Grid stackable centered style={styles.mainGrid}>
-              {project.Charts.map((chart) => {
+              {charts.map((chart) => {
                 if (chart.draft) return (<span style={{ display: "none" }} key={chart.id} />);
                 if (!chart.public) return (<span style={{ display: "none" }} key={chart.id} />);
 
@@ -251,7 +311,7 @@ function PublicDashboard(props) {
                     <Chart
                       isPublic
                       chart={chart}
-                      charts={project.Charts}
+                      charts={charts}
                     />
                   </Grid.Column>
                 );
@@ -336,14 +396,20 @@ PublicDashboard.propTypes = {
   getPublicDashboard: PropTypes.func.isRequired,
   getProject: PropTypes.func.isRequired,
   updateProject: PropTypes.func.isRequired,
+  updateProjectLogo: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
+  charts: PropTypes.array.isRequired,
 };
 
-const mapStateToProps = () => ({});
+const mapStateToProps = (state) => ({
+  charts: state.chart.data,
+});
+
 const mapDispatchToProps = (dispatch) => ({
   getPublicDashboard: (brewName) => dispatch(getPublicDashboardAction(brewName)),
   getProject: (projectId) => dispatch(getProjectAction(projectId)),
   updateProject: (projectId, data) => dispatch(updateProjectAction(projectId, data)),
+  updateProjectLogo: (projectId, logo) => dispatch(updateProjectLogoAction(projectId, logo)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(PublicDashboard);
