@@ -4,15 +4,17 @@ import React, { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import {
-  Button, Container, Dimmer, Divider, Form, Grid, Header, Icon, Input,
+  Button, Checkbox, Container, Dimmer, Divider, Form, Grid, Header, Icon, Input,
+  Label,
   Loader, Menu, Modal, Popup, TransitionablePortal,
 } from "semantic-ui-react";
 import { connect } from "react-redux";
-import { SketchPicker } from "react-color";
+import { TwitterPicker } from "react-color";
 import { createMedia } from "@artsy/fresnel";
 import { Helmet } from "react-helmet";
 import { clone } from "lodash";
 import { useDropzone } from "react-dropzone";
+import { useWindowSize } from "react-use";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 
@@ -22,23 +24,30 @@ import {
   updateProject as updateProjectAction,
   updateProjectLogo as updateProjectLogoAction,
 } from "../../actions/project";
-import { blue } from "../../config/colors";
+import { updateTeam as updateTeamAction } from "../../actions/team";
+import { blue, primary, secondary } from "../../config/colors";
 import Chart from "../Chart/Chart";
 import logo from "../../assets/logo_inverted.png";
-import { API_HOST } from "../../config/settings";
+import { API_HOST, SITE_HOST } from "../../config/settings";
+import canAccess from "../../config/canAccess";
 
-const AppMedia = createMedia({
-  breakpoints: {
-    mobile: 0,
-    tablet: 768,
-    computer: 1024,
-  },
-});
+const breakpoints = {
+  mobile: 0,
+  tablet: 768,
+  computer: 1024,
+};
+const AppMedia = createMedia({ breakpoints });
 const { Media } = AppMedia;
+
+const defaultColors = [
+  "#FFFFFF", "#000000", "#D9E3F0", "#F47373", "#697689", "#37D67A", primary, secondary, blue,
+  "#2CCCE4", "#555555", "#dce775", "#ff8a65", "#ba68c8",
+];
 
 function PublicDashboard(props) {
   const {
     getPublicDashboard, match, getProject, updateProject, updateProjectLogo, charts,
+    updateTeam, user, teams,
   } = props;
 
   const [project, setProject] = useState({});
@@ -52,6 +61,9 @@ function PublicDashboard(props) {
     titleColor: "black",
   });
   const [logoPreview, setLogoPreview] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [newBrewName, setNewBrewName] = useState("");
+  const [error, setError] = useState("");
 
   const onDrop = useCallback((acceptedFiles) => {
     setNewChanges({ ...newChanges, logo: acceptedFiles });
@@ -70,6 +82,8 @@ function PublicDashboard(props) {
     onDrop,
   });
 
+  const { width } = useWindowSize();
+
   useEffect(() => {
     setLoading(true);
     _fetchProject();
@@ -84,6 +98,8 @@ function PublicDashboard(props) {
         description: project.description,
         logo: project.logo && `${API_HOST}/${project.logo}`,
       });
+
+      setNewBrewName(project.brewName);
     }
   }, [project]);
 
@@ -121,12 +137,24 @@ function PublicDashboard(props) {
     return charts.filter((c) => c.public).length > 0;
   };
 
-  const _onChangeTitleColor = () => {
-    if (newChanges.titleColor === "black") {
-      setNewChanges({ ...newChanges, titleColor: "white" });
-    } else {
-      setNewChanges({ ...newChanges, titleColor: "black" });
-    }
+  const _onChangeBrewName = (e, data) => {
+    setNewBrewName(data.value);
+  };
+
+  const _onSaveBrewName = () => {
+    if (!newBrewName) return;
+
+    setSaveLoading(true);
+    updateProject(project.id, { brewName: newBrewName })
+      .then((project) => {
+        setSaveLoading(false);
+        setIsSaved(true);
+        window.location.href = `${SITE_HOST}/b/${project.brewName}`;
+      })
+      .catch(() => {
+        setSaveLoading(false);
+        setError("This dashboard URL is already taken. Please try another one.");
+      });
   };
 
   const _onSaveChanges = () => {
@@ -148,6 +176,20 @@ function PublicDashboard(props) {
       .catch(() => {
         toast.error("Oh no! We couldn't update the dashboard. Please try again");
       });
+  };
+
+  const _onToggleBranding = () => {
+    updateTeam(project.team_id, { showBranding: !project.Team.showBranding })
+      .then(() => {
+        _fetchProject();
+      })
+      .catch(() => {});
+  };
+
+  const _canAccess = (role) => {
+    const team = teams.filter((t) => t.id === project.team_id)[0];
+    if (!team) return false;
+    return canAccess(role, user.id, team.TeamRoles);
   };
 
   return (
@@ -202,42 +244,59 @@ function PublicDashboard(props) {
             </Menu.Item>
           )}
           <Menu.Menu position="right">
-            <Popup
-              trigger={(
-                <Menu.Item icon>
-                  <Icon name="image" />
-                </Menu.Item>
-              )}
-              on="click"
-              position="bottom right"
-            >
-              <>
-                <Header size="small">Change background</Header>
-                <SketchPicker
-                  color={newChanges.backgroundColor}
-                  onChangeComplete={(color) => {
-                    const rgba = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
-                    setNewChanges({ ...newChanges, backgroundColor: rgba });
-                  }}
-                />
-              </>
-            </Popup>
-            <Menu.Item icon onClick={() => setEditingTitle(true)}>
+            {_canAccess("editor") && (
               <Popup
                 trigger={(
-                  <Icon name="pencil" />
+                  <Menu.Item icon>
+                    <Icon name="image" />
+                  </Menu.Item>
+                )}
+                on="click"
+                position={width < breakpoints.tablet ? "bottom center" : "bottom right"}
+              >
+                <>
+                  <Header size="small">Change background</Header>
+                  <TwitterPicker
+                    color={newChanges.backgroundColor}
+                    onChangeComplete={(color) => {
+                      const rgba = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
+                      setNewChanges({ ...newChanges, backgroundColor: rgba });
+                    }}
+                    colors={defaultColors}
+                  />
+                  <Divider />
+                  <Header size="small">Change text color</Header>
+                  <TwitterPicker
+                    color={newChanges.titleColor}
+                    onChangeComplete={(color) => {
+                      const rgba = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
+                      setNewChanges({ ...newChanges, titleColor: rgba });
+                    }}
+                    colors={defaultColors}
+                  />
+                </>
+              </Popup>
+            )}
+            {_canAccess("editor") && (
+              <Popup
+                trigger={(
+                  <Menu.Item icon onClick={() => setEditingTitle(true)}>
+                    <Icon name="pencil" />
+                  </Menu.Item>
                 )}
                 content="Edit the dashboard title and description"
               />
-            </Menu.Item>
-            <Menu.Item icon onClick={_onChangeTitleColor}>
+            )}
+            {_canAccess("admin") && (
               <Popup
                 trigger={(
-                  <Icon name="adjust" />
+                  <Menu.Item icon onClick={() => setShowSettings(true)}>
+                    <Icon name="cogs" />
+                  </Menu.Item>
                 )}
-                content="Toggle white/black title"
+                content="Dashboard settings"
               />
-            </Menu.Item>
+            )}
           </Menu.Menu>
         </Menu>
       )}
@@ -319,7 +378,14 @@ function PublicDashboard(props) {
               {project.Team && project.Team.showBranding && (
                 <Grid.Column textAlign="center" style={{ color: newChanges.titleColor }} width={16}>
                   {"Powered by "}
-                  <a href="https://chartbrew.com" target="_blank" rel="noopener noreferrer">Chartbrew</a>
+                  <a
+                    href={`https://chartbrew.com?ref=${project.brewName}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: newChanges.titleColor, textDecoration: "underline" }}
+                  >
+                    Chartbrew
+                  </a>
                 </Grid.Column>
               )}
             </Grid>
@@ -362,6 +428,53 @@ function PublicDashboard(props) {
           </Modal.Actions>
         </Modal>
       </TransitionablePortal>
+
+      <TransitionablePortal open={showSettings}>
+        <Modal open={showSettings} onClose={() => setShowSettings(false)}>
+          <Modal.Header>Dashboard settings</Modal.Header>
+          <Modal.Content>
+            <Form>
+              <Form.Field>
+                <label>Your dashboard URL</label>
+                <Input
+                  placeholder="Enter your custom dashboard URL"
+                  label={`${SITE_HOST}/b/`}
+                  value={newBrewName}
+                  onChange={_onChangeBrewName}
+                />
+                {error && (<Label pointing color="red">{error}</Label>)}
+              </Form.Field>
+              <Form.Field>
+                <Button
+                  positive
+                  icon="checkmark"
+                  content="Save and reload"
+                  onClick={_onSaveBrewName}
+                  disabled={!newBrewName}
+                  loading={saveLoading}
+                />
+              </Form.Field>
+              <Form.Field>
+                <Divider section />
+                <Checkbox
+                  label={project.Team && project.Team.showBranding ? "Chartbrew branding is visible" : "Chartbrew branding is disabled"}
+                  toggle
+                  checked={project.Team && project.Team.showBranding}
+                  onChange={_onToggleBranding}
+                />
+              </Form.Field>
+            </Form>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button
+              primary
+              content="Close"
+              onClick={() => setShowSettings(false)}
+            />
+          </Modal.Actions>
+        </Modal>
+      </TransitionablePortal>
+
       <ToastContainer
         position="top-right"
         autoClose={1500}
@@ -399,12 +512,17 @@ PublicDashboard.propTypes = {
   getProject: PropTypes.func.isRequired,
   updateProject: PropTypes.func.isRequired,
   updateProjectLogo: PropTypes.func.isRequired,
+  updateTeam: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   charts: PropTypes.array.isRequired,
+  user: PropTypes.object.isRequired,
+  teams: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => ({
   charts: state.chart.data,
+  user: state.user.data,
+  teams: state.team.data,
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -412,6 +530,7 @@ const mapDispatchToProps = (dispatch) => ({
   getProject: (projectId) => dispatch(getProjectAction(projectId)),
   updateProject: (projectId, data) => dispatch(updateProjectAction(projectId, data)),
   updateProjectLogo: (projectId, logo) => dispatch(updateProjectLogoAction(projectId, logo)),
+  updateTeam: (teamId, data) => dispatch(updateTeamAction(teamId, data)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(PublicDashboard);
