@@ -114,7 +114,8 @@ function PublicDashboard(props) {
       || newChanges.titleColor !== project.titleColor
       || newChanges.dashboardTitle !== project.dashboardTitle
       || newChanges.description !== project.description
-      || newChanges.headerCode !== project.headerCode)
+      || ((newChanges.headerCode || project.headerCode !== null)
+        && newChanges.headerCode !== project.headerCode))
     ) {
       setIsSaved(false);
     }
@@ -174,7 +175,7 @@ function PublicDashboard(props) {
 
     updateProject(project.id, updateData)
       .then(async () => {
-        if (typeof newChanges.logo === "object") {
+        if (typeof newChanges.logo === "object" && newChanges.logo !== null) {
           await updateProjectLogo(project.id, newChanges.logo);
         }
 
