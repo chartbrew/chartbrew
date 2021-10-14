@@ -203,6 +203,16 @@ function PublicDashboard(props) {
     return canAccess(role, user.id, team.TeamRoles);
   };
 
+  if (loading && !project.id) {
+    return (
+      <Dimmer active={loading}>
+        <Loader active={loading}>
+          Preparing the dashboard...
+        </Loader>
+      </Dimmer>
+    );
+  }
+
   if (noCharts && user.id) {
     return (
       <div>
@@ -641,6 +651,7 @@ const styles = {
     position: "absolute",
     top: 30,
     left: 20,
+    cursor: "pointer",
   },
   logoContainerMobile: {
     // padding: 20,
