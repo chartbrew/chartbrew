@@ -103,7 +103,7 @@ function ProjectNavigation(props) {
         <Menu.Item
           active={_checkIfActive("public")}
           as={Link}
-          to={`/${teamId}/${projectId}/public`}
+          to={`/b/${project.brewName}`}
         >
           <Icon name="world" size="large" />
         </Menu.Item>
@@ -298,7 +298,7 @@ function ProjectNavigation(props) {
             <Menu.Item
               active={_checkIfActive("public")}
               as={Link}
-              to={`/${teamId}/${projectId}/public`}
+              to={`/b/${project.brewName}`}
             >
               {menuSize === "small"
                 && (
