@@ -5,8 +5,7 @@ import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import {
   Button, Checkbox, Container, Dimmer, Divider, Form, Grid, Header, Icon, Input,
-  Label,
-  Loader, Menu, Modal, Popup, TransitionablePortal,
+  Label, Loader, Menu, Message, Modal, Popup, TransitionablePortal,
 } from "semantic-ui-react";
 import { connect } from "react-redux";
 import { TwitterPicker } from "react-color";
@@ -17,6 +16,9 @@ import { useDropzone } from "react-dropzone";
 import { useWindowSize } from "react-use";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
+import AceEditor from "react-ace";
+import "ace-builds/src-min-noconflict/mode-css";
+import "ace-builds/src-min-noconflict/theme-tomorrow";
 
 import {
   getPublicDashboard as getPublicDashboardAction,
@@ -64,6 +66,7 @@ function PublicDashboard(props) {
   const [showSettings, setShowSettings] = useState(false);
   const [newBrewName, setNewBrewName] = useState("");
   const [error, setError] = useState("");
+  const [helpActive, setHelpActive] = useState(false);
 
   const onDrop = useCallback((acceptedFiles) => {
     setNewChanges({ ...newChanges, logo: acceptedFiles });
@@ -97,6 +100,7 @@ function PublicDashboard(props) {
         dashboardTitle: project.dashboardTitle || project.name,
         description: project.description,
         logo: project.logo && `${API_HOST}/${project.logo}`,
+        headerCode: project.headerCode || "",
       });
 
       setNewBrewName(project.brewName);
@@ -108,7 +112,8 @@ function PublicDashboard(props) {
       && (newChanges.backgroundColor !== project.backgroundColor
       || newChanges.titleColor !== project.titleColor
       || newChanges.dashboardTitle !== project.dashboardTitle
-      || newChanges.description !== project.description)
+      || newChanges.description !== project.description
+      || newChanges.headerCode !== project.headerCode)
     ) {
       setIsSaved(false);
     }
@@ -195,16 +200,13 @@ function PublicDashboard(props) {
   return (
     <div>
       <Helmet>
-        <style>
+        {(newChanges.headerCode || project.headerCode) && (
+          <style type="text/css">{newChanges.headerCode || project.headerCode}</style>
+        )}
+        <style type="text/css">
           {`
             body {
               background-color: ${newChanges.backgroundColor};
-            }
-            
-            .dashboard-logo-container {
-              position: absolute;
-              top: 30px;
-              left: 20px;
             }
           `}
         </style>
@@ -284,7 +286,7 @@ function PublicDashboard(props) {
                     <Icon name="pencil" />
                   </Menu.Item>
                 )}
-                content="Edit the dashboard title and description"
+                content="Edit the dashboard information and style"
               />
             )}
             {_canAccess("admin") && (
@@ -303,25 +305,41 @@ function PublicDashboard(props) {
 
       {charts && charts.length > 0 && _isPublic()
         && (
-          <div style={{ padding: 20, position: "relative" }}>
+          <div className="main-container" style={{ padding: 20, position: "relative" }}>
             <Dimmer active={loading}>
               <Loader active={loading}>
                 Preparing the dashboard...
               </Loader>
             </Dimmer>
-            <Container text>
+            <Media greaterThan="mobile">
+              <Divider hidden />
+            </Media>
+            <Container text className="title-container">
               {editorVisible && (
                 <Popup
                   trigger={(
                     <div className="dashboard-logo-container" {...getRootProps()}>
                       <input {...getInputProps()} />
-                      <img
-                        className="dashboard-logo"
-                        src={logoPreview || newChanges.logo}
-                        height="50"
-                        alt={`${project.name} Logo`}
-                        style={{ cursor: "pointer" }}
+                      <Media greaterThan="mobile">
+                        <img
+                          className="dashboard-logo"
+                          src={logoPreview || newChanges.logo}
+                          height="70"
+                          alt={`${project.name} Logo`}
+                          style={styles.logoContainer}
                         />
+                      </Media>
+                      <Media at="mobile">
+                        <div style={{ textAlign: "center" }}>
+                          <img
+                            className="dashboard-logo"
+                            src={logoPreview || newChanges.logo}
+                            height="70"
+                            alt={`${project.name} Logo`}
+                            style={styles.logoContainerMobile}
+                          />
+                        </div>
+                      </Media>
                     </div>
                   )}
                   content="Click here to add your own logo"
@@ -331,12 +349,26 @@ function PublicDashboard(props) {
 
               {!editorVisible && (
                 <div className="dashboard-logo-container">
-                  <img
-                    className="dashboard-logo"
-                    src={project.logo ? `${API_HOST}/${project.logo}` : logo}
-                    height="50"
-                    alt={`${project.name} Logo`}
-                  />
+                  <Media greaterThan="mobile">
+                    <img
+                      className="dashboard-logo"
+                      src={project.logo ? `${API_HOST}/${project.logo}` : logo}
+                      height="70"
+                      alt={`${project.name} Logo`}
+                      style={styles.logoContainer}
+                    />
+                  </Media>
+                  <Media at="mobile">
+                    <div style={{ textAlign: "center" }}>
+                      <img
+                        className="dashboard-logo"
+                        src={project.logo ? `${API_HOST}/${project.logo}` : logo}
+                        height="70"
+                        alt={`${project.name} Logo`}
+                        style={styles.logoContainerMobile}
+                      />
+                    </div>
+                  </Media>
                 </div>
               )}
 
@@ -344,39 +376,52 @@ function PublicDashboard(props) {
                 textAlign="center"
                 size="huge"
                 style={styles.dashboardTitle(newChanges.titleColor || project.titleColor)}
+                className="dashboard-title"
               >
                 {newChanges.dashboardTitle || project.dashboardTitle || project.name}
                 {!editorVisible && project.description && (
-                  <Header.Subheader style={styles.dashboardTitle(project.titleColor)}>
+                  <Header.Subheader
+                    style={styles.dashboardTitle(project.titleColor)}
+                    className="dashboard-sub-title"
+                  >
                     {project.description}
                   </Header.Subheader>
                 )}
                 {editorVisible && newChanges.description && (
-                <Header.Subheader style={styles.dashboardTitle(newChanges.titleColor)}>
+                <Header.Subheader
+                  style={styles.dashboardTitle(newChanges.titleColor)}
+                  className="dashboard-sub-title"
+                >
                   {newChanges.description}
                 </Header.Subheader>
                 )}
               </Header>
             </Container>
-            <Divider hidden />
+            <Divider section hidden />
 
-            <Grid stackable centered style={styles.mainGrid}>
+            <Grid stackable centered style={styles.mainGrid} className="main-chart-grid">
               {charts.map((chart) => {
                 if (chart.draft) return (<span style={{ display: "none" }} key={chart.id} />);
                 if (!chart.public) return (<span style={{ display: "none" }} key={chart.id} />);
 
                 return (
-                  <Grid.Column width={chart.chartSize * 4} key={chart.id} style={styles.chartGrid}>
+                  <Grid.Column
+                    width={chart.chartSize * 4}
+                    key={chart.id}
+                    style={styles.chartGrid}
+                    className="chart-container"
+                  >
                     <Chart
                       isPublic
                       chart={chart}
                       charts={charts}
+                      className="chart-card"
                     />
                   </Grid.Column>
                 );
               })}
               {project.Team && project.Team.showBranding && (
-                <Grid.Column textAlign="center" style={{ color: newChanges.titleColor }} width={16}>
+                <Grid.Column className="footer-content" textAlign="center" style={{ color: newChanges.titleColor }} width={16}>
                   {"Powered by "}
                   <a
                     href={`https://chartbrew.com?ref=${project.brewName}`}
@@ -416,6 +461,57 @@ function PublicDashboard(props) {
                     setNewChanges({ ...newChanges, description: data.value });
                   }}
                 />
+              </Form.Field>
+              <Form.Field>
+                <Divider section />
+                <Header size="small">Custom CSS</Header>
+                <label>Some of the main classes on the page:</label>
+                <Label.Group>
+                  <Label>.main-container</Label>
+                  <Label>.title-container</Label>
+                  <Label>.dashboard-title</Label>
+                  <Label>.dashboard-sub-title</Label>
+                  <Label>.chart-grid</Label>
+                  <Label>.chart-container</Label>
+                  <Label>.chart-card</Label>
+                </Label.Group>
+                <AceEditor
+                  mode="css"
+                  theme="tomorrow"
+                  height="200px"
+                  width="none"
+                  value={newChanges.headerCode}
+                  onChange={(value) => {
+                    setNewChanges({ ...newChanges, headerCode: value });
+                  }}
+                  name="queryEditor"
+                  editorProps={{ $blockScrolling: true }}
+                />
+
+                {!helpActive && (
+                  <Button
+                    className="tertiary"
+                    content="See an example"
+                    onClick={() => setHelpActive(true)}
+                  />
+                )}
+
+                {helpActive && (
+                  <Message onDismiss={() => setHelpActive(false)}>
+                    <p>
+                      {"You might have to use "}
+                      <Label>{"!important"}</Label>
+                      {" for your styles to override existing ones"}
+                    </p>
+                    <p>
+                      <pre>
+                        {`.dashboard-title {
+  font-size: 4em !important;
+}`}
+                      </pre>
+                    </p>
+                  </Message>
+                )}
               </Form.Field>
             </Form>
           </Modal.Content>
@@ -505,6 +601,15 @@ const styles = {
   dashboardTitle: (color) => ({
     color: color || "black",
   }),
+  logoContainer: {
+    position: "absolute",
+    top: 30,
+    left: 20,
+  },
+  logoContainerMobile: {
+    // padding: 20,
+    cursor: "pointer",
+  },
 };
 
 PublicDashboard.propTypes = {

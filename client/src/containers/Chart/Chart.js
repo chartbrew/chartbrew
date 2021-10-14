@@ -323,6 +323,7 @@ function Chart(props) {
       {chart && (
         <Segment
           style={styles.chartContainer(_isKpi(chart), print)}
+          className="chart-card"
         >
           <div style={styles.titleArea(_isKpi(chart))}>
             <Popup
