@@ -358,7 +358,7 @@ function PublicDashboard(props) {
                       <Media greaterThan="mobile">
                         <img
                           className="dashboard-logo"
-                          src={logoPreview || newChanges.logo}
+                          src={logoPreview || newChanges.logo || logo}
                           height="70"
                           alt={`${project.name} Logo`}
                           style={styles.logoContainer}
