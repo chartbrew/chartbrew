@@ -67,6 +67,7 @@ function PublicDashboard(props) {
   const [newBrewName, setNewBrewName] = useState("");
   const [error, setError] = useState("");
   const [helpActive, setHelpActive] = useState(false);
+  const [noCharts, setNoCharts] = useState(false);
 
   const onDrop = useCallback((acceptedFiles) => {
     setNewChanges({ ...newChanges, logo: acceptedFiles });
@@ -133,8 +134,12 @@ function PublicDashboard(props) {
           })
           .catch(() => {});
       })
-      .catch(() => {
-        toast.error("Could not get the the dashboard data. Please try refreshing the page.");
+      .catch((err) => {
+        if (err === 404) {
+          setNoCharts(true);
+        } else {
+          toast.error("Could not get the the dashboard data. Please try refreshing the page.");
+        }
       });
   };
 
@@ -196,6 +201,36 @@ function PublicDashboard(props) {
     if (!team) return false;
     return canAccess(role, user.id, team.TeamRoles);
   };
+
+  if (noCharts && user.id) {
+    return (
+      <div>
+        <Container text textAlign="center">
+          <Divider section hidden />
+          <Header>{"This dashbord does not contain any public charts"}</Header>
+          <Divider section hidden />
+
+          <Button
+            primary
+            content="Go back"
+            onClick={() => window.history.back()}
+          />
+        </Container>
+      </div>
+    );
+  }
+
+  if (noCharts && !user.id) {
+    return (
+      <div>
+        <Container text textAlign="center">
+          <Divider section hidden />
+          <Header>{"This dashbord does not contain any public charts"}</Header>
+          <Divider section hidden />
+        </Container>
+      </div>
+    );
+  }
 
   return (
     <div>

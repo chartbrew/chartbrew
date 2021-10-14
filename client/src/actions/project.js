@@ -240,7 +240,7 @@ export function getPublicDashboard(brewName) {
       .then((response) => {
         if (!response.ok) {
           dispatch(addError(response.status));
-          return new Promise((resolve, reject) => reject(response.statusText));
+          return new Promise((resolve, reject) => reject(response.status));
         }
 
         return response.json();
