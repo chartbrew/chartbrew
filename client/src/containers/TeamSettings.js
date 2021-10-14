@@ -87,7 +87,7 @@ function TeamSettings(props) {
           <Form.Field>
             <Divider section />
             <Checkbox
-              label={team.showBranding ? "Chartbrew branding is shown on shared charts" : "Chartbrew branding is disabled"}
+              label={team.showBranding ? "Chartbrew branding is shown on shared charts and reports" : "Chartbrew branding is disabled"}
               toggle
               checked={team.showBranding}
               onChange={_onToggleBranding}

@@ -316,10 +316,12 @@ function PublicDashboard(props) {
                   </Grid.Column>
                 );
               })}
-              <Grid.Column textAlign="center" style={{ color: newChanges.titleColor }} width={16}>
-                {"Powered by "}
-                <a href="https://chartbrew.com" target="_blank" rel="noopener noreferrer">Chartbrew</a>
-              </Grid.Column>
+              {project.Team && project.Team.showBranding && (
+                <Grid.Column textAlign="center" style={{ color: newChanges.titleColor }} width={16}>
+                  {"Powered by "}
+                  <a href="https://chartbrew.com" target="_blank" rel="noopener noreferrer">Chartbrew</a>
+                </Grid.Column>
+              )}
             </Grid>
           </div>
         )}

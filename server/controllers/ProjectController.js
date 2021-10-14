@@ -178,6 +178,10 @@ class ProjectController {
           where: { public: true },
           include: [{ model: db.Dataset }],
         },
+        {
+          model: db.Team,
+          attributes: ["showBranding"],
+        }
       ],
       order: [[db.Chart, "dashboardOrder", "ASC"]],
     })
