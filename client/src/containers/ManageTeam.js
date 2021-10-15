@@ -25,7 +25,9 @@ import canAccess from "../config/canAccess";
   Description
 */
 function ManageTeam(props) {
-  const { cleanErrors, getTeam, saveActiveTeam, match, user, team } = props;
+  const {
+    cleanErrors, getTeam, saveActiveTeam, match, user, team
+  } = props;
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
