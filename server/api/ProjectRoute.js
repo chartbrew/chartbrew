@@ -1,5 +1,6 @@
 const path = require("path");
 const fs = require("fs");
+const { nanoid } = require("nanoid");
 
 const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
@@ -155,8 +156,9 @@ module.exports = (app) => {
 
     req.pipe(req.busboy);
     req.busboy.on("file", (fieldname, file, filename) => {
-      const uploadPath = path.normalize(`${__dirname}/../uploads/${filename}`);
-      logoPath = `uploads/${filename}`;
+      const newFilename = `${nanoid(6)}-${filename}`;
+      const uploadPath = path.normalize(`${__dirname}/../uploads/${newFilename}`);
+      logoPath = `uploads/${newFilename}`;
 
       file.pipe(fs.createWriteStream(uploadPath));
     });
