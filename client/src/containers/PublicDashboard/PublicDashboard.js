@@ -155,8 +155,14 @@ function PublicDashboard(props) {
   const _onSaveBrewName = () => {
     if (!newBrewName) return;
 
+    if (newBrewName.indexOf("/") > -1) {
+      setError("The route contains invalid characters. Try removing the '/'");
+      return;
+    }
+
     setSaveLoading(true);
-    updateProject(project.id, { brewName: newBrewName })
+    const processedName = encodeURI(newBrewName);
+    updateProject(project.id, { brewName: processedName })
       .then((project) => {
         setSaveLoading(false);
         setIsSaved(true);
@@ -203,7 +209,7 @@ function PublicDashboard(props) {
     return canAccess(role, user.id, team.TeamRoles);
   };
 
-  if (loading && !project.id) {
+  if (loading && !project.id && !noCharts) {
     return (
       <Dimmer active={loading}>
         <Loader active={loading}>
@@ -218,9 +224,13 @@ function PublicDashboard(props) {
       <div>
         <Container text textAlign="center">
           <Divider section hidden />
-          <Header>{"This dashbord does not contain any public charts"}</Header>
+          <Header>
+            {"This dashbord does not contain any public charts"}
+            <Header.Subheader>
+              {"Mark charts as public and they will appear here. You can further customize this page once you have at least one public chart."}
+            </Header.Subheader>
+          </Header>
           <Divider section hidden />
-
           <Button
             primary
             content="Go back"
