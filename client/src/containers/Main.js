@@ -20,7 +20,7 @@ const ManageTeam = lazy(() => import("./ManageTeam"));
 const UserInvite = lazy(() => import("./UserInvite"));
 const ManageUser = lazy(() => import("./ManageUser"));
 const FeedbackForm = lazy(() => import("../components/FeedbackForm"));
-const PublicDashboard = lazy(() => import("./PublicDashboard"));
+const PublicDashboard = lazy(() => import("./PublicDashboard/PublicDashboard"));
 const PasswordReset = lazy(() => import("./PasswordReset"));
 const EmbeddedChart = lazy(() => import("./EmbeddedChart"));
 const GoogleAuth = lazy(() => import("./GoogleAuth"));

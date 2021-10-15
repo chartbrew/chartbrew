@@ -1,3 +1,6 @@
+const path = require("path");
+const fs = require("fs");
+
 const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
 const verifyToken = require("../modules/verifyToken");
@@ -145,6 +148,40 @@ module.exports = (app) => {
   // -------------------------------------------
 
   /*
+  ** Route to update a project's Logo
+  */
+  app.post("/project/:id/logo", verifyToken, (req, res) => {
+    let logoPath;
+
+    req.pipe(req.busboy);
+    req.busboy.on("file", (fieldname, file, filename) => {
+      const uploadPath = path.normalize(`${__dirname}/../uploads/${filename}`);
+      logoPath = `uploads/${filename}`;
+
+      file.pipe(fs.createWriteStream(uploadPath));
+    });
+
+    req.busboy.on("finish", () => {
+      return checkAccess(req)
+        .then((teamRole) => {
+          const permission = accessControl.can(teamRole.role).updateAny("project");
+          if (!permission.granted) {
+            return new Promise((resolve, reject) => reject(new Error(401)));
+          }
+
+          return projectController.update(req.params.id, { logo: logoPath });
+        })
+        .then((project) => {
+          return res.status(200).send(project);
+        })
+        .catch((err) => {
+          return res.status(400).send(err);
+        });
+    });
+  });
+  // -------------------------------------------
+
+  /*
   ** Route to remove a project
   */
   app.delete("/project/:id", verifyToken, (req, res) => {
@@ -200,6 +237,9 @@ module.exports = (app) => {
         return res.status(200).send(dashboard);
       })
       .catch((error) => {
+        if (error && error.message === "404") {
+          return res.status(404).send(error);
+        }
         return res.status(400).send(error);
       });
   });

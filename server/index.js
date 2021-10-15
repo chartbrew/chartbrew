@@ -11,6 +11,7 @@ const { OneAccount } = require("oneaccount-express");
 const morgan = require("morgan");
 const helmet = require("helmet");
 const fs = require("fs");
+const busboy = require("connect-busboy");
 
 const settings = process.env.NODE_ENV === "production" ? require("./settings") : require("./settings-dev");
 const routes = require("./api");
@@ -21,12 +22,14 @@ const AuthCacheController = require("./controllers/AuthCacheController");
 
 const authCache = new AuthCacheController();
 
-// set up the cache folder
+// set up folders
 fs.mkdir(".cache", () => {});
+fs.mkdir("uploads", () => {});
 
 const app = express();
 app.settings = settings;
 
+app.use(busboy());
 if (process.env.NODE_ENV !== "production") {
   app.set("trust proxy", true);
   app.use(morgan("dev"));
@@ -53,6 +56,8 @@ app.use(new OneAccount({
 app.get("/", (req, res) => {
   return res.send("Welcome to chartBrew server API");
 });
+
+app.use("/uploads", express.static("uploads"));
 
 // Load the routes
 _.each(routes, (controller, route) => {

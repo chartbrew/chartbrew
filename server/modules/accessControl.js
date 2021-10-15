@@ -278,6 +278,9 @@ const grantList = [
   {
     role: "editor", resource: "project", action: "read:any", attributes: "*",
   },
+  {
+    role: "editor", resource: "project", action: "update:any", attributes: ["backgroundColor", "dashboardTitle", "description", "titleColor"],
+  },
   // resource: connection ---> Team Perspective
   {
     role: "editor", resource: "connection", action: "create:any", attributes: "*",

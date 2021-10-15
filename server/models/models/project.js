@@ -24,6 +24,26 @@ module.exports = (sequelize, DataTypes) => {
     dashboardTitle: {
       type: DataTypes.STRING,
     },
+    description: {
+      type: DataTypes.TEXT,
+    },
+    backgroundColor: {
+      type: DataTypes.STRING,
+      defaultValue: "#103751",
+    },
+    titleColor: {
+      type: DataTypes.STRING,
+      defaultValue: "white",
+    },
+    headerCode: {
+      type: DataTypes.TEXT,
+    },
+    footerCode: {
+      type: DataTypes.TEXT,
+    },
+    logo: {
+      type: DataTypes.STRING,
+    },
   }, {
     freezeTableName: true,
   });

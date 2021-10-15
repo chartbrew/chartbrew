@@ -21,12 +21,14 @@
     "base-64": "^0.1.0",
     "body-parser": "^1.19.0",
     "compare-versions": "^3.6.0",
+    "connect-busboy": "^0.0.2",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "cron": "^1.8.2",
     "date-fns": "^2.21.2",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "express-fileupload": "^1.2.1",
     "firebase-admin": "^9.5.0",
     "googleapis": "^71.0.0",
     "helmet": "^4.4.1",
@@ -50,6 +52,7 @@
     "sequelize": "^6.3.5",
     "simplecrypt": "^0.1.0",
     "umzug": "^2.3.0",
+    "uninstall": "*",
     "uuid": "^3.4.0"
   },
   "devDependencies": {
