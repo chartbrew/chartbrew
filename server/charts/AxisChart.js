@@ -623,11 +623,11 @@ class AxisChart {
     if (type === "array") {
       const avgCounter = {};
       yData.forEach((item) => {
-        if (!countData[item.x] && item.y) countData[item.x] = item.y.length;
-        else if (item.y) countData[item.x] += item.y.length;
+        if (!countData[item.x] && item.y) countData[item.x] = item.y.reduce((a, b) => a + b);
+        else if (item.y) countData[item.x] += item.y.reduce((a, b) => a + b);
 
-        if (!avgCounter[item.x]) avgCounter[item.x] = 1;
-        else avgCounter[item.x]++;
+        if (!avgCounter[item.x]) avgCounter[item.x] = item.y.length;
+        else avgCounter[item.x] += item.y.length;
       });
 
       if (average) {
