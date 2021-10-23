@@ -68,6 +68,7 @@ function PublicDashboard(props) {
   const [error, setError] = useState("");
   const [helpActive, setHelpActive] = useState(false);
   const [noCharts, setNoCharts] = useState(false);
+  const [preview, setPreview] = useState(false);
 
   const onDrop = useCallback((acceptedFiles) => {
     setNewChanges({ ...newChanges, logo: acceptedFiles });
@@ -269,7 +270,7 @@ function PublicDashboard(props) {
           `}
         </style>
       </Helmet>
-      {editorVisible && (
+      {editorVisible && !preview && (
         <Menu color="blue" inverted size="large">
           <Menu.Item icon as={Link} to={`/${project.team_id}/${project.id}/dashboard`}>
             <Popup
@@ -304,6 +305,17 @@ function PublicDashboard(props) {
             </Menu.Item>
           )}
           <Menu.Menu position="right">
+            {_canAccess("editor") && (
+              <Popup
+                trigger={(
+                  <Menu.Item icon onClick={() => setPreview(true)}>
+                    <Icon name="eye" />
+                  </Menu.Item>
+                )}
+                content="Preview as a visitor"
+                position={width < breakpoints.tablet ? "bottom center" : "bottom right"}
+              />
+            )}
             {_canAccess("editor") && (
               <Popup
                 trigger={(
@@ -361,6 +373,23 @@ function PublicDashboard(props) {
         </Menu>
       )}
 
+      {preview && (
+        <Popup
+          trigger={(
+            <Button
+              primary
+              onClick={() => setPreview(false)}
+              icon
+              style={styles.previewBtn}
+            >
+              <Icon name="x" />
+            </Button>
+          )}
+          content="Exit preview"
+          position="bottom right"
+        />
+      )}
+
       {charts && charts.length > 0 && _isPublic()
         && (
           <div className="main-container" style={{ padding: 20, position: "relative" }}>
@@ -373,7 +402,7 @@ function PublicDashboard(props) {
               <Divider hidden />
             </Media>
             <Container text className="title-container">
-              {editorVisible && (
+              {editorVisible && !preview && (
                 <>
                   <Media greaterThan="mobile">
                     <div className="dashboard-logo-container" {...getRootProps()}>
@@ -408,7 +437,7 @@ function PublicDashboard(props) {
                 </>
               )}
 
-              {!editorVisible && (
+              {(!editorVisible || preview) && (
                 <div className="dashboard-logo-container">
                   <Media greaterThan="mobile">
                     <a
@@ -693,6 +722,12 @@ const styles = {
   logoContainerMobile: {
     // padding: 20,
     cursor: "pointer",
+  },
+  previewBtn: {
+    position: "absolute",
+    top: 20,
+    right: 20,
+    zIndex: 10,
   },
 };
 
