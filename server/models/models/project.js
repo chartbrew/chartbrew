@@ -44,6 +44,9 @@ module.exports = (sequelize, DataTypes) => {
     logo: {
       type: DataTypes.STRING,
     },
+    logoLink: {
+      type: DataTypes.STRING(1234),
+    },
   }, {
     freezeTableName: true,
   });

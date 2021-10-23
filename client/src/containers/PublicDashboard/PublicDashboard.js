@@ -102,6 +102,7 @@ function PublicDashboard(props) {
         description: project.description,
         logo: project.logo && `${API_HOST}/${project.logo}`,
         headerCode: project.headerCode || "",
+        logoLink: project.logoLink,
       });
 
       setNewBrewName(project.brewName);
@@ -114,6 +115,7 @@ function PublicDashboard(props) {
       || newChanges.titleColor !== project.titleColor
       || newChanges.dashboardTitle !== project.dashboardTitle
       || newChanges.description !== project.description
+      || newChanges.logoLink !== project.logoLink
       || ((newChanges.headerCode || project.headerCode !== null)
         && newChanges.headerCode !== project.headerCode))
     ) {
@@ -372,57 +374,72 @@ function PublicDashboard(props) {
             </Media>
             <Container text className="title-container">
               {editorVisible && (
-                <Popup
-                  trigger={(
+                <>
+                  <Media greaterThan="mobile">
                     <div className="dashboard-logo-container" {...getRootProps()}>
                       <input {...getInputProps()} />
-                      <Media greaterThan="mobile">
-                        <img
-                          className="dashboard-logo"
-                          src={logoPreview || newChanges.logo || logo}
-                          height="70"
-                          alt={`${project.name} Logo`}
-                          style={styles.logoContainer}
-                        />
-                      </Media>
-                      <Media at="mobile">
-                        <div style={{ textAlign: "center" }}>
+                      <Popup
+                        trigger={(
                           <img
                             className="dashboard-logo"
-                            src={logoPreview || newChanges.logo}
+                            src={logoPreview || newChanges.logo || logo}
                             height="70"
                             alt={`${project.name} Logo`}
-                            style={styles.logoContainerMobile}
+                            style={styles.logoContainer}
                           />
-                        </div>
-                      </Media>
+                        )}
+                        content="Click here to add your own logo"
+                        position="bottom left"
+                      />
                     </div>
-                  )}
-                  content="Click here to add your own logo"
-                  position="bottom left"
-                />
+                  </Media>
+
+                  <Media at="mobile">
+                    <div style={{ textAlign: "center" }}>
+                      <img
+                        className="dashboard-logo"
+                        src={logoPreview || newChanges.logo}
+                        height="70"
+                        alt={`${project.name} Logo`}
+                        style={styles.logoContainerMobile}
+                      />
+                    </div>
+                  </Media>
+                </>
               )}
 
               {!editorVisible && (
                 <div className="dashboard-logo-container">
                   <Media greaterThan="mobile">
-                    <img
-                      className="dashboard-logo"
-                      src={project.logo ? `${API_HOST}/${project.logo}` : logo}
-                      height="70"
-                      alt={`${project.name} Logo`}
-                      style={styles.logoContainer}
-                    />
-                  </Media>
-                  <Media at="mobile">
-                    <div style={{ textAlign: "center" }}>
+                    <a
+                      href={project.logoLink || "#"}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       <img
                         className="dashboard-logo"
                         src={project.logo ? `${API_HOST}/${project.logo}` : logo}
                         height="70"
                         alt={`${project.name} Logo`}
-                        style={styles.logoContainerMobile}
+                        style={styles.logoContainer}
                       />
+                    </a>
+                  </Media>
+                  <Media at="mobile">
+                    <div style={{ textAlign: "center" }}>
+                      <a
+                        href={project.logoLink || "#"}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <img
+                          className="dashboard-logo"
+                          src={project.logo ? `${API_HOST}/${project.logo}` : logo}
+                          height="70"
+                          alt={`${project.name} Logo`}
+                          style={styles.logoContainerMobile}
+                        />
+                      </a>
                     </div>
                   </Media>
                 </div>
@@ -515,6 +532,16 @@ function PublicDashboard(props) {
                   value={newChanges.description}
                   onChange={(e, data) => {
                     setNewChanges({ ...newChanges, description: data.value });
+                  }}
+                />
+              </Form.Field>
+              <Form.Field>
+                <label>Website where the logo links towards</label>
+                <Input
+                  placeholder="https://example.com"
+                  value={newChanges.logoLink}
+                  onChange={(e, data) => {
+                    setNewChanges({ ...newChanges, logoLink: data.value });
                   }}
                 />
               </Form.Field>
