@@ -441,7 +441,7 @@ function PublicDashboard(props) {
                 <div className="dashboard-logo-container">
                   <Media greaterThan="mobile">
                     <a
-                      href={project.logoLink || "#"}
+                      href={newChanges.logoLink || project.logoLink || "#"}
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -457,7 +457,7 @@ function PublicDashboard(props) {
                   <Media at="mobile">
                     <div style={{ textAlign: "center" }}>
                       <a
-                        href={project.logoLink || "#"}
+                        href={newChanges.logoLink || project.logoLink || "#"}
                         target="_blank"
                         rel="noreferrer"
                       >
@@ -684,7 +684,7 @@ function PublicDashboard(props) {
       </TransitionablePortal>
 
       <ToastContainer
-        position="top-right"
+        position="bottom-center"
         autoClose={1500}
         hideProgressBar={false}
         newestOnTop={false}
