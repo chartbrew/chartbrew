@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Route, Switch, withRouter } from "react-router";
@@ -6,7 +6,12 @@ import { Route, Switch, withRouter } from "react-router";
 import { Link } from "react-router-dom";
 
 import {
-  Dimmer, Grid, Menu, Loader, Container, Header
+  Dimmer,
+  Grid,
+  Menu,
+  Loader,
+  Container,
+  Header,
 } from "semantic-ui-react";
 
 import { getTeam, saveActiveTeam } from "../actions/team";
@@ -19,37 +24,31 @@ import canAccess from "../config/canAccess";
 /*
   Description
 */
-class ManageTeam extends Component {
-  constructor(props) {
-    super(props);
+function ManageTeam(props) {
+  const {
+    cleanErrors, getTeam, saveActiveTeam, match, user, team
+  } = props;
+  const [loading, setLoading] = useState(true);
 
-    this.state = {
-      loading: true,
-    };
-  }
-
-  componentDidMount() {
-    const { cleanErrors } = this.props;
+  useEffect(() => {
     cleanErrors();
-    this._getTeam();
-  }
+    _getTeam();
+  }, []);
 
-  _getTeam = () => {
-    const { getTeam, saveActiveTeam, match } = this.props;
-
+  const _getTeam = () => {
     getTeam(match.params.teamId)
       .then((team) => {
         saveActiveTeam(team);
       })
       .then(() => {
-        this.setState({ loading: false });
+        setLoading(false);
       })
       .catch(() => {
-        this.setState({ loading: false });
+        setLoading(false);
       });
-  }
+  };
 
-  checkIfActive(path) {
+  const checkIfActive = (path) => {
     switch (path) {
       case "members":
         if (window.location.pathname.indexOf("members") > -1) return true;
@@ -65,65 +64,66 @@ class ManageTeam extends Component {
     }
 
     return false;
-  }
+  };
 
-  _canAccess(role) {
-    const { user, team } = this.props;
+  const _canAccess = (role) => {
     return canAccess(role, user.id, team.TeamRoles);
-  }
+  };
 
-  render() {
-    const { match, team } = this.props;
-    const { loading } = this.state;
-    if (!team.id) {
-      return (
-        <Container text style={styles.container}>
-          <Dimmer active={loading}>
-            <Loader />
-          </Dimmer>
-        </Container>
-      );
-    }
-
+  if (!team.id) {
     return (
-      <div style={styles.container}>
-        <Navbar />
-        <Grid centered padded columns={2} stackable>
-          <Grid.Column width={3}>
-            <Header as="h3" style={{ paddingTop: 20 }}>
-              Manage the team
-            </Header>
-            <Menu secondary vertical fluid>
-              {this._canAccess("owner")
-                && (
-                <Menu.Item
-                  active={this.checkIfActive("settings")}
-                  as={Link}
-                  to={`/manage/${match.params.teamId}/settings`}>
-                  Settings
-                </Menu.Item>
-                )}
-              <Menu.Item
-                active={this.checkIfActive("members")}
-                as={Link}
-                to={`/manage/${match.params.teamId}/members`}>
-                Members
-              </Menu.Item>
-            </Menu>
-          </Grid.Column>
-
-          <Grid.Column stretched width={12}>
-            <Container>
-              <Switch>
-                <Route path="/manage/:teamId/members" component={TeamMembers} />
-                {this._canAccess("owner") && <Route path="/manage/:teamId/settings" component={TeamSettings} />}
-              </Switch>
-            </Container>
-          </Grid.Column>
-        </Grid>
-      </div>
+      <Container text style={styles.container}>
+        <Dimmer active={loading}>
+          <Loader />
+        </Dimmer>
+      </Container>
     );
   }
+
+  return (
+    <div style={styles.container}>
+      <Navbar />
+      <Grid centered padded columns={2} stackable>
+        <Grid.Column width={3}>
+          <Header as="h3" style={{ paddingTop: 20 }}>
+            Manage the team
+          </Header>
+          <Menu secondary vertical fluid>
+            {_canAccess("owner") && (
+              <Menu.Item
+                active={checkIfActive("settings")}
+                as={Link}
+                to={`/manage/${match.params.teamId}/settings`}
+              >
+                Settings
+              </Menu.Item>
+            )}
+            <Menu.Item
+              active={checkIfActive("members")}
+              as={Link}
+              to={`/manage/${match.params.teamId}/members`}
+            >
+              Members
+            </Menu.Item>
+          </Menu>
+        </Grid.Column>
+
+        <Grid.Column stretched width={12}>
+          <Container>
+            <Switch>
+              <Route path="/manage/:teamId/members" component={TeamMembers} />
+              {_canAccess("owner") && (
+                <Route
+                  path="/manage/:teamId/settings"
+                  component={TeamSettings}
+                />
+              )}
+            </Switch>
+          </Container>
+        </Grid.Column>
+      </Grid>
+    </div>
+  );
 }
 
 const styles = {
@@ -150,10 +150,12 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    getTeam: id => dispatch(getTeam(id)),
+    getTeam: (id) => dispatch(getTeam(id)),
     saveActiveTeam: (team) => dispatch(saveActiveTeam(team)),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ManageTeam));
+export default withRouter(
+  connect(mapStateToProps, mapDispatchToProps)(ManageTeam)
+);
