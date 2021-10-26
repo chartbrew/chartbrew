@@ -565,7 +565,7 @@ function PublicDashboard(props) {
                 />
               </Form.Field>
               <Form.Field>
-                <label>Website where the logo links towards</label>
+                <label>Company website URL</label>
                 <Input
                   placeholder="https://example.com"
                   value={newChanges.logoLink}
