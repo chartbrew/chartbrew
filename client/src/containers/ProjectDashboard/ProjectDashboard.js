@@ -28,7 +28,7 @@ import {
 import canAccess from "../../config/canAccess";
 import ChartExport from "./components/ChartExport";
 import CreateTemplateForm from "../../components/CreateTemplateForm";
-import { lightGray } from "../../config/colors";
+import { whiteTransparent } from "../../config/colors";
 
 const AppMedia = createMedia({
   breakpoints: {
@@ -422,7 +422,6 @@ function ProjectDashboard(props) {
                             basic
                             as="a"
                             pointing="left"
-                            style={{ backgroundColor: lightGray }}
                           >
                             <Checkbox
                               toggle
@@ -613,7 +612,7 @@ const styles = {
     paddingRight: 10,
     paddingLeft: 10,
     borderRadius: 0,
-    backgroundColor: "transparent",
+    backgroundColor: whiteTransparent(1),
     boxShadow: "none",
   },
   actionBarMobile: {

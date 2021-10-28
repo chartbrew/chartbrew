@@ -4,6 +4,8 @@ export const teal = "#88BFc4";
 export const blue = "#103751";
 export const orange = "#cf6b4e";
 export const lightGray = "#ECEFF1";
+export const darkBlue = "#0c293c";
+export const dark = "#09151C";
 
 export function primaryTransparent(opacity = 1.0) {
   return `rgba(26, 127, 160, ${opacity})`;

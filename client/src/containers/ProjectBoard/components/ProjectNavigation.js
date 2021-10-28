@@ -8,7 +8,9 @@ import {
 } from "semantic-ui-react";
 import ReactMarkdown from "react-markdown";
 
-import { blue, lightGray, primary } from "../../../config/colors";
+import {
+  blue, dark, darkBlue, lightGray, primary
+} from "../../../config/colors";
 import { APP_VERSION } from "../../../config/settings";
 
 const sideMaxSize = 220;
@@ -497,7 +499,7 @@ const styles = {
     backgroundColor: lightGray,
   },
   absoluteLogo: {
-    backgroundColor: primary,
+    backgroundColor: blue,
     position: "absolute",
     bottom: 0,
     width: "100%",
@@ -535,12 +537,12 @@ const styles = {
     textAlign: "center",
   },
   mainSideMenu: (height) => ({
-    backgroundColor: blue,
+    backgroundColor: darkBlue,
     minHeight: height,
     borderRadius: 0,
   }),
   mobileMenu: {
-    backgroundColor: blue,
+    backgroundColor: dark,
     textAlign: "center",
   },
 };

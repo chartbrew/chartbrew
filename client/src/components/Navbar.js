@@ -114,7 +114,7 @@ function Navbar(props) {
     );
   }
   return (
-    <Menu fixed="top" color="violet" inverted secondary={width < 768} style={transparent ? styles.transparentMenu : { }}>
+    <Menu fixed="top" color="violet" inverted secondary={width < 768} style={transparent ? styles.transparentMenu : { backgroundColor: blue }}>
       <Menu.Item style={styles.logoContainer} as={Link} to="/user">
         <Image centered as="img" src={cbLogo} alt="Chartbrew logo" style={styles.logo} />
       </Menu.Item>
