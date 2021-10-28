@@ -337,8 +337,6 @@ class ChartController {
           datasets,
         };
 
-        // console.log("gCache.data", gCache.data);
-
         // change the datasets data if the cache is called
         if (!skipCache && noSource === true && gCache && gCache.data && gCache.data.datasets) {
           resolvingData.datasets = gCache.data.datasets.map((item) => {

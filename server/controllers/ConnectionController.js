@@ -13,6 +13,34 @@ const firebaseConnector = require("../modules/firebaseConnector");
 const googleConnector = require("../modules/googleConnector");
 const FirestoreConnection = require("../connections/FirestoreConnection");
 const oauthController = require("./OAuthController");
+const determineType = require("../modules/determineType");
+
+function isArrayPresent(responseData) {
+  let arrayFound = false;
+  Object.keys(responseData).forEach((k1) => {
+    if (determineType(responseData[k1]) === "array") {
+      arrayFound = true;
+    }
+
+    if (!arrayFound && determineType(responseData[k1]) === "object") {
+      Object.keys(responseData[k1]).forEach((k2) => {
+        if (determineType(responseData[k1][k2]) === "array") {
+          arrayFound = true;
+        }
+
+        if (!arrayFound && determineType(responseData[k1][k2]) === "object") {
+          Object.keys(responseData[k1][k2]).forEach((k3) => {
+            if (determineType(responseData[k1][k2][k3]) === "array") {
+              arrayFound = true;
+            }
+          });
+        }
+      });
+    }
+  });
+
+  return arrayFound;
+}
 
 class ConnectionController {
   constructor() {
@@ -527,7 +555,16 @@ class ConnectionController {
 
         if (response.statusCode < 300) {
           try {
-            return new Promise((resolve) => resolve(JSON.parse(response.body)));
+            let responseData = JSON.parse(response.body);
+
+            // check if there are arrays to take into account
+            // transform the data in 1-item array if that's the case
+            // check for arrays in 3 levels
+            if (determineType(responseData) === "object" && !isArrayPresent(responseData)) {
+              responseData = [responseData];
+            }
+
+            return new Promise((resolve) => resolve(responseData));
           } catch (e) {
             return new Promise((resolve, reject) => reject(406));
           }
