@@ -499,7 +499,6 @@ function AddChart(props) {
             {match.params.chartId && newChart.type && datasets.length > 0 && (
               <ChartSettings
                 type={newChart.type}
-                datasets={datasets}
                 pointRadius={newChart.pointRadius}
                 startDate={newChart.startDate}
                 endDate={newChart.endDate}

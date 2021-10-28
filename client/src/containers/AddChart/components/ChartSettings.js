@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Form, Segment, Checkbox, Grid, Modal, Button,
-  Accordion, Icon, Dropdown, Label, Header, Message, TransitionablePortal, Popup,
+  Accordion, Icon, Dropdown, Label, Header, TransitionablePortal, Popup,
 } from "semantic-ui-react";
 import moment from "moment";
 import { DateRangePicker } from "react-date-range";
@@ -25,12 +25,11 @@ function ChartSettings(props) {
   const [dateRange, setDateRange] = useState(initSelectionRange);
   const [labelStartDate, setLabelStartDate] = useState("");
   const [labelEndDate, setLabelEndDate] = useState("");
-  const [dateBlocked, setDateBlocked] = useState(false);
   const [max, setMax] = useState("");
   const [min, setMin] = useState("");
 
   const {
-    type, pointRadius, displayLegend, datasets,
+    type, pointRadius, displayLegend,
     endDate, currentEndDate, timeInterval,
     includeZeros, startDate, onChange, onComplete,
     maxValue, minValue,
@@ -56,16 +55,6 @@ function ChartSettings(props) {
       setMin("");
     }
   }, [maxValue, minValue]);
-
-  useEffect(() => {
-    let noDateFieldFound = false;
-    datasets.map((dataset) => {
-      if (!dataset.dateField) noDateFieldFound = true;
-      return dataset;
-    });
-
-    setDateBlocked(noDateFieldFound);
-  }, [datasets]);
 
   useEffect(() => {
     setDateRange({ startDate, endDate });
@@ -157,67 +146,49 @@ function ChartSettings(props) {
           )}
         </Accordion.Title>
         <Accordion.Content active={activeOption === "daterange"}>
-          {dateBlocked && (
-            <Message size="small">
-              {"All datasets must have a date field selected for the Date Filter to work."}
-            </Message>
-          )}
           <Form>
             <Form.Group widths="equal" style={{ paddingBottom: 20 }}>
-              {!dateBlocked && (
-                <Form.Field>
-                  <Button
-                    content="Date filter"
-                    primary
-                    icon="calendar"
-                    labelPosition="right"
-                    onClick={() => _onViewRange(true)}
-                  />
-                  <Checkbox
-                    checked={startDate != null || endDate != null}
-                    onChange={(e, data) => _onActivateRange(data.checked)}
-                    style={{ ...styles.accordionToggle, ...styles.inlineCheckbox }}
-                  />
-                  <div style={{ marginTop: 5 }}>
-                    {startDate && (
-                    <Label
-                      color="olive"
-                      as="a"
-                      onClick={() => setDateRangeModal(true)}
-                    >
-                      {labelStartDate}
-                    </Label>
-                    )}
-                    {startDate && (<span> to </span>)}
-                    {endDate && (
-                    <Label
-                      color="olive"
-                      as="a"
-                      onClick={() => setDateRangeModal(true)}
-                    >
-                      {labelEndDate}
-                    </Label>
-                    )}
-                  </div>
-                </Form.Field>
-              )}
-              {dateBlocked && (
-                <Form.Field>
-                  <Button
-                    content="Date filter"
-                    primary
-                    icon="calendar"
-                    labelPosition="right"
-                    disabled
-                  />
-                </Form.Field>
-              )}
+              <Form.Field>
+                <Button
+                  content="Date filter"
+                  primary
+                  icon="calendar"
+                  labelPosition="right"
+                  onClick={() => _onViewRange(true)}
+                />
+                <Checkbox
+                  checked={startDate != null || endDate != null}
+                  onChange={(e, data) => _onActivateRange(data.checked)}
+                  style={{ ...styles.accordionToggle, ...styles.inlineCheckbox }}
+                />
+                <div style={{ marginTop: 5 }}>
+                  {startDate && (
+                  <Label
+                    color="olive"
+                    as="a"
+                    onClick={() => setDateRangeModal(true)}
+                  >
+                    {labelStartDate}
+                  </Label>
+                  )}
+                  {startDate && (<span> to </span>)}
+                  {endDate && (
+                  <Label
+                    color="olive"
+                    as="a"
+                    onClick={() => setDateRangeModal(true)}
+                  >
+                    {labelEndDate}
+                  </Label>
+                  )}
+                </div>
+              </Form.Field>
               <Form.Field>
                 <Checkbox
                   label="Keep the date range updated with current dates"
                   toggle
                   checked={currentEndDate}
-                  disabled={!dateRange.endDate || dateBlocked}
+                  disabled={!dateRange.endDate}
                   onChange={() => {
                     onChange({ currentEndDate: !currentEndDate });
                   }}
@@ -441,7 +412,6 @@ ChartSettings.defaultProps = {
 
 ChartSettings.propTypes = {
   type: PropTypes.string.isRequired,
-  datasets: PropTypes.array.isRequired,
   displayLegend: PropTypes.bool,
   pointRadius: PropTypes.number,
   startDate: PropTypes.object,
