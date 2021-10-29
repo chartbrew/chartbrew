@@ -263,7 +263,10 @@ function ApiConnectionForm(props) {
                             content: seePass ? "Hide" : "Show",
                             labelPosition: "right",
                             icon: seePass ? "eye slash" : "eye",
-                            onClick: () => setSeePass(!seePass),
+                            onClick: (e) => {
+                              e.preventDefault();
+                              setSeePass(!seePass);
+                            },
                           }}
                         />
                       </Form.Group>
@@ -281,7 +284,10 @@ function ApiConnectionForm(props) {
                           content: seePass ? "Hide" : "Show",
                           labelPosition: "right",
                           icon: seePass ? "eye slash" : "eye",
-                          onClick: () => setSeePass(!seePass),
+                          onClick: (e) => {
+                            e.preventDefault();
+                            setSeePass(!seePass);
+                          },
                         }}
                       />
                     </Form.Field>
