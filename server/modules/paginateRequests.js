@@ -50,6 +50,58 @@ function PaginateRequests(options, limit, items, offset, totalResults = []) {
     });
 }
 
+function PaginatePages(options, limit, offset, totalResults = []) {
+  if (!options.qs[offset]) options.qs[offset] = 1; // eslint-disable-line
+
+  return request(options)
+    .then((response) => {
+      let results;
+      try {
+        const parsedResponse = JSON.parse(response.body);
+        if (parsedResponse instanceof Array) {
+          results = parsedResponse;
+        } else {
+          Object.keys(parsedResponse).forEach((key) => {
+            if (parsedResponse[key] instanceof Array) {
+              results = parsedResponse[key];
+            }
+          });
+        }
+      } catch (error) {
+        return new Promise((resolve, reject) => reject(response.statusCode));
+      }
+
+      // check if results are the same as previous ones (infinite request loop?)
+      let skipping = false;
+
+      if (_.isEqual(results, totalResults)) {
+        skipping = true;
+      }
+
+      const tempResults = totalResults.concat(results);
+
+      if (skipping || results.length === 0 || (tempResults.length >= limit && limit !== 0)) {
+        let finalResults = skipping ? results : tempResults;
+
+        // check if it goes above the limit
+        if (tempResults.length > limit && limit !== 0) {
+          finalResults = tempResults.slice(0, limit);
+        }
+
+        return new Promise((resolve) => resolve(finalResults));
+      }
+
+      // increment page number
+      const newOptions = options;
+      newOptions.qs[offset] = parseInt(options.qs[offset], 10) + 1;
+
+      return PaginatePages(newOptions, limit, offset, tempResults);
+    })
+    .catch((e) => {
+      return Promise.reject(e);
+    });
+}
+
 function PaginateStripe(options, limit, totalResults) {
   return request(options)
     .then((response) => {
@@ -159,6 +211,9 @@ module.exports = (template = "custom", {
     }
     case "url":
       results = PaginateUrl(options, paginationField, limit);
+      break;
+    case "pages":
+      results = PaginatePages(options, limit, offset);
       break;
     default:
       results = PaginateRequests(options, limit, items, offset);

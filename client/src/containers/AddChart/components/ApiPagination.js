@@ -11,6 +11,10 @@ const templates = [{
   value: "custom",
   text: "Custom template",
 }, {
+  key: "pages",
+  value: "pages",
+  text: "Pages",
+}, {
   key: "url",
   value: "url",
   text: "Pagination URL",
@@ -135,6 +139,19 @@ function ApiPagination(props) {
               onChange={(e, data) => onPaginationChanged("offset", data.value)}
             />
           </Form.Field>
+        )}
+        {template === "pages" && pagination && (
+          <>
+            <Form.Field>
+              <label>Enter the query parameter name for the page</label>
+              <Input
+                disabled={!pagination}
+                placeholder="page"
+                value={offset}
+                onChange={(e, data) => onPaginationChanged("offset", data.value)}
+              />
+            </Form.Field>
+          </>
         )}
         {template === "url" && pagination && (
           <>
