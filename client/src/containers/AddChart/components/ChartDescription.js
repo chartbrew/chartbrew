@@ -9,7 +9,6 @@ import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 
 import simpleAnalyticsLogo from "../../../assets/simpleAnalytics.png";
-import moreLogo from "../../../assets/moreComingSoon.png";
 import chartmogulLogo from "../../../assets/ChartMogul.webp";
 import mailgunLogo from "../../../assets/mailgun_logo.webp";
 import SimpleAnalyticsTemplate from "../../Connections/SimpleAnalytics/SimpleAnalyticsTemplate";
@@ -18,6 +17,7 @@ import MailgunTemplate from "../../Connections/Mailgun/MailgunTemplate";
 import connectionImages from "../../../config/connectionImages";
 import GaTemplate from "../../Connections/GoogleAnalytics/GaTemplate";
 import CustomTemplates from "../../Connections/CustomTemplates/CustomTemplates";
+import PlausibleTemplate from "../../Connections/Plausible/PlausibleTemplate";
 import canAccess from "../../../config/canAccess";
 
 function ChartDescription(props) {
@@ -180,32 +180,32 @@ function ChartDescription(props) {
                     <Card.Group itemsPerRow={5} stackable centered>
                       <Card className="project-segment" onClick={() => setFormType("saTemplate")}>
                         <Image src={simpleAnalyticsLogo} />
-                        <Card.Content textAlign="center">
+                        <Card.Content textAlign="center" style={styles.smallerText}>
                           <Card.Header>Simple Analytics</Card.Header>
                         </Card.Content>
                       </Card>
                       <Card className="project-segment" onClick={() => setFormType("cmTemplate")}>
                         <Image src={chartmogulLogo} />
-                        <Card.Content textAlign="center">
+                        <Card.Content textAlign="center" style={styles.smallerText}>
                           <Card.Header>ChartMogul</Card.Header>
                         </Card.Content>
                       </Card>
                       <Card className="project-segment" onClick={() => setFormType("mailgunTemplate")}>
                         <Image src={mailgunLogo} />
-                        <Card.Content textAlign="center">
+                        <Card.Content textAlign="center" style={styles.smallerText}>
                           <Card.Header>Mailgun</Card.Header>
                         </Card.Content>
                       </Card>
                       <Card className="project-segment" onClick={() => setFormType("googleAnalyticsTemplate")}>
                         <Image src={connectionImages.googleAnalytics} />
-                        <Card.Content textAlign="center">
+                        <Card.Content textAlign="center" style={styles.smallerText}>
                           <Card.Header>Google Analytics</Card.Header>
                         </Card.Content>
                       </Card>
-                      <Card>
-                        <Image src={moreLogo} />
-                        <Card.Content textAlign="center">
-                          <Card.Header>More coming soon</Card.Header>
+                      <Card className="project-segment" onClick={() => setFormType("plausibleTemplate")}>
+                        <Image src={connectionImages.plausible} />
+                        <Card.Content textAlign="center" style={styles.smallerText}>
+                          <Card.Header>Plausible Analytics</Card.Header>
                         </Card.Content>
                       </Card>
                     </Card.Group>
@@ -265,6 +265,15 @@ function ChartDescription(props) {
                 onBack={() => setFormType("")}
               />
             )}
+            {formType === "plausibleTemplate" && (
+              <PlausibleTemplate
+                teamId={teamId}
+                projectId={projectId}
+                onComplete={_onCompleteTemplate}
+                connections={connections}
+                onBack={() => setFormType("")}
+              />
+            )}
           </Container>
         </Grid.Column>
       </Grid.Row>
@@ -278,6 +287,9 @@ const styles = {
   },
   topBuffer: {
     marginTop: 50,
+  },
+  smallerText: {
+    fontSize: 12,
   },
 };
 

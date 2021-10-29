@@ -20,6 +20,7 @@ import ChartMogulTemplate from "./ChartMogul/ChartMogulTemplate";
 import MailgunTemplate from "./Mailgun/MailgunTemplate";
 import GaTemplate from "./GoogleAnalytics/GaTemplate";
 import CustomTemplates from "./CustomTemplates/CustomTemplates";
+import PlausibleTemplate from "./Plausible/PlausibleTemplate";
 
 import {
   testRequest as testRequestAction,
@@ -292,25 +293,25 @@ function Connections(props) {
                 <Card.Group itemsPerRow={5} stackable>
                   <Card className="project-segment" onClick={() => setFormType("api")}>
                     <Image src={connectionImages.api} />
-                    <Card.Content textAlign="center">
+                    <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>API</Card.Header>
                     </Card.Content>
                   </Card>
                   <Card className="project-segment" onClick={() => setFormType("mongodb")}>
                     <Image src={connectionImages.mongodb} />
-                    <Card.Content textAlign="center">
+                    <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>MongoDB</Card.Header>
                     </Card.Content>
                   </Card>
                   <Card className="project-segment" onClick={() => setFormType("postgres")}>
                     <Image src={connectionImages.postgres} />
-                    <Card.Content textAlign="center">
+                    <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>PostgreSQL</Card.Header>
                     </Card.Content>
                   </Card>
                   <Card className="project-segment" onClick={() => setFormType("mysql")}>
                     <Image src={connectionImages.mysql} />
-                    <Card.Content textAlign="center">
+                    <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>MySQL</Card.Header>
                     </Card.Content>
                   </Card>
@@ -321,7 +322,7 @@ function Connections(props) {
                         as: "a", color: "olive", title: "Freshly released", corner: "left", icon: "wrench"
                       }}
                     />
-                    <Card.Content textAlign="center">
+                    <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>Firestore</Card.Header>
                     </Card.Content>
                   </Card>
@@ -332,7 +333,7 @@ function Connections(props) {
                         as: "a", color: "olive", title: "Freshly released", corner: "left", icon: "wrench"
                       }}
                     />
-                    <Card.Content textAlign="center">
+                    <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>Google Analytics</Card.Header>
                     </Card.Content>
                   </Card>
@@ -342,31 +343,37 @@ function Connections(props) {
                 <Card.Group itemsPerRow={5} stackable>
                   <Card className="project-segment" onClick={() => setFormType("saTemplate")}>
                     <Image src={simpleAnalyticsLogo} />
-                    <Card.Content textAlign="center">
+                    <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>Simple Analytics</Card.Header>
                     </Card.Content>
                   </Card>
                   <Card className="project-segment" onClick={() => setFormType("cmTemplate")}>
                     <Image src={chartmogulLogo} />
-                    <Card.Content textAlign="center">
+                    <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>ChartMogul</Card.Header>
                     </Card.Content>
                   </Card>
                   <Card className="project-segment" onClick={() => setFormType("mailgunTemplate")}>
                     <Image src={mailgunLogo} />
-                    <Card.Content textAlign="center">
+                    <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>Mailgun</Card.Header>
                     </Card.Content>
                   </Card>
                   <Card className="project-segment" onClick={() => setFormType("googleAnalyticsTemplate")}>
                     <Image src={connectionImages.googleAnalytics} />
-                    <Card.Content textAlign="center">
+                    <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>Google Analytics</Card.Header>
+                    </Card.Content>
+                  </Card>
+                  <Card className="project-segment" onClick={() => setFormType("plausibleTemplate")}>
+                    <Image src={connectionImages.plausible} />
+                    <Card.Content textAlign="center" style={styles.smallerText}>
+                      <Card.Header>Plausible Analytics</Card.Header>
                     </Card.Content>
                   </Card>
                   <Card>
                     <Image src={moreLogo} />
-                    <Card.Content textAlign="center">
+                    <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>More coming soon</Card.Header>
                     </Card.Content>
                   </Card>
@@ -506,6 +513,15 @@ function Connections(props) {
               selection={templateConnection}
             />
           )}
+          {formType === "plausibleTemplate" && (
+            <PlausibleTemplate
+              teamId={match.params.teamId}
+              projectId={match.params.projectId}
+              onComplete={_onCompleteTemplate}
+              addError={addError}
+              connections={connections}
+            />
+          )}
         </div>
 
         {connections.length > 0
@@ -614,7 +630,7 @@ const styles = {
   },
   smallerText: {
     fontSize: 12,
-  }
+  },
 };
 
 Connections.propTypes = {

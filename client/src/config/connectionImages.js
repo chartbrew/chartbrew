@@ -5,6 +5,7 @@ import postgresLogo from "../assets/postgres.png";
 import gAnalyticsLogo from "../assets/GoogleAnalytics.webp";
 import mysqlLogo from "../assets/mysql.png";
 import apiLogo from "../assets/api.png";
+import plausibleLogo from "../assets/plausible-logo.png";
 
 export default {
   mongodb: mongoLogo,
@@ -14,4 +15,5 @@ export default {
   api: apiLogo,
   mysql: mysqlLogo,
   googleAnalytics: gAnalyticsLogo,
+  plausible: plausibleLogo,
 };

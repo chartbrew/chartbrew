@@ -10,7 +10,9 @@ const template = (website, apiKey, dashboardOrder) => ({
       "port": null,
       "username": null,
       "password": null,
-      "options": [],
+      "options": [{
+        "User-Agent": `chartbrew-${website}`
+      }],
       "connectionString": null,
       "authentication": {
         "type": "bearer_token",
@@ -25,79 +27,13 @@ const template = (website, apiKey, dashboardOrder) => ({
   ],
   "Charts": [
     {
-      "name": "Visitors chart",
-      "type": "line",
-      "subType": "lcTimeseries",
-      "public": false,
-      "shareable": false,
-      "chartSize": 2,
-      "dashboardOrder": dashboardOrder + 1,
-      "displayLegend": false,
-      "pointRadius": null,
-      "startDate": null,
-      "endDate": null,
-      "includeZeros": true,
-      "currentEndDate": false,
-      "timeInterval": "day",
-      "autoUpdate": null,
-      "draft": false,
-      "mode": "chart",
-      "maxValue": null,
-      "minValue": null,
-      "disabledExport": null,
-      "Datasets": [
-        {
-          "fillColor": "rgba(0,0,0,0)",
-          "patterns": [],
-          "conditions": null,
-          "fieldsSchema": {
-            "root.results[].date": "date",
-            "root.results[].visitors": "number"
-          },
-          "excludedFields": null,
-          "groups": null,
-          "query": null,
-          "xAxis": "root.results[].date",
-          "xAxisOperation": null,
-          "yAxis": "root.results[].visitors",
-          "yAxisOperation": "none",
-          "dateField": "root.results[].date",
-          "datasetColor": "rgba(101, 116, 205, 1)",
-          "fill": false,
-          "multiFill": false,
-          "dateFormat": null,
-          "legend": "Visitors",
-          "pointRadius": null,
-          "formula": null,
-          "groupBy": null,
-          "DataRequest": {
-            "headers": {},
-            "body": "null",
-            "conditions": null,
-            "configuration": null,
-            "method": "GET",
-            "route": `timeseries?site_id=${website}`,
-            "useGlobalHeaders": true,
-            "query": null,
-            "pagination": false,
-            "items": "items",
-            "itemsLimit": 100,
-            "offset": "offset",
-            "paginationField": null,
-            "template": null
-          },
-        }
-      ],
-      "tid": 0
-    },
-    {
       "name": "Visits stats",
       "type": "line",
       "subType": "lcTimeseries",
       "public": false,
       "shareable": false,
       "chartSize": 1,
-      "dashboardOrder": dashboardOrder + 2,
+      "dashboardOrder": dashboardOrder + 1,
       "displayLegend": false,
       "pointRadius": null,
       "startDate": null,
@@ -198,6 +134,72 @@ const template = (website, apiKey, dashboardOrder) => ({
         }
       ],
       "tid": 1
+    },
+    {
+      "name": "Visitors chart",
+      "type": "line",
+      "subType": "lcTimeseries",
+      "public": false,
+      "shareable": false,
+      "chartSize": 2,
+      "dashboardOrder": dashboardOrder + 2,
+      "displayLegend": false,
+      "pointRadius": null,
+      "startDate": null,
+      "endDate": null,
+      "includeZeros": true,
+      "currentEndDate": false,
+      "timeInterval": "day",
+      "autoUpdate": null,
+      "draft": false,
+      "mode": "chart",
+      "maxValue": null,
+      "minValue": null,
+      "disabledExport": null,
+      "Datasets": [
+        {
+          "fillColor": "rgba(0,0,0,0)",
+          "patterns": [],
+          "conditions": null,
+          "fieldsSchema": {
+            "root.results[].date": "date",
+            "root.results[].visitors": "number"
+          },
+          "excludedFields": null,
+          "groups": null,
+          "query": null,
+          "xAxis": "root.results[].date",
+          "xAxisOperation": null,
+          "yAxis": "root.results[].visitors",
+          "yAxisOperation": "none",
+          "dateField": "root.results[].date",
+          "datasetColor": "rgba(101, 116, 205, 1)",
+          "fill": false,
+          "multiFill": false,
+          "dateFormat": null,
+          "legend": "Visitors",
+          "pointRadius": null,
+          "formula": null,
+          "groupBy": null,
+          "DataRequest": {
+            "headers": {},
+            "body": "null",
+            "conditions": null,
+            "configuration": null,
+            "method": "GET",
+            "route": `timeseries?site_id=${website}`,
+            "useGlobalHeaders": true,
+            "query": null,
+            "pagination": false,
+            "items": "items",
+            "itemsLimit": 100,
+            "offset": "offset",
+            "paginationField": null,
+            "template": null
+          },
+        }
+      ],
+      "tid": 0
     },
     {
       "name": "Visit length",
@@ -502,13 +504,84 @@ const template = (website, apiKey, dashboardOrder) => ({
       "tid": 3
     },
     {
+      "name": "Devices",
+      "type": "doughnut",
+      "subType": "timeseries",
+      "public": false,
+      "shareable": false,
+      "chartSize": 1,
+      "dashboardOrder": dashboardOrder + 5,
+      "displayLegend": true,
+      "pointRadius": null,
+      "startDate": null,
+      "endDate": null,
+      "includeZeros": true,
+      "currentEndDate": false,
+      "timeInterval": "day",
+      "autoUpdate": null,
+      "draft": false,
+      "mode": "chart",
+      "maxValue": null,
+      "minValue": null,
+      "disabledExport": null,
+      "Datasets": [
+        {
+          "fillColor": [
+            "rgba(80, 227, 194, 0.88)",
+            "rgba(65, 117, 5, 0.45)",
+            "rgba(244, 228, 27, 0.6)",
+            "rgba(208, 2, 27, 0.4)"
+          ],
+          "patterns": [],
+          "conditions": null,
+          "fieldsSchema": {
+            "root.results[].device": "string",
+            "root.results[].visitors": "number"
+          },
+          "excludedFields": null,
+          "groups": null,
+          "query": null,
+          "xAxis": "root.results[].device",
+          "xAxisOperation": null,
+          "yAxis": "root.results[].visitors",
+          "yAxisOperation": "none",
+          "dateField": null,
+          "datasetColor": "rgba(252, 252, 252, 1)",
+          "fill": false,
+          "multiFill": true,
+          "dateFormat": null,
+          "legend": "Devices",
+          "pointRadius": null,
+          "formula": null,
+          "groupBy": null,
+          "DataRequest": {
+            "headers": {},
+            "body": "null",
+            "conditions": null,
+            "configuration": null,
+            "method": "GET",
+            "route": `breakdown?site_id=${website}&property=visit:device`,
+            "useGlobalHeaders": true,
+            "query": null,
+            "pagination": false,
+            "items": "items",
+            "itemsLimit": 100,
+            "offset": "offset",
+            "paginationField": null,
+            "template": null
+          },
+        }
+      ],
+      "tid": 5
+    },
+    {
       "name": "Top pages",
       "type": "table",
       "subType": "timeseries",
       "public": false,
       "shareable": false,
       "chartSize": 2,
-      "dashboardOrder": dashboardOrder + 5,
+      "dashboardOrder": dashboardOrder + 6,
       "displayLegend": false,
       "pointRadius": null,
       "startDate": null,
@@ -653,78 +726,7 @@ const template = (website, apiKey, dashboardOrder) => ({
       "tid": 4
     },
     {
-      "name": "Devices",
-      "type": "doughnut",
-      "subType": "timeseries",
-      "public": false,
-      "shareable": false,
-      "chartSize": 1,
-      "dashboardOrder": dashboardOrder + 6,
-      "displayLegend": true,
-      "pointRadius": null,
-      "startDate": null,
-      "endDate": null,
-      "includeZeros": true,
-      "currentEndDate": false,
-      "timeInterval": "day",
-      "autoUpdate": null,
-      "draft": false,
-      "mode": "chart",
-      "maxValue": null,
-      "minValue": null,
-      "disabledExport": null,
-      "Datasets": [
-        {
-          "fillColor": [
-            "rgba(80, 227, 194, 0.88)",
-            "rgba(65, 117, 5, 0.45)",
-            "rgba(244, 228, 27, 0.6)",
-            "rgba(208, 2, 27, 0.4)"
-          ],
-          "patterns": [],
-          "conditions": null,
-          "fieldsSchema": {
-            "root.results[].device": "string",
-            "root.results[].visitors": "number"
-          },
-          "excludedFields": null,
-          "groups": null,
-          "query": null,
-          "xAxis": "root.results[].device",
-          "xAxisOperation": null,
-          "yAxis": "root.results[].visitors",
-          "yAxisOperation": "none",
-          "dateField": null,
-          "datasetColor": "rgba(252, 252, 252, 1)",
-          "fill": false,
-          "multiFill": true,
-          "dateFormat": null,
-          "legend": "Devices",
-          "pointRadius": null,
-          "formula": null,
-          "groupBy": null,
-          "DataRequest": {
-            "headers": {},
-            "body": "null",
-            "conditions": null,
-            "configuration": null,
-            "method": "GET",
-            "route": `breakdown?site_id=${website}&property=visit:device`,
-            "useGlobalHeaders": true,
-            "query": null,
-            "pagination": false,
-            "items": "items",
-            "itemsLimit": 100,
-            "offset": "offset",
-            "paginationField": null,
-            "template": null
-          },
-        }
-      ],
-      "tid": 5
-    },
-    {
-      "name": "Countries",
+      "name": "Countries & Browsers",
       "type": "table",
       "subType": "timeseries",
       "public": false,
@@ -843,22 +845,20 @@ module.exports.build = async (projectId, {
   if ((!website || !apiKey) && !connection_id) return Promise.reject("Missing required 'website' or 'apiKey' argument");
 
   let checkErrored = false;
-  if (!connection_id) {
-    const checkWebsiteOpt = {
-      url: `https://plausible.io/api/v1/stats/aggregate?site_id=${website}&period=6mo&metrics=visitors,pageviews,bounce_rate,visit_duration`,
-      method: "GET",
-      headers: {
-        accept: "application/json",
-        authorization: `Bearer ${apiKey}`,
-      },
-      json: true,
-    };
+  const checkWebsiteOpt = {
+    url: `https://plausible.io/api/v1/stats/aggregate?site_id=${website}&period=6mo&metrics=visitors,pageviews,bounce_rate,visit_duration`,
+    method: "GET",
+    headers: {
+      accept: "application/json",
+      authorization: `Bearer ${apiKey}`,
+    },
+    json: true,
+  };
 
-    try {
-      await request(checkWebsiteOpt);
-    } catch (e) {
-      checkErrored = e;
-    }
+  try {
+    await request(checkWebsiteOpt);
+  } catch (e) {
+    checkErrored = e;
   }
 
   if (checkErrored) {

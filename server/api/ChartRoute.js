@@ -314,10 +314,10 @@ module.exports = (app) => {
       })
       .catch((error) => {
         console.error((error && error.message) || error); // eslint-disable-line
-        if (error === "401" || error.message === "401") {
+        if (`${error}` === "401" || error.message === "401") {
           return res.status(401).send({ error: "Not authorized" });
         }
-        if (error === "413" && error.message === "413") {
+        if (`${error}` === "413" && error.message === "413") {
           return res.status(413).send(error);
         }
         return res.status(400).send((error && error.message) || error);
