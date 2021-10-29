@@ -272,6 +272,7 @@ module.exports = function (webpackEnv) {
             },
           },
           sourceMap: shouldUseSourceMap,
+          parallel: 2,
         }),
         // This is only used in production mode
         new OptimizeCSSAssetsPlugin({
