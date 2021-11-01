@@ -3,7 +3,9 @@ const { QueryTypes } = require("sequelize");
 const db = require("../models");
 
 module.exports.up = () => {
-  return db.Team.findAll({ include: db.Project })
+  return db.Team.findAll({
+    include: [{ model: db.Project, attributes: ["id"] }], attributes: ["id"]
+  })
     .then((teams) => {
       if (!teams || teams.length === 0) return Promise.resolve("done");
       const projectsObj = {};
