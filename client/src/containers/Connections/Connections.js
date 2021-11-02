@@ -83,6 +83,9 @@ function Connections(props) {
           setEditConnection(foundConnection);
           setFormType(foundConnection.type);
         }
+      } else if (params.has("connection")) {
+        setFormType(params.get("connection"));
+        _onOpenConnectionForm();
       }
     }
   }, [connections]);
