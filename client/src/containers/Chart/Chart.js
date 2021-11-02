@@ -337,7 +337,7 @@ function Chart(props) {
                 />
               )}
               on="click"
-              position="top right"
+              position="bottom right"
               flowing
               size="tiny"
             >
