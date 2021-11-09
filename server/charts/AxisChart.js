@@ -210,6 +210,7 @@ class AxisChart {
               ) {
                 orderHelper.push(yDataTemp[y]);
                 yDataTemp.splice(y, 1);
+                break;
               }
             }
           });
@@ -602,7 +603,7 @@ class AxisChart {
 
     const finalData = {};
     Object.keys(yData).forEach((key) => {
-      let finalItem = yData[key][0];
+      let finalItem = yData[key][yData[key].length - 1];
       if (op === "sum" && yType === "number") finalItem = _.reduce(yData[key], (sum, n) => sum + n);
       if (op === "avg" && yType === "number") {
         finalItem = _.reduce(yData[key], (avg, n) => avg + n);
