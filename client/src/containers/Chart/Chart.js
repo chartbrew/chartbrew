@@ -164,6 +164,23 @@ function Chart(props) {
       });
   };
 
+  const _onChangeReport = () => {
+    setChartLoading(true);
+
+    updateChart(
+      match.params.projectId,
+      chart.id,
+      { onReport: !chart.onReport },
+    )
+      .then(() => {
+        setChartLoading(false);
+      })
+      .catch(() => {
+        setChartLoading(false);
+        setError(true);
+      });
+  };
+
   const _onEmbed = () => {
     setEmbedModal(true);
   };
@@ -379,8 +396,22 @@ function Chart(props) {
                         />
                       </>
                     )}
+                    <Dropdown.Item
+                      icon="file excel"
+                      text="Export to Excel"
+                      onClick={_onExport}
+                    />
+                    <Dropdown.Divider />
                     {!chart.draft && (
                       <>
+                        {_canAccess("editor") && (
+                          <Dropdown.Item
+                            onClick={_onChangeReport}
+                          >
+                            <Icon name="desktop" />
+                            {chart.onReport ? "Remove from report" : "Add to report"}
+                          </Dropdown.Item>
+                        )}
                         {_canAccess("editor") && (
                           <Dropdown.Item
                             onClick={_onPublicConfirmation}
@@ -396,11 +427,6 @@ function Chart(props) {
                         />
                       </>
                     )}
-                    <Dropdown.Item
-                      icon="file excel"
-                      text="Export to Excel"
-                      onClick={_onExport}
-                    />
                     {_canAccess("editor") && (
                       <>
                         <Dropdown.Divider />
@@ -492,14 +518,6 @@ function Chart(props) {
                 <Label color="olive" style={styles.draft}>Draft</Label>
               )}
               <span>
-                {chart.public && !isPublic && !print
-                    && (
-                      <Popup
-                        trigger={<Icon name="world" />}
-                        content="This chart is public"
-                        position="bottom center"
-                      />
-                    )}
                 {_canAccess("editor") && (
                   <Link to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}>
                     <span style={{ color: blackTransparent(0.9) }}>{chart.name}</span>
@@ -526,6 +544,26 @@ function Chart(props) {
                         <span>{" Updating..."}</span>
                       </>
                     )}
+                    {" "}
+                    <span>
+                      {chart.public && !isPublic && !print
+                        && (
+                          <Popup
+                            trigger={<Icon name="world" />}
+                            content="This chart is public"
+                            position="bottom center"
+                            inverted
+                          />
+                        )}
+                      {chart.onReport && !isPublic && !print && (
+                        <Popup
+                          trigger={<Icon name="desktop" />}
+                          content="This chart is on the report"
+                          position="bottom center"
+                          inverted
+                        />
+                      )}
+                    </span>
                   </small>
                   {chart.Datasets && (
                     <Label.Group style={{ display: "inline", marginLeft: 10 }} size="small">

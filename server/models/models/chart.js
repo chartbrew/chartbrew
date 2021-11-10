@@ -114,6 +114,10 @@ module.exports = (sequelize, DataTypes) => {
     disabledExport: {
       type: DataTypes.BOOLEAN,
     },
+    onReport: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   }, {
     freezeTableName: true,
   });
