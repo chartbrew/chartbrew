@@ -92,23 +92,23 @@ function ProjectNavigation(props) {
               <Icon name="power cord" size="large" />
             </Menu.Item>
           )}
-        {canAccess("editor")
-         && (
-         <Menu.Item
-           active={_checkIfActive("members")}
-           as={Link}
-           to={`/${teamId}/${projectId}/members`}
-            >
-           <Icon name="user" size="large" />
-         </Menu.Item>
-         )}
         <Menu.Item
           active={_checkIfActive("public")}
           as={Link}
           to={`/b/${project.brewName}`}
         >
-          <Icon name="world" size="large" />
+          <Icon name="desktop" size="large" />
         </Menu.Item>
+        {canAccess("editor")
+          && (
+            <Menu.Item
+              active={_checkIfActive("members")}
+              as={Link}
+              to={`/${teamId}/${projectId}/members`}
+            >
+              <Icon name="users" size="large" />
+            </Menu.Item>
+          )}
         {canAccess("admin")
           && (
             <Menu.Item
@@ -272,6 +272,24 @@ function ProjectNavigation(props) {
                 </Menu.Item>
               )}
 
+            <Menu.Item
+              active={_checkIfActive("public")}
+              as={Link}
+              to={`/b/${project.brewName}`}
+            >
+              {menuSize === "small"
+                && (
+                  <Popup
+                    trigger={<Icon name="desktop" size="large" />}
+                    content="Dashboard report"
+                    position="right center"
+                    inverted
+                  />
+                )}
+              {menuSize === "large" && <Icon name="desktop" />}
+              {menuSize === "large" && "Dashboard report"}
+            </Menu.Item>
+
             {canAccess("admin")
               && (
                 <Menu.Item
@@ -295,28 +313,6 @@ function ProjectNavigation(props) {
           </Menu.Menu>
         </Menu.Item>
 
-        <Menu.Item>
-          <Menu.Menu>
-            <Menu.Item
-              active={_checkIfActive("public")}
-              as={Link}
-              to={`/b/${project.brewName}`}
-            >
-              {menuSize === "small"
-                && (
-                  <Popup
-                    trigger={<Icon name="world" size="large" />}
-                    content="Public dashboard"
-                    position="right center"
-                    inverted
-                  />
-                )}
-              {menuSize === "large" && <Icon name="world" />}
-              {menuSize === "large" && "Public dashboard"}
-            </Menu.Item>
-          </Menu.Menu>
-        </Menu.Item>
-
         {canAccess("editor") && (
           <Menu.Item>
             {menuSize === "large" && <Menu.Header>Team</Menu.Header>}
@@ -331,7 +327,7 @@ function ProjectNavigation(props) {
                       inverted
                     />
                   )}
-                {menuSize === "large" && <Icon name="user" />}
+                {menuSize === "large" && <Icon name="users" />}
                 {menuSize === "large" && "Members"}
               </Menu.Item>
 
