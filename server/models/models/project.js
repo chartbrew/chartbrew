@@ -47,6 +47,17 @@ module.exports = (sequelize, DataTypes) => {
     logoLink: {
       type: DataTypes.STRING(1234),
     },
+    public: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    passwordProtected: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    password: {
+      type: DataTypes.STRING,
+    },
   }, {
     freezeTableName: true,
   });

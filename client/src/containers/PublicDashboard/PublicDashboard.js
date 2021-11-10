@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import {
-  Button, Checkbox, Container, Dimmer, Divider, Form, Grid, Header, Icon, Input,
+  Button, Container, Dimmer, Divider, Form, Grid, Header, Icon, Input,
   Label, Loader, Menu, Message, Modal, Popup, TransitionablePortal,
 } from "semantic-ui-react";
 import { connect } from "react-redux";
@@ -32,6 +32,7 @@ import Chart from "../Chart/Chart";
 import logo from "../../assets/logo_inverted.png";
 import { API_HOST, SITE_HOST } from "../../config/settings";
 import canAccess from "../../config/canAccess";
+import SharingSettings from "./components/SharingSettings";
 
 const breakpoints = {
   mobile: 0,
@@ -64,7 +65,6 @@ function PublicDashboard(props) {
   });
   const [logoPreview, setLogoPreview] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [newBrewName, setNewBrewName] = useState("");
   const [error, setError] = useState("");
   const [helpActive, setHelpActive] = useState(false);
   const [noCharts, setNoCharts] = useState(false);
@@ -105,8 +105,6 @@ function PublicDashboard(props) {
         headerCode: project.headerCode || "",
         logoLink: project.logoLink,
       });
-
-      setNewBrewName(project.brewName);
     }
   }, [project]);
 
@@ -151,11 +149,7 @@ function PublicDashboard(props) {
     return charts.filter((c) => c.public).length > 0;
   };
 
-  const _onChangeBrewName = (e, data) => {
-    setNewBrewName(data.value);
-  };
-
-  const _onSaveBrewName = () => {
+  const _onSaveBrewName = (newBrewName) => {
     if (!newBrewName) return;
 
     if (newBrewName.indexOf("/") > -1) {
@@ -191,17 +185,45 @@ function PublicDashboard(props) {
         setSaveLoading(false);
         _fetchProject();
         setIsSaved(true);
-        toast.success("The dashboard has been updated!");
+        toast.success("The report has been updated!");
       })
       .catch(() => {
         toast.error("Oh no! We couldn't update the dashboard. Please try again");
       });
   };
 
+  const _onTogglePublic = () => {
+    updateProject(project.id, { public: !project.public })
+      .then(() => {
+        _fetchProject();
+        toast.success("The report has been updated!");
+      })
+      .catch(() => { });
+  };
+
+  const _onTogglePassword = () => {
+    updateProject(project.id, { passwordProtected: !project.passwordProtected })
+      .then(() => {
+        _fetchProject();
+        toast.success("The report has been updated!");
+      })
+      .catch(() => { });
+  };
+
+  const _onSavePassword = (value) => {
+    updateProject(project.id, { password: value })
+      .then(() => {
+        _fetchProject();
+        toast.success("The report has been updated!");
+      })
+      .catch(() => { });
+  };
+
   const _onToggleBranding = () => {
     updateTeam(project.team_id, { showBranding: !project.Team.showBranding })
       .then(() => {
         _fetchProject();
+        toast.success("The branding settings are saved!");
       })
       .catch(() => {});
   };
@@ -363,10 +385,10 @@ function PublicDashboard(props) {
               <Popup
                 trigger={(
                   <Menu.Item icon onClick={() => setShowSettings(true)}>
-                    <Icon name="cogs" />
+                    <Icon name="share square" />
                   </Menu.Item>
                 )}
-                content="Dashboard settings"
+                content="Sharing settings"
               />
             )}
           </Menu.Menu>
@@ -637,51 +659,18 @@ function PublicDashboard(props) {
         </Modal>
       </TransitionablePortal>
 
-      <TransitionablePortal open={showSettings}>
-        <Modal open={showSettings} onClose={() => setShowSettings(false)}>
-          <Modal.Header>Dashboard settings</Modal.Header>
-          <Modal.Content>
-            <Form>
-              <Form.Field>
-                <label>Your dashboard URL</label>
-                <Input
-                  placeholder="Enter your custom dashboard URL"
-                  label={`${SITE_HOST}/b/`}
-                  value={newBrewName}
-                  onChange={_onChangeBrewName}
-                />
-                {error && (<Label pointing color="red">{error}</Label>)}
-              </Form.Field>
-              <Form.Field>
-                <Button
-                  positive
-                  icon="checkmark"
-                  content="Save and reload"
-                  onClick={_onSaveBrewName}
-                  disabled={!newBrewName}
-                  loading={saveLoading}
-                />
-              </Form.Field>
-              <Form.Field>
-                <Divider section />
-                <Checkbox
-                  label={project.Team && project.Team.showBranding ? "Chartbrew branding is visible" : "Chartbrew branding is disabled"}
-                  toggle
-                  checked={project.Team && project.Team.showBranding}
-                  onChange={_onToggleBranding}
-                />
-              </Form.Field>
-            </Form>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              primary
-              content="Close"
-              onClick={() => setShowSettings(false)}
-            />
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
+      <SharingSettings
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+        project={project}
+        error={error}
+        onSaveBrewName={_onSaveBrewName}
+        brewLoading={saveLoading}
+        onToggleBranding={_onToggleBranding}
+        onTogglePublic={_onTogglePublic}
+        onTogglePassword={_onTogglePassword}
+        onSavePassword={_onSavePassword}
+      />
 
       <ToastContainer
         position="bottom-center"

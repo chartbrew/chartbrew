@@ -1,4 +1,5 @@
 const { Op } = require("sequelize");
+const { nanoid } = require("nanoid");
 
 const db = require("../models/models");
 const TeamController = require("./TeamController");
@@ -98,7 +99,14 @@ class ProjectController {
   }
 
   update(id, data) {
-    return db.Project.update(data, { where: { id } })
+    const newFields = data;
+    return this.findById(id)
+      .then((project) => {
+        if (data.passwordProtected && !project.password) {
+          newFields.password = nanoid(8);
+        }
+        return db.Project.update(newFields, { where: { id } });
+      })
       .then(() => {
         return this.findById(id);
       })
