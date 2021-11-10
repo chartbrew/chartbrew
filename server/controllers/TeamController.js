@@ -209,7 +209,11 @@ class TeamController {
       where: { id },
       include: [
         { model: db.TeamRole },
-        { model: db.Project, include: [{ model: db.Chart, attributes: ["id"] }] }
+        {
+          model: db.Project,
+          attributes: { exclude: ["password"] },
+          include: [{ model: db.Chart, attributes: ["id"] }],
+        }
       ],
     })
       .then((team) => {
@@ -245,6 +249,7 @@ class TeamController {
             { model: db.TeamRole },
             {
               model: db.Project,
+              attributes: { exclude: ["password"] },
               include: [
                 { model: db.Chart, attributes: ["id"] },
                 { model: db.Connection, attributes: ["id"] },

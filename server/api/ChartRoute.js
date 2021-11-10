@@ -345,6 +345,7 @@ module.exports = (app) => {
         const team = await teamController.findById(project.team_id);
 
         chart.setDataValue("showBranding", team.showBranding);
+        chart.setDataValue("Chartshares", null);
         return res.status(200).send(chart);
       })
       .catch((error) => {
