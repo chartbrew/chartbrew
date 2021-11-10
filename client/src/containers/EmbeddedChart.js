@@ -98,6 +98,17 @@ function EmbeddedChart(props) {
       });
   };
 
+  const _checkIfFilters = () => {
+    let filterCount = 0;
+    chart.Datasets.forEach((d) => {
+      if (d.conditions) {
+        filterCount += d.conditions.filter((c) => c.exposed).length;
+      }
+    });
+
+    return filterCount > 0;
+  };
+
   if (loading || !chart) {
     return (
       <Container textAlign="center" text style={styles.loaderContainer}>
@@ -127,27 +138,29 @@ function EmbeddedChart(props) {
           {chart.chartData && (
             <div>
               <p>
-                <Popup
-                  trigger={(
-                    <Button
-                      icon="filter"
-                      direction="left"
-                      basic
-                      className="circular icon"
-                      style={styles.filterBtn}
+                {_checkIfFilters() && (
+                  <Popup
+                    trigger={(
+                      <Button
+                        icon="filter"
+                        direction="left"
+                        basic
+                        className="circular icon"
+                        style={styles.filterBtn}
+                      />
+                    )}
+                    on="click"
+                    flowing
+                    size="tiny"
+                  >
+                    <ChartFilters
+                      chart={chart}
+                      onAddFilter={_onAddFilter}
+                      onClearFilter={_onClearFilter}
+                      conditions={conditions}
                     />
-                  )}
-                  on="click"
-                  flowing
-                  size="tiny"
-                >
-                  <ChartFilters
-                    chart={chart}
-                    onAddFilter={_onAddFilter}
-                    onClearFilter={_onClearFilter}
-                    conditions={conditions}
-                  />
-                </Popup>
+                  </Popup>
+                )}
                 {chart.Datasets && (
                   <Label.Group style={{ display: "inline", marginLeft: 10 }} size="small">
                     {conditions.map((c) => {

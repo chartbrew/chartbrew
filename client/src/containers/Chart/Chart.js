@@ -244,6 +244,17 @@ function Chart(props) {
     return found;
   };
 
+  const _checkIfFilters = () => {
+    let filterCount = 0;
+    chart.Datasets.forEach((d) => {
+      if (d.conditions) {
+        filterCount += d.conditions.filter((c) => c.exposed).length;
+      }
+    });
+
+    return filterCount > 0;
+  };
+
   const _canAccess = (role) => {
     return canAccess(role, user.id, team.TeamRoles);
   };
@@ -343,28 +354,30 @@ function Chart(props) {
           className="chart-card"
         >
           <div style={styles.titleArea(_isKpi(chart))}>
-            <Popup
-              trigger={(
-                <Button
-                  icon="filter"
-                  direction="left"
-                  basic
-                  className="circular icon"
-                  style={styles.filterBtn(projectId && !print)}
+            {_checkIfFilters() && (
+              <Popup
+                trigger={(
+                  <Button
+                    icon="filter"
+                    direction="left"
+                    basic
+                    className="circular icon"
+                    style={styles.filterBtn(projectId && !print)}
+                  />
+                )}
+                on="click"
+                position="bottom right"
+                flowing
+                size="tiny"
+              >
+                <ChartFilters
+                  chart={chart}
+                  onAddFilter={_onAddFilter}
+                  onClearFilter={_onClearFilter}
+                  conditions={conditions}
                 />
-              )}
-              on="click"
-              position="bottom right"
-              flowing
-              size="tiny"
-            >
-              <ChartFilters
-                chart={chart}
-                onAddFilter={_onAddFilter}
-                onClearFilter={_onClearFilter}
-                conditions={conditions}
-              />
-            </Popup>
+              </Popup>
+            )}
             {projectId && !print
               && (
                 <Dropdown
