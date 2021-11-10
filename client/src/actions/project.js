@@ -226,15 +226,17 @@ export function removeProject(projectId) {
   };
 }
 
-export function getPublicDashboard(brewName) {
+export function getPublicDashboard(brewName, password) {
   return (dispatch) => {
     const token = cookie.load("brewToken");
-    const url = `${API_HOST}/project/dashboard/${brewName}`;
+    let url = `${API_HOST}/project/dashboard/${brewName}`;
     const headers = new Headers({
       "Accept": "application/json",
       "authorization": `Bearer ${token}`,
     });
     const method = "GET";
+
+    if (password) url += `?pass=${password}`;
 
     return fetch(url, { method, headers })
       .then((response) => {

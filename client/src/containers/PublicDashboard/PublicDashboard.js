@@ -5,7 +5,7 @@ import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import {
   Button, Container, Dimmer, Divider, Form, Grid, Header, Icon, Input,
-  Label, Loader, Menu, Message, Modal, Popup, TransitionablePortal,
+  Label, Loader, Menu, Message, Modal, Popup, Segment, TransitionablePortal,
 } from "semantic-ui-react";
 import { connect } from "react-redux";
 import { TwitterPicker } from "react-color";
@@ -69,6 +69,9 @@ function PublicDashboard(props) {
   const [helpActive, setHelpActive] = useState(false);
   const [noCharts, setNoCharts] = useState(false);
   const [preview, setPreview] = useState(false);
+  const [passwordRequired, setPasswordRequired] = useState(false);
+  const [notAuthorized, setNotAuthorized] = useState(false);
+  const [reportPassword, setReportPassword] = useState("");
 
   const onDrop = useCallback((acceptedFiles) => {
     setNewChanges({ ...newChanges, logo: acceptedFiles });
@@ -91,7 +94,7 @@ function PublicDashboard(props) {
 
   useEffect(() => {
     setLoading(true);
-    _fetchProject();
+    _fetchProject(window.localStorage.getItem("reportPassword"));
   }, []);
 
   useEffect(() => {
@@ -122,25 +125,42 @@ function PublicDashboard(props) {
     }
   }, [newChanges]);
 
-  const _fetchProject = () => {
+  const _fetchProject = (password) => {
+    if (password) window.localStorage.setItem("reportPassword", password);
+
     setLoading(true);
-    getPublicDashboard(match.params.brewName)
+    getPublicDashboard(match.params.brewName, password)
       .then((data) => {
         setProject(data);
         setLoading(false);
+        setNotAuthorized(false);
+        setPasswordRequired(false);
 
         // now get the project (mainly to check if the user can edit)
         getProject(data.id)
-          .then(() => {
+          .then((authenticatedProject) => {
+            if (authenticatedProject.password) {
+              setProject({ ...data, password: authenticatedProject.password });
+            }
             setEditorVisible(true);
           })
           .catch(() => {});
       })
       .catch((err) => {
+        setLoading(false);
+        if (err === 403) {
+          if (passwordRequired) {
+            toast.error("The password you entered is incorrect.");
+          }
+          setPasswordRequired(true);
+        }
+        if (err === 401) {
+          setNotAuthorized(true);
+          window.location.pathname = "/login";
+        }
         if (err === 404) {
           setNoCharts(true);
-        } else {
-          toast.error("Could not get the the dashboard data. Please try refreshing the page.");
+          toast.error("No charts found for this report.");
         }
       });
   };
@@ -241,6 +261,73 @@ function PublicDashboard(props) {
           Preparing the dashboard...
         </Loader>
       </Dimmer>
+    );
+  }
+
+  if (notAuthorized || passwordRequired) {
+    return (
+      <div>
+        <Helmet>
+          {(newChanges.headerCode || project.headerCode) && (
+            <style type="text/css">{newChanges.headerCode || project.headerCode}</style>
+          )}
+          <style type="text/css">
+            {`
+            body {
+              background-color: ${blue};
+            }
+          `}
+          </style>
+        </Helmet>
+
+        <Grid
+          centered
+          verticalAlign="middle"
+          textAlign="center"
+        >
+          <Grid.Column stretched style={{ maxWidth: 500 }}>
+            <Container textAlign="center" style={{ marginTop: 100 }}>
+              {passwordRequired && (
+                <Segment textAlign="left">
+                  <Header as="h4">
+                    Please enter the password to access this report
+                  </Header>
+                  <Form size="large">
+                    <Form.Field>
+                      <Input
+                        placeholder="Enter the password here"
+                        value={reportPassword}
+                        onChange={(e, data) => setReportPassword(data.value)}
+                      />
+                    </Form.Field>
+                    <Form.Field>
+                      <Button
+                        primary
+                        content="Access"
+                        loading={loading}
+                        onClick={() => _fetchProject(reportPassword)}
+                      />
+                    </Form.Field>
+                  </Form>
+                </Segment>
+              )}
+            </Container>
+          </Grid.Column>
+        </Grid>
+
+        <ToastContainer
+          position="bottom-center"
+          autoClose={1500}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnVisibilityChange
+          draggable
+          pauseOnHover
+          transition={Flip}
+        />
+      </div>
     );
   }
 
@@ -739,7 +826,9 @@ const mapStateToProps = (state) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  getPublicDashboard: (brewName) => dispatch(getPublicDashboardAction(brewName)),
+  getPublicDashboard: (brewName, password) => (
+    dispatch(getPublicDashboardAction(brewName, password))
+  ),
   getProject: (projectId) => dispatch(getProjectAction(projectId)),
   updateProject: (projectId, data) => dispatch(updateProjectAction(projectId, data)),
   updateProjectLogo: (projectId, logo) => dispatch(updateProjectLogoAction(projectId, logo)),

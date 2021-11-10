@@ -1,12 +1,14 @@
 const path = require("path");
 const fs = require("fs");
 const { nanoid } = require("nanoid");
+const _ = require("lodash");
 
 const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
 const refreshChartsApi = require("../modules/refreshChartsApi");
+const getUserFromToken = require("../modules/getUserFromToken");
 
 module.exports = (app) => {
   const projectController = new ProjectController();
@@ -233,10 +235,37 @@ module.exports = (app) => {
   /*
   ** Route to get a project with a public dashboard
   */
-  app.get("/project/dashboard/:brewName", (req, res) => {
+  app.get("/project/dashboard/:brewName", getUserFromToken, (req, res) => {
+    let processedProject;
     return projectController.getPublicDashboard(req.params.brewName)
-      .then((dashboard) => {
-        return res.status(200).send(dashboard);
+      .then(async (project) => {
+        processedProject = _.cloneDeep(project);
+        processedProject.setDataValue("password", "");
+
+        if (req.user) {
+          // now determine whether to show the dashboard or not
+          const teamRole = await teamController.getTeamRole(project.team_id, req.user.id);
+
+          if ((teamRole && teamRole.role)) {
+            return res.status(200).send(project);
+          }
+        }
+
+        if (project.public && !project.passwordProtected) {
+          return res.status(200).send(processedProject);
+        }
+
+        if (project.public && project.passwordProtected && req.query.pass === project.password) {
+          return res.status(200).send(processedProject);
+        }
+
+        if (project.public && project.passwordProtected && req.query.pass !== project.password) {
+          return res.status(403).send("Enter the correct password");
+        }
+
+        if (!project.isPublic) return res.status(401).send("Not authorized to access this page");
+
+        return res.status(400).send("Cannot get the data");
       })
       .catch((error) => {
         if (error && error.message === "404") {

@@ -11,7 +11,7 @@ class ProjectController {
   }
 
   findAll() {
-    return db.Project.findAll({ attributes: { exclude: ["password"] } })
+    return db.Project.findAll()
       .then((projects) => {
         return Promise.resolve(projects);
       })
@@ -23,7 +23,6 @@ class ProjectController {
   findById(id) {
     return db.Project.findOne({
       where: { id },
-      attributes: { exclude: ["password"] },
       include: [
         { model: db.Connection, attributes: ["id", "project_id", "name", "type"] },
         { model: db.Chart, include: [{ model: db.Dataset }] }
@@ -61,7 +60,6 @@ class ProjectController {
           where: {
             id: { [Op.in]: idArray },
           },
-          attributes: { exclude: ["password"] },
           include: [{ model: db.ProjectRole }, { model: db.Chart, attributes: ["id"] }],
         });
       })
@@ -171,7 +169,6 @@ class ProjectController {
   getTeamProjects(teamId) {
     return db.Project.findAll({
       where: { team_id: teamId },
-      attributes: { exclude: ["password"] },
     })
       .then((projects) => {
         return projects;
@@ -184,7 +181,6 @@ class ProjectController {
   getPublicDashboard(brewName) {
     return db.Project.findOne({
       where: { brewName },
-      attributes: { exclude: ["password"] },
       include: [
         {
           model: db.Chart,

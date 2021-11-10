@@ -106,7 +106,7 @@ function SharingSettings(props) {
                   />
                 )}
                 inverted
-                content="Viewers outsite your team will have to enter a password before they can view the report"
+                content="Public reports will require the viewers outside of your team to enter a password before viewing"
               />
             </Form.Field>
             <Form.Field>

@@ -211,7 +211,6 @@ class TeamController {
         { model: db.TeamRole },
         {
           model: db.Project,
-          attributes: { exclude: ["password"] },
           include: [{ model: db.Chart, attributes: ["id"] }],
         }
       ],
@@ -249,7 +248,6 @@ class TeamController {
             { model: db.TeamRole },
             {
               model: db.Project,
-              attributes: { exclude: ["password"] },
               include: [
                 { model: db.Chart, attributes: ["id"] },
                 { model: db.Connection, attributes: ["id"] },
