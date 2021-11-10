@@ -337,9 +337,9 @@ function PublicDashboard(props) {
         <Container text textAlign="center">
           <Divider section hidden />
           <Header>
-            {"This dashbord does not contain any public charts"}
+            {"This report does not contain any charts"}
             <Header.Subheader>
-              {"Mark charts as public and they will appear here. You can further customize this page once you have at least one public chart."}
+              {"Head back to your dashboard and add charts to the report from the individual chart settings menu."}
             </Header.Subheader>
           </Header>
           <Divider section hidden />
