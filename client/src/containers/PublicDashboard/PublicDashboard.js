@@ -165,8 +165,8 @@ function PublicDashboard(props) {
       });
   };
 
-  const _isPublic = () => {
-    return charts.filter((c) => c.public).length > 0;
+  const _isOnReport = () => {
+    return charts.filter((c) => c.onReport).length > 0;
   };
 
   const _onSaveBrewName = (newBrewName) => {
@@ -499,7 +499,7 @@ function PublicDashboard(props) {
         />
       )}
 
-      {charts && charts.length > 0 && _isPublic()
+      {charts && charts.length > 0 && _isOnReport()
         && (
           <div className="main-container" style={{ padding: 20, position: "relative" }}>
             <Dimmer active={loading}>
@@ -613,7 +613,7 @@ function PublicDashboard(props) {
             <Grid stackable centered style={styles.mainGrid} className="main-chart-grid">
               {charts.map((chart) => {
                 if (chart.draft) return (<span style={{ display: "none" }} key={chart.id} />);
-                if (!chart.public) return (<span style={{ display: "none" }} key={chart.id} />);
+                if (!chart.onReport) return (<span style={{ display: "none" }} key={chart.id} />);
 
                 return (
                   <Grid.Column
