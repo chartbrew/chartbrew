@@ -101,11 +101,21 @@ npm run start-dev
 
 ### Quickstart
 
-Run the following commands and configure the variables:
+A [Chartbrew docker image](https://hub.docker.com/r/razvanilin/chartbrew) is built whenever a new version is released. Run the commands below to get started.
+
+For `amd64` architecture:
 
 ```sh
 docker pull razvanilin/chartbrew
 ```
+
+For `arm64` architecture:
+
+```sh
+docker pull razvanilin/chartbrew:latest-arm64
+```
+
+Then:
 
 ```sh
 docker run -p 3210:3210 -p 3000:3000 \
