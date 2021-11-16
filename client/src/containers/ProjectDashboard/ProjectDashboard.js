@@ -39,6 +39,15 @@ const AppMedia = createMedia({
 });
 const { Media } = AppMedia;
 
+const getFiltersFromStorage = () => {
+  try {
+    const filters = JSON.parse(window.localStorage.getItem("_cb_filters"));
+    return filters || null;
+  } catch (e) {
+    return null;
+  }
+};
+
 /*
   Dashboard container (for the charts)
 */
@@ -48,13 +57,11 @@ function ProjectDashboard(props) {
     getProjectCharts, runQuery, changeOrder, user, team, onPrint, mobile, updateChart,
   } = props;
 
-  const initialFilters = window.localStorage.getItem("_cb_filters");
-  const [filters, setFilters] = useLocalStorage("_cb_filters", initialFilters);
+  const [filters, setFilters] = useState(getFiltersFromStorage());
   const [autoRefresh, setAutoRefresh] = useLocalStorage("_cb_auto_refresh", []);
   const [autoRefreshed, setAutoRefreshed] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
-  const [alreadyFiltered, setAlreadyFiltered] = useState(true);
   const [refreshLoading, setRefreshLoading] = useState(false);
   const [viewExport, setViewExport] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
@@ -71,20 +78,15 @@ function ProjectDashboard(props) {
   }, []);
 
   useEffect(() => {
-    if (!alreadyFiltered && charts && charts.length > 0) {
-      setAlreadyFiltered(true);
-      _runFiltering();
-    }
-  }, [charts]);
-
-  useEffect(() => {
     if (!autoRefreshed && _.indexOf(autoRefresh, match.params.projectId) > -1) {
       _onRefreshData();
     }
   }, [autoRefreshed]);
 
   useEffect(() => {
-    setAlreadyFiltered(false);
+    if (!filterLoading) {
+      _runFiltering();
+    }
   }, [filters]);
 
   const _onAddFilter = (filter) => {
@@ -94,17 +96,18 @@ function ProjectDashboard(props) {
     if (!newFilters[projectId]) newFilters[projectId] = [];
     newFilters[projectId].push(filter);
     setFilters(newFilters);
+    window.localStorage.setItem("_cb_filters", JSON.stringify(newFilters));
     setShowFilters(false);
-    _runFiltering();
   };
 
   const _onRemoveFilter = (filterId) => {
     const { projectId } = match.params;
-    _runFiltering();
     if (filters && filters[projectId].length === 1) {
       const newFilters = _.cloneDeep(filters);
       delete newFilters[projectId];
       setFilters(newFilters);
+      window.localStorage.removeItem("_cb_filters");
+      _runFiltering({});
       return;
     }
 
@@ -115,20 +118,20 @@ function ProjectDashboard(props) {
     newFilters[projectId].splice(index, 1);
 
     setFilters(newFilters);
+    window.localStorage.setItem("_cb_filters", JSON.stringify(newFilters));
   };
 
-  const _runFiltering = () => {
-    if (!filters || !filters[match.params.projectId]) return;
+  const _runFiltering = (currentFilters = filters) => {
     setFilterLoading(true);
     setTimeout(() => {
-      _onFilterCharts();
+      _onFilterCharts(currentFilters);
     }, 500);
   };
 
-  const _onFilterCharts = () => {
+  const _onFilterCharts = (currentFilters = filters) => {
     const { projectId } = match.params;
 
-    if (!filters || !filters[projectId]) {
+    if (!currentFilters || !currentFilters[projectId]) {
       getProjectCharts(projectId);
       setFilterLoading(false);
       return Promise.resolve("done");
@@ -136,12 +139,12 @@ function ProjectDashboard(props) {
 
     const refreshPromises = [];
     for (let i = 0; i < charts.length; i++) {
-      if (filters && filters[projectId]) {
+      if (currentFilters && currentFilters[projectId]) {
         setFilterLoading(true);
         // first, discard the charts on which the filters don't apply
         if (_chartHasFilter(charts[i])) {
           refreshPromises.push(
-            runQueryWithFilters(projectId, charts[i].id, filters[projectId])
+            runQueryWithFilters(projectId, charts[i].id, currentFilters[projectId])
           );
         }
       }
