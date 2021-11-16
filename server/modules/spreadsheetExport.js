@@ -71,7 +71,11 @@ module.exports = (sheetsData) => {
 
       // remove any headers based on the exclusions
       const formattedExclusions = dataset.excludedFields ? dataset.excludedFields.map((field) => {
-        return field.replaceAll("?", ".");
+        if (field && typeof field.replaceAll === "function") {
+          return field.replaceAll("?", ".");
+        }
+
+        return field;
       }) : [];
       const tempHeaders = [];
       formattedSet[setHeadersIndex].forEach((header) => {
