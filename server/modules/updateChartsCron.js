@@ -22,7 +22,7 @@ function updateCharts() {
 
       for (const chart of charts) {
         if (moment(chart.lastAutoUpdate).add(chart.autoUpdate, "seconds").isBefore(moment())) {
-          promises.push(chartController.updateChartData(chart.id));
+          promises.push(chartController.updateChartData(chart.id, {}));
           promises.push(chartController.update(chart.id, { lastAutoUpdate: moment() }));
         }
       }
