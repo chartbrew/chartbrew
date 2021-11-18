@@ -73,8 +73,8 @@ class ChartCacheController {
   remove(userId, chartId) {
     return this.findLast(userId, chartId)
       .then((cache) => {
-        if (cache.file) {
-          fs.unlink(cache.file, () => {});
+        if (cache.filePath) {
+          fs.unlink(cache.filePath, () => {});
         }
 
         return db.ChartCache.destroy({ where: { user_id: userId, chart_id: chartId } });
