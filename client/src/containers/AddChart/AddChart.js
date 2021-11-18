@@ -276,8 +276,8 @@ function AddChart(props) {
       });
   };
 
-  const _onRefreshData = () => {
-    runQuery(match.params.projectId, match.params.chartId)
+  const _onRefreshData = (getCache) => {
+    runQuery(match.params.projectId, match.params.chartId, false, false, getCache)
       .then(() => {
         if (conditions.length > 0) {
           runQueryWithFilters(match.params.projectId, newChart.id, conditions);
@@ -286,7 +286,7 @@ function AddChart(props) {
   };
 
   const _onRefreshPreview = (skipParsing = false) => {
-    runQuery(match.params.projectId, match.params.chartId, true, skipParsing)
+    runQuery(match.params.projectId, match.params.chartId, true, skipParsing, true)
       .then(() => {
         if (conditions.length > 0) {
           runQueryWithFilters(match.params.projectId, newChart.id, conditions);
@@ -759,8 +759,8 @@ const mapDispatchToProps = (dispatch) => {
     updateChart: (projectId, chartId, data) => {
       return dispatch(updateChartAction(projectId, chartId, data));
     },
-    runQuery: (projectId, chartId, noSource, skipParsing) => {
-      return dispatch(runQueryAction(projectId, chartId, noSource, skipParsing));
+    runQuery: (projectId, chartId, noSource, skipParsing, getCache) => {
+      return dispatch(runQueryAction(projectId, chartId, noSource, skipParsing, getCache));
     },
     updateUser: (id, data) => dispatch(updateUserAction(id, data)),
     changeTutorial: (tut) => dispatch(changeTutorialAction(tut)),

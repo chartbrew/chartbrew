@@ -133,10 +133,10 @@ export function deleteDataset(projectId, chartId, datasetId) {
   };
 }
 
-export function runRequest(projectId, chartId, datasetId) {
+export function runRequest(projectId, chartId, datasetId, getCache) {
   return (dispatch) => {
     const token = cookie.load("brewToken");
-    const url = `${API_HOST}/project/${projectId}/chart/${chartId}/dataset/${datasetId}/request`;
+    let url = `${API_HOST}/project/${projectId}/chart/${chartId}/dataset/${datasetId}/request`;
     const method = "GET";
     const headers = new Headers({
       "Accept": "application/json",
@@ -148,6 +148,11 @@ export function runRequest(projectId, chartId, datasetId) {
       statusText: "Internal Server Error",
     };
     let ok = true;
+
+    if (getCache) {
+      url += "?getCache=true";
+    }
+
     return fetch(url, { method, headers })
       .then((response) => {
         status = {

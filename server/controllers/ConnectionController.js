@@ -3,6 +3,7 @@ const requestP = require("request-promise");
 const Sequelize = require("sequelize");
 const querystring = require("querystring");
 const moment = require("moment");
+const _ = require("lodash");
 
 const db = require("../models/models");
 const ProjectController = require("./ProjectController");
@@ -14,6 +15,7 @@ const googleConnector = require("../modules/googleConnector");
 const FirestoreConnection = require("../connections/FirestoreConnection");
 const oauthController = require("./OAuthController");
 const determineType = require("../modules/determineType");
+const drCacheController = require("./DataRequestCacheController");
 
 function isArrayPresent(responseData) {
   let arrayFound = false;
@@ -439,7 +441,27 @@ class ConnectionController {
       });
   }
 
-  runApiRequest(id, chartId, dataRequest) {
+  async runApiRequest(id, chartId, dataRequest, getCache) {
+    if (getCache) {
+      // check if there is a cache available and valid
+      try {
+        const drCache = await drCacheController.findLast(dataRequest.id);
+        const cachedDataRequest = drCache.dataRequest;
+        cachedDataRequest.updatedAt = "";
+        cachedDataRequest.createdAt = "";
+
+        const liveDataRequest = dataRequest.toJSON();
+        liveDataRequest.updatedAt = "";
+        liveDataRequest.createdAt = "";
+
+        if (_.isEqual(cachedDataRequest, liveDataRequest)) {
+          return drCache.responseData;
+        }
+      } catch (e) {
+        //
+      }
+    }
+
     const limit = dataRequest.itemsLimit
       ? parseInt(dataRequest.itemsLimit, 10) : 0;
     return this.findById(id)
@@ -563,6 +585,14 @@ class ConnectionController {
             if (determineType(responseData) === "object" && !isArrayPresent(responseData)) {
               responseData = [responseData];
             }
+
+            // cache the data for later use
+            const dataToCache = {
+              dataRequest,
+              responseData,
+            };
+
+            drCacheController.create(dataRequest.id, dataToCache);
 
             return new Promise((resolve) => resolve(responseData));
           } catch (e) {

@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
   Container, Button, Icon, Header, Image, Dimmer, Dropdown,
-  Popup, Segment,
+  Popup, Segment, Checkbox,
 } from "semantic-ui-react";
 
 import lineChartImage from "../../../assets/charts/lineChart.jpg";
@@ -29,6 +29,7 @@ import polarSvg from "../../../assets/chart-icons/svg/009-analytics-61.svg";
 import doughnutSvg from "../../../assets/chart-icons/svg/011-analytics-59.svg";
 import tableSvg from "../../../assets/chart-icons/svg/table.svg";
 import avgSvg from "../../../assets/chart-icons/svg/average_kpi.svg";
+import { primaryTransparent } from "../../../config/colors";
 
 const chartModes = [{
   key: "chart",
@@ -48,6 +49,11 @@ function ChartPreview(props) {
   } = props;
 
   const [redraw, setRedraw] = useState(false);
+  const [useCache, setUseCache] = useState(false);
+
+  useEffect(() => {
+    setUseCache(!!window.localStorage.getItem("_cb_use_cache"));
+  }, []);
 
   useEffect(() => {
     _onRefreshPreview();
@@ -98,7 +104,17 @@ function ChartPreview(props) {
 
   const _onRefreshData = () => {
     setRedraw(true);
-    onRefreshData();
+    onRefreshData(!!useCache);
+  };
+
+  const _onChangeUseCache = () => {
+    if (window.localStorage.getItem("_cb_use_cache")) {
+      window.localStorage.removeItem("_cb_use_cache");
+      setUseCache(false);
+    } else {
+      window.localStorage.setItem("_cb_use_cache", true);
+      setUseCache(true);
+    }
   };
 
   return (
@@ -321,27 +337,17 @@ function ChartPreview(props) {
 
       {chart && chart.type && chart.Datasets && chart.Datasets.length > 0 && (
         <Container textAlign="center" style={styles.topBuffer}>
-          <Dropdown
-            options={chartModes}
-            selection
-            value={chart.mode}
-            onChange={_onChangeMode}
-            style={styles.modeSwitcher}
-            disabled={chart.type !== "line" && chart.type !== "bar"}
-          />
-          <Button.Group>
-            <Button
-              icon
-              labelPosition="left"
-              onClick={_onRefreshPreview}
-              primary
-              basic
-              loading={chartLoading}
-              disabled={!chart.chartData}
-            >
-              <Icon name="refresh" />
-              {"Refresh style"}
-            </Button>
+          <div>
+            <Dropdown
+              options={chartModes}
+              selection
+              value={chart.mode}
+              onChange={_onChangeMode}
+              style={styles.modeSwitcher}
+              disabled={chart.type !== "line" && chart.type !== "bar"}
+            />
+          </div>
+          <div style={styles.topBuffer}>
             <Button
               icon
               labelPosition="right"
@@ -350,10 +356,22 @@ function ChartPreview(props) {
               basic
               loading={chartLoading}
             >
-              <Icon name="angle double down" />
-              Get new data
+              <Icon name="refresh" />
+              Refresh chart
             </Button>
-          </Button.Group>
+            {" "}
+            <Checkbox
+              label="Use cache"
+              checked={!!useCache}
+              onChange={_onChangeUseCache}
+            />
+            {" "}
+            <Popup
+              trigger={<Icon name="question circle outline" style={{ color: primaryTransparent(0.7) }} />}
+              content="If checked, Chartbrew will use cached data instead of making requests to your data source whenever possible."
+              inverted
+            />
+          </div>
         </Container>
       )}
     </>

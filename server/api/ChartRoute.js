@@ -305,8 +305,11 @@ module.exports = (app) => {
         return chartController.updateChartData(
           req.params.id,
           req.user,
-          req.query.no_source === "true",
-          req.query.skip_parsing === "true",
+          {
+            noSource: req.query.no_source === "true",
+            skipParse: req.query.skip_parsing === "true",
+            getCache: req.query.getCache,
+          },
         );
       })
       .then((chart) => {
@@ -335,9 +338,12 @@ module.exports = (app) => {
     return chartController.updateChartData(
       req.params.id,
       req.user,
-      req.query.no_source === "true",
-      req.query.skip_parsing === "true",
-      req.body.filters,
+      {
+        noSource: req.query.no_source === "true",
+        skipParsing: req.query.skip_parsing === "true",
+        filters: req.body.filters,
+        getCache: true,
+      },
     )
       .then(async (chart) => {
         // get the team's branding status

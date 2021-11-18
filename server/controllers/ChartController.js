@@ -295,7 +295,9 @@ class ChartController {
       });
   }
 
-  updateChartData(id, user, noSource, skipParsing = false, filters, isExport) {
+  updateChartData(id, user, {
+    noSource, skipParsing, filters, isExport, getCache,
+  }) {
     let gChart;
     let gCache;
     let gChartData;
@@ -322,9 +324,13 @@ class ChartController {
         const requestPromises = [];
         gChart.Datasets.map((dataset) => {
           if (noSource && gCache && gCache.data) {
-            requestPromises.push(this.datasetController.runRequest(dataset.id, gChart.id, true));
+            requestPromises.push(
+              this.datasetController.runRequest(dataset.id, gChart.id, true, getCache)
+            );
           } else {
-            requestPromises.push(this.datasetController.runRequest(dataset.id, gChart.id));
+            requestPromises.push(
+              this.datasetController.runRequest(dataset.id, gChart.id, false, getCache)
+            );
           }
           return dataset;
         });
@@ -354,7 +360,6 @@ class ChartController {
           this.chartCache.create(user.id, gChart.id, resolvingData);
         }
 
-        // console.log("resolvingData", resolvingData);
         return Promise.resolve(resolvingData);
       })
       .then((chartData) => {
@@ -641,7 +646,14 @@ class ChartController {
         charts.forEach((chart) => {
           dataPromises.push(
             this.updateChartData(
-              chart.id, { id: userId }, false, false, filters, true
+              chart.id,
+              { id: userId },
+              {
+                noSource: false,
+                skipParsing: false,
+                filters,
+                isExport: true
+              },
             )
               .then((data) => {
                 // first, make sure the sheet name is no longer than 31 characters

@@ -184,15 +184,19 @@ export function removeChart(projectId, chartId) {
   };
 }
 
-export function runQuery(projectId, chartId, noSource = false, skipParsing = false) {
+export function runQuery(projectId, chartId, noSource = false, skipParsing = false, getCache) {
   return (dispatch) => {
     const token = cookie.load("brewToken");
-    const url = `${API_HOST}/project/${projectId}/chart/${chartId}?no_source=${noSource}&skip_parsing=${skipParsing}`;
+    let url = `${API_HOST}/project/${projectId}/chart/${chartId}?no_source=${noSource}&skip_parsing=${skipParsing}`;
     const method = "GET";
     const headers = new Headers({
       "Accept": "application/json",
       "authorization": `Bearer ${token}`,
     });
+
+    if (getCache) {
+      url += "&getCache=true";
+    }
 
     dispatch({ type: FETCH_CHART, chartId });
     return fetch(url, { method, headers })

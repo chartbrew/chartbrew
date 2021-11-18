@@ -19,6 +19,7 @@ import {
   runRequest as runRequestAction,
 } from "../../../actions/dataset";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
+import { primaryTransparent } from "../../../config/colors";
 
 const methods = [{
   key: 1,
@@ -61,6 +62,7 @@ function ApiBuilder(props) {
   const [requestSuccess, setRequestSuccess] = useState(false);
   const [requestLoading, setRequestLoading] = useState(false);
   const [requestError, setRequestError] = useState(false);
+  const [useCache, setUseCache] = useState(false);
 
   const {
     dataRequest, match, onChangeRequest, runRequest, dataset,
@@ -98,6 +100,8 @@ function ApiBuilder(props) {
         changeTutorial("apibuilder");
       }, 1000);
     }
+
+    setUseCache(!!window.localStorage.getItem("_cb_use_cache"));
   }, []);
 
   useEffect(() => {
@@ -216,7 +220,7 @@ function ApiBuilder(props) {
     setRequestError(false);
 
     onSave().then(() => {
-      runRequest(match.params.projectId, match.params.chartId, dataset.id)
+      runRequest(match.params.projectId, match.params.chartId, dataset.id, true)
         .then((result) => {
           setRequestLoading(false);
           setRequestSuccess(result.status);
@@ -229,6 +233,16 @@ function ApiBuilder(props) {
           setResult(JSON.stringify(error, null, 2));
         });
     });
+  };
+
+  const _onChangeUseCache = () => {
+    if (window.localStorage.getItem("_cb_use_cache")) {
+      window.localStorage.removeItem("_cb_use_cache");
+      setUseCache(false);
+    } else {
+      window.localStorage.setItem("_cb_use_cache", true);
+      setUseCache(true);
+    }
   };
 
   return (
@@ -419,7 +433,7 @@ function ApiBuilder(props) {
           )}
         </Grid.Column>
         <Grid.Column width={6}>
-          <Form>
+          <Form style={{ paddingBottom: 10 }}>
             <Form.Group widths={2}>
               <Form.Field className="apibuilder-type-tut">
                 <Dropdown
@@ -444,6 +458,23 @@ function ApiBuilder(props) {
                 </Button>
               </Form.Field>
             </Form.Group>
+            <Form.Field>
+              <Checkbox
+                label="Use cache"
+                checked={!!useCache}
+                onChange={_onChangeUseCache}
+              />
+              {" "}
+              <Popup
+                trigger={<Icon name="question circle outline" style={{ color: primaryTransparent(0.7) }} />}
+                inverted
+              >
+                <>
+                  <p>{"If checked, Chartbrew will use cached data instead of making requests to your data source."}</p>
+                  <p>{"The cache gets automatically invalidated when you change the configuration of the request."}</p>
+                </>
+              </Popup>
+            </Form.Field>
           </Form>
           <AceEditor
             mode="json"
@@ -493,8 +524,8 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    runRequest: (projectId, chartId, datasetId) => {
-      return dispatch(runRequestAction(projectId, chartId, datasetId));
+    runRequest: (projectId, chartId, datasetId, getCache) => {
+      return dispatch(runRequestAction(projectId, chartId, datasetId, getCache));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };

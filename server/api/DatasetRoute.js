@@ -184,7 +184,9 @@ module.exports = (app) => {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }
 
-        return datasetController.runRequest(req.params.id, req.params.chart_id);
+        return datasetController.runRequest(
+          req.params.id, req.params.chart_id, req.query.noSource, req.query.getCache
+        );
       })
       .then((dataset) => {
         const newDataset = dataset;
