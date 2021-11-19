@@ -607,12 +607,42 @@ class ConnectionController {
       });
   }
 
-  runFirestore(id, dataRequest) {
+  async runFirestore(id, dataRequest, getCache) {
+    if (getCache) {
+      // check if there is a cache available and valid
+      try {
+        const drCache = await drCacheController.findLast(dataRequest.id);
+        const cachedDataRequest = drCache.dataRequest;
+        cachedDataRequest.updatedAt = "";
+        cachedDataRequest.createdAt = "";
+
+        const liveDataRequest = dataRequest.toJSON();
+        liveDataRequest.updatedAt = "";
+        liveDataRequest.createdAt = "";
+
+        if (_.isEqual(cachedDataRequest, liveDataRequest)) {
+          return drCache.responseData;
+        }
+      } catch (e) {
+        //
+      }
+    }
+
     return this.findById(id)
       .then((connection) => {
         const firestoreConnection = new FirestoreConnection(connection);
 
         return firestoreConnection.get(dataRequest);
+      })
+      .then((responseData) => {
+        // cache the data for later use
+        const dataToCache = {
+          dataRequest,
+          responseData,
+        };
+        drCacheController.create(dataRequest.id, dataToCache);
+
+        return responseData;
       })
       .catch((err) => {
         return new Promise((resolve, reject) => reject(err));

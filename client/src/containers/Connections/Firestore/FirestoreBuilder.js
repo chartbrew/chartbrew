@@ -24,7 +24,7 @@ import {
 } from "../../../actions/connection";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import fieldFinder from "../../../modules/fieldFinder";
-import { secondary } from "../../../config/colors";
+import { primaryTransparent, secondary } from "../../../config/colors";
 import determineType from "../../../modules/determineType";
 
 export const operators = [{
@@ -100,6 +100,7 @@ function FirestoreBuilder(props) {
   }]);
   const [showSubUI, setShowSubUI] = useState(false);
   const [indexUrl, setIndexUrl] = useState("");
+  const [useCache, setUseCache] = useState(false);
 
   const {
     dataRequest, match, onChangeRequest, runRequest, dataset,
@@ -162,6 +163,8 @@ function FirestoreBuilder(props) {
         _onRunRequest();
       }
     }
+
+    setUseCache(!!window.localStorage.getItem("_cb_use_cache"));
   }, []);
 
   useEffect(() => {
@@ -237,7 +240,7 @@ function FirestoreBuilder(props) {
 
   const _onRunRequest = () => {
     setIndexUrl("");
-    runRequest(match.params.projectId, match.params.chartId, dataset.id)
+    runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache)
       .then((result) => {
         setRequestLoading(false);
         const jsonString = JSON.stringify(result.data, null, 2);
@@ -437,6 +440,16 @@ function FirestoreBuilder(props) {
     _onTest(newRequest);
   };
 
+  const _onChangeUseCache = () => {
+    if (window.localStorage.getItem("_cb_use_cache")) {
+      window.localStorage.removeItem("_cb_use_cache");
+      setUseCache(false);
+    } else {
+      window.localStorage.setItem("_cb_use_cache", true);
+      setUseCache(true);
+    }
+  };
+
   return (
     <div style={styles.container}>
       <Grid columns={3} stackable centered>
@@ -610,6 +623,23 @@ function FirestoreBuilder(props) {
                 <Icon name="play" />
                 Get Firestore data
               </Button>
+            </Form.Field>
+            <Form.Field>
+              <Checkbox
+                label="Use cache"
+                checked={!!useCache}
+                onChange={_onChangeUseCache}
+              />
+              {" "}
+              <Popup
+                trigger={<Icon name="question circle outline" style={{ color: primaryTransparent(0.7) }} />}
+                inverted
+              >
+                <>
+                  <p>{"If checked, Chartbrew will use cached data instead of making requests to your data source."}</p>
+                  <p>{"The cache gets automatically invalidated when you change the collections and/or filters."}</p>
+                </>
+              </Popup>
             </Form.Field>
             <Form.Field className="firestorebuilder-result-tut">
               <AceEditor
@@ -870,8 +900,8 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    runRequest: (projectId, chartId, datasetId) => {
-      return dispatch(runRequestAction(projectId, chartId, datasetId));
+    runRequest: (projectId, chartId, datasetId, getCache) => {
+      return dispatch(runRequestAction(projectId, chartId, datasetId, getCache));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
     testRequest: (projectId, data) => dispatch(testRequestAction(projectId, data)),

@@ -105,7 +105,7 @@ class DatasetController {
         } else if (connection.type === "postgres" || connection.type === "mysql") {
           return this.connectionController.runMysqlOrPostgres(connection.id, dataRequest);
         } else if (connection.type === "firestore") {
-          return this.connectionController.runFirestore(connection.id, dataRequest);
+          return this.connectionController.runFirestore(connection.id, dataRequest, getCache);
         } else if (connection.type === "googleAnalytics") {
           return this.connectionController.runGoogleAnalytics(connection, dataRequest);
         } else {
