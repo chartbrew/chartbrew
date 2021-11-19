@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Divider, Form, Header, Input, Label, Modal, Popup, TransitionablePortal
+  Button, Checkbox, Divider, Form, Icon, Input, Label, Modal, Popup,
+  TextArea, TransitionablePortal,
 } from "semantic-ui-react";
 import { SITE_HOST } from "../../../config/settings";
 import { blackTransparent } from "../../../config/colors";
@@ -14,6 +15,7 @@ function SharingSettings(props) {
 
   const [newBrewName, setNewBrewName] = useState("");
   const [urlCopied, setUrlCopied] = useState(false);
+  const [embedCopied, setEmbedCopied] = useState(false);
   const [newPassword, setNewPassword] = useState("");
 
   useEffect(() => {
@@ -30,6 +32,15 @@ function SharingSettings(props) {
   const _onCopyUrl = () => {
     setUrlCopied(true);
     navigator.clipboard.writeText(`${SITE_HOST}/b/${newBrewName}`); // eslint-disable-line
+  };
+
+  const _onCopyEmbed = () => {
+    setEmbedCopied(true);
+    navigator.clipboard.writeText(`<iframe src="${SITE_HOST}/b/${newBrewName}" allowTransparency="true" width="1200" height="600" frameborder="0" style="background-color: #ffffff"></iframe>`); // eslint-disable-line
+  };
+
+  const _getEmbedString = () => {
+    return `<iframe src="${SITE_HOST}/b/${newBrewName}" allowTransparency="true" width="1200" height="600" frameborder="0" style="background-color: #ffffff"></iframe>`;
   };
 
   return (
@@ -135,7 +146,31 @@ function SharingSettings(props) {
             </Form.Field>
             <Form.Field>
               <Divider section />
-              <Header as="h4">Show or hide the Chartbrew branding from charts and reports</Header>
+              <label>Embed this dashboard</label>
+              <TextArea
+                id="iframe-text"
+                value={_getEmbedString()}
+              />
+              {!project.public && (
+                <>
+                  <Icon name="exclamation circle" color="orange" />
+                  <i>{" The embedding only works when the report is public"}</i>
+                </>
+              )}
+            </Form.Field>
+            <Form.Field>
+              <Button
+                basic
+                icon={embedCopied ? "checkmark" : "clipboard"}
+                content={embedCopied ? "Copied" : "Copy to clipboard"}
+                color={embedCopied ? "green" : null}
+                onClick={_onCopyEmbed}
+                size="small"
+              />
+            </Form.Field>
+            <Form.Field>
+              <Divider section />
+              <label>Show or hide the Chartbrew branding from charts and reports</label>
               <Checkbox
                 label="Charbrew branding"
                 toggle
