@@ -144,6 +144,9 @@ This configuration file will have everything necessary to serve the backend and 
     <Location ~ "/chart/*">
       Header always unset X-Frame-Options
     </Location>
+    <Location ~ "/b/*">
+      Header always unset X-Frame-Options
+    </Location>
 </VirtualHost>
 
 ### BACKEND
