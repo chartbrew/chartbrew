@@ -104,7 +104,8 @@ function ChartPreview(props) {
 
   const _onRefreshData = () => {
     setRedraw(true);
-    onRefreshData(!!useCache);
+    setUseCache(!!window.localStorage.getItem("_cb_use_cache"));
+    onRefreshData(!!window.localStorage.getItem("_cb_use_cache"));
   };
 
   const _onChangeUseCache = () => {
