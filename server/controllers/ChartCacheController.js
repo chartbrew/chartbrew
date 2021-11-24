@@ -7,12 +7,12 @@ class ChartCacheController {
   create(userId, chartId, data) {
     return this.findLast(userId, chartId)
       .then((cache) => {
-        if (!cache) {
-          const filePath = path.normalize(`${__dirname}/../.cache/chart-${chartId}.txt`);
-          try {
-            fs.writeFile(filePath, JSON.stringify(data), () => { });
-          } catch (e) { /**/ }
+        const filePath = path.normalize(`${__dirname}/../.cache/chart-${chartId}.txt`);
+        try {
+          fs.writeFile(filePath, JSON.stringify(data), () => { });
+        } catch (e) { /**/ }
 
+        if (!cache) {
           return db.ChartCache.create({
             user_id: userId,
             chart_id: chartId,
@@ -20,7 +20,7 @@ class ChartCacheController {
           });
         }
 
-        return this.findLast(userId, chartId);
+        return this.update(data, userId, chartId);
       })
       .then((cache) => {
         return new Promise((resolve) => resolve(cache));
