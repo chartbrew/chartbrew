@@ -194,7 +194,21 @@ module.exports = (app) => {
         // reduce the size of the returned data. No point in showing thousands of objects
         if (typeof dataset.data === "object" && dataset.data instanceof Array) {
           newDataset.data = dataset.data.slice(0, 20);
+        } else if (typeof dataset === "object") {
+          let resultsKey;
+          // console.log("dataset.data", dataset);
+          Object.keys(dataset.data).forEach((key) => {
+            if (dataset.data[key] instanceof Array) {
+              resultsKey = key;
+            }
+          });
+
+          if (resultsKey) {
+            const slicedArray = dataset.data[resultsKey].slice(0, 20);
+            newDataset.data[resultsKey] = slicedArray;
+          }
         }
+
         return res.status(200).send(newDataset);
       })
       .catch((err) => {

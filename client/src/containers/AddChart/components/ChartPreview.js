@@ -350,15 +350,22 @@ function ChartPreview(props) {
           </div>
           <div style={styles.topBuffer}>
             <Button
-              icon
-              labelPosition="right"
+              onClick={_onRefreshPreview}
+              primary
+              basic
+              loading={chartLoading}
+              size="small"
+            >
+              Refresh preview
+            </Button>
+            <Button
               onClick={_onRefreshData}
               primary
               basic
               loading={chartLoading}
+              size="small"
             >
-              <Icon name="refresh" />
-              Refresh chart
+              Re-process data
             </Button>
             {" "}
             <Checkbox

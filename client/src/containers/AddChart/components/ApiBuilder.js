@@ -221,7 +221,7 @@ function ApiBuilder(props) {
     setRequestError(false);
 
     onSave().then(() => {
-      runRequest(match.params.projectId, match.params.chartId, dataset.id, true)
+      runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache)
         .then((result) => {
           setRequestLoading(false);
           setRequestSuccess(result.status);

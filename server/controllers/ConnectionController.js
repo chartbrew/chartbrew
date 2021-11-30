@@ -572,6 +572,13 @@ class ConnectionController {
       })
       .then((response) => {
         if (dataRequest.pagination) {
+          // cache the data for later use
+          const dataToCache = {
+            dataRequest,
+            responseData: response,
+          };
+          drCacheController.create(dataRequest.id, dataToCache);
+
           return new Promise((resolve) => resolve(response));
         }
 

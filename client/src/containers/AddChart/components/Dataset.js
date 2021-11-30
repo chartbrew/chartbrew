@@ -25,7 +25,7 @@ import { changeTutorial as changeTutorialAction } from "../../../actions/tutoria
 function Dataset(props) {
   const {
     dataset, connections, onUpdate, onDelete, chart, match, onRefresh,
-    changeTutorial,
+    changeTutorial, onRefreshPreview,
   } = props;
 
   const [newDataset, setNewDataset] = useState(dataset);
@@ -149,6 +149,7 @@ function Dataset(props) {
       changeTutorial("datasetdata");
     }
     setConfigOpened(false);
+    onRefreshPreview();
   };
 
   const _onSaveDataset = () => {
@@ -388,6 +389,7 @@ Dataset.propTypes = {
   match: PropTypes.object.isRequired,
   onRefresh: PropTypes.func.isRequired,
   changeTutorial: PropTypes.func.isRequired,
+  onRefreshPreview: PropTypes.func.isRequired,
 };
 
 const styles = {

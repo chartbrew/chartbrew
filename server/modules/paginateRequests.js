@@ -194,6 +194,7 @@ function PaginateUrl(options, paginationField, limit, totalResults = []) {
 }
 
 function PaginateCursor(options, limit, items, offset, totalResults = []) {
+  // console.log("options", options);
   return request(options)
     .then((response) => {
       let resultsKey;
