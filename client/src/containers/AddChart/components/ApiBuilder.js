@@ -12,6 +12,7 @@ import _ from "lodash";
 import { toast } from "react-toastify";
 
 import "ace-builds/src-min-noconflict/mode-json";
+import "ace-builds/src-min-noconflict/mode-javascript";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 
 import ApiPagination from "./ApiPagination";
@@ -479,7 +480,7 @@ function ApiBuilder(props) {
           <AceEditor
             mode="json"
             theme="tomorrow"
-            height="450px"
+            height="400px"
             width="none"
             value={result || ""}
             onChange={() => setResult(result)}
@@ -488,6 +489,10 @@ function ApiBuilder(props) {
             editorProps={{ $blockScrolling: false }}
             className="apibuilder-result-tut"
           />
+          <p>
+            <Icon name="exclamation circle" />
+            <small>{"This is a preview and it might not show all data in order to keep things fast in the UI."}</small>
+          </p>
         </Grid.Column>
       </Grid>
     </div>

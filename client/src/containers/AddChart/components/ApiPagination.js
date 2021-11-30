@@ -22,6 +22,10 @@ const templates = [{
   key: "stripe",
   value: "stripe",
   text: "Stripe",
+}, {
+  key: "cursor",
+  value: "cursor",
+  text: "Cursor-based",
 }];
 
 /*
@@ -102,6 +106,7 @@ function ApiPagination(props) {
       </Form>
       <Divider />
       <Form>
+        {/* CUSTOM */}
         {template === "custom" && (
           <Form.Field width={6}>
             <Popup
@@ -112,6 +117,7 @@ function ApiPagination(props) {
                   <Icon name="info circle" />
                 </label>
               )}
+              inverted
             />
             <Input
               disabled={!pagination}
@@ -131,6 +137,7 @@ function ApiPagination(props) {
                   <Icon name="info circle" />
                 </label>
               )}
+              inverted
             />
             <Input
               disabled={!pagination}
@@ -153,6 +160,8 @@ function ApiPagination(props) {
             </Form.Field>
           </>
         )}
+
+        {/* URL */}
         {template === "url" && pagination && (
           <>
             <Form.Field>
@@ -185,11 +194,56 @@ function ApiPagination(props) {
             </Form.Field>
           </>
         )}
+
+        {/* STRIPE */}
         {template === "stripe" && pagination && (
           <Form.Field>
             <p>Your request will now be paginated automatically</p>
           </Form.Field>
         )}
+
+        {/* CURSOR-BASED */}
+        {template === "cursor" && (
+          <Form.Field width={6}>
+            <Popup
+              content={"Enter the name of the query parameter that acts like a cursor for the pagination. Usually, this field is named 'start'."}
+              trigger={(
+                <label>
+                  {"Cursor query parameter "}
+                  <Icon name="info circle" />
+                </label>
+              )}
+              inverted
+            />
+            <Input
+              disabled={!pagination}
+              placeholder="Cursor query parameter name"
+              value={offset}
+              onChange={(e, data) => onPaginationChanged("offset", data.value)}
+            />
+          </Form.Field>
+        )}
+        {template === "cursor" && (
+          <Form.Field width={6}>
+            <Popup
+              content={"This should be the name of the field in the response that points to the next cursor position. This will help Chartbrew automatically set the cursor start position. "}
+              trigger={(
+                <label>
+                  {"Next cursor field name "}
+                  <Icon name="info circle" />
+                </label>
+              )}
+              inverted
+            />
+            <Input
+              disabled={!pagination}
+              placeholder="Next cursor field name"
+              value={items}
+              onChange={(e, data) => onPaginationChanged("items", data.value)}
+            />
+          </Form.Field>
+        )}
+
         <Form.Field width={6}>
           <Popup
             content={"The total amount of items to get (all the paged items put together) - Leave empty or 0 for unlimited"}
@@ -199,6 +253,7 @@ function ApiPagination(props) {
                 <Icon name="info circle" />
               </label>
             )}
+            inverted
           />
           <Input
             disabled={!pagination}

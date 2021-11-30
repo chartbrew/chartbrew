@@ -193,6 +193,50 @@ function PaginateUrl(options, paginationField, limit, totalResults = []) {
     });
 }
 
+function PaginateCursor(options, limit, items, offset, totalResults = []) {
+  return request(options)
+    .then((response) => {
+      let resultsKey;
+      try {
+        const result = JSON.parse(response.body);
+
+        Object.keys(result).forEach((key) => {
+          if (result[key] instanceof Array) {
+            resultsKey = key;
+          }
+        });
+
+        const tempResults = result;
+        tempResults[resultsKey] = (
+          totalResults
+          && totalResults[resultsKey]
+          && totalResults[resultsKey].concat(result[resultsKey])
+        ) || result[resultsKey];
+
+        if (!result[items]
+          || (tempResults[resultsKey] && tempResults[resultsKey].length >= limit && limit !== 0)
+        ) {
+          if (tempResults[resultsKey].length > limit && limit !== 0) {
+            tempResults[resultsKey] = tempResults[resultsKey].slice(0, limit);
+          }
+          // the recursion ends here
+          return new Promise((resolve) => resolve(tempResults));
+        }
+
+        // continue the recursion
+        const newOptions = options;
+        newOptions.qs[offset] = tempResults[items];
+
+        return PaginateCursor(newOptions, limit, items, offset, tempResults);
+      } catch (error) {
+        return new Promise((resolve, reject) => reject(response.statusCode));
+      }
+    })
+    .catch((err) => {
+      return Promise.reject(err);
+    });
+}
+
 module.exports = (template = "custom", {
   options, limit, items, offset, paginationField,
 }) => {
@@ -214,6 +258,9 @@ module.exports = (template = "custom", {
       break;
     case "pages":
       results = PaginatePages(options, limit, offset);
+      break;
+    case "cursor":
+      results = PaginateCursor(options, limit, items, offset);
       break;
     default:
       results = PaginateRequests(options, limit, items, offset);
