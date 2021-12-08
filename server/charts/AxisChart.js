@@ -265,7 +265,7 @@ class AxisChart {
             break;
           case "avg":
             if (yType === "array") {
-              yAxisData = this.count(xAxisData.formatted, yType, yAxisData, true);
+              yAxisData = this.count(xAxisData.formatted, yType, yAxisData, "avg");
             } else {
               yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, "avg");
             }
@@ -275,6 +275,20 @@ class AxisChart {
               yAxisData = this.count(xAxisData.formatted, yType, yAxisData);
             } else {
               yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, "sum");
+            }
+            break;
+          case "min":
+            if (yType === "array") {
+              yAxisData = this.count(xAxisData.formatted, yType, yAxisData, "min");
+            } else {
+              yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, "min");
+            }
+            break;
+          case "max":
+            if (yType === "array") {
+              yAxisData = this.count(xAxisData.formatted, yType, yAxisData, "max");
+            } else {
+              yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, "max");
             }
             break;
           default:
@@ -610,6 +624,8 @@ class AxisChart {
         finalItem /= yData[key].length;
         finalItem = parseFloat(finalItem.toFixed(2));
       }
+      if (op === "min") finalItem = _.min(yData[key]);
+      if (op === "max") finalItem = _.max(yData[key]);
 
       finalData[key] = finalItem;
     });
@@ -618,23 +634,33 @@ class AxisChart {
   }
 
   // average is used for the mean number of elements in arrays (if type == array)
-  count(xData, type, yData, average) {
+  count(xData, type, yData, op) {
     const countData = {};
 
     if (type === "array") {
       const avgCounter = {};
-      yData.forEach((item) => {
-        if (!countData[item.x] && item.y) countData[item.x] = item.y.reduce((a, b) => a + b);
-        else if (item.y) countData[item.x] += item.y.reduce((a, b) => a + b);
-
-        if (!avgCounter[item.x]) avgCounter[item.x] = item.y.length;
-        else avgCounter[item.x] += item.y.length;
-      });
-
-      if (average) {
-        Object.keys(avgCounter).forEach((key) => {
-          countData[key] /= avgCounter[key];
+      if (op === "min") {
+        yData.forEach((item) => {
+          if (item.y) countData[item.x] = _.min(item.y);
         });
+      } else if (op === "max") {
+        yData.forEach((item) => {
+          if (item.y) countData[item.x] = _.max(item.y);
+        });
+      } else {
+        yData.forEach((item) => {
+          if (!countData[item.x] && item.y) countData[item.x] = item.y.reduce((a, b) => a + b);
+          else if (item.y) countData[item.x] += item.y.reduce((a, b) => a + b);
+
+          if (!avgCounter[item.x]) avgCounter[item.x] = item.y.length;
+          else avgCounter[item.x] += item.y.length;
+        });
+
+        if (op === "avg") {
+          Object.keys(avgCounter).forEach((key) => {
+            countData[key] /= avgCounter[key];
+          });
+        }
       }
     } else {
       xData.forEach((item) => {

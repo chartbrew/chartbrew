@@ -56,4 +56,12 @@ export const operations = [{
   key: "avg",
   text: "Average",
   value: "avg",
+}, {
+  key: "min",
+  text: "Min",
+  value: "min",
+}, {
+  key: "max",
+  text: "Max",
+  value: "max",
 }];
