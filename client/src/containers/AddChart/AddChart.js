@@ -285,7 +285,7 @@ function AddChart(props) {
       });
   };
 
-  const _onRefreshPreview = (skipParsing = false) => {
+  const _onRefreshPreview = (skipParsing = true) => {
     runQuery(match.params.projectId, match.params.chartId, true, skipParsing, true)
       .then(() => {
         if (conditions.length > 0) {

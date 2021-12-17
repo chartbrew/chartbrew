@@ -16,17 +16,29 @@ moment.suppressDeprecationWarnings = true;
 const parser = new FormulaParser();
 
 const areDatesTheSame = (first, second, interval) => {
+  let isTimestamp = false;
+  let firstDate = first;
+  if (`${first}` === `${parseInt(first, 10)}`) {
+    isTimestamp = true;
+    firstDate = parseInt(first, 10);
+  }
+
   switch (interval) {
     case "hour":
-      return isSameHour(new Date(first), new Date(second));
+      if (isTimestamp) firstDate *= 1000;
+      return isSameHour(new Date(firstDate), new Date(second));
     case "day":
-      return isSameDay(new Date(first), new Date(second));
+      if (isTimestamp) firstDate *= 1000;
+      return isSameDay(new Date(firstDate), new Date(second));
     case "week":
-      return isSameWeek(new Date(first), new Date(second));
+      if (isTimestamp) firstDate *= 1000;
+      return isSameWeek(new Date(firstDate), new Date(second));
     case "month":
-      return isSameMonth(new Date(first), new Date(second));
+      if (isTimestamp) firstDate *= 1000;
+      return isSameMonth(new Date(firstDate), new Date(second));
     case "year":
-      return isSameYear(new Date(first), new Date(second));
+      if (isTimestamp) firstDate *= 1000;
+      return isSameYear(new Date(firstDate), new Date(second));
     default:
       return false;
   }
