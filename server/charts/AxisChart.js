@@ -205,7 +205,9 @@ class AxisChart {
             for (let y = 0; y < yDataTemp.length; y++) {
               const valToCompare = _.get(yDataTemp[y], xAxis);
               if (valToCompare
-                && ((valToCompare.toString().length === 10 && moment(valToCompare, "X").isSame(moment(xItem)))
+                && ((
+                  valToCompare.toString().length === 10
+                  && areDatesTheSame(parseInt(valToCompare, 10), xItem, this.chart.interval))
                 || areDatesTheSame(valToCompare, xItem, this.chart.timeInterval))
               ) {
                 orderHelper.push(yDataTemp[y]);

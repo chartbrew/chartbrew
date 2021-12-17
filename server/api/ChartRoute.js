@@ -307,7 +307,7 @@ module.exports = (app) => {
           req.user,
           {
             noSource: req.query.no_source === "true",
-            skipParse: req.query.skip_parsing === "true",
+            skipParsing: req.query.skip_parsing === "true",
             getCache: req.query.getCache,
           },
         );
