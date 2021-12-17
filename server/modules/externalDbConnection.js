@@ -10,6 +10,13 @@ module.exports = (connection) => {
 
   let sequelize;
 
+  const connectionConfig = {
+    host,
+    port,
+    dialect,
+    logging: false,
+  };
+
   if (connectionString) {
     // extract each element from the string so that we can encode the password
     // this is needed when the password contains symbols that are not URI-friendly
@@ -28,20 +35,19 @@ module.exports = (connection) => {
 
     newConnectionString = `${protocol}${username}:${password}${hostAndOpt}`;
 
-    sequelize = new Sequelize(newConnectionString, {
-      host,
-      port,
-      dialect,
-      logging: false,
-    });
+    if (connectionString.indexOf("sslmode=require") > -1 && dialect === "postgres") {
+      connectionConfig.native = true;
+      connectionConfig.dialectOptions = {
+        ssl: {
+          rejectUnauthorized: false,
+        },
+      };
+    }
+
+    sequelize = new Sequelize(newConnectionString, connectionConfig);
   // else just connect with each field from the form
   } else {
-    sequelize = new Sequelize(name, username, password, {
-      host,
-      port,
-      dialect,
-      logging: false,
-    });
+    sequelize = new Sequelize(name, username, password, connectionConfig);
   }
 
   return sequelize
