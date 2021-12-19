@@ -35,7 +35,7 @@ module.exports = (connection) => {
 
     newConnectionString = `${protocol}${username}:${password}${hostAndOpt}`;
 
-    if (connectionString.indexOf("sslmode=require") > -1 && dialect === "postgres") {
+    if (cs.indexOf("sslmode=require") > -1 && dialect === "postgres") {
       connectionConfig.native = true;
       connectionConfig.dialectOptions = {
         ssl: {
