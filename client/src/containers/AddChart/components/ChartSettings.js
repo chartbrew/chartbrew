@@ -60,7 +60,7 @@ function ChartSettings(props) {
     type, pointRadius, displayLegend,
     endDate, currentEndDate, timeInterval,
     includeZeros, startDate, onChange, onComplete,
-    maxValue, minValue, xLabelTicks,
+    maxValue, minValue, xLabelTicks, stacked,
   } = props;
 
   useEffect(() => {
@@ -140,6 +140,10 @@ function ChartSettings(props) {
 
   const _onAddPoints = (value) => {
     onChange({ pointRadius: value });
+  };
+
+  const _onChangeStacked = () => {
+    onChange({ stacked: !stacked });
   };
 
   const _onChangeDateRange = (range) => {
@@ -313,6 +317,17 @@ function ChartSettings(props) {
                     />
                   </Form.Field>
                 )}
+              {type === "bar" && (
+                <Form.Field>
+                  <Checkbox
+                    label="Stack datasets"
+                    toggle
+                    checked={stacked}
+                    onChange={_onChangeStacked}
+                    style={styles.accordionToggle}
+                  />
+                </Form.Field>
+              )}
               <Form.Field>
                 <Checkbox
                   label="Legend"
@@ -486,6 +501,7 @@ ChartSettings.defaultProps = {
   maxValue: null,
   minValue: null,
   xLabelTicks: "",
+  stacked: false,
 };
 
 ChartSettings.propTypes = {
@@ -502,6 +518,7 @@ ChartSettings.propTypes = {
   maxValue: PropTypes.number,
   minValue: PropTypes.number,
   xLabelTicks: PropTypes.number,
+  stacked: PropTypes.bool,
 };
 
 export default ChartSettings;

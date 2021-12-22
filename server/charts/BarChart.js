@@ -51,9 +51,11 @@ class NewBarChart {
         },
         scales: {
           yAxes: [{
+            stacked: this.chart.stacked,
             display: false,
           }],
           xAxes: [{
+            stacked: this.chart.stacked,
             display: false,
           }],
         },
@@ -77,6 +79,7 @@ class NewBarChart {
         },
         scales: {
           yAxes: [{
+            stacked: this.chart.stacked,
             ticks: {
               beginAtZero: !this.chart.minValue && true,
               precision: 0,
@@ -85,6 +88,7 @@ class NewBarChart {
             },
           }],
           xAxes: [{
+            stacked: this.chart.stacked,
             ticks: {
               fontFamily: "Inter",
             },
