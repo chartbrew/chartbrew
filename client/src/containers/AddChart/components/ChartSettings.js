@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Form, Segment, Checkbox, Grid, Modal, Button,
-  Accordion, Icon, Dropdown, Label, Header, TransitionablePortal, Popup, Input,
+  Accordion, Icon, Dropdown, Label, Header, TransitionablePortal, Popup, Input, Divider,
 } from "semantic-ui-react";
 import moment from "moment";
 import { DateRangePicker } from "react-date-range";
@@ -170,7 +170,11 @@ function ChartSettings(props) {
   };
 
   const _onChangeTickCustomValue = (value) => {
-    onChange({ xLabelTicks: `${value}` });
+    setTicksNumber(value);
+  };
+
+  const _onConfirmTicksNumber = () => {
+    onChange({ xLabelTicks: `${ticksNumber}` });
   };
 
   return (
@@ -320,61 +324,61 @@ function ChartSettings(props) {
               </Form.Field>
             </Form.Group>
 
-            <Form.Group widths="equal">
-              <Form.Field>
-                <label>Max Y value</label>
-                <Form.Input
-                  placeholder="Enter a number"
-                  value={max}
-                  onChange={(e, data) => setMax(data.value)}
-                  action
-                >
-                  <input />
-                  <Button
-                    disabled={!max || (max === maxValue)}
-                    onClick={() => onChange({ maxValue: max })}
-                    icon="checkmark"
-                    color="green"
-                  />
-                  <Popup
-                    trigger={(
-                      <Button
-                        onClick={() => onChange({ maxValue: null })}
-                        icon="x"
-                      />
-                    )}
-                    content="Clear value"
-                  />
-                </Form.Input>
-              </Form.Field>
-              <Form.Field>
-                <label>Min Y value</label>
-                <Form.Input
-                  placeholder="Enter a number"
-                  value={min}
-                  onChange={(e, data) => setMin(data.value)}
-                  action
-                >
-                  <input />
-                  <Button
-                    disabled={!min || (min === minValue)}
-                    onClick={() => onChange({ minValue: min })}
-                    icon="checkmark"
-                    color="green"
-                  />
-                  <Popup
-                    trigger={(
-                      <Button
-                        onClick={() => onChange({ minValue: null })}
-                        icon="x"
-                      />
-                    )}
-                    content="Clear value"
-                  />
-                </Form.Input>
-              </Form.Field>
-            </Form.Group>
             <Form.Field>
+              <Divider />
+              <label>Max Y Axis value</label>
+              <Form.Input
+                placeholder="Enter a number"
+                value={max}
+                onChange={(e, data) => setMax(data.value)}
+                action
+              >
+                <input />
+                <Button
+                  disabled={!max || (max === maxValue)}
+                  onClick={() => onChange({ maxValue: max })}
+                  icon="checkmark"
+                  color="green"
+                />
+                <Popup
+                  trigger={(
+                    <Button
+                      onClick={() => onChange({ maxValue: null })}
+                      icon="x"
+                    />
+                  )}
+                  content="Clear value"
+                />
+              </Form.Input>
+            </Form.Field>
+            <Form.Field>
+              <label>Min Y Axis value</label>
+              <Form.Input
+                placeholder="Enter a number"
+                value={min}
+                onChange={(e, data) => setMin(data.value)}
+                action
+              >
+                <input />
+                <Button
+                  disabled={!min || (min === minValue)}
+                  onClick={() => onChange({ minValue: min })}
+                  icon="checkmark"
+                  color="green"
+                />
+                <Popup
+                  trigger={(
+                    <Button
+                      onClick={() => onChange({ minValue: null })}
+                      icon="x"
+                    />
+                  )}
+                  content="Clear value"
+                />
+              </Form.Input>
+            </Form.Field>
+            <Form.Field>
+              <Divider />
               <label>Number of labels on the X Axis</label>
               <Dropdown
                 selection
@@ -391,6 +395,12 @@ function ChartSettings(props) {
                   value={ticksNumber}
                   onChange={(e, data) => _onChangeTickCustomValue(data.value)}
                   type="number"
+                  action={{
+                    color: "green",
+                    icon: "checkmark",
+                    content: "Save",
+                    onClick: () => _onConfirmTicksNumber(),
+                  }}
                 />
               </Form.Field>
             )}
