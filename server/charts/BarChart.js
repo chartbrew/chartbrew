@@ -87,7 +87,6 @@ class NewBarChart {
           xAxes: [{
             ticks: {
               fontFamily: "Inter",
-              maxTicksLimit: 25,
             },
           }],
         },
