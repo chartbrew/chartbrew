@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Form, Segment, Checkbox, Grid, Modal, Button,
-  Accordion, Icon, Dropdown, Label, Header, TransitionablePortal, Popup,
+  Accordion, Icon, Dropdown, Label, Header, TransitionablePortal, Popup, Input,
 } from "semantic-ui-react";
 import moment from "moment";
 import { DateRangePicker } from "react-date-range";
@@ -13,6 +13,32 @@ import "react-date-range/dist/theme/default.css"; // theme css file
 
 import { secondary, primary } from "../../../config/colors";
 import { defaultStaticRanges, defaultInputRanges } from "../../../config/dateRanges";
+
+const xLabelOptions = [{
+  key: "default",
+  value: "default",
+  text: "Default (aimed to improve visibility)",
+}, {
+  key: "showAll",
+  value: "showAll",
+  text: "Show all"
+}, {
+  key: "half",
+  value: "half",
+  text: "Half of the values"
+}, {
+  key: "third",
+  value: "third",
+  text: "A third of the values",
+}, {
+  key: "fourth",
+  value: "fourth",
+  text: "A fourth of the values",
+}, {
+  key: "custom",
+  value: "custom",
+  text: "Custom",
+}];
 
 function ChartSettings(props) {
   const [initSelectionRange] = useState({
@@ -27,12 +53,14 @@ function ChartSettings(props) {
   const [labelEndDate, setLabelEndDate] = useState("");
   const [max, setMax] = useState("");
   const [min, setMin] = useState("");
+  const [ticksNumber, setTicksNumber] = useState("");
+  const [ticksSelection, setTicksSelection] = useState("default");
 
   const {
     type, pointRadius, displayLegend,
     endDate, currentEndDate, timeInterval,
     includeZeros, startDate, onChange, onComplete,
-    maxValue, minValue,
+    maxValue, minValue, xLabelTicks,
   } = props;
 
   useEffect(() => {
@@ -59,6 +87,17 @@ function ChartSettings(props) {
   useEffect(() => {
     setDateRange({ startDate, endDate });
   }, [startDate, endDate]);
+
+  useEffect(() => {
+    if (!xLabelTicks || xLabelTicks === "default") {
+      setTicksSelection("default");
+    } else if (xLabelTicks !== "showAll" && xLabelTicks !== "half" && xLabelTicks !== "third" && xLabelTicks !== "fourth") {
+      setTicksSelection("custom");
+      setTicksNumber(xLabelTicks);
+    } else {
+      setTicksSelection(xLabelTicks);
+    }
+  }, [xLabelTicks]);
 
   useEffect(() => {
     if (startDate && endDate) {
@@ -124,6 +163,14 @@ function ChartSettings(props) {
     } else {
       setActiveOption(option);
     }
+  };
+
+  const _onChangeTicks = (value) => {
+    onChange({ xLabelTicks: value });
+  };
+
+  const _onChangeTickCustomValue = (value) => {
+    onChange({ xLabelTicks: `${value}` });
   };
 
   return (
@@ -327,6 +374,26 @@ function ChartSettings(props) {
                 </Form.Input>
               </Form.Field>
             </Form.Group>
+            <Form.Field>
+              <label>Number of labels on the X Axis</label>
+              <Dropdown
+                selection
+                options={xLabelOptions}
+                value={ticksSelection}
+                onChange={(e, data) => _onChangeTicks(data.value)}
+              />
+            </Form.Field>
+            {ticksSelection === "custom" && (
+              <Form.Field>
+                <label>Enter the number of labels</label>
+                <Input
+                  placeholder="Enter a number"
+                  value={ticksNumber}
+                  onChange={(e, data) => _onChangeTickCustomValue(data.value)}
+                  type="number"
+                />
+              </Form.Field>
+            )}
           </Form>
         </Accordion.Content>
       </Accordion>
@@ -408,6 +475,7 @@ ChartSettings.defaultProps = {
   onComplete: () => { },
   maxValue: null,
   minValue: null,
+  xLabelTicks: "",
 };
 
 ChartSettings.propTypes = {
@@ -423,6 +491,7 @@ ChartSettings.propTypes = {
   onComplete: PropTypes.func,
   maxValue: PropTypes.number,
   minValue: PropTypes.number,
+  xLabelTicks: PropTypes.number,
 };
 
 export default ChartSettings;

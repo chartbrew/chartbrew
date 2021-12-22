@@ -222,7 +222,7 @@ function AddChart(props) {
 
   const _onChangeGlobalSettings = ({
     pointRadius, displayLegend, dateRange, includeZeros, timeInterval, currentEndDate,
-    maxValue, minValue,
+    maxValue, minValue, xLabelTicks,
   }) => {
     const tempChart = {
       pointRadius: typeof pointRadius !== "undefined" ? pointRadius : newChart.pointRadius,
@@ -234,10 +234,11 @@ function AddChart(props) {
       currentEndDate: typeof currentEndDate !== "undefined" ? currentEndDate : newChart.currentEndDate,
       minValue: typeof minValue !== "undefined" ? minValue : newChart.minValue,
       maxValue: typeof maxValue !== "undefined" ? maxValue : newChart.maxValue,
+      xLabelTicks: typeof xLabelTicks !== "undefined" ? xLabelTicks : newChart.xLabelTicks,
     };
 
     let skipParsing = false;
-    if (pointRadius || displayLegend || minValue || maxValue) {
+    if (pointRadius || displayLegend || minValue || maxValue || xLabelTicks) {
       skipParsing = true;
     }
 
@@ -257,7 +258,7 @@ function AddChart(props) {
           });
         }
 
-        if (data.datasetColor || data.fillColor || data.type) {
+        if (skipParsing || data.datasetColor || data.fillColor || data.type) {
           shouldSkipParsing = true;
         }
 
@@ -510,6 +511,7 @@ function AddChart(props) {
                 onComplete={(skipParsing = false) => _onRefreshPreview(skipParsing)}
                 maxValue={newChart.maxValue}
                 minValue={newChart.minValue}
+                xLabelTicks={newChart.xLabelTicks}
               />
             )}
           </div>

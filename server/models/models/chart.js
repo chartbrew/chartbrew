@@ -118,6 +118,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    xLabelTicks: {
+      type: DataTypes.STRING,
+      defaultValue: "default",
+    },
   }, {
     freezeTableName: true,
   });
