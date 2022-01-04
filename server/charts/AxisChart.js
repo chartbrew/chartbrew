@@ -436,28 +436,30 @@ class AxisChart {
       });
     }
 
-    for (let i = 0; i < this.datasets.length; i++) {
-      if (this.datasets[i].options && this.datasets[i].options.formula) {
-        const { formula } = this.datasets[i].options;
-        this.axisData.y[i] = this.axisData.y[i].map((val) => {
-          const before = formula.substring(0, formula.indexOf("{"));
-          const after = formula.substring(formula.indexOf("}") + 1);
-          const expressionString = formula.substring(formula.indexOf("{") + 1, formula.indexOf("}"));
-          const expression = expressionString.replace(/val/g, val);
+    if (!skipDataProcessing) {
+      for (let i = 0; i < this.datasets.length; i++) {
+        if (this.datasets[i].options && this.datasets[i].options.formula) {
+          const { formula } = this.datasets[i].options;
+          this.axisData.y[i] = this.axisData.y[i].map((val) => {
+            const before = formula.substring(0, formula.indexOf("{"));
+            const after = formula.substring(formula.indexOf("}") + 1);
+            const expressionString = formula.substring(formula.indexOf("{") + 1, formula.indexOf("}"));
+            const expression = expressionString.replace(/val/g, val);
 
-          const newVal = parser.parse(expression);
-          let parserResult = newVal.result;
-          if (parserResult % 1 !== 0) {
-            parserResult = parserResult.toFixed(2);
-          }
+            const newVal = parser.parse(expression);
+            let parserResult = newVal.result;
+            if (parserResult % 1 !== 0) {
+              parserResult = parserResult.toFixed(2);
+            }
 
-          let finalVal = `${before}${parserResult}${after}`;
-          if (this.chart.mode !== "kpi") {
-            finalVal = parserResult;
-          }
+            let finalVal = `${before}${parserResult}${after}`;
+            if (this.chart.mode !== "kpi") {
+              finalVal = parserResult;
+            }
 
-          return finalVal;
-        });
+            return finalVal;
+          });
+        }
       }
     }
 
