@@ -196,25 +196,17 @@ This is already added in the example above, but if you create new virtual hosts 
 The setup is not yet updated for PostgreSQL. Please [open a PR](https://github.com/chartbrew/chartbrew/compare) or [a new issue](https://github.com/chartbrew/chartbrew/issues/new) if you have a solution or encounter any problems that can help us with the support.
 :::
 
-A [Chartbrew docker image](https://hub.docker.com/r/razvanilin/chartbrew) is built whenever a new version is released. Run the commands below to get started.
+A [Chartbrew docker image](https://hub.docker.com/r/razvanilin/chartbrew) is built whenever a new version is released.
+
+Before running the commands below, make sure you have a MySQL server already running and an empty database that Chartbrew can use. The database name should match the value of the `CB_DB_NAME` variable.
 
 For `amd64` architecture:
 
 ```sh
 docker pull razvanilin/chartbrew
-```
 
-For `arm64` architecture:
-
-```sh
-docker pull razvanilin/chartbrew:latest-arm64
-```
-
-Then:
-
-```sh
 docker run -p 3210:3210 -p 3000:3000 \
-  -e CB_SECRET=<enter_a_secure_string> \
+  -e CB_SECRET=enter_a_secure_string \
   -e CB_API_HOST=0.0.0.0 \
   -e CB_API_PORT=3210 \
   -e CB_DB_HOST=host.docker.internal \
@@ -224,6 +216,24 @@ docker run -p 3210:3210 -p 3000:3000 \
   -e REACT_APP_CLIENT_HOST=http://localhost:3000 \
   -e REACT_APP_API_HOST=http://localhost:3210 \
   razvanilin/chartbrew
+```
+
+For `arm64` architecture:
+
+```sh
+docker pull razvanilin/chartbrew:latest-arm64
+
+docker run -p 3210:3210 -p 3000:3000 \
+  -e CB_SECRET=enter_a_secure_string \
+  -e CB_API_HOST=0.0.0.0 \
+  -e CB_API_PORT=3210 \
+  -e CB_DB_HOST=host.docker.internal \
+  -e CB_DB_NAME=chartbrew \
+  -e CB_DB_USERNAME=root \
+  -e CB_DB_PASSWORD=password \
+  -e REACT_APP_CLIENT_HOST=http://localhost:3000 \
+  -e REACT_APP_API_HOST=http://localhost:3210 \
+  razvanilin/chartbrew:latest-arm64
 ```
 
 Check `.env-template` in the repository for extra environmental variables to enable `One account` or emailing capabilities.
