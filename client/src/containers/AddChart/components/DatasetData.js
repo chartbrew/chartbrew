@@ -507,15 +507,70 @@ function DatasetData(props) {
               scrolling
             />
 
+            <>
+              <Popup
+                trigger={(
+                  <Button
+                    icon="sort content ascending"
+                    basic
+                    primary={dataset.sort === "asc"}
+                    onClick={() => {
+                      if (dataset.sort === "asc") {
+                        onUpdate({ sort: "" });
+                      } else {
+                        onUpdate({ sort: "asc" });
+                      }
+                    }}
+                  />
+                )}
+                content="Sort the dataset in ascending order"
+                inverted
+              />
+              <Popup
+                trigger={(
+                  <Button
+                    icon="sort content descending"
+                    basic
+                    primary={dataset.sort === "desc"}
+                    onClick={() => {
+                      if (dataset.sort === "desc") {
+                        onUpdate({ sort: "" });
+                      } else {
+                        onUpdate({ sort: "desc" });
+                      }
+                    }}
+                  />
+                )}
+                content="Sort the dataset in descending order"
+                inverted
+              />
+            </>
+            {dataset.sort && (
+              <Popup
+                trigger={(
+                  <Button
+                    className="tertiary"
+                    icon="x"
+                    onClick={() => onUpdate({ sort: "" })}
+                  />
+                )}
+                content="Clear sorting"
+                inverted
+              />
+            )}
+
             {!formula && (
-              <Button
-                icon
-                className="tertiary"
-                onClick={_onAddFormula}
-              >
-                <Icon name="plus" />
-                {" Add formula"}
-              </Button>
+              <div>
+                <Button
+                  icon
+                  className="tertiary"
+                  onClick={_onAddFormula}
+                  size="small"
+                >
+                  <Icon name="plus" />
+                  {" Add formula"}
+                </Button>
+              </div>
             )}
           </Grid.Column>
         </Grid.Row>

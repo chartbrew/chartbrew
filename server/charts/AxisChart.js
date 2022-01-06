@@ -491,6 +491,56 @@ class AxisChart {
 
     const configuration = chart.getConfiguration();
 
+    const newDatasets = configuration.data.datasets;
+    const newLabels = configuration.data.labels;
+
+    // apply sorting if available
+    let shouldSort = false;
+    let sortIndex;
+    this.datasets.forEach((d, index) => {
+      if (d.options.sort) {
+        sortIndex = index;
+        shouldSort = true;
+      }
+    });
+
+    if (shouldSort) {
+      for (let i = 0; i < newDatasets[sortIndex].data.length - 1; i++) {
+        for (let j = i + 1; j < newDatasets[sortIndex].data.length; j++) {
+          let sortCondition;
+          if (this.datasets[sortIndex].options.sort === "asc") {
+            sortCondition = newDatasets[sortIndex].data[i] > newDatasets[sortIndex].data[j];
+          } else if (this.datasets[sortIndex].options.sort === "desc") {
+            sortCondition = newDatasets[sortIndex].data[i] < newDatasets[sortIndex].data[j];
+          }
+
+          if (sortCondition) {
+            // first, sort the dataset with the sorting option enabled
+            const saved = newDatasets[sortIndex].data[i];
+            newDatasets[sortIndex].data[i] = newDatasets[sortIndex].data[j];
+            newDatasets[sortIndex].data[j] = saved;
+
+            // then sort the labels in the same way
+            const savedLabel = newLabels[i];
+            newLabels[i] = newLabels[j];
+            newLabels[j] = savedLabel;
+
+            // finally, sort the rest of the datasets
+            for (let d = 0; d < newDatasets.length; d++) {
+              if (d !== sortIndex) {
+                const savedDataset = newDatasets[d].data[i];
+                newDatasets[d].data[i] = newDatasets[d].data[j];
+                newDatasets[d].data[j] = savedDataset;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    configuration.data.datasets = newDatasets;
+    configuration.data.labels = newLabels;
+
     return {
       configuration,
       conditionsOptions,

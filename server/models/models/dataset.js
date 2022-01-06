@@ -161,6 +161,9 @@ module.exports = (sequelize, DataTypes) => {
     groupBy: {
       type: DataTypes.STRING,
     },
+    sort: {
+      type: DataTypes.STRING,
+    },
   }, {
     freezeTableName: true,
   });
