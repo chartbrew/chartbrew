@@ -1,6 +1,19 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
-import { Polar } from "react-chartjs-2";
+import { PolarArea } from "react-chartjs-2";
+
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 function PolarChart(props) {
   const {
@@ -17,7 +30,7 @@ function PolarChart(props) {
 
   return (
     <div>
-      <Polar
+      <PolarArea
         data={chart.chartData.data}
         options={chart.chartData.options}
         height={height}

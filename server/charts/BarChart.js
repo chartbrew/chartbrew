@@ -41,34 +41,33 @@ class NewBarChart {
     if (this.chart.mode === "kpi") {
       chartJsData.options = {
         maintainAspectRatio: false,
-        legend: {
-          display: false,
-        },
         elements: {
           point: {
             radius: 0,
           },
         },
         scales: {
-          yAxes: [{
+          y: {
             stacked: this.chart.stacked,
             display: false,
-          }],
-          xAxes: [{
+          },
+          x: {
             stacked: this.chart.stacked,
             display: false,
-          }],
+          },
         },
-        tooltips: {
-          enabled: false,
+        plugins: {
+          tooltip: {
+            enabled: false,
+          },
+          legend: {
+            display: false,
+          },
         },
       };
     } else {
       chartJsData.options = {
         maintainAspectRatio: false,
-        legend: {
-          display: this.chart.displayLegend,
-        },
         elements: {
           point: {
             radius:
@@ -78,30 +77,39 @@ class NewBarChart {
           },
         },
         scales: {
-          yAxes: [{
+          y: {
+            stacked: this.chart.stacked,
+            beginAtZero: !this.chart.minValue && true,
+            maxTicksLimit: 15,
+            precision: 0,
+            ticks: {
+              font: {
+                family: "Inter",
+              },
+            },
+          },
+          x: {
             stacked: this.chart.stacked,
             ticks: {
-              beginAtZero: !this.chart.minValue && true,
-              precision: 0,
-              fontFamily: "Inter",
-              maxTicksLimit: 15,
+              font: {
+                family: "Inter",
+              },
             },
-          }],
-          xAxes: [{
-            stacked: this.chart.stacked,
-            ticks: {
-              fontFamily: "Inter",
-            },
-          }],
+          },
         },
-        tooltips: tooltipsStyle,
+        plugins: {
+          tooltip: tooltipsStyle,
+          legend: {
+            display: this.chart.displayLegend,
+          },
+        },
       };
 
       if (this.chart.maxValue) {
-        chartJsData.options.scales.yAxes[0].ticks.max = this.chart.maxValue;
+        chartJsData.options.scales.y.max = this.chart.maxValue;
       }
       if (this.chart.minValue) {
-        chartJsData.options.scales.yAxes[0].ticks.min = this.chart.minValue;
+        chartJsData.options.scales.y.min = this.chart.minValue;
       }
 
       // check how many ticks should the X Axis have
@@ -129,7 +137,7 @@ class NewBarChart {
         }
       }
 
-      chartJsData.options.scales.xAxes[0].ticks.maxTicksLimit = maxTicksLimit;
+      chartJsData.options.scales.x.maxTicksLimit = maxTicksLimit;
     }
 
     return chartJsData;

@@ -1,16 +1,19 @@
 module.exports = {
   backgroundColor: "#103751",
-  titleFontColor: "#fff",
-  titleFontSize: 12,
-  titleFontFamily: "Inter",
-  titleFontStyle: "normal",
-  bodyFontSize: 14,
-  bodyFontColor: "#fff",
-  bodyFontFamily: "Inter",
-  bodyFontStyle: "bold",
+  titleFont: {
+    color: "#fff",
+    size: 12,
+    family: "Inter",
+    weight: "normal",
+  },
+  bodyFont: {
+    size: 14,
+    color: "#fff",
+    family: "Inter",
+    weight: "bold"
+  },
   borderColor: "#1A7FA0",
   borderWidth: 2,
   bodySpacing: 10,
-  xPadding: 10,
-  yPadding: 10,
+  padding: 10,
 };

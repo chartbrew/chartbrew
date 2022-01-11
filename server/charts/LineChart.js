@@ -55,26 +55,25 @@ class NewLineChart {
           },
         },
         scales: {
-          yAxes: [{
+          y: {
             display: false,
-          }],
-          xAxes: [{
+          },
+          x: {
             display: false,
-          }],
+          },
         },
-        tooltips: {
-          enabled: false,
-        },
-        legend: {
-          display: false,
-        },
+        plugins: {
+          tooltip: {
+            enabled: false,
+          },
+          legend: {
+            display: false,
+          },
+        }
       };
     } else {
       chartJsData.options = {
         maintainAspectRatio: false,
-        legend: {
-          display: this.chart.displayLegend,
-        },
         elements: {
           point: {
             radius:
@@ -87,28 +86,37 @@ class NewLineChart {
           },
         },
         scales: {
-          yAxes: [{
+          y: {
+            beginAtZero: !this.chart.minValue && true,
+            precision: 0,
             ticks: {
-              beginAtZero: !this.chart.minValue && true,
-              precision: 0,
-              fontFamily: "Inter",
-              maxTicksLimit: 15,
-            }
-          }],
-          xAxes: [{
-            ticks: {
-              fontFamily: "Inter",
+              font: {
+                family: "Inter",
+              },
             },
-          }],
+            maxTicksLimit: 15,
+          },
+          x: {
+            ticks: {
+              font: {
+                family: "Inter",
+              },
+            },
+          },
         },
-        tooltips: tooltipsStyle,
+        plugins: {
+          tooltip: tooltipsStyle,
+          legend: {
+            display: this.chart.displayLegend,
+          },
+        },
       };
 
       if (this.chart.maxValue) {
-        chartJsData.options.scales.yAxes[0].ticks.max = this.chart.maxValue;
+        chartJsData.options.scales.y.max = this.chart.maxValue;
       }
       if (this.chart.minValue) {
-        chartJsData.options.scales.yAxes[0].ticks.min = this.chart.minValue;
+        chartJsData.options.scales.y.min = this.chart.minValue;
       }
 
       // check how many ticks should the X Axis have
@@ -136,7 +144,7 @@ class NewLineChart {
         }
       }
 
-      chartJsData.options.scales.xAxes[0].ticks.maxTicksLimit = maxTicksLimit;
+      chartJsData.options.scales.x.maxTicksLimit = maxTicksLimit;
     }
 
     return chartJsData;

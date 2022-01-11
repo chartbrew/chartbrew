@@ -2,6 +2,21 @@ import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Radar } from "react-chartjs-2";
 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  RadialLinearScale,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+ChartJS.register(
+  CategoryScale, RadialLinearScale, PointElement, ArcElement, Title, Tooltip, Legend
+);
+
 function RadarChart(props) {
   const {
     chart, redraw, redrawComplete, height

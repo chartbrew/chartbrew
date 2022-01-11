@@ -3,8 +3,20 @@ import PropTypes from "prop-types";
 import { Bar } from "react-chartjs-2";
 import { Header } from "semantic-ui-react";
 import uuid from "uuid/v4";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
 
 import determineType from "../../../modules/determineType";
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, BarElement, Title, Tooltip, Legend);
 
 function BarChart(props) {
   const {

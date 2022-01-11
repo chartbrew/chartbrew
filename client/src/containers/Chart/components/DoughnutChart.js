@@ -2,6 +2,19 @@ import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Doughnut } from "react-chartjs-2";
 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, ArcElement, Title, Tooltip, Legend);
+
 function DoughnutChart(props) {
   const {
     chart, redraw, redrawComplete, height

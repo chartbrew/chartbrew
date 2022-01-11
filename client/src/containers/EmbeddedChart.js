@@ -2,9 +2,6 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Pie, Doughnut, Radar, Polar
-} from "react-chartjs-2";
-import {
   Container, Loader, Header, Message, Icon, Popup, Button, Label,
 } from "semantic-ui-react";
 import moment from "moment";
@@ -20,6 +17,10 @@ import BarChart from "./Chart/components/BarChart";
 import TableContainer from "./Chart/components/TableView/TableContainer";
 import { blackTransparent } from "../config/colors";
 import ChartFilters from "./Chart/components/ChartFilters";
+import PieChart from "./Chart/components/PieChart";
+import DoughnutChart from "./Chart/components/DoughnutChart";
+import RadarChart from "./Chart/components/RadarChart";
+import PolarChart from "./Chart/components/PolarChart";
 
 const pageHeight = window.innerHeight;
 
@@ -193,9 +194,8 @@ function EmbeddedChart(props) {
         {chart.type === "pie"
           && (
           <Container fluid>
-            <Pie
-              data={chart.chartData.data}
-              options={chart.chartData.options}
+            <PieChart
+              chart={chart}
               height={pageHeight - 100}
             />
           </Container>
@@ -203,9 +203,8 @@ function EmbeddedChart(props) {
         {chart.type === "doughnut"
           && (
           <Container fluid>
-            <Doughnut
-              data={chart.chartData.data}
-              options={chart.chartData.options}
+            <DoughnutChart
+              chart={chart}
               height={pageHeight - 100}
             />
           </Container>
@@ -213,9 +212,8 @@ function EmbeddedChart(props) {
         {chart.type === "radar"
           && (
           <Container fluid>
-            <Radar
-              data={chart.chartData.data}
-              options={chart.chartData.options}
+            <RadarChart
+              chart={chart}
               height={pageHeight - 100}
             />
           </Container>
@@ -223,9 +221,8 @@ function EmbeddedChart(props) {
         {chart.type === "polar"
           && (
           <Container fluid>
-            <Polar
-              data={chart.chartData.data}
-              options={chart.chartData.options}
+            <PolarChart
+              chart={chart}
               height={pageHeight - 100}
             />
           </Container>

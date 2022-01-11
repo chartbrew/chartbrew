@@ -12,10 +12,9 @@ class NewPieChart {
     const barChart = new NewBarChart(this.chart, this.datasets, this.axisData);
     const config = barChart.getConfiguration();
 
-    config.options.pieceLabel = { render: "value", fontStyle: "bold" };
     config.options.scales = {
-      xAxes: [{ display: false }],
-      yAxes: [{ display: false }],
+      x: { display: false },
+      y: { display: false },
     };
 
     return config;
