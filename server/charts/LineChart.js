@@ -73,6 +73,10 @@ class NewLineChart {
       };
     } else {
       chartJsData.options = {
+        interaction: {
+          intersect: false,
+          mode: "index",
+        },
         maintainAspectRatio: false,
         elements: {
           point: {

@@ -12,8 +12,23 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, ArcElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale, LinearScale, PointElement, ArcElement, Title, Tooltip, Legend,
+);
+
+const dataLabelsPlugin = {
+  // borderColor: "white",
+  // borderRadius: 25,
+  // borderWidth: 2,
+  // color: "black",
+  font: {
+    weight: "bold",
+  },
+  padding: 3,
+  formatter: Math.round
+};
 
 function DoughnutChart(props) {
   const {
@@ -32,9 +47,16 @@ function DoughnutChart(props) {
     <div>
       <Doughnut
         data={chart.chartData.data}
-        options={chart.chartData.options}
+        options={{
+          ...chart.chartData.options,
+          plugins: {
+            ...chart.chartData.options.plugins,
+            datalabels: dataLabelsPlugin,
+          },
+        }}
         height={height}
         redraw={redraw}
+        plugins={[ChartDataLabels]}
       />
     </div>
   );
