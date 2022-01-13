@@ -80,7 +80,7 @@ function DatasetAppearance(props) {
             {dataItems && dataItems.data && dataItems.data.map((val, fillIndex) => {
               return (
                 <Popup
-                  key={dataItems.labels[fillIndex]}
+                  key={dataItems && dataItems.labels[fillIndex]}
                   content={() => (
                     <ColorPicker type="fill" fillIndex={fillIndex} onUpdate={onUpdate} dataset={dataset} />
                   )}
@@ -89,7 +89,7 @@ function DatasetAppearance(props) {
                       size="large"
                       color="blue"
                       style={styles.datasetColorBtn(dataset.fillColor[fillIndex])}
-                      content={dataItems.labels[fillIndex]}
+                      content={dataItems && dataItems.labels[fillIndex]}
                     />
                   )}
                   style={{ padding: 0, margin: 0 }}

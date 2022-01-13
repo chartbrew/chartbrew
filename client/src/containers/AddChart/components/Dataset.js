@@ -107,7 +107,10 @@ function Dataset(props) {
 
       if (foundIndex || foundIndex === 0) {
         tempDataItems = chart.chartData.data.datasets[foundIndex];
-        tempDataItems = { ...tempDataItems, labels: chart.chartData.data.labels };
+        tempDataItems = {
+          ...tempDataItems,
+          labels: chart.chartData.data && chart.chartData.data.labels
+        };
         setDataItems(tempDataItems);
       }
     }
