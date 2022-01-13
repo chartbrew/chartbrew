@@ -12,11 +12,14 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from "chart.js";
 
 import determineType from "../../../modules/determineType";
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler
+);
 
 function LineChart(props) {
   const {

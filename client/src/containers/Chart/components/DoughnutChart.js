@@ -11,11 +11,12 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
 ChartJS.register(
-  CategoryScale, LinearScale, PointElement, ArcElement, Title, Tooltip, Legend,
+  CategoryScale, LinearScale, PointElement, ArcElement, Title, Tooltip, Legend, Filler,
 );
 
 const dataLabelsPlugin = {

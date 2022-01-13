@@ -11,9 +11,12 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from "chart.js";
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, ArcElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale, LinearScale, PointElement, ArcElement, Title, Tooltip, Legend, Filler
+);
 
 function PieChart(props) {
   const {

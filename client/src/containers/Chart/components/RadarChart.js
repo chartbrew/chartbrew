@@ -11,10 +11,11 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from "chart.js";
 
 ChartJS.register(
-  CategoryScale, RadialLinearScale, PointElement, ArcElement, Title, Tooltip, Legend
+  CategoryScale, RadialLinearScale, PointElement, ArcElement, Title, Tooltip, Legend, Filler,
 );
 
 function RadarChart(props) {
