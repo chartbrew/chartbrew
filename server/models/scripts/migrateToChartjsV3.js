@@ -155,10 +155,12 @@ module.exports.up = () => {
               ) {
                 formattedDataset.datalabels = {
                   color: dataset.backgroundColor.map((color) => getContrastYIQ(color)),
+                  display: "auto",
                 };
               } else {
                 formattedDataset.datalabels = {
                   color: getContrastYIQ(dataset.backgroundColor),
+                  display: "auto",
                 };
               }
 

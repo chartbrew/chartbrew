@@ -35,10 +35,12 @@ class NewBarChart {
       ) {
         formattedDataset.datalabels = {
           color: dataset.options.fillColor.map((color) => getContrastYIQ(color)),
+          display: "auto",
         };
       } else {
         formattedDataset.datalabels = {
           color: getContrastYIQ(dataset.options.fillColor),
+          display: "auto",
         };
       }
 
