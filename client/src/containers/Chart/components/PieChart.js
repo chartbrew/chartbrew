@@ -33,12 +33,14 @@ function PieChart(props) {
 
   return (
     <div>
-      <Pie
-        data={chart.chartData.data}
-        options={chart.chartData.options}
-        height={height}
-        redraw={redraw}
-      />
+      {chart.chartData.data && chart.chartData.data.labels && (
+        <Pie
+          data={chart.chartData.data}
+          options={chart.chartData.options}
+          height={height}
+          redraw={redraw}
+        />
+      )}
     </div>
   );
 }

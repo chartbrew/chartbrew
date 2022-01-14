@@ -92,12 +92,14 @@ function BarChart(props) {
           </div>
         )}
       <div className={chart.mode === "kpi" && "chart-kpi"}>
-        <Bar
-          data={chart.chartData.data}
-          options={chart.chartData.options}
-          height={height}
-          redraw={redraw}
-        />
+        {chart.chartData.data && chart.chartData.data.labels && (
+          <Bar
+            data={chart.chartData.data}
+            options={chart.chartData.options}
+            height={height}
+            redraw={redraw}
+          />
+        )}
       </div>
     </>
   );

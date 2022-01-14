@@ -46,19 +46,21 @@ function DoughnutChart(props) {
 
   return (
     <div>
-      <Doughnut
-        data={chart.chartData.data}
-        options={{
-          ...chart.chartData.options,
-          plugins: {
-            ...chart.chartData.options.plugins,
-            datalabels: dataLabelsPlugin,
-          },
-        }}
-        height={height}
-        redraw={redraw}
-        plugins={[ChartDataLabels]}
-      />
+      {chart.chartData.data && chart.chartData.data.labels && (
+        <Doughnut
+          data={chart.chartData.data}
+          options={{
+            ...chart.chartData.options,
+            plugins: {
+              ...chart.chartData.options.plugins,
+              datalabels: dataLabelsPlugin,
+            },
+          }}
+          height={height}
+          redraw={redraw}
+          plugins={[ChartDataLabels]}
+        />
+      )}
     </div>
   );
 }

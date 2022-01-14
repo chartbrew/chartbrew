@@ -33,12 +33,14 @@ function PolarChart(props) {
 
   return (
     <div>
-      <PolarArea
-        data={chart.chartData.data}
-        options={chart.chartData.options}
-        height={height}
-        redraw={redraw}
-      />
+      {chart.chartData.data && chart.chartData.data.labels && (
+        <PolarArea
+          data={chart.chartData.data}
+          options={chart.chartData.options}
+          height={height}
+          redraw={redraw}
+        />
+      )}
     </div>
   );
 }

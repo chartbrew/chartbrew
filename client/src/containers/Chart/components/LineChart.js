@@ -92,12 +92,14 @@ function LineChart(props) {
           </div>
         )}
       <div className={chart.mode === "kpi" && "chart-kpi"}>
-        <Line
-          data={chart.chartData.data}
-          options={chart.chartData.options}
-          height={height}
-          redraw={redraw}
-        />
+        {chart.chartData.data && chart.chartData.data.labels && (
+          <Line
+            data={chart.chartData.data}
+            options={chart.chartData.options}
+            height={height}
+            redraw={redraw}
+          />
+        )}
       </div>
     </>
   );

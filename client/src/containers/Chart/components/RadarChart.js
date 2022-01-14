@@ -33,12 +33,14 @@ function RadarChart(props) {
 
   return (
     <div>
-      <Radar
-        data={chart.chartData.data}
-        options={chart.chartData.options}
-        height={height}
-        redraw={redraw}
-      />
+      {chart.chartData.data && chart.chartData.data.labels && (
+        <Radar
+          data={chart.chartData.data}
+          options={chart.chartData.options}
+          height={height}
+          redraw={redraw}
+        />
+      )}
     </div>
   );
 }
