@@ -48,6 +48,8 @@ module.exports.up = () => {
               newChartData.options.scales.y = {
                 ...newChartData.options.scales.yAxes[0].ticks,
                 ticks: {
+                  maxTicksLimit: newChartData.options.scales.yAxes[0].maxTicksLimit,
+                  precision: newChartData.options.scales.yAxes[0].precision,
                   font: {
                     family: "Inter",
                   },
@@ -57,6 +59,8 @@ module.exports.up = () => {
               newChartData.options.scales.x = {
                 ...newChartData.options.scales.xAxes[0].ticks,
                 ticks: {
+                  maxTicksLimit: newChartData.options.scales.xAxes[0].maxTicksLimit,
+                  precision: 0,
                   font: {
                     family: "Inter",
                   },
@@ -115,6 +119,8 @@ module.exports.up = () => {
                 ...newChartData.options.scales.yAxes[0].ticks,
                 stacked: newChartData.options.scales.yAxes[0].stacked,
                 ticks: {
+                  maxTicksLimit: newChartData.options.scales.yAxes[0].maxTicksLimit,
+                  precision: 0,
                   font: {
                     family: "Inter",
                   },
@@ -125,6 +131,8 @@ module.exports.up = () => {
                 ...newChartData.options.scales.xAxes[0].ticks,
                 stacked: newChartData.options.scales.xAxes[0].stacked,
                 ticks: {
+                  maxTicksLimit: newChartData.options.scales.xAxes[0],
+                  precision: 0,
                   font: {
                     family: "Inter",
                   },

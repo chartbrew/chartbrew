@@ -100,9 +100,9 @@ class NewBarChart {
           y: {
             stacked: this.chart.stacked,
             beginAtZero: !this.chart.minValue && true,
-            maxTicksLimit: 15,
-            precision: 0,
             ticks: {
+              maxTicksLimit: 15,
+              precision: 0,
               font: {
                 family: "Inter",
               },
@@ -157,7 +157,7 @@ class NewBarChart {
         }
       }
 
-      chartJsData.options.scales.x.maxTicksLimit = maxTicksLimit;
+      chartJsData.options.scales.x.ticks.maxTicksLimit = maxTicksLimit;
     }
 
     return chartJsData;

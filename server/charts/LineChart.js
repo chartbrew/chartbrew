@@ -92,16 +92,17 @@ class NewLineChart {
         scales: {
           y: {
             beginAtZero: !this.chart.minValue && true,
-            precision: 0,
             ticks: {
+              precision: 0,
               font: {
                 family: "Inter",
               },
+              maxTicksLimit: 15,
             },
-            maxTicksLimit: 15,
           },
           x: {
             ticks: {
+              precision: 0,
               font: {
                 family: "Inter",
               },
@@ -148,7 +149,7 @@ class NewLineChart {
         }
       }
 
-      chartJsData.options.scales.x.maxTicksLimit = maxTicksLimit;
+      chartJsData.options.scales.x.ticks.maxTicksLimit = maxTicksLimit;
     }
 
     return chartJsData;
