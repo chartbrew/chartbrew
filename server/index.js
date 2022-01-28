@@ -67,7 +67,7 @@ _.each(routes, (controller, route) => {
 app.listen(app.settings.port, app.settings.api, () => {
   // Check if this is the main cluster and run the cron jobs if it is
   const isMainCluster = parseInt(process.env.NODE_APP_INSTANCE, 10) === 0;
-  if (isMainCluster) {
+  if (isMainCluster || !process.env.NODE_APP_INSTANCE) {
     // start CronJob, making sure the database is populated for the first time
     setTimeout(() => {
       updateChartsCron();
