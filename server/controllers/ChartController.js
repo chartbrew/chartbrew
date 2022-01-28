@@ -306,7 +306,7 @@ class ChartController {
       .then((chart) => {
         gChart = chart;
         if (!chart.Datasets || chart.Datasets.length === 0) {
-          return new Promise((resolve, reject) => reject(new Error("The chart doesn't have any datasets")));
+          return new Promise((resolve, reject) => reject("The chart doesn't have any datasets"));
         }
 
         if (!user) {
@@ -425,7 +425,7 @@ class ChartController {
         return this.findById(id);
       })
       .catch((err) => {
-        return new Promise((resolve, reject) => reject(err));
+        return err;
       });
   }
 
@@ -527,7 +527,7 @@ class ChartController {
         } else if (connection.type === "postgres" || connection.type === "mysql") {
           return this.getPostgresData(chart, projectId, connection);
         } else {
-          return new Promise((resolve, reject) => reject(new Error("The connection type is not supported")));
+          return new Promise((resolve, reject) => reject("The connection type is not supported"));
         }
       })
       .catch((error) => {
@@ -579,7 +579,7 @@ class ChartController {
         } else if (connection.type === "postgres" || connection.type === "mysql") {
           return this.getPostgresData(chart, projectId, connection);
         } else {
-          return new Promise((resolve, reject) => reject(new Error("The connection type is not supported")));
+          return new Promise((resolve, reject) => reject("The connection type is not supported"));
         }
       })
       .then((data) => {
