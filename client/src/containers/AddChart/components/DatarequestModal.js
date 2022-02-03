@@ -11,7 +11,7 @@ import { toast } from "react-toastify";
 import ApiBuilder from "./ApiBuilder";
 import SqlBuilder from "./SqlBuilder";
 import MongoQueryBuilder from "./MongoQueryBuilder";
-import FirebaseBuilder from "../../Connections/Firebase/FirebaseBuilder";
+import RealtimeDbBuilder from "../../Connections/RealtimeDb/RealtimeDbBuilder";
 import FirestoreBuilder from "../../Connections/Firestore/FirestoreBuilder";
 import GaBuilder from "../../Connections/GoogleAnalytics/GaBuilder";
 
@@ -129,6 +129,7 @@ function DatarequestModal(props) {
   };
 
   const _onSaveRequest = (dr = dataRequest) => {
+    console.log("dr", dr);
     setLoading(true);
     const newDr = _.cloneDeep(dr);
     return updateDataRequest(
@@ -206,8 +207,8 @@ function DatarequestModal(props) {
             exploreData={result && JSON.stringify(result.data, null, 2)}
           />
         )}
-        {connection.type === "firebase" && dataRequest && (
-          <FirebaseBuilder
+        {connection.type === "realtimedb" && dataRequest && (
+          <RealtimeDbBuilder
             dataset={dataset}
             dataRequest={dataRequest}
             connection={connection}

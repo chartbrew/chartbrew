@@ -16,6 +16,7 @@ const FirestoreConnection = require("../connections/FirestoreConnection");
 const oauthController = require("./OAuthController");
 const determineType = require("../modules/determineType");
 const drCacheController = require("./DataRequestCacheController");
+const RealtimeDatabase = require("../connections/RealtimeDatabase");
 
 function isArrayPresent(responseData) {
   let arrayFound = false;
@@ -179,7 +180,7 @@ class ConnectionController {
       return this.testMongo(data);
     } else if (data.type === "mysql" || data.type === "postgres") {
       return this.testMysql(data);
-    } else if (data.type === "firebase") {
+    } else if (data.type === "realtimedb") {
       return this.testFirebase(data);
     } else if (data.type === "firestore") {
       return this.testFirestore(data);
@@ -228,19 +229,25 @@ class ConnectionController {
 
   testFirebase(data) {
     const parsedData = data;
-    try {
-      parsedData.firebaseServiceAccount = JSON.parse(data.firebaseServiceAccount);
-    } catch (e) {
-      return Promise.reject("The authentication JSON is not formatted correctly.");
+    if (typeof data.firebaseServiceAccount !== "object") {
+      try {
+        parsedData.firebaseServiceAccount = JSON.parse(data.firebaseServiceAccount);
+      } catch (e) {
+        return Promise.reject("The authentication JSON is not formatted correctly.");
+      }
+    } else if (data.firebaseServiceAccount) {
+      parsedData.firebaseServiceAccount = data.firebaseServiceAccount;
+    } else {
+      return Promise.reject("The firebase authentication is missing");
     }
 
-    return firebaseConnector.getAuthToken(parsedData)
-      .then(() => {
-        return Promise.resolve("The Firebase gods granted us access. The connection was successful 🙌");
-      })
-      .catch((err) => {
-        return Promise.reject(err.message || err);
-      });
+    const realtimeDatabase = new RealtimeDatabase(parsedData);
+
+    if (realtimeDatabase.db) {
+      return Promise.resolve("Connection successful");
+    }
+
+    return Promise.reject("Could not connect to the database. Please check if the Service Account details are correct.");
   }
 
   testFirestore(data) {
@@ -281,7 +288,7 @@ class ConnectionController {
           case "postgres":
           case "mysql":
             return externalDbConnection(connection);
-          case "firebase":
+          case "realtimedb":
           case "firestore":
             return firebaseConnector.getAuthToken(connection);
           case "googleAnalytics":
@@ -302,7 +309,7 @@ class ConnectionController {
           case "postgres":
           case "mysql":
             return new Promise((resolve) => resolve({ success: true }));
-          case "firebase":
+          case "realtimedb":
           case "firestore":
             return new Promise((resolve) => resolve(response));
           case "googleAnalytics":
@@ -640,6 +647,48 @@ class ConnectionController {
         const firestoreConnection = new FirestoreConnection(connection);
 
         return firestoreConnection.get(dataRequest);
+      })
+      .then((responseData) => {
+        // cache the data for later use
+        const dataToCache = {
+          dataRequest,
+          responseData,
+        };
+        drCacheController.create(dataRequest.id, dataToCache);
+
+        return responseData;
+      })
+      .catch((err) => {
+        return new Promise((resolve, reject) => reject(err));
+      });
+  }
+
+  async runRealtimeDb(id, dataRequest, getCache) {
+    if (getCache) {
+      // check if there is a cache available and valid
+      try {
+        const drCache = await drCacheController.findLast(dataRequest.id);
+        const cachedDataRequest = drCache.dataRequest;
+        cachedDataRequest.updatedAt = "";
+        cachedDataRequest.createdAt = "";
+
+        const liveDataRequest = dataRequest.toJSON();
+        liveDataRequest.updatedAt = "";
+        liveDataRequest.createdAt = "";
+
+        if (_.isEqual(cachedDataRequest, liveDataRequest)) {
+          return drCache.responseData;
+        }
+      } catch (e) {
+        //
+      }
+    }
+
+    return this.findById(id)
+      .then((connection) => {
+        const realtimeDatabase = new RealtimeDatabase(connection);
+
+        return realtimeDatabase.getData(dataRequest);
       })
       .then((responseData) => {
         // cache the data for later use

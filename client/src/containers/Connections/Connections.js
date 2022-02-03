@@ -12,7 +12,7 @@ import MongoConnectionForm from "./components/MongoConnectionForm";
 import ApiConnectionForm from "./components/ApiConnectionForm";
 import PostgresConnectionForm from "./components/PostgresConnectionForm";
 import MysqlConnectionForm from "./components/MysqlConnectionForm";
-import FirebaseConnectionForm from "./Firebase/FirebaseConnectionForm";
+import RealtimeDbConnectionForm from "./RealtimeDb/RealtimeDbConnectionForm";
 import FirestoreConnectionForm from "./Firestore/FirestoreConnectionForm";
 import GaConnectionForm from "./GoogleAnalytics/GaConnectionForm";
 import SimpleAnalyticsTemplate from "./SimpleAnalytics/SimpleAnalyticsTemplate";
@@ -329,6 +329,17 @@ function Connections(props) {
                       <Card.Header>Firestore</Card.Header>
                     </Card.Content>
                   </Card>
+                  <Card className="project-segment" onClick={() => setFormType("realtimedb")}>
+                    <Image
+                      src={connectionImages.firebase}
+                      label={{
+                        as: "a", color: "olive", title: "Freshly released", corner: "left", icon: "wrench"
+                      }}
+                    />
+                    <Card.Content textAlign="center" style={styles.smallerText}>
+                      <Card.Header>Realtime Database</Card.Header>
+                    </Card.Content>
+                  </Card>
                   <Card className="project-segment" onClick={() => setFormType("googleAnalytics")}>
                     <Image
                       src={connectionImages.googleAnalytics}
@@ -447,8 +458,8 @@ function Connections(props) {
               testResult={testResult}
             />
           )}
-          {formType === "firebase" && (
-            <FirebaseConnectionForm
+          {formType === "realtimedb" && (
+            <RealtimeDbConnectionForm
               projectId={match.params.projectId}
               onTest={_onTestRequest}
               onComplete={_onAddNewConnection}

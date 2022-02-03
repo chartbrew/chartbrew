@@ -81,7 +81,7 @@ function CustomTemplateForm(props) {
             }
             break;
           case "firestore":
-          case "firebase":
+          case "realtimedb":
             if (c.firebaseServiceAccount === connection.firebaseServiceAccount) {
               foundConnections.push(c);
             }

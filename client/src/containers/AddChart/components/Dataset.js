@@ -10,13 +10,7 @@ import {
 import moment from "moment";
 
 import { primary } from "../../../config/colors";
-import mongoImg from "../../../assets/mongodb-logo-1.png";
-import mysqlImg from "../../../assets/mysql.svg";
-import apiImg from "../../../assets/api.png";
-import postgresImg from "../../../assets/postgres.png";
-import firebaseImg from "../../../assets/firebase-real-time-database.png";
-import firestoreImg from "../../../assets/firebase-firestore.png";
-import gAnalyticsLogo from "../../../assets/GoogleAnalytics.webp";
+import connectionImages from "../../../config/connectionImages";
 import DatarequestModal from "./DatarequestModal";
 import DatasetAppearance from "./DatasetAppearance";
 import DatasetData from "./DatasetData";
@@ -43,12 +37,12 @@ function Dataset(props) {
     const config = [];
     connections.map((connection) => {
       const image = connection.type === "mongodb"
-        ? mongoImg : connection.type === "api"
-          ? apiImg : connection.type === "mysql"
-            ? mysqlImg : connection.type === "firebase"
-              ? firebaseImg : connection.type === "firestore"
-                ? firestoreImg : connection.type === "googleAnalytics"
-                  ? gAnalyticsLogo : postgresImg;
+        ? connectionImages.mongodb : connection.type === "api"
+          ? connectionImages.api : connection.type === "mysql"
+            ? connectionImages.mysql : connection.type === "realtimedb"
+              ? connectionImages.firebase : connection.type === "firestore"
+                ? connectionImages.firestore : connection.type === "googleAnalytics"
+                  ? connectionImages.googleAnalytics : connectionImages.postgres;
 
       config.push({
         key: connection.id,

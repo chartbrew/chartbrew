@@ -26,14 +26,14 @@ const sampleAuth = `{
 /*
   The Form used to create API connections
 */
-function FirebaseConnectionForm(props) {
+function RealtimeDbConnectionForm(props) {
   const {
     editConnection, projectId, onComplete, addError, onTest, testResult,
   } = props;
 
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
-  const [connection, setConnection] = useState({ type: "firebase", optionsArray: [], firebaseServiceAccount: sampleAuth });
+  const [connection, setConnection] = useState({ type: "realtimedb", optionsArray: [], firebaseServiceAccount: sampleAuth });
   const [errors, setErrors] = useState({});
   const [showInstructions, setShowInstructions] = useState(false);
 
@@ -285,13 +285,13 @@ const styles = {
   },
 };
 
-FirebaseConnectionForm.defaultProps = {
+RealtimeDbConnectionForm.defaultProps = {
   editConnection: null,
   addError: null,
   testResult: null,
 };
 
-FirebaseConnectionForm.propTypes = {
+RealtimeDbConnectionForm.propTypes = {
   onComplete: PropTypes.func.isRequired,
   onTest: PropTypes.func.isRequired,
   projectId: PropTypes.string.isRequired,
@@ -300,4 +300,4 @@ FirebaseConnectionForm.propTypes = {
   testResult: PropTypes.object,
 };
 
-export default FirebaseConnectionForm;
+export default RealtimeDbConnectionForm;

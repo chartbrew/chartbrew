@@ -108,11 +108,14 @@ class DatasetController {
           return this.connectionController.runFirestore(connection.id, dataRequest, getCache);
         } else if (connection.type === "googleAnalytics") {
           return this.connectionController.runGoogleAnalytics(connection, dataRequest);
+        } else if (connection.type === "realtimedb") {
+          return this.connectionController.runRealtimeDb(connection.id, dataRequest, getCache);
         } else {
           return new Promise((resolve, reject) => reject(new Error("Invalid connection type")));
         }
       })
       .then(async (rawData) => {
+        console.log("rawData", rawData);
         let data = rawData;
         if (gConnection.type === "mongodb") {
           data = JSON.parse(JSON.stringify(data));
