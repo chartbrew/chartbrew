@@ -1,14 +1,19 @@
-import React, { useState, useEffect } from "react";
+/* eslint-disable react/jsx-props-no-spreading */
+
+import React, {
+  useState, useEffect, useMemo, useCallback
+} from "react";
 import PropTypes from "prop-types";
 import {
   Segment, Form, Button, Icon, Header, Label, Message, Container,
   Placeholder, Divider, List, Transition,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
+import { useDropzone } from "react-dropzone";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
-import { secondary } from "../../../config/colors";
+import { blue, secondary } from "../../../config/colors";
 
 const sampleAuth = `{
   "type": "service_account",
@@ -35,11 +40,89 @@ function RealtimeDbConnectionForm(props) {
   const [testLoading, setTestLoading] = useState(false);
   const [connection, setConnection] = useState({ type: "realtimedb", optionsArray: [], firebaseServiceAccount: sampleAuth });
   const [errors, setErrors] = useState({});
-  const [showInstructions, setShowInstructions] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(true);
+  const [jsonVisible, setJsonVisible] = useState(false);
 
   useEffect(() => {
     _init();
   }, []);
+
+  useEffect(() => {
+    if (connection && connection.firebaseServiceAccount) {
+      setJsonVisible(true);
+    }
+  }, [connection]);
+
+  const baseStyle = {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    padding: "20px",
+    borderWidth: 2,
+    borderRadius: 2,
+    borderColor: "#eeeeee",
+    borderStyle: "dashed",
+    backgroundColor: "#fafafa",
+    color: blue,
+    outline: "none",
+    transition: "border .24s ease-in-out"
+  };
+
+  const activeStyle = {
+    borderColor: "#2196f3"
+  };
+
+  const acceptStyle = {
+    borderColor: "#00e676"
+  };
+
+  const rejectStyle = {
+    borderColor: "#ff1744"
+  };
+
+  function StyledDropzone() {
+    const onDrop = useCallback((acceptedFiles) => {
+      const reader = new FileReader(); // eslint-disable-line
+      reader.readAsText(acceptedFiles[0]);
+      reader.onload = () => {
+        let jsonData = reader.result;
+        jsonData = JSON.stringify(JSON.parse(reader.result), null, 4);
+        setConnection({ ...connection, firebaseServiceAccount: jsonData });
+      };
+    }, []);
+
+    const {
+      getRootProps,
+      getInputProps,
+      isDragActive,
+      isDragAccept,
+      isDragReject
+    } = useDropzone({ accept: "application/json", onDrop });
+
+    const style = useMemo(() => ({
+      ...baseStyle,
+      ...(isDragActive ? activeStyle : {}),
+      ...(isDragAccept ? acceptStyle : {}),
+      ...(isDragReject ? rejectStyle : {})
+    }), [
+      isDragActive,
+      isDragReject,
+      isDragAccept
+    ]);
+
+    return (
+      <div className="container" style={{ cursor: "pointer" }}>
+        <div {...getRootProps({ style })}>
+          <input {...getInputProps()} />
+          <p>
+            <Icon size="big" name="file code outline" />
+            {"Drag and drop your JSON authentication file here"}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const _init = () => {
     if (editConnection) {
@@ -126,7 +209,7 @@ function RealtimeDbConnectionForm(props) {
               <Divider />
 
               <Header as="h4" onClick={() => setShowInstructions(!showInstructions)} style={styles.tableFields}>
-                {"See connection instructions "}
+                {"How to authenticate "}
                 {!showInstructions && (<Icon size="small" name="chevron down" />)}
                 {showInstructions && (<Icon size="small" name="chevron up" />)}
               </Header>
@@ -152,7 +235,7 @@ function RealtimeDbConnectionForm(props) {
 
                     <List.Item>
                       <List.Content>
-                        <List.Header>{"3. Open the JSON file and copy the contents below."}</List.Header>
+                        <List.Header>{"3. Drag and drop the file below or copy the contents in the text editor."}</List.Header>
                         <List.Description>{"The JSON file contains authentication details that Chartbrew needs in order to connect to your Firebase."}</List.Description>
                       </List.Content>
                     </List.Item>
@@ -164,20 +247,37 @@ function RealtimeDbConnectionForm(props) {
             </Form.Field>
 
             <Form.Field>
-              <label>Add your Service Account details here</label>
-              <AceEditor
-                mode="json"
-                theme="tomorrow"
-                height="250px"
-                width="none"
-                value={connection.firebaseServiceAccount || ""}
-                name="queryEditor"
-                onChange={(value) => {
-                  setConnection({ ...connection, firebaseServiceAccount: value });
-                }}
-                editorProps={{ $blockScrolling: true }}
-              />
+              <StyledDropzone />
             </Form.Field>
+
+            {!jsonVisible && (
+              <Form.Field>
+                <Button
+                  primary
+                  className="tertiary"
+                  content="Click here to copy the JSON manually"
+                  onClick={() => setJsonVisible(true)}
+                />
+              </Form.Field>
+            )}
+
+            {jsonVisible && (
+              <Form.Field>
+                <label>Add your Service Account details here</label>
+                <AceEditor
+                  mode="json"
+                  theme="tomorrow"
+                  height="250px"
+                  width="none"
+                  value={connection.firebaseServiceAccount || ""}
+                  name="queryEditor"
+                  onChange={(value) => {
+                    setConnection({ ...connection, firebaseServiceAccount: value });
+                  }}
+                  editorProps={{ $blockScrolling: true }}
+                />
+              </Form.Field>
+            )}
 
             <Divider hidden />
           </Form>
