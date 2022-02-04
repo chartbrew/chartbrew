@@ -297,6 +297,7 @@ function PublicDashboard(props) {
                       <Input
                         placeholder="Enter the password here"
                         value={reportPassword}
+                        type="password"
                         onChange={(e, data) => setReportPassword(data.value)}
                       />
                     </Form.Field>
