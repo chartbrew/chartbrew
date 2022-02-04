@@ -157,11 +157,11 @@ function RealtimeDbConnectionForm(props) {
 
   const _getFirebaseAuth = (data) => {
     const { firebaseServiceAccount } = data;
-    if (!firebaseServiceAccount) return sampleAuth;
+    if (!firebaseServiceAccount) return "";
     try {
       return JSON.stringify(data.firebaseServiceAccount, null, 4);
     } catch (e) {
-      return data.firebaseServiceAccount || sampleAuth;
+      return data.firebaseServiceAccount || "";
     }
   };
 
