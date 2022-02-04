@@ -279,15 +279,6 @@ function FirestoreConnectionForm(props) {
             </Message>
           )}
 
-        <Message icon>
-          <Icon name="wrench" />
-          <Message.Content>
-            <Message.Header>Firestore has just arrived</Message.Header>
-            {"The Firestore functionality was just implemented on Chartbrew. If you spot any issues, please let me know at "}
-            <a href="mailto:raz@chartbrew.com?subject=Firestore feedback">raz@chartbrew.com</a>
-          </Message.Content>
-        </Message>
-
         <Divider hidden />
         <Container fluid textAlign="right">
           <Button

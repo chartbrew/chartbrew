@@ -191,6 +191,15 @@ function RealtimeDbConnectionForm(props) {
             </Message>
           )}
 
+        <Message icon>
+          <Icon name="wrench" />
+          <Message.Content>
+            <Message.Header>Realtime Database has just arrived</Message.Header>
+            {"The integration was just added to Chartbrew. If you spot any issues, please let me know at "}
+            <a href="mailto:raz@chartbrew.com?subject=Realtime Database feedback">raz@chartbrew.com</a>
+          </Message.Content>
+        </Message>
+
         <Divider hidden />
         <Container fluid textAlign="right">
           <Button

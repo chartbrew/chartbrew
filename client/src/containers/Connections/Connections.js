@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import moment from "moment";
 import {
   Card, Image, Button, Icon, Container, Divider,
-  Modal, Header, Message, Segment, TransitionablePortal, Menu, Label,
+  Modal, Header, Message, Segment, TransitionablePortal, Menu,
 } from "semantic-ui-react";
 import { useWindowSize } from "react-use";
 
@@ -288,7 +288,6 @@ function Connections(props) {
               >
                 <Icon name="clone" />
                 Custom templates
-                <Label color="olive">New!</Label>
               </Menu.Item>
             </Menu>
             <Segment attached>
@@ -321,9 +320,6 @@ function Connections(props) {
                   <Card className="project-segment" onClick={() => setFormType("firestore")}>
                     <Image
                       src={connectionImages.firestore}
-                      label={{
-                        as: "a", color: "olive", title: "Freshly released", corner: "left", icon: "wrench"
-                      }}
                     />
                     <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>Firestore</Card.Header>
@@ -333,7 +329,7 @@ function Connections(props) {
                     <Image
                       src={connectionImages.firebase}
                       label={{
-                        as: "a", color: "olive", title: "Freshly released", corner: "left", icon: "wrench"
+                        as: "a", color: "olive", title: "Freshly released", corner: "left", icon: "star"
                       }}
                     />
                     <Card.Content textAlign="center" style={styles.smallerText}>
@@ -343,9 +339,6 @@ function Connections(props) {
                   <Card className="project-segment" onClick={() => setFormType("googleAnalytics")}>
                     <Image
                       src={connectionImages.googleAnalytics}
-                      label={{
-                        as: "a", color: "olive", title: "Freshly released", corner: "left", icon: "wrench"
-                      }}
                     />
                     <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>Google Analytics</Card.Header>

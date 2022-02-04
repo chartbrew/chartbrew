@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Form, Input, Button, Icon, Label, Popup, Checkbox, Header, Divider,
+  Grid, Form, Input, Button, Icon, Label, Popup, Checkbox, Header, Divider, Message,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -319,6 +319,16 @@ function RealtimeDbBuilder(props) {
               />
             </Form.Field>
           </Form>
+
+          <Divider />
+          <Message icon size="small">
+            <Icon name="wrench" />
+            <Message.Content>
+              <Message.Header>Realtime Database has just arrived</Message.Header>
+              {"The integration was just added to Chartbrew. If you spot any issues, please let me know at "}
+              <a href="mailto:raz@chartbrew.com?subject=Realtime Database feedback">raz@chartbrew.com</a>
+            </Message.Content>
+          </Message>
         </Grid.Column>
         <Grid.Column width={6}>
           <Form>
