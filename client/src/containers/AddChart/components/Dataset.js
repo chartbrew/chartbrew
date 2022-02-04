@@ -40,7 +40,7 @@ function Dataset(props) {
         ? connectionImages.mongodb : connection.type === "api"
           ? connectionImages.api : connection.type === "mysql"
             ? connectionImages.mysql : connection.type === "realtimedb"
-              ? connectionImages.firebase : connection.type === "firestore"
+              ? connectionImages.realtimedb : connection.type === "firestore"
                 ? connectionImages.firestore : connection.type === "googleAnalytics"
                   ? connectionImages.googleAnalytics : connectionImages.postgres;
 

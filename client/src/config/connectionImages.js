@@ -10,7 +10,7 @@ import plausibleLogo from "../assets/plausible-logo.png";
 export default {
   mongodb: mongoLogo,
   firestore: firestoreLogo,
-  firebase: firebaseLogo,
+  realtimedb: firebaseLogo,
   postgres: postgresLogo,
   api: apiLogo,
   mysql: mysqlLogo,

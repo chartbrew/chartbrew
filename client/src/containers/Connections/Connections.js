@@ -327,7 +327,7 @@ function Connections(props) {
                   </Card>
                   <Card className="project-segment" onClick={() => setFormType("realtimedb")}>
                     <Image
-                      src={connectionImages.firebase}
+                      src={connectionImages.realtimedb}
                       label={{
                         as: "a", color: "olive", title: "Freshly released", corner: "left", icon: "star"
                       }}
