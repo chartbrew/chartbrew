@@ -115,7 +115,6 @@ class DatasetController {
         }
       })
       .then(async (rawData) => {
-        console.log("rawData", rawData);
         let data = rawData;
         if (gConnection.type === "mongodb") {
           data = JSON.parse(JSON.stringify(data));

@@ -40,43 +40,38 @@ class RealtimeDatabase {
   getData(dataRequest) {
     const { configuration } = dataRequest;
 
-    return new Promise((resolve) => {
-      if (configuration && configuration.orderBy === "child" && configuration.key) {
-        this.db.ref(dataRequest.route).orderByChild(configuration.key).on("value", (snapshot) => {
-          let firebaseData = snapshot.val();
+    return new Promise((resolve, reject) => {
+      try {
+        let ref = this.db.ref(dataRequest.route);
+        if (configuration && configuration.orderBy === "child" && configuration.key) {
+          ref = ref.orderByChild(configuration.key);
+        } else if (configuration && configuration.orderBy === "key") {
+          ref = ref.orderByKey();
+        } else if (configuration && configuration.orderBy === "value") {
+          ref = ref.orderByValue();
+        }
+
+        if (configuration.limitToLast && configuration.limitToLast !== "0") {
+          ref = ref.limitToLast(parseInt(configuration.limitToLast, 10));
+        }
+        if (configuration.limitToFirst && configuration.limitToFirst !== "0") {
+          ref = ref.limitToFirst(parseInt(configuration.limitToFirst, 10));
+        }
+
+        ref.on("value", (snapshot) => {
+          let firebaseData = [];
+          snapshot.forEach((dataPoint) => {
+            firebaseData.push({ _key: dataPoint.key, ...dataPoint.val() });
+          });
+
           if (determineType(firebaseData) !== "array") {
             firebaseData = [firebaseData];
           }
 
           return resolve(firebaseData);
         });
-      } else if (configuration && configuration.orderBy === "key") {
-        this.db.ref(dataRequest.route).orderByKey().on("value", (snapshot) => {
-          let firebaseData = snapshot.val();
-          if (determineType(firebaseData) !== "array") {
-            firebaseData = [firebaseData];
-          }
-
-          return resolve(firebaseData);
-        });
-      } else if (configuration && configuration.orderBy === "value") {
-        this.db.ref(dataRequest.route).orderByValue().on("value", (snapshot) => {
-          let firebaseData = snapshot.val();
-          if (determineType(firebaseData) !== "array") {
-            firebaseData = [firebaseData];
-          }
-
-          return resolve(firebaseData);
-        });
-      } else {
-        this.db.ref(dataRequest.route).once("value", (snapshot) => {
-          let firebaseData = snapshot.val();
-          if (determineType(firebaseData) !== "array") {
-            firebaseData = [firebaseData];
-          }
-
-          return resolve(firebaseData);
-        });
+      } catch (e) {
+        reject(e);
       }
     });
   }

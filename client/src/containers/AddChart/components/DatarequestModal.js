@@ -129,7 +129,6 @@ function DatarequestModal(props) {
   };
 
   const _onSaveRequest = (dr = dataRequest) => {
-    console.log("dr", dr);
     setLoading(true);
     const newDr = _.cloneDeep(dr);
     return updateDataRequest(

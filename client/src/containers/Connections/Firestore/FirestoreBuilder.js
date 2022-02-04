@@ -637,7 +637,7 @@ function FirestoreBuilder(props) {
               >
                 <>
                   <p>{"If checked, Chartbrew will use cached data instead of making requests to your data source."}</p>
-                  <p>{"The cache gets automatically invalidated when you change the collections and/or filters."}</p>
+                  <p>{"The cache gets automatically invalidated when you change any call settings."}</p>
                 </>
               </Popup>
             </Form.Field>

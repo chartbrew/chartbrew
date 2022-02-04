@@ -31,6 +31,7 @@ function RealtimeDbBuilder(props) {
   const [requestError, setRequestError] = useState(false);
   const [projectId, setProjectId] = useState("");
   const [useCache, setUseCache] = useState(false);
+  const [limitValue, setLimitValue] = useState(100);
 
   const {
     dataRequest, match, onChangeRequest, runRequest, dataset,
@@ -100,6 +101,29 @@ function RealtimeDbBuilder(props) {
     } else {
       window.localStorage.setItem("_cb_use_cache", true);
       setUseCache(true);
+    }
+  };
+
+  const _onChangeLimitValue = (value) => {
+    setLimitValue(value);
+    if (firebaseRequest.configuration && firebaseRequest.configuration.limitToLast) {
+      setFirebaseRequest({
+        ...firebaseRequest,
+        configuration: {
+          ...firebaseRequest.configuration,
+          limitToLast: value,
+        },
+      });
+    }
+
+    if (firebaseRequest.configuration && firebaseRequest.configuration.limitToFirst) {
+      setFirebaseRequest({
+        ...firebaseRequest,
+        configuration: {
+          ...firebaseRequest.configuration,
+          limitToFirst: value,
+        },
+      });
     }
   };
 
@@ -187,12 +211,28 @@ function RealtimeDbBuilder(props) {
                 >
                   {"Value"}
                 </Button>
+                {firebaseRequest.configuration && firebaseRequest.configuration.orderBy && (
+                  <Button
+                    className="tertiary"
+                    icon="x"
+                    content="Disable ordering"
+                    onClick={() => (
+                      setFirebaseRequest({
+                        ...firebaseRequest,
+                        configuration: {
+                          ...firebaseRequest.configuration,
+                          orderBy: ""
+                        }
+                      })
+                    )}
+                  />
+                )}
               </Form.Field>
             </Form.Group>
             {firebaseRequest.configuration && firebaseRequest.configuration.orderBy === "child" && (
               <Form.Field>
                 <Input
-                  placeholder="Enter a field name"
+                  placeholder="Enter a field to order by"
                   value={(firebaseRequest.configuration && firebaseRequest.configuration.key) || ""}
                   onChange={(e, data) => (
                     setFirebaseRequest({
@@ -206,24 +246,78 @@ function RealtimeDbBuilder(props) {
                 />
               </Form.Field>
             )}
-            {firebaseRequest.configuration && firebaseRequest.configuration.orderBy && (
-              <Form.Field>
-                <Button
-                  className="tertiary"
-                  icon="x"
-                  content="Disable ordering"
-                  onClick={() => (
-                    setFirebaseRequest({
-                      ...firebaseRequest,
-                      configuration: {
-                        ...firebaseRequest.configuration,
-                        orderBy: ""
-                      }
-                    })
-                  )}
-                />
-              </Form.Field>
-            )}
+            <Form.Field>
+              <Divider />
+              <Header as="h4">Limit results</Header>
+            </Form.Field>
+            <Form.Field>
+              <Button
+                basic={
+                  !firebaseRequest.configuration
+                  || (firebaseRequest.configuration && !firebaseRequest.configuration.limitToLast)
+                }
+                primary={firebaseRequest.configuration && firebaseRequest.configuration.limitToLast}
+                onClick={() => (
+                  setFirebaseRequest({
+                    ...firebaseRequest,
+                    configuration: {
+                      ...firebaseRequest.configuration,
+                      limitToLast: limitValue,
+                      limitToFirst: 0,
+                    }
+                  })
+                )}
+                content="Limit to last"
+              />
+              <Button
+                basic={
+                  !firebaseRequest.configuration
+                  || (firebaseRequest.configuration && !firebaseRequest.configuration.limitToFirst)
+                }
+                primary={
+                  firebaseRequest.configuration && firebaseRequest.configuration.limitToFirst
+                }
+                onClick={() => (
+                  setFirebaseRequest({
+                    ...firebaseRequest,
+                    configuration: {
+                      ...firebaseRequest.configuration,
+                      limitToFirst: limitValue,
+                      limitToLast: 0,
+                    }
+                  })
+                )}
+                content="Limit to first"
+              />
+              {firebaseRequest.configuration
+                && (firebaseRequest.configuration.limitToLast
+                  || firebaseRequest.configuration.limitToFirst)
+                && (
+                  <Button
+                    className="tertiary"
+                    icon="x"
+                    content="Disable limit"
+                    onClick={() => (
+                      setFirebaseRequest({
+                        ...firebaseRequest,
+                        configuration: {
+                          ...firebaseRequest.configuration,
+                          limitToFirst: "",
+                          limitToLast: "",
+                        }
+                      })
+                    )}
+                  />
+                )}
+            </Form.Field>
+            <Form.Field>
+              <Input
+                placeholder="How many records should return?"
+                type="number"
+                value={limitValue}
+                onChange={(e, data) => _onChangeLimitValue(data.value)}
+              />
+            </Form.Field>
           </Form>
         </Grid.Column>
         <Grid.Column width={6}>
