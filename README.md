@@ -44,6 +44,7 @@ Currently, Chartbrew supports connections to these data sources.
 * PostgreSQL
 * MongoDB
 * Firestore
+* Realtime Database
 * Google Analytics
 * REST APIs
 
