@@ -115,7 +115,9 @@ function FirestoreConnectionForm(props) {
   const _init = () => {
     if (editConnection) {
       const newConnection = editConnection;
-      newConnection.firebaseServiceAccount = _getFirebaseAuth(newConnection);
+      newConnection.firebaseServiceAccount = JSON.stringify(
+        _getFirebaseAuth(newConnection), null, 4
+      );
       setConnection(newConnection);
     }
   };
@@ -160,7 +162,7 @@ function FirestoreConnectionForm(props) {
     const { firebaseServiceAccount } = data;
     if (!firebaseServiceAccount) return "";
     try {
-      return JSON.stringify(data.firebaseServiceAccount, null, 4);
+      return JSON.parse(data.firebaseServiceAccount);
     } catch (e) {
       return data.firebaseServiceAccount || "";
     }
