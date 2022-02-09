@@ -316,6 +316,13 @@ function RealtimeDbBuilder(props) {
                 type="number"
                 value={limitValue}
                 onChange={(e, data) => _onChangeLimitValue(data.value)}
+                disabled={
+                  !firebaseRequest.configuration
+                    || (
+                      !firebaseRequest.configuration.limitToLast
+                      && !firebaseRequest.configuration.limitToFirst
+                    )
+                }
               />
             </Form.Field>
           </Form>

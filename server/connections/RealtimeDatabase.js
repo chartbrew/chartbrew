@@ -51,10 +51,10 @@ class RealtimeDatabase {
           ref = ref.orderByValue();
         }
 
-        if (configuration.limitToLast && configuration.limitToLast !== "0") {
+        if (configuration && configuration.limitToLast && configuration.limitToLast !== "0") {
           ref = ref.limitToLast(parseInt(configuration.limitToLast, 10));
         }
-        if (configuration.limitToFirst && configuration.limitToFirst !== "0") {
+        if (configuration && configuration.limitToFirst && configuration.limitToFirst !== "0") {
           ref = ref.limitToFirst(parseInt(configuration.limitToFirst, 10));
         }
 
