@@ -134,7 +134,7 @@ function RealtimeDbBuilder(props) {
           <Form>
             <Form.Field className="RealtimeDb-route-tut">
               <Input
-                label={`https://${projectId || "<your_project>"}.firebaseio.com/`}
+                label={connection.connectionString || `https://${projectId || "<your_project>"}.firebaseio.com/`}
                 placeholder={"Enter the data path"}
                 focus
                 value={firebaseRequest.route || ""}

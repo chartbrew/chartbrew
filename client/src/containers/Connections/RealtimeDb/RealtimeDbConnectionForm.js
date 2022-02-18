@@ -6,7 +6,7 @@ import React, {
 import PropTypes from "prop-types";
 import {
   Segment, Form, Button, Icon, Header, Label, Message, Container,
-  Placeholder, Divider, List, Transition,
+  Placeholder, Divider, List, Transition, Input, Image,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
 import { useDropzone } from "react-dropzone";
@@ -14,6 +14,7 @@ import { useDropzone } from "react-dropzone";
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import { blue, secondary } from "../../../config/colors";
+import realtimeDbImage from "../../../assets/realtime-db-url.webp";
 
 /*
   The Form used to create API connections
@@ -29,6 +30,7 @@ function RealtimeDbConnectionForm(props) {
   const [errors, setErrors] = useState({});
   const [showInstructions, setShowInstructions] = useState(true);
   const [jsonVisible, setJsonVisible] = useState(false);
+  const [showUrlGuide, setShowUrlGuide] = useState(false);
 
   useEffect(() => {
     _init();
@@ -196,8 +198,60 @@ function RealtimeDbConnectionForm(props) {
 
             <Form.Field>
               <Divider />
+              <label>Database URL</label>
+              <Input
+                placeholder="You Realtime Database URL"
+                value={connection.connectionString || ""}
+                onChange={(e, data) => {
+                  setConnection({ ...connection, connectionString: data.value });
+                }}
+              />
+            </Form.Field>
+            <Form.Field>
+              <Header as="h5" onClick={() => setShowUrlGuide(!showUrlGuide)} style={styles.tableFields}>
+                {"How to get the database URL "}
+                {!showUrlGuide && (<Icon size="small" name="chevron down" />)}
+                {showUrlGuide && (<Icon size="small" name="chevron up" />)}
+              </Header>
 
-              <Header as="h4" onClick={() => setShowInstructions(!showInstructions)} style={styles.tableFields}>
+              <Transition animation="fade down" visible={showUrlGuide}>
+                <div>
+                  <List divided relaxed="very">
+                    <List.Item as="a" href="https://console.firebase.google.com/project" target="_blank" rel="noreferrer noopener">
+                      <List.Content>
+                        <List.Header style={{ color: secondary }}>
+                          {"1. Select your project from here "}
+                          <Icon name="external alternate" />
+                        </List.Header>
+                        <List.Description>{"Log in with your Google account and select the project you want to connect to."}</List.Description>
+                      </List.Content>
+                    </List.Item>
+
+                    <List.Item>
+                      <List.Content>
+                        <List.Header>{"2. Once you select a project, navigate to 'Realtime Database'"}</List.Header>
+                        <List.Description>{"You can find this option in the side menu of your Firebase dashboard."}</List.Description>
+                      </List.Content>
+                    </List.Item>
+
+                    <List.Item>
+                      <List.Content>
+                        <List.Header>{"3. Copy the database URL and paste it in the field above"}</List.Header>
+                        <List.Description>
+                          <p>{"You can find the URL as soon as you access the Realtime Database menu option."}</p>
+                          <Image src={realtimeDbImage} size="medium" />
+                        </List.Description>
+                      </List.Content>
+                    </List.Item>
+                  </List>
+                </div>
+              </Transition>
+              <Divider />
+
+            </Form.Field>
+
+            <Form.Field>
+              <Header as="h5" onClick={() => setShowInstructions(!showInstructions)} style={styles.tableFields}>
                 {"How to authenticate "}
                 {!showInstructions && (<Icon size="small" name="chevron down" />)}
                 {showInstructions && (<Icon size="small" name="chevron up" />)}
@@ -231,8 +285,6 @@ function RealtimeDbConnectionForm(props) {
                   </List>
                 </div>
               </Transition>
-              <Divider hidden />
-
             </Form.Field>
 
             <Form.Field>

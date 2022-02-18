@@ -20,9 +20,11 @@ class RealtimeDatabase {
         // do nothing
       }
 
+      const databaseURL = connection.connectionString || `https://${serviceAccount.project_id}.firebaseio.com`;
+
       const authOptions = {
         credential: firebase.credential.cert(serviceAccount),
-        databaseURL: `https://${serviceAccount.project_id}.firebaseio.com`
+        databaseURL,
       };
 
       if (connection.username) {
