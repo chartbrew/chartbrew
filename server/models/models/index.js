@@ -75,6 +75,8 @@ db.migrate()
       const appData = await db.App.findAll();
       if (!appData || appData.length === 0) {
         db.App.create({ version: packageJson.version });
+      } else if (appData && appData[0]) {
+        db.App.update({ version: packageJson.version }, { where: { id: appData[0].id } });
       }
     } catch (e) {
       // continue
