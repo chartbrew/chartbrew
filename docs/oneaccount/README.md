@@ -10,6 +10,8 @@ meta:
 
 # One account Docs
 
+[One Account](https://oneaccount.app/) is a 3rd party authentication app that can be integrated in your Chartbrew project. **This setup is optional**, but can be useful for your organization and make signing up easier.
+
 ::: tip
   Before you proceed with the setup, ensure you deployed the app on your server. [Follow the deployment instructions here](/deployment)
 :::
