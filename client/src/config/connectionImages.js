@@ -6,6 +6,7 @@ import gAnalyticsLogo from "../assets/GoogleAnalytics.webp";
 import mysqlLogo from "../assets/mysql.png";
 import apiLogo from "../assets/api.png";
 import plausibleLogo from "../assets/plausible-logo.png";
+import customerioLogo from "../assets/customerio.webp";
 
 export default {
   mongodb: mongoLogo,
@@ -16,4 +17,5 @@ export default {
   mysql: mysqlLogo,
   googleAnalytics: gAnalyticsLogo,
   plausible: plausibleLogo,
+  customerio: customerioLogo,
 };

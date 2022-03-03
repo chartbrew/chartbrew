@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const requestP = require("request-promise");
+const request = require("request-promise");
 const Sequelize = require("sequelize");
 const querystring = require("querystring");
 const moment = require("moment");
@@ -17,6 +17,7 @@ const oauthController = require("./OAuthController");
 const determineType = require("../modules/determineType");
 const drCacheController = require("./DataRequestCacheController");
 const RealtimeDatabase = require("../connections/RealtimeDatabase");
+const CustomerioConnection = require("../connections/CustomerioConnection");
 
 function isArrayPresent(responseData) {
   let arrayFound = false;
@@ -186,6 +187,8 @@ class ConnectionController {
       return this.testFirestore(data);
     } else if (data.type === "googleAnalytics") {
       return this.testGoogleAnalytics(data);
+    } else if (data.type === "customerio") {
+      return this.testCustomerio(data);
     }
 
     return new Promise((resolve, reject) => reject(new Error("No request type specified")));
@@ -194,7 +197,7 @@ class ConnectionController {
   testApi(data) {
     const testOpt = this.getApiTestOptions(data);
 
-    return requestP(testOpt);
+    return request(testOpt);
   }
 
   testMongo(data) {
@@ -284,7 +287,7 @@ class ConnectionController {
           case "mongodb":
             return this.getConnectionUrl(id);
           case "api":
-            return requestP(this.getApiTestOptions(connection));
+            return request(this.getApiTestOptions(connection));
           case "postgres":
           case "mysql":
             return externalDbConnection(connection);
@@ -293,6 +296,8 @@ class ConnectionController {
             return firebaseConnector.getAuthToken(connection);
           case "googleAnalytics":
             return this.testGoogleAnalytics(connection);
+          case "customerio":
+            return this.testCustomerio(connection);
           default:
             return new Promise((resolve, reject) => reject(new Error(400)));
         }
@@ -313,6 +318,8 @@ class ConnectionController {
           case "firestore":
             return new Promise((resolve) => resolve(response));
           case "googleAnalytics":
+            return new Promise((resolve) => resolve(response));
+          case "customerio":
             return new Promise((resolve) => resolve(response));
           default:
             return new Promise((resolve, reject) => reject(new Error(400)));
@@ -384,7 +391,7 @@ class ConnectionController {
           }
         }
 
-        return requestP(options);
+        return request(options);
       })
       .then((response) => {
         if (pagination) {
@@ -575,7 +582,7 @@ class ConnectionController {
           }
         }
 
-        return requestP(options);
+        return request(options);
       })
       .then((response) => {
         if (dataRequest.pagination) {
@@ -717,6 +724,16 @@ class ConnectionController {
 
     const oauth = await oauthController.findById(connection.oauth_id);
     return googleConnector.getAccounts(oauth.refreshToken, connection.oauth_id);
+  }
+
+  async testCustomerio(connection) {
+    const options = CustomerioConnection
+      .getConnectionOpt(connection, {
+        method: "GET",
+        route: "segments"
+      });
+
+    return request(options);
   }
 }
 

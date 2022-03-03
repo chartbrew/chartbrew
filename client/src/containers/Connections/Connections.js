@@ -15,6 +15,7 @@ import MysqlConnectionForm from "./components/MysqlConnectionForm";
 import RealtimeDbConnectionForm from "./RealtimeDb/RealtimeDbConnectionForm";
 import FirestoreConnectionForm from "./Firestore/FirestoreConnectionForm";
 import GaConnectionForm from "./GoogleAnalytics/GaConnectionForm";
+import CustomerioConnectionForm from "./Customerio/CustomerioConnectionForm";
 import SimpleAnalyticsTemplate from "./SimpleAnalytics/SimpleAnalyticsTemplate";
 import ChartMogulTemplate from "./ChartMogul/ChartMogulTemplate";
 import MailgunTemplate from "./Mailgun/MailgunTemplate";
@@ -344,6 +345,17 @@ function Connections(props) {
                       <Card.Header>Google Analytics</Card.Header>
                     </Card.Content>
                   </Card>
+                  <Card className="project-segment" onClick={() => setFormType("customerio")}>
+                    <Image
+                      src={connectionImages.customerio}
+                      label={{
+                        as: "a", color: "olive", title: "Freshly released", corner: "left", icon: "star"
+                      }}
+                    />
+                    <Card.Content textAlign="center" style={styles.smallerText}>
+                      <Card.Header>Customer.io</Card.Header>
+                    </Card.Content>
+                  </Card>
                 </Card.Group>
               )}
               {selectedMenu === "templates" && (
@@ -473,6 +485,16 @@ function Connections(props) {
           )}
           {formType === "googleAnalytics" && (
             <GaConnectionForm
+              projectId={match.params.projectId}
+              onTest={_onTestRequest}
+              onComplete={_onAddNewConnection}
+              editConnection={editConnection}
+              addError={addError}
+              testResult={testResult}
+            />
+          )}
+          {formType === "customerio" && (
+            <CustomerioConnectionForm
               projectId={match.params.projectId}
               onTest={_onTestRequest}
               onComplete={_onAddNewConnection}
