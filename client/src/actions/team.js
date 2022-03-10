@@ -161,6 +161,38 @@ export function updateTeam(teamId, data) {
   };
 }
 
+export function generateInviteUrl(teamId, projects, canExport) {
+  return (dispatch) => {
+    if (!cookie.load("brewToken")) {
+      return new Promise((resolve, reject) => reject(new Error("No Token")));
+    }
+    const token = cookie.load("brewToken");
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+    const body = JSON.stringify({
+      projects,
+      canExport,
+    });
+    return fetch(`${API_HOST}/team/${teamId}/invite`, { method: "POST", headers, body })
+      .then((response) => {
+        if (!response.ok) {
+          dispatch(addError(response.status));
+          return new Promise((resolve, reject) => reject(response.statusText));
+        }
+        return response.json();
+      })
+      .then((invite) => {
+        return new Promise((resolve) => resolve(invite.url));
+      })
+      .catch(err => {
+        return new Promise((resolve, reject) => reject(err));
+      });
+  };
+}
+
 export function inviteMembers(email, teamId, projects, canExport) {
   return (dispatch) => {
     if (!cookie.load("brewToken")) {

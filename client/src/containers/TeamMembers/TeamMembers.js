@@ -19,7 +19,6 @@ import {
   deleteTeamMember as deleteTeamMemberAction,
 } from "../../actions/team";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
-import Invites from "../../components/Invites";
 import InviteMembersForm from "../../components/InviteMembersForm";
 import canAccess from "../../config/canAccess";
 
@@ -186,7 +185,6 @@ function TeamMembers(props) {
       {_canAccess("admin")
         && (
         <div>
-          <Invites />
           <Divider hidden />
         </div>
         )}

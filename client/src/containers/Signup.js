@@ -9,7 +9,7 @@ import {
 import _ from "lodash";
 
 import { createUser, createInvitedUser, oneaccountAuth } from "../actions/user";
-import { addTeamMember } from "../actions/team";
+import { addTeamMember as addTeamMemberAction } from "../actions/team";
 import { required, email, password } from "../config/validations";
 import cbLogoSmall from "../assets/logo_inverted.png";
 import { blue, secondary } from "../config/colors";
@@ -343,7 +343,7 @@ const mapDispatchToProps = (dispatch) => {
   return {
     createUser: user => dispatch(createUser(user)),
     oneaccountAuth: user => dispatch(oneaccountAuth(user)),
-    addTeamMember: (userId, token) => dispatch(addTeamMember(userId, token)),
+    addTeamMember: (userId, token) => dispatch(addTeamMemberAction(userId, token)),
     createInvitedUser: user => dispatch(createInvitedUser(user)),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };

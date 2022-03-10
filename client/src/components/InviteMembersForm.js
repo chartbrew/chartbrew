@@ -3,74 +3,42 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Segment, Dropdown, Message, Header, Divider, Form, Button, Icon, Grid, Checkbox, Popup
+  Segment, Header, Divider, Button, Icon, Grid, Checkbox, Popup, Input, Form,
 } from "semantic-ui-react";
 import _ from "lodash";
 
-import { email } from "../config/validations";
-
-import { inviteMembers as inviteMembersAction } from "../actions/team";
+import { generateInviteUrl as generateInviteUrlAction } from "../actions/team";
 
 /*
   Contains the team members invitation functionality
 */
 function InviteMembersForm(props) {
-  const [members, setMembers] = useState([]);
-  const [currentValues, setCurrentValues] = useState([]);
-  const [incorrectMail, setIncorrectMail] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [sentInvites, setSentInvites] = useState([]);
-  const [inviteError, setInviteError] = useState(false);
-  const [undeliveredInvites, setUndeliveredInvites] = useState([]);
   const [loading, setLoading] = useState(false);
   const [projectAccess, setProjectAccess] = useState([]);
   const [exportAllowed, setExportAllowed] = useState(false);
+  const [inviteUrl, setInviteUrl] = useState("");
+  const [urlCopied, setUrlCopied] = useState(false);
 
   const {
-    style, match, projects, team, inviteMembers,
+    style, match, projects, team, generateInviteUrl,
   } = props;
 
-  const onInviteMembers = () => {
+  const onGenerateUrl = () => {
     const teamId = team.id
       ? team.id : match.params.teamId;
 
-    setIncorrectMail(false);
-    setInviteError(false);
-    setSuccess(false);
     setLoading(true);
-    setSentInvites([]);
-    setUndeliveredInvites([]);
 
-    members.forEach((email) => {
-      inviteMembers(
-        email.value,
-        teamId,
-        projectAccess,
-        exportAllowed,
-      ).then(() => {
-        setLoading(false);
-        setIncorrectMail(false);
-        setSuccess(true);
-        setMembers([]);
-        setSentInvites([...sentInvites, email.value]);
-      }).catch(() => {
-        setInviteError(true);
-        setLoading(false);
-        setUndeliveredInvites([...undeliveredInvites, email.value]);
-      });
+    generateInviteUrl(
+      teamId,
+      projectAccess,
+      exportAllowed,
+    ).then((url) => {
+      setInviteUrl(url);
+      setLoading(false);
+    }).catch(() => {
+      setLoading(false);
     });
-  };
-
-  const handleEmail = (e, { value }) => setCurrentValues(value);
-
-  const handleAddition = (e, { value }) => {
-    // check if email is correct
-    if (email(value)) {
-      setIncorrectMail(true);
-    } else {
-      setIncorrectMail(false);
-      setMembers([{ text: value, value }, ...members]);
-    }
   };
 
   const _onChangeProjectAccess = (projectId) => {
@@ -96,65 +64,15 @@ function InviteMembersForm(props) {
     setProjectAccess([]);
   };
 
+  const _onCopyUrl = () => {
+    setUrlCopied(true);
+    navigator.clipboard.writeText(inviteUrl); // eslint-disable-line
+  };
+
   return (
     <div style={style}>
       <Segment>
         <Header as="h3">Invite new members</Header>
-        <Form>
-          <Form.Field style={{ paddingTop: 10 }}>
-            <Dropdown
-              options={members}
-              placeholder="Enter emails"
-              search
-              selection
-              fluid
-              multiple
-              allowAdditions
-              value={currentValues}
-              onAddItem={handleAddition}
-              onChange={handleEmail}
-            />
-          </Form.Field>
-          {incorrectMail
-            && (
-            <Form.Field textAlign="center">
-              <Message negative> Make sure the email is valid </Message>
-            </Form.Field>
-            )}
-          {success
-            && (
-            <Form.Field>
-              <Message positive>
-                <Message.List>
-                  {sentInvites.map((invite) => {
-                    return (
-                      <Message.Content key={invite}>
-                        <Icon name="checkmark" circular />
-                        {invite}
-                      </Message.Content>
-                    );
-                  })}
-                </Message.List>
-              </Message>
-            </Form.Field>
-            )}
-          {inviteError && (
-            <Form.Field>
-              <Message negative>
-                <Message.List>
-                  {undeliveredInvites.map((invite) => {
-                    return (
-                      <Message.Content key={invite}>
-                        <Icon name="delete" circular />
-                        {invite}
-                      </Message.Content>
-                    );
-                  })}
-                </Message.List>
-              </Message>
-            </Form.Field>
-          )}
-        </Form>
 
         <Header as="h4">
           {"Project access "}
@@ -178,7 +96,7 @@ function InviteMembersForm(props) {
             onClick={_onDeselectAllProjects}
           />
         </div>
-        <Grid columns={2} stackable>
+        <Grid columns={3} stackable>
           {projects && projects.map((project) => (
             <Grid.Column key={project.id}>
               <Checkbox
@@ -206,19 +124,40 @@ function InviteMembersForm(props) {
           onClick={() => setExportAllowed(!exportAllowed)}
         />
 
+        <Divider hidden />
         <Button
           loading={loading}
-          disabled={!members[0]}
           compact
           size="large"
-          onClick={onInviteMembers}
-          floated="right"
+          onClick={onGenerateUrl}
           primary
         >
-          Send Invites
+          Generate invite URL
         </Button>
         <Divider hidden />
-        <Divider hidden />
+
+        {inviteUrl && (
+          <Form>
+            <Form.Field>
+              <label>Share this link with your team</label>
+              <Input
+                id="url-text"
+                value={inviteUrl}
+              />
+            </Form.Field>
+            <Form.Field>
+              <Button
+                basic
+                icon={urlCopied ? "checkmark" : "clipboard"}
+                content={urlCopied ? "Copied" : "Copy to clipboard"}
+                color={urlCopied ? "green" : null}
+                onClick={_onCopyUrl}
+                size="small"
+              />
+            </Form.Field>
+          </Form>
+        )}
+
       </Segment>
     </div>
   );
@@ -229,7 +168,7 @@ InviteMembersForm.defaultProps = {
 };
 
 InviteMembersForm.propTypes = {
-  inviteMembers: PropTypes.func.isRequired,
+  generateInviteUrl: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,
   match: PropTypes.object.isRequired,
   projects: PropTypes.array.isRequired,
@@ -246,8 +185,8 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    inviteMembers: (email, teamId, projects, canExport) => (
-      dispatch(inviteMembersAction(email, teamId, projects, canExport))
+    generateInviteUrl: (teamId, projects, canExport) => (
+      dispatch(generateInviteUrlAction(teamId, projects, canExport))
     ),
   };
 };
