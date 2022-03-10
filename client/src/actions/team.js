@@ -185,7 +185,7 @@ export function generateInviteUrl(teamId, projects, canExport) {
         return response.json();
       })
       .then((invite) => {
-        return new Promise((resolve) => resolve(invite.url));
+        return invite.url;
       })
       .catch(err => {
         return new Promise((resolve, reject) => reject(err));

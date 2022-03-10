@@ -137,7 +137,7 @@ module.exports = (app) => {
         const token = jwt.sign(payload, app.settings.secret, {
           expiresIn: 2592000 // a month
         }, (err, token) => {
-          if (err) return new Promise((resolve, reject) => reject(err));
+          if (err) throw new Error(err);
           return res.status(200).send({
             url: `${app.settings.client}/invite?token=${token}`,
           });
