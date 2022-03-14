@@ -295,7 +295,6 @@ class TeamController {
     const token = uuidv4();
     return db.TeamInvitation.create({
       "team_id": teamId,
-      "email": data.email,
       "user_id": userId,
       token,
       projects: data.projects,

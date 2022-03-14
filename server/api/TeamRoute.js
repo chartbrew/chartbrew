@@ -1,10 +1,10 @@
 const _ = require("lodash");
+const jwt = require("jsonwebtoken");
 
 const TeamController = require("../controllers/TeamController");
 const UserController = require("../controllers/UserController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
-const mail = require("../modules/mail");
 
 function filterProjects(projects, teamRole) {
   return projects.filter((p) => _.indexOf(teamRole.projects, p.id) > -1);
@@ -114,92 +114,42 @@ module.exports = (app) => {
         return res.status(400).send(error);
       });
   });
-
-  const sendInviteEmail = ((invite, admin, teamName) => {
-    return mail.sendInvite(invite, admin.name, teamName.name);
-  });
   // --------------------------------------
 
   // a route to send a team invite
   app.post("/team/:id/invite", verifyToken, (req, res) => {
     if (!req.params.id || !req.body) return res.status(400).send("Missing params");
-    let invite = {};
-    let admin = {};
-    let completed = false;
+
     return teamController.getTeamRole(req.params.id, req.user.id)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).updateAny("teamInvite");
         if (!permission.granted) {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }
-        return teamController.isUserInTeam(req.params.id, req.body.email);
-      })
-      .then((arr) => {
-        if (arr && arr.includes(parseInt(req.params.id, 10))) return new Promise((resolve, reject) => reject(new Error("409")));
-        return teamController.getInviteByEmail(req.params.id, req.body.email);
-      })
-      .then((existingInvite) => {
-        if (existingInvite) {
-          invite = existingInvite;
-          return new Promise((resolve) => resolve(invite));
-        }
-        return teamController.saveTeamInvite(req.params.id, req.body, req.user.id);
-      })
-      .then((createdInvite) => {
-        invite = createdInvite;
-        return userController.findById(invite.user_id);
-      })
-      .then((teamAdmin) => {
-        admin = teamAdmin;
-        return teamController.findById(req.params.id);
-      })
-      .then((teamName) => {
-        completed = true;
-        return sendInviteEmail(invite, admin, teamName);
-      })
-      .then(() => {
-        return res.status(200).send(invite);
+
+        const payload = {
+          projects: req.body.projects,
+          canExport: req.body.canExport,
+          team_id: teamRole.team_id,
+          user_id: teamRole.user_id,
+        };
+
+        const token = jwt.sign(payload, app.settings.secret, {
+          expiresIn: 2592000 // a month
+        }, (err, token) => {
+          if (err) throw new Error(err);
+          return res.status(200).send({
+            url: `${app.settings.client}/invite?token=${token}`,
+          });
+        });
+
+        return token;
       })
       .catch((error) => {
         if (error.message === "406") return res.status(406).send(error);
         if (error.message === "401") return res.status(401).send({ error: "Not authorized" });
         if (error.message === "409") return res.status(409).send({ error: "The user is already in this team" });
 
-        if (completed) {
-          return res.status(200).send({
-            completed: true,
-            email: false,
-          });
-        }
-        return res.status(400).send(error);
-      });
-  });
-  // --------------------------------------
-
-  // route to resend existing team invite
-  app.post("/team/resendInvite", verifyToken, (req, res) => {
-    const { invite } = req.body;
-    let admin = {};
-    return teamController.getTeamRole(invite.team_id, req.user.id)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("teamInvite");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        return userController.findById(invite.user_id);
-      })
-      .then((teamAdmin) => {
-        admin = teamAdmin;
-        return teamController.findById(invite.team_id);
-      })
-      .then((teamName) => {
-        return sendInviteEmail(invite, admin, teamName);
-      })
-      .then(() => {
-        return res.status(200).send(invite);
-      })
-      .catch((error) => {
-        if (error.message === "401") return res.status(401).send({ error: "Not authorized" });
         return res.status(400).send(error);
       });
   });
@@ -208,27 +158,26 @@ module.exports = (app) => {
   // route for adding a team member with invite url
   app.post("/team/user/:user_id", verifyToken, (req, res) => {
     if (!req.params.user_id || !req.body.token) return res.status(400).send("Missing fields");
+    if (`${req.params.user_id}` !== `${req.user.id}`) {
+      return res.status(400).send("Malformed request");
+    }
+
     let newRole = {};
-    return teamController.getTeamInvite(req.body.token)
-      .then((invite) => {
-        return teamController.addTeamRole(invite.team_id, req.params.user_id, "member", invite.projects, invite.canExport);
-      })
-      .then((role) => {
-        newRole = role;
-        return teamController.deleteTeamInvite(req.body.token);
-      })
-      .then(() => {
-        return teamController.findById(newRole.team_id);
-      })
-      .then((team) => {
-        const modTeam = team;
-        if (team.Projects) modTeam.setDataValue("Projects", filterProjects(team.Projects, newRole));
-        return res.status(200).send(modTeam);
-      })
-      .catch((error) => {
-        if (error === "404") return res.status(404).send("The invitation is not found");
-        return res.status(400).send(error);
-      });
+    return jwt.verify(req.body.token, app.settings.secret, (err, decoded) => {
+      return teamController.addTeamRole(decoded.team_id, req.user.id, "member", decoded.projects, decoded.canExport)
+        .then((role) => {
+          newRole = role;
+          return teamController.findById(newRole.team_id);
+        })
+        .then((team) => {
+          const modTeam = team;
+          if (team.Projects) modTeam.setDataValue("Projects", filterProjects(team.Projects, newRole));
+          return res.status(200).send(modTeam);
+        })
+        .catch((error) => {
+          return res.status(400).send(error);
+        });
+    });
   });
   // --------------------------------------
 
