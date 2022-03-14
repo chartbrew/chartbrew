@@ -730,7 +730,7 @@ class ConnectionController {
     const options = CustomerioConnection
       .getConnectionOpt(connection, {
         method: "GET",
-        route: "segments"
+        route: "activities"
       });
 
     return request(options);

@@ -1,8 +1,9 @@
 const { PaginateCursor } = require("../modules/paginateRequests");
 
 function getConnectionOpt(connection, dr) {
+  const host = connection.host === "eu" ? "https://api-eu.customer.io/v1" : "https://api.customer.io/v1";
   const options = {
-    url: `${connection.host}/${dr.route}`,
+    url: `${host}/${dr.route}`,
     method: dr.method,
     headers: {
       "Accept": "application/json",
