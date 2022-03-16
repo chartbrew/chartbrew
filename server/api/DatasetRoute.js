@@ -195,17 +195,19 @@ module.exports = (app) => {
         if (typeof dataset.data === "object" && dataset.data instanceof Array) {
           newDataset.data = dataset.data.slice(0, 20);
         } else if (typeof dataset === "object") {
-          let resultsKey;
+          const resultsKey = [];
           // console.log("dataset.data", dataset);
           Object.keys(dataset.data).forEach((key) => {
             if (dataset.data[key] instanceof Array) {
-              resultsKey = key;
+              resultsKey.push(key);
             }
           });
 
-          if (resultsKey) {
-            const slicedArray = dataset.data[resultsKey].slice(0, 20);
-            newDataset.data[resultsKey] = slicedArray;
+          if (resultsKey.length > 0) {
+            resultsKey.forEach((resultKey) => {
+              const slicedArray = dataset.data[resultKey].slice(0, 20);
+              newDataset.data[resultKey] = slicedArray;
+            });
           }
         }
 
@@ -213,9 +215,9 @@ module.exports = (app) => {
       })
       .catch((err) => {
         if (err && err.message === "404") {
-          return res.status(404).send(err.message || err);
+          return res.status(404).send((err && err.message) || err);
         }
-        return res.status(400).send(err.message || err);
+        return res.status(400).send((err && err.message) || err);
       });
   });
   // ----------------------------------------------------
