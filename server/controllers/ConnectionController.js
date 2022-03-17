@@ -726,6 +726,10 @@ class ConnectionController {
     return googleConnector.getAccounts(oauth.refreshToken, connection.oauth_id);
   }
 
+  async runCustomerio(connection, dataRequest) {
+    return CustomerioConnection.getCustomers(connection, dataRequest);
+  }
+
   async testCustomerio(connection) {
     const options = CustomerioConnection
       .getConnectionOpt(connection, {

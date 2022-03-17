@@ -14,6 +14,7 @@ import MongoQueryBuilder from "./MongoQueryBuilder";
 import RealtimeDbBuilder from "../../Connections/RealtimeDb/RealtimeDbBuilder";
 import FirestoreBuilder from "../../Connections/Firestore/FirestoreBuilder";
 import GaBuilder from "../../Connections/GoogleAnalytics/GaBuilder";
+import CustomerioBuilder from "../../Connections/Customerio/CustomerioBuilder";
 
 import {
   getDataRequestByDataset as getDataRequestByDatasetAction,
@@ -236,6 +237,17 @@ function DatarequestModal(props) {
             exploreData={result && JSON.stringify(result.data, null, 2)}
           />
         )}
+        {connection.type === "customerio" && dataRequest && (
+          <CustomerioBuilder
+            dataset={dataset}
+            dataRequest={dataRequest}
+            connection={connection}
+            onChangeRequest={_updateDataRequest}
+            onSave={_onSaveRequest}
+            exploreData={result && JSON.stringify(result.data, null, 2)}
+          />
+        )}
+
       </Modal.Content>
       <Modal.Actions>
         <Button

@@ -197,35 +197,43 @@ function PaginateCursor(options, limit, items, offset, totalResults = []) {
   // console.log("options", options);
   return request(options)
     .then((response) => {
-      let resultsKey;
+      const resultsKey = [];
       try {
         const result = JSON.parse(response.body);
-
         Object.keys(result).forEach((key) => {
           if (result[key] instanceof Array) {
-            resultsKey = key;
+            resultsKey.push(key);
           }
         });
 
         const tempResults = result;
-        tempResults[resultsKey] = (
-          totalResults
-          && totalResults[resultsKey]
-          && totalResults[resultsKey].concat(result[resultsKey])
-        ) || result[resultsKey];
+        let endRecursion = false;
 
-        if (!result[items]
-          || (tempResults[resultsKey] && tempResults[resultsKey].length >= limit && limit !== 0)
-        ) {
-          if (tempResults[resultsKey].length > limit && limit !== 0) {
-            tempResults[resultsKey] = tempResults[resultsKey].slice(0, limit);
+        resultsKey.forEach((resultKey) => {
+          tempResults[resultKey] = (
+            totalResults
+            && totalResults[resultKey]
+            && totalResults[resultKey].concat(result[resultKey])
+          ) || result[resultKey];
+
+          if (!result[items]
+            || (tempResults[resultKey] && tempResults[resultKey].length >= limit && limit !== 0)
+          ) {
+            if (tempResults[resultKey].length > limit && limit !== 0) {
+              tempResults[resultKey] = tempResults[resultKey].slice(0, limit);
+            }
+            endRecursion = true;
           }
+        });
+
+        if (endRecursion) {
           // the recursion ends here
           return new Promise((resolve) => resolve(tempResults));
         }
 
         // continue the recursion
         const newOptions = options;
+        newOptions.qs = {};
         newOptions.qs[offset] = tempResults[items];
 
         return PaginateCursor(newOptions, limit, items, offset, tempResults);

@@ -110,6 +110,8 @@ class DatasetController {
           return this.connectionController.runGoogleAnalytics(connection, dataRequest);
         } else if (connection.type === "realtimedb") {
           return this.connectionController.runRealtimeDb(connection.id, dataRequest, getCache);
+        } else if (connection.type === "customerio") {
+          return this.connectionController.runCustomerio(connection, dataRequest);
         } else {
           return new Promise((resolve, reject) => reject(new Error("Invalid connection type")));
         }

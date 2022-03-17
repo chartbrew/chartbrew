@@ -36,13 +36,7 @@ function Dataset(props) {
   useEffect(() => {
     const config = [];
     connections.map((connection) => {
-      const image = connection.type === "mongodb"
-        ? connectionImages.mongodb : connection.type === "api"
-          ? connectionImages.api : connection.type === "mysql"
-            ? connectionImages.mysql : connection.type === "realtimedb"
-              ? connectionImages.realtimedb : connection.type === "firestore"
-                ? connectionImages.firestore : connection.type === "googleAnalytics"
-                  ? connectionImages.googleAnalytics : connectionImages.postgres;
+      const image = connectionImages[connection.type];
 
       config.push({
         key: connection.id,
