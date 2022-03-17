@@ -739,6 +739,20 @@ class ConnectionController {
 
     return request(options);
   }
+
+  runHelperMethod(connectionId, method, body) {
+    return this.findById(connectionId)
+      .then((connection) => {
+        if (connection.type === "customerio") {
+          return CustomerioConnection[method](connection, body);
+        }
+
+        return Promise.reject("Method not found");
+      })
+      .catch((err) => {
+        return err;
+      });
+  }
 }
 
 module.exports = ConnectionController;

@@ -1,15 +1,34 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Dropdown, Form, Icon, Input, Label, List, Popup
 } from "semantic-ui-react";
+import { runHelperMethod } from "../../../actions/connection";
 
 function CustomerQuery(props) {
   const {
-    conditions, onUpdateConditions, limit, onUpdateLimit
+    conditions, onUpdateConditions, limit, onUpdateLimit, projectId, connectionId,
   } = props;
 
   const [segmentConfig, setSegmentConfig] = useState(null);
+  const [segments, setSegments] = useState([]);
+
+  useEffect(() => {
+    // get segments
+    runHelperMethod(projectId, connectionId, "getAllSegments")
+      .then((segmentData) => {
+        const segmentOptions = segmentData.map((segment) => {
+          return {
+            text: segment.name,
+            value: segment.id,
+            key: segment.id,
+            icon: segment.type === "dynamic" ? "cloud" : "wrench",
+          };
+        });
+
+        setSegments(segmentOptions);
+      });
+  }, []);
 
   const _onAddSegmentCondition = () => {
     let condition = { segment: { id: segmentConfig.id } };
@@ -50,6 +69,15 @@ function CustomerQuery(props) {
     setSegmentConfig({});
   };
 
+  const _getSegmentName = (id) => {
+    let segmentName = id;
+    segments.forEach((segment) => {
+      if (segment.value === id) segmentName = segment.text;
+    });
+
+    return segmentName;
+  };
+
   return (
     <div>
       <Button
@@ -81,12 +109,15 @@ function CustomerQuery(props) {
               />
             </Form.Field>
             <Form.Field>
-              <Input
+              <Dropdown
+                selection
                 placeholder="Segments"
                 value={segmentConfig.id}
+                options={segments}
                 onChange={(e, data) => {
                   setSegmentConfig({ ...segmentConfig, id: data.value });
                 }}
+                style={{ minWidth: 200 }}
               />
             </Form.Field>
             <Form.Field>
@@ -116,7 +147,7 @@ function CustomerQuery(props) {
               >
                 {condition.segment && (
                   <Label as="a">
-                    {`in ${condition.segment.id}`}
+                    {`in ${_getSegmentName(condition.segment.id)}`}
                     <Icon
                       name="delete"
                       color="red"
@@ -126,7 +157,7 @@ function CustomerQuery(props) {
                 )}
                 {condition.not && condition.not.segment && (
                   <Label as="a">
-                    {`not in ${condition.not.segment.id}`}
+                    {`not in ${_getSegmentName(condition.not.segment.id)}`}
                     <Icon
                       name="delete"
                       color="red"
@@ -169,6 +200,8 @@ CustomerQuery.propTypes = {
   conditions: PropTypes.object.isRequired,
   limit: PropTypes.number.isRequired,
   onUpdateLimit: PropTypes.func.isRequired,
+  projectId: PropTypes.number.isRequired,
+  connectionId: PropTypes.number.isRequired,
 };
 
 export default CustomerQuery;

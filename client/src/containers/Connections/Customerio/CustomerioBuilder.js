@@ -34,7 +34,7 @@ function CustomerioBuilder(props) {
   const [conditions, setConditions] = useState({});
 
   const {
-    dataRequest, match, onChangeRequest, runRequest, dataset,
+    dataRequest, match, onChangeRequest, runRequest, dataset, project,
     connection, onSave, requests, changeTutorial, // eslint-disable-line
   } = props;
 
@@ -150,6 +150,8 @@ function CustomerioBuilder(props) {
             onUpdateConditions={_onUpdateCustomerConditions}
             limit={limitValue}
             onUpdateLimit={(value) => setLimitValue(value)}
+            projectId={project.id}
+            connectionId={connection.id}
           />
 
           <Divider />
@@ -236,11 +238,13 @@ CustomerioBuilder.propTypes = {
   requests: PropTypes.array.isRequired,
   dataRequest: PropTypes.object,
   changeTutorial: PropTypes.func.isRequired,
+  project: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
     requests: state.dataset.requests,
+    project: state.project.active,
   };
 };
 

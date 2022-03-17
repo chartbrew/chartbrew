@@ -1,3 +1,5 @@
+const request = require("request-promise");
+
 const paginateRequests = require("../modules/paginateRequests");
 
 function getConnectionOpt(connection, dr) {
@@ -10,7 +12,6 @@ function getConnectionOpt(connection, dr) {
       "authorization": `Bearer ${connection.password}`,
     },
     resolveWithFullResponse: true,
-    // json: true,
   };
 
   if (dr.method === "POST" || dr.method === "PUT") {
@@ -37,7 +38,30 @@ function getCustomers(connection, dr) {
   });
 }
 
+function getAllSegments(connection) {
+  const options = getConnectionOpt(connection, {
+    method: "GET",
+    route: "segments",
+  });
+
+  return request(options)
+    .then((data) => {
+      console.log("data.body", data.body);
+      try {
+        const parsedData = JSON.parse(data.body);
+        if (parsedData.segments) return parsedData.segments;
+      } catch (e) {
+        return Promise.reject("Segments not found");
+      }
+      return Promise.reject("Segments not found");
+    })
+    .catch((err) => {
+      return err;
+    });
+}
+
 module.exports = {
   getConnectionOpt,
   getCustomers,
+  getAllSegments,
 };
