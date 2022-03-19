@@ -46,7 +46,6 @@ function getAllSegments(connection) {
 
   return request(options)
     .then((data) => {
-      console.log("data.body", data.body);
       try {
         const parsedData = JSON.parse(data.body);
         if (parsedData.segments) return parsedData.segments;

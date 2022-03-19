@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Dropdown, Form, Icon, Input, Label, List, Popup
+  Button, Container, Dropdown, Form, Icon, Input, Label, List, Loader, Popup
 } from "semantic-ui-react";
+import { isEqual } from "lodash";
+
 import { runHelperMethod } from "../../../actions/connection";
+import { primary } from "../../../config/colors";
+import determineType from "../../../modules/determineType";
 
 function CustomerQuery(props) {
   const {
@@ -12,9 +16,11 @@ function CustomerQuery(props) {
 
   const [segmentConfig, setSegmentConfig] = useState(null);
   const [segments, setSegments] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // get segments
+    setLoading(true);
     runHelperMethod(projectId, connectionId, "getAllSegments")
       .then((segmentData) => {
         const segmentOptions = segmentData.map((segment) => {
@@ -27,13 +33,33 @@ function CustomerQuery(props) {
         });
 
         setSegments(segmentOptions);
-      });
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   const _onAddSegmentCondition = () => {
-    let condition = { segment: { id: segmentConfig.id } };
-    if (segmentConfig.operation === "not") {
-      condition = { not: { segment: { id: segmentConfig.id } } };
+    if (!segmentConfig.ids || segmentConfig.ids.length < 1) return;
+    let condition;
+
+    if (segmentConfig.ids.length > 1) {
+      condition = { or: [] };
+      if (segmentConfig.operation === "not") {
+        condition = { not: { or: [] } };
+      }
+      segmentConfig.ids.forEach((segmentId) => {
+        if (segmentConfig.operation === "not") {
+          condition.not.or = [...condition.not.or, { segment: { id: segmentId } }];
+        } else {
+          condition.or = [...condition.or, { segment: { id: segmentId } }];
+        }
+      });
+    } else if (segmentConfig.ids.length === 1) {
+      if (segmentConfig.operation === "not") {
+        condition = { not: { segment: { id: segmentConfig.ids[0] } } };
+      } else {
+        condition = { segment: { id: segmentConfig.ids[0] } };
+      }
     }
 
     if (!conditions.and) {
@@ -50,7 +76,17 @@ function CustomerQuery(props) {
     const newConditions = [];
     const selector = conditions.and ? "and" : "or";
 
-    if (type === "segment") {
+    if (determineType(identifier) === "object" || determineType(identifier) === "array") {
+      conditions[selector].forEach((condition) => {
+        if (!isEqual(condition, identifier)
+          && !isEqual(condition.or, identifier)
+          && !isEqual(condition.and, identifier)
+          && !isEqual(condition.not, identifier)
+        ) {
+          newConditions.push(condition);
+        }
+      });
+    } else if (type === "segment") {
       conditions[selector].forEach((condition) => {
         if ((!condition.segment && !condition.not)
           || (condition.segment && condition.segment.id !== identifier)
@@ -72,11 +108,19 @@ function CustomerQuery(props) {
   const _getSegmentName = (id) => {
     let segmentName = id;
     segments.forEach((segment) => {
-      if (segment.value === id) segmentName = segment.text;
+      if (`${segment.value}` === `${id}`) segmentName = segment.text;
     });
 
     return segmentName;
   };
+
+  if (loading) {
+    return (
+      <Container>
+        <Loader active={loading} />
+      </Container>
+    );
+  }
 
   return (
     <div>
@@ -98,8 +142,8 @@ function CustomerQuery(props) {
                 selection
                 placeholder="Select operation"
                 options={[
-                  { text: "in", value: "in", key: "in" },
-                  { text: "not in", value: "not", key: "not" }
+                  { text: "in any of", value: "in", key: "in" },
+                  { text: "not in any of", value: "not", key: "not" }
                 ]}
                 defaultValue={"in"}
                 value={segmentConfig.operation}
@@ -111,13 +155,15 @@ function CustomerQuery(props) {
             <Form.Field>
               <Dropdown
                 selection
+                multiple
+                search
                 placeholder="Segments"
-                value={segmentConfig.id}
+                value={segmentConfig.ids}
                 options={segments}
                 onChange={(e, data) => {
-                  setSegmentConfig({ ...segmentConfig, id: data.value });
+                  setSegmentConfig({ ...segmentConfig, ids: data.value });
                 }}
-                style={{ minWidth: 200 }}
+                style={{ minWidth: 300 }}
               />
             </Form.Field>
             <Form.Field>
@@ -142,7 +188,7 @@ function CustomerQuery(props) {
               <List.Item
                 key={
                   (condition.segment && condition.segment.id)
-                  || (condition.not && conditions.not.segment && condition.not.segment.id)
+                  || (condition.not && condition.not.segment && condition.not.segment.id)
                 }
               >
                 {condition.segment && (
@@ -162,6 +208,48 @@ function CustomerQuery(props) {
                       name="delete"
                       color="red"
                       onClick={() => _onRemoveCondition("segment", condition.not.segment.id)}
+                    />
+                  </Label>
+                )}
+                {condition.or && (
+                  <Label as="a">
+                    {"in "}
+                    {condition.or.map((sub, index) => {
+                      if (sub.segment && sub.segment.id) {
+                        return (
+                          <span key={sub.segment.id}>
+                            <span style={{ color: primary }}>{`${_getSegmentName(sub.segment.id)}`}</span>
+                            <small>{`${index < condition.or.length - 1 ? " or " : ""}`}</small>
+                          </span>
+                        );
+                      }
+                      return (<span />);
+                    })}
+                    <Icon
+                      name="delete"
+                      color="red"
+                      onClick={() => _onRemoveCondition("segment", condition.or)}
+                    />
+                  </Label>
+                )}
+                {condition.not && condition.not.or && (
+                  <Label as="a">
+                    {"not in "}
+                    {condition.not.or.map((sub, index) => {
+                      if (sub.segment && sub.segment.id) {
+                        return (
+                          <span key={sub.segment.id}>
+                            <span style={{ color: primary }}>{`${_getSegmentName(sub.segment.id)}`}</span>
+                            <small>{`${index < condition.not.or.length - 1 ? " or " : ""}`}</small>
+                          </span>
+                        );
+                      }
+                      return (<span />);
+                    })}
+                    <Icon
+                      name="delete"
+                      color="red"
+                      onClick={() => _onRemoveCondition("segment", condition.not)}
                     />
                   </Label>
                 )}
