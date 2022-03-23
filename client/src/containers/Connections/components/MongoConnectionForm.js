@@ -36,12 +36,11 @@ function MongoConnectionForm(props) {
       // format the options
       if (newConnection.options && newConnection.options.length > 0) {
         const newOptions = [];
-        const formattedOptions = newConnection.options.split("&");
+        const formattedOptions = newConnection.options;
         for (let i = 0; i < formattedOptions.length; i++) {
-          let optionKey = formattedOptions[i].substring(0, formattedOptions[i].indexOf("="));
-          optionKey = optionKey.replace("?", "");
+          const optionKey = Object.keys(formattedOptions[i])[0];
+          const optionValue = Object.values(formattedOptions[i])[0];
 
-          const optionValue = formattedOptions[i].substring(formattedOptions[i].indexOf("=") + 1);
           newOptions.push({
             id: uuid(),
             key: optionKey,
@@ -388,10 +387,12 @@ function MongoConnectionForm(props) {
                   <Form.Group widths="equal" key={option.id}>
                     <Form.Input
                       placeholder="Key"
+                      value={option.key}
                       onChange={(e, data) => _onChangeOption(option.id, data.value, "key")}
                     />
                     <Form.Input
                       onChange={(e, data) => _onChangeOption(option.id, data.value, "value")}
+                      value={option.value}
                       placeholder="Value"
                     />
                     <Form.Button icon onClick={() => _removeOption(option.id)}>
