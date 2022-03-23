@@ -15,6 +15,7 @@ function CustomerQuery(props) {
   } = props;
 
   const [segmentConfig, setSegmentConfig] = useState(null);
+  const [attributeConfig, setAttributeConfig] = useState(null);
   const [segments, setSegments] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -72,6 +73,10 @@ function CustomerQuery(props) {
     setSegmentConfig(null);
   };
 
+  const _onAddAttributeCondition = () => {
+
+  };
+
   const _onRemoveCondition = (type, identifier) => {
     const newConditions = [];
     const selector = conditions.and ? "and" : "or";
@@ -103,6 +108,12 @@ function CustomerQuery(props) {
 
   const _onConfigureSegment = () => {
     setSegmentConfig({});
+    setAttributeConfig(null);
+  };
+
+  const _onConfigureAttribute = () => {
+    setAttributeConfig({ operator: "eq" });
+    setSegmentConfig(null);
   };
 
   const _getSegmentName = (id) => {
@@ -132,6 +143,7 @@ function CustomerQuery(props) {
       <Button
         size="small"
         content="Add attribute condition"
+        onClick={() => _onConfigureAttribute()}
       />
 
       {segmentConfig && (
@@ -175,6 +187,60 @@ function CustomerQuery(props) {
               <Button
                 icon="x"
                 onClick={() => setSegmentConfig(null)}
+              />
+            </Form.Field>
+          </Form.Group>
+        </Form>
+      )}
+
+      {attributeConfig && (
+        <Form style={{ marginTop: 20 }}>
+          <Form.Group>
+            <Form.Field>
+              <Input
+                placeholder="Attribute name"
+                value={attributeConfig.field}
+                onChange={(e, data) => {
+                  setAttributeConfig({ ...attributeConfig, field: data.value });
+                }}
+              />
+            </Form.Field>
+            <Form.Field>
+              <Dropdown
+                selection
+                options={[
+                  { text: "is equal to", key: "eq", value: "eq" },
+                  { text: "is not equal to", key: "neq", value: "neq" },
+                  { text: "exist", key: "exist", value: "exist" },
+                  { text: "does not exist", key: "nexist", value: "nexist" },
+                ]}
+                defaultValue={"eq"}
+                value={attributeConfig.operator}
+                onChange={(e, data) => {
+                  setAttributeConfig({ ...attributeConfig, operator: data.value });
+                }}
+              />
+            </Form.Field>
+            {(attributeConfig.operator === "eq" || attributeConfig.operator === "neq") && (
+              <Form.Field>
+                <Input
+                  placeholder="Value"
+                  value={attributeConfig.value}
+                  onChange={(e, data) => {
+                    setAttributeConfig({ ...attributeConfig, value: data.value });
+                  }}
+                />
+              </Form.Field>
+            )}
+            <Form.Field>
+              <Button
+                icon="checkmark"
+                onClick={_onAddAttributeCondition}
+                primary
+              />
+              <Button
+                icon="x"
+                onClick={() => setAttributeConfig(null)}
               />
             </Form.Field>
           </Form.Group>
