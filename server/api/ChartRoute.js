@@ -401,7 +401,7 @@ module.exports = (app) => {
           if (error.message === "401") {
             return res.status(401).send({ error: "Not authorized" });
           }
-          if (error.message.indexOf("413") > -1) {
+          if (error.message && error.message.indexOf("413") > -1) {
             return res.status(413).send(error);
           }
           return res.status(400).send(error);
