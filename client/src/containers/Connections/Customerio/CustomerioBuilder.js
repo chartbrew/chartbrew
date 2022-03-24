@@ -146,14 +146,28 @@ function CustomerioBuilder(props) {
           </Menu>
           <Divider />
 
-          <CustomerQuery
-            conditions={conditions}
-            onUpdateConditions={_onUpdateCustomerConditions}
-            limit={limitValue}
-            onUpdateLimit={(value) => setLimitValue(value)}
-            projectId={project.id}
-            connectionId={connection.id}
-          />
+          {entity === "customers" && (
+            <CustomerQuery
+              conditions={conditions}
+              onUpdateConditions={_onUpdateCustomerConditions}
+              limit={limitValue}
+              onUpdateLimit={(value) => setLimitValue(value)}
+              projectId={project.id}
+              connectionId={connection.id}
+              populateAttributes={
+                cioRequest.configuration && cioRequest.configuration.populateAttributes
+              }
+              onChangeAttributes={() => {
+                setCioRequest({
+                  ...cioRequest,
+                  configuration: {
+                    ...cioRequest.configuration,
+                    populateAttributes: !cioRequest.configuration.populateAttributes,
+                  }
+                });
+              }}
+            />
+          )}
 
           <Divider />
           <Message icon size="small">

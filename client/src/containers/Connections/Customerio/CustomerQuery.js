@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Container, Divider, Dropdown, Form, Icon, Input, Label, List, Loader, Popup
+  Button, Checkbox, Container, Divider, Dropdown, Form, Icon, Input, Label, List, Loader, Popup
 } from "semantic-ui-react";
 import { isEqual } from "lodash";
 
@@ -12,6 +12,7 @@ import determineType from "../../../modules/determineType";
 function CustomerQuery(props) {
   const {
     conditions, onUpdateConditions, limit, onUpdateLimit, projectId, connectionId,
+    populateAttributes, onChangeAttributes,
   } = props;
 
   const [segmentConfig, setSegmentConfig] = useState(null);
@@ -496,6 +497,14 @@ function CustomerQuery(props) {
             onChange={(e, data) => onUpdateLimit(data.value)}
           />
         </Form.Field>
+        <Form.Field>
+          <Checkbox
+            label="Get the customers' attributes"
+            toggle
+            checked={populateAttributes}
+            onChange={onChangeAttributes}
+          />
+        </Form.Field>
       </Form>
     </div>
   );
@@ -508,6 +517,8 @@ CustomerQuery.propTypes = {
   onUpdateLimit: PropTypes.func.isRequired,
   projectId: PropTypes.number.isRequired,
   connectionId: PropTypes.number.isRequired,
+  populateAttributes: PropTypes.bool.isRequired,
+  onChangeAttributes: PropTypes.func.isRequired,
 };
 
 export default CustomerQuery;

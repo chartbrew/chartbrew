@@ -21,7 +21,37 @@ function getConnectionOpt(connection, dr) {
   return options;
 }
 
-function getCustomers(connection, dr) {
+function getCustomersAttributes(ids, options, result = {}) {
+  if (!ids) return result;
+
+  const newOpt = options;
+  if (ids.length <= 100) {
+    newOpt.body = JSON.stringify({ ids });
+  } else {
+    newOpt.body = JSON.stringify({ ids: ids.slice(0, 100) });
+  }
+
+  return request(newOpt)
+    .then((response) => {
+      try {
+        const parsedRes = JSON.parse(response.body);
+        const newResult = { ...result };
+        if (!newResult.customers) newResult.customers = [];
+
+        newResult.customers = [...newResult.customers, ...parsedRes.customers];
+        if (ids.length <= 100) return result;
+
+        return getCustomersAttributes(ids.slice(100), options, newResult);
+      } catch (e) {
+        return result;
+      }
+    })
+    .catch(() => {
+      return result;
+    });
+}
+
+async function getCustomers(connection, dr) {
   const options = getConnectionOpt(connection, dr);
 
   if (dr.configuration && dr.configuration.cioFilters) {
@@ -33,9 +63,25 @@ function getCustomers(connection, dr) {
     }
   }
 
-  return paginateRequests("cursor", {
+  let result = await paginateRequests("cursor", {
     options, limit: dr.itemsLimit, items: "next", offset: "start"
   });
+
+  // check if the customer attributes need to be populated
+  if (dr.configuration.populateAttributes) {
+    const attrOpt = options;
+    attrOpt.url += "/attributes";
+    result = await getCustomersAttributes(result.ids, attrOpt);
+  }
+
+  // clean the results
+  if (result.identifiers) {
+    result.customers = result.identifiers;
+    delete result.identifiers;
+    delete result.ids;
+    delete result.next;
+  }
+  return result;
 }
 
 function getAllSegments(connection) {
