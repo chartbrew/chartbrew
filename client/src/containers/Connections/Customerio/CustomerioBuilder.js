@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Form, Button, Icon, Popup, Checkbox, Divider, Message, Menu,
+  Grid, Form, Button, Icon, Popup, Checkbox, Divider, Message, Menu, Label,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -128,20 +128,21 @@ function CustomerioBuilder(props) {
               onClick={() => _onSelectCustomers()}
             />
             <Menu.Item
-              name="Segments"
-              active={entity === "segments"}
-              onClick={() => setEntity("segments")}
-            />
-            <Menu.Item
-              name="Campaigns"
+              disabled
               active={entity === "campaigns"}
               onClick={() => setEntity("campaigns")}
-            />
+            >
+              Campaigns
+              <Label size="tiny">coming soon!</Label>
+            </Menu.Item>
             <Menu.Item
-              name="Messages"
               active={entity === "messages"}
               onClick={() => setEntity("messages")}
-            />
+              disabled
+            >
+              Messages
+              <Label size="tiny">coming soon!</Label>
+            </Menu.Item>
           </Menu>
           <Divider />
 
@@ -160,7 +161,9 @@ function CustomerioBuilder(props) {
             <Message.Content>
               <Message.Header>Customer.io integration has just arrived</Message.Header>
               {"If you spot any issues or have any feedback, please let me know at "}
-              <a href="mailto:raz@chartbrew.com?subject=Customer.io integration feedback">raz@chartbrew.com</a>
+              <a href="mailto:raz@chartbrew.com?subject=Customer.io integration feedback">
+                {"raz@chartbrew.com"}
+              </a>
             </Message.Content>
           </Message>
         </Grid.Column>
