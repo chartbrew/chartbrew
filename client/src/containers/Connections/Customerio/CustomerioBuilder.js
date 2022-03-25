@@ -69,8 +69,6 @@ function CustomerioBuilder(props) {
   useEffect(() => {
     const newApiRequest = cioRequest;
 
-    console.log("cioRequest", cioRequest);
-
     onChangeRequest(newApiRequest);
   }, [cioRequest, connection]);
 
