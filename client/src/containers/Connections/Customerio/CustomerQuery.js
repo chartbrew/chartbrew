@@ -513,7 +513,7 @@ function CustomerQuery(props) {
 CustomerQuery.propTypes = {
   onUpdateConditions: PropTypes.func.isRequired,
   conditions: PropTypes.object.isRequired,
-  limit: PropTypes.number.isRequired,
+  limit: PropTypes.string.isRequired,
   onUpdateLimit: PropTypes.func.isRequired,
   projectId: PropTypes.number.isRequired,
   connectionId: PropTypes.number.isRequired,

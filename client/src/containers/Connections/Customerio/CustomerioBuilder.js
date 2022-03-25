@@ -69,6 +69,8 @@ function CustomerioBuilder(props) {
   useEffect(() => {
     const newApiRequest = cioRequest;
 
+    console.log("cioRequest", cioRequest);
+
     onChangeRequest(newApiRequest);
   }, [cioRequest, connection]);
 
@@ -81,7 +83,10 @@ function CustomerioBuilder(props) {
     setConditions(conditions);
     setCioRequest({
       ...cioRequest,
-      configuration: { cioFilters: conditions },
+      configuration: {
+        ...cioRequest.configuration,
+        cioFilters: conditions
+      },
     });
   };
 

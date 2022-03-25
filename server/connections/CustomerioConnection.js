@@ -39,7 +39,7 @@ function getCustomersAttributes(ids, options, result = {}) {
         if (!newResult.customers) newResult.customers = [];
 
         newResult.customers = [...newResult.customers, ...parsedRes.customers];
-        if (ids.length <= 100) return result;
+        if (ids.length <= 100) return newResult;
 
         return getCustomersAttributes(ids.slice(100), options, newResult);
       } catch (e) {
@@ -81,6 +81,8 @@ async function getCustomers(connection, dr) {
     delete result.ids;
     delete result.next;
   }
+
+  result.customer_count = result.customers ? result.customers.length : 0;
   return result;
 }
 
