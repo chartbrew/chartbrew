@@ -736,6 +736,7 @@ class ConnectionController {
         method: "GET",
         route: "activities"
       });
+    options.json = true;
 
     return request(options);
   }

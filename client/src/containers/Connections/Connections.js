@@ -29,6 +29,7 @@ import {
   getProjectConnections as getProjectConnectionsAction,
   addConnection as addConnectionAction,
   saveConnection as saveConnectionAction,
+  getConnection as getConnectionAction,
 } from "../../actions/connection";
 import {
   getTemplates as getTemplatesAction
@@ -50,7 +51,7 @@ function Connections(props) {
   const {
     cleanErrors, addConnection, saveConnection, match, history, connections, testRequest,
     removeConnection, getProjectConnections, user, team, getProjectCharts, getTemplates,
-    templates,
+    templates, getConnection,
   } = props;
 
   const { width } = useWindowSize();
@@ -81,8 +82,7 @@ function Connections(props) {
       } else if (params.has("edit")) {
         const foundConnection = connections.filter((c) => `${c.id}` === params.get("edit"))[0];
         if (foundConnection) {
-          setEditConnection(foundConnection);
-          setFormType(foundConnection.type);
+          _onEditConnection(foundConnection);
         }
       } else if (params.has("connection")) {
         setFormType(params.get("connection"));
@@ -189,10 +189,16 @@ function Connections(props) {
   const _onEditConnection = (connection) => {
     setEditConnection(null);
     setFormType("");
-    setTimeout(() => {
-      setEditConnection(connection);
-      setFormType(connection.type);
-    }, 100);
+
+    return getConnection(match.params.projectId, connection.id)
+      .then((connectionData) => {
+        setEditConnection(connectionData);
+        setFormType(connection.type);
+        return connectionData;
+      })
+      .catch((err) => {
+        return err;
+      });
   };
 
   const _closeConnectionForm = () => {
@@ -677,6 +683,7 @@ Connections.propTypes = {
   getProjectCharts: PropTypes.func.isRequired,
   getTemplates: PropTypes.func.isRequired,
   templates: PropTypes.object.isRequired,
+  getConnection: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -700,6 +707,9 @@ const mapDispatchToProps = (dispatch) => {
     cleanErrors: () => dispatch(cleanErrorsAction()),
     getProjectCharts: (projectId) => dispatch(getProjectChartsAction(projectId)),
     getTemplates: (teamId) => dispatch(getTemplatesAction(teamId)),
+    getConnection: (projectId, connectionId) => {
+      return dispatch(getConnectionAction(projectId, connectionId));
+    },
   };
 };
 

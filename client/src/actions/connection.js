@@ -42,6 +42,37 @@ export function getProjectConnections(projectId) {
   };
 }
 
+export function getConnection(projectId, connectionId) {
+  return (dispatch) => {
+    if (!cookie.load("brewToken")) {
+      return new Promise((resolve, reject) => reject(new Error("No Token")));
+    }
+    const token = cookie.load("brewToken");
+    const url = `${API_HOST}/project/${projectId}/connection/${connectionId}`;
+    const method = "GET";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    return fetch(url, { method, headers })
+      .then((response) => {
+        if (!response.ok) {
+          dispatch(addError(response.status));
+          return new Promise((resolve, reject) => reject(response.statusText));
+        }
+
+        return response.json();
+      })
+      .then((connection) => {
+        return new Promise(resolve => resolve(connection));
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  };
+}
+
 export function addConnection(projectId, connection) {
   return (dispatch) => {
     if (!cookie.load("brewToken")) {

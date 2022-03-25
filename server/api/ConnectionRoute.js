@@ -88,7 +88,7 @@ module.exports = (app) => {
         if (!permission.granted) {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }
-        const editorPermission = accessControl.can(teamRole.role).editAny("connection");
+        const editorPermission = accessControl.can(teamRole.role).updateAny("connection");
         if (editorPermission.granted) isEditor = true;
 
         return connectionController.findById(req.params.connection_id);

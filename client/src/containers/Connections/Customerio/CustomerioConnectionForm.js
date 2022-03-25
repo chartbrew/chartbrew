@@ -41,6 +41,10 @@ function CustomerioConnectionForm(props) {
     _init();
   }, []);
 
+  useEffect(() => {
+    setConnection(editConnection);
+  }, [editConnection]);
+
   const _init = () => {
     if (editConnection) {
       const newConnection = editConnection;
