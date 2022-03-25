@@ -42,7 +42,9 @@ function CustomerioConnectionForm(props) {
   }, []);
 
   useEffect(() => {
-    setConnection(editConnection);
+    if (editConnection) {
+      setConnection(editConnection);
+    }
   }, [editConnection]);
 
   const _init = () => {
