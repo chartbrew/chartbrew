@@ -1,82 +1,77 @@
-import React, { Component } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
-import { Field, reduxForm } from "redux-form";
 import {
   Container, Form, Divider, Button, Message, Icon, Label, Item, Modal,
   Header, Input, TransitionablePortal,
 } from "semantic-ui-react";
 
-import { login, requestPasswordReset, oneaccountAuth } from "../actions/user";
-import { addTeamMember } from "../actions/team";
-import { required, email } from "../config/validations";
+import {
+  login as loginAction,
+  requestPasswordReset as requestPasswordResetAction,
+  oneaccountAuth as oneaccountAuthAction,
+} from "../actions/user";
+import { addTeamMember as addTeamMemberAction } from "../actions/team";
+import { required, email as validateEmail } from "../config/validations";
 
 import { ONE_ACCOUNT_ENABLED } from "../config/settings";
 
 /*
   Contains login functionality
 */
-class LoginForm extends Component {
-  constructor(props) {
-    super(props);
-    this.loginUser = this.loginUser.bind(this);
-    this.state = {
-      loading: false,
-      oaloading: false,
+function LoginForm(props) {
+  const {
+    requestPasswordReset, oneaccountAuth, history, login, addTeamMember,
+  } = props;
+
+  const [loading, setLoading] = useState(false);
+  const [oaloading, setOaloading] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetDone, setResetDone] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [forgotModal, setForgotModal] = useState(false);
+  const [resetError, setResetError] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    document.addEventListener("oneaccount-authenticated", authenticateOneaccount);
+    return () => {
+      document.removeEventListener("oneaccount-authenticated", authenticateOneaccount);
     };
-  }
+  }, []);
 
-  componentDidMount() {
-    document.addEventListener("oneaccount-authenticated", this.authenticateOneaccount);
-  }
-
-  componentWillUnmount() {
-    document.removeEventListener("oneaccount-authenticated", this.authenticateOneaccount);
-  }
-
-  _onSendResetRequest = () => {
-    const { requestPasswordReset } = this.props;
-    const { resetEmail } = this.state;
-
-    if (email(resetEmail)) {
-      this.setState({ resetError: email(resetEmail) });
+  const _onSendResetRequest = () => {
+    if (validateEmail(resetEmail)) {
+      setResetError(validateEmail(resetEmail));
       return;
     }
 
-    this.setState({ resetLoading: true, resetError: false, resetSuccess: false });
+    setResetLoading(true);
     requestPasswordReset(resetEmail)
       .then(() => {
-        this.setState({ resetLoading: false, resetSuccess: true });
+        setResetLoading(false);
+        setResetDone(true);
       })
-      .catch((error) => {
-        if (error.message && error.message.indexOf("404") > -1) {
-          this.setState({
-            resetLoading: false,
-            resetError: "We couldn't find anyone with this email address. Try another one.",
-          });
-        } else {
-          this.setState({
-            resetLoading: false,
-            resetError: "There was a problem with your request. Please try again or get in touch with us directly.",
-          });
-        }
+      .catch(() => {
+        setResetLoading(false);
+        setResetDone(true);
       });
-  }
+  };
 
-  authenticateOneaccount = (event) => {
-    const { oneaccountAuth, history } = this.props;
+  const authenticateOneaccount = (event) => {
     const data = event.detail;
-    this.setState({ oaloading: true });
+    setOaloading(true);
     oneaccountAuth(data)
       .then(() => {
-        this.setState({ oaloading: false });
+        setOaloading(false);
         history.push("/user");
       });
-  }
+  };
 
-  socialSignin() {
-    const { oaloading } = this.state;
+  const socialSignin = () => {
     return (
       <Container>
         <Button
@@ -90,148 +85,151 @@ class LoginForm extends Component {
         </Button>
       </Container>
     );
-  }
+  };
 
-  loginUser(values) {
-    const { login, addTeamMember, history } = this.props;
+  const loginUser = () => {
     const params = new URLSearchParams(document.location.search);
 
-    this.setState({ loading: true });
-    login(values).then((user) => {
-      if (params.has("inviteToken")) {
-        addTeamMember(user.id, params.get("inviteToken"));
-      }
-      this.setState({ loading: false });
-      history.push("/user");
-    }).catch(() => {
-      this.setState({ loading: false });
-    });
-  }
+    if (validateEmail(email)) {
+      setErrors({ ...errors, email: validateEmail(email) });
+      return;
+    }
 
-  renderField({
-    input, type, meta: { touched, error }, ...custom
-  }) {
-    const hasError = touched && error !== undefined;
-    return (
-      <Form.Field>
-        { !hasError && <Message error header="Error" content={error} />}
-        <Form.Input iconPosition="left" type={type} error={hasError} {...input} {...custom} /> {/* eslint-disable-line */}
-        {touched && ((error && (
-          <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
-            {" "}
-            {error}
-            {" "}
-          </Label>
-        )))}
-      </Form.Field>
-    );
-  }
+    if (required(password)) {
+      setErrors({ ...errors, password: required(password) });
+      return;
+    }
 
-  render() {
-    const { handleSubmit } = this.props;
-    const {
-      loading, forgotModal, resetSuccess, resetError,
-      resetLoading,
-    } = this.state;
-    return (
-      <div style={styles.container}>
-        <Form size="large">
-          <Field name="email" component={this.renderField} validate={[required, email]} placeholder="Email" icon="mail" />
-          <Field name="password" type="password" component={this.renderField} validate={required} placeholder="Password" icon="lock" />
+    setLoading(true);
+    login({ email, password })
+      .then((user) => {
+        if (params.has("inviteToken")) {
+          addTeamMember(user.id, params.get("inviteToken"));
+        }
+        setLoading(false);
+        history.push("/user");
+      }).catch(() => {
+        setLoading(false);
+      });
+  };
 
-          <Button
-            onClick={handleSubmit(this.loginUser)}
-            icon
-            size="large"
-            labelPosition="right"
-            primary
-            disabled={loading}
-            loading={loading}
-            type="submit"
-              >
-            {" "}
-            <Icon name="right arrow" />
-            Login
-          </Button>
+  return (
+    <div style={styles.container}>
+      <Form size="large" onSubmit={loginUser}>
+        <Form.Field>
+          <Form.Input
+            icon="mail"
+            iconPosition="left"
+            type="email"
+            placeholder="Enter your email"
+            onChange={(e, data) => {
+              setEmail(data.value);
+              setErrors({ ...errors, email: "" });
+            }}
+            value={email}
+          />
+          {errors.email && (
+            <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
+              {"Email is not valid"}
+            </Label>
+          )}
+        </Form.Field>
 
-          <Item
-            style={{ paddingTop: 10 }}
-            onClick={() => this.setState({ forgotModal: true })}
+        <Form.Field>
+          <Form.Input
+            icon="lock"
+            iconPosition="left"
+            type="password"
+            placeholder="Enter your password"
+            onChange={(e, data) => {
+              setPassword(data.value);
+              setErrors({ ...errors, password: "" });
+            }}
+            value={password}
+          />
+          {errors.password && (
+            <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
+              {"Please enter your password"}
+            </Label>
+          )}
+        </Form.Field>
+
+        <Button
+          onClick={loginUser}
+          icon
+          size="large"
+          labelPosition="right"
+          primary
+          disabled={loading}
+          loading={loading}
+          type="submit"
+        >
+          Login
+          <Icon name="right arrow" />
+        </Button>
+
+        <Item
+          style={{ paddingTop: 10 }}
+          onClick={() => setForgotModal(true)}
           >
-            <a href="#">Did you forget your password?</a>
-          </Item>
-        </Form>
-        {/*
-          <Divider horizontal> Or </Divider>
-          <Button compact color="google plus" icon="google plus" content="Use Google" />
-          <Button compact color="twitter" icon="twitter" content="Use Twitter" />
-        */}
+          <a href="#">Did you forget your password?</a>
+        </Item>
+      </Form>
 
-        <TransitionablePortal open={forgotModal}>
-          <Modal open={forgotModal} size="small" onClose={() => this.setState({ forgotModal: false })}>
-            <Header
-              content="Reset your password"
-              inverted
+      <TransitionablePortal open={forgotModal}>
+        <Modal open={forgotModal} size="small" onClose={() => setForgotModal(false)}>
+          <Header
+            content="Reset your password"
+            inverted
             />
-            <Modal.Content>
-              <Header size="small">{"We will send you an email with further instructions on your email"}</Header>
-              <Input
-                placeholder="Enter your email here"
-                fluid
-                onChange={(e, data) => this.setState({ resetEmail: data.value })}
+          <Modal.Content>
+            <Header size="small">{"We will send you an email with further instructions on your email"}</Header>
+            <Input
+              placeholder="Enter your email here"
+              fluid
+              onChange={(e, data) => setResetEmail(data.value)}
               />
 
-              {resetSuccess
-                && (
-                <Message positive>
-                  <Message.Header>{"Check your email for further instructions"}</Message.Header>
-                </Message>
-                )}
-              {resetError
-                && (
-                <Message negative>
-                  <Message.Header>{resetError}</Message.Header>
-                </Message>
-                )}
-            </Modal.Content>
-            <Modal.Actions>
-              <Button
-                onClick={() => this.setState({ forgotModal: false })}
-              >
-                Close
-              </Button>
-              <Button
-                primary
-                disabled={resetSuccess}
-                icon
-                labelPosition="right"
-                loading={resetLoading}
-                onClick={this._onSendResetRequest}
-              >
-                <Icon name="checkmark" />
-                Send password reset email
-              </Button>
-            </Modal.Actions>
-          </Modal>
-        </TransitionablePortal>
-        {ONE_ACCOUNT_ENABLED
-          && (
-            <>
-              <Divider horizontal>
-                Or
-              </Divider>
-              {this.socialSignin()}
-            </>
-          )}
-      </div>
-    );
-  }
+            {resetDone && (
+              <Message positive>
+                <Message.Header>{"We will send further instructions over email if the address is registered with Chartbrew."}</Message.Header>
+              </Message>
+            )}
+            {resetError && (
+              <Message negative>
+                <Message.Header>{resetError}</Message.Header>
+              </Message>
+            )}
+          </Modal.Content>
+          <Modal.Actions>
+            <Button onClick={() => setForgotModal(false)}>
+              Close
+            </Button>
+            <Button
+              primary
+              disabled={resetDone}
+              icon
+              labelPosition="right"
+              loading={resetLoading}
+              onClick={_onSendResetRequest}
+            >
+              <Icon name="checkmark" />
+              Send password reset email
+            </Button>
+          </Modal.Actions>
+        </Modal>
+      </TransitionablePortal>
+      {ONE_ACCOUNT_ENABLED && (
+        <>
+          <Divider horizontal>
+            Or
+          </Divider>
+          {socialSignin()}
+        </>
+      )}
+    </div>
+  );
 }
-
-const validate = () => {
-  const errors = {};
-  return errors;
-};
 
 const OneaccountSVG = (props) => {
   const { style } = props;
@@ -284,7 +282,6 @@ const styles = {
 LoginForm.propTypes = {
   oneaccountAuth: PropTypes.func.isRequired,
   login: PropTypes.func.isRequired,
-  handleSubmit: PropTypes.func.isRequired,
   addTeamMember: PropTypes.func.isRequired,
   history: PropTypes.object.isRequired,
   requestPasswordReset: PropTypes.func.isRequired,
@@ -298,11 +295,11 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    oneaccountAuth: user => dispatch(oneaccountAuth(user)),
-    login: data => dispatch(login(data)),
-    addTeamMember: (userId, token) => dispatch(addTeamMember(userId, token)),
-    requestPasswordReset: (email) => dispatch(requestPasswordReset(email)),
+    oneaccountAuth: (user) => dispatch(oneaccountAuthAction(user)),
+    login: (data) => dispatch(loginAction(data)),
+    addTeamMember: (userId, token) => dispatch(addTeamMemberAction(userId, token)),
+    requestPasswordReset: (email) => dispatch(requestPasswordResetAction(email)),
   };
 };
 
-export default reduxForm({ form: "login", validate })(withRouter(connect(mapStateToProps, mapDispatchToProps)(LoginForm)));
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(LoginForm));

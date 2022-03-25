@@ -1,106 +1,113 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Field, reduxForm } from "redux-form";
 import { Link } from "react-router-dom";
 import {
   Message, Divider, Container, Segment, Form, Button, Header, Icon, Label,
 } from "semantic-ui-react";
-import _ from "lodash";
 
 import { createUser, createInvitedUser, oneaccountAuth } from "../actions/user";
 import { addTeamMember as addTeamMemberAction } from "../actions/team";
-import { required, email, password } from "../config/validations";
+import { required, email as emailValidation, password as passwordValidation } from "../config/validations";
 import cbLogoSmall from "../assets/logo_inverted.png";
 import { blue, secondary } from "../config/colors";
-import { cleanErrors as cleanErrorsAction } from "../actions/error";
 
 import { ONE_ACCOUNT_ENABLED } from "../config/settings";
 
 /*
-  Description
+  The Signup page
 */
-class Signup extends Component {
-  constructor(props) {
-    super(props);
+function Signup(props) {
+  const {
+    createUser, history, createInvitedUser, addTeamMember, oneaccountAuth,
+  } = props;
 
-    this.state = {
-      loading: false,
-      oaloading: false,
+  const [loading, setLoading] = useState(false);
+  const [oaloading, setOaloading] = useState(false);
+  const [addedToTeam, setAddedToTeam] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [signupError, setSignupError] = useState("");
+
+  useEffect(() => {
+    document.addEventListener("oneaccount-authenticated", authenticateOneaccount);
+
+    return () => {
+      document.removeEventListener("oneaccount-authenticated", authenticateOneaccount);
     };
-  }
+  }, []);
 
-  componentDidMount() {
-    this._isMounted = true;
-    document.addEventListener("oneaccount-authenticated", this.authenticateOneaccount);
-    const { cleanErrors } = this.props;
-    cleanErrors();
-  }
-
-  componentWillUnmount() {
-    this._isMounted = false;
-    document.removeEventListener("oneaccount-authenticated", this.authenticateOneaccount);
-  }
-
-  submitUser = (values) => {
-    const { createUser, history } = this.props;
-
+  const submitUser = (values) => {
     const params = new URLSearchParams(document.location.search);
-    this.setState({ loading: true });
-    if (params.has("inviteToken")) {
-      this._createInvitedUser(values, params.get("inviteToken"));
-    } else {
-      createUser(values)
-        .then(() => {
-          this.setState({ loading: false });
 
+    if (required(name)) {
+      setErrors({ ...errors, name: required(name) });
+      return;
+    }
+
+    if (emailValidation(email)) {
+      setErrors({ ...errors, email: emailValidation(email) });
+      return;
+    }
+
+    if (passwordValidation(password)) {
+      setErrors({ ...errors, password: passwordValidation(password) });
+      return;
+    }
+
+    setLoading(true);
+    if (params.has("inviteToken")) {
+      _createInvitedUser(values, params.get("inviteToken"));
+    } else {
+      createUser({ name, email, password })
+        .then(() => {
+          setLoading(false);
           history.push("/user");
         })
-        .catch(() => {
-          this.setState({ loading: false });
+        .catch((err) => {
+          setLoading(false);
+          setSignupError(err);
         });
     }
-  }
+  };
 
   // invited user doesn't receive verificationUrl
-  _createInvitedUser = (values, inviteToken) => {
-    const { createInvitedUser, addTeamMember, history } = this.props;
+  const _createInvitedUser = (values, inviteToken) => {
     createInvitedUser(values)
       .then((user) => {
         addTeamMember(user.id, inviteToken)
           .then(() => {
-            this.setState({ loading: false, addedToTeam: true });
+            setLoading(false);
+            setAddedToTeam(true);
             setTimeout(() => {
               history.push("/user");
             }, 3000);
           });
       })
       .catch(() => {
-        this.setState({ loading: false });
+        setLoading(false);
       });
-  }
+  };
 
-  authenticateOneaccount = (event) => {
-    const { oneaccountAuth, history } = this.props;
+  const authenticateOneaccount = (event) => {
     const data = event.detail;
 
     const params = new URLSearchParams(document.location.search);
-    if (!this._isMounted) return;
-    this.setState({ oaloading: true });
+    setOaloading(true);
     if (params.has("inviteToken")) {
-      this._createInvitedUser(data, params.get("inviteToken"));
+      _createInvitedUser(data, params.get("inviteToken"));
     } else {
       oneaccountAuth(data)
         .then(() => {
-          if (!this._isMounted) return;
-          this.setState({ oaloading: false });
+          setOaloading(false);
           history.push("/user");
         });
     }
-  }
+  };
 
-  socialSignup() {
-    const { oaloading } = this.state;
+  const socialSignup = () => {
     return (
       <Container>
         <Button
@@ -114,100 +121,97 @@ class Signup extends Component {
         </Button>
       </Container>
     );
-  }
+  };
 
-  renderField({
-    input, type, meta: { touched, error }, ...custom
-  }) {
-    const hasError = touched && error !== undefined;
-    return (
-      <Form.Field>
-        { !hasError && <Message error header="Error" content={error} />}
-        <Form.Input
-          iconPosition="left"
-          type={type}
-          error={hasError}
-          {...input} {...custom} /> {/* eslint-disable-line */}
-        {touched
-          && ((error && (
-          <Label size="medium" style={{ marginTop: -30 }} basic pointing>
-            {" "}
-            {error}
-            {" "}
-          </Label>
-          )))}
-      </Form.Field>
-    );
-  }
+  return (
+    <div style={styles.container}>
+      <Container text textAlign="center">
+        <Link to="/">
+          <img size="tiny" centered src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
+        </Link>
+        <Header inverted as="h2" style={{ marginTop: 0 }}>{"Time to brew some charts!"}</Header>
 
-  render() {
-    const { handleSubmit, errors } = this.props;
-    const {
-      loading, addedToTeam,
-    } = this.state;
-
-    const signupError = _.find(errors, { pathname: window.location.pathname });
-
-    return (
-      <div style={styles.container}>
-        <Container text textAlign="center">
-          <Link to="/">
-            <img size="tiny" centered src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
-          </Link>
-          <Header inverted as="h2" style={{ marginTop: 0 }}>{"Time to brew some charts!"}</Header>
-
-          <Segment color="olive" raised style={styles.verticalPadding} padded>
-            <Form size="large">
-              <Field
-                name="name"
-                component={this.renderField}
-                validate={required}
-                placeholder="What's your name?"
+        <Segment color="olive" raised style={styles.verticalPadding} padded>
+          <Form size="large" onSubmit={submitUser}>
+            <Form.Field>
+              <Form.Input
                 icon="user"
-                style={styles.leftAligned}
+                iconPosition="left"
+                type="text"
+                placeholder="What's your name?"
+                onChange={(e, data) => {
+                  setName(data.value);
+                  setErrors({ ...errors, name: "" });
+                }}
+                value={name}
               />
+              {errors.name && (
+                <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
+                  {"Please enter your name"}
+                </Label>
+              )}
+            </Form.Field>
 
-              <Header as="h5" style={styles.leftAligned}>{"Your new sign in details"}</Header>
-              <Field
-                name="email"
-                component={this.renderField}
-                validate={[required, email]}
-                placeholder="example@site.com"
+            <Header as="h5" style={styles.leftAligned}>{"Your new sign in details"}</Header>
+            <Form.Field>
+              <Form.Input
                 icon="mail"
+                iconPosition="left"
+                type="email"
+                placeholder="Enter your email"
+                onChange={(e, data) => {
+                  setEmail(data.value);
+                  setErrors({ ...errors, email: "" });
+                }}
+                value={email}
               />
-              <Field
-                name="password"
-                type="password"
-                component={this.renderField}
-                validate={[required, password]}
-                placeholder="Enter a secure password"
+              {errors.email && (
+                <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
+                  {"Please enter a valid email"}
+                </Label>
+              )}
+            </Form.Field>
+            <Form.Field>
+              <Form.Input
                 icon="lock"
-                style={styles.leftAligned}
+                iconPosition="left"
+                type="password"
+                placeholder="Enter a secure password"
+                onChange={(e, data) => {
+                  setPassword(data.value);
+                  setErrors({ ...errors, password: "" });
+                }}
+                value={password}
               />
+              {errors.password && (
+                <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
+                  {errors.password}
+                </Label>
+              )}
+            </Form.Field>
 
-              <Form.Field>
-                <Button
-                  onClick={handleSubmit(this.submitUser)}
-                  icon
-                  labelPosition="right"
-                  primary
-                  disabled={loading}
-                  loading={loading}
-                  type="submit"
-                  size="large"
-                >
-                  <Icon name="right arrow" />
-                  Sign Up
-                </Button>
-              </Form.Field>
-              {signupError
-              && (
+            <Form.Field>
+              <Button
+                onClick={submitUser}
+                icon
+                labelPosition="right"
+                primary
+                disabled={loading}
+                loading={loading}
+                type="submit"
+                size="large"
+              >
+                <Icon name="right arrow" />
+                Sign Up
+              </Button>
+            </Form.Field>
+            {signupError && (
               <Message negative>
-                <Message.Header>{signupError.message}</Message.Header>
+                <Message.Header>{signupError.message || signupError}</Message.Header>
                 <p>Please try it again.</p>
               </Message>
-              )}
-              {addedToTeam
+            )}
+            {addedToTeam
               && (
               <Message positive>
                 <Message.Header>
@@ -216,37 +220,37 @@ class Signup extends Component {
                 <p>{"We will redirect you to your dashboard now..."}</p>
               </Message>
               )}
-            </Form>
-            {ONE_ACCOUNT_ENABLED
+          </Form>
+
+          {ONE_ACCOUNT_ENABLED
               && (
                 <>
                   <Divider horizontal>
                     Or
                   </Divider>
-                  {this.socialSignup()}
+                  {socialSignup()}
                 </>
               )}
-            <Divider hidden />
-            <p>
-              {"By clicking Sign Up, you agree to our "}
-              <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/TermsAndConditions.md" rel="noopener noreferrer" target="_blank">Terms of Service</a>
-              {" and "}
-              <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/PrivacyPolicy.md" rel="noopener noreferrer" target="_blank">Privacy Policy</a>
-            </p>
-          </Segment>
-          <div>
-            <p style={styles.loginText}>
-              {" "}
-              Already have an account?
-              {" "}
-              <Link to={"/login"} style={styles.loginLink}>Login here</Link>
-              {" "}
-            </p>
-          </div>
-        </Container>
-      </div>
-    );
-  }
+          <Divider hidden />
+          <p>
+            {"By clicking Sign Up, you agree to our "}
+            <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/TermsAndConditions.md" rel="noopener noreferrer" target="_blank">Terms of Service</a>
+            {" and "}
+            <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/PrivacyPolicy.md" rel="noopener noreferrer" target="_blank">Privacy Policy</a>
+          </p>
+        </Segment>
+        <div>
+          <p style={styles.loginText}>
+            {" "}
+            Already have an account?
+            {" "}
+            <Link to={"/login"} style={styles.loginLink}>Login here</Link>
+            {" "}
+          </p>
+        </div>
+      </Container>
+    </div>
+  );
 }
 
 const OneaccountSVG = (props) => {
@@ -277,11 +281,6 @@ OneaccountSVG.propTypes = {
 
 OneaccountSVG.defaultProps = {
   style: {}
-};
-
-const validate = () => {
-  const errors = {};
-  return errors;
 };
 
 const styles = {
@@ -322,13 +321,9 @@ const styles = {
 Signup.propTypes = {
   createUser: PropTypes.func.isRequired,
   oneaccountAuth: PropTypes.func.isRequired,
-  handleSubmit: PropTypes.func.isRequired,
   addTeamMember: PropTypes.func.isRequired,
   createInvitedUser: PropTypes.func.isRequired,
   history: PropTypes.object.isRequired,
-  user: PropTypes.object.isRequired,
-  errors: PropTypes.array.isRequired,
-  cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -345,7 +340,6 @@ const mapDispatchToProps = (dispatch) => {
     oneaccountAuth: user => dispatch(oneaccountAuth(user)),
     addTeamMember: (userId, token) => dispatch(addTeamMemberAction(userId, token)),
     createInvitedUser: user => dispatch(createInvitedUser(user)),
-    cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
-export default reduxForm({ form: "signup", validate })(connect(mapStateToProps, mapDispatchToProps)(Signup));
+export default connect(mapStateToProps, mapDispatchToProps)(Signup);

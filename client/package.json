@@ -75,7 +75,6 @@
     "react-user-avatar": "^1.10.0",
     "reactour": "^1.18.0",
     "redux": "^4.0.5",
-    "redux-form": "^7.4.3",
     "redux-logger": "^3.0.6",
     "redux-thunk": "^2.3.0",
     "resolve": "1.18.1",

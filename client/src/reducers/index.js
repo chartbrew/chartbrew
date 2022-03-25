@@ -1,6 +1,5 @@
 import { combineReducers } from "redux";
 import { routerReducer } from "react-router-redux";
-import { reducer as formReducer } from "redux-form";
 
 // individual reducers imports
 import user from "./user";
@@ -18,7 +17,6 @@ import template from "./template";
 const AppReducer = combineReducers({
   user,
   project,
-  form: formReducer,
   team,
   chart,
   connection,
