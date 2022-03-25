@@ -101,7 +101,7 @@ function CustomerioConnectionForm(props) {
 
         <div style={styles.formStyle}>
           <Form id="connection-form">
-            <Form.Field error={!!errors.name} required>
+            <Form.Field error={!!errors.name}>
               <label>Name your connection</label>
               <Form.Input
                 placeholder="Enter a name that you can recognise later"
@@ -117,13 +117,13 @@ function CustomerioConnectionForm(props) {
               )}
             </Form.Field>
 
-            <Form.Field error={!!errors.password} required>
+            <Form.Field error={!!errors.password}>
               <label>
                 {"Your Customer.io API key "}
                 <Icon
                   name="question circle outline"
-                  size="large"
                   color="secondary"
+                  style={{ cursor: "pointer" }}
                   onClick={() => setShowInstructions(!showInstructions)}
                 />
               </label>
@@ -171,8 +171,16 @@ function CustomerioConnectionForm(props) {
               </Transition>
             </Form.Field>
 
-            <Form.Field required>
-              <label>Region of the Customer.io account</label>
+            <Form.Field>
+              <label>
+                {"Where is your Customer.io data located? "}
+                <a href="https://fly.customer.io/settings/privacy" target="_blank" rel="noopener noreferrer">
+                  <Icon
+                    name="external"
+                    color="secondary"
+                  />
+                </a>
+              </label>
               <Dropdown
                 selection
                 options={regionOptions}
