@@ -81,17 +81,23 @@ module.exports = (app) => {
   ** Route to get a connection by ID
   */
   app.get("/project/:project_id/connection/:connection_id", verifyToken, (req, res) => {
+    let isEditor = false;
     return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("connection");
         if (!permission.granted) {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }
+        const editorPermission = accessControl.can(teamRole.role).editAny("connection");
+        if (editorPermission.granted) isEditor = true;
+
         return connectionController.findById(req.params.connection_id);
       })
       .then((connection) => {
         const newConnection = connection;
-        newConnection.password = "";
+        if (!isEditor) {
+          newConnection.password = "";
+        }
         return res.status(200).send(newConnection);
       })
       .catch((error) => {
