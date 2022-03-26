@@ -480,6 +480,14 @@ function CustomerQuery(props) {
 
       <Form>
         <Form.Field>
+          <Checkbox
+            label="Get customers' attributes"
+            toggle
+            checked={populateAttributes}
+            onChange={onChangeAttributes}
+          />
+        </Form.Field>
+        <Form.Field>
           <Popup
             content={"The total amount of items to get. Leave empty or 0 for unlimited."}
             trigger={(
@@ -495,14 +503,6 @@ function CustomerQuery(props) {
             placeholder="Limit the number of records to return"
             value={limit}
             onChange={(e, data) => onUpdateLimit(data.value)}
-          />
-        </Form.Field>
-        <Form.Field>
-          <Checkbox
-            label="Get the customers' attributes"
-            toggle
-            checked={populateAttributes}
-            onChange={onChangeAttributes}
           />
         </Form.Field>
       </Form>
