@@ -726,8 +726,41 @@ class ConnectionController {
     return googleConnector.getAccounts(oauth.refreshToken, connection.oauth_id);
   }
 
-  async runCustomerio(connection, dataRequest) {
-    return CustomerioConnection.getCustomers(connection, dataRequest);
+  async runCustomerio(connection, dataRequest, getCache) {
+    if (getCache) {
+      // check if there is a cache available and valid
+      try {
+        const drCache = await drCacheController.findLast(dataRequest.id);
+        const cachedDataRequest = drCache.dataRequest;
+        cachedDataRequest.updatedAt = "";
+        cachedDataRequest.createdAt = "";
+
+        const liveDataRequest = dataRequest.toJSON();
+        liveDataRequest.updatedAt = "";
+        liveDataRequest.createdAt = "";
+
+        if (_.isEqual(cachedDataRequest, liveDataRequest)) {
+          return drCache.responseData;
+        }
+      } catch (e) {
+        //
+      }
+    }
+
+    return CustomerioConnection.getCustomers(connection, dataRequest)
+      .then((responseData) => {
+        // cache the data for later use
+        const dataToCache = {
+          dataRequest,
+          responseData,
+        };
+        drCacheController.create(dataRequest.id, dataToCache);
+
+        return responseData;
+      })
+      .catch((err) => {
+        return new Promise((resolve, reject) => reject(err));
+      });
   }
 
   async testCustomerio(connection) {
