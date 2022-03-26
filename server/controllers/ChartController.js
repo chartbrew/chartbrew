@@ -305,7 +305,7 @@ class ChartController {
     return this.findById(id)
       .then((chart) => {
         gChart = chart;
-        if (!chart.Datasets || chart.Datasets.length === 0) {
+        if (!chart || !chart.Datasets || chart.Datasets.length === 0) {
           return new Promise((resolve, reject) => reject("The chart doesn't have any datasets"));
         }
 
@@ -425,7 +425,7 @@ class ChartController {
         return this.findById(id);
       })
       .catch((err) => {
-        return err;
+        return new Promise((resolve, reject) => reject(err));
       });
   }
 

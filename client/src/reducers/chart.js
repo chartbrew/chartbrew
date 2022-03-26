@@ -63,6 +63,20 @@ export default function chart(state = {
       }
       return { ...state, loading: false, data: updateData };
     case FETCH_CHART_FAIL:
+      if (action.chartId) {
+        const newData = [...state.data];
+        let indexFound = false;
+        for (let i = 0; i < state.data.length; i++) {
+          if (state.data[i].id === parseInt(action.chartId, 10)) {
+            indexFound = i;
+          }
+        }
+
+        if (indexFound) newData[indexFound].loading = false;
+
+        return { ...state, data: newData, loading: false };
+      }
+
       return { ...state, loading: false, error: true };
     default:
       return state;

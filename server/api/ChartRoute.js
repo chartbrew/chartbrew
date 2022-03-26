@@ -27,7 +27,7 @@ module.exports = (app) => {
         }
 
         // check if the project_id matches in the database records
-        if (parseInt(data.project_id, 10) !== parseInt(gProject.id, 10)) {
+        if (data && `${data.project_id}` !== `${gProject.id}`) {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }
 

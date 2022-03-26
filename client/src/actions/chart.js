@@ -213,6 +213,7 @@ export function runQuery(projectId, chartId, noSource = false, skipParsing = fal
         return chart;
       })
       .catch((error) => {
+        dispatch({ type: FETCH_CHART_FAIL, chartId });
         return new Promise((resolve, reject) => reject(error));
       });
   };
@@ -245,6 +246,7 @@ export function runQueryWithFilters(projectId, chartId, filters) {
         return chart;
       })
       .catch((error) => {
+        dispatch({ type: FETCH_CHART_FAIL, chartId });
         return new Promise((resolve, reject) => reject(error));
       });
   };

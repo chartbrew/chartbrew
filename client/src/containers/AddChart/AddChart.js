@@ -41,6 +41,8 @@ import {
 } from "../../actions/tutorial";
 import ChartFilters from "../Chart/components/ChartFilters";
 
+const chartErrorToast = "chart-error-toast";
+
 /*
   Container used for setting up a new chart
 */
@@ -282,8 +284,20 @@ function AddChart(props) {
     runQuery(match.params.projectId, match.params.chartId, false, false, getCache)
       .then(() => {
         if (conditions.length > 0) {
-          runQueryWithFilters(match.params.projectId, newChart.id, conditions);
+          return runQueryWithFilters(match.params.projectId, newChart.id, conditions);
         }
+
+        return true;
+      })
+      .then(() => {
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+        toast.error("The request for data failed. Please check your dataset configuration", {
+          autoClose: 2500,
+          toastId: chartErrorToast,
+        });
       });
   };
 
@@ -291,8 +305,20 @@ function AddChart(props) {
     runQuery(match.params.projectId, match.params.chartId, true, skipParsing, true)
       .then(() => {
         if (conditions.length > 0) {
-          runQueryWithFilters(match.params.projectId, newChart.id, conditions);
+          return runQueryWithFilters(match.params.projectId, newChart.id, conditions);
         }
+
+        return true;
+      })
+      .then(() => {
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+        toast.error("The request for data failed. Please check your dataset configuration", {
+          autoClose: 2500,
+          toastId: chartErrorToast,
+        });
       });
   };
 
