@@ -15,21 +15,22 @@ function updateCharts() {
 
   return chartController.findAll(conditions)
     .then((charts) => {
-      const promises = [];
       if (!charts || charts.length === 0) {
         return new Promise((resolve) => resolve({ completed: true }));
       }
 
-      for (const chart of charts) {
+      let queuedUpdates = 0;
+      charts.forEach((chart) => {
         if (moment(chart.lastAutoUpdate).add(chart.autoUpdate, "seconds").isBefore(moment())) {
-          promises.push(chartController.updateChartData(chart.id, null, {}));
-          promises.push(chartController.update(chart.id, { lastAutoUpdate: moment() }));
+          queuedUpdates++;
+          chartController.updateChartData(chart.id, null, {})
+            .catch(() => { });
+          chartController.update(chart.id, { lastAutoUpdate: moment() })
+            .catch(() => { });
         }
-      }
+      });
 
-      if (promises.length === 0) return new Promise((resolve) => resolve({ completed: true }));
-
-      return Promise.all(promises);
+      return { completed: true, queuedUpdates };
     })
     .catch((error) => {
       return new Promise((resolve, reject) => reject(error));
