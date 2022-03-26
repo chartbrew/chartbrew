@@ -2,7 +2,7 @@ import React from "react";
 import { Provider } from "react-redux";
 
 import { createBrowserHistory } from "history";
-import { ConnectedRouter, routerMiddleware } from "react-router-redux";
+import { ConnectedRouter, routerMiddleware } from "connected-react-router";
 import { createStore, applyMiddleware, compose } from "redux";
 import thunk from "redux-thunk";
 import logger from "redux-logger";
@@ -19,7 +19,7 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 const store = createStore(
-  reducer,
+  reducer(history),
   undefined,
   compose(applyMiddleware(...middlewares)),
 );

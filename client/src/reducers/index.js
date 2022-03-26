@@ -1,5 +1,5 @@
 import { combineReducers } from "redux";
-import { routerReducer } from "react-router-redux";
+import { connectRouter } from "connected-react-router";
 
 // individual reducers imports
 import user from "./user";
@@ -14,7 +14,7 @@ import dataRequest from "./dataRequest";
 import tutorial from "./tutorial";
 import template from "./template";
 
-const AppReducer = combineReducers({
+const AppReducer = (history) => combineReducers({
   user,
   project,
   team,
@@ -26,7 +26,7 @@ const AppReducer = combineReducers({
   error,
   tutorial,
   template,
-  route: routerReducer,
+  router: connectRouter(history),
 });
 
 export default AppReducer;
