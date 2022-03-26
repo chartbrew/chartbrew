@@ -39,7 +39,7 @@ function Signup(props) {
     };
   }, []);
 
-  const submitUser = (values) => {
+  const submitUser = () => {
     const params = new URLSearchParams(document.location.search);
 
     if (required(name)) {
@@ -59,7 +59,7 @@ function Signup(props) {
 
     setLoading(true);
     if (params.has("inviteToken")) {
-      _createInvitedUser(values, params.get("inviteToken"));
+      _createInvitedUser({ name, email, password }, params.get("inviteToken"));
     } else {
       createUser({ name, email, password })
         .then(() => {
