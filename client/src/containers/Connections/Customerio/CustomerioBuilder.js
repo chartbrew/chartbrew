@@ -30,7 +30,7 @@ function CustomerioBuilder(props) {
   const [requestLoading, setRequestLoading] = useState(false);
   const [useCache, setUseCache] = useState(false);
   const [limitValue, setLimitValue] = useState(100);
-  const [entity, setEntity] = useState("customers");
+  const [entity, setEntity] = useState("");
   const [conditions, setConditions] = useState({});
 
   const {
