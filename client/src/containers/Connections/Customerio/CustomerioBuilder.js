@@ -30,7 +30,7 @@ function CustomerioBuilder(props) {
   const [requestLoading, setRequestLoading] = useState(false);
   const [useCache, setUseCache] = useState(false);
   const [limitValue, setLimitValue] = useState(100);
-  const [entity, setEntity] = useState("");
+  const [entity, setEntity] = useState("customers");
   const [conditions, setConditions] = useState({});
 
   const {
@@ -58,7 +58,9 @@ function CustomerioBuilder(props) {
         setEntity(dataRequest.route);
       }
 
-      if (dataRequest.itemsLimit) setLimitValue(dataRequest.itemsLimit);
+      if (dataRequest.itemsLimit || dataRequest.itemsLimit === 0) {
+        setLimitValue(dataRequest.itemsLimit);
+      }
 
       // setTimeout(() => {
       //   changeTutorial("Customerio");
