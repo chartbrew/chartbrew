@@ -41,8 +41,6 @@ import {
 } from "../../actions/tutorial";
 import ChartFilters from "../Chart/components/ChartFilters";
 
-const chartErrorToast = "chart-error-toast";
-
 /*
   Container used for setting up a new chart
 */
@@ -294,10 +292,6 @@ function AddChart(props) {
       })
       .catch(() => {
         setLoading(false);
-        toast.error("The request for data failed. Please check your dataset configuration", {
-          autoClose: 2500,
-          toastId: chartErrorToast,
-        });
       });
   };
 
@@ -315,10 +309,6 @@ function AddChart(props) {
       })
       .catch(() => {
         setLoading(false);
-        toast.error("The request for data failed. Please check your dataset configuration", {
-          autoClose: 2500,
-          toastId: chartErrorToast,
-        });
       });
   };
 
