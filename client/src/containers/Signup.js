@@ -3,16 +3,24 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import {
-  Message, Divider, Container, Segment, Form, Button, Header, Icon, Label,
+  Message, Divider, Container, Segment, Form, Button, Header, Label, Grid, Image,
 } from "semantic-ui-react";
+import { useWindowSize } from "react-use";
 
 import { createUser, createInvitedUser, oneaccountAuth } from "../actions/user";
 import { addTeamMember as addTeamMemberAction } from "../actions/team";
 import { required, email as emailValidation, password as passwordValidation } from "../config/validations";
-import cbLogoSmall from "../assets/logo_inverted.png";
-import { blue, secondary } from "../config/colors";
+import cbLogoSmall from "../assets/logo_blue.png";
+import { secondary } from "../config/colors";
+import signupBackground from "../assets/signup_background.jpeg";
 
 import { ONE_ACCOUNT_ENABLED } from "../config/settings";
+
+const breakpoints = {
+  mobile: 0,
+  tablet: 768,
+  computer: 1024,
+};
 
 /*
   The Signup page
@@ -30,6 +38,8 @@ function Signup(props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [signupError, setSignupError] = useState("");
+
+  const { height, width } = useWindowSize();
 
   useEffect(() => {
     document.addEventListener("oneaccount-authenticated", authenticateOneaccount);
@@ -112,9 +122,11 @@ function Signup(props) {
       <Container>
         <Button
           loading={oaloading}
-          size="large"
+          size="small"
           className="oneaccount-button oneaccount-show"
-          style={styles.oneaccount}>
+          style={styles.oneaccount}
+          fluid
+        >
           {" "}
           <OneaccountSVG style={styles.oneaccountIcon} />
           Sign up with One account
@@ -124,131 +136,146 @@ function Signup(props) {
   };
 
   return (
-    <div style={styles.container}>
-      <Container text textAlign="center">
-        <Link to="/">
-          <img size="tiny" centered src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
-        </Link>
-        <Header inverted as="h2" style={{ marginTop: 0 }}>{"Time to brew some charts!"}</Header>
+    <div style={styles.container(height)}>
+      <Grid
+        centered
+        columns={width < breakpoints.computer ? 1 : 2}
+        style={styles.mainGrid(height)}
+        stackable
+      >
+        <Grid.Column width={width < breakpoints.computer ? 12 : 8}>
+          <Segment basic text textAlign="left" padded={width < breakpoints.tablet ? null : "very"}>
+            <Link to="/">
+              <Image centered size="tiny" src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
+            </Link>
+            <Header as="h2" style={{ marginTop: 10, textAlign: "center" }}>
+              {"Let's get you started with your new account"}
+              <Header.Subheader>Your live, connected dashboards await</Header.Subheader>
+            </Header>
+            <Divider hidden />
 
-        <Segment color="olive" raised style={styles.verticalPadding} padded>
-          <Form size="large" onSubmit={submitUser}>
-            <Form.Field>
-              <Form.Input
-                icon="user"
-                iconPosition="left"
-                type="text"
-                placeholder="What's your name?"
-                onChange={(e, data) => {
-                  setName(data.value);
-                  setErrors({ ...errors, name: "" });
-                }}
-                value={name}
-              />
-              {errors.name && (
-                <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
-                  {"Please enter your name"}
-                </Label>
-              )}
-            </Form.Field>
+            <Form size="large" onSubmit={submitUser}>
+              <Header size="mini">{"But first, how can we call you?"}</Header>
+              <Form.Field>
+                <Form.Input
+                  icon="user"
+                  iconPosition="left"
+                  type="text"
+                  placeholder="Enter your name"
+                  onChange={(e, data) => {
+                    setName(data.value);
+                    setErrors({ ...errors, name: "" });
+                  }}
+                  value={name}
+                />
+                {errors.name && (
+                  <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
+                    {"Please enter your name"}
+                  </Label>
+                )}
+              </Form.Field>
 
-            <Header as="h5" style={styles.leftAligned}>{"Your new sign in details"}</Header>
-            <Form.Field>
-              <Form.Input
-                icon="mail"
-                iconPosition="left"
-                type="email"
-                placeholder="Enter your email"
-                onChange={(e, data) => {
-                  setEmail(data.value);
-                  setErrors({ ...errors, email: "" });
-                }}
-                value={email}
-              />
-              {errors.email && (
-                <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
-                  {"Please enter a valid email"}
-                </Label>
-              )}
-            </Form.Field>
-            <Form.Field>
-              <Form.Input
-                icon="lock"
-                iconPosition="left"
-                type="password"
-                placeholder="Enter a secure password"
-                onChange={(e, data) => {
-                  setPassword(data.value);
-                  setErrors({ ...errors, password: "" });
-                }}
-                value={password}
-              />
-              {errors.password && (
-                <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
-                  {errors.password}
-                </Label>
-              )}
-            </Form.Field>
+              <Header size="mini" style={styles.leftAligned}>{"Enter your new sign in details"}</Header>
+              <Form.Field>
+                <Form.Input
+                  icon="mail"
+                  iconPosition="left"
+                  type="email"
+                  placeholder="Enter your email"
+                  onChange={(e, data) => {
+                    setEmail(data.value);
+                    setErrors({ ...errors, email: "" });
+                  }}
+                  value={email}
+                />
+                {errors.email && (
+                  <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
+                    {"Please enter a valid email"}
+                  </Label>
+                )}
+              </Form.Field>
+              <Form.Field>
+                <Form.Input
+                  icon="lock"
+                  iconPosition="left"
+                  type="password"
+                  placeholder="Enter a secure password"
+                  onChange={(e, data) => {
+                    setPassword(data.value);
+                    setErrors({ ...errors, password: "" });
+                  }}
+                  value={password}
+                />
+                {errors.password && (
+                  <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
+                    {errors.password}
+                  </Label>
+                )}
+              </Form.Field>
 
-            <Form.Field>
-              <Button
-                onClick={submitUser}
-                icon
-                labelPosition="right"
-                primary
-                disabled={loading}
-                loading={loading}
-                type="submit"
-                size="large"
-              >
-                <Icon name="right arrow" />
-                Sign Up
-              </Button>
-            </Form.Field>
-            {signupError && (
-              <Message negative>
-                <Message.Header>{signupError.message || signupError}</Message.Header>
-                <p>Please try it again.</p>
-              </Message>
-            )}
-            {addedToTeam
-              && (
-              <Message positive>
-                <Message.Header>
-                  You created a new account and were added to the team
-                </Message.Header>
-                <p>{"We will redirect you to your dashboard now..."}</p>
-              </Message>
+              <Form.Field>
+                <Button
+                  onClick={submitUser}
+                  primary
+                  disabled={loading}
+                  loading={loading}
+                  type="submit"
+                  size="large"
+                  fluid
+                >
+                  Continue
+                </Button>
+              </Form.Field>
+              {signupError && (
+                <Message negative>
+                  <Message.Header>{signupError.message || signupError}</Message.Header>
+                  <p>Please try it again.</p>
+                </Message>
               )}
-          </Form>
+              {addedToTeam
+                && (
+                <Message positive>
+                  <Message.Header>
+                    You created a new account and were added to the team
+                  </Message.Header>
+                  <p>{"We will redirect you to your dashboard now..."}</p>
+                </Message>
+                )}
+            </Form>
 
-          {ONE_ACCOUNT_ENABLED
-              && (
-                <>
-                  <Divider horizontal>
-                    Or
-                  </Divider>
-                  {socialSignup()}
-                </>
-              )}
-          <Divider hidden />
-          <p>
-            {"By clicking Sign Up, you agree to our "}
-            <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/TermsAndConditions.md" rel="noopener noreferrer" target="_blank">Terms of Service</a>
-            {" and "}
-            <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/PrivacyPolicy.md" rel="noopener noreferrer" target="_blank">Privacy Policy</a>
-          </p>
-        </Segment>
-        <div>
-          <p style={styles.loginText}>
-            {" "}
-            Already have an account?
-            {" "}
-            <Link to={"/login"} style={styles.loginLink}>Login here</Link>
-            {" "}
-          </p>
-        </div>
-      </Container>
+            {ONE_ACCOUNT_ENABLED
+                  && (
+                    <>
+                      <Divider horizontal>
+                        Or
+                      </Divider>
+                      {socialSignup()}
+                    </>
+                  )}
+            <Divider hidden />
+            <p>
+              {"By signing up for a Chartbrew account, you agree to our "}
+              <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/TermsAndConditions.md" rel="noopener noreferrer" target="_blank">Terms of Service</a>
+              {" and "}
+              <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/PrivacyPolicy.md" rel="noopener noreferrer" target="_blank">Privacy Policy</a>
+            </p>
+            <div>
+              <p style={styles.loginText}>
+                {" "}
+                Already have an account?
+                {" "}
+                <Link to={"/login"} style={styles.loginLink}>Login here</Link>
+                {" "}
+              </p>
+            </div>
+          </Segment>
+        </Grid.Column>
+        {width > breakpoints.computer && (
+          <Grid.Column width={8} style={styles.sideBackground}>
+            <div />
+          </Grid.Column>
+        )}
+      </Grid>
     </div>
   );
 }
@@ -296,15 +323,12 @@ const styles = {
   oneaccountText: {
     verticalAlign: "middle",
   },
-  container: {
-    flex: 1,
-    backgroundColor: blue,
-    minHeight: window.innerHeight,
-    paddingBottom: 50,
-    paddingTop: 50,
-  },
+  container: (height) => ({
+    // backgroundColor: blue,
+    minHeight: height,
+  }),
   loginText: {
-    color: "white",
+    // color: "white",
   },
   loginLink: {
     color: secondary,
@@ -316,6 +340,14 @@ const styles = {
     paddingRight: 20,
     paddingLeft: 20
   },
+  sideBackground: {
+    backgroundImage: `url(${signupBackground})`,
+    backgroundSize: "cover",
+    backgroundPosition: "top",
+  },
+  mainGrid: (height) => ({
+    height: height + 20,
+  }),
 };
 
 Signup.propTypes = {
