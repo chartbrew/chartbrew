@@ -12,7 +12,7 @@ import { addTeamMember as addTeamMemberAction } from "../actions/team";
 import { required, email as emailValidation, password as passwordValidation } from "../config/validations";
 import cbLogoSmall from "../assets/logo_blue.png";
 import { secondary } from "../config/colors";
-import signupBackground from "../assets/signup_background.jpeg";
+import signupBackground from "../assets/signup_background.webp";
 
 import { ONE_ACCOUNT_ENABLED } from "../config/settings";
 
