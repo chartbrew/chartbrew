@@ -7,7 +7,6 @@ import {
   Menu, Dropdown, Dimmer, Container, Loader, Icon, Modal, Button, Image,
   TransitionablePortal, Input,
 } from "semantic-ui-react";
-import UserAvatar from "react-user-avatar";
 import { createMedia } from "@artsy/fresnel";
 import { useWindowSize } from "react-use";
 
@@ -222,8 +221,7 @@ function Navbar(props) {
           item
           floating={transparent}
           icon={width < 768 ? null : "dropdown"}
-          trigger={user.icon
-            ? <UserAvatar size={width < 768 ? "24" : "30"} name={user.icon} color="purple" /> : <span />}
+          trigger={<Icon name="user outline" />}
         >
           <Dropdown.Menu>
             <Dropdown.Item as={Link} to="/user">My space</Dropdown.Item>

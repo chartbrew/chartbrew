@@ -487,6 +487,7 @@ ProjectNavigation.defaultProps = {
 
 const styles = {
   container: {
+    zIndex: 10,
   },
   sideMenu: {
     backgroundColor: primary,

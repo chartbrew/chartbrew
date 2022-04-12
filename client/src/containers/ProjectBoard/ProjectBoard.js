@@ -5,8 +5,11 @@ import { Route, Switch, withRouter } from "react-router";
 import {
   Dimmer, Loader, Container, Grid, Divider,
 } from "semantic-ui-react";
-import SplitPane from "react-split-pane";
+import { Allotment } from "allotment";
 import { createMedia } from "@artsy/fresnel";
+import { useWindowSize } from "react-use";
+
+import "allotment/dist/style.css";
 
 import { getProject, changeActiveProject } from "../../actions/project";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
@@ -26,16 +29,18 @@ import PrintView from "../PrintView/PrintView";
 import ProjectNavigation from "./components/ProjectNavigation";
 import checkForUpdates from "../../modules/checkForUpdates";
 
+const breakpoints = {
+  mobile: 0,
+  tablet: 768,
+  computer: 1024,
+};
 const AppMedia = createMedia({
-  breakpoints: {
-    mobile: 0,
-    tablet: 768,
-    computer: 1024,
-  },
+  breakpoints,
 });
 const { Media } = AppMedia;
 
 const sideMaxSize = 220;
+const sideMinSize = 70;
 /*
   The project screen where the dashboard, builder, etc. are
 */
@@ -50,6 +55,8 @@ function ProjectBoard(props) {
   const [showDrafts, setShowDrafts] = useState(true);
   const [isPrinting, setIsPrinting] = useState(false);
   const [update, setUpdate] = useState({});
+
+  const { height } = useWindowSize();
 
   useEffect(() => {
     const params = new URLSearchParams(document.location.search);
@@ -118,10 +125,10 @@ function ProjectBoard(props) {
   };
 
   const _getDefaultMenuSize = () => {
-    if (menuSize === "small") return 70;
+    if (menuSize === "small") return sideMinSize;
     if (menuSize === "large") return sideMaxSize;
     if (window.localStorage.getItem("_cb_menu_size") === "small") {
-      return 70;
+      return sideMinSize;
     } else {
       return sideMaxSize;
     }
@@ -165,45 +172,51 @@ function ProjectBoard(props) {
       {!isPrinting && (
         <>
           <Media greaterThan="mobile">
-            <Navbar />
-            <SplitPane
-              split="vertical"
-              minSize={_getDefaultMenuSize()}
-              defaultSize={_getDefaultMenuSize()}
-              maxSize={_getDefaultMenuSize()}
-              step={180}
-              style={{ paddingTop: 40 }}
-              onChange={() => {}}
-            >
-              <div
-                style={{ backgroundColor: primary, width: menuSize === "small" ? 70 : sideMaxSize }}
+            <div style={{ height, paddingTop: 40 }}>
+              <Navbar />
+              <Allotment
+                defaultSizes={[sideMinSize, sideMaxSize]}
               >
-                <ProjectNavigation
-                  project={project}
-                  projects={projects}
-                  projectId={match.params.projectId}
-                  teamId={match.params.teamId}
-                  onChangeDrafts={_setDraftsVisible}
-                  onSetMenuSize={(mSize) => _setMenuSize(mSize)}
-                  canAccess={_canAccess}
-                  menuSize={menuSize}
-                  showDrafts={showDrafts}
-                  onChangeProject={_onChangeProject}
-                  update={update}
-                />
-              </div>
-              <div>
-                <Grid columns={1} centered stackable>
-                  <Grid.Column computer={16} style={{ paddingLeft: 0 }}>
-                    <MainContent
-                      showDrafts={showDrafts}
-                      onPrint={_onPrint}
-                      _canAccess={_canAccess}
-                    />
-                  </Grid.Column>
-                </Grid>
-              </div>
-            </SplitPane>
+                <Allotment.Pane
+                  minSize={_getDefaultMenuSize()}
+                  maxSize={_getDefaultMenuSize()}
+                  preferredSize={_getDefaultMenuSize()}
+                  style={{
+                    backgroundColor: primary,
+                    width: menuSize === "small" ? sideMinSize : sideMaxSize,
+                  }}
+                >
+                  <ProjectNavigation
+                    project={project}
+                    projects={projects}
+                    projectId={match.params.projectId}
+                    teamId={match.params.teamId}
+                    onChangeDrafts={_setDraftsVisible}
+                    onSetMenuSize={(mSize) => _setMenuSize(mSize)}
+                    canAccess={_canAccess}
+                    menuSize={menuSize}
+                    showDrafts={showDrafts}
+                    onChangeProject={_onChangeProject}
+                    update={update}
+                  />
+                </Allotment.Pane>
+                <Allotment.Pane>
+                  <div
+                    style={{ overflowY: "auto", height: "100%", overflowX: "hidden" }}
+                  >
+                    <Grid columns={1} centered stackable>
+                      <Grid.Column computer={16} style={{ paddingLeft: 0 }}>
+                        <MainContent
+                          showDrafts={showDrafts}
+                          onPrint={_onPrint}
+                          _canAccess={_canAccess}
+                        />
+                      </Grid.Column>
+                    </Grid>
+                  </div>
+                </Allotment.Pane>
+              </Allotment>
+            </div>
           </Media>
 
           <Media at="mobile">
@@ -216,7 +229,7 @@ function ProjectBoard(props) {
                   onPrint={_onPrint}
                   _canAccess={_canAccess}
                   mobile
-                />
+                    />
               </Grid.Column>
             </Grid>
 
