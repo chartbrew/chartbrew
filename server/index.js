@@ -73,7 +73,7 @@ app.listen(app.settings.port, app.settings.api, () => {
       updateChartsCron();
       cleanChartCache();
       cleanAuthCache();
-    }, 3000);
+    }, 5000);
   }
 
   console.log(`Running server on port ${app.settings.port}`); // eslint-disable-line

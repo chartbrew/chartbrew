@@ -10,7 +10,8 @@ function updateCharts() {
   const conditions = {
     where: {
       autoUpdate: { [Op.gt]: 0 }
-    }
+    },
+    attributes: ["id", "lastAutoUpdate", "autoUpdate"],
   };
 
   return chartController.findAll(conditions)
