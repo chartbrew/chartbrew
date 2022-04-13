@@ -46,7 +46,6 @@ if (!checkRequiredFiles([paths.appHtml, paths.appIndexJs])) {
 
 // Tools like Cloud9 rely on this.
 const devHost = process.env.REACT_APP_CLIENT_HOST_DEV;
-console.log("devHost", devHost);
 const chartbrewEnvPort = devHost && parseInt(devHost.substring(devHost.lastIndexOf(":") + 1), 10);
 const DEFAULT_PORT = chartbrewEnvPort || parseInt(process.env.PORT, 10) || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
