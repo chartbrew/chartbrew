@@ -23,6 +23,7 @@ const dotenvFiles = [
   NODE_ENV !== 'test' && `${paths.dotenv}.local`,
   `${paths.dotenv}.${NODE_ENV}`,
   paths.dotenv,
+  paths.chartbrewEnv,
 ].filter(Boolean);
 
 // Load environment variables from .env* files. Suppress warnings using silent
