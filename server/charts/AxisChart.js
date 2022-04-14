@@ -56,7 +56,7 @@ class AxisChart {
   }
 
   plot(skipDataProcessing, filters) {
-    // skip the data processing if required (this algorithm is time-expensive)
+    // skip the data processing if not required (this algorithm is CPU-intensive)
     const conditionsOptions = [];
 
     if (
@@ -264,6 +264,11 @@ class AxisChart {
               yType = "number";
             } else if (yType === "array") {
               newItem = [];
+            } else if (yAxis && yAxis.split("[]").length > 1) {
+              const nestedArray = _.get(item, yAxis.split("[]")[0]);
+              // console.log("nestedArray", nestedArray);
+              const arrayField = _.get(nestedArray[0], yAxis.split("[]")[1].slice(1));
+              yType = determineType(arrayField);
             }
             yAxisData.push({ x: xAxisData.filtered[index], y: newItem });
           }
@@ -272,41 +277,41 @@ class AxisChart {
         // Y CHART data processing
         switch (yAxisOperation) {
           case "none":
-            yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType);
+            yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, yAxis);
             break;
           case "count":
-            yAxisData = this.count(xAxisData.formatted, yType, yAxisData);
+            yAxisData = this.count(xAxisData.formatted, yType, yAxisData, yAxis);
             break;
           case "avg":
             if (yType === "array") {
-              yAxisData = this.count(xAxisData.formatted, yType, yAxisData, "avg");
+              yAxisData = this.count(xAxisData.formatted, yType, yAxisData, "avg", yAxis);
             } else {
-              yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, "avg");
+              yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, "avg", yAxis);
             }
             break;
           case "sum":
             if (yType === "array") {
-              yAxisData = this.count(xAxisData.formatted, yType, yAxisData);
+              yAxisData = this.count(xAxisData.formatted, yType, yAxisData, yAxis);
             } else {
-              yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, "sum");
+              yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, "sum", yAxis);
             }
             break;
           case "min":
             if (yType === "array") {
-              yAxisData = this.count(xAxisData.formatted, yType, yAxisData, "min");
+              yAxisData = this.count(xAxisData.formatted, yType, yAxisData, "min", yAxis);
             } else {
-              yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, "min");
+              yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, "min", yAxis);
             }
             break;
           case "max":
             if (yType === "array") {
-              yAxisData = this.count(xAxisData.formatted, yType, yAxisData, "max");
+              yAxisData = this.count(xAxisData.formatted, yType, yAxisData, "max", yAxis);
             } else {
-              yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, "max");
+              yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, "max", yAxis);
             }
             break;
           default:
-            yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType);
+            yAxisData = this.noOp(yAxisData, xAxisData.formatted, xType, yType, yAxis);
             break;
         }
 
@@ -666,7 +671,7 @@ class AxisChart {
   }
 
   /* OPERATIONS */
-  noOp(data, xData, xType, yType, op) {
+  noOp(data, xData, xType, yType, op, yAxis) {
     const yData = {};
     data.map((item, index) => {
       let key = item.x;
@@ -684,14 +689,60 @@ class AxisChart {
     const finalData = {};
     Object.keys(yData).forEach((key) => {
       let finalItem = yData[key][yData[key].length - 1];
-      if (op === "sum" && yType === "number") finalItem = _.reduce(yData[key], (sum, n) => sum + n);
-      if (op === "avg" && yType === "number") {
-        finalItem = _.reduce(yData[key], (avg, n) => avg + n);
-        finalItem /= yData[key].length;
-        finalItem = parseFloat(finalItem.toFixed(2));
+
+      // check if we're dealing with nested arrays
+      const nestedArray = yAxis && yAxis.split("[]");
+      if (nestedArray && nestedArray[1]) {
+        const nestedData = _.get(finalItem, nestedArray[0]);
+        // get the objects in the nested array
+        if (op === "sum" && yType === "number") {
+          finalItem = 0;
+          nestedData.forEach((item) => {
+            finalItem += _.get(item, nestedArray[1].slice(1));
+          });
+        }
+        if (op === "avg" && yType === "number") {
+          finalItem = 0;
+          let totalItems = 0;
+          nestedData.forEach((item) => {
+            totalItems++;
+            finalItem += _.get(item, nestedArray[1].slice(1));
+          });
+
+          finalItem /= totalItems;
+        }
+        if (op === "min") {
+          let minValue;
+          nestedData.forEach((item) => {
+            const current = _.get(item, nestedArray[1].slice(1));
+            if (current < minValue || (!minValue && minValue !== 0)) {
+              minValue = current;
+            }
+          });
+
+          finalItem = minValue;
+        }
+        if (op === "max") {
+          let maxValue;
+          nestedData.forEach((item) => {
+            const current = _.get(item, nestedArray[1].slice(1));
+            if (current > maxValue || (!maxValue && maxValue !== 0)) {
+              maxValue = current;
+            }
+          });
+
+          finalItem = maxValue;
+        }
+      } else {
+        if (op === "sum" && yType === "number") finalItem = _.reduce(yData[key], (sum, n) => sum + n);
+        if (op === "avg" && yType === "number") {
+          finalItem = _.reduce(yData[key], (avg, n) => avg + n);
+          finalItem /= yData[key].length;
+          finalItem = parseFloat(finalItem.toFixed(2));
+        }
+        if (op === "min") finalItem = _.min(yData[key]);
+        if (op === "max") finalItem = _.max(yData[key]);
       }
-      if (op === "min") finalItem = _.min(yData[key]);
-      if (op === "max") finalItem = _.max(yData[key]);
 
       finalData[key] = finalItem;
     });
@@ -705,7 +756,11 @@ class AxisChart {
 
     if (type === "array") {
       const avgCounter = {};
-      if (op === "min") {
+      if (op === "count") {
+        yData.forEach((item) => {
+          if (item.y) countData[item.x] = item.y.length;
+        });
+      } else if (op === "min") {
         yData.forEach((item) => {
           if (item.y) countData[item.x] = _.min(item.y);
         });

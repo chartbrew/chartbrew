@@ -322,10 +322,32 @@ function DatasetData(props) {
     onUpdate({ excludedFields });
   };
 
-  const _filterOptions = () => {
-    if (chartType !== "table") return fieldOptions;
+  const _filterOptions = (axis) => {
+    let filteredOptions = fieldOptions;
+    if (axis === "x" && chartType !== "table") {
+      filteredOptions = filteredOptions.filter((f) => {
+        if (f.type === "array" || (f.value && f.value.split("[]").length > 2)) {
+          return false;
+        }
 
-    let filteredOptions = fieldOptions.filter((f) => f.type === "array");
+        return true;
+      });
+    }
+
+    if (chartType !== "table") return filteredOptions;
+
+    filteredOptions = fieldOptions.filter((f) => f.type === "array");
+
+    if (axis === "x") {
+      filteredOptions = filteredOptions.filter((f) => {
+        if (f.type === "array" || (f.value && f.value.split("[]").length > 2)) {
+          return false;
+        }
+
+        return true;
+      });
+    }
+
     const rootObj = {
       key: "root[]",
       text: "Collection root",
@@ -451,7 +473,7 @@ function DatasetData(props) {
             header="Type to search"
             button
             className="small button"
-            options={_filterOptions()}
+            options={_filterOptions("x")}
             search
             text={(dataset.xAxis && dataset.xAxis.substring(dataset.xAxis.lastIndexOf(".") + 1)) || "Select a field"}
             value={dataset.xAxis}

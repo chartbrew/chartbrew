@@ -7,7 +7,7 @@ function findFields(coll, currentKey, first, fields) {
   if (!coll) return newFields;
   if (Object.keys(coll).length === 0) return newFields;
 
-  Object.keys(coll).map((field) => {
+  Object.keys(coll).forEach((field) => {
     const data = coll[field];
     let newKey = field;
     if (currentKey) {
@@ -15,18 +15,31 @@ function findFields(coll, currentKey, first, fields) {
       if (first) {
         newKey = `root.${currentKey}[].${field}`;
       }
+
+      const fieldType = determineType(coll[field]);
       newFields.push({
         field: newKey,
         value: coll[field],
-        type: determineType(coll[field]),
+        type: fieldType,
       });
+
+      // include fields from a nested array (2 levels max!)
+      if (fieldType === "array" && newKey.split("[]").length < 3) {
+        return findFields(coll[field][0], `${newKey}[]`, false, newFields);
+      }
     } else {
       if (first) newKey = `root[].${newKey}`;
+      const fieldType = determineType(coll[field]);
       newFields.push({
         field: newKey,
         value: coll[field],
-        type: determineType(coll[field]),
+        type: fieldType,
       });
+
+      // include fields from a nested array (2 levels max!)
+      if (fieldType === "array" && newKey.split("[]").length < 3) {
+        return findFields(coll[field][0], `${newKey}[]`, false, newFields);
+      }
     }
 
     if (data !== null && typeof data === "object" && !(data instanceof Array)) {
