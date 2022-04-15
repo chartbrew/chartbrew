@@ -448,13 +448,13 @@ function Chart(props) {
                           icon={false}
                           trigger={(
                             <p style={{ marginBottom: 0 }}>
-                              <Icon name="caret left" />
+                              <Icon name="caret down" />
                               {" "}
                               Size
                             </p>
                           )}
                         >
-                          <Dropdown.Menu>
+                          <Dropdown.Menu direction="left">
                             <Dropdown.Item
                               text="Small"
                               icon={chart.chartSize === 1 ? "checkmark" : false}
@@ -482,13 +482,13 @@ function Chart(props) {
                           icon={false}
                           trigger={(
                             <p style={{ marginBottom: 0 }}>
-                              <Icon name="caret left" />
+                              <Icon name="caret down" />
                               {" "}
                               Order
                             </p>
                           )}
                         >
-                          <Dropdown.Menu>
+                          <Dropdown.Menu direction="left">
                             <Dropdown.Item
                               text="Move to top"
                               icon="angle double up"
