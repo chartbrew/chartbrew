@@ -104,11 +104,24 @@ function LoginForm(props) {
     login({ email, password })
       .then((user) => {
         if (params.has("inviteToken")) {
-          addTeamMember(user.id, params.get("inviteToken"));
+          return addTeamMember(user.id, params.get("inviteToken"));
         }
         setLoading(false);
+        return "done";
+      })
+      .then((result) => {
+        if (result === "done") {
+          return result;
+        }
+
+        return login({ email, password });
+      })
+      .then((user) => {
+        setLoading(false);
         history.push("/user");
-      }).catch(() => {
+        return user;
+      })
+      .catch(() => {
         setLoading(false);
       });
   };

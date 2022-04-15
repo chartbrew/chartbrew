@@ -248,12 +248,12 @@ export function addTeamMember(userId, inviteToken) {
         }
         return response.json();
       })
-      .then(data => {
+      .then((data) => {
         dispatch(removeTeamInvite(inviteToken));
         dispatch(addNewTeam(data));
         return new Promise(resolve => resolve(data));
       })
-      .catch(err => {
+      .catch((err) => {
         return new Promise((resolve, reject) => reject(err));
       });
   };
