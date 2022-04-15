@@ -7,9 +7,17 @@ import {
 } from "semantic-ui-react";
 import { useWindowSize } from "react-use";
 
-import { createUser, createInvitedUser, oneaccountAuth } from "../actions/user";
+import {
+  createUser as createUserAction,
+  createInvitedUser as createInvitedUserAction,
+  oneaccountAuth as oneaccountAuthAction,
+} from "../actions/user";
 import { addTeamMember as addTeamMemberAction } from "../actions/team";
-import { required, email as emailValidation, password as passwordValidation } from "../config/validations";
+import {
+  required,
+  email as emailValidation,
+  password as passwordValidation
+} from "../config/validations";
 import cbLogoSmall from "../assets/logo_blue.png";
 import { secondary } from "../config/colors";
 import signupBackground from "../assets/signup_background.webp";
@@ -368,10 +376,10 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    createUser: user => dispatch(createUser(user)),
-    oneaccountAuth: user => dispatch(oneaccountAuth(user)),
+    createUser: (user) => dispatch(createUserAction(user)),
+    oneaccountAuth: (user) => dispatch(oneaccountAuthAction(user)),
     addTeamMember: (userId, token) => dispatch(addTeamMemberAction(userId, token)),
-    createInvitedUser: user => dispatch(createInvitedUser(user)),
+    createInvitedUser: (user) => dispatch(createInvitedUserAction(user)),
   };
 };
 export default connect(mapStateToProps, mapDispatchToProps)(Signup);

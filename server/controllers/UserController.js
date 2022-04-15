@@ -18,13 +18,12 @@ class UserController {
       .then((foundUser) => {
         if (foundUser) return new Promise((resolve, reject) => reject(new Error(409)));
         return db.User.create({
-          "name": user.name,
-          "oneaccountId": user.oneaccountId,
-          "email": user.email,
-          "password": user.password,
-          "icon": user.icon,
-          "active": true,
-          "admin": true,
+          name: user.name,
+          oneaccountId: user.oneaccountId,
+          email: user.email,
+          password: user.password,
+          icon: user.icon,
+          active: true,
         });
       })
       .then((newUser) => {
