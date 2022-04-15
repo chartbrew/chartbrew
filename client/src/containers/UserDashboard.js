@@ -65,6 +65,12 @@ function UserDashboard(props) {
           shouldOpenNewProject = false;
         }
 
+        if (team.TeamRoles
+          && team.TeamRoles.find((teamRole) => teamRole.user_id === user.data.id && teamRole.role === "owner")
+        ) {
+          teamOwned = team;
+        }
+
         return team;
       });
 
