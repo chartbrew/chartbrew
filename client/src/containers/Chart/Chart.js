@@ -828,6 +828,8 @@ function Chart(props) {
                     label={chart.shareable ? "Disable sharing" : "Enable sharing"}
                     onChange={_onToggleShareable}
                     checked={chart.shareable}
+                    disabled={!_canAccess("editor")}
+                    loading
                   />
                 </Form.Field>
               </Form>
@@ -839,6 +841,23 @@ function Chart(props) {
                   content="A public chart can be shared even if the sharing toggle is disabled. This gives you more flexibility if you want to hide the chart from the public dashboard but you still want to individually share it."
                   size="small"
                 />
+              )}
+              {!chart.public && !chart.shareable && (
+                <Message
+                  icon
+                  size="small"
+                >
+                  <Icon name="lock" />
+                  <Message.Content>
+                    <Message.Header>
+                      {"The chart is private"}
+                    </Message.Header>
+                    <p>{"A private chart can only be seen by members of the team. If you enable sharing, others outside of your team can see the chart and you can also embed it on other websites."}</p>
+                    {!_canAccess("editor") && (
+                      <p><i>{"You do not have the permission to enable sharing on this chart. Only editors and admins can enable this."}</i></p>
+                    )}
+                  </Message.Content>
+                </Message>
               )}
               {(chart.public || chart.shareable)
               && (!chart.Chartshares || chart.Chartshares.length === 0)
