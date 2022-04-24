@@ -64,7 +64,8 @@ _.each(routes, (controller, route) => {
   app.use(route, controller(app));
 });
 
-app.listen(app.settings.port, app.settings.api, () => {
+const port = process.env.PORT || app.settings.port || 4019;
+app.listen(port, app.settings.api, () => {
   // Check if this is the main cluster and run the cron jobs if it is
   const isMainCluster = parseInt(process.env.NODE_APP_INSTANCE, 10) === 0;
   if (isMainCluster || !process.env.NODE_APP_INSTANCE) {
@@ -76,5 +77,5 @@ app.listen(app.settings.port, app.settings.api, () => {
     }, 5000);
   }
 
-  console.log(`Running server on port ${app.settings.port}`); // eslint-disable-line
+  console.log(`Running server on port ${port}`); // eslint-disable-line
 });
