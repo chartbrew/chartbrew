@@ -119,7 +119,7 @@ The table below shows the `production` variables. The `development` variables ha
 | CB_DB_PORT | `3306` | The port of the hosting address |
 | CB_DB_DIALECT <br /><br /> `required` | `mysql` | Which database to use between `mysql` and `postgres` |
 | CB_SECRET <br /><br /> `required` | `change_to_random_string` | A secure string which is used to encrypt the data in the database |
-| CB_API_HOST <br /><br /> `required` | `localhost` | The address where the `server` app is running from. This variable is used internally by the `server` app. |
+| CB_API_HOST <br /><br /> `required` | `localhost` | The address where the `server` app is running from. This variable is used internally by the `server` app. <br /> **This value is overwritten by the PORT variable (if set)**|
 | CB_API_PORT <br /><br /> `required` | `4019` | The port where the `server` app is running from. This variable is used internally by the `server` app |
 | REACT_APP_CLIENT_HOST <br /><br /> `required` | `http://localhost:4018` | The full address where the `client` app is running from. This variable is used in the `client` app and it's populated during the building process.<br /><br />`Note` The app needs to be restarted/rebuilt when this value is changed. |
 | REACT_APP_API_HOST <br /><br /> `required` | `http://localhost:4019` | The full address where the `server` app is running. This variable is used by the `client` app.<br /><br />`Note` The app needs to be restarted/rebuilt when this value is changed. |
