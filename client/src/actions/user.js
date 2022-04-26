@@ -472,3 +472,27 @@ export function changePasswordWithToken(data) {
       });
   };
 }
+
+export function areThereAnyUsers() {
+  const url = `${API_HOST}/app/users`;
+  const method = "GET";
+  const headers = new Headers({
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+  });
+
+  return fetch(url, { method, headers })
+    .then((response) => {
+      if (!response.ok) {
+        return new Promise((resolve, reject) => reject(response.statusText));
+      }
+
+      return response.json();
+    })
+    .then((result) => {
+      return result.areThereAnyUsers;
+    })
+    .catch((err) => {
+      return err;
+    });
+}

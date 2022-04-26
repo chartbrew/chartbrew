@@ -330,6 +330,20 @@ module.exports = (app) => {
   });
   // --------------------------------------
 
+  /*
+  ** Route to check if there are any users registered in the database
+  */
+  app.get("/app/users", (req, res) => {
+    return userController.areThereAnyUsers()
+      .then((result) => {
+        return res.status(200).send({ areThereAnyUsers: result });
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------
+
   return (req, res, next) => {
     next();
   };

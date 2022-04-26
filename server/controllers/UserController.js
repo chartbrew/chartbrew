@@ -234,6 +234,19 @@ class UserController {
         return new Promise((resolve, reject) => reject(error));
       });
   }
+
+  areThereAnyUsers() {
+    return db.User.findAll()
+      .then((users) => {
+        if (!users || users.length === 0) {
+          return false;
+        }
+        return true;
+      })
+      .catch((err) => {
+        return err;
+      });
+  }
 }
 
 module.exports = UserController;

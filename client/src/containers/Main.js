@@ -8,7 +8,7 @@ import { createMedia } from "@artsy/fresnel";
 import SuspenseLoader from "../components/SuspenseLoader";
 import UserDashboard from "./UserDashboard";
 
-import { relog, getUser } from "../actions/user";
+import { relog, getUser, areThereAnyUsers } from "../actions/user";
 import { getTeams } from "../actions/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 
@@ -40,7 +40,7 @@ const { MediaContextProvider } = AppMedia;
 */
 function Main(props) {
   const {
-    relog, getUser, getTeams, location, cleanErrors,
+    relog, getUser, getTeams, location, cleanErrors, history,
   } = props;
 
   useEffect(() => {
@@ -50,6 +50,11 @@ function Main(props) {
         getUser(data.id);
         getTeams(data.id);
       });
+
+      areThereAnyUsers()
+        .then((anyUsers) => {
+          if (!anyUsers) history.push("/signup");
+        });
     }
   }, []);
 
@@ -159,6 +164,7 @@ Main.propTypes = {
   getTeams: PropTypes.func.isRequired,
   location: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
+  history: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {
