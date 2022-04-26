@@ -258,5 +258,10 @@ The `4019` port is used by the API and `4018` for the client app (UI). Feel free
 
 If the setup fails in any way, please double-check that the environmental variables are set correctly. Check that both API and Client apps are running, and if you can't get it running, please [open a new issue](https://github.com/chartbrew/chartbrew/issues/new) with as much info as you can share (logs, vars).
 
+## Deploy on Heroku and Vercel
+
+Chartbrew can be deployed directly on Heroku and Vercel and can be used there for free.
+
+* [Click here to read the full guide on how to set up the project](https://chartbrew.com/blog/how-to-deploy-chartbrew-on-heroku-and-vercel/)
 
 

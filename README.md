@@ -46,6 +46,7 @@ Currently, Chartbrew supports connections to these data sources.
 * Firestore
 * Realtime Database
 * Google Analytics
+* Customer.io
 * REST APIs
 
 Chartbrew also features dashboard templates with charts already prepared:
@@ -141,6 +142,10 @@ docker run -p 4019:4019 -p 4018:4018 \
   -e REACT_APP_API_HOST=http://localhost:4019 \
   razvanilin/chartbrew:latest-arm64
 ```
+
+## Deploy Chartbrew on Heroku and Vercel
+
+[Read more on how to do this here](https://chartbrew.com/blog/how-to-deploy-chartbrew-on-heroku-and-vercel/)
 
 ## Acknowledgements
 
