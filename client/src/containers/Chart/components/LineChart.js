@@ -1,9 +1,7 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Line } from "react-chartjs-2";
-import {
-  Header, Icon, Segment,
-} from "semantic-ui-react";
+import { Header } from "semantic-ui-react";
 
 import uuid from "uuid/v4";
 import {
@@ -19,7 +17,7 @@ import {
 } from "chart.js";
 
 import determineType from "../../../modules/determineType";
-import { blackTransparent, negative, positive } from "../../../config/colors";
+import KpiChartSegment from "./KpiChartSegment";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler
@@ -97,42 +95,7 @@ function LineChart(props) {
         )}
       <div className={chart.mode === "kpi" && "chart-kpi"}>
         {chart.chartData.growth && chart.mode === "kpichart" && (
-          <Segment.Group horizontal style={styles.growthContainer} compact>
-            {chart.chartData.growth.map((c, index) => (
-              <Segment basic compact key={c.label}>
-                <Header size="large">
-                  {`${c.value} `}
-                  {chart.showGrowth && (
-                    <small style={{ fontSize: "0.6em" }}>
-                      <Icon
-                        name={`arrow circle ${(c.status === "green" && "up") || "down"}`}
-                        color={c.status}
-                      />
-                      <span
-                        style={{
-                          color: c.status === "green"
-                            ? positive : c.status === "red"
-                              ? negative : blackTransparent(0.8)
-                        }}
-                      >
-                        {`${c.comparison}%`}
-                      </span>
-                    </small>
-                  )}
-                  <Header.Subheader>
-                    <span
-                      style={
-                        chart.Datasets
-                          && styles.datasetLabelColor(chart.Datasets[index].datasetColor)
-                      }
-                    >
-                      {c.label}
-                    </span>
-                  </Header.Subheader>
-                </Header>
-              </Segment>
-            ))}
-          </Segment.Group>
+          <KpiChartSegment chart={chart} />
         )}
         {chart.chartData.data && chart.chartData.data.labels && (
           <div>
@@ -168,9 +131,6 @@ const styles = {
   datasetLabelColor: (color) => ({
     borderBottom: `solid 3px ${color}`,
   }),
-  growthContainer: {
-    boxShadow: "none", border: "none", marginTop: 0, marginBottom: 10
-  }
 };
 
 LineChart.defaultProps = {

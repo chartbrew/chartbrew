@@ -557,14 +557,14 @@ class AxisChart {
         configuration.growth.push({
           value: d.data[d.data.length - 1],
           comparison: result.toFixed(2),
-          status: (result > 0 && "green") || (result < 0 && "red") || "grey",
+          status: (result > 0 && "positive") || (result < 0 && "negative") || "neutral",
           label: d.label,
         });
       } else {
         configuration.growth.push({
           value: d.data[d.data.length - 1],
           comparison: 100,
-          status: "green",
+          status: "positive",
           label: d.label,
         });
       }
