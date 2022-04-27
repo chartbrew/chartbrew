@@ -1,7 +1,10 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Line } from "react-chartjs-2";
-import { Header } from "semantic-ui-react";
+import {
+  Header, Icon, Segment,
+} from "semantic-ui-react";
+
 import uuid from "uuid/v4";
 import {
   Chart as ChartJS,
@@ -16,6 +19,7 @@ import {
 } from "chart.js";
 
 import determineType from "../../../modules/determineType";
+import { blackTransparent, negative, positive } from "../../../config/colors";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler
@@ -92,13 +96,51 @@ function LineChart(props) {
           </div>
         )}
       <div className={chart.mode === "kpi" && "chart-kpi"}>
+        {chart.chartData.compare && (
+          <Segment.Group horizontal style={styles.compareContainer} compact>
+            {chart.chartData.compare.map((c, index) => (
+              <Segment basic compact key={c.label}>
+                <Header size="large">
+                  {`${c.value} `}
+                  <small style={{ fontSize: "0.6em" }}>
+                    <Icon
+                      name={`arrow circle ${(c.status === "green" && "up") || "down"}`}
+                      color={c.status}
+                    />
+                    <span
+                      style={{
+                        color: c.status === "green"
+                          ? positive : c.status === "red"
+                            ? negative : blackTransparent(0.8)
+                      }}
+                    >
+                      {`${c.comparison}%`}
+                    </span>
+                  </small>
+                  <Header.Subheader>
+                    <span
+                      style={
+                        chart.Datasets
+                          && styles.datasetLabelColor(chart.Datasets[index].datasetColor)
+                      }
+                    >
+                      {c.label}
+                    </span>
+                  </Header.Subheader>
+                </Header>
+              </Segment>
+            ))}
+          </Segment.Group>
+        )}
         {chart.chartData.data && chart.chartData.data.labels && (
-          <Line
-            data={chart.chartData.data}
-            options={chart.chartData.options}
-            height={height}
-            redraw={redraw}
-          />
+          <div>
+            <Line
+              data={chart.chartData.data}
+              options={chart.chartData.options}
+              height={height - 90}
+              redraw={redraw}
+            />
+          </div>
         )}
       </div>
     </>
@@ -124,6 +166,9 @@ const styles = {
   datasetLabelColor: (color) => ({
     borderBottom: `solid 3px ${color}`,
   }),
+  compareContainer: {
+    boxShadow: "none", border: "none", marginTop: 0, marginBottom: 10
+  }
 };
 
 LineChart.defaultProps = {
