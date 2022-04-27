@@ -100,8 +100,10 @@ class NewLineChart {
               },
               maxTicksLimit: this.chart.mode === "kpichart" ? 8 : 15,
               padding: this.chart.mode === "kpichart" ? 10 : 3,
+              display: !(this.chart.chartSize === 1 && this.chart.mode === "kpichart"),
             },
             grid: {
+              display: !(this.chart.chartSize === 1 && this.chart.mode === "kpichart"),
               drawBorder: this.chart.mode !== "kpichart",
               lineWidth: 0.5,
             },

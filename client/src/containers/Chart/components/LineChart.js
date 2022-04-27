@@ -102,7 +102,7 @@ function LineChart(props) {
             <Line
               data={chart.chartData.data}
               options={chart.chartData.options}
-              height={height - ((chart.mode === "kpichart" && 90) || 0)}
+              height={height - ((chart.mode === "kpichart" && 80) || 0)}
               redraw={redraw}
             />
           </div>
