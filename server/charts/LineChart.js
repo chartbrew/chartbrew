@@ -96,8 +96,14 @@ class NewLineChart {
               precision: 0,
               font: {
                 family: "Inter",
+                size: 10,
               },
-              maxTicksLimit: 15,
+              maxTicksLimit: this.chart.mode === "kpichart" ? 8 : 15,
+              padding: this.chart.mode === "kpichart" ? 10 : 3,
+            },
+            grid: {
+              drawBorder: this.chart.mode !== "kpichart",
+              lineWidth: 0.5,
             },
           },
           x: {
@@ -105,7 +111,13 @@ class NewLineChart {
               precision: 0,
               font: {
                 family: "Inter",
+                size: 10,
               },
+            },
+            grid: {
+              display: this.chart.mode !== "kpichart",
+              drawBorder: this.chart.mode !== "kpichart",
+              lineWidth: 0.5,
             },
           },
         },

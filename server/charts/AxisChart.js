@@ -546,22 +546,22 @@ class AxisChart {
     configuration.data.datasets = newDatasets;
     configuration.data.labels = newLabels;
 
-    // calculate the compare values
-    configuration.compare = [];
+    // calculate the growth values
+    configuration.growth = [];
     configuration.data.datasets.forEach((d) => {
       if (d.data && d.data.length > 1 && d.data[d.data.length - 2] !== 0) {
         let result = (d.data[d.data.length - 1] - d.data[d.data.length - 2])
           / d.data[d.data.length - 2];
         result *= 100;
 
-        configuration.compare.push({
+        configuration.growth.push({
           value: d.data[d.data.length - 1],
           comparison: result.toFixed(2),
           status: (result > 0 && "green") || (result < 0 && "red") || "grey",
           label: d.label,
         });
       } else {
-        configuration.compare.push({
+        configuration.growth.push({
           value: d.data[d.data.length - 1],
           comparison: 100,
           status: "green",

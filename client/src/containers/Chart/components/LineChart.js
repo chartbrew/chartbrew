@@ -96,27 +96,29 @@ function LineChart(props) {
           </div>
         )}
       <div className={chart.mode === "kpi" && "chart-kpi"}>
-        {chart.chartData.compare && (
-          <Segment.Group horizontal style={styles.compareContainer} compact>
-            {chart.chartData.compare.map((c, index) => (
+        {chart.chartData.growth && chart.mode === "kpichart" && (
+          <Segment.Group horizontal style={styles.growthContainer} compact>
+            {chart.chartData.growth.map((c, index) => (
               <Segment basic compact key={c.label}>
                 <Header size="large">
                   {`${c.value} `}
-                  <small style={{ fontSize: "0.6em" }}>
-                    <Icon
-                      name={`arrow circle ${(c.status === "green" && "up") || "down"}`}
-                      color={c.status}
-                    />
-                    <span
-                      style={{
-                        color: c.status === "green"
-                          ? positive : c.status === "red"
-                            ? negative : blackTransparent(0.8)
-                      }}
-                    >
-                      {`${c.comparison}%`}
-                    </span>
-                  </small>
+                  {chart.showGrowth && (
+                    <small style={{ fontSize: "0.6em" }}>
+                      <Icon
+                        name={`arrow circle ${(c.status === "green" && "up") || "down"}`}
+                        color={c.status}
+                      />
+                      <span
+                        style={{
+                          color: c.status === "green"
+                            ? positive : c.status === "red"
+                              ? negative : blackTransparent(0.8)
+                        }}
+                      >
+                        {`${c.comparison}%`}
+                      </span>
+                    </small>
+                  )}
                   <Header.Subheader>
                     <span
                       style={
@@ -137,7 +139,7 @@ function LineChart(props) {
             <Line
               data={chart.chartData.data}
               options={chart.chartData.options}
-              height={height - 90}
+              height={height - ((chart.mode === "kpichart" && 90) || 0)}
               redraw={redraw}
             />
           </div>
@@ -166,7 +168,7 @@ const styles = {
   datasetLabelColor: (color) => ({
     borderBottom: `solid 3px ${color}`,
   }),
-  compareContainer: {
+  growthContainer: {
     boxShadow: "none", border: "none", marginTop: 0, marginBottom: 10
   }
 };
