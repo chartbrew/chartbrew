@@ -133,7 +133,7 @@ function ChartPreview(props) {
     <>
       {chart && chart.chartData && chart.Datasets && (
         <>
-          <Segment>
+          <Segment style={{ minHeight: 350 }}>
             {chart.type === "line"
               && (
                 <LineChart

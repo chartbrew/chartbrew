@@ -980,7 +980,7 @@ const styles = {
     boxShadow: print ? "none" : "0 2px 5px 0 rgba(51, 51, 79, .07)",
     border: print ? "solid 1px rgba(34,36,38,.15)" : "none",
     padding: noPadding ? 0 : 15,
-    minHeight: 363,
+    minHeight: 350,
   }),
   mainChartArea: (noPadding) => ({
     paddingTop: 10,
