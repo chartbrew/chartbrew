@@ -67,6 +67,7 @@ function Chart(props) {
   );
   const [conditions, setConditions] = useState([]);
   const [shareLoading, setShareLoading] = useState(false);
+  const [redraw, setRedraw] = useState(false);
 
   useEffect(() => {
     setIframeCopied(false);
@@ -82,6 +83,7 @@ function Chart(props) {
       true
     )
       .then(() => {
+        setRedraw(true);
         setChartLoading(false);
       })
       .catch(() => {
@@ -603,6 +605,8 @@ function Chart(props) {
                     <LineChart
                       chart={chart}
                       height={chart.mode === "kpi" ? height + 25 : height}
+                      redraw={redraw}
+                      redrawComplete={() => setRedraw(false)}
                     />
                   )}
                 {chart.type === "bar"
@@ -610,6 +614,8 @@ function Chart(props) {
                     <BarChart
                       chart={chart}
                       height={chart.mode === "kpi" ? height + 25 : height}
+                      redraw={redraw}
+                      redrawComplete={() => setRedraw(false)}
                     />
                   )}
                 {chart.type === "pie"
@@ -617,6 +623,8 @@ function Chart(props) {
                   <PieChart
                     chart={chart}
                     height={chart.mode === "kpi" ? height + 25 : height}
+                    redraw={redraw}
+                    redrawComplete={() => setRedraw(false)}
                   />
                   )}
                 {chart.type === "doughnut"
@@ -625,6 +633,8 @@ function Chart(props) {
                     <DoughnutChart
                       chart={chart}
                       height={chart.mode === "kpi" ? height + 25 : height}
+                      redraw={redraw}
+                      redrawComplete={() => setRedraw(false)}
                     />
                   </div>
                   )}
@@ -633,6 +643,8 @@ function Chart(props) {
                   <RadarChart
                     chart={chart}
                     height={chart.mode === "kpi" ? height + 25 : height}
+                    redraw={redraw}
+                    redrawComplete={() => setRedraw(false)}
                   />
                   )}
                 {chart.type === "polar"
@@ -641,6 +653,8 @@ function Chart(props) {
                     <PolarChart
                       chart={chart}
                       height={chart.mode === "kpi" ? height + 25 : height}
+                      redraw={redraw}
+                      redrawComplete={() => setRedraw(false)}
                     />
                   </div>
                   )}
@@ -658,6 +672,8 @@ function Chart(props) {
                     <LineChart
                       chart={chart}
                       height={chart.mode === "kpi" ? height + 25 : height}
+                      redraw={redraw}
+                      redrawComplete={() => setRedraw(false)}
                     />
                   )}
               </div>
