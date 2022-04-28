@@ -58,9 +58,9 @@ function BarChart(props) {
     const { status, comparison } = c;
     return (
       <div style={{
-        fontSize: chart.chartSize === 1 ? "0.5em" : "0.3em",
+        fontSize: chart.chartSize === 1 ? "0.9em" : "0.7em",
         display: "block",
-        marginTop: -15
+        marginTop: chart.chartSize === 1 ? 10 : 0,
       }}>
         <Icon
           name={
@@ -72,9 +72,9 @@ function BarChart(props) {
           }
         />
         <span style={{ color: Colors[status] }}>
-          {`${comparison}%`}
+          {`${comparison}% `}
         </span>
-        <small style={{ color: Colors.neutral, fontWeight: "normal" }}>
+        <small style={{ color: Colors.neutral, fontWeight: "normal", display: "inline-block" }}>
           {` last ${chart.timeInterval}`}
         </small>
       </div>
@@ -102,11 +102,11 @@ function BarChart(props) {
                       key={uuid()}
                     >
                       {dataset.data && _getKpi(dataset.data)}
-                      {chart.showGrowth && chart.chartData.growth && (
-                        _renderGrowth(chart.chartData.growth[index])
-                      )}
                       {chart.Datasets[index] && (
                         <Header.Subheader style={{ color: "black", marginTop: chart.showGrowth ? -5 : 0 }}>
+                          {chart.showGrowth && chart.chartData.growth && (
+                            _renderGrowth(chart.chartData.growth[index])
+                          )}
                           <span
                             style={
                               chart.Datasets
