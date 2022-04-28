@@ -1,5 +1,5 @@
 module.exports = {
-  backgroundColor: "#103751",
+  backgroundColor: "rgba(16, 55, 81, 0.8)",
   titleFont: {
     color: "#fff",
     size: 12,
@@ -13,7 +13,8 @@ module.exports = {
     weight: "bold"
   },
   borderColor: "#1A7FA0",
-  borderWidth: 2,
+  borderWidth: 3,
   bodySpacing: 10,
-  padding: 10,
+  padding: 8,
+  cornerRadius: 4,
 };
