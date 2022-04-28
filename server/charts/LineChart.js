@@ -98,7 +98,7 @@ class NewLineChart {
                 family: "Inter",
                 size: 10,
               },
-              maxTicksLimit: this.chart.mode === "kpichart" ? 8 : 15,
+              maxTicksLimit: this.chart.mode === "kpichart" ? 6 : 15,
               padding: this.chart.mode === "kpichart" ? 10 : 3,
               display: !(this.chart.chartSize === 1 && this.chart.mode === "kpichart"),
             },

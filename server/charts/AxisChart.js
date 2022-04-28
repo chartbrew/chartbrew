@@ -556,7 +556,7 @@ class AxisChart {
 
         configuration.growth.push({
           value: d.data[d.data.length - 1],
-          comparison: result.toFixed(2),
+          comparison: (result === 0 && 0) || result.toFixed(2),
           status: (result > 0 && "positive") || (result < 0 && "negative") || "neutral",
           label: d.label,
         });

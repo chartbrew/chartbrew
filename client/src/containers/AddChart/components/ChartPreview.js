@@ -136,11 +136,21 @@ function ChartPreview(props) {
           <Segment>
             {chart.type === "line"
               && (
-                <LineChart chart={chart} redraw={redraw} redrawComplete={_redrawComplete} />
+                <LineChart
+                  editMode
+                  chart={chart}
+                  redraw={redraw}
+                  redrawComplete={_redrawComplete}
+                />
               )}
             {chart.type === "bar"
               && (
-                <BarChart chart={chart} redraw={redraw} redrawComplete={_redrawComplete} />
+                <BarChart
+                  editMode
+                  chart={chart}
+                  redraw={redraw}
+                  redrawComplete={_redrawComplete}
+                />
               )}
             {chart.type === "pie"
               && (
@@ -148,6 +158,7 @@ function ChartPreview(props) {
                   <PieChart
                     chart={chart}
                     height={300}
+                    editMode
                   />
                 </div>
               )}
@@ -156,6 +167,7 @@ function ChartPreview(props) {
                 <DoughnutChart
                   chart={chart}
                   height={300}
+                  editMode
                 />
               )}
             {chart.type === "radar"
@@ -163,6 +175,7 @@ function ChartPreview(props) {
                 <RadarChart
                   chart={chart}
                   height={300}
+                  editMode
                 />
               )}
             {chart.type === "polar"
@@ -170,6 +183,7 @@ function ChartPreview(props) {
                 <PolarChart
                   chart={chart}
                   height={300}
+                  editMode
                 />
               )}
             {chart.type === "table"
@@ -178,12 +192,18 @@ function ChartPreview(props) {
                   <TableContainer
                     tabularData={chart.chartData}
                     height={400}
+                    editMode
                   />
                 </div>
               )}
             {chart.type === "avg"
               && (
-                <LineChart chart={chart} redraw={redraw} redrawComplete={_redrawComplete} />
+                <LineChart
+                  chart={chart}
+                  redraw={redraw}
+                  redrawComplete={_redrawComplete}
+                  editMode
+                />
               )}
           </Segment>
           <Container textAlign="center">
