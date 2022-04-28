@@ -72,6 +72,8 @@ class NewLineChart {
         }
       };
     } else {
+      const radius = !this.chart.pointRadius && this.chart.pointRadius !== 0
+        ? 0 : this.chart.pointRadius;
       chartJsData.options = {
         interaction: {
           intersect: false,
@@ -80,8 +82,7 @@ class NewLineChart {
         maintainAspectRatio: false,
         elements: {
           point: {
-            radius:
-              !this.chart.pointRadius && this.chart.pointRadius !== 0 ? 3 : this.chart.pointRadius,
+            radius: this.chart.chartSize === 1 ? 0 : radius,
             hitRadius: 8,
             hoverRadius: 8,
           },

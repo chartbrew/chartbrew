@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Line } from "react-chartjs-2";
-import { Header } from "semantic-ui-react";
+import { Header, Icon } from "semantic-ui-react";
 
 import uuid from "uuid/v4";
 import {
@@ -18,6 +18,7 @@ import {
 
 import determineType from "../../../modules/determineType";
 import KpiChartSegment from "./KpiChartSegment";
+import { Colors } from "../../../config/colors";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler
@@ -54,6 +55,33 @@ function LineChart(props) {
     return `${data}`;
   };
 
+  const _renderGrowth = (c) => {
+    const { status, comparison } = c;
+    return (
+      <div style={{
+        fontSize: chart.chartSize === 1 ? "0.5em" : "0.3em",
+        display: "block",
+        marginTop: -15
+      }}>
+        <Icon
+          name={
+            status === "neutral" ? "minus"
+              : `arrow circle ${(status === "positive" && "up") || "down"}`
+          }
+          color={
+            status === "positive" ? "green" : status === "negative" ? "red" : "grey"
+          }
+        />
+        <span style={{ color: Colors[status] }}>
+          {`${comparison}%`}
+        </span>
+        <small style={{ color: Colors.neutral, fontWeight: "normal" }}>
+          {` last ${chart.timeInterval}`}
+        </small>
+      </div>
+    );
+  };
+
   return (
     <>
       {chart.mode === "kpi"
@@ -70,13 +98,17 @@ function LineChart(props) {
                       style={styles.kpiItem(
                         chart.chartSize,
                         chart.chartData.data.datasets.length,
-                        index
+                        index,
+                        !!chart.chartData.growth,
                       )}
                       key={uuid()}
                     >
                       {dataset.data && _getKpi(dataset.data)}
+                      {chart.showGrowth && chart.chartData.growth && (
+                        _renderGrowth(chart.chartData.growth[index])
+                      )}
                       {chart.Datasets[index] && (
-                        <Header.Subheader style={{ color: "black" }}>
+                        <Header.Subheader style={{ color: "black", marginTop: chart.showGrowth ? -5 : 0 }}>
                           <span
                             style={
                               chart.Datasets
