@@ -9,6 +9,8 @@
 @teal           : #88BFc4;
 @blue           : #103751;
 @orange         : #CF6B4E;
+@green          : #0FC457;
+@red            : #EF4444;
 
 @fontName          : 'Inter';
 @headerFont        : 'Inter', sans-serif;

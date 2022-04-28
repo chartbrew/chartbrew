@@ -17,8 +17,8 @@ class NewBarChart {
       const formattedDataset = {
         label: dataset.options.legend,
         data: this.axisData.y[i],
-        borderWidth: 2,
-        hoverBorderWidth: 3,
+        borderWidth: 1.5,
+        hoverBorderWidth: 2,
       };
 
       if (dataset.options.datasetColor) {
@@ -90,10 +90,14 @@ class NewBarChart {
         maintainAspectRatio: false,
         elements: {
           point: {
-            radius:
-            !this.chart.pointRadius && this.chart.pointRadius !== 0 ? 3 : this.chart.pointRadius,
+            radius: !this.chart.pointRadius && this.chart.pointRadius !== 0
+              ? 3 : this.chart.pointRadius,
             hitRadius: 8,
             hoverRadius: 8,
+          },
+          bar: {
+            borderRadius: 3,
+            borderSkipped: "start",
           },
         },
         scales: {
@@ -101,11 +105,19 @@ class NewBarChart {
             stacked: this.chart.stacked,
             beginAtZero: !this.chart.minValue && true,
             ticks: {
-              maxTicksLimit: 15,
               precision: 0,
               font: {
                 family: "Inter",
+                size: 10,
               },
+              maxTicksLimit: this.chart.mode === "kpichart" ? 6 : 15,
+              padding: this.chart.mode === "kpichart" ? 10 : 3,
+              display: !(this.chart.chartSize === 1 && this.chart.mode === "kpichart"),
+            },
+            grid: {
+              display: !(this.chart.chartSize === 1 && this.chart.mode === "kpichart"),
+              drawBorder: this.chart.mode !== "kpichart",
+              lineWidth: 0.5,
             },
           },
           x: {
@@ -113,7 +125,13 @@ class NewBarChart {
             ticks: {
               font: {
                 family: "Inter",
+                size: 10,
               },
+            },
+            grid: {
+              display: this.chart.mode !== "kpichart",
+              drawBorder: this.chart.mode !== "kpichart",
+              lineWidth: 0.5,
             },
           },
         },
@@ -133,7 +151,7 @@ class NewBarChart {
       }
 
       // check how many ticks should the X Axis have
-      let maxTicksLimit = 25;
+      let maxTicksLimit = this.chart.chartSize === 1 ? 15 : 25;
 
       if (this.axisData.x.length) {
         switch (this.chart.xLabelTicks) {

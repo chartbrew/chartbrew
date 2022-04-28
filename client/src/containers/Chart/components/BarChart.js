@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Bar } from "react-chartjs-2";
-import { Header } from "semantic-ui-react";
+import { Header, Icon } from "semantic-ui-react";
 import uuid from "uuid/v4";
 import {
   Chart as ChartJS,
@@ -16,6 +16,8 @@ import {
 } from "chart.js";
 
 import determineType from "../../../modules/determineType";
+import KpiChartSegment from "./KpiChartSegment";
+import { Colors } from "../../../config/colors";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, BarElement, Title, Tooltip, Legend, Filler
@@ -23,7 +25,7 @@ ChartJS.register(
 
 function BarChart(props) {
   const {
-    chart, redraw, redrawComplete, height,
+    chart, redraw, redrawComplete, height, editMode,
   } = props;
 
   useEffect(() => {
@@ -52,6 +54,33 @@ function BarChart(props) {
     return `${data}`;
   };
 
+  const _renderGrowth = (c) => {
+    const { status, comparison } = c;
+    return (
+      <div style={{
+        fontSize: chart.chartSize === 1 ? "0.5em" : "0.3em",
+        display: "block",
+        marginTop: -15
+      }}>
+        <Icon
+          name={
+            status === "neutral" ? "minus"
+              : `arrow circle ${(status === "positive" && "up") || "down"}`
+          }
+          color={
+            status === "positive" ? "green" : status === "negative" ? "red" : "grey"
+          }
+        />
+        <span style={{ color: Colors[status] }}>
+          {`${comparison}%`}
+        </span>
+        <small style={{ color: Colors.neutral, fontWeight: "normal" }}>
+          {` last ${chart.timeInterval}`}
+        </small>
+      </div>
+    );
+  };
+
   return (
     <>
       {chart.mode === "kpi"
@@ -73,8 +102,11 @@ function BarChart(props) {
                       key={uuid()}
                     >
                       {dataset.data && _getKpi(dataset.data)}
+                      {chart.showGrowth && chart.chartData.growth && (
+                        _renderGrowth(chart.chartData.growth[index])
+                      )}
                       {chart.Datasets[index] && (
-                        <Header.Subheader style={{ color: "black" }}>
+                        <Header.Subheader style={{ color: "black", marginTop: chart.showGrowth ? -5 : 0 }}>
                           <span
                             style={
                               chart.Datasets
@@ -92,13 +124,24 @@ function BarChart(props) {
           </div>
         )}
       <div className={chart.mode === "kpi" && "chart-kpi"}>
+        {chart.chartData.growth && chart.mode === "kpichart" && (
+          <KpiChartSegment chart={chart} editMode={editMode} />
+        )}
         {chart.chartData.data && chart.chartData.data.labels && (
-          <Bar
-            data={chart.chartData.data}
-            options={chart.chartData.options}
-            height={height}
-            redraw={redraw}
-          />
+          <div>
+            <Bar
+              data={chart.chartData.data}
+              options={chart.chartData.options}
+              height={
+                height - (
+                  (chart.mode === "kpichart" && chart.chartSize > 1 && 90)
+                  || (chart.mode === "kpichart" && chart.chartSize === 1 && 80)
+                  || 0
+                )
+              }
+              redraw={redraw}
+            />
+          </div>
         )}
       </div>
     </>
@@ -130,6 +173,7 @@ BarChart.defaultProps = {
   redraw: false,
   redrawComplete: () => {},
   height: 300,
+  editMode: false,
 };
 
 BarChart.propTypes = {
@@ -137,6 +181,7 @@ BarChart.propTypes = {
   redraw: PropTypes.bool,
   redrawComplete: PropTypes.func,
   height: PropTypes.number,
+  editMode: PropTypes.bool,
 };
 
 export default BarChart;

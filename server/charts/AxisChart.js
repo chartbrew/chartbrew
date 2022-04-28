@@ -546,6 +546,30 @@ class AxisChart {
     configuration.data.datasets = newDatasets;
     configuration.data.labels = newLabels;
 
+    // calculate the growth values
+    configuration.growth = [];
+    configuration.data.datasets.forEach((d) => {
+      if (d.data && d.data.length > 1 && d.data[d.data.length - 2] !== 0) {
+        let result = (d.data[d.data.length - 1] - d.data[d.data.length - 2])
+          / d.data[d.data.length - 2];
+        result *= 100;
+
+        configuration.growth.push({
+          value: d.data[d.data.length - 1],
+          comparison: (result === 0 && 0) || result.toFixed(2),
+          status: (result > 0 && "positive") || (result < 0 && "negative") || "neutral",
+          label: d.label,
+        });
+      } else {
+        configuration.growth.push({
+          value: d.data[d.data.length - 1],
+          comparison: 100,
+          status: "positive",
+          label: d.label,
+        });
+      }
+    });
+
     return {
       configuration,
       conditionsOptions,

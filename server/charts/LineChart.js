@@ -17,7 +17,6 @@ class NewLineChart {
       const formattedDataset = {
         label: dataset.options.legend,
         data: this.axisData.y[i],
-        lineTension: 0,
       };
 
       if (dataset.options.datasetColor) {
@@ -51,7 +50,8 @@ class NewLineChart {
             radius: 0,
           },
           line: {
-            tension: 0,
+            tension: 0.05,
+            borderWidth: 4,
           },
         },
         scales: {
@@ -72,6 +72,8 @@ class NewLineChart {
         }
       };
     } else {
+      const radius = !this.chart.pointRadius && this.chart.pointRadius !== 0
+        ? 0 : this.chart.pointRadius;
       chartJsData.options = {
         interaction: {
           intersect: false,
@@ -80,13 +82,13 @@ class NewLineChart {
         maintainAspectRatio: false,
         elements: {
           point: {
-            radius:
-              !this.chart.pointRadius && this.chart.pointRadius !== 0 ? 3 : this.chart.pointRadius,
+            radius: this.chart.chartSize === 1 ? 0 : radius,
             hitRadius: 8,
             hoverRadius: 8,
           },
           line: {
-            tension: 0,
+            tension: 0.05,
+            borderCapStyle: "round",
           },
         },
         scales: {
@@ -96,8 +98,16 @@ class NewLineChart {
               precision: 0,
               font: {
                 family: "Inter",
+                size: 10,
               },
-              maxTicksLimit: 15,
+              maxTicksLimit: this.chart.mode === "kpichart" ? 6 : 15,
+              padding: this.chart.mode === "kpichart" ? 10 : 3,
+              display: !(this.chart.chartSize === 1 && this.chart.mode === "kpichart"),
+            },
+            grid: {
+              display: !(this.chart.chartSize === 1 && this.chart.mode === "kpichart"),
+              drawBorder: this.chart.mode !== "kpichart",
+              lineWidth: 0.5,
             },
           },
           x: {
@@ -105,7 +115,13 @@ class NewLineChart {
               precision: 0,
               font: {
                 family: "Inter",
+                size: 10,
               },
+            },
+            grid: {
+              display: this.chart.mode !== "kpichart",
+              drawBorder: this.chart.mode !== "kpichart",
+              lineWidth: 0.5,
             },
           },
         },
@@ -125,7 +141,7 @@ class NewLineChart {
       }
 
       // check how many ticks should the X Axis have
-      let maxTicksLimit = 25;
+      let maxTicksLimit = this.chart.chartSize === 1 ? 15 : 25;
 
       if (this.axisData.x.length) {
         switch (this.chart.xLabelTicks) {

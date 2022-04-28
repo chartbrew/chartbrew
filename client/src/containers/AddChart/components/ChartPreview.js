@@ -41,6 +41,11 @@ const chartModes = [{
   text: "KPI View",
   value: "kpi",
   icon: "hashtag",
+}, {
+  key: "kpichart",
+  text: "KPI with chart",
+  value: "kpichart",
+  icon: "plus square outline",
 }];
 
 function ChartPreview(props) {
@@ -86,11 +91,17 @@ function ChartPreview(props) {
   };
 
   const _onChangeMode = (e, data) => {
-    if (data.value === "chart") {
+    if (data.value === "chart" || data.value === "kpichart") {
       setRedraw(true);
     }
 
     return onChange({ mode: data.value });
+  };
+
+  const _onChangeGrowth = () => {
+    setRedraw(true);
+
+    return onChange({ showGrowth: !chart.showGrowth });
   };
 
   const _redrawComplete = () => {
@@ -122,14 +133,24 @@ function ChartPreview(props) {
     <>
       {chart && chart.chartData && chart.Datasets && (
         <>
-          <Segment>
+          <Segment style={{ minHeight: 350 }}>
             {chart.type === "line"
               && (
-                <LineChart chart={chart} redraw={redraw} redrawComplete={_redrawComplete} />
+                <LineChart
+                  editMode
+                  chart={chart}
+                  redraw={redraw}
+                  redrawComplete={_redrawComplete}
+                />
               )}
             {chart.type === "bar"
               && (
-                <BarChart chart={chart} redraw={redraw} redrawComplete={_redrawComplete} />
+                <BarChart
+                  editMode
+                  chart={chart}
+                  redraw={redraw}
+                  redrawComplete={_redrawComplete}
+                />
               )}
             {chart.type === "pie"
               && (
@@ -137,6 +158,7 @@ function ChartPreview(props) {
                   <PieChart
                     chart={chart}
                     height={300}
+                    editMode
                   />
                 </div>
               )}
@@ -145,6 +167,7 @@ function ChartPreview(props) {
                 <DoughnutChart
                   chart={chart}
                   height={300}
+                  editMode
                 />
               )}
             {chart.type === "radar"
@@ -152,6 +175,7 @@ function ChartPreview(props) {
                 <RadarChart
                   chart={chart}
                   height={300}
+                  editMode
                 />
               )}
             {chart.type === "polar"
@@ -159,6 +183,7 @@ function ChartPreview(props) {
                 <PolarChart
                   chart={chart}
                   height={300}
+                  editMode
                 />
               )}
             {chart.type === "table"
@@ -167,12 +192,18 @@ function ChartPreview(props) {
                   <TableContainer
                     tabularData={chart.chartData}
                     height={400}
+                    editMode
                   />
                 </div>
               )}
             {chart.type === "avg"
               && (
-                <LineChart chart={chart} redraw={redraw} redrawComplete={_redrawComplete} />
+                <LineChart
+                  chart={chart}
+                  redraw={redraw}
+                  redrawComplete={_redrawComplete}
+                  editMode
+                />
               )}
           </Segment>
           <Container textAlign="center">
@@ -346,6 +377,13 @@ function ChartPreview(props) {
               onChange={_onChangeMode}
               style={styles.modeSwitcher}
               disabled={chart.type !== "line" && chart.type !== "bar"}
+            />
+            <Checkbox
+              toggle
+              label="Show growth"
+              checked={chart.showGrowth}
+              onChange={_onChangeGrowth}
+              disabled={chart.mode === "chart"}
             />
           </div>
           <div style={styles.topBuffer}>
