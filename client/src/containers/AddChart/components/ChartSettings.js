@@ -305,9 +305,9 @@ function ChartSettings(props) {
                     <Checkbox
                       label="Data points"
                       toggle
-                      checked={(!pointRadius && pointRadius !== 0) || pointRadius > 0}
+                      checked={pointRadius > 0}
                       onChange={() => {
-                        if ((!pointRadius && pointRadius !== 0) || pointRadius > 0) {
+                        if (pointRadius > 0) {
                           _onAddPoints(0);
                         } else {
                           _onAddPoints(3);
