@@ -55,6 +55,7 @@ function BarChart(props) {
   };
 
   const _renderGrowth = (c) => {
+    if (!c) return (<span />);
     const { status, comparison } = c;
     return (
       <div style={{

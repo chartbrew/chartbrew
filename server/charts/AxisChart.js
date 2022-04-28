@@ -545,24 +545,36 @@ class AxisChart {
 
     configuration.data.datasets = newDatasets;
     configuration.data.labels = newLabels;
-
     // calculate the growth values
     configuration.growth = [];
     configuration.data.datasets.forEach((d) => {
       if (d.data && d.data.length > 1 && d.data[d.data.length - 2] !== 0) {
-        let result = (d.data[d.data.length - 1] - d.data[d.data.length - 2])
-          / d.data[d.data.length - 2];
-        result *= 100;
+        // get the last and previous values and make sure to format them as numbers
+        let currentValue;
+        let previousValue;
 
+        try {
+          const currArr = `${d.data[d.data.length - 1]}`.match(/[\d.]+/g);
+          const prevArr = `${d.data[d.data.length - 2]}`.match(/[\d.]+/g);
+          currentValue = parseFloat(currArr.filter((n) => n !== ".")[0]);
+          previousValue = parseFloat(prevArr.filter((n) => n !== ".")[0]);
+        } catch (e) { /** */ }
+
+        if (determineType(currentValue) === "number" && determineType(previousValue) === "number") {
+          let result = (currentValue - previousValue)
+          / previousValue;
+          result *= 100;
+
+          configuration.growth.push({
+            value: currentValue,
+            comparison: (result === 0 && 0) || result.toFixed(2),
+            status: (result > 0 && "positive") || (result < 0 && "negative") || "neutral",
+            label: d.label,
+          });
+        }
+      } else if (d.data && d.data.length === 1) {
         configuration.growth.push({
-          value: d.data[d.data.length - 1],
-          comparison: (result === 0 && 0) || result.toFixed(2),
-          status: (result > 0 && "positive") || (result < 0 && "negative") || "neutral",
-          label: d.label,
-        });
-      } else {
-        configuration.growth.push({
-          value: d.data[d.data.length - 1],
+          value: d.data[0],
           comparison: 100,
           status: "positive",
           label: d.label,
