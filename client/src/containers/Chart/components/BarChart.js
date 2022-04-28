@@ -16,6 +16,7 @@ import {
 } from "chart.js";
 
 import determineType from "../../../modules/determineType";
+import KpiChartSegment from "./KpiChartSegment";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, BarElement, Title, Tooltip, Legend, Filler
@@ -23,7 +24,7 @@ ChartJS.register(
 
 function BarChart(props) {
   const {
-    chart, redraw, redrawComplete, height,
+    chart, redraw, redrawComplete, height, editMode,
   } = props;
 
   useEffect(() => {
@@ -92,13 +93,24 @@ function BarChart(props) {
           </div>
         )}
       <div className={chart.mode === "kpi" && "chart-kpi"}>
+        {chart.chartData.growth && chart.mode === "kpichart" && (
+          <KpiChartSegment chart={chart} editMode={editMode} />
+        )}
         {chart.chartData.data && chart.chartData.data.labels && (
-          <Bar
-            data={chart.chartData.data}
-            options={chart.chartData.options}
-            height={height}
-            redraw={redraw}
-          />
+          <div>
+            <Bar
+              data={chart.chartData.data}
+              options={chart.chartData.options}
+              height={
+                height - (
+                  (chart.mode === "kpichart" && chart.chartSize > 1 && 90)
+                  || (chart.mode === "kpichart" && chart.chartSize === 1 && 80)
+                  || 0
+                )
+              }
+              redraw={redraw}
+            />
+          </div>
         )}
       </div>
     </>
@@ -130,6 +142,7 @@ BarChart.defaultProps = {
   redraw: false,
   redrawComplete: () => {},
   height: 300,
+  editMode: false,
 };
 
 BarChart.propTypes = {
@@ -137,6 +150,7 @@ BarChart.propTypes = {
   redraw: PropTypes.bool,
   redrawComplete: PropTypes.func,
   height: PropTypes.number,
+  editMode: PropTypes.bool,
 };
 
 export default BarChart;
