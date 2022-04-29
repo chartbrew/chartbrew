@@ -579,6 +579,13 @@ class AxisChart {
           status: "positive",
           label: d.label,
         });
+      } else if (d.data.length > 1) {
+        configuration.growth.push({
+          value: d.data[d.data.length - 1],
+          comparison: 0,
+          status: "neutral",
+          label: d.label,
+        });
       }
     });
 
