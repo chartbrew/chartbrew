@@ -395,6 +395,7 @@ module.exports = (app) => {
             chartSize: chart.chartSize,
             project_id: chart.project_id,
             showBranding: team.showBranding,
+            showGrowth: chart.showGrowth,
           });
         })
         .catch((error) => {
@@ -431,6 +432,7 @@ module.exports = (app) => {
           chartSize: chart.chartSize,
           project_id: chart.project_id,
           showBranding: team.showBranding,
+          showGrowth: chart.showGrowth,
         });
       })
       .catch((error) => {
