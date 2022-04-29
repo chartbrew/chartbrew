@@ -396,6 +396,7 @@ module.exports = (app) => {
             project_id: chart.project_id,
             showBranding: team.showBranding,
             showGrowth: chart.showGrowth,
+            timeInterval: chart.timeInterval,
           });
         })
         .catch((error) => {
@@ -433,6 +434,7 @@ module.exports = (app) => {
           project_id: chart.project_id,
           showBranding: team.showBranding,
           showGrowth: chart.showGrowth,
+          timeInterval: chart.timeInterval,
         });
       })
       .catch((error) => {
