@@ -402,8 +402,14 @@ class AxisChart {
         unifiedX = _.concat(unifiedX, arr);
         return arr;
       });
-      unifiedX = _.uniq(unifiedX)
-        .sort((a, b) => moment(a, this.dateFormat).diff(moment(b, this.dateFormat)));
+
+      if (this.chart.timeInterval === "week" || this.chart.timeInterval === "hour") {
+        unifiedX = unifiedX
+          .sort((a, b) => moment(a, this.dateFormat).diff(moment(b, this.dateFormat)));
+      } else {
+        unifiedX = _.uniq(unifiedX)
+          .sort((a, b) => moment(a, this.dateFormat).diff(moment(b, this.dateFormat)));
+      }
 
       // if we're dealing with dates, make sure to add the missing ones at the end
       if (gXType === "date" && startDate && endDate) {
@@ -432,6 +438,10 @@ class AxisChart {
 
       this.axisData.x = unifiedX;
     }
+
+    // console.log("this.axisData.x.length", this.axisData.x);
+    // console.log("this.axisData.y.length", this.axisData.y[0].length);
+    // console.log("this.axisData.y", this.axisData.y[0]);
 
     if (skipDataProcessing) {
       this.axisData.x = this.chart.chartData.data.labels;
@@ -651,10 +661,10 @@ class AxisChart {
           if (this.dateFormat) {
             axisData[i] = axisData[i].format(this.dateFormat);
           } else if (startDate.year() !== endDate.year() || moment().year() !== startDate.year()) {
-            this.dateFormat = "YYYY MMM [w] w";
+            this.dateFormat = "YYYY MMM [w] W";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else {
-            this.dateFormat = "MMM [w] w";
+            this.dateFormat = "MMM [w] W";
             axisData[i] = axisData[i].format(this.dateFormat);
           }
           break;
