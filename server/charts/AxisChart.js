@@ -557,7 +557,11 @@ class AxisChart {
     configuration.data.labels = newLabels;
     // calculate the growth values
     configuration.growth = [];
-    configuration.data.datasets.forEach((d) => {
+    configuration.data.datasets.forEach((d, index) => {
+      const { formula } = this.datasets[index].options;
+      const before = formula ? formula.substring(0, formula.indexOf("{")) : "";
+      const after = formula ? formula.substring(formula.indexOf("}") + 1) : "";
+
       if (d.data && d.data.length > 1 && d.data[d.data.length - 2] !== 0) {
         // get the last and previous values and make sure to format them as numbers
         let currentValue;
@@ -576,7 +580,7 @@ class AxisChart {
           result *= 100;
 
           configuration.growth.push({
-            value: currentValue,
+            value: `${before}${currentValue}${after}`,
             comparison: (result === 0 && 0) || result.toFixed(2),
             status: (result > 0 && "positive") || (result < 0 && "negative") || "neutral",
             label: d.label,
@@ -584,14 +588,14 @@ class AxisChart {
         }
       } else if (d.data && d.data.length === 1) {
         configuration.growth.push({
-          value: d.data[0],
+          value: `${before}${d.data[0]}${after}`,
           comparison: 100,
           status: "positive",
           label: d.label,
         });
       } else if (d.data.length > 1) {
         configuration.growth.push({
-          value: d.data[d.data.length - 1],
+          value: `${before}${d.data[d.data.length - 1]}${after}`,
           comparison: 0,
           status: "neutral",
           label: d.label,
