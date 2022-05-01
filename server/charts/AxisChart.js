@@ -576,7 +576,7 @@ class AxisChart {
 
         if (determineType(currentValue) === "number" && determineType(previousValue) === "number") {
           let result = (currentValue - previousValue)
-          / previousValue;
+            / previousValue;
           result *= 100;
 
           configuration.growth.push({
@@ -594,10 +594,18 @@ class AxisChart {
           label: d.label,
         });
       } else if (d.data.length > 1) {
+        let currentValue;
+        try {
+          const currArr = `${d.data[d.data.length - 1]}`.match(/[\d.]+/g);
+          currentValue = parseFloat(currArr.filter((n) => n !== ".")[0]);
+        } catch (e) {
+          //
+        }
+
         configuration.growth.push({
-          value: `${before}${d.data[d.data.length - 1]}${after}`,
-          comparison: 0,
-          status: "neutral",
+          value: `${before}${currentValue}${after}`,
+          comparison: currentValue * 100,
+          status: (currentValue > 0 && "positive") || (currentValue < 0 && "negative") || "neutral",
           label: d.label,
         });
       }
