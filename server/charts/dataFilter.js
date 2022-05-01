@@ -16,7 +16,7 @@ function compareDates(data, field, condition) {
     const selectors = field.split(".");
     let value = obj;
     for (let i = 0; i < selectors.length; i++) {
-      value = value[selectors[i]];
+      value = value && value[selectors[i]];
     }
 
     if (!value) return null;
