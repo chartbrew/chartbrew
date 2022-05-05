@@ -1,20 +1,20 @@
 module.exports = {
-  backgroundColor: "rgba(16, 55, 81, 0.8)",
+  backgroundColor: "rgba(16, 55, 81, 0.9)",
   titleFont: {
     color: "#fff",
-    size: 12,
+    size: 10,
     family: "Inter",
-    weight: "normal",
+    weight: "bold",
   },
   bodyFont: {
-    size: 14,
+    size: 12,
     color: "#fff",
     family: "Inter",
-    weight: "bold"
+    weight: "normal"
   },
   borderColor: "#1A7FA0",
-  borderWidth: 3,
-  bodySpacing: 10,
-  padding: 8,
+  borderWidth: 0,
+  bodySpacing: 5,
+  padding: 5,
   cornerRadius: 4,
 };
