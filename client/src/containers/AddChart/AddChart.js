@@ -53,7 +53,6 @@ function AddChart(props) {
   });
   const [editingTitle, setEditingTitle] = useState(false);
   const [addingDataset, setAddingDataset] = useState(false);
-  const [datasetName, setDatasetName] = useState("");
   const [savingDataset, setSavingDataset] = useState(false);
   const [chartName, setChartName] = useState("");
   const [toastOpen, setToastOpen] = useState(false);
@@ -157,7 +156,7 @@ function AddChart(props) {
     setSavingDataset(true);
     saveNewDataset(match.params.projectId, match.params.chartId, {
       chart_id: match.params.chartId,
-      legend: datasetName,
+      legend: `Dataset #${datasets.length + 1}`,
       datasetColor: chartColors[Math.floor(Math.random() * chartColors.length)],
       fillColor: ["rgba(0,0,0,0)"],
     })
@@ -165,7 +164,6 @@ function AddChart(props) {
         setSavingDataset(false);
         setAddingDataset(false);
         _onDatasetChanged(dataset);
-        setDatasetName("");
       })
       .catch(() => {
         setSavingDataset(false);
@@ -398,7 +396,7 @@ function AddChart(props) {
   return (
     <div style={styles.container(height)}>
       <ToastContainer
-        position="top-right"
+        position="bottom-right"
         autoClose={1500}
         hideProgressBar={false}
         newestOnTop={false}
@@ -558,15 +556,17 @@ function AddChart(props) {
           <div>
             {datasets && datasets.map((dataset) => {
               return (
-                <Button
-                  style={styles.datasetButtons}
-                  key={dataset.id}
-                  primary
-                  onClick={() => _onDatasetChanged(dataset)}
-                  basic={dataset.id !== activeDataset.id}
-                >
-                  {dataset.legend}
-                </Button>
+                <>
+                  <Button
+                    style={styles.datasetButtons}
+                    key={dataset.id}
+                    primary
+                    onClick={() => _onDatasetChanged(dataset)}
+                    basic={dataset.id !== activeDataset.id}
+                  >
+                    {dataset.legend}
+                  </Button>
+                </>
               );
             })}
           </div>
@@ -574,10 +574,15 @@ function AddChart(props) {
           <div style={styles.addDataset}>
             {!addingDataset && datasets.length > 0 && (
               <List>
-                <List.Item as="a" onClick={() => setAddingDataset(true)}>
-                  <Icon name="plus" />
+                <List.Item as="a" disabled={savingDataset} onClick={() => _onSaveNewDataset()}>
+                  <Icon name={savingDataset ? "spinner" : "plus"} loading={savingDataset} />
                   <List.Content>
-                    <List.Header>Add a new dataset</List.Header>
+                    {!savingDataset && (
+                      <List.Header>Add a new dataset</List.Header>
+                    )}
+                    {savingDataset && (
+                      <List.Header>Adding...</List.Header>
+                    )}
                   </List.Content>
                 </List.Item>
               </List>
@@ -594,40 +599,6 @@ function AddChart(props) {
                 <Icon name="plus" />
                 Add the first dataset
               </Button>
-            )}
-
-            {addingDataset && (
-              <Form>
-                <Form.Group>
-                  <Form.Field>
-                    <Input
-                      placeholder="Dataset name"
-                      value={datasetName}
-                      onChange={(e, data) => setDatasetName(data.value)}
-                    />
-                  </Form.Field>
-                  <Form.Field>
-                    <Button
-                      icon
-                      primary
-                      onClick={_onSaveNewDataset}
-                      loading={savingDataset}
-                    >
-                      <Icon name="checkmark" />
-                    </Button>
-                    <Button
-                      icon
-                      basic
-                      onClick={() => {
-                        setAddingDataset(false);
-                        setDatasetName("");
-                      }}
-                    >
-                      <Icon name="x" />
-                    </Button>
-                  </Form.Field>
-                </Form.Group>
-              </Form>
             )}
           </div>
 
