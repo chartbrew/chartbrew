@@ -16,7 +16,6 @@ function EditUserForm(props) {
   const [submitError, setSubmitError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
-  const [btnIcon, setBtnIcon] = useState("right arrow");
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [deleteUserError, setDeleteUserError] = useState(false);
 
@@ -48,12 +47,10 @@ function EditUserForm(props) {
     setSubmitError(false);
     setLoading(true);
     setSuccess(false);
-    setBtnIcon("arrow right");
     updateUser(userProp.id, user)
       .then(() => {
         setSuccess(true);
         setLoading(false);
-        setBtnIcon("check");
       })
       .catch(() => {
         setSubmitError(true);
@@ -117,29 +114,24 @@ function EditUserForm(props) {
         <Button
           loading={loading}
           disabled={!user.name || !user.icon}
-          floated="right"
-          icon
-          labelPosition="right"
           color={success ? "green" : "violet"}
           type="submit"
-          onClick={() => _onUpdateUser()}>
+          onClick={() => _onUpdateUser()}
+        >
           {success ? "Saved" : "Save" }
-          <Icon name={btnIcon} />
         </Button>
-        <Divider hidden />
+        <Divider section />
+        <Button
+          negative
+          content="Delete account"
+          onClick={() => setOpenDeleteModal(true)}
+        />
 
         <Container fluid>
           <TransitionablePortal open={openDeleteModal}>
             <Modal
               open={openDeleteModal}
               onClose={() => setOpenDeleteModal(false)}
-              trigger={(
-                <Button onClick={() => setOpenDeleteModal(true)} compact size="tiny" color="orange" icon>
-                  {" Delete Account"}
-                  <Icon name="delete" />
-                  {" "}
-                </Button>
-              )}
               basic
             >
               <Header icon="exclamation triangle" content="Delete Account" />
