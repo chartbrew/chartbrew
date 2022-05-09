@@ -61,6 +61,7 @@ function AddChart(props) {
   const [startTutorial, setStartTutorial] = useState(false);
   const [resetingTutorial, setResetingTutorial] = useState(false);
   const [conditions, setConditions] = useState([]);
+  const [updatingDataset, setUpdatingDataset] = useState(false);
 
   const { height } = useWindowSize();
 
@@ -163,7 +164,9 @@ function AddChart(props) {
       .then((dataset) => {
         setSavingDataset(false);
         setAddingDataset(false);
-        _onDatasetChanged(dataset);
+        setTimeout(() => {
+          _onDatasetChanged(dataset);
+        }, 100);
       })
       .catch(() => {
         setSavingDataset(false);
@@ -171,6 +174,7 @@ function AddChart(props) {
   };
 
   const _onUpdateDataset = (newDataset, skipParsing) => {
+    setUpdatingDataset(true);
     return updateDataset(
       match.params.projectId,
       match.params.chartId,
@@ -178,13 +182,6 @@ function AddChart(props) {
       newDataset
     )
       .then((dataset) => {
-        if (!toastOpen) {
-          toast.success("Updated the dataset 👌", {
-            onClose: () => setToastOpen(false),
-            onOpen: () => setToastOpen(true),
-          });
-        }
-
         // determine wether to do a full refresh or not
         if (activeDataset.xAxis !== dataset.xAxis
           || activeDataset.yAxis !== dataset.yAxis
@@ -198,8 +195,10 @@ function AddChart(props) {
         }
 
         setActiveDataset(dataset);
+        setUpdatingDataset(false);
       })
       .catch(() => {
+        setUpdatingDataset(false);
         toast.error("Cannot update the dataset 😫 Please try again", {
           autoClose: 2500,
         });
@@ -563,6 +562,7 @@ function AddChart(props) {
                     primary
                     onClick={() => _onDatasetChanged(dataset)}
                     basic={dataset.id !== activeDataset.id}
+                    size="small"
                   >
                     {dataset.legend}
                   </Button>
@@ -613,6 +613,7 @@ function AddChart(props) {
                   chart={newChart}
                   onRefresh={_onRefreshData}
                   onRefreshPreview={_onRefreshPreview}
+                  loading={updatingDataset}
               />
               </div>
             );

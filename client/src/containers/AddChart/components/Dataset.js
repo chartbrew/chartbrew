@@ -19,7 +19,7 @@ import { changeTutorial as changeTutorialAction } from "../../../actions/tutoria
 function Dataset(props) {
   const {
     dataset, connections, onUpdate, onDelete, chart, match, onRefresh,
-    changeTutorial, onRefreshPreview,
+    changeTutorial, onRefreshPreview, loading,
   } = props;
 
   const [newDataset, setNewDataset] = useState(dataset);
@@ -202,7 +202,7 @@ function Dataset(props) {
       <Grid stackable>
         <Grid.Row>
           <Grid.Column>
-            <Form>
+            <Form size="small">
               <Form.Group widths="equal">
                 <Form.Field>
                   <Input
@@ -214,64 +214,79 @@ function Dataset(props) {
                 </Form.Field>
                 <Form.Field>
                   <Button
-                    primary
+                    primary={saveRequired}
+                    positive={!saveRequired}
                     icon
                     labelPosition="right"
                     onClick={_onSaveDataset}
                     disabled={!saveRequired}
+                    size="small"
                   >
-                    <Icon name="checkmark" />
+                    <Icon name={saveRequired ? "save" : "checkmark"} />
                     {saveRequired ? "Save" : "Saved"}
                   </Button>
+                  <Popup
+                    trigger={(
+                      <Button
+                        basic
+                        negative
+                        icon
+                        onClick={() => setDeleteModal(true)}
+                        size="small"
+                      >
+                        <Icon name="trash" />
+                      </Button>
+                    )}
+                    content="Remove dataset"
+                    inverted
+                    size="small"
+                  />
+                </Form.Field>
+              </Form.Group>
+              <Form.Group widths="equal" className="dataset-manage-tut">
+                <Form.Field>
+                  <Dropdown
+                    placeholder="Select a connection"
+                    selection
+                    value={newDataset.connection_id}
+                    options={dropdownConfig}
+                    disabled={connections.length < 1}
+                    onChange={_onChangeConnection}
+                    fluid
+                    loading={loading}
+                  />
+                </Form.Field>
+                <Form.Field>
                   <Button
-                    basic
-                    negative
+                    primary
                     icon
-                    onClick={() => setDeleteModal(true)}
+                    labelPosition="right"
+                    disabled={!newDataset.connection_id}
+                    onClick={_openConfigModal}
+                    size="small"
                   >
-                    <Icon name="trash" />
+                    <Icon name="wifi" />
+                    Get data
                   </Button>
+                  <Popup
+                    trigger={(
+                      <Button
+                        as="a"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        icon="plug"
+                        href={_onManageConnections()}
+                        size="small"
+                      />
+                    )}
+                    content="Manage connections"
+                    inverted
+                    size="small"
+                    position="top center"
+                  />
                 </Form.Field>
               </Form.Group>
             </Form>
-          </Grid.Column>
-        </Grid.Row>
-        <Grid.Row columns={2} className="dataset-manage-tut">
-          <Grid.Column>
-            <Dropdown
-              placeholder="Select a connection"
-              selection
-              value={newDataset.connection_id}
-              options={dropdownConfig}
-              disabled={connections.length < 1}
-              onChange={_onChangeConnection}
-              fluid
-            />
-          </Grid.Column>
-          <Grid.Column textAlign="left">
-            <Button
-              primary
-              icon
-              labelPosition="right"
-              disabled={!newDataset.connection_id}
-              onClick={_openConfigModal}
-            >
-              <Icon name="wifi" />
-              Make request
-            </Button>
-            <Popup
-              trigger={(
-                <Button
-                  as="a"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  icon="plug"
-                  href={_onManageConnections()}
-                />
-              )}
-              content="Manage connections"
-              position="top center"
-            />
           </Grid.Column>
         </Grid.Row>
         <Grid.Row>
@@ -381,6 +396,11 @@ Dataset.propTypes = {
   onRefresh: PropTypes.func.isRequired,
   changeTutorial: PropTypes.func.isRequired,
   onRefreshPreview: PropTypes.func.isRequired,
+  loading: PropTypes.bool,
+};
+
+Dataset.defaultProps = {
+  loading: false,
 };
 
 const styles = {
