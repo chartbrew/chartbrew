@@ -132,25 +132,26 @@ function EditUserForm(props) {
             <Modal
               open={openDeleteModal}
               onClose={() => setOpenDeleteModal(false)}
-              basic
             >
               <Header icon="exclamation triangle" content="Delete Account" />
               <Modal.Content>
                 <p>
-                  This action will delete your account permanently,
-                  all teams, projects and charts that you created.
+                  {"This action will delete your account permanently, including your team and everything associated with it (projects, connections, and charts)."}
                 </p>
                 <p>
-                  Are you sure you want to delete it?
+                  <strong>{"We cannot reverse this action as all the content is delete immediately."}</strong>
+                </p>
+                <p>
+                  Are you sure you want to delete your user and team?
                 </p>
               </Modal.Content>
               <Modal.Actions>
-                <Button onClick={() => setOpenDeleteModal(false)}>
+                <Button onClick={() => setOpenDeleteModal(false)} color="primary">
                   <Icon name="chevron left" />
                   {" Go back"}
                 </Button>
                 <Button color="red" loading={loading} onClick={_onDeleteUser}>
-                  <Icon name="checkmark" />
+                  <Icon name="trash" />
                   {" Delete forever"}
                 </Button>
               </Modal.Actions>
