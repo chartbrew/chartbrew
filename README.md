@@ -17,12 +17,16 @@
 </p>
 
 <p align="center">
+  <strong><a href="https://chartbrew.com">Chartbrew as a service is available here</a></strong>
+</p>
+
+<br />
+
+<p align="center">
   <a href="https://chartbrew.com">
     <img src="https://cdn2.chartbrew.com/chartbrew-dashboard.jpg" alt="ChartBrew dashboard" width="600"/>
   </a>
 </p>
-
-<strong>If you are looking for Chartbrew as a service, <a href="https://chartbrew.com">it's available here</a>.</strong>
 
 <hr />
 
