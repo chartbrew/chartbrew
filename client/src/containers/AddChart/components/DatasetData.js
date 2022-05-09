@@ -450,7 +450,7 @@ function DatasetData(props) {
                 || chartType === "polar"
                 || chartType === "doughnut"
                 ? "Segment "
-                : chartType === "table" ? "Collection " : "X Axis "}
+                : chartType === "table" ? "Collection " : "X-Axis "}
             </strong>
           </label>
           <Dropdown
@@ -515,7 +515,7 @@ function DatasetData(props) {
                   || chartType === "radar"
                   || chartType === "polar"
                   || chartType === "doughnut"
-                  ? "Data " : "Y Axis "}
+                  ? "Data " : "Y-Axis "}
               </strong>
             </label>
             <Dropdown
@@ -548,7 +548,7 @@ function DatasetData(props) {
             />
           </Form.Field>
           <Form.Field>
-            <label>Sort</label>
+            <label>Sort on Y-Axis</label>
             <Popup
               trigger={(
                 <Button
@@ -610,7 +610,7 @@ function DatasetData(props) {
                 className="tertiary"
                 onClick={_onAddFormula}
                 size="small"
-                content="Add y-axis formula"
+                content="Add Y-Axis formula"
               />
             </div>
           )}
@@ -1066,7 +1066,7 @@ DatasetData.propTypes = {
 function FormulaTips() {
   return (
     <div>
-      <Header size="small">Formulas allow you to manipulate the final results on the Y Axis</Header>
+      <Header size="small">Formulas allow you to manipulate the final results on the Y-Axis</Header>
       <p>
         {"For "}
         <strong>{"val = 12345"}</strong>
