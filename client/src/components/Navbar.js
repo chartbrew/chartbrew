@@ -209,27 +209,30 @@ function Navbar(props) {
             <Icon name="wifi" />
           </Media>
         </Menu.Item>
-        <Menu.Item onClick={() => setFeedbackModal(true)}>
-          <Icon name="lightbulb outline" />
-          <Media greaterThan="mobile">
-            Suggestions
-          </Media>
-        </Menu.Item>
         <Dropdown
           style={{ paddingTop: 0, paddingBottom: 0 }}
           item
-          floating={transparent}
           icon={width < 768 ? null : "dropdown"}
-          trigger={<Icon name="user outline" />}
+          floating={transparent}
+          trigger={(
+            <>
+              <Icon name="life ring outline" />
+              <Media greaterThan="mobile">
+                Help
+              </Media>
+            </>
+          )}
         >
           <Dropdown.Menu>
-            <Dropdown.Item as={Link} to="/user">My space</Dropdown.Item>
-            <Dropdown.Item as={Link} to="/edit">Profile</Dropdown.Item>
-
-            {_canAccess("admin", teamOwned) && <Dropdown.Divider />}
-            {_canAccess("admin", teamOwned) && <Dropdown.Item as={Link} to={`/manage/${team.id || teamOwned.id}/settings`}>Team settings</Dropdown.Item>}
-
-            <Dropdown.Divider />
+            <Dropdown.Item
+              as="a"
+              href="https://discord.gg/KwGEbFk"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Icon name="discord" />
+              Join our Discord
+            </Dropdown.Item>
             <Dropdown.Item
               as="a"
               href="https://chartbrew.com/blog/tag/tutorial/"
@@ -250,22 +253,31 @@ function Navbar(props) {
             </Menu.Item>
             <Dropdown.Item
               as="a"
-              href="https://github.com/razvanilin/chartbrew"
+              href="https://github.com/chartbrew/chartbrew/discussions"
               target="_blank"
               rel="noopener noreferrer"
             >
               <Icon name="github" />
               GitHub
             </Dropdown.Item>
-            <Dropdown.Item
-              as="a"
-              href="https://discord.gg/KwGEbFk"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Icon name="discord" />
-              Discord
+            <Dropdown.Divider />
+            <Dropdown.Item onClick={() => setFeedbackModal(true)}>
+              <Icon name="lightbulb outline" />
+              Feedback
             </Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown>
+        <Dropdown
+          style={{ paddingTop: 0, paddingBottom: 0 }}
+          item
+          floating={transparent}
+          icon={width < 768 ? null : "dropdown"}
+          trigger={<Icon name="user outline" />}
+        >
+          <Dropdown.Menu>
+            <Dropdown.Item as={Link} to="/edit">Profile</Dropdown.Item>
+
+            {_canAccess("admin", teamOwned) && <Dropdown.Item as={Link} to={`/manage/${team.id || teamOwned.id}/settings`}>Account settings</Dropdown.Item>}
 
             <Dropdown.Divider />
             <Dropdown.Item onClick={logout}>
