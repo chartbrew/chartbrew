@@ -139,7 +139,7 @@ function EditUserForm(props) {
                   {"This action will delete your account permanently, including your team and everything associated with it (projects, connections, and charts)."}
                 </p>
                 <p>
-                  <strong>{"We cannot reverse this action as all the content is delete immediately."}</strong>
+                  <strong>{"We cannot reverse this action as all the content is deleted immediately."}</strong>
                 </p>
                 <p>
                   Are you sure you want to delete your user and team?

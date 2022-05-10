@@ -117,6 +117,10 @@ function Navbar(props) {
       <Menu.Item style={styles.logoContainer} as={Link} to="/user">
         <Image centered as="img" src={cbLogo} alt="Chartbrew logo" style={styles.logo} />
       </Menu.Item>
+      <Menu.Item as={Link} to="/user">
+        <Icon name="th" />
+        Home
+      </Menu.Item>
       {!hideTeam
         && (
         <Menu.Menu
@@ -124,17 +128,12 @@ function Navbar(props) {
         >
           <Media greaterThan="mobile">
             <Dropdown
-              text={(
-                <span>
-                  <Icon name="window restore outline" />
-                  {team.name}
-                </span>
-              )}
+              text={team.name}
               item
               style={styles.centeredDropdown}
             >
               <Dropdown.Menu>
-                <Dropdown.Header>{"Select a team"}</Dropdown.Header>
+                <Dropdown.Header>{"Quick access to your projects"}</Dropdown.Header>
                 <Dropdown.Divider />
                 {teams && teams.map((t) => {
                   return (
@@ -315,7 +314,7 @@ const styles = {
   logoContainer: {
     paddingTop: 1,
     paddingBottom: 1,
-    width: 70,
+    minWidth: 70,
   },
 };
 

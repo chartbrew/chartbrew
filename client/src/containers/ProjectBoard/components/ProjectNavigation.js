@@ -65,6 +65,14 @@ function ProjectNavigation(props) {
     }
   };
 
+  const _formatProjectName = (projectName) => {
+    if (projectName && projectName.length > 18) {
+      return `${project.name.substring(0, 15)}...`;
+    }
+
+    return projectName;
+  };
+
   if (mobile) {
     return (
       <Menu
@@ -135,29 +143,29 @@ function ProjectNavigation(props) {
       >
         <Menu.Item header>
           <Dropdown
-            text={menuSize === "large" ? project.name : null}
+            text={menuSize === "large" ? _formatProjectName(project.name) : null}
             button={menuSize === "small"}
             labeled={menuSize === "small"}
             icon={menuSize === "small"
-              && (
+              ? (
                 <Popup
                   trigger={<Icon name="list ul" size="large" />}
                   content="Switch projects"
                   position="right center"
                   inverted
                 />
-              )}
+              ) : "list ul"}
             item
-            style={styles.centered}
+            style={{ ...styles.centered, fontSize: 14 }}
             closeOnChange={false}
+            title={project.name}
           >
-            <Dropdown.Menu>
+            <Dropdown.Menu style={{ fontSize: 14 }}>
               <Input
                 icon="search"
                 iconPosition="left"
                 className="search"
                 onClick={(e) => e.stopPropagation()}
-                onFocus={(e) => e.stopPropagation()}
                 onChange={(e, data) => setProjectSearch(data.value)}
               />
               <Dropdown.Header>Select another project</Dropdown.Header>
