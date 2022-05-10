@@ -529,6 +529,7 @@ function DatasetData(props) {
               value={dataset.yAxis}
               onChange={_selectYField}
               scrolling
+              style={{ marginBottom: 5 }}
             />
             <Dropdown
               icon={null}
