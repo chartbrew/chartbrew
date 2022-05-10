@@ -594,7 +594,8 @@ function AddChart(props) {
                 icon
                 labelPosition="right"
                 size="large"
-                onClick={() => setAddingDataset(true)}
+                onClick={() => _onSaveNewDataset()}
+                loading={savingDataset}
               >
                 <Icon name="plus" />
                 Add the first dataset
