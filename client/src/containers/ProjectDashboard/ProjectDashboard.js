@@ -479,7 +479,7 @@ function ProjectDashboard(props) {
               <Header size="huge" textAlign="center" icon>
                 Welcome to your dashboard
                 <Header.Subheader>
-                  {"Create a new database connection and start visualizing your data. "}
+                  {"Connect to a data source and start visualizing your data. "}
                 </Header.Subheader>
               </Header>
               <Divider hidden />
