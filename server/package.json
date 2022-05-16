@@ -47,6 +47,7 @@
     "oneaccount-express": "1.0.3",
     "pg": "^8.5.1",
     "pg-hstore": "^2.3.3",
+    "puppeteer": "^14.1.0",
     "request": "^2.88.2",
     "request-promise": "^4.2.6",
     "sequelize": "^6.3.5",

@@ -2,5 +2,8 @@ node_modules
 .env
 models/.env
 .eslintcache 
+
+// generated forlders
 .cache
 uploads
+.snapshots

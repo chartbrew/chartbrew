@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Container, Loader, Header, Message, Icon, Popup, Button, Label,
+  Container, Loader, Header, Message, Icon, Popup, Button, Label, Segment,
 } from "semantic-ui-react";
 import moment from "moment";
 import { format } from "date-fns";
@@ -34,8 +34,13 @@ function EmbeddedChart(props) {
   const [chart, setChart] = useState(null);
   const [error, setError] = useState(false);
   const [conditions, setConditions] = useState([]);
+  const [isSnapshot, setIsSnapshot] = useState(false);
 
   useEffect(() => {
+    const params = new URLSearchParams(document.location.search);
+
+    setIsSnapshot(params.has("isSnapshot"));
+
     // change the background color to transparent
     document.body.style.backgroundColor = "transparent";
 
@@ -133,9 +138,13 @@ function EmbeddedChart(props) {
 
   return (
     <div style={styles.container}>
-      <Container>
-        <Container fluid style={styles.header(chart.type)}>
-          <Header style={{ display: "contents" }}>{chart.name}</Header>
+      <Segment
+        basic={!isSnapshot}
+        padded={isSnapshot}
+        style={isSnapshot ? styles.chartSegment : {}}
+      >
+        <div style={styles.header(chart.type)}>
+          <Header as="h1" style={{ display: "contents" }}>{chart.name}</Header>
           {chart.chartData && (
             <div>
               <p>
@@ -178,68 +187,68 @@ function EmbeddedChart(props) {
               </p>
             </div>
           )}
-        </Container>
+        </div>
         {chart.type === "line"
           && (
-          <Container fluid>
-            <LineChart chart={chart} height={pageHeight - 100} />
+          <Container fluid className="chart-container">
+            <LineChart chart={chart} height={pageHeight - 100} isSnapshot={isSnapshot} />
           </Container>
           )}
-        {chart.type === "bar"
-          && (
-          <Container fluid>
-            <BarChart chart={chart} height={pageHeight - 100} />
-          </Container>
-          )}
-        {chart.type === "pie"
-          && (
-          <Container fluid>
-            <PieChart
-              chart={chart}
-              height={pageHeight - 100}
-            />
-          </Container>
-          )}
-        {chart.type === "doughnut"
-          && (
-          <Container fluid>
-            <DoughnutChart
-              chart={chart}
-              height={pageHeight - 100}
-            />
-          </Container>
-          )}
-        {chart.type === "radar"
-          && (
-          <Container fluid>
-            <RadarChart
-              chart={chart}
-              height={pageHeight - 100}
-            />
-          </Container>
-          )}
-        {chart.type === "polar"
-          && (
-          <Container fluid>
-            <PolarChart
-              chart={chart}
-              height={pageHeight - 100}
-            />
-          </Container>
-          )}
-        {chart.type === "table"
-          && (
-          <Container fluid>
-            <TableContainer
-              height={pageHeight - 100}
-              tabularData={chart.chartData}
-              embedded
-            />
-          </Container>
-          )}
+        <div className="chart-container">
+          {chart.type === "bar"
+            && (
+              <BarChart chart={chart} height={pageHeight - 150} isSnapshot={isSnapshot} />
+            )}
+          {chart.type === "pie"
+            && (
+            <Container fluid className="chart-container">
+              <PieChart
+                chart={chart}
+                height={pageHeight - 100}
+              />
+            </Container>
+            )}
+          {chart.type === "doughnut"
+            && (
+            <Container fluid className="chart-container">
+              <DoughnutChart
+                chart={chart}
+                height={pageHeight - 100}
+              />
+            </Container>
+            )}
+          {chart.type === "radar"
+            && (
+            <Container fluid className="chart-container">
+              <RadarChart
+                chart={chart}
+                height={pageHeight - 100}
+              />
+            </Container>
+            )}
+          {chart.type === "polar"
+            && (
+            <Container fluid className="chart-container">
+              <PolarChart
+                chart={chart}
+                height={pageHeight - 100}
+              />
+            </Container>
+            )}
+          {chart.type === "table"
+            && (
+            <Container fluid className="chart-container">
+              <TableContainer
+                height={pageHeight - 100}
+                tabularData={chart.chartData}
+                embedded
+              />
+            </Container>
+            )}
+        </div>
         <div style={{ marginTop: 5 }}>
           <small>
-            {!loading && (
+            {!loading && !isSnapshot && (
               <i>
                 <span title="Last updated">{`${_getUpdatedTime(chart.chartDataUpdated)}`}</span>
               </i>
@@ -252,15 +261,15 @@ function EmbeddedChart(props) {
             )}
           </small>
           {chart.showBranding && (
-            <small style={{ color: blackTransparent(0.5), float: "right" }}>
+            <small style={styles.branding}>
               {"Powered by "}
               <a href="https://chartbrew.com" target="_blank" rel="noreferrer">
-                Chartbrew
+                <strong>Chartbrew</strong>
               </a>
             </small>
           )}
         </div>
-      </Container>
+      </Segment>
     </div>
   );
 }
@@ -269,12 +278,13 @@ const styles = {
   container: {
     flex: 1,
     backgroundColor: "transparent",
-    padding: 10,
+    padding: 20,
   },
   header: (type) => ({
     paddingRight: type === "table" ? 0 : 20,
     paddingLeft: type === "table" ? 0 : 20,
     paddingBottom: type === "table" ? 10 : 0,
+    textAlign: "center",
   }),
   loaderContainer: {
     minHeight: 100,
@@ -288,6 +298,18 @@ const styles = {
     backgroundColor: "transparent",
     boxShadow: "none",
   },
+  chartSegment: {
+    borderRadius: 6,
+    boxShadow: "0 2px 5px 0 rgba(51, 51, 79, .07)",
+    border: "none",
+    padding: 20,
+    paddingBottom: 30,
+    minHeight: 350,
+  },
+  branding: {
+    color: blackTransparent(0.5),
+    float: "right",
+  }
 };
 
 EmbeddedChart.propTypes = {

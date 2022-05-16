@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { Bar } from "react-chartjs-2";
 import { Header, Icon } from "semantic-ui-react";
@@ -25,8 +25,16 @@ ChartJS.register(
 
 function BarChart(props) {
   const {
-    chart, redraw, redrawComplete, height, editMode,
+    chart, redraw, redrawComplete, height, editMode, isSnapshot,
   } = props;
+
+  const chartRef = useRef(null);
+
+  useEffect(() => {
+    if (isSnapshot) {
+      selectLastElement();
+    }
+  }, []);
 
   useEffect(() => {
     if (redraw) {
@@ -52,6 +60,30 @@ function BarChart(props) {
     }
 
     return `${data}`;
+  };
+
+  const selectLastElement = () => {
+    if (!chartRef || !chartRef.current) return;
+
+    const { tooltip } = chartRef.current;
+    if (!tooltip) return;
+
+    if (tooltip.getActiveElements().length > 0) {
+      tooltip.setActiveElements([]);
+    } else {
+      const { chartArea } = chartRef.current;
+      const activeElements = chart.chartData.data.datasets.map((d, index) => {
+        return {
+          datasetIndex: index,
+          index: chart.chartData.data.labels.length - 1,
+        };
+      });
+      tooltip.setActiveElements(activeElements,
+        {
+          x: (chartArea.left + chartArea.right) / 2,
+          y: (chartArea.top + chartArea.bottom) / 2,
+        });
+    }
   };
 
   const _renderGrowth = (c) => {
@@ -131,6 +163,7 @@ function BarChart(props) {
         {chart.chartData.data && chart.chartData.data.labels && (
           <div>
             <Bar
+              ref={chartRef}
               data={chart.chartData.data}
               options={chart.chartData.options}
               height={
@@ -175,6 +208,7 @@ BarChart.defaultProps = {
   redrawComplete: () => {},
   height: 300,
   editMode: false,
+  isSnapshot: false,
 };
 
 BarChart.propTypes = {
@@ -183,6 +217,7 @@ BarChart.propTypes = {
   redrawComplete: PropTypes.func,
   height: PropTypes.number,
   editMode: PropTypes.bool,
+  isSnapshot: PropTypes.bool,
 };
 
 export default BarChart;

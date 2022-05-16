@@ -25,6 +25,7 @@ const authCache = new AuthCacheController();
 // set up folders
 fs.mkdir(".cache", () => {});
 fs.mkdir("uploads", () => {});
+fs.mkdir(".snapshots", () => {});
 
 const app = express();
 app.settings = settings;

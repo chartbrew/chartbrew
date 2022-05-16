@@ -9,6 +9,7 @@ const dataset = require("./DatasetRoute");
 const template = require("./TemplateRoute");
 const google = require("./GoogleRoute");
 const update = require("./UpdateRoute");
+const snapshot = require("./SnapshotRoute");
 
 module.exports = {
   team,
@@ -22,4 +23,5 @@ module.exports = {
   template,
   google,
   update,
+  snapshot,
 };
