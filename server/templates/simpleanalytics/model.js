@@ -27,7 +27,7 @@ const template = (website, apiKey, dashboardOrder) => ({
     type: "line",
     Datasets: [{
       legend: "Pageviews",
-      datasetColor: "rgba(23, 190, 207, 1)",
+      datasetColor: "rgba(80, 227, 194, 1)",
       fill: false,
       fillColor: "rgba(0,0,0,0)",
       dateField: "root.histogram[].date",
@@ -39,7 +39,7 @@ const template = (website, apiKey, dashboardOrder) => ({
       }
     }, {
       legend: "Visitors",
-      datasetColor: "#D62728",
+      datasetColor: "rgba(74, 144, 226, 1)",
       fill: false,
       fillColor: "rgba(0,0,0,0)",
       dateField: "root.histogram[].date",
@@ -59,14 +59,15 @@ const template = (website, apiKey, dashboardOrder) => ({
     displayLegend: false,
     draft: false,
     includeZeros: true,
-    mode: "chart",
+    mode: "kpichart",
     public: false,
     subType: "lcTimeseries",
     timeInterval: "day",
     type: "line",
+    showGrowth: true,
     Datasets: [{
       legend: "Pageviews",
-      datasetColor: "#17BECF",
+      datasetColor: "rgba(80, 227, 194, 1)",
       fill: false,
       fillColor: "rgba(0,0,0,0)",
       dateField: "root.histogram[].date",
@@ -78,7 +79,7 @@ const template = (website, apiKey, dashboardOrder) => ({
       }
     }, {
       legend: "Visitors",
-      datasetColor: "#D62728",
+      datasetColor: "rgba(74, 144, 226, 1)",
       fill: false,
       fillColor: "rgba(0,0,0,0)",
       dateField: "root.histogram[].date",
@@ -104,8 +105,8 @@ const template = (website, apiKey, dashboardOrder) => ({
     displayLegend: true,
     Datasets: [{
       legend: "Devices",
-      datasetColor: "rgba(207, 236, 249, 0)",
-      fillColor: ["rgba(208, 2, 27, 0.34)", "rgba(126, 211, 33, 0.4)", "rgba(74, 144, 226, 0.61)"],
+      datasetColor: "rgba(255, 255, 255, 1)",
+      fillColor: ["rgba(74, 144, 226, 0.55)", "rgba(126, 211, 33, 0.4)", "rgba(245, 166, 35, 0.55)"],
       multiFill: true,
       xAxis: "root.device_types[].value",
       yAxis: "root.device_types[].visitors",
