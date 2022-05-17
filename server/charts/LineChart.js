@@ -100,7 +100,7 @@ class NewLineChart {
                 family: "Inter",
                 size: 10,
               },
-              maxTicksLimit: this.chart.mode === "kpichart" ? 6 : 15,
+              maxTicksLimit: this.chart.mode === "kpichart" ? 6 : 10,
               padding: this.chart.mode === "kpichart" ? 10 : 3,
               display: !(this.chart.chartSize === 1 && this.chart.mode === "kpichart"),
             },
@@ -141,7 +141,12 @@ class NewLineChart {
       }
 
       // check how many ticks should the X Axis have
-      let maxTicksLimit = this.chart.chartSize === 1 ? 15 : 25;
+      let maxTicksLimit = 10;
+
+      if (this.chart.chartSize === 1) maxTicksLimit = 4;
+      if (this.chart.chartSize === 2) maxTicksLimit = 8;
+      if (this.chart.chartSize === 3) maxTicksLimit = 12;
+      if (this.chart.chartSize === 4) maxTicksLimit = 16;
 
       if (this.axisData.x.length) {
         switch (this.chart.xLabelTicks) {
