@@ -17,6 +17,10 @@ class NewPieChart {
       y: { display: false },
     };
 
+    config.options.interaction = {
+      mode: "nearest",
+    };
+
     return config;
   }
 }
