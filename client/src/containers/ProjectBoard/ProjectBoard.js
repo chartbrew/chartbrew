@@ -51,7 +51,7 @@ function ProjectBoard(props) {
   } = props;
 
   const [loading, setLoading] = useState(true);
-  const [menuSize, setMenuSize] = useState("large");
+  const [menuSize, setMenuSize] = useState("small");
   const [showDrafts, setShowDrafts] = useState(true);
   const [isPrinting, setIsPrinting] = useState(false);
   const [update, setUpdate] = useState({});
@@ -111,9 +111,9 @@ function ProjectBoard(props) {
       setMenuSize(size);
       return;
     }
-    let newMenuSize = "large";
-    if (size < sideMaxSize) {
-      newMenuSize = "small";
+    let newMenuSize = "small";
+    if (size > sideMinSize) {
+      newMenuSize = "large";
     }
     setMenuSize(newMenuSize);
     window.localStorage.setItem("_cb_menu_size", newMenuSize);
