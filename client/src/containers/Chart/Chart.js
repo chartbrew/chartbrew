@@ -792,6 +792,9 @@ function Chart(props) {
                     text: "Every 3 hours",
                     value: 10800,
                   }, {
+                    text: "Every 6 hours",
+                    value: 21600,
+                  }, {
                     text: "Every day",
                     value: 86400,
                   }, {
