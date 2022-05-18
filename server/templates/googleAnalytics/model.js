@@ -5,13 +5,14 @@ const db = require("../../models/models");
 const template = (configuration = {}, dashboardOrder = 0) => ({
   "Charts": [
     {
+      "tid": 0,
       "name": "New users",
       "type": "line",
       "subType": "timeseries",
       "public": false,
       "chartSize": 2,
-      "dashboardOrder": dashboardOrder + 1,
-      "displayLegend": true,
+      "dashboardOrder": dashboardOrder,
+      "displayLegend": false,
       "pointRadius": null,
       "startDate": null,
       "endDate": null,
@@ -20,7 +21,8 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
       "timeInterval": "day",
       "autoUpdate": null,
       "draft": false,
-      "mode": "chart",
+      "mode": "kpichart",
+      "showGrowth": true,
       "Datasets": [
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -121,15 +123,15 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           "Connection": null
         }
       ],
-      "tid": 0
     },
     {
+      "tid": 1,
       "name": "Referrers",
       "type": "table",
       "subType": "timeseries",
       "public": false,
       "chartSize": 2,
-      "dashboardOrder": dashboardOrder + 2,
+      "dashboardOrder": dashboardOrder + 1,
       "displayLegend": false,
       "pointRadius": null,
       "startDate": null,
@@ -238,15 +240,15 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           },
         },
       ],
-      "tid": 1
     },
     {
-      "name": "Trafic channel",
-      "type": "bar",
-      "subType": "timeseries",
+      "tid": 2,
+      "name": "Active users",
+      "type": "line",
+      "subType": "lcTimeseries",
       "public": false,
-      "chartSize": 1,
-      "dashboardOrder": dashboardOrder + 3,
+      "chartSize": 2,
+      "dashboardOrder": dashboardOrder + 2,
       "displayLegend": false,
       "pointRadius": null,
       "startDate": null,
@@ -256,80 +258,8 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
       "timeInterval": "day",
       "autoUpdate": null,
       "draft": false,
-      "mode": "chart",
-      "Datasets": [
-        {
-          "fillColor": [
-            "rgba(208, 2, 27, 0.35)",
-            "rgba(126, 211, 33, 0.52)",
-            "rgba(74, 144, 226, 0.37)"
-          ],
-          "patterns": [],
-          "conditions": null,
-          "fieldsSchema": {
-            "root[].ga:channelGrouping": "string",
-            "root[].ga:users": "string"
-          },
-          "excludedFields": null,
-          "query": null,
-          "xAxis": "root[].ga:channelGrouping",
-          "xAxisOperation": null,
-          "yAxis": "root[].ga:users",
-          "yAxisOperation": "none",
-          "dateField": null,
-          "datasetColor": "rgba(0, 0, 0, 1)",
-          "fill": false,
-          "multiFill": true,
-          "dateFormat": null,
-          "legend": "Channel",
-          "pointRadius": null,
-          "formula": null,
-          "DataRequest": {
-            "headers": null,
-            "body": "null",
-            "conditions": null,
-            "configuration": {
-              "accountId": configuration.accountId,
-              "propertyId": configuration.propertyId,
-              "viewId": configuration.viewId,
-              "filters": [],
-              "metrics": "ga:users",
-              "dimensions": "ga:channelGrouping",
-              "startDate": "30daysAgo",
-              "endDate": "yesterday"
-            },
-            "method": null,
-            "route": null,
-            "useGlobalHeaders": true,
-            "query": null,
-            "pagination": false,
-            "items": "items",
-            "itemsLimit": 100,
-            "offset": "offset",
-            "paginationField": null,
-            "template": null
-          },
-        },
-      ],
-      "tid": 2
-    },
-    {
-      "name": "Active users",
-      "type": "line",
-      "subType": "lcTimeseries",
-      "public": false,
-      "chartSize": 2,
-      "dashboardOrder": dashboardOrder + 4,
-      "displayLegend": true,
-      "pointRadius": null,
-      "startDate": null,
-      "endDate": null,
-      "includeZeros": true,
-      "currentEndDate": false,
-      "timeInterval": "day",
-      "autoUpdate": null,
-      "draft": false,
-      "mode": "chart",
+      "mode": "kpichart",
+      "showGrowth": true,
       "Datasets": [
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -476,15 +406,88 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           },
         },
       ],
-      "tid": 3
     },
     {
+      "tid": 3,
+      "name": "Trafic channel",
+      "type": "bar",
+      "subType": "timeseries",
+      "public": false,
+      "chartSize": 1,
+      "dashboardOrder": dashboardOrder + 3,
+      "displayLegend": false,
+      "pointRadius": null,
+      "startDate": null,
+      "endDate": null,
+      "includeZeros": true,
+      "currentEndDate": false,
+      "timeInterval": "day",
+      "autoUpdate": null,
+      "draft": false,
+      "mode": "chart",
+      "Datasets": [
+        {
+          "fillColor": [
+            "rgba(208, 2, 27, 0.35)",
+            "rgba(126, 211, 33, 0.52)",
+            "rgba(74, 144, 226, 0.37)"
+          ],
+          "patterns": [],
+          "conditions": null,
+          "fieldsSchema": {
+            "root[].ga:channelGrouping": "string",
+            "root[].ga:users": "string"
+          },
+          "excludedFields": null,
+          "query": null,
+          "xAxis": "root[].ga:channelGrouping",
+          "xAxisOperation": null,
+          "yAxis": "root[].ga:users",
+          "yAxisOperation": "none",
+          "dateField": null,
+          "datasetColor": "rgba(0, 0, 0, 1)",
+          "fill": false,
+          "multiFill": true,
+          "dateFormat": null,
+          "legend": "Channel",
+          "pointRadius": null,
+          "formula": null,
+          "DataRequest": {
+            "headers": null,
+            "body": "null",
+            "conditions": null,
+            "configuration": {
+              "accountId": configuration.accountId,
+              "propertyId": configuration.propertyId,
+              "viewId": configuration.viewId,
+              "filters": [],
+              "metrics": "ga:users",
+              "dimensions": "ga:channelGrouping",
+              "startDate": "30daysAgo",
+              "endDate": "yesterday"
+            },
+            "method": null,
+            "route": null,
+            "useGlobalHeaders": true,
+            "query": null,
+            "pagination": false,
+            "items": "items",
+            "itemsLimit": 100,
+            "offset": "offset",
+            "paginationField": null,
+            "template": null
+          },
+        },
+      ],
+    },
+    {
+      "tid": 4,
       "name": "Sessions by device",
       "type": "doughnut",
       "subType": "timeseries",
       "public": false,
       "chartSize": 1,
-      "dashboardOrder": dashboardOrder + 5,
+      "dashboardOrder": dashboardOrder + 4,
       "displayLegend": true,
       "pointRadius": null,
       "startDate": null,
@@ -499,7 +502,8 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
         {
           "fillColor": [
             "rgba(27, 127, 160, 0.6)",
-            "rgba(80, 227, 194, 0.39)"
+            "rgba(80, 227, 194, 0.39)",
+            "rgba(184, 233, 134, 0.54)"
           ],
           "patterns": [],
           "conditions": null,
@@ -548,15 +552,15 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           },
         },
       ],
-      "tid": 4
     },
     {
+      "tid": 5,
       "name": "Page visits",
       "type": "table",
       "subType": "timeseries",
       "public": false,
       "chartSize": 2,
-      "dashboardOrder": dashboardOrder + 6,
+      "dashboardOrder": dashboardOrder + 5,
       "displayLegend": false,
       "pointRadius": null,
       "startDate": null,
@@ -617,15 +621,15 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           },
         },
       ],
-      "tid": 5
     },
     {
+      "tid": 6,
       "name": "Bounce rate",
       "type": "line",
       "subType": "timeseries",
       "public": false,
       "chartSize": 1,
-      "dashboardOrder": dashboardOrder + 7,
+      "dashboardOrder": dashboardOrder + 6,
       "displayLegend": false,
       "pointRadius": null,
       "startDate": null,
@@ -685,15 +689,15 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           },
         },
       ],
-      "tid": 6
     },
     {
+      "tid": 7,
       "name": "Avg Sessions Length",
       "type": "line",
       "subType": "lcTimeseries",
       "public": false,
       "chartSize": 1,
-      "dashboardOrder": dashboardOrder + 8,
+      "dashboardOrder": dashboardOrder + 7,
       "displayLegend": false,
       "pointRadius": null,
       "startDate": null,
@@ -752,7 +756,6 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           },
         },
       ],
-      "tid": 7
     }
   ],
   "Connections": [{
