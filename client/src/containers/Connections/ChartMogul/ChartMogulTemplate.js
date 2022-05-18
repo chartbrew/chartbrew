@@ -201,31 +201,14 @@ function ChartMogulTemplate(props) {
             <>
               {availableConnections && availableConnections.length > 0 && <Divider />}
               <Form>
-                <Form.Field error={!!errors.token} required>
-                  <label>Enter your ChartMogul account token</label>
-                  <Form.Input
-                    value={connection.token || ""}
-                    onChange={(e, data) => {
-                      setConnection({ ...connection, token: data.value });
-                    }}
-                    placeholder="487cd43d3656609a32e92d1e7d17cd25"
-                  />
-                  {errors.token
-                    && (
-                      <Label basic color="red" pointing>
-                        {errors.token}
-                      </Label>
-                    )}
-                </Form.Field>
-
                 <Form.Field error={!!errors.key} required>
                   <label>
-                    {"Enter your ChartMogul secret key "}
+                    {"Enter your ChartMogul API key "}
                   </label>
                   <Form.Input
                     value={connection.key || ""}
                     onChange={(e, data) => {
-                      setConnection({ ...connection, key: data.value });
+                      setConnection({ ...connection, key: data.value, token: data.value });
                     }}
                     placeholder="de2bf2bc6de5266d11ea6b918b674780"
                   />
@@ -238,15 +221,16 @@ function ChartMogulTemplate(props) {
                 </Form.Field>
 
                 <Form.Field>
-                  <Message compact>
-                    <p>
-                      {"You can get your account token and API key "}
-                      <a href="https://app.chartmogul.com/#/admin/api" target="_blank" rel="noreferrer">
-                        {"from your ChartMogul dashboard. "}
-                        <Icon name="external" />
-                      </a>
-                    </p>
-                  </Message>
+                  <Button
+                    primary
+                    className="tertiary"
+                    as="a"
+                    href="https://ghost.chartbrew.com/blog/how-to-create-chartmogul-charts-in-chartbrew/#connecting-to-the-chartmogul-data-source"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    content="Click here to learn how to find your ChartMogul API key"
+                    icon="external"
+                  />
                 </Form.Field>
               </Form>
             </>
