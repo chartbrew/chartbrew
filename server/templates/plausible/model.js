@@ -152,13 +152,14 @@ const template = (website, apiKey, dashboardOrder) => ({
       "timeInterval": "day",
       "autoUpdate": null,
       "draft": false,
-      "mode": "chart",
+      "mode": "kpichart",
       "maxValue": null,
       "minValue": null,
       "disabledExport": null,
+      "showGrowth": true,
       "Datasets": [
         {
-          "fillColor": "rgba(0,0,0,0)",
+          "fillColor": "rgba(101, 116, 205, 0.08)",
           "patterns": [],
           "conditions": null,
           "fieldsSchema": {
@@ -174,7 +175,7 @@ const template = (website, apiKey, dashboardOrder) => ({
           "yAxisOperation": "none",
           "dateField": "root.results[].date",
           "datasetColor": "rgba(101, 116, 205, 1)",
-          "fill": false,
+          "fill": true,
           "multiFill": false,
           "dateFormat": null,
           "legend": "Visitors",
