@@ -463,7 +463,8 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
       "timeInterval": "day",
       "autoUpdate": null,
       "draft": false,
-      "mode": "chart",
+      "mode": "kpichart",
+      "showGrowth": true,
       "Datasets": [
         {
           "fillColor": "rgba(0,0,0,0)",
