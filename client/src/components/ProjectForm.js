@@ -13,7 +13,7 @@ import CustomTemplates from "../containers/Connections/CustomTemplates/CustomTem
 */
 function ProjectForm(props) {
   const {
-    createProject, onComplete, team, templates,
+    createProject, onComplete, team, templates, hideType,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -68,24 +68,26 @@ function ProjectForm(props) {
             )}
         </Form.Field>
 
-        <Form.Field>
-          <Menu secondary>
-            <Menu.Item
-              active={activeMenu === "empty"}
-              onClick={() => setActiveMenu("empty")}
-            >
-              <Icon name="pencil" />
-              Empty project
-            </Menu.Item>
-            <Menu.Item
-              active={activeMenu === "template"}
-              onClick={() => setActiveMenu("template")}
-            >
-              <Icon name="clone" />
-              From template
-            </Menu.Item>
-          </Menu>
-        </Form.Field>
+        {!hideType && (
+          <Form.Field>
+            <Menu secondary>
+              <Menu.Item
+                active={activeMenu === "empty"}
+                onClick={() => setActiveMenu("empty")}
+              >
+                <Icon name="pencil" />
+                Empty project
+              </Menu.Item>
+              <Menu.Item
+                active={activeMenu === "template"}
+                onClick={() => setActiveMenu("template")}
+              >
+                <Icon name="clone" />
+                From template
+              </Menu.Item>
+            </Menu>
+          </Form.Field>
+        )}
 
         {activeMenu === "empty" && (
           <Form.Field>
@@ -131,6 +133,7 @@ const styles = {
 
 ProjectForm.defaultProps = {
   onComplete: () => {},
+  hideType: false,
 };
 
 ProjectForm.propTypes = {
@@ -138,6 +141,7 @@ ProjectForm.propTypes = {
   onComplete: PropTypes.func,
   team: PropTypes.object.isRequired,
   templates: PropTypes.object.isRequired,
+  hideType: PropTypes.bool,
 };
 
 const mapStateToProps = (state) => {

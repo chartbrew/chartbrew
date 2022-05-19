@@ -72,12 +72,12 @@ function Connections(props) {
   }, []);
 
   useEffect(() => {
-    if (connections && connections.length > 0 && !selectedConnection && !editConnection) {
+    if (!selectedConnection && !editConnection) {
       const params = new URLSearchParams(document.location.search);
       if (params.has("edit") && params.has("type")) {
         setTemplateConnection(parseInt(params.get("edit"), 10));
         setFormType(params.get("type"));
-      } else if (params.has("edit")) {
+      } else if (params.has("edit") && connections && connections.length > 0) {
         const foundConnection = connections.filter((c) => `${c.id}` === params.get("edit"))[0];
         if (foundConnection) {
           _onEditConnection(foundConnection);

@@ -32,6 +32,7 @@
     "dotenv-expand": "5.1.0",
     "file-loader": "6.1.1",
     "fomantic-ui": "^2.8.7",
+    "framer-motion": "^6.3.3",
     "fs-extra": "^9.0.1",
     "history": "^4.10.1",
     "html-webpack-plugin": "4.5.0",
