@@ -304,7 +304,7 @@ function Start(props) {
               <Card.Group itemsPerRow={3} stackable>
                 {renderTemplateCard(simpleanalyticsDash, "saTemplate", "Simple Analytics")}
                 {renderTemplateCard(chartmogulDash, "cmTemplate", "ChartMogul")}
-                {renderTemplateCard(mailgunDash, "malgunTemplate", "Mailgun")}
+                {renderTemplateCard(mailgunDash, "mailgunTemplate", "Mailgun")}
                 {renderTemplateCard(gaDash, "googleAnalyticsTemplate", "Google Analytics")}
                 {renderTemplateCard(plausibleDash, "plausibleTemplate", "Plausible Analytics")}
               </Card.Group>
