@@ -20,7 +20,6 @@ import Connections from "../Connections/Connections";
 import ProjectDashboard from "../ProjectDashboard/ProjectDashboard";
 import AddChart from "../AddChart/AddChart";
 import Navbar from "../../components/Navbar";
-import { primary } from "../../config/colors";
 import TeamMembers from "../TeamMembers/TeamMembers";
 import TeamSettings from "../TeamSettings";
 import ProjectSettings from "../ProjectSettings";
@@ -181,10 +180,6 @@ function ProjectBoard(props) {
                   minSize={_getDefaultMenuSize()}
                   maxSize={_getDefaultMenuSize()}
                   preferredSize={_getDefaultMenuSize()}
-                  style={{
-                    backgroundColor: primary,
-                    width: menuSize === "small" ? sideMinSize : sideMaxSize,
-                  }}
                 >
                   <ProjectNavigation
                     project={project}

@@ -6,7 +6,6 @@ import {
   Card, Image, Button, Icon, Container, Divider,
   Modal, Header, Message, Segment, TransitionablePortal, Menu,
 } from "semantic-ui-react";
-import { useWindowSize } from "react-use";
 
 import MongoConnectionForm from "./components/MongoConnectionForm";
 import ApiConnectionForm from "./components/ApiConnectionForm";
@@ -37,12 +36,13 @@ import {
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import { getProjectCharts as getProjectChartsAction } from "../../actions/chart";
 import canAccess from "../../config/canAccess";
-import simpleAnalyticsLogo from "../../assets/simpleAnalytics.png";
-import moreLogo from "../../assets/moreComingSoon.png";
-import chartmogulLogo from "../../assets/ChartMogul.webp";
-import mailgunLogo from "../../assets/mailgun_logo.webp";
 import { lightGray, primary } from "../../config/colors";
 import connectionImages from "../../config/connectionImages";
+import plausibleDash from "./Plausible/plausible-template.jpeg";
+import simpleanalyticsDash from "./SimpleAnalytics/simpleanalytics-template.jpeg";
+import chartmogulDash from "./ChartMogul/chartmogul-template.jpeg";
+import mailgunDash from "./Mailgun/mailgun-template.jpeg";
+import gaDash from "./GoogleAnalytics/ga-template.jpeg";
 
 /*
   The page that contains all the connections
@@ -53,8 +53,6 @@ function Connections(props) {
     removeConnection, getProjectConnections, user, team, getProjectCharts, getTemplates,
     templates, getConnection,
   } = props;
-
-  const { width } = useWindowSize();
 
   const [newConnectionModal, setNewConnectionModal] = useState(false);
   const [addError, setAddError] = useState(false);
@@ -264,40 +262,35 @@ function Connections(props) {
                 <Divider hidden />
               </div>
             )}
-            {connections.length > 0 && (
-              <Header as="h2" textAlign="left">
-                Select one of the connection types below
-              </Header>
-            )}
-            <Menu
-              size="big"
-              tabular={width >= 768 ? true : null}
-              stackable
-              attached={width >= 768 ? "top" : null}
-              secondary={width < 768 ? true : null}
-            >
-              <Menu.Item
-                active={selectedMenu === "connections"}
-                name="Connections"
-                onClick={() => setSelectedMenu("connections")}
-                icon="plug"
-              />
-              <Menu.Item
-                active={selectedMenu === "templates"}
-                onClick={() => setSelectedMenu("templates")}
+
+            <Segment basic>
+              <Menu
+                size="big"
+                secondary
+                stackable
+                pointing
               >
-                <Icon name="magic" />
-                Community templates
-              </Menu.Item>
-              <Menu.Item
-                active={selectedMenu === "customTemplates"}
-                onClick={() => setSelectedMenu("customTemplates")}
-              >
-                <Icon name="clone" />
-                Custom templates
-              </Menu.Item>
-            </Menu>
-            <Segment attached>
+                <Menu.Item
+                  active={selectedMenu === "connections"}
+                  name="Connections"
+                  onClick={() => setSelectedMenu("connections")}
+                  icon="plug"
+                />
+                <Menu.Item
+                  active={selectedMenu === "templates"}
+                  onClick={() => setSelectedMenu("templates")}
+                >
+                  <Icon name="magic" />
+                  Community templates
+                </Menu.Item>
+                <Menu.Item
+                  active={selectedMenu === "customTemplates"}
+                  onClick={() => setSelectedMenu("customTemplates")}
+                >
+                  <Icon name="clone" />
+                  Custom templates
+                </Menu.Item>
+              </Menu>
               {selectedMenu === "connections" && (
                 <Card.Group itemsPerRow={5} stackable>
                   <Card className="project-segment" onClick={() => setFormType("api")}>
@@ -365,41 +358,35 @@ function Connections(props) {
                 </Card.Group>
               )}
               {selectedMenu === "templates" && (
-                <Card.Group itemsPerRow={5} stackable>
+                <Card.Group itemsPerRow={3} stackable>
                   <Card className="project-segment" onClick={() => setFormType("saTemplate")}>
-                    <Image src={simpleAnalyticsLogo} />
+                    <Image src={simpleanalyticsDash} />
                     <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>Simple Analytics</Card.Header>
                     </Card.Content>
                   </Card>
                   <Card className="project-segment" onClick={() => setFormType("cmTemplate")}>
-                    <Image src={chartmogulLogo} />
+                    <Image src={chartmogulDash} />
                     <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>ChartMogul</Card.Header>
                     </Card.Content>
                   </Card>
                   <Card className="project-segment" onClick={() => setFormType("mailgunTemplate")}>
-                    <Image src={mailgunLogo} />
+                    <Image src={mailgunDash} />
                     <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>Mailgun</Card.Header>
                     </Card.Content>
                   </Card>
                   <Card className="project-segment" onClick={() => setFormType("googleAnalyticsTemplate")}>
-                    <Image src={connectionImages.googleAnalytics} />
+                    <Image src={gaDash} />
                     <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>Google Analytics</Card.Header>
                     </Card.Content>
                   </Card>
                   <Card className="project-segment" onClick={() => setFormType("plausibleTemplate")}>
-                    <Image src={connectionImages.plausible} />
+                    <Image src={plausibleDash} />
                     <Card.Content textAlign="center" style={styles.smallerText}>
                       <Card.Header>Plausible Analytics</Card.Header>
-                    </Card.Content>
-                  </Card>
-                  <Card>
-                    <Image src={moreLogo} />
-                    <Card.Content textAlign="center" style={styles.smallerText}>
-                      <Card.Header>More coming soon</Card.Header>
                     </Card.Content>
                   </Card>
                 </Card.Group>
@@ -417,14 +404,12 @@ function Connections(props) {
                 />
               )}
             </Segment>
-            <Segment attached="bottom">
-              <p>
-                {"Need access to another data source? "}
-                <a href="https://github.com/chartbrew/chartbrew/issues" target="_blank" rel="noopener noreferrer">
-                  {"Let us know 💬"}
-                </a>
-              </p>
-            </Segment>
+            <p>
+              {"Need access to another data source? "}
+              <a href="https://github.com/chartbrew/chartbrew/issues" target="_blank" rel="noopener noreferrer">
+                {"Let us know 💬"}
+              </a>
+            </p>
           </div>
           )}
 
