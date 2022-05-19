@@ -30,7 +30,7 @@ import canAccess from "../config/canAccess";
 function UserDashboard(props) {
   const {
     relog, cleanErrors, user, getTeams, createTeam, saveActiveTeam,
-    teams, teamLoading, getTemplates,
+    teams, teamLoading, getTemplates, history,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -59,23 +59,16 @@ function UserDashboard(props) {
   useEffect(() => {
     if (teams.length > 0) {
       let shouldOpenNewProject = true;
-      let teamOwned;
-      teams.map((team) => {
+      teams.forEach((team) => {
         if (team && team.Projects && team.Projects.length > 0) {
           shouldOpenNewProject = false;
-        }
-
-        if (team.TeamRoles
-          && team.TeamRoles.find((teamRole) => teamRole.user_id === user.data.id && teamRole.role === "owner")
-        ) {
-          teamOwned = team;
         }
 
         return team;
       });
 
       if (shouldOpenNewProject) {
-        _onNewProject(teamOwned);
+        history.push("/start");
       }
     }
   }, [teams]);
@@ -447,6 +440,7 @@ UserDashboard.propTypes = {
   cleanErrors: PropTypes.func.isRequired,
   teamLoading: PropTypes.bool.isRequired,
   getTemplates: PropTypes.func.isRequired,
+  history: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {

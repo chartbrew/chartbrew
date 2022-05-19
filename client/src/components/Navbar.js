@@ -18,7 +18,7 @@ import FeedbackForm from "./FeedbackForm";
 import cbLogo from "../assets/logo_inverted.png";
 import canAccess from "../config/canAccess";
 import { DOCUMENTATION_HOST } from "../config/settings";
-import { blue } from "../config/colors";
+import { blue, dark } from "../config/colors";
 
 const AppMedia = createMedia({
   breakpoints: {
@@ -40,7 +40,7 @@ function Navbar(props) {
   const [projectSearch, setProjectSearch] = useState("");
 
   const {
-    getTeam, getProject, changeActiveProject,
+    getTeam, getProject, changeActiveProject, color,
     hideTeam, transparent, team, teams, projectProp, user, logout,
   } = props;
 
@@ -113,7 +113,7 @@ function Navbar(props) {
     );
   }
   return (
-    <Menu fixed="top" color="violet" inverted secondary={width < 768} style={transparent ? styles.transparentMenu : { backgroundColor: blue }}>
+    <Menu fixed="top" color="violet" inverted secondary={width < 768} style={{ backgroundColor: color }}>
       <Menu.Item style={styles.logoContainer} as={Link} to="/user">
         <Image centered as="img" src={cbLogo} alt="Chartbrew logo" style={styles.logo} />
       </Menu.Item>
@@ -318,7 +318,7 @@ const styles = {
     // width: 250,
   },
   transparentMenu: {
-    backgroundColor: blue,
+    backgroundColor: dark,
   },
   logo: {
     width: 30,
@@ -333,6 +333,7 @@ const styles = {
 Navbar.defaultProps = {
   hideTeam: false,
   transparent: false,
+  color: blue,
 };
 
 Navbar.propTypes = {
@@ -346,6 +347,7 @@ Navbar.propTypes = {
   logout: PropTypes.func.isRequired,
   hideTeam: PropTypes.bool,
   transparent: PropTypes.bool,
+  color: PropTypes.string,
 };
 
 const mapStateToProps = (state) => {

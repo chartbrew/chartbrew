@@ -20,6 +20,7 @@ import gaDash from "../Connections/GoogleAnalytics/ga-template.jpeg";
 import chartmogulDash from "../Connections/ChartMogul/chartmogul-template.jpeg";
 import mailgunDash from "../Connections/Mailgun/mailgun-template.jpeg";
 import connectionImages from "../../config/connectionImages";
+import Navbar from "../../components/Navbar";
 
 function Start(props) {
   const { team, history, createProject } = props;
@@ -127,6 +128,7 @@ function Start(props) {
 
   return (
     <div style={styles.container(height)}>
+      <Navbar hideTeam transparent color={dark} />
       <Segment basic style={{ paddingTop: 100 }}>
         <motion.div animate={{ opacity: [0, 1], scale: 1 }}>
           <Header textAlign="center" as="h1" inverted size="massive" style={styles.titleText}>
@@ -344,6 +346,7 @@ function Start(props) {
           transition={Flip}
         />
       </Segment>
+
     </div>
   );
 }
@@ -353,8 +356,6 @@ const styles = {
     backgroundColor: dark,
     minHeight: height + 20,
   }),
-  titleText: {
-  }
 };
 
 Start.propTypes = {
