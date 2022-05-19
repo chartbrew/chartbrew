@@ -14,6 +14,7 @@ import {
   blackTransparent, blue, dark, secondary, whiteTransparent
 } from "../../config/colors";
 import { createProject as createProjectAction } from "../../actions/project";
+import { getTeams as getTeamsAction } from "../../actions/team";
 import simpleanalyticsDash from "../Connections/SimpleAnalytics/simpleanalytics-template.jpeg";
 import plausibleDash from "../Connections/Plausible/plausible-template.jpeg";
 import gaDash from "../Connections/GoogleAnalytics/ga-template.jpeg";
@@ -23,7 +24,9 @@ import connectionImages from "../../config/connectionImages";
 import Navbar from "../../components/Navbar";
 
 function Start(props) {
-  const { team, history, createProject } = props;
+  const {
+    team, history, createProject, getTeams, user,
+  } = props;
 
   const [onboardingStep, setOnboardingStep] = useState("project");
   const [projectName, setProjectName] = useState("");
@@ -45,6 +48,8 @@ function Start(props) {
         team_id: team.id,
       })
         .then((project) => {
+          // refresh teams to avoid the onboarding from appearing again
+          getTeams(user.id);
           toast.update(toastId, { render: "🎉 Project created! One sec...", type: "success", isLoading: false });
           setTimeout(() => {
             setLoading(true);
@@ -362,14 +367,18 @@ Start.propTypes = {
   team: PropTypes.object.isRequired,
   history: PropTypes.object.isRequired,
   createProject: PropTypes.func.isRequired,
+  user: PropTypes.object.isRequired,
+  getTeams: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => ({
   team: state.team.data && state.team.data[0],
+  user: state.user.data,
 });
 
 const mapDispatchToProps = (dispatch) => ({
   createProject: (data) => dispatch(createProjectAction(data)),
+  getTeams: (userId) => dispatch(getTeamsAction(userId)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Start);
