@@ -5,7 +5,7 @@ import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
   Menu, Dropdown, Dimmer, Container, Loader, Icon, Modal, Button, Image,
-  TransitionablePortal, Input,
+  TransitionablePortal, Input, Label,
 } from "semantic-ui-react";
 import { createMedia } from "@artsy/fresnel";
 import { useWindowSize } from "react-use";
@@ -17,7 +17,7 @@ import { getProjectCharts } from "../actions/chart";
 import FeedbackForm from "./FeedbackForm";
 import cbLogo from "../assets/logo_inverted.png";
 import canAccess from "../config/canAccess";
-import { DOCUMENTATION_HOST } from "../config/settings";
+import { DOCUMENTATION_HOST, SITE_HOST } from "../config/settings";
 import { blue, dark } from "../config/colors";
 
 const AppMedia = createMedia({
@@ -264,6 +264,11 @@ function Navbar(props) {
             <Dropdown.Item onClick={() => setFeedbackModal(true)}>
               <Icon name="lightbulb outline" />
               Feedback
+            </Dropdown.Item>
+            <Dropdown.Divider />
+            <Dropdown.Item as="a" href={`${SITE_HOST}/start`}>
+              <Label color="olive" size="small">New</Label>
+              Project starter
             </Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown>

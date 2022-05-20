@@ -137,7 +137,7 @@ function Start(props) {
       <Segment basic style={{ paddingTop: 100 }}>
         <motion.div animate={{ opacity: [0, 1], scale: 1 }}>
           <Header textAlign="center" as="h1" inverted size="massive" style={styles.titleText}>
-            {"Set up your first Chartbrew project"}
+            {"Set up your new Chartbrew project"}
             {onboardingStep === "project" && (
             <Header.Subheader>First, enter a name below</Header.Subheader>
             )}
