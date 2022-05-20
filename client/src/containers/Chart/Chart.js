@@ -11,6 +11,7 @@ import moment from "moment";
 import _ from "lodash";
 import { enGB } from "date-fns/locale";
 import { format } from "date-fns";
+import { motion } from "framer-motion/dist/framer-motion";
 
 import {
   removeChart as removeChartAction,
@@ -341,7 +342,11 @@ function Chart(props) {
   const { projectId } = match.params;
 
   return (
-    <div style={styles.container}>
+    <motion.div
+      animate={{ opacity: [0, 1] }}
+      transition={{ duration: 0.5 }}
+      style={styles.container}
+    >
       {error && (
         <Message
           negative
@@ -970,7 +975,7 @@ function Chart(props) {
           </Modal>
         </TransitionablePortal>
       )}
-    </div>
+    </motion.div>
   );
 }
 
