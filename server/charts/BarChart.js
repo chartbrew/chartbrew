@@ -18,7 +18,7 @@ class NewBarChart {
         label: dataset.options.legend,
         data: this.axisData.y[i],
         borderWidth: 1.5,
-        hoverBorderWidth: 2,
+        hoverBorderWidth: 3,
       };
 
       if (dataset.options.datasetColor) {
@@ -139,6 +139,15 @@ class NewBarChart {
           tooltip: tooltipsStyle,
           legend: {
             display: this.chart.displayLegend,
+            position: this.chart.mode === "kpichart" ? "bottom" : "top",
+            labels: {
+              font: {
+                family: "Inter",
+                size: 12,
+              },
+              boxWidth: 15,
+              pointerStyle: "start"
+            },
           },
         },
       };

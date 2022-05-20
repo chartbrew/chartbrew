@@ -129,6 +129,15 @@ class NewLineChart {
           tooltip: tooltipsStyle,
           legend: {
             display: this.chart.displayLegend,
+            position: this.chart.mode === "kpichart" ? "bottom" : "top",
+            labels: {
+              font: {
+                family: "Inter",
+                size: 12,
+              },
+              boxWidth: 15,
+              pointerStyle: "start"
+            },
           },
         },
       };
