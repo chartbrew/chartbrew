@@ -747,20 +747,39 @@ class ConnectionController {
       }
     }
 
-    return CustomerioConnection.getCustomers(connection, dataRequest)
-      .then((responseData) => {
-        // cache the data for later use
-        const dataToCache = {
-          dataRequest,
-          responseData,
-        };
-        drCacheController.create(dataRequest.id, dataToCache);
+    if (dataRequest.route.indexOf("customers") === 0) {
+      return CustomerioConnection.getCustomers(connection, dataRequest)
+        .then((responseData) => {
+          // cache the data for later use
+          const dataToCache = {
+            dataRequest,
+            responseData,
+          };
+          drCacheController.create(dataRequest.id, dataToCache);
 
-        return responseData;
-      })
-      .catch((err) => {
-        return new Promise((resolve, reject) => reject(err));
-      });
+          return responseData;
+        })
+        .catch((err) => {
+          return new Promise((resolve, reject) => reject(err));
+        });
+    } else if (dataRequest.route.indexOf("campaigns") === 0) {
+      return CustomerioConnection.getCampaignMetrics(connection, dataRequest)
+        .then((responseData) => {
+          // cache the data for later use
+          const dataToCache = {
+            dataRequest,
+            responseData,
+          };
+          drCacheController.create(dataRequest.id, dataToCache);
+
+          return responseData;
+        })
+        .catch((err) => {
+          return new Promise((resolve, reject) => reject(err));
+        });
+    }
+
+    return new Promise((resolve, reject) => reject(404));
   }
 
   async testCustomerio(connection) {

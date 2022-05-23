@@ -1,4 +1,5 @@
 const request = require("request-promise");
+const moment = require("moment");
 
 const paginateRequests = require("../modules/paginateRequests");
 
@@ -97,10 +98,93 @@ function getAllSegments(connection) {
       try {
         const parsedData = JSON.parse(data.body);
         if (parsedData.segments) return parsedData.segments;
-      } catch (e) {
-        return Promise.reject("Segments not found");
-      }
+      } catch (e) { /** */ }
+
       return Promise.reject("Segments not found");
+    })
+    .catch((err) => {
+      return err;
+    });
+}
+
+function getAllCampaigns(connection) {
+  const options = getConnectionOpt(connection, {
+    method: "GET",
+    route: "campaigns",
+  });
+
+  return request(options)
+    .then((data) => {
+      try {
+        const parsedData = JSON.parse(data.body);
+        if (parsedData.campaigns) return parsedData.campaigns;
+      } catch (e) { /** */ }
+
+      return Promise.reject("Campaigns not found");
+    })
+    .catch((err) => {
+      return err;
+    });
+}
+
+function getCampaignMetrics(connection, dr) {
+  const options = getConnectionOpt(connection, dr);
+
+  if (dr && dr.configuration) {
+    options.qs = {
+      period: dr.configuration.period,
+      steps: dr.configuration.steps,
+      type: dr.configuration.type,
+    };
+  }
+
+  return request(options)
+    .then((data) => {
+      try {
+        const parsedData = JSON.parse(data.body);
+        if (parsedData.metric) return parsedData.metric;
+      } catch (e) { /** */ }
+
+      return Promise.reject("Metrics not found");
+    })
+    .then((metrics) => {
+      // process the metrics in CB-style
+      const period = (dr.configuration && dr.configuration.period) || "days";
+      const series = metrics.series[dr.configuration.series];
+
+      let newSeries;
+      if (period === "hours") {
+        newSeries = series.map((s, index) => {
+          return {
+            date: moment().subtract(series.length - index, "hours").toISOString(),
+            value: s,
+          };
+        });
+      } else if (period === "days") {
+        newSeries = series.map((s, index) => {
+          return {
+            date: moment().subtract(series.length - index - 1, "days").toISOString(),
+            value: s,
+          };
+        });
+      } else if (period === "weeks") {
+        newSeries = series.map((s, index) => {
+          return {
+            date: moment().subtract(series.length - index, "weeks").toISOString(),
+            value: s,
+          };
+        });
+      } else if (period === "months") {
+        newSeries = series.map((s, index) => {
+          return {
+            date: moment().subtract(series.length - index, "months").toISOString(),
+            value: s,
+          };
+        });
+      }
+      return {
+        [dr.configuration.series]: newSeries
+      };
     })
     .catch((err) => {
       return err;
@@ -111,4 +195,6 @@ module.exports = {
   getConnectionOpt,
   getCustomers,
   getAllSegments,
+  getAllCampaigns,
+  getCampaignMetrics,
 };
