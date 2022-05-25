@@ -20,15 +20,41 @@ ChartJS.register(
 );
 
 const dataLabelsPlugin = {
-  // borderColor: "white",
-  // borderRadius: 25,
-  // borderWidth: 2,
-  // color: "black",
   font: {
     weight: "bold",
+    size: 13,
+    family: "Inter",
   },
-  padding: 3,
-  formatter: Math.round
+  padding: 4,
+  formatter: (value, context) => {
+    const hiddens = context.chart._hiddenIndices;
+    let total = 0;
+    const datapoints = context.dataset.data;
+    datapoints.forEach((val, i) => {
+      if (hiddens[i] !== undefined) {
+        if (!hiddens[i]) {
+          total += val;
+        }
+      } else {
+        total += val;
+      }
+    });
+    const percentage = `${((value / total) * 100).toFixed(2)}%`;
+    const out = percentage;
+    return out;
+  },
+  display(context) {
+    const { dataset } = context;
+    const count = dataset.data.length;
+    const value = dataset.data[context.dataIndex];
+    return value > count * 1.5;
+  },
+  backgroundColor(context) {
+    return context.dataset.backgroundColor;
+  },
+  borderColor: "white",
+  borderRadius: 6,
+  borderWidth: 2,
 };
 
 function DoughnutChart(props) {

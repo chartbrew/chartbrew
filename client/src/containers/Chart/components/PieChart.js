@@ -13,10 +13,49 @@ import {
   Legend,
   Filler,
 } from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, ArcElement, Title, Tooltip, Legend, Filler
 );
+
+const dataLabelsPlugin = {
+  font: {
+    weight: "bold",
+    size: 13,
+    family: "Inter",
+  },
+  padding: 4,
+  formatter: (value, context) => {
+    const hiddens = context.chart._hiddenIndices;
+    let total = 0;
+    const datapoints = context.dataset.data;
+    datapoints.forEach((val, i) => {
+      if (hiddens[i] !== undefined) {
+        if (!hiddens[i]) {
+          total += val;
+        }
+      } else {
+        total += val;
+      }
+    });
+    const percentage = `${((value / total) * 100).toFixed(2)}%`;
+    const out = percentage;
+    return out;
+  },
+  display(context) {
+    const { dataset } = context;
+    const count = dataset.data.length;
+    const value = dataset.data[context.dataIndex];
+    return value > count * 1.5;
+  },
+  backgroundColor(context) {
+    return context.dataset.backgroundColor;
+  },
+  borderColor: "white",
+  borderRadius: 6,
+  borderWidth: 2,
+};
 
 function PieChart(props) {
   const {
@@ -36,9 +75,16 @@ function PieChart(props) {
       {chart.chartData.data && chart.chartData.data.labels && (
         <Pie
           data={chart.chartData.data}
-          options={chart.chartData.options}
+          options={{
+            ...chart.chartData.options,
+            plugins: {
+              ...chart.chartData.options.plugins,
+              datalabels: dataLabelsPlugin,
+            },
+          }}
           height={height}
           redraw={redraw}
+          plugins={[ChartDataLabels]}
         />
       )}
     </div>
