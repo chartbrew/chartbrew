@@ -22,7 +22,7 @@ ChartJS.register(
 const dataLabelsPlugin = {
   font: {
     weight: "bold",
-    size: 13,
+    size: 12,
     family: "Inter",
   },
   padding: 4,
