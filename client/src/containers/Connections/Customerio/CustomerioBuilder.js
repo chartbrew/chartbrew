@@ -29,7 +29,7 @@ function CustomerioBuilder(props) {
   const [result, setResult] = useState("");
   const [requestLoading, setRequestLoading] = useState(false);
   const [useCache, setUseCache] = useState(false);
-  const [limitValue, setLimitValue] = useState(100);
+  const [limitValue, setLimitValue] = useState(0);
   const [entity, setEntity] = useState("");
   const [conditions, setConditions] = useState({});
 
@@ -47,11 +47,20 @@ function CustomerioBuilder(props) {
         setResult(JSON.stringify(requestBody.data, null, 2));
       }
 
-      setCioRequest(dataRequest);
+      let newRequestData = dataRequest;
       setUseCache(!!window.localStorage.getItem("_cb_use_cache"));
 
       if (dataRequest.configuration && dataRequest.configuration.cioFilters) {
         setConditions(dataRequest.configuration.cioFilters);
+      }
+
+      if (!dataRequest.configuration) {
+        newRequestData = {
+          ...newRequestData,
+          configuration: {
+            populateAttributes: true,
+          },
+        };
       }
 
       if (dataRequest.route) {
@@ -61,6 +70,8 @@ function CustomerioBuilder(props) {
       if (dataRequest.itemsLimit || dataRequest.itemsLimit === 0) {
         setLimitValue(dataRequest.itemsLimit);
       }
+
+      setCioRequest(newRequestData);
 
       // setTimeout(() => {
       //   changeTutorial("Customerio");
