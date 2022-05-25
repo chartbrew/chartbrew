@@ -73,7 +73,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     itemsLimit: {
       type: DataTypes.INTEGER,
-      defaultValue: 100,
+      defaultValue: 0,
     },
     offset: {
       type: DataTypes.STRING,
