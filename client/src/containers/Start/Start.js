@@ -221,10 +221,10 @@ function Start(props) {
           <Container text>
             <motion.div
               animate={{
-                opacity: [0, 0, 0, 0, 0, 1],
+                opacity: !projectName ? [0, 0, 0, 0, 0, 1] : [0, 1],
                 scale: [0.8, 0.8, 1]
               }}
-              transition={{ duration: 3 }}
+              transition={{ duration: !projectName ? 3 : 0.5 }}
             >
               <Form size="huge" inverted>
                 <Form.Field>
