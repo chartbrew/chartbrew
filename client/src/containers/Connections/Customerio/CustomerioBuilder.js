@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Form, Button, Icon, Popup, Checkbox, Divider, Menu, Label,
+  Grid, Form, Button, Icon, Popup, Checkbox, Divider, Menu,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -167,26 +167,27 @@ function CustomerioBuilder(props) {
         <Grid.Column width={10}>
           <Menu secondary>
             <Menu.Item
-              name="Customers"
+              name="users"
               active={entity === "customers"}
               onClick={() => _onSelectCustomers()}
-            />
+            >
+              <Icon name="users" />
+              {"Customers"}
+            </Menu.Item>
             <Menu.Item
               active={entity === "campaigns"}
               onClick={() => _onSelectCampaigns()}
+              name="chat"
             >
-              Campaigns
-            </Menu.Item>
-            <Menu.Item
-              active={entity === "messages"}
-              onClick={() => setEntity("messages")}
-              disabled
-            >
-              Messages
-              <Label size="tiny">coming soon!</Label>
+              <Icon name="chat" />
+              {"Campaigns"}
             </Menu.Item>
           </Menu>
           <Divider />
+
+          {!entity && (
+            <p><i>Select which type of data you want to get started with</i></p>
+          )}
 
           {entity === "customers" && (
             <CustomerQuery
