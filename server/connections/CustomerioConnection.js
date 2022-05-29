@@ -3,6 +3,106 @@ const moment = require("moment");
 
 const paginateRequests = require("../modules/paginateRequests");
 
+/**
+ * HELPER FUNCTIONS
+ */
+function processCampaingMetrics(metrics, dr) {
+  const period = (dr.configuration && dr.configuration.period) || "days";
+  const series = metrics.series[dr.configuration.series];
+
+  let newSeries;
+  if (period === "hours") {
+    newSeries = series.map((s, index) => {
+      return {
+        date: moment().subtract(series.length - index, "hours").toISOString(),
+        value: s,
+      };
+    });
+  } else if (period === "days") {
+    newSeries = series.map((s, index) => {
+      return {
+        date: moment().subtract(series.length - index - 1, "days").toISOString(),
+        value: s,
+      };
+    });
+  } else if (period === "weeks") {
+    newSeries = series.map((s, index) => {
+      return {
+        date: moment().subtract(series.length - index, "weeks").toISOString(),
+        value: s,
+      };
+    });
+  } else if (period === "months") {
+    newSeries = series.map((s, index) => {
+      return {
+        date: moment().subtract(series.length - index, "months").toISOString(),
+        value: s,
+      };
+    });
+  }
+  return {
+    [dr.configuration.series]: newSeries
+  };
+}
+
+function processCampaignLinksMetrics(metrics, dr) {
+  const { linksMode, selectedLink, period } = dr.configuration;
+  if (!linksMode && !selectedLink) return Promise.reject("Invalid configuration");
+
+  let cbMetrics = [];
+  if (linksMode === "total") {
+    cbMetrics = metrics.map((metric) => {
+      return {
+        id: metric.link.id,
+        href: metric.link.href,
+        clicks: metric.metric.series.clicked.reduce((a, b) => a + b),
+      };
+    });
+  } else if (linksMode === "links") {
+    const link = metrics.filter((l) => l.link && l.link.href === selectedLink);
+    const series = link && link[0] && link[0].metric.series.clicked;
+
+    let newSeries;
+    if (period === "hours") {
+      newSeries = series.map((s, index) => {
+        return {
+          date: moment().subtract(series.length - index, "hours").toISOString(),
+          clicked: s,
+        };
+      });
+    } else if (period === "days") {
+      newSeries = series.map((s, index) => {
+        return {
+          date: moment().subtract(series.length - index - 1, "days").toISOString(),
+          clicked: s,
+        };
+      });
+    } else if (period === "weeks") {
+      newSeries = series.map((s, index) => {
+        return {
+          date: moment().subtract(series.length - index, "weeks").toISOString(),
+          clicked: s,
+        };
+      });
+    } else if (period === "months") {
+      newSeries = series.map((s, index) => {
+        return {
+          date: moment().subtract(series.length - index, "months").toISOString(),
+          clicked: s,
+        };
+      });
+    }
+
+    cbMetrics = {
+      linkSeries: newSeries,
+    };
+  }
+
+  return cbMetrics;
+}
+
+// ----------------------------
+
 function getConnectionOpt(connection, dr) {
   const host = connection.host === "eu" ? "https://api-eu.customer.io/v1" : "https://api.customer.io/v1";
   const options = {
@@ -135,6 +235,7 @@ function getCampaignMetrics(connection, dr) {
       period: dr.configuration.period,
       steps: dr.configuration.steps,
       type: dr.configuration.type,
+      unique: dr.configuration.unique,
     };
   }
 
@@ -142,49 +243,46 @@ function getCampaignMetrics(connection, dr) {
     .then((data) => {
       try {
         const parsedData = JSON.parse(data.body);
-        if (parsedData.metric) return parsedData.metric;
+        return parsedData;
       } catch (e) { /** */ }
 
       return Promise.reject("Metrics not found");
     })
     .then((metrics) => {
-      // process the metrics in CB-style
-      const period = (dr.configuration && dr.configuration.period) || "days";
-      const series = metrics.series[dr.configuration.series];
-
-      let newSeries;
-      if (period === "hours") {
-        newSeries = series.map((s, index) => {
-          return {
-            date: moment().subtract(series.length - index, "hours").toISOString(),
-            value: s,
-          };
-        });
-      } else if (period === "days") {
-        newSeries = series.map((s, index) => {
-          return {
-            date: moment().subtract(series.length - index - 1, "days").toISOString(),
-            value: s,
-          };
-        });
-      } else if (period === "weeks") {
-        newSeries = series.map((s, index) => {
-          return {
-            date: moment().subtract(series.length - index, "weeks").toISOString(),
-            value: s,
-          };
-        });
-      } else if (period === "months") {
-        newSeries = series.map((s, index) => {
-          return {
-            date: moment().subtract(series.length - index, "months").toISOString(),
-            value: s,
-          };
-        });
+      // process the metrics in CB-style based on the request type
+      if (options.url.substring(options.url.lastIndexOf("/") === "/metrics") && metrics.metric) {
+        return processCampaingMetrics(metrics.metric, dr);
       }
-      return {
-        [dr.configuration.series]: newSeries
-      };
+      if (options.url.indexOf("/metrics/links") > -1 && metrics.links) {
+        return processCampaignLinksMetrics(metrics.links, dr);
+      }
+      return metrics;
+    })
+    .catch((err) => {
+      return err;
+    });
+}
+
+function getCampaignLinks(connection, { campaignId }) {
+  const options = getConnectionOpt(connection, {
+    method: "GET",
+    route: `campaigns/${campaignId}/metrics/links`,
+  });
+
+  return request(options)
+    .then((data) => {
+      try {
+        const parsedData = JSON.parse(data.body);
+        if (!parsedData.links) return Promise.reject("Links not found");
+
+        const links = [];
+        parsedData.links.forEach((linkObj) => {
+          links.push(linkObj.link.href);
+        });
+        return links;
+      } catch (e) { /** */ }
+
+      return Promise.reject("Campaigns not found");
     })
     .catch((err) => {
       return err;
@@ -197,4 +295,5 @@ module.exports = {
   getAllSegments,
   getAllCampaigns,
   getCampaignMetrics,
+  getCampaignLinks,
 };

@@ -155,6 +155,8 @@ function CustomerioBuilder(props) {
         type: data.type && data.type,
         campaignId: data.campaignId,
         requestRoute: data.requestRoute,
+        linksMode: data.linksMode,
+        selectedLink: data.selectedLink,
       },
     });
   };
