@@ -135,7 +135,27 @@ function Start(props) {
     <div style={styles.container(height)}>
       <Navbar hideTeam transparent color={dark} />
       <Segment basic style={{ paddingTop: 100 }}>
-        <motion.div animate={{ opacity: [0, 1], scale: 1 }}>
+        <motion.div
+          animate={{ opacity: [1, 1, 1, 1, 1, 1, 0], scale: 1, translateY: [0, 0, 0, 0, 0, -50] }}
+          transition={{ duration: 2 }}
+        >
+          <Header textAlign="center" as="h1" size="massive" style={styles.titleText} inverted>
+            <motion.div
+              style={{ fontSize: "2em", marginBottom: 20 }}
+              animate={{
+                rotateZ: [0, 30, 0, 30, 0, 30, 0, 30, 0],
+              }}
+              transition={{ duration: 1.5 }}
+              >
+              {"👋"}
+            </motion.div>
+            <span style={{ fontSize: "1.5em" }}>{"Hi!"}</span>
+          </Header>
+        </motion.div>
+        <motion.div
+          animate={{ opacity: [0, 0, 0, 0, 0, 1], scale: 1 }}
+          transition={{ duration: 2.5 }}
+        >
           <Header textAlign="center" as="h1" inverted size="massive" style={styles.titleText}>
             {"Set up your new Chartbrew project"}
             {onboardingStep === "project" && (
@@ -201,9 +221,10 @@ function Start(props) {
           <Container text>
             <motion.div
               animate={{
-                opacity: [0, 0, 1],
+                opacity: [0, 0, 0, 0, 0, 1],
                 scale: [0.8, 0.8, 1]
               }}
+              transition={{ duration: 3 }}
             >
               <Form size="huge" inverted>
                 <Form.Field>
