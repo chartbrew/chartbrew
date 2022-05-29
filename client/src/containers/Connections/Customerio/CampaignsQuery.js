@@ -46,6 +46,8 @@ function CampaignsQuery(props) {
   const [stepsOptions, setStepsOptions] = useState([]);
   const [availableLinks, setAvailableLinks] = useState([]);
   const [linksLoading, setLinksLoading] = useState(false);
+  const [availableActions, setAvailableActions] = useState([]);
+  const [actionsLoading, setActionsLoading] = useState(false);
 
   useEffect(() => {
     // get segments
@@ -118,6 +120,22 @@ function CampaignsQuery(props) {
       ...config,
       requestRoute: "actions",
     });
+
+    if (availableActions.length === 0) {
+      setActionsLoading(true);
+      runHelperMethod(projectId, connectionId, "getCampaignActions", { campaignId: config.campaignId })
+        .then((actions) => {
+          setActionsLoading(false);
+          setAvailableActions(actions.map((a) => ({
+            key: a.id,
+            value: a.id,
+            text: a.name,
+          })));
+        })
+        .catch(() => {
+          setActionsLoading(false);
+        });
+    }
   };
 
   const _onSelectJourneyMetrics = () => {
@@ -132,6 +150,13 @@ function CampaignsQuery(props) {
       ...config,
       series: "",
       requestRoute: "metrics/links",
+    });
+  };
+
+  const _onSelectAction = (value) => {
+    setConfig({
+      ...config,
+      actionId: value,
     });
   };
 
@@ -195,7 +220,10 @@ function CampaignsQuery(props) {
     setStepsOptions(steps);
   };
 
-  const _onSelectClickTimeseries = (newConfig = config) => {
+  const _onSelectClickTimeseries = (conf) => {
+    let newConfig = conf;
+    if (!conf) newConfig = config;
+
     setConfig({ ...newConfig, linksMode: "links" });
     if (availableLinks.length === 0 || config.campaignId !== newConfig.campaignId) {
       setLinksLoading(true);
@@ -408,7 +436,27 @@ function CampaignsQuery(props) {
             </Form.Field>
           </>
         )}
-        {config.campaignId && config.requestRoute.indexOf("metrics") === 0 && (
+
+        {config.campaignId && config.requestRoute.indexOf("actions") === 0 && (
+          <Form.Field>
+            <label>Select an action to view the metrics</label>
+            <Dropdown
+              selection
+              search
+              options={availableActions}
+              value={config.actionId}
+              onChange={(e, data) => _onSelectAction(data.value)}
+              loading={actionsLoading}
+              disabled={actionsLoading}
+            />
+          </Form.Field>
+        )}
+
+        {config.campaignId
+          && (config.requestRoute.indexOf("metrics") === 0
+            || (config.requestRoute.indexOf("actions") === 0 && config.actionId)
+          )
+          && (
           <>
             <Form.Group widths={2}>
               <Form.Field>
@@ -432,7 +480,7 @@ function CampaignsQuery(props) {
                 />
               </Form.Field>
             </Form.Group>
-            {config.series && (
+            {(config.series || config.actionId) && (
               <Form.Group widths={2}>
                 <Form.Field>
                   <label>Type of messages. Leave empty for *all* types</label>
@@ -461,7 +509,7 @@ function CampaignsQuery(props) {
                   />
                   <Button
                     content="Clicks timeseries"
-                    onClick={_onSelectClickTimeseries}
+                    onClick={() => _onSelectClickTimeseries()}
                     primary={config.linksMode === "links"}
                     size="tiny"
                   />
@@ -493,16 +541,19 @@ function CampaignsQuery(props) {
                       value={config.selectedLink}
                       onChange={(e, data) => setConfig({ ...config, selectedLink: data.value })}
                       selection
+                      search
                     />
                   </Form.Field>
                 )}
               </Form.Group>
             )}
           </>
-        )}
+          )}
+
         {config.campaignId
         && (
           ((config.series || config.requestRoute === "metrics/links") && config.period && config.steps)
+          || (config.actionId && config.period && config.steps)
         ) && (
           <Form.Field>
             <p>

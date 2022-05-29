@@ -3,8 +3,27 @@ const moment = require("moment");
 
 const paginateRequests = require("../modules/paginateRequests");
 
+function getConnectionOpt(connection, dr) {
+  const host = connection.host === "eu" ? "https://api-eu.customer.io/v1" : "https://api.customer.io/v1";
+  const options = {
+    url: `${host}/${dr.route}`,
+    method: dr.method,
+    headers: {
+      "Accept": "application/json",
+      "authorization": `Bearer ${connection.password}`,
+    },
+    resolveWithFullResponse: true,
+  };
+
+  if (dr.method === "POST" || dr.method === "PUT") {
+    options.headers["content-type"] = "application/json";
+  }
+
+  return options;
+}
+
 /**
- * HELPER FUNCTIONS
+ * INTERNAL FUNCTIONS
  */
 function processCampaingMetrics(metrics, dr) {
   const period = (dr.configuration && dr.configuration.period) || "days";
@@ -103,24 +122,99 @@ function processCampaignLinksMetrics(metrics, dr) {
 
 // ----------------------------
 
-function getConnectionOpt(connection, dr) {
-  const host = connection.host === "eu" ? "https://api-eu.customer.io/v1" : "https://api.customer.io/v1";
-  const options = {
-    url: `${host}/${dr.route}`,
-    method: dr.method,
-    headers: {
-      "Accept": "application/json",
-      "authorization": `Bearer ${connection.password}`,
-    },
-    resolveWithFullResponse: true,
-  };
+/*
+** HELPER EXPORTED FUNCTIONS
+*/
 
-  if (dr.method === "POST" || dr.method === "PUT") {
-    options.headers["content-type"] = "application/json";
-  }
+function getAllSegments(connection) {
+  const options = getConnectionOpt(connection, {
+    method: "GET",
+    route: "segments?limit=100",
+  });
 
-  return options;
+  return request(options)
+    .then((data) => {
+      try {
+        const parsedData = JSON.parse(data.body);
+        if (parsedData.segments) return parsedData.segments;
+      } catch (e) { /** */ }
+
+      return Promise.reject("Segments not found");
+    })
+    .catch((err) => {
+      return err;
+    });
 }
+
+function getAllCampaigns(connection) {
+  const options = getConnectionOpt(connection, {
+    method: "GET",
+    route: "campaigns?limit=100",
+  });
+
+  return request(options)
+    .then((data) => {
+      try {
+        const parsedData = JSON.parse(data.body);
+        if (parsedData.campaigns) return parsedData.campaigns;
+      } catch (e) { /** */ }
+
+      return Promise.reject("Campaigns not found");
+    })
+    .catch((err) => {
+      return err;
+    });
+}
+
+function getCampaignLinks(connection, { campaignId }) {
+  const options = getConnectionOpt(connection, {
+    method: "GET",
+    route: `campaigns/${campaignId}/metrics/links?limit=100`,
+  });
+
+  return request(options)
+    .then((data) => {
+      try {
+        const parsedData = JSON.parse(data.body);
+        if (!parsedData.links) return Promise.reject("Links not found");
+
+        const links = [];
+        parsedData.links.forEach((linkObj) => {
+          links.push(linkObj.link.href);
+        });
+        return links;
+      } catch (e) { /** */ }
+
+      return Promise.reject("Campaigns not found");
+    })
+    .catch((err) => {
+      return err;
+    });
+}
+
+function getCampaignActions(connection, { campaignId }) {
+  const options = getConnectionOpt(connection, {
+    method: "GET",
+    route: `campaigns/${campaignId}/actions?limit=100`,
+  });
+
+  return request(options)
+    .then((data) => {
+      try {
+        const parsedData = JSON.parse(data.body);
+        if (!parsedData.actions) return Promise.reject("Actions not found");
+
+        return parsedData.actions;
+      } catch (e) { /** */ }
+
+      return Promise.reject("Actions not found");
+    })
+    .catch((err) => {
+      return err;
+    });
+}
+
+// ----------------------------
 
 function getCustomersAttributes(ids, options, result = {}) {
   if (!ids) return result;
@@ -187,46 +281,6 @@ async function getCustomers(connection, dr) {
   return result;
 }
 
-function getAllSegments(connection) {
-  const options = getConnectionOpt(connection, {
-    method: "GET",
-    route: "segments",
-  });
-
-  return request(options)
-    .then((data) => {
-      try {
-        const parsedData = JSON.parse(data.body);
-        if (parsedData.segments) return parsedData.segments;
-      } catch (e) { /** */ }
-
-      return Promise.reject("Segments not found");
-    })
-    .catch((err) => {
-      return err;
-    });
-}
-
-function getAllCampaigns(connection) {
-  const options = getConnectionOpt(connection, {
-    method: "GET",
-    route: "campaigns",
-  });
-
-  return request(options)
-    .then((data) => {
-      try {
-        const parsedData = JSON.parse(data.body);
-        if (parsedData.campaigns) return parsedData.campaigns;
-      } catch (e) { /** */ }
-
-      return Promise.reject("Campaigns not found");
-    })
-    .catch((err) => {
-      return err;
-    });
-}
-
 function getCampaignMetrics(connection, dr) {
   const options = getConnectionOpt(connection, dr);
 
@@ -236,6 +290,7 @@ function getCampaignMetrics(connection, dr) {
       steps: dr.configuration.steps,
       type: dr.configuration.type,
       unique: dr.configuration.unique,
+      limit: 100,
     };
   }
 
@@ -263,32 +318,6 @@ function getCampaignMetrics(connection, dr) {
     });
 }
 
-function getCampaignLinks(connection, { campaignId }) {
-  const options = getConnectionOpt(connection, {
-    method: "GET",
-    route: `campaigns/${campaignId}/metrics/links`,
-  });
-
-  return request(options)
-    .then((data) => {
-      try {
-        const parsedData = JSON.parse(data.body);
-        if (!parsedData.links) return Promise.reject("Links not found");
-
-        const links = [];
-        parsedData.links.forEach((linkObj) => {
-          links.push(linkObj.link.href);
-        });
-        return links;
-      } catch (e) { /** */ }
-
-      return Promise.reject("Campaigns not found");
-    })
-    .catch((err) => {
-      return err;
-    });
-}
-
 module.exports = {
   getConnectionOpt,
   getCustomers,
@@ -296,4 +325,5 @@ module.exports = {
   getAllCampaigns,
   getCampaignMetrics,
   getCampaignLinks,
+  getCampaignActions,
 };
