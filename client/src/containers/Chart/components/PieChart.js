@@ -14,6 +14,7 @@ import {
   Filler,
 } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import ChartErrorBoundary from "./ChartErrorBoundary";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, ArcElement, Title, Tooltip, Legend, Filler
@@ -73,19 +74,21 @@ function PieChart(props) {
   return (
     <div>
       {chart.chartData.data && chart.chartData.data.labels && (
-        <Pie
-          data={chart.chartData.data}
-          options={{
-            ...chart.chartData.options,
-            plugins: {
-              ...chart.chartData.options.plugins,
-              datalabels: dataLabelsPlugin,
-            },
-          }}
-          height={height}
-          redraw={redraw}
-          plugins={[ChartDataLabels]}
-        />
+        <ChartErrorBoundary>
+          <Pie
+            data={chart.chartData.data}
+            options={{
+              ...chart.chartData.options,
+              plugins: {
+                ...chart.chartData.options.plugins,
+                datalabels: dataLabelsPlugin,
+              },
+            }}
+            height={height}
+            redraw={redraw}
+            plugins={[ChartDataLabels]}
+          />
+        </ChartErrorBoundary>
       )}
     </div>
   );
