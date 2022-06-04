@@ -20,6 +20,7 @@ import TeamMembers from "./TeamMembers/TeamMembers";
 import TeamSettings from "./TeamSettings";
 import Navbar from "../components/Navbar";
 import canAccess from "../config/canAccess";
+import ApiKeys from "./ApiKeys/ApiKeys";
 
 /*
   Description
@@ -58,6 +59,9 @@ function ManageTeam(props) {
         break;
       case "payment":
         if (window.location.pathname.indexOf("payment") > -1) return true;
+        break;
+      case "api-keys":
+        if (window.location.pathname.indexOf("api-keys") > -1) return true;
         break;
       default:
         return false;
@@ -106,6 +110,20 @@ function ManageTeam(props) {
               Members
             </Menu.Item>
           </Menu>
+
+          <Header as="h3" style={{ paddingTop: 20 }}>
+            Developers
+          </Header>
+          <Menu secondary vertical fluid>
+            <Menu.Item
+              active={checkIfActive("api-keys")}
+              as={Link}
+              to={`/manage/${match.params.teamId}/api-keys`}
+              disabled={!_canAccess("admin")}
+            >
+              API Keys
+            </Menu.Item>
+          </Menu>
         </Grid.Column>
 
         <Grid.Column stretched width={12}>
@@ -116,6 +134,12 @@ function ManageTeam(props) {
                 <Route
                   path="/manage/:teamId/settings"
                   component={TeamSettings}
+                />
+              )}
+              {_canAccess("admin") && team.id && (
+                <Route
+                  path="/manage/:teamId/api-keys"
+                  render={() => (<ApiKeys teamId={team.id} />)}
                 />
               )}
             </Switch>

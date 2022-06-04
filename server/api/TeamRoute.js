@@ -339,6 +339,68 @@ module.exports = (app) => {
   });
   // --------------------------------------
 
+  // route to create a new API key to access the team content
+  app.post("/team/:id/apikey", verifyToken, (req, res) => {
+    if (!req.body.name) return res.status(400).send("Missing required fields.");
+
+    return teamController.getTeamRole(req.params.id, req.user.id)
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).createAny("apiKey");
+        if (!permission.granted) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
+        return teamController.createApiKey(req.params.id, req.user, req.body);
+      })
+      .then((apiKey) => {
+        return res.status(200).send(apiKey);
+      })
+      .catch((err) => {
+        return res.status(400).send(err);
+      });
+  });
+  // --------------------------------------
+
+  // route to get an API key
+  app.get("/team/:id/apikey", verifyToken, (req, res) => {
+    return teamController.getTeamRole(req.params.id, req.user.id)
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).readAny("apiKey");
+        if (!permission.granted) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
+        return teamController.getApiKeys(req.params.id);
+      })
+      .then((apiKey) => {
+        return res.status(200).send(apiKey);
+      })
+      .catch((err) => {
+        return res.status(400).send(err);
+      });
+  });
+  // --------------------------------------
+
+  // route to remove an API key
+  app.delete("/team/:id/apikey/:keyId", verifyToken, (req, res) => {
+    return teamController.getTeamRole(req.params.id, req.user.id)
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).deleteAny("apiKey");
+        if (!permission.granted) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
+        return teamController.deleteApiKey(req.params.keyId);
+      })
+      .then(() => {
+        return res.status(200).send({ deleted: true });
+      })
+      .catch((err) => {
+        return res.status(400).send(err);
+      });
+  });
+  // --------------------------------------
+
   return (req, res, next) => {
     next();
   };

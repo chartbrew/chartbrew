@@ -1,6 +1,7 @@
 const simplecrypt = require("simplecrypt");
 const uuidv4 = require("uuid/v4");
 const _ = require("lodash");
+const jwt = require("jsonwebtoken");
 
 const db = require("../models/models");
 const UserController = require("./UserController");
@@ -349,6 +350,55 @@ class TeamController {
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
+  async createApiKey(teamId, userData, body) {
+    try {
+      const token = jwt.sign({
+        id: userData.id,
+        email: userData.email,
+      }, settings.secret, { expiresIn: "9999 years" });
+
+      return await db.Apikey.create({
+        name: body.name,
+        team_id: teamId,
+        token,
+      });
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+
+  getApiKeys(teamId) {
+    return db.Apikey.findAll({ where: { team_id: teamId } })
+      .then((apiKeys) => {
+        if (!apiKeys || apiKeys.length < 1) return [];
+
+        return apiKeys.map((key) => ({
+          id: key.id,
+          name: key.name,
+          createdAt: key.createdAt,
+        }));
+      })
+      .catch((err) => {
+        return Promise.reject(err);
+      });
+  }
+
+  deleteApiKey(keyId) {
+    return db.Apikey.findByPk(keyId)
+      .then((apiKey) => {
+        return db.TokenBlacklist.create({ token: apiKey.token });
+      })
+      .then(() => {
+        return db.Apikey.destroy({ where: { id: keyId } });
+      })
+      .then((result) => {
+        return result;
+      })
+      .catch((err) => {
+        return Promise.reject(err);
       });
   }
 }

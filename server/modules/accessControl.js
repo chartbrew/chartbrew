@@ -136,6 +136,19 @@ const grantList = [
   {
     role: "owner", resource: "dataRequest", action: "delete:any", attributes: "*",
   },
+  // resource: apiKey ---> Team Perspective
+  {
+    role: "owner", resource: "apiKey", action: "create:any", attributes: "*",
+  },
+  {
+    role: "owner", resource: "apiKey", action: "read:any", attributes: "*",
+  },
+  {
+    role: "owner", resource: "apiKey", action: "update:any", attributes: "*",
+  },
+  {
+    role: "owner", resource: "apiKey", action: "delete:any", attributes: "*",
+  },
   //
   // --------------------
   //    ADMIN
@@ -261,6 +274,19 @@ const grantList = [
   },
   {
     role: "admin", resource: "dataRequest", action: "delete:any", attributes: "*",
+  },
+  // resource: apiKey ---> Team Perspective
+  {
+    role: "admin", resource: "apiKey", action: "create:any", attributes: "*",
+  },
+  {
+    role: "admin", resource: "apiKey", action: "read:any", attributes: "*",
+  },
+  {
+    role: "admin", resource: "apiKey", action: "update:any", attributes: "*",
+  },
+  {
+    role: "admin", resource: "apiKey", action: "delete:any", attributes: "*",
   },
   //
   // --------------------
