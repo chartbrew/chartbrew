@@ -9,8 +9,13 @@ module.exports = async (
 
   if (charts && Array.isArray(charts)) {
     const newModelCharts = [];
+    const processedCharts = [];
+    charts.forEach((chart) => {
+      processedCharts.push(parseInt(chart, 10));
+    });
+
     model.Charts.forEach((chart) => {
-      if (_.indexOf(charts, chart.tid) > -1) {
+      if (_.indexOf(processedCharts, chart.tid) > -1) {
         newModelCharts.push(chart);
       }
     });
