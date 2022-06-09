@@ -5,6 +5,9 @@ import { Link } from "react-router-dom";
 import {
   Message, Container, Segment, Header
 } from "semantic-ui-react";
+import {
+  Text,
+} from "@nextui-org/react";
 import _ from "lodash";
 
 import LoginForm from "../components/LoginForm";
@@ -29,8 +32,8 @@ function Login(props) {
         <Link to="/">
           <img size="tiny" src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
         </Link>
-        <Header inverted as="h2" style={{ marginTop: 0 }}>{"Log in to your account"}</Header>
         <Segment color="olive" raised style={styles.verticalPadding} padded>
+          <Text h2 style={{ marginTop: 0 }}>{"Log in to your account"}</Text>
           <Header textAlign="left" as="h5">{"Enter your login details"}</Header>
           <LoginForm />
           {loginError && (

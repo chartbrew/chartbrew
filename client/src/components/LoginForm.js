@@ -3,9 +3,12 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import {
-  Container, Form, Divider, Button, Message, Icon, Label, Item, Modal,
+  Container, Form, Divider, Message, Icon, Label, Item, Modal,
   Header, Input, TransitionablePortal,
 } from "semantic-ui-react";
+import {
+  Button, Loading,
+} from "@nextui-org/react";
 
 import {
   login as loginAction,
@@ -169,16 +172,16 @@ function LoginForm(props) {
 
         <Button
           onClick={loginUser}
-          icon
-          size="large"
-          labelPosition="right"
+          iconRight={(<Icon name="right arrow" />)}
+          size="lg"
           primary
+          shadow
           disabled={loading}
           loading={loading}
           type="submit"
         >
+          {loading && (<Loading type="points" color="currentColor" size="sm" />)}
           Login
-          <Icon name="right arrow" />
         </Button>
 
         <Item
