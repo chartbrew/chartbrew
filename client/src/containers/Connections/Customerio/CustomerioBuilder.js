@@ -157,6 +157,7 @@ function CustomerioBuilder(props) {
         requestRoute: data.requestRoute,
         linksMode: data.linksMode,
         selectedLink: data.selectedLink,
+        actionId: data.actionId,
       },
     });
   };
