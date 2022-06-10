@@ -101,6 +101,10 @@ function CampaignsQuery(props) {
     }
   }, [config]);
 
+  useEffect(() => {
+    _onSelectClickTimeseries();
+  }, [config.requestRoute]);
+
   const _onSelectCampaign = (cId) => {
     const newConfig = {
       ...config,
@@ -245,33 +249,28 @@ function CampaignsQuery(props) {
     if (!conf) newConfig = config;
 
     setConfig({ ...newConfig, linksMode: "links" });
-    if (availableLinks.length === 0
-      || config.campaignId !== newConfig.campaignId
-      || config.actionId !== newConfig.actionId
-    ) {
-      setLinksLoading(true);
-      runHelperMethod(projectId, connectionId, "getCampaignLinks", {
-        campaignId: newConfig.campaignId,
-        actionId: newConfig.requestRoute.indexOf("actions") > -1 ? newConfig.actionId : null,
-      })
-        .then((links) => {
-          if (links) {
-            const newAvailableLinks = links.map((link) => {
-              return {
-                key: link,
-                value: link,
-                text: link,
-              };
-            });
-            setAvailableLinks(newAvailableLinks);
-          }
+    setLinksLoading(true);
+    runHelperMethod(projectId, connectionId, "getCampaignLinks", {
+      campaignId: newConfig.campaignId,
+      actionId: newConfig.requestRoute.indexOf("actions") > -1 ? newConfig.actionId : null,
+    })
+      .then((links) => {
+        if (links) {
+          const newAvailableLinks = links.map((link) => {
+            return {
+              key: link,
+              value: link,
+              text: link,
+            };
+          });
+          setAvailableLinks(newAvailableLinks);
+        }
 
-          setLinksLoading(false);
-        })
-        .catch(() => {
-          setLinksLoading(false);
-        });
-    }
+        setLinksLoading(false);
+      })
+      .catch(() => {
+        setLinksLoading(false);
+      });
   };
 
   return (
@@ -490,7 +489,7 @@ function CampaignsQuery(props) {
                 )}
               </Label.Group>
             </Form.Field>
-            {config.requestRoute.indexOf("/metrics") > -1 && (
+            {(config.requestRoute.indexOf("/metrics") > -1 || config.requestRoute === "metrics") && (
               <Form.Field>
                 <label>Or show the campaign link metrics</label>
                 <Label
@@ -513,8 +512,8 @@ function CampaignsQuery(props) {
           )
           && (
           <>
-            <Form.Group widths={2}>
-              <Form.Field>
+            <Form.Group widths={3}>
+              <Form.Field width={4}>
                 <label>Choose the period</label>
                 <Dropdown
                   selection
@@ -524,7 +523,7 @@ function CampaignsQuery(props) {
                   onChange={(e, data) => _onChangePeriod(data.value)}
                 />
               </Form.Field>
-              <Form.Field>
+              <Form.Field width={6}>
                 <label>Max number of points on the chart</label>
                 <Dropdown
                   selection
@@ -534,10 +533,8 @@ function CampaignsQuery(props) {
                   onChange={(e, data) => _onChangeSteps(data.value)}
                 />
               </Form.Field>
-            </Form.Group>
-            {(config.series || config.actionId) && (
-              <Form.Group widths={2}>
-                <Form.Field>
+              {(config.series || config.actionId) && (
+                <Form.Field width={6}>
                   <label>Type of messages. Leave empty for *all* types</label>
                   <Dropdown
                     selection
@@ -550,57 +547,69 @@ function CampaignsQuery(props) {
                     style={{ minWidth: 300 }}
                 />
                 </Form.Field>
-              </Form.Group>
-            )}
+              )}
+            </Form.Group>
             {config.requestRoute.indexOf("links") > -1 && (
-              <Form.Group widths={3}>
-                <Form.Field width={6}>
-                  <label>Visualization type</label>
-                  <Button
-                    content="Total clicks"
-                    onClick={() => setConfig({ ...config, linksMode: "total" })}
-                    primary={config.linksMode === "total"}
-                    size="tiny"
-                  />
-                  <Button
-                    content="Clicks timeseries"
-                    onClick={() => _onSelectClickTimeseries()}
-                    primary={config.linksMode === "links"}
-                    size="tiny"
-                  />
-                </Form.Field>
-                <Form.Field width={4}>
-                  <label>Unique clicks per customer</label>
-                  <Checkbox
-                    toggle
-                    checked={config.unique}
-                    onChange={() => setConfig({ ...config, unique: !config.unique })}
-                  />
-                </Form.Field>
-                {config.linksMode === "links" && (
-                  <Form.Field width={6}>
-                    <label>
-                      {"Select a link "}
-                      <Popup
-                        trigger={(
-                          <Icon name="question circle outline" color="primary" />
-                        )}
-                        inverted
-                        content="You can select only one link, but if you wish to compare multiple links on the same chart, you can create a new dataset with another link."
-                        size="small"
-                      />
-                    </label>
-                    <Dropdown
-                      options={availableLinks}
-                      loading={linksLoading}
-                      value={config.selectedLink}
-                      onChange={(e, data) => setConfig({ ...config, selectedLink: data.value })}
-                      selection
-                      search
+              <>
+                <Form.Group widths={2}>
+                  <Form.Field>
+                    <label>Visualization type</label>
+                    <Button
+                      content="Total clicks"
+                      onClick={() => setConfig({ ...config, linksMode: "total" })}
+                      primary={config.linksMode === "total"}
+                      size="tiny"
+                    />
+                    <Button
+                      content="Clicks timeseries"
+                      onClick={() => _onSelectClickTimeseries()}
+                      primary={config.linksMode === "links"}
+                      size="tiny"
                     />
                   </Form.Field>
+                  <Form.Field>
+                    <label>Unique clicks per customer</label>
+                    <Checkbox
+                      toggle
+                      checked={config.unique}
+                      onChange={() => setConfig({ ...config, unique: !config.unique })}
+                    />
+                  </Form.Field>
+                </Form.Group>
+                {config.linksMode === "links" && (
+                  <Form.Group widths={2}>
+                    <Form.Field width={13}>
+                      <label>
+                        {"Select a link "}
+                        <Popup
+                          trigger={(
+                            <Icon name="question circle outline" color="primary" />
+                          )}
+                          inverted
+                          content="You can select only one link, but if you wish to compare multiple links on the same chart, you can create a new dataset with another link."
+                          size="small"
+                        />
+                      </label>
+                      <Dropdown
+                        options={availableLinks}
+                        loading={linksLoading}
+                        value={config.selectedLink}
+                        onChange={(e, data) => setConfig({ ...config, selectedLink: data.value })}
+                        selection
+                        search
+                      />
+                    </Form.Field>
+                    <Form.Field width={3}>
+                      <label>&nbsp;</label>
+                      <Button
+                        content="Refresh links"
+                        size="small"
+                        onClick={() => _onSelectClickTimeseries()}
+                      />
+                    </Form.Field>
+                  </Form.Group>
                 )}
-              </Form.Group>
+              </>
             )}
           </>
           )}
@@ -608,7 +617,7 @@ function CampaignsQuery(props) {
         {config.campaignId
         && (
           ((config.series || config.requestRoute === "metrics/links") && config.period && config.steps)
-          || (config.actionId && config.period && config.steps && config.series)
+          || (config.actionId && config.period && config.steps && (config.series || config.requestRoute.indexOf("metrics/links") > -1))
         ) && (
           <Form.Field>
             <p>
