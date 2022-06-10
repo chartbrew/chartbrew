@@ -327,7 +327,9 @@ function CampaignsQuery(props) {
           </Form.Field>
         )}
         {config.campaignId
-          && (config.requestRoute.indexOf("metrics") === 0 || config.requestRoute.indexOf("actions") > -1)
+          && (config.requestRoute.indexOf("metrics") === 0
+            || config.requestRoute.indexOf("actions") > -1
+            || config.requestRoute === "journey_metrics")
           && (
           <>
             <Form.Field>
@@ -335,6 +337,8 @@ function CampaignsQuery(props) {
               <MessageTypeLabels
                 selected={config.series}
                 onSelect={_onSetSeries}
+                mode={config.requestRoute === "journey_metrics" ? "journeys" : "messages"}
+                showPrimary={config.requestRoute !== "journey_metrics"}
               />
             </Form.Field>
             {(config.requestRoute.indexOf("/metrics") > -1 || config.requestRoute.indexOf("metrics") === 0) && (
