@@ -9,6 +9,7 @@ import {
 
 import { runHelperMethod } from "../../../actions/connection";
 import { primary } from "../../../config/colors";
+import MessageTypeLabels from "./MessageTypeLabels";
 
 const periodOptions = [
   { key: "hours", value: "hours", text: "Hours" },
@@ -48,7 +49,6 @@ function CampaignsQuery(props) {
   const [linksLoading, setLinksLoading] = useState(false);
   const [availableActions, setAvailableActions] = useState([]);
   const [actionsLoading, setActionsLoading] = useState(false);
-  const [showAllSeries, setShowAllSeries] = useState(false);
 
   useEffect(() => {
     // get segments
@@ -327,169 +327,17 @@ function CampaignsQuery(props) {
           </Form.Field>
         )}
         {config.campaignId
-          && (config.requestRoute.indexOf("metrics") > -1 || config.requestRoute.indexOf("actions") > -1)
+          && (config.requestRoute.indexOf("metrics") === 0 || config.requestRoute.indexOf("actions") > -1)
           && (
           <>
             <Form.Field>
               <label>What would you like this dataset to show?</label>
-              <Label.Group>
-                <Label
-                  as="a"
-                  onClick={() => _onSetSeries("delivered")}
-                  color={config.series === "delivered" ? "primary" : null}
-                >
-                  <Icon name="star outline" />
-                  Delivered
-                </Label>
-                <Label
-                  as="a"
-                  onClick={() => _onSetSeries("opened")}
-                  color={config.series === "opened" ? "primary" : null}
-                >
-                  <Icon name="star outline" />
-                  Opened
-                </Label>
-                <Label
-                  as="a"
-                  onClick={() => _onSetSeries("clicked")}
-                  color={config.series === "clicked" ? "primary" : null}
-                >
-                  <Icon name="star outline" />
-                  Clicked
-                </Label>
-                <Label
-                  as="a"
-                  onClick={() => _onSetSeries("converted")}
-                  color={config.series === "converted" ? "primary" : null}
-                >
-                  <Icon name="star outline" />
-                  Converted
-                </Label>
-                {!showAllSeries && (
-                  <Label
-                    as="a"
-                    onClick={() => setShowAllSeries(true)}
-                    basic
-                    primary
-                  >
-                    {"Show all "}
-                    <Icon name="chevron right" />
-                  </Label>
-                )}
-                {showAllSeries && (
-                  <>
-                    <Label
-                      as="a"
-                      onClick={() => _onSetSeries("attempted")}
-                      color={config.series === "attempted" ? "primary" : null}
-                    >
-                      Attempted
-                    </Label>
-                    <Label
-                      as="a"
-                      onClick={() => _onSetSeries("bounced")}
-                      color={config.series === "bounced" ? "primary" : null}
-                    >
-                      Bounced
-                    </Label>
-                    <Label
-                      as="a"
-                      onClick={() => _onSetSeries("created")}
-                      color={config.series === "created" ? "primary" : null}
-                    >
-                      Created
-                    </Label>
-                    <Label
-                      as="a"
-                      onClick={() => _onSetSeries("drafted")}
-                      color={config.series === "drafted" ? "primary" : null}
-                    >
-                      Drafted
-                    </Label>
-                    <Label
-                      as="a"
-                      onClick={() => _onSetSeries("dropped")}
-                      color={config.series === "dropped" ? "primary" : null}
-                    >
-                      Dropped
-                    </Label>
-                    <Label
-                      as="a"
-                      onClick={() => _onSetSeries("failed")}
-                      color={config.series === "failed" ? "primary" : null}
-                    >
-                      Failed
-                    </Label>
-                    <Label
-                      as="a"
-                      onClick={() => _onSetSeries("sent")}
-                      color={config.series === "sent" ? "primary" : null}
-                    >
-                      Sent
-                    </Label>
-                    <Label
-                      as="a"
-                      onClick={() => _onSetSeries("spammed")}
-                      color={config.series === "spammed" ? "primary" : null}
-                    >
-                      Spammed
-                    </Label>
-                    <Label
-                      as="a"
-                      onClick={() => _onSetSeries("undeliverable")}
-                      color={config.series === "undeliverable" ? "primary" : null}
-                    >
-                      Undeliverable
-                    </Label>
-                    <Label
-                      as="a"
-                      onClick={() => _onSetSeries("unsubscribed")}
-                      color={config.series === "unsubscribed" ? "primary" : null}
-                    >
-                      Unsubscribed
-                    </Label>
-                    <Label
-                      as="a"
-                      onClick={() => _onSetSeries("2xx")}
-                      color={config.series === "2xx" ? "primary" : null}
-                    >
-                      2xx responses
-                    </Label>
-                    <Label
-                      as="a"
-                      onClick={() => _onSetSeries("3xx")}
-                      color={config.series === "3xx" ? "primary" : null}
-                    >
-                      3xx responses
-                    </Label>
-                    <Label
-                      as="a"
-                      onClick={() => _onSetSeries("4xx")}
-                      color={config.series === "4xx" ? "primary" : null}
-                    >
-                      4xx responses
-                    </Label>
-                    <Label
-                      as="a"
-                      onClick={() => _onSetSeries("5xx")}
-                      color={config.series === "5xx" ? "primary" : null}
-                    >
-                      5xx responses
-                    </Label>
-                    <Label
-                      as="a"
-                      onClick={() => setShowAllSeries(false)}
-                      basic
-                      primary
-                    >
-                      <Icon name="chevron left" />
-                      {"Hide extra"}
-                    </Label>
-                  </>
-                )}
-              </Label.Group>
+              <MessageTypeLabels
+                selected={config.series}
+                onSelect={_onSetSeries}
+              />
             </Form.Field>
-            {(config.requestRoute.indexOf("/metrics") > -1 || config.requestRoute === "metrics") && (
+            {(config.requestRoute.indexOf("/metrics") > -1 || config.requestRoute.indexOf("metrics") === 0) && (
               <Form.Field>
                 <label>Or show the campaign link metrics</label>
                 <Label
