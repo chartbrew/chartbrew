@@ -166,10 +166,15 @@ function getAllCampaigns(connection) {
     });
 }
 
-function getCampaignLinks(connection, { campaignId }) {
+function getCampaignLinks(connection, { campaignId, actionId }) {
+  let route = `campaigns/${campaignId}/metrics/links?limit=100`;
+  if (actionId) {
+    route = `campaigns/${campaignId}/actions/${actionId}/metrics/links?limit=100`;
+  }
+
   const options = getConnectionOpt(connection, {
     method: "GET",
-    route: `campaigns/${campaignId}/metrics/links?limit=100`,
+    route,
   });
 
   return request(options)

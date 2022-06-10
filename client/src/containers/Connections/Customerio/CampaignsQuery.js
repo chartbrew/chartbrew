@@ -159,19 +159,25 @@ function CampaignsQuery(props) {
   };
 
   const _onShowCampaingLinkMetrics = () => {
-    setConfig({
-      ...config,
-      series: "",
-      requestRoute: "metrics/links",
-    });
+    if (config.requestRoute.indexOf("links") === -1) {
+      setConfig({
+        ...config,
+        series: "",
+        requestRoute: `${config.requestRoute}/links`,
+      });
+    }
   };
 
   const _onSelectAction = (value) => {
-    setConfig({
+    const newConfig = {
       ...config,
       actionId: value,
       requestRoute: `actions/${value}/metrics`,
-    });
+    };
+
+    setConfig(newConfig);
+
+    _onSelectClickTimeseries(newConfig);
   };
 
   const _onSetSeries = (type) => {
@@ -239,9 +245,15 @@ function CampaignsQuery(props) {
     if (!conf) newConfig = config;
 
     setConfig({ ...newConfig, linksMode: "links" });
-    if (availableLinks.length === 0 || config.campaignId !== newConfig.campaignId) {
+    if (availableLinks.length === 0
+      || config.campaignId !== newConfig.campaignId
+      || config.actionId !== newConfig.actionId
+    ) {
       setLinksLoading(true);
-      runHelperMethod(projectId, connectionId, "getCampaignLinks", { campaignId: newConfig.campaignId })
+      runHelperMethod(projectId, connectionId, "getCampaignLinks", {
+        campaignId: newConfig.campaignId,
+        actionId: newConfig.requestRoute.indexOf("actions") > -1 ? newConfig.actionId : null,
+      })
         .then((links) => {
           if (links) {
             const newAvailableLinks = links.map((link) => {
@@ -478,15 +490,17 @@ function CampaignsQuery(props) {
                 )}
               </Label.Group>
             </Form.Field>
-            {config.requestRoute.indexOf("actions") === -1 && (
+            {config.requestRoute.indexOf("/metrics") > -1 && (
               <Form.Field>
                 <label>Or show the campaign link metrics</label>
                 <Label
                   as="a"
                   onClick={_onShowCampaingLinkMetrics}
-                  color={config.requestRoute === "metrics/links" ? "primary" : null}
+                  color={config.requestRoute.indexOf("metrics/links") > -1 ? "primary" : null}
                 >
-                  Show campaign link metrics
+                  {"Show "}
+                  {config.requestRoute.indexOf("actions") > -1 ? "action" : "campaign"}
+                  {" link metrics"}
                 </Label>
               </Form.Field>
             )}
