@@ -25,9 +25,15 @@ function getConnectionOpt(connection, dr) {
 /**
  * INTERNAL FUNCTIONS
  */
-function processCampaingMetrics(metrics, dr) {
+function processSeriesData(metrics, dr) {
   const period = (dr.configuration && dr.configuration.period) || "days";
-  const series = metrics.series[dr.configuration.series];
+
+  let series;
+  if (metrics.series) {
+    series = metrics.series[dr.configuration.series];
+  } else {
+    series = metrics[dr.configuration.series];
+  }
 
   let newSeries;
   if (period === "hours") {
@@ -293,8 +299,11 @@ function getCampaignMetrics(connection, dr) {
     options.qs = {
       period: dr.configuration.period,
       steps: dr.configuration.steps,
+      resolution: dr.configuration.period,
       type: dr.configuration.type,
       unique: dr.configuration.unique,
+      start: dr.configuration.start,
+      end: dr.configuration.end,
       limit: 100,
     };
   }
@@ -311,7 +320,10 @@ function getCampaignMetrics(connection, dr) {
     .then((metrics) => {
       // process the metrics in CB-style based on the request type
       if (options.url.substring(options.url.lastIndexOf("/") === "/metrics") && metrics.metric) {
-        return processCampaingMetrics(metrics.metric, dr);
+        return processSeriesData(metrics.metric, dr);
+      }
+      if (options.url.substring(options.url.lastIndexOf("/") === "/journey_metrics") && metrics.journey_metric) {
+        return processSeriesData(metrics.journey_metric, dr);
       }
       if (options.url.indexOf("/metrics/links") > -1 && metrics.links) {
         return processCampaignLinksMetrics(metrics.links, dr);

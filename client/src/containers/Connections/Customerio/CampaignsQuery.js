@@ -4,18 +4,24 @@ import {
   Button,
   Checkbox,
   Divider,
-  Dropdown, Form, Icon, Label, Menu, Popup
+  Dropdown, Form, Icon, Input, Label, Menu, Popup
 } from "semantic-ui-react";
+import {
+  format, getUnixTime, subDays, endOfDay, startOfDay
+} from "date-fns";
+import { DateRangePicker } from "react-date-range";
+import { enGB } from "date-fns/locale";
 
 import { runHelperMethod } from "../../../actions/connection";
-import { primary } from "../../../config/colors";
+import { primary, secondary } from "../../../config/colors";
 import MessageTypeLabels from "./MessageTypeLabels";
+import { defaultStaticRanges, defaultInputRanges } from "../../../config/dateRanges";
 
 const periodOptions = [
-  { key: "hours", value: "hours", text: "Hours" },
-  { key: "days", value: "days", text: "Days" },
-  { key: "weeks", value: "weeks", text: "Weeks" },
-  { key: "months", value: "months", text: "Months" },
+  { key: "hours", value: "hours", text: "Hourly" },
+  { key: "days", value: "days", text: "Daily" },
+  { key: "weeks", value: "weeks", text: "Weekly" },
+  { key: "months", value: "months", text: "Monthly" },
 ];
 
 const messageOptions = [
@@ -49,6 +55,8 @@ function CampaignsQuery(props) {
   const [linksLoading, setLinksLoading] = useState(false);
   const [availableActions, setAvailableActions] = useState([]);
   const [actionsLoading, setActionsLoading] = useState(false);
+  const [journeyStart, setJourneyStart] = useState(startOfDay(subDays(new Date(), 30)));
+  const [journeyEnd, setJourneyEnd] = useState(endOfDay(new Date()));
 
   useEffect(() => {
     // get segments
@@ -79,6 +87,17 @@ function CampaignsQuery(props) {
             ...newConfig,
             ...request.configuration,
           };
+
+          if (request.configuration.start && request.configuration.end) {
+            setJourneyStart(new Date(parseInt(request.configuration.start, 10) * 1000));
+            setJourneyEnd(new Date(parseInt(request.configuration.end, 10) * 1000));
+          } else {
+            newConfig = {
+              ...newConfig,
+              start: getUnixTime(journeyStart),
+              end: getUnixTime(journeyEnd),
+            };
+          }
 
           setConfig(newConfig);
 
@@ -273,6 +292,20 @@ function CampaignsQuery(props) {
       });
   };
 
+  const _onChangeJourneyRange = (range) => {
+    const newStartDate = startOfDay(new Date(range.selection.startDate));
+    const newEndDate = endOfDay(new Date(range.selection.endDate));
+
+    setJourneyStart(newStartDate);
+    setJourneyEnd(newEndDate);
+
+    setConfig({
+      ...config,
+      start: getUnixTime(newStartDate),
+      end: getUnixTime(newEndDate),
+    });
+  };
+
   return (
     <div>
       <Form size="small">
@@ -465,6 +498,62 @@ function CampaignsQuery(props) {
             )}
           </>
           )}
+
+        {config.campaignId && config.requestRoute === "journey_metrics" && config.series && (
+          <>
+            <Form.Group>
+              <Form.Field width={10}>
+                <label>Select the start and end date of the journey</label>
+                <Popup
+                  on="click"
+                  position="right center"
+                  trigger={(
+                    <Input
+                      placeholder="Click to select a date"
+                      icon="calendar alternate"
+                      iconPosition="left"
+                      value={`${format(journeyStart, "dd MMMM yyyy")} - ${format(journeyEnd, "dd MMMM yyyy")}`}
+                      />
+                    )}
+                  content={(
+                    <DateRangePicker
+                      locale={enGB}
+                      direction="horizontal"
+                      rangeColors={[secondary, primary]}
+                      ranges={[{ startDate: journeyStart, endDate: journeyEnd, key: "selection" }]}
+                      onChange={_onChangeJourneyRange}
+                      staticRanges={defaultStaticRanges}
+                      inputRanges={defaultInputRanges}
+                    />
+                  )}
+                />
+              </Form.Field>
+              <Form.Field width={6}>
+                <label>Choose the period</label>
+                <Dropdown
+                  selection
+                  search
+                  options={periodOptions}
+                  value={config.period}
+                  onChange={(e, data) => _onChangePeriod(data.value)}
+                />
+              </Form.Field>
+            </Form.Group>
+            <Form.Field width={10}>
+              <label>Type of messages. Leave empty for *all* types</label>
+              <Dropdown
+                selection
+                multiple
+                search
+                placeholder="Select the message types"
+                options={messageOptions}
+                value={config.type}
+                onChange={(e, data) => _onChangeMessageTypes(data.value)}
+                style={{ minWidth: 300 }}
+              />
+            </Form.Field>
+          </>
+        )}
 
         {config.campaignId
         && (

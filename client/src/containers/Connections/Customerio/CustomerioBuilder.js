@@ -158,6 +158,8 @@ function CustomerioBuilder(props) {
         linksMode: data.linksMode,
         selectedLink: data.selectedLink,
         actionId: data.actionId,
+        start: data.start,
+        end: data.end,
       },
     });
   };
