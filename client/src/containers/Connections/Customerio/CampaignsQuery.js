@@ -132,6 +132,7 @@ function CampaignsQuery(props) {
     setConfig(newConfig);
 
     _onSelectClickTimeseries(newConfig);
+    _fetchActions(newConfig);
   };
 
   const _onSelectCampaignMetrics = () => {
