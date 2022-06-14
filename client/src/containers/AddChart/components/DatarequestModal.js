@@ -160,8 +160,7 @@ function DatarequestModal(props) {
       open={open}
       size="fullscreen"
       onClose={_onClose}
-      closeOnDimmerClick={false}
-      closeOnEscape={false}
+      closeIcon
     >
       <Modal.Header>{`Configure ${connection.name}`}</Modal.Header>
       <Modal.Content>
