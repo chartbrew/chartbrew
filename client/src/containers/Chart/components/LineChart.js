@@ -19,6 +19,7 @@ import {
 import determineType from "../../../modules/determineType";
 import KpiChartSegment from "./KpiChartSegment";
 import { Colors } from "../../../config/colors";
+import ChartErrorBoundary from "./ChartErrorBoundary";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler
@@ -132,18 +133,20 @@ function LineChart(props) {
         )}
         {chart.chartData.data && chart.chartData.data.labels && (
           <div>
-            <Line
-              data={chart.chartData.data}
-              options={chart.chartData.options}
-              height={
-                height - (
-                  (chart.mode === "kpichart" && chart.chartSize > 1 && 90)
-                   || (chart.mode === "kpichart" && chart.chartSize === 1 && 80)
-                   || 0
-                )
-              }
-              redraw={redraw}
-            />
+            <ChartErrorBoundary>
+              <Line
+                data={chart.chartData.data}
+                options={chart.chartData.options}
+                height={
+                  height - (
+                    (chart.mode === "kpichart" && chart.chartSize > 1 && 90)
+                    || (chart.mode === "kpichart" && chart.chartSize === 1 && 80)
+                    || 0
+                  )
+                }
+                redraw={redraw}
+              />
+            </ChartErrorBoundary>
           </div>
         )}
       </div>

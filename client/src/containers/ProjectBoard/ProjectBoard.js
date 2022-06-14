@@ -218,7 +218,7 @@ function ProjectBoard(props) {
             <Navbar />
 
             <Grid columns={1} centered stackable>
-              <Grid.Column computer={16} style={{ paddingLeft: 0 }}>
+              <Grid.Column computer={16}>
                 <MainContent
                   showDrafts={showDrafts}
                   onPrint={_onPrint}

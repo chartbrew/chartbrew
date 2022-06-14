@@ -101,6 +101,11 @@ function Main(props) {
               />
               <Route
                 exact
+                path="/manage/:teamId/api-keys"
+                component={ManageTeam}
+              />
+              <Route
+                exact
                 path="/:teamId/:projectId/dashboard"
                 component={ProjectBoard}
               />

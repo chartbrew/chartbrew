@@ -409,7 +409,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
     },
     {
       "tid": 3,
-      "name": "Trafic channel",
+      "name": "Traffic channel",
       "type": "bar",
       "subType": "timeseries",
       "public": false,

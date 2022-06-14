@@ -13,6 +13,7 @@ import {
   Legend,
   Filler,
 } from "chart.js";
+import ChartErrorBoundary from "./ChartErrorBoundary";
 
 ChartJS.register(
   CategoryScale, RadialLinearScale, PointElement, ArcElement, Title, Tooltip, Legend, Filler,
@@ -34,12 +35,14 @@ function RadarChart(props) {
   return (
     <div>
       {chart.chartData.data && chart.chartData.data.labels && (
-        <Radar
-          data={chart.chartData.data}
-          options={chart.chartData.options}
-          height={height}
-          redraw={redraw}
-        />
+        <ChartErrorBoundary>
+          <Radar
+            data={chart.chartData.data}
+            options={chart.chartData.options}
+            height={height}
+            redraw={redraw}
+          />
+        </ChartErrorBoundary>
       )}
     </div>
   );

@@ -34,6 +34,7 @@ function Start(props) {
   const [showBreadcrumbs, setShowBreadcrumbs] = useState(false);
   const [dimmed, setDimmed] = useState("");
   const [loading, setLoading] = useState(false);
+  const [initiated, setInitiated] = useState(false);
 
   const { height } = useWindowSize();
 
@@ -135,208 +136,232 @@ function Start(props) {
     <div style={styles.container(height)}>
       <Navbar hideTeam transparent color={dark} />
       <Segment basic style={{ paddingTop: 100 }}>
-        <motion.div animate={{ opacity: [0, 1], scale: 1 }}>
-          <Header textAlign="center" as="h1" inverted size="massive" style={styles.titleText}>
-            {"Set up your new Chartbrew project"}
-            {onboardingStep === "project" && (
-            <Header.Subheader>First, enter a name below</Header.Subheader>
-            )}
-            {onboardingStep === "mode" && (
-            <Header.Subheader>Get started with one of the options below</Header.Subheader>
-            )}
-            {onboardingStep === "data" && (
-            <Header.Subheader>
-              {mode === "template" ? "Select a template to start with" : "Select a connection to start with"}
-            </Header.Subheader>
-            )}
+        <motion.div
+          animate={{ opacity: [1, 1, 1, 1, 1, 1, 0], scale: 1, translateY: [0, 0, 0, 0, 0, -50] }}
+          transition={{ duration: 2 }}
+        >
+          <Header textAlign="center" as="h1" size="massive" style={styles.titleText} inverted>
+            <motion.div
+              style={{ fontSize: "2em", marginBottom: 20 }}
+              animate={{
+                rotateZ: [0, 30, 0, 30, 0, 30, 0, 30, 0],
+              }}
+              transition={{ duration: 1.5 }}
+              >
+              {"👋"}
+            </motion.div>
+            <span style={{ fontSize: "1.5em" }}>{"Hi!"}</span>
           </Header>
         </motion.div>
-        <Divider section hidden />
+        <motion.div animate={{ translateY: [0, 0, 0, 0, 0, 0, -100] }} transition={{ duration: 3 }}>
+          <motion.div
+            animate={{ opacity: [0, 0, 0, 0, 0, 1], scale: 1 }}
+            transition={{ duration: 2.5 }}
+          >
+            <Header textAlign="center" as="h1" inverted size="massive" style={styles.titleText}>
+              {"Set up your new Chartbrew project"}
+              {onboardingStep === "project" && (
+              <Header.Subheader>First, enter a name below</Header.Subheader>
+              )}
+              {onboardingStep === "mode" && (
+              <Header.Subheader>Get started with one of the options below</Header.Subheader>
+              )}
+              {onboardingStep === "data" && (
+              <Header.Subheader>
+                {mode === "template" ? "Select a template to start with" : "Select a connection to start with"}
+              </Header.Subheader>
+              )}
+            </Header>
+          </motion.div>
+          <Divider section hidden />
 
-        {showBreadcrumbs && (
-          <>
-            <div style={{ textAlign: "center" }}>
-              <Breadcrumb size="large" style={{ color: whiteTransparent(1) }}>
-                <Breadcrumb.Section
-                  link={onboardingStep !== "project"}
-                  style={{ color: onboardingStep === "project" ? whiteTransparent(1) : secondary }}
-                  active={onboardingStep === "project"}
-                  onClick={() => setOnboardingStep("project")}
-                >
-                  Project
-                </Breadcrumb.Section>
-                {projectName && (
-                  <Breadcrumb.Divider style={{ color: whiteTransparent(1) }} />
-                )}
-                {projectName && (
+          {showBreadcrumbs && (
+            <>
+              <div style={{ textAlign: "center" }}>
+                <Breadcrumb size="large" style={{ color: whiteTransparent(1) }}>
                   <Breadcrumb.Section
-                    link={onboardingStep !== "mode"}
-                    style={{ color: onboardingStep === "mode" ? whiteTransparent(1) : secondary }}
-                    active={onboardingStep === "mode"}
-                    onClick={() => setOnboardingStep("mode")}
+                    link={onboardingStep !== "project"}
+                    style={{ color: onboardingStep === "project" ? whiteTransparent(1) : secondary }}
+                    active={onboardingStep === "project"}
+                    onClick={() => setOnboardingStep("project")}
                   >
-                    Starting mode
+                    Project
                   </Breadcrumb.Section>
-                )}
-                {projectName && mode && (
-                  <Breadcrumb.Divider style={{ color: whiteTransparent(1) }} />
-                )}
-                {projectName && mode && (
-                  <Breadcrumb.Section
-                    link={onboardingStep !== "data"}
-                    style={{ color: onboardingStep === "data" ? whiteTransparent(1) : secondary }}
-                    active={onboardingStep === "data"}
-                    onClick={() => setOnboardingStep("data")}
-                  >
-                    {mode === "template" ? "Templates" : "Connections"}
-                  </Breadcrumb.Section>
-                )}
-              </Breadcrumb>
-            </div>
-            <Divider hidden />
-          </>
-        )}
-
-        {onboardingStep === "project" && (
-          <Container text>
-            <motion.div
-              animate={{
-                opacity: [0, 0, 1],
-                scale: [0.8, 0.8, 1]
-              }}
-            >
-              <Form size="huge" inverted>
-                <Form.Field>
-                  <Input
-                    placeholder="Name your cool project"
-                    value={projectName}
-                    onChange={(e, data) => setProjectName(data.value)}
-                  />
-                </Form.Field>
-                <Form.Field>
-                  <motion.div whileHover={{ scale: 1.1, translateX: 30 }}>
-                    <Button
-                      secondary
-                      onClick={() => {
-                        setOnboardingStep("mode");
-                        setShowBreadcrumbs(true);
-                      }}
-                      icon
-                      size="huge"
-                      disabled={projectName.length < 1}
-                      style={{ color: blue }}
+                  {projectName && (
+                    <Breadcrumb.Divider style={{ color: whiteTransparent(1) }} />
+                  )}
+                  {projectName && (
+                    <Breadcrumb.Section
+                      link={onboardingStep !== "mode"}
+                      style={{ color: onboardingStep === "mode" ? whiteTransparent(1) : secondary }}
+                      active={onboardingStep === "mode"}
+                      onClick={() => setOnboardingStep("mode")}
                     >
-                      {"Next step "}
-                      <Icon name="arrow right" />
-                    </Button>
-                  </motion.div>
-                </Form.Field>
-              </Form>
-            </motion.div>
-          </Container>
-        )}
-
-        {onboardingStep === "mode" && (
-          <Container text textAlign="center">
-            <motion.div animate={{ scale: [0.8, 1] }} transition={{ duration: 0.3 }}>
-              <Card.Group itemsPerRow={2}>
-                <Card
-                  className="project-segment"
-                  onClick={() => {
-                    setMode("template");
-                    setOnboardingStep("data");
-                  }}
-                  raised={mode === "template"}
-                  color={mode === "template" ? "olive" : null}
-                >
-                  {mode === "template" && (
-                    <Label corner="right" color="olive">
-                      <Icon name="checkmark" />
-                    </Label>
+                      Starting mode
+                    </Breadcrumb.Section>
                   )}
-                  <Card.Content>
-                    <Header icon>
-                      <Icon name="magic" />
-                      {"Start with a template"}
-                    </Header>
-                  </Card.Content>
-                  <Card.Content description style={{ color: blackTransparent(0.8) }}>
-                    <p style={{ fontSize: "1.2em" }}>
-                      {"Get started with dashboards and charts already created for you"}
-                    </p>
-                  </Card.Content>
-                </Card>
-                <Card
-                  className="project-segment"
-                  onClick={() => {
-                    setMode("connection");
-                    setOnboardingStep("data");
-                  }}
-                  raised={mode === "connection"}
-                  color={mode === "connection" ? "olive" : null}
-                >
-                  {mode === "connection" && (
-                    <Label corner="right" color="olive">
-                      <Icon name="checkmark" />
-                    </Label>
+                  {projectName && mode && (
+                    <Breadcrumb.Divider style={{ color: whiteTransparent(1) }} />
                   )}
-                  <Card.Content>
-                    <Header icon>
-                      <Icon name="plug" />
-                      {"Start with a connection"}
-                    </Header>
-                  </Card.Content>
-                  <Card.Content description style={{ color: blackTransparent(0.8) }}>
-                    <p style={{ fontSize: "1.2em" }}>
-                      {"Connect to a data source and create charts from scratch"}
-                    </p>
-                  </Card.Content>
-                </Card>
-              </Card.Group>
-            </motion.div>
-            <Divider hidden />
-          </Container>
-        )}
-
-        <Container>
-          {onboardingStep === "data" && mode === "template" && (
-            <motion.div animate={{ scale: [0.8, 1] }} transition={{ duration: 0.3 }}>
-              <Card.Group itemsPerRow={3} stackable>
-                {renderTemplateCard(simpleanalyticsDash, "saTemplate", "Simple Analytics")}
-                {renderTemplateCard(chartmogulDash, "cmTemplate", "ChartMogul")}
-                {renderTemplateCard(mailgunDash, "mailgunTemplate", "Mailgun")}
-                {renderTemplateCard(gaDash, "googleAnalyticsTemplate", "Google Analytics")}
-                {renderTemplateCard(plausibleDash, "plausibleTemplate", "Plausible Analytics")}
-              </Card.Group>
-            </motion.div>
-          )}
-
-          {onboardingStep === "data" && mode === "connection" && (
-            <motion.div animate={{ scale: [0.8, 1] }} transition={{ duration: 0.3 }}>
-              <Card.Group itemsPerRow={5} stackable>
-                {renderConnectionCard("api", "API")}
-                {renderConnectionCard("mongodb", "MongoDB")}
-                {renderConnectionCard("postgres", "PostgreSQL")}
-                {renderConnectionCard("mysql", "MySQL")}
-                {renderConnectionCard("firestore", "Firestore")}
-                {renderConnectionCard("realtimedb", "Realtime Database")}
-                {renderConnectionCard("googleAnalytics", "Google Analytics")}
-                {renderConnectionCard("customerio", "Customer.io")}
-              </Card.Group>
-            </motion.div>
-          )}
-
-          {onboardingStep === "data" && (
-            <div>
+                  {projectName && mode && (
+                    <Breadcrumb.Section
+                      link={onboardingStep !== "data"}
+                      style={{ color: onboardingStep === "data" ? whiteTransparent(1) : secondary }}
+                      active={onboardingStep === "data"}
+                      onClick={() => setOnboardingStep("data")}
+                    >
+                      {mode === "template" ? "Templates" : "Connections"}
+                    </Breadcrumb.Section>
+                  )}
+                </Breadcrumb>
+              </div>
               <Divider hidden />
-              <p style={{ fontSize: "1.2em", color: whiteTransparent(0.7), textAlign: "center" }}>
-                <i>Make your selection to get started</i>
-              </p>
-            </div>
+            </>
           )}
-        </Container>
 
-        <Divider section hidden />
+          {onboardingStep === "project" && (
+            <Container text>
+              <motion.div
+                animate={{
+                  opacity: !initiated ? [0, 0, 0, 0, 0, 1] : [0, 1],
+                  scale: [0.8, 0.8, 1]
+                }}
+                transition={{ duration: !initiated ? 3 : 0.5 }}
+              >
+                <Form size="huge" inverted>
+                  <Form.Field>
+                    <Input
+                      placeholder="Name your cool project"
+                      value={projectName}
+                      onChange={(e, data) => setProjectName(data.value)}
+                    />
+                  </Form.Field>
+                  <Form.Field>
+                    <motion.div whileHover={{ scale: 1.1, translateX: 30 }}>
+                      <Button
+                        secondary
+                        onClick={() => {
+                          setOnboardingStep("mode");
+                          setShowBreadcrumbs(true);
+                          setInitiated(true);
+                        }}
+                        icon
+                        size="huge"
+                        disabled={projectName.length < 1}
+                        style={{ color: blue }}
+                      >
+                        {"Next step "}
+                        <Icon name="arrow right" />
+                      </Button>
+                    </motion.div>
+                  </Form.Field>
+                </Form>
+              </motion.div>
+            </Container>
+          )}
+
+          {onboardingStep === "mode" && (
+            <Container text textAlign="center">
+              <motion.div animate={{ scale: [0.8, 1] }} transition={{ duration: 0.3 }}>
+                <Card.Group itemsPerRow={2}>
+                  <Card
+                    className="project-segment"
+                    onClick={() => {
+                      setMode("template");
+                      setOnboardingStep("data");
+                    }}
+                    raised={mode === "template"}
+                    color={mode === "template" ? "olive" : null}
+                  >
+                    {mode === "template" && (
+                      <Label corner="right" color="olive">
+                        <Icon name="checkmark" />
+                      </Label>
+                    )}
+                    <Card.Content>
+                      <Header icon>
+                        <Icon name="magic" />
+                        {"Start with a template"}
+                      </Header>
+                    </Card.Content>
+                    <Card.Content description style={{ color: blackTransparent(0.8) }}>
+                      <p style={{ fontSize: "1.2em" }}>
+                        {"Get started with dashboards and charts already created for you"}
+                      </p>
+                    </Card.Content>
+                  </Card>
+                  <Card
+                    className="project-segment"
+                    onClick={() => {
+                      setMode("connection");
+                      setOnboardingStep("data");
+                    }}
+                    raised={mode === "connection"}
+                    color={mode === "connection" ? "olive" : null}
+                  >
+                    {mode === "connection" && (
+                      <Label corner="right" color="olive">
+                        <Icon name="checkmark" />
+                      </Label>
+                    )}
+                    <Card.Content>
+                      <Header icon>
+                        <Icon name="plug" />
+                        {"Start with a connection"}
+                      </Header>
+                    </Card.Content>
+                    <Card.Content description style={{ color: blackTransparent(0.8) }}>
+                      <p style={{ fontSize: "1.2em" }}>
+                        {"Connect to a data source and create charts from scratch"}
+                      </p>
+                    </Card.Content>
+                  </Card>
+                </Card.Group>
+              </motion.div>
+              <Divider hidden />
+            </Container>
+          )}
+
+          <Container>
+            {onboardingStep === "data" && mode === "template" && (
+              <motion.div animate={{ scale: [0.8, 1] }} transition={{ duration: 0.3 }}>
+                <Card.Group itemsPerRow={3} stackable>
+                  {renderTemplateCard(simpleanalyticsDash, "saTemplate", "Simple Analytics")}
+                  {renderTemplateCard(chartmogulDash, "cmTemplate", "ChartMogul")}
+                  {renderTemplateCard(mailgunDash, "mailgunTemplate", "Mailgun")}
+                  {renderTemplateCard(gaDash, "googleAnalyticsTemplate", "Google Analytics")}
+                  {renderTemplateCard(plausibleDash, "plausibleTemplate", "Plausible Analytics")}
+                </Card.Group>
+              </motion.div>
+            )}
+
+            {onboardingStep === "data" && mode === "connection" && (
+              <motion.div animate={{ scale: [0.8, 1] }} transition={{ duration: 0.3 }}>
+                <Card.Group itemsPerRow={5} stackable>
+                  {renderConnectionCard("api", "API")}
+                  {renderConnectionCard("mongodb", "MongoDB")}
+                  {renderConnectionCard("postgres", "PostgreSQL")}
+                  {renderConnectionCard("mysql", "MySQL")}
+                  {renderConnectionCard("firestore", "Firestore")}
+                  {renderConnectionCard("realtimedb", "Realtime Database")}
+                  {renderConnectionCard("googleAnalytics", "Google Analytics")}
+                  {renderConnectionCard("customerio", "Customer.io")}
+                </Card.Group>
+              </motion.div>
+            )}
+
+            {onboardingStep === "data" && (
+              <div>
+                <Divider hidden />
+                <p style={{ fontSize: "1.2em", color: whiteTransparent(0.7), textAlign: "center" }}>
+                  <i>Make your selection to get started</i>
+                </p>
+              </div>
+            )}
+          </Container>
+
+          <Divider section hidden />
+        </motion.div>
 
         <ToastContainer
           position="bottom-right"

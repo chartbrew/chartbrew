@@ -502,7 +502,7 @@ function PublicDashboard(props) {
 
       {charts && charts.length > 0 && _isOnReport()
         && (
-          <div className="main-container" style={{ padding: 20, position: "relative" }}>
+          <div className="main-container" style={styles.mainContainer(width < breakpoints.tablet)}>
             <Dimmer active={loading}>
               <Loader active={loading}>
                 Preparing the dashboard...
@@ -806,6 +806,12 @@ const styles = {
     right: 20,
     zIndex: 10,
   },
+  mainContainer: (mobile) => ({
+    padding: mobile ? 0 : 20,
+    paddingTop: 20,
+    paddingBottom: 20,
+    position: "relative",
+  })
 };
 
 PublicDashboard.propTypes = {

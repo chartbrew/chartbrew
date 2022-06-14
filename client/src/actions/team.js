@@ -469,3 +469,77 @@ export function resendTeamInvite(invite) {
       });
   };
 }
+
+export function getApiKeys(teamId) {
+  if (!cookie.load("brewToken")) {
+    return new Promise((resolve, reject) => reject(new Error("No Token")));
+  }
+  const token = cookie.load("brewToken");
+  const headers = new Headers({
+    "Accept": "application/json",
+    "authorization": `Bearer ${token}`,
+  });
+  return fetch(`${API_HOST}/team/${teamId}/apikey`, { method: "GET", headers })
+    .then((response) => {
+      if (!response.ok) {
+        return new Promise((resolve, reject) => reject(response.statusText));
+      }
+      return response.json();
+    })
+    .then((keys) => {
+      return new Promise(resolve => resolve(keys));
+    })
+    .catch(err => {
+      return new Promise((resolve, reject) => reject(err));
+    });
+}
+
+export function createApiKey(teamId, keyName) {
+  if (!cookie.load("brewToken")) {
+    return new Promise((resolve, reject) => reject(new Error("No Token")));
+  }
+  const token = cookie.load("brewToken");
+  const headers = new Headers({
+    "Accept": "application/json",
+    "content-type": "application/json",
+    "authorization": `Bearer ${token}`,
+  });
+  const body = JSON.stringify({ name: keyName });
+  return fetch(`${API_HOST}/team/${teamId}/apikey`, { method: "POST", body, headers })
+    .then((response) => {
+      if (!response.ok) {
+        return new Promise((resolve, reject) => reject(response.statusText));
+      }
+      return response.json();
+    })
+    .then((keys) => {
+      return new Promise((resolve) => resolve(keys));
+    })
+    .catch(err => {
+      return new Promise((resolve, reject) => reject(err));
+    });
+}
+
+export function deleteApiKey(teamId, keyId) {
+  if (!cookie.load("brewToken")) {
+    return new Promise((resolve, reject) => reject(new Error("No Token")));
+  }
+  const token = cookie.load("brewToken");
+  const headers = new Headers({
+    "Accept": "application/json",
+    "authorization": `Bearer ${token}`,
+  });
+  return fetch(`${API_HOST}/team/${teamId}/apikey/${keyId}`, { method: "DELETE", headers })
+    .then((response) => {
+      if (!response.ok) {
+        return new Promise((resolve, reject) => reject(response.statusText));
+      }
+      return response.json();
+    })
+    .then((keys) => {
+      return new Promise(resolve => resolve(keys));
+    })
+    .catch(err => {
+      return new Promise((resolve, reject) => reject(err));
+    });
+}

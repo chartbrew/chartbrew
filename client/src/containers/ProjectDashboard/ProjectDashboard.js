@@ -30,12 +30,13 @@ import ChartExport from "./components/ChartExport";
 import CreateTemplateForm from "../../components/CreateTemplateForm";
 import { whiteTransparent } from "../../config/colors";
 
+const breakpoints = {
+  mobile: 0,
+  tablet: 768,
+  computer: 1024,
+};
 const AppMedia = createMedia({
-  breakpoints: {
-    mobile: 0,
-    tablet: 768,
-    computer: 1024,
-  },
+  breakpoints,
 });
 const { Media } = AppMedia;
 
@@ -68,7 +69,7 @@ function ProjectDashboard(props) {
   const [exportError, setExportError] = useState(false);
   const [templateVisible, setTemplateVisible] = useState(false);
 
-  const { height } = useWindowSize();
+  const { height, width } = useWindowSize();
 
   useEffect(() => {
     cleanErrors();
@@ -454,7 +455,7 @@ function ProjectDashboard(props) {
             </Menu>
           </div>
         )}
-      <div style={styles.container}>
+      <div style={styles.container(width < breakpoints.tablet)}>
         {connections.length === 0 && charts.length !== 0
             && (
             <Message
@@ -515,12 +516,16 @@ function ProjectDashboard(props) {
           )}
 
         {connections.length > 0 && (
-          <Grid stackable centered style={styles.mainGrid}>
+          <Grid stackable centered style={styles.mainGrid(width < breakpoints.tablet)}>
             {charts.map((chart, index) => {
               if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
               if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />); // eslint-disable-line
               return (
-                <Grid.Column width={chart.chartSize * 4} key={chart.id} style={styles.chartGrid}>
+                <Grid.Column
+                  width={chart.chartSize * 4}
+                  key={chart.id}
+                  style={styles.chartGrid(width < breakpoints.tablet)}
+                >
                   <Chart
                     key={chart.id}
                     chart={chart}
@@ -606,11 +611,12 @@ function ProjectDashboard(props) {
 }
 
 const styles = {
-  container: {
+  container: (mobile) => ({
     flex: 1,
-    padding: 10,
-    paddingLeft: 20,
-  },
+    padding: mobile ? 0 : 10,
+    paddingTop: 10,
+    paddingLeft: mobile ? 0 : 20,
+  }),
   actionBar: {
     paddingRight: 10,
     paddingLeft: 10,
@@ -629,12 +635,16 @@ const styles = {
     bottom: 25,
     right: 25,
   },
-  chartGrid: {
-    padding: 10,
-  },
-  mainGrid: {
-    padding: 10,
-  },
+  chartGrid: (mobile) => ({
+    padding: mobile ? 0 : 10,
+    paddingTop: 10,
+    paddingBottom: 10,
+  }),
+  mainGrid: (mobile) => ({
+    padding: mobile ? 0 : 10,
+    paddingTop: 10,
+    paddingBottom: 10,
+  }),
   addCard: {
     paddingTop: 50,
   },
