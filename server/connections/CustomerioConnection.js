@@ -278,6 +278,12 @@ async function getCustomers(connection, dr) {
     const attrOpt = options;
     attrOpt.url += "/attributes";
     result = await getCustomersAttributes(result.ids, attrOpt);
+
+    // remove the field timestamps until further notice
+    result.customers = result.customers.map((c) => ({
+      ...c,
+      timestamps: null,
+    }));
   }
 
   // clean the results
