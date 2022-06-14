@@ -9,12 +9,30 @@ import {
 } from "semantic-ui-react";
 import moment from "moment";
 
-import { primary } from "../../../config/colors";
+import { chartColors, primary } from "../../../config/colors";
 import connectionImages from "../../../config/connectionImages";
 import DatarequestModal from "./DatarequestModal";
 import DatasetAppearance from "./DatasetAppearance";
 import DatasetData from "./DatasetData";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
+
+const emptyColor = "rgba(0,0,0,0)";
+
+function replaceEmptyColors(colors) {
+  const colorsToAssign = [...chartColors];
+  const newColors = colors.map((color) => {
+    if (color === emptyColor) {
+      const randomSelector = Math.floor(Math.random() * colorsToAssign.length);
+      const selectedColor = colorsToAssign[Math.floor(Math.random() * colorsToAssign.length)];
+      colorsToAssign.splice(randomSelector, 1);
+      return selectedColor;
+    }
+
+    return color;
+  });
+
+  return newColors;
+}
 
 function Dataset(props) {
   const {
@@ -106,18 +124,33 @@ function Dataset(props) {
 
   useEffect(() => {
     // reformat the fill color value based on the chart type
-    if (dataset.multiFill && dataItems && dataItems.data) {
+    if ((chart.type === "pie" || chart.type === "doughnut" || dataset.multiFill)
+      && dataItems
+      && dataItems.data
+    ) {
       let { fillColor } = dataset;
       if (!Array.isArray(fillColor)) {
         fillColor = [fillColor];
       }
 
       for (let i = 0; i < dataItems.data.length; i++) {
-        if (!fillColor[i]) fillColor.push(fillColor[0]);
+        if (!fillColor[i]) {
+          fillColor.push(chartColors[Math.floor(Math.random() * chartColors.length)]);
+        }
       }
 
-      setNewDataset({ ...newDataset, fillColor });
-    } else if (!dataset.multiFill) {
+      fillColor = replaceEmptyColors(fillColor);
+
+      const newDatasetData = { ...newDataset, fillColor };
+
+      if ((chart.type === "pie" || chart.type === "doughnut") && !dataset.multiFill) {
+        newDatasetData.multiFill = true;
+      }
+
+      if (!_.isEqual(dataset.fillColor, fillColor)) {
+        setNewDataset(newDatasetData);
+      }
+    } else if (!dataset.multiFill && chart.type !== "pie" && chart.type !== "doughnut") {
       let newFillColor = newDataset.fillColor;
       if (Array.isArray(newFillColor)) {
         newFillColor = newFillColor[0].replace("\"", "");
@@ -305,7 +338,7 @@ function Dataset(props) {
                 color="blue"
                 disabled={chart.type === "table"}
               >
-                {"Appearance"}
+                {"Chart colors"}
               </Menu.Item>
             </Menu>
           </Grid.Column>
@@ -418,7 +451,7 @@ const styles = {
   },
   datasetColorBtn: (datasetColor) => ({
     cursor: "pointer",
-    backgroundColor: datasetColor === "rgba(0,0,0,0)" ? primary : datasetColor,
+    backgroundColor: datasetColor === emptyColor ? primary : datasetColor,
     border: `1px solid ${primary}`
   }),
 };
