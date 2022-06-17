@@ -5,10 +5,15 @@ const userResponse = require("./userResponse");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
-module.exports = (req, res, next) => {
+module.exports = async (req, res, next) => {
   const token = req.headers.authorization ? req.headers.authorization.replace("Bearer ", "") : "";
 
   if (token) {
+    try {
+      const blacklisted = await db.TokenBlacklist.findOne({ where: { token } });
+      if (blacklisted) return res.status(401).send("Unauthorized access.");
+    } catch (e) { /** */ }
+
     return jwt.verify(token, settings.secret, (err, decoded) => {
       if (err) return res.status(401).send("Unauthorized access.");
       return db.User.findByPk(decoded.id).then((user) => {
