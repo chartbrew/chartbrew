@@ -1,7 +1,6 @@
 {
   "name": "client",
-  "version": "v1.22.0",
-  "private": true,
+  "version": "v1.22.1",
   "author": {
     "email": "hello@chartbrew.com",
     "name": "Chartbrew"
