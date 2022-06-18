@@ -102,7 +102,10 @@ function TableComponent(props) {
                   return (
                     <Table.Cell collapsing {...cell.getCellProps()} style={{ maxWidth: 300 }}>
                       {(!isObject && !isArray) && (
-                        <span title={cellObj.props.value}>{cellObj}</span>
+                        <span title={cellObj.props.value}>
+                          {cellObj.props.value === true || cellObj.props.value === false
+                            ? `${cellObj.props.value}` : cellObj}
+                        </span>
                       )}
                       {(isObject || isArray) && (
                         <Popup
