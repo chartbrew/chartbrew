@@ -12,6 +12,7 @@ import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
 
 import { secondary } from "../../../config/colors";
+import determineType from "../../../modules/determineType";
 
 function ChartFilters(props) {
   const {
@@ -26,10 +27,11 @@ function ChartFilters(props) {
     if (!conditionOpt || !conditionOpt.values) return [];
 
     return conditionOpt.values.map((v) => {
+      const isBoolean = determineType(v) === "boolean";
       return {
         key: v,
-        value: v,
-        text: v,
+        value: isBoolean || v === null ? `${v}` : v,
+        text: isBoolean || v === null ? `${v}` : v,
       };
     });
   };

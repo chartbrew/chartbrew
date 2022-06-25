@@ -98,7 +98,7 @@ function Filters(props) {
   };
 
   const _onAddFilter = () => {
-    if (!filter.value) return;
+    if (!filter.value && filter.value !== false) return;
     onAddFilter(filter);
     setFilter({
       id: uuid(),
