@@ -204,7 +204,7 @@ function compareStrings(data, field, condition) {
 function compareBooleans(data, field, condition) {
   let newData = data;
 
-  if (!condition.value && condition.value !== false
+  if (!condition.value && condition.value !== false && condition.value !== "false"
     && (condition.operator !== "isNull" && condition.operator !== "isNotNull")) {
     return data;
   }
@@ -217,7 +217,7 @@ function compareBooleans(data, field, condition) {
       value = value[selectors[i]];
     }
 
-    if (!value && (value !== 0 || value !== "0")) {
+    if (!value && (value !== 0 || value !== "0") && value !== false) {
       return null;
     }
 
