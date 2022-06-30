@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import {
-  Message, Divider, Container, Segment, Form, Button, Header, Label, Grid, Image,
+  Message, Divider, Container, Segment, Form, Button, Header, Label, Grid, Image, Card,
 } from "semantic-ui-react";
 import { useWindowSize } from "react-use";
 
@@ -30,6 +30,8 @@ const breakpoints = {
   computer: 1024,
 };
 
+const testimonialAvatar = "https://cdn2.chartbrew.com/skyguy.webp";
+
 /*
   The Signup page
 */
@@ -46,6 +48,7 @@ function Signup(props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [signupError, setSignupError] = useState("");
+  const [sideHovered, setSideHovered] = useState(false);
 
   const { height, width } = useWindowSize();
 
@@ -279,8 +282,29 @@ function Signup(props) {
           </Segment>
         </Grid.Column>
         {width > breakpoints.computer && (
-          <Grid.Column width={8} style={styles.sideBackground}>
-            <div />
+          <Grid.Column width={8}>
+            <div
+              style={sideHovered ? styles.sideBackground : styles.sideBackgroundBlurred}
+              onMouseEnter={() => setSideHovered(true)}
+              onMouseLeave={() => setSideHovered(false)}
+            />
+            <Container text style={styles.testimonialCard}>
+              <Card style={{ minWidth: 500, padding: 10 }}>
+                <Card.Content>
+                  <Image centered size="tiny" style={{ borderRadius: 6 }} src={testimonialAvatar} floated="right" alt="Fairchain testimonial" />
+                  <Card.Header>Highly recommend!</Card.Header>
+                  <Card.Meta>
+                    {"Schuyler, Full-stack Developer at "}
+                    <a style={{ color: secondary }} href="https://app.fairchain.art?ref=chartbrew" target="_blank" rel="noopener noreferrer">
+                      Fairchain
+                    </a>
+                  </Card.Meta>
+                  <Card.Description>
+                    <i>{"\"Chartbrew has helped us move away from having to constantly update clunky Google-based charts, but what most impresses me is the responsiveness and the helpfulness of the people behind Chartbrew. Highly recommend!\""}</i>
+                  </Card.Description>
+                </Card.Content>
+              </Card>
+            </Container>
           </Grid.Column>
         )}
       </Grid>
@@ -350,12 +374,30 @@ const styles = {
   },
   sideBackground: {
     backgroundImage: `url(${signupBackground})`,
+    filter: "contrast(100%) blur(0px)",
     backgroundSize: "cover",
     backgroundPosition: "top",
+    width: "100%",
+    height: "100%",
+    transition: "filter 1s ease",
+  },
+  sideBackgroundBlurred: {
+    backgroundImage: `url(${signupBackground})`,
+    filter: "contrast(130%) blur(5px)",
+    backgroundSize: "cover",
+    backgroundPosition: "top",
+    width: "100%",
+    height: "100%",
+    transition: "filter 1s ease",
   },
   mainGrid: (height) => ({
     height: height + 20,
   }),
+  testimonialCard: {
+    position: "absolute",
+    top: "25%",
+    left: "15%",
+  },
 };
 
 Signup.propTypes = {
