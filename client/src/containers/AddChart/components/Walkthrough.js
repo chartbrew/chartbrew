@@ -182,7 +182,7 @@ const steps = {
           </p>
           <p>
             {"Note that you should always start the query with: "}
-            <pre>connection.collection...</pre>
+            <pre>{"collection(\"your_collection\")..."}</pre>
           </p>
         </>
       ),
