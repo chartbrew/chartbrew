@@ -428,7 +428,7 @@ class ConnectionController {
     return this.getConnectionUrl(id)
       .then((url) => {
         const options = {
-          keepAlive: 1,
+          keepAlive: true,
           connectTimeoutMS: 100000,
         };
         mongoConnection = mongoose.createConnection(url, options);
