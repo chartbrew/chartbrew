@@ -30,6 +30,9 @@ class TableView {
                   Header: k, accessor: k, columns: [{ Header: n, accessor: headerKey }]
                 });
               } else if (_.findIndex(tab.columns[headerIndex].columns, { Header: n }) === -1) {
+                if (!tab.columns[headerIndex].columns) {
+                  tab.columns[headerIndex].columns = [];
+                }
                 tab.columns[headerIndex].columns.push({ Header: n, accessor: headerKey });
               }
             });
