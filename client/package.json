@@ -16,7 +16,7 @@
     "@typescript-eslint/eslint-plugin": "^4.6.1",
     "@typescript-eslint/parser": "^4.6.1",
     "ace-builds": "^1.4.12",
-    "allotment": "^1.12.1",
+    "allotment": "1.13.0",
     "bfj": "^7.0.2",
     "camelcase": "^6.1.0",
     "case-sensitive-paths-webpack-plugin": "2.3.0",
