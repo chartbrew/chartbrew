@@ -3,10 +3,7 @@
   "version": "v1.22.1",
   "description": "",
   "main": "index.js",
-  "workspaces": [
-    "client",
-    "server"
-  ],
+  "workspaces": [],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "setup": "npm run prepareSettings && npm install && cd client && npm install && cd ../server/ && npm install",
