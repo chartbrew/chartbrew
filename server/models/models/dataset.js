@@ -164,6 +164,19 @@ module.exports = (sequelize, DataTypes) => {
     sort: {
       type: DataTypes.STRING,
     },
+    columnsOrder: {
+      type: DataTypes.TEXT,
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("columnsOrder"));
+        } catch (e) {
+          return this.getDataValue("columnsOrder");
+        }
+      },
+      set(val) {
+        return this.setDataValue("columnsOrder", JSON.stringify(val));
+      }
+    }
   }, {
     freezeTableName: true,
   });

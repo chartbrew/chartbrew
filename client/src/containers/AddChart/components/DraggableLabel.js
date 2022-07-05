@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useRef } from "react";
 import PropTypes from "prop-types";
-import { Icon, Label } from "semantic-ui-react";
+import { Label } from "semantic-ui-react";
 import { useDrag, useDrop } from "react-dnd";
 
 function DraggableLabel({ field, index, onMove }) {
@@ -32,9 +32,7 @@ function DraggableLabel({ field, index, onMove }) {
       const hoverClientY = clientOffset.y - hoverBoundingRect.top;
       const hoverClientLeft = clientOffset.x - hoverBoundingRect.left;
       const hoverMiddleX = (hoverBoundingRect.right - hoverBoundingRect.left) / 2;
-      // Only perform the move when the mouse has crossed half of the items height
-      // When dragging downwards, only move when the cursor is below 50%
-      // When dragging upwards, only move when the cursor is above 50%
+
       // Dragging downwards
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
         return;
@@ -51,7 +49,7 @@ function DraggableLabel({ field, index, onMove }) {
       if (dragIndex > hoverIndex && hoverClientLeft > hoverMiddleX) {
         return;
       }
-      // Time to actually perform the action
+
       onMove(dragIndex, hoverIndex);
       item.index = hoverIndex; // eslint-disable-line
     },
@@ -81,10 +79,9 @@ function DraggableLabel({ field, index, onMove }) {
         color="olive"
         as="a"
         style={{ ...styles.fieldLabels }}
-        title={field.accessor.replace("?", ".")}
+        title={field.Header.replace("?", ".")}
       >
-        <Icon name="window restore outline" title="Drag to order" />
-        {`${field.accessor.replace("?", ".")}  `}
+        {`${field.Header.replace("?", ".")}  `}
       </Label>
     </div>
   );

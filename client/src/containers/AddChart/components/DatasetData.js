@@ -22,6 +22,16 @@ import autoFieldSelector from "../../../modules/autoFieldSelector";
 import { operations, operators } from "../../../modules/filterOperations";
 import DraggableLabel from "./DraggableLabel";
 
+function formatColumnsForOrdering(columns) {
+  if (!columns) {
+    return [];
+  }
+  return columns.map((column, index) => ({
+    id: index,
+    Header: column,
+  }));
+}
+
 function DatasetData(props) {
   const {
     dataset, requestResult, onUpdate, runRequest, match, chartType, onNoRequest, chartData,
@@ -144,6 +154,20 @@ function DatasetData(props) {
       });
 
       setFieldOptions(tempFieldOptions);
+    }
+
+    if (dataset.columnsOrder) {
+      const notFoundColumns = [];
+      const datasetData = chartData[dataset.legend];
+      if (datasetData && datasetData.columns) {
+        datasetData.columns.forEach((field) => {
+          if (!dataset.columnsOrder.find((column) => column === field.Header)) {
+            notFoundColumns.push(field.Header);
+          }
+        });
+      }
+
+      setTableColumns(formatColumnsForOrdering(dataset.columnsOrder.concat(notFoundColumns)));
     }
   }, [dataset]);
 
@@ -388,18 +412,35 @@ function DatasetData(props) {
 
   const _onDragStateClicked = () => {
     setIsDragState(!isDragState);
+
     const columnsForOrdering = [];
-    const datasetData = chartData[dataset.legend];
-    datasetData.columns.forEach((field, index) => {
-      if (field && field.accessor && field.Header.indexOf("__cb_group") === -1) {
-        columnsForOrdering.push({
-          accessor: field.accessor,
-          id: index,
+    if (!isDragState && (!dataset.columnsOrder || dataset.columnsOrder.length === 0)) {
+      const datasetData = chartData[dataset.legend];
+      if (datasetData && datasetData.columns) {
+        datasetData.columns.forEach((field, index) => {
+          if (field && field.Header && field.Header.indexOf("__cb_group") === -1) {
+            columnsForOrdering.push({
+              Header: field.Header,
+              id: index,
+            });
+          }
         });
       }
-    });
 
-    setTableColumns(columnsForOrdering);
+      setTableColumns(columnsForOrdering);
+    } else {
+      const notFoundColumns = [];
+      const datasetData = chartData[dataset.legend];
+      if (datasetData && datasetData.columns) {
+        datasetData.columns.forEach((field) => {
+          if (!dataset.columnsOrder.find((column) => column === field.Header)) {
+            notFoundColumns.push(field.Header);
+          }
+        });
+      }
+
+      setTableColumns(formatColumnsForOrdering(dataset.columnsOrder.concat(notFoundColumns)));
+    }
   };
 
   const _onMoveLabel = useCallback((dragIndex, hoverIndex) => {
@@ -410,6 +451,20 @@ function DatasetData(props) {
       ],
     }),);
   }, []);
+
+  const _onConfirmColumnOrder = () => {
+    const newColumnsOrder = [];
+    tableColumns.forEach((column) => {
+      newColumnsOrder.push(column.Header);
+    });
+    onUpdate({ columnsOrder: newColumnsOrder });
+    setIsDragState(false);
+  };
+
+  const _onCancelColumnOrder = () => {
+    setIsDragState(false);
+    setTableColumns(formatColumnsForOrdering(dataset.columnsOrder));
+  };
 
   if ((!fieldOptions || !dataset.fieldsSchema) && dataset.connection_id) {
     return (
@@ -726,8 +781,14 @@ function DatasetData(props) {
                   <DndProvider backend={HTML5Backend} key={1} context={window}>
                     <Label.Group>
                       {tableColumns.map((field, index) => {
+                        // check if the field is found in the excluded fields
+                        if (dataset.excludedFields.find((i) => i === field.Header)) {
+                          return (<span key={field.Header} />);
+                        }
+
                         return (
                           <DraggableLabel
+                            key={field.Header}
                             field={field}
                             index={index}
                             onMove={_onMoveLabel}
@@ -738,7 +799,7 @@ function DatasetData(props) {
                   </DndProvider>
                 )}
                 <Label.Group>
-                  {dataset.excludedFields && dataset.excludedFields.map((field) => (
+                  {!isDragState && dataset.excludedFields && dataset.excludedFields.map((field) => (
                     <Label
                       key={field}
                       basic
@@ -780,12 +841,23 @@ function DatasetData(props) {
           <Form.Group>
             <Form.Field>
               <Button
-                icon={isDragState ? "x" : "window restore outline"}
-                content="Reorder table columns"
-                secondary={isDragState}
-                onClick={_onDragStateClicked}
-                size="small"
+                icon={isDragState ? "checkmark" : "window restore outline"}
+                content={isDragState ? "Confirm ordering" : "Reorder columns"}
+                positive={isDragState}
+                onClick={isDragState ? _onConfirmColumnOrder : _onDragStateClicked}
               />
+              {isDragState && (
+                <Button
+                  icon
+                  negative
+                  onClick={_onCancelColumnOrder}
+                  size="small"
+                  basic
+                  title="Cancel ordering"
+                >
+                  <Icon name="undo" />
+                </Button>
+              )}
             </Form.Field>
             <Form.Field>
               <Dropdown
@@ -800,6 +872,7 @@ function DatasetData(props) {
                 value={dataset.groupBy}
                 scrolling
                 title="Group by"
+                size="small"
               />
               <Popup
                 trigger={(
@@ -1125,9 +1198,6 @@ const styles = {
     whiteSpace: "nowrap",
     textOverflow: "ellipsis",
     overflow: "hidden",
-  },
-  pulsating: {
-    animation: "pulse 2s infinite",
   },
 };
 
