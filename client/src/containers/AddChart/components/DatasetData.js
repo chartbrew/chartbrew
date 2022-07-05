@@ -30,7 +30,6 @@ function DatasetData(props) {
   const [formula, setFormula] = useState("");
   const [tableFields, setTableFields] = useState([]);
   const [showTableFields, setShowTableFields] = useState(true);
-  const [selectedField, setSelectedField] = useState("");
 
   // Update the content when there is some data to work with
   useEffect(() => {
@@ -296,7 +295,6 @@ function DatasetData(props) {
   const _onExcludeField = (field) => {
     const excludedFields = dataset.excludedFields || [];
     const newExcludedFields = [...excludedFields, field];
-    setTimeout(() => setSelectedField(""));
     onUpdate({ excludedFields: newExcludedFields });
   };
 
@@ -359,28 +357,6 @@ function DatasetData(props) {
     }
 
     return filteredOptions;
-  };
-
-  const _onSelectField = (field) => {
-    if (selectedField === field.accessor) {
-      setSelectedField("");
-    } else if (selectedField && selectedField !== field.accessor) {
-      const groups = dataset.groups || [];
-      groups.push({ key: selectedField.replace("?", "."), value: field.accessor.replace("?", ".") });
-      onUpdate({ groups });
-      setSelectedField("");
-    } else {
-      setSelectedField(field.accessor);
-    }
-  };
-
-  const _onGroupFields = (e, data) => {
-    const groups = dataset.groups || [];
-    groups.push(
-      { key: selectedField.replace("?", "."), value: data.value.substring(data.value.lastIndexOf("].") + 2) }
-    );
-    onUpdate({ groups });
-    setSelectedField("");
   };
 
   const _onRemoveGroup = (key) => {
@@ -685,66 +661,33 @@ function DatasetData(props) {
       {chartType === "table" && (
         <>
           <Form.Field>
-            {!selectedField && (
-              <Header
-                onClick={() => setShowTableFields(!showTableFields)}
-                style={styles.tableFields}
-              >
-                {"Configure visible columns "}
-                {!showTableFields && (<Icon size="small" name="chevron down" />)}
-                {showTableFields && (<Icon size="small" name="chevron up" />)}
-              </Header>
-            )}
-            {selectedField && (
-              <Header as="h5">
-                Now click on another field to combine them
-              </Header>
-            )}
+            <Header
+              onClick={() => setShowTableFields(!showTableFields)}
+              style={styles.tableFields}
+            >
+              {"Configure visible columns "}
+              {!showTableFields && (<Icon size="small" name="chevron down" />)}
+              {showTableFields && (<Icon size="small" name="chevron up" />)}
+            </Header>
+
             <Transition animation="fade down" visible={showTableFields}>
-              <div>
+              <div style={{ position: "relative" }}>
                 <Label.Group>
                   {tableFields.map((field) => {
                     if (!field || !field.accessor || field.Header.indexOf("__cb_group") > -1) return (<span />);
                     return (
                       <Label
-                        color={selectedField === field.accessor ? "olive" : "violet"}
-                        key={field.accessor}
+                        color={"violet"}
                         as="a"
-                        onClick={() => _onSelectField(field)}
-                        style={
-                          selectedField && selectedField !== field.accessor
-                            ? { ...styles.pulsating, ...styles.fieldLabels } : styles.fieldLabels
-                        }
+                        style={styles.fieldLabels}
                         title={field.accessor.replace("?", ".")}
                       >
-                        {!selectedField && (<Icon name="eye" onClick={() => _onExcludeField(field.accessor)} />)}
-                        {selectedField && selectedField !== field.accessor && (
-                          <Icon name="code branch" />
-                        )}
+                        <Icon name="eye" onClick={() => _onExcludeField(field.accessor)} title="Hide field" />
                         {`${field.accessor.replace("?", ".")}  `}
                       </Label>
                     );
                   })}
                 </Label.Group>
-
-                {selectedField && (
-                  <Form>
-                    <Form.Field>
-                      <label>Or select a specific field</label>
-                      <Dropdown
-                        icon={null}
-                        header="Type to search"
-                        button
-                        className="small button"
-                        options={fieldOptions}
-                        search
-                        text={"Select a field"}
-                        onChange={_onGroupFields}
-                        scrolling
-                      />
-                    </Form.Field>
-                  </Form>
-                )}
 
                 <Label.Group>
                   {dataset.excludedFields && dataset.excludedFields.map((field) => (
