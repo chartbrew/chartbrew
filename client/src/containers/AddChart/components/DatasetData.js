@@ -46,6 +46,7 @@ function DatasetData(props) {
   const [showTableFields, setShowTableFields] = useState(true);
   const [isDragState, setIsDragState] = useState(false);
   const [tableColumns, setTableColumns] = useState([]);
+  const [reorderLoading, setReorderLoading] = useState(false);
 
   // Update the content when there is some data to work with
   useEffect(() => {
@@ -453,12 +454,21 @@ function DatasetData(props) {
   }, []);
 
   const _onConfirmColumnOrder = () => {
+    setReorderLoading(true);
+
     const newColumnsOrder = [];
     tableColumns.forEach((column) => {
       newColumnsOrder.push(column.Header);
     });
-    onUpdate({ columnsOrder: newColumnsOrder });
-    setIsDragState(false);
+    onUpdate({ columnsOrder: newColumnsOrder })
+      .then(() => {
+        setReorderLoading(false);
+        setIsDragState(false);
+      })
+      .catch(() => {
+        setReorderLoading(false);
+        setIsDragState(false);
+      });
   };
 
   const _onCancelColumnOrder = () => {
@@ -782,7 +792,9 @@ function DatasetData(props) {
                     <Label.Group>
                       {tableColumns.map((field, index) => {
                         // check if the field is found in the excluded fields
-                        if (dataset.excludedFields.find((i) => i === field.Header)) {
+                        if (dataset.excludedFields
+                          && dataset.excludedFields.find((i) => i === field.Header)
+                        ) {
                           return (<span key={field.Header} />);
                         }
 
@@ -845,6 +857,7 @@ function DatasetData(props) {
                 content={isDragState ? "Confirm ordering" : "Reorder columns"}
                 positive={isDragState}
                 onClick={isDragState ? _onConfirmColumnOrder : _onDragStateClicked}
+                loading={reorderLoading}
               />
               {isDragState && (
                 <Button
