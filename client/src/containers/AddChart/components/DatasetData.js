@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
@@ -11,12 +11,16 @@ import uuid from "uuid/v4";
 import _ from "lodash";
 import { formatISO, format } from "date-fns";
 import { enGB } from "date-fns/locale";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import update from "immutability-helper";
 
 import { runRequest as runRequestAction } from "../../../actions/dataset";
 import fieldFinder from "../../../modules/fieldFinder";
 import { blackTransparent, secondary } from "../../../config/colors";
 import autoFieldSelector from "../../../modules/autoFieldSelector";
 import { operations, operators } from "../../../modules/filterOperations";
+import DraggableLabel from "./DraggableLabel";
 
 function DatasetData(props) {
   const {
@@ -30,6 +34,8 @@ function DatasetData(props) {
   const [formula, setFormula] = useState("");
   const [tableFields, setTableFields] = useState([]);
   const [showTableFields, setShowTableFields] = useState(true);
+  const [isDragState, setIsDragState] = useState(false);
+  const [tableColumns, setTableColumns] = useState([]);
 
   // Update the content when there is some data to work with
   useEffect(() => {
@@ -366,6 +372,45 @@ function DatasetData(props) {
     onUpdate({ groups: newGroups });
   };
 
+  const _getGroupByFields = () => {
+    return fieldOptions.filter((f) => {
+      if (f.type !== "object" && f.type !== "array") {
+        if (f.key.replace("root[].", "").indexOf(".") === -1) return true;
+      }
+
+      return false;
+    });
+  };
+
+  const _onChangeGroupBy = (e, data) => {
+    onUpdate({ groupBy: data.value });
+  };
+
+  const _onDragStateClicked = () => {
+    setIsDragState(!isDragState);
+    const columnsForOrdering = [];
+    const datasetData = chartData[dataset.legend];
+    datasetData.columns.forEach((field, index) => {
+      if (field && field.accessor && field.Header.indexOf("__cb_group") === -1) {
+        columnsForOrdering.push({
+          accessor: field.accessor,
+          id: index,
+        });
+      }
+    });
+
+    setTableColumns(columnsForOrdering);
+  };
+
+  const _onMoveLabel = useCallback((dragIndex, hoverIndex) => {
+    setTableColumns((prevColumns) => update(prevColumns, {
+      $splice: [
+        [dragIndex, 1],
+        [hoverIndex, 0, prevColumns[dragIndex]],
+      ],
+    }),);
+  }, []);
+
   if ((!fieldOptions || !dataset.fieldsSchema) && dataset.connection_id) {
     return (
       <Container textAlign="center">
@@ -389,20 +434,6 @@ function DatasetData(props) {
       </Container>
     );
   }
-
-  const _getGroupByFields = () => {
-    return fieldOptions.filter((f) => {
-      if (f.type !== "object" && f.type !== "array") {
-        if (f.key.replace("root[].", "").indexOf(".") === -1) return true;
-      }
-
-      return false;
-    });
-  };
-
-  const _onChangeGroupBy = (e, data) => {
-    onUpdate({ groupBy: data.value });
-  };
 
   if (!dataset.connection_id) {
     return (
@@ -672,23 +703,40 @@ function DatasetData(props) {
 
             <Transition animation="fade down" visible={showTableFields}>
               <div style={{ position: "relative" }}>
-                <Label.Group>
-                  {tableFields.map((field) => {
-                    if (!field || !field.accessor || field.Header.indexOf("__cb_group") > -1) return (<span />);
-                    return (
-                      <Label
-                        color={"violet"}
-                        as="a"
-                        style={styles.fieldLabels}
-                        title={field.accessor.replace("?", ".")}
-                      >
-                        <Icon name="eye" onClick={() => _onExcludeField(field.accessor)} title="Hide field" />
-                        {`${field.accessor.replace("?", ".")}  `}
-                      </Label>
-                    );
-                  })}
-                </Label.Group>
+                {!isDragState && (
+                  <Label.Group>
+                    {tableFields.map((field) => {
+                      if (!field || !field.accessor || field.Header.indexOf("__cb_group") > -1) return (<span />);
+                      return (
+                        <Label
+                          color={"violet"}
+                          as="a"
+                          style={styles.fieldLabels}
+                          title={field.accessor.replace("?", ".")}
+                        >
+                          <Icon name="eye" onClick={() => _onExcludeField(field.accessor)} title="Hide field" />
+                          {`${field.accessor.replace("?", ".")}  `}
+                        </Label>
+                      );
+                    })}
+                  </Label.Group>
+                )}
 
+                {isDragState && tableColumns.length > 0 && (
+                  <DndProvider backend={HTML5Backend} key={1} context={window}>
+                    <Label.Group>
+                      {tableColumns.map((field, index) => {
+                        return (
+                          <DraggableLabel
+                            field={field}
+                            index={index}
+                            onMove={_onMoveLabel}
+                          />
+                        );
+                      })}
+                    </Label.Group>
+                  </DndProvider>
+                )}
                 <Label.Group>
                   {dataset.excludedFields && dataset.excludedFields.map((field) => (
                     <Label
@@ -729,35 +777,43 @@ function DatasetData(props) {
               </div>
             </Transition>
           </Form.Field>
-          <Form.Field>
-            <label>
-              Group final results by
-            </label>
-
-            <Dropdown
-              icon={null}
-              header="Type to search"
-              button
-              className="small button"
-              options={_getGroupByFields()}
-              search
-              text={dataset.groupBy || "Select a field"}
-              onChange={_onChangeGroupBy}
-              value={dataset.groupBy}
-              scrolling
-            />
-            <Popup
-              trigger={(
-                <Button
-                  icon="x"
-                  basic
-                  style={styles.addConditionBtn}
-                  onClick={() => _onChangeGroupBy(null, { value: null })}
-                />
-              )}
-              content="Clear the grouping"
-            />
-          </Form.Field>
+          <Form.Group>
+            <Form.Field>
+              <Button
+                icon={isDragState ? "x" : "window restore outline"}
+                content="Reorder table columns"
+                secondary={isDragState}
+                onClick={_onDragStateClicked}
+                size="small"
+              />
+            </Form.Field>
+            <Form.Field>
+              <Dropdown
+                icon={null}
+                header="Type to search"
+                button
+                className="small button"
+                options={_getGroupByFields()}
+                search
+                text={dataset.groupBy || "Group by"}
+                onChange={_onChangeGroupBy}
+                value={dataset.groupBy}
+                scrolling
+                title="Group by"
+              />
+              <Popup
+                trigger={(
+                  <Button
+                    icon="x"
+                    basic
+                    style={styles.addConditionBtn}
+                    onClick={() => _onChangeGroupBy(null, { value: null })}
+                  />
+                )}
+                content="Clear the grouping"
+              />
+            </Form.Field>
+          </Form.Group>
         </>
       )}
       <Form.Field>
