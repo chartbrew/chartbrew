@@ -76,13 +76,12 @@ const styles = {
     minHeight: window.innerHeight,
     paddingBottom: 50,
     paddingTop: 50,
+    overflow: "hidden",
   },
   signupText: {
     color: "white",
   },
   verticalPadding: {
-    // paddingRight: 10,
-    // paddingLeft: 10,
     maxWidth: 600,
   },
 };

@@ -2,11 +2,23 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import {
-  Message, Divider, Container, Segment, Form, Button, Header, Label, Grid, Image, Card,
-} from "semantic-ui-react";
 import { useWindowSize } from "react-use";
+import {
+  Button,
+  Card,
+  Container,
+  Grid,
+  Image,
+  Loading,
+  Row,
+  Spacer,
+  Text,
+  Input,
+  Link as LinkNext,
+  Avatar,
+} from "@nextui-org/react";
 
+import { ArrowRight, Message, User } from "react-iconly";
 import {
   createUser as createUserAction,
   createInvitedUser as createInvitedUserAction,
@@ -19,10 +31,10 @@ import {
   password as passwordValidation
 } from "../config/validations";
 import cbLogoSmall from "../assets/logo_blue.png";
-import { secondary } from "../config/colors";
+import {
+  negative, positive, secondary, whiteTransparent
+} from "../config/colors";
 import signupBackground from "../assets/signup_background.webp";
-
-import { ONE_ACCOUNT_ENABLED } from "../config/settings";
 
 const breakpoints = {
   mobile: 0,
@@ -41,7 +53,6 @@ function Signup(props) {
   } = props;
 
   const [loading, setLoading] = useState(false);
-  const [oaloading, setOaloading] = useState(false);
   const [addedToTeam, setAddedToTeam] = useState(false);
   const [errors, setErrors] = useState({});
   const [name, setName] = useState("");
@@ -116,154 +127,141 @@ function Signup(props) {
     const data = event.detail;
 
     const params = new URLSearchParams(document.location.search);
-    setOaloading(true);
     if (params.has("inviteToken")) {
       _createInvitedUser(data, params.get("inviteToken"));
     } else {
       oneaccountAuth(data)
         .then(() => {
-          setOaloading(false);
           history.push("/user");
         });
     }
   };
 
-  const socialSignup = () => {
-    return (
-      <Container>
-        <Button
-          loading={oaloading}
-          size="small"
-          className="oneaccount-button oneaccount-show"
-          style={styles.oneaccount}
-          fluid
-        >
-          {" "}
-          <OneaccountSVG style={styles.oneaccountIcon} />
-          Sign up with One account
-        </Button>
-      </Container>
-    );
-  };
-
   return (
     <div style={styles.container(height)}>
-      <Grid
-        centered
-        columns={width < breakpoints.computer ? 1 : 2}
-        style={styles.mainGrid(height)}
-        stackable
-      >
-        <Grid.Column width={width < breakpoints.computer ? 12 : 8}>
-          <Segment basic text textAlign="left" padded={width < breakpoints.tablet ? null : "very"}>
-            <Link to="/">
-              <Image centered size="tiny" src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
-            </Link>
-            <Header as="h2" style={{ marginTop: 10, textAlign: "center" }}>
-              {"Let's get you started with your new account"}
-              <Header.Subheader>Your live, connected dashboards await</Header.Subheader>
-            </Header>
-            <Divider hidden />
+      <Grid.Container style={styles.mainGrid(height)}>
+        <Grid xs={12} sm={6}>
+          <Container xs>
+            <Spacer size={2} />
+            <Row>
+              <Link to="/">
+                <Image centered size="tiny" src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
+              </Link>
+            </Row>
+            <Spacer size={1} />
+            <Row>
+              <Text h2>
+                {"Let's get you started with your new account"}
+              </Text>
+            </Row>
+            <Spacer y={2} />
 
-            <Form size="large" onSubmit={submitUser}>
-              <Header size="mini">{"But first, how can we call you?"}</Header>
-              <Form.Field>
-                <Form.Input
-                  icon="user"
-                  iconPosition="left"
+            <form onSubmit={submitUser}>
+              <Row>
+                <Text>{"But first, how can we call you?"}</Text>
+              </Row>
+              <Spacer y={0.5} />
+              <Row>
+                <Input
+                  bordered
+                  contentRight={<User />}
                   type="text"
                   placeholder="Enter your name"
-                  onChange={(e, data) => {
-                    setName(data.value);
+                  onChange={(e) => {
+                    setName(e.target.value);
                     setErrors({ ...errors, name: "" });
                   }}
                   value={name}
-                />
-                {errors.name && (
-                  <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
-                    {"Please enter your name"}
-                  </Label>
-                )}
-              </Form.Field>
-
-              <Header size="mini" style={styles.leftAligned}>{"Enter your new sign in details"}</Header>
-              <Form.Field>
-                <Form.Input
-                  icon="mail"
-                  iconPosition="left"
+                  fullWidth
+                  size="lg"
+                  />
+              </Row>
+              <Spacer y={1} />
+              {errors.name && (
+              <Row>
+                <Text color={negative}>
+                  {"Please enter your name"}
+                </Text>
+              </Row>
+              )}
+              <Row>
+                <Text>{"Enter your new sign in details"}</Text>
+              </Row>
+              <Spacer y={0.5} />
+              <Row>
+                <Input
+                  bordered
+                  contentRight={<Message />}
                   type="email"
                   placeholder="Enter your email"
-                  onChange={(e, data) => {
-                    setEmail(data.value);
+                  onChange={(e) => {
+                    setEmail(e.target.value);
                     setErrors({ ...errors, email: "" });
                   }}
                   value={email}
-                />
-                {errors.email && (
-                  <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
-                    {"Please enter a valid email"}
-                  </Label>
-                )}
-              </Form.Field>
-              <Form.Field>
-                <Form.Input
+                  fullWidth
+                  size="lg"
+                  />
+              </Row>
+              {errors.email && (
+              <Row>
+                <Text color={negative}>
+                  {"Please enter a valid email"}
+                </Text>
+              </Row>
+              )}
+              <Spacer y={1} />
+              <Row>
+                <Input.Password
+                  bordered
                   icon="lock"
                   iconPosition="left"
                   type="password"
                   placeholder="Enter a secure password"
-                  onChange={(e, data) => {
-                    setPassword(data.value);
+                  onChange={(e) => {
+                    setPassword(e.target.value);
                     setErrors({ ...errors, password: "" });
                   }}
                   value={password}
-                />
-                {errors.password && (
-                  <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
-                    {errors.password}
-                  </Label>
-                )}
-              </Form.Field>
-
-              <Form.Field>
+                  fullWidth
+                  size="lg"
+                  />
+              </Row>
+              {errors.password && (
+              <Row>
+                <Text color={negative}>
+                  {errors.password}
+                </Text>
+              </Row>
+              )}
+              <Spacer y={1} />
+              <Row>
                 <Button
                   onClick={submitUser}
-                  primary
                   disabled={loading}
-                  loading={loading}
                   type="submit"
-                  size="large"
-                  fluid
-                >
-                  Continue
+                  size="lg"
+                  iconRight={<ArrowRight />}
+                  auto
+                  >
+                  {!loading && "Continue"}
+                  {loading && <Loading type="points" color="currentColor" />}
                 </Button>
-              </Form.Field>
+              </Row>
               {signupError && (
-                <Message negative>
-                  <Message.Header>{signupError.message || signupError}</Message.Header>
-                  <p>Please try it again.</p>
-                </Message>
+              <Row>
+                <Text b color={negative}>{signupError.message || signupError}</Text>
+              </Row>
               )}
-              {addedToTeam
-                && (
-                <Message positive>
-                  <Message.Header>
-                    You created a new account and were added to the team
-                  </Message.Header>
-                  <p>{"We will redirect you to your dashboard now..."}</p>
-                </Message>
-                )}
-            </Form>
+              {addedToTeam && (
+              <Row>
+                <Text color={positive}>
+                  {"You created a new account and were added to the team. We will redirect you to your dashboard now..."}
+                </Text>
+              </Row>
+              )}
+            </form>
 
-            {ONE_ACCOUNT_ENABLED
-                  && (
-                    <>
-                      <Divider horizontal>
-                        Or
-                      </Divider>
-                      {socialSignup()}
-                    </>
-                  )}
-            <Divider hidden />
             <p>
               {"By signing up for a Chartbrew account, you agree to our "}
               <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/TermsAndConditions.md" rel="noopener noreferrer" target="_blank">Terms of Service</a>
@@ -279,35 +277,43 @@ function Signup(props) {
                 {" "}
               </p>
             </div>
-          </Segment>
-        </Grid.Column>
-        {width > breakpoints.computer && (
-          <Grid.Column width={8}>
+          </Container>
+        </Grid>
+        {width > breakpoints.tablet && (
+          <Grid xs={12} sm={6}>
             <div
               style={sideHovered ? styles.sideBackground : styles.sideBackgroundBlurred}
               onMouseEnter={() => setSideHovered(true)}
               onMouseLeave={() => setSideHovered(false)}
             />
-            <Container text style={styles.testimonialCard}>
+            <Container md style={styles.testimonialCard}>
               <Card style={{ minWidth: 500, padding: 10 }}>
-                <Card.Content>
-                  <Image centered size="tiny" style={{ borderRadius: 6 }} src={testimonialAvatar} floated="right" alt="Fairchain testimonial" />
-                  <Card.Header>Highly recommend!</Card.Header>
-                  <Card.Meta>
-                    {"Schuyler, Full-stack Developer at "}
-                    <a style={{ color: secondary }} href="https://app.fairchain.art?ref=chartbrew" target="_blank" rel="noopener noreferrer">
-                      Fairchain
-                    </a>
-                  </Card.Meta>
-                  <Card.Description>
-                    <i>{"\"Chartbrew has helped us move away from having to constantly update clunky Google-based charts, but what most impresses me is the responsiveness and the helpfulness of the people behind Chartbrew. Highly recommend!\""}</i>
-                  </Card.Description>
-                </Card.Content>
+                <Card.Header>
+                  <Avatar color="gradient" bordered squared size="lg" src={testimonialAvatar} alt="Fairchain testimonial" />
+                  <Grid.Container css={{ pl: "$6" }}>
+                    <Grid xs={12}>
+                      <Text h4 css={{ lineHeight: "$xs" }}>
+                        Schuyler
+                      </Text>
+                    </Grid>
+                    <Grid xs={12}>
+                      <Text css={{ color: "$accents8" }}>
+                        {"Full-stack Developer at "}
+                        <LinkNext href="https://fairchain.com" rel="noopener noreferrer" target="_blank">
+                          Fairchain
+                        </LinkNext>
+                      </Text>
+                    </Grid>
+                  </Grid.Container>
+                </Card.Header>
+                <Card.Body>
+                  <i>{"\"Chartbrew has helped us move away from having to constantly update clunky Google-based charts, but what most impresses me is the responsiveness and the helpfulness of the people behind Chartbrew. Highly recommend!\""}</i>
+                </Card.Body>
               </Card>
             </Container>
-          </Grid.Column>
+          </Grid>
         )}
-      </Grid>
+      </Grid.Container>
     </div>
   );
 }
@@ -356,7 +362,7 @@ const styles = {
     verticalAlign: "middle",
   },
   container: (height) => ({
-    // backgroundColor: blue,
+    backgroundColor: whiteTransparent(1),
     minHeight: height,
   }),
   loginText: {
@@ -396,7 +402,8 @@ const styles = {
   testimonialCard: {
     position: "absolute",
     top: "25%",
-    left: "15%",
+    right: "5%",
+    width: "40%",
   },
 };
 
