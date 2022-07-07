@@ -26,6 +26,10 @@ export function blackTransparent(opacity = 1.0) {
   return `rgba(0, 0, 0, ${opacity})`;
 }
 
+export function darkTransparent(opacity = 1.0) {
+  return `rgba(9, 21, 28, ${opacity})`;
+}
+
 export const chartColors = ["#1F77B4", "#FF7F0E", "#2CA02C", "#D62728", "#9467BD", "#8C564B", "#CFECF9", "#7F7F7F", "#BCBD22", "#17BECF"];
 
 export const Colors = {
