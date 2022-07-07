@@ -35,6 +35,7 @@ function formatColumnsForOrdering(columns) {
 function DatasetData(props) {
   const {
     dataset, requestResult, onUpdate, runRequest, match, chartType, onNoRequest, chartData,
+    dataLoading,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -46,7 +47,6 @@ function DatasetData(props) {
   const [showTableFields, setShowTableFields] = useState(true);
   const [isDragState, setIsDragState] = useState(false);
   const [tableColumns, setTableColumns] = useState([]);
-  const [reorderLoading, setReorderLoading] = useState(false);
 
   // Update the content when there is some data to work with
   useEffect(() => {
@@ -183,6 +183,8 @@ function DatasetData(props) {
       setTableFields(flatColumns);
     }
   }, [chartData]);
+
+  useEffect(() => { if (!dataLoading) setIsDragState(false); }, [dataLoading]);
 
   const _selectXField = (e, data) => {
     onUpdate({ xAxis: data.value });
@@ -454,21 +456,11 @@ function DatasetData(props) {
   }, []);
 
   const _onConfirmColumnOrder = () => {
-    setReorderLoading(true);
-
     const newColumnsOrder = [];
     tableColumns.forEach((column) => {
       newColumnsOrder.push(column.Header);
     });
-    onUpdate({ columnsOrder: newColumnsOrder })
-      .then(() => {
-        setReorderLoading(false);
-        setIsDragState(false);
-      })
-      .catch(() => {
-        setReorderLoading(false);
-        setIsDragState(false);
-      });
+    onUpdate({ columnsOrder: newColumnsOrder });
   };
 
   const _onCancelColumnOrder = () => {
@@ -857,7 +849,7 @@ function DatasetData(props) {
                 content={isDragState ? "Confirm ordering" : "Reorder columns"}
                 positive={isDragState}
                 onClick={isDragState ? _onConfirmColumnOrder : _onDragStateClicked}
-                loading={reorderLoading}
+                loading={dataLoading}
               />
               {isDragState && (
                 <Button
@@ -1136,6 +1128,7 @@ DatasetData.defaultProps = {
   requestResult: null,
   chartType: "",
   chartData: null,
+  dataLoading: false,
 };
 
 DatasetData.propTypes = {
@@ -1147,6 +1140,7 @@ DatasetData.propTypes = {
   runRequest: PropTypes.func.isRequired,
   onNoRequest: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
+  dataLoading: PropTypes.bool,
 };
 
 function FormulaTips() {

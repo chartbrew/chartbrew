@@ -353,6 +353,7 @@ function Dataset(props) {
                 chartData={chart.chartData}
                 onUpdate={(data) => onUpdate(data)}
                 onNoRequest={_openConfigModal}
+                dataLoading={loading}
               />
             </Grid.Column>
           </Grid.Row>
