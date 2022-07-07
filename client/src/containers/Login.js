@@ -3,16 +3,13 @@ import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import {
-  Message, Container, Segment, Header
-} from "semantic-ui-react";
-import {
-  Text,
+  Text, Container, Card, Row, Spacer,
 } from "@nextui-org/react";
 import _ from "lodash";
 
 import LoginForm from "../components/LoginForm";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
-import { blue } from "../config/colors";
+import { blue, negative } from "../config/colors";
 import cbLogoSmall from "../assets/logo_inverted.png";
 
 /*
@@ -28,27 +25,46 @@ function Login(props) {
 
   return (
     <div style={styles.container}>
-      <Container text textAlign="center">
-        <Link to="/">
-          <img size="tiny" src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
-        </Link>
-        <Segment color="olive" raised style={styles.verticalPadding} padded>
-          <Text h2 style={{ marginTop: 0 }}>{"Log in to your account"}</Text>
-          <Header textAlign="left" as="h5">{"Enter your login details"}</Header>
-          <LoginForm />
-          {loginError && (
-            <Message negative>
-              <Message.Header>{loginError.message}</Message.Header>
-              <p>{"Please try it again."}</p>
-            </Message>
-          )}
-        </Segment>
-        <div>
-          <p style={styles.signupText}>
-            {" You don't have an account yet? "}
-            <Link to={"/signup"}>Sign up here</Link>
-          </p>
-        </div>
+      <Container md>
+        <Row justify="center" align="center">
+          <Link to="/">
+            <img size="tiny" src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
+          </Link>
+        </Row>
+        <Spacer y={1} />
+        <Row justify="center" align="center">
+          <Container sm>
+            <Row justify="center" align="center">
+              <Card style={styles.verticalPadding}>
+                <Card.Header>
+                  <Text h3 style={{ marginTop: 0 }}>{"Welcome back to Chartbrew"}</Text>
+                </Card.Header>
+                <Card.Body>
+                  <Spacer y={1} />
+                  <LoginForm />
+                </Card.Body>
+                {loginError && (
+                  <Card.Footer>
+                    <Row>
+                      <Text h4 color={negative}>{loginError.message}</Text>
+                    </Row>
+                    <Row>
+                      <Text color={negative}>{"Please try it again."}</Text>
+                    </Row>
+                  </Card.Footer>
+                )}
+              </Card>
+            </Row>
+          </Container>
+        </Row>
+        <Row justify="center" align="center">
+          <div>
+            <p style={styles.signupText}>
+              {" You don't have an account yet? "}
+              <Link to={"/signup"}>Sign up here</Link>
+            </p>
+          </div>
+        </Row>
       </Container>
     </div>
   );
@@ -65,8 +81,9 @@ const styles = {
     color: "white",
   },
   verticalPadding: {
-    paddingRight: 20,
-    paddingLeft: 20
+    // paddingRight: 10,
+    // paddingLeft: 10,
+    maxWidth: 600,
   },
 };
 

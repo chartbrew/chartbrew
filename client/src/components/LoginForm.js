@@ -3,12 +3,12 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import {
-  Container, Form, Divider, Message, Icon, Label, Item, Modal,
-  Header, Input, TransitionablePortal,
+  Label,
 } from "semantic-ui-react";
 import {
-  Button, Loading,
+  Button, Loading, Input, Row, Spacer, Link, Modal, Text, Container,
 } from "@nextui-org/react";
+import { ArrowRight, Message } from "react-iconly";
 
 import {
   login as loginAction,
@@ -19,6 +19,7 @@ import { addTeamMember as addTeamMemberAction } from "../actions/team";
 import { required, email as validateEmail } from "../config/validations";
 
 import { ONE_ACCOUNT_ENABLED } from "../config/settings";
+import { negative } from "../config/colors";
 
 /*
   Contains login functionality
@@ -77,15 +78,18 @@ function LoginForm(props) {
   const socialSignin = () => {
     return (
       <Container>
-        <Button
-          loading={oaloading}
-          size="large"
-          className="oneaccount-button oneaccount-show"
-          style={styles.oneaccount}>
-          {" "}
-          <OneaccountSVG style={styles.oneaccountIcon} />
-          Sign in with One account
-        </Button>
+        <Spacer y={2} />
+        <Row justify="center" align="center">
+          <Button
+            loading={oaloading}
+            className="oneaccount-button oneaccount-show"
+            style={styles.oneaccount}
+          >
+            {" "}
+            <OneaccountSVG style={styles.oneaccountIcon} />
+            Sign in with One account
+          </Button>
+        </Row>
       </Container>
     );
   };
@@ -131,115 +135,117 @@ function LoginForm(props) {
 
   return (
     <div style={styles.container}>
-      <Form size="large" onSubmit={loginUser}>
-        <Form.Field>
-          <Form.Input
-            icon="mail"
-            iconPosition="left"
-            type="email"
-            placeholder="Enter your email"
-            onChange={(e, data) => {
-              setEmail(data.value);
-              setErrors({ ...errors, email: "" });
-            }}
-            value={email}
-          />
-          {errors.email && (
-            <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
-              {"Email is not valid"}
-            </Label>
-          )}
-        </Form.Field>
-
-        <Form.Field>
-          <Form.Input
-            icon="lock"
-            iconPosition="left"
-            type="password"
-            placeholder="Enter your password"
-            onChange={(e, data) => {
-              setPassword(data.value);
-              setErrors({ ...errors, password: "" });
-            }}
-            value={password}
-          />
-          {errors.password && (
-            <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
-              {"Please enter your password"}
-            </Label>
-          )}
-        </Form.Field>
-
-        <Button
-          onClick={loginUser}
-          iconRight={(<Icon name="right arrow" />)}
-          size="lg"
-          primary
-          shadow
-          disabled={loading}
-          loading={loading}
-          type="submit"
-        >
-          {loading && (<Loading type="points" color="currentColor" size="sm" />)}
-          Login
-        </Button>
-
-        <Item
-          style={{ paddingTop: 10 }}
-          onClick={() => setForgotModal(true)}
-          >
-          <a href="#">Did you forget your password?</a>
-        </Item>
-      </Form>
-
-      <TransitionablePortal open={forgotModal}>
-        <Modal open={forgotModal} size="small" onClose={() => setForgotModal(false)}>
-          <Header
-            content="Reset your password"
-            inverted
-            />
-          <Modal.Content>
-            <Header size="small">{"We will send you an email with further instructions on your email"}</Header>
+      <form onSubmit={loginUser}>
+        <Container>
+          <Row>
             <Input
-              placeholder="Enter your email here"
-              fluid
-              onChange={(e, data) => setResetEmail(data.value)}
-              />
-
-            {resetDone && (
-              <Message positive>
-                <Message.Header>{"We will send further instructions over email if the address is registered with Chartbrew."}</Message.Header>
-              </Message>
+              contentRight={<Message />}
+              type="email"
+              placeholder="Enter your email"
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setErrors({ ...errors, email: "" });
+              }}
+              value={email}
+              size="lg"
+              fullWidth
+            />
+          </Row>
+          {errors.email && (
+            <Row>
+              <Text color={negative}>
+                {"Email is not valid"}
+              </Text>
+            </Row>
+          )}
+          <Spacer y={1} />
+          <Row>
+            <Input.Password
+              type="password"
+              placeholder="Enter your password"
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setErrors({ ...errors, password: "" });
+              }}
+              value={password}
+              size="lg"
+              fullWidth
+            />
+            {errors.password && (
+              <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
+                {"Please enter your password"}
+              </Label>
             )}
-            {resetError && (
-              <Message negative>
-                <Message.Header>{resetError}</Message.Header>
-              </Message>
-            )}
-          </Modal.Content>
-          <Modal.Actions>
-            <Button onClick={() => setForgotModal(false)}>
-              Close
-            </Button>
+          </Row>
+          <Spacer y={1} />
+          <Row justify="center" align="center">
             <Button
+              onClick={loginUser}
+              iconRight={!loading && <ArrowRight />}
+              size="lg"
               primary
-              disabled={resetDone}
-              icon
-              labelPosition="right"
-              loading={resetLoading}
-              onClick={_onSendResetRequest}
+              shadow
+              disabled={loading}
+              loading={loading}
+              type="submit"
+              auto
             >
-              <Icon name="checkmark" />
-              Send password reset email
+              {loading && (<Loading type="points" color="currentColor" size="sm" />)}
+              {!loading && "Login"}
             </Button>
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
+          </Row>
+          <Spacer y={1} />
+          <Row justify="center" align="center">
+            <Link
+              style={{ paddingTop: 10 }}
+              onClick={() => setForgotModal(true)}
+            >
+              Did you forget your password?
+            </Link>
+          </Row>
+        </Container>
+      </form>
+
+      <Modal open={forgotModal} onClose={() => setForgotModal(false)} closeButton>
+        <Modal.Header>
+          <Text h3>Reset your password</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <Spacer y={1} />
+          <Input
+            labelPlaceholder="Enter your email here"
+            fullWidth
+            onChange={(e) => setResetEmail(e.target.value)}
+            contentRight={<Message />}
+            />
+          <Spacer y={1} />
+          {resetDone && (
+          <Row>
+            <Text color="green">{"We will send further instructions over email if the address is registered with Chartbrew."}</Text>
+          </Row>
+          )}
+          {resetError && (
+          <Row>
+            <Text color={negative}>{resetError}</Text>
+          </Row>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button onClick={() => setForgotModal(false)} flat auto color="warning">
+            Close
+          </Button>
+          <Button
+            disabled={resetDone}
+            onClick={_onSendResetRequest}
+            auto
+          >
+            {!resetLoading && (resetDone ? "Request received" : "Send password reset email")}
+            {resetLoading && (<Loading type="points" color="currentColor" />)}
+          </Button>
+        </Modal.Footer>
+      </Modal>
       {ONE_ACCOUNT_ENABLED && (
         <>
-          <Divider horizontal>
-            Or
-          </Divider>
           {socialSignin()}
         </>
       )}
