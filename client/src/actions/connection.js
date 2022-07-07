@@ -277,7 +277,9 @@ export function runHelperMethod(projectId, connectionId, methodName, data) {
   const body = data && JSON.stringify(data);
   const headers = new Headers({
     "Accept": "application/json",
+    "Content-Type": "application/json",
     "authorization": `Bearer ${token}`,
+
   });
 
   return fetch(url, { method, body, headers })

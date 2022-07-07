@@ -37,7 +37,7 @@ function MongoQueryBuilder(props) {
   const [testingQuery, setTestingQuery] = useState(false);
   const [result, setResult] = useState("");
   const [mongoRequest, setMongoRequest] = useState({
-    query: "connection.collection('users').find()",
+    query: "collection('users').find()",
   });
 
   useEffect(() => {
@@ -133,7 +133,7 @@ function MongoQueryBuilder(props) {
               content={(
                 <p>
                   {"In order to select a collection you always have to start with "}
-                  <pre>{"connection.collection('collection_name')"}</pre>
+                  <pre>{"collection('collection_name')"}</pre>
                 </p>
               )}
             />

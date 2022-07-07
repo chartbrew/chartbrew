@@ -590,7 +590,7 @@ function Chart(props) {
                       {conditions.map((c) => {
                         return (
                           <Label key={c.id} icon>
-                            {c.type !== "date" && c.value}
+                            {c.type !== "date" && `${c.value}`}
                             {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
                             <Icon name="delete" onClick={() => _onClearFilter(c)} />
                           </Label>

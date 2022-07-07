@@ -203,9 +203,10 @@ class ConnectionController {
   testMongo(data) {
     const mongoString = assembleMongoUrl(data);
 
-    return mongoose.connect(mongoString, { useNewUrlParser: true, useUnifiedTopology: true })
+    const mongoConnection = mongoose.createConnection(mongoString);
+    return mongoConnection.asPromise()
       .then((connection) => {
-        return connection.connection.db.listCollections().toArray();
+        return connection.db.listCollections().toArray();
       })
       .then((collections) => {
         return Promise.resolve({
@@ -304,8 +305,10 @@ class ConnectionController {
       })
       .then((response) => {
         switch (gConnection.type) {
-          case "mongodb":
-            return mongoose.connect(response);
+          case "mongodb": {
+            const mongoConnection = mongoose.createConnection(response);
+            return mongoConnection.asPromise();
+          }
           case "api":
             if (response.statusCode < 300) {
               return new Promise((resolve) => resolve({ success: true }));
@@ -414,22 +417,29 @@ class ConnectionController {
   }
 
   runMongo(id, dataRequest) {
+    let mongoConnection;
+    let formattedQuery = dataRequest.query;
+
+    // formatting required since introducing the multiple mongo connection support
+    if (formattedQuery.indexOf("connection.") === 0) {
+      formattedQuery = formattedQuery.replace("connection.", "");
+    }
+
     return this.getConnectionUrl(id)
       .then((url) => {
         const options = {
-          keepAlive: 1,
+          keepAlive: true,
           connectTimeoutMS: 100000,
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
         };
-        return mongoose.connect(url, options);
+        mongoConnection = mongoose.createConnection(url, options);
+        return mongoConnection.asPromise();
       })
       .then(() => {
-        return Function(`'use strict';return (mongoose) => mongoose.${dataRequest.query}.toArray()`)()(mongoose); // eslint-disable-line
+        return Function(`'use strict';return (mongoConnection) => mongoConnection.${formattedQuery}.toArray()`)()(mongoConnection); // eslint-disable-line
       })
       // if array fails, check if it works with object (for example .findOne() return object)
       .catch(() => {
-        return Function(`'use strict';return (mongoose) => mongoose.${dataRequest.query}`)()(mongoose); // eslint-disable-line
+        return Function(`'use strict';return (mongoConnection) => mongoConnection.${formattedQuery}`)()(mongoConnection); // eslint-disable-line
       })
       .then((data) => {
         return Promise.resolve(data);
@@ -747,20 +757,39 @@ class ConnectionController {
       }
     }
 
-    return CustomerioConnection.getCustomers(connection, dataRequest)
-      .then((responseData) => {
-        // cache the data for later use
-        const dataToCache = {
-          dataRequest,
-          responseData,
-        };
-        drCacheController.create(dataRequest.id, dataToCache);
+    if (dataRequest.route.indexOf("customers") === 0) {
+      return CustomerioConnection.getCustomers(connection, dataRequest)
+        .then((responseData) => {
+          // cache the data for later use
+          const dataToCache = {
+            dataRequest,
+            responseData,
+          };
+          drCacheController.create(dataRequest.id, dataToCache);
 
-        return responseData;
-      })
-      .catch((err) => {
-        return new Promise((resolve, reject) => reject(err));
-      });
+          return responseData;
+        })
+        .catch((err) => {
+          return new Promise((resolve, reject) => reject(err));
+        });
+    } else if (dataRequest.route.indexOf("campaigns") === 0) {
+      return CustomerioConnection.getCampaignMetrics(connection, dataRequest)
+        .then((responseData) => {
+          // cache the data for later use
+          const dataToCache = {
+            dataRequest,
+            responseData,
+          };
+          drCacheController.create(dataRequest.id, dataToCache);
+
+          return responseData;
+        })
+        .catch((err) => {
+          return new Promise((resolve, reject) => reject(err));
+        });
+    }
+
+    return new Promise((resolve, reject) => reject(404));
   }
 
   async testCustomerio(connection) {

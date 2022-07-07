@@ -30,6 +30,9 @@ class TableView {
                   Header: k, accessor: k, columns: [{ Header: n, accessor: headerKey }]
                 });
               } else if (_.findIndex(tab.columns[headerIndex].columns, { Header: n }) === -1) {
+                if (!tab.columns[headerIndex].columns) {
+                  tab.columns[headerIndex].columns = [];
+                }
                 tab.columns[headerIndex].columns.push({ Header: n, accessor: headerKey });
               }
             });
@@ -66,8 +69,32 @@ class TableView {
         tab.data.push(dataItem);
       });
 
+      const { columnsOrder } = datasets[datasetIndex].options;
+
+      if (columnsOrder && columnsOrder.length > 0) {
+        const orderedColumns = [];
+        const notFoundColumns = [];
+        columnsOrder.forEach((column) => {
+          const columnIndex = _.findIndex(tab.columns, { Header: column });
+          if (columnIndex !== -1) {
+            orderedColumns.push(tab.columns[columnIndex]);
+          }
+        });
+
+        // now check if which columns from tab.columns are not in columnsOrder
+        tab.columns.forEach((column) => {
+          if (_.indexOf(columnsOrder, column.Header) === -1) {
+            notFoundColumns.push(column);
+          }
+        });
+
+        tab.columns = orderedColumns.concat(notFoundColumns);
+      }
+
       tabularData[key] = tab;
     });
+
+    // console.log("tabularData", tabularData);
 
     return {
       configuration: tabularData,

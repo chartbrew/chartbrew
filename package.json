@@ -1,12 +1,9 @@
 {
   "name": "chartbrew",
-  "version": "v1.21.1",
+  "version": "v1.23.0",
   "description": "",
   "main": "index.js",
-  "workspaces": [
-    "client",
-    "server"
-  ],
+  "workspaces": [],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "setup": "npm run prepareSettings && npm install && cd client && npm install && cd ../server/ && npm install",
@@ -30,13 +27,6 @@
   },
   "homepage": "https://github.com/chartbrew/chartbrew",
   "devDependencies": {
-    "husky": "^7.0.4",
-    "lerna": "^4.0.0",
     "vuepress": "^1.9.7"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lerna run --concurrency 1 --stream precommit --since HEAD --exclude-dependents"
-    }
   }
 }

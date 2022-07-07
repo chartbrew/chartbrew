@@ -4,12 +4,17 @@ const db = require("../models/models");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
-module.exports = (req, res, next) => {
+module.exports = async (req, res, next) => {
   const token = req.headers.authorization ? req.headers.authorization.replace("Bearer ", "") : "";
   const requestedOwner = req.params.id || req.body.id || req.query.id;
   if (!requestedOwner) return res.status(401).send("Unauthorized access.");
 
   if (token) {
+    try {
+      const blacklisted = await db.TokenBlacklist.findOne({ where: { token } });
+      if (blacklisted) return res.status(401).send("Unauthorized access.");
+    } catch (e) { /** */ }
+
     return jwt.verify(token, settings.secret, (err, decoded) => {
       if (err) return res.status(401).send("Unauthorized access.");
 

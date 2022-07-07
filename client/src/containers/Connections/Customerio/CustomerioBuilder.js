@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Form, Button, Icon, Popup, Checkbox, Divider, Message, Menu, Label,
+  Grid, Form, Button, Icon, Popup, Checkbox, Divider, Menu,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -18,6 +18,7 @@ import {
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import { primaryTransparent } from "../../../config/colors";
 import CustomerQuery from "./CustomerQuery";
+import CampaignsQuery from "./CampaignsQuery";
 
 /*
   The Customer.io data request builder
@@ -64,7 +65,11 @@ function CustomerioBuilder(props) {
       }
 
       if (dataRequest.route) {
-        setEntity(dataRequest.route);
+        if (dataRequest.route.indexOf("customers") > -1) {
+          setEntity("customers");
+        } else if (dataRequest.route.indexOf("campaigns/") > -1) {
+          setEntity("campaigns");
+        }
       }
 
       if (dataRequest.itemsLimit || dataRequest.itemsLimit === 0) {
@@ -88,6 +93,11 @@ function CustomerioBuilder(props) {
   const _onSelectCustomers = () => {
     setEntity("customers");
     setCioRequest({ ...cioRequest, method: "POST", route: "customers" });
+  };
+
+  const _onSelectCampaigns = () => {
+    setEntity("campaigns");
+    setCioRequest({ ...cioRequest, method: "GET", route: "campaigns" });
   };
 
   const _onUpdateCustomerConditions = (conditions) => {
@@ -133,34 +143,54 @@ function CustomerioBuilder(props) {
     }
   };
 
+  const _onUpdateCampaignConfig = (data) => {
+    setCioRequest({
+      ...cioRequest,
+      route: `campaigns/${data.campaignId}/${data.requestRoute}`,
+      configuration: {
+        ...cioRequest.configuration,
+        period: data.period,
+        series: data.series,
+        steps: data.steps,
+        type: data.type && data.type,
+        campaignId: data.campaignId,
+        requestRoute: data.requestRoute,
+        linksMode: data.linksMode,
+        selectedLink: data.selectedLink,
+        actionId: data.actionId,
+        start: data.start,
+        end: data.end,
+      },
+    });
+  };
+
   return (
     <div style={styles.container}>
       <Grid columns={2} stackable centered>
         <Grid.Column width={10}>
           <Menu secondary>
             <Menu.Item
-              name="Customers"
+              name="users"
               active={entity === "customers"}
               onClick={() => _onSelectCustomers()}
-            />
-            <Menu.Item
-              disabled
-              active={entity === "campaigns"}
-              onClick={() => setEntity("campaigns")}
             >
-              Campaigns
-              <Label size="tiny">coming soon!</Label>
+              <Icon name="users" />
+              {"Customers"}
             </Menu.Item>
             <Menu.Item
-              active={entity === "messages"}
-              onClick={() => setEntity("messages")}
-              disabled
+              active={entity === "campaigns"}
+              onClick={() => _onSelectCampaigns()}
+              name="chat"
             >
-              Messages
-              <Label size="tiny">coming soon!</Label>
+              <Icon name="chat" />
+              {"Campaigns"}
             </Menu.Item>
           </Menu>
           <Divider />
+
+          {!entity && (
+            <p><i>Select which type of data you want to get started with</i></p>
+          )}
 
           {entity === "customers" && (
             <CustomerQuery
@@ -185,17 +215,14 @@ function CustomerioBuilder(props) {
             />
           )}
 
-          <Divider />
-          <Message icon size="small">
-            <Icon name="wrench" />
-            <Message.Content>
-              <Message.Header>Customer.io integration has just arrived</Message.Header>
-              {"If you spot any issues or have any feedback, please let me know at "}
-              <a href="mailto:raz@chartbrew.com?subject=Customer.io integration feedback">
-                {"raz@chartbrew.com"}
-              </a>
-            </Message.Content>
-          </Message>
+          {entity === "campaigns" && (
+            <CampaignsQuery
+              projectId={project.id}
+              connectionId={connection.id}
+              onUpdate={_onUpdateCampaignConfig}
+              request={cioRequest}
+            />
+          )}
         </Grid.Column>
         <Grid.Column width={6}>
           <Form>
