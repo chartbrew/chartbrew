@@ -4,9 +4,13 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
-  Menu, Dropdown, Dimmer, Container, Loader, Icon, Modal, Button, Image,
-  TransitionablePortal, Input, Label,
-} from "semantic-ui-react";
+  Loading, Modal, Row, Container, styled, Link as LinkNext, Col, Image, Spacer,
+  Dropdown, Button, Tooltip,
+} from "@nextui-org/react";
+import {
+  Category, Discovery, Document, Edit, Heart, Logout, Send, User
+} from "react-iconly";
+import { FaDiscord, FaGithub } from "react-icons/fa";
 import { createMedia } from "@artsy/fresnel";
 import { useWindowSize } from "react-use";
 
@@ -33,15 +37,13 @@ const { Media } = AppMedia;
   The navbar component used throughout the app
 */
 function Navbar(props) {
-  const [loading, setLoading] = useState(true);
   const [changelogPadding, setChangelogPadding] = useState(true);
   const [feedbackModal, setFeedbackModal] = useState();
   const [teamOwned, setTeamOwned] = useState({});
-  const [projectSearch, setProjectSearch] = useState("");
+  const [scrollPosition, setScrollPosition] = useState(0);
 
   const {
-    getTeam, getProject, changeActiveProject, color,
-    hideTeam, transparent, team, teams, projectProp, user, logout,
+    color, team, teams, user, logout,
   } = props;
 
   const { width } = useWindowSize();
@@ -56,6 +58,14 @@ function Navbar(props) {
         // ---
       }
     }, 1000);
+
+    setScrollPosition(
+      (typeof window !== "undefined" && window.pageYOffset) || 0
+    );
+    window.addEventListener("scroll", onScroll.bind(this));
+    return () => {
+      window.removeEventListener("scroll", onScroll.bind(this));
+    };
   }, []);
 
   useEffect(() => {
@@ -72,24 +82,10 @@ function Navbar(props) {
     }
   }, [teams]);
 
-  const _onTeamChange = (teamId, projectId) => {
-    setLoading(true);
-    getTeam(teamId)
-      .then(() => {
-        setLoading(false);
-        return new Promise(resolve => resolve(true));
-      })
-      .then(() => {
-        return getProject(projectId);
-      })
-      .then(() => {
-        return changeActiveProject(projectId);
-      })
-      .then(() => {
-        window.location.href = (`/${teamId}/${projectId}/dashboard`);
-        // window.reload();
-      })
-      .catch(() => {});
+  const onScroll = () => {
+    window.requestAnimationFrame(() => {
+      setScrollPosition(window.pageYOffset);
+    });
   };
 
   const _canAccess = (role, teamData) => {
@@ -99,223 +95,209 @@ function Navbar(props) {
     return canAccess(role, user.id, team.TeamRoles);
   };
 
-  const handleItemClick = () => {
-    // TODO
-  };
-
   if (!team.id && !teams) {
     return (
-      <Container text style={styles.container}>
-        <Dimmer active={loading}>
-          <Loader />
-        </Dimmer>
-      </Container>
+      <Modal open blur>
+        <Modal.Body>
+          <Container md>
+            <Row justify="center" align="center">
+              <Loading size="lg" />
+            </Row>
+          </Container>
+        </Modal.Body>
+      </Modal>
     );
   }
   return (
-    <Menu fixed="top" color="violet" inverted secondary={width < 768} style={{ backgroundColor: color }}>
-      <Menu.Item style={styles.logoContainer} as={Link} to="/user">
-        <Image centered as="img" src={cbLogo} alt="Chartbrew logo" style={styles.logo} />
-      </Menu.Item>
-      <Menu.Item as={Link} to="/user">
-        <Icon name="th" />
-        Home
-      </Menu.Item>
-      {!hideTeam
-        && (
-        <Menu.Menu
-          onClick={handleItemClick}
+    <nav secondary={width < 768} style={{ ...styles.navContainer, backgroundColor: color }}>
+      <StyledNavContainer detached={scrollPosition > 50} showBlur={scrollPosition > 50}>
+        <Container
+          fluid
+          as="nav"
+          display="flex"
+          wrap="nowrap"
+          alignItems="center"
         >
-          <Media greaterThan="mobile">
-            <Dropdown
-              text={team.name}
-              item
-              style={styles.centeredDropdown}
+          <Col
+            css={{
+              "@mdMax": {
+                width: "100%"
+              }
+            }}
+          >
+            <Row justify="flex-start" align="center">
+              <Link to="/user">
+                <LinkNext href="/user">
+                  <Image src={cbLogo} alt="Chartbrew Logo" style={styles.logo} />
+                </LinkNext>
+              </Link>
+              <Spacer x={1} />
+              <Link to="/user">
+                <LinkNext href="/user" css={{ color: "white" }}>
+                  <Row align="center">
+                    <Category size="small" />
+                    <Spacer x={0.2} />
+                    {"Home"}
+                  </Row>
+                </LinkNext>
+              </Link>
+            </Row>
+          </Col>
+          <Col className="navbar__search-container">
+            <Row
+              className="navbar__search-row"
+              justify="flex-end"
+              align="center"
+              css={{
+                position: "initial",
+                "@xsMax": {
+                  jc: "flex-end",
+                }
+              }}
             >
-              <Dropdown.Menu>
-                <Dropdown.Header>{"Quick access to your projects"}</Dropdown.Header>
-                <Dropdown.Divider />
-                {teams && teams.map((t) => {
-                  return (
-                    t.Projects.length > 0
-                    && (
-                    <Dropdown
-                      disabled={t.Projects.length < 1}
-                      item
-                      key={t.id}
-                      text={t.name}
-                      >
-                      <Dropdown.Menu>
-                        <Input
-                          icon="search"
-                          iconPosition="left"
-                          className="search"
-                          onClick={(e) => e.stopPropagation()}
-                          onFocus={(e) => e.stopPropagation()}
-                          onChange={(e, data) => setProjectSearch(data.value)}
-                        />
-                        <Dropdown.Menu scrolling>
-                          {t.Projects.map((project) => {
-                            if (projectSearch
-                              && project.name.toLowerCase()
-                                .indexOf(projectSearch.toLowerCase()) === -1) {
-                              return (<span key={project.id} />);
-                            }
-                            return (
-                              <Dropdown.Item
-                                onClick={() => _onTeamChange(t.id, project.id)}
-                                disabled={project.id === projectProp.id}
-                                key={project.id}>
-                                {project.id === projectProp.id
-                                && (
-                                <span className="label">
-                                  Active
-                                </span>
-                                )}
-                                <span>
-                                  {" "}
-                                  {project.name}
-                                  {" "}
-                                </span>
-                              </Dropdown.Item>
-                            );
-                          })}
-                        </Dropdown.Menu>
-                      </Dropdown.Menu>
-                    </Dropdown>
-                    )
-                  );
-                }) }
-              </Dropdown.Menu>
-            </Dropdown>
-          </Media>
-        </Menu.Menu>
-        )}
+              <Tooltip content={"Chartbrew updates"}>
+                <LinkNext
+                  href="#"
+                  className="changelog-trigger"
+                  title="Changelog"
+                  css={{ color: "white" }}
+                >
+                  <span className="changelog-badge">
+                    {changelogPadding && <span style={{ paddingLeft: 16, paddingRight: 16 }} />}
+                  </span>
+                </LinkNext>
+              </Tooltip>
+              <Spacer x={1} />
 
-      <Menu.Menu position="right">
-        <Menu.Item
-          className="changelog-trigger"
-          as="a"
-          style={{ paddingTop: 0, paddingBottom: 0, paddingLeft: 0 }}
-          title="Changelog"
-        >
-          <div className="changelog-badge">
-            {changelogPadding && <span style={{ paddingLeft: 16, paddingRight: 16 }} />}
-          </div>
-          <Media greaterThan="mobile">
-            <span>Updates</span>
-          </Media>
-          <Media at="mobile">
-            <Icon name="wifi" />
-          </Media>
-        </Menu.Item>
-        <Dropdown
-          style={{ paddingTop: 0, paddingBottom: 0 }}
-          item
-          icon={width < 768 ? null : "dropdown"}
-          floating={transparent}
-          trigger={(
-            <>
-              <Icon name="life ring outline" />
-              <Media greaterThan="mobile">
-                Help
-              </Media>
-            </>
-          )}
-        >
-          <Dropdown.Menu>
-            <Dropdown.Item
-              as="a"
-              href="https://discord.gg/KwGEbFk"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Icon name="discord" />
-              Join our Discord
-            </Dropdown.Item>
-            <Dropdown.Item
-              as="a"
-              href="https://chartbrew.com/blog/tag/tutorial/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Icon name="student" />
-              Tutorials
-            </Dropdown.Item>
-            <Menu.Item
-              as="a"
-              href={DOCUMENTATION_HOST}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Icon name="book" />
-              Documentation
-            </Menu.Item>
-            <Dropdown.Item
-              as="a"
-              href="https://github.com/chartbrew/chartbrew/discussions"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Icon name="github" />
-              GitHub
-            </Dropdown.Item>
-            <Dropdown.Divider />
-            <Dropdown.Item onClick={() => setFeedbackModal(true)}>
-              <Icon name="lightbulb outline" />
-              Feedback
-            </Dropdown.Item>
-            <Dropdown.Divider />
-            <Dropdown.Item as="a" href={`${SITE_HOST}/start`}>
-              <Label color="olive" size="small">New</Label>
-              Project starter
-            </Dropdown.Item>
-          </Dropdown.Menu>
-        </Dropdown>
-        <Dropdown
-          style={{ paddingTop: 0, paddingBottom: 0 }}
-          item
-          floating={transparent}
-          icon={width < 768 ? null : "dropdown"}
-          trigger={<Icon name="user outline" />}
-        >
-          <Dropdown.Menu>
-            <Dropdown.Item as={Link} to="/edit">Profile</Dropdown.Item>
+              <Dropdown>
+                <Dropdown.Trigger>
+                  <LinkNext css={{ color: "white" }}>
+                    <Row align="center">
+                      <Heart set="bold" size={"small"} />
+                      <Spacer x={0.2} />
+                      <Media greaterThan="mobile">
+                        {"Help"}
+                      </Media>
+                    </Row>
+                  </LinkNext>
+                </Dropdown.Trigger>
+                <Dropdown.Menu>
+                  <Dropdown.Item icon={<FaDiscord size={24} />}>
+                    <LinkNext
+                      href="https://discord.gg/KwGEbFk"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      css={{ color: "$text" }}
+                    >
+                      {"Join our Discord"}
+                    </LinkNext>
+                  </Dropdown.Item>
+                  <Dropdown.Item icon={<Discovery />}>
+                    <LinkNext
+                      href="https://chartbrew.com/blog/tag/tutorial/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      css={{ color: "$text" }}
+                    >
+                      {"Tutorials"}
+                    </LinkNext>
+                  </Dropdown.Item>
+                  <Dropdown.Item icon={<Document />}>
+                    <LinkNext
+                      href={DOCUMENTATION_HOST}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      css={{ color: "$text" }}
+                    >
+                      {"Documentation"}
+                    </LinkNext>
+                  </Dropdown.Item>
+                  <Dropdown.Item icon={<FaGithub size={24} />}>
+                    <LinkNext
+                      href="https://github.com/chartbrew/chartbrew/discussions"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      css={{ color: "$text" }}
+                    >
+                      {"GitHub"}
+                    </LinkNext>
+                  </Dropdown.Item>
+                  <Dropdown.Item icon={<Edit />}>
+                    <LinkNext onClick={() => setFeedbackModal(true)} css={{ color: "$text" }}>
+                      {"Feedback"}
+                    </LinkNext>
+                  </Dropdown.Item>
+                  <Dropdown.Item withDivider icon={<Send />}>
+                    <LinkNext href={`${SITE_HOST}/start`} css={{ color: "$text" }}>
+                      {"Project starter"}
+                    </LinkNext>
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
+              <Spacer x={1} />
 
-            {_canAccess("admin", teamOwned) && <Dropdown.Item as={Link} to={`/manage/${team.id || teamOwned.id}/settings`}>Account settings</Dropdown.Item>}
+              <Dropdown>
+                <Dropdown.Trigger>
+                  <LinkNext css={{ color: "white" }}>
+                    <User primaryColor="white" size="normal" />
+                  </LinkNext>
+                </Dropdown.Trigger>
+                <Dropdown.Menu>
+                  <Dropdown.Item>
+                    <Link to="/edit">
+                      <LinkNext href="/edit" css={{ color: "$text" }}>
+                        Profile
+                      </LinkNext>
+                    </Link>
+                  </Dropdown.Item>
 
-            <Dropdown.Divider />
-            <Dropdown.Item onClick={logout}>
-              <Icon name="sign out" />
-              Sign out
-            </Dropdown.Item>
-          </Dropdown.Menu>
-        </Dropdown>
-      </Menu.Menu>
+                  {_canAccess("admin", teamOwned) && (
+                    <Dropdown.Item>
+                      <Link to={`/manage/${team.id || teamOwned.id}/settings`}>
+                        <LinkNext href={`/manage/${team.id || teamOwned.id}/settings`} css={{ color: "$text" }}>
+                          Account settings
+                        </LinkNext>
+                      </Link>
+                    </Dropdown.Item>
+                  )}
 
-      <TransitionablePortal open={feedbackModal}>
-        <Modal
-          open={feedbackModal}
-          size="small"
-          onClose={() => setFeedbackModal(false)}
-        >
-          <Modal.Content>
-            <FeedbackForm />
-          </Modal.Content>
-          <Modal.Actions>
-            <Button onClick={() => setFeedbackModal(false)}>
-              Cancel
-            </Button>
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
-    </Menu>
+                  <Dropdown.Item withDivider icon={<Logout />} onClick={logout}>
+                    Sign out
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
+            </Row>
+          </Col>
+
+          <Modal
+            open={feedbackModal}
+            onClose={() => setFeedbackModal(false)}
+          >
+            <Modal.Body>
+              <FeedbackForm />
+            </Modal.Body>
+            <Modal.Footer>
+              <Button flat color="warning" onClick={() => setFeedbackModal(false)}>
+                Cancel
+              </Button>
+            </Modal.Footer>
+          </Modal>
+        </Container>
+      </StyledNavContainer>
+    </nav>
   );
 }
 
 const styles = {
   container: {
     flex: 1,
+  },
+  navContainer: {
+    top: 0,
+    height: "50px",
+    position: "sticky",
+    background: "transparent",
+    zIndex: 9999,
   },
   centeredDropdown: {
     display: "block",
@@ -336,8 +318,6 @@ const styles = {
 };
 
 Navbar.defaultProps = {
-  hideTeam: false,
-  transparent: false,
   color: blue,
 };
 
@@ -345,13 +325,7 @@ Navbar.propTypes = {
   user: PropTypes.object.isRequired,
   team: PropTypes.object.isRequired,
   teams: PropTypes.array.isRequired,
-  projectProp: PropTypes.object.isRequired,
-  getTeam: PropTypes.func.isRequired,
-  getProject: PropTypes.func.isRequired,
-  changeActiveProject: PropTypes.func.isRequired,
   logout: PropTypes.func.isRequired,
-  hideTeam: PropTypes.bool,
-  transparent: PropTypes.bool,
   color: PropTypes.string,
 };
 
@@ -373,5 +347,36 @@ const mapDispatchToProps = (dispatch) => {
     getProjectCharts: (projectId) => dispatch(getProjectCharts(projectId)),
   };
 };
+
+const StyledNavContainer = styled("div", {
+  display: "flex",
+  alignItems: "center",
+  size: "100%",
+  "& .navbar__social-icon": {
+    fill: "$colors$accents6"
+  },
+  variants: {
+    showBlur: {
+      true: {
+        background: "$background",
+        "@supports ((-webkit-backdrop-filter: none) or (backdrop-filter: none))":
+          {
+            background: "$headerBackground"
+          }
+      }
+    },
+    detached: {
+      true: {
+        backdropFilter: "saturate(180%) blur(10px)",
+        boxShadow: "0px 5px 20px -5px rgba(2, 1, 1, 0.1)"
+      },
+      false: {
+        backdropFilter: "none",
+        boxShadow: "none",
+        background: "transparent"
+      }
+    }
+  }
+});
 
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Navbar));
