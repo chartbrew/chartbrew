@@ -3,10 +3,6 @@ import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { useWindowSize } from "react-use";
 import {
-  Divider,
-  Header, Icon, Label,
-} from "semantic-ui-react";
-import {
   Container, Card, Loading, Text, Spacer, Row, Link, Input, Button, Grid,
 } from "@nextui-org/react";
 import { motion } from "framer-motion/dist/framer-motion";
@@ -332,7 +328,7 @@ function Start(props) {
                   </Grid>
                 </Grid.Container>
               </motion.div>
-              <Divider hidden />
+              <Spacer y={1} />
             </Container>
             )}
 
@@ -366,7 +362,7 @@ function Start(props) {
 
               {onboardingStep === "data" && (
               <div>
-                <Divider hidden />
+                <Spacer y={1} />
                 <p style={{ fontSize: "1.2em", color: whiteTransparent(0.7), textAlign: "center" }}>
                   <i>Make your selection to get started</i>
                 </p>
@@ -374,7 +370,7 @@ function Start(props) {
               )}
             </Container>
 
-            <Divider section hidden />
+            <Spacer y={2} />
           </motion.div>
         </Row>
 
