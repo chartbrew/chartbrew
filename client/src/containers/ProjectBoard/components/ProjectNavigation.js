@@ -7,11 +7,19 @@ import {
   Button, Dropdown, Header, Icon, Input, Menu, Modal, Popup, TransitionablePortal,
 } from "semantic-ui-react";
 import ReactMarkdown from "react-markdown";
+import {
+  Container, Row, Link as LinkNext,
+} from "@nextui-org/react";
+import {
+  Category, Graph, Setting, TwoUsers,
+} from "react-iconly";
+import { FaPlug } from "react-icons/fa";
 
 import {
-  blue, dark, darkBlue, lightGray, primary
+  blue, dark, darkBlue, lightGray, primary, secondary
 } from "../../../config/colors";
 import { APP_VERSION } from "../../../config/settings";
+import StyledNavContainer from "../../../components/StyledNavContainer";
 
 const sideMaxSize = 220;
 
@@ -75,59 +83,55 @@ function ProjectNavigation(props) {
 
   if (mobile) {
     return (
-      <Menu
-        fixed="bottom"
-        icon
-        inverted
-        secondary
+      <nav
         style={styles.mobileMenu}
-        widths={5}
       >
-        <Menu.Item
-          active={_checkIfActive("dashboard")}
-          as={Link}
-          to={`/${teamId}/${projectId}/dashboard`}
-        >
-          <Icon name="line graph" size="large" />
-        </Menu.Item>
-        {canAccess("editor")
-          && (
-            <Menu.Item
-              active={_checkIfActive("connections")}
-              as={Link}
-              to={`/${teamId}/${projectId}/connections`}
-            >
-              <Icon name="power cord" size="large" />
-            </Menu.Item>
-          )}
-        <Menu.Item
-          active={_checkIfActive("public")}
-          as={Link}
-          to={`/b/${project.brewName}`}
-        >
-          <Icon name="desktop" size="large" />
-        </Menu.Item>
-        {canAccess("editor")
-          && (
-            <Menu.Item
-              active={_checkIfActive("members")}
-              as={Link}
-              to={`/${teamId}/${projectId}/members`}
-            >
-              <Icon name="users" size="large" />
-            </Menu.Item>
-          )}
-        {canAccess("admin")
-          && (
-            <Menu.Item
-              active={_checkIfActive("projectSettings")}
-              as={Link}
-              to={`/${teamId}/${projectId}/projectSettings`}
-            >
-              <Icon name="cog" size="large" />
-            </Menu.Item>
-          )}
-      </Menu>
+        <StyledNavContainer detached showBlur>
+          <Container
+            fluid
+            as="nav"
+            display="flex"
+            wrap="nowrap"
+            alignItems="center"
+          >
+            <Row justify="space-between" align="center">
+              <Link to={`/${teamId}/${projectId}/dashboard`}>
+                <LinkNext>
+                  <Category color={_checkIfActive("dashboard") ? secondary : "white"} />
+                </LinkNext>
+              </Link>
+              {canAccess("editor") && (
+                <Link to={`/${teamId}/${projectId}/connections`}>
+                  <LinkNext>
+                    <FaPlug size={22} color={_checkIfActive("connections") ? secondary : "white"} />
+                  </LinkNext>
+                </Link>
+              )}
+              <Link to={`/b/${project.brewName}`}>
+                <LinkNext>
+                  <Graph color={_checkIfActive("public") ? secondary : "white"} />
+                </LinkNext>
+              </Link>
+              {canAccess("editor")
+                && (
+                  <Link to={`/${teamId}/${projectId}/members`}>
+                    <LinkNext>
+                      <TwoUsers color={_checkIfActive("members") ? secondary : "white"} />
+                    </LinkNext>
+                  </Link>
+                )}
+              {canAccess("admin")
+                && (
+                  <Link to={`/${teamId}/${projectId}/projectSettings`}>
+                    <LinkNext>
+                      <Setting color={_checkIfActive("projectSettings") ? secondary : "white"} />
+                    </LinkNext>
+                  </Link>
+                )}
+            </Row>
+          </Container>
+        </StyledNavContainer>
+      </nav>
     );
   }
 
@@ -547,8 +551,11 @@ const styles = {
     borderRadius: 0,
   }),
   mobileMenu: {
+    bottom: 0,
+    height: "60px",
+    position: "sticky",
+    zIndex: 9999,
     backgroundColor: dark,
-    textAlign: "center",
   },
 };
 

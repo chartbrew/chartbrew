@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
-  Loading, Modal, Row, Container, styled, Link as LinkNext, Col, Image, Spacer,
+  Loading, Modal, Row, Container, Link as LinkNext, Col, Image, Spacer,
   Dropdown, Button, Tooltip,
 } from "@nextui-org/react";
 import {
@@ -12,7 +12,6 @@ import {
 } from "react-iconly";
 import { FaDiscord, FaGithub } from "react-icons/fa";
 import { createMedia } from "@artsy/fresnel";
-import { useWindowSize } from "react-use";
 
 import { getTeam } from "../actions/team";
 import { logout } from "../actions/user";
@@ -23,6 +22,7 @@ import cbLogo from "../assets/logo_inverted.png";
 import canAccess from "../config/canAccess";
 import { DOCUMENTATION_HOST, SITE_HOST } from "../config/settings";
 import { blue, dark } from "../config/colors";
+import StyledNavContainer from "./StyledNavContainer";
 
 const AppMedia = createMedia({
   breakpoints: {
@@ -45,8 +45,6 @@ function Navbar(props) {
   const {
     color, team, teams, user, logout,
   } = props;
-
-  const { width } = useWindowSize();
 
   useEffect(() => {
     // _onTeamChange(match.params.teamId, match.params.projectId);
@@ -109,7 +107,7 @@ function Navbar(props) {
     );
   }
   return (
-    <nav secondary={width < 768} style={{ ...styles.navContainer, backgroundColor: color }}>
+    <nav style={{ ...styles.navContainer, backgroundColor: color }}>
       <StyledNavContainer detached={scrollPosition > 50} showBlur={scrollPosition > 50}>
         <Container
           fluid
@@ -297,7 +295,7 @@ const styles = {
     height: "50px",
     position: "sticky",
     background: "transparent",
-    zIndex: 9999,
+    zIndex: 999,
   },
   centeredDropdown: {
     display: "block",
@@ -347,36 +345,5 @@ const mapDispatchToProps = (dispatch) => {
     getProjectCharts: (projectId) => dispatch(getProjectCharts(projectId)),
   };
 };
-
-const StyledNavContainer = styled("div", {
-  display: "flex",
-  alignItems: "center",
-  size: "100%",
-  "& .navbar__social-icon": {
-    fill: "$colors$accents6"
-  },
-  variants: {
-    showBlur: {
-      true: {
-        background: "$background",
-        "@supports ((-webkit-backdrop-filter: none) or (backdrop-filter: none))":
-          {
-            background: "$headerBackground"
-          }
-      }
-    },
-    detached: {
-      true: {
-        backdropFilter: "saturate(180%) blur(10px)",
-        boxShadow: "0px 5px 20px -5px rgba(2, 1, 1, 0.1)"
-      },
-      false: {
-        backdropFilter: "none",
-        boxShadow: "none",
-        background: "transparent"
-      }
-    }
-  }
-});
 
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Navbar));

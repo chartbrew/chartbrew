@@ -2,12 +2,12 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Route, Switch, withRouter } from "react-router";
-import {
-  Dimmer, Loader, Container, Grid, Divider,
-} from "semantic-ui-react";
 import { Allotment } from "allotment";
 import { createMedia } from "@artsy/fresnel";
 import { useWindowSize } from "react-use";
+import {
+  Container, Grid, Loading, Spacer
+} from "@nextui-org/react";
 
 import "allotment/dist/style.css";
 
@@ -145,12 +145,10 @@ function ProjectBoard(props) {
     window.location.href = `/${match.params.teamId}/${id}/dashboard`;
   };
 
-  if (!project.id) {
+  if (!project.id && loading) {
     return (
       <Container text style={styles.container}>
-        <Dimmer active={loading}>
-          <Loader active={loading} content="Loading your dashboard" />
-        </Dimmer>
+        <Loading type="spinner">Loading your dashboard</Loading>
       </Container>
     );
   }
@@ -171,7 +169,7 @@ function ProjectBoard(props) {
       {!isPrinting && (
         <>
           <Media greaterThan="mobile">
-            <div style={{ height, paddingTop: 40 }}>
+            <div style={{ height }}>
               <Navbar />
               <Allotment
                 defaultSizes={[sideMinSize, sideMaxSize]}
@@ -199,15 +197,15 @@ function ProjectBoard(props) {
                   <div
                     style={{ overflowY: "auto", height: "100%", overflowX: "hidden" }}
                   >
-                    <Grid columns={1} centered stackable>
-                      <Grid.Column computer={16} style={{ paddingLeft: 0 }}>
+                    <Grid.Container>
+                      <Grid xs={12} style={{ paddingLeft: 0 }}>
                         <MainContent
                           showDrafts={showDrafts}
                           onPrint={_onPrint}
                           _canAccess={_canAccess}
                         />
-                      </Grid.Column>
-                    </Grid>
+                      </Grid>
+                    </Grid.Container>
                   </div>
                 </Allotment.Pane>
               </Allotment>
@@ -217,19 +215,18 @@ function ProjectBoard(props) {
           <Media at="mobile">
             <Navbar />
 
-            <Grid columns={1} centered stackable>
-              <Grid.Column computer={16}>
+            <Grid.Container>
+              <Grid xs={12}>
                 <MainContent
                   showDrafts={showDrafts}
                   onPrint={_onPrint}
                   _canAccess={_canAccess}
                   mobile
                     />
-              </Grid.Column>
-            </Grid>
+              </Grid>
+            </Grid.Container>
 
-            <Divider section hidden />
-            <Divider section hidden />
+            <Spacer y={4} />
 
             <ProjectNavigation
               project={project}
