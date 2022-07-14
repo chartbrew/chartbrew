@@ -2,18 +2,14 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-// import {
-//   Divider, Dimmer, Loader, Form, Modal, Header, Message, Container,
-//   Button, Icon, Grid, Card, TransitionablePortal,
-// } from "semantic-ui-react";
 import { useWindowSize } from "react-use";
 import {
-  Button, Card, Col, Container, Grid, Loading, Modal, Row, Spacer, Text
+  Button, Col, Container, Input, Loading, Modal, Row,
+  Spacer, Table, Text, Tooltip, Link as LinkNext,
 } from "@nextui-org/react";
 import {
-  Chart, People, Plus, Setting, Swap, User
+  Chart, Delete, Edit, People, Plus, Search, Setting, Swap, User
 } from "react-iconly";
-import { motion } from "framer-motion/dist/framer-motion";
 
 import {
   getTeams as getTeamsAction,
@@ -28,7 +24,8 @@ import ProjectForm from "../components/ProjectForm";
 import Invites from "../components/Invites";
 import Navbar from "../components/Navbar";
 import canAccess from "../config/canAccess";
-import { secondary } from "../config/colors";
+import { negative, secondary } from "../config/colors";
+import { IconButton } from "../components/IconButton";
 
 /*
   The user dashboard with all the teams and projects
@@ -43,6 +40,7 @@ function UserDashboard(props) {
   const [addProject, setAddProject] = useState(false);
   const [fetched, setFetched] = useState(false);
   const [retried, setRetried] = useState(false);
+  const [search, setSearch] = useState({});
 
   const { width, height } = useWindowSize();
 
@@ -117,6 +115,13 @@ function UserDashboard(props) {
 
   const _getTeamRole = (teamRoles) => {
     return teamRoles.filter((o) => o.user_id === user.data.id)[0].role;
+  };
+
+  const _getFilteredProjects = (team) => {
+    if (!search[team.id]) return team.Projects;
+    return team.Projects.filter((p) => {
+      return p.name.toLowerCase().indexOf(search[team.id].toLowerCase()) > -1;
+    });
   };
 
   const newProjectModal = () => {
@@ -236,56 +241,106 @@ function UserDashboard(props) {
                   )}
               </Container>
               <Container>
-                <Grid.Container justify="flex-start" gap={2}>
-                  {key.Projects && key.Projects.map((project) => {
-                    return (
-                      <Grid xs={12} sm={4} md={3} key={project.id}>
-                        <Card
-                          isHoverable
-                          isPressable
-                          onClick={() => directToProject(key, project.id)}
-                        >
-                          <Card.Header>
-                            {project.name}
-                          </Card.Header>
-                          <Card.Body>
-                            <Row justify="space-around" align="center">
-                              <Text>
-                                <Swap />
+                <Spacer y={1} />
+                <Row justify="flex-start" align="center">
+                  {_canAccess("admin", key.TeamRoles) && (
+                    <>
+                      <Button
+                        onClick={() => _onNewProject(key)}
+                        iconRight={<Plus />}
+                        auto
+                      >
+                        Create new project
+                      </Button>
+                      <Spacer x={0.5} />
+                    </>
+                  )}
+                  <Input
+                    type="text"
+                    placeholder="Search projects"
+                    clearable
+                    bordered
+                    contentRight={<Search set="light" />}
+                    onChange={(e) => setSearch({ ...search, [key.id]: e.target.value })}
+                  />
+                </Row>
+                <Spacer y={1} />
+                {key.Projects && (
+                  <Table
+                    aria-label="Projects list"
+                    css={{
+                      height: "auto",
+                      minWidth: "100%",
+                      backgroundColor: "$backgroundContrast"
+                    }}
+                    sticked
+                    striped
+                    headerLined
+                  >
+                    <Table.Header>
+                      <Table.Column key="name">Project name</Table.Column>
+                      <Table.Column key="connections" align="center">
+                        <Row align="center" justify="center">
+                          <Swap size="small" />
+                          <Spacer x={0.2} />
+                          Connections
+                        </Row>
+                      </Table.Column>
+                      <Table.Column key="charts" align="center">
+                        <Row align="center" justify="center">
+                          <Chart size="small" />
+                          <Spacer x={0.2} />
+                          Charts
+                        </Row>
+                      </Table.Column>
+                      <Table.Column key="actions" align="center" hideHeader>Actions</Table.Column>
+                    </Table.Header>
+                    <Table.Body items={_getFilteredProjects(key)}>
+                      {(project) => (
+                        <Table.Row key={project.id}>
+                          <Table.Cell key="name">
+                            <LinkNext onClick={() => directToProject(key, project.id)}>
+                              <Text b css={{ color: "$text" }}>{project.name}</Text>
+                            </LinkNext>
+                          </Table.Cell>
+                          <Table.Cell key="connections">
+                            <Row justify="center" align="center">
+                              <Text b>
                                 {project.Connections && project.Connections.length}
                               </Text>
-                              <Spacer x={1} />
-                              <Text>
-                                <Chart />
+                            </Row>
+                          </Table.Cell>
+                          <Table.Cell key="charts">
+                            <Row justify="center" align="center">
+                              <Text b>
                                 {project.Charts.length}
                               </Text>
                             </Row>
-                          </Card.Body>
-                        </Card>
-                      </Grid>
-                    );
-                  })}
-                  {_canAccess("admin", key.TeamRoles) && (
-                    <Grid xs={12} sm={4} md={3}>
-                      <motion.div whileHover={{ opacity: 1 }} style={styles.addProjectCard}>
-                        <Card
-                          isHoverable
-                          isPressable
-                          onClick={() => _onNewProject(key)}
-                        >
-                          <Card.Body>
-                            <Row justify="center" align="center">
-                              <Plus size="large" />
+                          </Table.Cell>
+                          <Table.Cell key="actions">
+                            <Row justify="flex-end" align="center">
+                              <Tooltip content="Edit project" color={"primary"}>
+                                <IconButton>
+                                  <Edit set="light" />
+                                </IconButton>
+                              </Tooltip>
+                              <Spacer x={0.5} />
+                              <Tooltip
+                                content="Delete project"
+                                color="error"
+                              >
+                                <IconButton>
+                                  <Delete primaryColor={negative} set="light" />
+                                </IconButton>
+                              </Tooltip>
+                              <Spacer x={0.5} />
                             </Row>
-                            <Row justify="center" align="center">
-                              <Text>Create a new project</Text>
-                            </Row>
-                          </Card.Body>
-                        </Card>
-                      </motion.div>
-                    </Grid>
-                  )}
-                </Grid.Container>
+                          </Table.Cell>
+                        </Table.Row>
+                      )}
+                    </Table.Body>
+                  </Table>
+                )}
                 {key.Projects && key.Projects.length === 0 && !_canAccess("admin", key.TeamRoles)
                   && (
                     <Container>
