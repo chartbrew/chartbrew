@@ -277,6 +277,16 @@ async function getCustomers(connection, dr) {
   if (dr.configuration.populateAttributes) {
     const attrOpt = options;
     attrOpt.url += "/attributes";
+
+    // make sure the ids are populated
+    if (result.identifiers && result.identifiers.length > 0) {
+      for (let i = 0; i < result.identifiers.length; i++) {
+        if (!result.ids[i] && result.identifiers[i].cio_id) {
+          result.ids[i] = result.identifiers[i].cio_id;
+        }
+      }
+    }
+
     result = await getCustomersAttributes(result.ids, attrOpt);
 
     // remove the field timestamps until further notice
@@ -295,6 +305,7 @@ async function getCustomers(connection, dr) {
   }
 
   result.customer_count = result.customers ? result.customers.length : 0;
+
   return result;
 }
 
