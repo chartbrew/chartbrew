@@ -2,9 +2,14 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Card, Grid, Header, Icon, Placeholder,
-} from "semantic-ui-react";
+  Avatar,
+  Button,
+  Card,
+  Grid,
+  Loading, Row, Spacer, Text,
+} from "@nextui-org/react";
 import moment from "moment";
+import { Chart } from "react-iconly";
 
 import CreateTemplateForm from "../../../components/CreateTemplateForm";
 import connectionImages from "../../../config/connectionImages";
@@ -35,33 +40,26 @@ function CustomTemplates(props) {
 
   if (loading) {
     return (
-      <div>
-        <Placeholder>
-          <Placeholder.Header image>
-            <Placeholder.Line />
-            <Placeholder.Line />
-          </Placeholder.Header>
-          <Placeholder.Paragraph>
-            <Placeholder.Header>
-              <Placeholder.Line />
-            </Placeholder.Header>
-          </Placeholder.Paragraph>
-        </Placeholder>
-      </div>
+      <Loading type="spinner">
+        Loading templates...
+      </Loading>
     );
   }
 
   if (templates.length === 0) {
     return (
       <div>
-        <Header>No custom templates yet</Header>
-        <p>{"You can create custom templates from any project with data source connections and charts."}</p>
+        <Text h4>No custom templates yet</Text>
+        <Text>{"You can create custom templates from any project with data source connections and charts."}</Text>
         {projectId && connections.length > 0 && (
           <Button
             primary
             content="Create a new template from this project"
             onClick={() => setCreateTemplate(true)}
-          />
+            size="small"
+          >
+            Create a new template from this project
+          </Button>
         )}
 
         <CreateTemplateForm
@@ -91,31 +89,43 @@ function CustomTemplates(props) {
 
   return (
     <div>
-      <Grid widths={4}>
+      <Grid.Container gap={2}>
         {templates && templates.map((template) => (
-          <Grid.Column key={template.id} width="4">
-            <Card className="project-segment" onClick={() => setSelectedTemplate(template)}>
-              <Card.Content header={template.name} />
-              <Card.Content>
-                <Card.Group itemsPerRow={4}>
-                  {template.model.Connections && template.model.Connections.map((c) => (
-                    <Card key={c.id} image={connectionImages[c.type]} />
-                  ))}
-                </Card.Group>
-                <Card.Description style={{ marginTop: 20 }}>
-                  <Icon name="chart area" />
-                  {` ${template.model.Charts.length} charts`}
-                </Card.Description>
-                <Card.Description>
-                  <Icon name="plug" />
-                  {` ${template.model.Connections.length} connections`}
-                </Card.Description>
-              </Card.Content>
-              <Card.Content extra>{`Updated ${_getUpdatedTime(template.updatedAt)}`}</Card.Content>
+          <Grid key={template.id} xs={12} sm={6} md={4}>
+            <Card onClick={() => setSelectedTemplate(template)} isHoverable isPressable variant="bordered">
+              <Card.Header>{template.name}</Card.Header>
+              <Card.Body>
+                {template.model.Connections && (
+                  <Row css={{ pr: 8, pl: 8 }} justify="center">
+                    <Avatar.Group animated={template.model.Connections.length > 1}>
+                      {template.model.Connections.map((c) => (
+                        <Avatar
+                          key={c.id}
+                          src={connectionImages[c.type]}
+                          pointer
+                          bordered
+                          stacked
+                          title={`${c.type} connection`}
+                        />
+                      ))}
+                    </Avatar.Group>
+                  </Row>
+                )}
+                <Spacer y={0.5} />
+                <Row align="center" justify="center">
+                  <Chart />
+                  <Spacer x={0.2} />
+                  <Text>{`${template.model.Charts.length} charts`}</Text>
+                </Row>
+                <Spacer y={0.5} />
+              </Card.Body>
+              <Card.Footer>
+                <Text small>{`Updated ${_getUpdatedTime(template.updatedAt)}`}</Text>
+              </Card.Footer>
             </Card>
-          </Grid.Column>
+          </Grid>
         ))}
-      </Grid>
+      </Grid.Container>
     </div>
   );
 }

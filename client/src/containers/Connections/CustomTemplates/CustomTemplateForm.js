@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { useWindowSize } from "react-use";
-import {
-  Button, Card, Checkbox, Header, Image, Divider, Grid, Icon, Popup, TransitionablePortal, Modal
-} from "semantic-ui-react";
 import _ from "lodash";
+import {
+  Avatar, Button, Card, Checkbox, Container, Divider, Grid, Loading,
+  Modal, Row, Spacer, Switch, Text, Tooltip,
+} from "@nextui-org/react";
+
+import {
+  ArrowRight, CaretLeft, CloseSquare, Delete, InfoSquare, Swap, TickSquare,
+} from "react-iconly";
 
 import connectionImages from "../../../config/connectionImages";
 import { generateDashboard } from "../../../actions/project";
@@ -14,7 +18,6 @@ function CustomTemplateForm(props) {
     template, connections, onBack, projectId, onComplete, isAdmin, onDelete,
     onCreateProject,
   } = props;
-  const { width } = useWindowSize();
 
   const [selectedConnections, setSelectedConnections] = useState({});
   const [selectedCharts, setSelectedCharts] = useState([]);
@@ -193,155 +196,191 @@ function CustomTemplateForm(props) {
   };
 
   return (
-    <div>
-      <Header as="h2" dividing>
-        {template.name}
-      </Header>
-
-      <Header>Connections</Header>
-      <Card.Group itemsPerRow={width > 1000 ? 3 : 2}>
+    <Container>
+      <Row align="center">
+        <Avatar icon={<CaretLeft />} onClick={onBack} squared />
+        <Spacer x={0.5} />
+        <Text h4>
+          {template.name}
+        </Text>
+      </Row>
+      <Spacer y={1} />
+      <Divider />
+      <Spacer y={1} />
+      <Row>
+        <Text b>Connections</Text>
+      </Row>
+      <Spacer y={0.5} />
+      <Grid.Container>
         {template.model.Connections && template.model.Connections.map((c) => {
           const existingConnections = _getExistingConnections(c);
 
           return (
-            <Card key={c.id}>
-              <Checkbox
-                checked={selectedConnections[c.id] && selectedConnections[c.id].active}
-                toggle
-                style={{ position: "absolute", top: 10, right: 10 }}
-                onChange={() => _onToggleConnection(c.id)}
-              />
-              <Card.Content>
-                <Image src={connectionImages[c.type]} floated="left" size="mini" />
-                <Card.Header>{c.name}</Card.Header>
-                <Card.Description>
+            <Grid xs={12} sm={6} md={4} xl={3} key={c.id}>
+              <Card variant="bordered">
+                <Card.Header>
+                  <Switch
+                    checked={selectedConnections[c.id] && selectedConnections[c.id].active}
+                    style={{ position: "absolute", top: 15, right: 10 }}
+                    onChange={() => _onToggleConnection(c.id)}
+                    size="xs"
+                  />
+                  <img src={connectionImages[c.type]} alt={"Connection logo"} width="34px" height="34px" />
+                  <Text>{c.name}</Text>
+                </Card.Header>
+                <Card.Body>
                   <Checkbox
-                    checked={
+                    isSelected={
                       (selectedConnections[c.id]
                       && selectedConnections[c.id].createNew)
                       || !existingConnections
                       || existingConnections.length < 1
                     }
-                    label="Create a new connection"
                     onChange={() => _onToggleCreateNew(c.id)}
-                    disabled={!existingConnections || existingConnections.length < 1}
-                  />
-                </Card.Description>
-              </Card.Content>
-              {existingConnections && existingConnections.length > 0 && (
-                <Card.Content extra>
-                  <Icon name="plug" />
-                  Existing connection found
-                </Card.Content>
-              )}
-            </Card>
+                    isDisabled={!existingConnections || existingConnections.length < 1}
+                    size="sm"
+                  >
+                    New connection
+                  </Checkbox>
+                </Card.Body>
+                {existingConnections && existingConnections.length > 0 && (
+                  <Card.Footer>
+                    <Row align="center">
+                      <Swap size="small" />
+                      <Spacer x={0.2} />
+                      <Text small>Existing connection found</Text>
+                    </Row>
+                  </Card.Footer>
+                )}
+              </Card>
+            </Grid>
           );
         })}
-      </Card.Group>
+      </Grid.Container>
 
       {template && template.model && (
         <>
-          <Divider hidden />
-          <Header size="small">{"Select which charts you want Chartbrew to create for you"}</Header>
-          <Grid columns={2} stackable>
+          <Spacer y={1} />
+          <Row>
+            <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
+          </Row>
+          <Spacer y={0.5} />
+          <Grid.Container gap={1}>
             {template.model.Charts && template.model.Charts.map((chart) => (
-              <Grid.Column key={chart.tid}>
+              <Grid key={chart.tid} xs={12} sm={6}>
                 <Checkbox
-                  label={chart.name}
-                  checked={
+                  isSelected={
                     _.indexOf(selectedCharts, chart.tid) > -1
                   }
-                  onClick={() => _onChangeSelectedCharts(chart.tid)}
-                />
+                  onChange={() => _onChangeSelectedCharts(chart.tid)}
+                  size="sm"
+                >
+                  {chart.name}
+                </Checkbox>
                 {_getDependency(chart) && (
                   <>
                     {" "}
-                    <Popup
-                      trigger={(
-                        <Icon name="warning sign" color="orange" />
-                      )}
+                    <Tooltip
                       content={`This chart depends on ${_getDependency(chart)} to display properly.`}
-                    />
+                      css={{ zIndex: 99999 }}
+                    >
+                      <InfoSquare size="small" />
+                    </Tooltip>
                   </>
                 )}
-              </Grid.Column>
+              </Grid>
             ))}
-          </Grid>
+          </Grid.Container>
 
-          <Divider hidden />
-          <Button
-            icon="check"
-            content="Select all"
-            basic
-            onClick={_onSelectAll}
-            size="small"
-          />
-          <Button
-            icon="x"
-            content="Deselect all"
-            basic
-            onClick={_onDeselectAll}
-            size="small"
-          />
+          <Spacer y={1} />
+          <Row>
+            <Button
+              iconRight={<TickSquare />}
+              bordered
+              onClick={_onSelectAll}
+              size="sm"
+              auto
+            >
+              Select all
+            </Button>
+            <Spacer x={0.5} />
+            <Button
+              iconRight={<CloseSquare />}
+              bordered
+              onClick={_onDeselectAll}
+              size="sm"
+              auto
+            >
+              Deselect all
+            </Button>
+          </Row>
         </>
       )}
 
-      <Divider />
-      <Button
-        content="Back"
-        onClick={onBack}
-      />
-      <Button
-        primary
-        content="Generate from template"
-        onClick={_generateTemplate}
-        loading={isCreating}
-      />
-
-      {isAdmin && (
-        <Button
-          color="red"
-          className="tertiary"
-          icon="trash"
-          content="Delete template"
-          onClick={() => setDeleteConfimation(true)}
-        />
-      )}
-
-      {isAdmin && (
-        <TransitionablePortal open={deleteConfirmation}>
-          <Modal
-            open={deleteConfirmation}
-            closeIcon
-            onClose={() => setDeleteConfimation(false)}
-            basic
+      <Spacer y={1} />
+      <Row justify="flex-end">
+        {isAdmin && (
+          <Button
+            color="error"
+            flat
+            iconRight={<Delete />}
+            onClick={() => setDeleteConfimation(true)}
+            auto
           >
-            <Modal.Header>
-              Are you sure you want to delete this template?
-            </Modal.Header>
-            <Modal.Content>
-              {"After you delete this template you will not be able to create charts from it. Deleting the template will not affect any dashboards."}
-            </Modal.Content>
-            <Modal.Actions>
-              <Button
-                content="Cancel"
-                onClick={() => setDeleteConfimation(false)}
-              />
-              <Button
-                color="red"
-                icon="trash"
-                content="Delete template"
-                loading={deleteLoading}
-                onClick={() => {
-                  setDeleteLoading(true);
-                  onDelete(template.id);
-                }}
-              />
-            </Modal.Actions>
-          </Modal>
-        </TransitionablePortal>
+            Delete template
+          </Button>
+        )}
+        <Spacer x={0.5} />
+        <Button
+          primary
+          onClick={_generateTemplate}
+          disabled={isCreating || !selectedCharts.length}
+          iconRight={<ArrowRight />}
+          auto
+        >
+          {!isCreating && "Generate from template"}
+          {isCreating && <Loading type="points" />}
+        </Button>
+      </Row>
+
+      {isAdmin && (
+        <Modal
+          open={deleteConfirmation}
+          closeButton
+          onClose={() => setDeleteConfimation(false)}
+        >
+          <Modal.Header>
+            <Text h4>Are you sure you want to delete this template?</Text>
+          </Modal.Header>
+          <Modal.Body>
+            {"After you delete this template you will not be able to create charts from it. Deleting the template will not affect any dashboards."}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              flat
+              color="warning"
+              onClick={() => setDeleteConfimation(false)}
+              auto
+            >
+              Close
+            </Button>
+            <Button
+              color="error"
+              iconRight={<Delete />}
+              disabled={deleteLoading}
+              onClick={() => {
+                setDeleteLoading(true);
+                onDelete(template.id);
+              }}
+              auto
+            >
+              {!deleteLoading && "Delete template"}
+              {deleteLoading && <Loading type="points" />}
+            </Button>
+          </Modal.Footer>
+        </Modal>
       )}
-    </div>
+    </Container>
   );
 }
 

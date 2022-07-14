@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { useWindowSize } from "react-use";
 import {
-  Button, Col, Container, Input, Loading, Modal, Row,
+  Button, Col, Container, Input, Loading, Row,
   Spacer, Table, Text, Tooltip, Link as LinkNext,
 } from "@nextui-org/react";
 import {
@@ -126,24 +126,11 @@ function UserDashboard(props) {
 
   const newProjectModal = () => {
     return (
-      <Modal
+      <ProjectForm
+        onComplete={_onProjectCreated}
         open={addProject}
         onClose={() => setAddProject(false)}
-        closeButton
-      >
-        <Modal.Body>
-          <ProjectForm onComplete={_onProjectCreated} />
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            onClick={() => setAddProject(false)}
-            color="warning"
-            flat
-          >
-            Cancel
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      />
     );
   };
 
@@ -295,50 +282,64 @@ function UserDashboard(props) {
                       </Table.Column>
                       <Table.Column key="actions" align="center" hideHeader>Actions</Table.Column>
                     </Table.Header>
-                    <Table.Body items={_getFilteredProjects(key)}>
-                      {(project) => (
-                        <Table.Row key={project.id}>
+                    {_getFilteredProjects(key).length > 0 && (
+                      <Table.Body items={_getFilteredProjects(key)}>
+                        {(project) => (
+                          <Table.Row key={project.id}>
+                            <Table.Cell key="name">
+                              <LinkNext onClick={() => directToProject(key, project.id)}>
+                                <Text b css={{ color: "$text" }}>{project.name}</Text>
+                              </LinkNext>
+                            </Table.Cell>
+                            <Table.Cell key="connections">
+                              <Row justify="center" align="center">
+                                <Text b>
+                                  {project.Connections && project.Connections.length}
+                                </Text>
+                              </Row>
+                            </Table.Cell>
+                            <Table.Cell key="charts">
+                              <Row justify="center" align="center">
+                                <Text b>
+                                  {project.Charts.length}
+                                </Text>
+                              </Row>
+                            </Table.Cell>
+                            <Table.Cell key="actions">
+                              <Row justify="flex-end" align="center">
+                                <Tooltip content="Edit project">
+                                  <IconButton>
+                                    <Edit set="light" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Spacer x={0.5} />
+                                <Tooltip
+                                  content="Delete project"
+                                  color="error"
+                                >
+                                  <IconButton>
+                                    <Delete primaryColor={negative} set="light" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Spacer x={0.5} />
+                              </Row>
+                            </Table.Cell>
+                          </Table.Row>
+                        )}
+                      </Table.Body>
+                    )}
+                    {_getFilteredProjects(key).length === 0 && (
+                      <Table.Body>
+                        <Table.Row>
                           <Table.Cell key="name">
-                            <LinkNext onClick={() => directToProject(key, project.id)}>
-                              <Text b css={{ color: "$text" }}>{project.name}</Text>
-                            </LinkNext>
+                            <Text i>No projects found</Text>
                           </Table.Cell>
-                          <Table.Cell key="connections">
-                            <Row justify="center" align="center">
-                              <Text b>
-                                {project.Connections && project.Connections.length}
-                              </Text>
-                            </Row>
-                          </Table.Cell>
-                          <Table.Cell key="charts">
-                            <Row justify="center" align="center">
-                              <Text b>
-                                {project.Charts.length}
-                              </Text>
-                            </Row>
-                          </Table.Cell>
-                          <Table.Cell key="actions">
-                            <Row justify="flex-end" align="center">
-                              <Tooltip content="Edit project" color={"primary"}>
-                                <IconButton>
-                                  <Edit set="light" />
-                                </IconButton>
-                              </Tooltip>
-                              <Spacer x={0.5} />
-                              <Tooltip
-                                content="Delete project"
-                                color="error"
-                              >
-                                <IconButton>
-                                  <Delete primaryColor={negative} set="light" />
-                                </IconButton>
-                              </Tooltip>
-                              <Spacer x={0.5} />
-                            </Row>
-                          </Table.Cell>
+                          <Table.Cell key="connections" align="center" />
+                          <Table.Cell key="charts" align="center" />
+                          <Table.Cell key="actions" align="center" />
                         </Table.Row>
-                      )}
-                    </Table.Body>
+                      </Table.Body>
+                    )}
                   </Table>
                 )}
                 {key.Projects && key.Projects.length === 0 && !_canAccess("admin", key.TeamRoles)

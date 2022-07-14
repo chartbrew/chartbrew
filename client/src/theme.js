@@ -78,7 +78,6 @@ function getThemeConfig(type = "light") {
         gradient: "linear-gradient(112deg, $blue600 -3.59%, $blue600 -20.3%, $orange800 80.46%)",
         gradientShadow: "linear-gradient(112deg, $blue600 -3.59%, $blue600 -20.3%, $orange800 80.46%)",
         link: "#5E1DAD",
-        background: "$blue1000",
         headerBackground: darkTransparent(0.8),
       },
       space: {},
@@ -86,10 +85,7 @@ function getThemeConfig(type = "light") {
         sans: "Inter, sans-serif",
       },
       fontWeights: {
-        // lighter: "600",
-        // normal: "700",
         medium: "600",
-        // bold: "800",
       }
     }
   });
