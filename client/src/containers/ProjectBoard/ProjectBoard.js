@@ -169,7 +169,8 @@ function ProjectBoard(props) {
       {!isPrinting && (
         <>
           <Media greaterThan="mobile">
-            <div style={{ height }}>
+            {/* extract the navbar height from here */}
+            <div style={{ height: height - 50 }}>
               <Navbar />
               <Allotment
                 defaultSizes={[sideMinSize, sideMaxSize]}

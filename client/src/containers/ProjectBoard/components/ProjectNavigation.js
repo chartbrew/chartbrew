@@ -4,19 +4,20 @@ import { useWindowSize } from "react-use";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
-  Button, Dropdown, Header, Icon, Input, Menu, Modal, Popup, TransitionablePortal,
+  Modal, TransitionablePortal,
 } from "semantic-ui-react";
 import ReactMarkdown from "react-markdown";
 import {
-  Container, Row, Link as LinkNext,
+  Container, Row, Link as LinkNext, Dropdown, Text, Tooltip, Spacer, Button, Avatar,
 } from "@nextui-org/react";
 import {
-  Category, Graph, Setting, TwoUsers,
+  Activity, Category, ChevronLeftCircle, ChevronRightCircle, ChevronUpCircle,
+  Graph, Hide, MoreSquare, Plus, Setting, Show, TwoUsers,
 } from "react-iconly";
 import { FaPlug } from "react-icons/fa";
 
 import {
-  blue, dark, darkBlue, lightGray, primary, secondary
+  dark, lightGray, primary, secondary
 } from "../../../config/colors";
 import { APP_VERSION } from "../../../config/settings";
 import StyledNavContainer from "../../../components/StyledNavContainer";
@@ -62,7 +63,6 @@ function ProjectNavigation(props) {
     canAccess, projects, onChangeDrafts, onChangeProject, mobile, update,
   } = props;
 
-  const [projectSearch, setProjectSearch] = useState("");
   const [showUpdate, setShowUpdate] = useState(false);
 
   const { height } = useWindowSize();
@@ -136,318 +136,297 @@ function ProjectNavigation(props) {
   }
 
   return (
-    <>
-      <Menu
-        size={menuSize === "small" ? "large" : "huge"}
-        fluid
-        inverted
-        vertical
-        icon={menuSize === "small"}
-        style={styles.mainSideMenu(height)}
-      >
-        <Menu.Item header>
+    <div>
+      <Container justify="space-between" style={styles.mainSideMenu(height)} css={{ background: "$backgroundContrast" }}>
+        <Row justify="center" align="center" css={{ pt: 20 }}>
           <Dropdown
-            text={menuSize === "large" ? _formatProjectName(project.name) : null}
-            button={menuSize === "small"}
-            labeled={menuSize === "small"}
-            icon={menuSize === "small"
-              ? (
-                <Popup
-                  trigger={<Icon name="list ul" size="large" />}
-                  content="Switch projects"
-                  position="right center"
-                  inverted
-                />
-              ) : "list ul"}
-            item
             style={{ ...styles.centered, fontSize: 14 }}
-            closeOnChange={false}
             title={project.name}
           >
-            <Dropdown.Menu style={{ fontSize: 14 }}>
-              <Input
-                icon="search"
-                iconPosition="left"
-                className="search"
-                onClick={(e) => e.stopPropagation()}
-                onChange={(e, data) => setProjectSearch(data.value)}
-              />
-              <Dropdown.Header>Select another project</Dropdown.Header>
-              <Dropdown.Menu scrolling>
-                <Dropdown.Divider />
-                {projects.map((p) => {
-                  if (projectSearch
-                    && p.name.toLowerCase().indexOf(projectSearch.toLowerCase()) === -1
-                  ) {
-                    return (<span key={p.id} />);
-                  }
-
-                  return (
-                    <Dropdown.Item
-                      key={p.id}
-                      onClick={() => onChangeProject(p.id)}
-                    >
-                      {p.name}
-                    </Dropdown.Item>
-                  );
-                })}
-              </Dropdown.Menu>
+            <Dropdown.Trigger>
+              <LinkNext css={{ color: "$accents9" }}>
+                {menuSize === "small" && (
+                  <Tooltip content="Switch project" placement="right">
+                    <Category size="large" />
+                  </Tooltip>
+                )}
+                {menuSize === "large" && (
+                  <Text b css={{ color: "$blue600" }}>{_formatProjectName(project.name)}</Text>
+                )}
+              </LinkNext>
+            </Dropdown.Trigger>
+            <Dropdown.Menu style={{ fontSize: 14 }} onAction={(pId) => onChangeProject(pId)}>
+              {projects.map((p) => {
+                return (
+                  <Dropdown.Item key={p.id}>
+                    {p.name}
+                  </Dropdown.Item>
+                );
+              })}
             </Dropdown.Menu>
           </Dropdown>
-        </Menu.Item>
-
+        </Row>
+        <Spacer y={1.5} />
         {canAccess("editor")
           && (
-            <Menu.Item
-              active={_checkIfActive("chart")}
-              style={styles.centered}
-            >
-              {menuSize === "small"
-                && (
-                  <Popup
-                    trigger={(
-                      <Button
-                        primary
-                        icon
-                        as={Link}
-                        to={`/${teamId}/${projectId}/chart`}
-                        size="small"
-                      >
-                        <Icon name="plus" />
-                      </Button>
+            <Row justify="center" align="center">
+              <Link to={`/${teamId}/${projectId}/chart`}>
+                <LinkNext color="primary">
+                  {menuSize === "small"
+                    && (
+                      <Tooltip content="Create a new chart" placement="right">
+                        <Avatar icon={<Plus size="large" />} squared />
+                      </Tooltip>
                     )}
-                    content="Create a new chart"
-                    position="right center"
-                    inverted
-                  />
-                )}
-              {menuSize === "large" && (
-                <Button
-                  primary
-                  icon
-                  labelPosition="right"
-                  as={Link}
-                  to={`/${teamId}/${projectId}/chart`}
-                  fluid
-                >
-                  <Icon name="plus" />
-                  Create a chart
-                </Button>
-              )}
-            </Menu.Item>
+                  {menuSize === "large" && (
+                    <Button
+                      iconRight={<Plus />}
+                      auto
+                      color="primary"
+                    >
+                      Create a chart
+                    </Button>
+                  )}
+                </LinkNext>
+              </Link>
+            </Row>
           )}
-
-        <Menu.Item>
-          {menuSize === "large"
-            && (
-              <Menu.Header>
-                Project
-              </Menu.Header>
-            )}
-          <Menu.Menu>
-            <Menu.Item
-              active={_checkIfActive("dashboard")}
-              as={Link}
-              to={`/${teamId}/${projectId}/dashboard`}
-            >
-              {menuSize === "small"
-                && (
-                  <Popup
-                    trigger={<Icon name="line graph" size="large" />}
-                    content="Dashboard"
-                    position="right center"
-                    inverted
-                  />
-                )}
-              {menuSize === "large" && <Icon name="line graph" />}
-              {menuSize === "large" && "Dashboard"}
-            </Menu.Item>
-
-            {canAccess("editor")
-              && (
-                <Menu.Item
-                  active={_checkIfActive("connections")}
-                  as={Link}
-                  to={`/${teamId}/${projectId}/connections`}
-                >
-                  {menuSize === "small"
-                    && (
-                      <Popup
-                        trigger={<Icon name="power cord" size="large" />}
-                        content="Connections"
-                        position="right center"
-                        inverted
-                      />
-                    )}
-                  {menuSize === "large" && <Icon name="power cord" />}
-                  {menuSize === "large" && "Connections"}
-                </Menu.Item>
+        <Spacer y={1.5} />
+        <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
+          <Link to={`/${teamId}/${projectId}/dashboard`}>
+            <LinkNext css={{ color: _checkIfActive("dashboard") ? "$blue600" : "$accents8" }}>
+              {menuSize === "small" && (
+                <Tooltip content="Dashboard" placement="right">
+                  <Activity size="large" />
+                </Tooltip>
               )}
 
-            <Menu.Item
-              active={_checkIfActive("public")}
-              as={Link}
-              to={`/b/${project.brewName}`}
-            >
-              {menuSize === "small"
-                && (
-                  <Popup
-                    trigger={<Icon name="desktop" size="large" />}
-                    content="Dashboard report"
-                    position="right center"
-                    inverted
-                  />
+              <Row align="center">
+                {menuSize === "large" && <Activity />}
+                {menuSize === "large" && <Spacer x={0.2} />}
+                {menuSize === "large" && (
+                  <Text h5 css={{ color: _checkIfActive("dashboard") ? "$blue600" : "$accents8" }}>
+                    Dashboard
+                  </Text>
                 )}
-              {menuSize === "large" && <Icon name="desktop" />}
-              {menuSize === "large" && "Dashboard report"}
-            </Menu.Item>
-
-            {canAccess("admin")
-              && (
-                <Menu.Item
-                  active={_checkIfActive("projectSettings")}
-                  as={Link}
-                  to={`/${teamId}/${projectId}/projectSettings`}
-                >
-                  {menuSize === "small"
-                    && (
-                      <Popup
-                        trigger={<Icon name="cog" size="large" />}
-                        content="Project settings"
-                        position="right center"
-                        inverted
-                      />
-                    )}
-                  {menuSize === "large" && <Icon name="cog" />}
-                  {menuSize === "large" && "Settings"}
-                </Menu.Item>
-              )}
-          </Menu.Menu>
-        </Menu.Item>
-
+              </Row>
+            </LinkNext>
+          </Link>
+        </Row>
         {canAccess("editor") && (
-          <Menu.Item>
-            {menuSize === "large" && <Menu.Header>Team</Menu.Header>}
-            <Menu.Menu>
-              <Menu.Item active={_checkIfActive("members")} as={Link} to={`/${teamId}/${projectId}/members`}>
-                {menuSize === "small"
+          <>
+            <Spacer y={0.5} />
+            <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
+              <Link to={`/${teamId}/${projectId}/connections`}>
+                <LinkNext css={{ color: _checkIfActive("connections") ? "$blue600" : "$accents8" }}>
+                  {menuSize === "small"
                   && (
-                    <Popup
-                      trigger={<Icon name="user" size="large" />}
-                      content="Members"
-                      position="right center"
-                      inverted
-                    />
+                    <Tooltip content="Connections" placement="right">
+                      <FaPlug size={28} />
+                    </Tooltip>
                   )}
-                {menuSize === "large" && <Icon name="users" />}
-                {menuSize === "large" && "Members"}
-              </Menu.Item>
-
-              {canAccess("owner")
-                && (
-                  <Menu.Item active={_checkIfActive("settings")} as={Link} to={`/${teamId}/${projectId}/settings`}>
-                    {menuSize === "small"
-                      && (
-                        <Popup
-                          trigger={<Icon name="settings" size="large" />}
-                          content="Settings"
-                          position="right center"
-                          inverted
-                        />
-                      )}
-                    {menuSize === "large" && <Icon name="settings" />}
-                    {menuSize === "large" && "Settings"}
-                  </Menu.Item>
-                )}
-            </Menu.Menu>
-          </Menu.Item>
+                  <Row align="center">
+                    {menuSize === "large" && <FaPlug size={22} />}
+                    {menuSize === "large" && <Spacer x={0.2} />}
+                    {menuSize === "large" && (
+                      <Text h5 css={{ color: _checkIfActive("connections") ? "$blue600" : "$accents8" }}>
+                        Connections
+                      </Text>
+                    )}
+                  </Row>
+                </LinkNext>
+              </Link>
+            </Row>
+          </>
         )}
-        <Menu.Menu style={styles.absoluteDrafts}>
-          {_checkIfActive("dashboard") && canAccess("editor") && (
-            <Popup
-              trigger={(
-                <Menu.Item onClick={() => onChangeDrafts(!showDrafts)}>
+
+        <Spacer y={0.5} />
+        <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
+          <Link to={`/b/${project.brewName}`}>
+            <LinkNext css={{ color: _checkIfActive("public") ? "$blue600" : "$accents8" }}>
+              {menuSize === "small" && (
+                <Tooltip content="Dashboard report" placement="right">
+                  <Graph size="large" />
+                </Tooltip>
+              )}
+              <Row align="center">
+                {menuSize === "large" && <Graph />}
+                {menuSize === "large" && <Spacer x={0.2} />}
+                {menuSize === "large" && (
+                  <Text h5 css={{ color: _checkIfActive("public") ? "$blue600" : "$accents8" }}>
+                    Dashboard report
+                  </Text>
+                )}
+              </Row>
+            </LinkNext>
+          </Link>
+        </Row>
+
+        {canAccess("admin") && (
+          <>
+            <Spacer y={0.5} />
+            <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
+              <Link to={`/${teamId}/${projectId}/projectSettings`}>
+                <LinkNext css={{ color: _checkIfActive("projectSettings") ? "$blue600" : "$accents8" }}>
                   {menuSize === "small" && (
-                    <>
-                      <Icon name={showDrafts ? "toggle on" : "toggle off"} size="large" />
-                    </>
+                    <Tooltip content="Project settings" placement="right">
+                      <Setting size="large" />
+                    </Tooltip>
                   )}
-                  {menuSize === "large" && <Icon name={showDrafts ? "toggle on" : "toggle off"} />}
-                  {menuSize === "large" && "Show drafts"}
-                </Menu.Item>
-              )}
-              content={showDrafts ? "Hide drafts" : "Show drafts"}
-              position="right center"
-              inverted
-            />
-          )}
-        </Menu.Menu>
-        {menuSize === "large"
-          && (
-            <Popup
-              trigger={(
-                <Menu.Item
-                  onClick={() => onSetMenuSize(70)}
-                  style={styles.absoluteCollapse(menuSize)}
-                >
-                  <Icon name="toggle left" size="large" />
-                </Menu.Item>
-              )}
-              content="Collapse menu"
-              position="right center"
-              inverted
-            />
-          )}
-        {menuSize === "small"
-          && (
-            <Menu.Item
-              onClick={() => onSetMenuSize(sideMaxSize)}
-              style={styles.absoluteCollapse(menuSize)}
-            >
-              <Popup
-                trigger={<Icon name="toggle right" size="large" />}
-                content="Expand menu"
-                position="right center"
-                inverted
-              />
-            </Menu.Item>
-          )}
-        <Menu.Item style={styles.absoluteLogo}>
-          <Header as="h6" inverted style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
-            {menuSize !== "small" && (
-              <a
-                href={((!update || !update.tag_name) && `https://github.com/chartbrew/chartbrew/releases/tag/${APP_VERSION}`) || "#"}
-                target={(!update || !update.tag_name) && "_blank"}
-                rel="noopener noreferrer"
-                onClick={_onVersionClicked}
-                style={{ color: "white" }}
-                title={(update && update.tag_name && "New version available") || "Current Chartbrew version"}
+                  <Row align="center">
+                    {menuSize === "large" && <Setting />}
+                    {menuSize === "large" && <Spacer x={0.2} />}
+                    {menuSize === "large" && (
+                      <Text h5 css={{ color: _checkIfActive("projectSettings") ? "$blue600" : "$accents8" }}>
+                        Project settings
+                      </Text>
+                    )}
+                  </Row>
+                </LinkNext>
+              </Link>
+            </Row>
+          </>
+        )}
+        <Spacer y={1.5} />
+        {canAccess("editor") && (
+          <>
+            {menuSize === "large" && (
+              <>
+                <Row justify="flex-start" align="center">
+                  <Text h6 css={{ color: "$accents8" }}>
+                    Team
+                  </Text>
+                </Row>
+                <Spacer y={0.5} />
+              </>
+            )}
+            <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
+              <Link to={`/${teamId}/${projectId}/members`}>
+                <LinkNext css={{ color: _checkIfActive("members") ? "$blue600" : "$accents8" }}>
+                  {menuSize === "small" && (
+                    <Tooltip content="Team members" placement="right">
+                      <TwoUsers size="large" />
+                    </Tooltip>
+                  )}
+                  <Row align="center">
+                    {menuSize === "large" && <TwoUsers />}
+                    {menuSize === "large" && <Spacer x={0.2} />}
+                    {menuSize === "large" && (
+                      <Text h5 css={{ color: _checkIfActive("members") ? "$blue600" : "$accents8" }}>
+                        Members
+                      </Text>
+                    )}
+                  </Row>
+                </LinkNext>
+              </Link>
+            </Row>
+            <Spacer y={0.5} />
+            {canAccess("owner") && (
+              <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
+                <Link to={`/${teamId}/${projectId}/settings`}>
+                  <LinkNext css={{ color: _checkIfActive("settings") ? "$blue600" : "$accents8" }}>
+                    {menuSize === "small" && (
+                      <Tooltip content="Team settings" placement="right">
+                        <MoreSquare size="large" />
+                      </Tooltip>
+                    )}
+                    <Row align="center">
+                      {menuSize === "large" && <MoreSquare />}
+                      {menuSize === "large" && <Spacer x={0.2} />}
+                      {menuSize === "large" && (
+                        <Text h5 css={{ color: _checkIfActive("settings") ? "$blue600" : "$accents8" }}>
+                          Settings
+                        </Text>
+                      )}
+                    </Row>
+                  </LinkNext>
+                </Link>
+              </Row>
+            )}
+          </>
+        )}
+        <Spacer y={1.5} />
+        <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
+          {_checkIfActive("dashboard") && canAccess("editor") && (
+            <LinkNext css={{ color: "$accents8" }} onClick={() => onChangeDrafts(!showDrafts)}>
+              <Tooltip
+                content={showDrafts ? "Click to hide drafts" : "Click to show drafts"}
+                placement="right"
               >
+                <Row align="center">
+                  {menuSize === "small" && (
+                    showDrafts ? (<Show size="large" />) : (<Hide size="large" />)
+                  )}
+                  {menuSize === "large" && (showDrafts ? (<Show />) : (<Hide />))}
+                  {menuSize === "large" && <Spacer x={0.2} />}
+                  {menuSize === "large" && (
+                    <Text h5 css={{ color: "$accents8" }}>
+                      {showDrafts ? "Showing drafts" : "Hiding drafts"}
+                    </Text>
+                  )}
+                </Row>
+              </Tooltip>
+            </LinkNext>
+          )}
+        </Row>
+        {menuSize === "small" && <Spacer y={0.5} />}
+        {menuSize === "large" && <Spacer y={1.5} />}
+        {menuSize === "large" && (
+          <Row justify="flex-end" align="center">
+            <LinkNext css={{ color: "$accents8" }} onClick={() => onSetMenuSize(70)}>
+              <Tooltip content="Click to collapse menu" placement="right">
+                <ChevronLeftCircle size="large" />
+              </Tooltip>
+            </LinkNext>
+          </Row>
+        )}
+        {menuSize === "small" && (
+          <Row justify="center" align="center">
+            <LinkNext css={{ color: "$accents8" }} onClick={() => onSetMenuSize(sideMaxSize)}>
+              <Tooltip content="Click to expand menu" placement="right">
+                <ChevronRightCircle size="large" />
+              </Tooltip>
+            </LinkNext>
+          </Row>
+        )}
+        <Row style={styles.absoluteLogo} align="center" justify="center">
+          {menuSize !== "small" && (
+            <LinkNext
+              href={((!update || !update.tag_name) && `https://github.com/chartbrew/chartbrew/releases/tag/${APP_VERSION}`) || "#"}
+              target={(!update || !update.tag_name) && "_blank"}
+              rel="noopener noreferrer"
+              onClick={_onVersionClicked}
+              style={{ color: "white" }}
+              title={(update && update.tag_name && "New version available") || "Current Chartbrew version"}
+            >
+              <Text b css={{ color: "$accents8", fs: 12 }} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
                 {update && update.tag_name && (
-                  <Icon name="circle" color="olive" />
+                  <ChevronUpCircle primaryColor={secondary} size="small" />
                 )}
                 Chartbrew
                 { ` ${APP_VERSION}`}
-              </a>
-            )}
-            {menuSize === "small" && (
-              <a
-                href={((!update || !update.tag_name) && `https://github.com/chartbrew/chartbrew/releases/tag/${APP_VERSION}`) || "#"}
-                target={(!update || !update.tag_name) && "_blank"}
-                rel="noopener noreferrer"
-                onClick={_onVersionClicked}
-                style={{ color: "white" }}
-                title={(update && update.tag_name && "New version available") || "Current Chartbrew version"}
-              >
+              </Text>
+            </LinkNext>
+          )}
+          {menuSize === "small" && (
+            <LinkNext
+              href={((!update || !update.tag_name) && `https://github.com/chartbrew/chartbrew/releases/tag/${APP_VERSION}`) || "#"}
+              target={(!update || !update.tag_name) && "_blank"}
+              rel="noopener noreferrer"
+              onClick={_onVersionClicked}
+              style={{ color: "white" }}
+              title={(update && update.tag_name && "New version available") || "Current Chartbrew version"}
+            >
+              <Text b css={{ color: "$accents8", fs: 12 }} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
                 {update && update.tag_name && (
-                  <Icon name="circle" color="olive" />
+                  <ChevronUpCircle primaryColor={secondary} size="small" />
                 )}
                 {APP_VERSION}
-              </a>
-            )}
-          </Header>
-        </Menu.Item>
-      </Menu>
+              </Text>
+            </LinkNext>
+          )}
+        </Row>
+      </Container>
 
       <TransitionablePortal open={showUpdate}>
         <Modal open={showUpdate} closeIcon onClose={() => setShowUpdate(false)}>
@@ -471,7 +450,7 @@ function ProjectNavigation(props) {
           </Modal.Actions>
         </Modal>
       </TransitionablePortal>
-    </>
+    </div>
   );
 }
 
@@ -508,18 +487,17 @@ const styles = {
     backgroundColor: lightGray,
   },
   absoluteLogo: {
-    backgroundColor: blue,
     position: "absolute",
     bottom: 0,
+    left: 0,
     width: "100%",
-    boxShadow: "-5px 1px 10px #000",
     textAlign: "center",
     padding: 5,
     borderRadius: 0,
   },
   cbVersion: {
     verticalAlign: "center",
-    padding: 7,
+    padding: 4,
   },
   cbVersionCollapsed: {
     verticalAlign: "center",
@@ -546,7 +524,6 @@ const styles = {
     textAlign: "center",
   },
   mainSideMenu: (height) => ({
-    backgroundColor: darkBlue,
     minHeight: height,
     borderRadius: 0,
   }),
