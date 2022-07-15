@@ -1,8 +1,8 @@
 import { createTheme } from "@nextui-org/react";
 
-import { darkTransparent } from "./config/colors";
+import { darkBlue, darkTransparent, dark } from "./config/colors";
 
-const light = {
+const lightTheme = {
   colors: {
     blue50: "#EAFAFF",
     blue100: "#BBE2EF",
@@ -86,7 +86,7 @@ const light = {
   }
 };
 
-const dark = {
+const darkTheme = {
   colors: {
     blue50: "#EAFAFF",
     blue100: "#BBE2EF",
@@ -160,6 +160,8 @@ const dark = {
     gradientShadow: "linear-gradient(112deg, $blue600 -3.59%, $blue600 -20.3%, $orange800 80.46%)",
     link: "#5E1DAD",
     headerBackground: darkTransparent(0.8),
+    background: dark,
+    backgroundContrast: darkBlue,
   },
   space: {},
   fonts: {
@@ -173,7 +175,7 @@ const dark = {
 function getThemeConfig(type = "light") {
   return createTheme({
     type,
-    theme: type === "light" ? light : dark,
+    theme: type === "light" ? lightTheme : darkTheme,
   });
 }
 

@@ -3,15 +3,19 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Message, Icon, Button, Container, Header, Divider, Menu,
-  Label, TransitionablePortal, Modal, Grid, Card, Popup, Checkbox,
-} from "semantic-ui-react";
+  Container, Row, Button, Loading, Spacer, Text, Link as LinkNext, Tooltip, Grid,
+  Card, Modal,
+} from "@nextui-org/react";
 import { Link } from "react-router-dom";
-import { useLocalStorage, useWindowSize } from "react-use";
+import { useWindowSize } from "react-use";
 import _ from "lodash";
 import { createMedia } from "@artsy/fresnel";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
+import {
+  CloseSquare, Filter2, Image2, PaperDownload, Play, Plus, Scan
+} from "react-iconly";
+import { HiRefresh } from "react-icons/hi";
 
 import Chart from "../Chart/Chart";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
@@ -28,7 +32,7 @@ import {
 import canAccess from "../../config/canAccess";
 import ChartExport from "./components/ChartExport";
 import CreateTemplateForm from "../../components/CreateTemplateForm";
-import { whiteTransparent } from "../../config/colors";
+import Badge from "../../components/Badge";
 
 const breakpoints = {
   mobile: 0,
@@ -59,8 +63,6 @@ function ProjectDashboard(props) {
   } = props;
 
   const [filters, setFilters] = useState(getFiltersFromStorage());
-  const [autoRefresh, setAutoRefresh] = useLocalStorage("_cb_auto_refresh", []);
-  const [autoRefreshed, setAutoRefreshed] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
   const [refreshLoading, setRefreshLoading] = useState(false);
@@ -73,16 +75,7 @@ function ProjectDashboard(props) {
 
   useEffect(() => {
     cleanErrors();
-    setTimeout(() => {
-      setAutoRefreshed(false);
-    }, 100);
   }, []);
-
-  useEffect(() => {
-    if (!autoRefreshed && _.indexOf(autoRefresh, match.params.projectId) > -1) {
-      _onRefreshData();
-    }
-  }, [autoRefreshed]);
 
   useEffect(() => {
     if (!filterLoading) {
@@ -275,18 +268,6 @@ function ProjectDashboard(props) {
     return canExport;
   };
 
-  const _onChangeAutoRefresh = () => {
-    const tempAutoRefresh = autoRefresh || [];
-    const index = _.indexOf(autoRefresh, match.params.projectId);
-    if (index > -1) {
-      tempAutoRefresh.splice(index, 1);
-    } else {
-      tempAutoRefresh.push(match.params.projectId);
-    }
-
-    setAutoRefresh(tempAutoRefresh);
-  };
-
   const _onUpdateExport = (chartId, disabled) => {
     updateChart(match.params.projectId, chartId, { disabledExport: disabled }, true);
   };
@@ -296,293 +277,232 @@ function ProjectDashboard(props) {
       {charts && charts.length > 0
         && (
           <div>
-            <Menu
-              tabular
+            <Container
               fluid
-              compact
               style={mobile ? styles.actionBarMobile : styles.actionBar}
-              size="small"
+              css={{ backgroundColor: "$backgroundContrast" }}
             >
-              <Menu.Item
-                name="filters"
-              >
-                <Media greaterThan="mobile">
-                  <Button
-                    basic
-                    primary
-                    icon="filter"
-                    content="Add filter"
-                    loading={filterLoading}
-                    onClick={_onShowFilters}
-                    size="small"
-                  />
-                </Media>
-                <Media at="mobile">
-                  <Button
-                    basic
-                    primary
-                    icon="filter"
-                    loading={filterLoading}
-                    onClick={_onShowFilters}
-                    size="small"
-                  />
-                </Media>
-              </Menu.Item>
-              <Menu.Item style={mobile ? {} : { borderLeft: "solid 1px #d4d4d5" }}>
-                <div>
-                  <Label.Group size="small">
-                    {filters
-                      && filters[match.params.projectId]
-                      && filters[match.params.projectId].map((filter) => (
-                        <Label color="violet" as="a" key={filter.id} style={{ marginBottom: 0 }}>
-                          <span>{`${filter.field.substring(filter.field.lastIndexOf(".") + 1)}`}</span>
-                          <strong>{` ${_getOperator(filter.operator)} `}</strong>
-                          <span>{`${filter.value}`}</span>
-                          <Label.Detail>
-                            <Icon name="x" onClick={() => _onRemoveFilter(filter.id)} />
-                          </Label.Detail>
-                        </Label>
-                      ))}
-                  </Label.Group>
-                </div>
-              </Menu.Item>
-              <Menu.Menu position="right">
-                {_canAccess("admin") && (
-                  <Menu.Item style={{ padding: 0 }}>
-                    <Popup
-                      trigger={(
-                        <Button
-                          button
-                          basic
-                          primary
-                          icon="clone"
-                          className="icon"
-                          onClick={() => setTemplateVisible(true)}
-                        />
-                      )}
-                      content="Create a template from this dashboard"
-                      position="bottom right"
-                    />
-                  </Menu.Item>
-                )}
-                {_canExport() && (
-                  <Menu.Item style={{ padding: 0 }}>
-                    <Popup
-                      trigger={(
-                        <Button
-                          button
-                          basic
-                          primary
-                          icon="file excel"
-                          className="icon"
-                          onClick={_openExport}
-                        />
-                      )}
-                      content="Export charts to Excel (.xlsx)"
-                      position="bottom right"
-                    />
-                  </Menu.Item>
-                )}
-                {!mobile && (
-                  <Menu.Item style={{ padding: 0 }}>
-                    <Popup
-                      trigger={(
-                        <Button
-                          basic
-                          primary
-                          icon="print"
-                          onClick={onPrint}
-                        />
-                      )}
-                      content="Open print view"
-                      position="bottom right"
-                    />
-                  </Menu.Item>
-                )}
-
-                <Menu.Item style={{ padding: 0 }}>
+              <Row justify="space-between" align="center">
+                <Row justify="flex-start" align="center">
                   <Media greaterThan="mobile">
-                    <Button size="tiny" as="div" labelPosition="right">
-                      <Popup
-                        trigger={(
-                          <Button
-                            basic
-                            primary
-                            icon="refresh"
-                            onClick={() => _onRefreshData()}
-                            loading={refreshLoading}
-                            content="Refresh all charts"
-                            size="tiny"
-                          />
-                        )}
-                        content="This function will get fresh data from all the data sources."
-                        position="bottom right"
-                      />
-                      <Popup
-                        trigger={(
-                          <Label
-                            size="small"
-                            color="violet"
-                            basic
-                            as="a"
-                            pointing="left"
-                          >
-                            <Checkbox
-                              toggle
-                              checked={_.indexOf(autoRefresh, match.params.projectId) > -1}
-                              onChange={_onChangeAutoRefresh}
-                            />
-                          </Label>
-                        )}
-                        content="Auto-refresh the charts when opening the dashboard"
-                      />
+                    <Button
+                      ghost
+                      iconRight={<Filter2 />}
+                      disabled={filterLoading}
+                      onClick={_onShowFilters}
+                      auto
+                    >
+                      {filterLoading && <Loading type="points" />}
+                      {!filterLoading && "Add filter"}
                     </Button>
                   </Media>
                   <Media at="mobile">
                     <Button
-                      basic
-                      primary
-                      icon
-                      onClick={() => _onRefreshData()}
-                      loading={refreshLoading}
-                      size="small"
-                    >
-                      <Icon name="refresh" />
-                    </Button>
+                      icon={<Filter2 />}
+                      onClick={_onShowFilters}
+                      disabled={filterLoading}
+                      ghost
+                      auto
+                    />
                   </Media>
-                </Menu.Item>
-              </Menu.Menu>
-            </Menu>
+                  <Spacer x={0.5} />
+                  <div style={mobile ? {} : { borderLeft: "solid 1px #d4d4d5" }}>
+                    {filters
+                      && filters[match.params.projectId]
+                      && filters[match.params.projectId].map((filter) => (
+                        <Badge type="primary" key={filter.id}>
+                          <span>{`${filter.field.substring(filter.field.lastIndexOf(".") + 1)}`}</span>
+                          <strong>{` ${_getOperator(filter.operator)} `}</strong>
+                          <span>{`${filter.value}`}</span>
+                          <Spacer x={0.2} />
+                          <LinkNext onClick={() => _onRemoveFilter(filter.id)}>
+                            <CloseSquare size="small" />
+                          </LinkNext>
+                        </Badge>
+                      ))}
+                  </div>
+                </Row>
+                <Row justify="flex-end" align="center">
+                  {_canAccess("admin") && (
+                    <>
+                      <Tooltip content="Create a template from this dashboard" placement="bottom">
+                        <Button
+                          ghost
+                          icon={<Scan />}
+                          onClick={() => setTemplateVisible(true)}
+                          auto
+                        />
+                      </Tooltip>
+                    </>
+                  )}
+                  {_canExport() && (
+                    <>
+                      <Spacer x={0.2} />
+                      <Tooltip content="Export charts to Excel" placement="bottom">
+                        <Button
+                          ghost
+                          icon={<PaperDownload />}
+                          onClick={_openExport}
+                          auto
+                        />
+                      </Tooltip>
+                    </>
+                  )}
+                  {!mobile && (
+                    <>
+                      <Spacer x={0.2} />
+                      <Tooltip content="Open print view" placement="bottomEnd">
+                        <Button
+                          ghost
+                          icon={<Image2 />}
+                          onClick={onPrint}
+                          auto
+                        />
+                      </Tooltip>
+                    </>
+                  )}
+
+                  <>
+                    <Spacer x={0.2} />
+                    <Media greaterThan="mobile">
+                      <Tooltip content="Refresh data" placement="bottomEnd">
+                        <Button
+                          ghost
+                          icon={<HiRefresh size={22} />}
+                          onClick={() => _onRefreshData()}
+                          disabled={refreshLoading}
+                          auto
+                      >
+                          {refreshLoading && <Loading type="points" />}
+                          {!refreshLoading && "Refresh all charts"}
+                        </Button>
+                      </Tooltip>
+                    </Media>
+                    <Media at="mobile">
+                      <Button
+                        ghost
+                        icon={<HiRefresh size={22} />}
+                        onClick={() => _onRefreshData()}
+                        disabled={refreshLoading}
+                        auto
+                    >
+                        {refreshLoading && <Loading type="points" />}
+                      </Button>
+                    </Media>
+                  </>
+                </Row>
+              </Row>
+            </Container>
           </div>
         )}
       <div style={styles.container(width < breakpoints.tablet)}>
-        {connections.length === 0 && charts.length !== 0
-            && (
-            <Message
-              floating
-              warning
-            >
-              <Link to={`/${match.params.teamId}/${match.params.projectId}/connections`}>
-                <Button primary floated="right" icon labelPosition="right">
-                  <Icon name="plug" />
-                  Connect now
-                </Button>
-              </Link>
-              <div>
-                <Icon name="database" size="big" />
-                Your project is not connected to any database yet.
-              </div>
-            </Message>
-            )}
         {connections.length === 0 && charts.length === 0
           && (
-            <Container text textAlign="center" style={{ paddingTop: height / 3 }}>
-              <Header size="huge" textAlign="center" icon>
-                Welcome to your dashboard
-                <Header.Subheader>
+            <Container justify="center" style={{ paddingTop: height / 3 }}>
+              <Row justify="center" align="center">
+                <Text h1>
+                  Welcome to your dashboard
+                </Text>
+              </Row>
+              <Spacer y={0.5} />
+              <Row justify="center" align="center">
+                <Text h3>
                   {"Connect to a data source and start visualizing your data. "}
-                </Header.Subheader>
-              </Header>
-              <Divider hidden />
-              <Link
-                to={{
-                  pathname: `/${match.params.teamId}/${match.params.projectId}/connections`,
-                  state: { onboarding: true },
-                }}
-              >
-                <Button primary icon labelPosition="right" size="huge">
-                  <Icon name="play" />
-                  Get started
-                </Button>
-              </Link>
+                </Text>
+              </Row>
+              <Spacer y={1} />
+              <Row justify="center" align="center">
+                <Link
+                  to={{
+                    pathname: `/${match.params.teamId}/${match.params.projectId}/connections`,
+                    state: { onboarding: true },
+                  }}
+                >
+                  <Button shadow iconRight={<Play />} size="lg" auto>
+                    Get started
+                  </Button>
+                </Link>
+              </Row>
             </Container>
           )}
 
         {_canAccess("editor") && charts.length < 1 && connections.length > 0
           && (
-            <Grid centered style={styles.addCard}>
-              <Card
-                raised
-                as={Link}
-                to={`/${match.params.teamId}/${match.params.projectId}/chart`}
-                color="olive"
-              >
-                <Header as="h2" textAlign="center" icon>
-                  <Icon name="plus" color="blue" />
-                  Add your first chart
-                </Header>
-              </Card>
-            </Grid>
+            <Container justify="center" style={styles.addCard}>
+              <Row justify="center" align="center">
+                <Link to={`/${match.params.teamId}/${match.params.projectId}/chart`}>
+                  <Card
+                    isHoverable
+                    isPressable
+                    as={Link}
+                  >
+                    <Card.Body>
+                      <Row justify="center" align="center">
+                        <Plus size="large" />
+                      </Row>
+                      <Row justify="center" align="center">
+                        <Text h3>Add your first chart</Text>
+                      </Row>
+                    </Card.Body>
+                  </Card>
+                </Link>
+              </Row>
+            </Container>
           )}
 
-        {connections.length > 0 && (
-          <Grid stackable centered style={styles.mainGrid(width < breakpoints.tablet)}>
-            {charts.map((chart, index) => {
-              if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
-              if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />); // eslint-disable-line
-              return (
-                <Grid.Column
-                  width={chart.chartSize * 4}
+        <Grid.Container stackable centered style={styles.mainGrid(width < breakpoints.tablet)}>
+          {charts.map((chart, index) => {
+            if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
+            if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />); // eslint-disable-line
+            return (
+              <Grid
+                xs={12}
+                sm={chart.chartSize * 6 > 12 ? 12 : chart.chartSize * 6}
+                md={chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 4}
+                key={chart.id}
+                style={styles.chartGrid(width < breakpoints.tablet)}
+              >
+                <Chart
                   key={chart.id}
-                  style={styles.chartGrid(width < breakpoints.tablet)}
-                >
-                  <Chart
-                    key={chart.id}
-                    chart={chart}
-                    charts={charts}
-                    showDrafts={showDrafts}
-                    onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
-                  />
-                </Grid.Column>
-              );
-            })}
-          </Grid>
-        )}
-        {connections.length > 0 && charts.length > 0 && _canAccess("editor") && (
-        <Container textAlign="center" style={{ paddingTop: 50 }}>
-          <Link to={`/${match.params.teamId}/${match.params.projectId}/chart`}>
-            <Button secondary icon labelPosition="right" style={styles.addChartBtn}>
-              <Icon name="plus" />
-              Add a new chart
-            </Button>
-          </Link>
-        </Container>
-        )}
+                  chart={chart}
+                  charts={charts}
+                  showDrafts={showDrafts}
+                  onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
+                />
+              </Grid>
+            );
+          })}
+        </Grid.Container>
       </div>
 
-      <TransitionablePortal open={showFilters}>
-        <Modal open={showFilters} closeIcon onClose={() => setShowFilters(false)}>
-          <Modal.Header>
-            <span style={{ verticalAlign: "middle" }}>{" Dashboard filters "}</span>
-            <Label style={{ verticalAlign: "middle" }} color="olive">New!</Label>
-          </Modal.Header>
-          <Modal.Content>
-            <Filters
-              charts={charts}
-              projectId={match.params.projectId}
-              onAddFilter={_onAddFilter}
-            />
-          </Modal.Content>
-        </Modal>
-      </TransitionablePortal>
+      <Modal open={showFilters} closeButton onClose={() => setShowFilters(false)}>
+        <Modal.Header>
+          <Text h5>Dashboard filters</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <Filters
+            charts={charts}
+            projectId={match.params.projectId}
+            onAddFilter={_onAddFilter}
+          />
+        </Modal.Body>
+      </Modal>
 
-      <TransitionablePortal open={viewExport}>
-        <Modal open={viewExport} closeIcon onClose={() => setViewExport(false)}>
-          <Modal.Header>
-            Export to Excel (.xlsx)
-          </Modal.Header>
-          <Modal.Content>
-            <ChartExport
-              charts={charts}
-              onExport={_onExport}
-              loading={exportLoading}
-              error={exportError}
-              onUpdate={(chartId, disabled) => _onUpdateExport(chartId, disabled)}
-              showDisabled={_canAccess("admin")}
-            />
-          </Modal.Content>
-        </Modal>
-      </TransitionablePortal>
+      <Modal open={viewExport} closeButton onClose={() => setViewExport(false)}>
+        <Modal.Header>
+          <Text h5>Export to Excel (.xlsx)</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <ChartExport
+            charts={charts}
+            onExport={_onExport}
+            loading={exportLoading}
+            error={exportError}
+            onUpdate={(chartId, disabled) => _onUpdateExport(chartId, disabled)}
+            showDisabled={_canAccess("admin")}
+          />
+        </Modal.Body>
+      </Modal>
 
       <CreateTemplateForm
         teamId={match.params.teamId}
@@ -618,11 +538,10 @@ const styles = {
     paddingLeft: mobile ? 0 : 20,
   }),
   actionBar: {
-    paddingRight: 10,
-    paddingLeft: 10,
+    padding: 10,
     borderRadius: 0,
-    backgroundColor: whiteTransparent(1),
     boxShadow: "none",
+    width: "100%",
   },
   actionBarMobile: {
     boxShadow: "none",

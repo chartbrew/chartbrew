@@ -255,7 +255,7 @@ function MainContent(props) {
   } = props;
 
   return (
-    <Container fluid>
+    <div style={{ width: "100%" }}>
       <Switch>
         <Route
           exact
@@ -281,7 +281,7 @@ function MainContent(props) {
             />
           )}
       </Switch>
-    </Container>
+    </div>
   );
 }
 
