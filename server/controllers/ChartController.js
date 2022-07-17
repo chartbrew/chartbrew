@@ -110,7 +110,7 @@ class ChartController {
   }
 
   update(id, data, user, justUpdates) {
-    if (data.autoUpdate) {
+    if (data.autoUpdate || data.autoUpdate === 0) {
       return db.Chart.update(data, {
         where: { id },
         attributes: { exclude: ["chartData"] },
