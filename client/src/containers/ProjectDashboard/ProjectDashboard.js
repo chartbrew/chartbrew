@@ -365,16 +365,16 @@ function ProjectDashboard(props) {
                   <>
                     <Spacer x={0.2} />
                     <Media greaterThan="mobile">
-                      <Tooltip content="Refresh data" placement="bottomEnd">
+                      <Tooltip content="Refresh data" placement="bottomStart">
                         <Button
                           ghost
                           icon={<HiRefresh size={22} />}
                           onClick={() => _onRefreshData()}
                           disabled={refreshLoading}
                           auto
-                      >
+                        >
+                          {!refreshLoading ? "Refresh all charts" : "Refreshing..."}
                           {refreshLoading && <Loading type="points" />}
-                          {!refreshLoading && "Refresh all charts"}
                         </Button>
                       </Tooltip>
                     </Media>
@@ -426,31 +426,29 @@ function ProjectDashboard(props) {
             </Container>
           )}
 
-        {_canAccess("editor") && charts.length < 1 && connections.length > 0
-          && (
-            <Container justify="center" style={styles.addCard}>
-              <Row justify="center" align="center">
-                <Link to={`/${match.params.teamId}/${match.params.projectId}/chart`}>
-                  <Card
-                    isHoverable
-                    isPressable
-                    as={Link}
-                  >
-                    <Card.Body>
-                      <Row justify="center" align="center">
-                        <Plus size="large" />
-                      </Row>
-                      <Row justify="center" align="center">
-                        <Text h3>Add your first chart</Text>
-                      </Row>
-                    </Card.Body>
-                  </Card>
-                </Link>
-              </Row>
-            </Container>
-          )}
+        {_canAccess("editor") && charts.length < 1 && connections.length > 0 && (
+          <Container justify="center" style={styles.addCard}>
+            <Row justify="center" align="center">
+              <Link to={`/${match.params.teamId}/${match.params.projectId}/chart`}>
+                <Card
+                  isHoverable
+                  isPressable
+                >
+                  <Card.Body>
+                    <Row justify="center" align="center">
+                      <Plus size="large" />
+                    </Row>
+                    <Row justify="center" align="center">
+                      <Text h3>Add your first chart</Text>
+                    </Row>
+                  </Card.Body>
+                </Card>
+              </Link>
+            </Row>
+          </Container>
+        )}
 
-        <Grid.Container stackable centered style={styles.mainGrid(width < breakpoints.tablet)}>
+        <Grid.Container gap={1.5}>
           {charts.map((chart, index) => {
             if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
             if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />); // eslint-disable-line
@@ -458,9 +456,8 @@ function ProjectDashboard(props) {
               <Grid
                 xs={12}
                 sm={chart.chartSize * 6 > 12 ? 12 : chart.chartSize * 6}
-                md={chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 4}
+                md={chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3}
                 key={chart.id}
-                style={styles.chartGrid(width < breakpoints.tablet)}
               >
                 <Chart
                   key={chart.id}

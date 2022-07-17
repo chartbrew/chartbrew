@@ -108,7 +108,7 @@ function Navbar(props) {
   }
   return (
     <nav style={{ ...styles.navContainer, backgroundColor: color }}>
-      <StyledNavContainer detached={scrollPosition > 50} showBlur={scrollPosition > 50}>
+      <StyledNavContainer detached={scrollPosition > 40} showBlur={scrollPosition > 40}>
         <Container
           fluid
           as="nav"
@@ -125,9 +125,7 @@ function Navbar(props) {
           >
             <Row justify="flex-start" align="center">
               <Link to="/user">
-                <LinkNext href="/user">
-                  <Image src={cbLogo} alt="Chartbrew Logo" style={styles.logo} />
-                </LinkNext>
+                <Image src={cbLogo} alt="Chartbrew Logo" style={styles.logo} />
               </Link>
               <Spacer x={1} />
               <Link to="/user">
@@ -292,7 +290,7 @@ const styles = {
   },
   navContainer: {
     top: 0,
-    height: "50px",
+    height: 40,
     position: "sticky",
     background: "transparent",
     zIndex: 999,
@@ -306,7 +304,7 @@ const styles = {
     backgroundColor: dark,
   },
   logo: {
-    width: 30,
+    width: 25,
   },
   logoContainer: {
     paddingTop: 1,

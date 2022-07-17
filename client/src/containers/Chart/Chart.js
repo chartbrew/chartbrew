@@ -4,14 +4,20 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import {
-  Icon, Header, Segment, Modal, Button, TransitionablePortal,
-  Dropdown, Message, Popup, Form, TextArea, Label, Input, Divider, Checkbox, Placeholder,
-} from "semantic-ui-react";
+  Card, Text, Grid, Spacer, Row, Loading, Tooltip, Dropdown, Button, Modal, Input,
+  Link as LinkNext, Textarea, Switch, Container,
+} from "@nextui-org/react";
+import {
+  ArrowDown, ArrowUp, ChevronDown, ChevronDownCircle, ChevronUp, CloseSquare,
+  Delete, EditSquare, Filter2, Graph, Lock, MoreSquare, Paper, PaperDownload,
+  Plus, Send, TickSquare, TimeCircle, Unlock,
+} from "react-iconly";
 import moment from "moment";
 import _ from "lodash";
 import { enGB } from "date-fns/locale";
 import { format } from "date-fns";
 import { motion } from "framer-motion/dist/framer-motion";
+import { HiRefresh } from "react-icons/hi";
 
 import {
   removeChart as removeChartAction,
@@ -29,9 +35,9 @@ import RadarChart from "./components/RadarChart";
 import PolarChart from "./components/PolarChart";
 import DoughnutChart from "./components/DoughnutChart";
 import PieChart from "./components/PieChart";
-import { blackTransparent } from "../../config/colors";
 import TableContainer from "./components/TableView/TableContainer";
 import ChartFilters from "./components/ChartFilters";
+import Badge from "../../components/Badge";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -193,6 +199,23 @@ function Chart(props) {
     setUpdateFrequency(chart.autoUpdate);
   };
 
+  const _getUpdateFreqText = (value) => {
+    let text = "Not updating automatically";
+
+    if (value === 60) text = "Every minute";
+    else if (value === 300) text = "Every 5 minutes";
+    else if (value === 900) text = "Every 15 minutes";
+    else if (value === 1800) text = "Every 30 minutes";
+    else if (value === 3600) text = "Every 1 hour";
+    else if (value === 10800) text = "Every 3 hours";
+    else if (value === 21600) text = "Every 6 hours";
+    else if (value === 43200) text = "Every 12 hours";
+    else if (value === 86400) text = "Every day";
+    else if (value === 604800) text = "Every week";
+    else if (value === 2592000) text = "Every month";
+    return text;
+  };
+
   const _onChangeAutoUpdate = () => {
     setAutoUpdateLoading(true);
 
@@ -348,262 +371,253 @@ function Chart(props) {
       style={styles.container}
     >
       {error && (
-        <Message
-          negative
-          onDismiss={() => setError(false)}
-          header="There was a problem with your request"
-          content="This is on us, we couldn't process your request. Try to refresh the page and try again."
-        />
+        <Text color="error" onClick={() => setError(false)}>
+          {"There was a problem with your request. Please refresh the page and try again."}
+        </Text>
       )}
       {chart && (
-        <Segment
-          style={styles.chartContainer(_isKpi(chart), print)}
-          className="chart-card"
+        <Card
+          style={styles.chartContainer(print)}
+          variant="bordered"
         >
-          <div style={styles.titleArea(_isKpi(chart))}>
-            {_checkIfFilters() && (
-              <Popup
-                trigger={(
-                  <Button
-                    icon="filter"
-                    direction="left"
-                    basic
-                    className="circular icon"
-                    style={styles.filterBtn(projectId && !print)}
-                  />
-                )}
-                on="click"
-                position="bottom right"
-                flowing
-                size="tiny"
-              >
-                <ChartFilters
-                  chart={chart}
-                  onAddFilter={_onAddFilter}
-                  onClearFilter={_onClearFilter}
-                  conditions={conditions}
-                />
-              </Popup>
-            )}
-            {projectId && !print
-              && (
-                <Dropdown
-                  icon="ellipsis horizontal"
-                  direction="left"
-                  button
-                  basic
-                  className="circular icon"
-                  style={styles.menuBtn}
-                >
-                  <Dropdown.Menu>
-                    <Dropdown.Item
-                      icon="refresh"
-                      text="Refresh chart"
-                      onClick={_onGetChartData}
-                    />
-                    {_canAccess("editor") && (
+          <Card.Header>
+            <Grid.Container>
+              <Grid xs={8} sm={10} md={10} justify="flex-start">
+                <div>
+                  <Row justify="flex-start" align="center">
+                    {chart.draft && (
                       <>
-                        <Dropdown.Item
-                          icon="clock"
-                          text="Auto-update"
-                          onClick={_openUpdateModal}
-                        />
-                        <Dropdown.Item
-                          icon="pencil"
-                          text="Edit"
-                          as={Link}
-                          to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}
-                        />
+                        <Badge type="secondary">Draft</Badge>
+                        <Spacer x={0.1} />
                       </>
                     )}
-                    <Dropdown.Item
-                      icon="file excel"
-                      text="Export to Excel"
-                      onClick={_onExport}
-                    />
-                    <Dropdown.Divider />
-                    {!chart.draft && (
-                      <>
-                        {_canAccess("editor") && (
-                          <Dropdown.Item
-                            onClick={_onChangeReport}
-                          >
-                            <Icon name="desktop" />
-                            {chart.onReport ? "Remove from report" : "Add to report"}
-                          </Dropdown.Item>
-                        )}
-                        {_canAccess("editor") && (
-                          <Dropdown.Item
-                            onClick={_onPublicConfirmation}
-                          >
-                            <Icon name="world" color={chart.public ? "red" : "green"} />
-                            {chart.public ? "Make private" : "Make public"}
-                          </Dropdown.Item>
-                        )}
-                        <Dropdown.Item
-                          icon="code"
-                          text="Embed"
-                          onClick={_onEmbed}
-                        />
-                      </>
-                    )}
-                    {_canAccess("editor") && (
-                      <>
-                        <Dropdown.Divider />
-                        <Dropdown
-                          item
-                          icon={false}
-                          trigger={(
-                            <p style={{ marginBottom: 0 }}>
-                              <Icon name="caret down" />
-                              {" "}
-                              Size
-                            </p>
-                          )}
-                        >
-                          <Dropdown.Menu direction="left">
-                            <Dropdown.Item
-                              text="Small"
-                              icon={chart.chartSize === 1 ? "checkmark" : false}
-                              onClick={() => _onChangeSize(1)}
-                            />
-                            <Dropdown.Item
-                              text="Medium"
-                              icon={chart.chartSize === 2 ? "checkmark" : false}
-                              onClick={() => _onChangeSize(2)}
-                            />
-                            <Dropdown.Item
-                              text="Large"
-                              icon={chart.chartSize === 3 ? "checkmark" : false}
-                              onClick={() => _onChangeSize(3)}
-                            />
-                            <Dropdown.Item
-                              text="Full width"
-                              icon={chart.chartSize === 4 ? "checkmark" : false}
-                              onClick={() => _onChangeSize(4)}
-                            />
-                          </Dropdown.Menu>
-                        </Dropdown>
-                        <Dropdown
-                          item
-                          icon={false}
-                          trigger={(
-                            <p style={{ marginBottom: 0 }}>
-                              <Icon name="caret down" />
-                              {" "}
-                              Order
-                            </p>
-                          )}
-                        >
-                          <Dropdown.Menu direction="left">
-                            <Dropdown.Item
-                              text="Move to top"
-                              icon="angle double up"
-                              disabled={_getChartIndex() === 0}
-                              onClick={() => onChangeOrder(chart.id, "top")}
-                            />
-                            <Dropdown.Item
-                              text="Move up"
-                              icon="chevron up"
-                              disabled={_getChartIndex() === 0}
-                              onClick={() => onChangeOrder(chart.id, "up")}
-                            />
-                            <Dropdown.Item
-                              text="Move down"
-                              icon="chevron down"
-                              disabled={_getChartIndex() === charts.length - 1}
-                              onClick={() => onChangeOrder(chart.id, "down")}
-                            />
-                            <Dropdown.Item
-                              text="Move to bottom"
-                              icon="angle double down"
-                              disabled={_getChartIndex() === charts.length - 1}
-                              onClick={() => onChangeOrder(chart.id, "bottom")}
-                            />
-                          </Dropdown.Menu>
-                        </Dropdown>
-                        <Dropdown.Divider />
-                        <Dropdown.Item
-                          icon="trash"
-                          text="Delete"
-                          onClick={_onDeleteChartConfirmation}
-                        />
-                      </>
-                    )}
-                  </Dropdown.Menu>
-                </Dropdown>
-              )}
-            <Header style={{ display: "contents" }}>
-              {chart.draft && (
-                <Label color="olive" style={styles.draft}>Draft</Label>
-              )}
-              <span>
-                {_canAccess("editor") && (
-                  <Link to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}>
-                    <span style={{ color: blackTransparent(0.9) }}>{chart.name}</span>
-                  </Link>
-                )}
-                {!_canAccess("editor") && (
-                  <span>{chart.name}</span>
-                )}
-              </span>
-            </Header>
-            {chart.chartData && (
-              <div>
-                <p>
-                  <small>
-                    {!chartLoading && !chart.loading && (
-                      <i>
-                        {!print && <span title="Last updated">{`${_getUpdatedTime(chart.chartDataUpdated)}`}</span>}
-                        {print && <small>{`${moment(chart.chartDataUpdated).format("LLL")}`}</small>}
-                      </i>
-                    )}
-                    {(chartLoading || chart.loading) && (
-                      <>
-                        <Icon name="spinner" loading />
-                        <span>{" Updating..."}</span>
-                      </>
-                    )}
-                    {" "}
                     <span>
-                      {chart.public && !isPublic && !print
-                        && (
-                          <Popup
-                            trigger={<Icon name="world" />}
-                            content="This chart is public"
-                            position="bottom center"
-                            inverted
-                          />
-                        )}
-                      {chart.onReport && !isPublic && !print && (
-                        <Popup
-                          trigger={<Icon name="desktop" />}
-                          content="This chart is on the report"
-                          position="bottom center"
-                          inverted
-                        />
+                      {_canAccess("editor") && (
+                        <Link to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}>
+                          <Text h5 css={{ color: "$text" }}>{chart.name}</Text>
+                        </Link>
+                      )}
+                      {!_canAccess("editor") && (
+                        <Text h5>{chart.name}</Text>
                       )}
                     </span>
-                  </small>
-                  {chart.Datasets && (
-                    <Label.Group style={{ display: "inline", marginLeft: 10 }} size="small">
-                      {conditions.map((c) => {
-                        return (
-                          <Label key={c.id} icon>
-                            {c.type !== "date" && `${c.value}`}
-                            {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
-                            <Icon name="delete" onClick={() => _onClearFilter(c)} />
-                          </Label>
-                        );
-                      })}
-                    </Label.Group>
+                    <Spacer x={0.2} />
+                    {chart.Datasets && conditions.map((c) => {
+                      return (
+                        <Badge type="primary" key={c.id}>
+                          {c.type !== "date" && `${c.value}`}
+                          {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
+                          <LinkNext onClick={() => _onClearFilter(c)}>
+                            <CloseSquare size="small" />
+                          </LinkNext>
+                        </Badge>
+                      );
+                    })}
+                  </Row>
+                  {chart.chartData && (
+                    <Row justify="flex-start" align="center">
+                      {!chartLoading && !chart.loading && (
+                        <i>
+                          {!print && <Text small title="Last updated">{`${_getUpdatedTime(chart.chartDataUpdated)}`}</Text>}
+                          {print && <Text small>{`${moment(chart.chartDataUpdated).format("LLL")}`}</Text>}
+                        </i>
+                      )}
+                      {(chartLoading || chart.loading) && (
+                        <>
+                          <Loading type="spinner" size="xs" inlist />
+                          <Text small>{" Updating..."}</Text>
+                        </>
+                      )}
+                      <Spacer x={0.2} />
+                      {chart.autoUpdate > 0 && (
+                        <Tooltip content={`Updates automatically - ${_getUpdateFreqText(chart.autoUpdate)}`}>
+                          <TimeCircle size="small" set="light" />
+                        </Tooltip>
+                      )}
+                      {chart.public && !isPublic && !print && (
+                        <Tooltip content="This chart is public">
+                          <Unlock size="small" set="light" />
+                        </Tooltip>
+                      )}
+                      {chart.onReport && !isPublic && !print && (
+                        <Tooltip content="This chart is on a report">
+                          <Graph size="small" set="light" />
+                        </Tooltip>
+                      )}
+                    </Row>
                   )}
-                </p>
-              </div>
-            )}
-          </div>
+                </div>
+              </Grid>
+              <Grid xs={4} sm={2} md={2} justify="flex-end">
+                {_checkIfFilters() && (
+                  <Tooltip
+                    content={(
+                      <ChartFilters
+                        chart={chart}
+                        onAddFilter={_onAddFilter}
+                        onClearFilter={_onClearFilter}
+                        conditions={conditions}
+                      />
+                    )}
+                  >
+                    <Text css={{ color: "$accents6" }}>
+                      <Filter2 />
+                    </Text>
+                  </Tooltip>
+                )}
+                {projectId && !print && (
+                  <Dropdown closeOnSelect={false}>
+                    <Dropdown.Trigger>
+                      <span>
+                        <Tooltip content="Chart settings" placement="leftStart">
+                          <Text css={{ color: "$accents6" }}>
+                            <MoreSquare />
+                          </Text>
+                        </Tooltip>
+                      </span>
+                    </Dropdown.Trigger>
+                    <Dropdown.Menu>
+                      <Dropdown.Item icon={<HiRefresh size={22} />}>
+                        <Text onClick={_onGetChartData}>Refresh chart</Text>
+                      </Dropdown.Item>
+                      {_canAccess("editor") && (
+                        <Dropdown.Item icon={<TimeCircle />}>
+                          <Text onClick={_openUpdateModal}>Auto-update</Text>
+                        </Dropdown.Item>
+                      )}
+                      {_canAccess("editor") && (
+                        <Dropdown.Item icon={<EditSquare />}>
+                          <Link to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}>
+                            <Text>Edit chart</Text>
+                          </Link>
+                        </Dropdown.Item>
+                      )}
+                      <Dropdown.Item icon={<PaperDownload />}>
+                        <Text onClick={_onExport}>Export to Excel</Text>
+                      </Dropdown.Item>
+                      {!chart.draft && _canAccess("editor") && (
+                        <Dropdown.Item withDivider icon={<Graph />}>
+                          <Text onClick={_onChangeReport}>
+                            {chart.onReport ? "Remove from report" : "Add to report"}
+                          </Text>
+                        </Dropdown.Item>
+                      )}
+                      {!chart.draft && _canAccess("editor") && (
+                        <Dropdown.Item icon={chart.public ? <Unlock /> : <Lock />}>
+                          <Text onClick={_onPublicConfirmation}>
+                            {chart.public ? "Make private" : "Make public"}
+                          </Text>
+                        </Dropdown.Item>
+                      )}
+                      {!chart.draft && (
+                        <Dropdown.Item icon={<Send />}>
+                          <Text onClick={_onEmbed}>{"Embed & Share"}</Text>
+                        </Dropdown.Item>
+                      )}
+                      {_canAccess("editor") && (
+                        <Dropdown.Item icon={<ChevronDownCircle />} withDivider>
+                          <Dropdown>
+                            <Dropdown.Trigger>
+                              <Text>Chart size</Text>
+                            </Dropdown.Trigger>
+                            <Dropdown.Menu
+                              disallowEmptySelection
+                              onSelectionChange={(key) => {
+                                if (key && Object.values(key)) {
+                                  _onChangeSize(Object.values(key)[0]);
+                                }
+                              }}
+                              selectedKeys={[`${chart.chartSize}`]}
+                              selectionMode="single"
+                            >
+                              <Dropdown.Item key={1}>
+                                <Text>Small</Text>
+                              </Dropdown.Item>
+                              <Dropdown.Item key={2}>
+                                <Text>Medium</Text>
+                              </Dropdown.Item>
+                              <Dropdown.Item key={3}>
+                                <Text>Large</Text>
+                              </Dropdown.Item>
+                              <Dropdown.Item key={4}>
+                                <Text>Full width</Text>
+                              </Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown>
+                        </Dropdown.Item>
+                      )}
+                      {_canAccess("editor") && (
+                        <Dropdown.Item icon={<ChevronDownCircle />}>
+                          <Dropdown>
+                            <Dropdown.Trigger>
+                              <Text>Change order</Text>
+                            </Dropdown.Trigger>
+                            <Dropdown.Menu>
+                              <Dropdown.Item icon={<ArrowUp />}>
+                                {_getChartIndex() === 0 && (
+                                  <Text css={{ color: "$accents4" }}>
+                                    Move to top
+                                  </Text>
+                                )}
+                                {_getChartIndex() !== 0 && (
+                                  <Text onClick={() => onChangeOrder(chart.id, "top")}>
+                                    Move to top
+                                  </Text>
+                                )}
+                              </Dropdown.Item>
+                              <Dropdown.Item icon={<ChevronUp />}>
+                                {_getChartIndex() === 0 && (
+                                  <Text css={{ color: "$accents4" }}>
+                                    Move up
+                                  </Text>
+                                )}
+                                {_getChartIndex() !== 0 && (
+                                  <Text onClick={() => onChangeOrder(chart.id, "up")}>
+                                    Move up
+                                  </Text>
+                                )}
+                              </Dropdown.Item>
+                              <Dropdown.Item icon={<ChevronDown />}>
+                                {_getChartIndex() === charts.length - 1 && (
+                                  <Text css={{ color: "$accents4" }}>
+                                    Move down
+                                  </Text>
+                                )}
+                                {_getChartIndex() < charts.length - 1 && (
+                                  <Text onClick={() => onChangeOrder(chart.id, "down")}>
+                                    Move down
+                                  </Text>
+                                )}
+                              </Dropdown.Item>
+                              <Dropdown.Item icon={<ArrowDown />}>
+                                {_getChartIndex() === charts.length - 1 && (
+                                  <Text css={{ color: "$accents4" }}>
+                                    Move to bottom
+                                  </Text>
+                                )}
+                                {_getChartIndex() !== charts.length - 1 && (
+                                  <Text onClick={() => onChangeOrder(chart.id, "bottom")}>
+                                    Move to bottom
+                                  </Text>
+                                )}
+                              </Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown>
+                        </Dropdown.Item>
+                      )}
+                      {_canAccess("editor") && (
+                        <Dropdown.Item icon={<Delete />} color="error" withDivider>
+                          <Text onClick={_onDeleteChartConfirmation}>Delete chart</Text>
+                        </Dropdown.Item>
+                      )}
+                    </Dropdown.Menu>
+                  </Dropdown>
+                )}
+              </Grid>
+            </Grid.Container>
+          </Card.Header>
           {chart.chartData && (
-            <>
+            <Card.Body>
               <div style={styles.mainChartArea(_isKpi(chart))}>
                 {chart.type === "line"
                   && (
@@ -682,298 +696,284 @@ function Chart(props) {
                     />
                   )}
               </div>
-            </>
+            </Card.Body>
           )}
-        </Segment>
+        </Card>
       )}
 
       {/* DELETE CONFIRMATION MODAL */}
-      <TransitionablePortal open={deleteModal}>
-        <Modal open={deleteModal} basic size="small" onClose={() => setDeleteModal(false)}>
-          <Header
-            icon="exclamation triangle"
-            content="Are you sure you want to remove this chart?"
-            />
-          <Modal.Content>
-            <p>
-              {"All the chart data will be removed and you won't be able to see it on your dashboard anymore if you proceed with the removal."}
-            </p>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              basic
-              inverted
-              onClick={() => setDeleteModal(false)}
-              >
-              Go back
-            </Button>
-            <Button
-              color="orange"
-              inverted
-              loading={chartLoading}
-              onClick={_onDeleteChart}
-              >
-              <Icon name="x" />
-              Remove completely
-            </Button>
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
+      <Modal open={deleteModal} onClose={() => setDeleteModal(false)} blur>
+        <Modal.Header>
+          <Text h4>Are you sure you want to remove this chart?</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <Text>
+            {"All the chart data will be removed and you won't be able to see it on your dashboard anymore if you proceed with the removal."}
+          </Text>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            flat
+            color="warning"
+            onClick={() => setDeleteModal(false)}
+            auto
+          >
+            Go back
+          </Button>
+          <Button
+            color="error"
+            iconRight={<Delete />}
+            onClick={_onDeleteChart}
+            auto
+          >
+            Remove completely
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* MAKE CHART PUBLIC MODAL */}
-      <TransitionablePortal open={publicModal}>
-        <Modal
-          open={publicModal}
-          basic
-          size="small"
-          onClose={() => setPublicModal(false)}
+      <Modal onClose={() => setPublicModal(false)} open={publicModal}>
+        <Modal.Header>
+          <Text h4>Are you sure you want to make your chart public?</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <Text>
+            {"Public charts will show in your Public Dashboard page and it can be viewed by everyone with access to the unique sharing link. Nobody other than you and your team will be able to edit or update the chart data."}
+          </Text>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            flat
+            color="warning"
+            auto
+            onClick={() => setPublicModal(false)}
           >
-          <Header
-            icon="exclamation triangle"
-            content="Are you sure you want to make your chart public?"
-            />
-          <Modal.Content>
-            <p>
-              {"Public charts will show in your Public Dashboard page and it can be viewed by everyone that access to the unique sharing link. Nobody other than you and your team will be able to edit or update the chart data."}
-            </p>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              basic
-              inverted
-              onClick={() => setPublicModal(false)}
-              >
-              Go back
-            </Button>
-            <Button
-              primary
-              inverted
-              loading={publicLoading}
-              onClick={_onPublic}
-              >
-              <Icon name="globe" />
-              Make the chart public
-            </Button>
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
+            Go back
+          </Button>
+          <Button
+            loading={publicLoading}
+            auto
+            iconRight={<Unlock />}
+            onClick={_onPublic}
+          >
+            Make the chart public
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* AUTO-UPDATE MODAL */}
-      <TransitionablePortal open={updateModal}>
-        <Modal
-          open={updateModal}
-          size="small"
-          onClose={() => setUpdateModal(false)}
+      <Modal open={updateModal} onClose={() => setUpdateModal(false)}>
+        <Modal.Header>
+          <Text h4>Set up auto-update for your chart</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <Row align="center">
+            <Text>Select the desired frequency:</Text>
+          </Row>
+          <Row align="center">
+            <Dropdown selectionMode="single" selectedKeys={[`${updateFrequency}`]}>
+              <Dropdown.Button auto bordered>
+                {_getUpdateFreqText(updateFrequency)}
+              </Dropdown.Button>
+              <Dropdown.Menu>
+                <Dropdown.Item>
+                  <Text key="0" onClick={() => setUpdateFrequency(0)}>{"Don't auto update"}</Text>
+                </Dropdown.Item>
+                <Dropdown.Item>
+                  <Text key="60" onClick={() => setUpdateFrequency(60)}>Every minute</Text>
+                </Dropdown.Item>
+                <Dropdown.Item>
+                  <Text key="300" onClick={() => setUpdateFrequency(300)}>Every 5 minutes</Text>
+                </Dropdown.Item>
+                <Dropdown.Item>
+                  <Text key="900" onClick={() => setUpdateFrequency(900)}>Every 15 minutes</Text>
+                </Dropdown.Item>
+                <Dropdown.Item>
+                  <Text key="1800" onClick={() => setUpdateFrequency(1800)}>Every 30 minutes</Text>
+                </Dropdown.Item>
+                <Dropdown.Item>
+                  <Text key="3600" onClick={() => setUpdateFrequency(3600)}>Every hour</Text>
+                </Dropdown.Item>
+                <Dropdown.Item>
+                  <Text key="10800" onClick={() => setUpdateFrequency(10800)}>Every 3 hours</Text>
+                </Dropdown.Item>
+                <Dropdown.Item>
+                  <Text key="21600" onClick={() => setUpdateFrequency(21600)}>Every 6 hours</Text>
+                </Dropdown.Item>
+                <Dropdown.Item>
+                  <Text key="43200" onClick={() => setUpdateFrequency(43200)}>Every 12 hours</Text>
+                </Dropdown.Item>
+                <Dropdown.Item>
+                  <Text key="86400" onClick={() => setUpdateFrequency(86400)}>Every day</Text>
+                </Dropdown.Item>
+                <Dropdown.Item>
+                  <Text key="604800" onClick={() => setUpdateFrequency(604800)}>Every week</Text>
+                </Dropdown.Item>
+                <Dropdown.Item>
+                  <Text key="2592000" onClick={() => setUpdateFrequency(2592000)}>Every month</Text>
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
+          </Row>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            flat
+            color={"warning"}
+            auto
+            onClick={() => setUpdateModal(false)}
           >
-          <Modal.Header>
-            Set up auto-update for your chart
-          </Modal.Header>
-          <Modal.Content>
-            <Form>
-              <Form.Field>
-                <label>Select the desired frequency</label>
-                <Dropdown
-                  placeholder="Select the frequency"
-                  selection
-                  options={[{
-                    text: "Don't auto update",
-                    value: 0,
-                  }, {
-                    text: "Every minute",
-                    value: 60,
-                  }, {
-                    text: "Every 5 minutes",
-                    value: 300,
-                  }, {
-                    text: "Every 15 minutes",
-                    value: 900,
-                  }, {
-                    text: "Every 30 minutes",
-                    value: 1800,
-                  }, {
-                    text: "Every hour",
-                    value: 3600,
-                  }, {
-                    text: "Every 3 hours",
-                    value: 10800,
-                  }, {
-                    text: "Every 6 hours",
-                    value: 21600,
-                  }, {
-                    text: "Every 12 hours",
-                    value: 43200,
-                  }, {
-                    text: "Every day",
-                    value: 86400,
-                  }, {
-                    text: "Every week",
-                    value: 604800,
-                  }, {
-                    text: "Every month",
-                    value: 2592000,
-                  }]}
-                  value={updateFrequency || 0}
-                  onChange={(e, data) => setUpdateFrequency(data.value)}
-                  />
-              </Form.Field>
-            </Form>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              onClick={() => setUpdateModal(false)}
-              >
-              Cancel
-            </Button>
-            <Button
-              primary
-              loading={autoUpdateLoading}
-              onClick={_onChangeAutoUpdate}
-              >
-              <Icon name="checkmark" />
-              Save
-            </Button>
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
+            Cancel
+          </Button>
+          <Button
+            iconRight={<TickSquare />}
+            auto
+            loading={autoUpdateLoading}
+            onClick={_onChangeAutoUpdate}
+          >
+            Save
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* EMBED CHART MODAL */}
       {chart && (
-        <TransitionablePortal open={embedModal}>
-          <Modal
-            open={embedModal}
-            onClose={() => setEmbedModal(false)}
-              >
-            <Modal.Header>
-              <Icon name="code" />
-              {" Embed your chart on other websites"}
-            </Modal.Header>
-            <Modal.Content>
-              <Form>
-                <Form.Field>
-                  <Checkbox
-                    toggle
-                    label={chart.shareable ? "Disable sharing" : "Enable sharing"}
-                    onChange={_onToggleShareable}
-                    checked={chart.shareable}
-                    disabled={!_canAccess("editor")}
-                    loading
-                  />
-                </Form.Field>
-              </Form>
+        <Modal open={embedModal} onClose={() => setEmbedModal(false)} width="600px">
+          <Modal.Header>
+            <Text h4>{"Embed your chart on other websites"}</Text>
+          </Modal.Header>
+          <Modal.Body>
+            <Container>
+              <Row align="center">
+                <Switch
+                  label={chart.shareable ? "Disable sharing" : "Enable sharing"}
+                  onChange={_onToggleShareable}
+                  checked={chart.shareable}
+                  disabled={!_canAccess("editor")}
+              />
+                <Spacer x={0.2} />
+                <Text>
+                  {chart.shareable ? "Disable sharing" : "Enable sharing"}
+                </Text>
+                <Spacer x={0.2} />
+                {shareLoading && (<Loading type="spinner" size="sm" />)}
+              </Row>
+              <Spacer y={1} />
               {chart.public && !chart.shareable && (
-                <Message
-                  info
-                  icon="globe"
-                  header="The chart is public"
-                  content="A public chart can be shared even if the sharing toggle is disabled. This gives you more flexibility if you want to hide the chart from the public dashboard but you still want to individually share it."
-                  size="small"
-                />
+                <Row>
+                  <Text color="primary">
+                    {"The chart is public. A public chart can be shared even if the sharing toggle is disabled. This gives you more flexibility if you want to hide the chart from the public dashboard but you still want to individually share it."}
+                  </Text>
+                </Row>
               )}
               {!chart.public && !chart.shareable && (
-                <Message
-                  icon
-                  size="small"
-                >
-                  <Icon name="lock" />
-                  <Message.Content>
-                    <Message.Header>
-                      {"The chart is private"}
-                    </Message.Header>
-                    <p>{"A private chart can only be seen by members of the team. If you enable sharing, others outside of your team can see the chart and you can also embed it on other websites."}</p>
-                    {!_canAccess("editor") && (
-                      <p><i>{"You do not have the permission to enable sharing on this chart. Only editors and admins can enable this."}</i></p>
-                    )}
-                  </Message.Content>
-                </Message>
+                <>
+                  <Spacer y={1} />
+                  <Row align="center">
+                    <Text>
+                      {"The chart is private. A private chart can only be seen by members of the team. If you enable sharing, others outside of your team can see the chart and you can also embed it on other websites."}
+                    </Text>
+                  </Row>
+                </>
+              )}
+              {!_canAccess("editor") && !chart.public && !chart.shareable && (
+                <>
+                  <Spacer y={1} />
+                  <Row>
+                    <Text color="error">
+                      {"You do not have the permission to enable sharing on this chart. Only editors and admins can enable this."}
+                    </Text>
+                  </Row>
+                </>
               )}
               {(chart.public || chart.shareable)
               && (!chart.Chartshares || chart.Chartshares.length === 0)
               && (
-                <Button
-                  icon="plus"
-                  content="Create a sharing code"
-                  primary
-                  onClick={_onCreateSharingString}
-                />
+                <>
+                  <Spacer y={1} />
+                  <Row align="center">
+                    <Button
+                      iconRight={<Plus />}
+                      auto
+                      onClick={_onCreateSharingString}
+                    >
+                      Create a sharing code
+                    </Button>
+                  </Row>
+                </>
               )}
-
+              <Spacer y={1} />
               {shareLoading && (
-                <Placeholder>
-                  <Placeholder.Line />
-                  <Placeholder.Line />
-                  <Placeholder.Line />
-                  <Placeholder.Line />
-                  <Placeholder.Line />
-                </Placeholder>
+                <Row><Loading type="points" /></Row>
               )}
 
               {(chart.shareable || chart.public)
-              && !chartLoading
-              && (chart.Chartshares && chart.Chartshares.length > 0)
-              && (
-                <>
-                  <Divider />
-                  <Form>
-                    <Form.Field>
-                      <label>
-                        {"Copy the following code on the website you wish to add your chart in."}
-                      </label>
-                      <TextArea
-                        id="iframe-text"
-                        value={_getEmbedString()}
-                      />
-                    </Form.Field>
-                    <Form.Field>
-                      <Button
-                        primary={!iframeCopied}
-                        positive={iframeCopied}
-                        basic
-                        icon
-                        labelPosition="right"
-                        onClick={_onCopyIframe}
-                      >
-                        {!iframeCopied && <Icon name="clipboard" />}
-                        {iframeCopied && <Icon name="checkmark" />}
-                        {!iframeCopied && "Copy the code"}
-                        {iframeCopied && "Copied to your clipboard"}
-                      </Button>
-                    </Form.Field>
-                  </Form>
+            && !chartLoading
+            && (chart.Chartshares && chart.Chartshares.length > 0)
+            && (
+              <>
+                <Row>
+                  <Text>
+                    {"Copy the following code on the website you wish to add your chart in."}
+                  </Text>
+                </Row>
+                <Spacer y={0.5} />
+                <Row>
+                  <Textarea
+                    id="iframe-text"
+                    value={_getEmbedString()}
+                    fullWidth
+                  />
+                </Row>
+                <Spacer y={0.5} />
+                <Row>
+                  <Button
+                    color={iframeCopied ? "success" : "primary"}
+                    iconRight={iframeCopied ? <TickSquare /> : <Paper />}
+                    onClick={_onCopyIframe}
+                    ghost
+                    auto
+                  >
+                    {!iframeCopied && "Copy the code"}
+                    {iframeCopied && "Copied to your clipboard"}
+                  </Button>
+                </Row>
 
-                  <Divider />
-                  <Form>
-                    <Form.Field>
-                      <label>{"Or get just the URL"}</label>
-                      <Input value={_getEmbedUrl()} id="url-text" />
-                    </Form.Field>
-                    <Form.Field>
-                      <Button
-                        primary={!urlCopied}
-                        positive={urlCopied}
-                        basic
-                        icon
-                        labelPosition="right"
-                        onClick={_onCopyUrl}
-                      >
-                        {!urlCopied && <Icon name="clipboard" />}
-                        {urlCopied && <Icon name="checkmark" />}
-                        {!urlCopied && "Copy URL"}
-                        {urlCopied && "Copied to your clipboard"}
-                      </Button>
-                    </Form.Field>
-                  </Form>
-                </>
-              )}
-            </Modal.Content>
-            <Modal.Actions>
-              <Button
-                onClick={() => setEmbedModal(false)}
-              >
-                Close
-              </Button>
-            </Modal.Actions>
-          </Modal>
-        </TransitionablePortal>
+                <Spacer y={1} />
+                <Row>
+                  <Text>{"Or get just the URL"}</Text>
+                </Row>
+                <Spacer y={0.5} />
+                <Row>
+                  <Input value={_getEmbedUrl()} id="url-text" fullWidth />
+                </Row>
+                <Spacer y={0.5} />
+                <Row>
+                  <Button
+                    color={urlCopied ? "success" : "primary"}
+                    iconRight={iframeCopied ? <TickSquare /> : <Paper />}
+                    ghost
+                    onClick={_onCopyUrl}
+                    auto
+                  >
+                    {!urlCopied && "Copy URL"}
+                    {urlCopied && "Copied to your clipboard"}
+                  </Button>
+                </Row>
+              </>
+            )}
+            </Container>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              flat
+              color="warning"
+              onClick={() => setEmbedModal(false)}
+            >
+              Close
+            </Button>
+          </Modal.Footer>
+        </Modal>
       )}
     </motion.div>
   );
@@ -981,18 +981,24 @@ function Chart(props) {
 
 const styles = {
   container: {
-    flex: 1,
+    width: "100%",
   },
   draft: {
     marginRight: 10,
   },
-  chartContainer: (noPadding, print) => ({
-    borderRadius: 6,
-    boxShadow: print ? "none" : "0 2px 5px 0 rgba(51, 51, 79, .07)",
-    border: print ? "solid 1px rgba(34,36,38,.15)" : "none",
-    padding: noPadding ? 0 : 15,
-    minHeight: 350,
-  }),
+  chartContainer: (print) => {
+    if (!print) {
+      return {
+        minHeight: 350,
+      };
+    } else {
+      return {
+        minHeight: 350,
+        boxShadow: "none",
+        border: "solid 1px rgba(34,36,38,.15)",
+      };
+    }
+  },
   mainChartArea: (noPadding) => ({
     paddingTop: 10,
     paddingBottom: noPadding ? 0 : 10,
