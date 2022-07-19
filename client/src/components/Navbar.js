@@ -257,8 +257,8 @@ function Navbar(props) {
                     </Dropdown.Item>
                   )}
 
-                  <Dropdown.Item withDivider icon={<Logout />} onClick={logout}>
-                    Sign out
+                  <Dropdown.Item withDivider icon={<Logout />}>
+                    <LinkNext onClick={logout} css={{ color: "$text" }}>Sign out</LinkNext>
                   </Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>

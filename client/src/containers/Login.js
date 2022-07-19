@@ -45,12 +45,14 @@ function Login(props) {
                 </Card.Body>
                 {loginError && (
                   <Card.Footer>
-                    <Row>
-                      <Text h4 color={negative}>{loginError.message}</Text>
-                    </Row>
-                    <Row>
-                      <Text color={negative}>{"Please try it again."}</Text>
-                    </Row>
+                    <Container justify="center">
+                      <Row justify="center">
+                        <Text h4 color={negative}>{loginError.message}</Text>
+                      </Row>
+                      <Row justify="center">
+                        <Text color={negative}>{"Please try again."}</Text>
+                      </Row>
+                    </Container>
                   </Card.Footer>
                 )}
               </Card>
