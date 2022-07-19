@@ -25,7 +25,7 @@ import Navbar from "../../components/Navbar";
 
 function Start(props) {
   const {
-    team, history, createProject, getTeams, user,
+    teams, history, createProject, getTeams, user,
   } = props;
 
   const [onboardingStep, setOnboardingStep] = useState("project");
@@ -37,6 +37,21 @@ function Start(props) {
 
   const { height } = useWindowSize();
 
+  const _getOwnedTeam = () => {
+    let team;
+    teams.forEach((t) => {
+      if (t.TeamRoles) {
+        t.TeamRoles.forEach((tr) => {
+          if (tr.user_id === user.id && tr.role === "owner") {
+            team = t;
+          }
+        });
+      }
+    });
+
+    return team;
+  };
+
   const _onSelect = (type) => {
     if (loading) return;
 
@@ -45,7 +60,7 @@ function Start(props) {
     setTimeout(() => {
       return createProject({
         name: projectName,
-        team_id: team.id,
+        team_id: _getOwnedTeam().id,
       })
         .then((project) => {
           // refresh teams to avoid the onboarding from appearing again
@@ -53,7 +68,7 @@ function Start(props) {
           toast.update(toastId, { render: "🎉 Project created! One sec...", type: "success", isLoading: false });
           setTimeout(() => {
             setLoading(true);
-            history.push(`${team.id}/${project.id}/connections?type=${type}&edit=true`);
+            history.push(`${_getOwnedTeam().id}/${project.id}/connections?type=${type}&edit=true`);
           }, 1500);
         })
         .catch(() => {
@@ -400,7 +415,7 @@ const styles = {
 };
 
 Start.propTypes = {
-  team: PropTypes.object.isRequired,
+  teams: PropTypes.object.isRequired,
   history: PropTypes.object.isRequired,
   createProject: PropTypes.func.isRequired,
   user: PropTypes.object.isRequired,
@@ -408,7 +423,7 @@ Start.propTypes = {
 };
 
 const mapStateToProps = (state) => ({
-  team: state.team.data && state.team.data[0],
+  teams: state.team.data && state.team.data,
   user: state.user.data,
 });
 
