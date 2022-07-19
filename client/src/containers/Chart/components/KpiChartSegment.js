@@ -1,16 +1,17 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {
-  Header, Icon, Popup, Segment
-} from "semantic-ui-react";
+  Grid, Row, Spacer, Text, Tooltip, Container,
+} from "@nextui-org/react";
 
-import { Colors } from "../../../config/colors";
+import { ChevronDownCircle, ChevronUpCircle } from "react-iconly";
+import { negative, positive } from "../../../config/colors";
 
 function KpiChartSegment(props) {
   const { chart, editMode } = props;
 
   return (
-    <Segment.Group horizontal style={styles.growthContainer} compact>
+    <Grid.Container>
       {chart.chartData.growth.map((c, index) => {
         if (chart.chartSize === 1 && index > 1) return (<span key={c.label} />);
         else if (editMode && index > 3) return (<span key={c.label} />);
@@ -19,56 +20,58 @@ function KpiChartSegment(props) {
         else if (chart.chartSize > 3 && index > 7) return (<span key={c.label} />);
 
         return (
-          <Segment
-            basic
-            compact
+          <Grid
+            xs={6}
+            sm={3}
+            md={2}
             key={c.label}
-            style={{
-              paddingRight: 16 - (chart.chartData.growth.length * 2)
-            }}
+            css={{ mr: 20 - (chart.chartData.growth.length * 2) }}
           >
-            <Header size={chart.chartSize === 1 ? "normal" : "large"}>
-              <span>{`${c.value} `}</span>
-              {chart.showGrowth && (
-                <Popup
-                  trigger={(
-                    <small style={{ fontSize: "0.6em", display: "inline-block" }}>
-                      <Icon
-                        name={
-                          c.status === "neutral" ? "minus"
-                            : `arrow circle ${(c.status === "positive" && "up") || "down"}`
-                        }
-                        color={
-                          c.status === "positive" ? "green" : c.status === "negative" ? "red" : "grey"
-                        }
-                      />
-                      <span style={{ color: Colors[c.status] }}>
-                        {`${c.comparison}%`}
-                      </span>
-                    </small>
-                  )}
-                  inverted
-                  content={
-                    `In the last ${chart.timeInterval}`
-                  }
-                  size="tiny"
-                />
-              )}
-              <Header.Subheader style={chart.chartSize === 1 ? { fontSize: "0.8em" } : {}}>
-                <span
-                  style={
-                    chart.Datasets
-                    && styles.datasetLabelColor(chart.Datasets[index].datasetColor)
-                  }
-                >
-                  {c.label}
-                </span>
-              </Header.Subheader>
-            </Header>
-          </Segment>
+            <Container fluid css={{ p: 0, pb: 10 }}>
+              <Row align="center">
+                <Text h4={chart.chartSize === 1} h3={chart.chartSize > 1}>
+                  {`${c.value} `}
+                </Text>
+                <Spacer x={0.2} />
+                {chart.showGrowth && (
+                  <Tooltip content={`compared to last ${chart.timeInterval}`}>
+                    {c.status === "neutral" && (
+                      <Text size={"0.8em"}>{`${c.comparison}%`}</Text>
+                    )}
+                    {c.status === "negative" && (
+                      <Row align="center">
+                        <ChevronDownCircle size="small" primaryColor={negative} />
+                        <Spacer x={0.1} />
+                        <Text small css={{ color: "$errorLightContrast" }}>{` ${c.comparison}%`}</Text>
+                      </Row>
+                    )}
+                    {c.status === "positive" && (
+                      <Row align="center">
+                        <ChevronUpCircle size="small" primaryColor={positive} />
+                        {/* <Spacer x={0.1} /> */}
+                        <Text b size={"0.8em"} css={{ color: "$successLightContrast" }}>{` ${c.comparison}%`}</Text>
+                      </Row>
+                    )}
+                  </Tooltip>
+                )}
+              </Row>
+              <Row>
+                <Text h6={chart.chartSize === 1} h5={chart.chartSize > 1} css={{ fontWeight: "normal" }}>
+                  <span
+                    style={
+                      chart.Datasets
+                      && styles.datasetLabelColor(chart.Datasets[index].datasetColor)
+                    }
+                  >
+                    {c.label}
+                  </span>
+                </Text>
+              </Row>
+            </Container>
+          </Grid>
         );
       })}
-    </Segment.Group>
+    </Grid.Container>
   );
 }
 

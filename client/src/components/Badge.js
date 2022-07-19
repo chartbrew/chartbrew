@@ -38,10 +38,14 @@ const StyledBadge = styled("span", {
         bg: "$secondaryLight",
         color: "$secondaryLightContrast",
       },
+      neutral: {
+        bg: "$accents6",
+        color: "$accents9",
+      },
     }
   },
   defaultVariants: {
-    type: "active"
+    type: "neutral"
   }
 });
 

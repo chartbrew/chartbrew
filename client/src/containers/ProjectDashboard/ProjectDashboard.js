@@ -455,7 +455,7 @@ function ProjectDashboard(props) {
             return (
               <Grid
                 xs={12}
-                sm={chart.chartSize * 6 > 12 ? 12 : chart.chartSize * 6}
+                sm={chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4}
                 md={chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3}
                 key={chart.id}
               >

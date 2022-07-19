@@ -380,7 +380,7 @@ function Chart(props) {
           style={styles.chartContainer(print)}
           variant="bordered"
         >
-          <Card.Header>
+          <Card.Header css={{ pb: 0 }}>
             <Grid.Container>
               <Grid xs={8} sm={10} md={10} justify="flex-start">
                 <div>
@@ -617,13 +617,13 @@ function Chart(props) {
             </Grid.Container>
           </Card.Header>
           {chart.chartData && (
-            <Card.Body>
+            <Card.Body css={{ pt: 5 }}>
               <div style={styles.mainChartArea(_isKpi(chart))}>
                 {chart.type === "line"
                   && (
                     <LineChart
                       chart={chart}
-                      height={chart.mode === "kpi" ? height + 25 : height}
+                      height={height}
                       redraw={redraw}
                       redrawComplete={() => setRedraw(false)}
                     />
@@ -632,7 +632,7 @@ function Chart(props) {
                   && (
                     <BarChart
                       chart={chart}
-                      height={chart.mode === "kpi" ? height + 25 : height}
+                      height={height}
                       redraw={redraw}
                       redrawComplete={() => setRedraw(false)}
                     />
@@ -641,56 +641,50 @@ function Chart(props) {
                   && (
                   <PieChart
                     chart={chart}
-                    height={chart.mode === "kpi" ? height + 25 : height}
+                    height={height}
                     redraw={redraw}
                     redrawComplete={() => setRedraw(false)}
                   />
                   )}
                 {chart.type === "doughnut"
                   && (
-                  <div>
                     <DoughnutChart
                       chart={chart}
-                      height={chart.mode === "kpi" ? height + 25 : height}
+                      height={height}
                       redraw={redraw}
                       redrawComplete={() => setRedraw(false)}
                     />
-                  </div>
                   )}
                 {chart.type === "radar"
                   && (
                   <RadarChart
                     chart={chart}
-                    height={chart.mode === "kpi" ? height + 25 : height}
+                    height={height}
                     redraw={redraw}
                     redrawComplete={() => setRedraw(false)}
                   />
                   )}
                 {chart.type === "polar"
                   && (
-                  <div>
                     <PolarChart
                       chart={chart}
-                      height={chart.mode === "kpi" ? height + 25 : height}
+                      height={height}
                       redraw={redraw}
                       redrawComplete={() => setRedraw(false)}
                     />
-                  </div>
                   )}
                 {chart.type === "table"
                   && (
-                    <div>
-                      <TableContainer
-                        height={height - 55}
-                        tabularData={chart.chartData}
-                      />
-                    </div>
+                    <TableContainer
+                      height={height - 55}
+                      tabularData={chart.chartData}
+                    />
                   )}
                 {chart.type === "avg"
                   && (
                     <LineChart
                       chart={chart}
-                      height={chart.mode === "kpi" ? height + 25 : height}
+                      height={height}
                       redraw={redraw}
                       redrawComplete={() => setRedraw(false)}
                     />
@@ -1000,16 +994,8 @@ const styles = {
     }
   },
   mainChartArea: (noPadding) => ({
-    paddingTop: 10,
     paddingBottom: noPadding ? 0 : 10,
   }),
-  menuBtn: {
-    position: "absolute",
-    right: 10,
-    top: 10,
-    backgroundColor: "transparent",
-    boxShadow: "none",
-  },
   filterBtn: (addPadding) => ({
     position: "absolute",
     right: addPadding ? 40 : 10,
@@ -1019,7 +1005,7 @@ const styles = {
   }),
   titleArea: (isKpi) => ({
     paddingLeft: isKpi ? 15 : 0,
-    paddingTop: isKpi ? 15 : 0,
+    // paddingTop: isKpi ? 15 : 0,
   }),
 };
 
