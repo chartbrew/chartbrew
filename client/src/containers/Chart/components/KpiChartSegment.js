@@ -22,8 +22,8 @@ function KpiChartSegment(props) {
         return (
           <Grid
             xs={6}
-            sm={3}
-            md={2}
+            sm={4}
+            md={3}
             key={c.label}
             css={{ mr: 20 - (chart.chartData.growth.length * 2) }}
           >

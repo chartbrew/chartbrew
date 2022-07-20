@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import {
   Card, Text, Grid, Spacer, Row, Loading, Tooltip, Dropdown, Button, Modal, Input,
-  Link as LinkNext, Textarea, Switch, Container,
+  Link as LinkNext, Textarea, Switch, Container, Popover,
 } from "@nextui-org/react";
 import {
   ArrowDown, ArrowUp, ChevronDown, ChevronDownCircle, ChevronUp, CloseSquare,
@@ -378,7 +378,7 @@ function Chart(props) {
       {chart && (
         <Card
           style={styles.chartContainer(print)}
-          variant="bordered"
+          // variant="bordered"
         >
           <Card.Header css={{ pb: 0 }}>
             <Grid.Container>
@@ -450,20 +450,23 @@ function Chart(props) {
               </Grid>
               <Grid xs={4} sm={2} md={2} justify="flex-end">
                 {_checkIfFilters() && (
-                  <Tooltip
-                    content={(
-                      <ChartFilters
-                        chart={chart}
-                        onAddFilter={_onAddFilter}
-                        onClearFilter={_onClearFilter}
-                        conditions={conditions}
-                      />
-                    )}
-                  >
-                    <Text css={{ color: "$accents6" }}>
-                      <Filter2 />
-                    </Text>
-                  </Tooltip>
+                  <Popover>
+                    <Popover.Trigger>
+                      <LinkNext css={{ color: "$accents6" }}>
+                        <Filter2 set="light" />
+                      </LinkNext>
+                    </Popover.Trigger>
+                    <Popover.Content>
+                      <Container>
+                        <ChartFilters
+                          chart={chart}
+                          onAddFilter={_onAddFilter}
+                          onClearFilter={_onClearFilter}
+                          conditions={conditions}
+                        />
+                      </Container>
+                    </Popover.Content>
+                  </Popover>
                 )}
                 {projectId && !print && (
                   <Dropdown closeOnSelect={false}>
@@ -471,7 +474,7 @@ function Chart(props) {
                       <span>
                         <Tooltip content="Chart settings" placement="leftStart">
                           <Text css={{ color: "$accents6" }}>
-                            <MoreSquare />
+                            <MoreSquare set="light" />
                           </Text>
                         </Tooltip>
                       </span>
@@ -761,54 +764,56 @@ function Chart(props) {
           <Text h4>Set up auto-update for your chart</Text>
         </Modal.Header>
         <Modal.Body>
-          <Row align="center">
-            <Text>Select the desired frequency:</Text>
-          </Row>
-          <Row align="center">
-            <Dropdown selectionMode="single" selectedKeys={[`${updateFrequency}`]}>
-              <Dropdown.Button auto bordered>
-                {_getUpdateFreqText(updateFrequency)}
-              </Dropdown.Button>
-              <Dropdown.Menu>
-                <Dropdown.Item>
-                  <Text key="0" onClick={() => setUpdateFrequency(0)}>{"Don't auto update"}</Text>
-                </Dropdown.Item>
-                <Dropdown.Item>
-                  <Text key="60" onClick={() => setUpdateFrequency(60)}>Every minute</Text>
-                </Dropdown.Item>
-                <Dropdown.Item>
-                  <Text key="300" onClick={() => setUpdateFrequency(300)}>Every 5 minutes</Text>
-                </Dropdown.Item>
-                <Dropdown.Item>
-                  <Text key="900" onClick={() => setUpdateFrequency(900)}>Every 15 minutes</Text>
-                </Dropdown.Item>
-                <Dropdown.Item>
-                  <Text key="1800" onClick={() => setUpdateFrequency(1800)}>Every 30 minutes</Text>
-                </Dropdown.Item>
-                <Dropdown.Item>
-                  <Text key="3600" onClick={() => setUpdateFrequency(3600)}>Every hour</Text>
-                </Dropdown.Item>
-                <Dropdown.Item>
-                  <Text key="10800" onClick={() => setUpdateFrequency(10800)}>Every 3 hours</Text>
-                </Dropdown.Item>
-                <Dropdown.Item>
-                  <Text key="21600" onClick={() => setUpdateFrequency(21600)}>Every 6 hours</Text>
-                </Dropdown.Item>
-                <Dropdown.Item>
-                  <Text key="43200" onClick={() => setUpdateFrequency(43200)}>Every 12 hours</Text>
-                </Dropdown.Item>
-                <Dropdown.Item>
-                  <Text key="86400" onClick={() => setUpdateFrequency(86400)}>Every day</Text>
-                </Dropdown.Item>
-                <Dropdown.Item>
-                  <Text key="604800" onClick={() => setUpdateFrequency(604800)}>Every week</Text>
-                </Dropdown.Item>
-                <Dropdown.Item>
-                  <Text key="2592000" onClick={() => setUpdateFrequency(2592000)}>Every month</Text>
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
-          </Row>
+          <Container fluid>
+            <Row align="center" justify="center">
+              <Text>Select the desired frequency:</Text>
+            </Row>
+            <Row align="center" justify="center">
+              <Dropdown selectionMode="single" selectedKeys={[`${updateFrequency}`]}>
+                <Dropdown.Button auto bordered>
+                  {_getUpdateFreqText(updateFrequency)}
+                </Dropdown.Button>
+                <Dropdown.Menu>
+                  <Dropdown.Item key="0">
+                    <Text onClick={() => setUpdateFrequency(0)}>{"Don't auto update"}</Text>
+                  </Dropdown.Item>
+                  <Dropdown.Item key="60">
+                    <Text onClick={() => setUpdateFrequency(60)}>Every minute</Text>
+                  </Dropdown.Item>
+                  <Dropdown.Item key="300">
+                    <Text onClick={() => setUpdateFrequency(300)}>Every 5 minutes</Text>
+                  </Dropdown.Item>
+                  <Dropdown.Item key="900">
+                    <Text onClick={() => setUpdateFrequency(900)}>Every 15 minutes</Text>
+                  </Dropdown.Item>
+                  <Dropdown.Item key="1800">
+                    <Text onClick={() => setUpdateFrequency(1800)}>Every 30 minutes</Text>
+                  </Dropdown.Item>
+                  <Dropdown.Item key="3600">
+                    <Text onClick={() => setUpdateFrequency(3600)}>Every hour</Text>
+                  </Dropdown.Item>
+                  <Dropdown.Item key="10800">
+                    <Text onClick={() => setUpdateFrequency(10800)}>Every 3 hours</Text>
+                  </Dropdown.Item>
+                  <Dropdown.Item key="21600">
+                    <Text onClick={() => setUpdateFrequency(21600)}>Every 6 hours</Text>
+                  </Dropdown.Item>
+                  <Dropdown.Item key="43200">
+                    <Text onClick={() => setUpdateFrequency(43200)}>Every 12 hours</Text>
+                  </Dropdown.Item>
+                  <Dropdown.Item key="86400">
+                    <Text onClick={() => setUpdateFrequency(86400)}>Every day</Text>
+                  </Dropdown.Item>
+                  <Dropdown.Item key="604800">
+                    <Text onClick={() => setUpdateFrequency(604800)}>Every week</Text>
+                  </Dropdown.Item>
+                  <Dropdown.Item key="2592000">
+                    <Text onClick={() => setUpdateFrequency(2592000)}>Every month</Text>
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
+            </Row>
+          </Container>
         </Modal.Body>
         <Modal.Footer>
           <Button
