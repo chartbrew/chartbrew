@@ -473,9 +473,9 @@ function Chart(props) {
                     <Dropdown.Trigger>
                       <span>
                         <Tooltip content="Chart settings" placement="leftStart">
-                          <Text css={{ color: "$accents6" }}>
+                          <LinkNext css={{ color: "$accents6" }}>
                             <MoreSquare set="light" />
-                          </Text>
+                          </LinkNext>
                         </Tooltip>
                       </span>
                     </Dropdown.Trigger>
