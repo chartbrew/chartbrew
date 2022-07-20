@@ -67,13 +67,13 @@ function LineChart(props) {
       <div>
         <TooltipNext content={`compared to last ${chart.timeInterval}`}>
           {status === "neutral" && (
-            <Text size={"0.8em"}>{`${comparison}%`}</Text>
+            <Text b css={{ color: "$accents6" }}>{`${comparison}%`}</Text>
           )}
           {status === "negative" && (
             <Row align="center">
               <ChevronDownCircle size="small" primaryColor={negative} />
               <Spacer x={0.1} />
-              <Text css={{ color: "$errorLightContrast" }}>{` ${comparison}%`}</Text>
+              <Text b css={{ color: "$errorLightContrast" }}>{` ${comparison}%`}</Text>
             </Row>
           )}
           {status === "positive" && (
@@ -118,7 +118,7 @@ function LineChart(props) {
 
                     {chart.Datasets[index] && (
                       <Row justify="center" align="center">
-                        <Text style={{ marginTop: chart.showGrowth ? -5 : 0 }}>
+                        <Text style={{ marginTop: chart.showGrowth ? -5 : 0, textAlign: "center" }}>
                           {chart.showGrowth && chart.chartData.growth && (
                             _renderGrowth(chart.chartData.growth[index])
                           )}
@@ -152,8 +152,8 @@ function LineChart(props) {
                   options={chart.chartData.options}
                   height={
                     height - (
-                      (chart.mode === "kpichart" && chart.chartSize > 1 && 90)
-                      || (chart.mode === "kpichart" && chart.chartSize === 1 && 80)
+                      (chart.mode === "kpichart" && chart.chartSize > 1 && 80)
+                      || (chart.mode === "kpichart" && chart.chartSize === 1 && 70)
                       || 0
                     )
                   }
@@ -180,6 +180,7 @@ const styles = {
     marginRight: index < items - 1 && size > 1 ? (40 * size) - (items * 8) : 0,
   }),
   datasetLabelColor: (color) => ({
+    textAlign: "center",
     borderBottom: `solid 3px ${color}`,
   }),
 };

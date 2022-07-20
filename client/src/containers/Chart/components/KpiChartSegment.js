@@ -42,7 +42,7 @@ function KpiChartSegment(props) {
                       <Row align="center">
                         <ChevronDownCircle size="small" primaryColor={negative} />
                         <Spacer x={0.1} />
-                        <Text small css={{ color: "$errorLightContrast" }}>{` ${c.comparison}%`}</Text>
+                        <Text b size={"0.8em"} css={{ color: "$errorLightContrast" }}>{` ${c.comparison}%`}</Text>
                       </Row>
                     )}
                     {c.status === "positive" && (

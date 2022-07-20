@@ -124,16 +124,16 @@ const darkTheme = {
     green100: "#05983F",
     green50: "#00762F",
 
-    red900: "#FFF4F4",
-    red800: "#FEDDDD",
-    red700: "#FBC0C0",
-    red600: "#FCA5A5",
-    red500: "#F48484",
-    red400: "#F36060",
-    red300: "#EF4444",
-    red200: "#E53232",
-    red100: "#DE1313",
-    red50: "#C90808",
+    red50: "#FFF4F4",
+    red100: "#FEDDDD",
+    red200: "#FBC0C0",
+    red300: "#FCA5A5",
+    red400: "#F48484",
+    red500: "#F36060",
+    red600: "#EF4444",
+    red700: "#E53232",
+    red800: "#DE1313",
+    red900: "#C90808",
 
     primary: "$blue600",
     secondary: "$orange600",
@@ -174,7 +174,7 @@ const darkTheme = {
   }
 };
 
-function getThemeConfig(type = "dark") {
+function getThemeConfig(type = "light") {
   return createTheme({
     type,
     theme: type === "light" ? lightTheme : darkTheme,

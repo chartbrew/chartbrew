@@ -378,7 +378,7 @@ function Chart(props) {
       {chart && (
         <Card
           style={styles.chartContainer(print)}
-          // variant="bordered"
+          variant="bordered"
         >
           <Card.Header css={{ pb: 0 }}>
             <Grid.Container>

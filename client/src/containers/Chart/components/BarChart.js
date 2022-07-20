@@ -137,8 +137,8 @@ function BarChart(props) {
                 options={chart.chartData.options}
                 height={
                   height - (
-                    (chart.mode === "kpichart" && chart.chartSize > 1 && 90)
-                    || (chart.mode === "kpichart" && chart.chartSize === 1 && 80)
+                    (chart.mode === "kpichart" && chart.chartSize > 1 && 80)
+                    || (chart.mode === "kpichart" && chart.chartSize === 1 && 70)
                     || 0
                   )
                 }
