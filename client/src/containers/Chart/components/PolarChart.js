@@ -39,7 +39,7 @@ function PolarChart(props) {
           <PolarArea
             data={chart.chartData.data}
             options={chart.chartData.options}
-            height={height}
+            height={height - 10}
             redraw={redraw}
           />
         </ChartErrorBoundary>

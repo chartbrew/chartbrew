@@ -66,23 +66,24 @@ function LineChart(props) {
     return (
       <div>
         <TooltipNext content={`compared to last ${chart.timeInterval}`}>
-          {status === "neutral" && (
-            <Text b css={{ color: "$accents6" }}>{`${comparison}%`}</Text>
-          )}
-          {status === "negative" && (
-            <Row align="center">
-              <ChevronDownCircle size="small" primaryColor={negative} />
-              <Spacer x={0.1} />
-              <Text b css={{ color: "$errorLightContrast" }}>{` ${comparison}%`}</Text>
-            </Row>
-          )}
-          {status === "positive" && (
-            <Row align="center">
-              <ChevronUpCircle size="small" primaryColor={positive} />
-              {/* <Spacer x={0.1} /> */}
-              <Text b css={{ color: "$successLightContrast" }}>{` ${comparison}%`}</Text>
-            </Row>
-          )}
+          <Container fluid>
+            {status === "neutral" && (
+              <Text b css={{ color: "$accents6" }}>{`${comparison}%`}</Text>
+            )}
+            {status === "negative" && (
+              <Row align="center">
+                <ChevronDownCircle size="small" primaryColor={negative} />
+                <Spacer x={0.1} />
+                <Text b css={{ color: "$errorLightContrast" }}>{` ${comparison}%`}</Text>
+              </Row>
+            )}
+            {status === "positive" && (
+              <Row align="center">
+                <ChevronUpCircle size="small" primaryColor={positive} />
+                <Text b css={{ color: "$successLightContrast" }}>{` ${comparison}%`}</Text>
+              </Row>
+            )}
+          </Container>
         </TooltipNext>
       </div>
     );
@@ -180,7 +181,6 @@ const styles = {
     marginRight: index < items - 1 && size > 1 ? (40 * size) - (items * 8) : 0,
   }),
   datasetLabelColor: (color) => ({
-    textAlign: "center",
     borderBottom: `solid 3px ${color}`,
   }),
 };

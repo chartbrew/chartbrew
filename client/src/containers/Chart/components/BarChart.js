@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Bar } from "react-chartjs-2";
-import { Header, Icon } from "semantic-ui-react";
 import uuid from "uuid/v4";
 import {
   Chart as ChartJS,
@@ -14,10 +13,14 @@ import {
   Legend,
   Filler,
 } from "chart.js";
+import {
+  Container, Grid, Row, Spacer, Text, Tooltip as TooltipNext,
+} from "@nextui-org/react";
+import { ChevronDownCircle, ChevronUpCircle } from "react-iconly";
 
 import determineType from "../../../modules/determineType";
 import KpiChartSegment from "./KpiChartSegment";
-import { Colors } from "../../../config/colors";
+import { negative, positive } from "../../../config/colors";
 import ChartErrorBoundary from "./ChartErrorBoundary";
 
 ChartJS.register(
@@ -59,108 +62,115 @@ function BarChart(props) {
     if (!c) return (<span />);
     const { status, comparison } = c;
     return (
-      <div style={{
-        fontSize: chart.chartSize === 1 ? "0.9em" : "0.7em",
-        display: "block",
-        marginTop: chart.chartSize === 1 ? 10 : 0,
-      }}>
-        <Icon
-          name={
-            status === "neutral" ? "minus"
-              : `arrow circle ${(status === "positive" && "up") || "down"}`
-          }
-          color={
-            status === "positive" ? "green" : status === "negative" ? "red" : "grey"
-          }
-        />
-        <span style={{ color: Colors[status] }}>
-          {`${comparison}% `}
-        </span>
-        <small style={{ color: Colors.neutral, fontWeight: "normal", display: "inline-block" }}>
-          {` last ${chart.timeInterval}`}
-        </small>
+      <div>
+        <TooltipNext content={`compared to last ${chart.timeInterval}`}>
+          <Container fluid>
+            {status === "neutral" && (
+              <Text b css={{ color: "$accents6" }}>{`${comparison}%`}</Text>
+            )}
+            {status === "negative" && (
+              <Row align="center">
+                <ChevronDownCircle size="small" primaryColor={negative} />
+                <Spacer x={0.1} />
+                <Text b css={{ color: "$errorLightContrast" }}>{` ${comparison}%`}</Text>
+              </Row>
+            )}
+            {status === "positive" && (
+              <Row align="center">
+                <ChevronUpCircle size="small" primaryColor={positive} />
+                <Text b css={{ color: "$successLightContrast" }}>{` ${comparison}%`}</Text>
+              </Row>
+            )}
+          </Container>
+        </TooltipNext>
       </div>
     );
   };
 
   return (
     <>
-      {chart.mode === "kpi"
-        && (
-          <div>
-            {chart.chartData
-              && chart.chartData.data
-              && chart.chartData.data.datasets && (
-                <div style={styles.kpiContainer(chart.chartSize)}>
-                  {chart.chartData.data.datasets.map((dataset, index) => (
-                    <Header
-                      as="h1"
-                      size="massive"
-                      style={styles.kpiItem(
-                        chart.chartSize,
-                        chart.chartData.data.datasets.length,
-                        index
-                      )}
-                      key={uuid()}
-                    >
-                      {dataset.data && _getKpi(dataset.data)}
-                      {chart.Datasets[index] && (
-                        <Header.Subheader style={{ color: "black", marginTop: chart.showGrowth ? -5 : 0 }}>
+      {chart.mode === "kpi" && chart.chartData && chart.chartData.data
+        && chart.chartData.data.datasets && (
+          <div style={styles.kpiContainer}>
+            <Grid.Container justify="center" gap={1} alignContent="center" alignItems="center">
+              {chart.chartData.data.datasets.map((dataset, index) => (
+                <Grid
+                  xs={12}
+                  sm={chart.chartSize === 1 ? 12 : 4}
+                  md={chart.chartSize === 1 ? 12 : 4}
+                  lg={chart.chartSize === 1 ? 6 : 2}
+                  key={dataset.label}
+                  alignContent="center"
+                  alignItems="center"
+                >
+                  <Container fluid justify="center" alignContent="center" alignItems="center">
+                    <Row justify="center" align="center">
+                      <Text
+                        h1={chart.chartSize === 1}
+                        h2={chart.chartSize > 1}
+                        size={"2.5em"}
+                        key={uuid()}
+                      >
+                        {dataset.data && _getKpi(dataset.data)}
+                      </Text>
+                    </Row>
+
+                    {chart.Datasets[index] && (
+                      <Row justify="center" align="center">
+                        <Text style={{ marginTop: chart.showGrowth ? -5 : 0, textAlign: "center" }}>
                           {chart.showGrowth && chart.chartData.growth && (
                             _renderGrowth(chart.chartData.growth[index])
                           )}
                           <span
                             style={
-                              chart.Datasets
-                              && styles.datasetLabelColor(chart.Datasets[index].datasetColor)
-                            }
-                          >
+                                chart.Datasets
+                                && styles.datasetLabelColor(chart.Datasets[index].datasetColor)
+                              }
+                            >
                             {dataset.label}
                           </span>
-                        </Header.Subheader>
-                      )}
-                    </Header>
-                  ))}
-                </div>
-            )}
+                        </Text>
+                      </Row>
+                    )}
+                  </Container>
+                </Grid>
+              ))}
+            </Grid.Container>
           </div>
-        )}
-      <div className={chart.mode === "kpi" && "chart-kpi"}>
-        {chart.chartData.growth && chart.mode === "kpichart" && (
-          <KpiChartSegment chart={chart} editMode={editMode} />
-        )}
-        {chart.chartData.data && chart.chartData.data.labels && (
-          <div>
-            <ChartErrorBoundary>
-              <Bar
-                data={chart.chartData.data}
-                options={chart.chartData.options}
-                height={
-                  height - (
-                    (chart.mode === "kpichart" && chart.chartSize > 1 && 80)
-                    || (chart.mode === "kpichart" && chart.chartSize === 1 && 70)
-                    || 0
-                  )
-                }
-                redraw={redraw}
-              />
-            </ChartErrorBoundary>
-          </div>
-        )}
-      </div>
+      )}
+      {chart.mode !== "kpi" && chart.chartData && chart.chartData.data && (
+        <div className={chart.mode === "kpi" && "chart-kpi"}>
+          {chart.chartData.growth && chart.mode === "kpichart" && (
+            <KpiChartSegment chart={chart} editMode={editMode} />
+          )}
+          {chart.chartData.data && chart.chartData.data.labels && (
+            <div>
+              <ChartErrorBoundary>
+                <Bar
+                  data={chart.chartData.data}
+                  options={chart.chartData.options}
+                  height={
+                    height - (
+                      (chart.mode === "kpichart" && chart.chartSize > 1 && 80)
+                      || (chart.mode === "kpichart" && chart.chartSize === 1 && 70)
+                      || 0
+                    )
+                  }
+                  redraw={redraw}
+                />
+              </ChartErrorBoundary>
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 }
 
 const styles = {
-  kpiContainer: (size) => ({
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    display: "flex",
-    flexDirection: size === 1 ? "column" : "row",
-  }),
+  kpiContainer: {
+    height: 300, display: "flex", justifyContent: "center", alignItems: "center"
+  },
   kpiItem: (size, items, index) => ({
     fontSize: size === 1 ? "2.5em" : "4em",
     textAlign: "center",

@@ -1,5 +1,5 @@
 import React from "react";
-import { Header } from "semantic-ui-react";
+import { Text } from "@nextui-org/react";
 
 export default class ChartErrorBoundary extends React.Component {
   constructor(props) {
@@ -23,7 +23,7 @@ export default class ChartErrorBoundary extends React.Component {
     const { children } = this.props; // eslint-disable-line
     if (hasError) {
       // You can render any custom fallback UI
-      return <Header size="small">Something went wrong. Please refresh the data in the chart.</Header>;
+      return <Text>Something went wrong. Please refresh the data in the chart.</Text>;
     }
 
     return children;

@@ -84,7 +84,7 @@ function DoughnutChart(props) {
                 datalabels: dataLabelsPlugin,
               },
             }}
-            height={height}
+            height={height - 10}
             redraw={redraw}
             plugins={[ChartDataLabels]}
           />
