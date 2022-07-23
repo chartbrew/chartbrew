@@ -2,9 +2,8 @@ import React, { useState } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import {
-  Button,
-  Form, Input, Modal, TransitionablePortal
-} from "semantic-ui-react";
+  Button, Input, Loading, Modal, Spacer, Text,
+} from "@nextui-org/react";
 
 import {
   createTemplate as createTemplateAction,
@@ -40,35 +39,47 @@ function CreateTemplateForm(props) {
   };
 
   return (
-    <TransitionablePortal open={visible}>
-      <Modal open={visible} closeIcon onClose={() => onClose()} size="small">
-        <Modal.Header>Create a template</Modal.Header>
-        <Modal.Content>
-          <Form>
-            <Form.Field error={validationError}>
-              <label>Template name</label>
-              <Input
-                placeholder="Enter a name you can recognize later"
-                value={templateName}
-                onChange={(e, data) => setTemplateName(data.value)}
-              />
-            </Form.Field>
-          </Form>
-        </Modal.Content>
-        <Modal.Actions>
-          <Button
-            content="Cancel"
-            onClick={() => onClose()}
+    <Modal open={visible} closeIcon onClose={() => onClose()} size="small">
+      <Modal.Header>
+        <Text h3>Create a template</Text>
+      </Modal.Header>
+      <Modal.Body>
+        <Spacer y={1} />
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          _onSaveTemplate();
+        }}>
+          <Input
+            labelPlaceholder="Enter a name for the template"
+            value={templateName}
+            onChange={(e) => setTemplateName(e.target.value)}
+            color={validationError ? "error" : "default"}
+            bordered
+            fullWidth
+            autoFocus
           />
-          <Button
-            primary
-            content="Save template"
-            loading={loading}
-            onClick={_onSaveTemplate}
-          />
-        </Modal.Actions>
-      </Modal>
-    </TransitionablePortal>
+        </form>
+        <Spacer y={1} />
+      </Modal.Body>
+      <Modal.Footer>
+        <Button
+          flat
+          color="warning"
+          onClick={() => onClose()}
+          auto
+        >
+          Close
+        </Button>
+        <Button
+          disabled={loading}
+          onClick={_onSaveTemplate}
+          auto
+        >
+          {loading && <Loading type="points" />}
+          {!loading && "Save template"}
+        </Button>
+      </Modal.Footer>
+    </Modal>
   );
 }
 
