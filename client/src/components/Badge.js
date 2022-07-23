@@ -3,7 +3,7 @@ import { styled } from "@nextui-org/react";
 
 // Badge component will be available as part of the core library soon
 const Badge = styled("span", {
-  display: "inline-block",
+  display: "inline-flex",
   textTransform: "uppercase",
   padding: "$2 $3",
   margin: "0 2px",

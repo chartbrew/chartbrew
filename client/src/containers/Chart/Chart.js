@@ -407,7 +407,7 @@ function Chart(props) {
                         <Badge type="primary" key={c.id}>
                           {c.type !== "date" && `${c.value}`}
                           {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
-                          <LinkNext onClick={() => _onClearFilter(c)}>
+                          <LinkNext onClick={() => _onClearFilter(c)} css={{ color: "$text" }}>
                             <CloseSquare size="small" />
                           </LinkNext>
                         </Badge>

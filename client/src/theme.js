@@ -174,7 +174,7 @@ const darkTheme = {
   }
 };
 
-function getThemeConfig(type = "light") {
+function getThemeConfig(type = "dark") {
   return createTheme({
     type,
     theme: type === "light" ? lightTheme : darkTheme,

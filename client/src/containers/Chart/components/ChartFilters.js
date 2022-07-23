@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import {
-  Button,
-  Dropdown, Form, Segment,
-} from "semantic-ui-react";
 import { Calendar } from "react-date-range";
 import { enGB } from "date-fns/locale";
 import { format, formatISO } from "date-fns";
+import {
+  Container, Row, Button, Dropdown, Spacer, Text,
+} from "@nextui-org/react";
+import { Calendar as CalendarIcon, CloseSquare } from "react-iconly";
 
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
@@ -62,11 +62,11 @@ function ChartFilters(props) {
 
   return (
     <div>
-      <Form>
+      <Container fluid>
         {!_checkIfFilters() && (
-          <Form.Field>
+          <Row>
             <p>No filters available</p>
-          </Form.Field>
+          </Row>
         )}
         {chart
           && chart.Datasets.filter((d) => d.conditions && d.conditions.length)
@@ -74,59 +74,68 @@ function ChartFilters(props) {
               return dataset.conditions.filter((c) => c.exposed).map((condition) => {
                 const filterOptions = _getDropdownOptions(dataset, condition);
                 return (
-                  <Form.Field key={condition.id}>
-                    <label>{`${condition.field.replace("root[].", "")} ${condition.operator}`}</label>
+                  <Row key={condition.id} align="center">
+                    <Text>{`${condition.field.replace("root[].", "")} ${condition.operator}`}</Text>
+                    <Spacer x={0.5} />
                     {condition.type !== "date" && (
-                    <Dropdown
-                      selection
-                      clearable
-                      search
-                      placeholder={`${condition.field.replace("root[].", "")}`}
-                      options={filterOptions}
-                      onChange={(e, data) => _onOptionSelected(data.value, condition)}
-                      value={_getConditionValue(condition.id) || ""}
-                      scrolling
-                      style={{ minWidth: 250 }}
-                    />
+                      <Dropdown>
+                        <Dropdown.Button bordered>
+                          {`${condition.field.replace("root[].", "")}`}
+                        </Dropdown.Button>
+                        <Dropdown.Menu
+                          selectedKeys={[`${_getConditionValue(condition.id)}`]}
+                          onSelectionChange={(selection) => {
+                            _onOptionSelected(Object.values(selection)[0], condition);
+                          }}
+                        >
+                          {filterOptions.map((opt) => (
+                            <Dropdown.Item key={opt.value}>
+                              {opt.text}
+                            </Dropdown.Item>
+                          ))}
+                        </Dropdown.Menu>
+                      </Dropdown>
                     )}
                     {condition.type === "date" && calendarOpen !== condition.id && (
-                    <>
-                      <Button
-                        basic
-                        icon="calendar"
-                        content={(_getConditionValue(condition.id) && format(new Date(_getConditionValue(condition.id)), "Pp", { locale: enGB })) || "Select a date"}
-                        onClick={() => setCalendarOpen(condition.id)}
-                        size="small"
-                      />
-                      {_getConditionValue(condition.id) && (
+                      <>
                         <Button
-                          className="tertiary"
-                          icon="x"
-                          onClick={() => _onOptionSelected("", condition)}
-                          size="small"
-                        />
-                      )}
-                    </>
+                          bordered
+                          icon={<CalendarIcon />}
+                          onClick={() => setCalendarOpen(condition.id)}
+                          auto
+                        >
+                          {(_getConditionValue(condition.id) && format(new Date(_getConditionValue(condition.id)), "Pp", { locale: enGB })) || "Select a date"}
+                        </Button>
+                        <Spacer x={0.2} />
+                        {_getConditionValue(condition.id) && (
+                          <Button
+                            flat
+                            icon={<CloseSquare />}
+                            onClick={() => _onOptionSelected("", condition)}
+                            auto
+                          />
+                        )}
+                      </>
                     )}
                     {condition.type === "date" && calendarOpen === condition.id && (
-                    <Segment textAlign="left">
-                      <Calendar
-                        date={(
-                          _getConditionValue(condition.id)
-                          && new Date(_getConditionValue(condition.id))
-                        )
-                          || new Date()}
-                        onChange={(date) => _onOptionSelected(formatISO(date), condition)}
-                        locale={enGB}
-                        color={secondary}
-                      />
-                    </Segment>
+                      <div>
+                        <Calendar
+                          date={(
+                            _getConditionValue(condition.id)
+                            && new Date(_getConditionValue(condition.id))
+                          )
+                            || new Date()}
+                          onChange={(date) => _onOptionSelected(formatISO(date), condition)}
+                          locale={enGB}
+                          color={secondary}
+                        />
+                      </div>
                     )}
-                  </Form.Field>
+                  </Row>
                 );
               });
             })}
-      </Form>
+      </Container>
     </div>
   );
 }
