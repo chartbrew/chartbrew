@@ -51,31 +51,29 @@ function TableComponent(props) {
         shadow={false}
       >
         <Table.Header>
-          {headerGroups.map((headerGroup) => {
-            return headerGroup.headers.map((column) => {
-              return (
-                <Table.Column
-                  onClick={column.getHeaderProps(column.getSortByToggleProps()).onClick}
-                  key={column.getHeaderProps(column.getSortByToggleProps()).key}
-                  style={{ maxWidth: 400, whiteSpace: "unset" }}
-                  justify="center"
+          {headerGroups[headerGroups.length - 1].headers.map((column) => {
+            return (
+              <Table.Column
+                onClick={column.getHeaderProps(column.getSortByToggleProps()).onClick}
+                key={column.getHeaderProps(column.getSortByToggleProps()).key}
+                style={{ maxWidth: 400, whiteSpace: "unset" }}
+                justify="center"
                 >
-                  <Row align="center">
-                    {column.isSorted
-                      ? column.isSortedDesc
-                        ? (<ChevronDownCircle />)
-                        : (<ChevronUpCircle />)
-                      : ""}
-                    <LinkNext>
-                      <Text>
-                        {typeof column.render("Header") === "object"
-                          ? column.render("Header") : column.render("Header").replace("__cb_group", "")}
-                      </Text>
-                    </LinkNext>
-                  </Row>
-                </Table.Column>
-              );
-            });
+                <Row align="center">
+                  {column.isSorted
+                    ? column.isSortedDesc
+                      ? (<ChevronDownCircle />)
+                      : (<ChevronUpCircle />)
+                    : ""}
+                  <LinkNext>
+                    <Text>
+                      {typeof column.render("Header") === "object"
+                        ? column.render("Header") : column.render("Header").replace("__cb_group", "")}
+                    </Text>
+                  </LinkNext>
+                </Row>
+              </Table.Column>
+            );
           })}
         </Table.Header>
         <Table.Body {...getTableBodyProps()}>
