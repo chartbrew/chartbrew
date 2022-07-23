@@ -1,21 +1,16 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { Menu } from "semantic-ui-react";
-import { createMedia } from "@artsy/fresnel";
+import {
+  Button, Row, Spacer
+} from "@nextui-org/react";
+import { ArrowDown, ArrowUp } from "react-iconly";
 
 import TableComponent from "./TableComponent";
 
-const AppMedia = createMedia({
-  breakpoints: {
-    mobile: 0,
-    tablet: 768,
-    computer: 1024,
-  },
-});
-const { Media } = AppMedia;
-
 function TableContainer(props) {
-  const { tabularData, height, embedded } = props;
+  const {
+    tabularData, height, embedded, chartSize
+  } = props;
 
   const [activeDataset, setActiveDataset] = useState("");
   const [expanded, setExpanded] = useState(false);
@@ -34,38 +29,39 @@ function TableContainer(props) {
 
   return (
     <div>
-      <Menu secondary stackable>
+      <Row align="center">
         {Object.keys(tabularData).map((dataset) => {
           return (
-            <Menu.Item
-              name={dataset}
-              onClick={() => setActiveDataset(dataset)}
-              active={activeDataset === dataset}
-              key={dataset}
-            />
+            <>
+              <Button
+                onClick={() => setActiveDataset(dataset)}
+                bordered={activeDataset !== dataset}
+                flat={activeDataset === dataset}
+                auto
+                key={dataset}
+                size={chartSize === 1 ? "xs" : "sm"}
+              >
+                {dataset}
+              </Button>
+              <Spacer x={0.2} />
+            </>
           );
         })}
+        <Spacer x={0.2} />
         {!embedded && (
-          <>
-            <Media greaterThan="mobile">
-              <Menu.Item
-                name={expanded ? "See less" : "See more"}
-                icon={expanded ? "arrow up" : "arrow down"}
-                onClick={() => _onExpand()}
-                style={styles.seeMore}
-              />
-            </Media>
-            <Media at="mobile">
-              <Menu.Item
-                name={expanded ? "See less" : "See more"}
-                icon={expanded ? "arrow up" : "arrow down"}
-                onClick={() => _onExpand()}
-                style={{ margin: 0, marginTop: 5 }}
-              />
-            </Media>
-          </>
+          <Button
+            icon={expanded ? <ArrowUp /> : <ArrowDown />}
+            onClick={() => _onExpand()}
+            auto
+            size={chartSize === 1 ? "xs" : "sm"}
+            bordered
+            css={{ border: "$accents6" }}
+          >
+            {expanded ? "See less" : "See more"}
+          </Button>
         )}
-      </Menu>
+      </Row>
+      <Spacer y={0.5} />
       {activeDataset && tabularData[activeDataset] && tabularData[activeDataset].columns && (
         <TableComponent
           height={expanded ? height + 200 : height}
@@ -78,12 +74,6 @@ function TableContainer(props) {
   );
 }
 
-const styles = {
-  seeMore: {
-    border: "solid 1px #e8e8e8",
-  },
-};
-
 TableContainer.defaultProps = {
   height: 300,
   embedded: false,
@@ -91,6 +81,7 @@ TableContainer.defaultProps = {
 
 TableContainer.propTypes = {
   tabularData: PropTypes.object.isRequired,
+  chartSize: PropTypes.number.isRequired,
   height: PropTypes.number,
   embedded: PropTypes.bool,
 };

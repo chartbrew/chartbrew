@@ -4,8 +4,14 @@ import React from "react";
 import { usePagination, useSortBy, useTable } from "react-table";
 import PropTypes from "prop-types";
 import {
-  Button, Dropdown, Form, Icon, Input, Label, Popup, Table
-} from "semantic-ui-react";
+  Dropdown, Row, Spacer, Text, Link as LinkNext, Table,
+  Popover, Pagination,
+} from "@nextui-org/react";
+import {
+  ChevronDownCircle, ChevronUpCircle
+} from "react-iconly";
+
+import Badge from "../../../../components/Badge";
 
 const paginationOptions = [5, 10, 20, 30, 40, 50].map((pageSize) => ({
   key: pageSize,
@@ -24,15 +30,10 @@ function TableComponent(props) {
     headerGroups,
     page,
     prepareRow,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
     pageCount,
     gotoPage,
-    nextPage,
-    previousPage,
     setPageSize,
-    state: { pageIndex, pageSize },
+    state: { pageSize },
   } = useTable({
     columns,
     data,
@@ -41,41 +42,41 @@ function TableComponent(props) {
   useSortBy,
   usePagination);
 
-  const getColumnsRealSize = () => {
-    let realSize = 0;
-    columns.forEach((column) => {
-      realSize++;
-      if (column.columns) realSize += column.columns.length;
-    });
-
-    return realSize;
-  };
-
   return (
     <div style={styles.mainBody(height, embedded)}>
-      <Table sortable celled striped unstackable fixed {...getTableProps()} style={styles.table}>
+      <Table
+        {...getTableProps()}
+        lined
+        selectionMode="single"
+        shadow={false}
+      >
         <Table.Header>
-          {headerGroups.map(headerGroup => (
-            <Table.Row {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map(column => (
-                <Table.HeaderCell
-                  {...column.getHeaderProps(column.getSortByToggleProps())}
+          {headerGroups.map((headerGroup) => {
+            return headerGroup.headers.map((column) => {
+              return (
+                <Table.Column
+                  onClick={column.getHeaderProps(column.getSortByToggleProps()).onClick}
+                  key={column.getHeaderProps(column.getSortByToggleProps()).key}
                   style={{ maxWidth: 400, whiteSpace: "unset" }}
+                  justify="center"
                 >
-                  {typeof column.render("Header") === "object"
-                    ? column.render("Header") : column.render("Header").replace("__cb_group", "")}
-                  <span>
-                    {" "}
+                  <Row align="center">
                     {column.isSorted
                       ? column.isSortedDesc
-                        ? (<Icon name="chevron down" />)
-                        : (<Icon name="chevron up" />)
+                        ? (<ChevronDownCircle />)
+                        : (<ChevronUpCircle />)
                       : ""}
-                  </span>
-                </Table.HeaderCell>
-              ))}
-            </Table.Row>
-          ))}
+                    <LinkNext>
+                      <Text>
+                        {typeof column.render("Header") === "object"
+                          ? column.render("Header") : column.render("Header").replace("__cb_group", "")}
+                      </Text>
+                    </LinkNext>
+                  </Row>
+                </Table.Column>
+              );
+            });
+          })}
         </Table.Header>
         <Table.Body {...getTableBodyProps()}>
           {page.length < 1 && (
@@ -102,17 +103,20 @@ function TableComponent(props) {
                   return (
                     <Table.Cell collapsing {...cell.getCellProps()} style={{ maxWidth: 300 }}>
                       {(!isObject && !isArray) && (
-                        <span title={cellObj.props.value}>
+                        <Text size={"0.9em"} title={cellObj.props.value}>
                           {cellObj.props.value === true || cellObj.props.value === false
                             ? `${cellObj.props.value}` : cellObj}
-                        </span>
+                        </Text>
                       )}
                       {(isObject || isArray) && (
-                        <Popup
-                          trigger={(<Label as="a">{(isShort && `${Object.values(objDetails)[0]}`) || "Collection"}</Label>)}
-                          content={(<pre><code>{JSON.stringify(objDetails, null, 4)}</code></pre>)}
-                          on="click"
-                        />
+                        <Popover>
+                          <Popover.Trigger>
+                            <LinkNext><Badge>{(isShort && `${Object.values(objDetails)[0]}`) || "Collection"}</Badge></LinkNext>
+                          </Popover.Trigger>
+                          <Popover.Content>
+                            <pre><code>{JSON.stringify(objDetails, null, 4)}</code></pre>
+                          </Popover.Content>
+                        </Popover>
                       )}
                     </Table.Cell>
                   );
@@ -121,59 +125,35 @@ function TableComponent(props) {
             );
           })}
         </Table.Body>
-        <Table.Footer className="pagination">
-          <Table.Row>
-            <Table.HeaderCell colSpan={getColumnsRealSize()} style={{ overflow: "visible" }}>
-              <Form size="small">
-                <Form.Group style={{ marginBottom: 0 }}>
-                  <Form.Field>
-                    <Button icon="angle double left" onClick={() => gotoPage(0)} disabled={!canPreviousPage} />
-                    <Button icon="angle left" onClick={() => previousPage()} disabled={!canPreviousPage} />
-                    <Button icon="angle right" onClick={() => nextPage()} disabled={!canNextPage} />
-                    <Button icon="angle double right" onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} />
-                  </Form.Field>
-                  <Form.Field>
-                    <span>
-                      {"Page "}
-                      <strong>
-                        {pageIndex + 1}
-                        {" of "}
-                        {pageOptions.length}
-                      </strong>
-                    </span>
-                    <span>
-                      {" "}
-                      <Input
-                        type="number"
-                        defaultValue={pageIndex + 1}
-                        onChange={e => {
-                          const page = e.target.value ? Number(e.target.value) - 1 : 0;
-                          gotoPage(page);
-                        }}
-                        style={{ width: 70 }}
-                      />
-                    </span>
-                    {" "}
-                  </Form.Field>
-                  <Form.Field>
-                    <Dropdown
-                      value={pageSize}
-                      onChange={(e, data) => {
-                        setPageSize(Number(data.value));
-                      }}
-                      options={paginationOptions}
-                      selection
-                      compact
-                      upward
-                      style={styles.itemsDropdown}
-                    />
-                  </Form.Field>
-                </Form.Group>
-              </Form>
-            </Table.HeaderCell>
-          </Table.Row>
-        </Table.Footer>
       </Table>
+      <div fluid>
+        <Row align="center">
+          <Pagination
+            total={pageCount}
+            initialPage={1}
+            onChange={(page) => {
+              gotoPage(page - 1);
+            }}
+          />
+          <Spacer x={0.5} />
+          <Dropdown>
+            <Dropdown.Button bordered>
+              {paginationOptions.find((option) => option.value === pageSize).text}
+            </Dropdown.Button>
+            <Dropdown.Menu
+              selectionMode="single"
+              selectedKeys={[`${pageSize}`]}
+              onSelectionChange={(selection) => setPageSize(Number(Object.values(selection)[0]))}
+            >
+              {paginationOptions.map((option) => (
+                <Dropdown.Item key={`${option.value}`}>
+                  <Text css={{ color: "$text" }}>{option.text}</Text>
+                </Dropdown.Item>
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
+        </Row>
+      </div>
     </div>
   );
 }

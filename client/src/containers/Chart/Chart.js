@@ -681,6 +681,7 @@ function Chart(props) {
                     <TableContainer
                       height={height - 55}
                       tabularData={chart.chartData}
+                      chartSize={chart.chartSize}
                     />
                   )}
                 {chart.type === "avg"
