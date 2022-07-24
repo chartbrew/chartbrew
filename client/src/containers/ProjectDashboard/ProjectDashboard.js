@@ -485,9 +485,9 @@ function ProjectDashboard(props) {
         </Modal.Body>
       </Modal>
 
-      <Modal open={viewExport} closeButton onClose={() => setViewExport(false)}>
+      <Modal open={viewExport} closeButton onClose={() => setViewExport(false)} width="800px">
         <Modal.Header>
-          <Text h5>Export to Excel (.xlsx)</Text>
+          <Text h3>Export to Excel (.xlsx)</Text>
         </Modal.Header>
         <Modal.Body>
           <ChartExport

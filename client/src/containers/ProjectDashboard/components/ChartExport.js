@@ -1,9 +1,13 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import {
-  Button, Checkbox, Container, Divider, Grid, Header, Popup
-} from "semantic-ui-react";
 import _ from "lodash";
+import {
+  Button, Checkbox, Container, Divider, Grid, Loading, Row, Spacer, Text, Tooltip,
+  Link as LinkNext,
+} from "@nextui-org/react";
+import {
+  CloseSquare, Download, Hide, Show, TickSquare
+} from "react-iconly";
 
 function ChartExport(props) {
   const {
@@ -39,92 +43,113 @@ function ChartExport(props) {
 
   return (
     <Container>
-      <Header size="small">
-        Select which charts you want to export
-      </Header>
-      <Button
-        content="Select all"
-        onClick={_onSelectAll}
-        size="tiny"
-        labelPosition="left"
-        icon="check"
-      />
-      <Button
-        content="Deselect all"
-        onClick={_onDeselectAll}
-        size="tiny"
-        labelPosition="right"
-        icon="x"
-      />
-      <Divider hidden />
-      <Grid columns={2}>
-        {charts && charts.filter((c) => !c.disabledExport).map((chart) => {
-          return (
-            <Grid.Column key={chart.id}>
-              <Checkbox
-                checked={_.indexOf(selectedIds, chart.id) > -1}
-                onChange={() => _onSelectChart(chart.id)}
-                label={chart.name}
-              />
-              {showDisabled && (
-                <Popup
-                  trigger={(
-                    <Button
-                      icon="eye"
-                      basic
-                      style={styles.iconBtn}
-                      onClick={() => onUpdate(chart.id, true)}
-                    />
-                  )}
-                  content="Disable the export function for this chart"
-                />
-              )}
-            </Grid.Column>
-          );
-        })}
-      </Grid>
-      <Divider />
+      <Row>
+        <Text b>
+          Select which charts you want to export
+        </Text>
+      </Row>
+      <Spacer y={1} />
+      <Row align="center">
+        <Button
+          bordered
+          onClick={_onSelectAll}
+          iconRight={<TickSquare />}
+          auto
+          size="sm"
+        >
+          Select all
+        </Button>
+        <Spacer x={0.2} />
+        <Button
+          bordered
+          onClick={_onDeselectAll}
+          size="sm"
+          iconRight={<CloseSquare />}
+          auto
+        >
+          Deselect all
+        </Button>
+      </Row>
+      <Spacer y={0.5} />
+      <Row align="center">
+        <Grid.Container gap={2}>
+          {charts && charts.filter((c) => !c.disabledExport).map((chart) => {
+            return (
+              <Grid key={chart.id} xs={12} sm={6}>
+                <div style={{ flex: 1, alignItems: "center" }}>
+                  <Row align="center">
+                    <Checkbox
+                      isSelected={_.indexOf(selectedIds, chart.id) > -1}
+                      onChange={() => _onSelectChart(chart.id)}
+                      size="sm"
+                  >
+                      {chart.name}
+                    </Checkbox>
+                    {showDisabled && (
+                    <>
+                      <Spacer x={0.2} />
+                      <Tooltip content="Disable the export function for this chart" css={{ zIndex: 999999 }}>
+                        <LinkNext css={{ color: "$warning" }} onClick={() => onUpdate(chart.id, true)}>
+                          <Show />
+                        </LinkNext>
+                      </Tooltip>
+                    </>
+                    )}
+                  </Row>
+                </div>
+              </Grid>
+            );
+          })}
+        </Grid.Container>
+      </Row>
+      <Spacer y={0.5} />
 
       {showDisabled && (
         <>
-          {charts && charts.filter((c) => c.disabledExport).length > 0 && (
-            <Header size="small">
-              Charts disabled for export
-            </Header>
-          )}
-          <Grid columns={2}>
-            {charts && charts.filter((c) => c.disabledExport).map((chart) => {
-              return (
-                <Grid.Column key={chart.id}>
-                  <Popup
-                    trigger={(
-                      <Button
-                        icon="eye slash outline"
-                        className="tertiary"
-                        style={styles.iconBtn}
-                        onClick={() => onUpdate(chart.id, false)}
-                        content={chart.name}
-                      />
-                    )}
-                    content="Enable the export function for this chart"
-                  />
-                </Grid.Column>
-              );
-            })}
-          </Grid>
           <Divider />
+          <Spacer y={1} />
+          {charts && charts.filter((c) => c.disabledExport).length > 0 && (
+            <Row>
+              <Text b>
+                Admin view - Charts disabled for export
+              </Text>
+            </Row>
+          )}
+          <Row align="center">
+            <Grid.Container gap={2}>
+              {charts && charts.filter((c) => c.disabledExport).map((chart) => {
+                return (
+                  <Grid key={chart.id} xs={12} sm={6}>
+                    <Tooltip content="Enable the export function for this chart" css={{ zIndex: 99999 }}>
+                      <LinkNext css={{ color: "$success", ai: "center" }} onClick={() => onUpdate(chart.id, false)}>
+                        <Hide />
+                        {chart.name}
+                      </LinkNext>
+                    </Tooltip>
+                  </Grid>
+                );
+              })}
+            </Grid.Container>
+          </Row>
+          <Spacer y={1} />
         </>
       )}
-      <Button
-        primary
-        onClick={() => onExport(selectedIds)}
-        content="Export"
-        labelPosition="right"
-        icon="file excel"
-        loading={loading}
-      />
+      <Row align="center">
+        <Button
+          onClick={() => onExport(selectedIds)}
+          iconRight={<Download />}
+          disabled={loading}
+          auto
+        >
+          {loading && <Loading type="points" />}
+          {!loading && "Export"}
+        </Button>
+      </Row>
+      <Spacer y={0.5} />
       {error && (
-        <p style={{ color: "red" }}><i>{"One or more of the charts failed to export. Check that all your requests are still running correctly before exporting."}</i></p>
+        <Row>
+          <Text css={{ color: "$error" }} i>{"One or more of the charts failed to export. Check that all your requests are still running correctly before exporting."}</Text>
+        </Row>
       )}
     </Container>
   );
@@ -143,12 +168,6 @@ ChartExport.propTypes = {
   loading: PropTypes.bool,
   error: PropTypes.bool,
   showDisabled: PropTypes.bool,
-};
-
-const styles = {
-  iconBtn: {
-    boxShadow: "none",
-  },
 };
 
 export default ChartExport;
