@@ -2,18 +2,23 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
 import uuid from "uuid/v4";
-import {
-  Button, Container, Divider, Dropdown, Grid, Header, Icon, Input, Label, Popup,
-} from "semantic-ui-react";
 import { formatISO, format } from "date-fns";
 import { Calendar } from "react-date-range";
 import { enGB } from "date-fns/locale";
+import {
+  Container, Dropdown, Row, Spacer, Text, Link as LinkNext, Input, Popover,
+  Tooltip, Button, Modal,
+} from "@nextui-org/react";
+import { Calendar as CalendarIcon, InfoCircle, Plus } from "react-iconly";
 
 import { operators } from "../../../modules/filterOperations";
 import { secondary } from "../../../config/colors";
+import Badge from "../../../components/Badge";
 
 function Filters(props) {
-  const { charts, projectId, onAddFilter } = props;
+  const {
+    charts, projectId, onAddFilter, open, onClose
+  } = props;
 
   const [fieldOptions, setFieldOptions] = useState([]);
   const [filter, setFilter] = useState({
@@ -41,14 +46,12 @@ function Filters(props) {
                   type,
                   chart_id: chart.id,
                   label: {
-                    style: { width: 55, textAlign: "center" },
                     content: type || "unknown",
-                    size: "mini",
-                    color: type === "date" ? "olive"
-                      : type === "number" ? "blue"
-                        : type === "string" ? "teal"
-                          : type === "boolean" ? "purple"
-                            : "grey"
+                    color: type === "date" ? "warning"
+                      : type === "number" ? "success"
+                        : type === "string" ? "primary"
+                          : type === "boolean" ? "warning"
+                            : "neutral"
                   },
                 });
               });
@@ -110,108 +113,133 @@ function Filters(props) {
   };
 
   return (
-    <Container>
-      <Grid columns={1} relaxed>
-        <Grid.Column>
-          <Header as="h4">
-            Configure your filter
-          </Header>
-          <div>
-            <Dropdown
-              icon={null}
-              header="Type to search"
-              className="button"
-              button
-              options={fieldOptions}
-              search
-              text={(filter.field && filter.field.substring(filter.field.lastIndexOf(".") + 1)) || "field"}
-              value={filter.field}
-              onChange={(e, data) => _updateFilter(data.value, "field")}
-            />
-            <Dropdown
-              icon={null}
-              button
-              className="button"
-              options={operators}
-              search
-              text={
-                (
-                  _.find(operators, { value: filter.operator })
-                  && _.find(operators, { value: filter.operator }).key
-                )
-                || "="
-              }
-              value={filter.operator}
-              onChange={(e, data) => _updateFilter(data.value, "operator")}
-            />
-
+    <Modal open={open} onClose={onClose} closeButton width="800px">
+      <Modal.Header>
+        <Text h3>Dashboard filters</Text>
+      </Modal.Header>
+      <Modal.Body>
+        <Container>
+          <Row>
+            <Text b>
+              Configure your filter
+            </Text>
+          </Row>
+          <Spacer y={1} />
+          <Row>
+            <Dropdown>
+              <Dropdown.Button flat>
+                {(filter.field && filter.field.substring(filter.field.lastIndexOf(".") + 1)) || "Select a field"}
+              </Dropdown.Button>
+              <Dropdown.Menu
+                selectedKeys={[filter.field]}
+                onSelectionChange={(selection) => _updateFilter(Object.values(selection)[0], "field")}
+                selectionMode="single"
+                css={{ minWidth: 350 }}
+              >
+                {fieldOptions.map((field) => (
+                  <Dropdown.Item key={field.value}>
+                    <LinkNext css={{ ai: "center", color: "$text" }}>
+                      <Badge type={field.label.color}>
+                        {field.type}
+                      </Badge>
+                      <Text>
+                        {field.text}
+                      </Text>
+                    </LinkNext>
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown>
+            <Spacer x={0.2} />
+            <Dropdown>
+              <Dropdown.Button flat>
+                {(_.find(operators, { value: filter.operator })
+                  && _.find(operators, { value: filter.operator }).key)
+                  || "="}
+              </Dropdown.Button>
+              <Dropdown.Menu
+                selectionMode="single"
+                selectedKeys={[filter.operator]}
+                onSelectionChange={(selection) => _updateFilter(Object.values(selection)[0], "operator")}
+              >
+                {operators.map((op) => (
+                  <Dropdown.Item key={op.value}>
+                    {op.text}
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown>
+            <Spacer x={0.2} />
             {(!filter.field
               || (_.find(fieldOptions, { value: filter.field })
                 && _.find(fieldOptions, { value: filter.field }).type !== "date")) && (
                 <Input
                   placeholder="Enter a value"
                   value={filter.value}
-                  onChange={(e, data) => _updateFilter(data.value, "value")}
+                  onChange={(e) => _updateFilter(e.target.value, "value")}
                 />
             )}
             {_.find(fieldOptions, { value: filter.field })
               && _.find(fieldOptions, { value: filter.field }).type === "date" && (
-                <Popup
-                  on="click"
-                  position="bottom center"
-                  trigger={(
+                <Popover placement="bottom">
+                  <Popover.Trigger>
                     <Input
-                      placeholder="Enter a value"
-                      icon="calendar alternate"
-                      iconPosition="left"
-                      value={filter.value && format(new Date(filter.value), "Pp", { locale: enGB })}
+                      placeholder="Click to open calendar"
+                      contentLeft={<CalendarIcon />}
+                      value={(filter.value && format(new Date(filter.value), "Pp", { locale: enGB })) || ""}
                     />
-                  )}
-                  content={(
+                  </Popover.Trigger>
+                  <Popover.Content>
                     <Calendar
                       date={(filter.value && new Date(filter.value)) || new Date()}
                       onChange={(date) => _updateFilter(formatISO(date), "value")}
                       locale={enGB}
                       color={secondary}
                     />
-                  )}
-                />
+                  </Popover.Content>
+                </Popover>
             )}
-            <Popup
-              trigger={<Icon style={{ marginLeft: 15 }} size="large" name="question circle outline" />}
-              content={
-                "If you can't see your fields, please go in each chart and re-run the queries. Chartbrew will then index the fields and then they will appear here."
-              }
-            />
-          </div>
-        </Grid.Column>
-
-        {filter.field && (
-          <Grid.Column>
-            <Divider />
-            <Header as="h4">The filter will affect the following charts:</Header>
-            <Label.Group>
-              {_getChartsWithField(filter.field).map((chart) => (
-                <Label key={chart.id}>
-                  {chart.name}
-                </Label>
-              ))}
-            </Label.Group>
-          </Grid.Column>
-        )}
-
-        <Grid.Column>
-          <Button
-            primary
-            icon="plus"
-            labelPosition="right"
-            content="Apply filter"
-            disabled={!filter.value}
-            onClick={_onAddFilter}
-          />
-        </Grid.Column>
-      </Grid>
-    </Container>
+            <Spacer x={0.2} />
+            <Tooltip content={"If you can't see your fields, please go in each chart and re-run the queries. Chartbrew will then index the fields and then they will appear here."} css={{ zIndex: 99999 }}>
+              <LinkNext css={{ color: "$blue400" }}>
+                <InfoCircle />
+              </LinkNext>
+            </Tooltip>
+          </Row>
+          <Spacer y={1} />
+          {filter.field && (
+            <>
+              <Row align="center">
+                <Text b>The filter will affect the following charts:</Text>
+              </Row>
+              <Spacer y={0.5} />
+              <Row wrap="wrap">
+                {_getChartsWithField(filter.field).map((chart) => (
+                  <>
+                    <Badge type="primary" key={chart.id}>
+                      {chart.name}
+                    </Badge>
+                    <Spacer x={0.1} />
+                  </>
+                ))}
+              </Row>
+            </>
+          )}
+          <Spacer y={1} />
+          <Row>
+            <Button
+              iconRight={<Plus />}
+              content="Apply filter"
+              disabled={!filter.value}
+              onClick={_onAddFilter}
+              auto
+            >
+              Apply filter
+            </Button>
+          </Row>
+        </Container>
+      </Modal.Body>
+    </Modal>
   );
 }
 
@@ -219,6 +247,8 @@ Filters.propTypes = {
   charts: PropTypes.array.isRequired,
   projectId: PropTypes.number.isRequired,
   onAddFilter: PropTypes.func.isRequired,
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.bool.isRequired,
 };
 
 export default Filters;

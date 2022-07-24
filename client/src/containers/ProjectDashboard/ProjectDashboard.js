@@ -287,7 +287,7 @@ function ProjectDashboard(props) {
                   <Media greaterThan="mobile">
                     <Button
                       ghost
-                      iconRight={<Filter2 />}
+                      iconRight={<Filter2 set="light" />}
                       disabled={filterLoading}
                       onClick={_onShowFilters}
                       auto
@@ -298,7 +298,7 @@ function ProjectDashboard(props) {
                   </Media>
                   <Media at="mobile">
                     <Button
-                      icon={<Filter2 />}
+                      icon={<Filter2 set="light" />}
                       onClick={_onShowFilters}
                       disabled={filterLoading}
                       ghost
@@ -315,7 +315,7 @@ function ProjectDashboard(props) {
                           <strong>{` ${_getOperator(filter.operator)} `}</strong>
                           <span>{`${filter.value}`}</span>
                           <Spacer x={0.2} />
-                          <LinkNext onClick={() => _onRemoveFilter(filter.id)}>
+                          <LinkNext onClick={() => _onRemoveFilter(filter.id)} css={{ color: "$text" }}>
                             <CloseSquare size="small" />
                           </LinkNext>
                         </Badge>
@@ -472,18 +472,13 @@ function ProjectDashboard(props) {
         </Grid.Container>
       </div>
 
-      <Modal open={showFilters} closeButton onClose={() => setShowFilters(false)}>
-        <Modal.Header>
-          <Text h5>Dashboard filters</Text>
-        </Modal.Header>
-        <Modal.Body>
-          <Filters
-            charts={charts}
-            projectId={match.params.projectId}
-            onAddFilter={_onAddFilter}
-          />
-        </Modal.Body>
-      </Modal>
+      <Filters
+        charts={charts}
+        projectId={match.params.projectId}
+        onAddFilter={_onAddFilter}
+        open={showFilters}
+        onClose={() => setShowFilters(false)}
+      />
 
       <Modal open={viewExport} closeButton onClose={() => setViewExport(false)} width="800px">
         <Modal.Header>
