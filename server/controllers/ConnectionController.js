@@ -416,7 +416,27 @@ class ConnectionController {
       });
   }
 
-  runMongo(id, dataRequest) {
+  async runMongo(id, dataRequest, getCache) {
+    if (getCache) {
+      // check if there is a cache available and valid
+      try {
+        const drCache = await drCacheController.findLast(dataRequest.id);
+        const cachedDataRequest = drCache.dataRequest;
+        cachedDataRequest.updatedAt = "";
+        cachedDataRequest.createdAt = "";
+
+        const liveDataRequest = dataRequest.toJSON();
+        liveDataRequest.updatedAt = "";
+        liveDataRequest.createdAt = "";
+
+        if (_.isEqual(cachedDataRequest, liveDataRequest)) {
+          return drCache.responseData;
+        }
+      } catch (e) {
+        //
+      }
+    }
+
     let mongoConnection;
     let formattedQuery = dataRequest.query;
 
@@ -442,6 +462,12 @@ class ConnectionController {
         return Function(`'use strict';return (mongoConnection) => mongoConnection.${formattedQuery}`)()(mongoConnection); // eslint-disable-line
       })
       .then((data) => {
+        // cache the data for later use
+        const dataToCache = {
+          dataRequest,
+          responseData: data,
+        };
+        drCacheController.create(dataRequest.id, dataToCache);
         return Promise.resolve(data);
       })
       .catch((error) => {
