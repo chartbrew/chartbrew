@@ -247,8 +247,7 @@ class AxisChart {
               indexCheck = _.findIndex(
                 xAxisData.filtered,
                 (dateValue) => (
-                  new Date(dateValue).getTime()
-                      === new Date(yData[index][xAxisFieldName]).getTime()
+                  areDatesTheSame(dateValue, yData[index][xAxisFieldName], this.chart.interval)
                 )
               );
             }
