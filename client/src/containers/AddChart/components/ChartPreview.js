@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
   Container, Button, Icon, Header, Image, Dimmer, Dropdown,
-  Popup, Segment, Checkbox,
+  Popup, Segment, Checkbox, Loader,
 } from "semantic-ui-react";
 
 import lineChartImage from "../../../assets/charts/lineChart.jpg";
@@ -346,10 +346,13 @@ function ChartPreview(props) {
         {chart && chart.type && !chart.chartData && (
           <Dimmer.Dimmable active>
             <Dimmer active inverted>
-              <Header as="h2">
-                {"Just a few steps away from the perfect visualisation"}
-                <Header.Subheader className="large">{"Create a dataset to get started"}</Header.Subheader>
-              </Header>
+              {chartLoading && <Loader active size="large">Creating your chart...</Loader>}
+              {!chartLoading && (
+                <Header as="h2">
+                  {"Just a few steps away from the perfect visualisation"}
+                  <Header.Subheader className="large">{"Create a dataset to get started"}</Header.Subheader>
+                </Header>
+              )}
             </Dimmer>
             <Image
               src={
