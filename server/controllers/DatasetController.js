@@ -97,7 +97,7 @@ class DatasetController {
         }
 
         if (connection.type === "mongodb") {
-          return this.connectionController.runMongo(connection.id, dataRequest);
+          return this.connectionController.runMongo(connection.id, dataRequest, getCache);
         } else if (connection.type === "api") {
           return this.connectionController.runApiRequest(
             connection.id, chartId, dataRequest, getCache,

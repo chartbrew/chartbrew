@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Grid, Header, Button, Container, Icon, List,
-  Modal, Input, Popup, TransitionablePortal,
+  Modal, Input, Popup, TransitionablePortal, Checkbox,
 } from "semantic-ui-react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
@@ -16,6 +16,7 @@ import { createSavedQuery, updateSavedQuery } from "../../../actions/savedQuery"
 import SavedQueries from "../../../components/SavedQueries";
 import { runRequest as runRequestAction } from "../../../actions/dataset";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
+import { primaryTransparent } from "../../../config/colors";
 
 /*
   MongoDB query builder
@@ -39,6 +40,7 @@ function MongoQueryBuilder(props) {
   const [mongoRequest, setMongoRequest] = useState({
     query: "collection('users').find()",
   });
+  const [useCache, setUseCache] = useState(false);
 
   useEffect(() => {
     if (dataRequest) {
@@ -49,6 +51,8 @@ function MongoQueryBuilder(props) {
         changeTutorial("mongobuilder");
       }, 1000);
     }
+
+    setUseCache(!!window.localStorage.getItem("_cb_use_cache"));
   }, []);
 
   useEffect(() => {
@@ -107,7 +111,7 @@ function MongoQueryBuilder(props) {
     setTestError(false);
 
     onSave().then(() => {
-      runRequest(match.params.projectId, match.params.chartId, dataset.id)
+      runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache)
         .then((result) => {
           setTestingQuery(false);
           setTestSuccess(result.status);
@@ -120,6 +124,16 @@ function MongoQueryBuilder(props) {
           toast.error("The request failed. Please check your query 🕵️‍♂️");
         });
     });
+  };
+
+  const _onChangeUseCache = () => {
+    if (window.localStorage.getItem("_cb_use_cache")) {
+      window.localStorage.removeItem("_cb_use_cache");
+      setUseCache(false);
+    } else {
+      window.localStorage.setItem("_cb_use_cache", true);
+      setUseCache(true);
+    }
   };
 
   return (
@@ -163,8 +177,8 @@ function MongoQueryBuilder(props) {
               {testSuccess && <Icon name="checkmark" />}
               {testError && <Icon name="x" />}
               {!testSuccess && !testError && <Icon name="flask" />}
-              {!testSuccess && !testError && "Test the query"}
-              {(testSuccess || testError) && "Test again"}
+              {!testSuccess && !testError && "Run the query"}
+              {(testSuccess || testError) && "Run again"}
             </Button>
 
             <Button
@@ -194,6 +208,23 @@ function MongoQueryBuilder(props) {
               </Button>
               )}
           </Button.Group>
+          <Container style={{ paddingTop: 20 }}>
+            <Checkbox
+              label="Use cache"
+              checked={!!useCache}
+              onChange={_onChangeUseCache}
+            />
+            {" "}
+            <Popup
+              trigger={<Icon name="question circle outline" style={{ color: primaryTransparent(0.7) }} />}
+              inverted
+            >
+              <>
+                <p>{"If checked, Chartbrew will use cached data instead of making requests to your data source."}</p>
+                <p>{"The cache gets automatically invalidated when you change any call settings."}</p>
+              </>
+            </Popup>
+          </Container>
 
           <Header size="small">Saved queries</Header>
           <Container className="mongobuilder-saved-tut">
@@ -225,6 +256,12 @@ function MongoQueryBuilder(props) {
             editorProps={{ $blockScrolling: false }}
             className="mongobuilder-result-tut"
           />
+
+          {result && (
+            <div>
+              <small>This is a sample response and might not show all the data.</small>
+            </div>
+          )}
 
           <Popup
             on="click"
@@ -341,8 +378,8 @@ const mapDispatchToProps = (dispatch) => {
     updateSavedQuery: (projectId, savedQueryId, data) => (
       dispatch(updateSavedQuery(projectId, savedQueryId, data))
     ),
-    runRequest: (projectId, chartId, datasetId) => {
-      return dispatch(runRequestAction(projectId, chartId, datasetId));
+    runRequest: (projectId, chartId, datasetId, getCache) => {
+      return dispatch(runRequestAction(projectId, chartId, datasetId, getCache));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };
