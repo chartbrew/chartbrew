@@ -88,45 +88,43 @@ function CustomTemplates(props) {
   }
 
   return (
-    <div>
-      <Grid.Container gap={2}>
-        {templates && templates.map((template) => (
-          <Grid key={template.id} xs={12} sm={6} md={4}>
-            <Card onClick={() => setSelectedTemplate(template)} isHoverable isPressable variant="bordered">
-              <Card.Header>{template.name}</Card.Header>
-              <Card.Body>
-                {template.model.Connections && (
-                  <Row css={{ pr: 8, pl: 8 }} justify="center">
-                    <Avatar.Group animated={template.model.Connections.length > 1}>
-                      {template.model.Connections.map((c) => (
-                        <Avatar
-                          key={c.id}
-                          src={connectionImages[c.type]}
-                          pointer
-                          bordered
-                          stacked
-                          title={`${c.type} connection`}
-                        />
-                      ))}
-                    </Avatar.Group>
-                  </Row>
-                )}
-                <Spacer y={0.5} />
-                <Row align="center" justify="center">
-                  <Chart />
-                  <Spacer x={0.2} />
-                  <Text>{`${template.model.Charts.length} charts`}</Text>
+    <Grid.Container gap={2}>
+      {templates && templates.map((template) => (
+        <Grid key={template.id} xs={12} sm={6} md={4}>
+          <Card onClick={() => setSelectedTemplate(template)} isHoverable isPressable variant="bordered">
+            <Card.Header>{template.name}</Card.Header>
+            <Card.Body>
+              {template.model.Connections && (
+                <Row css={{ pr: 8, pl: 8 }} justify="center">
+                  <Avatar.Group animated={template.model.Connections.length > 1}>
+                    {template.model.Connections.map((c) => (
+                      <Avatar
+                        key={c.id}
+                        src={connectionImages[c.type]}
+                        pointer
+                        bordered
+                        stacked
+                        title={`${c.type} connection`}
+                      />
+                    ))}
+                  </Avatar.Group>
                 </Row>
-                <Spacer y={0.5} />
-              </Card.Body>
-              <Card.Footer>
-                <Text small>{`Updated ${_getUpdatedTime(template.updatedAt)}`}</Text>
-              </Card.Footer>
-            </Card>
-          </Grid>
-        ))}
-      </Grid.Container>
-    </div>
+              )}
+              <Spacer y={0.5} />
+              <Row align="center" justify="center">
+                <Chart />
+                <Spacer x={0.2} />
+                <Text>{`${template.model.Charts.length} charts`}</Text>
+              </Row>
+              <Spacer y={0.5} />
+            </Card.Body>
+            <Card.Footer>
+              <Text small>{`Updated ${_getUpdatedTime(template.updatedAt)}`}</Text>
+            </Card.Footer>
+          </Card>
+        </Grid>
+      ))}
+    </Grid.Container>
   );
 }
 

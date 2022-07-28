@@ -49,8 +49,8 @@ const lightTheme = {
     red800: "#DE1313",
     red900: "#C90808",
 
-    primary: "$blue600",
-    secondary: "$orange600",
+    primary: "$blue700",
+    secondary: "$orange700",
 
     primaryLight: "$blue200",
     primaryLightHover: "$blue300",

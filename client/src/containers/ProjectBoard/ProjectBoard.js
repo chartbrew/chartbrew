@@ -6,7 +6,7 @@ import { Allotment } from "allotment";
 import { createMedia } from "@artsy/fresnel";
 import { useWindowSize } from "react-use";
 import {
-  Container, Grid, Loading, Spacer
+  Container, Grid, Loading, Row, Spacer, Text
 } from "@nextui-org/react";
 
 import "allotment/dist/style.css";
@@ -147,14 +147,21 @@ function ProjectBoard(props) {
 
   if (!project.id && loading) {
     return (
-      <Container text style={styles.container}>
-        <Loading type="spinner">Loading your dashboard</Loading>
+      <Container style={styles.container}>
+        <Spacer y={4} />
+        <Row align="center" justify="center">
+          <Loading type="points" color="currentColor" size="xl" />
+        </Row>
+        <Spacer y={1} />
+        <Row align="center" justify="center">
+          <Text size="1.4em" css={{ color: "$accents7" }}>Loading the dashboard...</Text>
+        </Row>
       </Container>
     );
   }
 
   return (
-    <div style={styles.container}>
+    <div>
       {isPrinting && (
         <Switch>
           <Route
@@ -298,6 +305,16 @@ MainContent.defaultProps = {
 };
 
 const styles = {
+  // center the div in the middle of the screen
+  container: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    height: "100%",
+    width: "100%",
+    overflow: "hidden",
+  },
   teamSettings: {
     padding: 20,
     paddingLeft: 30,

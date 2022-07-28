@@ -2,11 +2,15 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import moment from "moment";
-import {
-  Card, Image, Button, Icon, Container, Divider,
-  Modal, Header, Message, Segment, TransitionablePortal, Menu,
-} from "semantic-ui-react";
 
+import {
+  Button, Card, Container, Grid, Loading, Modal, Row, Spacer, Text
+} from "@nextui-org/react";
+import {
+  ChevronLeft, Delete, Plus, Scan
+} from "react-iconly";
+
+import { FaMagic, FaPlug } from "react-icons/fa";
 import MongoConnectionForm from "./components/MongoConnectionForm";
 import ApiConnectionForm from "./components/ApiConnectionForm";
 import PostgresConnectionForm from "./components/PostgresConnectionForm";
@@ -36,7 +40,7 @@ import {
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import { getProjectCharts as getProjectChartsAction } from "../../actions/chart";
 import canAccess from "../../config/canAccess";
-import { lightGray, primary } from "../../config/colors";
+import { primary } from "../../config/colors";
 import connectionImages from "../../config/connectionImages";
 import plausibleDash from "./Plausible/plausible-template.jpeg";
 import simpleanalyticsDash from "./SimpleAnalytics/simpleanalytics-template.jpeg";
@@ -221,177 +225,281 @@ function Connections(props) {
     <div style={styles.container}>
       <Container style={styles.mainContent}>
         {formType && (
-          <Container>
+          <Row>
             {removeError && (
-              <Message negative>
-                <Message.Header>Oups! A server error intrerruped the request</Message.Header>
-                <p>Please refresh the page and try again.</p>
-              </Message>
+              <Row align="center">
+                <Text color="error" b>
+                  {"Oups! A server error intrerruped the request. Please refresh the page and try again."}
+                </Text>
+              </Row>
             )}
 
             {formType && (
-              <Button secondary icon labelPosition="left" onClick={_closeConnectionForm}>
-                <Icon name="chevron left" />
+              <Button
+                color="secondary"
+                icon={<ChevronLeft set="bold" />}
+                onClick={_closeConnectionForm}
+                auto
+              >
                 Back
               </Button>
             )}
 
-            <Divider />
-          </Container>
+            <Spacer y={2} />
+          </Row>
         )}
 
         {connections.length > 0 && !formType && (
-          <Container>
-            <Button primary icon labelPosition="right" onClick={_onOpenConnectionForm}>
-              <Icon name="plus" />
+          <Row>
+            <Button
+              iconRight={<Plus />}
+              auto
+              onClick={_onOpenConnectionForm}
+            >
               Add a new connection
             </Button>
-            <Divider />
-          </Container>
+          </Row>
         )}
 
-        {(connections.length < 1 || newConnectionModal) && !formType
-          && (
-          <div>
-            <Divider hidden />
+        <Spacer y={2} />
+
+        {(connections.length < 1 || newConnectionModal) && !formType && (
+          <Container css={{
+            background: "$backgroundContrast", p: "$6", br: "$md"
+          }}>
             {connections.length < 1 && (
-              <div style={{ textAlign: "center" }}>
-                <Header as="h1" textAlign="left">
+              <Row align="center">
+                <Text h1>
                   {"Create a connection or start with a template"}
-                </Header>
-                <Divider hidden />
-              </div>
+                </Text>
+                <Spacer y={1} />
+              </Row>
             )}
 
-            <Segment basic>
-              <Menu
-                size="big"
-                secondary
-                stackable
-                pointing
+            <Row align="center">
+              <Button
+                color="secondary"
+                ghost={selectedMenu !== "connections"}
+                onClick={() => setSelectedMenu("connections")}
+                icon={<FaPlug size={20} />}
+                auto
               >
-                <Menu.Item
-                  active={selectedMenu === "connections"}
-                  name="Connections"
-                  onClick={() => setSelectedMenu("connections")}
-                  icon="plug"
-                />
-                <Menu.Item
-                  active={selectedMenu === "templates"}
-                  onClick={() => setSelectedMenu("templates")}
-                >
-                  <Icon name="magic" />
-                  Community templates
-                </Menu.Item>
-                <Menu.Item
-                  active={selectedMenu === "customTemplates"}
-                  onClick={() => setSelectedMenu("customTemplates")}
-                >
-                  <Icon name="clone" />
-                  Custom templates
-                </Menu.Item>
-              </Menu>
+                Connections
+              </Button>
+              <Spacer x={0.2} />
+              <Button
+                color="secondary"
+                ghost={selectedMenu !== "templates"}
+                onClick={() => setSelectedMenu("templates")}
+                icon={<FaMagic size={20} />}
+                auto
+              >
+                Community templates
+              </Button>
+              <Spacer x={0.2} />
+              <Button
+                color="secondary"
+                ghost={selectedMenu !== "customTemplates"}
+                onClick={() => setSelectedMenu("customTemplates")}
+                icon={<Scan />}
+                auto
+              >
+                Custom templates
+              </Button>
+            </Row>
+            <Spacer y={1} />
+            <Row>
               {selectedMenu === "connections" && (
-                <Card.Group itemsPerRow={5} stackable>
-                  <Card className="project-segment" onClick={() => setFormType("api")}>
-                    <Image src={connectionImages.api} />
-                    <Card.Content textAlign="center" style={styles.smallerText}>
-                      <Card.Header>API</Card.Header>
-                    </Card.Content>
-                  </Card>
-                  <Card className="project-segment" onClick={() => setFormType("mongodb")}>
-                    <Image src={connectionImages.mongodb} />
-                    <Card.Content textAlign="center" style={styles.smallerText}>
-                      <Card.Header>MongoDB</Card.Header>
-                    </Card.Content>
-                  </Card>
-                  <Card className="project-segment" onClick={() => setFormType("postgres")}>
-                    <Image src={connectionImages.postgres} />
-                    <Card.Content textAlign="center" style={styles.smallerText}>
-                      <Card.Header>PostgreSQL</Card.Header>
-                    </Card.Content>
-                  </Card>
-                  <Card className="project-segment" onClick={() => setFormType("mysql")}>
-                    <Image src={connectionImages.mysql} />
-                    <Card.Content textAlign="center" style={styles.smallerText}>
-                      <Card.Header>MySQL</Card.Header>
-                    </Card.Content>
-                  </Card>
-                  <Card className="project-segment" onClick={() => setFormType("firestore")}>
-                    <Image
-                      src={connectionImages.firestore}
-                    />
-                    <Card.Content textAlign="center" style={styles.smallerText}>
-                      <Card.Header>Firestore</Card.Header>
-                    </Card.Content>
-                  </Card>
-                  <Card className="project-segment" onClick={() => setFormType("realtimedb")}>
-                    <Image
-                      src={connectionImages.realtimedb}
-                      label={{
-                        as: "a", color: "olive", title: "Freshly released", corner: "left", icon: "star"
-                      }}
-                    />
-                    <Card.Content textAlign="center" style={styles.smallerText}>
-                      <Card.Header>Realtime Database</Card.Header>
-                    </Card.Content>
-                  </Card>
-                  <Card className="project-segment" onClick={() => setFormType("googleAnalytics")}>
-                    <Image
-                      src={connectionImages.googleAnalytics}
-                    />
-                    <Card.Content textAlign="center" style={styles.smallerText}>
-                      <Card.Header>Google Analytics</Card.Header>
-                    </Card.Content>
-                  </Card>
-                  <Card className="project-segment" onClick={() => setFormType("customerio")}>
-                    <Image
-                      src={connectionImages.customerio}
-                      label={{
-                        as: "a", color: "olive", title: "Freshly released", corner: "left", icon: "star"
-                      }}
-                    />
-                    <Card.Content textAlign="center" style={styles.smallerText}>
-                      <Card.Header>Customer.io</Card.Header>
-                    </Card.Content>
-                  </Card>
-                </Card.Group>
-              )}
-              {selectedMenu === "templates" && (
-                <Card.Group itemsPerRow={3} stackable>
-                  <Card className="project-segment" onClick={() => setFormType("saTemplate")}>
-                    <Image src={simpleanalyticsDash} />
-                    <Card.Content textAlign="center" style={styles.smallerText}>
-                      <Card.Header>Simple Analytics</Card.Header>
-                    </Card.Content>
-                  </Card>
-                  <Card className="project-segment" onClick={() => setFormType("cmTemplate")}>
-                    <Image src={chartmogulDash} />
-                    <Card.Content textAlign="center" style={styles.smallerText}>
-                      <Card.Header>ChartMogul</Card.Header>
-                    </Card.Content>
-                  </Card>
-                  <Card className="project-segment" onClick={() => setFormType("mailgunTemplate")}>
-                    <Image src={mailgunDash} />
-                    <Card.Content textAlign="center" style={styles.smallerText}>
-                      <Card.Header>Mailgun</Card.Header>
-                    </Card.Content>
-                  </Card>
-                  <Card className="project-segment" onClick={() => setFormType("googleAnalyticsTemplate")}>
-                    <Image src={gaDash} />
-                    <Card.Content textAlign="center" style={styles.smallerText}>
-                      <Card.Header>Google Analytics</Card.Header>
-                    </Card.Content>
-                  </Card>
-                  <Card className="project-segment" onClick={() => setFormType("plausibleTemplate")}>
-                    <Image src={plausibleDash} />
-                    <Card.Content textAlign="center" style={styles.smallerText}>
-                      <Card.Header>Plausible Analytics</Card.Header>
-                    </Card.Content>
-                  </Card>
-                </Card.Group>
+                <Grid.Container gap={2}>
+                  <Grid xs={6} sm={4} md={2}>
+                    <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("api")}>
+                      <Card.Body css={{ p: 0 }}>
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages.api} />
+                      </Card.Body>
+                      <Card.Footer>
+                        <Row wrap="wrap" justify="center" align="center">
+                          <Text h4>
+                            API
+                          </Text>
+                        </Row>
+                      </Card.Footer>
+                    </Card>
+                  </Grid>
+                  <Grid xs={6} sm={4} md={2}>
+                    <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("mongodb")}>
+                      <Card.Body css={{ p: 0 }}>
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages.mongodb} />
+                      </Card.Body>
+                      <Card.Footer>
+                        <Row wrap="wrap" justify="center" align="center">
+                          <Text h4>
+                            MongoDB
+                          </Text>
+                        </Row>
+                      </Card.Footer>
+                    </Card>
+                  </Grid>
+                  <Grid xs={6} sm={4} md={2}>
+                    <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("postgres")}>
+                      <Card.Body css={{ p: 0 }}>
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages.postgres} />
+                      </Card.Body>
+                      <Card.Footer>
+                        <Row wrap="wrap" justify="center" align="center">
+                          <Text h4>
+                            PostgreSQL
+                          </Text>
+                        </Row>
+                      </Card.Footer>
+                    </Card>
+                  </Grid>
+                  <Grid xs={6} sm={4} md={2}>
+                    <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("mysql")}>
+                      <Card.Body css={{ p: 0 }}>
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages.mysql} />
+                      </Card.Body>
+                      <Card.Footer>
+                        <Row wrap="wrap" justify="center" align="center">
+                          <Text h4>
+                            MySQL
+                          </Text>
+                        </Row>
+                      </Card.Footer>
+                    </Card>
+                  </Grid>
+                  <Grid xs={6} sm={4} md={2}>
+                    <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("firestore")}>
+                      <Card.Body css={{ p: 0 }}>
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages.firestore} />
+                      </Card.Body>
+                      <Card.Footer>
+                        <Row wrap="wrap" justify="center" align="center">
+                          <Text h4>
+                            Firestore
+                          </Text>
+                        </Row>
+                      </Card.Footer>
+                    </Card>
+                  </Grid>
+                  <Grid xs={6} sm={4} md={2}>
+                    <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("realtimedb")}>
+                      <Card.Body css={{ p: 0 }}>
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages.realtimedb} />
+                      </Card.Body>
+                      <Card.Footer>
+                        <Row wrap="wrap" justify="center" align="center">
+                          <Text h4>
+                            Realtime Database
+                          </Text>
+                        </Row>
+                      </Card.Footer>
+                    </Card>
+                  </Grid>
+                  <Grid xs={6} sm={4} md={2}>
+                    <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("googleAnalytics")}>
+                      <Card.Body css={{ p: 0 }}>
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages.googleAnalytics} />
+                      </Card.Body>
+                      <Card.Footer>
+                        <Row wrap="wrap" justify="center" align="center">
+                          <Text h4>
+                            Google Analytics
+                          </Text>
+                        </Row>
+                      </Card.Footer>
+                    </Card>
+                  </Grid>
+                  <Grid xs={6} sm={4} md={2}>
+                    <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("customerio")}>
+                      <Card.Body css={{ p: 0 }}>
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages.customerio} />
+                      </Card.Body>
+                      <Card.Footer>
+                        <Row wrap="wrap" justify="center" align="center">
+                          <Text h4>
+                            Customer.io
+                          </Text>
+                        </Row>
+                      </Card.Footer>
+                    </Card>
+                  </Grid>
+                </Grid.Container>
               )}
 
+              {selectedMenu === "templates" && (
+                <Grid.Container gap={2}>
+                  <Grid xs={12} sm={6} md={4}>
+                    <Card variant="flat" isPressable isHoverable className="project-segment" onClick={() => setFormType("saTemplate")}>
+                      <Card.Body css={{ p: 0 }}>
+                        <Card.Image objectFit="cover" width="300" height="300" src={simpleanalyticsDash} />
+                      </Card.Body>
+                      <Card.Footer>
+                        <Row wrap="wrap" justify="center" align="center">
+                          <Text h4>
+                            Simple Analytics
+                          </Text>
+                        </Row>
+                      </Card.Footer>
+                    </Card>
+                  </Grid>
+                  <Grid xs={12} sm={6} md={4}>
+                    <Card variant="flat" isPressable isHoverable className="project-segment" onClick={() => setFormType("cmTemplate")}>
+                      <Card.Body css={{ p: 0 }}>
+                        <Card.Image objectFit="cover" width="300" height="300" src={chartmogulDash} />
+                      </Card.Body>
+                      <Card.Footer>
+                        <Row wrap="wrap" justify="center" align="center">
+                          <Text h4>
+                            ChartMogul
+                          </Text>
+                        </Row>
+                      </Card.Footer>
+                    </Card>
+                  </Grid>
+                  <Grid xs={12} sm={6} md={4}>
+                    <Card variant="flat" isPressable isHoverable className="project-segment" onClick={() => setFormType("mailgunTemplate")}>
+                      <Card.Body css={{ p: 0 }}>
+                        <Card.Image objectFit="cover" width="300" height="300" src={mailgunDash} />
+                      </Card.Body>
+                      <Card.Footer>
+                        <Row wrap="wrap" justify="center" align="center">
+                          <Text h4>
+                            Mailgun
+                          </Text>
+                        </Row>
+                      </Card.Footer>
+                    </Card>
+                  </Grid>
+                  <Grid xs={12} sm={6} md={4}>
+                    <Card variant="flat" isPressable isHoverable className="project-segment" onClick={() => setFormType("googleAnalyticsTemplate")}>
+                      <Card.Body css={{ p: 0 }}>
+                        <Card.Image objectFit="cover" width="300" height="300" src={gaDash} />
+                      </Card.Body>
+                      <Card.Footer>
+                        <Row wrap="wrap" justify="center" align="center">
+                          <Text h4>
+                            Google Analytics
+                          </Text>
+                        </Row>
+                      </Card.Footer>
+                    </Card>
+                  </Grid>
+                  <Grid xs={12} sm={6} md={4}>
+                    <Card variant="flat" isPressable isHoverable className="project-segment" onClick={() => setFormType("plausibleTemplate")}>
+                      <Card.Body css={{ p: 0 }}>
+                        <Card.Image objectFit="cover" width="300" height="300" src={plausibleDash} />
+                      </Card.Body>
+                      <Card.Footer>
+                        <Row wrap="wrap" justify="center" align="center">
+                          <Text h4>
+                            API
+                          </Text>
+                        </Row>
+                      </Card.Footer>
+                    </Card>
+                  </Grid>
+                </Grid.Container>
+              )}
               {selectedMenu === "customTemplates" && (
                 <CustomTemplates
                   templates={templates.data}
@@ -403,15 +511,18 @@ function Connections(props) {
                   isAdmin={_canAccess("admin")}
                 />
               )}
-            </Segment>
-            <p>
-              {"Need access to another data source? "}
-              <a href="https://github.com/chartbrew/chartbrew/issues" target="_blank" rel="noopener noreferrer">
-                {"Let us know 💬"}
-              </a>
-            </p>
-          </div>
-          )}
+            </Row>
+            <Spacer y={1} />
+            <Row>
+              <Text>
+                {"Need access to another data source? "}
+                <a href="https://github.com/chartbrew/chartbrew/issues" target="_blank" rel="noopener noreferrer">
+                  {"Let us know 💬"}
+                </a>
+              </Text>
+            </Row>
+          </Container>
+        )}
 
         <div id="connection-form-area">
           {formType === "api" && (
@@ -544,96 +655,112 @@ function Connections(props) {
           )}
         </div>
 
-        {connections.length > 0
-          && (
-          <Header as="h2">
-            {"Your connections"}
-          </Header>
-          )}
-        <Card.Group itemsPerRow={3} stackable>
-          {connections.map(connection => {
-            return (
-              <Card
-                key={connection.id}
-                fluid
-                className="project-segment"
-                style={
-                  editConnection && connection.id === editConnection.id
-                    ? styles.selectedConnection : {}
-                }
-              >
-                <Card.Content onClick={() => _onEditConnection(connection)} style={{ cursor: "pointer" }}>
-                  <Image
-                    floated="right"
-                    size="tiny"
-                    src={connectionImages[connection.type]}
-                  />
-                  <Card.Header>{connection.name}</Card.Header>
-                  <Card.Meta style={styles.smallerText}>
-                    {`Created on ${moment(connection.createdAt).format("LLL")}`}
-                  </Card.Meta>
-                  <Card.Description />
-                </Card.Content>
-                {_canAccess("admin") && (
-                  <Card.Content extra>
-                    <Button.Group widths={2}>
-                      <Button
-                        primary
-                        onClick={() => _onEditConnection(connection)}
-                        className="tertiary"
-                        style={{ borderRight: `0.2px solid ${lightGray}` }}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        color="red"
-                        loading={removeLoading === connection.id}
-                        onClick={() => _onRemoveConfirmation(connection)}
-                        className="tertiary"
-                      >
-                        Remove
-                      </Button>
-                    </Button.Group>
-                  </Card.Content>
-                )}
-              </Card>
-            );
-          })}
-        </Card.Group>
+        {(formType || newConnectionModal) && <Spacer y={2} />}
+
+        {connections.length > 0 && (
+          <Row align="center">
+            <Spacer x={0.5} />
+            <Text h2>
+              {"Your connections"}
+            </Text>
+          </Row>
+        )}
+        <Spacer y={1} />
+        <Row align="center" />
+        <Row align="center">
+          <Grid.Container gap={2}>
+            {connections.map(connection => {
+              return (
+                <Grid xs={12} sm={6} md={4} key={connection.id}>
+                  <Card
+                    variant="bordered"
+                    isPressable
+                    isHoverable
+                    className="project-segment"
+                    style={
+                      editConnection && connection.id === editConnection.id
+                        ? styles.selectedConnection : {}
+                    }
+                    onClick={() => _onEditConnection(connection)}
+                  >
+                    <Card.Header>
+                      <Container justify="flex-start" fluid>
+                        <Row align="center" justify="space-between">
+                          <Text h4>{connection.name}</Text>
+                          <Spacer x={0.2} />
+                          <img
+                            width="50px"
+                            height="50px"
+                            src={connectionImages[connection.type]}
+                            alt={`${connection.type} logo`}
+                          />
+                        </Row>
+                      </Container>
+                    </Card.Header>
+                    <Card.Body>
+                      <Text>
+                        {`Created on ${moment(connection.createdAt).format("LLL")}`}
+                      </Text>
+                    </Card.Body>
+                    {_canAccess("admin") && (
+                      <Card.Footer>
+                        <Button
+                          flat
+                          onClick={() => _onEditConnection(connection)}
+                        >
+                          Edit
+                        </Button>
+                        <Spacer x={0.5} />
+                        <Button
+                          color="error"
+                          flat
+                          disabled={removeLoading === connection.id}
+                          onClick={() => _onRemoveConfirmation(connection)}
+                        >
+                          {removeLoading === connection.id && (<Loading type="points" />)}
+                          {!removeLoading && "Remove"}
+                        </Button>
+                      </Card.Footer>
+                    )}
+                  </Card>
+                </Grid>
+              );
+            })}
+          </Grid.Container>
+        </Row>
       </Container>
 
       {/* REMOVE CONFIRMATION MODAL */}
-      <TransitionablePortal open={removeModal}>
-        <Modal open={removeModal} basic size="small" onClose={() => setRemoveModal(false)}>
-          <Header
-            icon="exclamation triangle"
-            content="Are you sure you want to remove this connection?"
-          />
-          <Modal.Content>
-            <p>
-              {"All the charts that are using this connection will stop working."}
-            </p>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              basic
-              inverted
-              onClick={() => setRemoveModal(false)}
-            >
-              Go back
-            </Button>
-            <Button
-              color="orange"
-              inverted
-              loading={!!removeLoading}
-              onClick={_onRemoveConnection}
-            >
-              <Icon name="x" />
-              Remove completely
-            </Button>
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
+      <Modal open={removeModal} blur onClose={() => setRemoveModal(false)}>
+        <Modal.Header>
+          <Text h4>Are you sure you want to remove this connection?</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <p>
+            {"All the charts that are using this connection will stop working."}
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            flat
+            color="warning"
+            onClick={() => setRemoveModal(false)}
+            auto
+          >
+            Go back
+          </Button>
+          <Button
+            flat
+            color="error"
+            disabled={!!removeLoading}
+            onClick={_onRemoveConnection}
+            iconRight={<Delete />}
+            auto
+          >
+            Remove completely
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

@@ -211,7 +211,7 @@ function CustomTemplateForm(props) {
         <Text b>Connections</Text>
       </Row>
       <Spacer y={0.5} />
-      <Grid.Container>
+      <Grid.Container gap={2}>
         {template.model.Connections && template.model.Connections.map((c) => {
           const existingConnections = _getExistingConnections(c);
 
