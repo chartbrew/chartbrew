@@ -10,7 +10,7 @@ const packageJson = require("../../package.json");
 
 const db = {};
 
-const sequelize = new Sequelize(config.database, config.username, config.password, {
+const options = {
   host: config.host,
   port: config.port,
   dialect: config.dialect,
@@ -28,7 +28,15 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
   dialectOptions: {
     charset: "utf8mb4",
   },
-});
+};
+
+if (config.cert) {
+  options.dialectOptions.ssl = {
+    ca: Buffer.from(config.cert, "base64").toString("ascii")
+  };
+}
+
+const sequelize = new Sequelize(config.database, config.username, config.password, options);
 
 fs
   .readdirSync(__dirname)
