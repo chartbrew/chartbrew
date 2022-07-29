@@ -683,7 +683,7 @@ function Connections(props) {
                     }
                     onClick={() => _onEditConnection(connection)}
                   >
-                    <Card.Header>
+                    <Card.Body css={{ p: "$4", pl: "$8" }}>
                       <Container justify="flex-start" fluid>
                         <Row align="center" justify="space-between">
                           <Text h4>{connection.name}</Text>
@@ -695,31 +695,37 @@ function Connections(props) {
                             alt={`${connection.type} logo`}
                           />
                         </Row>
+                        <Row>
+                          <Text css={{ color: "$accents7" }}>
+                            {`Created on ${moment(connection.createdAt).format("LLL")}`}
+                          </Text>
+                        </Row>
                       </Container>
-                    </Card.Header>
-                    <Card.Body>
-                      <Text>
-                        {`Created on ${moment(connection.createdAt).format("LLL")}`}
-                      </Text>
                     </Card.Body>
                     {_canAccess("admin") && (
                       <Card.Footer>
-                        <Button
-                          flat
-                          onClick={() => _onEditConnection(connection)}
-                        >
-                          Edit
-                        </Button>
-                        <Spacer x={0.5} />
-                        <Button
-                          color="error"
-                          flat
-                          disabled={removeLoading === connection.id}
-                          onClick={() => _onRemoveConfirmation(connection)}
-                        >
-                          {removeLoading === connection.id && (<Loading type="points" />)}
-                          {!removeLoading && "Remove"}
-                        </Button>
+                        <Container>
+                          <Row justify="center">
+                            <Button
+                              flat
+                              onClick={() => _onEditConnection(connection)}
+                              size="sm"
+                            >
+                              Edit
+                            </Button>
+                            <Spacer x={0.5} />
+                            <Button
+                              color="error"
+                              flat
+                              disabled={removeLoading === connection.id}
+                              onClick={() => _onRemoveConfirmation(connection)}
+                              size="sm"
+                            >
+                              {removeLoading === connection.id && (<Loading type="points" />)}
+                              {!removeLoading && "Remove"}
+                            </Button>
+                          </Row>
+                        </Container>
                       </Card.Footer>
                     )}
                   </Card>
