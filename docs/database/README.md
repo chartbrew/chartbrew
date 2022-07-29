@@ -36,6 +36,8 @@ CB_DB_PASSWORD= # Database password
 CB_DB_HOST= # Database host
 CB_DB_PORT= # The port on which your database server runs
 CB_DB_DIALECT= # 'mysql' or `postgres`
+# If your database requires an SSL connection
+CB_DB_CERT= # String format of the certificate 
 
 ### DEVELOPMENT
 
@@ -45,4 +47,6 @@ CB_DB_PASSWORD_DEV= # Database password
 CB_DB_HOST_DEV= # Database host
 CB_DB_PORT_DEV= # The port on which your database server runs
 CB_DB_DIALECT_DEV= # 'mysql' or `postgres`
+# If your database requires an SSL connection
+CB_DB_CERT_DEV= # String format of the certificate 
 ```

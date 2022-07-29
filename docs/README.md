@@ -118,6 +118,7 @@ The table below shows the `production` variables. The `development` variables ha
 | CB_DB_HOST <br /><br /> `required` | `localhost` | The host address where the database is located |
 | CB_DB_PORT | `3306` | The port of the hosting address |
 | CB_DB_DIALECT <br /><br /> `required` | `mysql` | Which database to use between `mysql` and `postgres` |
+| CB_DB_CERT | No default | If your DB requires an SSL connection, use this variable to provide the string value of the certificate |
 | CB_SECRET <br /><br /> `required` | `change_to_random_string` | A secure string which is used to encrypt the data in the database |
 | CB_API_HOST <br /><br /> `required` | `localhost` | The address where the `server` app is running from. This variable is used internally by the `server` app. <br /> **This value is overwritten by the PORT variable (if set)**|
 | CB_API_PORT <br /><br /> `required` | `4019` | The port where the `server` app is running from. This variable is used internally by the `server` app |
