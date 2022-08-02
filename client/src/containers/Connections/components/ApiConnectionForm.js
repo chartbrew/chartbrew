@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
+
 import {
-  Segment, Form, Button, Icon, Header, Label, Message, Container,
-  Placeholder,
-  Menu,
-  Dropdown,
-  Input,
-  Divider,
-} from "semantic-ui-react";
+  Button,
+  Container, Divider, Dropdown, Grid, Input, Loading, Row, Spacer, Text
+} from "@nextui-org/react";
+import { CloseSquare, Plus } from "react-iconly";
 import uuid from "uuid/v4";
 import AceEditor from "react-ace";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+
+import Badge from "../../../components/Badge";
 
 const authTypes = [{
   key: "no_auth",
@@ -41,7 +41,6 @@ function ApiConnectionForm(props) {
   const [connection, setConnection] = useState({ type: "api", optionsArray: [] });
   const [errors, setErrors] = useState({});
   const [menuType, setMenuType] = useState("authentication");
-  const [seePass, setSeePass] = useState(false);
 
   useEffect(() => {
     _addOption();
@@ -164,251 +163,342 @@ function ApiConnectionForm(props) {
 
   return (
     <div style={styles.container}>
-      <Segment style={styles.mainSegment}>
-        <Header as="h3" style={{ marginBottom: 20 }}>
-          {!editConnection && "Add a new API host"}
-          {editConnection && `Edit ${editConnection.name}`}
-        </Header>
-
-        <div style={styles.formStyle}>
-          <Form>
-            <Form.Field error={!!errors.name} required>
-              <label>Name your connection</label>
-              <Form.Input
-                placeholder="Enter a name that you can recognise later"
-                value={connection.name || ""}
-                onChange={(e, data) => {
-                  setConnection({ ...connection, name: data.value });
-                }}
-              />
-              {errors.name
-                && (
-                <Label basic color="red" pointing>
-                  {errors.name}
-                </Label>
+      <Container style={styles.mainSegment} css={{ backgroundColor: "$backgroundContrast", br: "$md" }} md>
+        <Row align="center">
+          <Text h3>
+            {!editConnection && "Add a new API host"}
+            {editConnection && `Edit ${editConnection.name}`}
+          </Text>
+        </Row>
+        <Spacer y={1} />
+        <Row align="center" style={styles.formStyle}>
+          <Grid.Container>
+            <Grid xs={12} sm={12} md={5}>
+              <Container>
+                <Row>
+                  <label>Enter a name for your connection</label>
+                </Row>
+                <Row>
+                  <Input
+                    placeholder="Enter a name you can recognize later"
+                    value={connection.name || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, name: e.target.value });
+                    }}
+                    color={errors.name ? "error" : "default"}
+                    fullWidth
+                    bordered
+                  />
+                </Row>
+                {errors.name && (
+                  <Row>
+                    <Text color="error">
+                      {errors.name}
+                    </Text>
+                  </Row>
                 )}
-            </Form.Field>
+              </Container>
+            </Grid>
 
-            <Form.Field error={!!errors.host} required>
-              <label>The hostname of your API</label>
-              <Form.Input
-                placeholder="https://api.example.com"
-                value={connection.host || ""}
-                onChange={(e, data) => {
-                  setConnection({ ...connection, host: data.value });
-                }}
-              />
-              {errors.host && (
-                <Label basic color="red" pointing>
-                  {errors.host}
-                </Label>
-              )}
-            </Form.Field>
+            <Grid xs={12} sm={12} md={7}>
+              <Container>
+                <Row>
+                  <label>The hostname of your API</label>
+                </Row>
+                <Row>
+                  <Input
+                    placeholder="https://api.example.com"
+                    value={connection.host || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, host: e.target.value });
+                    }}
+                    fullWidth
+                    color={errors.host ? "error" : "default"}
+                    bordered
+                  />
+                </Row>
+                {errors.host && (
+                  <Row>
+                    <Text color="error">
+                      {errors.host}
+                    </Text>
+                  </Row>
+                )}
+              </Container>
+            </Grid>
 
-            <Divider hidden />
-            <Menu secondary>
-              <Menu.Item
-                active={menuType === "authentication"}
-                onClick={() => setMenuType("authentication")}
-              >
-                Authentication
-                <Label
-                  circular
-                  color={connection.authentication && connection.authentication.type !== "no_auth" ? "violet" : null}
-                  size="mini"
-                >
-                  {" "}
-                </Label>
-              </Menu.Item>
-              <Menu.Item
-                active={menuType === "headers"}
-                onClick={() => setMenuType("headers")}
-              >
-                Headers
-                <Label circular color="violet" size="mini">{connection.optionsArray.length}</Label>
-              </Menu.Item>
-            </Menu>
-            <Divider />
+            <Spacer y={1} />
+            <Grid md={12}>
+              <Container>
+                <Row>
+                  <Button
+                    color="secondary"
+                    ghost={menuType !== "authentication"}
+                    onClick={() => setMenuType("authentication")}
+                    iconRight={(
+                      <Badge
+                        type={connection.authentication && connection.authentication.type !== "no_auth" ? "primary" : "neutral"}
+                      >
+                        {" "}
+                      </Badge>
+                    )}
+                    auto
+                    size="sm"
+                  >
+                    Authentication
+                  </Button>
+                  <Spacer x={0.2} />
+                  <Button
+                    color="secondary"
+                    ghost={menuType !== "headers"}
+                    onClick={() => setMenuType("headers")}
+                    iconRight={(
+                      <Badge type="primary">
+                        {connection.optionsArray.length}
+                      </Badge>
+                    )}
+                    auto
+                    size="sm"
+                  >
+                    Headers
+                  </Button>
+                </Row>
+              </Container>
+            </Grid>
+
+            <Grid md={12}>
+              <Container>
+                <Spacer y={1} />
+                <Divider />
+                <Spacer y={1} />
+              </Container>
+            </Grid>
 
             {menuType === "authentication" && (
-              <Form>
-                <Form.Group widths={2}>
-                  <Form.Field width={4}>
-                    <label>Authentication type</label>
-                    <Dropdown
-                      options={authTypes}
-                      selection
-                      fluid
-                      defaultValue="no_auth"
-                      value={connection.authentication && connection.authentication.type}
-                      onChange={(e, data) => _onChangeAuthParams("type", data.value)}
-                    />
-                  </Form.Field>
+              <Grid md={12}>
+                <Grid.Container gap={2}>
+                  <Grid xs={12} sm={4}>
+                    <Container>
+                      <Row>
+                        <Dropdown
+                          options={authTypes}
+                          selection
+                          fluid
+                          defaultValue="no_auth"
+                          value={connection.authentication && connection.authentication.type}
+                          onChange={(e) => _onChangeAuthParams("type", e.target.value)}
+                        >
+                          <Dropdown.Trigger>
+                            <Input
+                              initialValue="Authentication type"
+                              value={connection.authentication && connection.authentication.type}
+                              fullWidth
+                            />
+                          </Dropdown.Trigger>
+                          <Dropdown.Menu
+                            onAction={(key) => _onChangeAuthParams("type", key)}
+                            selectedKeys={[
+                              connection.authentication && connection.authentication.type
+                            ]}
+                            selectionMode="single"
+                          >
+                            {authTypes.map((type) => (
+                              <Dropdown.Item key={type.value}>
+                                {type.text}
+                              </Dropdown.Item>
+                            ))}
+                          </Dropdown.Menu>
+                        </Dropdown>
+                      </Row>
+                    </Container>
+                  </Grid>
                   {connection.authentication && connection.authentication.type === "basic_auth" && (
-                    <Form.Field width={12}>
-                      <Form.Group widths={1} grouped>
-                        <label>Username or API Key</label>
-                        <Form.Input
-                          placeholder="Enter a Username or API Key"
-                          onChange={(e, data) => _onChangeAuthParams("user", data.value)}
-                          value={connection.authentication.user}
-                        />
-                        <label>Password or API Key Value</label>
-                        <Form.Input
-                          placeholder="Enter a Password or API Key Value"
-                          type={seePass ? "text" : "password"}
-                          onChange={(e, data) => _onChangeAuthParams("pass", data.value)}
-                          value={connection.authentication.pass}
-                          action={{
-                            content: seePass ? "Hide" : "Show",
-                            labelPosition: "right",
-                            icon: seePass ? "eye slash" : "eye",
-                            onClick: (e) => {
-                              e.preventDefault();
-                              setSeePass(!seePass);
-                            },
-                          }}
-                        />
-                      </Form.Group>
-                    </Form.Field>
+                    <Grid xs={12} sm={5}>
+                      <Container>
+                        <Row align="center">
+                          <Input
+                            labelPlaceholder="Enter a Username or API Key"
+                            onChange={(e) => _onChangeAuthParams("user", e.target.value)}
+                            value={connection.authentication.user}
+                            fullWidth
+                            bordered
+                          />
+                        </Row>
+                        <Spacer y={2} />
+                        <Row align="center">
+                          <Input.Password
+                            labelPlaceholder="Enter a Password or API Key Value"
+                            onChange={(e) => _onChangeAuthParams("pass", e.target.value)}
+                            value={connection.authentication.pass}
+                            fullWidth
+                            bordered
+                          />
+                        </Row>
+                      </Container>
+                    </Grid>
                   )}
                   {connection.authentication && connection.authentication.type === "bearer_token" && (
-                    <Form.Field width={12}>
+                    <Grid xs={12} sm={5}>
                       <label>Token</label>
-                      <Input
-                        placeholder="Enter your authentication token"
-                        type={seePass ? "text" : "password"}
-                        onChange={(e, data) => _onChangeAuthParams("token", data.value)}
+                      <Input.Password
+                        labelPlaceholder="Authentication token"
+                        onChange={(e) => _onChangeAuthParams("token", e.target.value)}
                         value={connection.authentication.token}
-                        action={{
-                          content: seePass ? "Hide" : "Show",
-                          labelPosition: "right",
-                          icon: seePass ? "eye slash" : "eye",
-                          onClick: (e) => {
-                            e.preventDefault();
-                            setSeePass(!seePass);
-                          },
-                        }}
+                        fullWidth
+                        bordered
                       />
-                    </Form.Field>
+                    </Grid>
                   )}
-                </Form.Group>
-              </Form>
+                </Grid.Container>
+              </Grid>
             )}
 
             {menuType === "headers" && (
-              <Header as="h5">
-                Global headers to send with the requests
-                <Header.Subheader>
-                  {"These headers will be included with all the future requests"}
-                </Header.Subheader>
-              </Header>
+              <Grid md={12}>
+                <Container>
+                  <Row>
+                    <Text h5>
+                      Global headers to send with the requests
+                    </Text>
+                  </Row>
+                  <Row>
+                    <Text>
+                      {"These headers will be included with all the future requests"}
+                    </Text>
+                  </Row>
+                </Container>
+              </Grid>
             )}
-            {menuType === "headers" && connection.optionsArray && connection.optionsArray.map((option) => {
-              return (
-                <Form.Group widths="equal" key={option.id}>
-                  <Form.Input
-                    placeholder="Header name"
-                    value={option.key}
-                    onChange={(e, data) => _onChangeOption(option.id, data.value, "key")}
-                  />
-                  <Form.Input
-                    onChange={(e, data) => _onChangeOption(option.id, data.value, "value")}
-                    value={option.value}
-                    placeholder="Value"
-                  />
-                  <Form.Button icon onClick={() => _removeOption(option.id)}>
-                    <Icon name="close" />
-                  </Form.Button>
-                </Form.Group>
-              );
-            })}
+
+            <Grid md={12}>
+              <Container>
+                <Grid.Container gap={2}>
+                  {menuType === "headers" && connection.optionsArray && connection.optionsArray.map((option) => {
+                    return (
+                      <>
+                        <Grid xs={12} sm={4}>
+                          <Input
+                            placeholder="Header name"
+                            value={option.key}
+                            onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
+                            fullWidth
+                          />
+                        </Grid>
+                        <Grid xs={12} sm={4}>
+                          <Input
+                            onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
+                            value={option.value}
+                            placeholder="Value"
+                            fullWidth
+                          />
+                          <Spacer x={0.5} />
+                          <Button
+                            icon={<CloseSquare />}
+                            onClick={() => _removeOption(option.id)}
+                            auto
+                            flat
+                            color="warning"
+                          />
+                        </Grid>
+                        <Grid xs={0} sm={4} />
+                      </>
+                    );
+                  })}
+                </Grid.Container>
+              </Container>
+            </Grid>
             {menuType === "headers" && (
-              <Form.Field>
-                <Button
-                  size="small"
-                  icon
-                  labelPosition="right"
-                  onClick={_addOption}
-                >
-                  <Icon name="plus" />
-                  Add a header
-                </Button>
-              </Form.Field>
+              <Grid xs={12}>
+                <Container>
+                  <Spacer y={0.5} />
+                  <Button
+                    size="sm"
+                    iconRight={<Plus />}
+                    onClick={_addOption}
+                    flat
+                    auto
+                  >
+                    Add a header
+                  </Button>
+                </Container>
+              </Grid>
             )}
-          </Form>
-        </div>
+          </Grid.Container>
+        </Row>
 
-        {addError
-          && (
-          <Message negative>
-            <Message.Header>{"Server error while trying to save your connection"}</Message.Header>
-            <p>Please try adding your connection again.</p>
-          </Message>
-          )}
+        {addError && (
+          <>
+            <Spacer y={1} />
+            <Row>
+              <Text b color="error">{"Server error while trying to save your connection"}</Text>
+              <br />
+              <Text color="error">Please try adding your connection again.</Text>
+            </Row>
+          </>
+        )}
 
-        <Divider hidden />
-        <Container fluid textAlign="right">
+        <Spacer y={2} />
+        <Row align="center">
           <Button
-            primary
-            basic
+            ghost
             onClick={() => _onCreateConnection(true)}
-            loading={testLoading}
+            disabled={testLoading}
+            auto
           >
-            Test connection
+            {testLoading && <Loading type="points" color="currentColor" />}
+            {!testLoading && "Test connection"}
           </Button>
+          <Spacer x={0.2} />
           {!editConnection && (
             <Button
-              primary
-              loading={loading}
+              disabled={loading}
               onClick={_onCreateConnection}
-              icon
-              labelPosition="right"
-              style={styles.saveBtn}
+              auto
             >
-              <Icon name="checkmark" />
-              Save connection
+              {loading && <Loading type="points" color="currentColor" />}
+              {!loading && "Save connection"}
             </Button>
           )}
           {editConnection && (
             <Button
-              secondary
-              loading={loading}
+              disabled={loading}
               onClick={_onCreateConnection}
-              icon
-              labelPosition="right"
-              style={styles.saveBtn}
+              auto
             >
-              <Icon name="checkmark" />
+              {loading && <Loading type="points" color="currentColor" />}
+              {!loading && "Save connection"}
               Save changes
             </Button>
           )}
-        </Container>
-      </Segment>
+        </Row>
+      </Container>
+      <Spacer y={2} />
 
       {testLoading && (
-        <Segment>
-          <Placeholder>
-            <Placeholder.Line />
-            <Placeholder.Line />
-            <Placeholder.Line />
-            <Placeholder.Line />
-            <Placeholder.Line />
-          </Placeholder>
-        </Segment>
+        <Container css={{ backgroundColor: "$backgroundContrast", br: "$md", p: 20 }} md>
+          <Row align="center">
+            <Loading type="points">
+              Test underway...
+            </Loading>
+          </Row>
+          <Spacer y={2} />
+        </Container>
       )}
 
       {testResult && !testLoading && (
-        <Container fluid style={{ marginTop: 15 }}>
-          <Header attached="top">
-            Test Result
-            <Label
-              color={testResult.status < 400 ? "green" : "orange"}
-            >
-              {`Status code: ${testResult.status}`}
-            </Label>
-          </Header>
-          <Segment attached>
+        <Container css={{ backgroundColor: "$backgroundContrast", br: "$md", p: 20 }} md>
+          <Row align="center">
+            <Text>
+              {"Test Result "}
+              <Badge
+                type={testResult.status < 400 ? "success" : "error"}
+              >
+                {`Status code: ${testResult.status}`}
+              </Badge>
+            </Text>
+          </Row>
+          <Spacer y={1} />
+          <Row align="center">
             <AceEditor
               mode="json"
               theme="tomorrow"
@@ -419,7 +509,7 @@ function ApiConnectionForm(props) {
               name="queryEditor"
               editorProps={{ $blockScrolling: true }}
             />
-          </Segment>
+          </Row>
         </Container>
       )}
     </div>
