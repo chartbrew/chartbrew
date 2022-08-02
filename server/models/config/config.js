@@ -9,6 +9,7 @@ module.exports = {
     host: process.env.CB_DB_HOST_DEV,
     dialect: process.env.CB_DB_DIALECT_DEV || "mysql",
     port: process.env.CB_DB_PORT_DEV || 3306,
+    cert: process.env.CB_DB_CERT_DEV,
   },
   test: {
     username: process.env.CB_DB_USERNAME_DEV,
@@ -17,6 +18,7 @@ module.exports = {
     host: process.env.CB_DB_HOST_DEV,
     dialect: process.env.CB_DB_DIALECT_DEV || "mysql",
     port: process.env.CB_DB_PORT_DEV || 3306,
+    cert: process.env.CB_DB_CERT_DEV,
   },
   production: {
     username: process.env.CB_DB_USERNAME,
@@ -25,5 +27,6 @@ module.exports = {
     host: process.env.CB_DB_HOST,
     dialect: process.env.CB_DB_DIALECT || "mysql",
     port: process.env.CB_DB_PORT || 3306,
+    cert: process.env.CB_DB_CERT
   }
 };
