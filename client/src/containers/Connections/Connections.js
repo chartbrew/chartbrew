@@ -276,13 +276,16 @@ function Connections(props) {
               </Row>
             )}
 
-            <Row align="center">
+            <Row align="center" wrap="wrap" gap={1}>
               <Button
                 color="secondary"
                 ghost={selectedMenu !== "connections"}
                 onClick={() => setSelectedMenu("connections")}
                 icon={<FaPlug size={20} />}
                 auto
+                css={{
+                  "@xsMax": { width: "90%" },
+                }}
               >
                 Connections
               </Button>
@@ -293,6 +296,9 @@ function Connections(props) {
                 onClick={() => setSelectedMenu("templates")}
                 icon={<FaMagic size={20} />}
                 auto
+                css={{
+                  "@xsMax": { width: "90%" },
+                }}
               >
                 Community templates
               </Button>
@@ -303,6 +309,9 @@ function Connections(props) {
                 onClick={() => setSelectedMenu("customTemplates")}
                 icon={<Scan />}
                 auto
+                css={{
+                  "@xsMax": { width: "90%" },
+                }}
               >
                 Custom templates
               </Button>
