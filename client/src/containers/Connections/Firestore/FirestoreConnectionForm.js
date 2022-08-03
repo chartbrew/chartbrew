@@ -5,16 +5,18 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import {
-  Segment, Form, Button, Icon, Header, Label, Message, Container,
-  Placeholder, Divider, List, Transition,
-} from "semantic-ui-react";
+  Button, Collapse, Container, Input, Link, Loading, Row, Spacer, Text,
+} from "@nextui-org/react";
+import { PaperUpload } from "react-iconly";
+import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import AceEditor from "react-ace";
 import { useDropzone } from "react-dropzone";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 
-import { blue, secondary } from "../../../config/colors";
+import { blue } from "../../../config/colors";
+import Badge from "../../../components/Badge";
 
 /*
   The Form used to create API connections
@@ -28,7 +30,6 @@ function FirestoreConnectionForm(props) {
   const [testLoading, setTestLoading] = useState(false);
   const [connection, setConnection] = useState({ type: "firestore", optionsArray: [], firebaseServiceAccount: "" });
   const [errors, setErrors] = useState({});
-  const [showInstructions, setShowInstructions] = useState(true);
   const [jsonVisible, setJsonVisible] = useState(false);
 
   useEffect(() => {
@@ -103,10 +104,11 @@ function FirestoreConnectionForm(props) {
       <div className="container" style={{ cursor: "pointer" }}>
         <div {...getRootProps({ style })}>
           <input {...getInputProps()} />
-          <p>
-            <Icon size="big" name="file code outline" />
-            {"Drag and drop your JSON authentication file here"}
-          </p>
+          <Link css={{ ai: "center", color: "$primary" }}>
+            <PaperUpload />
+            <Spacer x={0.2} />
+            {" Drag and drop your JSON authentication file here"}
+          </Link>
         </div>
       </div>
     );
@@ -170,90 +172,112 @@ function FirestoreConnectionForm(props) {
 
   return (
     <div style={styles.container}>
-      <Segment style={styles.mainSegment}>
-        <Header as="h3" style={{ marginBottom: 20 }}>
-          {!editConnection && "Connect to Firestore"}
-          {editConnection && `Edit ${editConnection.name}`}
-        </Header>
+      <Container
+        css={{
+          backgroundColor: "$backgroundContrast",
+          br: "$md",
+          p: 10,
+          "@xs": {
+            p: 20,
+          },
+          "@sm": {
+            p: 20,
+          },
+          "@md": {
+            p: 20,
+          },
+        }}
+        md
+        justify="flex-start"
+      >
+        <Row align="center">
+          <Text h3>
+            {!editConnection && "Connect to Firestore"}
+            {editConnection && `Edit ${editConnection.name}`}
+          </Text>
+        </Row>
 
-        <div style={styles.formStyle}>
-          <Form>
-            <Form.Field error={!!errors.name} required>
-              <label>Name your connection</label>
-              <Form.Input
-                placeholder="Enter a name that you can recognise later"
-                value={connection.name || ""}
-                onChange={(e, data) => {
-                  setConnection({ ...connection, name: data.value });
-                }}
-              />
-              {errors.name
-                && (
-                  <Label basic color="red" pointing>
-                    {errors.name}
-                  </Label>
-                )}
-            </Form.Field>
+        <Spacer y={1} />
+        <Row align="center">
+          <Input
+            label="Name your connection"
+            placeholder="Enter a name that you can recognise later"
+            value={connection.name || ""}
+            onChange={(e) => {
+              setConnection({ ...connection, name: e.target.value });
+            }}
+            helperColor="error"
+            helperText={errors.name}
+            bordered
+            fullWidth
+            css={{ "@md": { width: "600px" } }}
+          />
+        </Row>
+        <Spacer y={1} />
+        <Row align="center">
+          <Collapse.Group bordered css={{ maxWidth: 600 }}>
+            <Collapse title={<Text b>How to authenticate</Text>}>
+              <Container>
+                <Row align="center">
+                  <Link
+                    href="https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk?authuser=0"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    css={{ ai: "center", color: "$primary" }}
+                  >
+                    <Text b color="primary">{"1. Create a Firebase Service Account "}</Text>
+                    <Spacer x={0.2} />
+                    <FaExternalLinkSquareAlt size={14} />
+                  </Link>
+                </Row>
+                <Row align="center">
+                  <Text>{"Log in with your Google account and select the project you want to connect to."}</Text>
+                </Row>
+                <Spacer y={0.5} />
+                <Row>
+                  <Text b>{"2. Once authenticated, press on 'Generate new private key'"}</Text>
+                </Row>
+                <Row>
+                  <Text>{"This will start a download with a JSON file on your computer."}</Text>
+                </Row>
+                <Spacer y={0.5} />
+                <Row>
+                  <Text b>{"3. Drag and drop the file below or copy the contents in the text editor."}</Text>
+                </Row>
+                <Row>
+                  <Text>{"The JSON file contains authentication details that Chartbrew needs in order to connect to your Firebase."}</Text>
+                </Row>
+              </Container>
+            </Collapse>
+          </Collapse.Group>
+        </Row>
+        <Spacer y={1} />
 
-            <Form.Field>
-              <Divider />
+        <Row align="center">
+          <StyledDropzone />
+        </Row>
+        <Spacer y={0.5} />
 
-              <Header as="h4" onClick={() => setShowInstructions(!showInstructions)} style={styles.tableFields}>
-                {"How to authenticate "}
-                {!showInstructions && (<Icon size="small" name="chevron down" />)}
-                {showInstructions && (<Icon size="small" name="chevron up" />)}
-              </Header>
-              <Transition animation="fade down" visible={showInstructions}>
-                <div>
-                  <List divided relaxed="very">
-                    <List.Item as="a" href="https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk?authuser=0" target="_blank" rel="noreferrer noopener">
-                      <List.Content>
-                        <List.Header style={{ color: secondary }}>
-                          {"1. Create a Firebase Service Account "}
-                          <Icon name="external alternate" />
-                        </List.Header>
-                        <List.Description>{"Log in with your Google account and select the project you want to connect to."}</List.Description>
-                      </List.Content>
-                    </List.Item>
+        {!jsonVisible && (
+          <Row>
+            <Button
+              onClick={() => setJsonVisible(true)}
+              size="sm"
+              auto
+              ghost
+            >
+              Click here to copy the JSON manually
+            </Button>
+          </Row>
+        )}
 
-                    <List.Item>
-                      <List.Content>
-                        <List.Header>{"2. Once authenticated, press on 'Generate new private key'"}</List.Header>
-                        <List.Description>{"This will start a download with a JSON file on your computer."}</List.Description>
-                      </List.Content>
-                    </List.Item>
-
-                    <List.Item>
-                      <List.Content>
-                        <List.Header>{"3. Drag and drop the file below or copy the contents in the text editor."}</List.Header>
-                        <List.Description>{"The JSON file contains authentication details that Chartbrew needs in order to connect to your Firebase."}</List.Description>
-                      </List.Content>
-                    </List.Item>
-                  </List>
-                </div>
-              </Transition>
-              <Divider hidden />
-
-            </Form.Field>
-
-            <Form.Field>
-              <StyledDropzone />
-            </Form.Field>
-
-            {!jsonVisible && (
-              <Form.Field>
-                <Button
-                  primary
-                  className="tertiary"
-                  content="Click here to copy the JSON manually"
-                  onClick={() => setJsonVisible(true)}
-                />
-              </Form.Field>
-            )}
-
-            {jsonVisible && (
-              <Form.Field>
-                <label>Add your Service Account details here</label>
+        {jsonVisible && (
+          <>
+            <Row>
+              <Text>Add your Service Account details here</Text>
+            </Row>
+            <Row justify="flex-start" css={{ maxWidth: 600 }}>
+              <Container css={{ p: 0 }}>
                 <AceEditor
                   mode="json"
                   theme="tomorrow"
@@ -266,97 +290,88 @@ function FirestoreConnectionForm(props) {
                   }}
                   editorProps={{ $blockScrolling: true }}
                 />
-              </Form.Field>
-            )}
+              </Container>
+            </Row>
+          </>
+        )}
 
-            <Divider hidden />
-          </Form>
-        </div>
+        <Spacer y={1} />
 
-        {addError
-          && (
-            <Message negative>
-              <Message.Header>{"Server error while trying to save your connection"}</Message.Header>
-              <p>Please try adding your connection again.</p>
-            </Message>
-          )}
+        {addError && (
+          <Row>
+            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+              <Row>
+                <Text h5>{"Server error while trying to save your connection"}</Text>
+              </Row>
+              <Row>
+                <Text>Please try adding your connection again.</Text>
+              </Row>
+            </Container>
+          </Row>
+        )}
 
-        <Divider hidden />
-        <Container fluid textAlign="right">
+        <Spacer y={1} />
+        <Row>
           <Button
-            primary
-            basic
+            ghost
+            auto
             onClick={() => _onCreateConnection(true)}
-            loading={testLoading}
-            disabled={!connection.name || !connection.firebaseServiceAccount}
+            disabled={testLoading}
           >
-            Test connection
+            {testLoading && <Loading type="points" color="currentColor" />}
+            {!testLoading && "Test connection"}
           </Button>
-          {!editConnection && (
-            <Button
-              primary
-              loading={loading}
-              onClick={_onCreateConnection}
-              icon
-              labelPosition="right"
-              style={styles.saveBtn}
-              disabled={!connection.name || !connection.firebaseServiceAccount}
-            >
-              <Icon name="checkmark" />
-              Save connection
-            </Button>
-          )}
-          {editConnection && (
-            <Button
-              secondary
-              loading={loading}
-              onClick={_onCreateConnection}
-              icon
-              labelPosition="right"
-              style={styles.saveBtn}
-              disabled={!connection.name || !connection.firebaseServiceAccount}
-            >
-              <Icon name="checkmark" />
-              Save changes
-            </Button>
-          )}
-        </Container>
-      </Segment>
+          <Spacer x={0.2} />
+          <Button
+            disabled={loading}
+            onClick={_onCreateConnection}
+            auto
+          >
+            {loading && <Loading type="points" color="currentColor" />}
+            {!loading && "Save connection"}
+          </Button>
+        </Row>
+      </Container>
 
       {testLoading && (
-        <Segment>
-          <Placeholder>
-            <Placeholder.Line />
-            <Placeholder.Line />
-            <Placeholder.Line />
-            <Placeholder.Line />
-            <Placeholder.Line />
-          </Placeholder>
-        </Segment>
+        <Container css={{ backgroundColor: "$backgroundContrast", br: "$md", p: 20 }} md>
+          <Row align="center">
+            <Loading type="points">
+              Test underway...
+            </Loading>
+          </Row>
+          <Spacer y={2} />
+        </Container>
       )}
 
       {testResult && !testLoading && (
-        <Container fluid style={{ marginTop: 15 }}>
-          <Header attached="top">
-            Test Result
-            <Label
-              color={testResult.status < 400 ? "green" : "orange"}
-            >
-              {`Status code: ${testResult.status}`}
-            </Label>
-          </Header>
-          <Segment attached>
-            <AceEditor
-              mode="json"
-              theme="tomorrow"
-              height="250px"
-              width="none"
-              value={testResult.body}
-              readOnly
-              name="queryEditor"
-              editorProps={{ $blockScrolling: true }}
-            />
-          </Segment>
+        <Container
+          css={{
+            backgroundColor: "$backgroundContrast", br: "$md", p: 20, mt: 20
+          }}
+          md
+        >
+          <Row align="center">
+            <Text>
+              {"Test Result "}
+              <Badge
+                type={testResult.status < 400 ? "success" : "error"}
+              >
+                {`Status code: ${testResult.status}`}
+              </Badge>
+            </Text>
+          </Row>
+          <Spacer y={1} />
+          <AceEditor
+            mode="json"
+            theme="tomorrow"
+            height="150px"
+            width="none"
+            value={testResult.body || "Hello"}
+            readOnly
+            name="queryEditor"
+            editorProps={{ $blockScrolling: true }}
+          />
         </Container>
       )}
     </div>
