@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Segment, Form, Button, Header, Label, Message, Placeholder, Container, Menu, List, Icon,
-} from "semantic-ui-react";
+  Button, Container, Grid, Input, Link, Loading, Row, Spacer, Text,
+} from "@nextui-org/react";
+import { FaExternalLinkSquareAlt } from "react-icons/fa";
+import { ChevronRight } from "react-iconly";
 import AceEditor from "react-ace";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+
+import Badge from "../../../components/Badge";
+
 /*
   The Form for creating a new Mysql connection
 */
@@ -20,7 +25,6 @@ function MysqlConnectionForm(props) {
   const [connection, setConnection] = useState({ type: "mysql" });
   const [errors, setErrors] = useState({});
   const [formStyle, setFormStyle] = useState("string");
-  const [hideString, setHideString] = useState(true);
 
   useEffect(() => {
     _init();
@@ -86,252 +90,300 @@ function MysqlConnectionForm(props) {
 
   return (
     <div style={styles.container}>
-      <Segment style={styles.mainSegment}>
-        <Header as="h3" style={{ marginBottom: 20 }}>Add a new MySQL connection</Header>
+      <Container
+        css={{
+          backgroundColor: "$backgroundContrast",
+          br: "$md",
+          p: 10,
+          "@xs": {
+            p: 20,
+          },
+          "@sm": {
+            p: 20,
+          },
+          "@md": {
+            p: 20,
+          },
+        }}
+        md
+      >
+        <Row align="center">
+          <Text h3>Add a new MySQL connection</Text>
+        </Row>
 
-        <Menu secondary>
-          <Menu.Item
-            name="Connection string"
-            active={formStyle === "string"}
+        <Spacer y={0.5} />
+        <Row align="center" style={styles.formStyle}>
+          <Link
+            css={{
+              background: formStyle === "string" ? "$background" : "$backgroundContrast",
+              p: 5,
+              pr: 10,
+              pl: 10,
+              br: "$sm"
+            }}
             onClick={() => setFormStyle("string")}
-          />
-          <Menu.Item
-            name="Connection form"
-            active={formStyle === "form"}
+          >
+            <Text>Connection string</Text>
+          </Link>
+          <Spacer x={0.5} />
+          <Link
+            css={{
+              background: formStyle === "form" ? "$background" : "$backgroundContrast",
+              p: 5,
+              pr: 10,
+              pl: 10,
+              br: "$sm"
+            }}
             onClick={() => setFormStyle("form")}
-          />
-        </Menu>
+          >
+            <Text>Connection form</Text>
+          </Link>
+        </Row>
 
         {formStyle === "string" && (
-          <div style={styles.formStyle}>
-            <Form>
-              <Form.Group>
-                <Form.Field width={6}>
-                  <label>Name your connection</label>
-                  <Form.Input
-                    placeholder="Enter a name that you can recognise later"
-                    value={connection.name || ""}
-                    onChange={(e, data) => {
-                      setConnection({ ...connection, name: data.value });
-                    }}
-                  />
-                  {errors.name
-                    && (
-                      <Label basic color="red" pointing>
-                        {errors.name}
-                      </Label>
-                    )}
-                </Form.Field>
-              </Form.Group>
-              <Form.Field>
-                <label>Enter your MySQL connection string</label>
-                {connection.connectionString && (
-                  <label style={{ fontWeight: "normal" }}>
-                    {"mysql://username:password@mysql.example.com:3306/dbname"}
-                  </label>
-                )}
-                <Form.Input
-                  placeholder="mysql://username:password@mysql.example.com:3306/dbname"
-                  value={connection.connectionString || ""}
-                  onChange={(e, data) => {
-                    setConnection({ ...connection, connectionString: data.value });
-                  }}
-                  type={hideString ? "password" : "text"}
-                  action={{
-                    content: hideString ? "Show string" : "Hide string",
-                    labelPosition: "right",
-                    icon: hideString ? "eye" : "eye slash",
-                    onClick: () => setHideString(!hideString),
-                  }}
-                />
-                {errors.connectionString && (
-                  <Label basic color="red" pointing>
-                    {errors.connectionString}
-                  </Label>
-                )}
-              </Form.Field>
-            </Form>
-          </div>
+          <>
+            <Row align="center">
+              <Input
+                label="Name your connection"
+                placeholder="Enter a name that you can recognise later"
+                value={connection.name || ""}
+                onChange={(e) => {
+                  setConnection({ ...connection, name: e.target.value });
+                }}
+                color={errors.name ? "error" : "default"}
+                bordered
+                fullWidth
+              />
+            </Row>
+            {errors.name && (
+              <Row css={{ p: 5 }}>
+                <Text small color="error">
+                  {errors.name}
+                </Text>
+              </Row>
+            )}
+            <Spacer y={0.5} />
+            <Row align="center">
+              <Input.Password
+                label="Enter your MySQL connection string"
+                placeholder="mysql://username:password@mysql.example.com:3306/dbname"
+                value={connection.connectionString || ""}
+                onChange={(e) => {
+                  setConnection({ ...connection, connectionString: e.target.value });
+                }}
+                helperText={"mysql://username:password@mysql.example.com:3306/dbname"}
+                bordered
+                fullWidth
+              />
+            </Row>
+            {errors.connectionString && (
+              <Row css={{ p: 5 }}>
+                <Text small color="error">
+                  {errors.connectionString}
+                </Text>
+              </Row>
+            )}
+            <Spacer y={0.5} />
+          </>
         )}
+
         {formStyle === "form" && (
-          <div style={styles.formStyle}>
-            <Form>
-              <Form.Field error={!!errors.name} required>
-                <label>Name your connection</label>
-                <Form.Input
+          <Row>
+            <Grid.Container gap={1.5}>
+              <Grid xs={12} sm={8}>
+                <Input
+                  label="Name your connection"
                   placeholder="Enter a name that you can recognise later"
                   value={connection.name || ""}
-                  onChange={(e, data) => {
-                    setConnection({ ...connection, name: data.value });
+                  onChange={(e) => {
+                    setConnection({ ...connection, name: e.target.value });
                   }}
-                  />
-                {errors.name
-                    && (
-                    <Label basic color="red" pointing>
-                      {errors.name}
-                    </Label>
-                    )}
-              </Form.Field>
+                  helperColor="error"
+                  helperText={errors.name}
+                  bordered
+                  fullWidth
+                />
+              </Grid>
 
-              <Form.Group widths={2}>
-                <Form.Field error={!!errors.host} required width={10}>
-                  <label>The hostname of your API</label>
-                  <Form.Input
-                    placeholder="mysql.example.com"
-                    value={connection.host || ""}
-                    onChange={(e, data) => {
-                      setConnection({ ...connection, host: data.value });
-                    }}
-                    />
-                  {errors.host
-                      && (
-                      <Label basic color="red" pointing>
-                        {errors.host}
-                      </Label>
-                      )}
-                </Form.Field>
-                <Form.Field width={6}>
-                  <label>Port</label>
-                  <Form.Input
-                    placeholder="Optional, defaults to 3306"
-                    value={connection.port}
-                    onChange={(e, data) => {
-                      setConnection({ ...connection, port: data.value });
-                    }}
-                    />
-                </Form.Field>
-              </Form.Group>
+              <Grid xs={12} sm={10} md={8}>
+                <Input
+                  label="Hostname or IP address"
+                  placeholder="mysql.example.com"
+                  value={connection.host || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, host: e.target.value });
+                  }}
+                  helperColor="error"
+                  helperText={errors.host}
+                  bordered
+                  fullWidth
+                />
+              </Grid>
+              <Grid xs={12} sm={2} md={4}>
+                <Input
+                  label="Port"
+                  placeholder="Optional, defaults to 3306"
+                  value={connection.port || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, port: e.target.value });
+                  }}
+                  helperColor="error"
+                  helperText={errors.port}
+                  bordered
+                  fullWidth
+                />
+              </Grid>
 
-              <Form.Group widths={3}>
-                <Form.Field width={6}>
-                  <label>Database name</label>
-                  <Form.Input
-                    placeholder="Enter your database name"
-                    value={connection.dbName}
-                    onChange={(e, data) => setConnection({ ...connection, dbName: data.value })}
-                    />
-                </Form.Field>
-                <Form.Field width={5}>
-                  <label>Username</label>
-                  <Form.Input
-                    placeholder="Enter your database username"
-                    value={connection.username}
-                    onChange={(e, data) => setConnection({ ...connection, username: data.value })}
-                    />
-                </Form.Field>
-                <Form.Field width={5}>
-                  <label>Password</label>
-                  <Form.Input
-                    placeholder="Enter your database password"
-                    type="password"
-                    onChange={(e, data) => setConnection({ ...connection, password: data.value })}
-                  />
-                </Form.Field>
-              </Form.Group>
-            </Form>
-          </div>
+              <Grid xs={12} sm={4} md={4}>
+                <Input
+                  label="Database name"
+                  placeholder="Enter your database name"
+                  value={connection.dbName || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, dbName: e.target.value });
+                  }}
+                  helperColor="error"
+                  helperText={errors.dbName}
+                  bordered
+                  fullWidth
+                />
+              </Grid>
+
+              <Grid xs={12} sm={4} md={4}>
+                <Input
+                  label="Database username"
+                  placeholder="Username"
+                  value={connection.username || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, username: e.target.value });
+                  }}
+                  helperColor="error"
+                  helperText={errors.username}
+                  bordered
+                  fullWidth
+                />
+              </Grid>
+
+              <Grid xs={12} sm={4} md={4}>
+                <Input.Password
+                  label="Database password"
+                  placeholder="Database user password"
+                  onChange={(e) => {
+                    setConnection({ ...connection, password: e.target.value });
+                  }}
+                  helperColor="error"
+                  helperText={errors.password}
+                  bordered
+                  fullWidth
+                />
+              </Grid>
+            </Grid.Container>
+          </Row>
         )}
 
-        <List style={styles.helpList} relaxed animated>
-          <List.Item
-            icon="linkify"
-            content="For security reasons, connect to your MySQL database with read-only credentials"
-            as="a"
+        <Spacer y={2} />
+        <Row align="center">
+          <ChevronRight />
+          <Spacer x={0.2} />
+          <Link
             target="_blank"
             rel="noopener noreferrer"
             href="https://www.digitalocean.com/community/tutorials/how-to-create-a-new-user-and-grant-permissions-in-mysql"
-          />
-          <List.Item
-            icon="linkify"
-            content="Find out how to allow remote connections to your MySQL database"
-            as="a"
+          >
+            <Text>{"For security reasons, connect to your MySQL database with read-only credentials"}</Text>
+          </Link>
+          <Spacer x={0.2} />
+          <FaExternalLinkSquareAlt size={12} />
+        </Row>
+        <Row align="center">
+          <ChevronRight />
+          <Spacer x={0.2} />
+          <Link
             href="https://www.cyberciti.biz/tips/how-do-i-enable-remote-access-to-mysql-database-server.html"
             target="_blank"
             rel="noopener noreferrer"
-          />
-        </List>
+          >
+            <Text>{"Find out how to allow remote connections to your MySQL database"}</Text>
+          </Link>
+          <Spacer x={0.2} />
+          <FaExternalLinkSquareAlt size={12} />
+        </Row>
 
         {addError && (
-          <Message negative>
-            <Message.Header>{"Server error while trying to save your connection"}</Message.Header>
-            <p>Please try adding your connection again.</p>
-          </Message>
+          <Row>
+            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+              <Row>
+                <Text h5>{"Server error while trying to save your connection"}</Text>
+              </Row>
+              <Row>
+                <Text>Please try adding your connection again.</Text>
+              </Row>
+            </Container>
+          </Row>
         )}
 
-        <Container fluid textAlign="right">
+        <Spacer y={1} />
+        <Row>
           <Button
-            primary
-            basic
+            ghost
+            auto
             onClick={() => _onCreateConnection(true)}
-            loading={testLoading}
+            disabled={testLoading}
           >
-            Test connection
+            {testLoading && <Loading type="points" color="currentColor" />}
+            {!testLoading && "Test connection"}
           </Button>
-          {!editConnection
-            && (
-              <Button
-                primary
-                loading={loading}
-                onClick={_onCreateConnection}
-                icon
-                labelPosition="right"
-                style={styles.saveBtn}
-              >
-                <Icon name="checkmark" />
-                Save connection
-              </Button>
-            )}
-          {editConnection
-            && (
-              <Button
-                secondary
-                loading={loading}
-                onClick={_onCreateConnection}
-                icon
-                labelPosition="right"
-                style={styles.saveBtn}
-              >
-                <Icon name="checkmark" />
-                Save changes
-              </Button>
-            )}
-        </Container>
-      </Segment>
+          <Spacer x={0.2} />
+          <Button
+            disabled={loading}
+            onClick={_onCreateConnection}
+            auto
+          >
+            {loading && <Loading type="points" color="currentColor" />}
+            {!loading && "Save connection"}
+          </Button>
+        </Row>
+      </Container>
 
       {testLoading && (
-        <Segment>
-          <Placeholder>
-            <Placeholder.Line />
-            <Placeholder.Line />
-            <Placeholder.Line />
-            <Placeholder.Line />
-            <Placeholder.Line />
-          </Placeholder>
-        </Segment>
+        <Container css={{ backgroundColor: "$backgroundContrast", br: "$md", p: 20 }} md>
+          <Row align="center">
+            <Loading type="points">
+              Test underway...
+            </Loading>
+          </Row>
+          <Spacer y={2} />
+        </Container>
       )}
 
       {testResult && !testLoading && (
-        <Container fluid style={{ marginTop: 15 }}>
-          <Header attached="top">
-            Test Result
-            <Label
-              color={testResult.status < 400 ? "green" : "orange"}
-            >
-              {testResult.status < 400 ? "Your connection works!" : "We couldn't connect"}
-            </Label>
-          </Header>
-          <Segment attached>
-            <AceEditor
-              mode="json"
-              theme="tomorrow"
-              height="150px"
-              width="none"
-              value={testResult.body}
-              readOnly
-              name="queryEditor"
-              editorProps={{ $blockScrolling: true }}
-            />
-          </Segment>
+        <Container
+          css={{
+            backgroundColor: "$backgroundContrast", br: "$md", p: 20, mt: 20
+          }}
+          md
+        >
+          <Row align="center">
+            <Text>
+              {"Test Result "}
+              <Badge
+                type={testResult.status < 400 ? "success" : "error"}
+              >
+                {`Status code: ${testResult.status}`}
+              </Badge>
+            </Text>
+          </Row>
+          <Spacer y={1} />
+          <AceEditor
+            mode="json"
+            theme="tomorrow"
+            height="150px"
+            width="none"
+            value={testResult.body || "Hello"}
+            readOnly
+            name="queryEditor"
+            editorProps={{ $blockScrolling: true }}
+          />
         </Container>
       )}
     </div>

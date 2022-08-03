@@ -290,8 +290,8 @@ function MongoConnectionForm(props) {
 
         {formStyle === "form" && (
           <Row>
-            <Grid.Container gap={1}>
-              <Grid xs={12}>
+            <Grid.Container gap={1.5}>
+              <Grid xs={12} sm={8}>
                 <Input
                   label="Name your connection"
                   placeholder="Enter a name that you can recognise later"
@@ -446,11 +446,11 @@ function MongoConnectionForm(props) {
           </Row>
         )}
 
-        <Spacer y={0.5} />
+        <Spacer y={1} />
         <Row xs={12}>
-          <Container css={{ backgroundColor: "$backgroundContrast", br: "$md", p: 20 }} md>
+          <Container css={{ backgroundColor: "$blue50", br: "$md", p: 20 }} md>
             <Row>
-              <Text b>Avoid using users that can write data</Text>
+              <Text b>Avoid using credentials that can write data</Text>
             </Row>
             <Row>
               <Text>{"Out of abundance of caution, we recommend all our users to connect only with read permissions. Don't use mongo users with readWrite permissions."}</Text>

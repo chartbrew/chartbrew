@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import moment from "moment";
 
 import {
-  Button, Card, Container, Grid, Loading, Modal, Row, Spacer, Text
+  Button, Card, Container, Grid, Loading, Modal, Row, Spacer, Text, Link,
 } from "@nextui-org/react";
 import {
   ChevronLeft, Delete, Plus, Scan
@@ -277,44 +277,59 @@ function Connections(props) {
             )}
 
             <Row align="center" wrap="wrap" gap={1}>
-              <Button
-                color="secondary"
-                ghost={selectedMenu !== "connections"}
+              <Link
+                css={{
+                  background: selectedMenu === "connections" ? "$background" : "$backgroundContrast",
+                  p: 5,
+                  pr: 10,
+                  pl: 10,
+                  br: "$sm",
+                  "@xsMax": { width: "90%" },
+                  ai: "center",
+                  color: "$text",
+                }}
                 onClick={() => setSelectedMenu("connections")}
-                icon={<FaPlug size={20} />}
-                auto
-                css={{
-                  "@xsMax": { width: "90%" },
-                }}
               >
-                Connections
-              </Button>
+                <FaPlug size={20} />
+                <Spacer x={0.2} />
+                <Text>{" Connections"}</Text>
+              </Link>
               <Spacer x={0.2} />
-              <Button
-                color="secondary"
-                ghost={selectedMenu !== "templates"}
+              <Link
+                css={{
+                  background: selectedMenu === "templates" ? "$background" : "$backgroundContrast",
+                  p: 5,
+                  pr: 10,
+                  pl: 10,
+                  br: "$sm",
+                  "@xsMax": { width: "90%" },
+                  ai: "center",
+                  color: "$text",
+                }}
                 onClick={() => setSelectedMenu("templates")}
-                icon={<FaMagic size={20} />}
-                auto
-                css={{
-                  "@xsMax": { width: "90%" },
-                }}
               >
-                Community templates
-              </Button>
+                <FaMagic size={20} />
+                <Spacer x={0.2} />
+                <Text>{" Community templates"}</Text>
+              </Link>
               <Spacer x={0.2} />
-              <Button
-                color="secondary"
-                ghost={selectedMenu !== "customTemplates"}
-                onClick={() => setSelectedMenu("customTemplates")}
-                icon={<Scan />}
-                auto
+              <Link
                 css={{
+                  background: selectedMenu === "customTemplates" ? "$background" : "$backgroundContrast",
+                  p: 5,
+                  pr: 10,
+                  pl: 10,
+                  br: "$sm",
                   "@xsMax": { width: "90%" },
+                  ai: "center",
+                  color: "$text",
                 }}
+                onClick={() => setSelectedMenu("customTemplates")}
               >
-                Custom templates
-              </Button>
+                <Scan />
+                <Spacer x={0.2} />
+                <Text>{" Custom templates"}</Text>
+              </Link>
             </Row>
             <Spacer y={1} />
             <Row>
