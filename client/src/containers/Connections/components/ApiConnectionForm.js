@@ -163,7 +163,23 @@ function ApiConnectionForm(props) {
 
   return (
     <div style={styles.container}>
-      <Container style={styles.mainSegment} css={{ backgroundColor: "$backgroundContrast", br: "$md" }} md>
+      <Container
+        css={{
+          backgroundColor: "$backgroundContrast",
+          br: "$md",
+          p: 10,
+          "@xs": {
+            p: 20,
+          },
+          "@sm": {
+            p: 20,
+          },
+          "@md": {
+            p: 20,
+          },
+        }}
+        md
+      >
         <Row align="center">
           <Text h3>
             {!editConnection && "Add a new API host"}
@@ -172,14 +188,12 @@ function ApiConnectionForm(props) {
         </Row>
         <Spacer y={1} />
         <Row align="center" style={styles.formStyle}>
-          <Grid.Container>
+          <Grid.Container gap={1}>
             <Grid xs={12} sm={12} md={5}>
               <Container>
                 <Row>
-                  <label>Enter a name for your connection</label>
-                </Row>
-                <Row>
                   <Input
+                    label="Enter a name for your connection"
                     placeholder="Enter a name you can recognize later"
                     value={connection.name || ""}
                     onChange={(e) => {
@@ -203,10 +217,8 @@ function ApiConnectionForm(props) {
             <Grid xs={12} sm={12} md={7}>
               <Container>
                 <Row>
-                  <label>The hostname of your API</label>
-                </Row>
-                <Row>
                   <Input
+                    label="The hostname of your API"
                     placeholder="https://api.example.com"
                     value={connection.host || ""}
                     onChange={(e) => {
@@ -235,13 +247,6 @@ function ApiConnectionForm(props) {
                     color="secondary"
                     ghost={menuType !== "authentication"}
                     onClick={() => setMenuType("authentication")}
-                    iconRight={(
-                      <Badge
-                        type={connection.authentication && connection.authentication.type !== "no_auth" ? "primary" : "neutral"}
-                      >
-                        {" "}
-                      </Badge>
-                    )}
                     auto
                     size="sm"
                   >
@@ -290,6 +295,7 @@ function ApiConnectionForm(props) {
                         >
                           <Dropdown.Trigger>
                             <Input
+                              label="Select an authentication type"
                               initialValue="Authentication type"
                               value={connection.authentication && connection.authentication.type}
                               fullWidth
@@ -317,17 +323,19 @@ function ApiConnectionForm(props) {
                       <Container>
                         <Row align="center">
                           <Input
-                            labelPlaceholder="Enter a Username or API Key"
+                            label="Enter a Username or API Key"
+                            placeholder="Username or API Key"
                             onChange={(e) => _onChangeAuthParams("user", e.target.value)}
                             value={connection.authentication.user}
                             fullWidth
                             bordered
                           />
                         </Row>
-                        <Spacer y={2} />
+                        <Spacer y={0.5} />
                         <Row align="center">
                           <Input.Password
-                            labelPlaceholder="Enter a Password or API Key Value"
+                            label="Enter a Password or API Key Value"
+                            placeholder="Password or API Key Value"
                             onChange={(e) => _onChangeAuthParams("pass", e.target.value)}
                             value={connection.authentication.pass}
                             fullWidth
@@ -339,9 +347,9 @@ function ApiConnectionForm(props) {
                   )}
                   {connection.authentication && connection.authentication.type === "bearer_token" && (
                     <Grid xs={12} sm={5}>
-                      <label>Token</label>
                       <Input.Password
-                        labelPlaceholder="Authentication token"
+                        label="Enter the token"
+                        placeholder="Authentication token"
                         onChange={(e) => _onChangeAuthParams("token", e.target.value)}
                         value={connection.authentication.token}
                         fullWidth
@@ -415,7 +423,7 @@ function ApiConnectionForm(props) {
                     size="sm"
                     iconRight={<Plus />}
                     onClick={_addOption}
-                    flat
+                    bordered
                     auto
                   >
                     Add a header
@@ -467,7 +475,6 @@ function ApiConnectionForm(props) {
             >
               {loading && <Loading type="points" color="currentColor" />}
               {!loading && "Save connection"}
-              Save changes
             </Button>
           )}
         </Row>
@@ -498,18 +505,16 @@ function ApiConnectionForm(props) {
             </Text>
           </Row>
           <Spacer y={1} />
-          <Row align="center">
-            <AceEditor
-              mode="json"
-              theme="tomorrow"
-              height="150px"
-              width="none"
-              value={testResult.body}
-              readOnly
-              name="queryEditor"
-              editorProps={{ $blockScrolling: true }}
-            />
-          </Row>
+          <AceEditor
+            mode="json"
+            theme="tomorrow"
+            height="150px"
+            width="none"
+            value={testResult.body || "Hello"}
+            readOnly
+            name="queryEditor"
+            editorProps={{ $blockScrolling: true }}
+          />
         </Container>
       )}
     </div>
