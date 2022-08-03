@@ -18,8 +18,8 @@ const lightTheme = {
 
     orange50: "#FFF6F3",
     orange100: "#FFECE4",
-    orange200: "#EAFAFF",
-    orange300: "#FFDED2",
+    orange200: "#FFDED2",
+    orange300: "#FFCCB9",
     orange400: "#FFB89E",
     orange500: "#F8A78A",
     orange600: "#F69977",

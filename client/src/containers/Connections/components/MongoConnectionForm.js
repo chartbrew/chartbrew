@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Segment, Form, Button, Icon, Header, Label, Message, Checkbox, Popup,
-  Placeholder, Container, List, Menu,
-} from "semantic-ui-react";
+  Container, Row, Spacer, Text, Link, Input, Grid, Checkbox, Tooltip, Button, Loading,
+} from "@nextui-org/react";
+import {
+  ChevronRight, CloseSquare, InfoCircle, Plus
+} from "react-iconly";
+import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import uuid from "uuid/v4";
 import AceEditor from "react-ace";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+
+import Badge from "../../../components/Badge";
 
 /*
   The MongoDB connection form
@@ -24,7 +29,6 @@ function MongoConnectionForm(props) {
   const [connection, setConnection] = useState({ type: "mongodb", optionsArray: [], srv: false });
   const [errors, setErrors] = useState({});
   const [formStyle, setFormStyle] = useState("string");
-  const [hideString, setHideString] = useState(true);
 
   useEffect(() => {
     _init();
@@ -188,344 +192,397 @@ function MongoConnectionForm(props) {
 
   return (
     <div style={styles.container}>
-      <Segment style={styles.mainSegment}>
-        <Header as="h3" style={{ marginBottom: 20 }}>Connect to a MongoDB database</Header>
-
-        <Menu secondary>
-          <Menu.Item
-            name="Connection string"
-            active={formStyle === "string"}
+      <Container
+        css={{
+          backgroundColor: "$backgroundContrast",
+          br: "$md",
+          p: 10,
+          "@xs": {
+            p: 20,
+          },
+          "@sm": {
+            p: 20,
+          },
+          "@md": {
+            p: 20,
+          },
+        }}
+        md
+      >
+        <Row align="center">
+          <Text h3>Connect to a MongoDB database</Text>
+        </Row>
+        <Spacer y={1} />
+        <Row align="center" style={styles.formStyle}>
+          <Link
+            css={{
+              background: formStyle === "string" ? "$background" : "$backgroundContrast",
+              p: 5,
+              pr: 10,
+              pl: 10,
+              br: "$sm"
+            }}
             onClick={() => setFormStyle("string")}
-          />
-          <Menu.Item
-            name="Connection form"
-            active={formStyle === "form"}
+          >
+            <Text>Connection string</Text>
+          </Link>
+          <Spacer x={0.5} />
+          <Link
+            css={{
+              background: formStyle === "form" ? "$background" : "$backgroundContrast",
+              p: 5,
+              pr: 10,
+              pl: 10,
+              br: "$sm"
+            }}
             onClick={() => setFormStyle("form")}
-          />
-        </Menu>
+          >
+            <Text>Connection form</Text>
+          </Link>
+        </Row>
 
         {formStyle === "string" && (
-          <div style={styles.formStyle}>
-            <Form>
-              <Form.Group>
-                <Form.Field width={6}>
-                  <label>Name your connection</label>
-                  <Form.Input
-                    placeholder="Enter a name that you can recognise later"
-                    value={connection.name || ""}
-                    onChange={(e, data) => {
-                      setConnection({ ...connection, name: data.value });
-                    }}
-                  />
-                  {errors.name
-                    && (
-                      <Label basic color="red" pointing>
-                        {errors.name}
-                      </Label>
-                    )}
-                </Form.Field>
-              </Form.Group>
-              <Form.Field>
-                <label>Enter your MongoDB connection string</label>
-                {connection.connectionString && (
-                  <label style={{ fontWeight: "normal" }}>
-                    {"mongodb://username:password@mongodb.example.com:27017/dbname"}
-                  </label>
-                )}
-                <Form.Input
-                  placeholder="mongodb://username:password@mongodb.example.com:27017/dbname"
-                  value={connection.connectionString || ""}
-                  onChange={(e, data) => {
-                    setConnection({ ...connection, connectionString: data.value });
-                  }}
-                  type={hideString ? "password" : "text"}
-                  action={{
-                    content: hideString ? "Show string" : "Hide string",
-                    labelPosition: "right",
-                    icon: hideString ? "eye" : "eye slash",
-                    onClick: () => setHideString(!hideString),
-                  }}
-                />
-                {errors.connectionString && (
-                  <Label basic color="red" pointing>
-                    {errors.connectionString}
-                  </Label>
-                )}
-              </Form.Field>
-            </Form>
-          </div>
+          <>
+            <Row align="center">
+              <Input
+                label="Name your connection"
+                placeholder="Enter a name that you can recognise later"
+                value={connection.name || ""}
+                onChange={(e) => {
+                  setConnection({ ...connection, name: e.target.value });
+                }}
+                color={errors.name ? "error" : "default"}
+                bordered
+                fullWidth
+              />
+            </Row>
+            {errors.name && (
+              <Row>
+                <Text color="error">
+                  {errors.name}
+                </Text>
+              </Row>
+            )}
+            <Spacer y={0.5} />
+            <Row align="center">
+              <Input.Password
+                label="Enter your MongoDB connection string"
+                placeholder="mongodb://username:password@mongodb.example.com:27017/dbname"
+                value={connection.connectionString || ""}
+                onChange={(e) => {
+                  setConnection({ ...connection, connectionString: e.target.value });
+                }}
+                helperText={"mongodb://username:password@mongodb.example.com:27017/dbname"}
+                bordered
+                fullWidth
+              />
+            </Row>
+            {errors.connectionString && (
+              <Row>
+                <Text color="error">
+                  {errors.connectionString}
+                </Text>
+              </Row>
+            )}
+            <Spacer y={0.5} />
+          </>
         )}
 
         {formStyle === "form" && (
-          <div style={styles.formStyle}>
-            <Form>
-              <Form.Field error={!!errors.name} required>
-                <label>Name your connection</label>
-                <Form.Input
+          <Row>
+            <Grid.Container gap={1}>
+              <Grid xs={12}>
+                <Input
+                  label="Name your connection"
                   placeholder="Enter a name that you can recognise later"
                   value={connection.name || ""}
-                  onChange={(e, data) => {
-                    setConnection({ ...connection, name: data.value });
+                  onChange={(e) => {
+                    setConnection({ ...connection, name: e.target.value });
                   }}
+                  helperColor="error"
+                  helperText={errors.name}
+                  bordered
+                  fullWidth
                 />
-                {errors.name
-                  && (
-                  <Label basic color="red" pointing>
-                    {errors.name}
-                  </Label>
-                  )}
-              </Form.Field>
+              </Grid>
 
-              <Form.Group widths={2}>
-                <Form.Field error={!!errors.host} required width={10}>
-                  <label>Hostname or IP address</label>
-                  <Form.Input
-                    placeholder="'yourmongodomain.com' or '0.0.0.0' "
-                    value={connection.host || ""}
-                    onChange={(e, data) => {
-                      setConnection({ ...connection, host: data.value });
-                    }}
-                  />
-                  {errors.host && (
-                    <Label basic color="red" pointing>
-                      {errors.host}
-                    </Label>
-                  )}
-                </Form.Field>
-                <Form.Field error={!!errors.port} width={6}>
-                  <label>Port</label>
-                  <Form.Input
-                    placeholder="Leave empty if using the default"
-                    value={connection.port || ""}
-                    onChange={(e, data) => {
-                      setConnection({ ...connection, port: data.value });
-                    }}
-                  />
-                  {errors.port && (
-                    <Label basic color="red" pointing>
-                      {errors.port}
-                    </Label>
-                  )}
-                </Form.Field>
-              </Form.Group>
+              <Grid xs={12} sm={10} md={8}>
+                <Input
+                  label="Hostname or IP address"
+                  placeholder="'yourmongodomain.com' or '0.0.0.0' "
+                  value={connection.host || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, host: e.target.value });
+                  }}
+                  helperColor="error"
+                  helperText={errors.host}
+                  bordered
+                  fullWidth
+                />
+              </Grid>
+              <Grid xs={12} sm={2} md={4}>
+                <Input
+                  label="Port"
+                  placeholder="Leave empty if using the default"
+                  value={connection.port || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, port: e.target.value });
+                  }}
+                  helperColor="error"
+                  helperText={errors.port}
+                  bordered
+                  fullWidth
+                />
+              </Grid>
 
-              <Form.Group widths={3}>
-                <Form.Field error={!!errors.dbName} required width={6}>
-                  <label>Database name</label>
-                  <Form.Input
-                    placeholder="Enter your database name"
-                    value={connection.dbName || ""}
-                    onChange={(e, data) => {
-                      setConnection({ ...connection, dbName: data.value });
-                    }}
-                  />
-                  {errors.dbName && (
-                    <Label basic color="red" pointing>
-                      {errors.dbName}
-                    </Label>
-                  )}
-                </Form.Field>
+              <Grid xs={12} sm={4} md={4}>
+                <Input
+                  label="Database name"
+                  placeholder="Enter your database name"
+                  value={connection.dbName || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, dbName: e.target.value });
+                  }}
+                  helperColor="error"
+                  helperText={errors.dbName}
+                  bordered
+                  fullWidth
+                />
+              </Grid>
 
-                <Form.Field error={!!errors.username} width={5}>
-                  <label>Database username</label>
-                  <Form.Input
-                    placeholder="Username"
-                    value={connection.username || ""}
-                    onChange={(e, data) => {
-                      setConnection({ ...connection, username: data.value });
-                    }}
-                  />
-                  {errors.username && (
-                    <Label basic color="red" pointing>
-                      {errors.username}
-                    </Label>
-                  )}
-                </Form.Field>
+              <Grid xs={12} sm={4} md={4}>
+                <Input
+                  label="Database username"
+                  placeholder="Username"
+                  value={connection.username || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, username: e.target.value });
+                  }}
+                  helperColor="error"
+                  helperText={errors.username}
+                  bordered
+                  fullWidth
+                />
+              </Grid>
 
-                <Form.Field error={!!errors.password} width={5}>
-                  {!editConnection && <label>Database password</label>}
-                  {editConnection && <label>New database password</label>}
-                  <Form.Input
-                    placeholder="Database user password"
-                    type="password"
-                    onChange={(e, data) => {
-                      setConnection({ ...connection, password: data.value });
-                    }}
-                  />
-                  {errors.password && (
-                    <Label basic color="red" pointing>
-                      {errors.password}
-                    </Label>
-                  )}
-                </Form.Field>
-              </Form.Group>
+              <Grid xs={12} sm={4} md={4}>
+                <Input.Password
+                  label="Database password"
+                  placeholder="Database user password"
+                  onChange={(e) => {
+                    setConnection({ ...connection, password: e.target.value });
+                  }}
+                  helperColor="error"
+                  helperText={errors.password}
+                  bordered
+                  fullWidth
+                />
+              </Grid>
 
-              <Form.Field>
+              <Grid xs={12}>
                 <Checkbox
-                  label="Use MongoDB 3.6 SRV URI connection string "
                   defaultChecked={connection.srv}
                   onChange={_onChangeSrv}
-                />
-                <Popup
-                  trigger={<Icon name="question circle outline" />}
+                  size="sm"
+                >
+                  Use MongoDB 3.6 SRV URI connection string
+                </Checkbox>
+                <Tooltip
                   content="Tick this if your connection URI contains 'mongodb+srv://'"
-                />
-              </Form.Field>
+                  placement="left"
+                >
+                  <InfoCircle />
+                </Tooltip>
+              </Grid>
 
-              <Message info>
-                <Message.Header>Avoid using users that can write data</Message.Header>
-                <p>{"Out of abundance of caution, we recommend all our users to connect only with read permissions. Don't use mongo users with readWrite permissions."}</p>
-                <a href="https://docs.mongodb.com/manual/reference/method/db.createUser/" target="_blank" rel="noopener noreferrer">
-                  Check this link on how to do it
-                </a>
-              </Message>
-
-              {connection.optionsArray.length > 0
-                && <Header as="h5">Connection options</Header>}
+              {connection.optionsArray.length > 0 && (
+                <Grid xs={12}>
+                  <Text h5>Connection options</Text>
+                </Grid>
+              )}
               {connection.optionsArray.map((option) => {
                 return (
-                  <Form.Group widths="equal" key={option.id}>
-                    <Form.Input
-                      placeholder="Key"
-                      value={option.key}
-                      onChange={(e, data) => _onChangeOption(option.id, data.value, "key")}
-                    />
-                    <Form.Input
-                      onChange={(e, data) => _onChangeOption(option.id, data.value, "value")}
-                      value={option.value}
-                      placeholder="Value"
-                    />
-                    <Form.Button icon onClick={() => _removeOption(option.id)}>
-                      <Icon name="close" />
-                    </Form.Button>
-                  </Form.Group>
+                  <>
+                    <Grid xs={12} sm={4}>
+                      <Input
+                        placeholder="Key"
+                        value={option.key}
+                        onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid xs={12} sm={4}>
+                      <Input
+                        onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
+                        value={option.value}
+                        placeholder="Value"
+                        fullWidth
+                      />
+                      <Spacer x={0.5} />
+                      <Button
+                        icon={<CloseSquare />}
+                        onClick={() => _removeOption(option.id)}
+                        auto
+                        flat
+                        color="error"
+                      />
+                    </Grid>
+                    <Grid xs={0} sm={4} />
+                  </>
                 );
               })}
-              <Form.Field>
+              <Grid xs={12}>
                 <Button
-                  size="small"
-                  icon
-                  labelPosition="right"
+                  size="sm"
+                  iconRight={<Plus />}
                   onClick={_addOption}
+                  ghost
+                  auto
                 >
-                  <Icon name="plus" />
                   Add options
                 </Button>
-              </Form.Field>
-            </Form>
-          </div>
+              </Grid>
+            </Grid.Container>
+          </Row>
         )}
 
-        <List style={styles.helpList} relaxed animated>
-          <List.Item
-            icon="linkify"
-            content="Find out more about MongoDB connection strings"
-            as="a"
+        <Spacer y={0.5} />
+        <Row xs={12}>
+          <Container css={{ backgroundColor: "$backgroundContrast", br: "$md", p: 20 }} md>
+            <Row>
+              <Text b>Avoid using users that can write data</Text>
+            </Row>
+            <Row>
+              <Text>{"Out of abundance of caution, we recommend all our users to connect only with read permissions. Don't use mongo users with readWrite permissions."}</Text>
+            </Row>
+            <Row>
+              <Link href="https://docs.mongodb.com/manual/reference/method/db.createUser/" target="_blank" rel="noopener noreferrer">
+                Check this link on how to do it
+              </Link>
+            </Row>
+          </Container>
+        </Row>
+        <Spacer y={0.5} />
+        <Row align="center">
+          <ChevronRight />
+          <Spacer x={0.2} />
+          <Link
             target="_blank"
             rel="noopener noreferrer"
             href="https://docs.mongodb.com/manual/reference/connection-string/"
-          />
-          <List.Item
-            icon="linkify"
-            content="Find out how to get your MongoDB Atlas connection string"
-            as="a"
+          >
+            <Text>Find out more about MongoDB connection strings</Text>
+          </Link>
+          <Spacer x={0.2} />
+          <FaExternalLinkSquareAlt size={12} />
+        </Row>
+        <Row align="center">
+          <ChevronRight />
+          <Spacer x={0.2} />
+          <Link
             href="https://docs.mongodb.com/guides/cloud/connectionstring/"
             target="_blank"
             rel="noopener noreferrer"
-          />
-          <List.Item
-            icon="chevron right"
-            content="Front-end and back-end on different servers?"
-            as="a"
-            onClick={() => setShowIp(!showIp)}
-          />
-        </List>
-
+          >
+            <Text>Find out how to get your MongoDB Atlas connection string</Text>
+          </Link>
+          <Spacer x={0.2} />
+          <FaExternalLinkSquareAlt size={12} />
+        </Row>
+        <Row align="center">
+          <ChevronRight />
+          <Spacer x={0.2} />
+          <Link onClick={() => setShowIp(!showIp)}>
+            <Text>Front-end and back-end on different servers?</Text>
+          </Link>
+        </Row>
+        <Spacer y={0.5} />
         {showIp && (
-          <Message onDismiss={() => setShowIp(false)}>
-            <Message.Header>{"You might need to whitelist the front-end IP in the back-end"}</Message.Header>
-            <p>{"This is sometimes required when the database and the Chartbrew app are running on separate servers."}</p>
-          </Message>
+          <Row>
+            <Container css={{ backgroundColor: "$blue100", p: 10, br: "$sm" }}>
+              <Row>
+                <Text h5>{"You might need to whitelist the front-end IP in the back-end"}</Text>
+              </Row>
+              <Row>
+                <Text>{"This is sometimes required when the database and the Chartbrew app are running on separate servers."}</Text>
+              </Row>
+            </Container>
+          </Row>
         )}
         {addError && (
-          <Message negative>
-            <Message.Header>{"Server error while trying to save your connection"}</Message.Header>
-            <p>Please try adding your connection again.</p>
-          </Message>
+          <Row>
+            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+              <Row>
+                <Text h5>{"Server error while trying to save your connection"}</Text>
+              </Row>
+              <Row>
+                <Text>Please try adding your connection again.</Text>
+              </Row>
+            </Container>
+          </Row>
         )}
-
-        <Container fluid textAlign="right">
+        <Spacer y={1} />
+        <Row>
           <Button
-            primary
-            basic
+            ghost
+            auto
             onClick={() => _onCreateConnection(true)}
-            loading={testLoading}
+            disabled={testLoading}
           >
-            Test connection
+            {testLoading && <Loading type="points" color="currentColor" />}
+            {!testLoading && "Test connection"}
           </Button>
-          {!editConnection && (
-            <Button
-              primary
-              loading={loading}
-              onClick={_onCreateConnection}
-              icon
-              labelPosition="right"
-              style={styles.saveBtn}
-            >
-              <Icon name="checkmark" />
-              Save connection
-            </Button>
-          )}
-          {editConnection && (
-            <Button
-              secondary
-              loading={loading}
-              onClick={_onCreateConnection}
-              icon
-              labelPosition="right"
-              style={styles.saveBtn}
-            >
-              <Icon name="checkmark" />
-              Save changes
-            </Button>
-          )}
-        </Container>
-      </Segment>
+          <Spacer x={0.2} />
+          <Button
+            disabled={loading}
+            onClick={_onCreateConnection}
+            auto
+          >
+            {loading && <Loading type="points" color="currentColor" />}
+            {!loading && "Save connection"}
+          </Button>
+        </Row>
+      </Container>
 
       {testLoading && (
-        <Segment>
-          <Placeholder>
-            <Placeholder.Line />
-            <Placeholder.Line />
-            <Placeholder.Line />
-            <Placeholder.Line />
-            <Placeholder.Line />
-          </Placeholder>
-        </Segment>
+        <Container css={{ backgroundColor: "$backgroundContrast", br: "$md", p: 20 }} md>
+          <Row align="center">
+            <Loading type="points">
+              Test underway...
+            </Loading>
+          </Row>
+          <Spacer y={2} />
+        </Container>
       )}
 
       {testResult && !testLoading && (
-        <Container fluid style={{ marginTop: 15 }}>
-          <Header attached="top">
-            Test Result
-            <Label
-              color={testResult.status < 400 ? "green" : "orange"}
-            >
-              {testResult.status < 400 ? "Your connection works!" : "We couldn't connect"}
-            </Label>
-          </Header>
-          <Segment attached>
-            <AceEditor
-              mode="json"
-              theme="tomorrow"
-              height="150px"
-              width="none"
-              value={testResult.body}
-              readOnly
-              name="queryEditor"
-              editorProps={{ $blockScrolling: true }}
-            />
-          </Segment>
+        <Container
+          css={{
+            backgroundColor: "$backgroundContrast", br: "$md", p: 20, mt: 20
+          }}
+          md
+        >
+          <Row align="center">
+            <Text>
+              {"Test Result "}
+              <Badge
+                type={testResult.status < 400 ? "success" : "error"}
+              >
+                {`Status code: ${testResult.status}`}
+              </Badge>
+            </Text>
+          </Row>
+          <Spacer y={1} />
+          <AceEditor
+            mode="json"
+            theme="tomorrow"
+            height="150px"
+            width="none"
+            value={testResult.body || "Hello"}
+            readOnly
+            name="queryEditor"
+            editorProps={{ $blockScrolling: true }}
+          />
         </Container>
       )}
     </div>

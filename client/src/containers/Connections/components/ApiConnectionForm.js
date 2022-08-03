@@ -236,11 +236,11 @@ function ApiConnectionForm(props) {
                     </Text>
                   </Row>
                 )}
+                <Spacer y={1} />
               </Container>
             </Grid>
 
-            <Spacer y={1} />
-            <Grid md={12}>
+            <Grid sm={12} md={12}>
               <Container>
                 <Row>
                   <Button
@@ -271,7 +271,7 @@ function ApiConnectionForm(props) {
               </Container>
             </Grid>
 
-            <Grid md={12}>
+            <Grid xs={12}>
               <Container>
                 <Spacer y={1} />
                 <Divider />
@@ -280,7 +280,7 @@ function ApiConnectionForm(props) {
             </Grid>
 
             {menuType === "authentication" && (
-              <Grid md={12}>
+              <Grid xs={12}>
                 <Grid.Container gap={2}>
                   <Grid xs={12} sm={4}>
                     <Container>
