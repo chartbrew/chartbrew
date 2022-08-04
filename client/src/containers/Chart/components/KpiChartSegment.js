@@ -58,6 +58,7 @@ function KpiChartSegment(props) {
                 <span
                   style={
                     chart.Datasets
+                    && chart.Datasets[index]
                     && styles.datasetLabelColor(chart.Datasets[index].datasetColor)
                   }
                 >
