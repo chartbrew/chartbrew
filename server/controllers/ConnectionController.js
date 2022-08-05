@@ -65,7 +65,9 @@ class ConnectionController {
   }
 
   findById(id) {
-    return db.Connection.findByPk(id)
+    return db.Connection.findByPk(id, {
+      include: [{ model: db.OAuth, attributes: { exclude: ["refreshToken"] } }],
+    })
       .then((connection) => {
         if (!connection) {
           return new Promise((resolve, reject) => reject(new Error(404)));
