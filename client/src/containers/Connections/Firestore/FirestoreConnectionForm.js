@@ -214,48 +214,11 @@ function FirestoreConnectionForm(props) {
           />
         </Row>
         <Spacer y={1} />
-        <Row align="center">
-          <Collapse.Group bordered css={{ maxWidth: 600 }}>
-            <Collapse title={<Text b>How to authenticate</Text>}>
-              <Container>
-                <Row align="center">
-                  <Link
-                    href="https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk?authuser=0"
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    css={{ ai: "center", color: "$primary" }}
-                  >
-                    <Text b color="primary">{"1. Create a Firebase Service Account "}</Text>
-                    <Spacer x={0.2} />
-                    <FaExternalLinkSquareAlt size={14} />
-                  </Link>
-                </Row>
-                <Row align="center">
-                  <Text>{"Log in with your Google account and select the project you want to connect to."}</Text>
-                </Row>
-                <Spacer y={0.5} />
-                <Row>
-                  <Text b>{"2. Once authenticated, press on 'Generate new private key'"}</Text>
-                </Row>
-                <Row>
-                  <Text>{"This will start a download with a JSON file on your computer."}</Text>
-                </Row>
-                <Spacer y={0.5} />
-                <Row>
-                  <Text b>{"3. Drag and drop the file below or copy the contents in the text editor."}</Text>
-                </Row>
-                <Row>
-                  <Text>{"The JSON file contains authentication details that Chartbrew needs in order to connect to your Firebase."}</Text>
-                </Row>
-              </Container>
-            </Collapse>
-          </Collapse.Group>
-        </Row>
-        <Spacer y={1} />
 
         <Row align="center">
           <StyledDropzone />
         </Row>
+
         <Spacer y={0.5} />
 
         {!jsonVisible && (
@@ -295,6 +258,44 @@ function FirestoreConnectionForm(props) {
           </>
         )}
 
+        <Spacer y={1} />
+        <Row align="center">
+          <Collapse.Group bordered css={{ maxWidth: 600 }}>
+            <Collapse title={<Text b>How to authenticate</Text>}>
+              <Container>
+                <Row align="center">
+                  <Link
+                    href="https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk?authuser=0"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    css={{ ai: "center", color: "$primary" }}
+                  >
+                    <Text b color="primary">{"1. Create a Firebase Service Account "}</Text>
+                    <Spacer x={0.2} />
+                    <FaExternalLinkSquareAlt size={14} />
+                  </Link>
+                </Row>
+                <Row align="center">
+                  <Text>{"Log in with your Google account and select the project you want to connect to."}</Text>
+                </Row>
+                <Spacer y={0.5} />
+                <Row>
+                  <Text b>{"2. Once authenticated, press on 'Generate new private key'"}</Text>
+                </Row>
+                <Row>
+                  <Text>{"This will start a download with a JSON file on your computer."}</Text>
+                </Row>
+                <Spacer y={0.5} />
+                <Row>
+                  <Text b>{"3. Drag and drop the file below or copy the contents in the text editor."}</Text>
+                </Row>
+                <Row>
+                  <Text>{"The JSON file contains authentication details that Chartbrew needs in order to connect to your Firebase."}</Text>
+                </Row>
+              </Container>
+            </Collapse>
+          </Collapse.Group>
+        </Row>
         <Spacer y={1} />
 
         {addError && (

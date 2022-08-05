@@ -5,15 +5,19 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import {
-  Segment, Form, Button, Icon, Header, Label, Message, Container,
-  Placeholder, Divider,
-} from "semantic-ui-react";
+  Button,
+  Container, Input, Loading, Row, Spacer, Text,
+} from "@nextui-org/react";
 import AceEditor from "react-ace";
 import cookie from "react-cookies";
+import { FaGoogle } from "react-icons/fa";
+import { HiRefresh } from "react-icons/hi";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+
 import { API_HOST } from "../../../config/settings";
+import Badge from "../../../components/Badge";
 
 /*
   The Form used to create GA connections
@@ -30,7 +34,7 @@ function GaConnectionForm(props) {
 
   useEffect(() => {
     _init();
-  }, []);
+  }, [editConnection]);
 
   const _init = () => {
     if (editConnection) {
@@ -97,148 +101,169 @@ function GaConnectionForm(props) {
 
   return (
     <div style={styles.container}>
-      <Segment style={styles.mainSegment}>
-        <Header as="h3" style={{ marginBottom: 20 }}>
-          {!editConnection && "Connect to Google Analytics"}
-          {editConnection && `Edit ${editConnection.name}`}
-        </Header>
-
-        <div style={styles.formStyle}>
-          <Form>
-            <Form.Field error={!!errors.name} required>
-              <label>Name your connection</label>
-              <Form.Input
-                placeholder="Enter a name that you can recognise later"
-                value={connection.name || ""}
-                onChange={(e, data) => {
-                  setConnection({ ...connection, name: data.value });
-                }}
-              />
-              {errors.name
-                && (
-                  <Label basic color="red" pointing>
-                    {errors.name}
-                  </Label>
-                )}
-            </Form.Field>
-            {!editConnection && (
-              <Form.Field>
-                <Button
-                  primary
-                  loading={loading}
-                  onClick={_onCreateConnection}
-                  icon
-                  style={styles.saveBtn}
-                  disabled={!connection.name}
-                >
-                  {"Create connection "}
-                  <Icon name="arrow right" />
-                </Button>
-              </Form.Field>
-            )}
-            {editConnection && !connection.OAuth && (
-              <Form.Field>
-                <Button
-                  primary
-                  icon="google"
-                  labelPosition="right"
-                  content="Authenticate with Google"
-                  onClick={_onGoogleAuth}
-                />
-                {errors.auth && (
-                  <Label basic color="red" pointing>
-                    {errors.auth}
-                  </Label>
-                )}
-              </Form.Field>
-            )}
-            {editConnection && connection.OAuth && (
-              <Form.Field>
-                <Header color="green" size="small">
-                  {`Authenticated as ${connection.OAuth.email}`}
-                </Header>
-                <Button
-                  className="tertiary"
-                  primary
-                  icon="refresh"
-                  content="Click here to re-authenticate"
-                  onClick={_onGoogleAuth}
-                />
-              </Form.Field>
-            )}
-          </Form>
-        </div>
-
-        {addError
-          && (
-            <Message negative>
-              <Message.Header>{"Server error while trying to save your connection"}</Message.Header>
-              <p>Please try adding your connection again.</p>
-            </Message>
-          )}
-
-        <Divider hidden />
-        <Container fluid textAlign="right">
-          <Button
-            primary
-            basic
-            onClick={() => onTest(connection)}
-            loading={testLoading}
-            disabled={!connection.name || !connection.oauth_id}
-          >
-            Test connection
-          </Button>
-          {editConnection && (
+      <Container
+        css={{
+          backgroundColor: "$backgroundContrast",
+          br: "$md",
+          p: 10,
+          "@xs": {
+            p: 20,
+          },
+          "@sm": {
+            p: 20,
+          },
+          "@md": {
+            p: 20,
+          },
+        }}
+        md
+        justify="flex-start"
+      >
+        <Row align="center">
+          <Text h3>
+            {!editConnection && "Connect to Google Analytics"}
+            {editConnection && `Edit ${editConnection.name}`}
+          </Text>
+        </Row>
+        <Spacer y={1} />
+        <Row align="center">
+          <Input
+            label="Name your connection"
+            placeholder="Enter a name that you can recognise later"
+            value={connection.name || ""}
+            onChange={(e) => {
+              setConnection({ ...connection, name: e.target.value });
+            }}
+            helperColor="error"
+            helperText={errors.name}
+            bordered
+            fullWidth
+            css={{ "@md": { width: "600px" } }}
+          />
+        </Row>
+        <Spacer y={0.5} />
+        <Row>
+          {!editConnection && (
             <Button
-              secondary
-              loading={loading}
+              color={"secondary"}
+              disabled={loading || !connection.name}
               onClick={_onCreateConnection}
-              icon
-              labelPosition="right"
-              style={styles.saveBtn}
-              disabled={!connection.name}
+              auto
             >
-              <Icon name="checkmark" />
-              Save changes
+              {loading && <Loading type="points" />}
+              {!loading && "Create connection"}
             </Button>
           )}
-        </Container>
-      </Segment>
+          {editConnection && !connection.OAuth && (
+            <Button
+              color={"secondary"}
+              iconRight={<FaGoogle size={20} />}
+              onClick={_onGoogleAuth}
+              auto
+            >
+              {"Authenticate with Google"}
+            </Button>
+          )}
+          {editConnection && connection.OAuth && (
+            <Button
+              color={"secondary"}
+              iconRight={<HiRefresh size={22} />}
+              onClick={_onGoogleAuth}
+              auto
+            >
+              {"Click here to re-authenticate"}
+            </Button>
+          )}
+        </Row>
+        {editConnection && connection.OAuth && (
+          <Row>
+            <Text color="success">
+              {`Authenticated as ${connection.OAuth.email}`}
+            </Text>
+          </Row>
+        )}
+        {errors.auth && (
+          <Row>
+            <Text color="error">{errors.auth}</Text>
+          </Row>
+        )}
+        <Spacer y={1} />
+
+        {addError && (
+          <Row>
+            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+              <Row>
+                <Text h5>{"Server error while trying to save your connection"}</Text>
+              </Row>
+              <Row>
+                <Text>Please try adding your connection again.</Text>
+              </Row>
+            </Container>
+          </Row>
+        )}
+        <Spacer y={1} />
+        <Row>
+          <Button
+            ghost
+            auto
+            onClick={() => _onCreateConnection(true)}
+            disabled={!connection.name || !connection.oauth_id || testLoading}
+          >
+            {testLoading && <Loading type="points" color="currentColor" />}
+            {!testLoading && "Test connection"}
+          </Button>
+          <Spacer x={0.2} />
+          <Button
+            disabled={loading || !connection.oauth_id}
+            onClick={_onCreateConnection}
+            auto
+          >
+            {loading && <Loading type="points" color="currentColor" />}
+            {!loading && "Save connection"}
+          </Button>
+        </Row>
+      </Container>
+      <Spacer y={1} />
 
       {testLoading && (
-        <Segment>
-          <Placeholder>
-            <Placeholder.Line />
-            <Placeholder.Line />
-            <Placeholder.Line />
-            <Placeholder.Line />
-            <Placeholder.Line />
-          </Placeholder>
-        </Segment>
+        <Container css={{ backgroundColor: "$backgroundContrast", br: "$md", p: 20 }} md>
+          <Row align="center">
+            <Loading type="points">
+              Test underway...
+            </Loading>
+          </Row>
+          <Spacer y={2} />
+        </Container>
       )}
 
       {testResult && !testLoading && (
-        <Container fluid style={{ marginTop: 15 }}>
-          <Header attached="top">
-            Test Result
-            <Label
-              color={testResult.status < 400 ? "green" : "orange"}
-            >
-              {`Status code: ${testResult.status}`}
-            </Label>
-          </Header>
-          <Segment attached>
-            <AceEditor
-              mode="json"
-              theme="tomorrow"
-              height="250px"
-              width="none"
-              value={testResult.body}
-              readOnly
-              name="queryEditor"
-              editorProps={{ $blockScrolling: true }}
-            />
-          </Segment>
+        <Container
+          css={{
+            backgroundColor: "$backgroundContrast", br: "$md", p: 20, mt: 20
+          }}
+          md
+        >
+          <Row align="center">
+            <Text>
+              {"Test Result "}
+              <Badge
+                type={testResult.status < 400 ? "success" : "error"}
+              >
+                {`Status code: ${testResult.status}`}
+              </Badge>
+            </Text>
+          </Row>
+          <Spacer y={1} />
+          <AceEditor
+            mode="json"
+            theme="tomorrow"
+            height="150px"
+            width="none"
+            value={testResult.body || "Hello"}
+            readOnly
+            name="queryEditor"
+            editorProps={{ $blockScrolling: true }}
+          />
         </Container>
       )}
     </div>
