@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Segment, Form, Button, Icon, Header, Label, Message,
-  Container, Divider, List, Grid, Checkbox, Dropdown,
-} from "semantic-ui-react";
+  Button,
+  Checkbox,
+  Container, Divider, Dropdown, Grid, Input, Link, Loading, Row, Spacer, Text,
+} from "@nextui-org/react";
 import _ from "lodash";
 import cookie from "react-cookies";
+import {
+  ChevronRight, CloseSquare, Plus, TickSquare
+} from "react-iconly";
+import { FaExternalLinkSquareAlt } from "react-icons/fa";
 
 import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
@@ -15,7 +20,7 @@ import { API_HOST } from "../../../config/settings";
 */
 function SimpleAnalyticsTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete, connections, onBack,
+    teamId, projectId, addError, onComplete, connections,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -150,227 +155,287 @@ function SimpleAnalyticsTemplate(props) {
 
   return (
     <div style={styles.container}>
-      <Segment style={styles.mainSegment}>
-        <Header as="h3" style={{ marginBottom: 20 }}>
-          Configure the template
-        </Header>
+      <Container
+        css={{
+          backgroundColor: "$backgroundContrast",
+          br: "$md",
+          p: 10,
+          "@xs": {
+            p: 20,
+          },
+          "@sm": {
+            p: 20,
+          },
+          "@md": {
+            p: 20,
+          },
+        }}
+        md
+        justify="flex-start"
+      >
+        <Row align="center">
+          <Text h3>Configure the template</Text>
+        </Row>
 
-        <div style={styles.formStyle}>
-          {availableConnections && availableConnections.length > 0 && (
-            <>
-              <Form>
-                <Form.Group widths={2}>
-                  <Form.Field disabled={formVisible}>
-                    <label>{"Select an existing connection"}</label>
-                    <Dropdown
-                      options={availableConnections}
-                      value={selectedConnection || ""}
-                      placeholder="Click to select a connection"
-                      onChange={(e, data) => setSelectedConnection(data.value)}
-                      selection
-                      style={{ marginRight: 20 }}
-                    />
-                  </Form.Field>
-                  <Form.Field error={!!errors.name} required disabled={formVisible}>
-                    <label>Enter your Simple Analytics website</label>
-                    <Form.Input
-                      placeholder="chartbrew.com"
-                      value={(!formVisible && connection.website) || ""}
-                      onChange={(e, data) => {
-                        setConnection({ ...connection, website: data.value });
-                      }}
-                    />
-                    {errors.website
-                      && (
-                        <Label basic color="red" pointing>
-                          {errors.website}
-                        </Label>
-                      )}
-                  </Form.Field>
-                </Form.Group>
-                <Form.Field>
-                  {!formVisible && (
-                    <Button
-                      primary
-                      className="tertiary"
-                      icon="plus"
-                      content="Or create a new connection"
-                      onClick={() => setFormVisible(true)}
-                    />
-                  )}
-                  {formVisible && (
-                    <>
-                      <Button
-                        primary
-                        className="tertiary"
-                        content="Use an existing connection instead"
-                        onClick={() => setFormVisible(false)}
+        {availableConnections && availableConnections.length > 0 && (
+          <>
+            <Row>
+              <Grid.Container gap={1}>
+                <Grid xs={12} sm={6} md={6}>
+                  <Dropdown
+                    isDisabled={formVisible}
+                  >
+                    <Dropdown.Trigger>
+                      <Input
+                        label="Select an existing connection"
+                        value={
+                          availableConnections.find((c) => c.value === selectedConnection)?.text
+                        }
+                        placeholder="Click to select a connection"
+                        fullWidth
                       />
-                    </>
-                  )}
-                </Form.Field>
-              </Form>
-            </>
-          )}
-          {formVisible && (
-            <>
-              {availableConnections && availableConnections.length > 0 && <Divider />}
-              <Form>
-                <Form.Field error={!!errors.website} required>
-                  <label>Enter your Simple Analytics website</label>
-                  <Form.Input
+                    </Dropdown.Trigger>
+                    <Dropdown.Menu
+                      onAction={(key) => setSelectedConnection(key)}
+                      selectedKeys={[selectedConnection]}
+                      selectionMode="single"
+                      disabled={formVisible}
+                    >
+                      {availableConnections.map((connection) => (
+                        <Dropdown.Item key={connection.key}>
+                          {connection.text}
+                        </Dropdown.Item>
+                      ))}
+                    </Dropdown.Menu>
+                  </Dropdown>
+                </Grid>
+                <Grid xs={12} sm={6} md={6}>
+                  <Input
+                    label="Enter your Simple Analytics website"
                     placeholder="chartbrew.com"
-                    value={connection.website || ""}
-                    onChange={(e, data) => {
-                      setConnection({ ...connection, website: data.value });
+                    value={(!formVisible && connection.website) || ""}
+                    onChange={(e) => {
+                      setConnection({ ...connection, website: e.target.value });
                     }}
+                    helperColor="error"
+                    helperText={errors.website}
+                    bordered
+                    fullWidth
+                    disabled={formVisible}
                   />
-                  {errors.website
-                    && (
-                      <Label basic color="red" pointing>
-                        {errors.website}
-                      </Label>
-                    )}
-                </Form.Field>
+                </Grid>
+              </Grid.Container>
+            </Row>
+            <Spacer y={1} />
+            <Row align="center">
+              {!formVisible && (
+                <Button
+                  ghost
+                  icon={<Plus />}
+                  onClick={() => setFormVisible(true)}
+                  auto
+                >
+                  Or create a new connection
+                </Button>
+              )}
+              {formVisible && (
+                <Button
+                  ghost
+                  auto
+                  onClick={() => setFormVisible(false)}
+                >
+                  Use an existing connection instead
+                </Button>
+              )}
+            </Row>
+          </>
+        )}
+        <Spacer y={1} />
+        {formVisible && (
+          <>
+            {availableConnections && availableConnections.length > 0 && (
+              <Row>
+                <Divider />
+              </Row>
+            )}
+            <Spacer y={1} />
+            <Row align="center">
+              <Input
+                label="Enter your Simple Analytics website"
+                placeholder="chartbrew.com"
+                value={connection.website || ""}
+                onChange={(e) => {
+                  setConnection({ ...connection, website: e.target.value });
+                }}
+                helperColor="error"
+                helperText={errors.website}
+                bordered
+                fullWidth
+              />
+            </Row>
+            <Spacer y={1} />
+            <Row align="center">
+              <Input
+                label="Enter your Simple Analytics API key (if the website is private)."
+                placeholder="sa_api_key_*"
+                value={connection.apiKey || ""}
+                onChange={(e, data) => {
+                  setConnection({ ...connection, apiKey: data.value });
+                }}
+                bordered
+                fullWidth
+              />
+            </Row>
+            <Spacer y={0.5} />
+            <Row align="center">
+              <Link href="https://simpleanalytics.com/account#api" target="_blank" rel="noreferrer" css={{ ai: "center", color: "$secondary" }}>
+                <Text css={{ color: "$secondary" }}>{"Get your API key here "}</Text>
+                <Spacer x={0.2} />
+                <FaExternalLinkSquareAlt size={12} />
+              </Link>
+            </Row>
+          </>
+        )}
 
-                <Form.Field>
-                  <label>
-                    {"Enter your Simple Analytics API key (if the website is private). "}
-                    <a href="https://simpleanalytics.com/account#api" target="_blank" rel="noreferrer">
-                      {"Get your API key here "}
-                      <Icon name="external" />
-                    </a>
-                  </label>
-                  <Form.Input
-                    placeholder="sa_api_key_*"
-                    value={connection.apiKey || ""}
-                    onChange={(e, data) => {
-                      setConnection({ ...connection, apiKey: data.value });
-                    }}
-                  />
-                </Form.Field>
-              </Form>
-            </>
-          )}
-
-          {configuration && (
-            <>
-              <Divider hidden />
-              <Header size="small">{"Select which charts you want Chartbrew to create for you"}</Header>
-              <Grid columns={2} stackable>
+        {configuration && (
+          <>
+            <Spacer y={2} />
+            <Row>
+              <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
+            </Row>
+            <Spacer y={1} />
+            <Row align="center">
+              <Grid.Container>
                 {configuration.Charts && configuration.Charts.map((chart) => (
-                  <Grid.Column key={chart.tid}>
+                  <Grid key={chart.tid} xs={12} sm={6}>
                     <Checkbox
-                      label={chart.name}
-                      checked={
+                      isSelected={
                         _.indexOf(selectedCharts, chart.tid) > -1
                       }
-                      onClick={() => _onChangeSelectedCharts(chart.tid)}
-                    />
-                  </Grid.Column>
+                      onChange={() => _onChangeSelectedCharts(chart.tid)}
+                      size="sm"
+                    >
+                      {chart.name}
+                    </Checkbox>
+                  </Grid>
                 ))}
-              </Grid>
+              </Grid.Container>
+            </Row>
 
-              <Divider hidden />
+            <Divider y={1} />
+            <Row>
               <Button
-                icon="check"
-                content="Select all"
-                basic
+                bordered
+                icon={<TickSquare />}
+                auto
                 onClick={_onSelectAll}
-                size="small"
-              />
+                size="sm"
+              >
+                Select all
+              </Button>
+              <Spacer x={0.2} />
               <Button
-                icon="x"
-                content="Deselect all"
-                basic
+                bordered
+                icon={<CloseSquare />}
+                auto
                 onClick={_onDeselectAll}
-                size="small"
-              />
-            </>
-          )}
-        </div>
+                size="sm"
+              >
+                Deselect all
+              </Button>
+            </Row>
+          </>
+        )}
 
-        {addError
-          && (
-            <Message negative>
-              <Message.Header>{"Server error while trying to save your connection"}</Message.Header>
-              <p>Please try adding your connection again.</p>
-            </Message>
-          )}
+        {addError && (
+          <Row>
+            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+              <Row>
+                <Text h5>{"Server error while trying to save your connection"}</Text>
+              </Row>
+              <Row>
+                <Text>Please try again</Text>
+              </Row>
+            </Container>
+          </Row>
+        )}
 
         {notPublic && (
-          <Container>
-            <Message negative>
-              <Message.Header>{"Your site appears to be set to private"}</Message.Header>
-              <div>
-                <p>{"In order to be able to get the stats from Simple Analytics, please do one of the following:"}</p>
-                <List bulleted>
-                  <List.Item>
-                    {"Enter your Simple Analytics API key in the field above. "}
-                    <a href="https://simpleanalytics.com/account#api" target="_blank" rel="noreferrer">
-                      {"Click here to find your API key. "}
-                      <Icon name="external" />
-                    </a>
-                  </List.Item>
-                  <List.Item>
-                    {"Alternatively, "}
-                    <a href={`https://simpleanalytics.com/${connection.website}/settings#visibility`} target="_blank" rel="noreferrer">
-                      {"make your site stats public here. "}
-                      <Icon name="external" />
-                    </a>
-                  </List.Item>
-                </List>
-              </div>
-            </Message>
-          </Container>
+          <Row>
+            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+              <Row>
+                <Text h5>{"Your site appears to be set to private"}</Text>
+              </Row>
+              <Row>
+                <Text>{"In order to be able to get the stats from Simple Analytics, please do one of the following:"}</Text>
+              </Row>
+              <Row align="center">
+                <ChevronRight />
+                <Spacer x={0.2} />
+                <Link
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href="https://simpleanalytics.com/account#api"
+                >
+                  <Text>Click here to get your API key and enter it in the field above.</Text>
+                </Link>
+                <Spacer x={0.2} />
+                <FaExternalLinkSquareAlt size={12} />
+              </Row>
+              <Row align="center">
+                <ChevronRight />
+                <Spacer x={0.2} />
+                <Link
+                  href={`https://simpleanalytics.com/${connection.website}/settings#visibility`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Text>{"Alternatively, go to this page and make your website analytics public."}</Text>
+                </Link>
+                <Spacer x={0.2} />
+                <FaExternalLinkSquareAlt size={12} />
+              </Row>
+            </Container>
+          </Row>
         )}
 
         {notFound && (
-          <Container>
-            <Message negative>
-              <Message.Header>{"Your site could not be found"}</Message.Header>
-              <div>
-                <p>{"Make sure your website is spelt correctly and that it is registered with Simple Analytics."}</p>
-                <p>
-                  {"You can check if it exists here: "}
-                  <a href={`https://simpleanalytics.com/${connection.website}`} target="_blank" rel="noreferrer">
-                    {`https://simpleanalytics.com/${connection.website} `}
-                    <Icon name="external" />
-                  </a>
-                </p>
-              </div>
-            </Message>
-          </Container>
+          <Row>
+            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+              <Row>
+                <Text h5>{"Your site could not be found"}</Text>
+              </Row>
+              <Row>
+                <Text>{"Make sure your website is spelt correctly and that it is registered with Simple Analytics."}</Text>
+              </Row>
+              <Row align="center">
+                <Link href={`https://simpleanalytics.com/${connection.website}`} target="_blank" rel="noreferrer">
+                  <Text>{"Click here to see if your website is registered with Simple Analytics"}</Text>
+                  <Spacer x={0.2} />
+                  <FaExternalLinkSquareAlt size={12} />
+                </Link>
+              </Row>
+            </Container>
+          </Row>
         )}
 
-        <Divider hidden />
-        <Container fluid textAlign="right">
-          {onBack && (
-            <Button
-              basic
-              icon="chevron left"
-              content="Go back"
-              onClick={onBack}
-            />
-          )}
+        <Spacer y={2} />
+        <Row>
           <Button
-            primary
-            loading={loading}
-            onClick={_onGenerateDashboard}
-            icon
-            labelPosition="right"
-            style={styles.saveBtn}
             disabled={
               (!formVisible && !selectedConnection)
               || !connection.website
               || (!selectedCharts || selectedCharts.length < 1)
+              || loading
             }
+            onClick={_onGenerateDashboard}
+            auto
           >
-            <Icon name="magic" />
-            Create the charts
+            {loading && <Loading type="points" color="currentColor" />}
+            {!loading && "Create the charts"}
           </Button>
-        </Container>
-      </Segment>
+        </Row>
+      </Container>
     </div>
   );
 }
@@ -392,7 +457,6 @@ const styles = {
 
 SimpleAnalyticsTemplate.defaultProps = {
   addError: null,
-  onBack: null,
 };
 
 SimpleAnalyticsTemplate.propTypes = {
@@ -401,7 +465,6 @@ SimpleAnalyticsTemplate.propTypes = {
   onComplete: PropTypes.func.isRequired,
   connections: PropTypes.array.isRequired,
   addError: PropTypes.bool,
-  onBack: PropTypes.func,
 };
 
 export default SimpleAnalyticsTemplate;
