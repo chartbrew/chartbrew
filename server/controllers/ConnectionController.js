@@ -5,6 +5,8 @@ const querystring = require("querystring");
 const moment = require("moment");
 const _ = require("lodash");
 
+const { ObjectId } = mongoose.Types;
+
 const db = require("../models/models");
 const ProjectController = require("./ProjectController");
 const externalDbConnection = require("../modules/externalDbConnection");
@@ -455,11 +457,11 @@ class ConnectionController {
         return mongoConnection.asPromise();
       })
       .then(() => {
-        return Function(`'use strict';return (mongoConnection) => mongoConnection.${formattedQuery}.toArray()`)()(mongoConnection); // eslint-disable-line
+        return Function(`'use strict';return (mongoConnection, ObjectId) => mongoConnection.${formattedQuery}.toArray()`)()(mongoConnection, ObjectId); // eslint-disable-line
       })
       // if array fails, check if it works with object (for example .findOne() return object)
       .catch(() => {
-        return Function(`'use strict';return (mongoConnection) => mongoConnection.${formattedQuery}`)()(mongoConnection); // eslint-disable-line
+        return Function(`'use strict';return (mongoConnection, ObjectId) => mongoConnection.${formattedQuery}`)()(mongoConnection, ObjectId); // eslint-disable-line
       })
       .then((data) => {
         // cache the data for later use
