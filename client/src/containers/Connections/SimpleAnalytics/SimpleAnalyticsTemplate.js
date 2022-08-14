@@ -278,8 +278,8 @@ function SimpleAnalyticsTemplate(props) {
                 label="Enter your Simple Analytics API key (if the website is private)."
                 placeholder="sa_api_key_*"
                 value={connection.apiKey || ""}
-                onChange={(e, data) => {
-                  setConnection({ ...connection, apiKey: data.value });
+                onChange={(e) => {
+                  setConnection({ ...connection, apiKey: e.target.value });
                 }}
                 bordered
                 fullWidth

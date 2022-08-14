@@ -253,8 +253,8 @@ function ChartMogulTemplate(props) {
                 label="Enter your ChartMogul API key"
                 placeholder="de2bf2bc6de5266d11ea6b918b674780"
                 value={connection.key || ""}
-                onChange={(e, data) => {
-                  setConnection({ ...connection, key: data.value, token: e.target.value });
+                onChange={(e) => {
+                  setConnection({ ...connection, token: e.target.value });
                 }}
                 helperColor="error"
                 helperText={errors.key}
@@ -265,7 +265,7 @@ function ChartMogulTemplate(props) {
             <Spacer y={0.5} />
             <Row align="center">
               <Link
-                href="https://ghost.chartbrew.com/blog/how-to-create-chartmogul-charts-in-chartbrew/#connecting-to-the-chartmogul-data-source"
+                href="https://chartbrew.com/blog/how-to-create-chartmogul-charts-in-chartbrew/#connecting-to-the-chartmogul-data-source"
                 target="_blank"
                 rel="noreferrer noopener"
                 css={{ color: "$secondary", ai: "center" }}
