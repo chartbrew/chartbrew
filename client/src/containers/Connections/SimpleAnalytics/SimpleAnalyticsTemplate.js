@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button,
-  Checkbox,
-  Container, Divider, Dropdown, Grid, Input, Link, Loading, Row, Spacer, Text,
+  Button, Checkbox, Container, Divider, Dropdown, Grid, Input,
+  Link, Loading, Row, Spacer, Text,
 } from "@nextui-org/react";
 import _ from "lodash";
 import cookie from "react-cookies";
@@ -212,7 +211,7 @@ function SimpleAnalyticsTemplate(props) {
                 <Grid xs={12} sm={6} md={6}>
                   <Input
                     label="Enter your Simple Analytics website"
-                    placeholder="chartbrew.com"
+                    placeholder="example.com"
                     value={(!formVisible && connection.website) || ""}
                     onChange={(e) => {
                       setConnection({ ...connection, website: e.target.value });
@@ -262,7 +261,7 @@ function SimpleAnalyticsTemplate(props) {
             <Row align="center">
               <Input
                 label="Enter your Simple Analytics website"
-                placeholder="chartbrew.com"
+                placeholder="example.com"
                 value={connection.website || ""}
                 onChange={(e) => {
                   setConnection({ ...connection, website: e.target.value });
@@ -299,7 +298,7 @@ function SimpleAnalyticsTemplate(props) {
 
         {configuration && (
           <>
-            <Spacer y={2} />
+            <Spacer y={1} />
             <Row>
               <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
             </Row>
@@ -322,7 +321,7 @@ function SimpleAnalyticsTemplate(props) {
               </Grid.Container>
             </Row>
 
-            <Divider y={1} />
+            <Spacer y={1} />
             <Row>
               <Button
                 bordered
