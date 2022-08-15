@@ -2,9 +2,13 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Segment, Form, Button, Icon, Header, Label, Message,
-  Container, Divider, List, Grid, Checkbox, Dropdown,
-} from "semantic-ui-react";
+  Button, Checkbox, Container, Divider, Dropdown, Grid, Input,
+  Loading, Row, Spacer, Text,
+} from "@nextui-org/react";
+import {
+  ChevronDown, CloseSquare, Plus, TickSquare
+} from "react-iconly";
+import { FaGoogle } from "react-icons/fa";
 import _ from "lodash";
 import cookie from "react-cookies";
 
@@ -20,15 +24,13 @@ import { API_HOST } from "../../../config/settings";
 */
 function GaTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete, connections, onBack,
+    teamId, projectId, addError, onComplete, connections,
     testRequest, selection, addConnection,
   } = props;
 
   const [loading, setLoading] = useState(false);
   const [connection, setConnection] = useState({ name: "Google analytics", type: "googleAnalytics" });
   const [errors, setErrors] = useState({});
-  const [notPublic, setNotPublic] = useState(false);
-  const [notFound, setNotFound] = useState(false);
   const [configuration, setConfiguration] = useState({
     accountId: "",
     propertyId: "",
@@ -38,8 +40,6 @@ function GaTemplate(props) {
   const [availableConnections, setAvailableConnections] = useState([]);
   const [selectedConnection, setSelectedConnection] = useState(null);
   const [formVisible, setFormVisible] = useState(true);
-  const [collectionsLoading, setCollectionsLoading] = useState(false);
-
   const [accountOptions, setAccountOptions] = useState([]);
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [viewOptions, setViewOptions] = useState([]);
@@ -171,8 +171,6 @@ function GaTemplate(props) {
     }
 
     setLoading(true);
-    setNotPublic(false);
-    setNotFound(false);
 
     generateDashboard(projectId, data, "googleAnalytics")
       .then(() => {
@@ -180,9 +178,7 @@ function GaTemplate(props) {
           onComplete();
         }, 2000);
       })
-      .catch((err) => {
-        if (err && err.message === "403") setNotPublic(true);
-        if (err && err.message === "404") setNotFound(true);
+      .catch(() => {
         setLoading(false);
       });
   };
@@ -210,18 +206,16 @@ function GaTemplate(props) {
     setSelectedConnection(value);
 
     // get the accounts
-    setCollectionsLoading(true);
-    const connectionObj = connections.filter((c) => c.id === value)[0];
+    const connectionObj = connections.filter((c) => c.id === parseInt(value, 10))[0];
     return testRequest(projectId, connectionObj)
       .then((data) => {
         return data.json();
       })
       .then((data) => {
         setAccountsData(data);
-        setCollectionsLoading(false);
       })
       .catch(() => {
-        setCollectionsLoading(false);
+        //
       });
   };
 
@@ -336,232 +330,280 @@ function GaTemplate(props) {
       });
   };
 
+  const _getListName = (list, value, isInt) => (
+    list
+      && value
+      && list.find(
+        (c) => c.value === (isInt ? parseInt(value, 10) : value)
+      )?.text
+  );
+
   return (
     <div style={styles.container}>
-      <Segment style={styles.mainSegment}>
-        <Header as="h3" style={{ marginBottom: 20 }}>
-          Configure the template
-        </Header>
+      <Container
+        css={{
+          backgroundColor: "$backgroundContrast",
+          br: "$md",
+          p: 10,
+          "@xs": {
+            p: 20,
+          },
+          "@sm": {
+            p: 20,
+          },
+          "@md": {
+            p: 20,
+          },
+        }}
+        md
+        justify="flex-start"
+      >
+        <Row align="center">
+          <Text h3>Configure the template</Text>
+        </Row>
 
-        <div style={styles.formStyle}>
-          {availableConnections && availableConnections.length > 0 && (
-            <>
-              <Form>
-                <Form.Field disabled={formVisible}>
-                  <label>{"Select an existing connection"}</label>
-                  <Dropdown
-                    options={availableConnections}
-                    value={selectedConnection || ""}
+        {availableConnections && availableConnections.length > 0 && (
+          <>
+            <Row align="center">
+              <Dropdown
+                isDisabled={formVisible}
+              >
+                <Dropdown.Trigger>
+                  <Input
+                    label="Select an existing connection"
+                    value={_getListName(availableConnections, selectedConnection, true)}
                     placeholder="Click to select a connection"
-                    onChange={(e, data) => _onSelectConnection(data.value)}
-                    selection
-                    style={{ marginRight: 20 }}
+                    bordered
+                    fullWidth
+                    contentRight={<ChevronDown />}
                   />
-                </Form.Field>
-                <Form.Field>
-                  {!formVisible && (
-                    <Button
-                      primary
-                      className="tertiary"
-                      icon="plus"
-                      content="Or create a new connection"
-                      onClick={() => setFormVisible(true)}
-                    />
-                  )}
-                  {formVisible && (
-                    <>
-                      <Button
-                        primary
-                        className="tertiary"
-                        content="Use an existing connection instead"
-                        onClick={() => setFormVisible(false)}
-                      />
-                    </>
-                  )}
-                </Form.Field>
+                </Dropdown.Trigger>
+                <Dropdown.Menu
+                  onAction={(key) => _onSelectConnection(key)}
+                  selectedKeys={[selectedConnection]}
+                  selectionMode="single"
+                  disabled={formVisible}
+                >
+                  {availableConnections.map((connection) => (
+                    <Dropdown.Item key={connection.key}>
+                      {connection.text}
+                    </Dropdown.Item>
+                  ))}
+                </Dropdown.Menu>
+              </Dropdown>
+            </Row>
+            <Spacer y={1} />
+            <Row align="center">
+              {!formVisible && (
+                <Button
+                  ghost
+                  icon={<Plus />}
+                  onClick={() => setFormVisible(true)}
+                  auto
+                >
+                  Or create a new connection
+                </Button>
+              )}
+              {formVisible && (
+                <Button
+                  ghost
+                  auto
+                  onClick={() => setFormVisible(false)}
+                >
+                  Use an existing connection instead
+                </Button>
+              )}
+            </Row>
+            <Spacer y={1} />
+            <Row>
+              <Grid.Container gap={1}>
                 {selectedConnection && !formVisible && (
-                  <Form.Group widths={3}>
-                    <Form.Field>
-                      <label>Account</label>
-                      <Dropdown
-                        placeholder="Select an account"
-                        selection
-                        options={accountOptions}
-                        onChange={(e, data) => _onAccountSelected(data.value)}
-                        loading={collectionsLoading}
-                        value={configuration.accountId}
-                      />
-                    </Form.Field>
-                    <Form.Field disabled={!configuration.accountId}>
-                      <label>Property</label>
-                      <Dropdown
-                        placeholder="Select a property"
-                        selection
-                        options={propertyOptions}
-                        onChange={(e, data) => _onPropertySelected(data.value)}
-                        loading={collectionsLoading}
-                        value={configuration.propertyId}
-                      />
-                    </Form.Field>
-                    <Form.Field disabled={!configuration.accountId || !configuration.propertyId}>
-                      <label>View</label>
-                      <Dropdown
-                        placeholder="Select a view"
-                        selection
-                        options={viewOptions}
-                        onChange={(e, data) => _onViewSelected(data.value)}
-                        loading={collectionsLoading}
-                        value={configuration.viewId}
-                      />
-                    </Form.Field>
-                  </Form.Group>
+                  <>
+                    <Grid xs={12} sm={12} md={4}>
+                      <Dropdown>
+                        <Dropdown.Trigger>
+                          <Input
+                            placeholder="Select an account"
+                            label="Account"
+                            value={_getListName(accountOptions, configuration.accountId)}
+                            bordered
+                            fullWidth
+                            contentRight={<ChevronDown />}
+                          />
+                        </Dropdown.Trigger>
+                        <Dropdown.Menu
+                          onAction={(key) => _onAccountSelected(key)}
+                          selectedKeys={[configuration.accountId]}
+                          selectionMode="single"
+                        >
+                          {accountOptions.map((option) => (
+                            <Dropdown.Item key={option.key}>
+                              {option.text}
+                            </Dropdown.Item>
+                          ))}
+                        </Dropdown.Menu>
+                      </Dropdown>
+                    </Grid>
+                    <Grid xs={12} sm={12} md={4}>
+                      <Dropdown isDisabled={!configuration.accountId}>
+                        <Dropdown.Trigger>
+                          <Input
+                            placeholder="Select a property"
+                            label="Property"
+                            value={_getListName(propertyOptions, configuration.propertyId)}
+                            bordered
+                            fullWidth
+                            contentRight={<ChevronDown />}
+                          />
+                        </Dropdown.Trigger>
+                        <Dropdown.Menu
+                          onAction={(key) => _onPropertySelected(key)}
+                          selectedKeys={[configuration.propertyId]}
+                          selectionMode="single"
+                        >
+                          {propertyOptions.map((option) => (
+                            <Dropdown.Item key={option.key}>
+                              {option.text}
+                            </Dropdown.Item>
+                          ))}
+                        </Dropdown.Menu>
+                      </Dropdown>
+                    </Grid>
+                    <Grid xs={12} sm={12} md={4}>
+                      <Dropdown isDisabled={!configuration.accountId || !configuration.propertyId}>
+                        <Dropdown.Trigger>
+                          <Input
+                            placeholder="Select a view"
+                            label="View"
+                            value={_getListName(viewOptions, configuration.viewId)}
+                            bordered
+                            fullWidth
+                            contentRight={<ChevronDown />}
+                          />
+                        </Dropdown.Trigger>
+                        <Dropdown.Menu
+                          onAction={(key) => _onViewSelected(key)}
+                          selectedKeys={[configuration.viewId]}
+                          selectionMode="single"
+                        >
+                          {viewOptions.map((option) => (
+                            <Dropdown.Item key={option.key}>
+                              {option.text}
+                            </Dropdown.Item>
+                          ))}
+                        </Dropdown.Menu>
+                      </Dropdown>
+                    </Grid>
+                  </>
                 )}
-              </Form>
-            </>
-          )}
+              </Grid.Container>
+            </Row>
+          </>
+        )}
 
-          {formVisible && (
-            <>
-              {availableConnections && availableConnections.length > 0 && <Divider />}
-              <Form>
-                <Form.Field error={!!errors.name} required>
-                  <label>Enter a name for your connection</label>
-                  <Form.Input
-                    placeholder="Google analytics"
-                    value={connection.name || ""}
-                    onChange={(e, data) => {
-                      setConnection({ ...connection, name: data.value });
-                    }}
-                  />
-                  {errors.name
-                    && (
-                      <Label basic color="red" pointing>
-                        {errors.name}
-                      </Label>
-                    )}
-                </Form.Field>
+        {formVisible && (
+          <>
+            {availableConnections && availableConnections.length > 0 && (
+              <Row>
+                <Divider />
+              </Row>
+            )}
+            <Spacer y={1} />
+            <Row align="center">
+              <Input
+                placeholder="Google analytics"
+                label="Enter a name for your connection"
+                value={connection.name || ""}
+                onChange={(e) => {
+                  setConnection({ ...connection, name: e.target.value });
+                }}
+                bordered
+                fullWidth
+                helperColor="error"
+                helperText={errors.name}
+              />
+            </Row>
+            <Spacer y={1} />
+            <Row align="center">
+              <Button
+                color={"secondary"}
+                iconRight={<FaGoogle size={20} />}
+                onClick={_onGoogleAuth}
+                auto
+              >
+                {"Authenticate with Google"}
+              </Button>
+            </Row>
+            {errors.auth && (<Row><p>{errors.auth}</p></Row>)}
+          </>
+        )}
 
-                <Form.Field>
-                  <Button
-                    primary
-                    icon="google"
-                    labelPosition="right"
-                    content="Authenticate with Google"
-                    onClick={_onGoogleAuth}
-                  />
-                  {errors.auth && (<p>{errors.auth}</p>)}
-                </Form.Field>
-              </Form>
-            </>
-          )}
-
-          {configuration && (
-            <>
-              <Divider hidden />
-              <Header size="small">{"Select which charts you want Chartbrew to create for you"}</Header>
-              <Grid columns={2} stackable>
+        {configuration && (
+          <>
+            <Spacer y={1} />
+            <Row>
+              <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
+            </Row>
+            <Spacer y={1} />
+            <Row align="center">
+              <Grid.Container>
                 {configuration.Charts && configuration.Charts.map((chart) => (
-                  <Grid.Column key={chart.tid}>
+                  <Grid key={chart.tid} xs={12} sm={6}>
                     <Checkbox
-                      label={chart.name}
-                      checked={
+                      isSelected={
                         _.indexOf(selectedCharts, chart.tid) > -1
                       }
-                      onClick={() => _onChangeSelectedCharts(chart.tid)}
-                    />
-                  </Grid.Column>
+                      onChange={() => _onChangeSelectedCharts(chart.tid)}
+                      size="sm"
+                    >
+                      {chart.name}
+                    </Checkbox>
+                  </Grid>
                 ))}
-              </Grid>
+              </Grid.Container>
+            </Row>
 
-              <Divider hidden />
+            <Spacer y={1} />
+            <Row>
               <Button
-                icon="check"
-                content="Select all"
-                basic
+                bordered
+                icon={<TickSquare />}
+                auto
                 onClick={_onSelectAll}
-                size="small"
-              />
+                size="sm"
+              >
+                Select all
+              </Button>
+              <Spacer x={0.2} />
               <Button
-                icon="x"
-                content="Deselect all"
-                basic
+                bordered
+                icon={<CloseSquare />}
+                auto
                 onClick={_onDeselectAll}
-                size="small"
-              />
-            </>
-          )}
-        </div>
-
-        {addError
-          && (
-            <Message negative>
-              <Message.Header>{"Server error while trying to save your connection"}</Message.Header>
-              <p>Please try adding your connection again.</p>
-            </Message>
-          )}
-
-        {notPublic && (
-          <Container>
-            <Message negative>
-              <Message.Header>{"Your site appears to be set to private"}</Message.Header>
-              <div>
-                <p>{"In order to be able to get the stats from Simple Analytics, please do one of the following:"}</p>
-                <List bulleted>
-                  <List.Item>
-                    {"Enter your Simple Analytics API key in the field above. "}
-                    <a href="https://simpleanalytics.com/account#api" target="_blank" rel="noreferrer">
-                      {"Click here to find your API key. "}
-                      <Icon name="external" />
-                    </a>
-                  </List.Item>
-                  <List.Item>
-                    {"Alternatively, "}
-                    <a href={`https://simpleanalytics.com/${connection.website}/settings#visibility`} target="_blank" rel="noreferrer">
-                      {"make your site stats public here. "}
-                      <Icon name="external" />
-                    </a>
-                  </List.Item>
-                </List>
-              </div>
-            </Message>
-          </Container>
+                size="sm"
+              >
+                Deselect all
+              </Button>
+            </Row>
+          </>
         )}
 
-        {notFound && (
-          <Container>
-            <Message negative>
-              <Message.Header>{"Your site could not be found"}</Message.Header>
-              <div>
-                <p>{"Make sure your website is spelt correctly and that it is registered with Simple Analytics."}</p>
-                <p>
-                  {"You can check if it exists here: "}
-                  <a href={`https://simpleanalytics.com/${connection.website}`} target="_blank" rel="noreferrer">
-                    {`https://simpleanalytics.com/${connection.website} `}
-                    <Icon name="external" />
-                  </a>
-                </p>
-              </div>
-            </Message>
-          </Container>
+        {addError && (
+          <Row>
+            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+              <Row>
+                <Text h5>{"Server error while trying to save your connection"}</Text>
+              </Row>
+              <Row>
+                <Text>Please try again</Text>
+              </Row>
+            </Container>
+          </Row>
         )}
 
-        <Divider hidden />
-        <Container fluid textAlign="right">
-          {onBack && (
-            <Button
-              basic
-              icon="chevron left"
-              content="Go back"
-              onClick={onBack}
-            />
-          )}
+        <Spacer y={2} />
+        <Row>
           <Button
-            primary
-            loading={loading}
-            onClick={_onGenerateDashboard}
-            icon
-            labelPosition="right"
-            style={styles.saveBtn}
             disabled={
               (!formVisible && !selectedConnection)
               || !configuration.accountId
@@ -569,12 +611,14 @@ function GaTemplate(props) {
               || !configuration.viewId
               || (!selectedCharts || selectedCharts.length < 1)
             }
+            onClick={_onGenerateDashboard}
+            auto
           >
-            <Icon name="magic" />
-            Create the charts
+            {loading && <Loading type="points" color="currentColor" />}
+            {!loading && "Create the charts"}
           </Button>
-        </Container>
-      </Segment>
+        </Row>
+      </Container>
     </div>
   );
 }
@@ -596,7 +640,6 @@ const styles = {
 
 GaTemplate.defaultProps = {
   addError: null,
-  onBack: null,
   selection: -1,
 };
 
@@ -606,7 +649,6 @@ GaTemplate.propTypes = {
   onComplete: PropTypes.func.isRequired,
   connections: PropTypes.array.isRequired,
   addError: PropTypes.bool,
-  onBack: PropTypes.func,
   selection: PropTypes.number,
   testRequest: PropTypes.func.isRequired,
   addConnection: PropTypes.func.isRequired,
