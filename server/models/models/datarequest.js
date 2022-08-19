@@ -86,7 +86,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
     },
     conditions: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT("long"),
       set(val) {
         return this.setDataValue("conditions", JSON.stringify(val));
       },
