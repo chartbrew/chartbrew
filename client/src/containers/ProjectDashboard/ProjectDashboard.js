@@ -527,7 +527,7 @@ const styles = {
     flex: 1,
     padding: mobile ? 0 : 10,
     paddingTop: 10,
-    paddingLeft: mobile ? 0 : 20,
+    paddingLeft: mobile ? 0 : 10,
   }),
   actionBar: {
     padding: 10,
