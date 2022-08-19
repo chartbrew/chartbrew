@@ -516,7 +516,7 @@ function Connections(props) {
                       <Card.Footer>
                         <Row wrap="wrap" justify="center" align="center">
                           <Text h4>
-                            API
+                            Plausible Analytics
                           </Text>
                         </Row>
                       </Card.Footer>
