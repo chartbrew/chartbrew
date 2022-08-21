@@ -81,12 +81,10 @@ function ChartDescription(props) {
         "@md": {
           p: 20,
         },
-        mt: 50,
-        mb: 50,
       }}
       md
     >
-      <Row align="center" wrap="wrap" gap={1}>
+      <Row align="center" wrap="wrap" gap={1} css={{ marginLeft: 0 }}>
         <Link
           css={{
             background: selectedMenu === "emptyChart" ? "$background" : "$backgroundContrast",

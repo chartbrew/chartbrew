@@ -171,23 +171,22 @@ function ProjectNavigation(props) {
           && (
             <Row justify="center" align="center">
               <Link to={`/${teamId}/${projectId}/chart`}>
-                <LinkNext color="primary">
-                  {menuSize === "small"
-                    && (
-                      <Tooltip content="Create a new chart" placement="right">
-                        <Avatar icon={<Plus size="large" />} squared />
-                      </Tooltip>
-                    )}
-                  {menuSize === "large" && (
-                    <Button
-                      iconRight={<Plus />}
-                      auto
-                      color="primary"
-                    >
-                      Create a chart
-                    </Button>
-                  )}
-                </LinkNext>
+                {menuSize === "small" && (
+                  <Tooltip content="Create a new chart" placement="right">
+                    <LinkNext color="primary">
+                      <Avatar icon={<Plus size="large" />} squared />
+                    </LinkNext>
+                  </Tooltip>
+                )}
+                {menuSize === "large" && (
+                  <Button
+                    iconRight={<Plus />}
+                    auto
+                    color="primary"
+                  >
+                    Create a chart
+                  </Button>
+                )}
               </Link>
             </Row>
           )}
