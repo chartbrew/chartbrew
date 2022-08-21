@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Form, Segment, Checkbox, Grid, Modal, Button,
-  Accordion, Icon, Dropdown, Label, Header, TransitionablePortal, Popup, Input, Divider,
-} from "semantic-ui-react";
+  Button, Link,
+  Checkbox,
+  Container, Divider, Grid, Row, Spacer, Text, Input, Dropdown, Tooltip, Modal,
+} from "@nextui-org/react";
+import {
+  Calendar, ChevronDown, TickSquare
+} from "react-iconly";
 import moment from "moment";
 import { DateRangePicker } from "react-date-range";
 import { enGB } from "date-fns/locale";
@@ -13,6 +17,7 @@ import "react-date-range/dist/theme/default.css"; // theme css file
 
 import { secondary, primary } from "../../../config/colors";
 import { defaultStaticRanges, defaultInputRanges } from "../../../config/dateRanges";
+import Badge from "../../../components/Badge";
 
 const xLabelOptions = [{
   key: "default",
@@ -40,6 +45,23 @@ const xLabelOptions = [{
   text: "Custom",
 }];
 
+const timeIntervalOptions = [{
+  text: "Hourly",
+  value: "hour",
+}, {
+  text: "Daily",
+  value: "day",
+}, {
+  text: "Weekly",
+  value: "week",
+}, {
+  text: "Monthly",
+  value: "month",
+}, {
+  text: "Yearly",
+  value: "year",
+}];
+
 function ChartSettings(props) {
   const [initSelectionRange] = useState({
     startDate: moment().startOf("month").toDate(),
@@ -47,7 +69,6 @@ function ChartSettings(props) {
     key: "selection",
   });
   const [dateRangeModal, setDateRangeModal] = useState(false);
-  const [activeOption, setActiveOption] = useState(false);
   const [dateRange, setDateRange] = useState(initSelectionRange);
   const [labelStartDate, setLabelStartDate] = useState("");
   const [labelEndDate, setLabelEndDate] = useState("");
@@ -161,14 +182,6 @@ function ChartSettings(props) {
     onComplete();
   };
 
-  const _onChangeActiveOption = (option) => {
-    if (activeOption === option) {
-      setActiveOption(false);
-    } else {
-      setActiveOption(option);
-    }
-  };
-
   const _onChangeTicks = (value) => {
     onChange({ xLabelTicks: value });
   };
@@ -182,311 +195,363 @@ function ChartSettings(props) {
   };
 
   return (
-    <div style={styles.container}>
-      <Header dividing size="small">Chart Settings</Header>
-      <Accordion fluid styled>
-        <Accordion.Title
-          active={activeOption === "daterange"}
-          onClick={() => _onChangeActiveOption("daterange")}
-              >
-          <Icon name="dropdown" />
-          Global date settings
-          {startDate && endDate && activeOption !== "daterange" && (
-            <span>
-              {" "}
-              <Label size="small" color="olive">{labelStartDate}</Label>
-              {" - "}
-              <Label size="small" color="olive">{labelEndDate}</Label>
-            </span>
-          )}
-        </Accordion.Title>
-        <Accordion.Content active={activeOption === "daterange"}>
-          <Form>
-            <Form.Group widths="equal" style={{ paddingBottom: 20 }}>
-              <Form.Field>
-                <Button
-                  content="Date filter"
-                  primary
-                  icon="calendar"
-                  labelPosition="right"
-                  onClick={() => _onViewRange(true)}
-                />
-                <Checkbox
-                  checked={startDate != null || endDate != null}
-                  onChange={(e, data) => _onActivateRange(data.checked)}
-                  style={{ ...styles.accordionToggle, ...styles.inlineCheckbox }}
-                />
-                <div style={{ marginTop: 5 }}>
-                  {startDate && (
-                  <Label
-                    color="olive"
-                    as="a"
-                    onClick={() => setDateRangeModal(true)}
+    <Container
+      css={{
+        backgroundColor: "$backgroundContrast",
+        br: "$md",
+        p: 10,
+        "@xs": {
+          p: 20,
+        },
+        "@sm": {
+          p: 20,
+        },
+        "@md": {
+          p: 20,
+        },
+      }}
+    >
+      <Row>
+        <Text b>Chart Settings</Text>
+      </Row>
+
+      <Spacer y={0.5} />
+      <Divider />
+      <Spacer y={0.5} />
+
+      <Row>
+        <Text b>Global date settings</Text>
+      </Row>
+      <Spacer y={0.5} />
+      <Row>
+        <Grid.Container gap={1}>
+          <Grid xs={12} sm={6} md={6} alignItems="center">
+            <div>
+              <Container css={{ ml: 0, pl: 0 }}>
+                <Row css={{ ml: 0, pl: 0 }} align="center">
+                  <Button
+                    iconRight={<Calendar />}
+                    onClick={() => _onViewRange(true)}
+                    auto
                   >
-                    {labelStartDate}
-                  </Label>
-                  )}
-                  {startDate && (<span> to </span>)}
-                  {endDate && (
-                  <Label
-                    color="olive"
-                    as="a"
-                    onClick={() => setDateRangeModal(true)}
-                  >
-                    {labelEndDate}
-                  </Label>
-                  )}
-                </div>
-              </Form.Field>
-              <Form.Field>
-                <Checkbox
-                  label="Keep the date range updated with current dates"
-                  toggle
-                  checked={currentEndDate}
-                  disabled={!dateRange.endDate}
-                  onChange={() => {
-                    onChange({ currentEndDate: !currentEndDate });
-                  }}
-                  style={styles.accordionToggle}
-                />
-              </Form.Field>
-            </Form.Group>
-            <Form.Group widths="equal">
-              <Form.Field>
-                <label>Time interval</label>
-                <Dropdown
-                  placeholder="Select the frequency"
-                  selection
-                  options={[{
-                    text: "Hourly",
-                    value: "hour",
-                  }, {
-                    text: "Daily",
-                    value: "day",
-                  }, {
-                    text: "Weekly",
-                    value: "week",
-                  }, {
-                    text: "Monthly",
-                    value: "month",
-                  }, {
-                    text: "Yearly",
-                    value: "year",
-                  }]}
-                  value={timeInterval || "day"}
-                  onChange={(e, data) => onChange({ timeInterval: data.value })}
-                />
-              </Form.Field>
-              <Form.Field>
-                <label>Show zeros</label>
-                <Checkbox
-                  label="Allow zero dates"
-                  toggle
-                  checked={includeZeros}
-                  onChange={() => onChange({ includeZeros: !includeZeros })}
-                />
-              </Form.Field>
-            </Form.Group>
-          </Form>
-        </Accordion.Content>
-        <Accordion.Title
-          active={activeOption === "dataset"}
-          onClick={() => _onChangeActiveOption("dataset")}
-        >
-          <Icon name="dropdown" />
-          Appearance settings
-        </Accordion.Title>
-        <Accordion.Content active={activeOption === "dataset"}>
-          <Form>
-            <Form.Group widths="equal">
-              {type === "line"
-                && (
-                  <Form.Field>
+                    Date filter
+                  </Button>
+                  <Spacer x={0.5} />
+                  <Tooltip content="Toggle date filtering">
                     <Checkbox
-                      label="Data points"
-                      toggle
-                      checked={pointRadius > 0}
-                      onChange={() => {
-                        if (pointRadius > 0) {
-                          _onAddPoints(0);
-                        } else {
-                          _onAddPoints(3);
-                        }
-                      }}
-                      style={styles.accordionToggle}
+                      isSelected={startDate != null || endDate != null}
+                      onChange={(checked) => _onActivateRange(checked)}
                     />
-                  </Form.Field>
+                  </Tooltip>
+                </Row>
+              </Container>
+              <div style={{ marginTop: 5 }}>
+                {startDate && (
+                  <Badge type="secondary">
+                    <Link onClick={() => setDateRangeModal(true)}>
+                      {labelStartDate}
+                    </Link>
+                  </Badge>
                 )}
-              {type === "bar" && (
-                <Form.Field>
-                  <Checkbox
-                    label="Stack datasets"
-                    toggle
-                    checked={stacked}
-                    onChange={_onChangeStacked}
-                    style={styles.accordionToggle}
-                  />
-                </Form.Field>
-              )}
-              <Form.Field>
-                <Checkbox
-                  label="Legend"
-                  toggle
-                  checked={displayLegend}
-                  onChange={() => onChange({ displayLegend: !displayLegend })}
-                  style={styles.accordionToggle}
-                />
-              </Form.Field>
-            </Form.Group>
-
-            <Form.Field>
-              <Divider />
-              <label>Max Y Axis value</label>
-              <Form.Input
-                placeholder="Enter a number"
-                value={max}
-                onChange={(e, data) => setMax(data.value)}
-                action
-              >
-                <input />
-                <Button
-                  disabled={!max || (max === maxValue)}
-                  onClick={() => onChange({ maxValue: max })}
-                  icon="checkmark"
-                  color="green"
-                />
-                <Popup
-                  trigger={(
-                    <Button
-                      onClick={() => onChange({ maxValue: null })}
-                      icon="x"
-                    />
-                  )}
-                  content="Clear value"
-                />
-              </Form.Input>
-            </Form.Field>
-            <Form.Field>
-              <label>Min Y Axis value</label>
-              <Form.Input
-                placeholder="Enter a number"
-                value={min}
-                onChange={(e, data) => setMin(data.value)}
-                action
-              >
-                <input />
-                <Button
-                  disabled={!min || (min === minValue)}
-                  onClick={() => onChange({ minValue: min })}
-                  icon="checkmark"
-                  color="green"
-                />
-                <Popup
-                  trigger={(
-                    <Button
-                      onClick={() => onChange({ minValue: null })}
-                      icon="x"
-                    />
-                  )}
-                  content="Clear value"
-                />
-              </Form.Input>
-            </Form.Field>
-            <Form.Field>
-              <Divider />
-              <label>Number of labels on the X Axis</label>
-              <Dropdown
-                selection
-                options={xLabelOptions}
-                value={ticksSelection}
-                onChange={(e, data) => _onChangeTicks(data.value)}
+                {startDate && (<span> to </span>)}
+                {endDate && (
+                  <Badge type="secondary">
+                    <Link onClick={() => setDateRangeModal(true)}>
+                      {labelEndDate}
+                    </Link>
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </Grid>
+          <Grid xs={12} sm={6} md={6} alignItems="flex-start">
+            <Checkbox
+              isSelected={currentEndDate}
+              isDisabled={!dateRange.endDate}
+              onChange={() => {
+                onChange({ currentEndDate: !currentEndDate });
+              }}
+              size="sm"
+            >
+              Make the date range relative to present
+            </Checkbox>
+          </Grid>
+        </Grid.Container>
+      </Row>
+      <Spacer y={0.5} />
+      <Grid.Container gap={1}>
+        <Grid xs={12} sm={6} md={6}>
+          <Dropdown>
+            <Dropdown.Trigger>
+              <Input
+                label="Time interval"
+                placeholder="Select the frequency"
+                value={
+                  timeInterval
+                  && timeIntervalOptions.find((option) => option.value === timeInterval).text
+                }
+                bordered
+                contentRight={<ChevronDown />}
               />
-            </Form.Field>
-            {ticksSelection === "custom" && (
-              <Form.Field>
-                <label>Enter the number of labels</label>
-                <Input
-                  placeholder="Enter a number"
-                  value={ticksNumber}
-                  onChange={(e, data) => _onChangeTickCustomValue(data.value)}
-                  type="number"
-                  action={{
-                    color: "green",
-                    icon: "checkmark",
-                    content: "Save",
-                    onClick: () => _onConfirmTicksNumber(),
-                  }}
-                />
-              </Form.Field>
-            )}
-          </Form>
-        </Accordion.Content>
-      </Accordion>
+            </Dropdown.Trigger>
+            <Dropdown.Menu
+              onAction={(key) => onChange({ timeInterval: key })}
+              selectedKeys={[timeInterval]}
+              selectionMode="single"
+            >
+              {timeIntervalOptions.map((option) => (
+                <Dropdown.Item key={option.value}>
+                  {option.text}
+                </Dropdown.Item>
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
+        </Grid>
+        <Grid xs={12} sm={6} md={6} alignItems="center">
+          <Checkbox
+            isSelected={includeZeros}
+            onChange={() => onChange({ includeZeros: !includeZeros })}
+            size="sm"
+          >
+            Allow zero values
+          </Checkbox>
+        </Grid>
+      </Grid.Container>
 
-      <TransitionablePortal open={dateRangeModal}>
-        <Modal
-          size="small"
-          basic
-          open={dateRangeModal}
-          onClose={() => setDateRangeModal(false)}
-        >
-          <Modal.Header>Set a custom date range for your chart</Modal.Header>
-          <Modal.Content>
-            <Grid centered padded>
-              <Segment textAlign="center" compact>
-                <DateRangePicker
-                  locale={enGB}
-                  direction="horizontal"
-                  rangeColors={[secondary, primary]}
-                  ranges={[
-                    dateRange.startDate && dateRange.endDate ? {
-                      startDate: moment(dateRange.startDate).toDate(),
-                      endDate: moment(dateRange.endDate).toDate(),
-                      key: "selection",
-                    } : initSelectionRange
-                  ]}
-                  onChange={_onChangeDateRange}
-                  staticRanges={defaultStaticRanges}
-                  inputRanges={defaultInputRanges}
-                />
-              </Segment>
-            </Grid>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              basic
-              inverted
-              icon="x"
-              labelPosition="right"
-              content="Cancel"
-              onClick={() => setDateRangeModal(false)}
+      <Spacer y={0.5} />
+      <Divider />
+      <Spacer y={0.5} />
+
+      <Grid.Container gap={1}>
+        <Grid xs={12} sm={6} md={6}>
+          {type === "line"
+            && (
+              <Checkbox
+                isSelected={pointRadius > 0}
+                onChange={() => {
+                  if (pointRadius > 0) {
+                    _onAddPoints(0);
+                  } else {
+                    _onAddPoints(3);
+                  }
+                }}
+                size="sm"
+              >
+                Data points
+              </Checkbox>
+            )}
+          {type === "bar" && (
+            <Checkbox
+              isSelected={stacked}
+              onChange={_onChangeStacked}
+              size="sm"
+            >
+              Stack datasets
+            </Checkbox>
+          )}
+        </Grid>
+        <Grid xs={12} sm={6} md={6}>
+          <Checkbox
+            isSelected={displayLegend}
+            onChange={() => onChange({ displayLegend: !displayLegend })}
+            size="sm"
+          >
+            Legend
+          </Checkbox>
+        </Grid>
+      </Grid.Container>
+
+      <Spacer y={0.5} />
+      <Divider />
+      <Spacer y={0.5} />
+
+      <Grid.Container gap={1}>
+        <Grid xs={12} sm={6} md={6}>
+          <Input
+            label="Max Y Axis value"
+            placeholder="Enter a number"
+            type="number"
+            value={max}
+            onChange={(e) => setMax(e.target.value)}
+            bordered
+            fullWidth
+          />
+        </Grid>
+        <Grid xs={12} sm={6} md={6} justify="center" alignItems="flex-end">
+          {max && (
+            <>
+              <Button
+                disabled={!max || (max === maxValue)}
+                onClick={() => onChange({ maxValue: max })}
+                color="success"
+                flat
+                auto
+              >
+                Save
+              </Button>
+              <Spacer x={0.1} />
+              <Button
+                flat
+                color="error"
+                onClick={() => {
+                  onChange({ maxValue: null });
+                  setMax("");
+                }}
+                auto
+              >
+                Clear
+              </Button>
+            </>
+          )}
+        </Grid>
+        <Grid xs={12} sm={6} md={6}>
+          <Input
+            label="Min Y Axis value"
+            placeholder="Enter a number"
+            type="number"
+            value={min}
+            onChange={(e) => setMin(e.target.value)}
+            bordered
+            fullWidth
+          />
+        </Grid>
+        <Grid xs={12} sm={6} md={6} justify="center" alignItems="flex-end">
+          {min && (
+            <>
+              <Button
+                disabled={!min || (min === minValue)}
+                onClick={() => onChange({ minValue: min })}
+                color="success"
+                auto
+                flat
+              >
+                Save
+              </Button>
+              <Spacer x={0.1} />
+              <Button
+                flat
+                color="error"
+                onClick={() => {
+                  onChange({ minValue: null });
+                  setMin("");
+                }}
+                auto
+              >
+                Clear
+              </Button>
+            </>
+          )}
+        </Grid>
+      </Grid.Container>
+
+      <Spacer y={0.5} />
+      <Divider />
+      <Spacer y={0.5} />
+
+      <Grid.Container gap={1}>
+        <Grid xs={12} sm={12} md={12}>
+          <Dropdown>
+            <Dropdown.Trigger>
+              <Input
+                label="Number of labels on the X Axis"
+                placeholder="Select the number of labels"
+                value={
+                  ticksSelection
+                  && xLabelOptions.find((option) => option.value === ticksSelection).text
+                }
+                bordered
+                fullWidth
+                contentRight={<ChevronDown />}
+              />
+            </Dropdown.Trigger>
+            <Dropdown.Menu
+              onAction={(key) => _onChangeTicks(key)}
+              selectedKeys={[ticksSelection]}
+              selectionMode="single"
+            >
+              {xLabelOptions.map((option) => (
+                <Dropdown.Item key={option.value}>
+                  {option.text}
+                </Dropdown.Item>
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
+        </Grid>
+        {ticksSelection === "custom" && (
+          <Grid xs={12} sm={12} md={12}>
+            <Input
+              label="Enter the number of labels"
+              placeholder="Enter a number"
+              value={ticksNumber}
+              onChange={(e) => _onChangeTickCustomValue(e.target.value)}
+              type="number"
+              action={{
+                color: "green",
+                icon: "checkmark",
+                content: "Save",
+                onClick: () => _onConfirmTicksNumber(),
+              }}
+              contentRight={(
+                <Button
+                  flat
+                  color="success"
+                  onClick={() => _onConfirmTicksNumber()}
+                  auto
+                >
+                  Save
+                </Button>
+              )}
             />
-            <Button
-              primary
-              icon="checkmark"
-              labelPosition="right"
-              content="Apply date filter"
-              onClick={_onComplete}
-            />
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
-    </div>
+          </Grid>
+        )}
+      </Grid.Container>
+
+      <Modal open={dateRangeModal} onClose={() => setDateRangeModal(false)} width="800px">
+        <Modal.Header>
+          <Text h3>Set a custom date range for your chart</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <Container>
+            <Row justify="center">
+              <DateRangePicker
+                locale={enGB}
+                direction="horizontal"
+                rangeColors={[secondary, primary]}
+                ranges={[
+                  dateRange.startDate && dateRange.endDate ? {
+                    startDate: moment(dateRange.startDate).toDate(),
+                    endDate: moment(dateRange.endDate).toDate(),
+                    key: "selection",
+                  } : initSelectionRange
+                ]}
+                onChange={_onChangeDateRange}
+                staticRanges={defaultStaticRanges}
+                inputRanges={defaultInputRanges}
+              />
+            </Row>
+          </Container>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            flat
+            color="warning"
+            onClick={() => setDateRangeModal(false)}
+            auto
+          >
+            Cancel
+          </Button>
+          <Button
+            iconRight={<TickSquare />}
+            onClick={_onComplete}
+            auto
+          >
+            Apply date filter
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </Container>
   );
 }
-
-const styles = {
-  container: {
-    flex: 1,
-  },
-  accordionToggle: {
-    marginTop: 0,
-  },
-  inlineCheckbox: {
-    verticalAlign: "middle",
-    marginLeft: 10,
-  },
-};
 
 ChartSettings.defaultProps = {
   displayLegend: false,

@@ -450,7 +450,7 @@ function AddChart(props) {
                   </form>
                 )}
               </Row>
-              <Row style={{ flex: 0.4, textAlign: "right" }} className="chart-actions-tut" align="center">
+              <Row style={{ flex: 0.4 }} className="chart-actions-tut" align="center" justify="flex-end">
                 <div style={{ display: "flex" }}>
                   <Switch
                     checked={newChart.draft}
