@@ -667,7 +667,7 @@ const styles = {
   container: (height) => ({
     flex: 1,
     paddingTop: 20,
-    backgroundColor: "white",
+    // backgroundColor: "white",
     minHeight: height,
   }),
   mainContent: {
