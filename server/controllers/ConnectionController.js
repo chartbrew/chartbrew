@@ -211,12 +211,20 @@ class ConnectionController {
         return connection.db.listCollections().toArray();
       })
       .then((collections) => {
+        // Close the connection
+        mongoConnection.close();
+
         return Promise.resolve({
           success: true,
           collections
         });
       })
-      .catch((err) => Promise.reject(err.message || err));
+      .catch((err) => {
+        // Close the connection
+        mongoConnection.close();
+
+        return Promise.reject(err.message || err);
+      });
   }
 
   testMysql(data) {
@@ -283,6 +291,7 @@ class ConnectionController {
 
   testConnection(id) {
     let gConnection;
+    let mongoConnection;
     return db.Connection.findByPk(id)
       .then((connection) => {
         gConnection = connection;
@@ -308,7 +317,7 @@ class ConnectionController {
       .then((response) => {
         switch (gConnection.type) {
           case "mongodb": {
-            const mongoConnection = mongoose.createConnection(response);
+            mongoConnection = mongoose.createConnection(response);
             return mongoConnection.asPromise();
           }
           case "api":
@@ -331,9 +340,19 @@ class ConnectionController {
         }
       })
       .then(() => {
+        // close the mongodb connection if it exists
+        if (mongoConnection) {
+          mongoConnection.close();
+        }
+
         return new Promise((resolve) => resolve({ success: true }));
       })
       .catch((err) => {
+        // close the mongodb connection if it exists
+        if (mongoConnection) {
+          mongoConnection.close();
+        }
+
         return new Promise((resolve, reject) => reject(err));
       });
   }
@@ -470,9 +489,16 @@ class ConnectionController {
           responseData: data,
         };
         drCacheController.create(dataRequest.id, dataToCache);
+
+        // close the mongodb connection
+        mongoConnection.close();
+
         return Promise.resolve(data);
       })
       .catch((error) => {
+        // close the mongodb connection
+        mongoConnection.close();
+
         return new Promise((resolve, reject) => reject(error));
       });
   }
