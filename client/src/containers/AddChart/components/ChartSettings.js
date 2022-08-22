@@ -22,7 +22,7 @@ import Badge from "../../../components/Badge";
 const xLabelOptions = [{
   key: "default",
   value: "default",
-  text: "Default (aimed to improve visibility)",
+  text: "Default",
 }, {
   key: "showAll",
   value: "showAll",

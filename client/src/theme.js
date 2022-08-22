@@ -162,7 +162,7 @@ const darkTheme = {
     gradientShadow: "linear-gradient(112deg, $blue600 -3.59%, $blue600 -20.3%, $orange800 80.46%)",
     link: "#5E1DAD",
     headerBackground: darkTransparent(0.8),
-    background: "#000",
+    background: "#020d14",
     backgroundContrast: dark,
   },
   space: {},
