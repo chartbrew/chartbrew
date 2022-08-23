@@ -534,7 +534,21 @@ function AddChart(props) {
         </Grid>
 
         <Grid xs={12} sm={6} md={5} className="add-dataset-tut">
-          <Container>
+          <Container
+            css={{
+              backgroundColor: "$backgroundContrast",
+              br: "$md",
+              "@xs": {
+                p: 20,
+              },
+              "@sm": {
+                p: 20,
+              },
+              "@md": {
+                p: 20,
+              },
+            }}
+          >
             <Row justify="space-between">
               <Text b>
                 Datasets

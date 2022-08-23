@@ -46,19 +46,19 @@ const xLabelOptions = [{
 }];
 
 const timeIntervalOptions = [{
-  text: "Hourly",
+  text: "Hourly interval",
   value: "hour",
 }, {
-  text: "Daily",
+  text: "Daily interval",
   value: "day",
 }, {
-  text: "Weekly",
+  text: "Weekly interval",
   value: "week",
 }, {
-  text: "Monthly",
+  text: "Monthly interval",
   value: "month",
 }, {
-  text: "Yearly",
+  text: "Yearly interval",
   value: "year",
 }];
 
@@ -284,7 +284,6 @@ function ChartSettings(props) {
           <Dropdown>
             <Dropdown.Trigger>
               <Input
-                label="Time interval"
                 placeholder="Select the frequency"
                 value={
                   timeInterval

@@ -220,7 +220,7 @@ function ChartPreview(props) {
                 content={"Get the average value of all the points on the chart"}
               >
                 <Button
-                  ghost={chart.type !== "avg"}
+                  bordered={chart.type !== "avg"}
                   color={chart.type === "avg" ? "secondary" : "primary"}
                   onClick={() => _onChangeChartType({ type: "avg" })}
                   auto
@@ -234,7 +234,7 @@ function ChartPreview(props) {
                 content={chart.subType.indexOf("AddTimeseries") > -1 ? "Turn accumulation off" : "Accumulate datasets"}
               >
                 <Button
-                  ghost={chart.subType.indexOf("AddTimeseries") === -1}
+                  bordered={chart.subType.indexOf("AddTimeseries") === -1}
                   color={chart.subType.indexOf("AddTimeseries") > -1 ? "secondary" : "primary"}
                   onClick={_toggleAccumulation}
                   disabled={chart.type !== "line" && chart.type !== "bar" && chart.type !== "avg"}
@@ -248,7 +248,7 @@ function ChartPreview(props) {
 
               <Tooltip content="Display data in a table view">
                 <Button
-                  ghost={chart.type !== "table"}
+                  bordered={chart.type !== "table"}
                   onClick={() => _onChangeChartType({ type: "table" })}
                   auto
                   size="sm"
@@ -260,7 +260,7 @@ function ChartPreview(props) {
 
               <Tooltip content="Display as line chart">
                 <Button
-                  ghost={chart.type !== "line"}
+                  bordered={chart.type !== "line"}
                   onClick={() => _onChangeChartType({ type: "line" })}
                   auto
                   size="sm"
@@ -271,7 +271,7 @@ function ChartPreview(props) {
               <Spacer x={0.1} />
               <Tooltip content="Display as bar chart">
                 <Button
-                  ghost={chart.type !== "bar"}
+                  bordered={chart.type !== "bar"}
                   onClick={() => _onChangeChartType({ type: "bar" })}
                   auto
                   size="sm"
@@ -283,7 +283,7 @@ function ChartPreview(props) {
 
               <Tooltip content="Display as pie chart">
                 <Button
-                  ghost={chart.type !== "pie"}
+                  bordered={chart.type !== "pie"}
                   onClick={() => _onChangeChartType({ type: "pie" })}
                   auto
                   size="sm"
@@ -294,7 +294,7 @@ function ChartPreview(props) {
               <Spacer x={0.1} />
               <Tooltip content="Display as radar chart">
                 <Button
-                  ghost={chart.type !== "radar"}
+                  bordered={chart.type !== "radar"}
                   onClick={() => _onChangeChartType({ type: "radar" })}
                   auto
                   size="sm"
@@ -305,7 +305,7 @@ function ChartPreview(props) {
               <Spacer x={0.1} />
               <Tooltip content="Display as doughnut chart">
                 <Button
-                  ghost={chart.type !== "doughnut"}
+                  bordered={chart.type !== "doughnut"}
                   onClick={() => _onChangeChartType({ type: "doughnut" })}
                   auto
                   size="sm"
@@ -316,7 +316,7 @@ function ChartPreview(props) {
               <Spacer x={0.1} />
               <Tooltip content="Display as polar chart">
                 <Button
-                  ghost={chart.type !== "polar"}
+                  bordered={chart.type !== "polar"}
                   onClick={() => _onChangeChartType({ type: "polar" })}
                   auto
                   size="sm"
@@ -361,19 +361,13 @@ function ChartPreview(props) {
       {chart && chart.type && chart.Datasets && chart.Datasets.length > 0 && (
         <Container style={styles.topBuffer}>
           <Row align="center" justify="center">
-            <Dropdown
-              options={chartModes}
-              selection
-              value={chart.mode}
-              onChange={_onChangeMode}
-              style={styles.modeSwitcher}
-              disabled={chart.type !== "line" && chart.type !== "bar"}
-            >
+            <Dropdown isDisabled={chart.type !== "line" && chart.type !== "bar"}>
               <Dropdown.Trigger>
                 <Input
                   value={chart.mode && chartModes.find((mode) => mode.value === chart.mode).text}
                   bordered
                   contentRight={<ChevronDown />}
+                  disabled={chart.type !== "line" && chart.type !== "bar"}
                 />
               </Dropdown.Trigger>
               <Dropdown.Menu

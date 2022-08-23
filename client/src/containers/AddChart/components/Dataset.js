@@ -3,11 +3,12 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import _ from "lodash";
-import {
-  Popup, Icon, Dropdown, Button, Grid,
-  Form, Input, Modal, Header, Menu, TransitionablePortal,
-} from "semantic-ui-react";
 import moment from "moment";
+import {
+  Grid, Tooltip, Button, Spacer, Dropdown, Input, Loading, Link, Container, Text, Modal, Image, Row,
+  Divider,
+} from "@nextui-org/react";
+import { ArrowDownSquare, ChevronDown } from "react-iconly";
 
 import { chartColors, primary } from "../../../config/colors";
 import connectionImages from "../../../config/connectionImages";
@@ -36,7 +37,7 @@ function replaceEmptyColors(colors) {
 
 function Dataset(props) {
   const {
-    dataset, connections, onUpdate, onDelete, chart, match, onRefresh,
+    dataset, connections, onUpdate, onDelete, chart, onRefresh,
     changeTutorial, onRefreshPreview, loading,
   } = props;
 
@@ -160,8 +161,8 @@ function Dataset(props) {
     }
   }, [dataItems]);
 
-  const _onChangeConnection = (e, data) => {
-    onUpdate({ connection_id: data.value });
+  const _onChangeConnection = (key) => {
+    onUpdate({ connection_id: key });
   };
 
   const _openConfigModal = () => {
@@ -194,8 +195,8 @@ function Dataset(props) {
       });
   };
 
-  const _onChangeLegend = (e, data) => {
-    if (data.value && e.target.value.length > 0) {
+  const _onChangeLegend = (e) => {
+    if (e.target.value && e.target.value.length > 0) {
       setNewDataset({ ...newDataset, legend: e.target.value });
     }
   };
@@ -213,10 +214,6 @@ function Dataset(props) {
     return activeConnection;
   };
 
-  const _onManageConnections = () => {
-    return `/${match.params.teamId}/${match.params.projectId}/connections`;
-  };
-
   const _updateColors = (data, forceUpdate) => {
     setNewDataset(data);
     if (forceUpdate) {
@@ -232,120 +229,157 @@ function Dataset(props) {
 
   return (
     <div style={styles.container}>
-      <Grid stackable>
-        <Grid.Row>
-          <Grid.Column>
-            <Form size="small">
-              <Form.Group widths="equal">
-                <Form.Field>
-                  <Input
-                    type="text"
-                    placeholder="Enter the dataset name"
-                    value={newDataset.legend}
-                    onChange={_onChangeLegend}
-                  />
-                </Form.Field>
-                <Form.Field>
-                  <Button
-                    primary={saveRequired}
-                    positive={!saveRequired}
-                    icon
-                    labelPosition="right"
-                    onClick={_onSaveDataset}
-                    disabled={!saveRequired}
-                    size="small"
-                  >
-                    <Icon name={saveRequired ? "save" : "checkmark"} />
-                    {saveRequired ? "Save" : "Saved"}
-                  </Button>
-                  <Popup
-                    trigger={(
-                      <Button
-                        basic
-                        negative
-                        icon
-                        onClick={() => setDeleteModal(true)}
-                        size="small"
-                      >
-                        <Icon name="trash" />
-                      </Button>
-                    )}
-                    content="Remove dataset"
-                    inverted
-                    size="small"
-                  />
-                </Form.Field>
-              </Form.Group>
-              <Form.Group widths="equal" className="dataset-manage-tut">
-                <Form.Field>
-                  <Dropdown
-                    placeholder="Select a connection"
-                    selection
-                    value={newDataset.connection_id}
-                    options={dropdownConfig}
-                    disabled={connections.length < 1}
-                    onChange={_onChangeConnection}
-                    fluid
-                    loading={loading}
-                  />
-                </Form.Field>
-                <Form.Field>
-                  <Button
-                    primary
-                    icon
-                    labelPosition="right"
-                    disabled={!newDataset.connection_id}
-                    onClick={_openConfigModal}
-                    size="small"
-                  >
-                    <Icon name="wifi" />
-                    Get data
-                  </Button>
-                  <Popup
-                    trigger={(
-                      <Button
-                        as="a"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        icon="plug"
-                        href={_onManageConnections()}
-                        size="small"
-                      />
-                    )}
-                    content="Manage connections"
-                    inverted
-                    size="small"
-                    position="top center"
-                  />
-                </Form.Field>
-              </Form.Group>
-            </Form>
-          </Grid.Column>
-        </Grid.Row>
-        <Grid.Row>
-          <Grid.Column>
-            <Menu pointing secondary widths={2}>
-              <Menu.Item
-                active={menuItem === "data"}
-                onClick={() => setMenuItem("data")}
-                color="blue"
+      <Grid.Container gap={1}>
+        <Grid xs={12} sm={6} md={6}>
+          <Input
+            placeholder="Enter the dataset name"
+            value={newDataset.legend}
+            onChange={_onChangeLegend}
+            bordered
+            fullWidth
+          />
+        </Grid>
+        <Grid xs={12} sm={6} md={6}>
+          <Button
+            color={saveRequired ? "primary" : "success"}
+            onClick={_onSaveDataset}
+            disabled={!saveRequired}
+            auto
+          >
+            {saveRequired ? "Save" : "Saved"}
+          </Button>
+          <Spacer x={0.2} />
+          <div style={{ width: 100 }}>
+            <Tooltip content="Remove dataset" color="invert">
+              <Button
+                flat
+                color="error"
+                onClick={() => setDeleteModal(true)}
+                auto
               >
-                {"Chart data"}
-              </Menu.Item>
-              <Menu.Item
-                active={menuItem === "appearance"}
-                onClick={() => setMenuItem("appearance")}
-                color="blue"
-                disabled={chart.type === "table"}
-              >
-                {"Chart colors"}
-              </Menu.Item>
-            </Menu>
-          </Grid.Column>
-        </Grid.Row>
+                {"Remove"}
+              </Button>
+            </Tooltip>
+          </div>
+        </Grid>
+        <Grid xs={12} sm={6} md={6} className="dataset-manage-tut">
+          <Dropdown isDisabled={connections.length < 1}>
+            <Dropdown.Trigger>
+              <Input
+                placeholder="Select a connection"
+                value={
+                  (newDataset.connection_id
+                  && dropdownConfig.length > 0
+                  && dropdownConfig.find(
+                    (c) => c.value === parseInt(newDataset.connection_id, 10)
+                  ).text) || "Select a connection"
+                }
+                disabled={connections.length < 1}
+                fullWidth
+                bordered
+                contentRight={loading ? <Loading type="spinner" /> : <ChevronDown />}
+                contentLeft={
+                  dropdownConfig.length > 0
+                  && newDataset.connection_id
+                  && (
+                    <Image
+                      src={dropdownConfig.find(
+                        (c) => c.value === parseInt(newDataset.connection_id, 10)
+                      )?.image?.src}
+                      width={30}
+                      height={30}
+                      alt="Selected connection"
+                    />
+                  )
+                }
+              />
+            </Dropdown.Trigger>
+            <Dropdown.Menu
+              onAction={_onChangeConnection}
+              selectedKeys={[newDataset.connection_id]}
+              selectionMode="single"
+            >
+              {dropdownConfig.map((option) => (
+                <Dropdown.Item key={option.value}>
+                  <Container fluid css={{ p: 0, m: 0 }}>
+                    <Row align="center" css={{ p: 0, m: 0 }}>
+                      <img src={option.image.src} width={30} height={30} alt="Connection" />
+                      <Spacer x={0.2} />
+                      <Text>{option.text}</Text>
+                    </Row>
+                  </Container>
+                </Dropdown.Item>
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
+        </Grid>
+        <Grid xs={12} sm={6} md={6}>
+          <Button
+            iconRight={<ArrowDownSquare />}
+            disabled={!newDataset.connection_id}
+            onClick={_openConfigModal}
+            auto
+          >
+            Get data
+          </Button>
+        </Grid>
+        <Grid xs={12}>
+          <Divider css={{ m: 20 }} />
+        </Grid>
+        <Grid
+          xs={12}
+          sm={6}
+          md={6}
+          justify="center"
+          css={{
+            background: menuItem === "data" ? "$background" : "$backgroundContrast",
+            br: "$sm",
+          }}
+        >
+          <Link
+            css={{
+              p: 5,
+              pr: 10,
+              pl: 10,
+              "@xsMax": { width: "90%" },
+              ai: "center",
+              color: "$text",
+            }}
+            onClick={() => setMenuItem("data")}
+          >
+            <Text b>{"Data"}</Text>
+          </Link>
+        </Grid>
+        <Grid
+          xs={12}
+          sm={6}
+          md={6}
+          justify="center"
+          css={{
+            background: menuItem === "appearance" ? "$background" : "$backgroundContrast",
+            br: "$sm",
+          }}
+        >
+          <Link
+            css={{
+              p: 5,
+              pr: 10,
+              pl: 10,
+              "@xsMax": { width: "90%" },
+              ai: "center",
+              color: "$secondary",
+            }}
+            onClick={() => setMenuItem("appearance")}
+          >
+            <Text b>{"Chart colors"}</Text>
+          </Link>
+        </Grid>
+        <Grid xs={12}>
+          <Spacer y={1} />
+        </Grid>
         {menuItem === "data" && (
-          <Grid.Row>
-            <Grid.Column>
+          <Grid xs={12} sm={12} md={12}>
+            <Container>
               <DatasetData
                 dataset={newDataset}
                 requestResult={requestResult}
@@ -355,22 +389,20 @@ function Dataset(props) {
                 onNoRequest={_openConfigModal}
                 dataLoading={loading}
               />
-            </Grid.Column>
-          </Grid.Row>
+            </Container>
+          </Grid>
         )}
         {menuItem === "appearance" && (
-          <Grid.Row>
-            <Grid.Column className="dataset-colors-tut">
-              <DatasetAppearance
-                dataset={newDataset}
-                chart={chart}
-                onUpdate={_updateColors}
-                dataItems={dataItems}
-              />
-            </Grid.Column>
-          </Grid.Row>
+          <Grid xs={12} sm={12} md={12}>
+            <DatasetAppearance
+              dataset={newDataset}
+              chart={chart}
+              onUpdate={_updateColors}
+              dataItems={dataItems}
+            />
+          </Grid>
         )}
-      </Grid>
+      </Grid.Container>
 
       {newDataset.connection_id && (
         <DatarequestModal
@@ -384,38 +416,34 @@ function Dataset(props) {
       )}
 
       {/* DELETE CONFIRMATION MODAL */}
-      <TransitionablePortal open={deleteModal}>
-        <Modal open={deleteModal} basic size="small" onClose={() => setDeleteModal(false)}>
-          <Header
-            icon="exclamation triangle"
-            content="Are you sure you want to remove this dataset?"
-          />
-          <Modal.Content>
-            <p>
-              {"This action cannot be reversed."}
-            </p>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              basic
-              inverted
-              onClick={() => setDeleteModal(false)}
-            >
-              Go back
-            </Button>
-            <Button
-              negative
-              loading={deleteLoading}
-              onClick={_onDeleteDataset}
-              icon
-              labelPosition="right"
-            >
-              <Icon name="trash" />
-              Remove dataset
-            </Button>
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
+      <Modal open={deleteModal} basic size="small" onClose={() => setDeleteModal(false)}>
+        <Modal.Header>
+          <Text h3>{"Are you sure you want to remove this dataset?"}</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <Text>
+            {"This action cannot be reversed."}
+          </Text>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            flat
+            color="warning"
+            onClick={() => setDeleteModal(false)}
+            auto
+          >
+            Go back
+          </Button>
+          <Button
+            color="error"
+            disabled={deleteLoading}
+            onClick={_onDeleteDataset}
+            auto
+          >
+            {deleteLoading ? <Loading type="points" /> : "Remove dataset"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
@@ -426,7 +454,6 @@ Dataset.propTypes = {
   onUpdate: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   chart: PropTypes.object.isRequired,
-  match: PropTypes.object.isRequired,
   onRefresh: PropTypes.func.isRequired,
   changeTutorial: PropTypes.func.isRequired,
   onRefreshPreview: PropTypes.func.isRequired,
