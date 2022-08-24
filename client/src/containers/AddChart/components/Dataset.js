@@ -9,6 +9,7 @@ import {
   Divider,
 } from "@nextui-org/react";
 import { ArrowDownSquare, ChevronDown } from "react-iconly";
+import { FaPlug } from "react-icons/fa";
 
 import { chartColors, primary } from "../../../config/colors";
 import connectionImages from "../../../config/connectionImages";
@@ -37,7 +38,7 @@ function replaceEmptyColors(colors) {
 
 function Dataset(props) {
   const {
-    dataset, connections, onUpdate, onDelete, chart, onRefresh,
+    dataset, connections, onUpdate, onDelete, chart, match, onRefresh,
     changeTutorial, onRefreshPreview, loading,
   } = props;
 
@@ -214,6 +215,10 @@ function Dataset(props) {
     return activeConnection;
   };
 
+  const _onManageConnections = () => {
+    return `/${match.params.teamId}/${match.params.projectId}/connections`;
+  };
+
   const _updateColors = (data, forceUpdate) => {
     setNewDataset(data);
     if (forceUpdate) {
@@ -313,7 +318,7 @@ function Dataset(props) {
             </Dropdown.Menu>
           </Dropdown>
         </Grid>
-        <Grid xs={12} sm={6} md={6}>
+        <Grid xs={12} sm={6} md={6} alignItems="center">
           <Button
             iconRight={<ArrowDownSquare />}
             disabled={!newDataset.connection_id}
@@ -322,6 +327,17 @@ function Dataset(props) {
           >
             Get data
           </Button>
+          <Spacer x={0.5} />
+          <Tooltip content="Go to the connections page" color="invert">
+            <Link
+              href={_onManageConnections()}
+              target="_blank"
+              rel="noopener noreferrer"
+              color="primary"
+            >
+              <FaPlug size={24} />
+            </Link>
+          </Tooltip>
         </Grid>
         <Grid xs={12}>
           <Divider css={{ m: 20 }} />
@@ -379,17 +395,15 @@ function Dataset(props) {
         </Grid>
         {menuItem === "data" && (
           <Grid xs={12} sm={12} md={12}>
-            <Container>
-              <DatasetData
-                dataset={newDataset}
-                requestResult={requestResult}
-                chartType={chart.type}
-                chartData={chart.chartData}
-                onUpdate={(data) => onUpdate(data)}
-                onNoRequest={_openConfigModal}
-                dataLoading={loading}
-              />
-            </Container>
+            <DatasetData
+              dataset={newDataset}
+              requestResult={requestResult}
+              chartType={chart.type}
+              chartData={chart.chartData}
+              onUpdate={(data) => onUpdate(data)}
+              onNoRequest={_openConfigModal}
+              dataLoading={loading}
+            />
           </Grid>
         )}
         {menuItem === "appearance" && (
@@ -454,6 +468,7 @@ Dataset.propTypes = {
   onUpdate: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   chart: PropTypes.object.isRequired,
+  match: PropTypes.object.isRequired,
   onRefresh: PropTypes.func.isRequired,
   changeTutorial: PropTypes.func.isRequired,
   onRefreshPreview: PropTypes.func.isRequired,

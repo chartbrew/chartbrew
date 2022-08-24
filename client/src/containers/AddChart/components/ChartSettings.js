@@ -220,7 +220,7 @@ function ChartSettings(props) {
       <Spacer y={0.5} />
 
       <Row>
-        <Text b>Global date settings</Text>
+        <Text>Global date settings</Text>
       </Row>
       <Spacer y={0.5} />
       <Row>

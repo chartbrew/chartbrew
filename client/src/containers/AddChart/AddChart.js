@@ -4,10 +4,10 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Container, Link as LinkNext, Grid, Spacer, Tooltip, Row, Input, Button,
-  Switch, Text, Popover, Loading, Modal, Divider,
+  Switch, Text, Loading, Modal, Divider,
 } from "@nextui-org/react";
 import {
-  ChevronRight, Discovery, Filter2, Plus,
+  ChevronRight, Discovery, Edit, Plus,
 } from "react-iconly";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
@@ -42,7 +42,6 @@ import {
   completeTutorial as completeTutorialAction,
   resetTutorial as resetTutorialAction,
 } from "../../actions/tutorial";
-import ChartFilters from "../Chart/components/ChartFilters";
 
 /*
   Container used for setting up a new chart
@@ -413,12 +412,14 @@ function AddChart(props) {
       <Grid.Container>
         <Grid xs={12} sm={6} md={7}>
           <Container>
-            <Row align="center" wrap="wrap" gap={1} justify="space-between">
+            <Row align="center" wrap="wrap" justify="space-between">
               <Row style={{ flex: 0.6 }} className="chart-name-tut">
                 {!editingTitle
                   && (
                     <Tooltip content="Edit the chart name">
-                      <LinkNext onClick={() => setEditingTitle(true)}>
+                      <LinkNext onClick={() => setEditingTitle(true)} css={{ ai: "center" }} color="primary">
+                        <Edit />
+                        <Spacer x={0.2} />
                         <Text b>
                           {newChart.name}
                         </Text>
@@ -473,30 +474,6 @@ function AddChart(props) {
                 </Button>
               </Row>
             </Row>
-            <Spacer y={0.5} />
-            <Divider />
-            <Spacer y={0.5} />
-            <Row>
-              <Popover>
-                <Popover.Trigger>
-                  <LinkNext css={{ color: "$primary", ai: "center" }}>
-                    <Text b css={{ color: "$primary" }}>Exposed filters</Text>
-                    <Spacer x={0.2} />
-                    <Filter2 set="bold" />
-                  </LinkNext>
-                </Popover.Trigger>
-                <Popover.Content>
-                  <Container>
-                    <ChartFilters
-                      chart={newChart}
-                      onAddFilter={_onAddFilter}
-                      onClearFilter={_onClearFilter}
-                      conditions={conditions}
-                    />
-                  </Container>
-                </Popover.Content>
-              </Popover>
-            </Row>
             <Spacer y={1} />
             <Row className="chart-type-tut">
               <ChartPreview
@@ -533,7 +510,7 @@ function AddChart(props) {
           </Container>
         </Grid>
 
-        <Grid xs={12} sm={6} md={5} className="add-dataset-tut">
+        <Grid xs={12} sm={6} md={5} className="add-dataset-tut" css={{ pr: 10 }}>
           <Container
             css={{
               backgroundColor: "$backgroundContrast",
@@ -681,6 +658,7 @@ const styles = {
   container: (height) => ({
     flex: 1,
     paddingTop: 20,
+    paddingBottom: 20,
     // backgroundColor: "white",
     minHeight: height,
   }),
