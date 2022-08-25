@@ -39,7 +39,7 @@ const Badge = styled("span", {
         color: "$secondaryLightContrast",
       },
       neutral: {
-        bg: "$accents6",
+        bg: "$accents4",
         color: "$accents9",
       },
     }

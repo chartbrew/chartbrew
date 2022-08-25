@@ -17,7 +17,7 @@ import {
 import { HiRefresh } from "react-icons/hi";
 import { TbDragDrop } from "react-icons/tb";
 import {
-  ArrowDown, ArrowUp, ChevronRight, CloseSquare, Filter, Hide, InfoCircle, Plus, Show, TickSquare
+  CaretDown, CaretUp, ChevronRight, CloseSquare, Filter, Hide, InfoCircle, Plus, Show, TickSquare
 } from "react-iconly";
 import { FaMagic, FaRedo } from "react-icons/fa";
 
@@ -696,7 +696,7 @@ function DatasetData(props) {
                     }
                   }}
                   css={{ minWidth: "fit-content" }}
-                  icon={<ArrowUp />}
+                  icon={<CaretUp />}
                 />
               </Tooltip>
               <Spacer x={0.2} />
@@ -712,7 +712,7 @@ function DatasetData(props) {
                     }
                   }}
                   css={{ minWidth: "fit-content" }}
-                  icon={<ArrowDown />}
+                  icon={<CaretDown />}
                 />
               </Tooltip>
               {dataset.sort && (

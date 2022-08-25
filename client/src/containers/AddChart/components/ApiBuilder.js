@@ -3,13 +3,17 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Form, Dropdown, Input, Menu, Button, List, Icon, Checkbox,
-  Divider, Label, Popup,
-} from "semantic-ui-react";
+  Button, Checkbox, Container, Divider, Dropdown, Grid, Input,
+  Link, Loading, Row, Spacer, Text, Tooltip,
+} from "@nextui-org/react";
 import AceEditor from "react-ace";
 import uuid from "uuid/v4";
 import _ from "lodash";
 import { toast } from "react-toastify";
+import {
+  ChevronDown,
+  CloseSquare, InfoCircle, Play, Plus
+} from "react-iconly";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/mode-javascript";
@@ -20,7 +24,7 @@ import {
   runRequest as runRequestAction,
 } from "../../../actions/dataset";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
-import { primaryTransparent } from "../../../config/colors";
+import Badge from "../../../components/Badge";
 
 const methods = [{
   key: 1,
@@ -247,262 +251,347 @@ function ApiBuilder(props) {
   };
 
   return (
-    <div style={styles.container}>
-      <Grid columns={2} stackable centered>
-        <Grid.Column width={10}>
-          <Form>
-            <Form.Field className="apibuilder-route-tut">
+    <div>
+      <Grid.Container gap={1}>
+        <Grid xs={12} sm={7} md={8}>
+          <Container>
+            <Row align="center">
+              <Badge type="neutral">
+                <Text>{connection.host}</Text>
+              </Badge>
+              <Spacer x={0.2} />
               <Input
-                label={connection.host}
                 placeholder="/route?key=value"
-                focus
+                autoFocus
                 value={apiRequest.route || ""}
-                onChange={(e, data) => _onChangeRoute(data.value)}
+                onChange={(e) => _onChangeRoute(e.target.value)}
+                fullWidth
+                bordered
+                animated={false}
               />
-            </Form.Field>
-            <Form.Field>
-              {"Available variables: "}
-              <Popup
-                trigger={(
-                  <Label basic as="a" onClick={() => chart.startDate && _onChangeRoute(`${apiRequest.route}{{start_date}}`)}>
-                    {"{{start_date}}"}
-                  </Label>
-                )}
+            </Row>
+            <Spacer y={0.5} />
+            <Row align="center">
+              <Text>{"Available variables: "}</Text>
+              <Spacer x={0.2} />
+              <Tooltip
                 content={chart.startDate || "Set this value in chart date settings first"}
-                position="bottom center"
-              />
-              <Popup
-                trigger={(
-                  <Label basic as="a" onClick={() => chart.endDate && _onChangeRoute(`${apiRequest.route}{{end_date}}`)}>
-                    {"{{end_date}}"}
-                  </Label>
-                )}
-                content={chart.endDate || "Set this value in chart date settings first"}
-                position="bottom center"
-              />
-            </Form.Field>
-          </Form>
-
-          <Menu pointing secondary className="apibuilder-menu-tut">
-            <Menu.Item
-              name="Headers"
-              active={activeMenu === "headers"}
-              onClick={() => setActiveMenu("headers")}
-            />
-            <Menu.Item
-              name="Body"
-              disabled={apiRequest.method === "GET" || apiRequest.method === "OPTIONS"}
-              active={activeMenu === "body"}
-              onClick={() => setActiveMenu("body")}
-            />
-            <Menu.Item
-              name="Pagination"
-              active={activeMenu === "pagination"}
-              onClick={() => setActiveMenu("pagination")}
-            />
-            <div style={{ position: "absolute", right: 15 }}>
-              {requestSuccess && (
-                <>
-                  <Label color="green" style={{ marginBottom: 10 }}>
-                    {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
-                  </Label>
-                </>
-              )}
-              {requestError && (
-                <Label color="red" style={{ marginBottom: 10 }}>
-                  {`${requestError.statusCode} ${requestError.statusText}`}
-                </Label>
-              )}
-            </div>
-          </Menu>
-          {activeMenu === "headers" && (
-            <div className="apibuilder-headers-tut">
-              {connection.options && connection.options.length > 0 && (
-                <div>
-                  <Checkbox
-                    label="Include connection headers"
-                    checked={!!apiRequest.useGlobalHeaders}
-                    onChange={_onToggleGlobal}
-                  />
-
-                  {apiRequest.useGlobalHeaders && (
-                    <List>
-                      {connection.options.map((header) => {
-                        return (
-                          <List.Item key={header}>
-                            <List.Content>
-                              <Form>
-                                <Form.Group widths={2}>
-                                  <Form.Field width={7}>
-                                    <Input value={Object.keys(header)[0]} />
-                                  </Form.Field>
-                                  <Form.Field width={7}>
-                                    <Input value={header[Object.keys(header)[0]]} />
-                                  </Form.Field>
-                                </Form.Group>
-                              </Form>
-                            </List.Content>
-                          </List.Item>
-                        );
-                      })}
-                    </List>
-                  )}
-
-                  <Divider />
-                </div>
-              )}
-              <List>
-                {apiRequest.formattedHeaders && apiRequest.formattedHeaders.map((header) => {
-                  return (
-                    <List.Item key={header.id}>
-                      <List.Content>
-                        <Form>
-                          <Form.Group widths={3}>
-                            <Form.Field width={7}>
-                              <Input
-                                placeholder="Header"
-                                value={header.key}
-                                onChange={(e, data) => {
-                                  _onChangeHeader(header.id, data.value);
-                                }}
-                              />
-                            </Form.Field>
-                            <Form.Field width={7}>
-                              <Input
-                                placeholder="Value"
-                                value={header.value}
-                                onChange={(e, data) => {
-                                  _onChangeHeaderValue(header.id, data.value);
-                                }}
-                              />
-                            </Form.Field>
-                            <Form.Field width={1}>
-                              <Button
-                                icon
-                                onClick={() => _removeHeader(header.id)}
-                              >
-                                <Icon name="close" />
-                              </Button>
-                            </Form.Field>
-                          </Form.Group>
-                        </Form>
-                      </List.Content>
-                    </List.Item>
-                  );
-                })}
-              </List>
-
-              <Button
-                icon
-                labelPosition="right"
-                size="small"
-                onClick={_addHeader}
+                color="invert"
+                css={{ zIndex: 10000 }}
               >
-                <Icon name="plus" />
-                Add header
-              </Button>
-            </div>
-          )}
-          {activeMenu === "body" && (
-            <div>
-              <AceEditor
-                mode="json"
-                theme="tomorrow"
-                height="400px"
-                width="none"
-                value={apiRequest.body || ""}
-                onChange={(value) => {
-                  _onChangeBody(value);
+                <Badge type="primary">
+                  <Link onClick={() => chart.startDate && _onChangeRoute(`${apiRequest.route}{{start_date}}`)}>
+                    <Text size={14}>{"{{start_date}}"}</Text>
+                  </Link>
+                </Badge>
+              </Tooltip>
+              <Spacer x={0.2} />
+              <Tooltip
+                content={chart.endDate || "Set this value in chart date settings first"}
+                color="invert"
+                css={{ zIndex: 10000 }}
+              >
+                <Badge type="primary">
+                  <Link onClick={() => chart.endDate && _onChangeRoute(`${apiRequest.route}{{end_date}}`)}>
+                    <Text size={14}>{"{{end_date}}"}</Text>
+                  </Link>
+                </Badge>
+              </Tooltip>
+            </Row>
+            <Spacer y={1} />
+            <Row className="apibuilder-menu-tut">
+              <Link
+                css={{
+                  background: activeMenu === "headers" ? "$background" : "$backgroundContrast",
+                  p: 5,
+                  pr: 10,
+                  pl: 10,
+                  br: "$sm",
+                  "@xsMax": { width: "90%" },
+                  ai: "center",
+                  color: "$text",
                 }}
-                name="queryEditor"
-                editorProps={{ $blockScrolling: true }}
-              />
-            </div>
-          )}
-          {activeMenu === "pagination" && (
-            <ApiPagination
-              items={apiRequest.items}
-              itemsLimit={apiRequest.itemsLimit}
-              offset={apiRequest.offset}
-              paginationField={apiRequest.paginationField}
-              pagination={apiRequest.pagination}
-              onPaginationChanged={_onPaginationChanged}
-              apiRoute={apiRequest.route || ""}
-              template={apiRequest.template}
-              result={result && JSON.parse(result)}
-            />
-          )}
-        </Grid.Column>
-        <Grid.Column width={6}>
-          <Form style={{ paddingBottom: 10 }}>
-            <Form.Group widths={2}>
-              <Form.Field className="apibuilder-type-tut">
-                <Dropdown
-                  fluid
-                  text={apiRequest.method}
-                  options={methods}
-                  selection
-                  onChange={(e, data) => _changeMethod(data.value)}
+                onClick={() => setActiveMenu("headers")}
+              >
+                <Text>{"Headers"}</Text>
+              </Link>
+              <Spacer x={0.2} />
+              <Link
+                css={{
+                  background: activeMenu === "body" ? "$background" : "$backgroundContrast",
+                  p: 5,
+                  pr: 10,
+                  pl: 10,
+                  br: "$sm",
+                  "@xsMax": { width: "90%" },
+                  ai: "center",
+                  cursor: apiRequest.method === "GET" || apiRequest.method === "OPTIONS" ? "not-allowed" : "pointer",
+                }}
+                onClick={() => {
+                  if (apiRequest.method === "GET" || apiRequest.method === "OPTIONS") return;
+                  setActiveMenu("body");
+                }}
+              >
+                <Text css={{ color: apiRequest.method === "GET" || apiRequest.method === "OPTIONS" ? "$accents5" : "$text" }}>{"Body"}</Text>
+              </Link>
+              <Spacer x={0.2} />
+              <Link
+                css={{
+                  background: activeMenu === "pagination" ? "$background" : "$backgroundContrast",
+                  p: 5,
+                  pr: 10,
+                  pl: 10,
+                  br: "$sm",
+                  "@xsMax": { width: "90%" },
+                  ai: "center",
+                  color: "$text",
+                }}
+                onClick={() => setActiveMenu("pagination")}
+              >
+                <Text>{"Pagination"}</Text>
+              </Link>
+              <div style={{ position: "absolute", right: 15 }}>
+                {requestSuccess && (
+                <>
+                  <Badge type="success">
+                    <Text size={14}>{`${requestSuccess.statusCode} ${requestSuccess.statusText}`}</Text>
+                  </Badge>
+                </>
+                )}
+                {requestError && (
+                  <Badge color="error">
+                    <Text size={14}>{`${requestError.statusCode} ${requestError.statusText}`}</Text>
+                  </Badge>
+                )}
+              </div>
+            </Row>
+
+            <Spacer y={0.5} />
+            <Row>
+              <Divider />
+            </Row>
+            <Spacer y={0.5} />
+
+            {activeMenu === "headers" && (
+              <Row className="apibuilder-headers-tut">
+                <Container css={{ pl: 0, pr: 0 }}>
+                  {connection.options && connection.options.length > 0 && (
+                    <>
+                      <Row>
+                        <Checkbox
+                          label="Include connection headers"
+                          isSelected={!!apiRequest.useGlobalHeaders}
+                          onChange={_onToggleGlobal}
+                          size="sm"
+                        />
+                      </Row>
+                      <Spacer y={0.5} />
+                      {apiRequest.useGlobalHeaders && (
+                        <>
+                          <Container css={{ pl: 0, pr: 0 }}>
+                            {connection.options.map((header) => {
+                              return (
+                                <Row key={header}>
+                                  <Input
+                                    value={Object.keys(header)[0]}
+                                    bordered
+                                    fullWidth
+                                    animated={false}
+                                  />
+                                  <Spacer x={0.5} />
+                                  <Input
+                                    value={header[Object.keys(header)[0]]}
+                                    bordered
+                                    fullWidth
+                                    animated={false}
+                                  />
+                                </Row>
+                              );
+                            })}
+                          </Container>
+                          <Spacer y={1} />
+                          <Divider />
+                          <Spacer y={0.5} />
+                        </>
+                      )}
+                    </>
+                  )}
+                  <Container css={{ pl: 0, pr: 0 }} gap={1}>
+                    {apiRequest.formattedHeaders && apiRequest.formattedHeaders.map((header) => {
+                      return (
+                        <div key={header.id}>
+                          <Row>
+                            <Input
+                              placeholder="Header"
+                              value={header.key}
+                              onChange={(e) => {
+                                _onChangeHeader(header.id, e.target.value);
+                              }}
+                              bordered
+                            />
+                            <Spacer x={0.5} />
+                            <Input
+                              placeholder="Value"
+                              value={header.value}
+                              onChange={(e) => {
+                                _onChangeHeaderValue(header.id, e.target.value);
+                              }}
+                              bordered
+                            />
+                            <Spacer x={0.5} />
+                            <Button
+                              icon={<CloseSquare />}
+                              onClick={() => _removeHeader(header.id)}
+                              color="error"
+                              flat
+                              css={{ minWidth: "fit-content" }}
+                            />
+                          </Row>
+                          <Spacer y={0.5} />
+                        </div>
+                      );
+                    })}
+                  </Container>
+
+                  <Spacer y={1} />
+                  <Button
+                    iconRight={<Plus />}
+                    size="sm"
+                    onClick={_addHeader}
+                    bordered
+                    auto
+                  >
+                    Add header
+                  </Button>
+                </Container>
+              </Row>
+            )}
+            {activeMenu === "body" && (
+              <Row>
+                <div style={{ width: "100%" }}>
+                  <AceEditor
+                    mode="json"
+                    theme="tomorrow"
+                    height="400px"
+                    width="none"
+                    value={apiRequest.body || ""}
+                    onChange={(value) => {
+                      _onChangeBody(value);
+                    }}
+                    name="queryEditor"
+                    editorProps={{ $blockScrolling: true }}
+                  />
+                </div>
+              </Row>
+            )}
+            {activeMenu === "pagination" && (
+              <Row xs={12}>
+                <ApiPagination
+                  items={apiRequest.items}
+                  itemsLimit={apiRequest.itemsLimit}
+                  offset={apiRequest.offset}
+                  paginationField={apiRequest.paginationField}
+                  pagination={apiRequest.pagination}
+                  onPaginationChanged={_onPaginationChanged}
+                  apiRoute={apiRequest.route || ""}
+                  template={apiRequest.template}
+                  result={result && JSON.parse(result)}
                 />
-              </Form.Field>
-              <Form.Field className="apibuilder-request-tut">
+              </Row>
+            )}
+          </Container>
+        </Grid>
+
+        <Grid xs={12} sm={5} md={4}>
+          <Grid.Container gap={1} css={{ pt: 0 }}>
+            <Grid xs={12} sm={6}>
+              <div className="apibuilder-type-tut" style={{ width: "100%" }}>
+                <Dropdown>
+                  <Dropdown.Trigger>
+                    <Input
+                      value={apiRequest.method}
+                      bordered
+                      fullWidth
+                      animated={false}
+                      contentRight={<ChevronDown />}
+                    />
+                  </Dropdown.Trigger>
+                  <Dropdown.Menu
+                    onAction={(key) => _changeMethod(key)}
+                    selectedKeys={[apiRequest.method]}
+                    selectionMode="single"
+                  >
+                    {methods.map((method) => (
+                      <Dropdown.Item key={method.value}>
+                        {method.text}
+                      </Dropdown.Item>
+                    ))}
+                  </Dropdown.Menu>
+                </Dropdown>
+              </div>
+            </Grid>
+            <Grid xs={12} sm={6}>
+              <div className="apibuilder-request-tut">
                 <Button
-                  primary
-                  icon
-                  labelPosition="right"
-                  loading={requestLoading}
+                  iconRight={requestLoading ? null : <Play />}
+                  disabled={requestLoading}
                   onClick={_onTest}
-                  fluid
+                  auto
+                  shadow
                 >
-                  <Icon name="play" />
-                  Run the request
+                  {requestLoading ? <Loading type="points" /> : "Send the request"}
                 </Button>
-              </Form.Field>
-            </Form.Group>
-            <Form.Field>
+              </div>
+            </Grid>
+            <Grid xs={12} alignItems="center">
               <Checkbox
                 label="Use cache"
                 checked={!!useCache}
                 onChange={_onChangeUseCache}
+                size="sm"
               />
-              {" "}
-              <Popup
-                trigger={<Icon name="question circle outline" style={{ color: primaryTransparent(0.7) }} />}
-                inverted
+              <Spacer x={0.2} />
+              <Tooltip
+                color="invert"
+                content={(
+                  <>
+                    <p>{"If checked, Chartbrew will use cached data instead of making requests to your data source."}</p>
+                    <p>{"The cache gets automatically invalidated when you change the configuration of the request."}</p>
+                  </>
+                )}
+                css={{ zIndex: 10000 }}
+                placement="bottom"
               >
-                <>
-                  <p>{"If checked, Chartbrew will use cached data instead of making requests to your data source."}</p>
-                  <p>{"The cache gets automatically invalidated when you change the configuration of the request."}</p>
-                </>
-              </Popup>
-            </Form.Field>
-          </Form>
-          <AceEditor
-            mode="json"
-            theme="tomorrow"
-            height="400px"
-            width="none"
-            value={result || ""}
-            onChange={() => setResult(result)}
-            name="resultEditor"
-            readOnly
-            editorProps={{ $blockScrolling: false }}
-            className="apibuilder-result-tut"
-          />
-          <p>
-            <Icon name="exclamation circle" />
-            <small>{"This is a preview and it might not show all data in order to keep things fast in the UI."}</small>
-          </p>
-        </Grid.Column>
-      </Grid>
+                <InfoCircle size="small" />
+              </Tooltip>
+            </Grid>
+            <Grid xs={12} direction="column">
+              <AceEditor
+                mode="json"
+                theme="tomorrow"
+                height="450px"
+                width="none"
+                value={result || ""}
+                onChange={() => setResult(result)}
+                name="resultEditor"
+                readOnly
+                editorProps={{ $blockScrolling: false }}
+                className="apibuilder-result-tut"
+              />
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                <InfoCircle size="small" />
+                <Spacer x={0.2} />
+                <Text small>
+                  {"This is a preview and it might not show all data in order to keep things fast in the UI."}
+                </Text>
+              </div>
+            </Grid>
+          </Grid.Container>
+        </Grid>
+      </Grid.Container>
     </div>
   );
 }
-const styles = {
-  container: {
-    flex: 1,
-  },
-};
 
 ApiBuilder.defaultProps = {
   dataRequest: null,

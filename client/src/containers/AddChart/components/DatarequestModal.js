@@ -252,6 +252,7 @@ function DatarequestModal(props) {
       </Modal.Body>
       <Modal.Footer>
         <Button
+          flat
           color={saved ? "success" : "secondary"}
           onClick={() => _onSaveRequest()}
           disabled={loading}
@@ -260,9 +261,9 @@ function DatarequestModal(props) {
           {saved && !loading ? "Saved" : "Save"}
           {loading && <Loading type="points" />}
         </Button>
-        {closeTrigger && <span>Are you sure? Your settings are not saved</span>}
+        {closeTrigger && <Text small>Are you sure? Your settings are not saved</Text>}
         <Button
-          flat={closeTrigger}
+          flat
           color={closeTrigger ? "error" : "primary"}
           onClick={_onClose}
           auto

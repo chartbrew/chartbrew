@@ -541,7 +541,7 @@ function AddChart(props) {
             <Spacer y={0.5} />
             <Divider />
             <Spacer y={0.5} />
-            <Row>
+            <Row wrap="wrap">
               {datasets && datasets.map((dataset) => {
                 return (
                   <>
