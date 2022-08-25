@@ -195,32 +195,34 @@ module.exports.build = async (projectId, {
 }, dashboardOrder) => {
   if (!website && !connection_id) return Promise.reject("Missing required 'website' argument");
 
-  let checkErrored = false;
   if (!connection_id) {
-    const checkWebsiteOpt = {
-      url: `https://simpleanalytics.com/${website}.json?version=5&fields=histogram`,
-      method: "GET",
-      headers: {
-        accept: "application/json",
-      },
-      json: true,
-    };
-
-    if (apiKey) {
-      checkWebsiteOpt.headers = {
-        "Api-Key": apiKey,
+    let checkErrored = false;
+    if (!connection_id) {
+      const checkWebsiteOpt = {
+        url: `https://simpleanalytics.com/${website}.json?version=5&fields=histogram`,
+        method: "GET",
+        headers: {
+          accept: "application/json",
+        },
+        json: true,
       };
-    }
-    try {
-      const data = await request(checkWebsiteOpt);
-      if (!data.histogram) return new Promise((resolve, reject) => reject(new Error("403")));
-    } catch (e) {
-      checkErrored = true;
-    }
-  }
 
-  if (!connection_id && checkErrored) {
-    return Promise.reject(new Error("404"));
+      if (apiKey) {
+        checkWebsiteOpt.headers = {
+          "Api-Key": apiKey,
+        };
+      }
+      try {
+        const data = await request(checkWebsiteOpt);
+        if (!data.histogram) return new Promise((resolve, reject) => reject(new Error("403")));
+      } catch (e) {
+        checkErrored = true;
+      }
+    }
+
+    if (!connection_id && checkErrored) {
+      return Promise.reject(new Error("404"));
+    }
   }
 
   return builder(projectId, website, apiKey, dashboardOrder, template, charts, connection_id)

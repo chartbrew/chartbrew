@@ -845,25 +845,27 @@ module.exports.build = async (projectId, {
 }, dashboardOrder) => {
   if ((!website || !apiKey) && !connection_id) return Promise.reject("Missing required 'website' or 'apiKey' argument");
 
-  let checkErrored = false;
-  const checkWebsiteOpt = {
-    url: `https://plausible.io/api/v1/stats/aggregate?site_id=${website}&period=6mo&metrics=visitors,pageviews,bounce_rate,visit_duration`,
-    method: "GET",
-    headers: {
-      accept: "application/json",
-      authorization: `Bearer ${apiKey}`,
-    },
-    json: true,
-  };
+  if (!connection_id) {
+    let checkErrored = false;
+    const checkWebsiteOpt = {
+      url: `https://plausible.io/api/v1/stats/aggregate?site_id=${website}&period=6mo&metrics=visitors,pageviews,bounce_rate,visit_duration`,
+      method: "GET",
+      headers: {
+        accept: "application/json",
+        authorization: `Bearer ${apiKey}`,
+      },
+      json: true,
+    };
 
-  try {
-    await request(checkWebsiteOpt);
-  } catch (e) {
-    checkErrored = e;
-  }
+    try {
+      await request(checkWebsiteOpt);
+    } catch (e) {
+      checkErrored = e;
+    }
 
-  if (checkErrored) {
-    return Promise.reject(new Error(checkErrored));
+    if (checkErrored) {
+      return Promise.reject(new Error(checkErrored));
+    }
   }
 
   return builder(projectId, website, apiKey, dashboardOrder, template, charts, connection_id)
