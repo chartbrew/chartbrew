@@ -291,6 +291,8 @@ function ProjectDashboard(props) {
                       disabled={filterLoading}
                       onClick={_onShowFilters}
                       auto
+                      css={{ minWidth: "fit-content" }}
+                      size="sm"
                     >
                       {filterLoading && <Loading type="points" />}
                       {!filterLoading && "Add filter"}
@@ -331,6 +333,8 @@ function ProjectDashboard(props) {
                           icon={<Scan />}
                           onClick={() => setTemplateVisible(true)}
                           auto
+                          css={{ minWidth: "fit-content" }}
+                          size="sm"
                         />
                       </Tooltip>
                     </>
@@ -344,6 +348,8 @@ function ProjectDashboard(props) {
                           icon={<PaperDownload />}
                           onClick={_openExport}
                           auto
+                          css={{ minWidth: "fit-content" }}
+                          size="sm"
                         />
                       </Tooltip>
                     </>
@@ -357,6 +363,8 @@ function ProjectDashboard(props) {
                           icon={<Image2 />}
                           onClick={onPrint}
                           auto
+                          css={{ minWidth: "fit-content" }}
+                          size="sm"
                         />
                       </Tooltip>
                     </>
@@ -372,6 +380,8 @@ function ProjectDashboard(props) {
                           onClick={() => _onRefreshData()}
                           disabled={refreshLoading}
                           auto
+                          css={{ minWidth: "fit-content" }}
+                          size="sm"
                         >
                           {!refreshLoading ? "Refresh all charts" : "Refreshing..."}
                           {refreshLoading && <Loading type="points" />}

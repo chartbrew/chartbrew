@@ -214,6 +214,7 @@ function ChartPreview(props) {
                 />
               )}
           </Container>
+          <Spacer y={1} />
           <Container textAlign="center">
             <Row align="center" wrap="wrap" gap={1} justify="center">
               <Tooltip
@@ -345,13 +346,10 @@ function ChartPreview(props) {
             )}
             {!chartLoading && (
               <>
-                <Row>
-                  <Text h3>{"Just a few steps away from the perfect visualisation"}</Text>
+                <Row justify="center">
+                  <Text h3>{"Create a dataset to get started"}</Text>
                 </Row>
                 <Spacer y={0.2} />
-                <Row>
-                  <Text h4>{"Create a dataset to get started"}</Text>
-                </Row>
               </>
             )}
           </>

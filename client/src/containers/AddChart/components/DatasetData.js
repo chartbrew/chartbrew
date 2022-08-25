@@ -409,8 +409,8 @@ function DatasetData(props) {
     });
   };
 
-  const _onChangeGroupBy = (e, data) => {
-    onUpdate({ groupBy: data.value });
+  const _onChangeGroupBy = (e, key) => {
+    onUpdate({ groupBy: key || null });
   };
 
   const _onDragStateClicked = () => {
@@ -517,7 +517,7 @@ function DatasetData(props) {
               : chartType === "table" ? "Collection " : "X-Axis "}
           </Text>
         </div>
-        <div>
+        <div style={styles.rowDisplay}>
           <Dropdown>
             <Dropdown.Trigger>
               <Input
@@ -549,6 +549,7 @@ function DatasetData(props) {
               <Spacer x={0.2} />
               <Tooltip
                 content="Select a collection (array) of objects to display in a table format. 'Root' means the first level of the collection."
+                color="invert"
               >
                 <InfoCircle />
               </Tooltip>
@@ -683,8 +684,9 @@ function DatasetData(props) {
             </div>
             <div style={styles.rowDisplay}>
               <Tooltip content="Sort the dataset in ascending order" color="invert">
-                <Link
+                <Button
                   color={dataset.sort === "asc" ? "secondary" : "primary"}
+                  bordered={dataset.sort !== "asc"}
                   onClick={() => {
                     if (dataset.sort === "asc") {
                       onUpdate({ sort: "" });
@@ -692,14 +694,15 @@ function DatasetData(props) {
                       onUpdate({ sort: "asc" });
                     }
                   }}
-                  css={{ border: "2px solid $primary", br: "$md", p: 5 }}
-                >
-                  <ArrowUp />
-                </Link>
+                  css={{ minWidth: "fit-content" }}
+                  icon={<ArrowUp />}
+                />
               </Tooltip>
               <Spacer x={0.2} />
               <Tooltip content="Sort the dataset in descending order" color="invert">
-                <Link
+                <Button
+                  color={dataset.sort === "desc" ? "secondary" : "primary"}
+                  bordered={dataset.sort !== "desc"}
                   onClick={() => {
                     if (dataset.sort === "desc") {
                       onUpdate({ sort: "" });
@@ -707,11 +710,9 @@ function DatasetData(props) {
                       onUpdate({ sort: "desc" });
                     }
                   }}
-                  color={dataset.sort === "desc" ? "secondary" : "primary"}
-                  css={{ border: "2px solid $primary", br: "$md", p: 5 }}
-                >
-                  <ArrowDown />
-                </Link>
+                  css={{ minWidth: "fit-content" }}
+                  icon={<ArrowDown />}
+                />
               </Tooltip>
               {dataset.sort && (
                 <>
@@ -758,7 +759,7 @@ function DatasetData(props) {
             <Input
               placeholder="Enter your formula here: {val}"
               value={formula}
-              onChange={(e, data) => setFormula(data.value)}
+              onChange={(e) => setFormula(e.target.value)}
               bordered
             />
             <Spacer x={0.5} />
@@ -787,11 +788,11 @@ function DatasetData(props) {
       {chartType === "table" && (
         <>
           <Grid xs={12}>
-            <Collapse.Group>
-              <Collapse title="Configure visible columns">
-                <Container>
+            <Collapse.Group css={{ width: "100%", fs: 16, fontWeight: "$bold" }}>
+              <Collapse subtitle="Configure columns">
+                <Container css={{ pl: 0, pr: 0 }}>
                   {!isDragState && (
-                    <Row wrap="wrap" gap={1}>
+                    <Row wrap="wrap">
                       {tableFields.map((field) => {
                         if (!field || !field.accessor || field.Header.indexOf("__cb_group") > -1) return (<span />);
                         return (
@@ -799,10 +800,14 @@ function DatasetData(props) {
                             type="primary"
                             style={styles.fieldLabels}
                           >
-                            <Link css={{ ai: "center" }} onClick={() => _onExcludeField(field.accessor)} title="Hide field">
+                            <Link
+                              css={{ ai: "center", color: "$primary" }}
+                              onClick={() => _onExcludeField(field.accessor)}
+                              title="Hide field"
+                            >
                               <Show />
                             </Link>
-                            <Text>{`${field.accessor.replace("?", ".")}  `}</Text>
+                            <Text size={14}>{`${field.accessor.replace("?", ".")}`}</Text>
                           </Badge>
                         );
                       })}
@@ -811,7 +816,7 @@ function DatasetData(props) {
 
                   {isDragState && tableColumns.length > 0 && (
                     <DndProvider backend={HTML5Backend} key={1} context={window}>
-                      <Row wrap="wrap" gap={1} align="center">
+                      <Row wrap="wrap" align="center">
                         {tableColumns.map((field, index) => {
                           // check if the field is found in the excluded fields
                           if (dataset.excludedFields
@@ -832,8 +837,15 @@ function DatasetData(props) {
                       </Row>
                     </DndProvider>
                   )}
-                  <Spacer y={1} />
-                  <Row wrap="wrap" gap={1} align="center">
+
+                  {!isDragState
+                      && dataset.excludedFields
+                      && dataset.excludedFields.length > 0
+                      && (
+                        <Spacer y={0.5} />
+                      )}
+
+                  <Row wrap="wrap" align="center">
                     {!isDragState
                       && dataset.excludedFields
                       && dataset.excludedFields.map((field) => (
@@ -841,50 +853,59 @@ function DatasetData(props) {
                           key={field}
                           onClick={() => _onShowField(field)}
                           type="warning"
+                          style={styles.fieldLabels}
                         >
-                          <Link css={{ ai: "center" }}>
+                          <Link css={{ ai: "center", color: "$primary" }}>
                             <Hide />
-                            <Text>{field.replace("?", ".")}</Text>
                           </Link>
+                          <Text size={14}>{field.replace("?", ".")}</Text>
                         </Badge>
                       ))}
+                  </Row>
+                  <Spacer y={1} />
+                  <Row>
+                    <Button
+                      color={isDragState ? "success" : "primary"}
+                      bordered
+                      onClick={isDragState ? _onConfirmColumnOrder : _onDragStateClicked}
+                      disabled={dataLoading}
+                      auto
+                      size="sm"
+                    >
+                      {isDragState && !dataLoading ? "Confirm ordering" : "Reorder columns"}
+                      {dataLoading && <Loading type="points" />}
+                    </Button>
+                    {isDragState && (
+                      <>
+                        <Spacer x={0.2} />
+                        <Button
+                          icon={<CloseSquare />}
+                          flat
+                          color={"error"}
+                          onClick={_onCancelColumnOrder}
+                          title="Cancel ordering"
+                          css={{ minWidth: "fit-content" }}
+                          size="sm"
+                        />
+                      </>
+                    )}
                   </Row>
                 </Container>
               </Collapse>
             </Collapse.Group>
           </Grid>
-          <Grid xs={12}>
-            <Button
-              color={isDragState ? "positive" : "primary"}
-              bordered
-              onClick={isDragState ? _onConfirmColumnOrder : _onDragStateClicked}
-              disabled={dataLoading}
-              auto
-            >
-              {isDragState && !dataLoading ? "Confirm ordering" : "Reorder columns"}
-              {dataLoading && <Loading type="points" />}
-            </Button>
-            {isDragState && (
-              <>
-                <Spacer x={0.2} />
-                <Button
-                  icon={<CloseSquare />}
-                  flat
-                  color={"error"}
-                  onClick={_onCancelColumnOrder}
-                  title="Cancel ordering"
-                />
-              </>
-            )}
-          </Grid>
-          <Grid xs={12}>
+          <Grid xs={12} alignItems="center">
             <Dropdown>
               <Dropdown.Trigger>
                 <Input
                   value={dataset.groupBy || "Group by"}
                 />
               </Dropdown.Trigger>
-              <Dropdown.Menu>
+              <Dropdown.Menu
+                onAction={(key) => _onChangeGroupBy(null, key)}
+                selectedKeys={[dataset.groupBy]}
+                selectionMode="single"
+              >
                 {_getGroupByFields().map((field) => (
                   <Dropdown.Item key={field.value}>
                     <Container css={{ p: 0, m: 0 }}>
@@ -900,12 +921,12 @@ function DatasetData(props) {
             </Dropdown>
             <Spacer x={0.2} />
             <Tooltip content="Clear the grouping" color="invert">
-              <Button
-                icon={<CloseSquare />}
-                flat
+              <Link
                 color="error"
-                onClick={() => _onChangeGroupBy(null, { value: null })}
-              />
+                onClick={_onChangeGroupBy}
+              >
+                <CloseSquare />
+              </Link>
             </Tooltip>
           </Grid>
         </>
