@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
-import {
-  Modal, Button, Loader, Container, Placeholder,
-} from "semantic-ui-react";
 import _ from "lodash";
 import { toast } from "react-toastify";
+import {
+  Button, Container, Loading, Modal, Row, Spacer, Text
+} from "@nextui-org/react";
 
 import ApiBuilder from "./ApiBuilder";
 import SqlBuilder from "./SqlBuilder";
@@ -158,22 +158,24 @@ function DatarequestModal(props) {
   return (
     <Modal
       open={open}
-      size="fullscreen"
+      fullScreen
       onClose={_onClose}
-      closeIcon
+      closeButton
     >
-      <Modal.Header>{`Configure ${connection.name}`}</Modal.Header>
-      <Modal.Content>
+      <Modal.Header>
+        <Text h3>{`Configure ${connection.name}`}</Text>
+      </Modal.Header>
+      <Modal.Body>
         {!dataRequest && (
           <Container>
-            <Loader active inverted>Loading</Loader>
-            <Placeholder>
-              <Placeholder.Line />
-              <Placeholder.Line />
-              <Placeholder.Line />
-              <Placeholder.Line />
-              <Placeholder.Line />
-            </Placeholder>
+            <Spacer y={4} />
+            <Row align="center" justify="center">
+              <Loading type="points" color="currentColor" size="xl" />
+            </Row>
+            <Spacer y={1} />
+            <Row align="center" justify="center">
+              <Text size="1.4em" css={{ color: "$accents7" }}>Preparing the data request...</Text>
+            </Row>
           </Container>
         )}
         {connection.type === "api" && dataRequest && (
@@ -247,25 +249,27 @@ function DatarequestModal(props) {
           />
         )}
 
-      </Modal.Content>
-      <Modal.Actions>
+      </Modal.Body>
+      <Modal.Footer>
         <Button
-          secondary={!saved}
-          positive={saved}
+          color={saved ? "success" : "secondary"}
           onClick={() => _onSaveRequest()}
-          loading={loading}
+          disabled={loading}
+          auto
         >
-          {saved ? "Saved" : "Save"}
+          {saved && !loading ? "Saved" : "Save"}
+          {loading && <Loading type="points" />}
         </Button>
         {closeTrigger && <span>Are you sure? Your settings are not saved</span>}
         <Button
-          negative={closeTrigger}
+          flat={closeTrigger}
+          color={closeTrigger ? "error" : "primary"}
           onClick={_onClose}
-          primary
+          auto
         >
           Build the chart
         </Button>
-      </Modal.Actions>
+      </Modal.Footer>
     </Modal>
   );
 }

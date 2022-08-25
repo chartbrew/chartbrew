@@ -15,6 +15,7 @@ import {
   Popover, Row, Spacer, Text, Tooltip, Divider,
 } from "@nextui-org/react";
 import { HiRefresh } from "react-icons/hi";
+import { TbDragDrop } from "react-icons/tb";
 import {
   ArrowDown, ArrowUp, ChevronRight, CloseSquare, Filter, Hide, InfoCircle, Plus, Show, TickSquare
 } from "react-iconly";
@@ -871,6 +872,7 @@ function DatasetData(props) {
                       disabled={dataLoading}
                       auto
                       size="sm"
+                      icon={<TbDragDrop size={20} />}
                     >
                       {isDragState && !dataLoading ? "Confirm ordering" : "Reorder columns"}
                       {dataLoading && <Loading type="points" />}
@@ -943,6 +945,7 @@ function DatasetData(props) {
             icon={<Filter />}
             onClick={_onAddCondition}
             auto
+            size={"sm"}
           >
             Add data filters
           </Button>
