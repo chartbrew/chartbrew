@@ -3,11 +3,15 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Header, Button, Container, Icon, List,
-  Modal, Input, Popup, TransitionablePortal, Checkbox,
-} from "semantic-ui-react";
+  Button,
+  Checkbox,
+  Container, Grid, Input, Link, Loading, Modal, Popover, Row, Spacer, Text, Tooltip,
+} from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
+import {
+  ChevronRight, Edit, InfoCircle, Play, Plus, TickSquare
+} from "react-iconly";
 
 import "ace-builds/src-min-noconflict/mode-javascript";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -16,7 +20,6 @@ import { createSavedQuery, updateSavedQuery } from "../../../actions/savedQuery"
 import SavedQueries from "../../../components/SavedQueries";
 import { runRequest as runRequestAction } from "../../../actions/dataset";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
-import { primaryTransparent } from "../../../config/colors";
 
 /*
   MongoDB query builder
@@ -138,204 +141,241 @@ function MongoQueryBuilder(props) {
 
   return (
     <div style={styles.container}>
-      <Grid columns={2} stackable centered divided>
-        <Grid.Column width={8}>
-          <Header size="small">
-            {"Enter your mongodb query here."}
-            <Popup
-              trigger={<Icon name="question circle outline" />}
-              content={(
-                <p>
-                  {"In order to select a collection you always have to start with "}
-                  <pre>{"collection('collection_name')"}</pre>
-                </p>
-              )}
-            />
-          </Header>
-          <AceEditor
-            mode="javascript"
-            theme="tomorrow"
-            height="200px"
-            width="none"
-            value={mongoRequest.query || ""}
-            onChange={(value) => {
-              _onChangeQuery(value);
-            }}
-            name="queryEditor"
-            editorProps={{ $blockScrolling: true }}
-            className="mongobuilder-query-tut"
-          />
-          <Button.Group fluid className="mongobuilder-buttons-tut">
-            <Button
-              color={testSuccess ? "green" : testError ? "red" : null}
-              primary={!testSuccess && !testError}
-              icon
-              labelPosition="right"
-              onClick={_onTest}
-              loading={testingQuery}
-            >
-              {testSuccess && <Icon name="checkmark" />}
-              {testError && <Icon name="x" />}
-              {!testSuccess && !testError && <Icon name="flask" />}
-              {!testSuccess && !testError && "Run the query"}
-              {(testSuccess || testError) && "Run again"}
-            </Button>
-
-            <Button
-              secondary
-              icon
-              labelPosition="right"
-              loading={savingQuery}
-              onClick={_onSaveQueryConfirmation}
-            >
-              <Icon name="plus" />
-              {!savedQuery && "Save the query"}
-              {savedQuery && "Save as new"}
-            </Button>
-
-            {savedQuery
-              && (
-              <Button
-                primary
-                basic
-                icon
-                labelPosition="right"
-                onClick={_onUpdateSavedQuery}
-                loading={updatingSavedQuery}
+      <Grid.Container gap={1}>
+        <Grid xs={12} sm={6}>
+          <Container>
+            <Row align="center">
+              <Text>
+                {"Enter your mongodb query here"}
+              </Text>
+              <Spacer x={0.2} />
+              <Tooltip
+                content={(
+                  <>
+                    <Text>
+                      {"In order to select a collection you always have to start with "}
+                    </Text>
+                    <pre>{"collection('collection_name')"}</pre>
+                  </>
+                )}
+                css={{ zIndex: 10000 }}
+                placement="bottom"
               >
-                <Icon name="angle double up" />
-                Update the query
+                <InfoCircle size="small" />
+              </Tooltip>
+            </Row>
+            <Row>
+              <div style={{ width: "100%" }}>
+                <AceEditor
+                  mode="javascript"
+                  theme="tomorrow"
+                  height="200px"
+                  width="none"
+                  value={mongoRequest.query || ""}
+                  onChange={(value) => {
+                    _onChangeQuery(value);
+                  }}
+                  name="queryEditor"
+                  editorProps={{ $blockScrolling: true }}
+                  className="mongobuilder-query-tut"
+                />
+              </div>
+            </Row>
+            <Row align="center" className="mongobuilder-buttons-tut">
+              <Button
+                color={testSuccess ? "success" : testError ? "error" : "primary"}
+                iconRight={testSuccess && !testingQuery ? <TickSquare /> : <Play />}
+                onClick={_onTest}
+                disabled={testingQuery}
+                auto
+                shadow
+              >
+                {!testSuccess && !testError && !testingQuery && "Run the query"}
+                {(testSuccess || testError) && !testingQuery && "Run again"}
+                {testingQuery && <Loading type="points" />}
               </Button>
+              <Spacer x={0.2} />
+              <Button
+                color="secondary"
+                iconRight={<Plus />}
+                disabled={savingQuery}
+                onClick={_onSaveQueryConfirmation}
+                auto
+              >
+                {!savedQuery && !savingQuery && "Save the query"}
+                {savedQuery && !savingQuery && "Save as new"}
+                {savingQuery && <Loading type="points" />}
+              </Button>
+              {savedQuery && (
+                <>
+                  <Spacer x={0.2} />
+                  <Button
+                    bordered
+                    icon={<Edit />}
+                    onClick={_onUpdateSavedQuery}
+                    disabled={updatingSavedQuery}
+                    auto
+                  >
+                    {updatingSavedQuery ? <Loading type="points" /> : "Update the query"}
+                  </Button>
+                </>
               )}
-          </Button.Group>
-          <Container style={{ paddingTop: 20 }}>
-            <Checkbox
-              label="Use cache"
-              checked={!!useCache}
-              onChange={_onChangeUseCache}
-            />
-            {" "}
-            <Popup
-              trigger={<Icon name="question circle outline" style={{ color: primaryTransparent(0.7) }} />}
-              inverted
-            >
-              <>
-                <p>{"If checked, Chartbrew will use cached data instead of making requests to your data source."}</p>
-                <p>{"The cache gets automatically invalidated when you change any call settings."}</p>
-              </>
-            </Popup>
+            </Row>
+            <Spacer y={1} />
+            <Row align="center">
+              <Checkbox
+                label="Use cache"
+                isSelected={!!useCache}
+                onChange={_onChangeUseCache}
+                size="sm"
+              />
+              <Spacer x={0.2} />
+              <Tooltip
+                content={"If checked, Chartbrew will use cached data instead of making requests to your data source. The cache gets automatically invalidated when you change any call settings."}
+                color="invert"
+                css={{ zIndex: 10000, maxWidth: 400 }}
+              >
+                <InfoCircle size="small" />
+              </Tooltip>
+            </Row>
+
+            <Spacer y={1} />
+            <Row>
+              <Text b>Saved queries</Text>
+            </Row>
+            <Spacer y={0.5} />
+            <Row className="mongobuilder-saved-tut">
+              <SavedQueries
+                selectedQuery={savedQuery}
+                onSelectQuery={(savedQuery) => {
+                  setSavedQuery(savedQuery.id);
+                  _onChangeQuery(savedQuery.query);
+                }}
+                type="mongodb"
+                style={styles.savedQueriesContainer}
+              />
+            </Row>
           </Container>
+        </Grid>
+        <Grid xs={12} sm={6}>
+          <Container>
+            <Row>
+              <Text b>
+                {"Query result"}
+              </Text>
+            </Row>
+            <Spacer y={0.5} />
 
-          <Header size="small">Saved queries</Header>
-          <Container className="mongobuilder-saved-tut">
-            <SavedQueries
-              selectedQuery={savedQuery}
-              onSelectQuery={(savedQuery) => {
-                setSavedQuery(savedQuery.id);
-                _onChangeQuery(savedQuery.query);
-              }}
-              type="mongodb"
-              style={styles.savedQueriesContainer}
-            />
+            <Row>
+              <div style={{ width: "100%" }}>
+                <AceEditor
+                  mode="json"
+                  theme="tomorrow"
+                  height="450px"
+                  width="none"
+                  value={exploreData || result || ""}
+                  onChange={() => setResult(result)}
+                  name="resultEditor"
+                  readOnly
+                  editorProps={{ $blockScrolling: false }}
+                  className="mongobuilder-result-tut"
+                />
+              </div>
+            </Row>
+            <Spacer y={0.5} />
+            {result && (
+              <Row>
+                <Text small>This is a sample response and might not show all the data.</Text>
+              </Row>
+            )}
+
+            <Row>
+              <Popover>
+                <Popover.Trigger>
+                  <Link css={{ color: "$secondary", ai: "center" }}>
+                    <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                      <InfoCircle size="small" />
+                      <Spacer x={0.2} />
+                      <Text>How to optimise your queries?</Text>
+                    </div>
+                  </Link>
+                </Popover.Trigger>
+                <Popover.Content css={{ maxWidth: 600, p: 10 }}>
+                  <Container fluid>
+                    <Row>
+                      <Text>{"You can use the following methods to optimize your queries and make them significantly smaller in size."}</Text>
+                    </Row>
+                    <Spacer y={1} />
+                    <Row>
+                      <Link href="https://docs.mongodb.com/manual/reference/operator/query-comparison/" target="_blank" rel="noopener noreferrer" css={{ ai: "center" }}>
+                        <ChevronRight />
+                        <Spacer x={0.2} />
+                        <Text color="primary">
+                          {"Use a relevant condition for your query. For example, don't fetch all the documents if you know you are going to use just the recent ones."}
+                        </Text>
+                      </Link>
+                    </Row>
+                    <Spacer y={0.5} />
+                    <Row>
+                      <Link as="a" href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only" target="_blank" rel="noopener noreferrer" css={{ ai: "center" }}>
+                        <ChevronRight />
+                        <Spacer x={0.2} />
+                        <Text color="primary">
+                          {"Remove unwanted fields from the query payload if you know for sure that they won't help to generate the chart you have in mind."}
+                        </Text>
+                      </Link>
+                    </Row>
+                    <Spacer y={0.5} />
+                    <Row>
+                      <Link as="a" href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only" target="_blank" rel="noopener noreferrer" css={{ ai: "center" }}>
+                        <ChevronRight />
+                        <Spacer x={0.2} />
+                        <Text color="primary">
+                          {"If you store files encoded in base64, make sure you exclude them using the method above"}
+                        </Text>
+                      </Link>
+                    </Row>
+                  </Container>
+                </Popover.Content>
+              </Popover>
+            </Row>
           </Container>
-        </Grid.Column>
-        <Grid.Column width={8}>
-          <Header size="small">
-            {"Query result"}
-          </Header>
-
-          <AceEditor
-            mode="json"
-            theme="tomorrow"
-            height="450px"
-            width="none"
-            value={exploreData || result || ""}
-            onChange={() => setResult(result)}
-            name="resultEditor"
-            readOnly
-            editorProps={{ $blockScrolling: false }}
-            className="mongobuilder-result-tut"
-          />
-
-          {result && (
-            <div>
-              <small>This is a sample response and might not show all the data.</small>
-            </div>
-          )}
-
-          <Popup
-            on="click"
-            trigger={(
-              <Header size="small" style={{ cursor: "pointer" }}>
-                <a>
-                  <Icon name="question circle outline" />
-                  How to optimise your queries?
-                </a>
-              </Header>
-            )}
-            content={(
-              <>
-                <p>{"You can use the following methods to optimize your queries and make them significantly smaller in size."}</p>
-                <List relaxed>
-                  <List.Item as="a" href="https://docs.mongodb.com/manual/reference/operator/query-comparison/" target="_blank" rel="noopener noreferrer">
-                    <Icon name="chevron right" />
-                    <List.Content>
-                      {"Use a relevant condition for your query. For example, don't fetch all the documents if you know you are going to use just the recent ones."}
-                    </List.Content>
-                  </List.Item>
-                  <List.Item as="a" href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only" target="_blank" rel="noopener noreferrer">
-                    <Icon name="chevron right" />
-                    <List.Content>
-                      {"Remove unwanted fields from the query payload if you know for sure that they won't help to generate the chart you have in mind."}
-                    </List.Content>
-                  </List.Item>
-                  <List.Item as="a" href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only" target="_blank" rel="noopener noreferrer">
-                    <Icon name="chevron right" />
-                    <List.Content>
-                      {"If you store files encoded in base64, make sure you exclude them using the method above"}
-                    </List.Content>
-                  </List.Item>
-                </List>
-              </>
-            )}
-          />
-        </Grid.Column>
-      </Grid>
+        </Grid>
+      </Grid.Container>
 
       {/* Save query modal */}
-      <TransitionablePortal open={saveQueryModal}>
-        <Modal open={saveQueryModal} size="small" onClose={() => setSaveQueryModal(false)}>
-          <Header
-            content="Save your query and use it later in this project"
-            inverted
+      <Modal open={saveQueryModal} size="small" onClose={() => setSaveQueryModal(false)}>
+        <Modal.Header>
+          <Text h3>{"Save your query and use it later in this project"}</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <Input
+            label="Write a short description for your query"
+            placeholder="Type a summary here"
+            fluid
+            onChange={(e) => setSavedQuerySummary(e.target.value)}
+            size="lg"
           />
-          <Modal.Content>
-            <Header size="small">Write a short description for your query</Header>
-            <Input
-              placeholder="Type a summary here"
-              fluid
-              onChange={(e, data) => setSavedQuerySummary(data.value)}
-            />
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              onClick={() => setSaveQueryModal(false)}
-            >
-              Close
-            </Button>
-            <Button
-              primary
-              disabled={!savedQuerySummary}
-              icon
-              labelPosition="right"
-              onClick={_onSaveQuery}
-            >
-              <Icon name="checkmark" />
-              Save the query
-            </Button>
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            flat
+            color="warning"
+            onClick={() => setSaveQueryModal(false)}
+            auto
+          >
+            Close
+          </Button>
+          <Button
+            disabled={!savedQuerySummary}
+            iconRight={<TickSquare />}
+            onClick={_onSaveQuery}
+            auto
+          >
+            Save the query
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
