@@ -282,7 +282,7 @@ module.exports = (app) => {
   app.post("/project/:id/template/:template", verifyToken, (req, res) => {
     return checkAccess(req)
       .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).createAny("project");
+        const permission = accessControl.can(teamRole.role).createAny("connection");
         if (!permission.granted) {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }

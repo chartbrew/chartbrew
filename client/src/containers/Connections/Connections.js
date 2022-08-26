@@ -574,7 +574,7 @@ function Connections(props) {
                   </Card.Meta>
                   <Card.Description />
                 </Card.Content>
-                {_canAccess("admin") && (
+                {_canAccess("editor") && (
                   <Card.Content extra>
                     <Button.Group widths={2}>
                       <Button
