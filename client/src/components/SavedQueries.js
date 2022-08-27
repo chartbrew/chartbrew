@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  List, Button, Icon, Popup, Loader, Message, Modal, Header, Input, TransitionablePortal
-} from "semantic-ui-react";
+  Button, Container, Input, Loading, Modal, Row, Spacer, Text, Tooltip,
+} from "@nextui-org/react";
+import { CloseSquare, Edit, TickSquare } from "react-iconly";
 
 import { getSavedQueries, updateSavedQuery, deleteSavedQuery } from "../actions/savedQuery";
 import { secondaryTransparent } from "../config/colors";
@@ -81,160 +82,145 @@ function SavedQueries(props) {
 
   return (
     <div style={{ ...styles.container, ...style }}>
-      <Loader active={loading} />
+      {loading && (
+        <Loading type="spinner">
+          Loading queries
+        </Loading>
+      )}
 
-      {error
-        && (
-        <Message negative>
-          <Message.Header>Could not get your saved queries</Message.Header>
-          <p>Try to refresh the page or get in touch with us to fix the issue.</p>
-        </Message>
-        )}
+      {error && (
+        <Text color="error">
+          {"Could not get your saved queries. Try to refresh the page or get in touch with us to fix the issue"}
+        </Text>
+      )}
 
-      {savedQueries.length > 0
-        && (
-        <List
-          divided
-          selection
-          verticalAlign="middle"
-        >
+      {savedQueries.length > 0 && (
+        <Container css={{ pl: 0, width: "100%" }}>
           {savedQueries.map((query) => {
             return (
-              <List.Item
+              <Row
                 key={query.id}
                 style={selectedQuery === query.id ? styles.selectedItem : {}}
+                justify="space-between"
+                align="center"
+                gap={1}
+                css={{ pb: 10 }}
               >
-                <List.Content floated="right">
-                  <Popup
-                    trigger={(
-                      <Button
-                        icon
-                        positive
-                        onClick={() => onSelectQuery(query)}
-                      >
-                        <Icon name="check" />
-                      </Button>
-                    )}
-                    content="Use this query"
-                    position="top left"
-                  />
-
-                  <Popup
-                    trigger={(
-                      <Button
-                        icon
-                        secondary
-                        loading={editQuery && editLoading && editQuery.id === query.id}
-                        onClick={() => _onEditQueryConfirmation(query)}
-                      >
-                        <Icon name="pencil" />
-                      </Button>
-                    )}
-                    content="Edit the summary"
-                    position="top center"
-                  />
-
-                  <Popup
-                    trigger={(
-                      <Button
-                        icon
-                        negative
-                        onClick={() => _onRemoveQueryConfirmation(query.id)}
-                      >
-                        <Icon name="x" />
-                      </Button>
-                    )}
-                    content="Remove the saved query"
-                    position="top right"
-                  />
-                </List.Content>
-
-                <List.Content verticalAlign="middle">
-                  <List.Header>{query.summary}</List.Header>
-                  <List.Description>{`created by ${query.User.name}`}</List.Description>
-                </List.Content>
-              </List.Item>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <Text b>{query.summary}</Text>
+                  <Spacer y={0.2} />
+                  <Text small>{`created by ${query.User.name}`}</Text>
+                </div>
+                <div style={{ display: "flex", flexDirection: "row", justifyContent: "flex-end" }}>
+                  <Tooltip content="Use this query" color="invert" css={{ zIndex: 10000 }}>
+                    <Button
+                      icon={<TickSquare />}
+                      color="success"
+                      onClick={() => onSelectQuery(query)}
+                      css={{ minWidth: "fit-content" }}
+                      size="sm"
+                    />
+                  </Tooltip>
+                  <Spacer x={0.2} />
+                  <Tooltip content="Edit the summary" color="invert" css={{ zIndex: 10000 }}>
+                    <Button
+                      icon={editQuery && editLoading && editQuery.id === query.id ? <Loading type="spinner" /> : <Edit />}
+                      color="secondary"
+                      disabled={editQuery && editLoading && editQuery.id === query.id}
+                      onClick={() => _onEditQueryConfirmation(query)}
+                      css={{ minWidth: "fit-content" }}
+                      size="sm"
+                    />
+                  </Tooltip>
+                  <Spacer x={0.2} />
+                  <Tooltip content="Remove the saved query" color="invert" css={{ zIndex: 10000 }}>
+                    <Button
+                      icon={<CloseSquare />}
+                      color="error"
+                      onClick={() => _onRemoveQueryConfirmation(query.id)}
+                      css={{ minWidth: "fit-content" }}
+                      size="sm"
+                    />
+                  </Tooltip>
+                </div>
+              </Row>
             );
           })}
-        </List>
-        )}
+        </Container>
+      )}
       {savedQueries.length < 1 && !loading
         && <p><i>{"The project doesn't have any saved queries yet"}</i></p>}
 
       {/* Update query modal */}
-      <TransitionablePortal open={!!editQuery}>
-        <Modal open={!!editQuery} size="small" onClose={() => setEditQuery(null)}>
-          <Header
-            content="Edit the query"
-            inverted
+      <Modal open={!!editQuery} size="small" onClose={() => setEditQuery(null)}>
+        <Modal.Header>
+          <Text h3>Edit the query</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <Input
+            label="Edit the description of the query"
+            placeholder="Type a summary here"
+            value={savedQuerySummary ? savedQuerySummary /* eslint-disable-line */
+              : editQuery ? editQuery.summary : ""}
+            fluid
+            onChange={(e) => setSavedQuerySummary(e.target.value)}
+            bordered
+            fullWidth
           />
-          <Modal.Content>
-            <Header size="small">Edit the description of the query</Header>
-            <Input
-              placeholder="Type a summary here"
-              value={savedQuerySummary ? savedQuerySummary /* eslint-disable-line */
-                : editQuery ? editQuery.summary : ""}
-              fluid
-              onChange={(e, data) => setSavedQuerySummary(data.value)}
-            />
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              onClick={() => setEditQuery(null)}
-            >
-              Close
-            </Button>
-            <Button
-              primary
-              disabled={!savedQuerySummary}
-              icon
-              labelPosition="right"
-              loading={editLoading}
-              onClick={_onEditQuery}
-            >
-              <Icon name="checkmark" />
-              Save the query
-            </Button>
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            flat
+            color="warning"
+            onClick={() => setEditQuery(null)}
+            auto
+          >
+            Close
+          </Button>
+          <Button
+            disabled={editLoading || !savedQuerySummary}
+            onClick={_onEditQuery}
+            auto
+          >
+            Save the query
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* Update query modal */}
-      <TransitionablePortal open={!!removeQuery}>
-        <Modal open={!!removeQuery} size="small" basic onClose={() => setRemoveQuery(null)}>
-          <Header
-            icon="exclamation triangle"
-            content="Are you sure you want to remove the query?"
-            inverted
-          />
-          <Modal.Content>
-            <p>{"This action will be permanent."}</p>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              onClick={() => setRemoveQuery(null)}
-            >
-              Close
-            </Button>
-            <Button
-              negative
-              icon
-              labelPosition="right"
-              loading={removeLoading}
-              onClick={_onRemoveQuery}
-            >
-              <Icon name="x" />
-              Remove the query
-            </Button>
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
+      <Modal open={!!removeQuery} size="small" basic onClose={() => setRemoveQuery(null)}>
+        <Modal.Header>
+          <Text h3>Are you sure you want to remove the query?</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <Text>{"This action will be permanent."}</Text>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            flat
+            color="warning"
+            onClick={() => setRemoveQuery(null)}
+            auto
+          >
+            Close
+          </Button>
+          <Button
+            color="error"
+            disabled={removeLoading}
+            onClick={_onRemoveQuery}
+            auto
+          >
+            Remove the query
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
 
 const styles = {
   container: {
+    width: "100%",
   },
   selectedItem: {
     backgroundColor: secondaryTransparent(0.1),

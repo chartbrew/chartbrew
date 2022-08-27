@@ -156,6 +156,7 @@ function AddChart(props) {
   };
 
   const _onSaveNewDataset = () => {
+    if (savingDataset || addingDataset) return;
     setSavingDataset(true);
     saveNewDataset(match.params.projectId, match.params.chartId, {
       chart_id: match.params.chartId,
@@ -562,11 +563,15 @@ function AddChart(props) {
 
             <Row align="center">
               {!addingDataset && datasets.length > 0 && (
-                <LinkNext onClick={() => _onSaveNewDataset()} css={{ color: "$primary", ai: "center" }}>
-                  {!savingDataset ? <Plus /> : <Loading type="spinner" />}
-                  <Spacer x={0.2} />
+                <Button
+                  onClick={() => _onSaveNewDataset()}
+                  icon={!savingDataset ? <Plus /> : <Loading type="spinner" />}
+                  auto
+                  bordered
+                  css={{ border: "none", p: 0 }}
+                >
                   {!savingDataset ? <Text>{"Add a new dataset"}</Text> : <Text>{"Saving dataset"}</Text>}
-                </LinkNext>
+                </Button>
               )}
 
               {!addingDataset && datasets.length === 0 && (
