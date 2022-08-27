@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {
   Button, Row, Spacer
 } from "@nextui-org/react";
-import { ArrowDown, ArrowUp } from "react-iconly";
+import { ChevronDownCircle, ChevronUpCircle } from "react-iconly";
 
 import TableComponent from "./TableComponent";
 
@@ -50,7 +50,7 @@ function TableContainer(props) {
         <Spacer x={0.2} />
         {!embedded && (
           <Button
-            icon={expanded ? <ArrowUp /> : <ArrowDown />}
+            icon={expanded ? <ChevronUpCircle /> : <ChevronDownCircle />}
             onClick={() => _onExpand()}
             auto
             size={chartSize === 1 ? "xs" : "sm"}

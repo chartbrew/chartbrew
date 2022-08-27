@@ -351,6 +351,7 @@ function UserDashboard(props) {
                     </Container>
                   )}
               </Container>
+              <Spacer y={3} />
             </>
           );
         })}

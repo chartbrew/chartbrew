@@ -29,7 +29,7 @@ function KpiChartSegment(props) {
           >
             <Container fluid css={{ p: 0, pb: 10 }}>
               <Row align="center">
-                <Text h4={chart.chartSize === 1} h3={chart.chartSize > 1}>
+                <Text b size={chart.chartSize === 1 ? "1.2em" : "1.4em"}>
                   {`${c.value} `}
                 </Text>
                 <Spacer x={0.2} />
@@ -56,7 +56,7 @@ function KpiChartSegment(props) {
                 )}
               </Row>
               <Row>
-                <Text h6={chart.chartSize === 1} h5={chart.chartSize > 1} css={{ fontWeight: "normal" }}>
+                <Text size={chart.chartSize === 1 ? "0.9em" : "1em"} css={{ fontWeight: "normal" }}>
                   <span
                     style={
                       chart.Datasets

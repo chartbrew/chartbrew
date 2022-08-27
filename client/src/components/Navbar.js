@@ -5,7 +5,7 @@ import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
   Loading, Modal, Row, Container, Link as LinkNext, Col, Image, Spacer,
-  Dropdown, Button, Tooltip,
+  Dropdown, Button, Tooltip, Text,
 } from "@nextui-org/react";
 import {
   Category, Discovery, Document, Edit, Heart, Logout, Send, User
@@ -167,12 +167,12 @@ function Navbar(props) {
 
               <Dropdown>
                 <Dropdown.Trigger>
-                  <LinkNext css={{ color: "white" }}>
+                  <LinkNext color="default" css={{ color: "white" }}>
                     <Row align="center">
-                      <Heart set="bold" size={"small"} />
+                      <Heart set="bold" size={"small"} primaryColor="white" />
                       <Spacer x={0.2} />
                       <Media greaterThan="mobile">
-                        {"Help"}
+                        <Text color="white">{"Help"}</Text>
                       </Media>
                     </Row>
                   </LinkNext>

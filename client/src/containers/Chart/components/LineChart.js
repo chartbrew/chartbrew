@@ -108,9 +108,8 @@ function LineChart(props) {
                   <Container fluid justify="center" alignContent="center" alignItems="center">
                     <Row justify="center" align="center">
                       <Text
-                        h1={chart.chartSize === 1}
-                        h2={chart.chartSize > 1}
-                        size={"2.5em"}
+                        b
+                        size={chart.chartSize === 1 ? "2.4em" : "2.6em"}
                         key={uuid()}
                       >
                         {dataset.data && _getKpi(dataset.data)}

@@ -382,7 +382,7 @@ function Chart(props) {
         >
           <Card.Header css={{ pb: 0 }}>
             <Grid.Container>
-              <Grid xs={8} sm={10} md={10} justify="flex-start">
+              <Grid xs={8} sm={10} md={10} justify="flex-start" alignItems="flex-start">
                 <div>
                   <Row justify="flex-start" align="center">
                     {chart.draft && (
@@ -394,7 +394,7 @@ function Chart(props) {
                     <span>
                       {_canAccess("editor") && (
                         <Link to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}>
-                          <Text h5 css={{ color: "$text" }}>{chart.name}</Text>
+                          <Text b size="1.1em" css={{ color: "$text", lineHeight: "$xs" }}>{chart.name}</Text>
                         </Link>
                       )}
                       {!_canAccess("editor") && (
@@ -448,7 +448,7 @@ function Chart(props) {
                   )}
                 </div>
               </Grid>
-              <Grid xs={4} sm={2} md={2} justify="flex-end">
+              <Grid xs={4} sm={2} md={2} justify="flex-end" alignItems="flex-start">
                 {_checkIfFilters() && (
                   <Popover>
                     <Popover.Trigger>
@@ -471,13 +471,9 @@ function Chart(props) {
                 {projectId && !print && (
                   <Dropdown closeOnSelect={false}>
                     <Dropdown.Trigger>
-                      <span>
-                        <Tooltip content="Chart settings" placement="leftStart">
-                          <LinkNext css={{ color: "$accents6" }}>
-                            <MoreSquare set="light" />
-                          </LinkNext>
-                        </Tooltip>
-                      </span>
+                      <LinkNext color="text">
+                        <MoreSquare set="light" />
+                      </LinkNext>
                     </Dropdown.Trigger>
                     <Dropdown.Menu>
                       <Dropdown.Item icon={<HiRefresh size={22} />}>

@@ -144,10 +144,10 @@ function ProjectNavigation(props) {
             title={project.name}
           >
             <Dropdown.Trigger>
-              <LinkNext css={{ color: "$accents9" }}>
+              <LinkNext>
                 {menuSize === "small" && (
                   <Tooltip content="Switch project" placement="right">
-                    <Category size="large" />
+                    <Text css={{ color: "$accents8" }}><Category size="large" /></Text>
                   </Tooltip>
                 )}
                 {menuSize === "large" && (
@@ -170,70 +170,71 @@ function ProjectNavigation(props) {
         {canAccess("editor")
           && (
             <Row justify="center" align="center">
-              <Link to={`/${teamId}/${projectId}/chart`}>
-                {menuSize === "small" && (
-                  <Tooltip content="Create a new chart" placement="right">
-                    <LinkNext color="primary">
+              {menuSize === "small" && (
+                <Tooltip content="Create a new chart" placement="right">
+                  <Link to={`/${teamId}/${projectId}/chart`}>
+                    <Text color="primary">
                       <Avatar icon={<Plus size="large" />} squared />
-                    </LinkNext>
-                  </Tooltip>
-                )}
-                {menuSize === "large" && (
+                    </Text>
+                  </Link>
+                </Tooltip>
+              )}
+              {menuSize === "large" && (
+                <Link to={`/${teamId}/${projectId}/chart`}>
                   <Button
                     iconRight={<Plus />}
                     auto
                     color="primary"
+                    onClick={(e) => { e.preventDefault(); }}
                   >
                     Create a chart
                   </Button>
-                )}
-              </Link>
+                </Link>
+              )}
             </Row>
           )}
         <Spacer y={1.5} />
         <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
           <Link to={`/${teamId}/${projectId}/dashboard`}>
-            <LinkNext css={{ color: _checkIfActive("dashboard") ? "$blue600" : "$accents8" }}>
-              {menuSize === "small" && (
+            {menuSize === "small" && (
+              <Row css={{ color: _checkIfActive("dashboard") ? "$blue600" : "$accents8" }}>
                 <Tooltip content="Dashboard" placement="right">
                   <Activity size="large" />
                 </Tooltip>
-              )}
-
-              <Row align="center">
-                {menuSize === "large" && <Activity />}
-                {menuSize === "large" && <Spacer x={0.2} />}
-                {menuSize === "large" && (
-                  <Text h5 css={{ color: _checkIfActive("dashboard") ? "$blue600" : "$accents8" }}>
-                    Dashboard
-                  </Text>
-                )}
               </Row>
-            </LinkNext>
+            )}
+            {menuSize === "large" && (
+              <Row css={{ color: _checkIfActive("dashboard") ? "$blue600" : "$accents8" }}>
+                <Activity />
+                <Spacer x={0.2} />
+                <Text h5 css={{ color: _checkIfActive("dashboard") ? "$blue600" : "$accents8" }}>
+                  Dashboard
+                </Text>
+              </Row>
+            )}
           </Link>
         </Row>
         {canAccess("editor") && (
           <>
             <Spacer y={0.5} />
-            <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
+            <Row justify={menuSize === "large" ? "flex-start" : "center"}>
               <Link to={`/${teamId}/${projectId}/connections`}>
-                <LinkNext css={{ color: _checkIfActive("connections") ? "$blue600" : "$accents8" }}>
-                  {menuSize === "small"
-                  && (
+                {menuSize === "small" && (
+                  <Row css={{ color: _checkIfActive("connections") ? "$blue600" : "$accents8" }}>
                     <Tooltip content="Connections" placement="right">
                       <FaPlug size={28} />
                     </Tooltip>
-                  )}
-                  <Row align="center">
-                    {menuSize === "large" && <FaPlug size={22} />}
-                    {menuSize === "large" && <Spacer x={0.2} />}
-                    {menuSize === "large" && (
-                      <Text h5 css={{ color: _checkIfActive("connections") ? "$blue600" : "$accents8" }}>
-                        Connections
-                      </Text>
-                    )}
                   </Row>
-                </LinkNext>
+                )}
+                {menuSize === "large" && (
+                  <Row css={{ color: _checkIfActive("connections") ? "$blue600" : "$accents8" }}>
+                    <FaPlug size={22} />
+                    <Spacer x={0.2} />
+                    <Text h5 css={{ color: _checkIfActive("connections") ? "$blue600" : "$accents8" }}>
+                      Connections
+                    </Text>
+                  </Row>
+                )}
               </Link>
             </Row>
           </>
@@ -244,19 +245,21 @@ function ProjectNavigation(props) {
           <Link to={`/b/${project.brewName}`}>
             <LinkNext css={{ color: _checkIfActive("public") ? "$blue600" : "$accents8" }}>
               {menuSize === "small" && (
-                <Tooltip content="Dashboard report" placement="right">
-                  <Graph size="large" />
-                </Tooltip>
+                <Row css={{ color: _checkIfActive("public") ? "$blue600" : "$accents8" }}>
+                  <Tooltip content="Dashboard report" placement="right">
+                    <Graph size="large" />
+                  </Tooltip>
+                </Row>
               )}
-              <Row align="center">
-                {menuSize === "large" && <Graph />}
-                {menuSize === "large" && <Spacer x={0.2} />}
-                {menuSize === "large" && (
+              {menuSize === "large" && (
+                <Row css={{ color: _checkIfActive("public") ? "$blue600" : "$accents8" }}>
+                  <Graph />
+                  <Spacer x={0.2} />
                   <Text h5 css={{ color: _checkIfActive("public") ? "$blue600" : "$accents8" }}>
                     Dashboard report
                   </Text>
-                )}
-              </Row>
+                </Row>
+              )}
             </LinkNext>
           </Link>
         </Row>
@@ -264,24 +267,24 @@ function ProjectNavigation(props) {
         {canAccess("admin") && (
           <>
             <Spacer y={0.5} />
-            <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
+            <Row justify={menuSize === "large" ? "flex-start" : "center"}>
               <Link to={`/${teamId}/${projectId}/projectSettings`}>
-                <LinkNext css={{ color: _checkIfActive("projectSettings") ? "$blue600" : "$accents8" }}>
-                  {menuSize === "small" && (
+                {menuSize === "small" && (
+                  <Row css={{ color: _checkIfActive("projectSettings") ? "$blue600" : "$accents8" }}>
                     <Tooltip content="Project settings" placement="right">
                       <Setting size="large" />
                     </Tooltip>
-                  )}
-                  <Row align="center">
-                    {menuSize === "large" && <Setting />}
-                    {menuSize === "large" && <Spacer x={0.2} />}
-                    {menuSize === "large" && (
-                      <Text h5 css={{ color: _checkIfActive("projectSettings") ? "$blue600" : "$accents8" }}>
-                        Project settings
-                      </Text>
-                    )}
                   </Row>
-                </LinkNext>
+                )}
+                {menuSize === "large" && (
+                  <Row css={{ color: _checkIfActive("projectSettings") ? "$blue600" : "$accents8" }}>
+                    <Setting />
+                    <Spacer x={0.2} />
+                    <Text h5 css={{ color: _checkIfActive("projectSettings") ? "$blue600" : "$accents8" }}>
+                      Project settings
+                    </Text>
+                  </Row>
+                )}
               </Link>
             </Row>
           </>
@@ -299,46 +302,46 @@ function ProjectNavigation(props) {
                 <Spacer y={0.5} />
               </>
             )}
-            <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
+            <Row justify={menuSize === "large" ? "flex-start" : "center"}>
               <Link to={`/${teamId}/${projectId}/members`}>
-                <LinkNext css={{ color: _checkIfActive("members") ? "$blue600" : "$accents8" }}>
-                  {menuSize === "small" && (
+                {menuSize === "small" && (
+                  <Row css={{ color: _checkIfActive("members") ? "$blue600" : "$accents8" }}>
                     <Tooltip content="Team members" placement="right">
                       <TwoUsers size="large" />
                     </Tooltip>
-                  )}
-                  <Row align="center">
-                    {menuSize === "large" && <TwoUsers />}
-                    {menuSize === "large" && <Spacer x={0.2} />}
-                    {menuSize === "large" && (
-                      <Text h5 css={{ color: _checkIfActive("members") ? "$blue600" : "$accents8" }}>
-                        Members
-                      </Text>
-                    )}
                   </Row>
-                </LinkNext>
+                )}
+                {menuSize === "large" && (
+                  <Row css={{ color: _checkIfActive("members") ? "$blue600" : "$accents8" }}>
+                    <TwoUsers />
+                    <Spacer x={0.2} />
+                    <Text h5 css={{ color: _checkIfActive("members") ? "$blue600" : "$accents8" }}>
+                      Members
+                    </Text>
+                  </Row>
+                )}
               </Link>
             </Row>
             <Spacer y={0.5} />
             {canAccess("owner") && (
               <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
                 <Link to={`/${teamId}/${projectId}/settings`}>
-                  <LinkNext css={{ color: _checkIfActive("settings") ? "$blue600" : "$accents8" }}>
-                    {menuSize === "small" && (
+                  {menuSize === "small" && (
+                    <Row css={{ color: _checkIfActive("settings") ? "$blue600" : "$accents8" }}>
                       <Tooltip content="Team settings" placement="right">
                         <MoreSquare size="large" />
                       </Tooltip>
-                    )}
-                    <Row align="center">
-                      {menuSize === "large" && <MoreSquare />}
-                      {menuSize === "large" && <Spacer x={0.2} />}
-                      {menuSize === "large" && (
-                        <Text h5 css={{ color: _checkIfActive("settings") ? "$blue600" : "$accents8" }}>
-                          Settings
-                        </Text>
-                      )}
                     </Row>
-                  </LinkNext>
+                  )}
+                  {menuSize === "large" && (
+                    <Row css={{ color: _checkIfActive("settings") ? "$blue600" : "$accents8" }}>
+                      <MoreSquare />
+                      <Spacer x={0.2} />
+                      <Text h5 css={{ color: _checkIfActive("settings") ? "$blue600" : "$accents8" }}>
+                        Settings
+                      </Text>
+                    </Row>
+                  )}
                 </Link>
               </Row>
             )}
@@ -352,7 +355,7 @@ function ProjectNavigation(props) {
                 content={showDrafts ? "Click to hide drafts" : "Click to show drafts"}
                 placement="right"
               >
-                <Row align="center">
+                <Row>
                   {menuSize === "small" && (
                     showDrafts ? (<Show size="large" />) : (<Hide size="large" />)
                   )}

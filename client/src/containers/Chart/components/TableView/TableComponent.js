@@ -59,7 +59,6 @@ function TableComponent(props) {
           <Table
             {...getTableProps()}
             lined
-            selectionMode="single"
             shadow={false}
           >
             <Table.Header>
@@ -97,7 +96,7 @@ function TableComponent(props) {
               {page.map((row) => {
                 prepareRow(row);
                 return (
-                  <Table.Row {...row.getRowProps()}>
+                  <Table.Row {...row.getRowProps()} css={{ userSelect: "text" }}>
                     {row.cells.map((cell) => {
                       // identify collections to render them differently
                       const cellObj = cell.render("Cell");
@@ -112,7 +111,7 @@ function TableComponent(props) {
                       const isShort = isObject && Object.keys(objDetails).length === 1;
 
                       return (
-                        <Table.Cell collapsing {...cell.getCellProps()} style={{ maxWidth: 300 }}>
+                        <Table.Cell collapsing {...cell.getCellProps()} style={{ maxWidth: 300 }} css={{ userSelect: "text" }}>
                           {(!isObject && !isArray) && (
                             <Text size={"0.9em"} title={cellObj.props.value}>
                               {cellObj.props.value === true || cellObj.props.value === false
