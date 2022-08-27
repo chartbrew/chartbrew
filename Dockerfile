@@ -6,7 +6,7 @@ COPY . .
 RUN cd client && npm install && cd ../server && npm install
 RUN npm run prepareSettings
 
-EXPOSE 3000
-EXPOSE 3210
+EXPOSE 4018
+EXPOSE 4019
 
 ENTRYPOINT ["./entrypoint.sh"]

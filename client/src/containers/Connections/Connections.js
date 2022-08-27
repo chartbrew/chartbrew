@@ -726,7 +726,7 @@ function Connections(props) {
                         </Row>
                       </Container>
                     </Card.Body>
-                    {_canAccess("admin") && (
+                    {_canAccess("editor") && (
                       <Card.Footer>
                         <Container>
                           <Row justify="center">
