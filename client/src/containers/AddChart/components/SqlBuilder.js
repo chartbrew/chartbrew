@@ -198,7 +198,7 @@ function SqlBuilder(props) {
               <Text b>Saved queries</Text>
             </Row>
             <Spacer y={0.5} />
-            <Row className="mongobuilder-saved-tut">
+            <Row className="sqlbuilder-saved-tut">
               <SavedQueries
                 selectedQuery={savedQuery}
                 onSelectQuery={(savedQuery) => {
