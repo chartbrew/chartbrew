@@ -3,11 +3,13 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Header, Button, Icon, Container,
-  Modal, Input, TransitionablePortal,
-} from "semantic-ui-react";
+  Grid, Button, Container, Row, Text, Spacer, Loading, Modal, Input,
+} from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
+import {
+  Edit, Play, Plus, TickSquare
+} from "react-iconly";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/mode-pgsql";
@@ -120,134 +122,162 @@ function SqlBuilder(props) {
 
   return (
     <div style={styles.container}>
-      <Grid columns={2} stackable centered divided>
-        <Grid.Column width={8}>
-          {connection.type === "mysql" && <Header size="small">{"Enter your MySQL query here"}</Header>}
-          {connection.type === "postgres" && <Header size="small">{"Enter your PostgreSQL query here"}</Header>}
-          <AceEditor
-            mode="pgsql"
-            theme="tomorrow"
-            height="200px"
-            width="none"
-            value={sqlRequest.query || ""}
-            onChange={(value) => {
-              _onChangeQuery(value);
-            }}
-            name="queryEditor"
-            editorProps={{ $blockScrolling: true }}
-            className="sqlbuilder-query-tut"
-          />
-          <Button.Group fluid className="sqlbuilder-buttons-tut">
-            <Button
-              color={requestSuccess ? "green" : requestError ? "red" : null}
-              primary={!requestSuccess && !requestError}
-              icon
-              labelPosition="right"
-              onClick={_onTest}
-              loading={requestLoading}
-            >
-              {requestSuccess && <Icon name="checkmark" />}
-              {requestError && <Icon name="x" />}
-              {!requestSuccess && !requestError && <Icon name="flask" />}
-              {!requestSuccess && !requestError && "Run the query"}
-              {(requestSuccess || requestError) && "Run again"}
-            </Button>
-
-            <Button
-              secondary
-              icon
-              labelPosition="right"
-              loading={savingQuery}
-              onClick={_onSaveQueryConfirmation}
-            >
-              <Icon name="plus" />
-              {!savedQuery && "Save the query"}
-              {savedQuery && "Save as new"}
-            </Button>
-
-            {savedQuery
-              && (
+      <Grid.Container gap={1}>
+        <Grid xs={12} sm={6}>
+          <Container>
+            <Row align="center">
+              <Text>
+                {connection.type === "mysql" && "Enter your MySQL query here"}
+                {connection.type === "postgres" && "Enter your PostgreSQL query here"}
+              </Text>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <div style={{ width: "100%" }}>
+                <AceEditor
+                  mode="pgsql"
+                  theme="tomorrow"
+                  height="300px"
+                  width="none"
+                  value={sqlRequest.query || ""}
+                  onChange={(value) => {
+                    _onChangeQuery(value);
+                  }}
+                  name="queryEditor"
+                  editorProps={{ $blockScrolling: true }}
+                  className="sqlbuilder-query-tut"
+                />
+              </div>
+            </Row>
+            <Spacer y={0.5} />
+            <Row className="sqlbuilder-buttons-tut">
               <Button
-                primary
-                basic
-                icon
-                labelPosition="right"
-                onClick={_onUpdateSavedQuery}
-                loading={updatingSavedQuery}
+                color={requestSuccess ? "success" : requestError ? "error" : "primary"}
+                iconRight={requestSuccess && !requestLoading ? <TickSquare /> : <Play />}
+                onClick={_onTest}
+                disabled={requestLoading}
+                auto
+                shadow
               >
-                <Icon name="angle double up" />
-                Update the query
+                {!requestSuccess && !requestError && !requestLoading && "Run the query"}
+                {(requestSuccess || requestError) && !requestLoading && "Run again"}
+                {requestLoading && <Loading type="points" />}
               </Button>
+
+              <Spacer x={0.2} />
+              <Button
+                color="secondary"
+                iconRight={<Plus />}
+                disabled={savingQuery}
+                onClick={_onSaveQueryConfirmation}
+                auto
+              >
+                {!savedQuery && !savingQuery && "Save the query"}
+                {savedQuery && !savingQuery && "Save as new"}
+                {savingQuery && <Loading type="points" />}
+              </Button>
+
+              {savedQuery && (
+                <>
+                  <Spacer x={0.2} />
+                  <Button
+                    bordered
+                    icon={<Edit />}
+                    onClick={_onUpdateSavedQuery}
+                    disabled={updatingSavedQuery}
+                    auto
+                  >
+                    {updatingSavedQuery ? <Loading type="points" /> : "Update the query"}
+                  </Button>
+                </>
               )}
-          </Button.Group>
+            </Row>
 
-          <Header size="small">Saved queries</Header>
-          <Container className="sqlbuilder-saved-tut">
-            <SavedQueries
-              selectedQuery={savedQuery}
-              onSelectQuery={(savedQuery) => {
-                setSavedQuery(savedQuery.id);
-                _onChangeQuery(savedQuery.query);
-              }}
-              type="mysql"
-              style={styles.savedQueriesContainer}
-            />
+            <Spacer y={1} />
+            <Row>
+              <Text b>Saved queries</Text>
+            </Row>
+            <Spacer y={0.5} />
+            <Row className="mongobuilder-saved-tut">
+              <SavedQueries
+                selectedQuery={savedQuery}
+                onSelectQuery={(savedQuery) => {
+                  setSavedQuery(savedQuery.id);
+                  _onChangeQuery(savedQuery.query);
+                }}
+                type="mysql"
+                style={styles.savedQueriesContainer}
+              />
+            </Row>
           </Container>
-        </Grid.Column>
-        <Grid.Column width={8}>
-          <Header size="small">
-            {"Query result"}
-          </Header>
-
-          <AceEditor
-            mode="json"
-            theme="tomorrow"
-            height="450px"
-            width="none"
-            value={exploreData || result || ""}
-            onChange={() => setResult(result)}
-            name="resultEditor"
-            readOnly
-            editorProps={{ $blockScrolling: false }}
-            className="sqlbuilder-result-tut"
-          />
-        </Grid.Column>
-      </Grid>
+        </Grid>
+        <Grid xs={12} sm={6}>
+          <Container>
+            <Row>
+              <Text b>
+                {"Query result"}
+              </Text>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <div style={{ width: "100%" }}>
+                <AceEditor
+                  mode="json"
+                  theme="tomorrow"
+                  height="450px"
+                  width="none"
+                  value={exploreData || result || ""}
+                  onChange={() => setResult(result)}
+                  name="resultEditor"
+                  readOnly
+                  editorProps={{ $blockScrolling: false }}
+                  className="sqlbuilder-result-tut"
+                />
+              </div>
+            </Row>
+            <Spacer y={0.5} />
+            {result && (
+              <Row>
+                <Text small>This is a sample response and might not show all the data.</Text>
+              </Row>
+            )}
+          </Container>
+        </Grid>
+      </Grid.Container>
 
       {/* Save query modal */}
-      <TransitionablePortal open={saveQueryModal}>
-        <Modal open={saveQueryModal} size="small" onClose={() => setSaveQueryModal(false)}>
-          <Header
-            content="Save your query and use it later in this project"
-            inverted
+      <Modal open={saveQueryModal} size="small" onClose={() => setSaveQueryModal(false)}>
+        <Modal.Header>
+          <Text h3>{"Save your query and use it later in this project"}</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <Input
+            label="Write a short description for your query"
+            placeholder="Type a summary here"
+            fluid
+            onChange={(e) => setSavedQuerySummary(e.target.value)}
+            size="lg"
           />
-          <Modal.Content>
-            <Header size="small">Write a short description for your query</Header>
-            <Input
-              placeholder="Type a summary here"
-              fluid
-              onChange={(e, data) => setSavedQuerySummary(data.value)}
-            />
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              onClick={() => setSaveQueryModal(false)}
-            >
-              Close
-            </Button>
-            <Button
-              primary
-              disabled={!savedQuerySummary}
-              icon
-              labelPosition="right"
-              onClick={_onSaveQuery}
-            >
-              <Icon name="checkmark" />
-              Save the query
-            </Button>
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            flat
+            color="warning"
+            onClick={() => setSaveQueryModal(false)}
+            auto
+          >
+            Close
+          </Button>
+          <Button
+            disabled={!savedQuerySummary}
+            iconRight={<TickSquare />}
+            onClick={_onSaveQuery}
+            auto
+          >
+            Save the query
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
