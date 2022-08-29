@@ -3,8 +3,8 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Form, Input, Button, Icon, Label, Popup, Checkbox, Header, Divider, Message,
-} from "semantic-ui-react";
+  Grid, Button, Container, Row, Input, Spacer, Divider, Badge, Text, Loading, Checkbox, Tooltip,
+} from "@nextui-org/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
 import { toast } from "react-toastify";
@@ -12,11 +12,11 @@ import { toast } from "react-toastify";
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 
+import { CloseSquare, InfoCircle, Play } from "react-iconly";
 import {
   runRequest as runRequestAction,
 } from "../../../actions/dataset";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
-import { primaryTransparent } from "../../../config/colors";
 
 /*
   The API Data Request builder
@@ -129,93 +129,118 @@ function RealtimeDbBuilder(props) {
 
   return (
     <div style={styles.container}>
-      <Grid columns={2} stackable centered>
-        <Grid.Column width={10}>
-          <Form>
-            <Form.Field className="RealtimeDb-route-tut">
+      <Grid.Container>
+        <Grid xs={12} sm={6} md={7}>
+          <Container>
+            <Row className="RealtimeDb-route-tut">
               <Input
-                label={connection.connectionString || `https://${projectId || "<your_project>"}.firebaseio.com/`}
-                placeholder={"Enter the data path"}
-                focus
-                value={firebaseRequest.route || ""}
-                onChange={(e, data) => _onChangeRoute(data.value)}
+                value={connection.connectionString || `https://${projectId || "<your_project>"}.firebaseio.com/`}
+                fullWidth
+                css={{ pointerEvents: "none" }}
               />
-            </Form.Field>
-            <Form.Field>
-              {requestSuccess && (
-                <>
-                  <Label color="green" style={{ marginBottom: 10 }}>
-                    {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
-                  </Label>
-                  <Label style={{ marginBottom: 10 }}>
-                    {`Length: ${result ? JSON.parse(result).length : 0}`}
-                  </Label>
-                </>
-              )}
-              {requestError && (
-                <Label color="red" style={{ marginBottom: 10 }}>
-                  {`${requestError.statusCode} ${requestError.statusText}`}
-                </Label>
-              )}
-              <Divider />
-            </Form.Field>
-            <Form.Field>
-              <Header as="h4">
+              <Spacer x={0.2} />
+              <Input
+                placeholder={"Enter the data path"}
+                autoFocus
+                value={firebaseRequest.route || ""}
+                onChange={(e) => _onChangeRoute(e.target.value)}
+                bordered
+                fullWidth
+                animated={false}
+              />
+            </Row>
+            {(requestSuccess || requestError) && (
+              <>
+                <Spacer y={0.5} />
+                <Row>
+                  {requestSuccess && (
+                    <>
+                      <Badge color="success">
+                        {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
+                      </Badge>
+                      <Spacer x={0.2} />
+                      <Badge>
+                        {`Length: ${result ? JSON.parse(result).length : 0}`}
+                      </Badge>
+                    </>
+                  )}
+                  {requestError && (
+                    <Badge color="error">
+                      {`${requestError.statusCode} ${requestError.statusText}`}
+                    </Badge>
+                  )}
+                </Row>
+              </>
+            )}
+
+            <Spacer y={0.5} />
+            <Divider />
+            <Spacer y={0.5} />
+
+            <Row>
+              <Text b>
                 Order By
-              </Header>
-            </Form.Field>
-            <Form.Group>
-              <Form.Field>
-                <Button
-                  basic={!firebaseRequest.configuration || (firebaseRequest.configuration && firebaseRequest.configuration.orderBy !== "child")}
-                  primary={firebaseRequest.configuration && firebaseRequest.configuration.orderBy === "child"}
-                  onClick={() => (
-                    setFirebaseRequest({
-                      ...firebaseRequest,
-                      configuration: {
-                        ...firebaseRequest.configuration,
-                        orderBy: "child"
-                      }
-                    })
-                  )}
-                >
-                  {"Child key"}
-                </Button>
-                <Button
-                  basic={!firebaseRequest.configuration || (firebaseRequest.configuration && firebaseRequest.configuration.orderBy !== "key")}
-                  primary={firebaseRequest.configuration && firebaseRequest.configuration.orderBy === "key"}
-                  onClick={() => (
-                    setFirebaseRequest({
-                      ...firebaseRequest,
-                      configuration: {
-                        ...firebaseRequest.configuration,
-                        orderBy: "key",
-                      }
-                    })
-                  )}
-                >
-                  {"Key"}
-                </Button>
-                <Button
-                  basic={!firebaseRequest.configuration || (firebaseRequest.configuration && firebaseRequest.configuration.orderBy !== "value")}
-                  primary={firebaseRequest.configuration && firebaseRequest.configuration.orderBy === "value"}
-                  onClick={() => (
-                    setFirebaseRequest({
-                      ...firebaseRequest,
-                      configuration: {
-                        ...firebaseRequest.configuration,
-                        orderBy: "value",
-                      }
-                    })
-                  )}
-                >
-                  {"Value"}
-                </Button>
-                {firebaseRequest.configuration && firebaseRequest.configuration.orderBy && (
+              </Text>
+            </Row>
+            <Spacer y={0.5} />
+            <Row align="center">
+              <Badge
+                isSquared
+                variant={"bordered"}
+                color={!firebaseRequest.configuration || (firebaseRequest.configuration && firebaseRequest.configuration.orderBy !== "child") ? "netral" : "secondary"}
+                onClick={() => (
+                  setFirebaseRequest({
+                    ...firebaseRequest,
+                    configuration: {
+                      ...firebaseRequest.configuration,
+                      orderBy: "child"
+                    }
+                  })
+                )}
+              >
+                {"Child key"}
+              </Badge>
+              <Spacer x={0.2} />
+              <Badge
+                isSquared
+                variant="bordered"
+                color={!firebaseRequest.configuration || (firebaseRequest.configuration && firebaseRequest.configuration.orderBy !== "key") ? "neutral" : "secondary"}
+                onClick={() => (
+                  setFirebaseRequest({
+                    ...firebaseRequest,
+                    configuration: {
+                      ...firebaseRequest.configuration,
+                      orderBy: "key",
+                    }
+                  })
+                )}
+              >
+                {"Key"}
+              </Badge>
+              <Spacer x={0.2} />
+              <Badge
+                isSquared
+                variant={"bordered"}
+                color={!firebaseRequest.configuration || (firebaseRequest.configuration && firebaseRequest.configuration.orderBy !== "value") ? "bordered" : "secondary"}
+                onClick={() => (
+                  setFirebaseRequest({
+                    ...firebaseRequest,
+                    configuration: {
+                      ...firebaseRequest.configuration,
+                      orderBy: "value",
+                    }
+                  })
+                )}
+              >
+                {"Value"}
+              </Badge>
+              {firebaseRequest.configuration && firebaseRequest.configuration.orderBy && (
+                <>
+                  <Spacer x={0.2} />
                   <Button
-                    className="tertiary"
-                    icon="x"
-                    content="Disable ordering"
+                    color="error"
+                    bordered
+                    icon={<CloseSquare size="small" />}
                     onClick={() => (
                       setFirebaseRequest({
                         ...firebaseRequest,
@@ -225,38 +250,53 @@ function RealtimeDbBuilder(props) {
                         }
                       })
                     )}
-                  />
-                )}
-              </Form.Field>
-            </Form.Group>
+                    auto
+                    size="xs"
+                  >
+                    {"Disable ordering"}
+                  </Button>
+                </>
+              )}
+            </Row>
+            <Spacer y={0.5} />
             {firebaseRequest.configuration && firebaseRequest.configuration.orderBy === "child" && (
-              <Form.Field>
+              <Row>
                 <Input
                   placeholder="Enter a field to order by"
                   value={(firebaseRequest.configuration && firebaseRequest.configuration.key) || ""}
-                  onChange={(e, data) => (
+                  onChange={(e) => (
                     setFirebaseRequest({
                       ...firebaseRequest,
                       configuration: {
                         ...firebaseRequest.configuration,
-                        key: data.value
+                        key: e.target.value
                       }
                     })
                   )}
+                  bordered
+                  fullWidth
                 />
-              </Form.Field>
+              </Row>
             )}
-            <Form.Field>
-              <Divider />
-              <Header as="h4">Limit results</Header>
-            </Form.Field>
-            <Form.Field>
-              <Button
-                basic={
+
+            <Spacer y={0.5} />
+            <Divider />
+            <Spacer y={0.5} />
+
+            <Row>
+              <Text b>Limit results</Text>
+            </Row>
+            <Spacer y={0.5} />
+
+            <Row align="center">
+              <Badge
+                isSquared
+                variant={"bordered"}
+                color={
                   !firebaseRequest.configuration
                   || (firebaseRequest.configuration && !firebaseRequest.configuration.limitToLast)
+                    ? "netrual" : "secondary"
                 }
-                primary={firebaseRequest.configuration && firebaseRequest.configuration.limitToLast}
                 onClick={() => (
                   setFirebaseRequest({
                     ...firebaseRequest,
@@ -267,15 +307,17 @@ function RealtimeDbBuilder(props) {
                     }
                   })
                 )}
-                content="Limit to last"
-              />
-              <Button
-                basic={
+              >
+                Limit to last
+              </Badge>
+              <Spacer x={0.2} />
+              <Badge
+                isSquared
+                variant={"bordered"}
+                color={
                   !firebaseRequest.configuration
                   || (firebaseRequest.configuration && !firebaseRequest.configuration.limitToFirst)
-                }
-                primary={
-                  firebaseRequest.configuration && firebaseRequest.configuration.limitToFirst
+                    ? "neutral" : "secondary"
                 }
                 onClick={() => (
                   setFirebaseRequest({
@@ -287,16 +329,16 @@ function RealtimeDbBuilder(props) {
                     }
                   })
                 )}
-                content="Limit to first"
-              />
+              >
+                Limit to first
+              </Badge>
+              <Spacer x={0.2} />
               {firebaseRequest.configuration
                 && (firebaseRequest.configuration.limitToLast
                   || firebaseRequest.configuration.limitToFirst)
                 && (
                   <Button
-                    className="tertiary"
-                    icon="x"
-                    content="Disable limit"
+                    icon={<CloseSquare size="small" />}
                     onClick={() => (
                       setFirebaseRequest({
                         ...firebaseRequest,
@@ -307,15 +349,22 @@ function RealtimeDbBuilder(props) {
                         }
                       })
                     )}
-                  />
+                    auto
+                    bordered
+                    color="error"
+                    size="xs"
+                  >
+                    Disable limit
+                  </Button>
                 )}
-            </Form.Field>
-            <Form.Field>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
               <Input
                 placeholder="How many records should return?"
                 type="number"
                 value={limitValue}
-                onChange={(e, data) => _onChangeLimitValue(data.value)}
+                onChange={(e) => e.target.value && _onChangeLimitValue(e.target.value)}
                 disabled={
                   !firebaseRequest.configuration
                     || (
@@ -323,67 +372,63 @@ function RealtimeDbBuilder(props) {
                       && !firebaseRequest.configuration.limitToFirst
                     )
                 }
+                bordered
+                fullWidth
               />
-            </Form.Field>
-          </Form>
-
-          <Divider />
-          <Message icon size="small">
-            <Icon name="wrench" />
-            <Message.Content>
-              <Message.Header>Realtime Database has just arrived</Message.Header>
-              {"The integration was just added to Chartbrew. If you spot any issues, please let me know at "}
-              <a href="mailto:raz@chartbrew.com?subject=Realtime Database feedback">raz@chartbrew.com</a>
-            </Message.Content>
-          </Message>
-        </Grid.Column>
-        <Grid.Column width={6}>
-          <Form>
-            <Form.Field className="RealtimeDb-request-tut">
+            </Row>
+          </Container>
+        </Grid>
+        <Grid xs={12} sm={6} md={5}>
+          <Container>
+            <Row className="RealtimeDb-request-tut">
               <Button
-                primary
-                icon
-                labelPosition="right"
-                loading={requestLoading}
+                shadow
+                iconRight={requestLoading ? <Loading type="points" /> : <Play />}
+                disabled={requestLoading}
                 onClick={_onTest}
-                fluid
+                css={{ width: "100%" }}
               >
-                <Icon name="play" />
                 Make the request
               </Button>
-            </Form.Field>
-            <Form.Field>
+            </Row>
+            <Spacer y={0.5} />
+            <Row align="center">
               <Checkbox
-                label="Use cache"
-                checked={!!useCache}
+                isSelected={!!useCache}
                 onChange={_onChangeUseCache}
-              />
-              {" "}
-              <Popup
-                trigger={<Icon name="question circle outline" style={{ color: primaryTransparent(0.7) }} />}
-                inverted
+                size="sm"
               >
-                <>
-                  <p>{"If checked, Chartbrew will use cached data instead of making requests to your data source."}</p>
-                  <p>{"The cache gets automatically invalidated when you change the collections and/or filters."}</p>
-                </>
-              </Popup>
-            </Form.Field>
-          </Form>
-          <AceEditor
-            mode="json"
-            theme="tomorrow"
-            height="450px"
-            width="none"
-            value={result || ""}
-            onChange={() => setResult(result)}
-            name="resultEditor"
-            readOnly
-            editorProps={{ $blockScrolling: false }}
-            className="RealtimeDb-result-tut"
-          />
-        </Grid.Column>
-      </Grid>
+                Use cache
+              </Checkbox>
+              <Spacer x={0.2} />
+              <Tooltip
+                content="Use cache to avoid hitting the Firebase API every time you request data. The cache will be cleared when you change any of the settings."
+                color="invert"
+                css={{ minWidth: 600, zIndex: 10000 }}
+              >
+                <InfoCircle size="small" />
+              </Tooltip>
+            </Row>
+            <Spacer y={0.5} />
+            <Row align="center">
+              <div style={{ width: "100%" }}>
+                <AceEditor
+                  mode="json"
+                  theme="tomorrow"
+                  height="450px"
+                  width="none"
+                  value={result || ""}
+                  onChange={() => setResult(result)}
+                  name="resultEditor"
+                  readOnly
+                  editorProps={{ $blockScrolling: false }}
+                  className="RealtimeDb-result-tut"
+                />
+              </div>
+            </Row>
+          </Container>
+        </Grid>
+      </Grid.Container>
     </div>
   );
 }
