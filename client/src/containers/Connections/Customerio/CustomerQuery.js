@@ -1,13 +1,35 @@
-import React, { useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Container, Divider, Dropdown, Form, Icon, Input, Label, List, Loader, Popup
-} from "semantic-ui-react";
+  Button, Container, Dropdown, Input, Loading, Row, Spacer, Badge,
+  Link, Checkbox, Divider,
+} from "@nextui-org/react";
 import { isEqual } from "lodash";
 
+import {
+  ChevronDown, CloseSquare, Folder, TickSquare, User
+} from "react-iconly";
+import { FaCloud, FaWrench } from "react-icons/fa";
 import { runHelperMethod } from "../../../actions/connection";
 import { primary, secondary } from "../../../config/colors";
 import determineType from "../../../modules/determineType";
+
+const customerOperations = [
+  { text: "All conditions match", key: "and", value: "and" },
+  { text: "At least one condition matches", key: "or", value: "or" },
+];
+
+const filterOperations = [
+  { text: "in any of", value: "in", key: "in" },
+  { text: "not in any of", value: "not", key: "not" }
+];
+
+const attributeOperations = [
+  { text: "is equal to", key: "eq", value: "eq" },
+  { text: "is not equal to", key: "neq", value: "not,eq" },
+  { text: "exist", key: "exists", value: "exists" },
+  { text: "does not exist", key: "nexist", value: "not,exists" },
+];
 
 function CustomerQuery(props) {
   const {
@@ -31,7 +53,7 @@ function CustomerQuery(props) {
             text: segment.name,
             value: segment.id,
             key: segment.id,
-            icon: segment.type === "dynamic" ? "cloud" : "wrench",
+            icon: segment.type === "dynamic" ? <FaCloud size={18} /> : <FaWrench size={18} />,
           };
         });
 
@@ -188,325 +210,410 @@ function CustomerQuery(props) {
     return "equals";
   };
 
+  const _getSegmentNames = (ids) => {
+    const segmentNames = [];
+    ids.forEach((id) => {
+      segmentNames.push(_getSegmentName(id));
+    }).join(", ");
+
+    return segmentNames;
+  };
+
   if (loading) {
     return (
       <Container>
-        <Loader active={loading} />
+        <Loading type="spinner">
+          Loading your segments...
+        </Loading>
       </Container>
     );
   }
 
   return (
-    <div>
+    <Container css={{ pr: 0, pl: 0 }}>
       {((conditions.and && conditions.and.length > 0)
         || (conditions.or && conditions.or.length > 0)
       ) && (
-        <Form size="small">
-          <Form.Group>
-            <Form.Field width={8}>
-              <Dropdown
-                selection
-                options={[
-                  { text: "All conditions match", key: "and", value: "and" },
-                  { text: "At least one condition matches", key: "or", value: "or" },
-                ]}
-                value={mainOperation}
-                onChange={(e, data) => _onChangeOperation(data.value)}
-              />
-            </Form.Field>
-          </Form.Group>
-        </Form>
-      )}
-
-      {conditions[mainOperation] && (
-        <List style={{ marginTop: 20 }}>
-          {conditions[mainOperation].map((condition) => {
-            return (
-              <List.Item
-                key={
-                  (condition.segment && condition.segment.id)
-                  || (condition.not && condition.not.segment && condition.not.segment.id)
+        <Row>
+          <Dropdown>
+            <Dropdown.Trigger>
+              <Input
+                bordered
+                placeholder="Select an operation"
+                contentRight={<ChevronDown />}
+                value={
+                  (mainOperation
+                  && customerOperations
+                    .find((operation) => operation.value === mainOperation)?.text)
+                  || "Select an operation"
                 }
-              >
-                {/** SEGMENTS */}
-                {condition.segment && (
-                  <Label as="a">
-                    <Icon name="folder" />
-                    {"in "}
-                    <span style={{ color: primary }}>
-                      {`${_getSegmentName(condition.segment.id)}`}
-                    </span>
-                    <Icon
-                      name="delete"
-                      color="red"
-                      onClick={() => _onRemoveCondition("segment", condition.segment.id)}
-                    />
-                  </Label>
-                )}
-                {condition.not && condition.not.segment && (
-                  <Label as="a">
-                    <Icon name="folder" />
-                    {"not in "}
-                    <span style={{ color: primary }}>
-                      {`${_getSegmentName(condition.not.segment.id)}`}
-                    </span>
-                    <Icon
-                      name="delete"
-                      color="red"
-                      onClick={() => _onRemoveCondition("segment", condition.not.segment.id)}
-                    />
-                  </Label>
-                )}
-                {condition.or && (
-                  <Label as="a">
-                    <Icon name="folder" />
-                    {"in "}
-                    {condition.or.map((sub, index) => {
-                      if (sub.segment && sub.segment.id) {
-                        return (
-                          <span key={sub.segment.id}>
-                            <span style={{ color: primary }}>{`${_getSegmentName(sub.segment.id)}`}</span>
-                            {`${index < condition.or.length - 1 ? " or " : ""}`}
-                          </span>
-                        );
-                      }
-                      return (<span />);
-                    })}
-                    <Icon
-                      name="delete"
-                      color="red"
-                      onClick={() => _onRemoveCondition("segment", condition.or)}
-                    />
-                  </Label>
-                )}
-                {condition.not && condition.not.or && (
-                  <Label as="a">
-                    <Icon name="folder" />
-                    {"not in "}
-                    {condition.not.or.map((sub, index) => {
-                      if (sub.segment && sub.segment.id) {
-                        return (
-                          <span key={sub.segment.id}>
-                            <span style={{ color: primary }}>{`${_getSegmentName(sub.segment.id)}`}</span>
-                            {`${index < condition.not.or.length - 1 ? " or " : ""}`}
-                          </span>
-                        );
-                      }
-                      return (<span />);
-                    })}
-                    <Icon
-                      name="delete"
-                      color="red"
-                      onClick={() => _onRemoveCondition("segment", condition.not)}
-                    />
-                  </Label>
-                )}
-
-                {/** ATTRIBUTES */}
-                {condition.attribute && (
-                  <Label as="a">
-                    <Icon name="address card" />
-                    <span style={{ color: primary }}>
-                      {`${condition.attribute.field} `}
-                    </span>
-                    {condition.attribute.operator === "eq" ? "is " : ""}
-                    <span style={{ color: secondary }}>
-                      {`${_getOperatorName(condition.attribute.operator)}`}
-                    </span>
-                    {condition.attribute.operator === "eq" && (
-                      <span style={{ color: primary }}>
-                        {` to ${condition.attribute.value}`}
-                      </span>
-                    )}
-                    <Icon
-                      name="delete"
-                      color="red"
-                      onClick={() => _onRemoveCondition("attribute", condition.attribute.field)}
-                    />
-                  </Label>
-                )}
-                {condition.not && condition.not.attribute && (
-                  <Label as="a">
-                    <Icon name="address card" />
-                    <span style={{ color: primary }}>
-                      {`${condition.not.attribute.field} `}
-                    </span>
-                    {condition.not.attribute.operator === "eq" ? "is " : ""}
-                    <span style={{ color: secondary }}>
-                      {`${_getOperatorName(`not,${condition.not.attribute.operator}`)}`}
-                    </span>
-                    {condition.not.attribute.operator === "eq" && (
-                      <span style={{ color: primary }}>
-                        {` to ${condition.not.attribute.value}`}
-                      </span>
-                    )}
-                    <Icon
-                      name="delete"
-                      color="red"
-                      onClick={() => _onRemoveCondition("attribute", condition.not)}
-                    />
-                  </Label>
-                )}
-              </List.Item>
-            );
-          })}
-        </List>
+              />
+            </Dropdown.Trigger>
+            <Dropdown.Menu
+              onAction={(key) => _onChangeOperation(key)}
+              selectedKeys={[mainOperation]}
+              selectionMode="single"
+              css={{ minWidth: "max-content" }}
+            >
+              {customerOperations.map((operation) => (
+                <Dropdown.Item key={operation.key}>{operation.text}</Dropdown.Item>
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
+        </Row>
       )}
+      <Spacer y={1} />
 
+      <Row wrap="wrap" align="center">
+        {conditions[mainOperation] && conditions[mainOperation].map((condition) => {
+          return (
+            <Fragment
+              key={
+                (condition.segment && condition.segment.id)
+                || (condition.not && condition.not.segment && condition.not.segment.id)
+              }
+            >
+              {/** SEGMENTS */}
+              {condition.segment && (
+                <Badge as="a" variant={"bordered"}>
+                  <Folder size="small" />
+                  <Spacer x={0.1} />
+                  <span style={{ color: primary }}>
+                    {`in ${_getSegmentName(condition.segment.id)}`}
+                  </span>
+                  <Spacer x={0.1} />
+                  <Link onClick={() => _onRemoveCondition("segment", condition.segment.id)} color="secondary">
+                    <CloseSquare size="small" />
+                  </Link>
+                </Badge>
+              )}
+              {condition.not && condition.not.segment && (
+                <Badge as="a" variant={"bordered"}>
+                  <Folder size="small" />
+                  <Spacer x={0.1} />
+                  <span style={{ color: primary }}>
+                    {`not in  ${_getSegmentName(condition.not.segment.id)}`}
+                  </span>
+                  <Spacer x={0.1} />
+                  <Link onClick={() => _onRemoveCondition("segment", condition.not.segment.id)} color="secondary">
+                    <CloseSquare size="small" />
+                  </Link>
+                </Badge>
+              )}
+              {condition.or && (
+                <Badge as="a" variant={"bordered"}>
+                  <Folder size="small" />
+                  <Spacer x={0.1} />
+                  <span>{"in"}</span>
+                  <Spacer x={0.1} />
+                  {condition.or.map((sub, index) => {
+                    if (sub.segment && sub.segment.id) {
+                      return (
+                        <span key={sub.segment.id}>
+                          <span style={{ color: primary }}>{`${_getSegmentName(sub.segment.id)}`}</span>
+                          {`${index < condition.or.length - 1 ? " or " : ""}`}
+                        </span>
+                      );
+                    }
+                    return (<span />);
+                  })}
+                  <Spacer x={0.1} />
+                  <Link onClick={() => _onRemoveCondition("segment", condition.or)} color="secondary">
+                    <CloseSquare size="small" />
+                  </Link>
+                </Badge>
+              )}
+              {condition.not && condition.not.or && (
+                <Badge as="a" variant={"bordered"}>
+                  <Folder size="small" />
+                  <Spacer x={0.1} />
+                  <span>{"not in"}</span>
+                  <Spacer x={0.1} />
+                  {condition.not.or.map((sub, index) => {
+                    if (sub.segment && sub.segment.id) {
+                      return (
+                        <span key={sub.segment.id}>
+                          <span style={{ color: primary }}>{`${_getSegmentName(sub.segment.id)}`}</span>
+                          {`${index < condition.not.or.length - 1 ? " or " : ""}`}
+                        </span>
+                      );
+                    }
+                    return (<span />);
+                  })}
+                  <Spacer x={0.1} />
+                  <Link onClick={() => _onRemoveCondition("segment", condition.not)} color="secondary">
+                    <CloseSquare size="small" />
+                  </Link>
+                </Badge>
+              )}
+
+              {/** ATTRIBUTES */}
+              {condition.attribute && (
+                <Badge as="a" variant={"bordered"}>
+                  <User size="small" />
+                  <Spacer x={0.1} />
+                  <span style={{ color: primary }}>
+                    {`${condition.attribute.field}`}
+                  </span>
+                  <Spacer x={0.1} />
+                  {condition.attribute.operator === "eq" && (
+                    <>
+                      <Spacer x={0.1} />
+                      <span>is</span>
+                      <Spacer x={0.1} />
+                    </>
+                  )}
+                  <span style={{ color: secondary }}>
+                    {`${_getOperatorName(condition.attribute.operator)}`}
+                  </span>
+                  <Spacer x={0.1} />
+                  {condition.attribute.operator === "eq" && (
+                    <>
+                      <Spacer x={0.1} />
+                      <span style={{ color: primary }}>
+                        {`to ${condition.attribute.value}`}
+                      </span>
+                      <Spacer x={0.1} />
+                    </>
+                  )}
+                  <Link onClick={() => _onRemoveCondition("attribute", condition.attribute.field)} color="secondary">
+                    <CloseSquare size="small" />
+                  </Link>
+                </Badge>
+              )}
+              {condition.not && condition.not.attribute && (
+                <Badge as="a" isSquared>
+                  <User size="small" />
+                  <Spacer x={0.1} />
+                  <span style={{ color: primary }}>
+                    {`${condition.not.attribute.field}`}
+                  </span>
+                  <Spacer x={0.1} />
+                  {condition.not.attribute.operator === "eq" && (
+                    <>
+                      <Spacer x={0.1} />
+                      <span>is</span>
+                      <Spacer x={0.1} />
+                    </>
+                  )}
+                  <span style={{ color: secondary }}>
+                    {`${_getOperatorName(`not,${condition.not.attribute.operator}`)}`}
+                  </span>
+                  <Spacer x={0.1} />
+                  {condition.not.attribute.operator === "eq" && (
+                    <>
+                      <Spacer x={0.1} />
+                      <span style={{ color: primary }}>
+                        {`to ${condition.not.attribute.value}`}
+                      </span>
+                      <Spacer x={0.1} />
+                    </>
+                  )}
+                  <Link onClick={() => _onRemoveCondition("attribute", condition.not)} color="secondary">
+                    <CloseSquare size="small" />
+                  </Link>
+                </Badge>
+              )}
+              <Spacer x={0.2} />
+            </Fragment>
+          );
+        })}
+      </Row>
+
+      <Spacer y={1} />
       {!segmentConfig && !attributeConfig && (
-        <>
+        <Row align="center">
           <Button
-            size="tiny"
-            icon="folder"
-            content="Add segment condition"
+            size="sm"
+            icon={<Folder />}
             onClick={() => _onConfigureSegment()}
-            basic
-            color="blue"
-          />
+            bordered
+            auto
+          >
+            Add segment condition
+          </Button>
+          <Spacer x={0.2} />
           <Button
-            size="tiny"
-            icon="address card"
-            content="Add attribute condition"
+            size="sm"
+            icon={<User />}
             onClick={() => _onConfigureAttribute()}
-            basic
-            color="blue"
-          />
-        </>
+            bordered
+            auto
+          >
+            Add attribute condition
+          </Button>
+        </Row>
       )}
       {segmentConfig && (
-        <Form size="tiny">
-          <Form.Group>
-            <Form.Field>
-              <Dropdown
-                selection
-                placeholder="Select operation"
-                options={[
-                  { text: "in any of", value: "in", key: "in" },
-                  { text: "not in any of", value: "not", key: "not" }
-                ]}
-                defaultValue={"in"}
-                value={segmentConfig.operation}
-                onChange={(e, data) => {
-                  setSegmentConfig({ ...segmentConfig, operation: data.value });
-                }}
+        <Row>
+          <Dropdown>
+            <Dropdown.Trigger>
+              <Input
+                size="sm"
+                bordered
+                contentRight={<ChevronDown />}
+                animated={false}
+                value={
+                  (segmentConfig.operation
+                  && filterOperations.find((op) => op.value === segmentConfig.operation)?.text)
+                  || "Select operation"
+                }
               />
-            </Form.Field>
-            <Form.Field>
-              <Dropdown
-                selection
-                multiple
-                search
-                placeholder="Segments"
-                value={segmentConfig.ids}
-                options={segments}
-                onChange={(e, data) => {
-                  setSegmentConfig({ ...segmentConfig, ids: data.value });
-                }}
-                style={{ minWidth: 300 }}
-              />
-            </Form.Field>
-            <Form.Field>
-              <Button
-                icon="checkmark"
-                onClick={_onAddSegmentCondition}
-                primary
-                size="tiny"
-              />
-              <Button
-                icon="x"
-                onClick={() => setSegmentConfig(null)}
-                size="tiny"
-              />
-            </Form.Field>
-          </Form.Group>
-        </Form>
+            </Dropdown.Trigger>
+            <Dropdown.Menu
+              onAction={(key) => setSegmentConfig({ ...segmentConfig, operation: key })}
+              selectedKeys={[segmentConfig.operation]}
+              selectionMode="single"
+              defaultSelectedKeys={["in"]}
+            >
+              {filterOperations.map((operation) => (
+                <Dropdown.Item key={operation.value}>
+                  {operation.text}
+                </Dropdown.Item>
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
+          <Spacer x={0.2} />
+          <Dropdown>
+            <Dropdown.Button size="sm">
+              {segmentConfig.ids && segmentConfig.ids.length > 0 ? _getSegmentNames(segmentConfig.ids) : "Segments"}
+            </Dropdown.Button>
+            <Dropdown.Menu
+              selectionMode="multiple"
+              selectedKeys={segmentConfig.ids}
+              onAction={(key) => {
+                // if key exists in array, remove it, else add it
+                const newIds = segmentConfig.ids.includes(key);
+                setSegmentConfig({
+                  ...segmentConfig,
+                  ids: newIds
+                    ? segmentConfig.ids.filter((id) => id !== key) : [...segmentConfig.ids, key]
+                });
+              }}
+            >
+              {segments.map((segment) => (
+                <Dropdown.Item
+                  key={segment.value}
+                  icon={segment.icon}
+                >
+                  {segment.text}
+                </Dropdown.Item>
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
+          <Spacer x={0.5} />
+          <Button
+            icon={<TickSquare />}
+            onClick={_onAddSegmentCondition}
+            size="sm"
+            color="success"
+            css={{ minWidth: "fit-content" }}
+          />
+          <Spacer x={0.2} />
+          <Button
+            icon={<CloseSquare />}
+            color="error"
+            flat
+            onClick={() => setSegmentConfig(null)}
+            size="sm"
+            css={{ minWidth: "fit-content" }}
+          />
+        </Row>
       )}
       {attributeConfig && (
-        <Form size="tiny">
-          <Form.Group>
-            <Form.Field>
-              <Input
-                placeholder="Attribute name"
-                value={attributeConfig.field}
-                onChange={(e, data) => {
-                  setAttributeConfig({ ...attributeConfig, field: data.value });
-                }}
-              />
-            </Form.Field>
-            <Form.Field>
-              <Dropdown
-                selection
-                options={[
-                  { text: "is equal to", key: "eq", value: "eq" },
-                  { text: "is not equal to", key: "neq", value: "not,eq" },
-                  { text: "exist", key: "exists", value: "exists" },
-                  { text: "does not exist", key: "nexist", value: "not,exists" },
-                ]}
-                defaultValue={"eq"}
-                value={attributeConfig.operator}
-                onChange={(e, data) => {
-                  setAttributeConfig({ ...attributeConfig, operator: data.value });
-                }}
-              />
-            </Form.Field>
-            {(attributeConfig.operator === "eq" || attributeConfig.operator === "not,eq") && (
-              <Form.Field>
-                <Input
-                  placeholder="Value"
-                  value={attributeConfig.value}
-                  onChange={(e, data) => {
-                    setAttributeConfig({ ...attributeConfig, value: data.value });
-                  }}
-                />
-              </Form.Field>
-            )}
-            <Form.Field>
-              <Button
-                icon="checkmark"
-                onClick={_onAddAttributeCondition}
-                primary
-                size="tiny"
-              />
-              <Button
-                icon="x"
-                onClick={() => setAttributeConfig(null)}
-                size="tiny"
-              />
-            </Form.Field>
-          </Form.Group>
-        </Form>
-      )}
-      <Divider hidden />
-
-      <Form>
-        <Form.Field>
-          <Checkbox
-            label="Get customers' attributes"
-            toggle
-            checked={populateAttributes}
-            onChange={onChangeAttributes}
-          />
-        </Form.Field>
-        <Form.Field>
-          <Popup
-            content={"The total amount of items to get. Leave empty or 0 for unlimited."}
-            trigger={(
-              <label>
-                {"Maximum number of results (0 = unlimited)"}
-                <Icon name="info circle" />
-              </label>
-            )}
-            inverted
-          />
+        <Row align="center">
           <Input
-            type="number"
-            placeholder="Limit the number of records to return"
-            value={limit}
-            onChange={(e, data) => onUpdateLimit(data.value)}
+            placeholder="Attribute name"
+            value={attributeConfig.field}
+            onChange={(e) => {
+              setAttributeConfig({ ...attributeConfig, field: e.target.value });
+            }}
+            bordered
+            size="sm"
           />
-        </Form.Field>
-      </Form>
-    </div>
+          <Spacer x={0.5} />
+          <Dropdown>
+            <Dropdown.Trigger>
+              <Input
+                size="sm"
+                bordered
+                contentRight={<ChevronDown />}
+                animated={false}
+                value={
+                  (attributeConfig.operator
+                  && attributeOperations.find((op) => op.value === attributeConfig.operator)?.text)
+                  || "Select operation"
+                }
+              />
+            </Dropdown.Trigger>
+            <Dropdown.Menu
+              onAction={(key) => setAttributeConfig({ ...attributeConfig, operator: key })}
+              selectedKeys={[attributeConfig.operator]}
+              selectionMode="single"
+              defaultSelectedKeys={["eq"]}
+            >
+              {attributeOperations.map((operation) => (
+                <Dropdown.Item key={operation.value}>
+                  {operation.text}
+                </Dropdown.Item>
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
+          {(attributeConfig.operator === "eq" || attributeConfig.operator === "not,eq") && (
+            <>
+              <Spacer x={0.5} />
+              <Input
+                placeholder="Value"
+                value={attributeConfig.value}
+                onChange={(e) => {
+                  setAttributeConfig({ ...attributeConfig, value: e.target.value });
+                }}
+                size="sm"
+                bordered
+              />
+            </>
+          )}
+          <Spacer x={0.5} />
+          <Button
+            icon={<TickSquare />}
+            onClick={_onAddAttributeCondition}
+            size="sm"
+            css={{ minWidth: "fit-content" }}
+          />
+          <Spacer x={0.2} />
+          <Button
+            icon={<CloseSquare />}
+            onClick={() => setAttributeConfig(null)}
+            size="sm"
+            css={{ minWidth: "fit-content" }}
+          />
+        </Row>
+      )}
+
+      <Spacer y={1} />
+      <Divider />
+      <Spacer y={1} />
+
+      <Row>
+        <Checkbox
+          label="Get customers' attributes"
+          isSelected={populateAttributes}
+          onChange={onChangeAttributes}
+          size="sm"
+        />
+      </Row>
+      <Spacer y={1} />
+      <Row>
+        <Input
+          label="Maximum number of results (0 = unlimited)"
+          type="number"
+          placeholder="Limit the number of records to return"
+          value={limit}
+          onChange={(e) => onUpdateLimit(e.target.value)}
+          bordered
+        />
+      </Row>
+    </Container>
   );
 }
 
