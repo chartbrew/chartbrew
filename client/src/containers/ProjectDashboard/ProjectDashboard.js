@@ -287,7 +287,7 @@ function ProjectDashboard(props) {
                   <Media greaterThan="mobile">
                     <Button
                       ghost
-                      iconRight={<Filter2 set="light" />}
+                      iconRight={<Filter2 size="small" />}
                       disabled={filterLoading}
                       onClick={_onShowFilters}
                       auto
@@ -300,7 +300,7 @@ function ProjectDashboard(props) {
                   </Media>
                   <Media at="mobile">
                     <Button
-                      icon={<Filter2 set="light" />}
+                      icon={<Filter2 />}
                       onClick={_onShowFilters}
                       disabled={filterLoading}
                       ghost
@@ -376,7 +376,7 @@ function ProjectDashboard(props) {
                       <Tooltip content="Refresh data" placement="bottomStart">
                         <Button
                           ghost
-                          icon={<HiRefresh size={22} />}
+                          icon={<HiRefresh size={20} />}
                           onClick={() => _onRefreshData()}
                           disabled={refreshLoading}
                           auto

@@ -3,14 +3,18 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Form, Button, Icon, Header, Divider, Dropdown, Label, Input, Popup, Message,
-} from "semantic-ui-react";
+  Grid, Button, Popover, Container, Row, Text, Divider, Dropdown,
+  Input, Loading, Tooltip, Spacer, Badge,
+} from "@nextui-org/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
 import { toast } from "react-toastify";
 import { Calendar } from "react-date-range";
 import { format, sub } from "date-fns";
 import { enGB } from "date-fns/locale";
+import {
+  ChevronDown, InfoCircle, Play, Calendar as CalendarIcon,
+} from "react-iconly";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -59,8 +63,6 @@ function GaBuilder(props) {
 
   const [metricsOptions, setMetricsOptions] = useState([]);
   const [dimensionsOptions, setDimensionsOptions] = useState([]);
-  const [metricsSearch, setMetricsSearch] = useState("");
-  const [dimensionsSearch, setDimensionsSearch] = useState("");
 
   // on init effect
   useEffect(() => {
@@ -312,25 +314,29 @@ function GaBuilder(props) {
   };
 
   const _renderCalendar = (type) => (
-    <Popup
-      trigger={(
-        <Button
-          icon="calendar alternate"
-        />
-      )}
-      on="click"
-    >
-      <Popup.Content>
-        <Calendar
-          date={_getDateForCalendar(configuration[type])}
-          onChange={(date) => {
-            setConfiguration({ ...configuration, [type]: format(date, "yyyy-MM-dd") });
-          }}
-          locale={enGB}
-          color={secondary}
-        />
-      </Popup.Content>
-    </Popup>
+    <div>
+      <Popover>
+        <Popover.Trigger>
+          <Button
+            icon={<CalendarIcon set="bold" />}
+            css={{ minWidth: "fit-content" }}
+            flat
+            color="secondary"
+            disabled={!configuration.viewId}
+          />
+        </Popover.Trigger>
+        <Popover.Content>
+          <Calendar
+            date={_getDateForCalendar(configuration[type])}
+            onChange={(date) => {
+              setConfiguration({ ...configuration, [type]: format(date, "yyyy-MM-dd") });
+            }}
+            locale={enGB}
+            color={secondary}
+          />
+        </Popover.Content>
+      </Popover>
+    </div>
   );
 
   const _getDateForCalendar = (value) => {
@@ -360,285 +366,364 @@ function GaBuilder(props) {
 
   return (
     <div style={styles.container}>
-      <Grid columns={2} stackable centered>
-        <Grid.Column width={10}>
-          <div className="gabuilder-collections-tut">
-            <Header as="h4">Select a view for your connection</Header>
-            <Form>
-              <Form.Group widths={3}>
-                <Form.Field>
-                  <label>Account</label>
-                  <Dropdown
+      <Grid.Container>
+        <Grid xs={12} sm={7} md={7}>
+          <Grid.Container gap={1}>
+            <Grid xs={12} sm={4} className="gabuilder-collections-tut">
+              <Dropdown>
+                <Dropdown.Trigger>
+                  <Input
+                    label="Account"
                     placeholder="Select an account"
-                    selection
-                    options={accountOptions}
-                    onChange={(e, data) => _onAccountSelected(data.value)}
-                    loading={collectionsLoading}
-                    value={configuration.accountId}
+                    contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown />}
+                    bordered
+                    animated={false}
+                    fullWidth
+                    value={
+                      (accountOptions
+                      && configuration.accountId
+                      && accountOptions.find((a) => a.value === configuration.accountId)?.text)
+                      || "Select an account"
+                    }
                   />
-                </Form.Field>
-                <Form.Field disabled={!configuration.accountId}>
-                  <label>Property</label>
-                  <Dropdown
-                    placeholder="Select a property"
-                    selection
-                    options={propertyOptions}
-                    onChange={(e, data) => _onPropertySelected(data.value)}
-                    loading={collectionsLoading}
-                    value={configuration.propertyId}
-                  />
-                </Form.Field>
-                <Form.Field disabled={!configuration.accountId || !configuration.propertyId}>
-                  <label>View</label>
-                  <Dropdown
-                    placeholder="Select a view"
-                    selection
-                    options={viewOptions}
-                    onChange={(e, data) => _onViewSelected(data.value)}
-                    loading={collectionsLoading}
-                    value={configuration.viewId}
-                  />
-                </Form.Field>
-              </Form.Group>
-            </Form>
-          </div>
-          <Divider />
-
-          <div className="gabuilder-query-tut">
-            <Form disabled={!configuration.viewId}>
-              <Form.Field required error={formErrors.metrics}>
-                <label>
-                  {"Choose a metric "}
-                  <Popup
-                    trigger={(
-                      <Icon name="question circle" />
-                    )}
-                    content="You can add multiple metrics by creating another dataset for this chart. Click on 'Build chart', then 'Add new dataset' on the right."
-                  />
-                </label>
-                <Dropdown
-                  selection
-                  options={metricsOptions}
-                  loading={collectionsLoading}
-                  search
-                  value={configuration.metrics}
-                  onSearchChange={(e, data) => {
-                    setMetricsSearch(data.searchQuery);
-                  }}
-                  searchQuery={metricsSearch}
-                  scrolling
+                </Dropdown.Trigger>
+                <Dropdown.Menu
+                  onAction={(key) => _onAccountSelected(key)}
+                  selectedKeys={[configuration.accountId]}
+                  selectionMode="single"
                 >
-                  <Dropdown.Menu>
-                    {metricsOptions.map((item) => {
-                      if (metricsSearch
-                        && item.value.toLowerCase().indexOf(metricsSearch.toLowerCase()) === -1
-                        && item.text.toLowerCase().indexOf(metricsSearch.toLowerCase()) === -1
-                      ) {
-                        return (<span key={item.key} />);
-                      }
-
-                      return (
-                        <Dropdown.Item
-                          key={item.key}
-                          onClick={() => {
-                            setConfiguration({ ...configuration, metrics: item.value });
-                            setMetricsSearch("");
-                          }}
-                        >
-                          <Dropdown.Header style={{ paddingBottom: 10 }}>
-                            {item.text}
-                            <Label size="small" style={{ float: "right" }}>
-                              {item.attributes.group}
-                            </Label>
-                          </Dropdown.Header>
-                          <div><small>{item.value}</small></div>
-                        </Dropdown.Item>
-                      );
-                    })}
-                  </Dropdown.Menu>
-                </Dropdown>
-              </Form.Field>
-              <Form.Field>
-                <label>Choose a dimension</label>
-                <Dropdown
-                  selection
-                  options={dimensionsOptions}
-                  loading={collectionsLoading}
-                  value={configuration.dimensions}
-                  scrolling
-                  search
-                  onSearchChange={(e, data) => {
-                    setDimensionsSearch(data.searchQuery);
-                  }}
-                  searchQuery={dimensionsSearch}
-                >
-                  <Dropdown.Menu>
-                    <Dropdown.Item>
-                      <Button
-                        secondary
-                        icon="x"
-                        content="Clear Field"
-                        onClick={() => {
-                          setDimensionsSearch("");
-                          setConfiguration({ ...configuration, dimensions: "" });
-                        }}
-                        fluid
-                        size="small"
-                      />
+                  {accountOptions.map((account) => (
+                    <Dropdown.Item key={account.value}>
+                      {account.text}
                     </Dropdown.Item>
-                    {dimensionsOptions.map((item) => {
-                      if (dimensionsSearch
-                        && item.value.toLowerCase().indexOf(dimensionsSearch.toLowerCase()) === -1
-                        && item.text.toLowerCase().indexOf(dimensionsSearch.toLowerCase()) === -1
-                      ) {
-                        return (<span key={item.key} />);
-                      }
+                  ))}
+                </Dropdown.Menu>
+              </Dropdown>
+            </Grid>
+            <Grid xs={12} sm={4}>
+              <Dropdown isDisabled={!configuration.accountId}>
+                <Dropdown.Trigger>
+                  <Input
+                    label="Property"
+                    placeholder="Select a property"
+                    contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown />}
+                    bordered
+                    animated={false}
+                    fullWidth
+                    disabled={!configuration.accountId}
+                    value={
+                      (propertyOptions
+                      && configuration.propertyId
+                      && propertyOptions.find((p) => p.value === configuration.propertyId)?.text)
+                      || "Select a property"
+                    }
+                  />
+                </Dropdown.Trigger>
+                <Dropdown.Menu
+                  onAction={(key) => _onPropertySelected(key)}
+                  selectedKeys={[configuration.propertyId]}
+                  selectionMode="single"
+                >
+                  {propertyOptions.map((property) => (
+                    <Dropdown.Item key={property.value}>
+                      {property.text}
+                    </Dropdown.Item>
+                  ))}
+                </Dropdown.Menu>
+              </Dropdown>
+            </Grid>
+            <Grid xs={12} sm={4}>
+              <Dropdown isDisabled={!configuration.accountId || !configuration.propertyId}>
+                <Dropdown.Trigger>
+                  <Input
+                    label="View"
+                    placeholder="Select a view"
+                    contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown />}
+                    bordered
+                    animated={false}
+                    fullWidth
+                    disabled={!configuration.accountId || !configuration.propertyId}
+                    value={
+                      (viewOptions
+                      && configuration.viewId
+                      && viewOptions.find((view) => view.value === configuration.viewId)?.text)
+                      || "Select a view"
+                    }
+                  />
+                </Dropdown.Trigger>
+                <Dropdown.Menu
+                  onAction={(key) => _onViewSelected(key)}
+                  selectedKeys={[configuration.viewId]}
+                  selectionMode="single"
+                >
+                  {viewOptions.map((view) => (
+                    <Dropdown.Item key={view.value}>
+                      {view.text}
+                    </Dropdown.Item>
+                  ))}
+                </Dropdown.Menu>
+              </Dropdown>
+            </Grid>
 
-                      return (
-                        <Dropdown.Item
-                          key={item.key}
-                          onClick={() => {
-                            setConfiguration({ ...configuration, dimensions: item.value });
-                            setDimensionsSearch("");
-                          }}
-                        >
-                          <Dropdown.Header style={{ paddingBottom: 10 }}>
-                            {item.text}
-                            <Label size="small" style={{ float: "right" }}>
-                              {item.attributes.group}
-                            </Label>
-                          </Dropdown.Header>
-                          <div><small>{item.value}</small></div>
-                        </Dropdown.Item>
-                      );
-                    })}
-                  </Dropdown.Menu>
-                </Dropdown>
-              </Form.Field>
-              <Form.Group widths="2">
-                <Form.Field required>
-                  <label>Start date</label>
+            <Grid xs={12}>
+              <Divider />
+            </Grid>
+
+            <Grid xs={12} className="gabuilder-query-tut" direction="column">
+              <div style={styles.row}>
+                <Text size={16}>
+                  {"Choose a metric "}
+                </Text>
+                <Spacer x={0.2} />
+                <Tooltip
+                  content="You can add multiple metrics by creating another dataset for this chart. Click on 'Build chart', then 'Add new dataset' on the right."
+                  color="invert"
+                  css={{ zIndex: 10000, maxWidth: 500 }}
+                  placement="rightStart"
+                >
+                  <InfoCircle size="small" />
+                </Tooltip>
+              </div>
+              <Dropdown isDisabled={!configuration.viewId}>
+                <Dropdown.Trigger>
                   <Input
-                    action={_renderCalendar("startDate")}
-                    placeholder="YYYY-MM-DD"
-                    value={configuration.startDate}
-                    onChange={(e, data) => {
-                      setConfiguration({ ...configuration, startDate: data.value });
-                    }}
+                    placeholder="Select a metric"
+                    contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown />}
+                    bordered
+                    animated={false}
+                    fullWidth
+                    helperColor="error"
+                    helperText={formErrors.metrics}
+                    color={formErrors.metrics ? "error" : "default"}
+                    disabled={!configuration.viewId}
+                    value={
+                      (metricsOptions
+                      && configuration.metrics
+                      && metricsOptions.find((m) => m.value === configuration.metrics)?.text)
+                      || "Select a metric"
+                    }
                   />
-                  <Label.Group style={{ marginTop: 10 }}>
-                    <Label
-                      as="a"
-                      onClick={() => setConfiguration({ ...configuration, startDate: "today" })}
-                      content="today"
-                    />
-                    <Label
-                      as="a"
-                      onClick={() => setConfiguration({ ...configuration, startDate: "yesterday" })}
-                      content="yesterday"
-                    />
-                    <Label
-                      as="a"
-                      onClick={() => setConfiguration({ ...configuration, startDate: "30daysAgo" })}
-                      content="30daysAgo"
-                    />
-                    <Label
-                      as="a"
-                      onClick={() => setDateHelp(!dateHelp)}
-                      icon="question circle"
-                      content="info"
-                      basic
-                      color={(dateHelp && "olive") || null}
-                    />
-                  </Label.Group>
-                </Form.Field>
-                <Form.Field required>
-                  <label>End date</label>
+                </Dropdown.Trigger>
+                <Dropdown.Menu
+                  onAction={(key) => setConfiguration({ ...configuration, metrics: key })}
+                  selectedKeys={[configuration.metrics]}
+                  selectionMode="single"
+                  css={{ minWidth: "max-content" }}
+                >
+                  {metricsOptions.map((item) => {
+                    return (
+                      <Dropdown.Item
+                        key={item.key}
+                        command={item.attributes.group}
+                        description={item.value}
+                      >
+                        <Text size={16}>{item.text}</Text>
+                      </Dropdown.Item>
+                    );
+                  })}
+                </Dropdown.Menu>
+              </Dropdown>
+            </Grid>
+            <Grid xs={12} direction="column">
+              <Text size={16}>Choose a dimension</Text>
+
+              <Dropdown isDisabled={!configuration.viewId}>
+                <Dropdown.Trigger>
                   <Input
-                    action={_renderCalendar("endDate")}
-                    placeholder="YYYY-MM-DD"
-                    value={configuration.endDate}
-                    onChange={(e, data) => {
-                      setConfiguration({ ...configuration, endDate: data.value });
-                    }}
+                    placeholder="Select a dimension"
+                    contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown />}
+                    bordered
+                    animated={false}
+                    fullWidth
+                    helperColor="error"
+                    helperText={formErrors.dimensions}
+                    color={formErrors.dimensions ? "error" : "default"}
+                    disabled={!configuration.viewId}
+                    value={
+                      (dimensionsOptions
+                      && configuration.dimensions
+                      && dimensionsOptions.find((d) => d.value === configuration.dimensions)?.text)
+                      || "Select a dimension"
+                    }
                   />
-                  <Label.Group style={{ marginTop: 10 }}>
-                    <Label
-                      as="a"
-                      onClick={() => setConfiguration({ ...configuration, endDate: "today" })}
-                      content="today"
-                    />
-                    <Label
-                      as="a"
-                      onClick={() => setConfiguration({ ...configuration, endDate: "yesterday" })}
-                      content="yesterday"
-                    />
-                    <Label
-                      as="a"
-                      onClick={() => setConfiguration({ ...configuration, endDate: "30daysAgo" })}
-                      content="30daysAgo"
-                    />
-                    <Label
-                      as="a"
-                      onClick={() => setDateHelp(!dateHelp)}
-                      icon="question circle"
-                      content="info"
-                      basic
-                      color={(dateHelp && "olive") || null}
-                    />
-                  </Label.Group>
-                </Form.Field>
-              </Form.Group>
-              {dateHelp && (
-                <Form.Field>
-                  <Message>
-                    <p>
-                      {"You can use relative dates such as "}
-                      <Label>today</Label>
-                      {", "}
-                      <Label>yesterday</Label>
-                      {", and "}
-                      <Label>NdaysAgo</Label>
-                    </p>
-                    <p>
-                      {"Alternatively, you can type in any date in YYYY-MM-DD format or use the calendar picker next to each field."}
-                    </p>
-                  </Message>
-                </Form.Field>
-              )}
-            </Form>
-          </div>
-        </Grid.Column>
-        <Grid.Column width={6}>
-          <Form>
-            <Form.Field className="gabuilder-request-tut">
+                </Dropdown.Trigger>
+                <Dropdown.Menu
+                  onAction={(key) => setConfiguration({ ...configuration, dimensions: key })}
+                  selectedKeys={[configuration.dimensions]}
+                  selectionMode="single"
+                  css={{ minWidth: "max-content" }}
+                >
+                  {dimensionsOptions.map((item) => {
+                    return (
+                      <Dropdown.Item
+                        key={item.key}
+                        command={item.attributes.group}
+                        description={item.value}
+                      >
+                        <Text size={16}>{item.text}</Text>
+                      </Dropdown.Item>
+                    );
+                  })}
+                </Dropdown.Menu>
+              </Dropdown>
+            </Grid>
+            <Grid xs={12} sm={6} direction="column">
+              <Text size={16}>Start date</Text>
+              <Input
+                contentRight={_renderCalendar("startDate")}
+                contentRightStyling={false}
+                placeholder="YYYY-MM-DD"
+                value={configuration.startDate}
+                disabled={!configuration.viewId}
+                onChange={(e) => {
+                  setConfiguration({ ...configuration, startDate: e.target.value });
+                }}
+                bordered
+                fullWidth
+              />
+              <Spacer y={0.2} />
+              <div style={styles.row}>
+                <Badge
+                  as="a"
+                  onClick={() => setConfiguration({ ...configuration, startDate: "today" })}
+                >
+                  today
+                </Badge>
+                <Spacer x={0.2} />
+                <Badge
+                  as="a"
+                  onClick={() => setConfiguration({ ...configuration, startDate: "yesterday" })}
+                >
+                  yesterday
+                </Badge>
+                <Spacer x={0.2} />
+                <Badge
+                  as="a"
+                  onClick={() => setConfiguration({ ...configuration, startDate: "30daysAgo" })}
+                  variant="default"
+                >
+                  30daysAgo
+                </Badge>
+                <Spacer x={0.2} />
+                <Badge
+                  as="a"
+                  onClick={() => setDateHelp(!dateHelp)}
+                  variant="flat"
+                  color={dateHelp ? "secondary" : "default"}
+                  size="sm"
+                >
+                  <InfoCircle size="small" />
+                  <Spacer x={0.1} />
+                  <span>info</span>
+                </Badge>
+              </div>
+            </Grid>
+            <Grid xs={12} sm={6} direction="column">
+              <Text size={16}>End date</Text>
+              <Input
+                contentRight={_renderCalendar("endDate")}
+                contentRightStyling={false}
+                placeholder="YYYY-MM-DD"
+                value={configuration.endDate}
+                disabled={!configuration.viewId}
+                onChange={(e) => {
+                  setConfiguration({ ...configuration, endDate: e.target.value });
+                }}
+                bordered
+                fullWidth
+              />
+              <Spacer y={0.2} />
+              <div style={styles.row}>
+                <Badge
+                  as="a"
+                  onClick={() => setConfiguration({ ...configuration, endDate: "today" })}
+                >
+                  today
+                </Badge>
+                <Badge
+                  as="a"
+                  onClick={() => setConfiguration({ ...configuration, endDate: "yesterday" })}
+                >
+                  yesterday
+                </Badge>
+                <Badge
+                  as="a"
+                  onClick={() => setConfiguration({ ...configuration, endDate: "30daysAgo" })}
+                >
+                  30daysAgo
+                </Badge>
+                <Badge
+                  as="a"
+                  onClick={() => setDateHelp(!dateHelp)}
+                  variant="flat"
+                  color={dateHelp ? "secondary" : "default"}
+                  size="sm"
+                >
+                  <InfoCircle size="small" />
+                  <Spacer x={0.1} />
+                  <span>info</span>
+                </Badge>
+              </div>
+            </Grid>
+            {dateHelp && (
+              <Grid xs={12}>
+                <Container
+                  css={{
+                    backgroundColor: "$accents3", br: 20, p: 10, pl: 15, pr: 15
+                  }}
+                >
+                  <Row>
+                    <Text>{"You can use relative dates such as "}</Text>
+                    <Spacer x={0.1} />
+                    <Badge>today</Badge>
+                    <Spacer x={0.1} />
+                    <Text>{", "}</Text>
+                    <Spacer x={0.1} />
+                    <Badge>yesterday</Badge>
+                    <Spacer x={0.1} />
+                    <Text>{", and "}</Text>
+                    <Spacer x={0.1} />
+                    <Badge>NdaysAgo</Badge>
+                  </Row>
+                  <Row>
+                    <Text>{"Alternatively, you can type in any date in YYYY-MM-DD format or use the calendar picker next to each field."}</Text>
+                  </Row>
+                </Container>
+              </Grid>
+            )}
+          </Grid.Container>
+        </Grid>
+        <Grid xs={12} sm={5} md={5}>
+          <Container>
+            <Row className="gabuilder-request-tut">
               <Button
-                primary
-                icon
-                labelPosition="right"
-                loading={requestLoading}
+                iconRight={requestLoading ? <Loading type="spinner" /> : <Play />}
+                disabled={requestLoading}
                 onClick={() => _onTest()}
-                fluid
+                css={{ width: "100%" }}
+                shadow
               >
-                <Icon name="play" />
                 Get analytics data
               </Button>
-            </Form.Field>
-            <Form.Field className="gabuilder-result-tut">
-              <AceEditor
-                mode="json"
-                theme="tomorrow"
-                height="450px"
-                width="none"
-                value={result || ""}
-                name="resultEditor"
-                readOnly
-                editorProps={{ $blockScrolling: false }}
-              />
-            </Form.Field>
-          </Form>
-        </Grid.Column>
-      </Grid>
+            </Row>
+            <Spacer y={1} />
+            <Row className="gabuilder-result-tut">
+              <div style={{ width: "100%" }}>
+                <AceEditor
+                  mode="json"
+                  theme="tomorrow"
+                  height="450px"
+                  width="none"
+                  value={result || ""}
+                  name="resultEditor"
+                  readOnly
+                  editorProps={{ $blockScrolling: false }}
+                />
+              </div>
+            </Row>
+          </Container>
+        </Grid>
+      </Grid.Container>
     </div>
   );
 }
@@ -646,6 +731,15 @@ const styles = {
   container: {
     flex: 1,
   },
+  row: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  column: {
+    display: "flex",
+    flexDirection: "column",
+  }
 };
 
 GaBuilder.defaultProps = {
