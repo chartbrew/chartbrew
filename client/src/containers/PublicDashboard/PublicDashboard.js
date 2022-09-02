@@ -615,7 +615,8 @@ function PublicDashboard(props) {
 
             <Row justify="center" align="center">
               <Text
-                size="2em"
+                b
+                size="2.4em"
                 style={styles.dashboardTitle(newChanges.titleColor || project.titleColor)}
                 className="dashboard-title"
               >
@@ -626,7 +627,7 @@ function PublicDashboard(props) {
             {!editorVisible && project.description && (
               <Row justify="center" align="center">
                 <Text
-                  size="1.2em"
+                  size="1.5em"
                   style={styles.dashboardTitle(project.titleColor)}
                   className="dashboard-sub-title"
                 >
