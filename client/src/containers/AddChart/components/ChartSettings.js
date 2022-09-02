@@ -230,7 +230,7 @@ function ChartSettings(props) {
               <Container css={{ ml: 0, pl: 0 }}>
                 <Row css={{ ml: 0, pl: 0 }} align="center">
                   <Button
-                    iconRight={<Calendar />}
+                    iconRight={<Calendar set="bold" />}
                     onClick={() => _onViewRange(true)}
                     auto
                   >

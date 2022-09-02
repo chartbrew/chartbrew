@@ -106,6 +106,7 @@ function BarChart(props) {
                   <Container fluid justify="center" alignContent="center" alignItems="center">
                     <Row justify="center" align="center">
                       <Text
+                        b
                         size={chart.chartSize === 1 ? "2.4em" : "2.6em"}
                         key={uuid()}
                       >

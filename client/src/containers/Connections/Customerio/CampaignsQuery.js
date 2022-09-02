@@ -547,8 +547,8 @@ function CampaignsQuery(props) {
                     <Dropdown.Menu
                       onAction={(key) => {
                         // add to the list if not already in it
-                        if (!config.type.includes(key)) {
-                          _onChangeMessageTypes([...config.type, key]);
+                        if (!config.type || !config.type.includes(key)) {
+                          _onChangeMessageTypes(!config.type ? [key] : [...config.type, key]);
                         } else {
                           setConfig({ ...config, type: config.type.filter((t) => t !== key) });
                         }
@@ -739,8 +739,8 @@ function CampaignsQuery(props) {
                 <Dropdown.Menu
                   onAction={(key) => {
                     // add to the list if not already in it
-                    if (!config.type.includes(key)) {
-                      _onChangeMessageTypes([...config.type, key]);
+                    if (!config.type || !config.type.includes(key)) {
+                      _onChangeMessageTypes(!config.type ? [key] : [...config.type, key]);
                     } else {
                       setConfig({ ...config, type: config.type.filter((t) => t !== key) });
                     }
