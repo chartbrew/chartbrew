@@ -301,7 +301,7 @@ function CustomerioBuilder(props) {
               </div>
             </Row>
             <Spacer y={0.5} />
-            <Row>
+            <Row align="center">
               <InfoCircle size="small" />
               <Spacer x={0.2} />
               <Text small>

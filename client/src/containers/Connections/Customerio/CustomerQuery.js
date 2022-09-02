@@ -210,21 +210,12 @@ function CustomerQuery(props) {
     return "equals";
   };
 
-  const _getSegmentNames = (ids) => {
-    const segmentNames = [];
-    ids.forEach((id) => {
-      segmentNames.push(_getSegmentName(id));
-    }).join(", ");
-
-    return segmentNames;
-  };
-
   if (loading) {
     return (
       <Container>
-        <Loading type="spinner">
-          Loading your segments...
-        </Loading>
+        <Row>
+          <Loading type="spinner" color="primary" size="xl" />
+        </Row>
       </Container>
     );
   }
@@ -310,8 +301,10 @@ function CustomerQuery(props) {
                     if (sub.segment && sub.segment.id) {
                       return (
                         <span key={sub.segment.id}>
-                          <span style={{ color: primary }}>{`${_getSegmentName(sub.segment.id)}`}</span>
-                          {`${index < condition.or.length - 1 ? " or " : ""}`}
+                          <span style={{ color: primary }}>{`${_getSegmentName(sub.segment.id)} `}</span>
+                          {index < condition.or.length - 1 && (
+                            <span style={{ marginRight: 3 }}>or</span>
+                          )}
                         </span>
                       );
                     }
@@ -334,7 +327,7 @@ function CustomerQuery(props) {
                       return (
                         <span key={sub.segment.id}>
                           <span style={{ color: primary }}>{`${_getSegmentName(sub.segment.id)}`}</span>
-                          {`${index < condition.not.or.length - 1 ? " or " : ""}`}
+                          {`${index < condition.not.or.length - 1 ? " or- " : ""}`}
                         </span>
                       );
                     }
@@ -475,21 +468,37 @@ function CustomerQuery(props) {
           </Dropdown>
           <Spacer x={0.2} />
           <Dropdown>
-            <Dropdown.Button size="sm">
-              {segmentConfig.ids && segmentConfig.ids.length > 0 ? _getSegmentNames(segmentConfig.ids) : "Segments"}
+            <Dropdown.Button size="sm" flat>
+              Segments
+              <Spacer x={0.2} />
+              {segmentConfig.ids && segmentConfig.ids.length > 0 && (
+                <Badge variant="default" color="secondary" size="sm">
+                  {segmentConfig.ids.length}
+                </Badge>
+              )}
+              {(!segmentConfig.ids || (segmentConfig.ids && segmentConfig.ids.length === 0)) && (
+                <Badge color="secondary" size="sm" variant="flat">
+                  None
+                </Badge>
+              )}
             </Dropdown.Button>
             <Dropdown.Menu
               selectionMode="multiple"
-              selectedKeys={segmentConfig.ids}
+              selectedKeys={segmentConfig.ids || []}
               onAction={(key) => {
-                // if key exists in array, remove it, else add it
-                const newIds = segmentConfig.ids.includes(key);
-                setSegmentConfig({
-                  ...segmentConfig,
-                  ids: newIds
-                    ? segmentConfig.ids.filter((id) => id !== key) : [...segmentConfig.ids, key]
-                });
+                // add to the list if not already in it
+                if (!segmentConfig.ids || !segmentConfig.ids.includes(key)) {
+                  setSegmentConfig({
+                    ...segmentConfig,
+                    ids: !segmentConfig.ids ? [key] : [...segmentConfig.ids, key]
+                  });
+                } else {
+                  setSegmentConfig({
+                    ...segmentConfig, ids: segmentConfig.ids.filter((t) => t !== key)
+                  });
+                }
               }}
+              css={{ minWidth: "max-content" }}
             >
               {segments.map((segment) => (
                 <Dropdown.Item
@@ -578,6 +587,7 @@ function CustomerQuery(props) {
             icon={<TickSquare />}
             onClick={_onAddAttributeCondition}
             size="sm"
+            color="success"
             css={{ minWidth: "fit-content" }}
           />
           <Spacer x={0.2} />
@@ -585,6 +595,8 @@ function CustomerQuery(props) {
             icon={<CloseSquare />}
             onClick={() => setAttributeConfig(null)}
             size="sm"
+            color="error"
+            flat
             css={{ minWidth: "fit-content" }}
           />
         </Row>

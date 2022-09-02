@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { Icon, Label } from "semantic-ui-react";
+import { Badge, Spacer } from "@nextui-org/react";
 
 const messageTypes = {
   messages: [
@@ -43,59 +43,74 @@ function MessageTypeLabels(props) {
   const [showAll, setShowAll] = useState(false);
 
   return (
-    <Label.Group>
+    <>
       {messageTypes[mode].filter((m) => m.primary).map((message) => (
-        <Label
-          key={message.value}
-          as="a"
-          onClick={() => onSelect(message.value)}
-          color={selected === message.value ? "primary" : null}
-        >
-          {message.text}
-        </Label>
+        <>
+          <Badge
+            key={message.value}
+            onClick={() => onSelect(message.value)}
+            color="primary"
+            variant={selected === message.value ? "default" : "bordered"}
+            css={{ cursor: "pointer", mb: 5 }}
+          >
+            {message.text}
+          </Badge>
+          <Spacer x={0.1} />
+        </>
       ))}
       {!showAll
         && messageTypes[mode].filter((m) => !m.primary && selected === m.value).map((message) => (
-          <Label
-            as="a"
-            onClick={() => onSelect(message.value)}
-            color="violet"
-          >
-            {message.text}
-          </Label>
+          <>
+            <Badge
+              onClick={() => onSelect(message.value)}
+              color="primary"
+              variant="bordered"
+              css={{ cursor: "pointer" }}
+            >
+              {message.text}
+            </Badge>
+            <Spacer x={0.1} />
+          </>
         ))}
       {!showAll && showPrimary && (
-        <Label
-          as="a"
-          onClick={() => setShowAll(true)}
-          basic
-        >
-          {"Show all "}
-          <Icon name="chevron right" />
-        </Label>
+        <>
+          <Badge
+            onClick={() => setShowAll(true)}
+            color="secondary"
+            css={{ cursor: "pointer" }}
+          >
+            {"Show all"}
+          </Badge>
+          <Spacer x={0.1} />
+        </>
       )}
       {showAll && messageTypes[mode].filter((m) => !m.primary).map((message) => (
-        <Label
-          key={message.value}
-          as="a"
-          onClick={() => onSelect(message.value)}
-          color={selected === message.value ? "primary" : null}
-        >
-          {message.text}
-        </Label>
+        <>
+          <Badge
+            key={message.value}
+            onClick={() => onSelect(message.value)}
+            variant={selected === message.value ? "default" : "bordered"}
+            color="primary"
+            css={{ cursor: "pointer" }}
+          >
+            {message.text}
+          </Badge>
+          <Spacer x={0.1} />
+        </>
       ))}
       {showAll && (
-        <Label
-          as="a"
-          onClick={() => setShowAll(false)}
-          basic
-          primary
-        >
-          <Icon name="chevron left" />
-          {"Hide extra"}
-        </Label>
+        <>
+          <Badge
+            onClick={() => setShowAll(false)}
+            color="secondary"
+            css={{ cursor: "pointer" }}
+          >
+            {"Hide extra"}
+          </Badge>
+          <Spacer x={0.1} />
+        </>
       )}
-    </Label.Group>
+    </>
   );
 }
 

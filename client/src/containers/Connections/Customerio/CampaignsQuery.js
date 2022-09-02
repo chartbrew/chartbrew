@@ -1,17 +1,16 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button,
-  Checkbox,
-  Divider,
-  Dropdown, Form, Icon, Input, Label, Menu, Popup
-} from "semantic-ui-react";
+  Badge, Button, Col, Container, Divider, Dropdown, Grid, Input, Link,
+  Loading, Popover, Row, Spacer, Switch, Text, Tooltip,
+} from "@nextui-org/react";
 import {
   format, getUnixTime, subDays, endOfDay, startOfDay
 } from "date-fns";
 import { DateRangePicker } from "react-date-range";
 import { enGB } from "date-fns/locale";
 
+import { ChevronDown, InfoCircle, Calendar } from "react-iconly";
 import { runHelperMethod } from "../../../actions/connection";
 import { primary, secondary } from "../../../config/colors";
 import MessageTypeLabels from "./MessageTypeLabels";
@@ -70,9 +69,7 @@ function CampaignsQuery(props) {
             key: campaign.id,
             label: {
               content: campaign.active ? "Running" : "Stopped",
-              color: campaign.active ? "green" : "red",
-              size: "tiny",
-              icon: campaign.active ? "circle" : "square",
+              color: campaign.active ? "success" : "error",
             },
           };
         });
@@ -308,271 +305,486 @@ function CampaignsQuery(props) {
   };
 
   return (
-    <div>
-      <Form size="small">
-        <Form.Field>
-          <label>Choose one of your campaigns</label>
-          <Dropdown
-            selection
-            search
-            placeholder="Choose a campaign"
-            value={config.campaignId}
-            options={campaigns}
-            style={{ minWidth: 300 }}
-            onChange={(e, data) => _onSelectCampaign(data.value)}
-            loading={loading}
-            disabled={loading}
-          />
-        </Form.Field>
-        {config.campaignId && (
-          <Form.Field>
-            <Menu secondary size="small">
-              <Menu.Item
-                name="Campaign metrics"
-                active={config.requestRoute.indexOf("metrics") === 0}
-                onClick={_onSelectCampaignMetrics}
-              />
-              <Menu.Item
-                name="Action metrics"
-                active={config.requestRoute.indexOf("actions") === 0}
-                onClick={_onSelectActionMetrics}
-              />
-              <Menu.Item
-                name="Journey metrics"
-                active={config.requestRoute.indexOf("journey_metrics") === 0}
-                onClick={_onSelectJourneyMetrics}
-              />
-            </Menu>
-            <Divider />
-          </Form.Field>
-        )}
-        {config.campaignId && config.requestRoute.indexOf("actions") === 0 && (
-          <Form.Field>
-            <label>Select an action to view the metrics</label>
-            <Dropdown
-              selection
-              search
-              options={availableActions}
-              value={config.actionId}
-              onChange={(e, data) => _onSelectAction(data.value)}
-              loading={actionsLoading}
-              disabled={actionsLoading}
+    <Container css={{ pr: 0, pl: 0 }}>
+      <Row>
+        <Dropdown>
+          <Dropdown.Trigger>
+            <Input
+              bordered
+              label="Choose one of your campaigns"
+              animated={false}
+              contentRight={loading ? <Loading type="spinner" /> : <ChevronDown />}
+              value={
+                (config.campaignId && campaigns.find((c) => c.value === config.campaignId)?.text)
+                || "Choose a campaign"
+              }
             />
-          </Form.Field>
-        )}
-        {config.campaignId
-          && (config.requestRoute.indexOf("metrics") === 0
-            || config.requestRoute.indexOf("actions") > -1
-            || config.requestRoute === "journey_metrics")
-          && (
-          <>
-            <Form.Field>
-              <label>What would you like this dataset to show?</label>
-              <MessageTypeLabels
-                selected={config.series}
-                onSelect={_onSetSeries}
-                mode={config.requestRoute === "journey_metrics" ? "journeys" : "messages"}
-                showPrimary={config.requestRoute !== "journey_metrics"}
-              />
-            </Form.Field>
-            {(config.requestRoute.indexOf("/metrics") > -1 || config.requestRoute.indexOf("metrics") === 0) && (
-              <Form.Field>
-                <label>Or show the campaign link metrics</label>
-                <Label
-                  as="a"
-                  onClick={_onShowCampaingLinkMetrics}
-                  color={config.requestRoute.indexOf("metrics/links") > -1 ? "primary" : null}
-                >
-                  {"Show "}
-                  {config.requestRoute.indexOf("actions") > -1 ? "action" : "campaign"}
-                  {" link metrics"}
-                </Label>
-              </Form.Field>
-            )}
-          </>
-          )}
+          </Dropdown.Trigger>
+          <Dropdown.Menu
+            onAction={(key) => _onSelectCampaign(key)}
+            selectedKeys={[config.campaignId]}
+            selectionMode="single"
+          >
+            {campaigns.map((campaign) => (
+              <Dropdown.Item
+                key={campaign.key}
+                icon={<Badge color={campaign.label.color}>{campaign.label.content}</Badge>}
+              >
+                {campaign.text}
+              </Dropdown.Item>
+            ))}
+          </Dropdown.Menu>
+        </Dropdown>
+      </Row>
+      <Spacer y={1} />
+      {config.campaignId && (
+        <Row wrap="wrap">
+          <Link
+            css={{
+              background: config.requestRoute.indexOf("metrics") === 0 ? "$background" : "$backgroundContrast",
+              p: 5,
+              pr: 10,
+              pl: 10,
+              br: "$sm",
+              "@xsMax": { width: "90%" },
+              ai: "center",
+              color: "$text",
+            }}
+            onClick={_onSelectCampaignMetrics}
+          >
+            <Text>{"Campaign metrics"}</Text>
+          </Link>
+          <Spacer x={0.2} />
+          <Link
+            css={{
+              background: config.requestRoute.indexOf("actions") === 0 ? "$background" : "$backgroundContrast",
+              p: 5,
+              pr: 10,
+              pl: 10,
+              br: "$sm",
+              "@xsMax": { width: "90%" },
+              ai: "center",
+              color: "$text",
+            }}
+            onClick={_onSelectActionMetrics}
+          >
+            <Text>{"Action metrics"}</Text>
+          </Link>
+          <Spacer x={0.2} />
+          <Link
+            css={{
+              background: config.requestRoute.indexOf("journey_metrics") === 0 ? "$background" : "$backgroundContrast",
+              p: 5,
+              pr: 10,
+              pl: 10,
+              br: "$sm",
+              "@xsMax": { width: "90%" },
+              ai: "center",
+              color: "$text",
+            }}
+            onClick={_onSelectJourneyMetrics}
+          >
+            <Text>{"Journey metrics"}</Text>
+          </Link>
+        </Row>
+      )}
 
-        {config.campaignId
-          && (config.requestRoute.indexOf("metrics") === 0
-            || (config.requestRoute.indexOf("actions") === 0 && config.actionId)
-          )
-          && (
-          <>
-            <Form.Group widths={3}>
-              <Form.Field width={4}>
-                <label>Choose the period</label>
-                <Dropdown
-                  selection
-                  search
-                  options={periodOptions}
-                  value={config.period}
-                  onChange={(e, data) => _onChangePeriod(data.value)}
-                />
-              </Form.Field>
-              <Form.Field width={6}>
-                <label>Max number of points on the chart</label>
-                <Dropdown
-                  selection
-                  search
-                  options={stepsOptions}
-                  value={config.steps}
-                  onChange={(e, data) => _onChangeSteps(data.value)}
-                />
-              </Form.Field>
+      <Spacer y={0.5} />
+      <Divider />
+      <Spacer y={0.5} />
+
+      {config.campaignId && config.requestRoute.indexOf("actions") === 0 && (
+        <Row>
+          <Dropdown>
+            <Dropdown.Trigger>
+              <Input
+                bordered
+                label="Select an action to view the metrics"
+                animated={false}
+                contentRight={actionsLoading ? <Loading type="spinner" /> : <ChevronDown />}
+                fullWidth
+                value={
+                  (config.actionId
+                    && availableActions.find((a) => a.value === config.actionId)?.text)
+                  || "Select an action"
+                }
+              />
+            </Dropdown.Trigger>
+            <Dropdown.Menu
+              onAction={(key) => _onSelectAction(key)}
+              selectedKeys={[config.actionId]}
+              selectionMode="single"
+              css={{ minWidth: "max-content" }}
+            >
+              {availableActions.map((action) => (
+                <Dropdown.Item key={action.key} value={action.value}>
+                  {action.text}
+                </Dropdown.Item>
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
+        </Row>
+      )}
+      {config.campaignId
+        && (config.requestRoute.indexOf("metrics") === 0
+          || config.requestRoute.indexOf("actions") > -1
+          || config.requestRoute === "journey_metrics")
+        && (
+        <>
+          <Spacer y={0.5} />
+          <Row>
+            <Text size={14}>What would you like this dataset to show?</Text>
+          </Row>
+          <Spacer y={0.2} />
+          <Row wrap="wrap">
+            <MessageTypeLabels
+              selected={config.series}
+              onSelect={_onSetSeries}
+              mode={config.requestRoute === "journey_metrics" ? "journeys" : "messages"}
+              showPrimary={config.requestRoute !== "journey_metrics"}
+            />
+          </Row>
+          <Spacer y={0.5} />
+          {(config.requestRoute.indexOf("/metrics") > -1 || config.requestRoute.indexOf("metrics") === 0) && (
+            <>
+              <Row>
+                <Text size={14}>Or show the campaign link metrics</Text>
+              </Row>
+              <Spacer y={0.2} />
+              <Row>
+                <Badge
+                  onClick={_onShowCampaingLinkMetrics}
+                  color="primary"
+                  variant={config.requestRoute.indexOf("metrics/links") > -1 ? "default" : "bordered"}
+                  css={{ cursor: "pointer" }}
+                >
+                  {`Show ${config.requestRoute.indexOf("actions") > -1 ? "action" : "campaign"} link metrics`}
+                </Badge>
+              </Row>
+            </>
+          )}
+        </>
+        )}
+
+      {config.campaignId
+        && (config.requestRoute.indexOf("metrics") === 0
+          || (config.requestRoute.indexOf("actions") === 0 && config.actionId)
+        )
+        && (
+        <>
+          <Spacer y={0.5} />
+          <Row>
+            <Grid.Container gap={0.5}>
+              <Grid xs={12} sm={(config.series || config.actionId) ? 4 : 6}>
+                <Dropdown>
+                  <Dropdown.Trigger>
+                    <Input
+                      bordered
+                      label="Choose the period"
+                      animated={false}
+                      contentRight={<ChevronDown />}
+                      fullWidth
+                      value={(periodOptions.find((p) => p.value === config.period)?.text) || "Choose a period"}
+                    />
+                  </Dropdown.Trigger>
+                  <Dropdown.Menu
+                    onAction={(key) => _onChangePeriod(key)}
+                    selectedKeys={[config.period]}
+                    selectionMode="single"
+                  >
+                    {periodOptions.map((period) => (
+                      <Dropdown.Item key={period.key}>
+                        {period.text}
+                      </Dropdown.Item>
+                    ))}
+                  </Dropdown.Menu>
+                </Dropdown>
+              </Grid>
+              <Grid xs={12} sm={(config.series || config.actionId) ? 4 : 6}>
+                <Dropdown>
+                  <Dropdown.Trigger>
+                    <Input
+                      bordered
+                      label="Max number of steps"
+                      animated={false}
+                      contentRight={<ChevronDown />}
+                      fullWidth
+                      value={(stepsOptions.find((p) => p.value === config.steps)?.text) || "Choose a number"}
+                    />
+                  </Dropdown.Trigger>
+                  <Dropdown.Menu
+                    onAction={(key) => _onChangeSteps(key)}
+                    selectedKeys={[config.steps]}
+                    selectionMode="single"
+                  >
+                    {stepsOptions.map((steps) => (
+                      <Dropdown.Item key={steps.key}>
+                        {steps.text}
+                      </Dropdown.Item>
+                    ))}
+                  </Dropdown.Menu>
+                </Dropdown>
+              </Grid>
+
               {(config.series || config.actionId) && (
-                <Form.Field width={6}>
-                  <label>Type of messages. Leave empty for *all* types</label>
-                  <Dropdown
-                    selection
-                    multiple
-                    search
-                    placeholder="Enter types to filter"
-                    options={messageOptions}
-                    value={config.type}
-                    onChange={(e, data) => _onChangeMessageTypes(data.value)}
-                    style={{ minWidth: 300 }}
-                />
-                </Form.Field>
+                <Grid xs={12} sm={4} direction="column" justify="center">
+                  <Text size={14}>Leave empty for *all* types</Text>
+                  <Dropdown>
+                    <Dropdown.Button flat>
+                      Message types
+                      <Spacer x={0.2} />
+                      {config.type && config.type.length > 0 && (
+                        <Badge variant="default" color="secondary" size="sm">
+                          {config.type.length}
+                        </Badge>
+                      )}
+                      {config.type && config.type.length === 0 && (
+                        <Badge color="secondary" size="sm" variant="flat">
+                          All
+                        </Badge>
+                      )}
+                    </Dropdown.Button>
+                    <Dropdown.Menu
+                      onAction={(key) => {
+                        // add to the list if not already in it
+                        if (!config.type.includes(key)) {
+                          _onChangeMessageTypes([...config.type, key]);
+                        } else {
+                          setConfig({ ...config, type: config.type.filter((t) => t !== key) });
+                        }
+                      }}
+                      selectedKeys={config.type || []}
+                      selectionMode="multiple"
+                    >
+                      {messageOptions.map((message) => (
+                        <Dropdown.Item key={message.key}>
+                          {message.text}
+                        </Dropdown.Item>
+                      ))}
+                    </Dropdown.Menu>
+                  </Dropdown>
+                </Grid>
               )}
-            </Form.Group>
-            {config.requestRoute.indexOf("links") > -1 && (
-              <>
-                <Form.Group widths={2}>
-                  <Form.Field>
-                    <label>Visualization type</label>
-                    <Button
-                      content="Total clicks"
-                      onClick={() => setConfig({ ...config, linksMode: "total" })}
-                      primary={config.linksMode === "total"}
-                      size="tiny"
-                    />
-                    <Button
-                      content="Clicks timeseries"
-                      onClick={() => _onSelectClickTimeseries()}
-                      primary={config.linksMode === "links"}
-                      size="tiny"
-                    />
-                  </Form.Field>
-                  <Form.Field>
-                    <label>Unique clicks per customer</label>
-                    <Checkbox
-                      toggle
+            </Grid.Container>
+          </Row>
+          {config.requestRoute.indexOf("links") > -1 && (
+            <>
+              <Spacer y={1} />
+              <Row>
+                <Grid.Container gap={0.5}>
+                  <Grid xs={12} sm={6} direction="column">
+                    <Text size={14}>Visualization type</Text>
+                    <div style={styles.row}>
+                      <Button
+                        onClick={() => setConfig({ ...config, linksMode: "total" })}
+                        size="sm"
+                        bordered={config.linksMode !== "total"}
+                        auto
+                        color="secondary"
+                      >
+                        Total clicks
+                      </Button>
+                      <Spacer x={0.2} />
+                      <Button
+                        onClick={() => _onSelectClickTimeseries()}
+                        bordered={config.linksMode !== "links"}
+                        size="sm"
+                        auto
+                        color="secondary"
+                      >
+                        Click timeseries
+                      </Button>
+                    </div>
+                  </Grid>
+                  <Grid xs={12} sm={6} direction="column" justify="center">
+                    <Text size={14}>Unique clicks per customer</Text>
+                    <Switch
                       checked={config.unique}
                       onChange={() => setConfig({ ...config, unique: !config.unique })}
+                      size="sm"
                     />
-                  </Form.Field>
-                </Form.Group>
-                {config.linksMode === "links" && (
-                  <Form.Group widths={2}>
-                    <Form.Field width={13}>
-                      <label>
-                        {"Select a link "}
-                        <Popup
-                          trigger={(
-                            <Icon name="question circle outline" color="primary" />
-                          )}
-                          inverted
+                  </Grid>
+                </Grid.Container>
+              </Row>
+              {config.linksMode === "links" && (
+                <>
+                  <Spacer y={1} />
+                  <Row align="center">
+                    <Grid.Container gap={0.5}>
+                      <Grid xs={12} sm={9}>
+                        <Dropdown>
+                          <Dropdown.Trigger>
+                            <Input
+                              bordered
+                              label="Select a link"
+                              animated={false}
+                              contentRight={linksLoading ? <Loading type="spinner" /> : <ChevronDown />}
+                              fullWidth
+                              value={config.selectedLink || "Select a link"}
+                            />
+                          </Dropdown.Trigger>
+                          <Dropdown.Menu
+                            onAction={(key) => setConfig({ ...config, selectedLink: key })}
+                            selectedKeys={[config.selectedLink]}
+                            selectionMode="single"
+                            css={{ minWidth: "max-content" }}
+                          >
+                            {availableLinks.map((link) => (
+                              <Dropdown.Item key={link.key}>
+                                {link.text}
+                              </Dropdown.Item>
+                            ))}
+                          </Dropdown.Menu>
+                        </Dropdown>
+                      </Grid>
+                      <Grid xs={12} sm={3} alignItems="flex-end">
+                        <Button
+                          onClick={() => _onSelectClickTimeseries()}
+                          auto
+                          color="secondary"
+                        >
+                          Refresh links
+                        </Button>
+                        <Spacer x={0.2} />
+                        <Tooltip
+                          color="invert"
                           content="You can select only one link, but if you wish to compare multiple links on the same chart, you can create a new dataset with another link."
-                          size="small"
-                        />
-                      </label>
-                      <Dropdown
-                        options={availableLinks}
-                        loading={linksLoading}
-                        value={config.selectedLink}
-                        onChange={(e, data) => setConfig({ ...config, selectedLink: data.value })}
-                        selection
-                        search
-                      />
-                    </Form.Field>
-                    <Form.Field width={3}>
-                      <label>&nbsp;</label>
-                      <Button
-                        content="Refresh links"
-                        size="small"
-                        onClick={() => _onSelectClickTimeseries()}
-                      />
-                    </Form.Field>
-                  </Form.Group>
-                )}
-              </>
-            )}
-          </>
+                          css={{ zIndex: 10000, maxWidth: 500 }}
+                        >
+                          <InfoCircle />
+                        </Tooltip>
+                      </Grid>
+                    </Grid.Container>
+                  </Row>
+                </>
+              )}
+            </>
           )}
+        </>
+        )}
 
-        {config.campaignId && config.requestRoute === "journey_metrics" && config.series && (
-          <>
-            <Form.Group>
-              <Form.Field width={10}>
-                <label>Select the start and end date of the journey</label>
-                <Popup
-                  on="click"
-                  position="right center"
-                  trigger={(
-                    <Input
-                      placeholder="Click to select a date"
-                      icon="calendar alternate"
-                      iconPosition="left"
-                      value={`${format(journeyStart, "dd MMMM yyyy")} - ${format(journeyEnd, "dd MMMM yyyy")}`}
-                      />
-                    )}
-                  content={(
-                    <DateRangePicker
-                      locale={enGB}
-                      direction="horizontal"
-                      rangeColors={[secondary, primary]}
-                      ranges={[{ startDate: journeyStart, endDate: journeyEnd, key: "selection" }]}
-                      onChange={_onChangeJourneyRange}
-                      staticRanges={defaultStaticRanges}
-                      inputRanges={defaultInputRanges}
-                    />
+      {config.campaignId && config.requestRoute === "journey_metrics" && config.series && (
+        <>
+          <Spacer y={0.5} />
+          <Row>
+            <Popover>
+              <Popover.Trigger>
+                <Input
+                  label="Select the start and end date of the journey"
+                  placeholder="Click to select a date"
+                  contentLeft={<Calendar />}
+                  bordered
+                  fullWidth
+                  value={`${format(journeyStart, "dd MMMM yyyy")} - ${format(journeyEnd, "dd MMMM yyyy")}`}
+                />
+              </Popover.Trigger>
+              <Popover.Content>
+                <DateRangePicker
+                  locale={enGB}
+                  direction="horizontal"
+                  rangeColors={[secondary, primary]}
+                  ranges={[{ startDate: journeyStart, endDate: journeyEnd, key: "selection" }]}
+                  onChange={_onChangeJourneyRange}
+                  staticRanges={defaultStaticRanges}
+                  inputRanges={defaultInputRanges}
+                />
+              </Popover.Content>
+            </Popover>
+            <Spacer x={0.5} />
+            <Dropdown>
+              <Dropdown.Trigger>
+                <Input
+                  bordered
+                  label="Select the period"
+                  animated={false}
+                  contentRight={<ChevronDown />}
+                  fullWidth
+                  value={
+                    config.period && periodOptions.find((p) => p.value === config.period)?.text
+                  }
+                />
+              </Dropdown.Trigger>
+              <Dropdown.Menu
+                onAction={(key) => _onChangePeriod(key)}
+                selectedKeys={[config.period]}
+                selectionMode="single"
+              >
+                {periodOptions.map((period) => (
+                  <Dropdown.Item key={period.value}>
+                    {period.text}
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown>
+          </Row>
+          <Spacer y={0.5} />
+          <Row>
+            <Col>
+              <Text size={14}>Type of messages. Leave empty for *all* types</Text>
+              <Dropdown>
+                <Dropdown.Button flat>
+                  Message types
+                  <Spacer x={0.2} />
+                  {config.type && config.type.length > 0 && (
+                    <Badge variant="default" color="secondary" size="sm">
+                      {config.type.length}
+                    </Badge>
                   )}
-                />
-              </Form.Field>
-              <Form.Field width={6}>
-                <label>Choose the period</label>
-                <Dropdown
-                  selection
-                  search
-                  options={periodOptions}
-                  value={config.period}
-                  onChange={(e, data) => _onChangePeriod(data.value)}
-                />
-              </Form.Field>
-            </Form.Group>
-            <Form.Field width={10}>
-              <label>Type of messages. Leave empty for *all* types</label>
-              <Dropdown
-                selection
-                multiple
-                search
-                placeholder="Select the message types"
-                options={messageOptions}
-                value={config.type}
-                onChange={(e, data) => _onChangeMessageTypes(data.value)}
-                style={{ minWidth: 300 }}
-              />
-            </Form.Field>
-          </>
-        )}
+                  {config.type && config.type.length === 0 && (
+                    <Badge color="secondary" size="sm" variant="flat">
+                      All
+                    </Badge>
+                  )}
+                </Dropdown.Button>
+                <Dropdown.Menu
+                  onAction={(key) => {
+                    // add to the list if not already in it
+                    if (!config.type.includes(key)) {
+                      _onChangeMessageTypes([...config.type, key]);
+                    } else {
+                      setConfig({ ...config, type: config.type.filter((t) => t !== key) });
+                    }
+                  }}
+                  selectedKeys={config.type || []}
+                  selectionMode="multiple"
+                >
+                  {messageOptions.map((message) => (
+                    <Dropdown.Item key={message.key}>
+                      {message.text}
+                    </Dropdown.Item>
+                  ))}
+                </Dropdown.Menu>
+              </Dropdown>
+            </Col>
+          </Row>
+        </>
+      )}
 
-        {config.campaignId
-        && (
-          ((config.series || config.requestRoute === "metrics/links") && config.period && config.steps)
-          || (config.actionId && config.period && config.steps && (config.series || config.requestRoute.indexOf("metrics/links") > -1))
-        ) && (
-          <Form.Field>
-            <p>
-              Looking good! You can now press the
-              <strong style={{ color: primary }}>{" \"Make the request\" "}</strong>
-              button
-            </p>
-          </Form.Field>
-        )}
-      </Form>
-    </div>
+      {config.campaignId
+      && (
+        ((config.series || config.requestRoute === "metrics/links") && config.period && config.steps)
+        || (config.actionId && config.period && config.steps && (config.series || config.requestRoute.indexOf("metrics/links") > -1))
+      ) && (
+        <>
+          <Spacer y={1} />
+          <Text>
+            Looking good! You can now press the
+            <strong style={{ color: primary }}>{" \"Make the request\" "}</strong>
+            button
+          </Text>
+        </>
+      )}
+    </Container>
   );
 }
+
+const styles = {
+  row: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+};
 
 CampaignsQuery.propTypes = {
   projectId: PropTypes.number.isRequired,
