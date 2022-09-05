@@ -391,16 +391,16 @@ function Chart(props) {
                         <Spacer x={0.1} />
                       </>
                     )}
-                    <span>
+                    <>
                       {_canAccess("editor") && (
                         <Link to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}>
                           <Text b size="1.1em" css={{ color: "$text", lineHeight: "$xs" }}>{chart.name}</Text>
                         </Link>
                       )}
                       {!_canAccess("editor") && (
-                        <Text h5>{chart.name}</Text>
+                        <Text b size="1.1em" css={{ color: "$text", lineHeight: "$xs" }}>{chart.name}</Text>
                       )}
-                    </span>
+                    </>
                     <Spacer x={0.2} />
                     {chart.Datasets && conditions.map((c) => {
                       return (
@@ -417,10 +417,10 @@ function Chart(props) {
                   {chart.chartData && (
                     <Row justify="flex-start" align="center">
                       {!chartLoading && !chart.loading && (
-                        <i>
-                          {!print && <Text small title="Last updated">{`${_getUpdatedTime(chart.chartDataUpdated)}`}</Text>}
-                          {print && <Text small>{`${moment(chart.chartDataUpdated).format("LLL")}`}</Text>}
-                        </i>
+                        <>
+                          {!print && <Text small i title="Last updated">{`${_getUpdatedTime(chart.chartDataUpdated)}`}</Text>}
+                          {print && <Text small i>{`${moment(chart.chartDataUpdated).format("LLL")}`}</Text>}
+                        </>
                       )}
                       {(chartLoading || chart.loading) && (
                         <>

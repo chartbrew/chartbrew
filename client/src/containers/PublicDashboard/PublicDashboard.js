@@ -402,6 +402,7 @@ function PublicDashboard(props) {
                 <LinkDom to={`/${project.team_id}/${project.id}/dashboard`}>
                   <Button
                     icon={<ChevronLeftCircle />}
+                    bordered
                     css={{ minWidth: "fit-content" }}
                   />
                 </LinkDom>
@@ -531,7 +532,7 @@ function PublicDashboard(props) {
               <>
                 <Row justify="flex-start">
                   <Media greaterThan="mobile">
-                    <div className="dashboard-logo-container" {...getRootProps()}>
+                    <div className="dashboard-logo-container">
                       <img
                         className="dashboard-logo"
                         src={logoPreview || newChanges.logo || logo}
@@ -539,11 +540,9 @@ function PublicDashboard(props) {
                         alt={`${project.name} Logo`}
                         style={styles.logoContainer}
                       />
-                      <Badge variant={"flat"} size="sm" color="primary" css={{ cursor: "pointer" }}>
-                        <Link color="primary">
-                          <EditSquare size="small" />
-                          <input {...getInputProps()} />
-                        </Link>
+                      <Badge color="primary" css={{ cursor: "pointer", mt: -10, ml: -10 }} {...getRootProps()}>
+                        <EditSquare size="small" />
+                        <input {...getInputProps()} />
                       </Badge>
                     </div>
                   </Media>
@@ -580,13 +579,13 @@ function PublicDashboard(props) {
                       href={newChanges.logoLink || project.logoLink || "#"}
                       target="_blank"
                       rel="noreferrer"
+                      style={{ ...styles.logoContainer, zIndex: 10 }}
                     >
                       <img
                         className="dashboard-logo"
                         src={project.logo ? `${API_HOST}/${project.logo}` : logo}
                         height="70"
                         alt={`${project.name} Logo`}
-                        style={styles.logoContainer}
                       />
                     </a>
                   </Media>
@@ -674,12 +673,14 @@ function PublicDashboard(props) {
             {project.Team && project.Team.showBranding && (
               <Grid xs={12} className="footer-content" justify="center">
                 <Link
-                  style={{ color: newChanges.titleColor }}
+                  css={{ color: newChanges.titleColor }}
                   href={`https://chartbrew.com?ref=${project.brewName}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Text>Powered by Chartbrew</Text>
+                  <Text b css={{ color: newChanges.titleColor }}>
+                    Powered by Chartbrew
+                  </Text>
                 </Link>
               </Grid>
             )}
@@ -820,6 +821,7 @@ const styles = {
   },
   dashboardTitle: (color) => ({
     color: color || "black",
+    textAlign: "center",
   }),
   logoContainer: {
     position: "absolute",
