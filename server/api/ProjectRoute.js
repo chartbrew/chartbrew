@@ -157,8 +157,8 @@ module.exports = (app) => {
     let logoPath;
 
     req.pipe(req.busboy);
-    req.busboy.on("file", (fieldname, file, filename) => {
-      const newFilename = `${nanoid(6)}-${filename}`;
+    req.busboy.on("file", (fieldname, file, info) => {
+      const newFilename = `${nanoid(6)}-${info.filename}`;
       const uploadPath = path.normalize(`${__dirname}/../uploads/${newFilename}`);
       logoPath = `uploads/${newFilename}`;
 
