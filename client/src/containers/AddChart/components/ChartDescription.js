@@ -80,9 +80,13 @@ function ChartDescription(props) {
         },
         "@md": {
           p: 20,
+          m: 20,
+        },
+        "@lg": {
+          p: 20,
+          m: 20,
         },
       }}
-      md
     >
       <Row align="center" wrap="wrap" gap={1} css={{ marginLeft: 0 }}>
         <Link

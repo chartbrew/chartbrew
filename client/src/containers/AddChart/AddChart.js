@@ -379,7 +379,6 @@ function AddChart(props) {
   if (titleScreen) {
     return (
       <div style={{ textAlign: "center" }}>
-        <Spacer y={2} />
         <ChartDescription
           name={chartName}
           onChange={_onNameChange}
