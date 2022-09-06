@@ -275,7 +275,34 @@ function MainContent(props) {
         {_canAccess("editor") && <Route path="/:teamId/:projectId/chart/:chartId/edit" component={AddChart} />}
         {_canAccess("editor") && <Route path="/:teamId/:projectId/chart" component={AddChart} />}
         {_canAccess("admin") && <Route path="/:teamId/:projectId/projectSettings" render={() => (<ProjectSettings style={styles.teamSettings} />)} />}
-        <Route path="/:teamId/:projectId/members" render={() => (<TeamMembers style={styles.teamSettings} />)} />
+        <Route
+          path="/:teamId/:projectId/members"
+          render={() => (
+            <Container
+              css={{
+                backgroundColor: "$backgroundContrast",
+                br: "$md",
+                p: 10,
+                "@xs": {
+                  p: 20,
+                },
+                "@sm": {
+                  p: 20,
+                },
+                "@md": {
+                  p: 20,
+                  m: 20,
+                },
+                "@lg": {
+                  p: 20,
+                  m: 20,
+                },
+              }}
+            >
+              <TeamMembers style={styles.teamSettings} />
+            </Container>
+          )}
+        />
         {_canAccess("owner")
           && (
             <Route

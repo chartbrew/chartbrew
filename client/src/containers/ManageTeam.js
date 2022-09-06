@@ -69,9 +69,9 @@ function ManageTeam(props) {
 
   if (!team.id || loading) {
     return (
-      <Container sm justify="center">
-        <Row>
-          <Loading type="spinner" size="lg" />
+      <Container sm justify="center" css={{ pt: 100 }}>
+        <Row justify="center" align="center">
+          <Loading type="points" size="lg">Loading your team</Loading>
         </Row>
       </Container>
     );

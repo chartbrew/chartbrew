@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Form, Header, Icon, Input, Loader, Modal, Popup, Segment, Table, TransitionablePortal
-} from "semantic-ui-react";
+  Button, Container, Input, Loading, Modal, Row, Spacer, Table, Text,
+} from "@nextui-org/react";
 import { formatRelative } from "date-fns";
+import { Delete, Plus, TickSquare } from "react-iconly";
+import { FaClipboard } from "react-icons/fa";
 
 import { getApiKeys, createApiKey, deleteApiKey } from "../../actions/team";
 
@@ -74,149 +76,182 @@ function ApiKeys(props) {
   };
 
   return (
-    <div>
-      <Header attached="top" as="h3">Team settings</Header>
-      <Segment attached padded style={{ paddingBottom: 40 }}>
-        <Loader active={loading} />
+    <Container>
+      <Row>
+        <Text h3>Team settings</Text>
+      </Row>
+      <Spacer y={0.5} />
+      {loading && (
+        <Row justify="center">
+          <Loading type="spinner">Loading keys...</Loading>
+        </Row>
+      )}
+      <Row>
         <Button
-          content="Create a new API Key"
           onClick={_onCreateRequested}
-          icon="plus"
-          primary
-        />
-        <Table striped>
-          <Table.Header>
+          icon={<Plus />}
+          auto
+        >
+          Create a new API Key
+        </Button>
+      </Row>
+      <Spacer y={0.5} />
+
+      <Table bordered shadow={false}>
+        <Table.Header>
+          <Table.Column key="token">API Tokens list</Table.Column>
+          <Table.Column key="created" hideHeader align="flex-end">Date created</Table.Column>
+          <Table.Column key="actions" hideHeader align="flex-end">Actions</Table.Column>
+        </Table.Header>
+
+        <Table.Body>
+          {apiKeys.length === 0 && (
             <Table.Row>
-              <Table.HeaderCell colSpan="3">API Tokens list</Table.HeaderCell>
+              <Table.Cell key="token">
+                <i>{"You don't have any API Keys yet"}</i>
+              </Table.Cell>
+              <Table.Cell key="created" />
+              <Table.Cell key="actions" />
             </Table.Row>
-          </Table.Header>
-
-          <Table.Body>
-            {apiKeys.length === 0 && (
-              <Table.Row>
-                <Table.Cell>
-                  <i>{"You don't have any API Keys yet"}</i>
-                </Table.Cell>
-              </Table.Row>
-            )}
-            {apiKeys.map((key) => (
-              <Table.Row>
-                <Table.Cell>
-                  <Icon name="key" />
-                  {` ${key.name}`}
-                </Table.Cell>
-                <Table.Cell collapsing textAlign="left">
-                  {formatRelative(new Date(key.createdAt), new Date())}
-                </Table.Cell>
-                <Table.Cell collapsing textAlign="right">
-                  <Button
-                    icon="trash"
-                    basic
-                    negative
-                    size="tiny"
-                    onClick={() => _onRemoveConfirmation(key)}
-                  />
-                </Table.Cell>
-              </Table.Row>
-            ))}
-          </Table.Body>
-        </Table>
-      </Segment>
-
-      <TransitionablePortal open={!!createdKey.id}>
-        <Modal open={!!createdKey.id} onClose={() => setCreatedKey({})}>
-          <Modal.Header>Your new API Key</Modal.Header>
-          <Modal.Content>
-            <p>{"Congrats! your new API key has been created."}</p>
-            <p>{"This is the only time we show you the code, so please copy it before closing this window."}</p>
-
-            <Form>
-              <Form.Field>
-                <label>Your new API Key</label>
-                <Input
-                  value={createdKey.token}
+          )}
+          {apiKeys.map((key) => (
+            <Table.Row key={key.id}>
+              <Table.Cell key="token">
+                {key.name}
+              </Table.Cell>
+              <Table.Cell key="created">
+                {formatRelative(new Date(key.createdAt), new Date())}
+              </Table.Cell>
+              <Table.Cell key="actions">
+                <Button
+                  icon={<Delete />}
+                  light
+                  color="error"
+                  onClick={() => _onRemoveConfirmation(key)}
+                  css={{ minWidth: "fit-content" }}
                 />
-              </Form.Field>
-              <Form.Field>
-                <Popup
-                  trigger={(
-                    <Button
-                      basic
-                      icon={tokenCopied ? "checkmark" : "clipboard"}
-                      color={tokenCopied ? "green" : null}
-                      onClick={_onCopyToken}
-                      content="Copy the key"
-                    />
-                  )}
-                  inverted
-                  content="Copy the URL to the clipboard"
-              />
-              </Form.Field>
-            </Form>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              content="Close"
-              onClick={() => setCreatedKey({})}
-            />
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
+              </Table.Cell>
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table>
 
-      <TransitionablePortal open={createMode}>
-        <Modal open={createMode} onClose={() => setCreateMode(false)}>
-          <Modal.Header>Create a new API Key</Modal.Header>
-          <Modal.Content>
-            <p>{"The API key will give the same access to your team as your current account. Please make sure you do not misplace the key."}</p>
-
-            <Form>
-              <Form.Field>
-                <label>Enter a name to remember it later</label>
-                <Input
-                  value={newKey}
-                  onChange={(e, data) => setNewKey(data.value)}
-                  placeholder="Enter a name here"
-                />
-              </Form.Field>
-            </Form>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              content="Close"
-              onClick={() => setCreateMode(false)}
-            />
-            <Button
-              content="Create the key"
-              primary
-              onClick={_onCreateKey}
-              loading={createLoading}
-              disabled={!newKey}
-            />
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
-
-      <TransitionablePortal open={!!confirmDelete}>
-        <Modal basic open={!!confirmDelete} onClose={() => setConfirmDelete(false)}>
-          <Modal.Header>Are you sure you want to delete the key?</Modal.Header>
-          <Modal.Content>
-            <p>{"This key will lose access to Chartbrew. This action cannot be undone."}</p>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              content="Go back"
-              onClick={() => setConfirmDelete(false)}
+      <Modal open={!!createdKey.id} onClose={() => setCreatedKey({})} width="500px">
+        <Modal.Header>
+          <Text h4>Your new API Key</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <Container>
+            <Row>
+              <Text color="success">{"Congrats! your new API key has been created."}</Text>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <Text>{"This is the only time we show you the code, so please copy it before closing this window."}</Text>
+            </Row>
+            <Spacer y={2} />
+            <Row>
+              <Input
+                label="Your new API Key"
+                value={createdKey.token}
+                bordered
+                fullWidth
               />
-            <Button
-              content="Remove the key permanently"
-              negative
-              onClick={_onRemoveKey}
-              loading={createLoading}
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <Button
+                bordered
+                icon={tokenCopied ? <TickSquare /> : <FaClipboard />}
+                color={tokenCopied ? "success" : "primary"}
+                onClick={_onCopyToken}
+                auto
+              >
+                {tokenCopied ? "Copied!" : "Copy to clipboard"}
+              </Button>
+            </Row>
+          </Container>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            color="warning"
+            flat
+            onClick={() => setCreatedKey({})}
+            auto
+          >
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal open={createMode} onClose={() => setCreateMode(false)} width="500px">
+        <Modal.Header>
+          <Text h4>Create a new API Key</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <Container>
+            <Row>
+              <Text>{"The API key will give the same access to your team as your current account. Please make sure you do not misplace the key."}</Text>
+            </Row>
+            <Spacer y={1} />
+            <Row>
+              <Input
+                label="Enter a name to remember it later"
+                value={newKey}
+                onChange={(e) => setNewKey(e.target.value)}
+                placeholder="Enter a name here"
+                bordered
+                fullWidth
               />
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
-    </div>
+            </Row>
+          </Container>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            color="warning"
+            auto
+            flat
+            onClick={() => setCreateMode(false)}
+          >
+            Close
+          </Button>
+          <Button
+            onClick={_onCreateKey}
+            disabled={!newKey || createLoading}
+            auto
+          >
+            Create the key
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal blur open={!!confirmDelete} onClose={() => setConfirmDelete(false)}>
+        <Modal.Header>
+          <Text h4>Are you sure you want to delete the key?</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <Text>{"This key will lose access to Chartbrew. This action cannot be undone."}</Text>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            color="warning"
+            auto
+            flat
+            onClick={() => setConfirmDelete(false)}
+          >
+            Go back
+          </Button>
+          <Button
+            color="error"
+            onClick={_onRemoveKey}
+            disabled={createLoading}
+            auto
+          >
+            Remove key permanently
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </Container>
   );
 }
 
