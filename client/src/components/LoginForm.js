@@ -3,12 +3,9 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import {
-  Label,
-} from "semantic-ui-react";
-import {
   Button, Loading, Input, Row, Spacer, Link, Modal, Text, Container,
 } from "@nextui-org/react";
-import { ArrowRight, Message } from "react-iconly";
+import { ChevronRightCircle, Message } from "react-iconly";
 
 import {
   login as loginAction,
@@ -149,6 +146,9 @@ function LoginForm(props) {
               value={email}
               size="lg"
               fullWidth
+              bordered
+              helperColor="error"
+              helperText={errors.email}
             />
           </Row>
           {errors.email && (
@@ -170,18 +170,16 @@ function LoginForm(props) {
               value={password}
               size="lg"
               fullWidth
+              bordered
+              helperColor="error"
+              helperText={errors.password && "Please enter your password"}
             />
-            {errors.password && (
-              <Label size="medium" style={{ marginTop: "-4em" }} basic pointing>
-                {"Please enter your password"}
-              </Label>
-            )}
           </Row>
           <Spacer y={1} />
           <Row justify="center" align="center">
             <Button
               onClick={loginUser}
-              iconRight={!loading && <ArrowRight />}
+              iconRight={!loading && <ChevronRightCircle />}
               size="lg"
               primary
               shadow
@@ -194,7 +192,7 @@ function LoginForm(props) {
               {!loading && "Login"}
             </Button>
           </Row>
-          <Spacer y={1} />
+          <Spacer y={0.5} />
           <Row justify="center" align="center">
             <Link
               style={{ paddingTop: 10 }}

@@ -36,11 +36,12 @@ function Login(props) {
           <Container sm>
             <Row justify="center" align="center">
               <Card style={styles.verticalPadding}>
-                <Card.Header>
-                  <Text h3 style={{ marginTop: 0 }}>{"Welcome back to Chartbrew"}</Text>
+                <Card.Header css={{ textAlign: "center", ai: "center" }}>
+                  <Container justify="center">
+                    <Text h3 css={{ marginTop: 0 }}>{"Welcome back to Chartbrew"}</Text>
+                  </Container>
                 </Card.Header>
                 <Card.Body>
-                  <Spacer y={1} />
                   <LoginForm />
                 </Card.Body>
                 {loginError && (
@@ -59,6 +60,7 @@ function Login(props) {
             </Row>
           </Container>
         </Row>
+        <Spacer y={0.5} />
         <Row justify="center" align="center">
           <div>
             <p style={styles.signupText}>

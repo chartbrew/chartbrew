@@ -32,7 +32,7 @@ import {
 } from "../config/validations";
 import cbLogoSmall from "../assets/logo_blue.png";
 import {
-  negative, positive, secondary, whiteTransparent
+  negative, positive, secondary,
 } from "../config/colors";
 import signupBackground from "../assets/signup_background.webp";
 
@@ -139,7 +139,7 @@ function Signup(props) {
 
   return (
     <div style={styles.container(height)}>
-      <Grid.Container style={styles.mainGrid(height)}>
+      <Grid.Container style={styles.mainGrid(height)} css={{ backgroundColor: "$backgroundContrast" }}>
         <Grid xs={12} sm={6}>
           <Container xs>
             <Spacer size={2} />
@@ -151,7 +151,7 @@ function Signup(props) {
             <Spacer size={1} />
             <Row>
               <Text h2>
-                {"Let's get you started with your new account"}
+                {"Let's get you started with your new Chartbrew account"}
               </Text>
             </Row>
             <Spacer y={2} />
@@ -243,7 +243,8 @@ function Signup(props) {
                   size="lg"
                   iconRight={<ArrowRight />}
                   auto
-                  >
+                  shadow
+                >
                   {!loading && "Continue"}
                   {loading && <Loading type="points" color="currentColor" />}
                 </Button>
@@ -262,20 +263,22 @@ function Signup(props) {
               )}
             </form>
 
-            <p>
+            <Spacer y={1} />
+            <Text size={14}>
               {"By signing up for a Chartbrew account, you agree to our "}
               <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/TermsAndConditions.md" rel="noopener noreferrer" target="_blank">Terms of Service</a>
               {" and "}
               <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/PrivacyPolicy.md" rel="noopener noreferrer" target="_blank">Privacy Policy</a>
-            </p>
+            </Text>
+            <Spacer y={0.5} />
             <div>
-              <p style={styles.loginText}>
+              <Text size={14}>
                 {" "}
                 Already have an account?
                 {" "}
                 <Link to={"/login"} style={styles.loginLink}>Login here</Link>
                 {" "}
-              </p>
+              </Text>
             </div>
           </Container>
         </Grid>
@@ -292,15 +295,16 @@ function Signup(props) {
                   <Avatar color="gradient" bordered squared size="lg" src={testimonialAvatar} alt="Fairchain testimonial" />
                   <Grid.Container css={{ pl: "$6" }}>
                     <Grid xs={12}>
-                      <Text h4 css={{ lineHeight: "$xs" }}>
+                      <Text size={20} b css={{ lineHeight: "$xs" }}>
                         Schuyler
                       </Text>
                     </Grid>
                     <Grid xs={12}>
-                      <Text css={{ color: "$accents8" }}>
+                      <Text css={{ color: "$accents8", flexDirection: "row", display: "flex" }}>
                         {"Full-stack Developer at "}
-                        <LinkNext href="https://fairchain.com" rel="noopener noreferrer" target="_blank">
-                          Fairchain
+                        <Spacer x={0.2} />
+                        <LinkNext href="https://fairchain.com" rel="noopener noreferrer" target="_blank" color="secondary">
+                          {"Fairchain"}
                         </LinkNext>
                       </Text>
                     </Grid>
@@ -362,7 +366,7 @@ const styles = {
     verticalAlign: "middle",
   },
   container: (height) => ({
-    backgroundColor: whiteTransparent(1),
+    // backgroundColor: whiteTransparent(1),
     minHeight: height,
   }),
   loginText: {
