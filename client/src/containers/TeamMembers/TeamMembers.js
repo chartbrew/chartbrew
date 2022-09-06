@@ -3,14 +3,15 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Dimmer, Message, Segment, Button, Divider, Dropdown, Checkbox, Grid,
-  Loader, Container, Header, Modal, List, TransitionablePortal, Popup, Icon, Label,
-} from "semantic-ui-react";
+  Badge, Button, Checkbox, Container, Divider, Dropdown, Grid, Loading,
+  Modal, Row, Spacer, Table, Text, Tooltip,
+} from "@nextui-org/react";
 import _ from "lodash";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
-import { useWindowSize } from "react-use";
-import { createMedia } from "@artsy/fresnel";
+import {
+  Delete, InfoCircle, Password, People,
+} from "react-iconly";
 
 import {
   getTeam as getTeamAction,
@@ -21,15 +22,6 @@ import {
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import InviteMembersForm from "../../components/InviteMembersForm";
 import canAccess from "../../config/canAccess";
-
-const AppMedia = createMedia({
-  breakpoints: {
-    mobile: 0,
-    tablet: 768,
-    computer: 1024,
-  },
-});
-const { Media } = AppMedia;
 
 /*
   Contains Pending Invites and All team members with functionality to delete/change role
@@ -42,13 +34,10 @@ function TeamMembers(props) {
 
   const [loading, setLoading] = useState(true);
   const [changedMember, setChangedMember] = useState(null);
-  const [error, setError] = useState(false);
   const [deleteMember, setDeleteMember] = useState("");
   const [projectModal, setProjectModal] = useState(false);
   const [projectAccess, setProjectAccess] = useState({});
   const [changedRole, setChangedRole] = useState({});
-
-  const { width } = useWindowSize();
 
   useEffect(() => {
     cleanErrors();
@@ -82,14 +71,13 @@ function TeamMembers(props) {
 
   const _onChangeRole = (newRole, member) => {
     setLoading(true);
-    setError(false);
     setChangedMember(member);
     updateTeamRole({ role: newRole }, member.id, team.id)
       .then(() => {
         setLoading(false);
       }).catch(() => {
         setLoading(false);
-        setError(true);
+        toast.error("Something went wrong. Please try again");
       });
   };
 
@@ -161,7 +149,7 @@ function TeamMembers(props) {
       })
       .catch(() => {
         setLoading(false);
-        setError(true);
+        toast.error("Something went wrong. Please try again");
         setDeleteMember(false);
       });
   };
@@ -172,250 +160,258 @@ function TeamMembers(props) {
 
   if (!team) {
     return (
-      <Container text style={styles.container}>
-        <Dimmer active={!team}>
-          <Loader />
-        </Dimmer>
+      <Container sm justify="center">
+        <Loading type="spinner" size="lg" />
       </Container>
     );
   }
 
   return (
     <div style={style}>
-      {_canAccess("admin")
-        && (
-        <div>
-          <Divider hidden />
-        </div>
-        )}
-
-      {_canAccess("admin")
-        && (
+      {_canAccess("admin") && (
         <div>
           <InviteMembersForm />
-          <Divider hidden />
+          <Spacer y={1} />
+          <Divider />
+          <Spacer y={1} />
         </div>
-        )}
+      )}
 
-      <Segment>
-        <Header as="h3">{"Team members"}</Header>
+      <Container>
+        <Row>
+          <Text h3>{"Team members"}</Text>
+        </Row>
 
-        <Container fluid>
-          <List relaxed divided size="large" selection>
+        <Table selectionMode="none" shadow={false} bordered headerLined>
+          <Table.Header>
+            <Table.Column key="member">Member</Table.Column>
+            <Table.Column key="role">Role</Table.Column>
+            <Table.Column key="projectAccess">Projects</Table.Column>
+            <Table.Column key="export">Can export</Table.Column>
+            <Table.Column key="actions">Actions</Table.Column>
+          </Table.Header>
+          <Table.Body>
             {teamMembers && teamMembers.map((member) => {
-              let memberRole = "guest";
+              let memberRole = {};
               for (let i = 0; i < member.TeamRoles.length; i++) {
                 if (member.TeamRoles[i].team_id === team.id) {
-                  memberRole = member.TeamRoles[i].role;
+                  memberRole = member.TeamRoles[i];
                   break;
                 }
               }
 
               return (
-                <List.Item key={member.id}>
-                  <List.Content floated="right">
-                    {_canAccess("admin") && (
-                      <Button
-                        icon={width < 768 ? "key" : null}
-                        content={width < 768 ? null : "Project access"}
-                        onClick={() => _openProjectAccess(member)}
-                        size="small"
-                      />
-                    )}
-                    {_canAccess("admin") && user.id !== member.id && (
-                      <Dropdown
-                        text={width < 768 ? null : "Edit role"}
-                        floating={width >= 768}
-                        labeled={width >= 768}
-                        button
-                        icon="eye"
-                        className="small icon"
-                        direction="left"
-                      >
-                        <Dropdown.Menu>
-                          {user.id !== member.id && memberRole !== "member"
-                            && (_canAccess("owner") || (_canAccess("admin") && memberRole !== "owner"))
-                            && (
-                            <Dropdown.Item
-                              onClick={() => _onChangeRole("member", member)}
-                            >
-                              <strong>Member</strong>
-                              <Media greaterThan="mobile">
-                                <p>{"Can only view projects and charts. Cannot update chart or connection data."}</p>
-                              </Media>
-                            </Dropdown.Item>
-                            )}
-                          {user.id !== member.id && memberRole !== "editor"
-                            && (_canAccess("owner") || (_canAccess("admin") && memberRole !== "owner"))
-                            && (
-                            <Dropdown.Item
-                              onClick={() => _onChangeRole("editor", member)}
-                            >
-                              <strong>Editor</strong>
-                              <Media greaterThan="mobile">
-                                <p>{"Create, edit, remove charts. Can also create new connections."}</p>
-                              </Media>
-                            </Dropdown.Item>
-                            )}
-                          {user.id !== member.id && memberRole !== "admin"
-                            && (_canAccess("owner") || (_canAccess("admin") && memberRole !== "owner"))
-                            && (
-                            <Dropdown.Item
-                              onClick={() => _onChangeRole("admin", member)}
-                            >
-                              <strong>Admin</strong>
-                              <Media greaterThan="mobile">
-                                <p>{"Full access, but can't delete the team."}</p>
-                              </Media>
-                            </Dropdown.Item>
-                            )}
-                        </Dropdown.Menu>
-                      </Dropdown>
-                    )}
-                    {user.id !== member.id
-                      && (_canAccess("owner") || (_canAccess("admin") && memberRole !== "owner"))
-                      && (
-                      <Button
-                        onClick={() => _onDeleteConfirmation(member.id)}
-                        floated="right"
-                        icon="trash"
-                        basic
-                        size="small"
-                      />
-                      )}
-                  </List.Content>
-
-                  <List.Content>
-                    {user.id === member.id
-                      ? (
-                        <List.Header>
-                          <strong>{"(You) "}</strong>
-                          {member.name}
-                          {" "}
-                          {member.surname}
-                          {" "}
-                          <Label size="small">{`${memberRole}`}</Label>
-                        </List.Header>
-                      )
-                      : (
-                        <List.Header>
-                          {" "}
-                          {member.name}
-                          {" "}
-                          {member.surname}
-                          {" "}
-                          <Label size="small">{`${memberRole}`}</Label>
-                        </List.Header>
-                      )}
-                    <List.Description>{member.email}</List.Description>
-                  </List.Content>
-                  {error && changedMember && member.id === changedMember.id
-                    && (
-                    <Container textAlign="center">
-                      <Message
-                        content="Something went wrong, please try again!"
-                        negative
-                        onDismiss={() => {
-                          setError(false);
-                          setChangedMember(null);
-                        }}
-                      />
+                <Table.Row key={member.id}>
+                  <Table.Cell key="member">
+                    <Text>{member.name}</Text>
+                    <Text small css={{ color: "$accents6" }}>{member.email}</Text>
+                  </Table.Cell>
+                  <Table.Cell key="role">
+                    {memberRole.role === "owner" && <Badge color="primary">Owner</Badge>}
+                    {memberRole.role === "admin" && <Badge color="success">Admin</Badge>}
+                    {memberRole.role === "editor" && <Badge color="secondary">Editor</Badge>}
+                    {memberRole.role === "member" && <Badge color="default">Member</Badge>}
+                  </Table.Cell>
+                  <Table.Cell key="projectAccess">
+                    {!memberRole.projects || memberRole.projects.length === 0 ? "None" : memberRole.projects.length}
+                  </Table.Cell>
+                  <Table.Cell key="export">
+                    {memberRole.canExport && <Badge color="success" variant={"flat"}>Yes</Badge>}
+                    {!memberRole.canExport && <Badge color="error" variant={"flat"}>No</Badge>}
+                  </Table.Cell>
+                  <Table.Cell key="actions">
+                    <Container css={{ pl: 0, pr: 0 }}>
+                      <Row>
+                        {_canAccess("admin") && (
+                          <>
+                            <Tooltip content="Adjust project access" color="invert">
+                              <Button
+                                light
+                                color="primary"
+                                icon={<Password />}
+                                auto
+                                onClick={() => _openProjectAccess(member)}
+                              />
+                            </Tooltip>
+                            <Spacer x={0.2} />
+                          </>
+                        )}
+                        {_canAccess("admin") && user.id !== member.id && (
+                          <>
+                            <Tooltip content="Change member role" color="invert">
+                              <Dropdown>
+                                <Dropdown.Button light auto icon={<People />} color="secondary" />
+                                <Dropdown.Menu
+                                  onAction={(key) => _onChangeRole(key, member)}
+                                  selectedKeys={[memberRole.role]}
+                                  selectionMode="single"
+                                >
+                                  {user.id !== member.id
+                                    && (_canAccess("owner") || (_canAccess("admin") && memberRole.role !== "owner"))
+                                    && (
+                                      <Dropdown.Item key="admin" css={{ height: "fit-content", lineHeight: 1, pb: 5 }}>
+                                        <Text>Admin</Text>
+                                        <Text small css={{ color: "$accents6", wordWrap: "break-word" }}>
+                                          {"Full access, but can't delete the team"}
+                                        </Text>
+                                      </Dropdown.Item>
+                                    )}
+                                  {user.id !== member.id
+                                    && (_canAccess("owner") || (_canAccess("admin") && memberRole.role !== "owner"))
+                                    && (
+                                      <Dropdown.Item key="editor" css={{ height: "max-content", lineHeight: 1, pb: 5 }}>
+                                        <Text>Editor</Text>
+                                        <Text small css={{ color: "$accents6", wordWrap: "break-word" }}>
+                                          {"Can create, edit, and remove charts and connections in assigned projects"}
+                                        </Text>
+                                      </Dropdown.Item>
+                                    )}
+                                  {user.id !== member.id
+                                    && (_canAccess("owner") || (_canAccess("admin") && memberRole.role !== "owner"))
+                                    && (
+                                      <Dropdown.Item key="member" css={{ height: "fit-content", lineHeight: 1, pb: 5 }}>
+                                        <Text>Member</Text>
+                                        <Text small css={{ color: "$accents6", wordWrap: "break-word" }}>
+                                          {"Can view charts in assigned projects"}
+                                        </Text>
+                                      </Dropdown.Item>
+                                    )}
+                                </Dropdown.Menu>
+                              </Dropdown>
+                            </Tooltip>
+                            <Spacer x={0.2} />
+                          </>
+                        )}
+                        {user.id !== member.id
+                          && (_canAccess("owner") || (_canAccess("admin") && memberRole !== "owner"))
+                          && (
+                            <Tooltip content="Remove user from the team">
+                              <Button
+                                light
+                                auto
+                                onClick={() => _onDeleteConfirmation(member.id)}
+                                icon={<Delete />}
+                                color="error"
+                              />
+                            </Tooltip>
+                          )}
+                      </Row>
                     </Container>
-                    )}
-                </List.Item>
+                  </Table.Cell>
+                </Table.Row>
               );
             })}
-          </List>
-        </Container>
-      </Segment>
+          </Table.Body>
+        </Table>
+      </Container>
 
       {/* Remove user modal */}
-      <TransitionablePortal open={!!deleteMember}>
-        <Modal
-          open={!!deleteMember}
-          size="small"
-          basic
-          onClose={() => setDeleteMember(false)}
-        >
-          <Modal.Header>
-            Are you sure you want to remove the user from the team?
-          </Modal.Header>
-          <Modal.Content>
-            <p>{"This action will remove the user from the team and restrict them from accessing the dashboards."}</p>
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              onClick={() => setDeleteMember(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              negative
-              loading={loading}
-              onClick={() => _onDeleteTeamMember(deleteMember)}
-            >
-              Remove
-            </Button>
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
+      <Modal open={!!deleteMember} blur onClose={() => setDeleteMember(false)}>
+        <Modal.Header>
+          <Text h4>Are you sure you want to remove the user from the team?</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <p>{"This action will remove the user from the team and restrict them from accessing the dashboards."}</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            flat
+            color="warning"
+            auto
+            onClick={() => setDeleteMember(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            auto
+            color="error"
+            disabled={loading}
+            onClick={() => _onDeleteTeamMember(deleteMember)}
+            iconRight={loading ? <Loading type="points" /> : <Delete />}
+          >
+            Remove
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
-      <TransitionablePortal open={projectModal}>
-        <Modal open={projectModal} onClose={() => setProjectModal(false)}>
-          <Modal.Header>
-            Assign project access
-          </Modal.Header>
-          <Modal.Content>
-            {changedMember && projectAccess[changedMember.id] && (
-              <div>
-                <p>{"Tick the projects you want to give the user access to. The unticked projects cannot be accessed by this user."}</p>
-                <p>
-                  {"You are currently giving"}
-                  <strong>{` ${projectAccess[changedMember.id].role} `}</strong>
-                  {"access to"}
-                  <strong>{` ${changedMember.name} `}</strong>
-                  {"for the following projects:"}
-                </p>
-                <Grid columns={2} stackable>
-                  {projects && projects.map((project) => (
-                    <Grid.Column key={project.id}>
-                      <Checkbox
-                        toggle
-                        label={project.name}
-                        checked={
-                          _.indexOf(projectAccess[changedMember.id].projects, project.id) > -1
-                        }
-                        onClick={() => _onChangeProjectAccess(project.id)}
-                      />
-                    </Grid.Column>
-                  ))}
-                </Grid>
+      {/* Project access modal */}
+      <Modal open={projectModal} onClose={() => setProjectModal(false)} width="700px">
+        <Modal.Header>
+          <Text h4>Assign project access</Text>
+        </Modal.Header>
+        <Modal.Body>
+          {changedMember && projectAccess[changedMember.id] && (
+            <Container>
+              <Row>
+                <Text>{"Tick the projects you want to give the user access to. The unticked projects cannot be accessed by this user."}</Text>
+              </Row>
+              <Spacer y={0.5} />
+              <Row wrap="wrap">
+                <Text>{"You are currently giving"}</Text>
+                <Spacer x={0.2} />
+                <Badge color="primary">{`${projectAccess[changedMember.id].role}`}</Badge>
+                <Spacer x={0.2} />
+                <Text>{`access to ${changedMember.name}`}</Text>
+                <Spacer x={0.2} />
+                <Text>{"for the following projects:"}</Text>
+              </Row>
+              <Spacer y={0.5} />
 
-                <Divider />
-                <Header as="h4">
+              <Grid.Container gap={0.5}>
+                {projects && projects.map((project) => (
+                  <Grid xs={12} sm={6} key={project.id}>
+                    <Checkbox
+                      label={project.name}
+                      isSelected={
+                        _.indexOf(projectAccess[changedMember.id].projects, project.id) > -1
+                      }
+                      onChange={() => _onChangeProjectAccess(project.id)}
+                      size="sm"
+                    />
+                  </Grid>
+                ))}
+              </Grid.Container>
+
+              <Spacer y={0.5} />
+              <Divider />
+              <Spacer y={0.5} />
+
+              <Row align="center">
+                <Text size={20} b>
                   {"Data export permissions "}
-                  <Popup
-                    trigger={<Icon style={{ fontSize: 16, verticalAlign: "baseline" }} name="question circle" />}
-                    content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
-                  />
-                </Header>
+                </Text>
+                <Spacer x={0.2} />
+                <Tooltip
+                  content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
+                  color="invert"
+                  css={{ zIndex: 99999 }}
+                >
+                  <InfoCircle />
+                </Tooltip>
+              </Row>
+              <Spacer y={0.5} />
+              <Row>
                 <Checkbox
-                  toggle
                   label="Allow data export"
-                  checked={changedRole.canExport}
-                  onClick={_onChangeExport}
+                  isSelected={changedRole.canExport}
+                  onChange={_onChangeExport}
+                  size="sm"
                 />
-              </div>
-            )}
-          </Modal.Content>
-          <Modal.Actions>
-            <Button
-              content="Close"
-              onClick={() => setProjectModal(false)}
-            />
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
+              </Row>
+            </Container>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            auto
+            flat
+            color="warning"
+            onClick={() => setProjectModal(false)}
+          >
+            Done
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       <ToastContainer
         position="top-right"
@@ -432,14 +428,6 @@ function TeamMembers(props) {
     </div>
   );
 }
-
-const styles = {
-  container: {
-    flex: 1,
-    padding: 20,
-    paddingLeft: 30,
-  },
-};
 
 TeamMembers.defaultProps = {
   style: {},

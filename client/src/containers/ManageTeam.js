@@ -2,17 +2,10 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Route, Switch, withRouter } from "react-router";
-
 import { Link } from "react-router-dom";
-
 import {
-  Dimmer,
-  Grid,
-  Menu,
-  Loader,
-  Container,
-  Header,
-} from "semantic-ui-react";
+  Grid, Container, Row, Loading, Text, Spacer, Button,
+} from "@nextui-org/react";
 
 import { getTeam, saveActiveTeam } from "../actions/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
@@ -74,60 +67,107 @@ function ManageTeam(props) {
     return canAccess(role, user.id, team.TeamRoles);
   };
 
-  if (!team.id) {
+  if (!team.id || loading) {
     return (
-      <Container text style={styles.container}>
-        <Dimmer active={loading}>
-          <Loader />
-        </Dimmer>
+      <Container sm justify="center">
+        <Row>
+          <Loading type="spinner" size="lg" />
+        </Row>
       </Container>
     );
   }
 
   return (
-    <div style={styles.container}>
+    <div>
       <Navbar />
-      <Grid centered padded columns={2} stackable>
-        <Grid.Column width={3}>
-          <Header as="h3" style={{ paddingTop: 20 }}>
-            Manage the team
-          </Header>
-          <Menu secondary vertical fluid>
+      <Grid.Container gap={1}>
+        <Grid xs={12} sm={3} md={2}>
+          <Container css={{ pt: 20 }}>
+            <Row>
+              <Text h4>
+                Manage the team
+              </Text>
+            </Row>
             {_canAccess("owner") && (
-              <Menu.Item
-                active={checkIfActive("settings")}
-                as={Link}
-                to={`/manage/${match.params.teamId}/settings`}
-              >
-                Settings
-              </Menu.Item>
+              <>
+                <Row>
+                  <Link to={`/manage/${match.params.teamId}/settings`}>
+                    <Button
+                      light
+                      auto
+                      color={checkIfActive("settings") ? "primary" : "default"}
+                      disabled={!checkIfActive("settings")}
+                      size="lg"
+                    >
+                      Settings
+                    </Button>
+                  </Link>
+                </Row>
+              </>
             )}
-            <Menu.Item
-              active={checkIfActive("members")}
-              as={Link}
-              to={`/manage/${match.params.teamId}/members`}
-            >
-              Members
-            </Menu.Item>
-          </Menu>
 
-          <Header as="h3" style={{ paddingTop: 20 }}>
-            Developers
-          </Header>
-          <Menu secondary vertical fluid>
-            <Menu.Item
-              active={checkIfActive("api-keys")}
-              as={Link}
-              to={`/manage/${match.params.teamId}/api-keys`}
-              disabled={!_canAccess("admin")}
-            >
-              API Keys
-            </Menu.Item>
-          </Menu>
-        </Grid.Column>
+            <Row>
+              <Link to={`/manage/${match.params.teamId}/members`}>
+                <Button
+                  light
+                  auto
+                  color={checkIfActive("members") ? "primary" : "default"}
+                  disabled={!checkIfActive("members")}
+                  size="lg"
+                >
+                  Members
+                </Button>
+              </Link>
+            </Row>
+            <Spacer y={1} />
 
-        <Grid.Column stretched width={12}>
-          <Container>
+            {_canAccess("admin") && (
+              <>
+                <Row>
+                  <Text h4>
+                    Developers
+                  </Text>
+                </Row>
+                <Row>
+                  <Link to={`/manage/${match.params.teamId}/api-keys`}>
+                    <Button
+                      light
+                      color={checkIfActive("api-keys") ? "primary" : "default"}
+                      auto
+                      disabled={!checkIfActive("api-keys")}
+                      size="lg"
+                    >
+                      API Keys
+                    </Button>
+                  </Link>
+                </Row>
+              </>
+            )}
+          </Container>
+        </Grid>
+
+        <Grid xs={12} sm={9} md={10}>
+          <Container
+            css={{
+              backgroundColor: "$backgroundContrast",
+              br: "$md",
+              p: 10,
+              "@xs": {
+                p: 20,
+              },
+              "@sm": {
+                p: 20,
+              },
+              "@md": {
+                p: 20,
+                m: 20,
+              },
+              "@lg": {
+                p: 20,
+                m: 20,
+              },
+            }}
+          >
             <Switch>
               <Route path="/manage/:teamId/members" component={TeamMembers} />
               {_canAccess("owner") && (
@@ -144,17 +184,11 @@ function ManageTeam(props) {
               )}
             </Switch>
           </Container>
-        </Grid.Column>
-      </Grid>
+        </Grid>
+      </Grid.Container>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    flex: 1,
-  },
-};
 
 ManageTeam.propTypes = {
   getTeam: PropTypes.func.isRequired,

@@ -3,9 +3,11 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Segment, Header, Divider, Button, Icon, Grid, Checkbox, Popup, Input, Form,
-} from "semantic-ui-react";
+  Button, Container, Row, Text, Tooltip, Spacer, Grid, Checkbox, Input,
+} from "@nextui-org/react";
 import _ from "lodash";
+import { CloseSquare, InfoCircle, TickSquare } from "react-iconly";
+import { FaClipboard } from "react-icons/fa";
 
 import { generateInviteUrl as generateInviteUrlAction } from "../actions/team";
 
@@ -71,94 +73,127 @@ function InviteMembersForm(props) {
 
   return (
     <div style={style}>
-      <Segment>
-        <Header as="h3">Invite new members</Header>
-
-        <Header as="h4">
-          {"Project access "}
-          <Popup
-            trigger={<Icon style={{ fontSize: 16, verticalAlign: "baseline" }} name="question circle" />}
+      <Container>
+        <Row>
+          <Text h3>Invite new members</Text>
+        </Row>
+        <Spacer y={1} />
+        <Row align="center">
+          <Text size={20} b>
+            {"Project access "}
+          </Text>
+          <Spacer x={0.2} />
+          <Tooltip
             content="The newly invited users will only be able to access the projects you select below. The project access can be changed later as well."
-          />
-        </Header>
-
-        <div style={{ marginBottom: 15 }}>
+            color="invert"
+            css={{ maxWidth: 400 }}
+          >
+            <InfoCircle />
+          </Tooltip>
+        </Row>
+        <Spacer y={0.5} />
+        <Row>
           <Button
-            content="Select all"
-            size="small"
-            basic
+            size="sm"
+            light
+            icon={<TickSquare />}
             onClick={_onSelectAllProjects}
-          />
+            auto
+            color="primary"
+          >
+            Select all
+          </Button>
+          <Spacer x={0.2} />
           <Button
-            content="Deselect all"
-            size="small"
-            basic
+            size="sm"
+            light
+            auto
+            icon={<CloseSquare />}
             onClick={_onDeselectAllProjects}
-          />
-        </div>
-        <Grid columns={3} stackable>
+            color="secondary"
+          >
+            Deselect all
+          </Button>
+        </Row>
+        <Spacer y={0.5} />
+        <Grid.Container gap={0.5}>
           {projects && projects.map((project) => (
-            <Grid.Column key={project.id}>
+            <Grid xs={12} sm={6} key={project.id}>
               <Checkbox
                 label={project.name}
-                checked={
+                isSelected={
                   _.indexOf(projectAccess, project.id) > -1
                 }
-                onClick={() => _onChangeProjectAccess(project.id)}
+                onChange={() => _onChangeProjectAccess(project.id)}
+                size="sm"
               />
-            </Grid.Column>
+            </Grid>
           ))}
-        </Grid>
-
-        <Header as="h4">
-          {"Data export permissions "}
-          <Popup
-            trigger={<Icon style={{ fontSize: 16, verticalAlign: "baseline" }} name="question circle" />}
+        </Grid.Container>
+        <Spacer y={1} />
+        <Row align="center">
+          <Text size={20} b>
+            {"Data export permissions "}
+          </Text>
+          <Spacer x={0.2} />
+          <Tooltip
             content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
+            color="invert"
+            css={{ maxWidth: 400 }}
+          >
+            <InfoCircle />
+          </Tooltip>
+        </Row>
+        <Spacer y={0.5} />
+        <Row>
+          <Checkbox
+            label="Allow data export"
+            isSelected={exportAllowed}
+            onSelect={() => setExportAllowed(!exportAllowed)}
+            size="sm"
           />
-        </Header>
+        </Row>
 
-        <Checkbox
-          label="Allow data export"
-          checked={exportAllowed}
-          onClick={() => setExportAllowed(!exportAllowed)}
-        />
-
-        <Divider hidden />
-        <Button
-          loading={loading}
-          compact
-          size="large"
-          onClick={onGenerateUrl}
-          primary
-        >
-          Generate invite URL
-        </Button>
-        <Divider hidden />
+        <Spacer y={1} />
+        <Row>
+          <Button
+            disabled={loading}
+            onClick={onGenerateUrl}
+            auto
+          >
+            {loading ? "Generating..." : "Generate invite link"}
+          </Button>
+        </Row>
+        <Spacer y={0.5} />
 
         {inviteUrl && (
-          <Form>
-            <Form.Field>
-              <label>Share this link with your team</label>
+          <>
+            <Row>
               <Input
+                label="Share this link with your team"
                 id="url-text"
                 value={inviteUrl}
+                fullWidth
+                bordered
               />
-            </Form.Field>
-            <Form.Field>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
               <Button
-                basic
-                icon={urlCopied ? "checkmark" : "clipboard"}
-                content={urlCopied ? "Copied" : "Copy to clipboard"}
-                color={urlCopied ? "green" : null}
+                iconRight={urlCopied ? <TickSquare /> : <FaClipboard />}
+                color={urlCopied ? "success" : "primary"}
                 onClick={_onCopyUrl}
-                size="small"
-              />
-            </Form.Field>
-          </Form>
+                bordered
+                size="sm"
+                auto
+              >
+                {urlCopied ? "Copied" : "Copy to clipboard"}
+              </Button>
+            </Row>
+          </>
         )}
 
-      </Segment>
+      </Container>
     </div>
   );
 }
