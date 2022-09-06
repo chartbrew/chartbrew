@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-
 import {
-  Segment, Modal, Message, Divider, Form, Icon, Button, Loader, Container,
-  Header,
-  TransitionablePortal,
-} from "semantic-ui-react";
+  Button, Container, Divider, Input, Loading, Modal, Row, Spacer, Text,
+} from "@nextui-org/react";
+
+import { Delete } from "react-iconly";
 import { updateUser, deleteUser } from "../actions/user";
+
 /*
   Component for editting/deleting user account
 */
 function EditUserForm(props) {
-  const [user, setUser] = useState({ name: "", icon: "" });
+  const [user, setUser] = useState({ name: "" });
   const [submitError, setSubmitError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
@@ -29,18 +29,11 @@ function EditUserForm(props) {
     }
   }, [userProp.name, user.name]);
 
-  const onChangeIcon = (e, data) => {
-    const re = /^[a-zA-Z]+$/;
-    if (e.target.value === "" || re.test(e.target.value)) {
-      setUser({ ...user, icon: data.value });
-    }
-  };
-
   const loadData = () => {
     if (!userProp && !userProp.name) return;
 
     setLoading(false);
-    setUser({ name: userProp.name, icon: userProp.icon });
+    setUser({ name: userProp.name });
   };
 
   const _onUpdateUser = () => {
@@ -73,106 +66,144 @@ function EditUserForm(props) {
 
   if (!user.name) {
     return (
-      <Container text style={styles.container}>
-        <Loader active />
+      <Container>
+        <Loading type={"spinner"} size="lg" />
       </Container>
     );
   }
 
   return (
-    <div style={styles.container}>
-      <Header attached="top" as="h3">Profile</Header>
-      <Segment attached>
-        <Form>
-          <Form.Input
-            label="Name"
-            name="name"
-            value={user.name || ""}
-            type="text"
-            placeholder="Name"
-            icon="user"
-            onChange={(e, data) => setUser({ ...user, name: data.value })} />
-          <Form.Input
-            maxLength="2"
-            label="User Icon"
-            name="icon"
-            value={user.icon || ""}
-            type="text"
-            placeholder="User Icon consists of your Initials"
-            onChange={(e, data) => onChangeIcon(e, data)}
-          />
-          {submitError && (
-            <Container textAlign="center" style={{ margin: "1em" }}>
-              <Message negative>
-                <Message.Header>There was an error updating your account </Message.Header>
-                <Message.Content> Please try again </Message.Content>
-              </Message>
+    <Container
+      css={{
+        backgroundColor: "$backgroundContrast",
+        br: "$md",
+        "@xs": {
+          p: 20,
+        },
+        "@sm": {
+          p: 20,
+        },
+        "@md": {
+          p: 20,
+          m: 20,
+        },
+      }}
+    >
+      <Row>
+        <Text h3>Profile settings</Text>
+      </Row>
+      <Spacer y={1} />
+      <Row>
+        <Input
+          label="Name"
+          name="name"
+          value={user.name || ""}
+          type="text"
+          placeholder="Enter your name"
+          onChange={(e) => setUser({ ...user, name: e.target.value })}
+          bordered
+          fullWidth
+        />
+      </Row>
+      <Spacer y={0.5} />
+      {submitError && (
+        <>
+          <Row>
+            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+              <Row>
+                <Text h5>{"There was an error updating your account"}</Text>
+              </Row>
+              <Row>
+                <Text>Please try saving again.</Text>
+              </Row>
             </Container>
-          )}
-        </Form>
-        <Divider hidden />
+          </Row>
+          <Spacer y={0.5} />
+        </>
+      )}
+      <Row>
         <Button
-          loading={loading}
-          disabled={!user.name || !user.icon}
-          color={success ? "green" : "violet"}
-          type="submit"
-          onClick={() => _onUpdateUser()}
+          disabled={!user.name || loading}
+          color={success ? "success" : "primary"}
+          onClick={_onUpdateUser}
+          auto
+          iconRight={loading ? <Loading type="points" /> : null}
         >
           {success ? "Saved" : "Save" }
         </Button>
-        <Divider section />
-        <Button
-          negative
-          content="Delete account"
-          onClick={() => setOpenDeleteModal(true)}
-        />
+      </Row>
 
-        <Container fluid>
-          <TransitionablePortal open={openDeleteModal}>
-            <Modal
-              open={openDeleteModal}
-              onClose={() => setOpenDeleteModal(false)}
-            >
-              <Header icon="exclamation triangle" content="Delete Account" />
-              <Modal.Content>
-                <p>
-                  {"This action will delete your account permanently, including your team and everything associated with it (projects, connections, and charts)."}
-                </p>
-                <p>
-                  <strong>{"We cannot reverse this action as all the content is deleted immediately."}</strong>
-                </p>
-                <p>
-                  Are you sure you want to delete your user and team?
-                </p>
-              </Modal.Content>
-              <Modal.Actions>
-                <Button onClick={() => setOpenDeleteModal(false)} color="primary">
-                  <Icon name="chevron left" />
-                  {" Go back"}
-                </Button>
-                <Button color="red" loading={loading} onClick={_onDeleteUser}>
-                  <Icon name="trash" />
-                  {" Delete forever"}
-                </Button>
-              </Modal.Actions>
-            </Modal>
-          </TransitionablePortal>
-        </Container>
-        {deleteUserError && (
-          <Container textAlign="center" text style={{ marginTop: 10 }}>
-            <Message negative content="Something went wrong while deleting your account" />
+      <Spacer y={1} />
+      <Divider />
+      <Spacer y={1} />
+
+      <Row>
+        <Button
+          iconRight={<Delete />}
+          color="error"
+          onClick={() => setOpenDeleteModal(true)}
+          bordered
+          auto
+        >
+          Delete account
+        </Button>
+      </Row>
+
+      <Modal blur open={openDeleteModal} onClose={() => setOpenDeleteModal(false)}>
+        <Modal.Header>
+          <Text h3>Delete Account</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <Container>
+            <Row>
+              <Text>{"This action will delete your account permanently, including your team and everything associated with it (projects, connections, and charts)."}</Text>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <Text>{"We cannot reverse this action as all the content is deleted immediately."}</Text>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <Text b>Are you sure you want to delete your user and team?</Text>
+            </Row>
           </Container>
-        )}
-      </Segment>
-    </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            onClick={() => setOpenDeleteModal(false)}
+            color="warning"
+            flat
+            auto
+          >
+            {"Go back"}
+          </Button>
+          <Button
+            color="error"
+            disabled={loading}
+            onClick={_onDeleteUser}
+            iconRight={loading ? <Loading type="points" /> : <Delete />}
+            auto
+          >
+            {"Delete forever"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {deleteUserError && (
+        <Row>
+          <Container css={{ backgroundColor: "$red300", p: 10 }}>
+            <Row>
+              <Text h5>{"Something went wrong while deleting your account"}</Text>
+            </Row>
+            <Row>
+              <Text>Please try refreshing the page.</Text>
+            </Row>
+          </Container>
+        </Row>
+      )}
+    </Container>
   );
 }
-
-const styles = {
-  container: {
-    flex: 1,
-  },
-};
 
 EditUserForm.propTypes = {
   userProp: PropTypes.object.isRequired,
