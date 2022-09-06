@@ -10,7 +10,7 @@ import _ from "lodash";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import {
-  Delete, InfoCircle, Password, People,
+  CloseSquare, InfoCircle, Password, People,
 } from "react-iconly";
 
 import {
@@ -285,12 +285,12 @@ function TeamMembers(props) {
                         {user.id !== member.id
                           && (_canAccess("owner") || (_canAccess("admin") && memberRole !== "owner"))
                           && (
-                            <Tooltip content="Remove user from the team">
+                            <Tooltip content="Remove user from the team" color="invert">
                               <Button
                                 light
                                 auto
                                 onClick={() => _onDeleteConfirmation(member.id)}
-                                icon={<Delete />}
+                                icon={<CloseSquare />}
                                 color="error"
                               />
                             </Tooltip>
@@ -327,7 +327,7 @@ function TeamMembers(props) {
             color="error"
             disabled={loading}
             onClick={() => _onDeleteTeamMember(deleteMember)}
-            iconRight={loading ? <Loading type="points" /> : <Delete />}
+            iconRight={loading ? <Loading type="points" /> : <CloseSquare />}
           >
             Remove
           </Button>
