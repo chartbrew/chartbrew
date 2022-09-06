@@ -3,8 +3,9 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Dimmer, Segment, Loader, Message, Form, Container, Header, Input, Checkbox, Divider
-} from "semantic-ui-react";
+  Container, Input, Checkbox, Loading, Row, Text, Spacer, Button, Divider,
+} from "@nextui-org/react";
+
 import { getTeam, updateTeam } from "../actions/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 
@@ -51,59 +52,70 @@ function TeamSettings(props) {
 
   if (!team) {
     return (
-      <Container text style={styles.container}>
-        <Dimmer active>
-          <Loader />
-        </Dimmer>
+      <Container css={{ pt: 50 }} justify="center">
+        <Row justify="center" align="center">
+          <Loading type="spinner" size="lg" />
+        </Row>
       </Container>
     );
   }
 
   return (
     <div style={style}>
-      <Header attached="top" as="h3">Team settings</Header>
-      <Segment attached padded style={{ paddingBottom: 40 }}>
-        <Form>
-          <Form.Field>
-            <label>Team name</label>
-            <Input
-              placeholder={team.name}
-              name="name"
-              value={teamState.name}
-              onChange={(e, data) => {
-                setTeamState({ ...teamState, name: data.value });
-              }}
-              action={{
-                color: success ? "green" : "violet",
-                labelPosition: "right",
-                icon: "checkmark",
-                content: success ? "Done" : "Save",
-                loading,
-                onClick: () => _onTeamUpdate(),
-              }}
-              />
-            {submitError && (<Message negative> There was an error updating your team </Message>)}
-          </Form.Field>
-          <Form.Field>
-            <Divider section />
-            <Checkbox
-              label={team.showBranding ? "Chartbrew branding is shown on shared charts and reports" : "Chartbrew branding is disabled"}
-              toggle
-              checked={team.showBranding}
-              onChange={_onToggleBranding}
-            />
-          </Form.Field>
-        </Form>
-      </Segment>
+      <Container>
+        <Row>
+          <Text h3>Team settings</Text>
+        </Row>
+        <Spacer y={0.5} />
+        <Row>
+          <Input
+            label="Team name"
+            placeholder={team.name}
+            name="name"
+            value={teamState.name}
+            onChange={(e) => {
+              setTeamState({ ...teamState, name: e.target.value });
+            }}
+            fullWidth
+            bordered
+            helperColor="error"
+            helperText={submitError ? "Error updating team" : ""}
+            action={{
+              color: success ? "green" : "violet",
+              labelPosition: "right",
+              icon: "checkmark",
+              content: success ? "Done" : "Save",
+              loading,
+              onClick: () => _onTeamUpdate(),
+            }}
+          />
+        </Row>
+        <Spacer y={0.5} />
+        <Row>
+          <Button
+            color={success ? "success" : "primary"}
+            disabled={loading}
+            onClick={_onTeamUpdate}
+            auto
+          >
+            {success ? "Saved" : "Save"}
+          </Button>
+        </Row>
+        <Spacer y={1} />
+        <Divider />
+        <Spacer y={1} />
+        <Row>
+          <Checkbox
+            label={team.showBranding ? "Chartbrew branding is shown on shared charts and reports" : "Chartbrew branding is disabled"}
+            isSelected={team.showBranding}
+            onChange={_onToggleBranding}
+            size="sm"
+          />
+        </Row>
+      </Container>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    flex: 1,
-  },
-};
 
 TeamSettings.defaultProps = {
   style: {},
