@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { useWindowSize } from "react-use";
 import {
   Button, Col, Container, Input, Loading, Row,
-  Spacer, Table, Text, Tooltip, Link as LinkNext,
+  Spacer, Table, Text, Tooltip, Link as LinkNext, Badge,
 } from "@nextui-org/react";
 import {
   Chart, Delete, Edit, People, Plus, Search, Setting, Swap, User
@@ -195,7 +195,8 @@ function UserDashboard(props) {
                     {key.TeamRoles.length < 2 && <User />}
                     <Spacer x={0.2} />
                     <Text
-                      h3
+                      size={24}
+                      b
                       style={styles.teamHeader}
                       title={`${key.TeamRoles.length} member${key.TeamRoles.length > 1 ? "s" : ""}`}
                     >
@@ -203,9 +204,9 @@ function UserDashboard(props) {
                     </Text>
                     <Spacer x={0.5} />
                     {key.TeamRoles[0] && (
-                      <Text style={styles.roleBanner} size="small">
+                      <Badge color="secondary">
                         {_getTeamRole(key.TeamRoles)}
-                      </Text>
+                      </Badge>
                     )}
                   </Row>
                 </Col>
@@ -213,16 +214,17 @@ function UserDashboard(props) {
                   && (
                     <Col>
                       <Row justify="flex-end" align="center">
-                        <Link to={`/manage/${key.id}/settings`}>
-                          <Button
-                            style={width >= 768 ? styles.settingsBtn : {}}
-                            ghost
-                            icon={<Setting />}
-                            auto
-                          >
-                            Team settings
-                          </Button>
-                        </Link>
+                        <Tooltip content="Team settings" color="invert">
+                          <Link to={`/manage/${key.id}/settings`}>
+                            <Button
+                              style={width >= 768 ? styles.settingsBtn : {}}
+                              ghost
+                              icon={<Setting />}
+                              css={{ minWidth: "fit-content" }}
+                              size="sm"
+                            />
+                          </Link>
+                        </Tooltip>
                       </Row>
                     </Col>
                   )}
