@@ -425,7 +425,8 @@ function Chart(props) {
                       {(chartLoading || chart.loading) && (
                         <>
                           <Loading type="spinner" size="xs" inlist />
-                          <Text small>{" Updating..."}</Text>
+                          <Spacer x={0.2} />
+                          <Text small>{"Updating..."}</Text>
                         </>
                       )}
                       <Spacer x={0.2} />

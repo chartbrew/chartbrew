@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {
-  Grid, Row, Spacer, Text, Tooltip, Container,
+  Row, Spacer, Text, Tooltip, Container,
 } from "@nextui-org/react";
 
 import { ChevronDownCircle, ChevronUpCircle } from "react-iconly";
@@ -11,23 +11,24 @@ function KpiChartSegment(props) {
   const { chart, editMode } = props;
 
   return (
-    <Grid.Container>
-      {chart.chartData.growth.map((c, index) => {
-        if (chart.chartSize === 1 && index > 1) return (<span key={c.label} />);
-        else if (editMode && index > 3) return (<span key={c.label} />);
-        else if (chart.chartSize === 2 && index > 3) return (<span key={c.label} />);
-        else if (chart.chartSize === 3 && index > 5) return (<span key={c.label} />);
-        else if (chart.chartSize > 3 && index > 7) return (<span key={c.label} />);
+    <Container css={{ pl: 0, pr: 0 }}>
+      <Row wrap="wrap">
+        {chart.chartData.growth.map((c, index) => {
+          if (chart.chartSize === 1 && index > 1) return (<span key={c.label} />);
+          else if (editMode && index > 3) return (<span key={c.label} />);
+          else if (chart.chartSize === 2 && index > 3) return (<span key={c.label} />);
+          else if (chart.chartSize === 3 && index > 5) return (<span key={c.label} />);
+          else if (chart.chartSize > 3 && index > 7) return (<span key={c.label} />);
 
-        return (
-          <Grid
-            xs={6}
-            sm={4}
-            md={3}
-            key={c.label}
-            css={{ mr: 20 - (chart.chartData.growth.length * 2) }}
-          >
-            <Container fluid css={{ p: 0, pb: 10 }}>
+          return (
+            <div
+              style={{
+                padding: 0,
+                paddingBottom: 10,
+                marginRight: 20 - (chart.chartData.growth.length * 2)
+              }}
+              key={c.label}
+            >
               <Row align="center">
                 <Text b size={chart.chartSize === 1 ? "1.2em" : "1.4em"}>
                   {`${c.value} `}
@@ -68,11 +69,11 @@ function KpiChartSegment(props) {
                   </span>
                 </Text>
               </Row>
-            </Container>
-          </Grid>
-        );
-      })}
-    </Grid.Container>
+            </div>
+          );
+        })}
+      </Row>
+    </Container>
   );
 }
 
