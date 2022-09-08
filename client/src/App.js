@@ -6,9 +6,14 @@ import { ConnectedRouter, routerMiddleware } from "connected-react-router";
 import { createStore, applyMiddleware, compose } from "redux";
 import thunk from "redux-thunk";
 import logger from "redux-logger";
+import useDarkMode from "@fisch0920/use-dark-mode";
+import { NextUIProvider } from "@nextui-org/react";
+import { IconlyProvider } from "react-iconly";
 
 import Main from "./containers/Main";
 import reducer from "./reducers";
+import getThemeConfig from "./theme";
+import useThemeDetector from "./modules/useThemeDetector";
 
 const history = createBrowserHistory();
 
@@ -24,14 +29,29 @@ const store = createStore(
   compose(applyMiddleware(...middlewares)),
 );
 
-export default class App extends React.Component {
-  render() {
-    return (
-      <Provider store={store}>
-        <ConnectedRouter history={history}>
-          <Main />
-        </ConnectedRouter>
-      </Provider>
-    );
-  }
+export default function App() {
+  const darkMode = useDarkMode(window.localStorage.getItem("darkMode"));
+  const isDark = useThemeDetector();
+
+  const _getTheme = () => {
+    if (darkMode.value === true) {
+      return getThemeConfig("dark");
+    } else if (darkMode.value === false) {
+      return getThemeConfig("light");
+    } else {
+      return getThemeConfig(isDark ? "dark" : "light");
+    }
+  };
+
+  return (
+    <NextUIProvider theme={_getTheme()}>
+      <IconlyProvider set="bulk">
+        <Provider store={store}>
+          <ConnectedRouter history={history}>
+            <Main />
+          </ConnectedRouter>
+        </Provider>
+      </IconlyProvider>
+    </NextUIProvider>
+  );
 }
