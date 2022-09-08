@@ -274,7 +274,7 @@ function NavbarContainer(props) {
           <FeedbackForm />
         </Modal.Body>
         <Modal.Footer>
-          <Button flat color="warning" onClick={() => setFeedbackModal(false)}>
+          <Button flat color="warning" onClick={() => setFeedbackModal(false)} auto>
             Cancel
           </Button>
         </Modal.Footer>

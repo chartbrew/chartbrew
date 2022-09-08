@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Form, Button, Segment, Header, Divider, Message
-} from "semantic-ui-react";
+  Button, Container, Input, Row, Spacer, Text, Textarea,
+} from "@nextui-org/react";
+
 import { sendFeedback } from "../actions/user";
 
 function FeedbackForm(props) {
@@ -35,39 +36,57 @@ function FeedbackForm(props) {
   };
 
   return (
-    <div style={styles.container}>
-      <Header attached="top" as="h2">Feedback & Suggestions</Header>
-      <Segment raised attached>
-        <Header content="We would appreciate any feedback you may have" />
-        <Form>
-          <Form.Input
-            onChange={(e, data) => setName(data.value)}
-            name="name"
-            label="Your name"
-            placeholder="You can leave it anonymous" />
-          <Form.TextArea
-            onChange={(e, data) => setFeedback(data.value)}
-            name="feedback"
-            label="Your Comments"
-            placeholder="Tell us about your exprience with our product" />
-        </Form>
-        <Divider hidden />
+    <Container>
+      <Row>
+        <Text h4>{"Feedback & Suggestions"}</Text>
+      </Row>
+      <Spacer y={1} />
+      <Row>
+        <Text>We would appreciate any feedback you may have</Text>
+      </Row>
+      <Spacer y={1} />
+      <Row>
+        <Input
+          onChange={(e) => setName(e.target.value)}
+          name="name"
+          label="Your name"
+          placeholder="Can be anonymous"
+          fullWidth
+          bordered
+        />
+      </Row>
+      <Spacer y={0.5} />
+      <Row>
+        <Textarea
+          onChange={(e) => setFeedback(e.target.value)}
+          name="feedback"
+          label="Your Comments"
+          placeholder="Tell us about your exprience with our product"
+          fullWidth
+          bordered
+        />
+      </Row>
+      {(success || submitError) && <Spacer y={0.5} />}
+      <Row>
         {success
-            && <Message positive content="We received your feedback and will work on it! Thank you." />}
+            && <Text color="success">{"We received your feedback and will work on it! Thank you."}</Text>}
         {submitError
-            && <Message negative content="Something went wront, please try again or email us directly on info@depomo.com" />}
-        <Button loading={loading} onClick={() => _onSendFeedback()} disabled={!feedback} floated="right" primary>Send</Button>
-        <Divider hidden section />
-      </Segment>
-    </div>
+            && <Text color="error">{"Something went wront, please try again or email us directly on support@chartbrew.com"}</Text>}
+      </Row>
+      <Spacer y={0.5} />
+      <Row>
+        <Button
+          disabled={loading || !feedback}
+          onClick={() => _onSendFeedback()}
+          auto
+        >
+          Send feedback
+        </Button>
+      </Row>
+    </Container>
   );
 }
 
-const styles = {
-  container: {
-    flex: 1,
-  },
-};
 FeedbackForm.propTypes = {
   sendFeedback: PropTypes.func.isRequired,
   user: PropTypes.object.isRequired,
