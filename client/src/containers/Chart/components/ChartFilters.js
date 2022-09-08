@@ -87,6 +87,7 @@ function ChartFilters(props) {
                           onSelectionChange={(selection) => {
                             _onOptionSelected(Object.values(selection)[0], condition);
                           }}
+                          selectionMode="single"
                         >
                           {filterOptions.map((opt) => (
                             <Dropdown.Item key={opt.value}>
