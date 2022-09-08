@@ -4,13 +4,13 @@ import { PropTypes } from "prop-types";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
-  Segment, Message, Button, Header, Form, Input, Container
-} from "semantic-ui-react";
+  Button, Input, Container, Row, Spacer, useTheme, Text, Loading,
+} from "@nextui-org/react";
 
 import { changePasswordWithToken } from "../actions/user";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
-import { blue } from "../config/colors";
 import cbLogoSmall from "../assets/logo_inverted.png";
+import cbLogo from "../assets/logo_blue.png";
 
 /*
   Component for verifying a new user
@@ -23,6 +23,8 @@ function PasswordReset(props) {
   const [passwordConfirm, setPasswordConfirm] = useState("");
 
   const { cleanErrors, changePasswordWithToken, history } = props;
+
+  const { isDark } = useTheme();
 
   useEffect(() => {
     cleanErrors();
@@ -65,64 +67,81 @@ function PasswordReset(props) {
 
   return (
     <div style={styles.container}>
-      <Container text textAlign="center">
-        <Link to="/">
-          <img src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
-        </Link>
+      <Container sm>
+        <Row>
+          <Link to="/">
+            <img src={isDark ? cbLogoSmall : cbLogo} style={{ width: 70 }} alt="Chartbrew logo" />
+          </Link>
+        </Row>
+        <Spacer y={1} />
+        <Row>
+          <Text h2>
+            Forgot your password?
+          </Text>
+        </Row>
+        <Row>
+          <Text h4>{"No worries, complete the form below to change to a brand new one"}</Text>
+        </Row>
+        <Spacer y={1} />
+        <Row>
+          <Input.Password
+            label="New password"
+            placeholder="Enter your new password"
+            type="password"
+            value={password || ""}
+            onChange={(e) => setPassword(e.target.value)}
+            bordered
+            fullWidth
+          />
+        </Row>
+        <Spacer y={0.5} />
+        <Row>
+          <Input.Password
+            label="Confirm your new password"
+            placeholder="Write your new password again"
+            type="password"
+            value={passwordConfirm || ""}
+            onChange={(e) => setPasswordConfirm(e.target.value)}
+            fullWidth
+            bordered
+          />
+        </Row>
+        <Spacer y={1} />
+        <Row>
+          <Button
+            type="submit"
+            size="lg"
+            disabled={success || loading}
+            onClick={_onSubmit}
+            auto
+            iconRight={loading ? <Loading type="points" /> : null}
+          >
+            Change password
+          </Button>
+        </Row>
+        <Spacer y={1} />
+        {success && (
+          <Row>
+            <Container css={{ backgroundColor: "$green200", p: 10, br: 10 }}>
+              <Row>
+                <Text h5>{"Your password was changed successfully"}</Text>
+              </Row>
+              <Row>
+                <Text>{"You will now be redirected to the Login page where you can use your new password to authenticate."}</Text>
+              </Row>
+            </Container>
+          </Row>
+        )}
 
-        <Header inverted as="h2" style={{ marginTop: 0 }}>
-          Forgot your password?
-          <Header.Subheader>{"No worries, complete the form below to change to a brand new one"}</Header.Subheader>
-        </Header>
-
-        <Segment textAlign="left" raised>
-          <Form loading={loading}>
-            <Form.Field>
-              <label>New password</label>
-              <Input
-                placeholder="Enter your new password"
-                type="password"
-                value={password || ""}
-                onChange={(e, data) => setPassword(data.value)}
-              />
-            </Form.Field>
-            <Form.Field>
-              <label>Confirm your new password</label>
-              <Input
-                placeholder="Write your new password again"
-                type="password"
-                value={passwordConfirm || ""}
-                onChange={(e, data) => setPasswordConfirm(data.value)}
-              />
-            </Form.Field>
-            <Form.Field>
-              <Button
-                type="submit"
-                size="large"
-                primary
-                fluid
-                disabled={success}
-                onClick={_onSubmit}
-                content="Change password"
-              />
-            </Form.Field>
-          </Form>
-
-          {success
-            && (
-              <Message positive>
-                <Message.Header>{"Your password was changed successfully"}</Message.Header>
-                <p>{"You will now be redirected to the Login page where you can use your new password to authenticate."}</p>
-              </Message>
-            )}
-
-          {error
-            && (
-              <Message negative>
-                <Message.Header>{error}</Message.Header>
-              </Message>
-            )}
-        </Segment>
+        {error && (
+          <Row>
+            <Container css={{ backgroundColor: "$red200", p: 10, br: 10 }}>
+              <Row>
+                <Text h5>{error}</Text>
+              </Row>
+            </Container>
+          </Row>
+        )}
       </Container>
     </div>
   );
@@ -130,9 +149,6 @@ function PasswordReset(props) {
 
 const styles = {
   container: {
-    flex: 1,
-    backgroundColor: blue,
-    minHeight: window.innerHeight,
     paddingBottom: 50,
     paddingTop: 50,
   },
