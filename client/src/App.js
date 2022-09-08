@@ -44,14 +44,14 @@ export default function App() {
   };
 
   return (
-    <NextUIProvider theme={_getTheme()}>
-      <IconlyProvider set="bulk">
-        <Provider store={store}>
-          <ConnectedRouter history={history}>
+    <Provider store={store}>
+      <ConnectedRouter history={history}>
+        <NextUIProvider theme={_getTheme()}>
+          <IconlyProvider set="bulk">
             <Main />
-          </ConnectedRouter>
-        </Provider>
-      </IconlyProvider>
-    </NextUIProvider>
+          </IconlyProvider>
+        </NextUIProvider>
+      </ConnectedRouter>
+    </Provider>
   );
 }

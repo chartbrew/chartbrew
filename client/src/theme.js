@@ -81,10 +81,15 @@ const lightTheme = {
   },
   space: {},
   fonts: {
-    sans: "Inter, sans-serif",
+    sans: "Inter, -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"Roboto\", \"Oxygen\", \"Ubuntu\", \"Cantarell\", \"Fira Sans\", \"Droid Sans\", \"Helvetica Neue\", sans-serif",
+    mono: "'Roboto Mono', Monaco, 'Lucida Console', 'Liberation Mono', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', 'Courier New', monospace",
   },
   fontWeights: {
+    lighter: "300",
+    normal: "400",
     medium: "600",
+    bold: "700",
+    bolder: "800",
   }
 };
 
@@ -158,6 +163,16 @@ const darkTheme = {
     secondarySolidContrast: "$orange50",
     secondaryShadow: "$orange500",
 
+    errorLight: "$red200",
+    errorLightHover: "$red400",
+    errorLightActive: "$red500",
+    errorLightContrast: "$red800",
+    errorBorder: "$red700",
+    errorBorderHover: "$red700",
+    errorSolidHover: "$red900",
+    errorSolidContrast: "$red100",
+    errorShadow: "$red600",
+
     gradient: "linear-gradient(112deg, $blue600 -3.59%, $blue600 -20.3%, $orange800 80.46%)",
     gradientShadow: "linear-gradient(112deg, $blue600 -3.59%, $blue600 -20.3%, $orange800 80.46%)",
     link: "#5E1DAD",
@@ -167,10 +182,15 @@ const darkTheme = {
   },
   space: {},
   fonts: {
-    sans: "Inter, sans-serif",
+    sans: "Inter, -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"Roboto\", \"Oxygen\", \"Ubuntu\", \"Cantarell\", \"Fira Sans\", \"Droid Sans\", \"Helvetica Neue\", sans-serif",
+    mono: "'Roboto Mono', Monaco, 'Lucida Console', 'Liberation Mono', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', 'Courier New', monospace",
   },
   fontWeights: {
+    lighter: "300",
+    normal: "400",
     medium: "600",
+    bold: "700",
+    bolder: "800",
   }
 };
 
