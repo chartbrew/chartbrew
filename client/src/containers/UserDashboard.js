@@ -155,29 +155,6 @@ function UserDashboard(props) {
         <Invites />
         {newProjectModal()}
 
-        {teams && teams.length === 0 && !teamLoading && !loading && (
-          <>
-            <Row justify="center" align="center">
-              <Text h2 style={{ marginTop: 100 }}>
-                You are not part of any team yet
-              </Text>
-            </Row>
-            <Row justify="center" align="center">
-              <Text h3>
-                You can join a team when you receive and accept an invitation
-              </Text>
-            </Row>
-          </>
-        )}
-
-        {loading && (
-          <Row justify="center" align="center">
-            <Loading>
-              Loading teams
-            </Loading>
-          </Row>
-        )}
-
         {teams && teams.map((key) => {
           return (
             <>
@@ -357,6 +334,14 @@ function UserDashboard(props) {
             </>
           );
         })}
+
+        {(loading || teamLoading || (teams && teams.length === 0)) && (
+          <Row justify="center" align="center">
+            <Loading type="points" size="lg">
+              Loading your team
+            </Loading>
+          </Row>
+        )}
       </Container>
     </div>
   );
