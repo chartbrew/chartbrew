@@ -137,19 +137,21 @@ function EmbeddedChart(props) {
     <div style={styles.container}>
       <Container fluid style={styles.header(chart.type)}>
         <Row justify="space-between">
-          <Text b size="1.1em" css={{ color: "$text", lineHeight: "$xs" }}>{chart.name}</Text>
-
-          {chart.Datasets && conditions.map((c) => {
-            return (
-              <Badge type="primary" key={c.id}>
-                {c.type !== "date" && `${c.value}`}
-                {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
-                <Link onClick={() => _onClearFilter(c)} css={{ color: "$text" }}>
-                  <CloseSquare size="small" />
-                </Link>
-              </Badge>
-            );
-          })}
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <Text b size="1.1em" css={{ color: "$text", lineHeight: "$xs" }}>{chart.name}</Text>
+            <Spacer x={0.5} />
+            {chart.Datasets && conditions.map((c) => {
+              return (
+                <Badge type="primary" key={c.id} size="sm">
+                  {c.type !== "date" && `${c.value}`}
+                  {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
+                  <Link onClick={() => _onClearFilter(c)} css={{ color: "$text", ml: 5 }}>
+                    <CloseSquare size={12} />
+                  </Link>
+                </Badge>
+              );
+            })}
+          </div>
 
           {chart.chartData && (
             <div>
@@ -238,7 +240,7 @@ function EmbeddedChart(props) {
         </Container>
         )}
       <Spacer y={0.5} />
-      <Container>
+      <Container css={{ pr: 0, pl: 0 }}>
         <Row justify="space-between" align="center">
           <div>
             {!loading && (
@@ -257,9 +259,9 @@ function EmbeddedChart(props) {
           {chart.showBranding && (
             <Text small css={{ color: "$accents6" }}>
               {"Powered by "}
-              <a href="https://chartbrew.com" target="_blank" rel="noreferrer">
+              <Link href="https://chartbrew.com" target="_blank" rel="noreferrer" css={{ display: "inline-block", color: "$primary" }}>
                 Chartbrew
-              </a>
+              </Link>
             </Text>
           )}
         </Row>
@@ -275,8 +277,8 @@ const styles = {
     padding: 20,
   },
   header: (type) => ({
-    paddingRight: type === "table" ? 0 : 20,
-    paddingLeft: type === "table" ? 0 : 20,
+    paddingLeft: 0,
+    paddingRight: 0,
     paddingBottom: type === "table" ? 10 : 0,
   }),
   loaderContainer: {

@@ -451,14 +451,14 @@ function Chart(props) {
               </Grid>
               <Grid xs={4} sm={2} md={2} justify="flex-end" alignItems="flex-start">
                 {_checkIfFilters() && (
-                  <Popover>
+                  <Popover placement="bottom-right">
                     <Popover.Trigger>
                       <LinkNext css={{ color: "$accents6" }}>
                         <Filter2 set="light" />
                       </LinkNext>
                     </Popover.Trigger>
                     <Popover.Content>
-                      <Container>
+                      <Container css={{ pt: 10, pb: 10 }}>
                         <ChartFilters
                           chart={chart}
                           onAddFilter={_onAddFilter}

@@ -250,8 +250,8 @@ function NavbarContainer(props) {
             )}
 
             <Dropdown.Item icon={<Show />} command="Beta">
-              <LinkNext onClick={() => setShowAppearance(true)}>
-                <Text>
+              <LinkNext onClick={() => setShowAppearance(true)} css={{ minWidth: "100%" }}>
+                <Text css={{ color: "$text" }}>
                   Appearance
                 </Text>
               </LinkNext>
