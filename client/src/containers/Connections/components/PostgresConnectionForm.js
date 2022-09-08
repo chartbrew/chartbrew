@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button,
-  Container, Grid, Input, Link, Loading, Row, Spacer, Text,
+  Button, Container, Grid, Input, Link, Loading, Row, Spacer, Text, useTheme,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+import "ace-builds/src-min-noconflict/theme-one_dark";
+
 import { ChevronRight } from "react-iconly";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import Badge from "../../../components/Badge";
@@ -25,6 +26,8 @@ function PostgresConnectionForm(props) {
   const [connection, setConnection] = useState({ type: "postgres" });
   const [errors, setErrors] = useState({});
   const [formStyle, setFormStyle] = useState("string");
+
+  const { isDark } = useTheme();
 
   useEffect(() => {
     _init();
@@ -376,7 +379,8 @@ function PostgresConnectionForm(props) {
           <Spacer y={1} />
           <AceEditor
             mode="json"
-            theme="tomorrow"
+            theme={isDark ? "one_dark" : "tomorrow"}
+            style={{ borderRadius: 10 }}
             height="150px"
             width="none"
             value={testResult.body || "Hello"}

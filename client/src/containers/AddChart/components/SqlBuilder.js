@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Button, Container, Row, Text, Spacer, Loading, Modal, Input,
+  Grid, Button, Container, Row, Text, Spacer, Loading, Modal, Input, useTheme,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
@@ -14,6 +14,7 @@ import {
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/mode-pgsql";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { createSavedQuery, updateSavedQuery } from "../../../actions/savedQuery";
 import { runRequest as runRequestAction } from "../../../actions/dataset";
@@ -41,6 +42,8 @@ function SqlBuilder(props) {
   const [requestLoading, setRequestLoading] = useState(false);
   const [requestError, setRequestError] = useState(false);
   const [result, setResult] = useState("");
+
+  const { isDark } = useTheme();
 
   useEffect(() => {
     if (dataRequest) {
@@ -136,7 +139,8 @@ function SqlBuilder(props) {
               <div style={{ width: "100%" }}>
                 <AceEditor
                   mode="pgsql"
-                  theme="tomorrow"
+                  theme={isDark ? "one_dark" : "tomorrow"}
+                  style={{ borderRadius: 10 }}
                   height="300px"
                   width="none"
                   value={sqlRequest.query || ""}
@@ -223,7 +227,8 @@ function SqlBuilder(props) {
               <div style={{ width: "100%" }}>
                 <AceEditor
                   mode="json"
-                  theme="tomorrow"
+                  theme={isDark ? "one_dark" : "tomorrow"}
+                  style={{ borderRadius: 10 }}
                   height="450px"
                   width="none"
                   value={exploreData || result || ""}

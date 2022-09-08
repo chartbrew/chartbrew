@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Grid, Button, Popover, Container, Row, Text, Divider, Dropdown,
-  Input, Loading, Tooltip, Spacer, Badge,
+  Input, Loading, Tooltip, Spacer, Badge, useTheme,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -18,6 +18,7 @@ import {
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+import "ace-builds/src-min-noconflict/theme-one_dark";
 import "ace-builds/webpack-resolver";
 
 import {
@@ -63,6 +64,8 @@ function GaBuilder(props) {
 
   const [metricsOptions, setMetricsOptions] = useState([]);
   const [dimensionsOptions, setDimensionsOptions] = useState([]);
+
+  const { isDark } = useTheme();
 
   // on init effect
   useEffect(() => {
@@ -711,7 +714,8 @@ function GaBuilder(props) {
               <div style={{ width: "100%" }}>
                 <AceEditor
                   mode="json"
-                  theme="tomorrow"
+                  theme={isDark ? "one_dark" : "tomorrow"}
+                  style={{ borderRadius: 10 }}
                   height="450px"
                   width="none"
                   value={result || ""}

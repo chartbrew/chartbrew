@@ -5,7 +5,7 @@ import PropTypes from "prop-types";
 import { Link as LinkDom } from "react-router-dom";
 import {
   Button, Container, Grid, Input, Loading, Row, Spacer, Text,
-  Navbar, Tooltip, Popover, Divider, Modal, Badge, Link,
+  Navbar, Tooltip, Popover, Divider, Modal, Badge, Link, useTheme,
 } from "@nextui-org/react";
 import {
   ChevronLeftCircle, CloseSquare, Edit, EditSquare, Image2, People, Show, TickSquare
@@ -22,6 +22,7 @@ import "react-toastify/dist/ReactToastify.min.css";
 import AceEditor from "react-ace";
 import "ace-builds/src-min-noconflict/mode-css";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import {
   getPublicDashboard as getPublicDashboardAction,
@@ -74,6 +75,8 @@ function PublicDashboard(props) {
   const [passwordRequired, setPasswordRequired] = useState(false);
   const [notAuthorized, setNotAuthorized] = useState(false);
   const [reportPassword, setReportPassword] = useState("");
+
+  const { isDark } = useTheme();
 
   const onDrop = useCallback((acceptedFiles) => {
     setNewChanges({ ...newChanges, logo: acceptedFiles });
@@ -755,10 +758,11 @@ function PublicDashboard(props) {
               <div style={{ width: "100%" }}>
                 <AceEditor
                   mode="css"
-                  theme="tomorrow"
+                  theme={isDark ? "one_dark" : "tomorrow"}
                   height="200px"
                   width="none"
                   value={newChanges.headerCode}
+                  style={{ borderRadius: 10 }}
                   onChange={(value) => {
                     setNewChanges({ ...newChanges, headerCode: value });
                   }}

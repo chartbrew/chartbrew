@@ -3,9 +3,8 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Button,
-  Checkbox,
-  Container, Grid, Input, Link, Loading, Modal, Popover, Row, Spacer, Text, Tooltip,
+  Button, Checkbox, Container, Grid, Input, Link, Loading,
+  Modal, Popover, Row, Spacer, Text, Tooltip, useTheme,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
@@ -15,6 +14,7 @@ import {
 
 import "ace-builds/src-min-noconflict/mode-javascript";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { createSavedQuery, updateSavedQuery } from "../../../actions/savedQuery";
 import SavedQueries from "../../../components/SavedQueries";
@@ -44,6 +44,8 @@ function MongoQueryBuilder(props) {
     query: "collection('users').find()",
   });
   const [useCache, setUseCache] = useState(false);
+
+  const { isDark } = useTheme();
 
   useEffect(() => {
     if (dataRequest) {
@@ -168,7 +170,8 @@ function MongoQueryBuilder(props) {
               <div style={{ width: "100%" }}>
                 <AceEditor
                   mode="javascript"
-                  theme="tomorrow"
+                  theme={isDark ? "one_dark" : "tomorrow"}
+                  style={{ borderRadius: 10 }}
                   height="200px"
                   width="none"
                   value={mongoRequest.query || ""}
@@ -270,7 +273,8 @@ function MongoQueryBuilder(props) {
               <div style={{ width: "100%" }}>
                 <AceEditor
                   mode="json"
-                  theme="tomorrow"
+                  theme={isDark ? "one_dark" : "tomorrow"}
+                  style={{ borderRadius: 10 }}
                   height="450px"
                   width="none"
                   value={exploreData || result || ""}

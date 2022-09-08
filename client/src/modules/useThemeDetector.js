@@ -8,9 +8,9 @@ const useThemeDetector = () => {
   });
 
   useEffect(() => {
-    const darkThemeMq = window.matchMedia("(prefers-color-scheme: dark)");
-    darkThemeMq.addEventListener("change", mqListener);
-    return () => darkThemeMq.removeEventListener(mqListener);
+    const darkThemeMq = window.matchMedia("(prefers-color-scheme: dark)")
+      ?.addEventListener("change", mqListener);
+    return () => darkThemeMq?.removeEventListener("change", mqListener);
   }, []);
   return isDarkTheme;
 };

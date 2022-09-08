@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Button, Container, Link, Row, Spacer, Text, Loading, Checkbox, Tooltip,
+  Grid, Button, Container, Link, Row, Spacer, Text, Loading, Checkbox, Tooltip, useTheme,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -14,6 +14,7 @@ import {
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import {
   runRequest as runRequestAction,
@@ -35,6 +36,8 @@ function CustomerioBuilder(props) {
   const [limitValue, setLimitValue] = useState(0);
   const [entity, setEntity] = useState("");
   const [conditions, setConditions] = useState({});
+
+  const { isDark } = useTheme();
 
   const {
     dataRequest, match, onChangeRequest, runRequest, dataset, project,
@@ -288,7 +291,8 @@ function CustomerioBuilder(props) {
               <div style={{ width: "100%" }}>
                 <AceEditor
                   mode="json"
-                  theme="tomorrow"
+                  theme={isDark ? "one_dark" : "tomorrow"}
+                  style={{ borderRadius: 10 }}
                   height="450px"
                   width="none"
                   value={result || ""}

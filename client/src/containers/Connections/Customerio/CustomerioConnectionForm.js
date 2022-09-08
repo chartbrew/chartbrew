@@ -2,12 +2,14 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Collapse, Container, Dropdown, Input, Link, Loading, Row, Spacer, Text,
+  useTheme,
 } from "@nextui-org/react";
 import { InfoCircle } from "react-iconly";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import AceEditor from "react-ace";
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import Badge from "../../../components/Badge";
 
@@ -25,6 +27,8 @@ function CustomerioConnectionForm(props) {
   const [errors, setErrors] = useState({});
   const [testLoading, setTestLoading] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const { isDark } = useTheme();
 
   const regionOptions = [
     {
@@ -285,7 +289,8 @@ function CustomerioConnectionForm(props) {
           <Spacer y={1} />
           <AceEditor
             mode="json"
-            theme="tomorrow"
+            theme={isDark ? "one_dark" : "tomorrow"}
+            style={{ borderRadius: 10 }}
             height="150px"
             width="none"
             value={testResult.body || "Hello"}

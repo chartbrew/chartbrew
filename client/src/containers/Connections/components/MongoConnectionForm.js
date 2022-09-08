@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Container, Row, Spacer, Text, Link, Input, Grid, Checkbox, Tooltip, Button, Loading,
+  useTheme,
 } from "@nextui-org/react";
 import {
   ChevronRight, CloseSquare, InfoCircle, Plus
@@ -12,6 +13,7 @@ import AceEditor from "react-ace";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import Badge from "../../../components/Badge";
 
@@ -29,6 +31,8 @@ function MongoConnectionForm(props) {
   const [connection, setConnection] = useState({ type: "mongodb", optionsArray: [], srv: false });
   const [errors, setErrors] = useState({});
   const [formStyle, setFormStyle] = useState("string");
+
+  const { isDark } = useTheme();
 
   useEffect(() => {
     _init();
@@ -575,7 +579,8 @@ function MongoConnectionForm(props) {
           <Spacer y={1} />
           <AceEditor
             mode="json"
-            theme="tomorrow"
+            theme={isDark ? "one_dark" : "tomorrow"}
+            style={{ borderRadius: 10 }}
             height="150px"
             width="none"
             value={testResult.body || "Hello"}

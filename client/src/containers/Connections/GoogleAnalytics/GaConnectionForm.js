@@ -5,8 +5,7 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import {
-  Button,
-  Container, Input, Loading, Row, Spacer, Text,
+  Button, Container, Input, Loading, Row, Spacer, Text, useTheme,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import cookie from "react-cookies";
@@ -15,6 +14,7 @@ import { HiRefresh } from "react-icons/hi";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { API_HOST } from "../../../config/settings";
 import Badge from "../../../components/Badge";
@@ -31,6 +31,8 @@ function GaConnectionForm(props) {
   const [testLoading, setTestLoading] = useState(false);
   const [connection, setConnection] = useState({ type: "googleAnalytics", optionsArray: [], name: "Google Analytics" });
   const [errors, setErrors] = useState({});
+
+  const { isDark } = useTheme();
 
   useEffect(() => {
     _init();
@@ -256,7 +258,8 @@ function GaConnectionForm(props) {
           <Spacer y={1} />
           <AceEditor
             mode="json"
-            theme="tomorrow"
+            theme={isDark ? "one_dark" : "tomorrow"}
+            style={{ borderRadius: 10 }}
             height="150px"
             width="none"
             value={testResult.body || "Hello"}

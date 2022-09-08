@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Button, Checkbox, Container, Divider, Dropdown, Grid, Input,
-  Link, Loading, Row, Spacer, Text, Tooltip,
+  Link, Loading, Row, Spacer, Text, Tooltip, useTheme,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import uuid from "uuid/v4";
@@ -18,6 +18,7 @@ import {
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/mode-javascript";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import ApiPagination from "./ApiPagination";
 import {
@@ -68,6 +69,8 @@ function ApiBuilder(props) {
   const [requestLoading, setRequestLoading] = useState(false);
   const [requestError, setRequestError] = useState(false);
   const [useCache, setUseCache] = useState(false);
+
+  const { isDark } = useTheme();
 
   const {
     dataRequest, match, onChangeRequest, runRequest, dataset,
@@ -471,7 +474,8 @@ function ApiBuilder(props) {
                 <div style={{ width: "100%" }}>
                   <AceEditor
                     mode="json"
-                    theme="tomorrow"
+                    theme={isDark ? "one_dark" : "tomorrow"}
+                    style={{ borderRadius: 10 }}
                     height="400px"
                     width="none"
                     value={apiRequest.body || ""}
@@ -568,7 +572,8 @@ function ApiBuilder(props) {
             <Grid xs={12} direction="column">
               <AceEditor
                 mode="json"
-                theme="tomorrow"
+                theme={isDark ? "one_dark" : "tomorrow"}
+                style={{ borderRadius: 10 }}
                 height="450px"
                 width="none"
                 value={result || ""}

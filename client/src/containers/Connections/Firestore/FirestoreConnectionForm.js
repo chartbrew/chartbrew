@@ -5,7 +5,7 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Collapse, Container, Input, Link, Loading, Row, Spacer, Text,
+  Button, Collapse, Container, Input, Link, Loading, Row, Spacer, Text, useTheme,
 } from "@nextui-org/react";
 import { PaperUpload } from "react-iconly";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
@@ -14,6 +14,7 @@ import { useDropzone } from "react-dropzone";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { blue } from "../../../config/colors";
 import Badge from "../../../components/Badge";
@@ -31,6 +32,8 @@ function FirestoreConnectionForm(props) {
   const [connection, setConnection] = useState({ type: "firestore", optionsArray: [], firebaseServiceAccount: "" });
   const [errors, setErrors] = useState({});
   const [jsonVisible, setJsonVisible] = useState(false);
+
+  const { isDark } = useTheme();
 
   useEffect(() => {
     _init();
@@ -243,7 +246,8 @@ function FirestoreConnectionForm(props) {
               <Container css={{ p: 0 }}>
                 <AceEditor
                   mode="json"
-                  theme="tomorrow"
+                  theme={isDark ? "one_dark" : "tomorrow"}
+                  style={{ borderRadius: 10 }}
                   height="250px"
                   width="none"
                   value={connection.firebaseServiceAccount || ""}

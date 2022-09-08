@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 
 import {
   Button,
-  Container, Divider, Dropdown, Grid, Input, Loading, Row, Spacer, Text
+  Container, Divider, Dropdown, Grid, Input, Loading, Row, Spacer, Text, useTheme,
 } from "@nextui-org/react";
 import { CloseSquare, Plus } from "react-iconly";
 import uuid from "uuid/v4";
@@ -11,6 +11,7 @@ import AceEditor from "react-ace";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
+import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import Badge from "../../../components/Badge";
 
@@ -41,6 +42,8 @@ function ApiConnectionForm(props) {
   const [connection, setConnection] = useState({ type: "api", optionsArray: [] });
   const [errors, setErrors] = useState({});
   const [menuType, setMenuType] = useState("authentication");
+
+  const { isDark } = useTheme();
 
   useEffect(() => {
     _addOption();
@@ -507,7 +510,8 @@ function ApiConnectionForm(props) {
           <Spacer y={1} />
           <AceEditor
             mode="json"
-            theme="tomorrow"
+            theme={isDark ? "one_dark" : "tomorrow"}
+            style={{ borderRadius: 10 }}
             height="150px"
             width="none"
             value={testResult.body || "Hello"}
