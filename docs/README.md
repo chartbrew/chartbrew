@@ -99,7 +99,7 @@ npm run docs:dev
 
 * [ReactJS](https://reactjs.org/)
 * [Redux](https://redux.js.org/)
-* [Semantic UI](https://fomantic-ui.com/) (Fomantic UI at the moment)
+* [NextUI](https://nextui.org/)
 * [ChartJs](https://www.chartjs.org/)
 
 **Docs**
