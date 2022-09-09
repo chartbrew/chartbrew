@@ -2,7 +2,7 @@ import React, { useEffect, lazy, Suspense } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Route, Switch, withRouter } from "react-router";
-import { Grid, Container } from "semantic-ui-react";
+import { Container } from "@nextui-org/react";
 import { createMedia } from "@artsy/fresnel";
 
 import SuspenseLoader from "../components/SuspenseLoader";
@@ -14,7 +14,6 @@ import { cleanErrors as cleanErrorsAction } from "../actions/error";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
-const VerifyUser = lazy(() => import("./VerifyUser"));
 const Login = lazy(() => import("./Login"));
 const ManageTeam = lazy(() => import("./ManageTeam"));
 const UserInvite = lazy(() => import("./UserInvite"));
@@ -72,17 +71,14 @@ function Main(props) {
                 exact
                 path="/feedback"
                 render={() => (
-                  <Grid centered padded>
-                    <Container textAlign="left" text>
-                      <FeedbackForm />
-                    </Container>
-                  </Grid>
+                  <Container justify="center" css={{ pt: 100, pb: 50 }} sm>
+                    <FeedbackForm />
+                  </Container>
                 )}
               />
               <Route exact path="/manage/:teamId" component={ManageTeam} />
               <Route exact path="/:teamId/:projectId" component={ProjectBoard} />
               <Route exact path="/signup" component={Signup} />
-              <Route exact path="/verify" component={VerifyUser} />
               <Route exact path="/google-auth" component={GoogleAuth} />
               <Route exact path="/login" component={Login} />
               <Route exact path="/user" component={UserDashboard} />

@@ -5,10 +5,12 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Button, Container, Form, Grid, Header, Icon, Input, Popup
-} from "semantic-ui-react";
+  Button, Container, Grid, Input, Row, Spacer, Text, Tooltip,
+} from "@nextui-org/react";
 import { Helmet } from "react-helmet";
 import uuid from "uuid/v4";
+import { FaPrint, FaRedo } from "react-icons/fa";
+import { ChevronLeftCircle, TickSquare } from "react-iconly";
 
 import {
   runQueryWithFilters as runQueryWithFiltersAction,
@@ -90,7 +92,7 @@ function PrintView(props) {
           <style type="text/css">
             {`
               body {
-                background-color: white;
+                background-color: white !important;
               }
             `}
           </style>
@@ -107,89 +109,78 @@ function PrintView(props) {
           </style>
         </Helmet>
       )}
-      <div style={styles.logoContainer} onMouseEnter={_onDisplayMenu}>
+      <Container style={styles.logoContainer} onMouseEnter={_onDisplayMenu}>
         {showMenu && (
-          <div style={styles.orientationBtn}>
+          <Row style={styles.orientationBtn}>
             <Button
-              icon="arrow left"
-              basic
+              icon={<ChevronLeftCircle />}
+              bordered
               onClick={_togglePrint}
+              css={{ minWidth: "fit-content" }}
             />
+            <Spacer x={0.2} />
             <Button
-              icon
-              labelPosition="left"
-              primary
-              basic
+              icon={<FaRedo />}
+              bordered
               onClick={_changeOrientation}
+              auto
             >
-              <Icon name="redo" />
               {orientation === "portrait" ? "Switch to Landscape" : "Switch to Portrait"}
             </Button>
+            <Spacer x={0.2} />
             <Button
-              icon
-              labelPosition="left"
-              primary
+              icon={<FaPrint />}
               onClick={_onStartPrint}
+              auto
             >
-              <Icon name="print" />
               Print
             </Button>
-          </div>
+          </Row>
         )}
-      </div>
+      </Container>
       <div onMouseEnter={_onDisplayMenu}>
-        <Header textAlign="center" size="huge" onClick={() => setEditingTitle(true)}>
-          <Popup
-            trigger={(
-              <a style={styles.editTitle}>
-                { printTitle || project.name}
-              </a>
-            )}
-            content="Edit your public dashboard title"
-          />
-        </Header>
+        <Text size="2.5em" onClick={() => setEditingTitle(true)}>
+          <Tooltip content="Edit your public dashboard title">
+            <a style={styles.editTitle}>
+              {printTitle || project.name}
+            </a>
+          </Tooltip>
+        </Text>
 
         {editingTitle
           && (
-            <Container fluid textAlign="center">
-              <Form style={{ display: "inline-block" }} size="big">
-                <Form.Group>
-                  <Form.Field>
-                    <Input
-                      placeholder="Enter a title"
-                      value={printTitle || project.name}
-                      onChange={(e, data) => setPrintTitle(data.value)}
-                    />
-                  </Form.Field>
-                  <Form.Field>
-                    <Button
-                      secondary
-                      icon
-                      labelPosition="right"
-                      type="submit"
-                      onClick={() => setEditingTitle(false)}
-                      size="big"
-                    >
-                      <Icon name="checkmark" />
-                      Save
-                    </Button>
-                  </Form.Field>
-                </Form.Group>
-              </Form>
+            <Container justify="center">
+              <Row justify="center" align="center">
+                <Input
+                  placeholder="Enter a title"
+                  value={printTitle || project.name}
+                  onChange={(e) => setPrintTitle(e.target.value)}
+                  bordered
+                />
+                <Spacer x={0.2} />
+                <Button
+                  color="secondary"
+                  icon={<TickSquare />}
+                  onClick={() => setEditingTitle(false)}
+                  auto
+                >
+                  Save
+                </Button>
+              </Row>
             </Container>
           )}
       </div>
-      <Grid stackable centered style={styles.mainGrid}>
+      <Grid.Container style={styles.mainGrid}>
         {orientation && printCharts && printCharts.map((chart) => {
           if (chart === "row") {
             return (
-              <Grid.Row style={{ marginTop: orientation === "landscape" ? 50 : 230 }} key={uuid()} />
+              <Grid xs={12} style={{ paddingTop: orientation === "landscape" ? 50 : 230 }} key={uuid()} />
             );
           }
           if (chart.draft) return (<span style={{ display: "none" }} key={chart.id} />);
           return (
-            <Grid.Column
-              width={chart.chartSize * 4}
+            <Grid
+              xs={chart.chartSize * 3}
               key={chart.id}
               style={styles.chartGrid}
             >
@@ -200,10 +191,10 @@ function PrintView(props) {
                 print={orientation}
                 height={orientation === "landscape" ? 230 : 300}
               />
-            </Grid.Column>
+            </Grid>
           );
         })}
-      </Grid>
+      </Grid.Container>
     </div>
   );
 }
@@ -219,10 +210,10 @@ const styles = {
   page: (orientation) => ({
     width: orientation === "landscape" ? "9.25in" : "7in",
     height: orientation === "landscape" ? "7in" : "9.25in",
-    marginTop: orientation === "landscape" ? "0.2in" : "0.9in",
-    marginBottom: orientation === "landscape" ? "0.5in" : "0.9in",
-    marginRight: orientation === "landscape" ? "1in" : "auto",
-    marginLeft: orientation === "landscape" ? "1in" : "auto",
+    paddingTop: orientation === "landscape" ? "0.2in" : "0.9in",
+    paddingBottom: orientation === "landscape" ? "0.5in" : "0.9in",
+    paddingRight: orientation === "landscape" ? "1in" : "auto",
+    paddingLeft: orientation === "landscape" ? "1in" : "auto",
     backgroundColor: "white",
   }),
   chartGrid: {

@@ -258,7 +258,7 @@ function ApiBuilder(props) {
       <Grid.Container gap={1}>
         <Grid xs={12} sm={7} md={8}>
           <Container>
-            <Row align="center">
+            <Row align="center" className="apibuilder-route-tut">
               <Badge type="neutral">
                 <Text>{connection.host}</Text>
               </Badge>

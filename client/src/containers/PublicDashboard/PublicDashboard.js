@@ -358,13 +358,15 @@ function PublicDashboard(props) {
             </Text>
           </Row>
           <Spacer y={1} />
-          <Button
-            onClick={() => window.history.back()}
-            auto
-            size="lg"
-          >
-            Go back
-          </Button>
+          <Row justify="center">
+            <Button
+              onClick={() => window.history.back()}
+              auto
+              size="lg"
+            >
+              Go back
+            </Button>
+          </Row>
         </Container>
       </div>
     );

@@ -3,9 +3,10 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import {
-  Grid, Loader, Container, Dimmer, Button, Header, Icon
-} from "semantic-ui-react";
+  Container, Row, Text, Spacer, Button, Loading,
+} from "@nextui-org/react";
 import cookie from "react-cookies";
+import { ChevronRightCircle } from "react-iconly";
 
 import { API_HOST } from "../config/settings";
 
@@ -30,6 +31,7 @@ function GoogleAuth(props) {
 
     if (!state || !code) {
       setError(true);
+      setLoading(false);
       return false;
     }
     const ids = state.split(",");
@@ -66,54 +68,72 @@ function GoogleAuth(props) {
   };
 
   return (
-    <div style={styles.container}>
-      <Grid
-        centered
-        verticalAlign="middle"
-        textAlign="center"
-      >
-        <Grid.Column stretched style={{ maxWidth: 500 }}>
-          <Dimmer active={loading} style={{ marginTop: "5em" }} inverted>
-            <Loader size="big" inverted content="Authenticating with Google..." />
-          </Dimmer>
+    <Container
+      sm
+      css={{
+        backgroundColor: "$backgroundContrast", br: 10, mt: 20, p: 20
+      }}
+    >
+      {loading && (
+        <Row>
+          <Loading>Authenticating with Google...</Loading>
+        </Row>
+      )}
 
-          {success
-            && (
-              <Container textAlign="center" style={{ marginTop: "3em" }}>
-                <Header as="h2" icon color="green">
-                  <Icon color="green" name="checkmark" circular />
-                </Header>
-                <Button positive icon labelPosition="right">
-                  <Link to="/user" style={{ color: "white" }}> Go to connections </Link>
-                  <Icon name="arrow alternate circle right outline" />
-                </Button>
-              </Container>
-            )}
+      {success && (
+        <>
+          <Row>
+            <Text h2 color="success">
+              Authentication successful!
+            </Text>
+          </Row>
+          <Spacer y={1} />
+          <Row>
+            <Link to="/user">
+              <Button
+                color="success"
+                iconRight={<ChevronRightCircle />}
+                auto
+              >
+                Go to connections
+              </Button>
+            </Link>
+          </Row>
+        </>
+      )}
 
-          {error
-            && (
-              <Header as="h2" icon color="red">
-                <Icon color="red" name="delete" circular />
-                The authentication could not be completed
-                <Header.Subheader>
-                  Please try refreshing the page or get in touch for help.
-                </Header.Subheader>
-              </Header>
-            )}
-        </Grid.Column>
-      </Grid>
-    </div>
+      {error && (
+        <>
+          <Row>
+            <Text h2 color="error">
+              The authentication could not be completed
+            </Text>
+          </Row>
+          <Row>
+            <Text h4>
+              Please try refreshing the page or get in touch for help.
+            </Text>
+          </Row>
+          <Spacer y={1} />
+          <Row>
+            <Link to="/user">
+              <Button
+                color="secondary"
+                iconRight={<ChevronRightCircle />}
+                auto
+              >
+                Back to the dashboard
+              </Button>
+            </Link>
+          </Row>
+        </>
+      )}
+    </Container>
   );
 }
 
 GoogleAuth.propTypes = {
   history: PropTypes.object.isRequired,
-};
-
-const styles = {
-  container: {
-    flex: 1,
-  },
 };
 
 export default connect()(GoogleAuth);

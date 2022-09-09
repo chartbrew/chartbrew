@@ -3,12 +3,9 @@ import PropTypes from "prop-types";
 import { useWindowSize } from "react-use";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
-import {
-  Modal, TransitionablePortal,
-} from "semantic-ui-react";
 import ReactMarkdown from "react-markdown";
 import {
-  Container, Row, Link as LinkNext, Dropdown, Text, Tooltip, Spacer, Button, Avatar,
+  Container, Row, Link as LinkNext, Dropdown, Text, Tooltip, Spacer, Button, Avatar, Modal,
 } from "@nextui-org/react";
 import {
   Activity, Category, ChevronLeftCircle, ChevronRightCircle, ChevronUpCircle,
@@ -430,28 +427,35 @@ function ProjectNavigation(props) {
         </Row>
       </Container>
 
-      <TransitionablePortal open={showUpdate}>
-        <Modal open={showUpdate} closeIcon onClose={() => setShowUpdate(false)}>
-          <Modal.Header>{`${update.tag_name} is available`}</Modal.Header>
-          <Modal.Content>
-            <ReactMarkdown>{update.body}</ReactMarkdown>
-          </Modal.Content>
-          <Modal.Actions>
+      <Modal open={showUpdate} closeIcon onClose={() => setShowUpdate(false)}>
+        <Modal.Header>
+          <Text h4>{`${update.tag_name} is available`}</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <ReactMarkdown>{update.body}</ReactMarkdown>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            flat
+            color="warning"
+            auto
+            onClick={() => setShowUpdate(false)}
+          >
+            Close
+          </Button>
+          <LinkNext
+            href={`https://github.com/chartbrew/chartbrew/releases/tag/${update.tag_name}`}
+            target="_blank"
+            rel="noreferrer"
+          >
             <Button
-              content="Close"
-              onClick={() => setShowUpdate(false)}
-            />
-            <Button
-              as="a"
-              primary
-              content="Check the release"
-              href={`https://github.com/chartbrew/chartbrew/releases/tag/${update.tag_name}`}
-              target="_blank"
-              rel="noreferrer"
-            />
-          </Modal.Actions>
-        </Modal>
-      </TransitionablePortal>
+              auto
+            >
+              Check the release
+            </Button>
+          </LinkNext>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

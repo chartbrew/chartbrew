@@ -3,8 +3,8 @@ import { connect } from "react-redux";
 import { PropTypes } from "prop-types";
 import { withRouter } from "react-router";
 import {
-  Grid, Container, Button, Header, Divider
-} from "semantic-ui-react";
+  Grid, Container, Button, Row, Text, Spacer,
+} from "@nextui-org/react";
 
 import cookie from "react-cookies";
 
@@ -39,31 +39,43 @@ function UserInvite(props) {
 
   return (
     <div style={styles.container}>
-      <Grid
-        centered
-        verticalAlign="middle"
-        textAlign="center"
-        >
-        <Grid.Column stretched style={{ maxWidth: 500 }}>
+      <Grid.Container
+        justify="center"
+        alignContent="center"
+        alignItems="center"
+      >
+        <Grid xs={12} sm={6}>
           <Container textAlign="center" style={{ marginTop: "3em" }}>
-            <Header as="h2" icon>
-              Your Chartbrew team invitation
-              <Header.Subheader>Please select an option below</Header.Subheader>
-            </Header>
-            <Divider section hidden />
-            <Button
-              basic
-              content="Login with an existing account"
-              onClick={() => redirectUser("login")}
-            />
-            <Button
-              secondary
-              content="Create a new account"
-              onClick={() => redirectUser("signup")}
-            />
+            <Row justify="center" align="center" css={{ ta: "center" }}>
+              <Text h2>
+                Your Chartbrew team invitation
+              </Text>
+            </Row>
+            <Row justify="center" align="center">
+              <Text h4>Please select an option below</Text>
+            </Row>
+            <Spacer y={1} />
+            <Row justify="center" align="center" wrap="wrap">
+              <Button
+                color="secondary"
+                onClick={() => redirectUser("login")}
+                auto
+                css={{ mb: 10 }}
+              >
+                Login with an existing account
+              </Button>
+              <Spacer x={0.5} />
+              <Button
+                onClick={() => redirectUser("signup")}
+                auto
+                css={{ mb: 10 }}
+              >
+                Create a new account
+              </Button>
+            </Row>
           </Container>
-        </Grid.Column>
-      </Grid>
+        </Grid>
+      </Grid.Container>
     </div>
   );
 }

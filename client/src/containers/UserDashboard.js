@@ -21,7 +21,6 @@ import {
   getTemplates as getTemplatesAction
 } from "../actions/template";
 import ProjectForm from "../components/ProjectForm";
-import Invites from "../components/Invites";
 import Navbar from "../components/Navbar";
 import canAccess from "../config/canAccess";
 import { negative, secondary } from "../config/colors";
@@ -151,8 +150,6 @@ function UserDashboard(props) {
       <Navbar hideTeam transparent />
       <Container style={styles.mainContent}>
         <Spacer y={1} />
-
-        <Invites />
         {newProjectModal()}
 
         {teams && teams.map((key) => {

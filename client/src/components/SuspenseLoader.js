@@ -1,9 +1,9 @@
 import React from "react";
-import { Loader } from "semantic-ui-react";
+import { Loading } from "@nextui-org/react";
 
 function SuspenseLoader() {
   return (
-    <Loader active />
+    <Loading />
   );
 }
 

@@ -1,7 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
 import Tour from "reactour";
-import { Button, Icon } from "semantic-ui-react";
+import { Button } from "@nextui-org/react";
+import { FaPlug } from "react-icons/fa";
+import { Edit, Setting, TickSquare } from "react-iconly";
 
 import { secondary } from "../../../config/colors";
 import showTutorial from "../../../config/tutorials";
@@ -65,12 +67,12 @@ const steps = {
           <p>{"Here is the place where you prepare the data for brewing. You can create different datasets, connect them to data sources and get the data flowing."}</p>
           <p>{"You will need at least one dataset to generate a chart. Create one now and get acquainted with how it works 👩‍💻"}</p>
           <Button
-            content="Brewing time!"
-            icon="flask"
-            labelPosition="right"
-            positive
+            color="success"
             onClick={close}
-          />
+            auto
+          >
+            Brewing time!
+          </Button>
         </>
       ),
     },
@@ -83,7 +85,7 @@ const steps = {
           <p>{"Each dataset will need to be connected to one of your data sources. Chartbrew will then know where to fetch the data from."}</p>
           <p>
             {"You can always create new connections by clicking the "}
-            <Icon name="plug" />
+            <FaPlug />
             {" button."}
           </p>
           <p>{"Select one of your connections from the dropdown list to get started."}</p>
@@ -97,12 +99,13 @@ const steps = {
           <p>{"The dataset settings are saved automatically, but you can always save manually from here."}</p>
           <p>{"If you no longer need one of the datasets, the delete button is also here for you."}</p>
           <Button
-            content="Time to connect"
-            icon="plug"
-            labelPosition="right"
-            positive
+            iconRight={<FaPlug />}
+            color="success"
             onClick={close}
-          />
+            auto
+          >
+            Time to connect
+          </Button>
         </>
       ),
     }
@@ -155,12 +158,13 @@ const steps = {
           <p>{"If the request is successful you will see the JSON data in this section."}</p>
           <p>{"If the API supports it, you will also get the error message in case the request is not successful."}</p>
           <Button
-            content="Start configuring"
-            icon="cog"
-            labelPosition="right"
-            positive
+            icon={<Setting />}
+            color="success"
             onClick={close}
-          />
+            auto
+          >
+            Start configuring
+          </Button>
         </>
       ),
     },
@@ -210,12 +214,13 @@ const steps = {
         <>
           <p>{"The JSON-formatted data will appear here when you run a successful query."}</p>
           <Button
-            content="Write a query"
-            icon="pencil"
-            labelPosition="right"
-            positive
+            iconRight={<Edit />}
+            color="success"
             onClick={close}
-          />
+            auto
+          >
+            Write a query
+          </Button>
         </>
       ),
     },
@@ -258,12 +263,13 @@ const steps = {
         <>
           <p>{"The JSON-formatted data will appear here when you run a successful query."}</p>
           <Button
-            content="Write a query"
-            icon="pencil"
-            labelPosition="right"
-            positive
+            iconRight={<Edit />}
+            color="success"
             onClick={close}
-          />
+            auto
+          >
+            Write a query
+          </Button>
         </>
       ),
     },
@@ -310,12 +316,12 @@ const steps = {
           <p>{"You will have to select which field you want to query on, the operation, and value(s)."}</p>
           <p>{"Chartbrew supports all Firestore operations, but more custom query options will be added soon."}</p>
           <Button
-            content="Awesome!"
-            icon="checkmark"
-            labelPosition="right"
-            positive
+            color="success"
             onClick={close}
-          />
+            auto
+          >
+            Awesome!
+          </Button>
         </>
       ),
     },
@@ -328,12 +334,12 @@ const steps = {
           <p>{"Great! You have some data now."}</p>
           <p>{"You can explore your data and press 'Done' to continue configuring your chart."}</p>
           <Button
-            content="Gotcha"
-            icon="checkmark"
-            labelPosition="right"
-            positive
+            color="success"
             onClick={close}
-          />
+            auto
+          >
+            Gotcha
+          </Button>
         </>
       ),
     },
@@ -368,12 +374,13 @@ const steps = {
             {"on the right to filter your data."}
           </p>
           <Button
-            content="All done"
-            icon="checkmark"
-            labelPosition="right"
-            positive
+            iconRight={<TickSquare />}
+            color="success"
             onClick={close}
-          />
+            auto
+          >
+            All done
+          </Button>
         </>
       )
     }
