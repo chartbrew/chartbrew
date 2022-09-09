@@ -8,7 +8,4 @@ export REACT_APP_ONE_ACCOUNT_EXTERNAL_ID=${REACT_APP_ONE_ACCOUNT_EXTERNAL_ID}
 cd server
 NODE_ENV=production nohup node index.js &
 
-echo -e "\nBuilding the UI. This might take a couple of minutes...\n"
-
-cd ../client && npm run build
-npx serve -s -p 3000 build
+npx serve -s -p 4018 build
