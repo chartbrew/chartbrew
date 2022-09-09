@@ -8,4 +8,4 @@ export REACT_APP_ONE_ACCOUNT_EXTERNAL_ID=${REACT_APP_ONE_ACCOUNT_EXTERNAL_ID}
 cd server
 NODE_ENV=production nohup node index.js &
 
-npx serve -s -p 4018 build
+cd ../client && npx serve -s -p 4018 build
