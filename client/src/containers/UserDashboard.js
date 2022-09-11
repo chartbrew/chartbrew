@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { useWindowSize } from "react-use";
 import {
   Button, Col, Container, Input, Loading, Row,
-  Spacer, Table, Text, Tooltip, Link as LinkNext, Badge,
+  Spacer, Table, Text, Tooltip, Link as LinkNext, Badge, Modal,
 } from "@nextui-org/react";
 import {
   Chart, Delete, Edit, People, Plus, Search, Setting, Swap, User
@@ -20,11 +20,14 @@ import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import {
   getTemplates as getTemplatesAction
 } from "../actions/template";
+import {
+  updateProject as updateProjectAction,
+  removeProject as removeProjectAction,
+} from "../actions/project";
 import ProjectForm from "../components/ProjectForm";
 import Navbar from "../components/Navbar";
 import canAccess from "../config/canAccess";
-import { negative, secondary } from "../config/colors";
-import { IconButton } from "../components/IconButton";
+import { secondary } from "../config/colors";
 
 /*
   The user dashboard with all the teams and projects
@@ -32,7 +35,7 @@ import { IconButton } from "../components/IconButton";
 function UserDashboard(props) {
   const {
     relog, cleanErrors, user, getTeams, saveActiveTeam,
-    teams, teamLoading, getTemplates, history,
+    teams, teamLoading, getTemplates, history, updateProject, removeProject,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -40,6 +43,9 @@ function UserDashboard(props) {
   const [fetched, setFetched] = useState(false);
   const [retried, setRetried] = useState(false);
   const [search, setSearch] = useState({});
+  const [projectToEdit, setProjectToEdit] = useState(null);
+  const [projectToDelete, setProjectToDelete] = useState(null);
+  const [modifyingProject, setModifyingProject] = useState(false);
 
   const { width, height } = useWindowSize();
 
@@ -75,7 +81,7 @@ function UserDashboard(props) {
   const _getTeams = () => {
     setFetched(true);
     setLoading(true);
-    getTeams(user.data.id)
+    return getTeams(user.data.id)
       .then(() => {
         setLoading(false);
       })
@@ -121,6 +127,48 @@ function UserDashboard(props) {
     return team.Projects.filter((p) => {
       return p.name.toLowerCase().indexOf(search[team.id].toLowerCase()) > -1;
     });
+  };
+
+  const _onEditProject = (project) => {
+    setProjectToEdit(project);
+  };
+
+  const _onEditProjectSubmit = () => {
+    if (projectToEdit && projectToEdit.id) {
+      setModifyingProject(true);
+      updateProject(projectToEdit.id, { name: projectToEdit.name })
+        .then(() => {
+          return _getTeams();
+        })
+        .then(() => {
+          setModifyingProject(false);
+          setProjectToEdit(null);
+        })
+        .catch(() => {
+          setModifyingProject(false);
+        });
+    }
+  };
+
+  const _onDeleteProject = (project) => {
+    setProjectToDelete(project);
+  };
+
+  const _onDeleteProjectSubmit = () => {
+    if (projectToDelete && projectToDelete.id) {
+      setModifyingProject(true);
+      removeProject(projectToDelete.id)
+        .then(() => {
+          return _getTeams();
+        })
+        .then(() => {
+          setProjectToDelete(null);
+          setModifyingProject(false);
+        })
+        .catch(() => {
+          setModifyingProject(false);
+        });
+    }
   };
 
   const newProjectModal = () => {
@@ -283,19 +331,27 @@ function UserDashboard(props) {
                             </Table.Cell>
                             <Table.Cell key="actions">
                               <Row justify="flex-end" align="center">
-                                <Tooltip content="Edit project">
-                                  <IconButton>
-                                    <Edit set="light" />
-                                  </IconButton>
+                                <Tooltip content="Rename the project">
+                                  <Button
+                                    icon={<Edit />}
+                                    light
+                                    size="sm"
+                                    css={{ minWidth: "fit-content" }}
+                                    onClick={() => _onEditProject(project)}
+                                  />
                                 </Tooltip>
-                                <Spacer x={0.5} />
                                 <Tooltip
                                   content="Delete project"
                                   color="error"
                                 >
-                                  <IconButton>
-                                    <Delete primaryColor={negative} set="light" />
-                                  </IconButton>
+                                  <Button
+                                    color="error"
+                                    icon={<Delete />}
+                                    light
+                                    size="sm"
+                                    css={{ minWidth: "fit-content" }}
+                                    onClick={() => _onDeleteProject(project)}
+                                  />
                                 </Tooltip>
                                 <Spacer x={0.5} />
                               </Row>
@@ -328,6 +384,70 @@ function UserDashboard(props) {
                   )}
               </Container>
               <Spacer y={3} />
+
+              <Modal open={!!projectToEdit} onClose={() => setProjectToEdit(null)}>
+                <Modal.Header>
+                  <Text h3>Rename your project</Text>
+                </Modal.Header>
+                <Modal.Body>
+                  <Input
+                    label="Project name"
+                    placeholder="Enter the project name"
+                    value={projectToEdit?.name || ""}
+                    onChange={(e) => setProjectToEdit({ ...projectToEdit, name: e.target.value })}
+                    bordered
+                    fullWidth
+                  />
+                </Modal.Body>
+                <Modal.Footer>
+                  <Button
+                    flat
+                    color="warning"
+                    onClick={() => setProjectToEdit(null)}
+                    auto
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    auto
+                    onClick={() => _onEditProjectSubmit()}
+                    disabled={!projectToEdit?.name || modifyingProject}
+                    iconRight={modifyingProject ? <Loading size="xs" /> : null}
+                  >
+                    Save
+                  </Button>
+                </Modal.Footer>
+              </Modal>
+
+              <Modal open={!!projectToDelete} onClose={() => setProjectToDelete(null)}>
+                <Modal.Header>
+                  <Text h4>Are you sure you want to delete the project?</Text>
+                </Modal.Header>
+                <Modal.Body>
+                  <Text>
+                    {"Deleting a project will delete all the charts and connections associated with it. This action cannot be undone."}
+                  </Text>
+                </Modal.Body>
+                <Modal.Footer>
+                  <Button
+                    flat
+                    color="warning"
+                    onClick={() => setProjectToDelete(null)}
+                    auto
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    auto
+                    color="error"
+                    iconRight={modifyingProject ? <Loading size="xs" /> : <Delete />}
+                    onClick={() => _onDeleteProjectSubmit()}
+                    disabled={modifyingProject}
+                  >
+                    Delete
+                  </Button>
+                </Modal.Footer>
+              </Modal>
             </>
           );
         })}
@@ -418,6 +538,8 @@ UserDashboard.propTypes = {
   teamLoading: PropTypes.bool.isRequired,
   getTemplates: PropTypes.func.isRequired,
   history: PropTypes.object.isRequired,
+  updateProject: PropTypes.func.isRequired,
+  removeProject: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -436,6 +558,8 @@ const mapDispatchToProps = (dispatch) => {
     relog: () => dispatch(relogAction()),
     cleanErrors: () => dispatch(cleanErrorsAction()),
     getTemplates: (teamId) => dispatch(getTemplatesAction(teamId)),
+    updateProject: (projectId, data) => dispatch(updateProjectAction(projectId, data)),
+    removeProject: (projectId) => dispatch(removeProjectAction(projectId)),
   };
 };
 
