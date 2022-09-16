@@ -7,13 +7,12 @@ import { Calendar } from "react-date-range";
 import { enGB } from "date-fns/locale";
 import {
   Container, Dropdown, Row, Spacer, Text, Link as LinkNext, Input, Popover,
-  Tooltip, Button, Modal,
+  Tooltip, Button, Modal, Badge,
 } from "@nextui-org/react";
 import { Calendar as CalendarIcon, InfoCircle, Plus } from "react-iconly";
 
 import { operators } from "../../../modules/filterOperations";
 import { secondary } from "../../../config/colors";
-import Badge from "../../../components/Badge";
 
 function Filters(props) {
   const {
@@ -125,7 +124,7 @@ function Filters(props) {
             </Text>
           </Row>
           <Spacer y={1} />
-          <Row>
+          <Row align="center">
             <Dropdown>
               <Dropdown.Button flat>
                 {(filter.field && filter.field.substring(filter.field.lastIndexOf(".") + 1)) || "Select a field"}
@@ -134,14 +133,15 @@ function Filters(props) {
                 selectedKeys={[filter.field]}
                 onSelectionChange={(selection) => _updateFilter(Object.values(selection)[0], "field")}
                 selectionMode="single"
-                css={{ minWidth: 350 }}
+                css={{ minWidth: "fit-content" }}
               >
                 {fieldOptions.map((field) => (
                   <Dropdown.Item key={field.value}>
                     <LinkNext css={{ ai: "center", color: "$text" }}>
-                      <Badge type={field.label.color}>
+                      <Badge size="sm" color={field.label.color}>
                         {field.type}
                       </Badge>
+                      <Spacer x={0.2} />
                       <Text>
                         {field.text}
                       </Text>
@@ -216,7 +216,7 @@ function Filters(props) {
               <Row wrap="wrap">
                 {_getChartsWithField(filter.field).map((chart) => (
                   <>
-                    <Badge type="primary" key={chart.id}>
+                    <Badge color="primary" key={chart.id} isSquared>
                       {chart.name}
                     </Badge>
                     <Spacer x={0.1} />

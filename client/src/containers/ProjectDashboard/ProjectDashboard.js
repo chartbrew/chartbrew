@@ -292,6 +292,7 @@ function ProjectDashboard(props) {
                       onClick={_onShowFilters}
                       css={{ minWidth: "fit-content" }}
                       size="sm"
+                      auto
                     >
                       {filterLoading && <Loading type="points" />}
                       {!filterLoading && "Add filter"}
@@ -381,6 +382,7 @@ function ProjectDashboard(props) {
                           disabled={refreshLoading}
                           css={{ minWidth: "fit-content" }}
                           size="sm"
+                          auto
                         >
                           Refresh all charts
                         </Button>
