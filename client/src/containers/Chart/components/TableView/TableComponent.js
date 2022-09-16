@@ -114,8 +114,15 @@ function TableComponent(props) {
                         <Table.Cell collapsing {...cell.getCellProps()} style={{ maxWidth: 300 }} css={{ userSelect: "text" }}>
                           {(!isObject && !isArray) && (
                             <Text size={"0.9em"} title={cellObj.props.value}>
-                              {cellObj.props.value === true || cellObj.props.value === false
-                                ? `${cellObj.props.value}` : cellObj}
+                              <span
+                                style={{ cursor: "text", WebkitUserSelect: "text" }}
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                role="presentation"
+                              >
+                                {cellObj.props.value === true || cellObj.props.value === false
+                                  ? `${cellObj.props.value}` : cellObj}
+                              </span>
                             </Text>
                           )}
                           {(isObject || isArray) && (
