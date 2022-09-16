@@ -920,6 +920,7 @@ function Chart(props) {
                     id="iframe-text"
                     value={_getEmbedString()}
                     fullWidth
+                    readOnly
                   />
                 </Row>
                 <Spacer y={0.5} />
@@ -942,7 +943,7 @@ function Chart(props) {
                 </Row>
                 <Spacer y={0.5} />
                 <Row>
-                  <Input value={_getEmbedUrl()} id="url-text" fullWidth />
+                  <Input value={_getEmbedUrl()} id="url-text" fullWidth readOnly />
                 </Row>
                 <Spacer y={0.5} />
                 <Row>
@@ -966,6 +967,7 @@ function Chart(props) {
               flat
               color="warning"
               onClick={() => setEmbedModal(false)}
+              auto
             >
               Close
             </Button>
