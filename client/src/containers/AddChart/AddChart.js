@@ -432,22 +432,23 @@ function AddChart(props) {
                     e.preventDefault();
                     _onSubmitNewName();
                   }}>
-                    <Input
-                      placeholder="Enter a title"
-                      value={chartName}
-                      onChange={(e) => _onNameChange(e.target.value)}
-                      contentRight={(
-                        <Button
-                          color="secondary"
-                          type="submit"
-                          onClick={_onSubmitNewName}
-                          size="sm"
-                          auto
-                        >
-                          Save
-                        </Button>
-                      )}
-                    />
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <Input
+                        placeholder="Enter a title"
+                        value={chartName}
+                        onChange={(e) => _onNameChange(e.target.value)}
+                        bordered
+                      />
+                      <Spacer x={0.2} />
+                      <Button
+                        color="secondary"
+                        type="submit"
+                        onClick={_onSubmitNewName}
+                        auto
+                      >
+                        Save
+                      </Button>
+                    </div>
                   </form>
                 )}
               </Row>

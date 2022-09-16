@@ -1,10 +1,8 @@
 import React, { useLayoutEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDrag, useDrop } from "react-dnd";
-import { Spacer, Text } from "@nextui-org/react";
+import { Spacer, Badge } from "@nextui-org/react";
 import { MdOutlineDragIndicator } from "react-icons/md";
-
-import Badge from "../../../components/Badge";
 
 function DraggableLabel({ field, index, onMove }) {
   const ref = useRef(null);
@@ -79,26 +77,15 @@ function DraggableLabel({ field, index, onMove }) {
   return (
     <div ref={ref} style={{ display: "inline-block" }} data-handler-id={handlerId}>
       <Badge
-        type="secondary"
-        style={{ ...styles.fieldLabels }}
+        color="secondary"
       >
         <MdOutlineDragIndicator size={20} />
         <Spacer x={0.2} />
-        <Text size={14} title={field.Header.replace("?", ".")}>{`${field.Header.replace("?", ".")}  `}</Text>
+        {`${field.Header.replace("?", ".")}  `}
       </Badge>
     </div>
   );
 }
-
-const styles = {
-  fieldLabels: {
-    cursor: "move",
-    maxWidth: 150,
-    whiteSpace: "nowrap",
-    textOverflow: "ellipsis",
-    overflow: "hidden",
-  },
-};
 
 DraggableLabel.propTypes = {
   field: PropTypes.object.isRequired,

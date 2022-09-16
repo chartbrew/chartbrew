@@ -290,7 +290,6 @@ function ProjectDashboard(props) {
                       iconRight={<Filter2 size="small" />}
                       disabled={filterLoading}
                       onClick={_onShowFilters}
-                      auto
                       css={{ minWidth: "fit-content" }}
                       size="sm"
                     >
@@ -304,7 +303,8 @@ function ProjectDashboard(props) {
                       onClick={_onShowFilters}
                       disabled={filterLoading}
                       ghost
-                      auto
+                      css={{ minWidth: "fit-content" }}
+                      size="sm"
                     />
                   </Media>
                   <Spacer x={0.5} />
@@ -376,28 +376,29 @@ function ProjectDashboard(props) {
                       <Tooltip content="Refresh data" placement="bottomStart">
                         <Button
                           ghost
-                          icon={<HiRefresh size={20} />}
+                          icon={refreshLoading ? <Loading type="points" /> : <HiRefresh size={20} />}
                           onClick={() => _onRefreshData()}
                           disabled={refreshLoading}
-                          auto
                           css={{ minWidth: "fit-content" }}
                           size="sm"
                         >
-                          {!refreshLoading ? "Refresh all charts" : "Refreshing..."}
-                          {refreshLoading && <Loading type="points" />}
+                          Refresh all charts
                         </Button>
                       </Tooltip>
                     </Media>
                     <Media at="mobile">
-                      <Button
-                        ghost
-                        icon={<HiRefresh size={22} />}
-                        onClick={() => _onRefreshData()}
-                        disabled={refreshLoading}
-                        auto
-                    >
-                        {refreshLoading && <Loading type="points" />}
-                      </Button>
+                      <>
+                        <Tooltip content="Refresh all charts" placement="bottomEnd">
+                          <Button
+                            ghost
+                            icon={refreshLoading ? <Loading type="points" /> : <HiRefresh size={22} />}
+                            onClick={() => _onRefreshData()}
+                            disabled={refreshLoading}
+                            css={{ minWidth: "fit-content" }}
+                            size="sm"
+                          />
+                        </Tooltip>
+                      </>
                     </Media>
                   </>
                 </Row>
@@ -547,6 +548,7 @@ const styles = {
   },
   actionBarMobile: {
     boxShadow: "none",
+    padding: 5,
   },
   addChartBtn: {
     boxShadow: "0 1px 10px 0 #d4d4d5, 0 0 0 1px #d4d4d5",

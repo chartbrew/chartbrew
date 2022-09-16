@@ -12,12 +12,13 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import update from "immutability-helper";
 import {
   Button, Collapse, Container, Dropdown, Grid, Input, Link, Loading,
-  Popover, Row, Spacer, Text, Tooltip, Divider,
+  Popover, Row, Spacer, Text, Tooltip, Divider, Badge,
 } from "@nextui-org/react";
 import { HiRefresh } from "react-icons/hi";
 import { TbDragDrop } from "react-icons/tb";
 import {
-  CaretDown, CaretUp, ChevronRight, CloseSquare, Filter, Hide, InfoCircle, Plus, Show, TickSquare
+  CaretDown, CaretUp, ChevronRight, CloseSquare, Filter, Hide,
+  InfoCircle, Plus, Setting, Show, TickSquare,
 } from "react-iconly";
 import { FaMagic, FaRedo } from "react-icons/fa";
 
@@ -29,7 +30,6 @@ import {
 import autoFieldSelector from "../../../modules/autoFieldSelector";
 import { operations, operators } from "../../../modules/filterOperations";
 import DraggableLabel from "./DraggableLabel";
-import Badge from "../../../components/Badge";
 
 function formatColumnsForOrdering(columns) {
   if (!columns) {
@@ -536,7 +536,7 @@ function DatasetData(props) {
                 <Dropdown.Item key={option.value}>
                   <Container css={{ p: 0, m: 0 }}>
                     <Row>
-                      <Badge type={option.label.color}>{option.label.content}</Badge>
+                      <Badge color={option.label.color}>{option.label.content}</Badge>
                       <Spacer x={0.2} />
                       <Text>{option.text}</Text>
                     </Row>
@@ -580,7 +580,7 @@ function DatasetData(props) {
                 <Dropdown.Item key={option.value}>
                   <Container css={{ p: 0, m: 0 }}>
                     <Row>
-                      <Badge type={option.label.color}>{option.label.content}</Badge>
+                      <Badge color={option.label.color}>{option.label.content}</Badge>
                       <Spacer x={0.2} />
                       <Text>{option.text}</Text>
                     </Row>
@@ -628,7 +628,7 @@ function DatasetData(props) {
                     <Dropdown.Item key={option.value}>
                       <Container css={{ p: 0, m: 0 }}>
                         <Row>
-                          <Badge type={option.label.color}>{option.label.content}</Badge>
+                          <Badge color={option.label.color}>{option.label.content}</Badge>
                           <Spacer x={0.2} />
                           <Text>{option.text}</Text>
                         </Row>
@@ -788,9 +788,9 @@ function DatasetData(props) {
       )}
       {chartType === "table" && (
         <>
-          <Grid xs={12}>
-            <Collapse.Group css={{ width: "100%", fs: 16, fontWeight: "$bold" }}>
-              <Collapse subtitle="Configure columns">
+          <Grid xs={12} css={{ pt: 20, pb: 20 }}>
+            <Collapse.Group css={{ width: "100%", fs: 16, fontWeight: "$bold" }} bordered>
+              <Collapse subtitle="Configure columns" css={{ color: "$text" }} arrowIcon={<Setting />}>
                 <Container css={{ pl: 0, pr: 0 }}>
                   {!isDragState && (
                     <Row wrap="wrap">
@@ -798,17 +798,19 @@ function DatasetData(props) {
                         if (!field || !field.accessor || field.Header.indexOf("__cb_group") > -1) return (<span />);
                         return (
                           <Badge
-                            type="primary"
-                            style={styles.fieldLabels}
+                            color="primary"
+                            // style={styles.fieldLabels}
+                            // variant={"flat"}
                           >
                             <Link
-                              css={{ ai: "center", color: "$primary" }}
+                              css={{ ai: "center" }}
                               onClick={() => _onExcludeField(field.accessor)}
                               title="Hide field"
                             >
-                              <Show />
+                              <Show primaryColor="white" />
                             </Link>
-                            <Text size={14}>{`${field.accessor.replace("?", ".")}`}</Text>
+                            <Spacer x={0.1} />
+                            {`${field.accessor.replace("?", ".")}`}
                           </Badge>
                         );
                       })}
@@ -853,13 +855,13 @@ function DatasetData(props) {
                         <Badge
                           key={field}
                           onClick={() => _onShowField(field)}
-                          type="warning"
-                          style={styles.fieldLabels}
+                          color="warning"
                         >
-                          <Link css={{ ai: "center", color: "$primary" }}>
-                            <Hide />
+                          <Link css={{ ai: "center" }}>
+                            <Hide primaryColor="white" />
                           </Link>
-                          <Text size={14}>{field.replace("?", ".")}</Text>
+                          <Spacer x={0.1} />
+                          {field.replace("?", ".")}
                         </Badge>
                       ))}
                   </Row>
@@ -912,7 +914,7 @@ function DatasetData(props) {
                   <Dropdown.Item key={field.value}>
                     <Container css={{ p: 0, m: 0 }}>
                       <Row>
-                        <Badge type={field.label.color}>{field.label.content}</Badge>
+                        <Badge color={field.label.color}>{field.label.content}</Badge>
                         <Spacer x={0.2} />
                         <Text>{field.text}</Text>
                       </Row>
@@ -933,7 +935,7 @@ function DatasetData(props) {
           </Grid>
         </>
       )}
-      <Grid xs={12}>
+      <Grid xs={12} direction="column">
         <Spacer y={1} />
         <Divider />
         <Spacer y={1} />
@@ -975,7 +977,7 @@ function DatasetData(props) {
                       <Dropdown.Item key={field.value}>
                         <Container css={{ p: 0, m: 0 }}>
                           <Row>
-                            <Badge type={field.label.color}>{field.label.content}</Badge>
+                            <Badge color={field.label.color}>{field.label.content}</Badge>
                             <Spacer x={0.2} />
                             <Text>{field.text}</Text>
                           </Row>
@@ -1125,7 +1127,7 @@ function DatasetData(props) {
           <div>
             {conditions.filter((c) => c.exposed).map((condition) => {
               return (
-                <Badge key={condition.id} type={"primary"}>
+                <Badge key={condition.id} color={"primary"}>
                   <Text size={14}>{condition.field.replace("root[].", "")}</Text>
                   <Spacer x={0.2} />
                   <Link onClick={() => _onHideCondition(condition.id)} color="error">
