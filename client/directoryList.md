@@ -1,6 +1,5 @@
     |-- .eslintrc.json
     |-- package.json
-    |-- semantic.json
     |-- config
     |   |-- env.js
     |   |-- paths.js
@@ -27,12 +26,3 @@
         |-- config
         |-- containers
         |-- reducers
-        |-- semantic
-            |-- dist
-            |-- src
-            |   |-- site
-            |   |   |-- globals
-            |   |       |-- reset.overrides
-            |   |       |-- reset.variables
-            |   |       |-- site.overrides
-            |   |       |-- site.variables

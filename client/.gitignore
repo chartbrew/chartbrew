@@ -1,24 +1,3 @@
-# semantic ui
-
-!/src/semantic/dist
-/src/semantic/dist/*
-!/src/semantic/dist/semantic.min.css
-!/src/semantic/dist/semantic.min.js
-!/src/semantic/dist/themes/
-/src/semantic/dist/themes/*
-!/src/semantic/dist/themes/default/
-
-src/semantic/tasks
-
-!/src/semantic/src/
-/src/semantic/src/*
-!/src/semantic/src/theme.config
-!/src/semantic/src/site
-/src/semantic/src/site/*
-!/src/semantic/src/site/globals
-!/src/semantic/src/site/elements
-!/src/semantic/src/site/modules
-
 # dependencies
 /node_modules
 
