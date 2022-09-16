@@ -58,8 +58,8 @@ function LineChart(props) {
                   height={
                     height - (
                       (chart.mode === "kpichart" && chart.chartSize > 1 && 80)
-                      || (chart.mode === "kpichart" && chart.chartSize === 1 && 70)
-                      || 0
+                      || (chart.mode === "kpichart" && chart.chartSize === 1 && 74)
+                      || 10
                     )
                   }
                   redraw={redraw}

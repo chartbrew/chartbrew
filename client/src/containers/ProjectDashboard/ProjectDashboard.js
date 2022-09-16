@@ -471,6 +471,7 @@ function ProjectDashboard(props) {
                 sm={chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4}
                 md={chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3}
                 key={chart.id}
+                css={{ height: 400, overflowY: "hidden" }}
               >
                 <Chart
                   key={chart.id}

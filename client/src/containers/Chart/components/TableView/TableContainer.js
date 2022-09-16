@@ -64,7 +64,7 @@ function TableContainer(props) {
       <Spacer y={0.5} />
       {activeDataset && tabularData[activeDataset] && tabularData[activeDataset].columns && (
         <TableComponent
-          height={expanded ? height + 200 : height}
+          height={expanded ? height + 200 : chartSize > 1 ? height + 3 : height + 12}
           columns={tabularData[activeDataset].columns}
           data={tabularData[activeDataset].data}
           embedded={embedded}

@@ -379,6 +379,7 @@ function Chart(props) {
         <Card
           style={styles.chartContainer(print)}
           variant="bordered"
+          css={{ height: "100%" }}
         >
           <Card.Header css={{ pb: 0 }}>
             <Grid.Container>
@@ -617,7 +618,7 @@ function Chart(props) {
             </Grid.Container>
           </Card.Header>
           {chart.chartData && (
-            <Card.Body css={{ pt: 5 }}>
+            <Card.Body css={{ pt: 5, overflowY: "hidden" }}>
               <div style={styles.mainChartArea(_isKpi(chart))}>
                 {chart.type === "line"
                   && (
