@@ -112,7 +112,7 @@ function SavedQueries(props) {
                   <Text small>{`created by ${query.User.name}`}</Text>
                 </div>
                 <div style={{ display: "flex", flexDirection: "row", justifyContent: "flex-end" }}>
-                  <Tooltip content="Use this query" color="invert" css={{ zIndex: 10000 }}>
+                  <Tooltip content="Use this query" css={{ zIndex: 10000 }}>
                     <Button
                       icon={<TickSquare />}
                       color="success"
@@ -122,7 +122,7 @@ function SavedQueries(props) {
                     />
                   </Tooltip>
                   <Spacer x={0.2} />
-                  <Tooltip content="Edit the summary" color="invert" css={{ zIndex: 10000 }}>
+                  <Tooltip content="Edit the summary" css={{ zIndex: 10000 }}>
                     <Button
                       icon={editQuery && editLoading && editQuery.id === query.id ? <Loading type="spinner" /> : <Edit />}
                       color="secondary"
@@ -133,7 +133,7 @@ function SavedQueries(props) {
                     />
                   </Tooltip>
                   <Spacer x={0.2} />
-                  <Tooltip content="Remove the saved query" color="invert" css={{ zIndex: 10000 }}>
+                  <Tooltip content="Remove the saved query" css={{ zIndex: 10000 }}>
                     <Button
                       icon={<CloseSquare />}
                       color="error"

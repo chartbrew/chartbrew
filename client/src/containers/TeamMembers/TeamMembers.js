@@ -224,7 +224,7 @@ function TeamMembers(props) {
                       <Row>
                         {_canAccess("admin") && (
                           <>
-                            <Tooltip content="Adjust project access" color="invert">
+                            <Tooltip content="Adjust project access">
                               <Button
                                 light
                                 color="primary"
@@ -238,7 +238,7 @@ function TeamMembers(props) {
                         )}
                         {_canAccess("admin") && user.id !== member.id && (
                           <>
-                            <Tooltip content="Change member role" color="invert">
+                            <Tooltip content="Change member role">
                               <Dropdown>
                                 <Dropdown.Button light auto icon={<People />} color="secondary" />
                                 <Dropdown.Menu
@@ -285,7 +285,7 @@ function TeamMembers(props) {
                         {user.id !== member.id
                           && (_canAccess("owner") || (_canAccess("admin") && memberRole !== "owner"))
                           && (
-                            <Tooltip content="Remove user from the team" color="invert">
+                            <Tooltip content="Remove user from the team">
                               <Button
                                 light
                                 auto
@@ -383,7 +383,6 @@ function TeamMembers(props) {
                 <Spacer x={0.2} />
                 <Tooltip
                   content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
-                  color="invert"
                   css={{ zIndex: 99999 }}
                 >
                   <InfoCircle />

@@ -480,7 +480,6 @@ function GaBuilder(props) {
                 <Spacer x={0.2} />
                 <Tooltip
                   content="You can add multiple metrics by creating another dataset for this chart. Click on 'Build chart', then 'Add new dataset' on the right."
-                  color="invert"
                   css={{ zIndex: 10000, maxWidth: 500 }}
                   placement="rightStart"
                 >

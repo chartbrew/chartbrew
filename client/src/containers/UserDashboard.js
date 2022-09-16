@@ -236,7 +236,7 @@ function UserDashboard(props) {
                   && (
                     <Col>
                       <Row justify="flex-end" align="center">
-                        <Tooltip content="Team settings" color="invert">
+                        <Tooltip content="Team settings">
                           <Link to={`/manage/${key.id}/settings`}>
                             <Button
                               style={width >= 768 ? styles.settingsBtn : {}}

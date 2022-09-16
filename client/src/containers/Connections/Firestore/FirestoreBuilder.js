@@ -512,7 +512,6 @@ function FirestoreBuilder(props) {
               <Spacer x={0.5} />
               <Tooltip
                 content="These filters are applied on the main collection only."
-                color="invert"
                 css={{ zIndex: 10000 }}
               >
                 <InfoCircle size="small" />
@@ -589,7 +588,6 @@ function FirestoreBuilder(props) {
                     <Spacer x={0.2} />
                     <Tooltip
                       content="These filters are applied on the sub-collection only."
-                      color="invert"
                       css={{ zIndex: 10000 }}
                     >
                       <InfoCircle size="small" />
@@ -669,7 +667,6 @@ function FirestoreBuilder(props) {
               <Spacer x={0.2} />
               <Tooltip
                 content="Use cache to avoid hitting the Firestore API every time you request data. The cache will be cleared when you change any of the settings."
-                color="invert"
                 css={{ zIndex: 10000, maxWidth: 500 }}
               >
                 <InfoCircle size="small" />
@@ -730,7 +727,6 @@ function Conditions(props) {
                 <>
                   <Tooltip
                     content="This condition might not work on the current collection."
-                    color="invert"
                     css={{ zIndex: 10000 }}
                   >
                     <Danger primaryColor={secondary} />
@@ -922,7 +918,6 @@ function Conditions(props) {
 
               <Tooltip
                 content="Remove filter"
-                color="invert"
                 css={{ zIndex: 10000 }}
               >
                 <Button
@@ -940,7 +935,6 @@ function Conditions(props) {
                 <>
                   <Tooltip
                     content="Apply this filter"
-                    color="invert"
                     css={{ zIndex: 10000 }}
                   >
                     <Button
@@ -962,7 +956,6 @@ function Conditions(props) {
                   <>
                     <Tooltip
                       content="Undo changes"
-                      color="invert"
                       css={{ zIndex: 10000 }}
                     >
                       <Button
@@ -981,7 +974,6 @@ function Conditions(props) {
               {index === conditions.length - 1 && (
                 <Tooltip
                   content="Add a new filter"
-                  color="invert"
                   css={{ zIndex: 10000 }}
                 >
                   <Button

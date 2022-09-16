@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {
   Button, Link,
   Checkbox,
-  Container, Divider, Grid, Row, Spacer, Text, Input, Dropdown, Tooltip, Modal,
+  Container, Divider, Grid, Row, Spacer, Text, Input, Dropdown, Tooltip, Modal, Badge
 } from "@nextui-org/react";
 import {
   Calendar, ChevronDown, TickSquare
@@ -17,7 +17,6 @@ import "react-date-range/dist/theme/default.css"; // theme css file
 
 import { secondary, primary } from "../../../config/colors";
 import { defaultStaticRanges, defaultInputRanges } from "../../../config/dateRanges";
-import Badge from "../../../components/Badge";
 
 const xLabelOptions = [{
   key: "default",
@@ -247,16 +246,16 @@ function ChartSettings(props) {
               </Container>
               <div style={{ marginTop: 5 }}>
                 {startDate && (
-                  <Badge type="secondary">
-                    <Link onClick={() => setDateRangeModal(true)}>
+                  <Badge color="secondary" size="sm">
+                    <Link onClick={() => setDateRangeModal(true)} css={{ color: "$accents0" }}>
                       {labelStartDate}
                     </Link>
                   </Badge>
                 )}
                 {startDate && (<span> to </span>)}
                 {endDate && (
-                  <Badge type="secondary">
-                    <Link onClick={() => setDateRangeModal(true)}>
+                  <Badge color="secondary" size="sm">
+                    <Link onClick={() => setDateRangeModal(true)} css={{ color: "$accents0" }}>
                       {labelEndDate}
                     </Link>
                   </Badge>

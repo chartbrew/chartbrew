@@ -407,7 +407,6 @@ function RealtimeDbBuilder(props) {
               <Spacer x={0.2} />
               <Tooltip
                 content="Use cache to avoid hitting the Firebase API every time you request data. The cache will be cleared when you change any of the settings."
-                color="invert"
                 css={{ minWidth: 600, zIndex: 10000 }}
               >
                 <InfoCircle size="small" />

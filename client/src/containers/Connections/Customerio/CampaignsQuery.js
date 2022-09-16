@@ -647,7 +647,6 @@ function CampaignsQuery(props) {
                         </Button>
                         <Spacer x={0.2} />
                         <Tooltip
-                          color="invert"
                           content="You can select only one link, but if you wish to compare multiple links on the same chart, you can create a new dataset with another link."
                           css={{ zIndex: 10000, maxWidth: 500 }}
                         >

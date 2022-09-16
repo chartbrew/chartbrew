@@ -279,7 +279,6 @@ function CustomerioBuilder(props) {
               <Spacer x={0.2} />
               <Tooltip
                 content="If checked, Chartbrew will use cached data instead of making requests to your data source. The cache gets automatically invalidated when you change the collections and/or filters."
-                color="invert"
                 css={{ zIndex: 10000, maxWidth: 500 }}
                 placement="leftStart"
               >

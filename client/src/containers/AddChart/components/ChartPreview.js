@@ -421,7 +421,7 @@ function ChartPreview(props) {
             <Spacer x={0.2} />
             <Tooltip
               content="If checked, Chartbrew will use cached data instead of making requests to your data source whenever possible."
-              color="invert"
+
             >
               <InfoCircle size="small" />
             </Tooltip>

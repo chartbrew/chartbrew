@@ -279,7 +279,6 @@ function ApiBuilder(props) {
               <Spacer x={0.2} />
               <Tooltip
                 content={chart.startDate || "Set this value in chart date settings first"}
-                color="invert"
                 css={{ zIndex: 10000 }}
               >
                 <Badge type="primary">
@@ -291,7 +290,6 @@ function ApiBuilder(props) {
               <Spacer x={0.2} />
               <Tooltip
                 content={chart.endDate || "Set this value in chart date settings first"}
-                color="invert"
                 css={{ zIndex: 10000 }}
               >
                 <Badge type="primary">
@@ -556,7 +554,6 @@ function ApiBuilder(props) {
               />
               <Spacer x={0.2} />
               <Tooltip
-                color="invert"
                 content={(
                   <>
                     <p>{"If checked, Chartbrew will use cached data instead of making requests to your data source."}</p>

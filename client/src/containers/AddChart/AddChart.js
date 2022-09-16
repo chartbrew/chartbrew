@@ -531,7 +531,7 @@ function AddChart(props) {
               <Text b>
                 Datasets
               </Text>
-              <Tooltip content="Start the chart builder tutorial" placement="leftStart" color="invert">
+              <Tooltip content="Start the chart builder tutorial" placement="leftStart">
                 <LinkNext css={{ color: "$accents6", ai: "center" }} onClick={_onResetTutorial}>
                   {!resetingTutorial ? <Discovery /> : <Loading type="spinner" />}
                   <Spacer x={0.2} />

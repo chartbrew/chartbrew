@@ -550,7 +550,7 @@ function DatasetData(props) {
               <Spacer x={0.2} />
               <Tooltip
                 content="Select a collection (array) of objects to display in a table format. 'Root' means the first level of the collection."
-                color="invert"
+
               >
                 <InfoCircle />
               </Tooltip>
@@ -686,7 +686,7 @@ function DatasetData(props) {
               <Text size={14}>Sort on Y-Axis</Text>
             </div>
             <div style={styles.rowDisplay}>
-              <Tooltip content="Sort the dataset in ascending order" color="invert">
+              <Tooltip content="Sort the dataset in ascending order">
                 <Button
                   color={dataset.sort === "asc" ? "secondary" : "primary"}
                   bordered={dataset.sort !== "asc"}
@@ -702,7 +702,7 @@ function DatasetData(props) {
                 />
               </Tooltip>
               <Spacer x={0.2} />
-              <Tooltip content="Sort the dataset in descending order" color="invert">
+              <Tooltip content="Sort the dataset in descending order">
                 <Button
                   color={dataset.sort === "desc" ? "secondary" : "primary"}
                   bordered={dataset.sort !== "desc"}
@@ -720,7 +720,7 @@ function DatasetData(props) {
               {dataset.sort && (
                 <>
                   <Spacer x={0.2} />
-                  <Tooltip content="Clear sorting" color="invert">
+                  <Tooltip content="Clear sorting">
                     <Link css={{ color: "$error" }} onClick={() => onUpdate({ sort: "" })}>
                       <CloseSquare />
                     </Link>
@@ -923,7 +923,7 @@ function DatasetData(props) {
               </Dropdown.Menu>
             </Dropdown>
             <Spacer x={0.2} />
-            <Tooltip content="Clear the grouping" color="invert">
+            <Tooltip content="Clear the grouping">
               <Link
                 color="error"
                 onClick={_onChangeGroupBy}
@@ -1049,14 +1049,14 @@ function DatasetData(props) {
                   )}
                 </div>
                 <Spacer x={0.2} />
-                <Tooltip content="Remove condition" color="invert">
+                <Tooltip content="Remove condition">
                   <Link color="error" onClick={() => _onRemoveCondition(condition.id)}>
                     <CloseSquare />
                   </Link>
                 </Tooltip>
 
                 {index === conditions.length - 1 && (
-                  <Tooltip content="Add a new condition" color="invert">
+                  <Tooltip content="Add a new condition">
                     <Link color="primary" onClick={_onAddCondition}>
                       <Plus />
                     </Link>
@@ -1080,7 +1080,7 @@ function DatasetData(props) {
                 )}
 
                 {condition.field && condition.operator && condition.exposed && (
-                  <Tooltip content="Hide this filter from viewers" color="invert">
+                  <Tooltip content="Hide this filter from viewers">
                     <Link
                       color="secondary"
                       onClick={() => _onApplyCondition(
@@ -1096,7 +1096,7 @@ function DatasetData(props) {
                 )}
 
                 {!condition.saved && condition.field && (
-                  <Tooltip content="Apply this condition" color="invert">
+                  <Tooltip content="Apply this condition">
                     <Link
                       color="success"
                       onClick={() => _onApplyCondition(condition.id, condition.exposed)}
@@ -1128,11 +1128,11 @@ function DatasetData(props) {
           <div>
             {conditions.filter((c) => c.exposed).map((condition) => {
               return (
-                <Badge key={condition.id} color={"primary"}>
+                <Badge key={condition.id} color={"primary"} size="sm">
                   {condition.field.replace("root[].", "")}
                   <Spacer x={0.2} />
                   <Link onClick={() => _onHideCondition(condition.id)} color="error">
-                    <CloseSquare />
+                    <CloseSquare size="small" color="white" />
                   </Link>
                 </Badge>
               );

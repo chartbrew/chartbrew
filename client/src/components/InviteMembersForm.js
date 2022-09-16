@@ -85,7 +85,6 @@ function InviteMembersForm(props) {
           <Spacer x={0.2} />
           <Tooltip
             content="The newly invited users will only be able to access the projects you select below. The project access can be changed later as well."
-            color="invert"
             css={{ maxWidth: 400 }}
           >
             <InfoCircle />
@@ -138,7 +137,6 @@ function InviteMembersForm(props) {
           <Spacer x={0.2} />
           <Tooltip
             content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
-            color="invert"
             css={{ maxWidth: 400 }}
           >
             <InfoCircle />

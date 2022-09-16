@@ -126,7 +126,6 @@ function ApiPagination(props) {
         <Grid xs={12} sm={6} direction="column">
           <Tooltip
             content={"The query parameter name that limits the number of item per request."}
-            color="invert"
             css={{ zIndex: 10000 }}
             placement="topStart"
           >
@@ -152,7 +151,6 @@ function ApiPagination(props) {
         <Grid xs={12} sm={6} direction="column">
           <Tooltip
             content={"The query parameter name used for the starting point of the first request."}
-            color="invert"
             css={{ zIndex: 10000 }}
             placement="topStart"
           >
@@ -245,7 +243,6 @@ function ApiPagination(props) {
         <Grid xs={12} sm={6} direction="column">
           <Tooltip
             content={"Enter the name of the query parameter that acts like a cursor for the pagination. Usually, this field is named 'start'."}
-            color="invert"
             css={{ zIndex: 10000 }}
             placement="topStart"
           >
@@ -269,7 +266,6 @@ function ApiPagination(props) {
         <Grid xs={12} sm={6} direction="column">
           <Tooltip
             content={"This should be the name of the field in the response that points to the next cursor position. This will help Chartbrew automatically set the cursor start position. "}
-            color="invert"
             css={{ zIndex: 10000, maxWidth: 400 }}
             placement="topStart"
           >
@@ -293,7 +289,6 @@ function ApiPagination(props) {
       <Grid xs={12} sm={6} direction="column">
         <Tooltip
           content={"The total amount of items to get (all the paged items put together) - Leave empty or 0 for unlimited"}
-          color="invert"
           css={{ zIndex: 10000 }}
           placement="topStart"
         >

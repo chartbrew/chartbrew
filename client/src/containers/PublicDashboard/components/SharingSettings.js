@@ -86,7 +86,6 @@ function SharingSettings(props) {
             </Button>
             <Spacer x={0.2} />
             <Tooltip
-              color="invert"
               content="Copy the URL to the clipboard"
               css={{ zIndex: 10000 }}
             >
@@ -110,7 +109,6 @@ function SharingSettings(props) {
             <Text>Make dashboard public</Text>
             <Spacer x={0.2} />
             <Tooltip
-              color="invert"
               content={(
                 <>
                   <p>{"A public report can be viewed by anyone with or without a Chartbrew account."}</p>
@@ -133,7 +131,6 @@ function SharingSettings(props) {
             <Text>Require password to view</Text>
             <Spacer x={0.2} />
             <Tooltip
-              color="invert"
               content="Public reports will require the viewers outside of your team to enter a password before viewing"
               css={{ zIndex: 10000 }}
             >

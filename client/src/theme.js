@@ -179,6 +179,8 @@ const darkTheme = {
     headerBackground: darkTransparent(0.8),
     background: "#020d14",
     backgroundContrast: dark,
+
+    accents0: "$gray100",
   },
   space: {},
   fonts: {

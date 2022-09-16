@@ -255,7 +255,7 @@ function Dataset(props) {
           </Button>
           <Spacer x={0.2} />
           <div style={{ width: 100 }}>
-            <Tooltip content="Remove dataset" color="invert">
+            <Tooltip content="Remove dataset">
               <Button
                 flat
                 color="error"
@@ -328,7 +328,7 @@ function Dataset(props) {
             Get data
           </Button>
           <Spacer x={0.5} />
-          <Tooltip content="Go to the connections page" color="invert">
+          <Tooltip content="Go to the connections page">
             <Link
               href={_onManageConnections()}
               target="_blank"
