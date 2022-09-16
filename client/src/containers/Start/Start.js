@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
-import { useWindowSize } from "react-use";
 import {
   Container, Card, Loading, Text, Spacer, Row, Link, Input, Button, Grid,
 } from "@nextui-org/react";
@@ -10,9 +9,6 @@ import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import { ArrowRight, Category, Setting } from "react-iconly";
 
-import {
-  dark, secondary, whiteTransparent
-} from "../../config/colors";
 import { createProject as createProjectAction } from "../../actions/project";
 import { getTeams as getTeamsAction } from "../../actions/team";
 import simpleanalyticsDash from "../Connections/SimpleAnalytics/simpleanalytics-template.jpeg";
@@ -34,8 +30,6 @@ function Start(props) {
   const [showBreadcrumbs, setShowBreadcrumbs] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initiated, setInitiated] = useState(false);
-
-  const { height } = useWindowSize();
 
   const _getOwnedTeam = () => {
     let team;
@@ -146,15 +140,15 @@ function Start(props) {
   };
 
   return (
-    <div style={styles.container(height)}>
-      <Navbar hideTeam transparent color={dark} />
+    <div>
+      <Navbar hideTeam transparent />
       <Container>
         <Row justify="center" align="center">
           <motion.div
             animate={{ opacity: [1, 1, 1, 1, 1, 1, 0], scale: 1, translateY: [0, 0, 0, 0, 0, -50] }}
             transition={{ duration: 2 }}
           >
-            <Text color="white" h1>
+            <Text h1>
               <motion.div
                 style={{ fontSize: "2em", marginBottom: 20 }}
                 animate={{
@@ -170,8 +164,10 @@ function Start(props) {
         </Row>
         <Row justify="center" align="center">
           <motion.div
-            animate={{ translateY: [0, 0, 0, 0, 0, 0, -100] }}
-            transition={{ duration: 3 }}
+            animate={{
+              translateY: onboardingStep === "project" && !showBreadcrumbs ? [0, 0, 0, 0, 0, 0, -100] : [0, -250]
+            }}
+            transition={{ duration: onboardingStep === "project" ? 3 : 0.5 }}
           >
             <motion.div
               animate={{ opacity: [0, 0, 0, 0, 0, 1], scale: 1 }}
@@ -179,19 +175,19 @@ function Start(props) {
             >
               <Container fluid>
                 <Row justify="center" align="center">
-                  <Text h1 color="white">
+                  <Text h1>
                     {"Set up your new Chartbrew project"}
                   </Text>
                 </Row>
                 <Row justify="center" align="center">
                   {onboardingStep === "project" && (
-                    <Text h3 color="white">{"First, enter a name below"}</Text>
+                    <Text h3>{"First, enter a name below"}</Text>
                   )}
                   {onboardingStep === "mode" && (
-                    <Text h3 color="white">{"Get started with one of the options below"}</Text>
+                    <Text h3>{"Get started with one of the options below"}</Text>
                   )}
                   {onboardingStep === "data" && (
-                    <Text h3 color="white">
+                    <Text h3>
                       {mode === "template" ? "Select a template to start with" : "Select a connection to start with"}
                     </Text>
                   )}
@@ -206,21 +202,21 @@ function Start(props) {
                   <Link onClick={() => setOnboardingStep("project")}>
                     <Text
                       b={onboardingStep === "project"}
-                      style={{ color: onboardingStep === "project" ? whiteTransparent(1) : secondary }}
+                      css={{ color: onboardingStep !== "project" ? "$text" : "$secondary" }}
                     >
                       Project
                     </Text>
                   </Link>
                   <Spacer x={1} />
                   {projectName && (
-                    <Text css={{ color: "$accents0" }}>/</Text>
+                    <Text css={{ color: "$accents6" }}>/</Text>
                   )}
                   <Spacer x={1} />
                   {projectName && (
                     <Link onClick={() => setOnboardingStep("mode")}>
                       <Text
-                        style={{ color: onboardingStep === "mode" ? whiteTransparent(1) : secondary }}
-                        active={onboardingStep === "mode"}
+                        css={{ color: onboardingStep !== "mode" ? "$text" : "$secondary" }}
+                        b={onboardingStep === "mode"}
                       >
                         Starting mode
                       </Text>
@@ -228,14 +224,14 @@ function Start(props) {
                   )}
                   <Spacer x={1} />
                   {projectName && mode && (
-                    <Text css={{ color: "$accents0" }}>/</Text>
+                    <Text css={{ color: "$accents6" }}>/</Text>
                   )}
                   <Spacer x={1} />
                   {projectName && mode && (
                     <Link onClick={() => setOnboardingStep("data")}>
                       <Text
-                        style={{ color: onboardingStep === "data" ? whiteTransparent(1) : secondary }}
-                        active={onboardingStep === "data"}
+                        css={{ color: onboardingStep !== "data" ? "$text" : "$secondary" }}
+                        b={onboardingStep === "data"}
                       >
                         {mode === "template" ? "Templates" : "Connections"}
                       </Text>
@@ -262,6 +258,7 @@ function Start(props) {
                     onChange={(e) => setProjectName(e.target.value)}
                     size="xl"
                     fullWidth
+                    bordered
                   />
                   <Spacer y={1} />
                   <Button
@@ -271,6 +268,7 @@ function Start(props) {
                     size="lg"
                     disabled={projectName.length < 1}
                     auto
+                    shadow
                   >
                     {"Next step"}
                   </Button>
@@ -378,9 +376,9 @@ function Start(props) {
               {onboardingStep === "data" && (
               <div>
                 <Spacer y={1} />
-                <p style={{ fontSize: "1.2em", color: whiteTransparent(0.7), textAlign: "center" }}>
-                  <i>Make your selection to get started</i>
-                </p>
+                <Text i css={{ fontSize: "1.2em", color: "$accents6", textAlign: "center" }}>
+                  Make your selection to get started
+                </Text>
               </div>
               )}
             </Container>
@@ -406,13 +404,6 @@ function Start(props) {
     </div>
   );
 }
-
-const styles = {
-  container: (height) => ({
-    backgroundColor: dark,
-    minHeight: height + 20,
-  }),
-};
 
 Start.propTypes = {
   teams: PropTypes.object.isRequired,
