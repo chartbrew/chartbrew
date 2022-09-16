@@ -18,7 +18,7 @@ import { HiRefresh } from "react-icons/hi";
 import { TbDragDrop } from "react-icons/tb";
 import {
   CaretDown, CaretUp, ChevronRight, CloseSquare, Filter, Hide,
-  InfoCircle, Plus, Setting, Show, TickSquare,
+  InfoCircle, Plus, Setting, Show, TickSquare, Calendar as CalendarIcon,
 } from "react-iconly";
 import { FaMagic, FaRedo } from "react-icons/fa";
 
@@ -530,13 +530,13 @@ function DatasetData(props) {
               onAction={_selectXField}
               selectedKeys={[dataset.xAxis]}
               selectionMode="single"
-              css={{ width: 500 }}
+              css={{ minWidth: "max-content" }}
             >
               {_filterOptions("x").map((option) => (
                 <Dropdown.Item key={option.value}>
                   <Container css={{ p: 0, m: 0 }}>
                     <Row>
-                      <Badge color={option.label.color}>{option.label.content}</Badge>
+                      <Badge size="sm" color={option.label.color}>{option.label.content}</Badge>
                       <Spacer x={0.2} />
                       <Text>{option.text}</Text>
                     </Row>
@@ -574,13 +574,13 @@ function DatasetData(props) {
               onAction={_selectDateField}
               selectedKeys={[dataset.dateField]}
               selectionMode="single"
-              css={{ width: 500 }}
+              css={{ minWidth: "max-content" }}
             >
               {fieldOptions.map((option) => (
                 <Dropdown.Item key={option.value}>
                   <Container css={{ p: 0, m: 0 }}>
                     <Row>
-                      <Badge color={option.label.color}>{option.label.content}</Badge>
+                      <Badge size="sm" color={option.label.color}>{option.label.content}</Badge>
                       <Spacer x={0.2} />
                       <Text>{option.text}</Text>
                     </Row>
@@ -623,12 +623,13 @@ function DatasetData(props) {
                   onAction={_selectYField}
                   selectedKeys={[dataset.yAxis]}
                   selectionMode="single"
+                  css={{ minWidth: "max-content" }}
                 >
                   {fieldOptions.map((option) => (
                     <Dropdown.Item key={option.value}>
                       <Container css={{ p: 0, m: 0 }}>
                         <Row>
-                          <Badge color={option.label.color}>{option.label.content}</Badge>
+                          <Badge size="sm" color={option.label.color}>{option.label.content}</Badge>
                           <Spacer x={0.2} />
                           <Text>{option.text}</Text>
                         </Row>
@@ -669,6 +670,7 @@ function DatasetData(props) {
                   onAction={_selectYOp}
                   selectedKeys={[dataset.yAxisOperation]}
                   selectionMode="single"
+                  css={{ minWidth: "max-content" }}
                 >
                   {operations.map((option) => (
                     <Dropdown.Item key={option.value}>
@@ -797,11 +799,7 @@ function DatasetData(props) {
                       {tableFields.map((field) => {
                         if (!field || !field.accessor || field.Header.indexOf("__cb_group") > -1) return (<span />);
                         return (
-                          <Badge
-                            color="primary"
-                            // style={styles.fieldLabels}
-                            // variant={"flat"}
-                          >
+                          <Badge color="primary">
                             <Link
                               css={{ ai: "center" }}
                               onClick={() => _onExcludeField(field.accessor)}
@@ -909,12 +907,13 @@ function DatasetData(props) {
                 onAction={(key) => _onChangeGroupBy(null, key)}
                 selectedKeys={[dataset.groupBy]}
                 selectionMode="single"
+                css={{ minWidth: "max-content" }}
               >
                 {_getGroupByFields().map((field) => (
                   <Dropdown.Item key={field.value}>
                     <Container css={{ p: 0, m: 0 }}>
                       <Row>
-                        <Badge color={field.label.color}>{field.label.content}</Badge>
+                        <Badge size="sm" color={field.label.color}>{field.label.content}</Badge>
                         <Spacer x={0.2} />
                         <Text>{field.text}</Text>
                       </Row>
@@ -972,12 +971,13 @@ function DatasetData(props) {
                     onAction={(key) => _updateCondition(condition.id, key, "field")}
                     selectedKeys={[condition.field]}
                     selectionMode="single"
+                    css={{ minWidth: "max-content" }}
                   >
                     {fieldOptions.map((field) => (
                       <Dropdown.Item key={field.value}>
                         <Container css={{ p: 0, m: 0 }}>
                           <Row>
-                            <Badge color={field.label.color}>{field.label.content}</Badge>
+                            <Badge size="sm" color={field.label.color}>{field.label.content}</Badge>
                             <Spacer x={0.2} />
                             <Text>{field.text}</Text>
                           </Row>
@@ -1004,6 +1004,7 @@ function DatasetData(props) {
                     onAction={(key) => _updateCondition(condition.id, key, "operator")}
                     selectedKeys={[condition.operator]}
                     selectionMode="single"
+                    css={{ minWidth: "max-content" }}
                   >
                     {operators.map((operator) => (
                       <Dropdown.Item key={operator.value}>
@@ -1030,7 +1031,7 @@ function DatasetData(props) {
                     <Popover>
                       <Popover.Trigger>
                         <Input
-                          contentRight={<Calendar />}
+                          contentRight={<CalendarIcon />}
                           value={(condition.value && format(new Date(condition.value), "Pp", { locale: enGB })) || "Enter a value"}
                           disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                           size="sm"
@@ -1128,7 +1129,7 @@ function DatasetData(props) {
             {conditions.filter((c) => c.exposed).map((condition) => {
               return (
                 <Badge key={condition.id} color={"primary"}>
-                  <Text size={14}>{condition.field.replace("root[].", "")}</Text>
+                  {condition.field.replace("root[].", "")}
                   <Spacer x={0.2} />
                   <Link onClick={() => _onHideCondition(condition.id)} color="error">
                     <CloseSquare />

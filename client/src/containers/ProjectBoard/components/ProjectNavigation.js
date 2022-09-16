@@ -152,7 +152,12 @@ function ProjectNavigation(props) {
                 )}
               </LinkNext>
             </Dropdown.Trigger>
-            <Dropdown.Menu style={{ fontSize: 14 }} onAction={(pId) => onChangeProject(pId)}>
+            <Dropdown.Menu
+              css={{ fontSize: 14, minWidth: "max-content" }}
+              onAction={(pId) => onChangeProject(pId)}
+              selectedKeys={[projectId]}
+              selectionMode="single"
+            >
               {projects.map((p) => {
                 return (
                   <Dropdown.Item key={p.id}>
