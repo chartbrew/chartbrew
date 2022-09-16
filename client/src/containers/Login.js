@@ -9,7 +9,7 @@ import _ from "lodash";
 
 import LoginForm from "../components/LoginForm";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
-import { blue, negative } from "../config/colors";
+import { negative } from "../config/colors";
 import cbLogoSmall from "../assets/logo_inverted.png";
 
 /*
@@ -60,7 +60,7 @@ function Login(props) {
             </Row>
           </Container>
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={1} />
         <Row justify="center" align="center">
           <div>
             <p style={styles.signupText}>
@@ -76,14 +76,9 @@ function Login(props) {
 const styles = {
   container: {
     flex: 1,
-    backgroundColor: blue,
-    minHeight: window.innerHeight,
     paddingBottom: 50,
     paddingTop: 50,
     overflow: "hidden",
-  },
-  signupText: {
-    color: "white",
   },
   verticalPadding: {
     maxWidth: 600,

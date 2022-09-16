@@ -8,7 +8,6 @@ import {
   Card,
   Container,
   Grid,
-  Image,
   Loading,
   Row,
   Spacer,
@@ -142,10 +141,13 @@ function Signup(props) {
       <Grid.Container style={styles.mainGrid(height)} css={{ backgroundColor: "$backgroundContrast" }}>
         <Grid xs={12} sm={6}>
           <Container xs>
-            <Spacer size={2} />
             <Row>
+              &nbsp;
+            </Row>
+            <Spacer size={1} />
+            <Row justify="center">
               <Link to="/">
-                <Image centered size="tiny" src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
+                <img centered src={cbLogoSmall} width="70" alt="Chartbrew logo" />
               </Link>
             </Row>
             <Spacer size={1} />
@@ -154,9 +156,12 @@ function Signup(props) {
                 {"Let's get you started with your new Chartbrew account"}
               </Text>
             </Row>
-            <Spacer y={2} />
+            <Spacer y={1} />
 
-            <form onSubmit={submitUser}>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              submitUser();
+            }}>
               <Row>
                 <Text>{"But first, how can we call you?"}</Text>
               </Row>
