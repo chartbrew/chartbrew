@@ -58,25 +58,26 @@ function TableComponent(props) {
         <>
           <Table
             {...getTableProps()}
-            lined
             shadow={false}
+            lined
           >
             <Table.Header>
               {headerGroups[headerGroups.length - 1].headers.map((column) => {
                 return (
                   <Table.Column
-                    onClick={column.getHeaderProps(column.getSortByToggleProps()).onClick}
                     key={column.getHeaderProps(column.getSortByToggleProps()).key}
                     style={{ maxWidth: 400, whiteSpace: "unset" }}
                     justify="center"
-                    >
+                  >
                     <Row align="center">
                       {column.isSorted
                         ? column.isSortedDesc
                           ? (<ChevronDownCircle />)
                           : (<ChevronUpCircle />)
                         : ""}
-                      <LinkNext>
+                      <LinkNext
+                        onClick={column.getHeaderProps(column.getSortByToggleProps()).onClick}
+                      >
                         <Text>
                           {typeof column.render("Header") === "object"
                             ? column.render("Header") : column.render("Header").replace("__cb_group", "")}
@@ -96,7 +97,7 @@ function TableComponent(props) {
               {page.map((row) => {
                 prepareRow(row);
                 return (
-                  <Table.Row {...row.getRowProps()} css={{ userSelect: "text" }}>
+                  <Table.Row {...row.getRowProps()}>
                     {row.cells.map((cell) => {
                       // identify collections to render them differently
                       const cellObj = cell.render("Cell");
