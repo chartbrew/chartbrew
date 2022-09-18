@@ -330,31 +330,33 @@ function UserDashboard(props) {
                               </Row>
                             </Table.Cell>
                             <Table.Cell key="actions">
-                              <Row justify="flex-end" align="center">
-                                <Tooltip content="Rename the project">
-                                  <Button
-                                    icon={<Edit />}
-                                    light
-                                    size="sm"
-                                    css={{ minWidth: "fit-content" }}
-                                    onClick={() => _onEditProject(project)}
-                                  />
-                                </Tooltip>
-                                <Tooltip
-                                  content="Delete project"
-                                  color="error"
-                                >
-                                  <Button
+                              {_canAccess("admin", key.TeamRoles) && (
+                                <Row justify="flex-end" align="center">
+                                  <Tooltip content="Rename the project">
+                                    <Button
+                                      icon={<Edit />}
+                                      light
+                                      size="sm"
+                                      css={{ minWidth: "fit-content" }}
+                                      onClick={() => _onEditProject(project)}
+                                    />
+                                  </Tooltip>
+                                  <Tooltip
+                                    content="Delete project"
                                     color="error"
-                                    icon={<Delete />}
-                                    light
-                                    size="sm"
-                                    css={{ minWidth: "fit-content" }}
-                                    onClick={() => _onDeleteProject(project)}
-                                  />
-                                </Tooltip>
-                                <Spacer x={0.5} />
-                              </Row>
+                                  >
+                                    <Button
+                                      color="error"
+                                      icon={<Delete />}
+                                      light
+                                      size="sm"
+                                      css={{ minWidth: "fit-content" }}
+                                      onClick={() => _onDeleteProject(project)}
+                                    />
+                                  </Tooltip>
+                                  <Spacer x={0.5} />
+                                </Row>
+                              )}
                             </Table.Cell>
                           </Table.Row>
                         )}
