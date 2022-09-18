@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, {
+  useState, useEffect, useCallback, useRef
+} from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
@@ -55,6 +57,15 @@ function DatasetData(props) {
   const [tableFields, setTableFields] = useState([]);
   const [isDragState, setIsDragState] = useState(false);
   const [tableColumns, setTableColumns] = useState([]);
+  const [xFieldFilter, setXFieldFilter] = useState("");
+  const [yFieldFilter, setYFieldFilter] = useState("");
+  const [dateFieldFilter, setDateFieldFilter] = useState("");
+  const [groupByFilter, setGroupByFilter] = useState("");
+
+  const yFieldRef = useRef(null);
+  const xFieldRef = useRef(null);
+  const dateFieldRef = useRef(null);
+  const groupByRef = useRef(null);
 
   // Update the content when there is some data to work with
   useEffect(() => {
@@ -196,10 +207,12 @@ function DatasetData(props) {
 
   const _selectXField = (key) => {
     onUpdate({ xAxis: key });
+    setXFieldFilter("");
   };
 
   const _selectYField = (key) => {
     onUpdate({ yAxis: key });
+    setYFieldFilter("");
   };
 
   const _selectYOp = (key) => {
@@ -208,6 +221,7 @@ function DatasetData(props) {
 
   const _selectDateField = (key) => {
     onUpdate({ dateField: key });
+    setDateFieldFilter("");
   };
 
   const _updateCondition = (id, data, type, dataType) => {
@@ -358,6 +372,11 @@ function DatasetData(props) {
       });
     }
 
+    if (axis === "x" && xFieldFilter) {
+      filteredOptions = filteredOptions
+        .filter((o) => o.text?.toString().toLowerCase().includes(xFieldFilter.toLowerCase()));
+    }
+
     if (chartType !== "table") return filteredOptions;
 
     filteredOptions = fieldOptions.filter((f) => f.type === "array");
@@ -400,18 +419,42 @@ function DatasetData(props) {
     return filteredOptions;
   };
 
+  const _getYFieldOptions = () => {
+    if (!yFieldFilter) return fieldOptions;
+
+    return fieldOptions
+      .filter((o) => o.text?.toString().toLowerCase().includes(yFieldFilter.toLowerCase()));
+  };
+
+  const _getDateFieldOptions = () => {
+    let filteredOptions = fieldOptions.filter((f) => f.type === "date");
+
+    if (dateFieldFilter) {
+      filteredOptions = filteredOptions
+        .filter((o) => o.text?.toString().toLowerCase().includes(dateFieldFilter.toLowerCase()));
+    }
+
+    return filteredOptions;
+  };
+
   const _getGroupByFields = () => {
-    return fieldOptions.filter((f) => {
+    const filtered = fieldOptions.filter((f) => {
       if (f.type !== "object" && f.type !== "array") {
         if (f.key.replace("root[].", "").indexOf(".") === -1) return true;
       }
 
       return false;
     });
+
+    if (!groupByFilter) return filtered;
+
+    return filtered
+      .filter((o) => o.text?.toString().toLowerCase().includes(groupByFilter.toLowerCase()));
   };
 
   const _onChangeGroupBy = (e, key) => {
     onUpdate({ groupBy: key || null });
+    setGroupByFilter("");
   };
 
   const _onDragStateClicked = () => {
@@ -520,10 +563,18 @@ function DatasetData(props) {
         </div>
         <div style={styles.rowDisplay}>
           <Dropdown>
-            <Dropdown.Trigger>
+            <Dropdown.Trigger type="text">
               <Input
-                value={(dataset.xAxis && dataset.xAxis.substring(dataset.xAxis.lastIndexOf(".") + 1)) || "Select a field"}
+                type="text"
+                value={
+                  xFieldFilter
+                  || dataset.xAxis?.substring(dataset.xAxis.lastIndexOf(".") + 1)
+                }
+                onChange={(e) => setXFieldFilter(e.target.value)}
                 fullWidth
+                placeholder="Double-click to search"
+                ref={xFieldRef}
+                contentRight={document.activeElement === xFieldRef.current ? "↵" : null}
               />
             </Dropdown.Trigger>
             <Dropdown.Menu
@@ -533,14 +584,8 @@ function DatasetData(props) {
               css={{ minWidth: "max-content" }}
             >
               {_filterOptions("x").map((option) => (
-                <Dropdown.Item key={option.value}>
-                  <Container css={{ p: 0, m: 0 }}>
-                    <Row>
-                      <Badge size="sm" color={option.label.color}>{option.label.content}</Badge>
-                      <Spacer x={0.2} />
-                      <Text>{option.text}</Text>
-                    </Row>
-                  </Container>
+                <Dropdown.Item key={option.value} icon={<Badge isSquared size="xs" color={option.label.color}>{option.label.content}</Badge>}>
+                  <Text>{option.text}</Text>
                 </Dropdown.Item>
               ))}
             </Dropdown.Menu>
@@ -550,7 +595,6 @@ function DatasetData(props) {
               <Spacer x={0.2} />
               <Tooltip
                 content="Select a collection (array) of objects to display in a table format. 'Root' means the first level of the collection."
-
               >
                 <InfoCircle />
               </Tooltip>
@@ -564,10 +608,18 @@ function DatasetData(props) {
         </div>
         <div style={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
           <Dropdown>
-            <Dropdown.Trigger>
+            <Dropdown.Trigger type="text">
               <Input
-                value={(dataset.dateField && dataset.dateField.substring(dataset.dateField.lastIndexOf(".") + 1)) || "Select a field"}
+                type="text"
+                value={
+                  dateFieldFilter
+                  || dataset.dateField?.substring(dataset.dateField.lastIndexOf(".") + 1)
+                }
                 fullWidth
+                placeholder="Double-click to search"
+                onChange={(e) => setDateFieldFilter(e.target.value)}
+                ref={dateFieldRef}
+                contentRight={document.activeElement === dateFieldRef.current ? "↵" : null}
               />
             </Dropdown.Trigger>
             <Dropdown.Menu
@@ -576,15 +628,12 @@ function DatasetData(props) {
               selectionMode="single"
               css={{ minWidth: "max-content" }}
             >
-              {fieldOptions.map((option) => (
-                <Dropdown.Item key={option.value}>
-                  <Container css={{ p: 0, m: 0 }}>
-                    <Row>
-                      <Badge size="sm" color={option.label.color}>{option.label.content}</Badge>
-                      <Spacer x={0.2} />
-                      <Text>{option.text}</Text>
-                    </Row>
-                  </Container>
+              {_getDateFieldOptions().map((option) => (
+                <Dropdown.Item
+                  key={option.value}
+                  icon={<Badge size="xs" isSquared color={option.label.color}>{option.label.content}</Badge>}
+                >
+                  <Text>{option.text}</Text>
                 </Dropdown.Item>
               ))}
             </Dropdown.Menu>
@@ -613,10 +662,18 @@ function DatasetData(props) {
             </div>
             <div>
               <Dropdown>
-                <Dropdown.Trigger>
+                <Dropdown.Trigger type="text">
                   <Input
-                    value={(dataset.yAxis && dataset.yAxis.substring(dataset.yAxis.lastIndexOf(".") + 1)) || "Select a field"}
+                    type="text"
+                    value={
+                      yFieldFilter
+                      || dataset.yAxis?.substring(dataset.yAxis.lastIndexOf(".") + 1)
+                    }
                     fullWidth
+                    placeholder="Double-click to search"
+                    onChange={(e) => setYFieldFilter(e.target.value)}
+                    ref={yFieldRef}
+                    contentRight={document.activeElement === yFieldRef.current ? "↵" : null}
                   />
                 </Dropdown.Trigger>
                 <Dropdown.Menu
@@ -625,7 +682,7 @@ function DatasetData(props) {
                   selectionMode="single"
                   css={{ minWidth: "max-content" }}
                 >
-                  {fieldOptions.map((option) => (
+                  {_getYFieldOptions().map((option) => (
                     <Dropdown.Item key={option.value}>
                       <Container css={{ p: 0, m: 0 }}>
                         <Row>
@@ -900,7 +957,14 @@ function DatasetData(props) {
             <Dropdown>
               <Dropdown.Trigger>
                 <Input
-                  value={dataset.groupBy || "Group by"}
+                  value={
+                    groupByFilter
+                    || dataset.groupBy
+                  }
+                  placeholder="Double-click to search"
+                  onChange={(e) => setGroupByFilter(e.target.value)}
+                  ref={groupByRef}
+                  contentRight={document.activeElement === groupByRef.current ? "↵" : null}
                 />
               </Dropdown.Trigger>
               <Dropdown.Menu
@@ -910,14 +974,11 @@ function DatasetData(props) {
                 css={{ minWidth: "max-content" }}
               >
                 {_getGroupByFields().map((field) => (
-                  <Dropdown.Item key={field.value}>
-                    <Container css={{ p: 0, m: 0 }}>
-                      <Row>
-                        <Badge size="sm" color={field.label.color}>{field.label.content}</Badge>
-                        <Spacer x={0.2} />
-                        <Text>{field.text}</Text>
-                      </Row>
-                    </Container>
+                  <Dropdown.Item
+                    key={field.value}
+                    icon={<Badge size="xs" isSquared color={field.label.color}>{field.label.content}</Badge>}
+                  >
+                    <Text>{field.text}</Text>
                   </Dropdown.Item>
                 ))}
               </Dropdown.Menu>
