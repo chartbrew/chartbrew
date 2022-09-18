@@ -268,9 +268,10 @@ function Dataset(props) {
           </div>
         </Grid>
         <Grid xs={12} sm={6} md={6} className="dataset-manage-tut">
-          <Dropdown isDisabled={connections.length < 1}>
-            <Dropdown.Trigger>
+          <Dropdown isDisabled={connections.length < 1} isDismissable={false}>
+            <Dropdown.Trigger type="text">
               <Input
+                type="text"
                 placeholder="Select a connection"
                 value={
                   (newDataset.connection_id

@@ -4,7 +4,7 @@ import { Calendar } from "react-date-range";
 import { enGB } from "date-fns/locale";
 import { format, formatISO } from "date-fns";
 import {
-  Container, Row, Button, Dropdown, Spacer, Text,
+  Container, Row, Button, Dropdown, Spacer, Text, Input,
 } from "@nextui-org/react";
 import { Calendar as CalendarIcon, CloseSquare } from "react-iconly";
 
@@ -20,6 +20,7 @@ function ChartFilters(props) {
   } = props;
 
   const [calendarOpen, setCalendarOpen] = useState("");
+  const [optionFilter, setOptionFilter] = useState({});
 
   const _getDropdownOptions = (dataset, condition) => {
     const conditionOpt = dataset.conditions.find((c) => c.field === condition.field);
@@ -60,6 +61,14 @@ function ChartFilters(props) {
     return filterCount;
   };
 
+  const _getFilteredOptions = (filterOptions, cId) => {
+    if (!optionFilter[cId]) return filterOptions;
+
+    return filterOptions
+      .filter((o) => o.text
+        && o.text.toString().toLowerCase()?.includes(optionFilter[cId].toLowerCase()));
+  };
+
   return (
     <div>
       <Container css={{ pl: 0, pr: 0 }}>
@@ -81,17 +90,33 @@ function ChartFilters(props) {
                       <div style={{ display: "flex", alignItems: "center" }}>
                         {condition.type !== "date" && (
                           <Dropdown>
-                            <Dropdown.Button light color="primary">
-                              {_getConditionValue(condition.id) || condition.field.replace("root[].", "")}
-                            </Dropdown.Button>
+                            <Dropdown.Trigger type="text">
+                              <Input
+                                type="text"
+                                value={
+                                  optionFilter[condition.id]
+                                  || _getConditionValue(condition.id)
+                                }
+                                placeholder="Double-click to search"
+                                onChange={(e) => {
+                                  setOptionFilter({
+                                    ...optionFilter, [condition.id]: e.target.value
+                                  });
+                                }}
+                                bordered
+                              />
+                            </Dropdown.Trigger>
                             <Dropdown.Menu
                               selectedKeys={[`${_getConditionValue(condition.id)}`]}
                               onSelectionChange={(selection) => {
                                 _onOptionSelected(Object.values(selection)[0], condition);
+                                setOptionFilter({
+                                  ...optionFilter, [condition.id]: ""
+                                });
                               }}
                               selectionMode="single"
                             >
-                              {filterOptions.map((opt) => (
+                              {_getFilteredOptions(filterOptions, condition.id).map((opt) => (
                                 <Dropdown.Item key={opt.value}>
                                   {opt.text}
                                 </Dropdown.Item>
