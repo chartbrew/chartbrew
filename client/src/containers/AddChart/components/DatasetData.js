@@ -1001,7 +1001,7 @@ function DatasetData(props) {
         <Spacer y={1} />
       </Grid>
       {conditions && conditions.length === 0 && (
-        <Grid xs={12}>
+        <Grid xs={12} className="datasetdata-filters-tut">
           <Button
             bordered
             icon={<Filter />}

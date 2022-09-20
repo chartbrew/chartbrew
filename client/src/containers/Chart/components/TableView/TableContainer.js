@@ -35,8 +35,9 @@ function TableContainer(props) {
             <>
               <Button
                 onClick={() => setActiveDataset(dataset)}
-                bordered={activeDataset !== dataset}
-                flat={activeDataset === dataset}
+                color="primary"
+                light={activeDataset !== dataset}
+                bordered={activeDataset === dataset}
                 auto
                 key={dataset}
                 size={chartSize === 1 ? "xs" : "sm"}
@@ -54,8 +55,7 @@ function TableContainer(props) {
             onClick={() => _onExpand()}
             auto
             size={chartSize === 1 ? "xs" : "sm"}
-            bordered
-            css={{ border: "$accents6" }}
+            light
           >
             {expanded ? "See less" : "See more"}
           </Button>

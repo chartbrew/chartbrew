@@ -5,13 +5,11 @@ import { usePagination, useSortBy, useTable } from "react-table";
 import PropTypes from "prop-types";
 import {
   Dropdown, Row, Spacer, Text, Link as LinkNext, Table,
-  Popover, Pagination,
+  Popover, Pagination, Badge,
 } from "@nextui-org/react";
 import {
   ChevronDownCircle, ChevronUpCircle
 } from "react-iconly";
-
-import Badge from "../../../../components/Badge";
 
 const paginationOptions = [5, 10, 20, 30, 40, 50].map((pageSize) => ({
   key: pageSize,
@@ -68,6 +66,7 @@ function TableComponent(props) {
                     key={column.getHeaderProps(column.getSortByToggleProps()).key}
                     style={{ maxWidth: 400, whiteSpace: "unset" }}
                     justify="center"
+                    css={{ pl: 10, pr: 10 }}
                   >
                     <Row align="center">
                       {column.isSorted
@@ -112,11 +111,21 @@ function TableComponent(props) {
                       const isShort = isObject && Object.keys(objDetails).length === 1;
 
                       return (
-                        <Table.Cell collapsing {...cell.getCellProps()} style={{ maxWidth: 300 }} css={{ userSelect: "text" }}>
+                        <Table.Cell
+                          {...cell.getCellProps()}
+                          css={{
+                            userSelect: "text",
+                            maxWidth: 300,
+                            pr: 10,
+                            pl: 10,
+                            borderBottom: "$accents3 solid 1px",
+                            borderRight: "$accents3 solid 1px",
+                          }}
+                        >
                           {(!isObject && !isArray) && (
-                            <Text size={"0.9em"} title={cellObj.props.value}>
+                            <Text size={"0.9em"} title={cellObj.props.value} css={{ whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
                               <span
-                                style={{ cursor: "text", WebkitUserSelect: "text" }}
+                                style={{ cursor: "text", WebkitUserSelect: "text", whiteSpace: "nowrap" }}
                                 onPointerDown={(e) => e.stopPropagation()}
                                 onMouseDown={(e) => e.stopPropagation()}
                                 role="presentation"
@@ -129,7 +138,7 @@ function TableComponent(props) {
                           {(isObject || isArray) && (
                             <Popover>
                               <Popover.Trigger>
-                                <LinkNext><Badge>{(isShort && `${Object.values(objDetails)[0]}`) || "Collection"}</Badge></LinkNext>
+                                <LinkNext><Badge color="primary" variant={"flat"}>{(isShort && `${Object.values(objDetails)[0]}`) || "Collection"}</Badge></LinkNext>
                               </Popover.Trigger>
                               <Popover.Content>
                                 <pre><code>{JSON.stringify(objDetails, null, 4)}</code></pre>
@@ -152,10 +161,11 @@ function TableComponent(props) {
                 onChange={(page) => {
                   gotoPage(page - 1);
                 }}
+                size="sm"
               />
               <Spacer x={0.5} />
               <Dropdown>
-                <Dropdown.Button bordered>
+                <Dropdown.Button bordered size="sm">
                   {paginationOptions.find((option) => option.value === pageSize).text}
                 </Dropdown.Button>
                 <Dropdown.Menu
