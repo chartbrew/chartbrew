@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Doughnut } from "react-chartjs-2";
+import { useTheme } from "@nextui-org/react";
 
 import {
   Chart as ChartJS,
@@ -71,6 +72,21 @@ function DoughnutChart(props) {
     }
   }, [redraw]);
 
+  const { theme } = useTheme();
+
+  const _getChartOptions = () => {
+    // add any dynamic changes to the chartJS options here
+    if (chart.chartData?.options) {
+      const newOptions = { ...chart.chartData.options };
+      if (newOptions.plugins?.legend) {
+        newOptions.plugins.legend.labels.color = theme.colors.accents9.value;
+      }
+      return newOptions;
+    }
+
+    return chart.chartData?.options;
+  };
+
   return (
     <div>
       {chart.chartData.data && chart.chartData.data.labels && (
@@ -78,9 +94,9 @@ function DoughnutChart(props) {
           <Doughnut
             data={chart.chartData.data}
             options={{
-              ...chart.chartData.options,
+              ..._getChartOptions(),
               plugins: {
-                ...chart.chartData.options.plugins,
+                ..._getChartOptions().plugins,
                 datalabels: dataLabelsPlugin,
               },
             }}

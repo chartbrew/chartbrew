@@ -12,6 +12,7 @@ import {
   Legend,
   Filler,
 } from "chart.js";
+import { useTheme } from "@nextui-org/react";
 
 import KpiChartSegment from "./KpiChartSegment";
 import ChartErrorBoundary from "./ChartErrorBoundary";
@@ -34,6 +35,33 @@ function LineChart(props) {
     }
   }, [redraw]);
 
+  const { theme } = useTheme();
+
+  const _getChartOptions = () => {
+    // add any dynamic changes to the chartJS options here
+    if (chart.chartData?.options) {
+      const newOptions = { ...chart.chartData.options };
+      if (newOptions.scales?.y?.grid) {
+        newOptions.scales.y.grid.color = theme.colors.accents5.value;
+      }
+      if (newOptions.scales?.x?.grid) {
+        newOptions.scales.x.grid.color = theme.colors.accents5.value;
+      }
+      if (newOptions.scales?.y?.ticks) {
+        newOptions.scales.y.ticks.color = theme.colors.accents9.value;
+      }
+      if (newOptions.scales?.x?.ticks) {
+        newOptions.scales.x.ticks.color = theme.colors.accents9.value;
+      }
+      if (newOptions.plugins?.legend) {
+        newOptions.plugins.legend.labels.color = theme.colors.accents9.value;
+      }
+      return newOptions;
+    }
+
+    return chart.chartData?.options;
+  };
+
   return (
     <>
       {chart.mode === "kpi"
@@ -54,7 +82,7 @@ function LineChart(props) {
               <ChartErrorBoundary>
                 <Line
                   data={chart.chartData.data}
-                  options={chart.chartData.options}
+                  options={_getChartOptions()}
                   height={
                     height - (
                       (chart.mode === "kpichart" && chart.chartSize > 1 && 80)
