@@ -334,7 +334,7 @@ function UserDashboard(props) {
                                 <Row justify="flex-end" align="center">
                                   <Tooltip content="Rename the project">
                                     <Button
-                                      icon={<Edit />}
+                                      icon={<Edit set="light" />}
                                       light
                                       size="sm"
                                       css={{ minWidth: "fit-content" }}
@@ -347,7 +347,7 @@ function UserDashboard(props) {
                                   >
                                     <Button
                                       color="error"
-                                      icon={<Delete />}
+                                      icon={<Delete set="light" />}
                                       light
                                       size="sm"
                                       css={{ minWidth: "fit-content" }}

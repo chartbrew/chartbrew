@@ -665,6 +665,7 @@ function PublicDashboard(props) {
                   md={chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3}
                   key={chart.id}
                   className="chart-container"
+                  css={{ minHeight: 400, overflowY: "hidden" }}
                 >
                   <Chart
                     isPublic

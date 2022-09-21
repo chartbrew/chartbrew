@@ -44,10 +44,10 @@ function RadarChart(props) {
         newOptions.scales = {
           r: {
             grid: {
-              color: theme.colors.accents7.value,
+              color: theme.colors.accents5.value,
             },
             angleLines: {
-              color: theme.colors.accents7.value,
+              color: theme.colors.accents5.value,
             },
             pointLabels: {
               color: theme.colors.accents9.value,
