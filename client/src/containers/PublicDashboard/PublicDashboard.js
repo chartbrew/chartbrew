@@ -677,15 +677,24 @@ function PublicDashboard(props) {
               );
             })}
             {project.Team && project.Team.showBranding && (
-              <Grid xs={12} className="footer-content" justify="center">
+              <Grid xs={12} className="footer-content" justify="center" css={{ mt: 20 }}>
                 <Link
-                  css={{ color: newChanges.titleColor }}
+                  css={{ color: newChanges.titleColor, ai: "flex-start" }}
                   href={`https://chartbrew.com?ref=${project.brewName}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Text b css={{ color: newChanges.titleColor }}>
-                    Powered by Chartbrew
+                  <img
+                    src={logo}
+                    width="20"
+                    alt="Chartbrew logo"
+                  />
+                  <Spacer x={0.2} />
+                  <Text css={{ color: newChanges.titleColor }}>
+                    <strong>Chart</strong>
+                  </Text>
+                  <Text css={{ color: newChanges.titleColor }}>
+                    brew
                   </Text>
                 </Link>
               </Grid>

@@ -21,6 +21,7 @@ import PieChart from "./Chart/components/PieChart";
 import DoughnutChart from "./Chart/components/DoughnutChart";
 import RadarChart from "./Chart/components/RadarChart";
 import PolarChart from "./Chart/components/PolarChart";
+import logo from "../assets/logo_inverted.png";
 
 const pageHeight = window.innerHeight;
 
@@ -257,12 +258,18 @@ function EmbeddedChart(props) {
             )}
           </div>
           {chart.showBranding && (
-            <Text small css={{ color: "$accents6" }}>
-              {"Powered by "}
-              <Link href="https://chartbrew.com" target="_blank" rel="noreferrer" css={{ display: "inline-block", color: "$primary" }}>
-                Chartbrew
-              </Link>
-            </Text>
+            <Link href="https://chartbrew.com" target="_blank" rel="noreferrer" css={{ color: "$primary", ai: "flex-end" }}>
+              <img
+                src={logo}
+                width="15"
+                alt="Chartbrew logo"
+              />
+              <Spacer x={0.2} />
+              <Text small css={{ color: "$accents6" }}>
+                <strong>Chart</strong>
+                brew
+              </Text>
+            </Link>
           )}
         </Row>
       </Container>
