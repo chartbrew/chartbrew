@@ -47,6 +47,7 @@ class UserController {
           team_id: data.id,
           user_id: gNewUser.id,
           role: "owner",
+          canExport: true,
         };
         return db.TeamRole.create(teamRole);
       })
