@@ -34,7 +34,7 @@ function RealtimeDbConnectionForm(props) {
   const [errors, setErrors] = useState({});
   const [jsonVisible, setJsonVisible] = useState(false);
 
-  const { isDark } = useTheme();
+  const { isDark, theme } = useTheme();
 
   useEffect(() => {
     _init();
@@ -54,9 +54,9 @@ function RealtimeDbConnectionForm(props) {
     padding: "20px",
     borderWidth: 2,
     borderRadius: 2,
-    borderColor: "#eeeeee",
+    borderColor: theme.colors.accents6.value,
     borderStyle: "dashed",
-    backgroundColor: "#fafafa",
+    backgroundColor: theme.colors.backgroundContrast.value,
     color: blue,
     outline: "none",
     transition: "border .24s ease-in-out"
