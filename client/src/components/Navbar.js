@@ -5,10 +5,10 @@ import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
   Loading, Modal, Row, Container, Link as LinkNext, Image, Spacer,
-  Dropdown, Button, Navbar, Text, Grid, Card, useTheme,
+  Dropdown, Button, Navbar, Text, Grid, Card, useTheme, Tooltip,
 } from "@nextui-org/react";
 import {
-  Category, Discovery, Document, Edit, Heart, Logout, Send, Setting, Show, User
+  Category, Discovery, Document, Edit, Heart, Logout, Send, Setting, User
 } from "react-iconly";
 import { FaDiscord, FaGithub } from "react-icons/fa";
 import { BsSun, BsMoonFill } from "react-icons/bs";
@@ -105,7 +105,10 @@ function NavbarContainer(props) {
     if (mode === "dark") {
       darkMode.enable();
     } else {
-      darkMode.disable();
+      darkMode.enable();
+      setTimeout(() => {
+        darkMode.disable();
+      }, 100);
     }
   };
 
@@ -249,10 +252,22 @@ function NavbarContainer(props) {
               </Dropdown.Item>
             )}
 
-            <Dropdown.Item icon={<Show />} command="Beta">
-              <LinkNext onClick={() => setShowAppearance(true)} css={{ minWidth: "100%" }}>
+            <Dropdown.Item
+              icon={isDark
+                ? <BsSun style={{ marginLeft: 3 }} size={20} />
+                : <BsMoonFill style={{ marginLeft: 3 }} size={20} />}
+              command={(
+                <Tooltip content="Appearance settings">
+                  <LinkNext onClick={() => setShowAppearance(true)} color="primary">
+                    <Setting />
+                  </LinkNext>
+                </Tooltip>
+              )}
+            >
+              <LinkNext onClick={() => _setTheme(isDark ? "light" : "dark")}>
                 <Text css={{ color: "$text" }}>
-                  Appearance
+                  {isDark && "Light mode"}
+                  {!isDark && "Dark mode"}
                 </Text>
               </LinkNext>
             </Dropdown.Item>
