@@ -257,10 +257,12 @@ function NavbarContainer(props) {
                 ? <BsSun style={{ marginLeft: 3 }} size={20} />
                 : <BsMoonFill style={{ marginLeft: 3 }} size={20} />}
               command={(
-                <Tooltip content="Appearance settings">
-                  <LinkNext onClick={() => setShowAppearance(true)} color="primary">
-                    <Setting />
-                  </LinkNext>
+                <Tooltip content="Theme settings" css={{ zIndex: 999999 }} placement="leftEnd">
+                  <div>
+                    <LinkNext onClick={() => setShowAppearance(true)} color="primary">
+                      <Setting />
+                    </LinkNext>
+                  </div>
                 </Tooltip>
               )}
             >
