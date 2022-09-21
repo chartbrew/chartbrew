@@ -78,7 +78,7 @@ function DoughnutChart(props) {
     // add any dynamic changes to the chartJS options here
     if (chart.chartData?.options) {
       const newOptions = { ...chart.chartData.options };
-      if (newOptions.plugins?.legend) {
+      if (newOptions.plugins?.legend?.labels) {
         newOptions.plugins.legend.labels.color = theme.colors.accents9.value;
       }
       return newOptions;

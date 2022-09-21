@@ -55,7 +55,7 @@ function PolarChart(props) {
           }
         };
       }
-      if (newOptions.plugins?.legend) {
+      if (newOptions.plugins?.legend?.labels) {
         newOptions.plugins.legend.labels.color = theme.colors.accents9.value;
       }
 

@@ -53,7 +53,7 @@ function BarChart(props) {
       if (newOptions.scales?.x?.ticks) {
         newOptions.scales.x.ticks.color = theme.colors.accents9.value;
       }
-      if (newOptions.plugins?.legend) {
+      if (newOptions.plugins?.legend?.labels) {
         newOptions.plugins.legend.labels.color = theme.colors.accents9.value;
       }
       return newOptions;
