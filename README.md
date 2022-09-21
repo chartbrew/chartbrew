@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://chartbrew.com">
-    <img src="https://docs.chartbrew.com/assets/logo_full_3.png" alt="ChartBrew logo" width="250"/>
+    <img src="./docs/.vuepress/public/assets/logo_full_3.png" alt="ChartBrew logo" width="250"/>
   </a>
 </a>
 
@@ -24,7 +24,7 @@
 
 <p align="center">
   <a href="https://chartbrew.com">
-    <img src="https://cdn2.chartbrew.com/chartbrew-dashboard.jpg" alt="ChartBrew dashboard" width="600"/>
+    <img src="https://cdn2.chartbrew.com/v2-banner.png" alt="ChartBrew dashboard" width="600"/>
   </a>
 </p>
 
