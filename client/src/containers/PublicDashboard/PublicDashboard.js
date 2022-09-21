@@ -680,7 +680,7 @@ function PublicDashboard(props) {
               <Grid xs={12} className="footer-content" justify="center" css={{ mt: 20 }}>
                 <Link
                   css={{ color: newChanges.titleColor, ai: "flex-start" }}
-                  href={`https://chartbrew.com?ref=${project.brewName}`}
+                  href={"https://chartbrew.com?ref=chartbrew_os_report"}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
