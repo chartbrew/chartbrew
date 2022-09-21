@@ -78,7 +78,7 @@ function KpiMode(props) {
                 size={chart.chartSize === 1 ? "2.4em" : "2.6em"}
                 key={dataset.label}
               >
-                {dataset.data && _getKpi(dataset.data)}
+                {dataset.data && _getKpi(dataset.data)?.toLocaleString()}
               </Text>
             </Row>
 

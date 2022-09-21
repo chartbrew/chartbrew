@@ -31,7 +31,7 @@ function KpiChartSegment(props) {
             >
               <Row align="center">
                 <Text b size={chart.chartSize === 1 ? "1.2em" : "1.4em"}>
-                  {`${c.value} `}
+                  {`${c.value?.toLocaleString()} `}
                 </Text>
                 <Spacer x={0.2} />
                 {chart.showGrowth && (

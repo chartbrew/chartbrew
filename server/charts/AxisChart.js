@@ -467,7 +467,7 @@ class AxisChart {
             const newVal = parser.parse(expression);
             let parserResult = newVal.result;
             if (parserResult % 1 !== 0) {
-              parserResult = parserResult.toFixed(2);
+              parserResult = parserResult.toLocaleString("en-US");
             }
 
             let finalVal = `${before}${parserResult}${after}`;
@@ -583,7 +583,7 @@ class AxisChart {
           result *= 100;
 
           configuration.growth.push({
-            value: `${before}${currentValue}${after}`,
+            value: `${before}${currentValue.toLocaleString()}${after}`,
             comparison: (result === 0 && 0) || result.toFixed(2),
             status: (result > 0 && "positive") || (result < 0 && "negative") || "neutral",
             label: d.label,
@@ -606,7 +606,7 @@ class AxisChart {
         }
 
         configuration.growth.push({
-          value: `${before}${currentValue}${after}`,
+          value: `${before}${currentValue.toLocaleString()}${after}`,
           comparison: currentValue * 100,
           status: (currentValue > 0 && "positive") || (currentValue < 0 && "negative") || "neutral",
           label: d.label,
