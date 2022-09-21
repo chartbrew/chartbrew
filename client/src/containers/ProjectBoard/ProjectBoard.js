@@ -173,12 +173,12 @@ function ProjectBoard(props) {
             )} />
         </Switch>
       )}
+      <Navbar />
       {!isPrinting && (
         <>
           <Media greaterThan="mobile">
             {/* extract the navbar height from here */}
             <div style={{ height: height - 50 }}>
-              <Navbar />
               <Allotment
                 defaultSizes={[sideMinSize, sideMaxSize]}
               >
@@ -221,8 +221,6 @@ function ProjectBoard(props) {
           </Media>
 
           <Media at="mobile">
-            <Navbar />
-
             <Grid.Container>
               <Grid xs={12}>
                 <MainContent
