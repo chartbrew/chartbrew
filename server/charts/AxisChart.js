@@ -467,12 +467,12 @@ class AxisChart {
             const newVal = parser.parse(expression);
             let parserResult = newVal.result;
             if (parserResult % 1 !== 0) {
-              parserResult = parserResult.toLocaleString("en-US");
+              parserResult = parserResult.toFixed(2);
             }
 
-            let finalVal = `${before}${parserResult}${after}`;
+            let finalVal = `${before}${parserResult.toLocaleString()}${after}`;
             if (this.chart.mode !== "kpi") {
-              finalVal = parserResult;
+              finalVal = parserResult.toLocaleString();
             }
 
             return finalVal;
