@@ -465,14 +465,10 @@ class AxisChart {
             const expression = expressionString.replace(/val/g, val);
 
             const newVal = parser.parse(expression);
-            let parserResult = newVal.result;
-            if (parserResult % 1 !== 0) {
-              parserResult = parserResult.toFixed(2);
-            }
 
-            let finalVal = `${before}${parserResult.toLocaleString()}${after}`;
+            let finalVal = `${before}${+(newVal.result.toFixed(2)).toLocaleString()}${after}`;
             if (this.chart.mode !== "kpi") {
-              finalVal = parserResult.toLocaleString();
+              finalVal = +(newVal.result.toFixed(2)).toLocaleString();
             }
 
             return finalVal;
@@ -584,7 +580,7 @@ class AxisChart {
 
           configuration.growth.push({
             value: `${before}${currentValue.toLocaleString()}${after}`,
-            comparison: (result === 0 && 0) || result.toFixed(2),
+            comparison: (result === 0 && 0) || +(result.toFixed(2)).toLocaleString(),
             status: (result > 0 && "positive") || (result < 0 && "negative") || "neutral",
             label: d.label,
           });
