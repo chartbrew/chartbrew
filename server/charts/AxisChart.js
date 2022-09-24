@@ -283,9 +283,9 @@ class AxisChart {
             break;
           case "avg":
             if (yType === "array") {
-              yAxisData = this.count(xAxisData.formatted, yType, yAxisData, "avg", yAxis);
+              yAxisData = this.count(xAxisData.formatted, yType, yAxisData, "avg", yAxis, dataset.options.averageByTotal);
             } else {
-              yAxisData = this.operate(yAxisData, xAxisData.formatted, xType, yType, "avg", yAxis);
+              yAxisData = this.operate(yAxisData, xAxisData.formatted, xType, yType, "avg", yAxis, dataset.options.averageByTotal);
             }
             break;
           case "sum":
@@ -735,7 +735,7 @@ class AxisChart {
   }
 
   /* OPERATIONS */
-  operate(data, xData, xType, yType, op, yAxis) {
+  operate(data, xData, xType, yType, op, yAxis, averageByTotal) {
     const yData = {};
     data.map((item, index) => {
       let key = item.x;
@@ -751,6 +751,7 @@ class AxisChart {
     });
 
     const finalData = {};
+    let totalNumberOfItems = 0;
     Object.keys(yData).forEach((key) => {
       let finalItem = yData[key];
 
@@ -793,9 +794,13 @@ class AxisChart {
         finalItem = finalItem[yData[key].length - 1];
         if (op === "sum" && yType === "number") finalItem = _.reduce(yData[key], (sum, n) => sum + n);
         if (op === "avg" && yType === "number") {
-          finalItem = _.reduce(yData[key], (avg, n) => avg + n);
-          finalItem /= yData[key].length;
-          finalItem = parseFloat(finalItem.toFixed(2));
+          if (averageByTotal) {
+            totalNumberOfItems += yData[key].length;
+          } else {
+            finalItem = _.reduce(yData[key], (avg, n) => avg + n);
+            finalItem /= yData[key].length;
+            finalItem = parseFloat(finalItem.toFixed(2));
+          }
         }
         if (op === "min") finalItem = _.min(yData[key]);
         if (op === "max") finalItem = _.max(yData[key]);
@@ -803,6 +808,13 @@ class AxisChart {
 
       finalData[key] = finalItem;
     });
+
+    if (averageByTotal) {
+      Object.keys(finalData).forEach((key) => {
+        finalData[key] /= totalNumberOfItems;
+        finalData[key] = parseFloat(finalData[key].toFixed(2));
+      });
+    }
 
     return finalData;
   }

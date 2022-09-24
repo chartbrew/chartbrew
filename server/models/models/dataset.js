@@ -176,7 +176,11 @@ module.exports = (sequelize, DataTypes) => {
       set(val) {
         return this.setDataValue("columnsOrder", JSON.stringify(val));
       }
-    }
+    },
+    averageByTotal: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   }, {
     freezeTableName: true,
   });

@@ -14,7 +14,7 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import update from "immutability-helper";
 import {
   Button, Collapse, Container, Dropdown, Grid, Input, Link, Loading,
-  Popover, Row, Spacer, Text, Tooltip, Divider, Badge,
+  Popover, Row, Spacer, Text, Tooltip, Divider, Badge, Switch,
 } from "@nextui-org/react";
 import { HiRefresh } from "react-icons/hi";
 import { TbDragDrop } from "react-icons/tb";
@@ -785,6 +785,17 @@ function DatasetData(props) {
                 </>
               )}
             </div>
+            <Spacer y={0.5} />
+            {dataset.yAxisOperation === "avg" && (
+              <div>
+                <Text size={14}>Average by the total items on the chart</Text>
+                <Switch
+                  size="sm"
+                  checked={dataset.averageByTotal}
+                  onChange={() => onUpdate({ averageByTotal: !dataset.averageByTotal })}
+                />
+              </div>
+            )}
           </Grid>
           <Grid xs={12} css={{ mt: 10 }}>
             {!formula && (
