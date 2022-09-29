@@ -86,6 +86,7 @@ class UserController {
         const promises = [];
         projects.forEach((project) => {
           promises.push(db.Chart.destroy({ where: { "project_id": project.id } }));
+          promises.push(db.Connection.destroy({ where: { "project_id": project.id } }));
         });
         promises.push(db.Project.destroy({ where: { "team_id": gTeam } }));
 
