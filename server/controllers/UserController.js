@@ -60,9 +60,42 @@ class UserController {
   }
 
   deleteUser(id) {
-    return db.User.destroy({ where: { id } })
+    let gTeam;
+    return db.SavedQuery.destroy({ where: { "user_id": id } })
       .then(() => {
-        return true;
+        return db.TeamRole.findAll({ where: { "user_id": id } });
+      })
+      .then((teamRoles) => {
+        const promises = [];
+        if (teamRoles.length > 0) {
+          teamRoles.forEach((tr) => {
+            if (tr.role === "owner") {
+              gTeam = tr.team_id;
+              promises.push(db.Team.destroy({ where: { "id": tr.team_id } }));
+            }
+            promises.push(db.TeamRole.destroy({ where: { "user_id": id } }));
+          });
+        }
+
+        return Promise.all(promises);
+      })
+      .then(() => {
+        return db.Project.findAll({ where: { "team_id": gTeam } });
+      })
+      .then((projects) => {
+        const promises = [];
+        projects.forEach((project) => {
+          promises.push(db.Chart.destroy({ where: { "project_id": project.id } }));
+        });
+        promises.push(db.Project.destroy({ where: { "team_id": gTeam } }));
+
+        return Promise.all(promises);
+      })
+      .then(() => {
+        return db.User.destroy({ where: { id } });
+      })
+      .then(() => {
+        return { deleted: true };
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
