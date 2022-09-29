@@ -106,7 +106,7 @@ function PaginateStripe(options, limit, totalResults) {
   return request(options)
     .then((response) => {
       // introduce a delay so Stripe doesn't shut down the request
-      return new Promise((resolve) => setTimeout(() => resolve(response), 1200));
+      return new Promise((resolve) => setTimeout(() => resolve(response), 1500));
     })
     .then((response) => {
       try {
