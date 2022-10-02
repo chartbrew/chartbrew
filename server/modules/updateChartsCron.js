@@ -4,9 +4,21 @@ const { Op } = require("sequelize");
 
 const ChartController = require("../controllers/ChartController");
 
-function updateCharts() {
-  const chartController = new ChartController();
+const chartController = new ChartController();
 
+function runUpdate(chart) {
+  if (moment(chart.lastAutoUpdate).add(chart.autoUpdate, "seconds").isBefore(moment())) {
+    chartController.update(chart.id, { lastAutoUpdate: moment() })
+      .then(() => {
+        return chartController.updateChartData(chart.id, null, {});
+      })
+      .catch(() => {
+        // console.log("error with chart", chart.id);
+      });
+  }
+}
+
+function updateCharts() {
   const conditions = {
     where: {
       autoUpdate: { [Op.gt]: 0 }
@@ -20,18 +32,11 @@ function updateCharts() {
         return new Promise((resolve) => resolve({ completed: true }));
       }
 
-      let queuedUpdates = 0;
       charts.forEach((chart) => {
-        if (moment(chart.lastAutoUpdate).add(chart.autoUpdate, "seconds").isBefore(moment())) {
-          queuedUpdates++;
-          chartController.updateChartData(chart.id, null, {})
-            .catch(() => { });
-          chartController.update(chart.id, { lastAutoUpdate: moment() })
-            .catch(() => { });
-        }
+        runUpdate(chart);
       });
 
-      return { completed: true, queuedUpdates };
+      return { completed: true };
     })
     .catch((error) => {
       return new Promise((resolve, reject) => reject(error));
