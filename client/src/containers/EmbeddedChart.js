@@ -165,7 +165,7 @@ function EmbeddedChart(props) {
                       </Link>
                     </Popover.Trigger>
                     <Popover.Content>
-                      <Container>
+                      <Container css={{ pt: 10, pb: 10 }}>
                         <ChartFilters
                           chart={chart}
                           onAddFilter={_onAddFilter}
@@ -237,6 +237,7 @@ function EmbeddedChart(props) {
             height={pageHeight - 100}
             tabularData={chart.chartData}
             embedded
+            datasets={chart.Datasets}
           />
         </Container>
         )}
