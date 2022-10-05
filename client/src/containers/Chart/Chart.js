@@ -680,6 +680,7 @@ function Chart(props) {
                       height={height - 55}
                       tabularData={chart.chartData}
                       chartSize={chart.chartSize}
+                      datasets={chart.Datasets}
                     />
                   )}
                 {chart.type === "avg"

@@ -485,6 +485,7 @@ function AddChart(props) {
                 onAddFilter={_onAddFilter}
                 onClearFilter={_onClearFilter}
                 conditions={conditions}
+                datasets={datasets}
               />
             </Row>
             <Spacer y={1} />

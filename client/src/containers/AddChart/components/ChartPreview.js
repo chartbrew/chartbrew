@@ -44,7 +44,7 @@ const chartModes = [{
 
 function ChartPreview(props) {
   const {
-    chart, onChange, onRefreshData, onRefreshPreview, chartLoading,
+    chart, onChange, onRefreshData, onRefreshPreview, chartLoading, datasets,
   } = props;
 
   const [redraw, setRedraw] = useState(false);
@@ -199,6 +199,7 @@ function ChartPreview(props) {
                 <div>
                   <TableContainer
                     tabularData={chart.chartData}
+                    datasets={datasets}
                     height={400}
                     editMode
                   />
@@ -470,6 +471,7 @@ ChartPreview.propTypes = {
   onChange: PropTypes.func.isRequired,
   onRefreshData: PropTypes.func.isRequired,
   onRefreshPreview: PropTypes.func.isRequired,
+  datasets: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {

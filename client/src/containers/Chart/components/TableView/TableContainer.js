@@ -9,19 +9,19 @@ import TableComponent from "./TableComponent";
 
 function TableContainer(props) {
   const {
-    tabularData, height, embedded, chartSize
+    tabularData, height, embedded, chartSize, datasets,
   } = props;
 
-  const [activeDataset, setActiveDataset] = useState("");
+  const [activeDataset, setActiveDataset] = useState(null);
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
-    if (tabularData && !activeDataset) {
-      setActiveDataset(Object.keys(tabularData)[0]);
-    } else if (!tabularData[activeDataset]) {
-      setActiveDataset(Object.keys(tabularData)[0]);
+    if (datasets && datasets[0] && !activeDataset) {
+      setActiveDataset(datasets[0]);
+    } else if (activeDataset) {
+      setActiveDataset(datasets.find((d) => d.id === activeDataset.id));
     }
-  }, [tabularData]);
+  }, [datasets]);
 
   const _onExpand = () => {
     setExpanded(!expanded);
@@ -30,19 +30,19 @@ function TableContainer(props) {
   return (
     <div>
       <Row align="center">
-        {Object.keys(tabularData).map((dataset) => {
+        {activeDataset && datasets.map((dataset) => {
           return (
             <>
               <Button
                 onClick={() => setActiveDataset(dataset)}
                 color="primary"
-                light={activeDataset !== dataset}
-                bordered={activeDataset === dataset}
+                light={activeDataset.id !== dataset.id}
+                bordered={activeDataset.id === dataset.id}
                 auto
-                key={dataset}
+                key={dataset.id}
                 size={chartSize === 1 ? "xs" : "sm"}
               >
-                {dataset}
+                {dataset.legend}
               </Button>
               <Spacer x={0.2} />
             </>
@@ -62,14 +62,18 @@ function TableContainer(props) {
         )}
       </Row>
       <Spacer y={0.5} />
-      {activeDataset && tabularData[activeDataset] && tabularData[activeDataset].columns && (
-        <TableComponent
-          height={expanded ? height + 200 : chartSize > 1 ? height + 3 : height + 12}
-          columns={tabularData[activeDataset].columns}
-          data={tabularData[activeDataset].data}
-          embedded={embedded}
-        />
-      )}
+      {activeDataset?.legend
+        && tabularData[activeDataset.legend]
+        && tabularData[activeDataset.legend].columns
+        && (
+          <TableComponent
+            height={expanded ? height + 200 : chartSize > 1 ? height + 3 : height + 12}
+            columns={tabularData[activeDataset.legend].columns}
+            data={tabularData[activeDataset.legend].data}
+            embedded={embedded}
+            dataset={activeDataset}
+          />
+        )}
     </div>
   );
 }
@@ -82,6 +86,7 @@ TableContainer.defaultProps = {
 TableContainer.propTypes = {
   tabularData: PropTypes.object.isRequired,
   chartSize: PropTypes.number.isRequired,
+  datasets: PropTypes.array.isRequired,
   height: PropTypes.number,
   embedded: PropTypes.bool,
 };

@@ -20,7 +20,7 @@ import { HiRefresh } from "react-icons/hi";
 import { TbDragDrop } from "react-icons/tb";
 import {
   CaretDown, CaretUp, ChevronRight, CloseSquare, Filter, Hide,
-  InfoCircle, Plus, Setting, Show, TickSquare, Calendar as CalendarIcon,
+  InfoCircle, Plus, Setting, Show, TickSquare, Calendar as CalendarIcon, ChevronDownCircle,
 } from "react-iconly";
 import { FaMagic, FaRedo } from "react-icons/fa";
 
@@ -358,6 +358,19 @@ function DatasetData(props) {
     const index = _.indexOf(excludedFields, field);
     excludedFields.splice(index, 1);
     onUpdate({ excludedFields });
+  };
+
+  const _onSumField = (field) => {
+    if (dataset.configuration) {
+      const newConfiguration = { ...dataset.configuration };
+      newConfiguration.sum = field;
+      if (dataset.configuration.sum === field) {
+        delete newConfiguration.sum;
+      }
+      onUpdate({ configuration: newConfiguration });
+    } else {
+      onUpdate({ configuration: { sum: field } });
+    }
   };
 
   const _filterOptions = (axis) => {
@@ -867,7 +880,16 @@ function DatasetData(props) {
                       {tableFields.map((field) => {
                         if (!field || !field.accessor || field.Header.indexOf("__cb_group") > -1) return (<span />);
                         return (
-                          <Badge color="primary">
+                          <Badge
+                            color="primary"
+                            css={{
+                              border: dataset?.configuration?.sum === field.accessor
+                                ? "solid 2px $secondary"
+                                : "solid 2px $border",
+                              mr: 3,
+                            }}
+                            style={{ marginBottom: 3 }}
+                          >
                             <Link
                               css={{ ai: "center" }}
                               onClick={() => _onExcludeField(field.accessor)}
@@ -875,8 +897,35 @@ function DatasetData(props) {
                             >
                               <Show primaryColor="white" />
                             </Link>
-                            <Spacer x={0.1} />
+                            <Spacer x={0.2} />
                             {`${field.accessor.replace("?", ".")}`}
+                            <Spacer x={0.2} />
+                            <Dropdown>
+                              <Dropdown.Trigger>
+                                <Link
+                                  css={{ ai: "center" }}
+                                  title="Sum values on this field"
+                                >
+                                  <ChevronDownCircle primaryColor="white" />
+                                </Link>
+                              </Dropdown.Trigger>
+                              <Dropdown.Menu>
+                                <Dropdown.Item>
+                                  <Link css={{ width: "100%" }} onClick={() => _onSumField(field.accessor)}>
+                                    {dataset.configuration
+                                      && dataset.configuration.sum === field.accessor
+                                      && (
+                                        <Text>Disable sum calculation</Text>
+                                      )}
+                                    {(!dataset.configuration
+                                      || dataset.configuration.sum !== field.accessor)
+                                      && (
+                                        <Text>Enable sum calculation</Text>
+                                      )}
+                                  </Link>
+                                </Dropdown.Item>
+                              </Dropdown.Menu>
+                            </Dropdown>
                           </Badge>
                         );
                       })}
@@ -966,8 +1015,9 @@ function DatasetData(props) {
           </Grid>
           <Grid xs={12} alignItems="center">
             <Dropdown>
-              <Dropdown.Trigger>
+              <Dropdown.Trigger type="text">
                 <Input
+                  type="text"
                   value={
                     groupByFilter
                     || dataset.groupBy
