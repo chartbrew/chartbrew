@@ -176,7 +176,7 @@ function TableComponent(props) {
               <Row justify="flex-end" align="center" css={{ pl: 20, pr: 20 }}>
                 <Text>{`Total ${dataset.configuration.sum}:`}</Text>
                 <Spacer x={0.3} />
-                <Text b>{totalValue}</Text>
+                <Text b>{totalValue.toLocaleString()}</Text>
               </Row>
               <Spacer y={0.5} />
             </div>
