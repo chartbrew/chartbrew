@@ -1013,46 +1013,59 @@ function DatasetData(props) {
               </Collapse>
             </Collapse.Group>
           </Grid>
-          <Grid xs={12} alignItems="center">
-            <Dropdown>
-              <Dropdown.Trigger type="text">
-                <Input
-                  type="text"
-                  value={
-                    groupByFilter
-                    || dataset.groupBy
-                  }
-                  placeholder="Double-click to search"
-                  onChange={(e) => setGroupByFilter(e.target.value)}
-                  ref={groupByRef}
-                  contentRight={document.activeElement === groupByRef.current ? "↵" : null}
-                />
-              </Dropdown.Trigger>
-              <Dropdown.Menu
-                onAction={(key) => _onChangeGroupBy(null, key)}
-                selectedKeys={[dataset.groupBy]}
-                selectionMode="single"
-                css={{ minWidth: "max-content" }}
-              >
-                {_getGroupByFields().map((field) => (
-                  <Dropdown.Item
-                    key={field.value}
-                    icon={<Badge size="xs" isSquared color={field.label.color}>{field.label.content}</Badge>}
-                  >
-                    <Text>{field.text}</Text>
-                  </Dropdown.Item>
-                ))}
-              </Dropdown.Menu>
-            </Dropdown>
-            <Spacer x={0.2} />
-            <Tooltip content="Clear the grouping">
-              <Link
-                color="error"
-                onClick={_onChangeGroupBy}
-              >
-                <CloseSquare />
-              </Link>
-            </Tooltip>
+          <Grid xs={12} direction="column">
+            <div>
+              <Text size={14}>{"Group by"}</Text>
+            </div>
+            <div style={styles.rowDisplay}>
+              <Dropdown>
+                <Dropdown.Trigger type="text">
+                  <Input
+                    type="text"
+                    value={
+                      groupByFilter
+                      || dataset.groupBy
+                      || ""
+                    }
+                    placeholder="Double-click to search"
+                    onChange={(e) => setGroupByFilter(e.target.value)}
+                    ref={groupByRef}
+                    contentRight={document.activeElement === groupByRef.current ? "↵" : null}
+                  />
+                </Dropdown.Trigger>
+                <Dropdown.Menu
+                  onAction={(key) => {
+                    if (key !== "$.0") _onChangeGroupBy(null, key);
+                  }}
+                  selectedKeys={[dataset.groupBy]}
+                  selectionMode="single"
+                  css={{ minWidth: "max-content" }}
+                >
+                  {_getGroupByFields().map((field) => (
+                    <Dropdown.Item
+                      key={field.value}
+                      icon={<Badge size="xs" isSquared color={field.label.color}>{field.label.content}</Badge>}
+                    >
+                      <Text>{field.text}</Text>
+                    </Dropdown.Item>
+                  ))}
+                  {_getGroupByFields().length === 0 && (
+                    <Dropdown.Item>
+                      <Text>No fields available</Text>
+                    </Dropdown.Item>
+                  )}
+                </Dropdown.Menu>
+              </Dropdown>
+              <Spacer x={0.2} />
+              <Tooltip content="Clear the grouping">
+                <Link
+                  color="error"
+                  onClick={_onChangeGroupBy}
+                >
+                  <CloseSquare />
+                </Link>
+              </Tooltip>
+            </div>
           </Grid>
         </>
       )}
