@@ -773,7 +773,11 @@ class AxisChart {
           }
         });
 
-        if (op === "avg") {
+        if (averageByTotal) {
+          totalNumberOfItems += collection.length;
+        }
+
+        if (op === "avg" && !averageByTotal) {
           finalItem = nestedResult / collection.length;
         } else if (op === "min") {
           if (nestedResult < minValue || (!minValue && minValue !== 0)) {
