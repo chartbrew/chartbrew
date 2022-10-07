@@ -45,13 +45,6 @@ function ChartMogulTemplate(props) {
   const _onGenerateDashboard = () => {
     setErrors({});
 
-    if (formVisible && !connection.token) {
-      setTimeout(() => {
-        setErrors({ ...errors, token: "Please enter your ChartMogul account token" });
-      }, 100);
-      return;
-    }
-
     if (formVisible && !connection.key) {
       setTimeout(() => {
         setErrors({ ...errors, key: "Please enter your ChartMogul account API key" });
@@ -254,7 +247,7 @@ function ChartMogulTemplate(props) {
                 placeholder="de2bf2bc6de5266d11ea6b918b674780"
                 value={connection.key || ""}
                 onChange={(e) => {
-                  setConnection({ ...connection, token: e.target.value });
+                  setConnection({ ...connection, key: e.target.value, token: e.target.value });
                 }}
                 helperColor="error"
                 helperText={errors.key}
@@ -366,9 +359,9 @@ function ChartMogulTemplate(props) {
         <Spacer y={2} />
         <Row>
           <Button
-            disabled={(
-              (!connection.token || !connection.key) && formVisible)
-              || selectedCharts.length === 0}
+            disabled={
+              (!connection.key && formVisible) || selectedCharts.length === 0
+            }
             onClick={_onGenerateDashboard}
             auto
           >
