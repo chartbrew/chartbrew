@@ -147,6 +147,16 @@ docker run -p 4019:4019 -p 4018:4018 \
   razvanilin/chartbrew:latest-arm64
 ```
 
+### Changing environmental variables
+
+If you want to run your Docker image with new environmental variables, it's important to build the client application again withing the image. This is done by running the following command:
+
+```sh
+# replace 'your_container_name' with the name of your docker container where Chartbrew is running
+
+docker exec -it -w /code/client your_container_name npm run build
+```
+
 ## Deploy Chartbrew on Heroku and Vercel
 
 [Read more on how to do this here](https://chartbrew.com/blog/how-to-deploy-chartbrew-on-heroku-and-vercel/)
