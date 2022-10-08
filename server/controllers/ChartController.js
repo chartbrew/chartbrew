@@ -83,7 +83,7 @@ class ChartController {
   findByProject(projectId) {
     return db.Chart.findAll({
       where: { project_id: projectId },
-      order: [["dashboardOrder", "ASC"]],
+      order: [["dashboardOrder", "ASC"], [db.Dataset, "order", "ASC"]],
       include: [{ model: db.Dataset }, { model: db.Chartshare }],
     })
       .then((charts) => {
@@ -98,6 +98,7 @@ class ChartController {
     const query = {
       where: { id },
       include: [{ model: db.Dataset }, { model: db.Chartshare }],
+      order: [[db.Dataset, "order", "ASC"]],
     };
 
     return db.Chart.findOne(customQuery || query)
@@ -640,6 +641,7 @@ class ChartController {
     return db.Chart.findAll({
       where: { id: chartIds },
       include: [{ model: db.Dataset }],
+      order: [[db.Dataset, "order", "ASC"]],
     })
       .then((charts) => {
         const dataPromises = [];

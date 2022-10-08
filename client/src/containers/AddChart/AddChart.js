@@ -4,10 +4,11 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Container, Link as LinkNext, Grid, Spacer, Tooltip, Row, Input, Button,
-  Switch, Text, Loading, Modal, Divider,
+  Switch, Text, Loading, Modal, Divider, Badge,
 } from "@nextui-org/react";
 import {
-  ChevronRight, Discovery, Edit, Plus,
+  ChevronLeftCircle,
+  ChevronRight, ChevronRightCircle, CloseSquare, Discovery, Edit, Plus, Swap, TickSquare,
 } from "react-iconly";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
@@ -64,6 +65,9 @@ function AddChart(props) {
   const [resetingTutorial, setResetingTutorial] = useState(false);
   const [conditions, setConditions] = useState([]);
   const [updatingDataset, setUpdatingDataset] = useState(false);
+  const [arrangeMode, setArrangeMode] = useState(false);
+  const [datasetsOrder, setDatasetsOrder] = useState([]);
+  const [arrangementLoading, setArrangementLoading] = useState(false);
 
   const { height } = useWindowSize();
 
@@ -124,6 +128,14 @@ function AddChart(props) {
     });
     if (!found) setSaveRequired(false);
   }, [newChart]);
+
+  useEffect(() => {
+    if (datasets.length > 0) {
+      const dOrder = [];
+      datasets.forEach((d) => dOrder.push(d));
+      setDatasetsOrder(dOrder);
+    }
+  }, [datasets]);
 
   const _onDatasetChanged = (dataset) => {
     setActiveDataset(dataset);
@@ -376,6 +388,51 @@ function AddChart(props) {
     runQueryWithFilters(match.params.projectId, newChart.id, [condition]);
   };
 
+  const _onSaveArrangement = () => {
+    const promiseData = [];
+    setArrangementLoading(true);
+
+    datasetsOrder.forEach((d, index) => {
+      promiseData.push(
+        updateDataset(
+          match.params.projectId,
+          match.params.chartId,
+          d.id,
+          { order: index },
+        ),
+      );
+    });
+
+    Promise.all(promiseData)
+      .then(() => {
+        setArrangementLoading(false);
+        setArrangeMode(false);
+        _onRefreshData(true);
+        getChartDatasets(match.params.projectId, match.params.chartId);
+      })
+      .catch(() => {
+        toast.error("Oups! Can't save the arrangement. Please try again.");
+        setArrangeMode(false);
+        setArrangementLoading(false);
+      });
+  };
+
+  const _changeDatasetOrder = (dId, direction) => {
+    const newDatasetsOrder = [...datasetsOrder];
+    const index = _.findIndex(datasetsOrder, { id: dId });
+    if (direction === "up") {
+      if (index === 0) return;
+      newDatasetsOrder[index] = datasetsOrder[index - 1];
+      newDatasetsOrder[index - 1] = datasetsOrder[index];
+    } else {
+      if (index === datasetsOrder.length - 1) return;
+      newDatasetsOrder[index] = datasetsOrder[index + 1];
+      newDatasetsOrder[index + 1] = datasetsOrder[index];
+    }
+
+    setDatasetsOrder(newDatasetsOrder);
+  };
+
   if (titleScreen) {
     return (
       <div style={{ textAlign: "center" }}>
@@ -544,7 +601,7 @@ function AddChart(props) {
             <Divider />
             <Spacer y={0.5} />
             <Row wrap="wrap">
-              {datasets && datasets.map((dataset) => {
+              {!arrangeMode && datasets && datasets.map((dataset) => {
                 return (
                   <>
                     <Button
@@ -560,19 +617,81 @@ function AddChart(props) {
                   </>
                 );
               })}
+              {arrangeMode && datasets && datasetsOrder.map((dataset, index) => {
+                return (
+                  <>
+                    <Badge
+                      style={styles.datasetButtons}
+                      key={dataset.id}
+                      isSquared
+                      variant={"bordered"}
+                      color="primary"
+                      size="sm"
+                    >
+                      {index > 0 && (
+                        <LinkNext onClick={() => _changeDatasetOrder(dataset.id, "up")}>
+                          <ChevronLeftCircle size={16} />
+                        </LinkNext>
+                      )}
+                      <Spacer x={0.2} />
+                      {dataset.legend}
+                      <Spacer x={0.2} />
+                      {index < datasetsOrder.length - 1 && (
+                        <LinkNext onClick={() => _changeDatasetOrder(dataset.id, "down")}>
+                          <ChevronRightCircle size={16} />
+                        </LinkNext>
+                      )}
+                    </Badge>
+                  </>
+                );
+              })}
             </Row>
 
-            <Row align="center">
+            <Row align="center" justify="space-between">
               {!addingDataset && datasets.length > 0 && (
-                <Button
-                  onClick={() => _onSaveNewDataset()}
-                  icon={!savingDataset ? <Plus /> : <Loading type="spinner" />}
-                  auto
-                  bordered
-                  css={{ border: "none", p: 0 }}
-                >
-                  {!savingDataset ? <Text>{"Add a new dataset"}</Text> : <Text>{"Saving dataset"}</Text>}
-                </Button>
+                <>
+                  <div>
+                    <Button
+                      onClick={() => _onSaveNewDataset()}
+                      icon={!savingDataset ? <Plus /> : <Loading type="spinner" />}
+                      auto
+                      color="primary"
+                      light
+                    >
+                      {!savingDataset ? <Text>{"Add a new dataset"}</Text> : <Text>{"Saving dataset"}</Text>}
+                    </Button>
+                  </div>
+                  <div style={{ display: "flex", "flexDirection": "row", justifyContent: "flex-end" }}>
+                    <Tooltip content={!arrangeMode ? "Arrange datasets" : "Save arrangement"} placement="leftStart">
+                      <Button
+                        onClick={() => {
+                          if (!arrangeMode) setArrangeMode(true);
+                          else _onSaveArrangement();
+                        }}
+                        icon={arrangeMode && arrangementLoading
+                          ? <Loading type="spinner" />
+                          : arrangeMode && !arrangementLoading
+                            ? <TickSquare /> : <Swap />}
+                        auto
+                        color={arrangeMode ? "success" : "primary"}
+                        light
+                      />
+                    </Tooltip>
+                    {arrangeMode && (
+                      <>
+                        <Tooltip content="Cancel arrangement" placement="leftStart">
+                          <Button
+                            onClick={() => setArrangeMode(false)}
+                            icon={<CloseSquare />}
+                            light
+                            color="warning"
+                            auto
+                          />
+                        </Tooltip>
+                      </>
+                    )}
+                  </div>
+                </>
               )}
 
               {!addingDataset && datasets.length === 0 && (

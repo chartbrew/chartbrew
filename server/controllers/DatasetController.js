@@ -22,6 +22,7 @@ class DatasetController {
   findByChart(chartId) {
     return db.Dataset.findAll({
       where: { chart_id: chartId },
+      order: [["order", "ASC"]],
     })
       .then((datasets) => {
         return datasets;

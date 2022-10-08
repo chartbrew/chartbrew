@@ -194,6 +194,10 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+    order: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
   }, {
     freezeTableName: true,
   });

@@ -30,6 +30,7 @@ module.exports.getDashboardModel = (projectId) => {
   };
   return db.Chart.findAll({
     where: { project_id: projectId },
+    order: [[db.Dataset, "order", "ASC"]],
     attributes: { exclude: ["id", "project_id", "chartData", "createdAt", "updatedAt", "lastAutoUpdate", "chartDataUpdated"] },
     include: [{
       model: db.Dataset,

@@ -23,6 +23,7 @@ class ProjectController {
   findById(id) {
     return db.Project.findOne({
       where: { id },
+      order: [[db.Chart, db.Dataset, "order", "ASC"]],
       include: [
         { model: db.Connection, attributes: ["id", "project_id", "name", "type"] },
         { model: db.Chart, include: [{ model: db.Dataset }] }
@@ -186,7 +187,7 @@ class ProjectController {
           model: db.Chart,
           attributes: { exclude: ["query"] },
           where: { onReport: true },
-          include: [{ model: db.Dataset }],
+          include: [{ model: db.Dataset, order: [["order", "ASC"]] }],
         },
         {
           model: db.Team,
