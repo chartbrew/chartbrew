@@ -7,15 +7,55 @@ const ChartController = require("../controllers/ChartController");
 const chartController = new ChartController();
 
 function runUpdate(chart) {
+  return chartController.updateChartData(chart.id, null, {})
+    .then(() => {
+      return true;
+    })
+    .catch(() => {
+      return true;
+    });
+}
+
+function updateDate(chart) {
   if (moment(chart.lastAutoUpdate).add(chart.autoUpdate, "seconds").isBefore(moment())) {
-    chartController.update(chart.id, { lastAutoUpdate: moment() })
+    return chartController.update(chart.id, { lastAutoUpdate: moment() })
       .then(() => {
-        return chartController.updateChartData(chart.id, null, {});
+        return true;
       })
       .catch(() => {
-        // console.log("error with chart", chart.id);
+        return true;
       });
   }
+
+  return true;
+}
+
+async function throttleUpdates(updates, index, steps = 20) {
+  if (index >= updates.length) {
+    return "done";
+  }
+
+  // select the next 20 updates
+  const nextUpdates = updates.slice(index, index + steps);
+  const updatePromises = nextUpdates.map((update) => runUpdate(update));
+
+  const result = await Promise.all(updatePromises); // eslint-disable-line
+
+  return throttleUpdates(updates, index + steps);
+}
+
+async function throttleUpdateDates(updates, index, steps = 20) {
+  if (index >= updates.length) {
+    return "done";
+  }
+
+  // select the next 20 updates
+  const nextUpdates = updates.slice(index, index + steps);
+  const updatePromises = nextUpdates.map((update) => updateDate(update));
+
+  const result = await Promise.all(updatePromises); // eslint-disable-line
+
+  return throttleUpdateDates(updates, index + steps);
 }
 
 function updateCharts() {
@@ -32,9 +72,10 @@ function updateCharts() {
         return new Promise((resolve) => resolve({ completed: true }));
       }
 
-      charts.forEach((chart) => {
-        runUpdate(chart);
-      });
+      const filteredCharts = charts.filter((chart) => moment(chart.lastAutoUpdate).add(chart.autoUpdate, "seconds").isBefore(moment()));
+
+      throttleUpdateDates(filteredCharts, 0);
+      throttleUpdates(filteredCharts, 0);
 
       return { completed: true };
     })
