@@ -684,11 +684,9 @@ function PublicDashboard(props) {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <img
-                    src={logo}
-                    width="20"
-                    alt="Chartbrew logo"
-                  />
+                  <Text css={{ color: newChanges.titleColor }}>
+                    Powered by
+                  </Text>
                   <Spacer x={0.2} />
                   <Text css={{ color: newChanges.titleColor }}>
                     <strong>Chart</strong>
