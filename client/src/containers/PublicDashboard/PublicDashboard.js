@@ -337,6 +337,7 @@ function PublicDashboard(props) {
           draggable
           pauseOnHover
           transition={Flip}
+          theme={isDark ? "dark" : "light"}
         />
       </div>
     );
@@ -817,6 +818,7 @@ function PublicDashboard(props) {
         draggable
         pauseOnHover
         transition={Flip}
+        theme={isDark ? "dark" : "light"}
       />
     </div>
   );

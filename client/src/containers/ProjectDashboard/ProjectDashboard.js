@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Container, Row, Button, Loading, Spacer, Text, Link as LinkNext, Tooltip, Grid,
-  Card, Modal,
+  Card, Modal, useTheme,
 } from "@nextui-org/react";
 import { Link } from "react-router-dom";
 import { useWindowSize } from "react-use";
@@ -72,6 +72,7 @@ function ProjectDashboard(props) {
   const [templateVisible, setTemplateVisible] = useState(false);
 
   const { height, width } = useWindowSize();
+  const { isDark } = useTheme();
 
   useEffect(() => {
     cleanErrors();
@@ -531,6 +532,7 @@ function ProjectDashboard(props) {
         draggable
         pauseOnHover
         transition={Flip}
+        theme={isDark ? "dark" : "light"}
       />
     </div>
   );

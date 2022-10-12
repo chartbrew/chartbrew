@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Badge, Button, Checkbox, Container, Divider, Dropdown, Grid, Loading,
-  Modal, Row, Spacer, Table, Text, Tooltip,
+  Modal, Row, Spacer, Table, Text, Tooltip, useTheme,
 } from "@nextui-org/react";
 import _ from "lodash";
 import { ToastContainer, toast, Flip } from "react-toastify";
@@ -38,6 +38,8 @@ function TeamMembers(props) {
   const [projectModal, setProjectModal] = useState(false);
   const [projectAccess, setProjectAccess] = useState({});
   const [changedRole, setChangedRole] = useState({});
+
+  const { isDark } = useTheme();
 
   useEffect(() => {
     cleanErrors();
@@ -423,6 +425,7 @@ function TeamMembers(props) {
         draggable
         pauseOnHover
         transition={Flip}
+        theme={isDark ? "dark" : "light"}
       />
     </div>
   );

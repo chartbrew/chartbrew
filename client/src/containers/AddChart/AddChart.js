@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Container, Link as LinkNext, Grid, Spacer, Tooltip, Row, Input, Button,
-  Switch, Text, Loading, Modal, Divider, Badge,
+  Switch, Text, Loading, Modal, Divider, Badge, useTheme,
 } from "@nextui-org/react";
 import {
   ChevronLeftCircle,
@@ -77,6 +77,8 @@ function AddChart(props) {
     completeTutorial, clearDatasets, resetTutorial, connections, templates, getTemplates,
     runQueryWithFilters,
   } = props;
+
+  const { isDark } = useTheme();
 
   useEffect(() => {
     if (match.params.chartId) {
@@ -465,6 +467,7 @@ function AddChart(props) {
         draggable
         pauseOnHover
         transition={Flip}
+        theme={isDark ? "dark" : "light"}
       />
       <Grid.Container>
         <Grid xs={12} sm={6} md={7}>

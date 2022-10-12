@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import {
-  Container, Card, Loading, Text, Spacer, Row, Link, Input, Button, Grid,
+  Container, Card, Loading, Text, Spacer, Row, Link, Input, Button, Grid, useTheme,
 } from "@nextui-org/react";
 import { motion } from "framer-motion/dist/framer-motion";
 import { ToastContainer, toast, Flip } from "react-toastify";
@@ -30,6 +30,8 @@ function Start(props) {
   const [showBreadcrumbs, setShowBreadcrumbs] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initiated, setInitiated] = useState(false);
+
+  const { isDark } = useTheme();
 
   const _getOwnedTeam = () => {
     let team;
@@ -398,6 +400,7 @@ function Start(props) {
           draggable
           pauseOnHover
           transition={Flip}
+          theme={isDark ? "dark" : "light"}
         />
       </Container>
 
