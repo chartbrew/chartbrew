@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Link,
-  Checkbox,
-  Container, Divider, Grid, Row, Spacer, Text, Input, Dropdown, Tooltip, Modal, Badge
+  Button, Link, Checkbox, Container, Divider, Grid, Row, Spacer,
+  Text, Input, Dropdown, Tooltip, Modal, Badge,
 } from "@nextui-org/react";
 import {
   Calendar, ChevronDown, TickSquare

@@ -2,8 +2,9 @@ import React, { useEffect, lazy, Suspense } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Route, Switch, withRouter } from "react-router";
-import { Container } from "@nextui-org/react";
+import { Container, useTheme } from "@nextui-org/react";
 import { createMedia } from "@artsy/fresnel";
+import { Helmet } from "react-helmet";
 
 import SuspenseLoader from "../components/SuspenseLoader";
 import UserDashboard from "./UserDashboard";
@@ -43,6 +44,8 @@ function Main(props) {
     relog, getUser, getTeams, location, cleanErrors, history,
   } = props;
 
+  const { isDark, theme } = useTheme();
+
   useEffect(() => {
     cleanErrors();
     if (!location.pathname.match(/\/chart\/\d+\/embedded/g)) {
@@ -60,6 +63,41 @@ function Main(props) {
 
   return (
     <div style={styles.container}>
+      <Helmet>
+        {isDark && (
+          <style type="text/css">
+            {`
+              .rdrDateRangePickerWrapper, .rdrDefinedRangesWrapper, .rdrStaticRanges .rdrStaticRange,
+              .rdrDateDisplayWrapper, .rdrMonthAndYearWrapper, .rdrMonths, .rdrDefinedRangesWrapper
+              {
+                background-color: ${theme.colors.backgroundContrast.value};
+                background: ${theme.colors.backgroundContrast.value};
+              }
+
+              .rdrStaticRange:hover, .rdrStaticRangeLabel:hover {
+                background: ${theme.colors.background.value};
+              }
+
+              .rdrInputRange span {
+                color: ${theme.colors.text.value};
+              }
+
+              .rdrDay span {
+                color: ${theme.colors.text.value};
+              }
+
+              .rdrMonthPicker select, .rdrYearPicker select {
+                color: ${theme.colors.text.value};
+              }
+
+              .rdrDateInput, .rdrInputRangeInput {
+                background-color: ${theme.colors.accents0.value};
+                color: ${theme.colors.text.value};
+              }
+            `}
+          </style>
+        )}
+      </Helmet>
       <style>{mediaStyles}</style>
       <MediaContextProvider>
         <div>
