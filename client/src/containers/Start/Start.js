@@ -7,7 +7,9 @@ import {
 import { motion } from "framer-motion/dist/framer-motion";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
-import { ArrowRight, Category, Setting } from "react-iconly";
+import {
+  ArrowRight, Category, MoreSquare, Setting
+} from "react-iconly";
 
 import { createProject as createProjectAction } from "../../actions/project";
 import { getTeams as getTeamsAction } from "../../actions/team";
@@ -62,10 +64,17 @@ function Start(props) {
           // refresh teams to avoid the onboarding from appearing again
           getTeams(user.id);
           toast.update(toastId, { render: "🎉 Project created! One sec...", type: "success", isLoading: false });
-          setTimeout(() => {
-            setLoading(true);
-            history.push(`${_getOwnedTeam().id}/${project.id}/connections?type=${type}&edit=true`);
-          }, 1500);
+          if (type) {
+            setTimeout(() => {
+              setLoading(true);
+              history.push(`${_getOwnedTeam().id}/${project.id}/connections?type=${type}&edit=true`);
+            }, 1500);
+          } else {
+            setTimeout(() => {
+              setLoading(false);
+              history.push(`${_getOwnedTeam().id}/${project.id}/dashboard`);
+            }, 1500);
+          }
         })
         .catch(() => {
           setLoading(true);
@@ -283,7 +292,7 @@ function Start(props) {
             <Container md>
               <motion.div animate={{ scale: [0.8, 1] }} transition={{ duration: 0.3 }}>
                 <Grid.Container gap={3}>
-                  <Grid xs={12} sm={6}>
+                  <Grid xs={12} sm={4}>
                     <Card
                       onClick={() => {
                         setMode("template");
@@ -295,10 +304,10 @@ function Start(props) {
                       css={{ p: "$8", mw: "400px" }}
                     >
                       <Card.Body>
-                        <Row justify="center" align="center">
+                        <Row>
                           <Category size={"xlarge"} />
                         </Row>
-                        <Row justify="center" align="center">
+                        <Row>
                           <Text h3>
                             {"Start with a template"}
                           </Text>
@@ -312,7 +321,7 @@ function Start(props) {
                       </Card.Body>
                     </Card>
                   </Grid>
-                  <Grid xs={12} sm={6}>
+                  <Grid xs={12} sm={4}>
                     <Card
                       onClick={() => {
                         setMode("connection");
@@ -324,10 +333,10 @@ function Start(props) {
                       css={{ p: "$8", mw: "400px" }}
                     >
                       <Card.Body>
-                        <Row justify="center" align="center">
+                        <Row>
                           <Setting size={"xlarge"} />
                         </Row>
-                        <Row justify="center" align="center">
+                        <Row>
                           <Text h3>
                             {"Start with a connection"}
                           </Text>
@@ -336,6 +345,32 @@ function Start(props) {
                         <Row>
                           <Text style={{ fontSize: "1.2em" }}>
                             {"Connect to a data source and create charts from scratch"}
+                          </Text>
+                        </Row>
+                      </Card.Body>
+                    </Card>
+                  </Grid>
+                  <Grid xs={12} sm={4}>
+                    <Card
+                      onClick={() => _onSelect()}
+                      isHoverable
+                      isPressable
+                      variant={mode === "template" ? "shadow" : "bordered"}
+                      css={{ p: "$8", mw: "400px" }}
+                    >
+                      <Card.Body>
+                        <Row>
+                          <MoreSquare size={"xlarge"} />
+                        </Row>
+                        <Row>
+                          <Text h3>
+                            {"Empty project"}
+                          </Text>
+                        </Row>
+                        <Spacer y={1} />
+                        <Row>
+                          <Text style={{ fontSize: "1.2em" }}>
+                            {"Create an empty project and choose what to do next"}
                           </Text>
                         </Row>
                       </Card.Body>
