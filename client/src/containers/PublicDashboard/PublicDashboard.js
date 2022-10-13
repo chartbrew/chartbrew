@@ -304,7 +304,7 @@ function PublicDashboard(props) {
                 placeholder="Enter the password here"
                 value={reportPassword}
                 type="password"
-                onChange={(e, data) => setReportPassword(data.value)}
+                onChange={(e) => setReportPassword(e.target.value)}
                 size="lg"
                 fullWidth
                 bordered
