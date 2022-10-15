@@ -14,7 +14,7 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import update from "immutability-helper";
 import {
   Button, Collapse, Container, Dropdown, Grid, Input, Link, Loading,
-  Popover, Row, Spacer, Text, Tooltip, Divider, Badge, Switch,
+  Popover, Row, Spacer, Text, Tooltip, Divider, Badge, Switch, Modal, Checkbox,
 } from "@nextui-org/react";
 import { HiRefresh } from "react-icons/hi";
 import { TbDragDrop } from "react-icons/tb";
@@ -61,6 +61,8 @@ function DatasetData(props) {
   const [yFieldFilter, setYFieldFilter] = useState("");
   const [dateFieldFilter, setDateFieldFilter] = useState("");
   const [groupByFilter, setGroupByFilter] = useState("");
+  const [conditionModal, setConditionModal] = useState(false);
+  const [selectedCondition, setSelectedCondition] = useState({});
 
   const yFieldRef = useRef(null);
   const xFieldRef = useRef(null);
@@ -294,6 +296,7 @@ function DatasetData(props) {
       operator: "is",
       value: "",
       saved: false,
+      displayValues: true,
     }];
 
     setConditions(newConditions);
@@ -310,6 +313,26 @@ function DatasetData(props) {
   const _onSaveConditions = (newConditions) => {
     const savedConditions = newConditions.filter((item) => item.saved);
     onUpdate({ conditions: savedConditions });
+  };
+
+  const _onEditConditionSettings = (condition) => {
+    setSelectedCondition(condition);
+    setConditionModal(true);
+  };
+
+  const _onConfirmConditionSettings = () => {
+    const newConditions = conditions.map((item) => {
+      let newItem = { ...item };
+      if (item.id === selectedCondition.id) {
+        newItem = { ...selectedCondition };
+      }
+
+      return newItem;
+    });
+
+    onUpdate({ conditions: newConditions });
+    setSelectedCondition({});
+    setConditionModal(false);
   };
 
   const _onAddFormula = () => {
@@ -562,560 +585,147 @@ function DatasetData(props) {
   }
 
   return (
-    <Grid.Container gap={1}>
-      <Grid xs={12} sm={6} md={6} className="datasetdata-axes-tut" direction="column">
-        <div>
-          <Text size={14} b>
-            {chartType === "pie"
-              || chartType === "radar"
-              || chartType === "polar"
-              || chartType === "doughnut"
-              ? "Segment "
-              : chartType === "table" ? "Collection " : "X-Axis "}
-          </Text>
-        </div>
-        <div style={styles.rowDisplay}>
-          <Dropdown>
-            <Dropdown.Trigger type="text">
-              <Input
-                type="text"
-                value={
-                  xFieldFilter
-                  || dataset.xAxis?.substring(dataset.xAxis.lastIndexOf(".") + 1)
-                }
-                onChange={(e) => setXFieldFilter(e.target.value)}
-                fullWidth
-                placeholder="Double-click to search"
-                ref={xFieldRef}
-                contentRight={document.activeElement === xFieldRef.current ? "↵" : null}
-              />
-            </Dropdown.Trigger>
-            <Dropdown.Menu
-              onAction={_selectXField}
-              selectedKeys={[dataset.xAxis]}
-              selectionMode="single"
-              css={{ minWidth: "max-content" }}
-            >
-              {_filterOptions("x").map((option) => (
-                <Dropdown.Item key={option.value} icon={<Badge size="xs" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}>
-                  <Text>{option.text}</Text>
-                </Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
-          {chartType === "table" && (
-            <>
-              <Spacer x={0.2} />
-              <Tooltip
-                content="Select a collection (array) of objects to display in a table format. 'Root' means the first level of the collection."
-              >
-                <InfoCircle />
-              </Tooltip>
-            </>
-          )}
-        </div>
-      </Grid>
-      <Grid xs={12} sm={6} md={6} className="datasetdata-date-tut" direction="column">
-        <div>
-          <Text size={14}>{"Select a date for global filtering"}</Text>
-        </div>
-        <div style={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
-          <Dropdown>
-            <Dropdown.Trigger type="text">
-              <Input
-                type="text"
-                value={
-                  dateFieldFilter
-                  || dataset.dateField?.substring(dataset.dateField.lastIndexOf(".") + 1)
-                }
-                fullWidth
-                placeholder="Double-click to search"
-                onChange={(e) => setDateFieldFilter(e.target.value)}
-                ref={dateFieldRef}
-                contentRight={document.activeElement === dateFieldRef.current ? "↵" : null}
-              />
-            </Dropdown.Trigger>
-            <Dropdown.Menu
-              onAction={_selectDateField}
-              selectedKeys={[dataset.dateField]}
-              selectionMode="single"
-              css={{ minWidth: "max-content" }}
-            >
-              {_getDateFieldOptions().map((option) => (
-                <Dropdown.Item
-                  key={option.value}
-                  icon={<Badge size="xs" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}
-                >
-                  <Text>{option.text}</Text>
-                </Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
-          <Spacer x={0.2} />
-          {dataset.dateField && (
-            <Tooltip content="Clear field">
-              <Link onClick={() => onUpdate({ dateField: "" })} css={{ color: "$error" }}>
-                <CloseSquare />
-              </Link>
-            </Tooltip>
-          )}
-        </div>
-      </Grid>
-      {chartType !== "table" && (
-        <>
-          <Grid xs={12} sm={6} md={6} direction="column">
-            <div>
-              <Text size={14} b>
-                {chartType === "pie"
-                  || chartType === "radar"
-                  || chartType === "polar"
-                  || chartType === "doughnut"
-                  ? "Data " : "Y-Axis "}
-              </Text>
-            </div>
-            <div>
-              <Dropdown>
-                <Dropdown.Trigger type="text">
-                  <Input
-                    type="text"
-                    value={
-                      yFieldFilter
-                      || dataset.yAxis?.substring(dataset.yAxis.lastIndexOf(".") + 1)
-                    }
-                    fullWidth
-                    placeholder="Double-click to search"
-                    onChange={(e) => setYFieldFilter(e.target.value)}
-                    ref={yFieldRef}
-                    contentRight={document.activeElement === yFieldRef.current ? "↵" : null}
-                  />
-                </Dropdown.Trigger>
-                <Dropdown.Menu
-                  onAction={_selectYField}
-                  selectedKeys={[dataset.yAxis]}
-                  selectionMode="single"
-                  css={{ minWidth: "max-content" }}
-                >
-                  {_getYFieldOptions().map((option) => (
-                    <Dropdown.Item key={option.value}>
-                      <Container css={{ p: 0, m: 0 }}>
-                        <Row>
-                          <Badge size="sm" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>
-                          <Spacer x={0.2} />
-                          <Text>{option.text}</Text>
-                        </Row>
-                      </Container>
-                    </Dropdown.Item>
-                  ))}
-                </Dropdown.Menu>
-              </Dropdown>
-              <Spacer x={0.2} />
-              <Dropdown
-                icon={null}
-                button
-                className="small button"
-                options={operations}
-                search
-                text={
-                  (dataset.yAxisOperation
-                    && operations.find((i) => i.value === dataset.yAxisOperation).text
-                  )
-                  || "Operation"
-                }
-                value={dataset.yAxisOperation}
-                onChange={_selectYOp}
-                scrolling
-              >
-                <Dropdown.Trigger>
-                  <Input
-                    value={
-                      (dataset.yAxisOperation
-                        && operations.find((i) => i.value === dataset.yAxisOperation).text
-                      )
-                      || "Operation"
-                    }
-                    fullWidth
-                  />
-                </Dropdown.Trigger>
-                <Dropdown.Menu
-                  onAction={_selectYOp}
-                  selectedKeys={[dataset.yAxisOperation]}
-                  selectionMode="single"
-                  css={{ minWidth: "max-content" }}
-                >
-                  {operations.map((option) => (
-                    <Dropdown.Item key={option.value}>
-                      {option.text}
-                    </Dropdown.Item>
-                  ))}
-                </Dropdown.Menu>
-              </Dropdown>
-            </div>
-          </Grid>
-          <Grid xs={12} sm={6} md={6} direction="column">
-            <div>
-              <Text size={14}>Sort on Y-Axis</Text>
-            </div>
-            <div style={styles.rowDisplay}>
-              <Tooltip content="Sort the dataset in ascending order">
-                <Button
-                  color={dataset.sort === "asc" ? "secondary" : "primary"}
-                  bordered={dataset.sort !== "asc"}
-                  onClick={() => {
-                    if (dataset.sort === "asc") {
-                      onUpdate({ sort: "" });
-                    } else {
-                      onUpdate({ sort: "asc" });
-                    }
-                  }}
-                  css={{ minWidth: "fit-content" }}
-                  icon={<CaretUp />}
-                />
-              </Tooltip>
-              <Spacer x={0.2} />
-              <Tooltip content="Sort the dataset in descending order">
-                <Button
-                  color={dataset.sort === "desc" ? "secondary" : "primary"}
-                  bordered={dataset.sort !== "desc"}
-                  onClick={() => {
-                    if (dataset.sort === "desc") {
-                      onUpdate({ sort: "" });
-                    } else {
-                      onUpdate({ sort: "desc" });
-                    }
-                  }}
-                  css={{ minWidth: "fit-content" }}
-                  icon={<CaretDown />}
-                />
-              </Tooltip>
-              {dataset.sort && (
-                <>
-                  <Spacer x={0.2} />
-                  <Tooltip content="Clear sorting">
-                    <Link css={{ color: "$error" }} onClick={() => onUpdate({ sort: "" })}>
-                      <CloseSquare />
-                    </Link>
-                  </Tooltip>
-                </>
-              )}
-            </div>
-            <Spacer y={0.5} />
-            {dataset.yAxisOperation === "avg" && (
-              <div>
-                <Text size={14}>Average by the total items on the chart</Text>
-                <Switch
-                  size="sm"
-                  checked={dataset.averageByTotal}
-                  onChange={() => onUpdate({ averageByTotal: !dataset.averageByTotal })}
-                />
-              </div>
-            )}
-          </Grid>
-          <Grid xs={12} css={{ mt: 10 }}>
-            {!formula && (
-              <Link onClick={_onAddFormula} css={{ ai: "center", color: "$text" }}>
-                <Plus />
-                <Spacer x={0.2} />
-                <Text b>Add Y-Axis formula</Text>
-              </Link>
-            )}
-          </Grid>
-        </>
-      )}
-      {formula && (
-        <Grid xs={12} direction="column">
+    <>
+      <Grid.Container gap={1}>
+        <Grid xs={12} sm={6} md={6} className="datasetdata-axes-tut" direction="column">
           <div>
-            <Popover>
-              <Popover.Trigger>
-                <div style={styles.rowDisplay}>
-                  <Text size={16}>
-                    {"Formula "}
-                  </Text>
-                  <Spacer x={0.2} />
-                  <InfoCircle size="small" />
-                </div>
-              </Popover.Trigger>
-              <Popover.Content>
-                <FormulaTips />
-              </Popover.Content>
-            </Popover>
+            <Text size={14} b>
+              {chartType === "pie"
+                || chartType === "radar"
+                || chartType === "polar"
+                || chartType === "doughnut"
+                ? "Segment "
+                : chartType === "table" ? "Collection " : "X-Axis "}
+            </Text>
           </div>
           <div style={styles.rowDisplay}>
-            <Input
-              placeholder="Enter your formula here: {val}"
-              value={formula}
-              onChange={(e) => setFormula(e.target.value)}
-              bordered
-            />
-            <Spacer x={0.5} />
-            <Tooltip
-              content={formula === dataset.formula ? "The formula is already applied" : "Apply the formula"}
-            >
-              <Link onClick={formula === dataset.formula ? () => { } : _onApplyFormula}>
-                <TickSquare primaryColor={formula === dataset.formula ? neutral : positive} />
-              </Link>
-            </Tooltip>
-            <Spacer x={0.2} />
-            <Tooltip content="Remove formula">
-              <Link onClick={_onRemoveFormula}>
-                <CloseSquare primaryColor={negative} />
-              </Link>
-            </Tooltip>
-            <Spacer x={0.5} />
-            <Tooltip content="Click for an example">
-              <Link onClick={_onExampleFormula}>
-                <FaMagic size={18} color={primary} />
-              </Link>
-            </Tooltip>
+            <Dropdown>
+              <Dropdown.Trigger type="text">
+                <Input
+                  type="text"
+                  value={
+                    xFieldFilter
+                    || dataset.xAxis?.substring(dataset.xAxis.lastIndexOf(".") + 1)
+                  }
+                  onChange={(e) => setXFieldFilter(e.target.value)}
+                  fullWidth
+                  placeholder="Double-click to search"
+                  ref={xFieldRef}
+                  contentRight={document.activeElement === xFieldRef.current ? "↵" : null}
+                />
+              </Dropdown.Trigger>
+              <Dropdown.Menu
+                onAction={_selectXField}
+                selectedKeys={[dataset.xAxis]}
+                selectionMode="single"
+                css={{ minWidth: "max-content" }}
+              >
+                {_filterOptions("x").map((option) => (
+                  <Dropdown.Item key={option.value} icon={<Badge size="xs" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}>
+                    <Text>{option.text}</Text>
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown>
+            {chartType === "table" && (
+              <>
+                <Spacer x={0.2} />
+                <Tooltip
+                  content="Select a collection (array) of objects to display in a table format. 'Root' means the first level of the collection."
+                >
+                  <InfoCircle />
+                </Tooltip>
+              </>
+            )}
           </div>
         </Grid>
-      )}
-      {chartType === "table" && (
-        <>
-          <Grid xs={12} css={{ pt: 20, pb: 20 }}>
-            <Collapse.Group css={{ width: "100%", fs: 16, fontWeight: "$bold" }} bordered>
-              <Collapse subtitle="Configure columns" css={{ color: "$text" }} arrowIcon={<Setting />}>
-                <Container css={{ pl: 0, pr: 0 }}>
-                  {!isDragState && (
-                    <Row wrap="wrap">
-                      {tableFields.map((field) => {
-                        if (!field || !field.accessor || field.Header.indexOf("__cb_group") > -1) return (<span />);
-                        return (
-                          <Badge
-                            color="primary"
-                            css={{
-                              border: dataset?.configuration?.sum === field.accessor
-                                ? "solid 2px $secondary"
-                                : "solid 2px $border",
-                              mr: 3,
-                              minWidth: 70,
-                            }}
-                            style={{ marginBottom: 3 }}
-                          >
-                            <Link
-                              css={{ ai: "center" }}
-                              onClick={() => _onExcludeField(field.accessor)}
-                              title="Hide field"
-                            >
-                              <Show primaryColor="white" />
-                            </Link>
-                            <Spacer x={0.2} />
-                            {`${field.accessor.replace("?", ".")}`}
-                            <Spacer x={0.2} />
-                            <Dropdown>
-                              <Dropdown.Trigger>
-                                <Link
-                                  css={{ ai: "center" }}
-                                  title="Sum values on this field"
-                                >
-                                  <ChevronDownCircle primaryColor="white" />
-                                </Link>
-                              </Dropdown.Trigger>
-                              <Dropdown.Menu>
-                                <Dropdown.Item>
-                                  <Link css={{ width: "100%" }} onClick={() => _onSumField(field.accessor)}>
-                                    {dataset.configuration
-                                      && dataset.configuration.sum === field.accessor
-                                      && (
-                                        <Text>Disable sum calculation</Text>
-                                      )}
-                                    {(!dataset.configuration
-                                      || dataset.configuration.sum !== field.accessor)
-                                      && (
-                                        <Text>Enable sum calculation</Text>
-                                      )}
-                                  </Link>
-                                </Dropdown.Item>
-                              </Dropdown.Menu>
-                            </Dropdown>
-                          </Badge>
-                        );
-                      })}
-                    </Row>
-                  )}
-
-                  {isDragState && tableColumns.length > 0 && (
-                    <DndProvider backend={HTML5Backend} key={1} context={window}>
-                      <Row wrap="wrap" align="center">
-                        {tableColumns.map((field, index) => {
-                          // check if the field is found in the excluded fields
-                          if (dataset.excludedFields
-                            && dataset.excludedFields.find((i) => i === field.Header)
-                          ) {
-                            return (<span key={field.Header} />);
-                          }
-
-                          return (
-                            <DraggableLabel
-                              key={field.Header}
-                              field={field}
-                              index={index}
-                              onMove={_onMoveLabel}
-                            />
-                          );
-                        })}
-                      </Row>
-                    </DndProvider>
-                  )}
-
-                  {!isDragState
-                      && dataset.excludedFields
-                      && dataset.excludedFields.length > 0
-                      && (
-                        <Spacer y={0.5} />
-                      )}
-
-                  <Row wrap="wrap" align="center">
-                    {!isDragState
-                      && dataset.excludedFields
-                      && dataset.excludedFields.map((field) => (
-                        <Badge
-                          key={field}
-                          onClick={() => _onShowField(field)}
-                          color="warning"
-                        >
-                          <Link css={{ ai: "center" }}>
-                            <Hide primaryColor="white" />
-                          </Link>
-                          <Spacer x={0.1} />
-                          {field.replace("?", ".")}
-                        </Badge>
-                      ))}
-                  </Row>
-                  <Spacer y={1} />
-                  <Row>
-                    <Button
-                      color={isDragState ? "success" : "primary"}
-                      bordered
-                      onClick={isDragState ? _onConfirmColumnOrder : _onDragStateClicked}
-                      disabled={dataLoading}
-                      auto
-                      size="sm"
-                      icon={<TbDragDrop size={20} />}
-                    >
-                      {isDragState && !dataLoading ? "Confirm ordering" : "Reorder columns"}
-                      {dataLoading && <Loading type="points" />}
-                    </Button>
-                    {isDragState && (
-                      <>
-                        <Spacer x={0.2} />
-                        <Button
-                          icon={<CloseSquare />}
-                          flat
-                          color={"error"}
-                          onClick={_onCancelColumnOrder}
-                          title="Cancel ordering"
-                          css={{ minWidth: "fit-content" }}
-                          size="sm"
-                        />
-                      </>
-                    )}
-                  </Row>
-                </Container>
-              </Collapse>
-            </Collapse.Group>
-          </Grid>
-          <Grid xs={12} direction="column">
-            <div>
-              <Text size={14}>{"Group by"}</Text>
-            </div>
-            <div style={styles.rowDisplay}>
-              <Dropdown>
-                <Dropdown.Trigger type="text">
-                  <Input
-                    type="text"
-                    value={
-                      groupByFilter
-                      || dataset.groupBy
-                      || ""
-                    }
-                    placeholder="Double-click to search"
-                    onChange={(e) => setGroupByFilter(e.target.value)}
-                    ref={groupByRef}
-                    contentRight={document.activeElement === groupByRef.current ? "↵" : null}
-                  />
-                </Dropdown.Trigger>
-                <Dropdown.Menu
-                  onAction={(key) => {
-                    if (key !== "$.0") _onChangeGroupBy(null, key);
-                  }}
-                  selectedKeys={[dataset.groupBy]}
-                  selectionMode="single"
-                  css={{ minWidth: "max-content" }}
-                >
-                  {_getGroupByFields().map((field) => (
-                    <Dropdown.Item
-                      key={field.value}
-                      icon={<Badge size="xs" css={{ minWidth: 70 }} color={field.label.color}>{field.label.content}</Badge>}
-                    >
-                      <Text>{field.text}</Text>
-                    </Dropdown.Item>
-                  ))}
-                  {_getGroupByFields().length === 0 && (
-                    <Dropdown.Item>
-                      <Text>No fields available</Text>
-                    </Dropdown.Item>
-                  )}
-                </Dropdown.Menu>
-              </Dropdown>
-              <Spacer x={0.2} />
-              <Tooltip content="Clear the grouping">
-                <Link
-                  color="error"
-                  onClick={_onChangeGroupBy}
-                >
+        <Grid xs={12} sm={6} md={6} className="datasetdata-date-tut" direction="column">
+          <div>
+            <Text size={14}>{"Select a date for global filtering"}</Text>
+          </div>
+          <div style={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
+            <Dropdown>
+              <Dropdown.Trigger type="text">
+                <Input
+                  type="text"
+                  value={
+                    dateFieldFilter
+                    || dataset.dateField?.substring(dataset.dateField.lastIndexOf(".") + 1)
+                  }
+                  fullWidth
+                  placeholder="Double-click to search"
+                  onChange={(e) => setDateFieldFilter(e.target.value)}
+                  ref={dateFieldRef}
+                  contentRight={document.activeElement === dateFieldRef.current ? "↵" : null}
+                />
+              </Dropdown.Trigger>
+              <Dropdown.Menu
+                onAction={_selectDateField}
+                selectedKeys={[dataset.dateField]}
+                selectionMode="single"
+                css={{ minWidth: "max-content" }}
+              >
+                {_getDateFieldOptions().map((option) => (
+                  <Dropdown.Item
+                    key={option.value}
+                    icon={<Badge size="xs" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}
+                  >
+                    <Text>{option.text}</Text>
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown>
+            <Spacer x={0.2} />
+            {dataset.dateField && (
+              <Tooltip content="Clear field">
+                <Link onClick={() => onUpdate({ dateField: "" })} css={{ color: "$error" }}>
                   <CloseSquare />
                 </Link>
               </Tooltip>
-            </div>
-          </Grid>
-        </>
-      )}
-      <Grid xs={12} direction="column">
-        <Spacer y={1} />
-        <Divider />
-        <Spacer y={1} />
-      </Grid>
-      {conditions && conditions.length === 0 && (
-        <Grid xs={12} className="datasetdata-filters-tut">
-          <Button
-            bordered
-            icon={<Filter />}
-            onClick={_onAddCondition}
-            auto
-            size={"sm"}
-          >
-            Add data filters
-          </Button>
+            )}
+          </div>
         </Grid>
-      )}
-      {conditions.map((condition, index) => {
-        return (
-          <Grid xs={12} key={condition.id} style={styles.conditionRow} className="datasetdata-filters-tut">
-            <Container css={{ pl: 0, pr: 0 }}>
-              <Row warp="wrap" gap={0.5} align="center" css={{ ml: 0, mr: 0 }}>
-                {index === 0 && (<Text size={14}>{"where "}</Text>)}
-                {index > 0 && (<Text size={14}>{"and "}</Text>)}
-                <Spacer x={0.2} />
+        {chartType !== "table" && (
+          <>
+            <Grid xs={12} sm={6} md={6} direction="column">
+              <div>
+                <Text size={14} b>
+                  {chartType === "pie"
+                    || chartType === "radar"
+                    || chartType === "polar"
+                    || chartType === "doughnut"
+                    ? "Data " : "Y-Axis "}
+                </Text>
+              </div>
+              <div>
                 <Dropdown>
-                  <Dropdown.Trigger>
+                  <Dropdown.Trigger type="text">
                     <Input
-                      value={(condition.field && condition.field.substring(condition.field.lastIndexOf(".") + 1)) || "field"}
-                      size="sm"
+                      type="text"
+                      value={
+                        yFieldFilter
+                        || dataset.yAxis?.substring(dataset.yAxis.lastIndexOf(".") + 1)
+                      }
+                      fullWidth
+                      placeholder="Double-click to search"
+                      onChange={(e) => setYFieldFilter(e.target.value)}
+                      ref={yFieldRef}
+                      contentRight={document.activeElement === yFieldRef.current ? "↵" : null}
                     />
                   </Dropdown.Trigger>
                   <Dropdown.Menu
-                    onAction={(key) => _updateCondition(condition.id, key, "field")}
-                    selectedKeys={[condition.field]}
+                    onAction={_selectYField}
+                    selectedKeys={[dataset.yAxis]}
                     selectionMode="single"
                     css={{ minWidth: "max-content" }}
                   >
-                    {fieldOptions.map((field) => (
-                      <Dropdown.Item key={field.value}>
+                    {_getYFieldOptions().map((option) => (
+                      <Dropdown.Item key={option.value}>
                         <Container css={{ p: 0, m: 0 }}>
                           <Row>
-                            <Badge size="sm" css={{ minWidth: 70 }} color={field.label.color}>{field.label.content}</Badge>
+                            <Badge size="sm" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>
                             <Spacer x={0.2} />
-                            <Text>{field.text}</Text>
+                            <Text>{option.text}</Text>
                           </Row>
                         </Container>
                       </Dropdown.Item>
@@ -1123,159 +733,638 @@ function DatasetData(props) {
                   </Dropdown.Menu>
                 </Dropdown>
                 <Spacer x={0.2} />
-                <Dropdown>
+                <Dropdown
+                  icon={null}
+                  button
+                  className="small button"
+                  options={operations}
+                  search
+                  text={
+                    (dataset.yAxisOperation
+                      && operations.find((i) => i.value === dataset.yAxisOperation).text
+                    )
+                    || "Operation"
+                  }
+                  value={dataset.yAxisOperation}
+                  onChange={_selectYOp}
+                  scrolling
+                >
                   <Dropdown.Trigger>
                     <Input
                       value={
-                        (
-                          _.find(operators, { value: condition.operator })
-                          && _.find(operators, { value: condition.operator }).key
+                        (dataset.yAxisOperation
+                          && operations.find((i) => i.value === dataset.yAxisOperation).text
                         )
-                        || "="
+                        || "Operation"
                       }
-                      size="sm"
+                      fullWidth
                     />
                   </Dropdown.Trigger>
                   <Dropdown.Menu
-                    onAction={(key) => _updateCondition(condition.id, key, "operator")}
-                    selectedKeys={[condition.operator]}
+                    onAction={_selectYOp}
+                    selectedKeys={[dataset.yAxisOperation]}
                     selectionMode="single"
                     css={{ minWidth: "max-content" }}
                   >
-                    {operators.map((operator) => (
-                      <Dropdown.Item key={operator.value}>
-                        {operator.text}
+                    {operations.map((option) => (
+                      <Dropdown.Item key={option.value}>
+                        {option.text}
                       </Dropdown.Item>
                     ))}
                   </Dropdown.Menu>
                 </Dropdown>
+              </div>
+            </Grid>
+            <Grid xs={12} sm={6} md={6} direction="column">
+              <div>
+                <Text size={14}>Sort on Y-Axis</Text>
+              </div>
+              <div style={styles.rowDisplay}>
+                <Tooltip content="Sort the dataset in ascending order">
+                  <Button
+                    color={dataset.sort === "asc" ? "secondary" : "primary"}
+                    bordered={dataset.sort !== "asc"}
+                    onClick={() => {
+                      if (dataset.sort === "asc") {
+                        onUpdate({ sort: "" });
+                      } else {
+                        onUpdate({ sort: "asc" });
+                      }
+                    }}
+                    css={{ minWidth: "fit-content" }}
+                    icon={<CaretUp />}
+                  />
+                </Tooltip>
                 <Spacer x={0.2} />
+                <Tooltip content="Sort the dataset in descending order">
+                  <Button
+                    color={dataset.sort === "desc" ? "secondary" : "primary"}
+                    bordered={dataset.sort !== "desc"}
+                    onClick={() => {
+                      if (dataset.sort === "desc") {
+                        onUpdate({ sort: "" });
+                      } else {
+                        onUpdate({ sort: "desc" });
+                      }
+                    }}
+                    css={{ minWidth: "fit-content" }}
+                    icon={<CaretDown />}
+                  />
+                </Tooltip>
+                {dataset.sort && (
+                  <>
+                    <Spacer x={0.2} />
+                    <Tooltip content="Clear sorting">
+                      <Link css={{ color: "$error" }} onClick={() => onUpdate({ sort: "" })}>
+                        <CloseSquare />
+                      </Link>
+                    </Tooltip>
+                  </>
+                )}
+              </div>
+              <Spacer y={0.5} />
+              {dataset.yAxisOperation === "avg" && (
                 <div>
-                  {(!condition.field
-                    || (_.find(fieldOptions, { value: condition.field })
-                    && _.find(fieldOptions, { value: condition.field }).type !== "date")) && (
-                    <Input
-                      placeholder="Enter a value"
-                      value={condition.value}
-                      onChange={(e) => _updateCondition(condition.id, e.target.value, "value", _.find(fieldOptions, { value: condition.field }))}
-                      disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
-                      size="sm"
-                    />
-                  )}
-                  {_.find(fieldOptions, { value: condition.field })
-                    && _.find(fieldOptions, { value: condition.field }).type === "date" && (
-                    <Popover>
-                      <Popover.Trigger>
-                        <Input
-                          contentRight={<CalendarIcon />}
-                          value={(condition.value && format(new Date(condition.value), "Pp", { locale: enGB })) || "Enter a value"}
-                          disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
-                          size="sm"
-                        />
-                      </Popover.Trigger>
-                      <Popover.Content>
-                        <Calendar
-                          date={(condition.value && new Date(condition.value)) || new Date()}
-                          onChange={(date) => _updateCondition(condition.id, formatISO(date), "value", _.find(fieldOptions, { value: condition.field }).type)}
-                          locale={enGB}
-                          color={secondary}
-                        />
-                      </Popover.Content>
-                    </Popover>
-                  )}
+                  <Text size={14}>Average by the total items on the chart</Text>
+                  <Switch
+                    size="sm"
+                    checked={dataset.averageByTotal}
+                    onChange={() => onUpdate({ averageByTotal: !dataset.averageByTotal })}
+                  />
                 </div>
+              )}
+            </Grid>
+            <Grid xs={12} css={{ mt: 10 }}>
+              {!formula && (
+                <Link onClick={_onAddFormula} css={{ ai: "center", color: "$text" }}>
+                  <Plus />
+                  <Spacer x={0.2} />
+                  <Text b>Add Y-Axis formula</Text>
+                </Link>
+              )}
+            </Grid>
+          </>
+        )}
+        {formula && (
+          <Grid xs={12} direction="column">
+            <div>
+              <Popover>
+                <Popover.Trigger>
+                  <div style={styles.rowDisplay}>
+                    <Text size={16}>
+                      {"Formula "}
+                    </Text>
+                    <Spacer x={0.2} />
+                    <InfoCircle size="small" />
+                  </div>
+                </Popover.Trigger>
+                <Popover.Content>
+                  <FormulaTips />
+                </Popover.Content>
+              </Popover>
+            </div>
+            <div style={styles.rowDisplay}>
+              <Input
+                placeholder="Enter your formula here: {val}"
+                value={formula}
+                onChange={(e) => setFormula(e.target.value)}
+                bordered
+              />
+              <Spacer x={0.5} />
+              <Tooltip
+                content={formula === dataset.formula ? "The formula is already applied" : "Apply the formula"}
+              >
+                <Link onClick={formula === dataset.formula ? () => { } : _onApplyFormula}>
+                  <TickSquare primaryColor={formula === dataset.formula ? neutral : positive} />
+                </Link>
+              </Tooltip>
+              <Spacer x={0.2} />
+              <Tooltip content="Remove formula">
+                <Link onClick={_onRemoveFormula}>
+                  <CloseSquare primaryColor={negative} />
+                </Link>
+              </Tooltip>
+              <Spacer x={0.5} />
+              <Tooltip content="Click for an example">
+                <Link onClick={_onExampleFormula}>
+                  <FaMagic size={18} color={primary} />
+                </Link>
+              </Tooltip>
+            </div>
+          </Grid>
+        )}
+        {chartType === "table" && (
+          <>
+            <Grid xs={12} css={{ pt: 20, pb: 20 }}>
+              <Collapse.Group css={{ width: "100%", fs: 16, fontWeight: "$bold" }} bordered>
+                <Collapse subtitle="Configure columns" css={{ color: "$text" }} arrowIcon={<Setting />}>
+                  <Container css={{ pl: 0, pr: 0 }}>
+                    {!isDragState && (
+                      <Row wrap="wrap">
+                        {tableFields.map((field) => {
+                          if (!field || !field.accessor || field.Header.indexOf("__cb_group") > -1) return (<span />);
+                          return (
+                            <Badge
+                              color="primary"
+                              css={{
+                                border: dataset?.configuration?.sum === field.accessor
+                                  ? "solid 2px $secondary"
+                                  : "solid 2px $border",
+                                mr: 3,
+                                minWidth: 70,
+                              }}
+                              style={{ marginBottom: 3 }}
+                            >
+                              <Link
+                                css={{ ai: "center" }}
+                                onClick={() => _onExcludeField(field.accessor)}
+                                title="Hide field"
+                              >
+                                <Show primaryColor="white" />
+                              </Link>
+                              <Spacer x={0.2} />
+                              {`${field.accessor.replace("?", ".")}`}
+                              <Spacer x={0.2} />
+                              <Dropdown>
+                                <Dropdown.Trigger>
+                                  <Link
+                                    css={{ ai: "center" }}
+                                    title="Sum values on this field"
+                                  >
+                                    <ChevronDownCircle primaryColor="white" />
+                                  </Link>
+                                </Dropdown.Trigger>
+                                <Dropdown.Menu>
+                                  <Dropdown.Item>
+                                    <Link css={{ width: "100%" }} onClick={() => _onSumField(field.accessor)}>
+                                      {dataset.configuration
+                                        && dataset.configuration.sum === field.accessor
+                                        && (
+                                          <Text>Disable sum calculation</Text>
+                                        )}
+                                      {(!dataset.configuration
+                                        || dataset.configuration.sum !== field.accessor)
+                                        && (
+                                          <Text>Enable sum calculation</Text>
+                                        )}
+                                    </Link>
+                                  </Dropdown.Item>
+                                </Dropdown.Menu>
+                              </Dropdown>
+                            </Badge>
+                          );
+                        })}
+                      </Row>
+                    )}
+
+                    {isDragState && tableColumns.length > 0 && (
+                      <DndProvider backend={HTML5Backend} key={1} context={window}>
+                        <Row wrap="wrap" align="center">
+                          {tableColumns.map((field, index) => {
+                            // check if the field is found in the excluded fields
+                            if (dataset.excludedFields
+                              && dataset.excludedFields.find((i) => i === field.Header)
+                            ) {
+                              return (<span key={field.Header} />);
+                            }
+
+                            return (
+                              <DraggableLabel
+                                key={field.Header}
+                                field={field}
+                                index={index}
+                                onMove={_onMoveLabel}
+                              />
+                            );
+                          })}
+                        </Row>
+                      </DndProvider>
+                    )}
+
+                    {!isDragState
+                        && dataset.excludedFields
+                        && dataset.excludedFields.length > 0
+                        && (
+                          <Spacer y={0.5} />
+                        )}
+
+                    <Row wrap="wrap" align="center">
+                      {!isDragState
+                        && dataset.excludedFields
+                        && dataset.excludedFields.map((field) => (
+                          <Badge
+                            key={field}
+                            onClick={() => _onShowField(field)}
+                            color="warning"
+                          >
+                            <Link css={{ ai: "center" }}>
+                              <Hide primaryColor="white" />
+                            </Link>
+                            <Spacer x={0.1} />
+                            {field.replace("?", ".")}
+                          </Badge>
+                        ))}
+                    </Row>
+                    <Spacer y={1} />
+                    <Row>
+                      <Button
+                        color={isDragState ? "success" : "primary"}
+                        bordered
+                        onClick={isDragState ? _onConfirmColumnOrder : _onDragStateClicked}
+                        disabled={dataLoading}
+                        auto
+                        size="sm"
+                        icon={<TbDragDrop size={20} />}
+                      >
+                        {isDragState && !dataLoading ? "Confirm ordering" : "Reorder columns"}
+                        {dataLoading && <Loading type="points" />}
+                      </Button>
+                      {isDragState && (
+                        <>
+                          <Spacer x={0.2} />
+                          <Button
+                            icon={<CloseSquare />}
+                            flat
+                            color={"error"}
+                            onClick={_onCancelColumnOrder}
+                            title="Cancel ordering"
+                            css={{ minWidth: "fit-content" }}
+                            size="sm"
+                          />
+                        </>
+                      )}
+                    </Row>
+                  </Container>
+                </Collapse>
+              </Collapse.Group>
+            </Grid>
+            <Grid xs={12} direction="column">
+              <div>
+                <Text size={14}>{"Group by"}</Text>
+              </div>
+              <div style={styles.rowDisplay}>
+                <Dropdown>
+                  <Dropdown.Trigger type="text">
+                    <Input
+                      type="text"
+                      value={
+                        groupByFilter
+                        || dataset.groupBy
+                        || ""
+                      }
+                      placeholder="Double-click to search"
+                      onChange={(e) => setGroupByFilter(e.target.value)}
+                      ref={groupByRef}
+                      contentRight={document.activeElement === groupByRef.current ? "↵" : null}
+                    />
+                  </Dropdown.Trigger>
+                  <Dropdown.Menu
+                    onAction={(key) => {
+                      if (key !== "$.0") _onChangeGroupBy(null, key);
+                    }}
+                    selectedKeys={[dataset.groupBy]}
+                    selectionMode="single"
+                    css={{ minWidth: "max-content" }}
+                  >
+                    {_getGroupByFields().map((field) => (
+                      <Dropdown.Item
+                        key={field.value}
+                        icon={<Badge size="xs" css={{ minWidth: 70 }} color={field.label.color}>{field.label.content}</Badge>}
+                      >
+                        <Text>{field.text}</Text>
+                      </Dropdown.Item>
+                    ))}
+                    {_getGroupByFields().length === 0 && (
+                      <Dropdown.Item>
+                        <Text>No fields available</Text>
+                      </Dropdown.Item>
+                    )}
+                  </Dropdown.Menu>
+                </Dropdown>
                 <Spacer x={0.2} />
-                <Tooltip content="Remove condition">
-                  <Link color="error" onClick={() => _onRemoveCondition(condition.id)}>
+                <Tooltip content="Clear the grouping">
+                  <Link
+                    color="error"
+                    onClick={_onChangeGroupBy}
+                  >
                     <CloseSquare />
                   </Link>
                 </Tooltip>
-
-                {condition.field && condition.operator && !condition.exposed && (
-                  <Tooltip content="Expose filter to viewers" color={"invert"}>
-                    <Link
-                      color="secondary"
-                      onClick={() => _onApplyCondition(
-                        condition.id,
-                        true,
-                        _.find(fieldOptions, { value: condition.field })
-                          && _.find(fieldOptions, { value: condition.field }).type
-                      )}
-                    >
-                      <Show />
-                    </Link>
-                  </Tooltip>
-                )}
-
-                {condition.field && condition.operator && condition.exposed && (
-                  <Tooltip content="Hide this filter from viewers">
-                    <Link
-                      color="secondary"
-                      onClick={() => _onApplyCondition(
-                        condition.id,
-                        false,
-                        _.find(fieldOptions, { value: condition.field })
-                          && _.find(fieldOptions, { value: condition.field }).type
-                      )}
-                    >
-                      <Hide />
-                    </Link>
-                  </Tooltip>
-                )}
-
-                {!condition.saved && condition.field && (
-                  <Tooltip content="Apply this condition">
-                    <Link
-                      color="success"
-                      onClick={() => _onApplyCondition(condition.id, condition.exposed)}
-                    >
-                      <TickSquare />
-                    </Link>
-                  </Tooltip>
-                )}
-                <Spacer x={0.2} />
-                {!condition.saved && condition.value && (
-                  <Tooltip content="Undo changes">
-                    <Link
-                      color="warning"
-                      onClick={() => _onRevertCondition(condition.id)}
-                    >
-                      <FaRedo size={18} />
-                    </Link>
-                  </Tooltip>
-                )}
-              </Row>
-            </Container>
-          </Grid>
-        );
-      })}
-      {conditions?.length > 0 && (
-        <Grid xs={12}>
-          <Button light color="primary" onClick={_onAddCondition} icon={<Plus />} auto css={{ p: 0 }}>
-            Add a new condition
-          </Button>
-        </Grid>
-      )}
-      {conditions.filter((c) => c.exposed).length > 0 && (
+              </div>
+            </Grid>
+          </>
+        )}
         <Grid xs={12} direction="column">
-          <div><Text>{"Exposed filters on the chart"}</Text></div>
-          <Spacer y={0.2} />
-          <div>
-            {conditions.filter((c) => c.exposed).map((condition) => {
-              return (
-                <Badge key={condition.id} color={"primary"} size="sm">
-                  {condition.field.replace("root[].", "")}
-                  <Spacer x={0.2} />
-                  <Link onClick={() => _onHideCondition(condition.id)} color="error">
-                    <CloseSquare size="small" color="white" />
-                  </Link>
-                </Badge>
-              );
-            })}
-          </div>
+          <Spacer y={1} />
+          <Divider />
+          <Spacer y={1} />
         </Grid>
-      )}
-    </Grid.Container>
+        {conditions && conditions.length === 0 && (
+          <Grid xs={12} className="datasetdata-filters-tut">
+            <Button
+              bordered
+              icon={<Filter />}
+              onClick={_onAddCondition}
+              auto
+              size={"sm"}
+            >
+              Add data filters
+            </Button>
+          </Grid>
+        )}
+        {conditions.map((condition, index) => {
+          return (
+            <Grid xs={12} key={condition.id} style={styles.conditionRow} className="datasetdata-filters-tut">
+              <Container css={{ pl: 0, pr: 0 }}>
+                <Row warp="wrap" gap={0.5} align="center" css={{ ml: 0, mr: 0 }}>
+                  {index === 0 && (<Text size={14}>{"where "}</Text>)}
+                  {index > 0 && (<Text size={14}>{"and "}</Text>)}
+                  <Spacer x={0.2} />
+                  <Dropdown>
+                    <Dropdown.Trigger>
+                      <Input
+                        value={(condition.field && condition.field.substring(condition.field.lastIndexOf(".") + 1)) || "field"}
+                        size="sm"
+                      />
+                    </Dropdown.Trigger>
+                    <Dropdown.Menu
+                      onAction={(key) => _updateCondition(condition.id, key, "field")}
+                      selectedKeys={[condition.field]}
+                      selectionMode="single"
+                      css={{ minWidth: "max-content" }}
+                    >
+                      {fieldOptions.map((field) => (
+                        <Dropdown.Item key={field.value}>
+                          <Container css={{ p: 0, m: 0 }}>
+                            <Row>
+                              <Badge size="sm" css={{ minWidth: 70 }} color={field.label.color}>{field.label.content}</Badge>
+                              <Spacer x={0.2} />
+                              <Text>{field.text}</Text>
+                            </Row>
+                          </Container>
+                        </Dropdown.Item>
+                      ))}
+                    </Dropdown.Menu>
+                  </Dropdown>
+                  <Spacer x={0.2} />
+                  <Dropdown>
+                    <Dropdown.Trigger>
+                      <Input
+                        value={
+                          (
+                            _.find(operators, { value: condition.operator })
+                            && _.find(operators, { value: condition.operator }).key
+                          )
+                          || "="
+                        }
+                        size="sm"
+                      />
+                    </Dropdown.Trigger>
+                    <Dropdown.Menu
+                      onAction={(key) => _updateCondition(condition.id, key, "operator")}
+                      selectedKeys={[condition.operator]}
+                      selectionMode="single"
+                      css={{ minWidth: "max-content" }}
+                    >
+                      {operators.map((operator) => (
+                        <Dropdown.Item key={operator.value}>
+                          {operator.text}
+                        </Dropdown.Item>
+                      ))}
+                    </Dropdown.Menu>
+                  </Dropdown>
+                  <Spacer x={0.2} />
+                  <div>
+                    {(!condition.field
+                      || (_.find(fieldOptions, { value: condition.field })
+                      && _.find(fieldOptions, { value: condition.field }).type !== "date")) && (
+                      <Input
+                        placeholder="Enter a value"
+                        value={condition.value}
+                        onChange={(e) => _updateCondition(condition.id, e.target.value, "value", _.find(fieldOptions, { value: condition.field }))}
+                        disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
+                        size="sm"
+                      />
+                    )}
+                    {_.find(fieldOptions, { value: condition.field })
+                      && _.find(fieldOptions, { value: condition.field }).type === "date" && (
+                      <Popover>
+                        <Popover.Trigger>
+                          <Input
+                            contentRight={<CalendarIcon />}
+                            value={(condition.value && format(new Date(condition.value), "Pp", { locale: enGB })) || "Enter a value"}
+                            disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
+                            size="sm"
+                          />
+                        </Popover.Trigger>
+                        <Popover.Content>
+                          <Calendar
+                            date={(condition.value && new Date(condition.value)) || new Date()}
+                            onChange={(date) => _updateCondition(condition.id, formatISO(date), "value", _.find(fieldOptions, { value: condition.field }).type)}
+                            locale={enGB}
+                            color={secondary}
+                          />
+                        </Popover.Content>
+                      </Popover>
+                    )}
+                  </div>
+                  <Spacer x={0.2} />
+                  <Tooltip content="Remove condition">
+                    <Link color="error" onClick={() => _onRemoveCondition(condition.id)}>
+                      <CloseSquare />
+                    </Link>
+                  </Tooltip>
+
+                  {condition.field && condition.operator && !condition.exposed && (
+                    <Tooltip content="Expose filter to viewers" color={"invert"}>
+                      <Link
+                        color="secondary"
+                        onClick={() => _onApplyCondition(
+                          condition.id,
+                          true,
+                          _.find(fieldOptions, { value: condition.field })
+                            && _.find(fieldOptions, { value: condition.field }).type
+                        )}
+                      >
+                        <Show />
+                      </Link>
+                    </Tooltip>
+                  )}
+
+                  {condition.field && condition.operator && condition.exposed && (
+                    <Tooltip content="Hide this filter from viewers">
+                      <Link
+                        color="secondary"
+                        onClick={() => _onApplyCondition(
+                          condition.id,
+                          false,
+                          _.find(fieldOptions, { value: condition.field })
+                            && _.find(fieldOptions, { value: condition.field }).type
+                        )}
+                      >
+                        <Hide />
+                      </Link>
+                    </Tooltip>
+                  )}
+
+                  {!condition.saved && condition.field && (
+                    <Tooltip content="Apply this condition">
+                      <Link
+                        color="success"
+                        onClick={() => _onApplyCondition(condition.id, condition.exposed)}
+                      >
+                        <TickSquare />
+                      </Link>
+                    </Tooltip>
+                  )}
+                  {!condition.saved && condition.value && (
+                    <Tooltip content="Undo changes">
+                      <Link
+                        color="warning"
+                        onClick={() => _onRevertCondition(condition.id)}
+                      >
+                        <FaRedo size={18} />
+                      </Link>
+                    </Tooltip>
+                  )}
+                  {condition.saved && (
+                    <Tooltip content="Condition settings">
+                      <Link
+                        css={{ color: "$accents8" }}
+                        onClick={() => _onEditConditionSettings(condition)}
+                      >
+                        <Setting />
+                      </Link>
+                    </Tooltip>
+                  )}
+                </Row>
+              </Container>
+            </Grid>
+          );
+        })}
+        {conditions?.length > 0 && (
+          <Grid xs={12}>
+            <Button light color="primary" onClick={_onAddCondition} icon={<Plus />} auto css={{ p: 0 }}>
+              Add a new condition
+            </Button>
+          </Grid>
+        )}
+        {conditions.filter((c) => c.exposed).length > 0 && (
+          <Grid xs={12} direction="column">
+            <div><Text>{"Exposed filters on the chart"}</Text></div>
+            <Spacer y={0.2} />
+            <div>
+              {conditions.filter((c) => c.exposed).map((condition) => {
+                return (
+                  <Badge key={condition.id} color={"primary"} size="sm">
+                    {condition.field.replace("root[].", "")}
+                    <Spacer x={0.2} />
+                    <Link onClick={() => _onHideCondition(condition.id)} color="error">
+                      <CloseSquare size="small" color="white" />
+                    </Link>
+                  </Badge>
+                );
+              })}
+            </div>
+          </Grid>
+        )}
+      </Grid.Container>
+      <Modal open={conditionModal} width="500px" onClose={() => setConditionModal(false)}>
+        <Modal.Header>
+          <Text h4>Condition settings</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <Container>
+            <Row>
+              <Input
+                label="The name of the filter as it appears to viewers"
+                placeholder="Enter a name"
+                onChange={(e) => {
+                  setSelectedCondition({ ...selectedCondition, displayName: e.target.value });
+                }}
+                value={
+                  selectedCondition.displayName
+                  || selectedCondition?.field?.substring(selectedCondition?.field?.lastIndexOf(".") + 1)
+                }
+                fullWidth
+                bordered
+              />
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <Checkbox
+                label="Hide existing values from the filter dropdown"
+                isSelected={selectedCondition.hideValues}
+                onChange={() => {
+                  setSelectedCondition({
+                    ...selectedCondition,
+                    hideValues: !selectedCondition.hideValues
+                  });
+                }}
+                size="sm"
+              />
+            </Row>
+          </Container>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            auto
+            onClick={() => setConditionModal(false)}
+            color="warning"
+            flat
+          >
+            Close
+          </Button>
+          <Button
+            auto
+            onClick={_onConfirmConditionSettings}
+            color="success"
+          >
+            Save settings
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
   );
 }
 
