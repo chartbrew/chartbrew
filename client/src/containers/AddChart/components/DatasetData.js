@@ -1324,7 +1324,8 @@ function DatasetData(props) {
                 }}
                 value={
                   selectedCondition.displayName
-                  || selectedCondition?.field?.substring(selectedCondition?.field?.lastIndexOf(".") + 1)
+                  || (selectedCondition.field && selectedCondition.field.substring(selectedCondition.field.lastIndexOf(".") + 1))
+                  || ""
                 }
                 fullWidth
                 bordered
