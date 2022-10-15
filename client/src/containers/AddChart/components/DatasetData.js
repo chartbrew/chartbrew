@@ -1191,14 +1191,6 @@ function DatasetData(props) {
                   </Link>
                 </Tooltip>
 
-                {index === conditions.length - 1 && (
-                  <Tooltip content="Add a new condition">
-                    <Link color="primary" onClick={_onAddCondition}>
-                      <Plus />
-                    </Link>
-                  </Tooltip>
-                )}
-
                 {condition.field && condition.operator && !condition.exposed && (
                   <Tooltip content="Expose filter to viewers" color={"invert"}>
                     <Link
@@ -1257,6 +1249,13 @@ function DatasetData(props) {
           </Grid>
         );
       })}
+      {conditions?.length > 0 && (
+        <Grid xs={12}>
+          <Button light color="primary" onClick={_onAddCondition} icon={<Plus />} auto css={{ p: 0 }}>
+            Add a new condition
+          </Button>
+        </Grid>
+      )}
       {conditions.filter((c) => c.exposed).length > 0 && (
         <Grid xs={12} direction="column">
           <div><Text>{"Exposed filters on the chart"}</Text></div>

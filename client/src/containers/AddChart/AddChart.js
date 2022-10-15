@@ -660,6 +660,7 @@ function AddChart(props) {
                       auto
                       color="primary"
                       light
+                      css={{ p: 0 }}
                     >
                       {!savingDataset ? <Text>{"Add a new dataset"}</Text> : <Text>{"Saving dataset"}</Text>}
                     </Button>
