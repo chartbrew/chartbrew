@@ -231,7 +231,7 @@ export function runQueryWithFilters(projectId, chartId, filters) {
       "content-type": "application/json",
     });
 
-    dispatch({ type: FETCH_CHART });
+    dispatch({ type: FETCH_CHART, chartId });
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
