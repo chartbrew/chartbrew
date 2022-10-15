@@ -328,7 +328,11 @@ function CampaignsQuery(props) {
             {campaigns.map((campaign) => (
               <Dropdown.Item
                 key={campaign.key}
-                icon={<Badge color={campaign.label.color}>{campaign.label.content}</Badge>}
+                icon={(
+                  <Badge color={campaign.label.color} css={{ minWidth: 70 }}>
+                    {campaign.label.content}
+                  </Badge>
+                )}
               >
                 {campaign.text}
               </Dropdown.Item>

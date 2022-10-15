@@ -138,7 +138,7 @@ function Filters(props) {
                 {fieldOptions.map((field) => (
                   <Dropdown.Item key={field.value}>
                     <LinkNext css={{ ai: "center", color: "$text" }}>
-                      <Badge size="sm" color={field.label.color}>
+                      <Badge size="sm" color={field.label.color} css={{ minWidth: 70 }}>
                         {field.type}
                       </Badge>
                       <Spacer x={0.2} />

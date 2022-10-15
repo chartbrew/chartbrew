@@ -597,7 +597,7 @@ function DatasetData(props) {
               css={{ minWidth: "max-content" }}
             >
               {_filterOptions("x").map((option) => (
-                <Dropdown.Item key={option.value} icon={<Badge isSquared size="xs" color={option.label.color}>{option.label.content}</Badge>}>
+                <Dropdown.Item key={option.value} icon={<Badge size="xs" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}>
                   <Text>{option.text}</Text>
                 </Dropdown.Item>
               ))}
@@ -644,7 +644,7 @@ function DatasetData(props) {
               {_getDateFieldOptions().map((option) => (
                 <Dropdown.Item
                   key={option.value}
-                  icon={<Badge size="xs" isSquared color={option.label.color}>{option.label.content}</Badge>}
+                  icon={<Badge size="xs" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}
                 >
                   <Text>{option.text}</Text>
                 </Dropdown.Item>
@@ -699,7 +699,7 @@ function DatasetData(props) {
                     <Dropdown.Item key={option.value}>
                       <Container css={{ p: 0, m: 0 }}>
                         <Row>
-                          <Badge size="sm" color={option.label.color}>{option.label.content}</Badge>
+                          <Badge size="sm" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>
                           <Spacer x={0.2} />
                           <Text>{option.text}</Text>
                         </Row>
@@ -887,6 +887,7 @@ function DatasetData(props) {
                                 ? "solid 2px $secondary"
                                 : "solid 2px $border",
                               mr: 3,
+                              minWidth: 70,
                             }}
                             style={{ marginBottom: 3 }}
                           >
@@ -1044,7 +1045,7 @@ function DatasetData(props) {
                   {_getGroupByFields().map((field) => (
                     <Dropdown.Item
                       key={field.value}
-                      icon={<Badge size="xs" isSquared color={field.label.color}>{field.label.content}</Badge>}
+                      icon={<Badge size="xs" css={{ minWidth: 70 }} color={field.label.color}>{field.label.content}</Badge>}
                     >
                       <Text>{field.text}</Text>
                     </Dropdown.Item>
@@ -1112,7 +1113,7 @@ function DatasetData(props) {
                       <Dropdown.Item key={field.value}>
                         <Container css={{ p: 0, m: 0 }}>
                           <Row>
-                            <Badge size="sm" color={field.label.color}>{field.label.content}</Badge>
+                            <Badge size="sm" css={{ minWidth: 70 }} color={field.label.color}>{field.label.content}</Badge>
                             <Spacer x={0.2} />
                             <Text>{field.text}</Text>
                           </Row>

@@ -751,7 +751,9 @@ function Conditions(props) {
                     <Dropdown.Item key={option.value} value={option.value}>
                       <Container css={{ p: 0, m: 0 }}>
                         <Row>
-                          <Badge color={option.label.color}>{option.label.content}</Badge>
+                          <Badge color={option.label.color} css={{ minWidth: 70 }}>
+                            {option.label.content}
+                          </Badge>
                           <Spacer x={0.2} />
                           <Text>{option.text}</Text>
                         </Row>
