@@ -29,19 +29,33 @@ const dataLabelsPlugin = {
   },
   padding: 4,
   formatter: (value, context) => {
+    let formattedValue = value;
+    try {
+      formattedValue = parseFloat(value);
+    } catch (e) {
+      // do nothing
+    }
+
     const hiddens = context.chart._hiddenIndices;
     let total = 0;
     const datapoints = context.dataset.data;
     datapoints.forEach((val, i) => {
+      let formattedVal = val;
+      try {
+        formattedVal = parseFloat(val);
+      } catch (e) {
+        // do nothing
+      }
+
       if (hiddens[i] !== undefined) {
         if (!hiddens[i]) {
-          total += val;
+          total += formattedVal;
         }
       } else {
-        total += val;
+        total += formattedVal;
       }
     });
-    const percentage = `${((value / total) * 100).toFixed(2)}%`;
+    const percentage = `${((formattedValue / total) * 100).toFixed(2)}%`;
     const out = percentage;
     return out;
   },
