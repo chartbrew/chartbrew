@@ -63,6 +63,9 @@ class NewLineChart {
           },
         },
         plugins: {
+          decimation: {
+            enabled: true
+          },
           tooltip: {
             enabled: false,
           },
@@ -138,6 +141,9 @@ class NewLineChart {
               boxWidth: 15,
               pointerStyle: "start"
             },
+          },
+          decimation: {
+            enabled: true,
           },
         },
       };

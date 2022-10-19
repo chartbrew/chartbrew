@@ -79,6 +79,9 @@ class NewBarChart {
           legend: {
             display: false,
           },
+          decimation: {
+            enabled: true,
+          },
         },
       };
     } else {
@@ -148,6 +151,9 @@ class NewBarChart {
               boxWidth: 15,
               pointerStyle: "start"
             },
+          },
+          decimation: {
+            enabled: true,
           },
         },
       };
