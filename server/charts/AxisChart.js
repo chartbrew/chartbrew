@@ -22,6 +22,10 @@ const areDatesTheSame = (first, second, interval) => {
     isTimestamp = true;
     firstDate = parseInt(first, 10);
   }
+  // regex to detect this format 2022-07-16 11:38:30 - to avoid Date() modifying the date to UTC
+  if (`${firstDate}`.match(/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/)) {
+    firstDate = `${firstDate.replace(" ", "T")}Z`;
+  }
 
   switch (interval) {
     case "hour":
