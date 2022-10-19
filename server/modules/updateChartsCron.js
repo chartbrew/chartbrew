@@ -1,4 +1,4 @@
-const { CronJob } = require("cron");
+const cron = require("node-cron");
 const moment = require("moment");
 const { Op } = require("sequelize");
 
@@ -89,11 +89,9 @@ module.exports = () => {
   updateCharts();
 
   // now run the cron job
-  const cron = new CronJob("0 */1 * * * *", () => {
+  cron.schedule("*/1 * * * *", () => {
     updateCharts();
   });
 
-  cron.start();
-
-  return cron;
+  return true;
 };

@@ -2,7 +2,7 @@
 // due to user closing window and continuing auth on mobile device
 // very rare case, but just in case, so we don't pollute authcache table
 const moment = require("moment");
-const { CronJob } = require("cron");
+const cron = require("node-cron");
 
 const db = require("../models/models");
 
@@ -31,11 +31,9 @@ module.exports = () => {
   clean();
 
   // now run the cron job every hour
-  const cron = new CronJob("0 0 * * * *", () => {
+  cron.schedule("0 * * * *", () => {
     clean();
   });
 
-  cron.start();
-
-  return cron;
+  return true;
 };
