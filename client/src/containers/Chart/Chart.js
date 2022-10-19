@@ -75,11 +75,28 @@ function Chart(props) {
   const [conditions, setConditions] = useState([]);
   const [shareLoading, setShareLoading] = useState(false);
   const [redraw, setRedraw] = useState(false);
+  const [updateFreqType, setUpdateFreqType] = useState("hours");
+  const [customUpdateFreq, setCustomUpdateFreq] = useState("");
+  const [autoUpdateError, setAutoUpdateError] = useState("");
 
   useEffect(() => {
     setIframeCopied(false);
     setUrlCopied(false);
   }, [embedModal]);
+
+  useEffect(() => {
+    if (customUpdateFreq && updateFreqType) {
+      if (updateFreqType === "days") {
+        setUpdateFrequency(customUpdateFreq * 3600 * 24);
+      } else if (updateFreqType === "hours") {
+        setUpdateFrequency(customUpdateFreq * 3600);
+      } else if (updateFreqType === "minutes") {
+        setUpdateFrequency(customUpdateFreq * 60);
+      } else if (updateFreqType === "seconds") {
+        setUpdateFrequency(customUpdateFreq);
+      }
+    }
+  }, [customUpdateFreq, updateFreqType]);
 
   const _onChangeSize = (size) => {
     setChartLoading(true);
@@ -200,7 +217,7 @@ function Chart(props) {
   };
 
   const _getUpdateFreqText = (value) => {
-    let text = "Not updating automatically";
+    let text = "Update schedule";
 
     if (value === 60) text = "Every minute";
     else if (value === 300) text = "Every 5 minutes";
@@ -213,12 +230,25 @@ function Chart(props) {
     else if (value === 86400) text = "Every day";
     else if (value === 604800) text = "Every week";
     else if (value === 2592000) text = "Every month";
+    else if (value < 120 && value > 0) text = `Every ${value} seconds`;
+    else if (value > 119 && value < 3600) {
+      text = `Every ${Math.floor(value / 60)} minutes`;
+    } else if (value > 3600 && value < 86400) {
+      text = `Every ${Math.floor(value / 3600)} hours`;
+    } else if (value > 86400 && value < 604800) {
+      text = `Every ${Math.floor(value / 86400)} days`;
+    }
+
     return text;
   };
 
   const _onChangeAutoUpdate = () => {
-    setAutoUpdateLoading(true);
+    if (updateFreqType === "seconds" && updateFrequency < 10 && updateFrequency > 0) {
+      setAutoUpdateError("Invalid update frequency");
+      return;
+    }
 
+    setAutoUpdateLoading(true);
     updateChart(
       match.params.projectId,
       chart.id,
@@ -759,16 +789,16 @@ function Chart(props) {
       </Modal>
 
       {/* AUTO-UPDATE MODAL */}
-      <Modal open={updateModal} onClose={() => setUpdateModal(false)}>
+      <Modal open={updateModal} width="500px" onClose={() => setUpdateModal(false)}>
         <Modal.Header>
           <Text h4>Set up auto-update for your chart</Text>
         </Modal.Header>
         <Modal.Body>
           <Container fluid>
-            <Row align="center" justify="center">
+            <Row align="center">
               <Text>Select the desired frequency:</Text>
             </Row>
-            <Row align="center" justify="center">
+            <Row align="center">
               <Dropdown selectionMode="single" selectedKeys={[`${updateFrequency}`]}>
                 <Dropdown.Button auto bordered>
                   {_getUpdateFreqText(updateFrequency)}
@@ -813,6 +843,51 @@ function Chart(props) {
                 </Dropdown.Menu>
               </Dropdown>
             </Row>
+            <Spacer y={1} />
+            <Row>
+              <Text>Or select a custom frequency:</Text>
+            </Row>
+            <Row align="center">
+              <Text>Every</Text>
+              <Spacer x={0.5} />
+              <Input
+                type="number"
+                onChange={(e) => setCustomUpdateFreq(e.target.value)}
+                value={customUpdateFreq}
+                bordered
+                animated={false}
+                size="sm"
+                min={updateFreqType === "seconds" ? 10 : 1}
+              />
+              <Spacer x={0.5} />
+              <Dropdown>
+                <Dropdown.Button auto bordered size="sm">
+                  {updateFreqType}
+                </Dropdown.Button>
+                <Dropdown.Menu>
+                  <Dropdown.Item key="seconds">
+                    <Text onClick={() => setUpdateFreqType("seconds")}>Seconds</Text>
+                  </Dropdown.Item>
+                  <Dropdown.Item key="minutes">
+                    <Text onClick={() => setUpdateFreqType("minutes")}>Minutes</Text>
+                  </Dropdown.Item>
+                  <Dropdown.Item key="hours">
+                    <Text onClick={() => setUpdateFreqType("hours")}>Hours</Text>
+                  </Dropdown.Item>
+                  <Dropdown.Item key="days">
+                    <Text onClick={() => setUpdateFreqType("days")}>Days</Text>
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
+            </Row>
+            {autoUpdateError && (
+              <>
+                <Spacer y={1} />
+                <Row>
+                  <Text color="error">{autoUpdateError}</Text>
+                </Row>
+              </>
+            )}
           </Container>
         </Modal.Body>
         <Modal.Footer>
@@ -825,9 +900,9 @@ function Chart(props) {
             Cancel
           </Button>
           <Button
-            iconRight={<TickSquare />}
+            iconRight={autoUpdateLoading ? <Loading type="spinner" /> : <TickSquare />}
             auto
-            loading={autoUpdateLoading}
+            disabled={autoUpdateLoading}
             onClick={_onChangeAutoUpdate}
           >
             Save
