@@ -708,8 +708,11 @@ class AxisChart {
           } else if (startDate.year() !== endDate.year()) {
             this.dateFormat = "YYYY/MM/DD hA";
             axisData[i] = axisData[i].format(this.dateFormat);
-          } else {
+          } else if (startDate.month() !== endDate.month()) {
             this.dateFormat = "MMM Do hA";
+            axisData[i] = axisData[i].format(this.dateFormat);
+          } else {
+            this.dateFormat = "ddd do hA";
             axisData[i] = axisData[i].format(this.dateFormat);
           }
           break;
