@@ -450,6 +450,46 @@ module.exports = (app) => {
   // --------------------------------------------------------
 
   /*
+  ** Route to get latest chart data without an authentication token
+  */
+  app.get("/chart/:id", (req, res) => {
+    // check if the chart is on a public report first
+    return chartController.findById(req.params.id)
+      .then(async (chart) => {
+        const project = await projectController.findById(chart.project_id);
+
+        if (!project.public) throw new Error(401);
+        if (project.public
+          && project.passwordProtected
+          && req.query.password !== project.password
+        ) {
+          throw new Error(401);
+        }
+
+        const team = await teamController.findById(project.team_id);
+
+        return res.status(200).send({
+          id: chart.id,
+          name: chart.name,
+          type: chart.type,
+          subType: chart.subType,
+          chartDataUpdated: chart.chartDataUpdated,
+          chartData: chart.chartData,
+          Datasets: chart.Datasets,
+          mode: chart.mode,
+          chartSize: chart.chartSize,
+          project_id: chart.project_id,
+          showBranding: team.showBranding,
+          showGrowth: chart.showGrowth,
+          timeInterval: chart.timeInterval,
+        });
+      })
+      .catch((err) => {
+        return res.status(400).send(err);
+      });
+  });
+
+  /*
   ** Route used to export data in spreadsheet format
   */
   app.post("/project/:project_id/chart/export", verifyToken, (req, res) => {

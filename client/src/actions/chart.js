@@ -10,15 +10,19 @@ export const FETCH_CHART_SUCCESS = "FETCH_CHART_SUCCESS";
 export const FETCH_CHART_FAIL = "FETCH_CHART_FAIL";
 export const UPDATE_CHART_FIELDS = "UPDATE_CHART_FIELDS";
 
-export function getChart(projectId, chartId) {
+export function getChart(projectId, chartId, password) {
   return (dispatch) => {
     const token = cookie.load("brewToken");
-    const url = `${API_HOST}/project/${projectId}/chart/${chartId}`;
+    let url = `${API_HOST}/project/${projectId}/chart/${chartId}`;
     const method = "GET";
     const headers = new Headers({
       "Accept": "application/json",
       "authorization": `Bearer ${token}`,
     });
+
+    if (password || !token) {
+      url = `${API_HOST}/chart/${chartId}?password=${password}`;
+    }
 
     dispatch({ type: FETCH_CHART, chartId });
     return fetch(url, { method, headers })
