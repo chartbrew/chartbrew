@@ -82,8 +82,8 @@ class AxisChart {
       let startDate;
       let endDate;
       if (this.chart.startDate && this.chart.endDate) {
-        startDate = moment(this.chart.startDate);
-        endDate = moment(this.chart.endDate);
+        startDate = moment(this.chart.startDate).startOf("day");
+        endDate = moment(this.chart.endDate).endOf("day");
       }
 
       for (let i = 0; i < this.datasets.length; i++) {
@@ -440,7 +440,12 @@ class AxisChart {
       }
 
       // if we're dealing with dates, make sure to add the missing ones at the end
-      if (gXType === "date" && startDate && endDate) {
+      if (gXType === "date"
+        && startDate
+        && endDate
+        && this.chart.timeInterval !== "minute"
+        && this.chart.timeInterval !== "second"
+      ) {
         const lastValue = moment(unifiedX[unifiedX.length - 1], this.dateFormat);
         lastValue.add(1, this.chart.timeInterval);
         while (lastValue.isBefore(endDate)) {
@@ -675,14 +680,14 @@ class AxisChart {
           } else if (startDate.month() !== endDate.month()) {
             this.dateFormat = "MMM Do HH:mm:ss";
             axisData[i] = axisData[i].format(this.dateFormat);
-          } else if (startDate.week() !== endDate.week()) {
-            this.dateFormat = "ddd do HH:mm:ss";
+          } else if (startDate.week() !== endDate.week() && moment().week() !== startDate.week()) {
+            this.dateFormat = "ddd Do HH:mm:ss";
             axisData[i] = axisData[i].format(this.dateFormat);
-          } else if (startDate.day() !== endDate.day()) {
+          } else if (startDate.day() !== endDate.day() && moment().day() !== startDate.day()) {
             this.dateFormat = "ddd HH:mm:ss";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else {
-            this.dateFormat = "HH:mm:ss";
+            this.dateFormat = "MMM Do HH:mm:ss";
             axisData[i] = axisData[i].format(this.dateFormat);
           }
           break;
@@ -695,14 +700,14 @@ class AxisChart {
           } else if (startDate.month() !== endDate.month()) {
             this.dateFormat = "MMM Do HH:mm";
             axisData[i] = axisData[i].format(this.dateFormat);
-          } else if (startDate.week() !== endDate.week()) {
+          } else if (startDate.week() !== endDate.week() && moment().week() !== startDate.week()) {
             this.dateFormat = "ddd do HH:mm";
             axisData[i] = axisData[i].format(this.dateFormat);
-          } else if (startDate.day() !== endDate.day()) {
+          } else if (startDate.day() !== endDate.day() && moment().day() !== startDate.day()) {
             this.dateFormat = "ddd HH:mm";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else {
-            this.dateFormat = "HH:mm";
+            this.dateFormat = "MMM Do HH:mm";
             axisData[i] = axisData[i].format(this.dateFormat);
           }
           break;
