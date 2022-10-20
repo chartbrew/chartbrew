@@ -796,7 +796,7 @@ function Chart(props) {
         <Modal.Body>
           <Container fluid>
             <Row align="center">
-              <Text>Select the desired frequency:</Text>
+              <Text>Select a preset:</Text>
             </Row>
             <Row align="center">
               <Dropdown selectionMode="single" selectedKeys={[`${updateFrequency}`]}>
@@ -845,7 +845,7 @@ function Chart(props) {
             </Row>
             <Spacer y={1} />
             <Row>
-              <Text>Or select a custom frequency:</Text>
+              <Text>Or enter a custom frequency:</Text>
             </Row>
             <Row align="center">
               <Text>Every</Text>
