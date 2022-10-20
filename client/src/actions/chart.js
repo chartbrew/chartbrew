@@ -10,6 +10,36 @@ export const FETCH_CHART_SUCCESS = "FETCH_CHART_SUCCESS";
 export const FETCH_CHART_FAIL = "FETCH_CHART_FAIL";
 export const UPDATE_CHART_FIELDS = "UPDATE_CHART_FIELDS";
 
+export function getChart(projectId, chartId) {
+  return (dispatch) => {
+    const token = cookie.load("brewToken");
+    const url = `${API_HOST}/project/${projectId}/chart/${chartId}`;
+    const method = "GET";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    dispatch({ type: FETCH_CHART, chartId });
+    return fetch(url, { method, headers })
+      .then((response) => {
+        if (!response.ok) {
+          dispatch(addError(response.status));
+          return new Promise((resolve, reject) => reject(response.statusText));
+        }
+
+        return response.json();
+      })
+      .then((chart) => {
+        dispatch({ type: FETCH_CHART_SUCCESS, chart });
+        return new Promise(resolve => resolve(chart));
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  };
+}
+
 export function getProjectCharts(projectId) {
   return (dispatch) => {
     const token = cookie.load("brewToken");

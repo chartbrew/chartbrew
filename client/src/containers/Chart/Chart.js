@@ -26,6 +26,7 @@ import {
   runQueryWithFilters as runQueryWithFiltersAction,
   exportChart,
   createShareString as createShareStringAction,
+  getChart as getChartAction,
 } from "../../actions/chart";
 import canAccess from "../../config/canAccess";
 import { SITE_HOST } from "../../config/settings";
@@ -38,6 +39,7 @@ import PieChart from "./components/PieChart";
 import TableContainer from "./components/TableView/TableContainer";
 import ChartFilters from "./components/ChartFilters";
 import Badge from "../../components/Badge";
+import useInterval from "../../modules/useInterval";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -55,7 +57,7 @@ function Chart(props) {
   const {
     updateChart, match, runQuery, removeChart, runQueryWithFilters,
     team, user, chart, isPublic, charts, onChangeOrder, print, height,
-    createShareString,
+    createShareString, getChart,
   } = props;
 
   const [chartLoading, setChartLoading] = useState(false);
@@ -78,6 +80,10 @@ function Chart(props) {
   const [updateFreqType, setUpdateFreqType] = useState("hours");
   const [customUpdateFreq, setCustomUpdateFreq] = useState("");
   const [autoUpdateError, setAutoUpdateError] = useState("");
+
+  useInterval(() => {
+    getChart(chart.project_id, chart.id);
+  }, chart.autoUpdate ? chart.autoUpdate * 1000 : null);
 
   useEffect(() => {
     setIframeCopied(false);
@@ -130,6 +136,13 @@ function Chart(props) {
             runQueryWithFilters(chart.project_id, chart.id, dashboardFilters);
           }
         }, 100);
+
+        // // set a timeout with the next auto-update
+        // if (chart.autoUpdate) {
+        //   setTimeout(() => {
+        //     _onGetChartData();
+        //   }, chart.autoUpdate * 1000);
+        // }
       })
       .catch((error) => {
         if (error === 413) {
@@ -1113,6 +1126,7 @@ Chart.propTypes = {
   print: PropTypes.string,
   height: PropTypes.number,
   createShareString: PropTypes.func.isRequired,
+  getChart: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -1136,6 +1150,7 @@ const mapDispatchToProps = (dispatch) => {
     createShareString: (projectId, chartId) => (
       dispatch(createShareStringAction(projectId, chartId))
     ),
+    getChart: (projectId, chartId) => dispatch(getChartAction(projectId, chartId)),
   };
 };
 
