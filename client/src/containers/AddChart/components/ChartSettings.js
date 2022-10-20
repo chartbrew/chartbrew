@@ -44,6 +44,12 @@ const xLabelOptions = [{
 }];
 
 const timeIntervalOptions = [{
+  text: "Seconds interval",
+  value: "second",
+}, {
+  text: "Minutes interval",
+  value: "minute",
+}, {
   text: "Hourly interval",
   value: "hour",
 }, {

@@ -1,7 +1,7 @@
 const _ = require("lodash");
 const moment = require("moment");
 const {
-  isSameDay, isSameHour, isSameWeek, isSameMonth, isSameYear,
+  isSameDay, isSameHour, isSameWeek, isSameMonth, isSameYear, isSameMinute, isSameSecond,
 } = require("date-fns");
 const FormulaParser = require("hot-formula-parser").Parser;
 
@@ -16,11 +16,10 @@ moment.suppressDeprecationWarnings = true;
 const parser = new FormulaParser();
 
 const areDatesTheSame = (first, second, interval) => {
-  let isTimestamp = false;
   let firstDate = first;
   if (`${first}` === `${parseInt(first, 10)}`) {
-    isTimestamp = true;
     firstDate = parseInt(first, 10);
+    firstDate *= 1000;
   }
   // regex to detect this format 2022-07-16 11:38:30 - to avoid Date() modifying the date to UTC
   if (`${firstDate}`.match(/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/)) {
@@ -28,20 +27,19 @@ const areDatesTheSame = (first, second, interval) => {
   }
 
   switch (interval) {
+    case "second":
+      return isSameSecond(new Date(firstDate), new Date(second));
+    case "minute":
+      return isSameMinute(new Date(firstDate), new Date(second));
     case "hour":
-      if (isTimestamp) firstDate *= 1000;
       return isSameHour(new Date(firstDate), new Date(second));
     case "day":
-      if (isTimestamp) firstDate *= 1000;
       return isSameDay(new Date(firstDate), new Date(second));
     case "week":
-      if (isTimestamp) firstDate *= 1000;
       return isSameWeek(new Date(firstDate), new Date(second));
     case "month":
-      if (isTimestamp) firstDate *= 1000;
       return isSameMonth(new Date(firstDate), new Date(second));
     case "year":
-      if (isTimestamp) firstDate *= 1000;
       return isSameYear(new Date(firstDate), new Date(second));
     default:
       return false;
@@ -367,12 +365,17 @@ class AxisChart {
 
             const currDate = moment(tempXData[i], this.dateFormat);
             const nextDate = moment(tempXData[i + 1], this.dateFormat);
+            const difference = nextDate.diff(currDate, this.chart.timeInterval);
             if (nextDate.diff(currDate, this.chart.timeInterval) > 1) {
-              currDate.add(1, this.chart.timeInterval);
+              let dateModifier = 1;
+              if (difference >= 100) {
+                dateModifier = parseInt(difference / 20, 10);
+              }
+              currDate.add(dateModifier, this.chart.timeInterval);
               while (currDate.isBefore(nextDate)) {
                 newX.push(currDate.format(this.dateFormat));
                 newY.push(0);
-                currDate.add(1, this.chart.timeInterval);
+                currDate.add(dateModifier, this.chart.timeInterval);
               }
             }
           }
@@ -403,7 +406,12 @@ class AxisChart {
       // if we're dealing with weekly or hourly data, make sure to not add the same data twice
       let unifiedX = [];
       this.axisData.x.forEach((arr, index) => {
-        if ((this.chart.timeInterval === "week" || this.chart.timeInterval === "hour") && index > 0) {
+        if ((this.chart.timeInterval === "week"
+          || this.chart.timeInterval === "hour"
+          || this.chart.timeInterval === "minute"
+          || this.chart.timeInterval === "second")
+          && index > 0
+        ) {
           arr.forEach((item) => {
             if (unifiedX.indexOf(item) === -1) {
               const allItemsFound = arr.filter((x) => x === item);
@@ -415,7 +423,11 @@ class AxisChart {
         }
       });
 
-      if (this.chart.timeInterval === "week" || this.chart.timeInterval === "hour") {
+      if (this.chart.timeInterval === "week"
+        || this.chart.timeInterval === "hour"
+        || this.chart.timeInterval === "minute"
+        || this.chart.timeInterval === "second"
+      ) {
         unifiedX = unifiedX
           .sort((a, b) => moment(a, this.dateFormat).diff(moment(b, this.dateFormat)));
       } else {
@@ -650,6 +662,46 @@ class AxisChart {
     // format the dates
     for (let i = 0; i < axisData.length; i++) {
       switch (this.chart.timeInterval) {
+        case "second":
+          if (this.dateFormat) {
+            axisData[i] = axisData[i].format(this.dateFormat);
+          } else if (startDate.year() !== endDate.year()) {
+            this.dateFormat = "YYYY/MM/DD HH:mm:ss";
+            axisData[i] = axisData[i].format(this.dateFormat);
+          } else if (startDate.month() !== endDate.month()) {
+            this.dateFormat = "MMM Do HH:mm:ss";
+            axisData[i] = axisData[i].format(this.dateFormat);
+          } else if (startDate.week() !== endDate.week()) {
+            this.dateFormat = "ddd do HH:mm:ss";
+            axisData[i] = axisData[i].format(this.dateFormat);
+          } else if (startDate.day() !== endDate.day()) {
+            this.dateFormat = "ddd HH:mm:ss";
+            axisData[i] = axisData[i].format(this.dateFormat);
+          } else {
+            this.dateFormat = "HH:mm:ss";
+            axisData[i] = axisData[i].format(this.dateFormat);
+          }
+          break;
+        case "minute":
+          if (this.dateFormat) {
+            axisData[i] = axisData[i].format(this.dateFormat);
+          } else if (startDate.year() !== endDate.year()) {
+            this.dateFormat = "YYYY/MM/DD HH:mm";
+            axisData[i] = axisData[i].format(this.dateFormat);
+          } else if (startDate.month() !== endDate.month()) {
+            this.dateFormat = "MMM Do HH:mm";
+            axisData[i] = axisData[i].format(this.dateFormat);
+          } else if (startDate.week() !== endDate.week()) {
+            this.dateFormat = "ddd do HH:mm";
+            axisData[i] = axisData[i].format(this.dateFormat);
+          } else if (startDate.day() !== endDate.day()) {
+            this.dateFormat = "ddd HH:mm";
+            axisData[i] = axisData[i].format(this.dateFormat);
+          } else {
+            this.dateFormat = "HH:mm";
+            axisData[i] = axisData[i].format(this.dateFormat);
+          }
+          break;
         case "hour":
           if (this.dateFormat) {
             axisData[i] = axisData[i].format(this.dateFormat);
