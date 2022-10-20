@@ -351,7 +351,11 @@ class AxisChart {
         });
 
         // if the include zero values on the chart is selected
-        if (this.chart.includeZeros && gXType === "date") {
+        if (this.chart.includeZeros
+          && gXType === "date"
+          && this.chart.timeInterval !== "minute"
+          && this.chart.timeInterval !== "second"
+        ) {
           const tempXData = this.axisData.x[xLength];
 
           const newX = [];
