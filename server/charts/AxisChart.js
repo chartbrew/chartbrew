@@ -686,6 +686,9 @@ class AxisChart {
           } else if (startDate.day() !== endDate.day() && moment().day() !== startDate.day()) {
             this.dateFormat = "ddd HH:mm:ss";
             axisData[i] = axisData[i].format(this.dateFormat);
+          } else if (startDate.day() === endDate.day() && moment().day() === startDate.day()) {
+            this.dateFormat = "HH:mm:ss";
+            axisData[i] = axisData[i].format(this.dateFormat);
           } else {
             this.dateFormat = "MMM Do HH:mm:ss";
             axisData[i] = axisData[i].format(this.dateFormat);
@@ -705,6 +708,9 @@ class AxisChart {
             axisData[i] = axisData[i].format(this.dateFormat);
           } else if (startDate.day() !== endDate.day() && moment().day() !== startDate.day()) {
             this.dateFormat = "ddd HH:mm";
+            axisData[i] = axisData[i].format(this.dateFormat);
+          } else if (startDate.day() === endDate.day() && moment().day() === startDate.day()) {
+            this.dateFormat = "HH:mm";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else {
             this.dateFormat = "MMM Do HH:mm";
