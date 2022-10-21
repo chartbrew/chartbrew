@@ -255,8 +255,8 @@ function Chart(props) {
     return text;
   };
 
-  const _onChangeAutoUpdate = () => {
-    if (updateFreqType === "seconds" && updateFrequency < 10 && updateFrequency > 0) {
+  const _onChangeAutoUpdate = (frequency = updateFrequency) => {
+    if (updateFreqType === "seconds" && frequency < 10 && frequency > 0) {
       setAutoUpdateError("Invalid update frequency");
       return;
     }
@@ -265,7 +265,7 @@ function Chart(props) {
     updateChart(
       match.params.projectId,
       chart.id,
-      { autoUpdate: updateFrequency },
+      { autoUpdate: frequency },
       true,
     )
       .then(() => {
@@ -909,14 +909,29 @@ function Chart(props) {
             color={"warning"}
             auto
             onClick={() => setUpdateModal(false)}
+            size="sm"
           >
             Cancel
+          </Button>
+          <Button
+            iconRight={autoUpdateLoading ? <Loading type="spinner" /> : <CloseSquare />}
+            auto
+            flat
+            color="error"
+            disabled={autoUpdateLoading}
+            onClick={() => {
+              setUpdateFrequency(0);
+              _onChangeAutoUpdate(0);
+            }}
+            size="sm"
+          >
+            Stop auto-updating
           </Button>
           <Button
             iconRight={autoUpdateLoading ? <Loading type="spinner" /> : <TickSquare />}
             auto
             disabled={autoUpdateLoading}
-            onClick={_onChangeAutoUpdate}
+            onClick={() => _onChangeAutoUpdate()}
           >
             Save
           </Button>
