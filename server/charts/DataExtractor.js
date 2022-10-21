@@ -19,8 +19,8 @@ module.exports = (data, filters) => {
   let startDate;
   let endDate;
   if (chart.startDate && chart.endDate) {
-    startDate = moment(chart.startDate);
-    endDate = moment(chart.endDate);
+    startDate = moment(chart.startDate).startOf("day");
+    endDate = moment(chart.endDate).endOf("day");
   }
 
   // this is only used when exporting data

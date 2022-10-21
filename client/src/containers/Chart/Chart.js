@@ -80,6 +80,7 @@ function Chart(props) {
   const [updateFreqType, setUpdateFreqType] = useState("hours");
   const [customUpdateFreq, setCustomUpdateFreq] = useState("");
   const [autoUpdateError, setAutoUpdateError] = useState("");
+  const [exportLoading, setExportLoading] = useState(false);
 
   useInterval(() => {
     getChart(chart.project_id, chart.id, isPublic ? window.localStorage.getItem("reportPassword") : null);
@@ -351,7 +352,14 @@ function Chart(props) {
   };
 
   const _onExport = () => {
-    return exportChart(match.params.projectId, [chart.id], dashboardFilters);
+    setExportLoading(true);
+    return exportChart(match.params.projectId, [chart.id], dashboardFilters)
+      .then(() => {
+        setExportLoading(false);
+      })
+      .catch(() => {
+        setExportLoading(false);
+      });
   };
 
   const _getUpdatedTime = (updatedAt) => {
@@ -536,7 +544,7 @@ function Chart(props) {
                           </Link>
                         </Dropdown.Item>
                       )}
-                      <Dropdown.Item icon={<PaperDownload />}>
+                      <Dropdown.Item icon={exportLoading ? <Loading type="spinner" color="currentColor" /> : <PaperDownload />}>
                         <Text onClick={_onExport}>Export to Excel</Text>
                       </Dropdown.Item>
                       {!chart.draft && _canAccess("editor") && (
