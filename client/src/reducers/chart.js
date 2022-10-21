@@ -22,7 +22,7 @@ export default function chart(state = {
           }
         }
 
-        if (indexFound) newData[indexFound].loading = true;
+        if (indexFound > -1) newData[indexFound].loading = true;
 
         return { ...state, data: newData, loading: true };
       } else {
@@ -72,7 +72,7 @@ export default function chart(state = {
           }
         }
 
-        if (indexFound) newData[indexFound].loading = false;
+        if (indexFound > -1) newData[indexFound].loading = false;
 
         return { ...state, data: newData, loading: false };
       }
