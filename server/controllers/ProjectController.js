@@ -191,7 +191,7 @@ class ProjectController {
         },
         {
           model: db.Team,
-          attributes: ["showBranding"],
+          attributes: ["showBranding", "allowReportRefresh"],
         }
       ],
       order: [[db.Chart, "dashboardOrder", "ASC"]],

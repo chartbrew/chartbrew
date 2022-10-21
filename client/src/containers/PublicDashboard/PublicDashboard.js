@@ -23,6 +23,7 @@ import AceEditor from "react-ace";
 import "ace-builds/src-min-noconflict/mode-css";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
+import { HiRefresh } from "react-icons/hi";
 
 import {
   getPublicDashboard as getPublicDashboardAction,
@@ -31,6 +32,7 @@ import {
   updateProjectLogo as updateProjectLogoAction,
 } from "../../actions/project";
 import { updateTeam as updateTeamAction } from "../../actions/team";
+import { runQueryOnPublic as runQueryOnPublicAction } from "../../actions/chart";
 import { blue, primary, secondary } from "../../config/colors";
 import Chart from "../Chart/Chart";
 import logo from "../../assets/logo_inverted.png";
@@ -54,7 +56,7 @@ const defaultColors = [
 function PublicDashboard(props) {
   const {
     getPublicDashboard, match, getProject, updateProject, updateProjectLogo, charts,
-    updateTeam, user, teams,
+    updateTeam, user, teams, runQueryOnPublic,
   } = props;
 
   const [project, setProject] = useState({});
@@ -75,6 +77,7 @@ function PublicDashboard(props) {
   const [passwordRequired, setPasswordRequired] = useState(false);
   const [notAuthorized, setNotAuthorized] = useState(false);
   const [reportPassword, setReportPassword] = useState("");
+  const [refreshLoading, setRefreshLoading] = useState(false);
 
   const { isDark } = useTheme();
 
@@ -251,6 +254,24 @@ function PublicDashboard(props) {
         toast.success("The branding settings are saved!");
       })
       .catch(() => {});
+  };
+
+  const _onRefreshCharts = () => {
+    setRefreshLoading(true);
+    const refreshPromises = [];
+    for (let i = 0; i < charts.length; i++) {
+      refreshPromises.push(
+        runQueryOnPublic(project.id, charts[i].id)
+      );
+    }
+
+    return Promise.all(refreshPromises)
+      .then(() => {
+        setRefreshLoading(false);
+      })
+      .catch(() => {
+        setRefreshLoading(false);
+      });
   };
 
   const _canAccess = (role) => {
@@ -516,6 +537,22 @@ function PublicDashboard(props) {
         />
       )}
 
+      <Media greaterThan="mobile">
+        {project?.Team?.allowReportRefresh && (
+          <Button
+            onClick={() => _onRefreshCharts()}
+            iconRight={refreshLoading ? <Loading type="spinner" /> : <HiRefresh />}
+            disabled={refreshLoading}
+            style={styles.refreshBtn(editorVisible)}
+            css={{ minWidth: "fit-content" }}
+            auto
+            size="sm"
+          >
+            Refresh charts
+          </Button>
+        )}
+      </Media>
+
       {charts && charts.length > 0 && _isOnReport() && (
         <div className="main-container" style={styles.mainContainer(width < breakpoints.tablet)}>
           {loading && (
@@ -536,6 +573,7 @@ function PublicDashboard(props) {
           <Container className="title-container" css={{ pl: 0, pr: 0 }} fluid>
             {editorVisible && !preview && (
               <>
+                <Spacer y={0.5} />
                 <Row justify="flex-start">
                   <Media greaterThan="mobile">
                     <div className="dashboard-logo-container">
@@ -650,6 +688,25 @@ function PublicDashboard(props) {
                   {newChanges.description}
                 </Text>
               </Row>
+            )}
+            {project.Team.allowReportRefresh && (
+              <>
+                <Spacer y={0.5} />
+                <Row justify="center">
+                  <Media at="mobile">
+                    <Button
+                      onClick={() => _onRefreshCharts()}
+                      iconRight={refreshLoading ? <Loading type="spinner" /> : <HiRefresh />}
+                      disabled={refreshLoading}
+                      css={{ minWidth: "fit-content" }}
+                      auto
+                      size="sm"
+                    >
+                      Refresh charts
+                    </Button>
+                  </Media>
+                </Row>
+              </>
             )}
           </Container>
           <Spacer y={2} />
@@ -855,6 +912,12 @@ const styles = {
     right: 20,
     zIndex: 10,
   },
+  refreshBtn: (isMenuVisible) => ({
+    position: "absolute",
+    top: isMenuVisible ? 90 : 20,
+    right: 20,
+    zIndex: 10,
+  }),
   mainContainer: (mobile) => ({
     padding: mobile ? 0 : 20,
     paddingTop: 20,
@@ -873,6 +936,7 @@ PublicDashboard.propTypes = {
   charts: PropTypes.array.isRequired,
   user: PropTypes.object.isRequired,
   teams: PropTypes.array.isRequired,
+  runQueryOnPublic: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => ({
@@ -889,6 +953,7 @@ const mapDispatchToProps = (dispatch) => ({
   updateProject: (projectId, data) => dispatch(updateProjectAction(projectId, data)),
   updateProjectLogo: (projectId, logo) => dispatch(updateProjectLogoAction(projectId, logo)),
   updateTeam: (teamId, data) => dispatch(updateTeamAction(teamId, data)),
+  runQueryOnPublic: (projectId, chartId) => dispatch(runQueryOnPublicAction(projectId, chartId)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(PublicDashboard);

@@ -356,7 +356,7 @@ class ChartController {
             }
             return tempItem;
           });
-        } else if (!skipCache) {
+        } else if (!skipCache && user) {
           // create a new cache for the data that was fetched
           this.chartCache.create(user.id, gChart.id, resolvingData);
         }

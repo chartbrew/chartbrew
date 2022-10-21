@@ -490,6 +490,38 @@ module.exports = (app) => {
   });
 
   /*
+  ** Route to run the query for a chart on a project that enables this
+  */
+  app.post("/chart/:id/query", (req, res) => {
+    return chartController.findById(req.params.id)
+      .then(async (chart) => {
+        const project = await projectController.findById(chart.project_id);
+
+        const team = await teamController.findById(project.team_id);
+
+        if (!team.allowReportRefresh) {
+          throw new Error(401);
+        }
+
+        return chartController.updateChartData(
+          req.params.id,
+          null,
+          {
+            noSource: req.query.no_source === "true",
+            skipParsing: req.query.skip_parsing === "true",
+            getCache: req.query.getCache,
+          },
+        );
+      })
+      .then((chart) => {
+        return res.status(200).send(chart);
+      })
+      .catch((err) => {
+        return res.status(400).send(err);
+      });
+  });
+
+  /*
   ** Route used to export data in spreadsheet format
   */
   app.post("/project/:project_id/chart/export", verifyToken, (req, res) => {

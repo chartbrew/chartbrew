@@ -286,6 +286,37 @@ export function runQueryWithFilters(projectId, chartId, filters) {
   };
 }
 
+export function runQueryOnPublic(projectId, chartId) {
+  return (dispatch) => {
+    const token = cookie.load("brewToken");
+    const url = `${API_HOST}/chart/${chartId}/query`;
+    const method = "POST";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    dispatch({ type: FETCH_CHART, chartId });
+    return fetch(url, { method, headers })
+      .then((response) => {
+        if (!response.ok) {
+          dispatch(addError(response.status));
+          return new Promise((resolve, reject) => reject(response.status));
+        }
+
+        return response.json();
+      })
+      .then((chart) => {
+        dispatch({ type: FETCH_CHART_SUCCESS, chart });
+        return chart;
+      })
+      .catch((error) => {
+        dispatch({ type: FETCH_CHART_FAIL, chartId });
+        return new Promise((resolve, reject) => reject(error));
+      });
+  };
+}
+
 export function getPreviewData(projectId, chart, noSource = false, skipParsing = false) {
   return (dispatch) => {
     const token = cookie.load("brewToken");
