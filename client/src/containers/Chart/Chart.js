@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import {
   Card, Text, Grid, Spacer, Row, Loading, Tooltip, Dropdown, Button, Modal, Input,
-  Link as LinkNext, Textarea, Switch, Container, Popover,
+  Link as LinkNext, Textarea, Switch, Container, Popover, Badge,
 } from "@nextui-org/react";
 import {
   ArrowDown, ArrowUp, ChevronDown, ChevronDownCircle, ChevronUp, CloseSquare,
@@ -38,7 +38,6 @@ import DoughnutChart from "./components/DoughnutChart";
 import PieChart from "./components/PieChart";
 import TableContainer from "./components/TableView/TableContainer";
 import ChartFilters from "./components/ChartFilters";
-import Badge from "../../components/Badge";
 import useInterval from "../../modules/useInterval";
 
 const getFiltersFromStorage = (projectId) => {
@@ -439,7 +438,7 @@ function Chart(props) {
                   <Row justify="flex-start" align="center">
                     {chart.draft && (
                       <>
-                        <Badge type="secondary">Draft</Badge>
+                        <Badge color="secondary">Draft</Badge>
                         <Spacer x={0.1} />
                       </>
                     )}
@@ -456,9 +455,10 @@ function Chart(props) {
                     <Spacer x={0.2} />
                     {chart.Datasets && conditions.map((c) => {
                       return (
-                        <Badge type="primary" key={c.id}>
+                        <Badge color="primary" variant={"flat"} key={c.id} size="sm" css={{ p: 0, pl: 5, pr: 5 }}>
                           {c.type !== "date" && `${c.value}`}
                           {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
+                          <Spacer x={0.2} />
                           <LinkNext onClick={() => _onClearFilter(c)} css={{ color: "$text" }}>
                             <CloseSquare size="small" />
                           </LinkNext>

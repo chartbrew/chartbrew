@@ -35,6 +35,7 @@ function EmbeddedChart(props) {
   const [chart, setChart] = useState(null);
   const [error, setError] = useState(false);
   const [conditions, setConditions] = useState([]);
+  const [dataLoading, setDataLoading] = useState(false);
 
   useEffect(() => {
     // change the background color to transparent
@@ -76,9 +77,14 @@ function EmbeddedChart(props) {
     if (!found) newConditions.push(condition);
     setConditions(newConditions);
 
+    setDataLoading(true);
     runQueryWithFilters(chart.project_id, chart.id, newConditions)
       .then((data) => {
+        setDataLoading(false);
         setChart(data);
+      })
+      .catch(() => {
+        setDataLoading(false);
       });
   };
 
@@ -143,11 +149,12 @@ function EmbeddedChart(props) {
             <Spacer x={0.5} />
             {chart.Datasets && conditions.map((c) => {
               return (
-                <Badge type="primary" key={c.id} size="sm">
+                <Badge color="primary" variant={"flat"} key={c.id} size="sm" css={{ p: 0, pl: 5, pr: 5 }}>
                   {c.type !== "date" && `${c.value}`}
                   {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
-                  <Link onClick={() => _onClearFilter(c)} css={{ color: "$text", ml: 5 }}>
-                    <CloseSquare size={12} />
+                  <Spacer x={0.2} />
+                  <Link onClick={() => _onClearFilter(c)} css={{ color: "$text" }}>
+                    <CloseSquare size="small" />
                   </Link>
                 </Badge>
               );
@@ -247,7 +254,14 @@ function EmbeddedChart(props) {
           <div>
             {!loading && (
               <Text i small css={{ color: "$accents6" }} title="Last updated">
-                {`${_getUpdatedTime(chart.chartDataUpdated)}`}
+                {dataLoading && (
+                  <>
+                    <Loading type="spinner" size="xs" inlist />
+                    <Spacer x={0.2} />
+                    <Text small>{"Updating..."}</Text>
+                  </>
+                )}
+                {!dataLoading && `${_getUpdatedTime(chart.chartDataUpdated)}`}
               </Text>
             )}
             {loading && (
