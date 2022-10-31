@@ -210,6 +210,7 @@ function UserDashboard(props) {
                 display="flex"
                 wrap="nowrap"
                 alignItems="center"
+                css={{ pl: 0, pr: 0 }}
               >
                 <Col>
                   <Row justify="flex-start" align="center">
@@ -251,15 +252,16 @@ function UserDashboard(props) {
                     </Col>
                   )}
               </Container>
-              <Container>
+              <Container css={{ pl: 0, pr: 0 }}>
                 <Spacer y={1} />
-                <Row justify="flex-start" align="center">
+                <Row justify="flex-start" align="center" wrap="wrap">
                   {_canAccess("admin", key.TeamRoles) && (
                     <>
                       <Button
                         onClick={() => _onNewProject(key)}
                         iconRight={<Plus />}
                         auto
+                        css={{ mb: 10 }}
                       >
                         Create new project
                       </Button>
@@ -273,9 +275,10 @@ function UserDashboard(props) {
                     bordered
                     contentRight={<Search set="light" />}
                     onChange={(e) => setSearch({ ...search, [key.id]: e.target.value })}
+                    css={{ mb: 10 }}
                   />
                 </Row>
-                <Spacer y={1} />
+                <Spacer y={0.5} />
                 {key.Projects && (
                   <Table
                     aria-label="Projects list"

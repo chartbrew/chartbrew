@@ -462,29 +462,36 @@ function ProjectDashboard(props) {
           </Container>
         )}
 
-        <Grid.Container gap={1.5}>
-          {charts.map((chart, index) => {
-            if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
-            if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />); // eslint-disable-line
-            return (
-              <Grid
-                xs={12}
-                sm={chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4}
-                md={chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3}
-                key={chart.id}
-                css={{ minHeight: 400, overflowY: "hidden" }}
-              >
-                <Chart
+        <Container css={width < breakpoints.tablet ? { p: 0, pl: 10, pr: 10 } : { p: 0, m: 0 }} xl>
+          <Grid.Container
+            gap={1.5}
+          >
+            {charts.map((chart, index) => {
+              if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
+              if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />); // eslint-disable-line
+              return (
+                <Grid
+                  xs={12}
+                  sm={chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4}
+                  md={chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3}
                   key={chart.id}
-                  chart={chart}
-                  charts={charts}
-                  showDrafts={showDrafts}
-                  onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
-                />
-              </Grid>
-            );
-          })}
-        </Grid.Container>
+                  css={{
+                    minHeight: 400,
+                    overflowY: "hidden",
+                  }}
+                >
+                  <Chart
+                    key={chart.id}
+                    chart={chart}
+                    charts={charts}
+                    showDrafts={showDrafts}
+                    onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
+                  />
+                </Grid>
+              );
+            })}
+          </Grid.Container>
+        </Container>
       </div>
 
       <Filters
