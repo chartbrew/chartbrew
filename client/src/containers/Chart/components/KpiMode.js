@@ -12,6 +12,7 @@ function KpiMode(props) {
   const { chart } = props;
 
   const _getKpi = (data) => {
+    let finalData;
     if (data && Array.isArray(data)) {
       for (let i = data.length - 1; i >= 0; i--) {
         if (data[i]
@@ -19,14 +20,21 @@ function KpiMode(props) {
           || determineType(data[i]) === "number"
           || determineType(data[i]) === "boolean")
         ) {
-          return data[i];
+          finalData = data[i];
+          break;
         }
       }
 
-      return `${data[data.length - 1]}`;
+      if (!finalData) {
+        finalData = `${data[data.length - 1]}`;
+      }
     }
 
-    return `${data}`;
+    if (`${parseFloat(finalData)}` === `${finalData}`) {
+      return parseFloat(finalData).toLocaleString();
+    }
+
+    return `${finalData}`;
   };
 
   const _renderGrowth = (c) => {
@@ -78,7 +86,7 @@ function KpiMode(props) {
                 size={chart.chartSize === 1 ? "2.4em" : "2.6em"}
                 key={dataset.label}
               >
-                {dataset.data && _getKpi(dataset.data)?.toLocaleString()}
+                {dataset.data && _getKpi(dataset.data)}
               </Text>
             </Row>
 

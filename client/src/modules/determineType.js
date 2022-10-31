@@ -18,11 +18,14 @@ export default function determineType(data) {
     dataType = "string";
   }
 
+  // regex to check if the string is made only of numbers
+  const checkNumbersOnly = /^\d+$/;
+
   try {
     if (data
       && ((!Number.isNaN(new Date(data).getTime()) && `${data}`.length > 9 && `${data}`.replace(/\D/g, "").length > 3)
-      || (moment(`${data})`).isValid() && ((typeof data === "number" && data.toString().length === 10) || typeof data !== "number"))
-      || (moment(`${data})`, "X").isValid() && (typeof data === "string" && data.length === 10))
+      || (moment(`${data}`).isValid() && ((typeof data === "number" && data.toString().length === 10) || typeof data !== "number"))
+      || (moment(`${data}`, "X").isValid() && (typeof data === "string" && data.length === 10) && checkNumbersOnly.test(data))
       || (data && `${data}`.length === 10 && `${data}`[0] === "1" && moment(data, "X").isValid() && typeof data === "number"))) {
       dataType = "date";
     }

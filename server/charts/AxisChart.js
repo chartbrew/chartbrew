@@ -491,7 +491,7 @@ class AxisChart {
 
             const newVal = parser.parse(expression);
 
-            let finalVal = `${before}${+(newVal.result.toFixed(2)).toLocaleString()}${after}`;
+            let finalVal = `${before}${newVal.result.toLocaleString()}${after}`;
             if (this.chart.mode !== "kpi") {
               finalVal = +(newVal.result.toFixed(2)).toLocaleString();
             }
@@ -592,10 +592,10 @@ class AxisChart {
         let previousValue;
 
         try {
-          const currArr = `${d.data[d.data.length - 1]}`.match(/[\d.]+/g);
-          const prevArr = `${d.data[d.data.length - 2]}`.match(/[\d.]+/g);
-          currentValue = parseFloat(currArr.filter((n) => n !== ".")[0]);
-          previousValue = parseFloat(prevArr.filter((n) => n !== ".")[0]);
+          const currArr = `${d.data[d.data.length - 1]}`.replace(",", "").match(/[\d.]+/g);
+          const prevArr = `${d.data[d.data.length - 2]}`.replace(",", "").match(/[\d.]+/g);
+          currentValue = parseFloat(currArr.filter((n) => n !== "." && n !== ",")[0]);
+          previousValue = parseFloat(prevArr.filter((n) => n !== "." && n !== ",")[0]);
         } catch (e) { /** */ }
 
         if (determineType(currentValue) === "number" && determineType(previousValue) === "number") {
