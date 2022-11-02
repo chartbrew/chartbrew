@@ -1,6 +1,9 @@
 import moment from "moment";
 
 export default function determineType(data) {
+  // regex to check if the string is made only of numbers
+  const checkNumbersOnly = /^\d+$/;
+
   let dataType;
   if (data !== null && typeof data === "object" && data instanceof Array) {
     dataType = "array";
@@ -11,15 +14,12 @@ export default function determineType(data) {
   if (typeof data !== "object" && !(data instanceof Array) && typeof data === "boolean") {
     dataType = "boolean";
   }
-  if (typeof data !== "object" && !(data instanceof Array) && typeof data === "number") {
+  if (typeof data !== "object" && !(data instanceof Array) && (typeof data === "number" || `${data}`.match(checkNumbersOnly))) {
     dataType = "number";
   }
-  if (typeof data !== "object" && !(data instanceof Array) && typeof data === "string") {
+  if (typeof data !== "object" && !(data instanceof Array) && typeof data === "string" && !`${data}`.match(checkNumbersOnly)) {
     dataType = "string";
   }
-
-  // regex to check if the string is made only of numbers
-  const checkNumbersOnly = /^\d+$/;
 
   try {
     if (data

@@ -392,10 +392,15 @@ class AxisChart {
         if (this.chart.subType.indexOf("AddTimeseries") > -1) {
           const newY = [];
           this.axisData.y[yLength].map((item, index) => {
+            let formattedItem = item;
+            if (determineType(item) === "number") {
+              formattedItem = parseFloat(item);
+            }
+
             if (index > 0) {
-              newY.push(item + newY[newY.length - 1]);
+              newY.push(formattedItem + newY[newY.length - 1]);
             } else {
-              newY.push(item);
+              newY.push(formattedItem);
             }
 
             return item;
