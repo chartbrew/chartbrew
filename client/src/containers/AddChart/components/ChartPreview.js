@@ -393,6 +393,12 @@ function ChartPreview(props) {
           </Row>
           <Spacer y={1} />
           <Row justify="center" align="center">
+            {chartLoading && (
+              <>
+                <Loading type="spinner" size="lg" />
+                <Spacer x={0.2} />
+              </>
+            )}
             <Button
               onClick={_onRefreshPreview}
               bordered
@@ -400,7 +406,7 @@ function ChartPreview(props) {
               size="sm"
               auto
             >
-              {chartLoading ? <Loading type="points" /> : "Refresh preview"}
+              {"Refresh preview"}
             </Button>
             <Spacer x={0.2} />
             <Button
@@ -409,7 +415,7 @@ function ChartPreview(props) {
               disabled={chartLoading}
               size="sm"
             >
-              {chartLoading ? <Loading type="points" /> : "Re-process data"}
+              {"Re-process data"}
             </Button>
             <Spacer x={1} />
             <Checkbox
