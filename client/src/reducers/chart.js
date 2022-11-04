@@ -22,7 +22,9 @@ export default function chart(state = {
           }
         }
 
-        if (indexFound > -1 && newData[indexFound]?.loading) newData[indexFound].loading = true;
+        if (indexFound > -1 && typeof newData[indexFound]?.loading !== "undefined") {
+          newData[indexFound].loading = true;
+        }
 
         return { ...state, data: newData, loading: true };
       } else {
