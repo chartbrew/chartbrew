@@ -2,6 +2,7 @@ const cron = require("node-cron");
 const moment = require("moment");
 const { Op } = require("sequelize");
 const { Worker } = require("worker_threads");
+const path = require("path");
 
 const ChartController = require("../controllers/ChartController");
 
@@ -15,7 +16,8 @@ function assignChartsPerWorker(charts) {
   for (let i = 0; i < workerCount; i++) {
     const workerCharts = charts.slice(i * chartsPerWorker, (i + 1) * chartsPerWorker);
 
-    workers.push(new Worker("./modules/workers/updateChart.js", { workerData: { charts: workerCharts } }));
+    const workerPath = path.join(__dirname, "/workers/updateChart.js");
+    workers.push(new Worker(workerPath, { workerData: { charts: workerCharts } }));
   }
 
   /** TO ACTIVATE FOR DEBUGGING */
