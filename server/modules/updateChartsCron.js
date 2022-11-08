@@ -1,61 +1,37 @@
 const cron = require("node-cron");
 const moment = require("moment");
 const { Op } = require("sequelize");
+const { Worker } = require("worker_threads");
 
 const ChartController = require("../controllers/ChartController");
 
 const chartController = new ChartController();
 
-function runUpdate(chart) {
-  return chartController.updateChartData(chart.id, null, {})
-    .then(() => {
-      return true;
-    })
-    .catch(() => {
-      return true;
-    });
-}
+function assignChartsPerWorker(charts) {
+  const workers = [];
+  const workerCount = process.env.CB_BACKEND_WORKERS || 4;
+  const chartsPerWorker = Math.ceil(charts.length / workerCount);
 
-function updateDate(chart) {
-  if (moment(chart.lastAutoUpdate).add(chart.autoUpdate, "seconds").isBefore(moment())) {
-    return chartController.update(chart.id, { lastAutoUpdate: moment() })
-      .then(() => {
-        return true;
-      })
-      .catch(() => {
-        return true;
-      });
+  for (let i = 0; i < workerCount; i++) {
+    const workerCharts = charts.slice(i * chartsPerWorker, (i + 1) * chartsPerWorker);
+
+    workers.push(new Worker("./modules/workers/updateChart.js", { workerData: { charts: workerCharts } }));
   }
 
-  return true;
-}
+  /** TO ACTIVATE FOR DEBUGGING */
+  // workers.forEach((worker) => {
+  //   worker.on("message", (message) => {
+  //     console.log("worker message", message);
+  //   });
+  //   worker.on("error", (error) => {
+  //     console.log("worker error", error);
+  //   });
+  //   worker.on("exit", (code) => {
+  //     console.log("worker exit code", code);
+  //   });
+  // });
 
-async function throttleUpdates(updates, index, steps = 20) {
-  if (index >= updates.length) {
-    return "done";
-  }
-
-  // select the next 20 updates
-  const nextUpdates = updates.slice(index, index + steps);
-  const updatePromises = nextUpdates.map((update) => runUpdate(update));
-
-  const result = await Promise.all(updatePromises); // eslint-disable-line
-
-  return throttleUpdates(updates, index + steps);
-}
-
-async function throttleUpdateDates(updates, index, steps = 20) {
-  if (index >= updates.length) {
-    return "done";
-  }
-
-  // select the next 20 updates
-  const nextUpdates = updates.slice(index, index + steps);
-  const updatePromises = nextUpdates.map((update) => updateDate(update));
-
-  const result = await Promise.all(updatePromises); // eslint-disable-line
-
-  return throttleUpdateDates(updates, index + steps);
+  return Promise.all(workers);
 }
 
 function updateCharts() {
@@ -64,6 +40,7 @@ function updateCharts() {
       autoUpdate: { [Op.gt]: 0 }
     },
     attributes: ["id", "lastAutoUpdate", "autoUpdate"],
+    raw: true
   };
 
   return chartController.findAll(conditions)
@@ -74,8 +51,9 @@ function updateCharts() {
 
       const filteredCharts = charts.filter((chart) => moment(chart.lastAutoUpdate).add(chart.autoUpdate, "seconds").isBefore(moment()));
 
-      throttleUpdateDates(filteredCharts, 0);
-      throttleUpdates(filteredCharts, 0);
+      // throttleUpdateDates(filteredCharts, 0);
+      // throttleUpdates(filteredCharts, 0);
+      assignChartsPerWorker(filteredCharts);
 
       return { completed: true };
     })
