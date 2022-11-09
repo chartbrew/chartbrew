@@ -731,6 +731,7 @@ function PublicDashboard(props) {
                     charts={charts}
                     className="chart-card"
                     showExport={project.Team?.allowReportExport}
+                    password={project.password || window.localStorage.getItem("reportPassword")}
                   />
                 </Grid>
               );

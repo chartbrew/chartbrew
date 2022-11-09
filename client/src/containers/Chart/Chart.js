@@ -57,7 +57,7 @@ function Chart(props) {
   const {
     updateChart, match, runQuery, removeChart, runQueryWithFilters,
     team, user, chart, isPublic, charts, onChangeOrder, print, height,
-    createShareString, getChart, showExport,
+    createShareString, getChart, showExport, password,
   } = props;
 
   const [chartLoading, setChartLoading] = useState(false);
@@ -364,7 +364,7 @@ function Chart(props) {
 
   const _onPublicExport = (chart) => {
     setExportLoading(true);
-    return exportChartPublic(chart, window.localStorage.getItem("reportPassword"))
+    return exportChartPublic(chart, password)
       .then(() => {
         setExportLoading(false);
       })
@@ -1159,6 +1159,7 @@ Chart.defaultProps = {
   print: "",
   height: 300,
   showExport: false,
+  password: "",
 };
 
 Chart.propTypes = {
@@ -1178,6 +1179,7 @@ Chart.propTypes = {
   createShareString: PropTypes.func.isRequired,
   getChart: PropTypes.func.isRequired,
   showExport: PropTypes.bool,
+  password: PropTypes.string,
 };
 
 const mapStateToProps = (state) => {
