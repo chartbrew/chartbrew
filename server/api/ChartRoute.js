@@ -10,6 +10,27 @@ module.exports = (app) => {
   const projectController = new ProjectController();
   const teamController = new TeamController();
 
+  const checkPublicAccess = (req, requiredAccess) => {
+    return projectController.findById(req.params.project_id)
+      .then((project) => {
+        if (project.passwordProtected) {
+          const passwordInput = req.body?.password || req.query?.password;
+          if (passwordInput !== project.password) {
+            return Promise.reject(401);
+          }
+        }
+
+        return teamController.findById(project.team_id);
+      })
+      .then((team) => {
+        if (requiredAccess === "export" && team.allowReportExport) {
+          return team;
+        }
+
+        return Promise.reject(401);
+      });
+  };
+
   const checkAccess = (req) => {
     let gProject;
     return projectController.findById(req.params.project_id)
@@ -533,6 +554,29 @@ module.exports = (app) => {
         }
 
         return chartController.exportChartData(req.user.id, req.body.chartIds, req.body.filters);
+      })
+      .then((data) => {
+        return spreadsheetExport(data);
+      })
+      .then((fileBuffer) => {
+        return res.status(200).send(fileBuffer);
+      })
+      .catch((err) => {
+        return res.status(400).send({
+          message: (err && err.message) || err,
+          error: (err && err.toString()) || err,
+        });
+      });
+  });
+  // --------------------------------------------------------
+
+  /*
+  ** Route used to export data from a PUBLIC dashboard
+  */
+  app.post("/project/:project_id/chart/export/public/:chart_id", (req, res) => {
+    return checkPublicAccess(req, "export")
+      .then(() => {
+        return chartController.exportChartData(null, [req.params.chart_id], req.body.filters);
       })
       .then((data) => {
         return spreadsheetExport(data);

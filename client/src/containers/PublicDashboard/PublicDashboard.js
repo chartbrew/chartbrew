@@ -689,7 +689,7 @@ function PublicDashboard(props) {
                 </Text>
               </Row>
             )}
-            {project.Team.allowReportRefresh && (
+            {project.Team?.allowReportRefresh && (
               <>
                 <Spacer y={0.5} />
                 <Row justify="center">
@@ -730,6 +730,7 @@ function PublicDashboard(props) {
                     chart={chart}
                     charts={charts}
                     className="chart-card"
+                    showExport={project.Team?.allowReportExport}
                   />
                 </Grid>
               );

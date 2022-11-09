@@ -438,6 +438,44 @@ export function exportChart(projectId, chartIds, filters) {
     });
 }
 
+export function exportChartPublic(chart, password) {
+  const token = cookie.load("brewToken");
+  const url = `${API_HOST}/project/${chart.project_id}/chart/export/public/${chart.id}`;
+  const method = "POST";
+  const body = JSON.stringify({ password });
+  const headers = new Headers({
+    "Content-Type": "application/json",
+    "authorization": `Bearer ${token}`,
+  });
+
+  return fetch(url, { method, body, headers })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(response.status);
+      }
+
+      return response.blob();
+    })
+    .then((file) => {
+      const url = window.URL.createObjectURL(new Blob([file])); // eslint-disable-line
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `${chart.name}-chartbrew.xlsx`);
+
+      // 3. Append to html page
+      document.body.appendChild(link);
+      // 4. Force download
+      link.click();
+      // 5. Clean up and remove the link
+      link.parentNode.removeChild(link);
+
+      return file;
+    })
+    .catch((err) => {
+      return err;
+    });
+}
+
 export function createShareString(projectId, chartId) {
   return (dispatch) => {
     const token = cookie.load("brewToken");

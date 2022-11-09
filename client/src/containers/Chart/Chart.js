@@ -25,6 +25,7 @@ import {
   updateChart as updateChartAction,
   runQueryWithFilters as runQueryWithFiltersAction,
   exportChart,
+  exportChartPublic,
   createShareString as createShareStringAction,
   getChart as getChartAction,
 } from "../../actions/chart";
@@ -56,7 +57,7 @@ function Chart(props) {
   const {
     updateChart, match, runQuery, removeChart, runQueryWithFilters,
     team, user, chart, isPublic, charts, onChangeOrder, print, height,
-    createShareString, getChart,
+    createShareString, getChart, showExport,
   } = props;
 
   const [chartLoading, setChartLoading] = useState(false);
@@ -232,24 +233,24 @@ function Chart(props) {
   const _getUpdateFreqText = (value) => {
     let text = "Update schedule";
 
-    if (value === 60) text = "Every minute";
-    else if (value === 300) text = "Every 5 minutes";
-    else if (value === 900) text = "Every 15 minutes";
-    else if (value === 1800) text = "Every 30 minutes";
-    else if (value === 3600) text = "Every 1 hour";
-    else if (value === 10800) text = "Every 3 hours";
-    else if (value === 21600) text = "Every 6 hours";
-    else if (value === 43200) text = "Every 12 hours";
-    else if (value === 86400) text = "Every day";
-    else if (value === 604800) text = "Every week";
-    else if (value === 2592000) text = "Every month";
-    else if (value < 120 && value > 0) text = `Every ${value} seconds`;
+    if (value === 60) text = "minute";
+    else if (value === 300) text = "5 minutes";
+    else if (value === 900) text = "15 minutes";
+    else if (value === 1800) text = "30 minutes";
+    else if (value === 3600) text = "1 hour";
+    else if (value === 10800) text = "3 hours";
+    else if (value === 21600) text = "6 hours";
+    else if (value === 43200) text = "12 hours";
+    else if (value === 86400) text = "day";
+    else if (value === 604800) text = "week";
+    else if (value === 2592000) text = "month";
+    else if (value < 120 && value > 0) text = `${value} seconds`;
     else if (value > 119 && value < 3600) {
-      text = `Every ${Math.floor(value / 60)} minutes`;
+      text = `${Math.floor(value / 60)} minutes`;
     } else if (value > 3600 && value < 86400) {
-      text = `Every ${Math.floor(value / 3600)} hours`;
+      text = `${Math.floor(value / 3600)} hours`;
     } else if (value > 86400 && value < 604800) {
-      text = `Every ${Math.floor(value / 86400)} days`;
+      text = `${Math.floor(value / 86400)} days`;
     }
 
     return text;
@@ -353,6 +354,17 @@ function Chart(props) {
   const _onExport = () => {
     setExportLoading(true);
     return exportChart(match.params.projectId, [chart.id], dashboardFilters)
+      .then(() => {
+        setExportLoading(false);
+      })
+      .catch(() => {
+        setExportLoading(false);
+      });
+  };
+
+  const _onPublicExport = (chart) => {
+    setExportLoading(true);
+    return exportChartPublic(chart, window.localStorage.getItem("reportPassword"))
       .then(() => {
         setExportLoading(false);
       })
@@ -483,7 +495,7 @@ function Chart(props) {
                       )}
                       <Spacer x={0.2} />
                       {chart.autoUpdate > 0 && (
-                        <Tooltip content={`Updates automatically - ${_getUpdateFreqText(chart.autoUpdate)}`}>
+                        <Tooltip content={`Updates every ${_getUpdateFreqText(chart.autoUpdate)}`}>
                           <TimeCircle size="small" set="light" />
                         </Tooltip>
                       )}
@@ -662,6 +674,21 @@ function Chart(props) {
                           <Text onClick={_onDeleteChartConfirmation}>Delete chart</Text>
                         </Dropdown.Item>
                       )}
+                    </Dropdown.Menu>
+                  </Dropdown>
+                )}
+
+                {showExport && (
+                  <Dropdown closeOnSelect={false}>
+                    <Dropdown.Trigger>
+                      <LinkNext color="text">
+                        <MoreSquare set="light" />
+                      </LinkNext>
+                    </Dropdown.Trigger>
+                    <Dropdown.Menu>
+                      <Dropdown.Item icon={exportLoading ? <Loading type="spinner" color="currentColor" /> : <PaperDownload />}>
+                        <Text onClick={() => _onPublicExport(chart)}>Export to Excel</Text>
+                      </Dropdown.Item>
                     </Dropdown.Menu>
                   </Dropdown>
                 )}
@@ -1123,7 +1150,6 @@ const styles = {
   }),
   titleArea: (isKpi) => ({
     paddingLeft: isKpi ? 15 : 0,
-    // paddingTop: isKpi ? 15 : 0,
   }),
 };
 
@@ -1132,6 +1158,7 @@ Chart.defaultProps = {
   onChangeOrder: () => {},
   print: "",
   height: 300,
+  showExport: false,
 };
 
 Chart.propTypes = {
@@ -1150,6 +1177,7 @@ Chart.propTypes = {
   height: PropTypes.number,
   createShareString: PropTypes.func.isRequired,
   getChart: PropTypes.func.isRequired,
+  showExport: PropTypes.bool,
 };
 
 const mapStateToProps = (state) => {

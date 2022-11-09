@@ -356,7 +356,7 @@ class ChartController {
             }
             return tempItem;
           });
-        } else if (!skipCache && user) {
+        } else if (!skipCache && user?.id) {
           // create a new cache for the data that was fetched
           this.chartCache.create(user.id, gChart.id, resolvingData);
         }
@@ -585,7 +585,7 @@ class ChartController {
       })
       .then((data) => {
         const previewData = data;
-        if (noSource !== "true") {
+        if (noSource !== "true" && user) {
           // cache, but do it async
           this.chartCache.create(user.id, chart.id, data);
         } else if (noSource) {
