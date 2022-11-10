@@ -16,9 +16,7 @@ function KpiMode(props) {
     if (data && Array.isArray(data)) {
       for (let i = data.length - 1; i >= 0; i--) {
         if (data[i]
-          && (determineType(data[i]) === "string"
-          || determineType(data[i]) === "number"
-          || determineType(data[i]) === "boolean")
+          && (determineType(data[i]) !== "array" || determineType(data[i]) !== "object")
         ) {
           finalData = data[i];
           break;
