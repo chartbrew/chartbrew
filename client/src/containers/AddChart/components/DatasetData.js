@@ -576,8 +576,8 @@ function DatasetData(props) {
     return (
       <Container>
         <Row>
-          <Text h4 style={styles.connectionNotice}>
-            <span>{"Connect your dataset and fetch some data above."}</span>
+          <Text h4>
+            {"Connect your dataset and fetch some data above."}
           </Text>
         </Row>
       </Container>

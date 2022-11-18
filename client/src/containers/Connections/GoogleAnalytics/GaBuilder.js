@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Grid, Button, Popover, Container, Row, Text, Divider, Dropdown,
-  Input, Loading, Tooltip, Spacer, Badge, useTheme,
+  Input, Loading, Tooltip, Spacer, Badge, useTheme, Checkbox,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -61,9 +61,9 @@ function GaBuilder(props) {
   const [viewOptions, setViewOptions] = useState([]);
   const [formErrors, setFormErrors] = useState({});
   const [dateHelp, setDateHelp] = useState(false);
-
   const [metricsOptions, setMetricsOptions] = useState([]);
   const [dimensionsOptions, setDimensionsOptions] = useState([]);
+  const [invalidateCache, setInvalidateCache] = useState(false);
 
   const { isDark } = useTheme();
 
@@ -239,7 +239,8 @@ function GaBuilder(props) {
   };
 
   const _onRunRequest = () => {
-    runRequest(match.params.projectId, match.params.chartId, dataset.id)
+    const useCache = !invalidateCache;
+    runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache)
       .then((result) => {
         setRequestLoading(false);
         const jsonString = JSON.stringify(result.data, null, 2);
@@ -708,7 +709,23 @@ function GaBuilder(props) {
                 Get analytics data
               </Button>
             </Row>
-            <Spacer y={1} />
+            <Spacer y={0.5} />
+            <Row align="center">
+              <Checkbox
+                label="Use cache"
+                isSelected={!invalidateCache}
+                onChange={() => setInvalidateCache(!invalidateCache)}
+                size="sm"
+              />
+              <Spacer x={0.2} />
+              <Tooltip
+                content="Chartbrew will cache the data to make the edit process faster. The cache will be cleared when you change any of the settings."
+                css={{ zIndex: 10000, maxWidth: 500 }}
+              >
+                <InfoCircle size="small" />
+              </Tooltip>
+            </Row>
+            <Spacer y={0.5} />
             <Row className="gabuilder-result-tut">
               <div style={{ width: "100%" }}>
                 <AceEditor

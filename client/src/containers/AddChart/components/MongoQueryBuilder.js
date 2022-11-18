@@ -43,7 +43,7 @@ function MongoQueryBuilder(props) {
   const [mongoRequest, setMongoRequest] = useState({
     query: "collection('users').find()",
   });
-  const [useCache, setUseCache] = useState(false);
+  const [invalidateCache, setInvalidateCache] = useState(false);
 
   const { isDark } = useTheme();
 
@@ -56,8 +56,6 @@ function MongoQueryBuilder(props) {
         changeTutorial("mongobuilder");
       }, 1000);
     }
-
-    setUseCache(!!window.localStorage.getItem("_cb_use_cache"));
   }, []);
 
   useEffect(() => {
@@ -116,6 +114,7 @@ function MongoQueryBuilder(props) {
     setTestError(false);
 
     onSave().then(() => {
+      const useCache = !invalidateCache;
       runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache)
         .then((result) => {
           setTestingQuery(false);
@@ -129,16 +128,6 @@ function MongoQueryBuilder(props) {
           toast.error("The request failed. Please check your query 🕵️‍♂️");
         });
     });
-  };
-
-  const _onChangeUseCache = () => {
-    if (window.localStorage.getItem("_cb_use_cache")) {
-      window.localStorage.removeItem("_cb_use_cache");
-      setUseCache(false);
-    } else {
-      window.localStorage.setItem("_cb_use_cache", true);
-      setUseCache(true);
-    }
   };
 
   return (
@@ -223,23 +212,22 @@ function MongoQueryBuilder(props) {
                   </Button>
                 </>
               )}
-            </Row>
-            <Spacer y={1} />
-            <Row align="center">
+              <Spacer x={0.5} />
               <Checkbox
                 label="Use cache"
-                isSelected={!!useCache}
-                onChange={_onChangeUseCache}
+                isSelected={!invalidateCache}
+                onChange={() => setInvalidateCache(!invalidateCache)}
                 size="sm"
               />
               <Spacer x={0.2} />
               <Tooltip
-                content={"If checked, Chartbrew will use cached data instead of making requests to your data source. The cache gets automatically invalidated when you change any call settings."}
+                content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change any call settings."}
                 css={{ zIndex: 10000, maxWidth: 400 }}
               >
                 <InfoCircle size="small" />
               </Tooltip>
             </Row>
+            <Spacer y={1} />
 
             <Spacer y={1} />
             <Row>
@@ -311,7 +299,7 @@ function MongoQueryBuilder(props) {
                     <Spacer y={1} />
                     <Row>
                       <Link href="https://docs.mongodb.com/manual/reference/operator/query-comparison/" target="_blank" rel="noopener noreferrer" css={{ ai: "center" }}>
-                        <ChevronRight />
+                        <div><ChevronRight /></div>
                         <Spacer x={0.2} />
                         <Text color="primary">
                           {"Use a relevant condition for your query. For example, don't fetch all the documents if you know you are going to use just the recent ones."}
@@ -321,7 +309,7 @@ function MongoQueryBuilder(props) {
                     <Spacer y={0.5} />
                     <Row>
                       <Link as="a" href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only" target="_blank" rel="noopener noreferrer" css={{ ai: "center" }}>
-                        <ChevronRight />
+                        <div><ChevronRight /></div>
                         <Spacer x={0.2} />
                         <Text color="primary">
                           {"Remove unwanted fields from the query payload if you know for sure that they won't help to generate the chart you have in mind."}
@@ -331,7 +319,7 @@ function MongoQueryBuilder(props) {
                     <Spacer y={0.5} />
                     <Row>
                       <Link as="a" href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only" target="_blank" rel="noopener noreferrer" css={{ ai: "center" }}>
-                        <ChevronRight />
+                        <div><ChevronRight /></div>
                         <Spacer x={0.2} />
                         <Text color="primary">
                           {"If you store files encoded in base64, make sure you exclude them using the method above"}

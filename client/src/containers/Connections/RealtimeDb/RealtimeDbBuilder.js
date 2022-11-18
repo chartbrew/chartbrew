@@ -32,8 +32,8 @@ function RealtimeDbBuilder(props) {
   const [requestLoading, setRequestLoading] = useState(false);
   const [requestError, setRequestError] = useState(false);
   const [projectId, setProjectId] = useState("");
-  const [useCache, setUseCache] = useState(false);
   const [limitValue, setLimitValue] = useState(100);
+  const [invalidateCache, setInvalidateCache] = useState(false);
 
   const { isDark } = useTheme();
 
@@ -60,8 +60,6 @@ function RealtimeDbBuilder(props) {
       }
 
       setFirebaseRequest(dataRequest);
-      setUseCache(!!window.localStorage.getItem("_cb_use_cache"));
-
       // setTimeout(() => {
       //   changeTutorial("RealtimeDb");
       // }, 1000);
@@ -84,6 +82,7 @@ function RealtimeDbBuilder(props) {
     setRequestError(false);
 
     onSave(firebaseRequest).then(() => {
+      const useCache = !invalidateCache;
       runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache)
         .then((result) => {
           setRequestLoading(false);
@@ -96,16 +95,6 @@ function RealtimeDbBuilder(props) {
           setResult(JSON.stringify(error, null, 2));
         });
     });
-  };
-
-  const _onChangeUseCache = () => {
-    if (window.localStorage.getItem("_cb_use_cache")) {
-      window.localStorage.removeItem("_cb_use_cache");
-      setUseCache(false);
-    } else {
-      window.localStorage.setItem("_cb_use_cache", true);
-      setUseCache(true);
-    }
   };
 
   const _onChangeLimitValue = (value) => {
@@ -398,8 +387,8 @@ function RealtimeDbBuilder(props) {
             <Spacer y={0.5} />
             <Row align="center">
               <Checkbox
-                isSelected={!!useCache}
-                onChange={_onChangeUseCache}
+                isSelected={!invalidateCache}
+                onChange={() => setInvalidateCache(!invalidateCache)}
                 size="sm"
               >
                 Use cache

@@ -32,7 +32,7 @@ function CustomerioBuilder(props) {
   });
   const [result, setResult] = useState("");
   const [requestLoading, setRequestLoading] = useState(false);
-  const [useCache, setUseCache] = useState(false);
+  const [invalidateCache, setInvalidateCache] = useState(false);
   const [limitValue, setLimitValue] = useState(0);
   const [entity, setEntity] = useState("");
   const [conditions, setConditions] = useState({});
@@ -54,7 +54,6 @@ function CustomerioBuilder(props) {
       }
 
       let newRequestData = dataRequest;
-      setUseCache(!!window.localStorage.getItem("_cb_use_cache"));
 
       if (dataRequest.configuration && dataRequest.configuration.cioFilters) {
         setConditions(dataRequest.configuration.cioFilters);
@@ -125,6 +124,7 @@ function CustomerioBuilder(props) {
     };
 
     onSave(drData).then(() => {
+      const useCache = !invalidateCache;
       runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache)
         .then((result) => {
           setRequestLoading(false);
@@ -136,16 +136,6 @@ function CustomerioBuilder(props) {
           setResult(JSON.stringify(error, null, 2));
         });
     });
-  };
-
-  const _onChangeUseCache = () => {
-    if (window.localStorage.getItem("_cb_use_cache")) {
-      window.localStorage.removeItem("_cb_use_cache");
-      setUseCache(false);
-    } else {
-      window.localStorage.setItem("_cb_use_cache", true);
-      setUseCache(true);
-    }
   };
 
   const _onUpdateCampaignConfig = (data) => {
@@ -272,8 +262,8 @@ function CustomerioBuilder(props) {
             <Row align="center">
               <Checkbox
                 label="Use cache"
-                checked={!!useCache}
-                onChange={_onChangeUseCache}
+                checked={!invalidateCache}
+                onChange={() => setInvalidateCache(!invalidateCache)}
                 size="sm"
               />
               <Spacer x={0.2} />

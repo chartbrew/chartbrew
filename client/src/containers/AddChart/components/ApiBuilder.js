@@ -68,7 +68,7 @@ function ApiBuilder(props) {
   const [requestSuccess, setRequestSuccess] = useState(false);
   const [requestLoading, setRequestLoading] = useState(false);
   const [requestError, setRequestError] = useState(false);
-  const [useCache, setUseCache] = useState(false);
+  const [invalidateCache, setInvalidateCache] = useState(false);
 
   const { isDark } = useTheme();
 
@@ -108,8 +108,6 @@ function ApiBuilder(props) {
         changeTutorial("apibuilder");
       }, 1000);
     }
-
-    setUseCache(!!window.localStorage.getItem("_cb_use_cache"));
   }, []);
 
   useEffect(() => {
@@ -228,7 +226,8 @@ function ApiBuilder(props) {
     setRequestError(false);
 
     onSave().then(() => {
-      runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache)
+      const getCache = !invalidateCache;
+      runRequest(match.params.projectId, match.params.chartId, dataset.id, getCache)
         .then((result) => {
           setRequestLoading(false);
           setRequestSuccess(result.status);
@@ -241,16 +240,6 @@ function ApiBuilder(props) {
           setResult(JSON.stringify(error, null, 2));
         });
     });
-  };
-
-  const _onChangeUseCache = () => {
-    if (window.localStorage.getItem("_cb_use_cache")) {
-      window.localStorage.removeItem("_cb_use_cache");
-      setUseCache(false);
-    } else {
-      window.localStorage.setItem("_cb_use_cache", true);
-      setUseCache(true);
-    }
   };
 
   return (
@@ -548,15 +537,15 @@ function ApiBuilder(props) {
             <Grid xs={12} alignItems="center">
               <Checkbox
                 label="Use cache"
-                checked={!!useCache}
-                onChange={_onChangeUseCache}
+                isSelected={!invalidateCache}
+                onChange={() => setInvalidateCache(!invalidateCache)}
                 size="sm"
               />
               <Spacer x={0.2} />
               <Tooltip
                 content={(
                   <>
-                    <p>{"If checked, Chartbrew will use cached data instead of making requests to your data source."}</p>
+                    <p>{"Chartbrew will use cached data for extra editing speed ⚡️⚡️⚡️"}</p>
                     <p>{"The cache gets automatically invalidated when you change the configuration of the request."}</p>
                   </>
                 )}

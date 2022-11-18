@@ -3,12 +3,12 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Button, Container, Row, Text, Spacer, Loading, Modal, Input, useTheme,
+  Grid, Button, Container, Row, Text, Spacer, Loading, Modal, Input, useTheme, Tooltip, Checkbox,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
 import {
-  Edit, Play, Plus, TickSquare
+  Edit, InfoCircle, Play, Plus, TickSquare
 } from "react-iconly";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -31,7 +31,7 @@ function SqlBuilder(props) {
   } = props;
 
   const [sqlRequest, setSqlRequest] = useState({
-    query: "SELECT * FROM user;",
+    query: "SELECT * FROM users;",
   });
   const [savedQuery, setSavedQuery] = useState(null);
   const [savedQuerySummary, setSavedQuerySummary] = useState("");
@@ -42,6 +42,7 @@ function SqlBuilder(props) {
   const [requestLoading, setRequestLoading] = useState(false);
   const [requestError, setRequestError] = useState(false);
   const [result, setResult] = useState("");
+  const [invalidateCache, setInvalidateCache] = useState(false);
 
   const { isDark } = useTheme();
 
@@ -108,7 +109,8 @@ function SqlBuilder(props) {
     setRequestError(false);
 
     onSave().then(() => {
-      runRequest(match.params.projectId, match.params.chartId, dataset.id)
+      const getCache = !invalidateCache;
+      runRequest(match.params.projectId, match.params.chartId, dataset.id, getCache)
         .then((result) => {
           setRequestLoading(false);
           setRequestSuccess(result.status);
@@ -154,7 +156,7 @@ function SqlBuilder(props) {
               </div>
             </Row>
             <Spacer y={0.5} />
-            <Row className="sqlbuilder-buttons-tut">
+            <Row align="center" className="sqlbuilder-buttons-tut">
               <Button
                 color={requestSuccess ? "success" : requestError ? "error" : "primary"}
                 iconRight={requestSuccess && !requestLoading ? <TickSquare /> : <Play />}
@@ -195,6 +197,21 @@ function SqlBuilder(props) {
                   </Button>
                 </>
               )}
+
+              <Spacer x={0.5} />
+              <Checkbox
+                label="Use cache"
+                isSelected={!invalidateCache}
+                onChange={() => setInvalidateCache(!invalidateCache)}
+                size="sm"
+              />
+              <Spacer x={0.2} />
+              <Tooltip
+                content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change any call settings."}
+                css={{ zIndex: 10000, maxWidth: 400 }}
+              >
+                <InfoCircle size="small" />
+              </Tooltip>
             </Row>
 
             <Spacer y={1} />

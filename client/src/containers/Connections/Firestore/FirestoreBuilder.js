@@ -106,7 +106,7 @@ function FirestoreBuilder(props) {
   }]);
   const [showSubUI, setShowSubUI] = useState(false);
   const [indexUrl, setIndexUrl] = useState("");
-  const [useCache, setUseCache] = useState(false);
+  const [invalidateCache, setInvalidateCache] = useState(false);
 
   const { isDark } = useTheme();
 
@@ -170,8 +170,6 @@ function FirestoreBuilder(props) {
         _onRunRequest();
       }
     }
-
-    setUseCache(!!window.localStorage.getItem("_cb_use_cache"));
   }, []);
 
   useEffect(() => {
@@ -247,6 +245,7 @@ function FirestoreBuilder(props) {
 
   const _onRunRequest = () => {
     setIndexUrl("");
+    const useCache = !invalidateCache;
     runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache)
       .then((result) => {
         setRequestLoading(false);
@@ -429,16 +428,6 @@ function FirestoreBuilder(props) {
     };
 
     _onTest(newRequest);
-  };
-
-  const _onChangeUseCache = () => {
-    if (window.localStorage.getItem("_cb_use_cache")) {
-      window.localStorage.removeItem("_cb_use_cache");
-      setUseCache(false);
-    } else {
-      window.localStorage.setItem("_cb_use_cache", true);
-      setUseCache(true);
-    }
   };
 
   return (
@@ -660,8 +649,8 @@ function FirestoreBuilder(props) {
             <Row align="center">
               <Checkbox
                 label="Use cache"
-                isSelected={!!useCache}
-                onChange={_onChangeUseCache}
+                isSelected={!invalidateCache}
+                onChange={() => setInvalidateCache(!invalidateCache)}
                 size="sm"
               />
               <Spacer x={0.2} />
