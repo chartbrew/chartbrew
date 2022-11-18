@@ -505,7 +505,27 @@ class ConnectionController {
       });
   }
 
-  runMysqlOrPostgres(id, dataRequest) {
+  async runMysqlOrPostgres(id, dataRequest, getCache) {
+    if (getCache) {
+      // check if there is a cache available and valid
+      try {
+        const drCache = await drCacheController.findLast(dataRequest.id);
+        const cachedDataRequest = drCache.dataRequest;
+        cachedDataRequest.updatedAt = "";
+        cachedDataRequest.createdAt = "";
+
+        const liveDataRequest = dataRequest.toJSON();
+        liveDataRequest.updatedAt = "";
+        liveDataRequest.createdAt = "";
+
+        if (_.isEqual(cachedDataRequest, liveDataRequest)) {
+          return drCache.responseData;
+        }
+      } catch (e) {
+        //
+      }
+    }
+
     return this.findById(id)
       .then((connection) => {
         return externalDbConnection(connection);
@@ -514,6 +534,14 @@ class ConnectionController {
         return dbConnection.query(dataRequest.query, { type: Sequelize.QueryTypes.SELECT });
       })
       .then((results) => {
+        // cache the data for later use
+        const dataToCache = {
+          dataRequest,
+          responseData: results,
+        };
+
+        drCacheController.create(dataRequest.id, dataToCache);
+
         return new Promise((resolve) => resolve(results));
       })
       .catch((error) => {

@@ -283,6 +283,9 @@ class AxisChart {
           case "count":
             yAxisData = this.count(xAxisData.formatted, yType, yAxisData, yAxis);
             break;
+          case "count_unique":
+            yAxisData = this.countUnique(xAxisData.formatted, yType, yAxisData, yAxis);
+            break;
           case "avg":
             if (yType === "array") {
               yAxisData = this.count(xAxisData.formatted, yType, yAxisData, "avg", yAxis, dataset.options.averageByTotal);
@@ -941,6 +944,16 @@ class AxisChart {
         else countData[item]++;
       });
     }
+
+    return countData;
+  }
+
+  countUnique(xData, type) {
+    if (type === "array") return {};
+    const countData = {};
+    xData.forEach((item) => {
+      if (!countData[item]) countData[item] = 1;
+    });
 
     return countData;
   }

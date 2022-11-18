@@ -49,6 +49,10 @@ export const operations = [{
   text: "Count",
   value: "count",
 }, {
+  key: "count_unique",
+  text: "Count uniques",
+  value: "count_unique",
+}, {
   key: "sum",
   text: "Sum",
   value: "sum",
