@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Checkbox, Container, Dropdown, Image, Input, Loading,
+  Button, Checkbox, Container, Divider, Dropdown, Image, Input, Loading,
   Row, Spacer, Text, Tooltip,
 } from "@nextui-org/react";
 import { ChevronDown, InfoCircle } from "react-iconly";
+import { HiRefresh } from "react-icons/hi";
 
 import LineChart from "../../Chart/components/LineChart";
 import BarChart from "../../Chart/components/BarChart";
@@ -45,14 +46,10 @@ const chartModes = [{
 function ChartPreview(props) {
   const {
     chart, onChange, onRefreshData, onRefreshPreview, chartLoading, datasets,
+    invalidateCache, changeCache,
   } = props;
 
   const [redraw, setRedraw] = useState(false);
-  const [useCache, setUseCache] = useState(false);
-
-  useEffect(() => {
-    setUseCache(!!window.localStorage.getItem("_cb_use_cache"));
-  }, []);
 
   useEffect(() => {
     _onRefreshPreview();
@@ -109,18 +106,7 @@ function ChartPreview(props) {
 
   const _onRefreshData = () => {
     setRedraw(true);
-    setUseCache(!!window.localStorage.getItem("_cb_use_cache"));
     onRefreshData(!!window.localStorage.getItem("_cb_use_cache"));
-  };
-
-  const _onChangeUseCache = () => {
-    if (window.localStorage.getItem("_cb_use_cache")) {
-      window.localStorage.removeItem("_cb_use_cache");
-      setUseCache(false);
-    } else {
-      window.localStorage.setItem("_cb_use_cache", true);
-      setUseCache(true);
-    }
   };
 
   return (
@@ -142,6 +128,38 @@ function ChartPreview(props) {
       {chart && chart.chartData && chart.Datasets && (
         <>
           <Container style={{ minHeight: 350 }}>
+            <Row justify="flex-start" align="center">
+              <Button
+                onClick={_onRefreshData}
+                disabled={chartLoading}
+                size="sm"
+                iconRight={chartLoading ? <Loading type="spinner" /> : <HiRefresh size={18} />}
+                auto
+                color="primary"
+                ghost
+              >
+                {"Refresh chart"}
+              </Button>
+              <Spacer x={0.5} />
+              <Checkbox
+                isSelected={!invalidateCache}
+                onChange={changeCache}
+                size="sm"
+              >
+                {"Use cached data"}
+              </Checkbox>
+              <Spacer x={0.2} />
+              <Tooltip
+                content="Chartbrew will use cached data for extra editing speed ⚡️⚡️⚡️"
+              >
+                <InfoCircle size="small" />
+              </Tooltip>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <Divider />
+            </Row>
+            <Spacer y={0.5} />
             {chart.type === "line"
               && (
                 <LineChart
@@ -392,47 +410,6 @@ function ChartPreview(props) {
             </Checkbox>
           </Row>
           <Spacer y={1} />
-          <Row justify="center" align="center">
-            {chartLoading && (
-              <>
-                <Loading type="spinner" size="lg" />
-                <Spacer x={0.2} />
-              </>
-            )}
-            <Button
-              onClick={_onRefreshPreview}
-              bordered
-              disabled={chartLoading}
-              size="sm"
-              auto
-            >
-              {"Refresh preview"}
-            </Button>
-            <Spacer x={0.2} />
-            <Button
-              onClick={_onRefreshData}
-              bordered
-              disabled={chartLoading}
-              size="sm"
-            >
-              {"Re-process data"}
-            </Button>
-            <Spacer x={1} />
-            <Checkbox
-              isChecked={!!useCache}
-              onChange={_onChangeUseCache}
-              size="sm"
-            >
-              Use cache
-            </Checkbox>
-            <Spacer x={0.2} />
-            <Tooltip
-              content="If checked, Chartbrew will use cached data instead of making requests to your data source whenever possible."
-
-            >
-              <InfoCircle size="small" />
-            </Tooltip>
-          </Row>
         </Container>
       )}
     </Container>
@@ -478,6 +455,8 @@ ChartPreview.propTypes = {
   onRefreshData: PropTypes.func.isRequired,
   onRefreshPreview: PropTypes.func.isRequired,
   datasets: PropTypes.array.isRequired,
+  invalidateCache: PropTypes.bool.isRequired,
+  changeCache: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {

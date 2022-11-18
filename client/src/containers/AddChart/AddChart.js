@@ -68,6 +68,7 @@ function AddChart(props) {
   const [arrangeMode, setArrangeMode] = useState(false);
   const [datasetsOrder, setDatasetsOrder] = useState([]);
   const [arrangementLoading, setArrangementLoading] = useState(false);
+  const [invalidateCache, setInvalidateCache] = useState(false);
 
   const { height } = useWindowSize();
 
@@ -292,7 +293,8 @@ function AddChart(props) {
       });
   };
 
-  const _onRefreshData = (getCache) => {
+  const _onRefreshData = () => {
+    const getCache = !invalidateCache;
     runQuery(match.params.projectId, match.params.chartId, false, false, getCache)
       .then(() => {
         if (conditions.length > 0) {
@@ -546,6 +548,8 @@ function AddChart(props) {
                 onClearFilter={_onClearFilter}
                 conditions={conditions}
                 datasets={datasets}
+                invalidateCache={invalidateCache}
+                changeCache={() => setInvalidateCache(!invalidateCache)}
               />
             </Row>
             <Spacer y={1} />
