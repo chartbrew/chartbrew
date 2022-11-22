@@ -463,7 +463,7 @@ class ConnectionController {
 
   async runMongo(id, dataRequest, getCache) {
     if (getCache) {
-      const drCache = await checkAndGetCache(dataRequest);
+      const drCache = await checkAndGetCache(id, dataRequest);
       if (drCache) return drCache;
     }
 
@@ -515,7 +515,7 @@ class ConnectionController {
 
   async runMysqlOrPostgres(id, dataRequest, getCache) {
     if (getCache) {
-      const drCache = await checkAndGetCache(dataRequest);
+      const drCache = await checkAndGetCache(id, dataRequest);
       if (drCache) return drCache;
     }
 
@@ -545,7 +545,7 @@ class ConnectionController {
 
   async runApiRequest(id, chartId, dataRequest, getCache) {
     if (getCache) {
-      const drCache = await checkAndGetCache(dataRequest);
+      const drCache = await checkAndGetCache(id, dataRequest);
       if (drCache) return drCache;
     }
 
@@ -733,7 +733,7 @@ class ConnectionController {
 
   async runRealtimeDb(id, dataRequest, getCache) {
     if (getCache) {
-      const drCache = await checkAndGetCache(dataRequest);
+      const drCache = await checkAndGetCache(id, dataRequest);
       if (drCache) return drCache;
     }
 
@@ -761,7 +761,7 @@ class ConnectionController {
 
   async runGoogleAnalytics(connection, dataRequest, getCache) {
     if (getCache) {
-      const drCache = await checkAndGetCache(dataRequest);
+      const drCache = await checkAndGetCache(connection.id, dataRequest);
       if (drCache) return drCache;
     }
 
@@ -794,7 +794,7 @@ class ConnectionController {
 
   async runCustomerio(connection, dataRequest, getCache) {
     if (getCache) {
-      const drCache = await checkAndGetCache(dataRequest);
+      const drCache = await checkAndGetCache(connection.id, dataRequest);
       if (drCache) return drCache;
     }
 
