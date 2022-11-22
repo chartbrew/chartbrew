@@ -278,7 +278,7 @@ function Dataset(props) {
                   && dropdownConfig.length > 0
                   && dropdownConfig.find(
                     (c) => c.value === parseInt(newDataset.connection_id, 10)
-                  ).text) || "Select a connection"
+                  )?.text) || "Select a connection"
                 }
                 disabled={connections.length < 1}
                 fullWidth
@@ -419,7 +419,7 @@ function Dataset(props) {
         )}
       </Grid.Container>
 
-      {newDataset.connection_id && (
+      {newDataset.connection_id && _getActiveConnection() && (
         <DatarequestModal
           dataset={dataset}
           connection={_getActiveConnection()}
