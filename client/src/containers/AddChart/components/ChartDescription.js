@@ -7,6 +7,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import { Edit, Scan } from "react-iconly";
 import { FaMagic } from "react-icons/fa";
+import { Link as RouterLink } from "react-router-dom";
 
 import SimpleAnalyticsTemplate from "../../Connections/SimpleAnalytics/SimpleAnalyticsTemplate";
 import ChartMogulTemplate from "../../Connections/ChartMogul/ChartMogulTemplate";
@@ -203,17 +204,14 @@ function ChartDescription(props) {
                 <>
                   <Spacer y={1} />
                   <Row>
-                    <Container css={{ backgroundColor: "$orange300", p: 10 }}>
+                    <Container css={{ backgroundColor: "$blue100", p: 10, br: 10 }}>
                       <Row>
                         <Text h5>
                           {"You haven't connected to any data source yet. Create charts from a template instead or "}
-                          <Link to={`/${match.params.teamId}/${match.params.projectId}/connections`}>
+                          <RouterLink to={`/${match.params.teamId}/${match.params.projectId}/connections`}>
                             {"create a data source first"}
-                          </Link>
+                          </RouterLink>
                         </Text>
-                      </Row>
-                      <Row>
-                        <Text>Please try again</Text>
                       </Row>
                     </Container>
                   </Row>
