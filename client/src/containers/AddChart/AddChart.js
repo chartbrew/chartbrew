@@ -299,6 +299,23 @@ function AddChart(props) {
 
   const _onRefreshData = () => {
     const getCache = !invalidateCache;
+
+    // check if all datasets are configured properly
+    const datasetsNotConfigured = datasets.filter((dataset) => {
+      if (!dataset.xAxis || !dataset.yAxis || !dataset.connection_id) return true;
+
+      return false;
+    });
+
+    if (datasetsNotConfigured.length > 0) {
+      datasetsNotConfigured.forEach((dataset) => {
+        toast.error(`Dataset "${dataset.legend}" is not configured properly. Please check the settings.`, {
+          autoClose: 3000,
+        });
+      });
+      return;
+    }
+
     runQuery(match.params.projectId, match.params.chartId, false, false, getCache)
       .then(() => {
         if (conditions.length > 0) {
@@ -311,6 +328,9 @@ function AddChart(props) {
         setLoading(false);
       })
       .catch(() => {
+        toast.error("We couldn't fetch the data. Please check your dataset settings and try again", {
+          autoClose: 2500,
+        });
         setLoading(false);
       });
   };
