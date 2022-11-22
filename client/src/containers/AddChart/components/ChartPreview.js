@@ -62,9 +62,13 @@ function ChartPreview(props) {
       newType.mode = "chart";
     }
 
-    if (data.type === "avg") {
+    if (data.type === "avg" && chart.type !== "avg") {
       newType.subType = "timeseries";
       newType.mode = "kpi";
+    } else if (data.type === "avg" && chart.type === "avg") {
+      newType.subType = "timeseries";
+      newType.mode = "chart";
+      newType.type = "line";
     }
 
     return onChange(newType);

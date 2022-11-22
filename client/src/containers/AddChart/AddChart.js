@@ -284,7 +284,11 @@ function AddChart(props) {
 
         // run the preview refresh only when it's needed
         if (!data.name) {
-          _onRefreshPreview(shouldSkipParsing);
+          if (data.subType || data.type) {
+            _onRefreshData();
+          } else {
+            _onRefreshPreview(shouldSkipParsing);
+          }
         }
 
         setLoading(false);
