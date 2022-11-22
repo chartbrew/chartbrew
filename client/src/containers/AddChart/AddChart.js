@@ -82,6 +82,8 @@ function AddChart(props) {
   const { isDark } = useTheme();
 
   useEffect(() => {
+    clearDatasets();
+
     if (match.params.chartId) {
       charts.map((chart) => {
         if (chart.id === parseInt(match.params.chartId, 10)) {
@@ -93,8 +95,6 @@ function AddChart(props) {
 
       // also fetch the chart's datasets
       getChartDatasets(match.params.projectId, match.params.chartId);
-    } else {
-      clearDatasets();
     }
 
     if (user && (!user.tutorials || Object.keys(user.tutorials).length === 0)) {
@@ -173,6 +173,7 @@ function AddChart(props) {
   const _onSaveNewDataset = () => {
     if (savingDataset || addingDataset) return;
     setSavingDataset(true);
+    let savedDataset;
     saveNewDataset(match.params.projectId, match.params.chartId, {
       chart_id: match.params.chartId,
       legend: `Dataset #${datasets.length + 1}`,
@@ -182,9 +183,12 @@ function AddChart(props) {
       .then((dataset) => {
         setSavingDataset(false);
         setAddingDataset(false);
-        setTimeout(() => {
-          _onDatasetChanged(dataset);
-        }, 100);
+        _onDatasetChanged(dataset);
+        savedDataset = dataset;
+        return getChartDatasets(match.params.projectId, match.params.chartId);
+      })
+      .then(() => {
+        _onDatasetChanged(savedDataset);
       })
       .catch(() => {
         setSavingDataset(false);
