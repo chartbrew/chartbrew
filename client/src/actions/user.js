@@ -309,14 +309,15 @@ export function relog() {
     const url = `${API_HOST}/user/relog`;
 
     return fetch(url, { method, headers })
-      .then(response => {
+      .then((response) => {
         if (!response.ok) {
           dispatch(addError(response.status));
           return new Promise((resolve, reject) => reject("Couldn't relog"));
         }
         return response.json();
       })
-      .then(user => {
+      .then((user) => {
+        dispatch(saveUser(user));
         redirectToDashboard();
         return new Promise(resolve => resolve(user));
       })
@@ -325,30 +326,6 @@ export function relog() {
           window.location.pathname = "/login";
         }
         return new Promise((resolve, reject) => reject("Can't authenticate the user"));
-      });
-  };
-}
-
-export function getUser(id) {
-  const headers = new Headers({
-    "Accept": "application/json",
-    "Content-Type": "application/json",
-  });
-  return (dispatch) => {
-    return fetch(`${API_HOST}/user/${id}`, { method: "GET", headers })
-      .then((response) => {
-        if (!response.ok) {
-          dispatch(addError(response.status, "Couldn't get requested user"));
-          throw new Error("Couldn't get requested user");
-        }
-        return response.json();
-      })
-      .then(user => {
-        dispatch(saveUser(user));
-        return new Promise(resolve => resolve(user));
-      })
-      .catch(err => {
-        return new Promise((resolve, reject) => reject(err.message));
       });
   };
 }

@@ -15,7 +15,7 @@ import {
   getTeams as getTeamsAction,
   saveActiveTeam as saveActiveTeamAction,
 } from "../actions/team";
-import { getUser, relog as relogAction } from "../actions/user";
+import { relog as relogAction } from "../actions/user";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import {
   getTemplates as getTemplatesAction
@@ -557,7 +557,6 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    getUser: (id) => dispatch(getUser(id)),
     getTeams: (userId) => dispatch(getTeamsAction(userId)),
     saveActiveTeam: (team) => dispatch(saveActiveTeamAction(team)),
     relog: () => dispatch(relogAction()),

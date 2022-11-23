@@ -71,7 +71,7 @@ app.listen(port, app.settings.api, () => {
   if (isMainCluster || !process.env.NODE_APP_INSTANCE) {
     // start CronJob, making sure the database is populated for the first time
     setTimeout(() => {
-      updateChartsCron();
+      // updateChartsCron();
       cleanChartCache();
       cleanAuthCache();
     }, 5000);

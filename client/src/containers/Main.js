@@ -9,7 +9,10 @@ import { Helmet } from "react-helmet";
 import SuspenseLoader from "../components/SuspenseLoader";
 import UserDashboard from "./UserDashboard";
 
-import { relog, getUser, areThereAnyUsers } from "../actions/user";
+import {
+  relog as relogAction,
+  areThereAnyUsers,
+} from "../actions/user";
 import { getTeams } from "../actions/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 
@@ -41,7 +44,7 @@ const { MediaContextProvider } = AppMedia;
 */
 function Main(props) {
   const {
-    relog, getUser, getTeams, location, cleanErrors, history,
+    relog, getTeams, location, cleanErrors, history,
   } = props;
 
   const { isDark, theme } = useTheme();
@@ -50,7 +53,6 @@ function Main(props) {
     cleanErrors();
     if (!location.pathname.match(/\/chart\/\d+\/embedded/g)) {
       relog().then((data) => {
-        getUser(data.id);
         getTeams(data.id);
       });
 
@@ -205,7 +207,6 @@ const styles = {
 
 Main.propTypes = {
   relog: PropTypes.func.isRequired,
-  getUser: PropTypes.func.isRequired,
   getTeams: PropTypes.func.isRequired,
   location: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
@@ -220,8 +221,7 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    relog: () => dispatch(relog()),
-    getUser: (id) => dispatch(getUser(id)),
+    relog: () => dispatch(relogAction()),
     getTeams: (id) => dispatch(getTeams(id)),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
