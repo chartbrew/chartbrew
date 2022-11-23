@@ -48,7 +48,7 @@ module.exports = (app) => {
   /*
   ** Route to get the user by id
   */
-  app.get("/user/:id", (req, res) => {
+  app.get("/user/:id", verifyToken, (req, res) => {
     userController.findById(req.params.id)
       .then((user) => {
         return res.status(200).send(userResponse(user));
