@@ -541,7 +541,9 @@ function Chart(props) {
                       </LinkNext>
                     </Dropdown.Trigger>
                     <Dropdown.Menu>
-                      <Dropdown.Item icon={<HiRefresh size={22} />}>
+                      <Dropdown.Item
+                        icon={(chartLoading || chart.loading) ? <Loading type="spinner" /> : <HiRefresh size={22} />}
+                      >
                         <Text onClick={_onGetChartData}>Refresh chart</Text>
                       </Dropdown.Item>
                       {_canAccess("editor") && (
