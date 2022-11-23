@@ -969,6 +969,7 @@ function Chart(props) {
             auto
             disabled={autoUpdateLoading}
             onClick={() => _onChangeAutoUpdate()}
+            size="sm"
           >
             Save
           </Button>
