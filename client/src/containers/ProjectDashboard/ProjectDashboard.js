@@ -79,7 +79,7 @@ function ProjectDashboard(props) {
   }, []);
 
   useEffect(() => {
-    if (!filterLoading) {
+    if (!filterLoading && filters) {
       _runFiltering();
     }
   }, [filters]);
