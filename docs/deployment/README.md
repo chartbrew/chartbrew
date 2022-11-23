@@ -210,6 +210,7 @@ docker run -p 4019:4019 -p 4018:4018 \
   -e CB_API_HOST=0.0.0.0 \
   -e CB_API_PORT=4019 \
   -e CB_DB_HOST=host.docker.internal \
+  -e CB_DB_PORT=3306 \
   -e CB_DB_NAME=chartbrew \
   -e CB_DB_USERNAME=root \
   -e CB_DB_PASSWORD=password \
@@ -228,6 +229,7 @@ docker run -p 4019:4019 -p 4018:4018 \
   -e CB_API_HOST=0.0.0.0 \
   -e CB_API_PORT=4019 \
   -e CB_DB_HOST=host.docker.internal \
+  -e CB_DB_PORT=3306 \
   -e CB_DB_NAME=chartbrew \
   -e CB_DB_USERNAME=root \
   -e CB_DB_PASSWORD=password \
@@ -256,7 +258,9 @@ The `4019` port is used by the API and `4018` for the client app (UI). Feel free
 
 * `CB_API_HOST` needs to point to the home address of the system. Usually for a docker image this is `0.0.0.0`.
 
-* `CB_DB_HOST` is the host of your database and determines how the application can reach it. `host.docker.internal` is used when you want the container to connect to a service on your host such as a database running on your server already. If your MySQL database is running on a different port than `3306`, then specify the port as well: `host.docker.internal:3307`.
+* `CB_DB_HOST` is the host of your database and determines how the application can reach it. `host.docker.internal` is used when you want the container to connect to a service on your host such as a database running on your server already.
+
+* `CB_DB_PORT` is the port number of your database.
 
 * `CB_DB_NAME` the name of the database (make sure the database exists before running the image).
 
