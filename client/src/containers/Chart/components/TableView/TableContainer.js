@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Row, Spacer
+  Button, Row, Spacer, Text
 } from "@nextui-org/react";
 import { ChevronDownCircle, ChevronUpCircle } from "react-iconly";
 
@@ -14,6 +14,7 @@ function TableContainer(props) {
 
   const [activeDataset, setActiveDataset] = useState(null);
   const [expanded, setExpanded] = useState(false);
+  const [totalValue, setTotalValue] = useState(0);
 
   useEffect(() => {
     if (datasets && datasets[0] && !activeDataset) {
@@ -23,13 +24,31 @@ function TableContainer(props) {
     }
   }, [datasets]);
 
+  useEffect(() => {
+    if (activeDataset
+      && tabularData[activeDataset.legend]?.data
+      && activeDataset?.configuration?.sum
+    ) {
+      setTotalValue(0);
+      tabularData[activeDataset.legend].data.forEach((d) => {
+        if (d[activeDataset.configuration.sum]) {
+          try {
+            setTotalValue((prev) => prev + parseFloat(d[activeDataset.configuration.sum]));
+          } catch (e) {
+            // console.log("e", e);
+          }
+        }
+      });
+    }
+  }, [activeDataset]);
+
   const _onExpand = () => {
     setExpanded(!expanded);
   };
 
   return (
     <div>
-      <Row align="center">
+      <Row align="center" wrap="wrap">
         {activeDataset && datasets.map((dataset) => {
           return (
             <>
@@ -59,6 +78,14 @@ function TableContainer(props) {
           >
             {expanded ? "See less" : "See more"}
           </Button>
+        )}
+
+        {activeDataset?.configuration?.sum && (
+          <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+            <Text>{`Total ${activeDataset.configuration.sum}:`}</Text>
+            <Spacer x={0.3} />
+            <Text b>{totalValue.toLocaleString()}</Text>
+          </div>
         )}
       </Row>
       <Spacer y={0.5} />

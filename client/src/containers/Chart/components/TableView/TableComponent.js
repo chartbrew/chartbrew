@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { usePagination, useSortBy, useTable } from "react-table";
 import PropTypes from "prop-types";
 import {
@@ -19,10 +19,8 @@ const paginationOptions = [5, 10, 20, 30, 40, 50].map((pageSize) => ({
 
 function TableComponent(props) {
   const {
-    columns, data, height, embedded, dataset,
+    columns, data, height, embedded,
   } = props;
-
-  const [totalValue, setTotalValue] = useState(0);
 
   const {
     getTableProps,
@@ -41,21 +39,6 @@ function TableComponent(props) {
   },
   useSortBy,
   usePagination);
-
-  useEffect(() => {
-    if (data && dataset?.configuration?.sum) {
-      setTotalValue(0);
-      data.forEach((d) => {
-        if (d[dataset.configuration.sum]) {
-          try {
-            setTotalValue((prev) => prev + parseFloat(d[dataset.configuration.sum]));
-          } catch (e) {
-            // console.log("e", e);
-          }
-        }
-      });
-    }
-  }, [dataset]);
 
   return (
     <div style={styles.mainBody(height, embedded)}>
@@ -171,16 +154,6 @@ function TableComponent(props) {
               })}
             </Table.Body>
           </Table>
-          {dataset?.configuration?.sum && (
-            <div>
-              <Row justify="flex-end" align="center" css={{ pl: 20, pr: 20 }}>
-                <Text>{`Total ${dataset.configuration.sum}:`}</Text>
-                <Spacer x={0.3} />
-                <Text b>{totalValue.toLocaleString()}</Text>
-              </Row>
-              <Spacer y={0.5} />
-            </div>
-          )}
           <div>
             <Row align="center">
               <Pagination
