@@ -11,7 +11,14 @@ function KpiChartSegment(props) {
   const { chart, editMode } = props;
 
   return (
-    <Container css={{ pl: 0, pr: 0 }} md>
+    <Container
+      css={{
+        pl: "$sm",
+        pr: "$sm",
+        "@xs": {
+          maxWidth: "100%",
+        },
+      }}>
       <Row wrap="wrap">
         {chart.chartData.growth.map((c, index) => {
           if (chart.chartSize === 1 && index > 1) return (<span key={c.label} />);

@@ -142,7 +142,7 @@ function EmbeddedChart(props) {
 
   return (
     <div style={styles.container}>
-      <Container fluid style={styles.header(chart.type)}>
+      <Container fluid css={{ pl: "$sm" }} style={styles.header(chart.type)}>
         <Row justify="space-between">
           <div style={{ display: "flex", alignItems: "center" }}>
             <Text b size="1.1em" css={{ color: "$text", lineHeight: "$xs" }}>{chart.name}</Text>
