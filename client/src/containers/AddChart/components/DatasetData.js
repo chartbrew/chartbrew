@@ -897,7 +897,7 @@ function DatasetData(props) {
           <>
             <Grid xs={12} css={{ pt: 20, pb: 20 }}>
               <Collapse.Group css={{ width: "100%", fs: 16, fontWeight: "$bold" }} bordered>
-                <Collapse subtitle="Configure columns" css={{ color: "$text" }} arrowIcon={<Setting />}>
+                <Collapse subtitle="Table columns options" css={{ color: "$text" }} arrowIcon={<Setting />}>
                   <Container css={{ pl: 0, pr: 0 }}>
                     {!isDragState && (
                       <Row wrap="wrap">

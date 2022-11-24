@@ -371,7 +371,7 @@ class ChartController {
         if (gChart.type === "table") {
           const extractedData = dataExtractor(chartData, filters);
           const tableView = new TableView();
-          return tableView.getTableData(extractedData, chartData.datasets);
+          return tableView.getTableData(extractedData, chartData);
         }
 
         const axisChart = new AxisChart(chartData);
