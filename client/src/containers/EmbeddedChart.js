@@ -197,56 +197,56 @@ function EmbeddedChart(props) {
         )}
       {chart.type === "bar"
         && (
-        <Container>
+        <div>
           <BarChart chart={chart} height={pageHeight - 100} />
-        </Container>
+        </div>
         )}
       {chart.type === "pie"
         && (
-        <Container>
+        <div>
           <PieChart
             chart={chart}
             height={pageHeight - 100}
           />
-        </Container>
+        </div>
         )}
       {chart.type === "doughnut"
         && (
-        <Container>
+        <div>
           <DoughnutChart
             chart={chart}
             height={pageHeight - 100}
           />
-        </Container>
+        </div>
         )}
       {chart.type === "radar"
         && (
-        <Container>
+        <div>
           <RadarChart
             chart={chart}
             height={pageHeight - 100}
           />
-        </Container>
+        </div>
         )}
       {chart.type === "polar"
         && (
-        <Container>
+        <div>
           <PolarChart
             chart={chart}
             height={pageHeight - 100}
           />
-        </Container>
+        </div>
         )}
       {chart.type === "table"
         && (
-        <Container>
+        <div>
           <TableContainer
             height={pageHeight - 100}
             tabularData={chart.chartData}
             embedded
             datasets={chart.Datasets}
           />
-        </Container>
+        </div>
         )}
       <Spacer y={0.5} />
       <Container css={{ pr: 0, pl: 0 }}>
@@ -299,8 +299,6 @@ const styles = {
     padding: 20,
   },
   header: (type) => ({
-    paddingLeft: 0,
-    paddingRight: 0,
     paddingBottom: type === "table" ? 10 : 0,
   }),
   loaderContainer: {
