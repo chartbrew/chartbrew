@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Container, Dropdown, Input, Loading, Modal, Row, Spacer, Text
+  Button, Checkbox, Container, Dropdown, Input, Loading, Modal, Row, Spacer, Text
 } from "@nextui-org/react";
 
 const dataTypes = [{
@@ -67,6 +67,10 @@ function TableDataFormattingModal(props) {
   const [dataType, setDataType] = useState("none");
   const [formatValue, setFormatValue] = useState("");
   const [customDateFormat, setCustomDateFormat] = useState("DD/MM/YYYY");
+  const [thousandsSeparator, setThousandsSeparator] = useState(false);
+  const [decimals, setDecimals] = useState(0);
+  const [allowDecimals, setAllowDecimals] = useState(false);
+  const [symbol, setSymbol] = useState("");
 
   useEffect(() => {
     if (config) {
@@ -78,14 +82,36 @@ function TableDataFormattingModal(props) {
       } else {
         setFormatValue(config.format || "");
       }
+
+      if (config.thousandsSeparator) {
+        setThousandsSeparator(true);
+      }
+
+      if (config.decimals > -1) {
+        setDecimals(config.decimals);
+      }
+
+      if (config.allowDecimals) {
+        setAllowDecimals(true);
+      }
+
+      if (config.symbol) {
+        setSymbol(config.symbol);
+      }
     } else {
       setDataType("none");
       setFormatValue("");
       setCustomDateFormat("DD/MM/YYYY");
+      setThousandsSeparator(false);
+      setDecimals(0);
+      setAllowDecimals(false);
+      setSymbol("");
     }
   }, [config]);
 
   const _onSave = () => {
+    const newConfig = {};
+
     if (dataType === "none") {
       onUpdate(null);
     }
@@ -95,10 +121,16 @@ function TableDataFormattingModal(props) {
       format = customDateFormat;
     }
 
-    onUpdate({
-      type: dataType,
-      format,
-    });
+    newConfig.type = dataType;
+    newConfig.format = format;
+    newConfig.thousandsSeparator = thousandsSeparator;
+    if (allowDecimals) {
+      newConfig.decimals = decimals;
+      newConfig.allowDecimals = allowDecimals;
+    }
+    if (symbol) newConfig.symbol = symbol;
+
+    onUpdate(newConfig);
   };
 
   return (
@@ -189,6 +221,55 @@ function TableDataFormattingModal(props) {
               </Row>
             </>
           )}
+          {(dataType === "number" || dataType === "currency") && (
+            <>
+              {dataType === "currency" && (
+                <>
+                  <Row>
+                    <Input
+                      bordered
+                      value={symbol}
+                      placeholder="Enter symbol here $, £, €, etc."
+                      onChange={(e) => setSymbol(e.target.value)}
+                      size="sm"
+                    />
+                  </Row>
+                  <Spacer y={0.5} />
+                </>
+              )}
+              <Row>
+                <Checkbox
+                  label="Add thousands separator"
+                  isSelected={thousandsSeparator}
+                  onChange={(checked) => setThousandsSeparator(checked)}
+                  size="sm"
+                />
+              </Row>
+              <Spacer y={0.5} />
+              <Row>
+                <Text b>Decimals</Text>
+              </Row>
+              <Row align="center">
+                <Checkbox
+                  label="Allow decimals"
+                  isSelected={allowDecimals}
+                  onChange={(checked) => setAllowDecimals(checked)}
+                  size="sm"
+                />
+                <Spacer x={0.5} />
+                <Input
+                  type="number"
+                  min={0}
+                  max={10}
+                  value={decimals}
+                  onChange={(e) => setDecimals(e.target.value)}
+                  bordered
+                  disabled={!allowDecimals}
+                  size="sm"
+                />
+              </Row>
+            </>
+          )}
         </Container>
       </Modal.Body>
       <Modal.Footer>
@@ -203,7 +284,7 @@ function TableDataFormattingModal(props) {
         <Button
           auto
           onClick={_onSave}
-          disabled={(dataType !== "none" && !formatValue) || loading}
+          disabled={(dataType === "date" && !formatValue) || loading}
           icon={loading ? <Loading type="spinner" /> : null}
         >
           Save

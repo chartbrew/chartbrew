@@ -4,11 +4,11 @@ const moment = require("moment");
 const determineType = require("../modules/determineType");
 
 function formatValue(value, config) {
-  if (!config || !config.type || !config.format || !value) return value;
+  if (!config || !config.type || !value) return value;
 
-  if (determineType(value) === "date" && config.type === "date") {
-    const checkNumbersOnly = /^\d+$/;
+  const checkNumbersOnly = /^\d+$/;
 
+  if (config.type === "date" && determineType(value) === "date") {
     if (value.toString().length === 10 && `${value}`.match(checkNumbersOnly)) {
       return moment.utc(value, "X").format(config.format);
     } else if (value.toString().length === 10 && `${value}`.match(checkNumbersOnly)) {
@@ -16,6 +16,25 @@ function formatValue(value, config) {
     } else {
       return moment.utc(value).format(config.format);
     }
+  } else if ((config.type === "number" || config.type === "currency")
+    && (determineType(value) === "number" || `${value}`.match(checkNumbersOnly))
+  ) {
+    let finalNumber = value;
+    // check if decimals are needed
+    if (config.decimals > -1) {
+      finalNumber = Number(value).toFixed(config.decimals);
+    }
+
+    //add thousands separator
+    if (config.thousandsSeparator) {
+      finalNumber = finalNumber.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    if (config.type === "currency" && config.symbol) {
+      finalNumber = `${config.symbol}${finalNumber}`;
+    }
+
+    return finalNumber;
   }
 
   return value;
@@ -71,8 +90,6 @@ class TableView {
             Object.keys(item[k]).forEach((n) => {
               columnConfig = datasetConfigs[datasetIndex]
                 ?.configuration?.columnsFormatting?.[`${k}?${n}`];
-              console.log("n", n);
-              console.log("columnConfig", columnConfig);
 
               const nestedType = determineType(item[k][n]);
               const headerKey = `${k}?${n}`;
@@ -120,8 +137,6 @@ class TableView {
 
       tabularData[key] = tab;
     });
-
-    // console.log("tabularData", tabularData);
 
     return {
       configuration: tabularData,
