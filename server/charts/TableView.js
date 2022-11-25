@@ -70,7 +70,9 @@ class TableView {
           if (determineType(item[k]) === "object") {
             Object.keys(item[k]).forEach((n) => {
               columnConfig = datasetConfigs[datasetIndex]
-                ?.configuration?.columnsFormatting?.[k]?.[n];
+                ?.configuration?.columnsFormatting?.[`${k}?${n}`];
+              console.log("n", n);
+              console.log("columnConfig", columnConfig);
 
               const nestedType = determineType(item[k][n]);
               const headerKey = `${k}?${n}`;
