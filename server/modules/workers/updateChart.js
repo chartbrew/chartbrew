@@ -40,7 +40,7 @@ charts.forEach((chart) => {
   );
 });
 
-return Promise.all(updatePromises)
+Promise.all(updatePromises)
   .then((results) => {
     parentPort.postMessage(results);
   })

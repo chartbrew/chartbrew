@@ -55,8 +55,9 @@
     "uuid": "^3.4.0"
   },
   "devDependencies": {
+    "@babel/eslint-parser": "^7.19.1",
     "babel-eslint": "^10.1.0",
-    "eslint": "^7.17.0",
+    "eslint": "^8.28.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.22.1",
     "lint-staged": "^10.5.3",

@@ -25,7 +25,7 @@ function formatValue(value, config) {
       finalNumber = Number(value).toFixed(config.decimals);
     }
 
-    //add thousands separator
+    // add thousands separator
     if (config.thousandsSeparator) {
       finalNumber = finalNumber.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }

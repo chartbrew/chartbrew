@@ -23,7 +23,14 @@
     "import/extensions": "off",
     "no-template-curly-in-string": "off"
   },
-  "parser": "babel-eslint",
+  "parser": "@babel/eslint-parser",
+  "parserOptions": {
+    "requireConfigFile": false,
+    "babelOptions": {
+      "babelrc": false,
+      "configFile": false
+    }
+  },
   "globals": {
     "Headers": false
   }
