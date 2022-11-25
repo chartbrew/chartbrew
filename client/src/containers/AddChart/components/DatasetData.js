@@ -32,6 +32,7 @@ import {
 import autoFieldSelector from "../../../modules/autoFieldSelector";
 import { operations, operators } from "../../../modules/filterOperations";
 import DraggableLabel from "./DraggableLabel";
+import TableDataFormattingModal from "./TableDataFormattingModal";
 
 function formatColumnsForOrdering(columns) {
   if (!columns) {
@@ -63,6 +64,10 @@ function DatasetData(props) {
   const [groupByFilter, setGroupByFilter] = useState("");
   const [conditionModal, setConditionModal] = useState(false);
   const [selectedCondition, setSelectedCondition] = useState({});
+
+  const [fieldForFormatting, setFieldForFormatting] = useState("");
+  const [fieldFormatConfig, setFieldFormatConfig] = useState(null);
+  const [fieldFormatLoading, setFieldFormatLoading] = useState(false);
 
   const yFieldRef = useRef(null);
   const xFieldRef = useRef(null);
@@ -548,6 +553,30 @@ function DatasetData(props) {
     setTableColumns(formatColumnsForOrdering(dataset.columnsOrder));
   };
 
+  const _onSelectFieldForFormatting = (field) => {
+    if (dataset?.configuration?.columnsFormatting?.[field]) {
+      setFieldFormatConfig(dataset.configuration.columnsFormatting[field]);
+    }
+
+    setFieldForFormatting(field);
+  };
+
+  const _onUpdateFieldFormatting = async (config) => {
+    const newConfiguration = { ...dataset.configuration };
+    if (!newConfiguration.columnsFormatting) {
+      newConfiguration.columnsFormatting = {};
+    }
+
+    newConfiguration.columnsFormatting[fieldForFormatting] = config;
+
+    setFieldFormatLoading(true);
+    await onUpdate({ configuration: newConfiguration });
+
+    setFieldFormatLoading(false);
+    setFieldForFormatting("");
+    setFieldFormatConfig(null);
+  };
+
   if ((!fieldOptions || !dataset.fieldsSchema) && dataset.connection_id) {
     return (
       <Container>
@@ -935,7 +964,12 @@ function DatasetData(props) {
                                   </Link>
                                 </Dropdown.Trigger>
                                 <Dropdown.Menu>
-                                  <Dropdown.Item>
+                                  <Dropdown.Item icon={<Setting />}>
+                                    <Link css={{ width: "100%" }} onClick={() => _onSelectFieldForFormatting(field.accessor)}>
+                                      <Text>Data formatting</Text>
+                                    </Link>
+                                  </Dropdown.Item>
+                                  <Dropdown.Item icon={<Plus />}>
                                     <Link css={{ width: "100%" }} onClick={() => _onSumField(field.accessor)}>
                                       {dataset.configuration
                                         && dataset.configuration.sum === field.accessor
@@ -1365,6 +1399,17 @@ function DatasetData(props) {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      <TableDataFormattingModal
+        config={fieldFormatConfig}
+        open={!!fieldForFormatting}
+        onClose={() => {
+          setFieldForFormatting("");
+          setFieldFormatConfig(null);
+        }}
+        onUpdate={_onUpdateFieldFormatting}
+        loading={fieldFormatLoading}
+      />
     </>
   );
 }
