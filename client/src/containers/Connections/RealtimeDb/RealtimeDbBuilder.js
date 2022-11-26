@@ -60,6 +60,12 @@ function RealtimeDbBuilder(props) {
       }
 
       setFirebaseRequest(dataRequest);
+      console.log("dataRequest", dataRequest);
+      if (dataRequest?.configuration?.limitToLast) {
+        setLimitValue(dataRequest.configuration.limitToLast);
+      } else if (dataRequest?.configuration?.limitToFirst) {
+        setLimitValue(dataRequest.configuration.limitToFirst);
+      }
       // setTimeout(() => {
       //   changeTutorial("RealtimeDb");
       // }, 1000);
