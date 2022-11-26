@@ -10,8 +10,23 @@ export const FETCH_CHART_SUCCESS = "FETCH_CHART_SUCCESS";
 export const FETCH_CHART_FAIL = "FETCH_CHART_FAIL";
 export const UPDATE_CHART_FIELDS = "UPDATE_CHART_FIELDS";
 
-export function getChart(projectId, chartId, password) {
-  return (dispatch) => {
+export function getChart(projectId, chartId, password, fromInterval = false) {
+  return (dispatch, getState) => {
+    // -------------------------------------------
+    // do not get the chart if already loading and if coming from an interval
+    // there is currently a bug with useInterval() and it triggers twice
+    if (fromInterval) {
+      try {
+        const selectedChart = getState().chart.data.find((c) => c.id === chartId);
+        if (selectedChart && selectedChart.loading) {
+          return new Promise((resolve) => resolve());
+        }
+      } catch (e) {
+        // do nothing
+      }
+    }
+    // --------------------------------------------
+
     const token = cookie.load("brewToken");
     let url = `${API_HOST}/project/${projectId}/chart/${chartId}`;
     const method = "GET";

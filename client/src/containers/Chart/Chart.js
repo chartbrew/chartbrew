@@ -83,7 +83,7 @@ function Chart(props) {
   const [exportLoading, setExportLoading] = useState(false);
 
   useInterval(() => {
-    getChart(chart.project_id, chart.id, isPublic ? window.localStorage.getItem("reportPassword") : null);
+    getChart(chart.project_id, chart.id, isPublic ? window.localStorage.getItem("reportPassword") : null, true);
   }, chart.autoUpdate ? chart.autoUpdate * 1000 : null);
 
   useEffect(() => {
@@ -1206,8 +1206,8 @@ const mapDispatchToProps = (dispatch) => {
     createShareString: (projectId, chartId) => (
       dispatch(createShareStringAction(projectId, chartId))
     ),
-    getChart: (projectId, chartId, password) => (
-      dispatch(getChartAction(projectId, chartId, password))
+    getChart: (projectId, chartId, password, fromInterval) => (
+      dispatch(getChartAction(projectId, chartId, password, fromInterval))
     ),
   };
 };
