@@ -296,51 +296,62 @@ class ChartController {
       });
   }
 
-  updateChartData(id, user, {
+  updateChartData(chart_id, user, {
     noSource, skipParsing, filters, isExport, getCache,
   }) {
     let gChart;
-    let gCache;
-    let gChartData;
-    let skipCache = false;
-    return this.findById(id)
+    return this.findById(chart_id)
       .then((chart) => {
         gChart = chart;
         if (!chart || !chart.Datasets || chart.Datasets.length === 0) {
           return new Promise((resolve, reject) => reject("The chart doesn't have any datasets"));
         }
 
-        if (!user) {
-          skipCache = true;
-          return new Promise((resolve) => resolve(false));
+        return this.getDataFromAllSources(gChart, user, noSource, getCache);
+      })
+      .then((chartData) => {
+        if (isExport) {
+          return dataExtractor(chartData, filters);
         }
 
-        return this.chartCache.findLast(user.id, chart.id);
+        return this.processSourceData(gChart, chartData, filters, skipParsing, isExport);
       })
-      .then((cache) => {
-        if (!skipCache) {
-          gCache = cache;
-        }
-
-        const requestPromises = [];
-        gChart.Datasets.map((dataset) => {
-          if (noSource && gCache && gCache.data) {
-            requestPromises.push(
-              this.datasetController.runRequest(dataset.id, gChart.id, true, getCache)
-            );
-          } else {
-            requestPromises.push(
-              this.datasetController.runRequest(dataset.id, gChart.id, false, getCache)
-            );
-          }
-          return dataset;
-        });
-
-        return Promise.all(requestPromises);
+      .then((chartData) => {
+        return this.saveNewChartData(gChart, chartData, filters, isExport);
       })
+      .catch((err) => {
+        return new Promise((resolve, reject) => reject(err));
+      });
+  }
+
+  async getDataFromAllSources(chart, user, noSource, getCache) {
+    let gCache;
+    let skipCache = false;
+
+    if (!user) skipCache = true;
+
+    if (!skipCache) {
+      gCache = await this.chartCache.findLast(user.id, chart.id);
+    }
+
+    const requestPromises = [];
+    chart.Datasets.map((dataset) => {
+      if (noSource && gCache && gCache.data) {
+        requestPromises.push(
+          this.datasetController.runRequest(dataset.id, chart.id, true, getCache)
+        );
+      } else {
+        requestPromises.push(
+          this.datasetController.runRequest(dataset.id, chart.id, false, getCache)
+        );
+      }
+      return dataset;
+    });
+
+    return Promise.all(requestPromises)
       .then(async (datasets) => {
         const resolvingData = {
-          chart: gChart,
+          chart,
           datasets,
         };
 
@@ -358,75 +369,69 @@ class ChartController {
           });
         } else if (!skipCache && user?.id) {
           // create a new cache for the data that was fetched
-          this.chartCache.create(user.id, gChart.id, resolvingData);
+          this.chartCache.create(user.id, chart.id, resolvingData);
         }
 
         return Promise.resolve(resolvingData);
-      })
-      .then((chartData) => {
-        if (isExport) {
-          return dataExtractor(chartData, filters);
+      });
+  }
+
+  processSourceData(chart, chartData, filters, skipParsing, isExport) {
+    if (chart.type === "table") {
+      const extractedData = dataExtractor(chartData, filters);
+      const tableView = new TableView();
+      return tableView.getTableData(extractedData, chartData);
+    }
+
+    const axisChart = new AxisChart(chartData);
+    return axisChart.plot(skipParsing, filters, isExport);
+  }
+
+  async saveNewChartData(chart, chartData, filters, isExport) {
+    if (filters || isExport) {
+      return filters;
+    }
+
+    // update the datasets if needed
+    const datasetsPromises = [];
+    if (chartData.conditionsOptions) {
+      chartData.conditionsOptions.forEach((opt) => {
+        if (opt.dataset_id) {
+          const dataset = chart.Datasets.find((d) => d.id === opt.dataset_id);
+          if (dataset && dataset.conditions) {
+            const newConditions = dataset.conditions.map((c) => {
+              const optCondition = opt.conditions.find((o) => o.field === c.field);
+              const values = (optCondition && optCondition.values) || [];
+
+              return { ...c, values };
+            });
+
+            datasetsPromises.push(
+              db.Dataset.update(
+                { conditions: newConditions },
+                { where: { id: opt.dataset_id } }
+              )
+            );
+          }
         }
+      });
+    }
 
-        if (gChart.type === "table") {
-          const extractedData = dataExtractor(chartData, filters);
-          const tableView = new TableView();
-          return tableView.getTableData(extractedData, chartData);
-        }
-
-        const axisChart = new AxisChart(chartData);
-        return axisChart.plot(skipParsing, filters, isExport);
-      })
-      .then(async (chartData) => {
-        gChartData = chartData;
-
-        if (filters || isExport) {
-          return filters;
-        }
-
-        // update the datasets if needed
-        const datasetsPromises = [];
-        if (chartData.conditionsOptions) {
-          chartData.conditionsOptions.forEach((opt) => {
-            if (opt.dataset_id) {
-              const dataset = gChart.Datasets.find((d) => d.id === opt.dataset_id);
-              if (dataset && dataset.conditions) {
-                const newConditions = dataset.conditions.map((c) => {
-                  const optCondition = opt.conditions.find((o) => o.field === c.field);
-                  const values = (optCondition && optCondition.values) || [];
-
-                  return { ...c, values };
-                });
-
-                datasetsPromises.push(
-                  db.Dataset.update(
-                    { conditions: newConditions },
-                    { where: { id: opt.dataset_id } }
-                  )
-                );
-              }
-            }
-          });
-        }
-
-        await Promise.all(datasetsPromises);
-        return this.update(id, { chartData: chartData.configuration, chartDataUpdated: moment() });
-      })
+    await Promise.all(datasetsPromises);
+    return this.update(chart.id,
+      { chartData: chartData.configuration, chartDataUpdated: moment() })
       .then(() => {
         if (filters && !isExport) {
-          const filteredChart = gChart;
-          filteredChart.chartData = gChartData.configuration;
+          const filteredChart = chart;
+          filteredChart.chartData = chartData.configuration;
           return filteredChart;
         }
 
         if (isExport) {
-          return gChartData.configuration;
+          return chartData.configuration;
         }
 
-        return this.findById(id);
-      })
-      .catch((err) => {
-        return new Promise((resolve, reject) => reject(err));
+        return this.findById(chart.id);
       });
   }
 
