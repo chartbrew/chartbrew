@@ -118,6 +118,12 @@ class AxisChart {
             const timeDiff = endDate.diff(startDate, "days");
             endDate = moment().endOf("day");
             startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+
+            if (this.chart.timeInterval === "month") {
+              startDate = moment().startOf("month").startOf("day");
+            } else if (this.chart.timeInterval === "year") {
+              startDate = moment().startOf("year").startOf("day");
+            }
           }
 
           const dateConditions = [{
