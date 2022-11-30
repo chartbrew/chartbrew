@@ -82,7 +82,14 @@ class AxisChart {
       let startDate;
       let endDate;
       if (this.chart.startDate && this.chart.endDate) {
-        startDate = moment(this.chart.startDate).startOf("day");
+        if (this.chart.timeInterval === "month" && this.chart.currentEndDate) {
+          startDate = moment(this.chart.startDate).startOf("month").startOf("day");
+        } else if (this.chart.timeInterval === "year" && this.chart.currentEndDate) {
+          startDate = moment(this.chart.startDate).startOf("year").startOf("day");
+        } else {
+          startDate = moment(this.chart.startDate).startOf("day");
+        }
+
         endDate = moment(this.chart.endDate).endOf("day");
       }
 
