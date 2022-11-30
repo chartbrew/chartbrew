@@ -115,9 +115,17 @@ class AxisChart {
 
         if (dateField && this.chart.startDate && this.chart.endDate && canDateFilter) {
           if (this.chart.currentEndDate) {
-            const timeDiff = endDate.diff(startDate, "days");
+            const timeDiff = endDate.diff(startDate, this.chart.timeInterval);
             endDate = moment().endOf("day");
-            startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+            startDate = endDate.clone().subtract(timeDiff, this.chart.timeInterval);
+
+            if (this.chart.timeInterval === "month") {
+              startDate = startDate.startOf("month");
+            } else if (this.chart.timeInterval === "year") {
+              startDate = startDate.startOf("year");
+            }
+
+            startDate = startDate.startOf("day");
           }
 
           const dateConditions = [{
