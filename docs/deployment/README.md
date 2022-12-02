@@ -274,8 +274,12 @@ If the setup fails in any way, please double-check that the environmental variab
 
 ## Deploy on Heroku and Vercel
 
-Chartbrew can be deployed directly on Heroku and Vercel and can be used there for free.
+Chartbrew can be deployed directly on Heroku and Vercel. Heroku does not offer a free tier anymore, but if you are already using it for other projects, you can deploy Chartbrew there as well.
 
 * [Click here to read the full guide on how to set up the project](https://chartbrew.com/blog/how-to-deploy-chartbrew-on-heroku-and-vercel/)
 
+## Deploy on Render
 
+Both the backend and the frontend can be deployed on Render. Check the tutorial below on how to set it up.
+
+* [Click here to read the full deployment guide for Render](https://chartbrew.com/blog/how-to-deploy-chartbrew-on-render/)

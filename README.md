@@ -42,25 +42,7 @@
 
 ## Data sources
 
-Currently, Chartbrew supports connections to these data sources.
-
-* MySQL
-* PostgreSQL
-* MongoDB
-* Firestore
-* Realtime Database
-* Google Analytics
-* Customer.io
-* REST APIs
-
-Chartbrew also features dashboard templates with charts already prepared:
-
-* Simple Analytics
-* ChartMogul
-* Mailgun
-* Google Analytics
-
-...or you can create your **custom templates** and replicate them across multiple dashboards.
+[Check Chartbrew's website for the latest list of supported data sources](https://chartbrew.com)
 
 ## Prerequisites
 
@@ -75,7 +57,7 @@ It is recommended you head over to the more detailed documentation to find out h
 
 [📚 You can find it here](https://docs.chartbrew.com/#getting-started)
 
-## Quickstart
+## Run locally with the CLI tool
 
 If you already have a MySQL or PostgreSQL server running, create a database called `chartbrew` and follow the prompts of the `create-chartbrew-app` command below.
 
@@ -100,6 +82,14 @@ npm run start
 cd server/
 npm run start-dev
 ```
+
+## Deploy Chartbrew on Render
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://chartbrew.com/blog/how-to-deploy-chartbrew-on-render/)
+
+## Deploy Chartbrew on Heroku and Vercel
+
+[Read more on how to do this here](https://chartbrew.com/blog/how-to-deploy-chartbrew-on-heroku-and-vercel/)
 
 ## Run with Docker
 
@@ -158,10 +148,6 @@ If you want to run your Docker image with new environmental variables, it's impo
 
 docker exec -it -w /code/client your_container_name npm run build
 ```
-
-## Deploy Chartbrew on Heroku and Vercel
-
-[Read more on how to do this here](https://chartbrew.com/blog/how-to-deploy-chartbrew-on-heroku-and-vercel/)
 
 ## Acknowledgements
 
