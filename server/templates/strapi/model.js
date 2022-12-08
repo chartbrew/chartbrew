@@ -17,7 +17,7 @@ const template = (templateData, dashboardOrder = 0) => {
 
   // remove the trailing slash from the strapiHost if present
   let formattedStrapiHost = strapiHost;
-  if (strapiHost.endsWith("/")) {
+  if (strapiHost && strapiHost.endsWith("/")) {
     formattedStrapiHost = strapiHost.slice(0, -1);
   }
 
@@ -332,7 +332,7 @@ module.exports.build = async (projectId, templateData, dashboardOrder) => {
 
   // remove the trailing slash from the strapiHost if present
   let formattedStrapiHost = strapiHost;
-  if (strapiHost.endsWith("/")) {
+  if (strapiHost && strapiHost.endsWith("/")) {
     formattedStrapiHost = strapiHost.slice(0, -1);
   }
 
