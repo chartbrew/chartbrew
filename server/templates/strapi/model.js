@@ -15,10 +15,16 @@ const template = (templateData, dashboardOrder = 0) => {
     formattedUpdatedAt = `attributes.${updatedField}`;
   }
 
+  // remove the trailing slash from the strapiHost if present
+  let formattedStrapiHost = strapiHost;
+  if (strapiHost.endsWith("/")) {
+    formattedStrapiHost = strapiHost.slice(0, -1);
+  }
+
   return {
     "Connections": [
       {
-        "host": `${strapiHost}/${apiEndpoint}`,
+        "host": `${formattedStrapiHost}/${apiEndpoint}`,
         "dbName": null,
         "port": null,
         "username": null,
@@ -324,10 +330,16 @@ module.exports.build = async (projectId, templateData, dashboardOrder) => {
     return Promise.reject("Missing required arguments to create the template");
   }
 
+  // remove the trailing slash from the strapiHost if present
+  let formattedStrapiHost = strapiHost;
+  if (strapiHost.endsWith("/")) {
+    formattedStrapiHost = strapiHost.slice(0, -1);
+  }
+
   let checkErrored = false;
   if (!connection_id) {
     const checkOpt = {
-      url: `${strapiHost}/${apiEndpoint}/${collection}`,
+      url: `${formattedStrapiHost}/${apiEndpoint}/${collection}`,
       method: "GET",
       headers: {
         accept: "application/json",
