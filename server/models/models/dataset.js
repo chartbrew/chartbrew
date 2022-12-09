@@ -206,6 +206,7 @@ module.exports = (sequelize, DataTypes) => {
     models.Dataset.belongsTo(models.Chart, { foreignKey: "chart_id" });
     models.Dataset.belongsTo(models.Connection, { foreignKey: "connection_id" });
     models.Dataset.hasOne(models.DataRequest, { foreignKey: "dataset_id" });
+    models.Dataset.hasMany(models.Alert, { foreignKey: "dataset_id" });
   };
 
   return Dataset;
