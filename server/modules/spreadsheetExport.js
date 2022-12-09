@@ -78,23 +78,26 @@ module.exports = (sheetsData) => {
         return field;
       }) : [];
       const tempHeaders = [];
-      formattedSet[setHeadersIndex].forEach((header) => {
-        let exclude = false;
+      if (formattedSet[setHeadersIndex]) {
+        formattedSet[setHeadersIndex].forEach((header) => {
+          let exclude = false;
 
-        // check for exact match
-        if (_.indexOf(formattedExclusions, header) > -1) {
-          exclude = true;
-        }
-
-        // check for nested matches
-        formattedExclusions.forEach((exclusion) => {
-          if (header.indexOf(`${exclusion}.`) > -1) {
+          // check for exact match
+          if (_.indexOf(formattedExclusions, header) > -1) {
             exclude = true;
           }
-        });
 
-        if (!exclude) tempHeaders.push(header);
-      });
+          // check for nested matches
+          formattedExclusions.forEach((exclusion) => {
+            if (header.indexOf(`${exclusion}.`) > -1) {
+              exclude = true;
+            }
+          });
+
+          if (!exclude) tempHeaders.push(header);
+        });
+      }
+
       formattedSet[setHeadersIndex] = tempHeaders;
 
       set.forEach((item) => {
