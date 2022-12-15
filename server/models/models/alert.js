@@ -14,6 +14,15 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
+    chart_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      reference: {
+        model: "Chart",
+        key: "id",
+        onDelete: "cascade",
+      },
+    },
     dataset_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -49,6 +58,19 @@ module.exports = (sequelize, DataTypes) => {
         }
       },
     },
+    mediums: {
+      type: DataTypes.TEXT,
+      set(val) {
+        return this.setDataValue("mediums", sc.encrypt(JSON.stringify(val)));
+      },
+      get() {
+        try {
+          return JSON.parse(sc.decrypt(this.getDataValue("mediums")));
+        } catch (e) {
+          return this.getDataValue("mediums");
+        }
+      },
+    },
     active: {
       type: DataTypes.BOOLEAN,
       required: true,
@@ -68,6 +90,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Alert.associate = (models) => {
     models.Alert.belongsTo(models.Dataset, { foreignKey: "dataset_id" });
+    models.Alert.belongsTo(models.Chart, { foreignKey: "chart_id" });
   };
 
   return Alert;

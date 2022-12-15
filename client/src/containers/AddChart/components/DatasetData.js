@@ -33,6 +33,7 @@ import autoFieldSelector from "../../../modules/autoFieldSelector";
 import { operations, operators } from "../../../modules/filterOperations";
 import DraggableLabel from "./DraggableLabel";
 import TableDataFormattingModal from "./TableDataFormattingModal";
+import DatasetAlerts from "./DatasetAlerts";
 
 function formatColumnsForOrdering(columns) {
   if (!columns) {
@@ -1129,9 +1130,29 @@ function DatasetData(props) {
           </>
         )}
         <Grid xs={12} direction="column">
-          <Spacer y={1} />
+          <Spacer y={0.5} />
           <Divider />
-          <Spacer y={1} />
+          <Spacer y={0.5} />
+        </Grid>
+
+        <Grid xs={12} direction="column">
+          <DatasetAlerts
+            chartType={chartType === "pie"
+                || chartType === "radar"
+                || chartType === "polar"
+                || chartType === "doughnut"
+                || chartType === "table"
+              ? "patterns" : "axis"}
+            chartId={match.params.chartId}
+            datasetId={dataset.id}
+            projectId={match.params.projectId}
+          />
+        </Grid>
+
+        <Grid xs={12} direction="column">
+          <Spacer y={0.5} />
+          <Divider />
+          <Spacer y={0.5} />
         </Grid>
         {conditions && conditions.length === 0 && (
           <Grid xs={12} className="datasetdata-filters-tut">
@@ -1150,6 +1171,14 @@ function DatasetData(props) {
           return (
             <Grid xs={12} key={condition.id} style={styles.conditionRow} className="datasetdata-filters-tut">
               <Container css={{ pl: 0, pr: 0 }}>
+                {index === 0 && (
+                  <>
+                    <Row>
+                      <Text b>{"Filters"}</Text>
+                    </Row>
+                    <Spacer y={0.5} />
+                  </>
+                )}
                 <Row warp="wrap" gap={0.5} align="center" css={{ ml: 0, mr: 0 }}>
                   {index === 0 && (<Text size={14}>{"where "}</Text>)}
                   {index > 0 && (<Text size={14}>{"and "}</Text>)}

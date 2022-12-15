@@ -329,7 +329,7 @@ function TeamMembers(props) {
             color="error"
             disabled={loading}
             onClick={() => _onDeleteTeamMember(deleteMember)}
-            iconRight={loading ? <Loading type="points" /> : <CloseSquare />}
+            iconRight={loading ? <Loading type="spinner" color={"currentColor"} /> : <CloseSquare />}
           >
             Remove
           </Button>

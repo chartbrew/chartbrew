@@ -157,6 +157,16 @@ class TeamController {
     });
   }
 
+  getTeamMembers(teamId) {
+    return this.getTeamMembersId(teamId)
+      .then((userIds) => {
+        return this.userController.getUsersById(userIds, teamId);
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
   updateTeamRole(teamId, userId, data) {
     return db.TeamRole.update(data, { where: { "team_id": teamId, "user_id": userId } })
       .then(() => {

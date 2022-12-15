@@ -16,6 +16,15 @@ module.exports = {
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
       },
+      chart_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        reference: {
+          model: "Chart",
+          key: "id",
+          onDelete: "cascade",
+        },
+      },
       dataset_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -48,6 +57,19 @@ module.exports = {
             return JSON.parse(sc.decrypt(this.getDataValue("recipients")));
           } catch (e) {
             return this.getDataValue("recipients");
+          }
+        },
+      },
+      mediums: {
+        type: Sequelize.TEXT,
+        set(val) {
+          return this.setDataValue("mediums", sc.encrypt(JSON.stringify(val)));
+        },
+        get() {
+          try {
+            return JSON.parse(sc.decrypt(this.getDataValue("mediums")));
+          } catch (e) {
+            return this.getDataValue("mediums");
           }
         },
       },

@@ -4,6 +4,7 @@ const TeamController = require("../controllers/TeamController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
 const spreadsheetExport = require("../modules/spreadsheetExport");
+const alertController = require("../controllers/AlertController");
 
 module.exports = (app) => {
   const chartController = new ChartController();
@@ -648,6 +649,61 @@ module.exports = (app) => {
       });
   });
   // --------------------------------------------------------
+
+  /*
+  ** Route to get chart alerts
+  */
+  app.get("/project/:project_id/chart/:id/alert", verifyToken, (req, res) => {
+    return checkAccess(req)
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).updateAny("chart");
+        if (!permission.granted) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
+        return alertController.getByChartId(req.params.id);
+      })
+      .then((alerts) => {
+        return res.status(200).send(alerts);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------------------------
+
+  /*
+  ** Route to create a new chart alert
+  */
+  app.post("/project/:project_id/chart/:id/alert", verifyToken, (req, res) => {
+    return checkAccess(req)
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).updateAny("chart");
+        if (!permission.granted) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
+        // check to see if the recipients are in the same team
+        return teamController.getTeamMembers(teamRole.team_id);
+      })
+      .then((teamMembers) => {
+        const { recipients } = req.body;
+        const teamMemberEmails = teamMembers.map((member) => member.email);
+        const invalidRecipients = recipients
+          .filter((recipient) => !teamMemberEmails.includes(recipient));
+        if (invalidRecipients.length > 0) {
+          return new Promise((resolve, reject) => reject(new Error("Invalid recipients")));
+        }
+
+        return alertController.create(req.body);
+      })
+      .then((alert) => {
+        return res.status(200).send(alert);
+      })
+      .catch((error) => {
+        return res.status(400).send((error && error.message) || error);
+      });
+  });
 
   return (req, res, next) => {
     next();

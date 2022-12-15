@@ -33,6 +33,10 @@ import {
   deleteDataset as deleteDatasetAction,
   clearDatasets as clearDatasetsAction,
 } from "../../actions/dataset";
+import {
+  getChartAlerts as getChartAlertsAction,
+  clearAlerts as clearAlertsAction,
+} from "../../actions/alert";
 import { updateUser as updateUserAction } from "../../actions/user";
 import {
   getTemplates as getTemplatesAction
@@ -76,13 +80,14 @@ function AddChart(props) {
     match, createChart, history, charts, saveNewDataset, getChartDatasets, tutorial,
     datasets, updateDataset, deleteDataset, updateChart, runQuery, user, changeTutorial,
     completeTutorial, clearDatasets, resetTutorial, connections, templates, getTemplates,
-    runQueryWithFilters,
+    runQueryWithFilters, getChartAlerts, clearAlerts,
   } = props;
 
   const { isDark } = useTheme();
 
   useEffect(() => {
     clearDatasets();
+    clearAlerts();
 
     if (match.params.chartId) {
       charts.map((chart) => {
@@ -93,8 +98,9 @@ function AddChart(props) {
       });
       setTitleScreen(false);
 
-      // also fetch the chart's datasets
+      // also fetch the chart's datasets and alerts
       getChartDatasets(match.params.projectId, match.params.chartId);
+      getChartAlerts(match.params.projectId, match.params.chartId);
     }
 
     if (user && (!user.tutorials || Object.keys(user.tutorials).length === 0)) {
@@ -871,6 +877,8 @@ AddChart.propTypes = {
   getTemplates: PropTypes.func.isRequired,
   templates: PropTypes.object.isRequired,
   runQueryWithFilters: PropTypes.func.isRequired,
+  getChartAlerts: PropTypes.func.isRequired,
+  clearAlerts: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -914,6 +922,8 @@ const mapDispatchToProps = (dispatch) => {
     runQueryWithFilters: (projectId, chartId, filters) => (
       dispatch(runQueryWithFiltersAction(projectId, chartId, filters))
     ),
+    getChartAlerts: (projectId, chartId) => dispatch(getChartAlertsAction(projectId, chartId)),
+    clearAlerts: () => dispatch(clearAlertsAction()),
   };
 };
 
