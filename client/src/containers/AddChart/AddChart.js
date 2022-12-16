@@ -507,7 +507,7 @@ function AddChart(props) {
       />
       <Grid.Container>
         <Grid xs={12} sm={6} md={7}>
-          <Container>
+          <Container css={{ "@xsMax": { pl: 0, pr: 0 } }}>
             <Row align="center" wrap="wrap" justify="space-between">
               <Row style={{ flex: 0.6 }} className="chart-name-tut">
                 {!editingTitle
