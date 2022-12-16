@@ -18,9 +18,6 @@ import {
 } from "../../../actions/alert";
 
 const ruleTypes = [{
-  label: "When a new value is detected",
-  value: "new_value",
-}, {
   label: "When value is above a threshold",
   value: "threshold_above",
 }, {
@@ -36,7 +33,7 @@ const ruleTypes = [{
 
 function DatasetAlerts(props) {
   const {
-    chartType, getTeamMembers, teamMembers, team, user, chartId, datasetId, projectId,
+    getTeamMembers, teamMembers, team, user, chartId, datasetId, projectId,
     createAlert, alerts, updateAlert, deleteAlert,
   } = props;
 
@@ -221,16 +218,6 @@ function DatasetAlerts(props) {
             </Row>
             <Spacer y={0.5} />
 
-            {newAlert.type === "new_value" && (
-              <Row>
-                <Text i>
-                  {"You will be notified when a new value is found "}
-                  {chartType === "axis" && "on the X Axis"}
-                  {chartType === "patterns" && "on the chart."}
-                </Text>
-              </Row>
-            )}
-
             {(newAlert.type === "threshold_above" || newAlert.type === "threshold_below") && (
               <Row>
                 <Input
@@ -412,7 +399,6 @@ function DatasetAlerts(props) {
 }
 
 DatasetAlerts.propTypes = {
-  chartType: PropTypes.string.isRequired,
   getTeamMembers: PropTypes.func.isRequired,
   teamMembers: PropTypes.array.isRequired,
   team: PropTypes.object.isRequired,

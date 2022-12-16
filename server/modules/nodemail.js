@@ -11,7 +11,7 @@ module.exports.sendInvite = (invite, admin, teamName) => {
   const message = {
     from: settings.adminMail,
     to: invite.email,
-    subject: "ChartBrew - Join the team",
+    subject: "Chartbrew - Join the team",
     text: `
       Hi there,
 
@@ -19,8 +19,7 @@ module.exports.sendInvite = (invite, admin, teamName) => {
 
       ${inviteUrl}
 
-      Cheers,
-      ChartBrew
+      - Chartbrew
     `,
     html: `
       <h3>Hi there 👋</h3>
@@ -29,8 +28,7 @@ module.exports.sendInvite = (invite, admin, teamName) => {
 
       <p>${inviteUrl}</p>
 
-      Cheers,
-      ChartBrew
+      - Chartbrew
     `,
   };
 
@@ -65,4 +63,30 @@ module.exports.passwordReset = (data) => {
   };
 
   return nodemail.sendMail(message);
+};
+
+module.exports.sendChartAlert = (data) => {
+  const message = {
+    from: settings.adminMail,
+    to: data.recipients,
+    subject: `Chartbrew - ${data.chartName} alert`,
+    text: `
+      Your "${data.chartName}" chart has a new alert
+
+      ${data.body}
+
+      - Chartbrew
+    `,
+    html: `
+      <h3>Your "${data.chartName}" chart has a new alert</h3>
+
+      <p>${data.body}</p>
+
+      - Chartbrew
+    `,
+  };
+
+  // console.log("sending email", message);
+  return message;
+  // return nodemail.sendMail(message);
 };
