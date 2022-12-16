@@ -124,7 +124,7 @@ export function deleteAlert(projectId, chartId, alertId) {
         return response.json();
       })
       .then((alert) => {
-        dispatch({ type: REMOVE_ALERT, alert });
+        dispatch({ type: REMOVE_ALERT, alertId });
         return alert;
       })
       .catch((error) => {

@@ -24,7 +24,7 @@ export default function alert(state = initialState, action) {
       // look for existing ALERTS in the data array and replace it if it exists
       let indexFound = -1;
       for (let i = 0; i < state.data.length; i++) {
-        if (state.data[i].id === parseInt(action.alert.id, 10)) {
+        if (state.data[i].id === action.alert.id) {
           indexFound = i;
           break;
         }
@@ -42,7 +42,7 @@ export default function alert(state = initialState, action) {
       // look for existing alerts in the data array and remove it if it exists
       let removeIndex = -1;
       for (let i = 0; i < state.data.length; i++) {
-        if (state.data[i].id === parseInt(action.alertId, 10)) {
+        if (state.data[i].id === action.alertId) {
           removeIndex = i;
           break;
         }

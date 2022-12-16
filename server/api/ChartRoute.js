@@ -704,6 +704,63 @@ module.exports = (app) => {
         return res.status(400).send((error && error.message) || error);
       });
   });
+  // --------------------------------------------------------
+
+  /*
+  ** Route to update a chart alert
+  */
+  app.put("/project/:project_id/chart/:id/alert/:alert_id", verifyToken, (req, res) => {
+    return checkAccess(req)
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).updateAny("chart");
+        if (!permission.granted) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
+        // check to see if the recipients are in the same team
+        return teamController.getTeamMembers(teamRole.team_id);
+      })
+      .then((teamMembers) => {
+        const { recipients } = req.body;
+        const teamMemberEmails = teamMembers.map((member) => member.email);
+        const invalidRecipients = recipients
+          .filter((recipient) => !teamMemberEmails.includes(recipient));
+        if (invalidRecipients.length > 0) {
+          return new Promise((resolve, reject) => reject(new Error("Invalid recipients")));
+        }
+
+        return alertController.update(req.params.alert_id, req.body);
+      })
+      .then((alert) => {
+        return res.status(200).send(alert);
+      })
+      .catch((error) => {
+        return res.status(400).send((error && error.message) || error);
+      });
+  });
+  // --------------------------------------------------------
+
+  /*
+  ** Route to delete a chart alert
+  */
+  app.delete("/project/:project_id/chart/:id/alert/:alert_id", verifyToken, (req, res) => {
+    return checkAccess(req)
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).updateAny("chart");
+        if (!permission.granted) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
+        return alertController.remove(req.params.alert_id);
+      })
+      .then(() => {
+        return res.status(200).send({ message: "Alert deleted" });
+      })
+      .catch((error) => {
+        return res.status(400).send((error && error.message) || error);
+      });
+  });
+  // --------------------------------------------------------
 
   return (req, res, next) => {
     next();

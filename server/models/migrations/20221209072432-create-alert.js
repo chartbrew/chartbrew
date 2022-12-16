@@ -34,6 +34,10 @@ module.exports = {
           onDelete: "cascade",
         },
       },
+      type: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
       rules: {
         type: Sequelize.TEXT("long"),
         set(val) {

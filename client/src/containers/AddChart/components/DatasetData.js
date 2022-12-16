@@ -1136,6 +1136,8 @@ function DatasetData(props) {
         </Grid>
 
         <Grid xs={12} direction="column">
+          <Text b>Alerts</Text>
+          <Spacer y={0.5} />
           <DatasetAlerts
             chartType={chartType === "pie"
                 || chartType === "radar"

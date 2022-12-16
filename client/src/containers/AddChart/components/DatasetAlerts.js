@@ -3,13 +3,19 @@ import PropTypes from "prop-types";
 import {
   Badge, Button, Container, Dropdown, Input, Link, Loading, Modal, Row, Spacer, Text
 } from "@nextui-org/react";
-import { Message, Notification } from "react-iconly";
+import {
+  Delete, Message, Notification, Plus
+} from "react-iconly";
 import { connect } from "react-redux";
 import { FaDiscord, FaSlack, FaTelegram } from "react-icons/fa";
 import { TbWebhook } from "react-icons/tb";
 
 import { getTeamMembers as getTeamMembersAction } from "../../../actions/team";
-import { createAlert as createAlertAction } from "../../../actions/alert";
+import {
+  createAlert as createAlertAction,
+  updateAlert as updateAlertAction,
+  deleteAlert as deleteAlertAction,
+} from "../../../actions/alert";
 
 const ruleTypes = [{
   label: "When a new value is detected",
@@ -31,79 +37,161 @@ const ruleTypes = [{
 function DatasetAlerts(props) {
   const {
     chartType, getTeamMembers, teamMembers, team, user, chartId, datasetId, projectId,
-    createAlert,
+    createAlert, alerts, updateAlert, deleteAlert,
   } = props;
+
+  const initAlert = {
+    rules: {},
+    recipients: [user.email],
+    mediums: {},
+    chart_id: chartId,
+    dataset_id: datasetId,
+    active: true,
+  };
 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [alertType, setAlertType] = useState("");
-  const [rule, setRule] = useState({});
-  const [recipients, setRecipients] = useState([user.email]);
-  const [mediums, setMediums] = useState({});
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [datasetAlerts, setDatasetAlerts] = useState([]);
+  const [newAlert, setNewAlert] = useState(initAlert);
 
   useEffect(() => {
     getTeamMembers(team.id);
   }, []);
 
+  useEffect(() => {
+    setDatasetAlerts(alerts.filter((a) => a.dataset_id === datasetId));
+  }, [alerts]);
+
   const _onChangeRecipient = (email) => {
-    if (recipients.includes(email)) {
-      setRecipients(recipients.filter((r) => r !== email));
+    if (newAlert.recipients.includes(email)) {
+      setNewAlert({ ...newAlert, recipients: newAlert.recipients.filter((r) => r !== email) });
     } else {
-      setRecipients([...recipients, email]);
+      setNewAlert({ ...newAlert, recipients: [...newAlert.recipients, email] });
     }
   };
 
+  const _onOpen = () => {
+    setNewAlert(initAlert);
+    setOpen(true);
+  };
+
   const _onChangeMediums = (medium) => {
-    setMediums({
-      ...mediums,
-      [medium]: {
-        enabled: !mediums[medium]?.enabled,
+    setNewAlert({
+      ...newAlert,
+      mediums: {
+        ...newAlert.mediums,
+        [medium]: {
+          enabled: !newAlert.mediums[medium]?.enabled,
+        }
       }
     });
   };
 
   const _onSaveAlert = () => {
-    const alert = {
-      rules: {
-        type: alertType,
-        ...rule,
-      },
-      recipients,
-      mediums,
-      chart_id: chartId,
-      dataset_id: datasetId,
-      active: true,
-    };
-
     setLoading(true);
-    createAlert(projectId, chartId, alert)
+
+    if (newAlert.id) {
+      updateAlert(projectId, chartId, newAlert)
+        .then(() => {
+          setOpen(false);
+          setLoading(false);
+          setNewAlert(initAlert);
+        })
+        .catch(() => {
+          setLoading(false);
+        });
+      return;
+    }
+
+    createAlert(projectId, chartId, newAlert)
       .then(() => {
         setOpen(false);
         setLoading(false);
+        setNewAlert(initAlert);
       })
       .catch(() => {
         setLoading(false);
       });
   };
 
+  const _onEdit = (alert) => {
+    setNewAlert(alert);
+    setOpen(true);
+  };
+
+  const _onDelete = () => {
+    if (!newAlert.id) return;
+    setDeleteLoading(true);
+    deleteAlert(projectId, chartId, newAlert.id)
+      .then(() => {
+        setOpen(false);
+        setDeleteLoading(false);
+      })
+      .catch(() => {
+        setDeleteLoading(false);
+      });
+  };
+
   return (
     <div className="dataset-alerts-tut">
-      <Badge color="secondary" content={"New"} size="xs">
-        <Button
-          color="primary"
-          auto
-          iconRight={<Notification />}
-          size="sm"
-          onClick={() => setOpen(true)}
-        >
-          Set up alerts
-        </Button>
-      </Badge>
-
+      <Container css={{ pl: 0, pr: 0 }}>
+        <Row wrap="wrap">
+          {datasetAlerts.length === 0 && (
+            <Badge color="secondary" content={"New"} size="xs">
+              <Button
+                color="primary"
+                auto
+                iconRight={<Notification />}
+                size="sm"
+                onClick={_onOpen}
+              >
+                Set up alerts
+              </Button>
+            </Badge>
+          )}
+          {datasetAlerts.length > 0 && datasetAlerts.map((alert) => (
+            <>
+              <Button
+                color="primary"
+                auto
+                bordered
+                size="sm"
+                css={{ mb: 5 }}
+                onClick={() => _onEdit(alert)}
+              >
+                {alert.type === "new_value" && "New value"}
+                {alert.type === "threshold_above" && "Above threshold"}
+                {alert.type === "threshold_below" && "Below threshold"}
+                {alert.type === "threshold_between" && "Between thresholds"}
+                {alert.type === "threshold_outside" && "Outside thresholds"}
+              </Button>
+              <Spacer x={0.2} />
+            </>
+          ))}
+        </Row>
+        {datasetAlerts.length > 0 && (
+          <>
+            <Spacer y={0.5} />
+            <Row>
+              <Button
+                color="primary"
+                auto
+                icon={<Plus />}
+                size="sm"
+                onClick={_onOpen}
+                light
+              >
+                Set new alert
+              </Button>
+            </Row>
+          </>
+        )}
+      </Container>
       <Modal open={open} onClose={() => setOpen(false)} width="800px">
         <Modal.Header>
           <Text h4 css={{ ac: "center", d: "flex", flexDirection: "row" }}>
-            Set up a new alert
+            {newAlert.id ? "Edit alert" : "Set up a new alert"}
             <Spacer x={0.5} />
             <Badge color="secondary" size="sm" css={{ pl: 10, pr: 10 }}>
               Beta
@@ -115,11 +203,11 @@ function DatasetAlerts(props) {
             <Row>
               <Dropdown>
                 <Dropdown.Button auto color="primary" bordered>
-                  {ruleTypes.find((r) => r.value === alertType)?.label || "Select an alert type"}
+                  {ruleTypes.find((r) => r.value === newAlert.type)?.label || "Select an alert type"}
                 </Dropdown.Button>
                 <Dropdown.Menu
-                  onAction={(key) => setAlertType(key)}
-                  selectedKeys={[alertType]}
+                  onAction={(key) => setNewAlert({ ...newAlert, type: key })}
+                  selectedKeys={[newAlert.type]}
                   selectionMode="single"
                   css={{ minWidth: "max-content" }}
                 >
@@ -133,7 +221,7 @@ function DatasetAlerts(props) {
             </Row>
             <Spacer y={0.5} />
 
-            {alertType === "new_value" && (
+            {newAlert.type === "new_value" && (
               <Row>
                 <Text i>
                   {"You will be notified when a new value is found "}
@@ -143,7 +231,7 @@ function DatasetAlerts(props) {
               </Row>
             )}
 
-            {(alertType === "threshold_above" || alertType === "threshold_below") && (
+            {(newAlert.type === "threshold_above" || newAlert.type === "threshold_below") && (
               <Row>
                 <Input
                   placeholder="Enter a threshold"
@@ -151,13 +239,18 @@ function DatasetAlerts(props) {
                   type="number"
                   fullWidth
                   bordered
-                  value={rule.value}
-                  onChange={(e) => setRule({ ...rule, value: e.target.value })}
+                  value={newAlert.rules.value}
+                  onChange={(e) => {
+                    setNewAlert({
+                      ...newAlert,
+                      rules: { ...newAlert.rules, value: e.target.value }
+                    });
+                  }}
                 />
               </Row>
             )}
 
-            {(alertType === "threshold_between" || alertType === "threshold_outside") && (
+            {(newAlert.type === "threshold_between" || newAlert.type === "threshold_outside") && (
               <Row>
                 <Input
                   placeholder="Enter a threshold"
@@ -165,8 +258,13 @@ function DatasetAlerts(props) {
                   type="number"
                   fullWidth
                   bordered
-                  value={rule.lower}
-                  onChange={(e) => setRule({ ...rule, lower: e.target.value })}
+                  value={newAlert.rules.lower}
+                  onChange={(e) => {
+                    setNewAlert({
+                      ...newAlert,
+                      rules: { ...newAlert.rules, lower: e.target.value }
+                    });
+                  }}
                 />
                 <Spacer x={0.5} />
                 <Input
@@ -175,8 +273,13 @@ function DatasetAlerts(props) {
                   type="number"
                   fullWidth
                   bordered
-                  value={rule.upper}
-                  onChange={(e) => setRule({ ...rule, upper: e.target.value })}
+                  value={newAlert.rules.upper}
+                  onChange={(e) => {
+                    setNewAlert({
+                      ...newAlert,
+                      rules: { ...newAlert.rules, upper: e.target.value }
+                    });
+                  }}
                 />
               </Row>
             )}
@@ -192,7 +295,7 @@ function DatasetAlerts(props) {
                 icon={<Message size="small" />}
                 color="secondary"
                 size="sm"
-                bordered={!mediums.email?.enabled}
+                bordered={!newAlert.mediums.email?.enabled}
                 onClick={() => _onChangeMediums("email")}
               >
                 Email
@@ -203,7 +306,7 @@ function DatasetAlerts(props) {
                 icon={<FaSlack />}
                 color="secondary"
                 size="sm"
-                bordered={!mediums.slack?.enabled}
+                bordered={!newAlert.mediums.slack?.enabled}
                 onClick={() => _onChangeMediums("slack")}
                 disabled
                 title="Coming soon"
@@ -216,7 +319,7 @@ function DatasetAlerts(props) {
                 icon={<FaTelegram />}
                 color="secondary"
                 size="sm"
-                bordered={!mediums.telegram?.enabled}
+                bordered={!newAlert.mediums.telegram?.enabled}
                 onClick={() => _onChangeMediums("telegram")}
                 disabled
                 title="Coming soon"
@@ -229,7 +332,7 @@ function DatasetAlerts(props) {
                 icon={<FaDiscord />}
                 color="secondary"
                 size="sm"
-                bordered={!mediums.discord?.enabled}
+                bordered={!newAlert.mediums.discord?.enabled}
                 onClick={() => _onChangeMediums("discord")}
                 disabled
                 title="Coming soon"
@@ -242,7 +345,7 @@ function DatasetAlerts(props) {
                 icon={<TbWebhook />}
                 color="secondary"
                 size="sm"
-                bordered={!mediums.webhook?.enabled}
+                bordered={!newAlert.mediums.webhook?.enabled}
                 onClick={() => _onChangeMediums("webhook")}
                 disabled
                 title="Coming soon"
@@ -251,7 +354,7 @@ function DatasetAlerts(props) {
               </Button>
             </Row>
 
-            {mediums.email?.enabled && (
+            {newAlert.mediums.email?.enabled && (
               <>
                 <Spacer y={1} />
                 <Row>
@@ -264,7 +367,7 @@ function DatasetAlerts(props) {
                       <Badge
                         color="primary"
                         isSquared
-                        variant={recipients.includes(member.email) ? "default" : "bordered"}
+                        variant={newAlert.recipients.includes(member.email) ? "default" : "bordered"}
                         css={{ mb: 5 }}
                       >
                         {member.email}
@@ -278,6 +381,18 @@ function DatasetAlerts(props) {
           </Container>
         </Modal.Body>
         <Modal.Footer>
+          {newAlert.id && (
+            <Button
+              auto
+              color="error"
+              icon={deleteLoading ? <Loading type="spinner" color="currentColor" /> : <Delete />}
+              light
+              onClick={() => _onDelete()}
+              disabled={deleteLoading}
+            >
+              Delete alert
+            </Button>
+          )}
           <Button auto onClick={() => setOpen(false)} color="warning" flat>
             Close
           </Button>
@@ -285,10 +400,10 @@ function DatasetAlerts(props) {
             auto
             onClick={() => _onSaveAlert()}
             color="primary"
-            disabled={mediums.length === 0 || !alertType || loading}
+            disabled={newAlert.mediums.length === 0 || !newAlert.type || loading}
             icon={loading ? <Loading type="spinner" color="currentColor" /> : null}
           >
-            Save
+            {newAlert.id ? "Update alert" : "Create alert"}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -306,18 +421,28 @@ DatasetAlerts.propTypes = {
   datasetId: PropTypes.string.isRequired,
   createAlert: PropTypes.func.isRequired,
   projectId: PropTypes.string.isRequired,
+  alerts: PropTypes.array.isRequired,
+  updateAlert: PropTypes.func.isRequired,
+  deleteAlert: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => ({
   teamMembers: state.team.teamMembers,
   team: state.team.active,
   user: state.user.data,
+  alerts: state.alert.data,
 });
 
 const mapDispatchToProps = (dispatch) => ({
   getTeamMembers: (teamId) => dispatch(getTeamMembersAction(teamId)),
   createAlert: (projectId, chartId, alert) => (
     dispatch(createAlertAction(projectId, chartId, alert))
+  ),
+  updateAlert: (projectId, chartId, alert) => (
+    dispatch(updateAlertAction(projectId, chartId, alert))
+  ),
+  deleteAlert: (projectId, chartId, alertId) => (
+    dispatch(deleteAlertAction(projectId, chartId, alertId))
   ),
 });
 

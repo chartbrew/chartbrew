@@ -32,6 +32,10 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "cascade",
       },
     },
+    type: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     rules: {
       type: DataTypes.TEXT("long"),
       set(val) {
