@@ -1,45 +1,50 @@
 const db = require("../models/models");
 const mail = require("./mail");
 
+const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+
 function processAlert(chart, alert, alertsFound) {
-  const { rules, mediums, recipients } = alert;
   const {
-    type, value, lower, upper
+    rules, mediums, recipients, type
+  } = alert;
+  const {
+    value, lower, upper
   } = rules;
 
+  const dashboardUrl = `${settings.client}/project/${chart.project_id}`;
+
   let thresholdText = "";
-  if (type === "threshhold_above") {
+  if (type === "threshold_above") {
     thresholdText = `The following values were found above your threshold of ${value}:`;
-  } else if (type === "threshhold_below") {
+  } else if (type === "threshold_below") {
     thresholdText = `The following values were found below your threshold of ${value}:`;
-  } else if (type === "threshhold_between") {
-    thresholdText = `The following values were found outside your threshold of ${lower} and ${upper}:`;
-  } else if (type === "threshhold_outside") {
-    thresholdText = `The following values were found outside your threshold of ${lower} and ${upper}:`;
+  } else if (type === "threshold_between") {
+    thresholdText = `The following values were found between your thresholds of ${lower} and ${upper}:`;
+  } else if (type === "threshold_outside") {
+    thresholdText = `The following values were found outside your thresholds of ${lower} and ${upper}:`;
   }
 
+  const stringAlerts = [];
   Object.keys(mediums).forEach((medium) => {
     const mediumData = mediums[medium];
 
     if (medium === "email" && mediumData.enabled) {
-      let body = `
-      ${thresholdText}`;
-
       alertsFound.forEach((a) => {
-        body += `
-        ${a.label}: ${a.value}`;
+        stringAlerts.push(`${a.label}: ${a.value}`);
       });
 
       mail.sendChartAlert({
         chartName: chart.name,
         recipients,
-        body,
+        thresholdText,
+        alerts: stringAlerts,
+        dashboardUrl,
       });
     }
   });
 }
 
-async function checkChart(chart) {
+async function checkChartForAlerts(chart) {
   const alerts = await db.Alert.findAll({
     where: {
       chart_id: chart.id,
@@ -59,17 +64,58 @@ async function checkChart(chart) {
     if (datasetAlerts.length > 0) {
       datasetAlerts.forEach((alert) => {
         const { rules, type } = alert;
-        const { value } = rules;
+        const { value, lower, upper } = rules;
 
-        if (type === "threshold_above") {
-          if (chartDataset.data[chartDataset.data.length - 1] > value) {
-            // Send alert
+        if (type === "threshold_above" && chartDataset.data) {
+          // find potential alerts
+          const alertsFound = [];
+          chartDataset.data.forEach((d, i) => {
+            if (d < value) {
+              alertsFound.push({
+                label: chartData.data.labels[i],
+                value: d,
+              });
+            }
+          });
+
+          if (alertsFound.length > 0) {
+            processAlert(chart, alert, alertsFound);
           }
         } else if (type === "threshold_below" && chartDataset.data) {
           // find potential alerts
           const alertsFound = [];
           chartDataset.data.forEach((d, i) => {
             if (d < value) {
+              alertsFound.push({
+                label: chartData.data.labels[i],
+                value: d,
+              });
+            }
+          });
+
+          if (alertsFound.length > 0) {
+            processAlert(chart, alert, alertsFound);
+          }
+        } else if (type === "threshold_between" && chartDataset.data) {
+          // find potential alerts
+          const alertsFound = [];
+          chartDataset.data.forEach((d, i) => {
+            if (d > lower && d < upper) {
+              alertsFound.push({
+                label: chartData.data.labels[i],
+                value: d,
+              });
+            }
+          });
+
+          if (alertsFound.length > 0) {
+            processAlert(chart, alert, alertsFound);
+          }
+        } else if (type === "threshold_outside" && chartDataset.data) {
+          // find potential alerts
+          const alertsFound = [];
+          chartDataset.data.forEach((d, i) => {
+            if (d < lower || d > upper) {
               alertsFound.push({
                 label: chartData.data.labels[i],
                 value: d,
@@ -89,5 +135,5 @@ async function checkChart(chart) {
 }
 
 module.exports = {
-  checkChart,
+  checkChartForAlerts,
 };

@@ -2,12 +2,14 @@ const moment = require("moment");
 const { workerData, parentPort } = require("worker_threads");
 
 const ChartController = require("../../controllers/ChartController");
+const { checkChartForAlerts } = require("../checkAlerts");
 
 const chartController = new ChartController();
 
 function runUpdate(chart) {
   return chartController.updateChartData(chart.id, null, {})
-    .then(() => {
+    .then((chartData) => {
+      checkChartForAlerts(chartData);
       return true;
     })
     .catch(() => {

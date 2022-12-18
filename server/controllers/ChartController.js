@@ -16,7 +16,6 @@ const dataExtractor = require("../charts/DataExtractor");
 // charts
 const AxisChart = require("../charts/AxisChart");
 const TableView = require("../charts/TableView");
-const { checkChart } = require("../modules/checkAlerts");
 
 class ChartController {
   constructor() {
@@ -425,10 +424,6 @@ class ChartController {
         }
 
         return this.findById(id);
-      })
-      .then((chart) => {
-        checkChart(chart);
-        return chart;
       })
       .catch((err) => {
         return new Promise((resolve, reject) => reject(err));

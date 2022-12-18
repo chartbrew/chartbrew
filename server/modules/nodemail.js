@@ -68,25 +68,38 @@ module.exports.passwordReset = (data) => {
 module.exports.sendChartAlert = (data) => {
   const message = {
     from: settings.adminMail,
-    to: data.recipients,
+    bcc: data.recipients,
     subject: `Chartbrew - ${data.chartName} alert`,
-    text: `
-      Your "${data.chartName}" chart has a new alert
-
-      ${data.body}
-
-      - Chartbrew
-    `,
-    html: `
-      <h3>Your "${data.chartName}" chart has a new alert</h3>
-
-      <p>${data.body}</p>
-
-      - Chartbrew
-    `,
   };
 
-  // console.log("sending email", message);
-  return message;
-  // return nodemail.sendMail(message);
+  /** TEXT */
+  message.text = `Your "${data.chartName}" chart has a new alert`;
+  message.text += "\n";
+  message.text += `${data.thresholdText}`;
+  message.text += "\n";
+  for (let i = 0; i < data.alerts.length; i++) {
+    message.text += `${data.alerts[i]}`;
+    message.text += "\n";
+  }
+  message.text += `Check your dashboard here: ${data.dashboardUrl}`;
+  message.text += "\n";
+  message.text += "- Chartbrew";
+  // ------------------------------
+
+  /** HTML */
+  message.html = `<h3>Your "${data.chartName}" chart has a new alert</h3>`;
+  message.html += "<br />";
+  message.html += `<p><strong>${data.thresholdText}</strong></p>`;
+  message.html += "<ul>";
+  for (let i = 0; i < data.alerts.length; i++) {
+    message.html += `<li>${data.alerts[i]}</li>`;
+  }
+  message.html += "</ul>";
+  message.html += "<br />";
+  message.html += `<p><strong><a href="${data.dashboardUrl}">Check your dashboard here</a></strong></p>`;
+  message.html += "<br />";
+  message.html += "<p> - Chartbrew </p>";
+  // ------------------------------
+
+  return nodemail.sendMail(message);
 };

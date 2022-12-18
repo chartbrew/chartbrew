@@ -4,9 +4,7 @@ const { Op } = require("sequelize");
 const { Worker } = require("worker_threads");
 const path = require("path");
 
-const ChartController = require("../controllers/ChartController");
-
-const chartController = new ChartController();
+const db = require("../models/models");
 
 function assignChartsPerWorker(charts) {
   const workers = [];
@@ -41,11 +39,12 @@ function updateCharts() {
     where: {
       autoUpdate: { [Op.gt]: 0 }
     },
-    attributes: ["id", "lastAutoUpdate", "autoUpdate"],
+    attributes: ["id", "project_id", "name", "lastAutoUpdate", "autoUpdate", "chartData"],
+    include: [{ model: db.Dataset }],
     raw: true
   };
 
-  return chartController.findAll(conditions)
+  return db.Chart.findAll(conditions)
     .then((charts) => {
       if (!charts || charts.length === 0) {
         return new Promise((resolve) => resolve({ completed: true }));
