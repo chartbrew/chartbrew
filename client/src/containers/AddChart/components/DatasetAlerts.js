@@ -156,7 +156,7 @@ function DatasetAlerts(props) {
                 size="sm"
                 css={{ mb: 5 }}
                 onClick={() => _onEdit(alert)}
-                iconRight={alert.active ? <Notification /> : <VolumeOff />}
+                iconRight={alert.active ? <Notification size="small" /> : <VolumeOff size="small" />}
               >
                 {alert.type === "new_value" && "New value"}
                 {alert.type === "threshold_above" && "Above threshold"}
@@ -180,7 +180,7 @@ function DatasetAlerts(props) {
                 onClick={_onOpen}
                 light
               >
-                Set new alert
+                Set up new alert
               </Button>
             </Row>
           </>

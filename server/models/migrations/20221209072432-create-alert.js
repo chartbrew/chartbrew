@@ -1,12 +1,4 @@
 const Sequelize = require("sequelize");
-const simplecrypt = require("simplecrypt");
-
-const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
-
-const sc = simplecrypt({
-  password: settings.secret,
-  salt: "10",
-});
 
 module.exports = {
   async up(queryInterface) {
@@ -41,11 +33,11 @@ module.exports = {
       rules: {
         type: Sequelize.TEXT("long"),
         set(val) {
-          return this.setDataValue("rules", sc.encrypt(JSON.stringify(val)));
+          return this.setDataValue("rules", JSON.stringify(val));
         },
         get() {
           try {
-            return JSON.parse(sc.decrypt(this.getDataValue("rules")));
+            return JSON.parse(this.getDataValue("rules"));
           } catch (e) {
             return this.getDataValue("rules");
           }
@@ -54,11 +46,11 @@ module.exports = {
       recipients: {
         type: Sequelize.TEXT,
         set(val) {
-          return this.setDataValue("recipients", sc.encrypt(JSON.stringify(val)));
+          return this.setDataValue("recipients", JSON.stringify(val));
         },
         get() {
           try {
-            return JSON.parse(sc.decrypt(this.getDataValue("recipients")));
+            return JSON.parse(this.getDataValue("recipients"));
           } catch (e) {
             return this.getDataValue("recipients");
           }
@@ -67,11 +59,11 @@ module.exports = {
       mediums: {
         type: Sequelize.TEXT,
         set(val) {
-          return this.setDataValue("mediums", sc.encrypt(JSON.stringify(val)));
+          return this.setDataValue("mediums", JSON.stringify(val));
         },
         get() {
           try {
-            return JSON.parse(sc.decrypt(this.getDataValue("mediums")));
+            return JSON.parse(this.getDataValue("mediums"));
           } catch (e) {
             return this.getDataValue("mediums");
           }
@@ -81,6 +73,16 @@ module.exports = {
         type: Sequelize.BOOLEAN,
         required: true,
         defaultValue: false,
+      },
+      token: {
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4,
+        required: true,
+      },
+      oneTime: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        required: true,
       },
       createdAt: {
         allowNull: false,

@@ -42,6 +42,12 @@ function processAlert(chart, alert, alertsFound) {
       });
     }
   });
+
+  // create an alert event
+  return db.AlertEvent.create({
+    alert_id: alert.id,
+    trigger: alertsFound,
+  });
 }
 
 async function checkChartForAlerts(chart) {
@@ -71,7 +77,7 @@ async function checkChartForAlerts(chart) {
           // find potential alerts
           const alertsFound = [];
           chartDataset.data.forEach((d, i) => {
-            if (d < value) {
+            if (d > value) {
               alertsFound.push({
                 label: chartData.data.labels[i],
                 value: d,
