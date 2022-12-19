@@ -48,6 +48,7 @@ async function checkChartForAlerts(chart) {
   const alerts = await db.Alert.findAll({
     where: {
       chart_id: chart.id,
+      active: true,
     },
   });
 

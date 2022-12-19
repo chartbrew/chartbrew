@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Badge, Button, Container, Dropdown, Input, Link, Loading, Modal, Row, Spacer, Text
+  Badge, Button, Container, Dropdown, Input, Link, Loading, Modal, Row, Spacer, Switch, Text
 } from "@nextui-org/react";
 import {
-  Delete, Message, Notification, Plus
+  Delete, Message, Notification, Plus, VolumeOff
 } from "react-iconly";
 import { connect } from "react-redux";
 import { FaDiscord, FaSlack, FaTelegram } from "react-icons/fa";
@@ -150,12 +150,13 @@ function DatasetAlerts(props) {
           {datasetAlerts.length > 0 && datasetAlerts.map((alert) => (
             <>
               <Button
-                color="primary"
+                color={alert.active ? "primary" : "secondary"}
                 auto
                 bordered
                 size="sm"
                 css={{ mb: 5 }}
                 onClick={() => _onEdit(alert)}
+                iconRight={alert.active ? <Notification /> : <VolumeOff />}
               >
                 {alert.type === "new_value" && "New value"}
                 {alert.type === "threshold_above" && "Above threshold"}
@@ -197,7 +198,7 @@ function DatasetAlerts(props) {
         </Modal.Header>
         <Modal.Body>
           <Container>
-            <Row>
+            <Row align="center">
               <Dropdown>
                 <Dropdown.Button auto color="primary" bordered>
                   {ruleTypes.find((r) => r.value === newAlert.type)?.label || "Select an alert type"}
@@ -368,6 +369,13 @@ function DatasetAlerts(props) {
           </Container>
         </Modal.Body>
         <Modal.Footer>
+          <Switch
+            checked={newAlert.active}
+            onChange={(e) => setNewAlert({ ...newAlert, active: e.target.checked })}
+            size="sm"
+            css={{ p: 0 }}
+          />
+          <Text>{newAlert.active ? "Alert enabled" : "Alert disabled"}</Text>
           {newAlert.id && (
             <Button
               auto
