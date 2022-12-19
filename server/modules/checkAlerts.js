@@ -14,7 +14,9 @@ function processAlert(chart, alert, alertsFound) {
   const dashboardUrl = `${settings.client}/project/${chart.project_id}`;
 
   let thresholdText = "";
-  if (type === "threshold_above") {
+  if (type === "milestone") {
+    thresholdText = `You reached your milestone of ${value}:`;
+  } else if (type === "threshold_above") {
     thresholdText = `The following values were found above your threshold of ${value}:`;
   } else if (type === "threshold_below") {
     thresholdText = `The following values were found below your threshold of ${value}:`;
@@ -42,6 +44,15 @@ function processAlert(chart, alert, alertsFound) {
       });
     }
   });
+
+  // deactivate alert if required
+  if (alert.oneTime || alert.type === "milestone") {
+    db.Alert.update({
+      active: false,
+    }, {
+      where: { id: alert.id },
+    });
+  }
 
   // create an alert event
   return db.AlertEvent.create({
@@ -73,7 +84,22 @@ async function checkChartForAlerts(chart) {
         const { rules, type } = alert;
         const { value, lower, upper } = rules;
 
-        if (type === "threshold_above" && chartDataset.data) {
+        if (type === "milestone" && chartDataset.data) {
+          // find potential alerts
+          const alertsFound = [];
+          chartDataset.data.forEach((d, i) => {
+            if (d >= value) {
+              alertsFound.push({
+                label: chartData.data.labels[i],
+                value: d,
+              });
+            }
+          });
+
+          if (alertsFound.length > 0) {
+            processAlert(chart, alert, alertsFound);
+          }
+        } else if (type === "threshold_above" && chartDataset.data) {
           // find potential alerts
           const alertsFound = [];
           chartDataset.data.forEach((d, i) => {

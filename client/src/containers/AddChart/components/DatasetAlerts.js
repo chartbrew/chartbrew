@@ -18,6 +18,9 @@ import {
 } from "../../../actions/alert";
 
 const ruleTypes = [{
+  label: "When reaching a milestone",
+  value: "milestone",
+}, {
   label: "When value is above a threshold",
   value: "threshold_above",
 }, {
@@ -158,7 +161,7 @@ function DatasetAlerts(props) {
                 onClick={() => _onEdit(alert)}
                 iconRight={alert.active ? <Notification size="small" /> : <VolumeOff size="small" />}
               >
-                {alert.type === "new_value" && "New value"}
+                {alert.type === "milestone" && "Milestone"}
                 {alert.type === "threshold_above" && "Above threshold"}
                 {alert.type === "threshold_below" && "Below threshold"}
                 {alert.type === "threshold_between" && "Between thresholds"}
@@ -219,24 +222,25 @@ function DatasetAlerts(props) {
             </Row>
             <Spacer y={0.5} />
 
-            {(newAlert.type === "threshold_above" || newAlert.type === "threshold_below") && (
-              <Row>
-                <Input
-                  placeholder="Enter a threshold"
-                  label="Threshold"
-                  type="number"
-                  fullWidth
-                  bordered
-                  value={newAlert.rules.value}
-                  onChange={(e) => {
-                    setNewAlert({
-                      ...newAlert,
-                      rules: { ...newAlert.rules, value: e.target.value }
-                    });
-                  }}
-                />
-              </Row>
-            )}
+            {(newAlert.type === "milestone" || newAlert.type === "threshold_above" || newAlert.type === "threshold_below")
+              && (
+                <Row>
+                  <Input
+                    placeholder="Enter a threshold"
+                    label={newAlert.type === "milestone" ? "Milestone" : "Threshold"}
+                    type="number"
+                    fullWidth
+                    bordered
+                    value={newAlert.rules.value}
+                    onChange={(e) => {
+                      setNewAlert({
+                        ...newAlert,
+                        rules: { ...newAlert.rules, value: e.target.value }
+                      });
+                    }}
+                  />
+                </Row>
+              )}
 
             {(newAlert.type === "threshold_between" || newAlert.type === "threshold_outside") && (
               <Row>
