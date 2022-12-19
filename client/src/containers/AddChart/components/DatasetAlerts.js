@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Badge, Button, Container, Dropdown, Input, Link, Loading, Modal, Row, Spacer, Switch, Text
+  Badge, Button, Checkbox, Container, Dropdown, Input, Link, Loading,
+  Modal, Row, Spacer, Switch, Text,
 } from "@nextui-org/react";
 import {
   Delete, Message, Notification, Plus, VolumeOff
@@ -345,6 +346,21 @@ function DatasetAlerts(props) {
                 Webhook
               </Button>
             </Row>
+
+            {newAlert.type && newAlert.type !== "milestone" && (
+              <>
+                <Spacer y={1} />
+                <Row>
+                  <Checkbox
+                    isSelected={newAlert.oneTime}
+                    onChange={(checked) => setNewAlert({ ...newAlert, oneTime: checked })}
+                    size="sm"
+                  >
+                    Disable this alert after sending once
+                  </Checkbox>
+                </Row>
+              </>
+            )}
 
             {newAlert.mediums.email?.enabled && (
               <>
