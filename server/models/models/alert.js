@@ -85,6 +85,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.DATE
     },
+    timeout: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      required: true,
+    },
     updatedAt: {
       allowNull: false,
       type: DataTypes.DATE

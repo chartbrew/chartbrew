@@ -84,6 +84,11 @@ module.exports = {
         defaultValue: false,
         required: true,
       },
+      timeout: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+        required: true,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

@@ -35,6 +35,17 @@ const ruleTypes = [{
   value: "threshold_outside",
 }];
 
+const timePeriods = [{
+  label: "Minutes",
+  value: "minutes",
+}, {
+  label: "Hours",
+  value: "hours",
+}, {
+  label: "Days",
+  value: "days",
+}];
+
 function DatasetAlerts(props) {
   const {
     getTeamMembers, teamMembers, team, user, chartId, datasetId, projectId,
@@ -44,7 +55,11 @@ function DatasetAlerts(props) {
   const initAlert = {
     rules: {},
     recipients: [user.email],
-    mediums: {},
+    mediums: {
+      email: {
+        enabled: true,
+      }
+    },
     chart_id: chartId,
     dataset_id: datasetId,
     active: true,
@@ -55,6 +70,8 @@ function DatasetAlerts(props) {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [datasetAlerts, setDatasetAlerts] = useState([]);
   const [newAlert, setNewAlert] = useState(initAlert);
+  const [displayTimeout, setDisplayTimeout] = useState(false);
+  const [timeoutUnit, setTimeoutUnit] = useState("minutes");
 
   useEffect(() => {
     getTeamMembers(team.id);
@@ -92,8 +109,15 @@ function DatasetAlerts(props) {
   const _onSaveAlert = () => {
     setLoading(true);
 
+    const alertToSave = { ...newAlert };
+
+    // update alert timeout
+    if (displayTimeout > 0) {
+      alertToSave.timeout = _getSecondsTimeout(displayTimeout);
+    }
+
     if (newAlert.id) {
-      updateAlert(projectId, chartId, newAlert)
+      updateAlert(projectId, chartId, alertToSave)
         .then(() => {
           setOpen(false);
           setLoading(false);
@@ -105,7 +129,7 @@ function DatasetAlerts(props) {
       return;
     }
 
-    createAlert(projectId, chartId, newAlert)
+    createAlert(projectId, chartId, alertToSave)
       .then(() => {
         setOpen(false);
         setLoading(false);
@@ -118,6 +142,18 @@ function DatasetAlerts(props) {
 
   const _onEdit = (alert) => {
     setNewAlert(alert);
+    let newDisplayTimeout = alert.timeout;
+    if (alert.timeout > 60 * 60 * 24 && alert.timeout % (60 * 60 * 24) === 0) {
+      newDisplayTimeout = parseInt(alert.timeout / (60 * 60 * 24), 10);
+      setTimeoutUnit("days");
+    } else if (alert.timeout > 60 * 60 && alert.timeout % (60 * 60) === 0) {
+      newDisplayTimeout = parseInt(alert.timeout / (60 * 60), 10);
+      setTimeoutUnit("hours");
+    } else {
+      newDisplayTimeout = parseInt(alert.timeout / 60, 10);
+      setTimeoutUnit("minutes");
+    }
+    setDisplayTimeout(newDisplayTimeout);
     setOpen(true);
   };
 
@@ -132,6 +168,20 @@ function DatasetAlerts(props) {
       .catch(() => {
         setDeleteLoading(false);
       });
+  };
+
+  const _getSecondsTimeout = (value) => {
+    let newValue = value;
+    // change timeout based on the timeoutUnit
+    if (timeoutUnit === "minutes") {
+      newValue = value * 60;
+    } else if (timeoutUnit === "hours") {
+      newValue = value * 60 * 60;
+    } else if (timeoutUnit === "days") {
+      newValue = value * 60 * 60 * 24;
+    }
+
+    return newValue;
   };
 
   return (
@@ -383,6 +433,46 @@ function DatasetAlerts(props) {
                       <Spacer x={0.2} />
                     </Link>
                   ))}
+                </Row>
+              </>
+            )}
+
+            {newAlert.type && (
+              <>
+                <Spacer y={1} />
+                <Row>
+                  <Text b>Add a timeout between alerts</Text>
+                </Row>
+                <Row>
+                  <Text small>By default, data is checked after each automatic chart update</Text>
+                </Row>
+                <Spacer y={0.5} />
+                <Row>
+                  <Input
+                    placeholder="Enter a timeout"
+                    type="number"
+                    fullWidth
+                    bordered
+                    value={displayTimeout}
+                    onChange={(e) => setDisplayTimeout(e.target.value)}
+                  />
+                  <Spacer x={0.5} />
+                  <Dropdown>
+                    <Dropdown.Button bordered>
+                      {timeoutUnit}
+                    </Dropdown.Button>
+                    <Dropdown.Menu
+                      onAction={(key) => setTimeoutUnit(key)}
+                      selectedKeys={[timeoutUnit]}
+                      selectionMode="single"
+                    >
+                      {timePeriods.map((period) => (
+                        <Dropdown.Item key={period.value}>
+                          {period.label}
+                        </Dropdown.Item>
+                      ))}
+                    </Dropdown.Menu>
+                  </Dropdown>
                 </Row>
               </>
             )}
