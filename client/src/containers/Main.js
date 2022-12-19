@@ -28,6 +28,7 @@ const PasswordReset = lazy(() => import("./PasswordReset"));
 const EmbeddedChart = lazy(() => import("./EmbeddedChart"));
 const GoogleAuth = lazy(() => import("./GoogleAuth"));
 const Start = lazy(() => import("./Start/Start"));
+const ProjectRedirect = lazy(() => import("./ProjectRedirect"));
 
 const AppMedia = createMedia({
   breakpoints: {
@@ -117,7 +118,6 @@ function Main(props) {
                 )}
               />
               <Route exact path="/manage/:teamId" component={ManageTeam} />
-              <Route exact path="/:teamId/:projectId" component={ProjectBoard} />
               <Route exact path="/signup" component={Signup} />
               <Route exact path="/google-auth" component={GoogleAuth} />
               <Route exact path="/login" component={Login} />
@@ -125,6 +125,11 @@ function Main(props) {
               <Route exact path="/profile" component={ManageUser} />
               <Route exact path="/edit" component={ManageUser} />
               <Route exact path="/passwordReset" component={PasswordReset} />
+              <Route
+                exact
+                path="/project/:projectId"
+                component={ProjectRedirect}
+              />
               <Route
                 exact
                 path="/manage/:teamId/members"
@@ -145,6 +150,9 @@ function Main(props) {
                 path="/:teamId/:projectId/dashboard"
                 component={ProjectBoard}
               />
+
+              {/* Add all the routes for the project board here */}
+              <Route exact path="/:teamId/:projectId" component={ProjectBoard} />
               <Route
                 exact
                 path="/:teamId/:projectId/connections"
