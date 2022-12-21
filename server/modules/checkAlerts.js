@@ -1,3 +1,5 @@
+const { add, isPast } = require("date-fns");
+
 const db = require("../models/models");
 const mail = require("./mail");
 
@@ -62,16 +64,32 @@ function processAlert(chart, alert, alertsFound) {
 }
 
 async function checkChartForAlerts(chart) {
-  const alerts = await db.Alert.findAll({
+  const dbAlerts = await db.Alert.findAll({
     where: {
       chart_id: chart.id,
       active: true,
     },
+    include: [{
+      model: db.AlertEvent,
+      as: "events",
+    }],
+    order: [[{ model: db.AlertEvent, as: "events" }, "createdAt", "DESC"]]
   });
 
-  if (alerts.length === 0) {
+  if (dbAlerts.length === 0) {
     return null;
   }
+
+  // filter alerts based on the time of the last event
+  const alerts = dbAlerts.filter((alert) => {
+    if (alert.events.length === 0) {
+      return true;
+    }
+
+    const lastEvent = alert.events[0];
+    const timeout = add(new Date(lastEvent.createdAt), { seconds: alert.timeout });
+    return isPast(timeout);
+  });
 
   const { chartData, Datasets } = chart;
 

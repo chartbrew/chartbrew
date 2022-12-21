@@ -63,6 +63,7 @@ function DatasetAlerts(props) {
     chart_id: chartId,
     dataset_id: datasetId,
     active: true,
+    timeout: 600,
   };
 
   const [open, setOpen] = useState(false);
@@ -70,7 +71,7 @@ function DatasetAlerts(props) {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [datasetAlerts, setDatasetAlerts] = useState([]);
   const [newAlert, setNewAlert] = useState(initAlert);
-  const [displayTimeout, setDisplayTimeout] = useState(false);
+  const [displayTimeout, setDisplayTimeout] = useState(10);
   const [timeoutUnit, setTimeoutUnit] = useState("minutes");
 
   useEffect(() => {
