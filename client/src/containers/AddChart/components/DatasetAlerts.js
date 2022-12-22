@@ -17,6 +17,7 @@ import {
   updateAlert as updateAlertAction,
   deleteAlert as deleteAlertAction,
 } from "../../../actions/alert";
+import autoUpdatePicture from "../../../assets/chartbrew-auto-update.jpg";
 
 const ruleTypes = [{
   label: "When reaching a milestone",
@@ -49,7 +50,7 @@ const timePeriods = [{
 function DatasetAlerts(props) {
   const {
     getTeamMembers, teamMembers, team, user, chartId, datasetId, projectId,
-    createAlert, alerts, updateAlert, deleteAlert,
+    createAlert, alerts, updateAlert, deleteAlert, charts,
   } = props;
 
   const initAlert = {
@@ -73,6 +74,8 @@ function DatasetAlerts(props) {
   const [newAlert, setNewAlert] = useState(initAlert);
   const [displayTimeout, setDisplayTimeout] = useState(10);
   const [timeoutUnit, setTimeoutUnit] = useState("minutes");
+  const [chart, setChart] = useState({});
+  const [showAutoUpdate, setShowAutoUpdate] = useState(false);
 
   useEffect(() => {
     getTeamMembers(team.id);
@@ -81,6 +84,12 @@ function DatasetAlerts(props) {
   useEffect(() => {
     setDatasetAlerts(alerts.filter((a) => a.dataset_id === datasetId));
   }, [alerts]);
+
+  useEffect(() => {
+    if (charts && chartId) {
+      setChart(charts.find((c) => `${c.id}` === `${chartId}`));
+    }
+  }, [charts, chartId]);
 
   const _onChangeRecipient = (email) => {
     if (newAlert.recipients.includes(email)) {
@@ -185,6 +194,10 @@ function DatasetAlerts(props) {
     return newValue;
   };
 
+  const _toggleAutoUpdate = () => {
+    setShowAutoUpdate(!showAutoUpdate);
+  };
+
   return (
     <div className="dataset-alerts-tut">
       <Container css={{ pl: 0, pr: 0 }}>
@@ -278,7 +291,7 @@ function DatasetAlerts(props) {
               && (
                 <Row>
                   <Input
-                    placeholder="Enter a threshold"
+                    placeholder={newAlert.type === "milestone" ? "Enter a milestone" : "Enter a threshold"}
                     label={newAlert.type === "milestone" ? "Milestone" : "Threshold"}
                     type="number"
                     fullWidth
@@ -333,7 +346,7 @@ function DatasetAlerts(props) {
               <Text>Where should we send the alerts?</Text>
             </Row>
             <Spacer y={0.5} />
-            <Row wrap="wrap">
+            <Row wrap="wrap" align="center">
               <Button
                 auto
                 icon={<Message size="small" />}
@@ -345,57 +358,65 @@ function DatasetAlerts(props) {
                 Email
               </Button>
               <Spacer x={0.5} />
-              <Button
-                auto
-                icon={<FaSlack />}
-                color="secondary"
-                size="sm"
-                bordered={!newAlert.mediums.slack?.enabled}
-                onClick={() => _onChangeMediums("slack")}
-                disabled
-                title="Coming soon"
-              >
-                Slack
-              </Button>
+              <Badge color="secondary" content={"soon"} size="xs">
+                <Button
+                  auto
+                  icon={<FaSlack />}
+                  color="secondary"
+                  size="sm"
+                  bordered={!newAlert.mediums.slack?.enabled}
+                  onClick={() => _onChangeMediums("slack")}
+                  disabled
+                  title="Coming soon"
+                >
+                  Slack
+                </Button>
+              </Badge>
               <Spacer x={0.5} />
-              <Button
-                auto
-                icon={<FaTelegram />}
-                color="secondary"
-                size="sm"
-                bordered={!newAlert.mediums.telegram?.enabled}
-                onClick={() => _onChangeMediums("telegram")}
-                disabled
-                title="Coming soon"
-              >
-                Telegram
-              </Button>
+              <Badge color="secondary" content={"soon"} size="xs">
+                <Button
+                  auto
+                  icon={<FaTelegram />}
+                  color="secondary"
+                  size="sm"
+                  bordered={!newAlert.mediums.telegram?.enabled}
+                  onClick={() => _onChangeMediums("telegram")}
+                  disabled
+                  title="Coming soon"
+                >
+                  Telegram
+                </Button>
+              </Badge>
               <Spacer x={0.5} />
-              <Button
-                auto
-                icon={<FaDiscord />}
-                color="secondary"
-                size="sm"
-                bordered={!newAlert.mediums.discord?.enabled}
-                onClick={() => _onChangeMediums("discord")}
-                disabled
-                title="Coming soon"
-              >
-                Discord
-              </Button>
+              <Badge color="secondary" content={"soon"} size="xs">
+                <Button
+                  auto
+                  icon={<FaDiscord />}
+                  color="secondary"
+                  size="sm"
+                  bordered={!newAlert.mediums.discord?.enabled}
+                  onClick={() => _onChangeMediums("discord")}
+                  disabled
+                  title="Coming soon"
+                >
+                  Discord
+                </Button>
+              </Badge>
               <Spacer x={0.5} />
-              <Button
-                auto
-                icon={<TbWebhook />}
-                color="secondary"
-                size="sm"
-                bordered={!newAlert.mediums.webhook?.enabled}
-                onClick={() => _onChangeMediums("webhook")}
-                disabled
-                title="Coming soon"
-              >
-                Webhook
-              </Button>
+              <Badge color="secondary" content={"soon"} size="xs">
+                <Button
+                  auto
+                  icon={<TbWebhook />}
+                  color="secondary"
+                  size="sm"
+                  bordered={!newAlert.mediums.webhook?.enabled}
+                  onClick={() => _onChangeMediums("webhook")}
+                  disabled
+                  title="Coming soon"
+                >
+                  Webhook
+                </Button>
+              </Badge>
             </Row>
 
             {newAlert.type && newAlert.type !== "milestone" && (
@@ -477,6 +498,33 @@ function DatasetAlerts(props) {
                 </Row>
               </>
             )}
+
+            {chart && !chart.autoUpdate && (
+              <>
+                <Spacer y={1} />
+                <Row>
+                  <Container css={{ backgroundColor: "$yellow100", p: 10, br: "$md" }}>
+                    <Row>
+                      <Text>
+                        {"In order for the alert to trigger, you must enable automatic chart updates from the dashboard."}
+                        <Link onClick={_toggleAutoUpdate}>
+                          {showAutoUpdate ? "Hide picture" : "Show how to do it"}
+                        </Link>
+                      </Text>
+                    </Row>
+                  </Container>
+                </Row>
+              </>
+            )}
+
+            {showAutoUpdate && (
+              <>
+                <Spacer y={1} />
+                <Row justify="center">
+                  <img width="400" src={autoUpdatePicture} alt="Auto update tutorial" />
+                </Row>
+              </>
+            )}
           </Container>
         </Modal.Body>
         <Modal.Footer>
@@ -529,6 +577,7 @@ DatasetAlerts.propTypes = {
   alerts: PropTypes.array.isRequired,
   updateAlert: PropTypes.func.isRequired,
   deleteAlert: PropTypes.func.isRequired,
+  charts: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => ({
@@ -536,6 +585,7 @@ const mapStateToProps = (state) => ({
   team: state.team.active,
   user: state.user.data,
   alerts: state.alert.data,
+  charts: state.chart.data,
 });
 
 const mapDispatchToProps = (dispatch) => ({
