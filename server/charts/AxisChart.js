@@ -60,6 +60,7 @@ class AxisChart {
   plot(skipDataProcessing, filters) {
     // skip the data processing if not required (this algorithm is CPU-intensive)
     const conditionsOptions = [];
+    let gXType;
 
     if (
       !skipDataProcessing
@@ -71,7 +72,6 @@ class AxisChart {
       // check if the global date filter should be on or off
       // the filter should work only if all the datasets have a dateField
       let canDateFilter = true;
-      let gXType;
       this.datasets.map((dataset) => {
         if (!dataset.options || !dataset.options.dateField) {
           canDateFilter = false;
@@ -659,6 +659,7 @@ class AxisChart {
     });
 
     return {
+      isTimeseries: gXType === "date",
       configuration,
       conditionsOptions,
     };

@@ -5,13 +5,34 @@ const mail = require("./mail");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
-function processAlert(chart, alert, alertsFound) {
+function processAlert(chart, alert, alerts) {
   const {
     rules, mediums, recipients, type
   } = alert;
   const {
     value, lower, upper
   } = rules;
+
+  let alertsFound = alerts;
+
+  // for timeseries alerts, check if the alert has occured before
+  if (chart.getDataValue("isTimeseries") && alert.events && alert.events.length > 0) {
+    const lastEvent = alert.events[0];
+
+    if (lastEvent.trigger && lastEvent.trigger.length > 0) {
+      const eventItems = lastEvent.trigger.map((item) => item.label);
+      // find the index of the first event item
+      const firstEventIndex = alertsFound.indexOf((item) => item.label === eventItems[0]);
+      // remove all alerts before the first event item
+      alertsFound = alertsFound.slice(firstEventIndex);
+      // remove alerts that have already been sent
+      alertsFound = alertsFound.filter((item) => !eventItems.includes(item.label));
+    }
+  }
+
+  if (alertsFound.length === 0) {
+    return false;
+  }
 
   const dashboardUrl = `${settings.client}/project/${chart.project_id}`;
 
@@ -99,16 +120,21 @@ async function checkChartForAlerts(chart) {
 
     if (datasetAlerts.length > 0) {
       datasetAlerts.forEach((alert) => {
+        let dataItems = chartDataset.data;
+        if (chart.getDataValue("isTimeseries") && alert.events.length === 0) {
+          dataItems = [chartDataset.data[chartDataset.data.length - 1]];
+        }
         const { rules, type } = alert;
         const { value, lower, upper } = rules;
 
-        if (type === "milestone" && chartDataset.data) {
+        if (type === "milestone" && dataItems) {
           // find potential alerts
           const alertsFound = [];
-          chartDataset.data.forEach((d, i) => {
+          dataItems.forEach((d, i) => {
+            const labelIndex = dataItems.length === 1 ? chartData.data.labels.length - 1 : i;
             if (d >= value) {
               alertsFound.push({
-                label: chartData.data.labels[i],
+                label: chartData.data.labels[labelIndex],
                 value: d,
               });
             }
@@ -117,13 +143,14 @@ async function checkChartForAlerts(chart) {
           if (alertsFound.length > 0) {
             processAlert(chart, alert, alertsFound);
           }
-        } else if (type === "threshold_above" && chartDataset.data) {
+        } else if (type === "threshold_above" && dataItems) {
           // find potential alerts
           const alertsFound = [];
-          chartDataset.data.forEach((d, i) => {
+          dataItems.forEach((d, i) => {
+            const labelIndex = dataItems.length === 1 ? chartData.data.labels.length - 1 : i;
             if (d > value) {
               alertsFound.push({
-                label: chartData.data.labels[i],
+                label: chartData.data.labels[labelIndex],
                 value: d,
               });
             }
@@ -132,13 +159,14 @@ async function checkChartForAlerts(chart) {
           if (alertsFound.length > 0) {
             processAlert(chart, alert, alertsFound);
           }
-        } else if (type === "threshold_below" && chartDataset.data) {
+        } else if (type === "threshold_below" && dataItems) {
           // find potential alerts
           const alertsFound = [];
-          chartDataset.data.forEach((d, i) => {
+          dataItems.forEach((d, i) => {
+            const labelIndex = dataItems.length === 1 ? chartData.data.labels.length - 1 : i;
             if (d < value) {
               alertsFound.push({
-                label: chartData.data.labels[i],
+                label: chartData.data.labels[labelIndex],
                 value: d,
               });
             }
@@ -147,13 +175,14 @@ async function checkChartForAlerts(chart) {
           if (alertsFound.length > 0) {
             processAlert(chart, alert, alertsFound);
           }
-        } else if (type === "threshold_between" && chartDataset.data) {
+        } else if (type === "threshold_between" && dataItems) {
           // find potential alerts
           const alertsFound = [];
-          chartDataset.data.forEach((d, i) => {
+          dataItems.forEach((d, i) => {
+            const labelIndex = dataItems.length === 1 ? chartData.data.labels.length - 1 : i;
             if (d > lower && d < upper) {
               alertsFound.push({
-                label: chartData.data.labels[i],
+                label: chartData.data.labels[labelIndex],
                 value: d,
               });
             }
@@ -162,13 +191,14 @@ async function checkChartForAlerts(chart) {
           if (alertsFound.length > 0) {
             processAlert(chart, alert, alertsFound);
           }
-        } else if (type === "threshold_outside" && chartDataset.data) {
+        } else if (type === "threshold_outside" && dataItems) {
           // find potential alerts
           const alertsFound = [];
-          chartDataset.data.forEach((d, i) => {
+          dataItems.forEach((d, i) => {
+            const labelIndex = dataItems.length === 1 ? chartData.data.labels.length - 1 : i;
             if (d < lower || d > upper) {
               alertsFound.push({
-                label: chartData.data.labels[i],
+                label: chartData.data.labels[labelIndex],
                 value: d,
               });
             }

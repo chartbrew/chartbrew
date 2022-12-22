@@ -113,7 +113,7 @@ function DatasetAlerts(props) {
     const alertToSave = { ...newAlert };
 
     // update alert timeout
-    if (displayTimeout > 0) {
+    if (displayTimeout > -1) {
       alertToSave.timeout = _getSecondsTimeout(displayTimeout);
     }
 
@@ -442,7 +442,7 @@ function DatasetAlerts(props) {
               <>
                 <Spacer y={1} />
                 <Row>
-                  <Text b>Add a timeout between alerts</Text>
+                  <Text b>Add a timeout between alerts of the same type</Text>
                 </Row>
                 <Row>
                   <Text small>By default, data is checked after each automatic chart update</Text>

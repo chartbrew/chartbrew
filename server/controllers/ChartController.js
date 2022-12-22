@@ -425,6 +425,10 @@ class ChartController {
 
         return this.findById(id);
       })
+      .then((chart) => {
+        chart.setDataValue("isTimeseries", gChartData.isTimeseries);
+        return chart;
+      })
       .catch((err) => {
         return new Promise((resolve, reject) => reject(err));
       });
