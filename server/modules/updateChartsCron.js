@@ -12,7 +12,9 @@ function assignChartsPerWorker(charts) {
   const chartsPerWorker = Math.ceil(charts.length / workerCount);
 
   for (let i = 0; i < workerCount; i++) {
-    const workerCharts = charts.slice(i * chartsPerWorker, (i + 1) * chartsPerWorker);
+    let workerCharts = charts.slice(i * chartsPerWorker, (i + 1) * chartsPerWorker);
+    // transform the data to json
+    workerCharts = workerCharts.map((chart) => chart.toJSON());
 
     const workerPath = path.join(__dirname, "/workers/updateChart.js");
     workers.push(new Worker(workerPath, { workerData: { charts: workerCharts } }));
@@ -41,7 +43,6 @@ function updateCharts() {
     },
     attributes: ["id", "project_id", "name", "lastAutoUpdate", "autoUpdate", "chartData"],
     include: [{ model: db.Dataset }],
-    raw: true
   };
 
   return db.Chart.findAll(conditions)
