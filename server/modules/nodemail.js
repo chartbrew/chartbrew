@@ -1,4 +1,5 @@
 const nodemailer = require("nodemailer");
+const ejs = require("ejs");
 
 const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
 
@@ -86,20 +87,17 @@ module.exports.sendChartAlert = (data) => {
   message.text += "- Chartbrew";
   // ------------------------------
 
-  /** HTML */
-  message.html = `<h3>Your "${data.chartName}" chart has a new alert</h3>`;
-  message.html += "<br />";
-  message.html += `<p><strong>${data.thresholdText}</strong></p>`;
-  message.html += "<ul>";
-  for (let i = 0; i < data.alerts.length; i++) {
-    message.html += `<li>${data.alerts[i]}</li>`;
-  }
-  message.html += "</ul>";
-  message.html += "<br />";
-  message.html += `<p><strong><a href="${data.dashboardUrl}">Check your dashboard here</a></strong></p>`;
-  message.html += "<br />";
-  message.html += "<p> - Chartbrew </p>";
-  // ------------------------------
+  ejs.renderFile(`${__dirname}/emailTemplates/alert.ejs`, {
+    chartName: data.chartName,
+    thresholdText: data.thresholdText,
+    alerts: data.alerts,
+    dashboardUrl: data.dashboardUrl,
+  }, (err, str) => {
+    if (err) {
+      console.log(err); // eslint-disable-line no-console
+    }
+    message.html = str;
 
-  return nodemail.sendMail(message);
+    return nodemail.sendMail(message);
+  });
 };

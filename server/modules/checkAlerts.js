@@ -38,15 +38,15 @@ function processAlert(chart, alert, alerts) {
 
   let thresholdText = "";
   if (type === "milestone") {
-    thresholdText = `You reached your milestone of ${value}:`;
+    thresholdText = `You reached your milestone of ${value}!`;
   } else if (type === "threshold_above") {
-    thresholdText = `The following values were found above your threshold of ${value}:`;
+    thresholdText = `Chartbrew found some values above your threshold of ${value}.`;
   } else if (type === "threshold_below") {
-    thresholdText = `The following values were found below your threshold of ${value}:`;
+    thresholdText = `Chartbrew found some values below your threshold of ${value}.`;
   } else if (type === "threshold_between") {
-    thresholdText = `The following values were found between your thresholds of ${lower} and ${upper}:`;
+    thresholdText = `Chartbrew found some values between your thresholds of ${lower} and ${upper}.`;
   } else if (type === "threshold_outside") {
-    thresholdText = `The following values were found outside your thresholds of ${lower} and ${upper}:`;
+    thresholdText = `Chartbrew found some values your thresholds of ${lower} and ${upper}.`;
   }
 
   const stringAlerts = [];
