@@ -85,6 +85,11 @@ function processAlert(chart, alert, alerts) {
 }
 
 async function checkChartForAlerts(chart) {
+  // do not run when dealing with tables
+  if (chart.type === "table") {
+    return null;
+  }
+
   const dbAlerts = await db.Alert.findAll({
     where: {
       chart_id: chart.id,

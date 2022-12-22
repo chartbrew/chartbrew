@@ -492,6 +492,21 @@ const steps = {
               {"on the right to filter your data."}
             </Text>
           </Row>
+        </Container>
+      )
+    },
+    {
+      selector: ".dataset-alerts-tut",
+      content: ({ close }) => ( // eslint-disable-line
+        <Container>
+          <Row>
+            <Text color="black">{"Set up alerts to always be notified about your data."}</Text>
+          </Row>
+          <Row>
+            <Text color="black">
+              {"Configure the way you want to be notified and the conditions that will trigger the alert. Chartbrew will then send you an email or notification when the conditions are met."}
+            </Text>
+          </Row>
           <Spacer y={0.5} />
           <Row>
             <Button

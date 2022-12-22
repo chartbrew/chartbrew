@@ -1129,27 +1129,32 @@ function DatasetData(props) {
             </Grid>
           </>
         )}
-        <Grid xs={12} direction="column">
-          <Spacer y={0.5} />
-          <Divider />
-          <Spacer y={0.5} />
-        </Grid>
 
-        <Grid xs={12} direction="column">
-          <Text b>Alerts</Text>
-          <Spacer y={0.5} />
-          <DatasetAlerts
-            chartType={chartType === "pie"
-                || chartType === "radar"
-                || chartType === "polar"
-                || chartType === "doughnut"
-                || chartType === "table"
-              ? "patterns" : "axis"}
-            chartId={match.params.chartId}
-            datasetId={dataset.id}
-            projectId={match.params.projectId}
-          />
-        </Grid>
+        {chartType !== "table" && (
+          <>
+            <Grid xs={12} direction="column">
+              <Spacer y={0.5} />
+              <Divider />
+              <Spacer y={0.5} />
+            </Grid>
+
+            <Grid xs={12} direction="column">
+              <Text b>Alerts</Text>
+              <Spacer y={0.5} />
+              <DatasetAlerts
+                chartType={chartType === "pie"
+                    || chartType === "radar"
+                    || chartType === "polar"
+                    || chartType === "doughnut"
+                    || chartType === "table"
+                  ? "patterns" : "axis"}
+                chartId={match.params.chartId}
+                datasetId={dataset.id}
+                projectId={match.params.projectId}
+              />
+            </Grid>
+          </>
+        )}
 
         <Grid xs={12} direction="column">
           <Spacer y={0.5} />
