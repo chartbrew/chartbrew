@@ -28,6 +28,7 @@
     "dotenv": "^16.0.3",
     "ejs": "^3.1.8",
     "express": "^4.17.1",
+    "express-rate-limit": "^6.7.0",
     "firebase-admin": "^11.2.0",
     "googleapis": "^100.0.0",
     "helmet": "^4.4.1",

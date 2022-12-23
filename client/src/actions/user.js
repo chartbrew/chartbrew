@@ -473,3 +473,57 @@ export function areThereAnyUsers() {
       return err;
     });
 }
+
+export function requestEmailUpdate(id, email) {
+  const token = cookie.load("brewToken");
+  const url = `${API_HOST}/user/${id}/email/verify`;
+  const method = "POST";
+  const body = JSON.stringify({ email });
+  const headers = new Headers({
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+    "authorization": `Bearer ${token}`,
+  });
+
+  return fetch(url, { method, body, headers })
+    .then((response) => {
+      if (!response.ok) {
+        return new Promise((resolve, reject) => reject(response.statusText));
+      }
+
+      return response.json();
+    })
+    .then((result) => {
+      return result;
+    })
+    .catch((err) => {
+      Promise.reject(err);
+    });
+}
+
+export function updateEmail(id, updateToken) {
+  const token = cookie.load("brewToken");
+  const url = `${API_HOST}/user/${id}/email/update`;
+  const method = "PUT";
+  const body = JSON.stringify({ token: updateToken });
+  const headers = new Headers({
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+    "authorization": `Bearer ${token}`,
+  });
+
+  return fetch(url, { method, body, headers })
+    .then((response) => {
+      if (!response.ok) {
+        return new Promise((resolve, reject) => reject(response.statusText));
+      }
+
+      return response.json();
+    })
+    .then((result) => {
+      return result;
+    })
+    .catch((err) => {
+      Promise.reject(err);
+    });
+}

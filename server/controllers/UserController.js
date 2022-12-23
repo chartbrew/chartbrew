@@ -1,5 +1,6 @@
 const simplecrypt = require("simplecrypt");
 const uuid = require("uuid/v4");
+const jwt = require("jsonwebtoken");
 
 const db = require("../models/models");
 const mail = require("../modules/mail");
@@ -280,6 +281,73 @@ class UserController {
       })
       .catch((err) => {
         return err;
+      });
+  }
+
+  requestEmailUpdate(id, email) {
+    // check if the email is already in use
+    return this.emailExists(email)
+      .then((exists) => {
+        if (exists) {
+          return new Promise((resolve, reject) => reject(new Error(409)));
+        }
+
+        return db.User.findByPk(id);
+      })
+      .then((userData) => {
+        const tokenPayload = {
+          id: userData.id,
+          email: userData.email,
+          newEmail: email,
+        };
+
+        const token = jwt.sign(tokenPayload, settings.secret, {
+          expiresIn: "3h",
+        });
+
+        return mail.emailUpdate({
+          email,
+          updateUrl: `${settings.client}/edit?email=${token}`,
+        });
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
+  updateEmail(id, token) {
+    let decodedToken;
+    try {
+      decodedToken = jwt.verify(token, settings.secret);
+    } catch (e) {
+      return new Promise((resolve, reject) => reject(e));
+    }
+
+    if (`${decodedToken.id}` !== `${id}`) {
+      return new Promise((resolve, reject) => reject(new Error(401)));
+    }
+
+    // check if email exists
+    return this.emailExists(decodedToken.newEmail)
+      .then((exists) => {
+        if (exists) {
+          return new Promise((resolve, reject) => reject(new Error(409)));
+        }
+
+        return db.User.findByPk(id);
+      })
+      .then((userData) => {
+        if (userData.email !== decodedToken.email) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
+        return this.update(id, { email: decodedToken.newEmail });
+      })
+      .then(() => {
+        return this.findById(id);
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
       });
   }
 }

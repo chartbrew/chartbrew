@@ -1,12 +1,20 @@
 const jwt = require("jsonwebtoken");
 const request = require("request");
 const uuid = require("uuid/v4");
+const rateLimit = require("express-rate-limit");
 
 const UserController = require("../controllers/UserController");
 const TeamController = require("../controllers/TeamController");
 const verifyUser = require("../modules/verifyUser");
 const verifyToken = require("../modules/verifyToken");
 const userResponse = require("../modules/userResponse");
+
+const apiLimiter = (max = 10) => {
+  return rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max,
+  });
+};
 
 module.exports = (app) => {
   const userController = new UserController();
@@ -337,6 +345,37 @@ module.exports = (app) => {
     return userController.areThereAnyUsers()
       .then((result) => {
         return res.status(200).send({ areThereAnyUsers: result });
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------
+
+  /*
+  ** Route to request a new email verification email
+  */
+  app.post("/user/:id/email/verify", apiLimiter(10), verifyUser, (req, res) => {
+    if (!req.body.email) return res.status(400).send("Missing fields");
+
+    return userController.requestEmailUpdate(req.params.id, req.body.email)
+      .then(() => {
+        return res.status(200).send({ "success": true });
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------
+
+  /*
+  ** Route to update the email of a user with the verification link info
+  */
+  app.put("/user/:id/email/update", verifyUser, (req, res) => {
+    if (!req.body.token) return res.status(400).send("Missing fields");
+    return userController.updateEmail(req.params.id, req.body.token)
+      .then((user) => {
+        return res.status(200).send(userResponse(user));
       })
       .catch((error) => {
         return res.status(400).send(error);

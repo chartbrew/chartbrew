@@ -101,3 +101,19 @@ module.exports.sendChartAlert = (data) => {
     return nodemail.sendMail(message);
   });
 };
+
+module.exports.emailUpdate = (data) => {
+  const message = {
+    from: settings.adminMail,
+    to: data.email,
+    subject: "Chartbrew - new email confirmation",
+  };
+
+  ejs.renderFile(`${__dirname}/emailTemplates/emailUpdate.ejs`, {
+    updateUrl: data.updateUrl,
+  }, (err, str) => {
+    message.html = str;
+
+    return nodemail.sendMail(message);
+  });
+};
