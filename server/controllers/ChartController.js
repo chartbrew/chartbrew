@@ -426,7 +426,7 @@ class ChartController {
         return this.findById(id);
       })
       .then((chart) => {
-        chart.setDataValue("isTimeseries", gChartData.isTimeseries);
+        if (!isExport) chart.setDataValue("isTimeseries", gChartData.isTimeseries);
         return chart;
       })
       .catch((err) => {
