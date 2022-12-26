@@ -49,7 +49,7 @@ class NewBarChart {
 
     const chartJsData = {
       data: {
-        labels: this.axisData.x,
+        labels: this.axisData.x === 0 ? ["No data"] : this.axisData.x,
         datasets: formattedDatasets,
       },
     };
