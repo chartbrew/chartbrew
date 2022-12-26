@@ -484,6 +484,8 @@ class AxisChart {
 
             if (index > 0 && this.chart.subType.indexOf("AddTimeseries") > -1) {
               this.axisData.y[i].splice(index, 0, this.axisData.y[i][index - 1]);
+            } else if (this.chart.timeInterval === "second" && this.datasets.length > 1) {
+              this.axisData.y[i].splice(index, 0, this.axisData.y[i][index - 1] || 0);
             } else {
               this.axisData.y[i].splice(index, 0, 0);
             }
