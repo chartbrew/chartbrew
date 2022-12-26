@@ -17,7 +17,7 @@ import _ from "lodash";
 import { enGB } from "date-fns/locale";
 import { format } from "date-fns";
 import { motion } from "framer-motion/dist/framer-motion";
-import { HiRefresh } from "react-icons/hi";
+import { HiRefresh, HiExternalLink } from "react-icons/hi";
 
 import {
   removeChart as removeChartAction,
@@ -223,6 +223,16 @@ function Chart(props) {
 
   const _onEmbed = () => {
     setEmbedModal(true);
+  };
+
+  const _onOpenEmbed = () => {
+    if (chart.Chartshares && chart.Chartshares.length > 0) {
+      // open the chart in a new tab
+      window.open(
+        `/chart/${chart.Chartshares[0].shareString}/embedded`,
+        "_blank"
+      );
+    }
   };
 
   const _openUpdateModal = () => {
@@ -578,6 +588,11 @@ function Chart(props) {
                       {!chart.draft && (
                         <Dropdown.Item icon={<Send />}>
                           <Text onClick={_onEmbed}>{"Embed & Share"}</Text>
+                        </Dropdown.Item>
+                      )}
+                      {!chart.draft && chart.shareable && (
+                        <Dropdown.Item icon={<HiExternalLink size={24} />}>
+                          <Text onClick={_onOpenEmbed}>{"Open in a new tab"}</Text>
                         </Dropdown.Item>
                       )}
                       {_canAccess("editor") && (
