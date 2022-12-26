@@ -37,7 +37,7 @@ class NewLineChart {
 
     const chartJsData = {
       data: {
-        labels: selectedDatasetLabels,
+        labels: selectedDatasetLabels === 0 ? ["No data"] : selectedDatasetLabels,
         datasets: formattedDatasets,
       },
     };
