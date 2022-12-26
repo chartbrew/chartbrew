@@ -419,6 +419,7 @@ module.exports = (app) => {
             showBranding: team.showBranding,
             showGrowth: chart.showGrowth,
             timeInterval: chart.timeInterval,
+            autoUpdate: chart.autoUpdate,
           });
         })
         .catch((error) => {
@@ -457,6 +458,7 @@ module.exports = (app) => {
           showBranding: team.showBranding,
           showGrowth: chart.showGrowth,
           timeInterval: chart.timeInterval,
+          autoUpdate: chart.autoUpdate,
         });
       })
       .catch((error) => {

@@ -22,6 +22,7 @@ import DoughnutChart from "./Chart/components/DoughnutChart";
 import RadarChart from "./Chart/components/RadarChart";
 import PolarChart from "./Chart/components/PolarChart";
 import logo from "../assets/logo_inverted.png";
+import useInterval from "../modules/useInterval";
 
 const pageHeight = window.innerHeight;
 
@@ -32,10 +33,22 @@ function EmbeddedChart(props) {
   const { getEmbeddedChart, match, runQueryWithFilters } = props;
 
   const [loading, setLoading] = useState(false);
-  const [chart, setChart] = useState(null);
+  const [chart, setChart] = useState({});
   const [error, setError] = useState(false);
   const [conditions, setConditions] = useState([]);
   const [dataLoading, setDataLoading] = useState(false);
+
+  useInterval(() => {
+    setDataLoading(true);
+    getEmbeddedChart(match.params.chartId)
+      .then((chart) => {
+        setChart(chart);
+        setDataLoading(false);
+      })
+      .catch(() => {
+        setDataLoading(false);
+      });
+  }, chart.autoUpdate ? chart.autoUpdate * 1000 : null);
 
   useEffect(() => {
     // change the background color to transparent
@@ -117,7 +130,7 @@ function EmbeddedChart(props) {
     return filterCount > 0;
   };
 
-  if (loading || !chart) {
+  if (loading || !chart.id) {
     return (
       <Container justify="center" css={{ ...styles.loaderContainer, pt: 50 }}>
         <Row justify="center" align="center">
@@ -142,7 +155,7 @@ function EmbeddedChart(props) {
 
   return (
     <div style={styles.container}>
-      <Container fluid css={{ pl: "$sm" }} style={styles.header(chart.type)}>
+      <Container fluid css={{ pl: "$sm" }} style={styles.header(chart.type)} xl>
         <Row justify="space-between">
           <div style={{ display: "flex", alignItems: "center" }}>
             <Text b size="1.1em" css={{ color: "$text", lineHeight: "$xs" }}>{chart.name}</Text>
@@ -249,11 +262,11 @@ function EmbeddedChart(props) {
         </div>
         )}
       <Spacer y={0.5} />
-      <Container css={{ pr: 0, pl: 0 }}>
+      <Container css={{ pr: 5, pl: 5 }} xl>
         <Row justify="space-between" align="center">
-          <div>
+          <div style={styles.row}>
             {!loading && (
-              <Text i small css={{ color: "$accents6" }} title="Last updated">
+              <>
                 {dataLoading && (
                   <>
                     <Loading type="spinner" size="xs" inlist />
@@ -261,8 +274,12 @@ function EmbeddedChart(props) {
                     <Text small>{"Updating..."}</Text>
                   </>
                 )}
-                {!dataLoading && `${_getUpdatedTime(chart.chartDataUpdated)}`}
-              </Text>
+                {!dataLoading && (
+                  <Text small i title="Last updated">
+                    {`${_getUpdatedTime(chart.chartDataUpdated)}`}
+                  </Text>
+                )}
+              </>
             )}
             {loading && (
               <>
@@ -313,6 +330,11 @@ const styles = {
     backgroundColor: "transparent",
     boxShadow: "none",
   },
+  row: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+  }
 };
 
 EmbeddedChart.propTypes = {
