@@ -34,6 +34,9 @@ const ruleTypes = [{
 }, {
   label: "When value is outside two thresholds",
   value: "threshold_outside",
+}, {
+  label: "When anomaly is detected",
+  value: "anomaly",
 }];
 
 const timePeriods = [{
@@ -231,6 +234,7 @@ function DatasetAlerts(props) {
                 {alert.type === "threshold_below" && "Below threshold"}
                 {alert.type === "threshold_between" && "Between thresholds"}
                 {alert.type === "threshold_outside" && "Outside thresholds"}
+                {alert.type === "anomaly" && "Anomaly detection"}
               </Button>
               <Spacer x={0.2} />
             </>
@@ -338,6 +342,18 @@ function DatasetAlerts(props) {
                     });
                   }}
                 />
+              </Row>
+            )}
+
+            {newAlert.type === "anomaly" && (
+              <Row>
+                <Container css={{ backgroundColor: "$blue100", p: 10, br: "$md" }}>
+                  <Row>
+                    <Text>
+                      {"The anomaly detection is done automatically. Best to use this when you want to be notified when a time series is behaving differently than usual."}
+                    </Text>
+                  </Row>
+                </Container>
               </Row>
             )}
 

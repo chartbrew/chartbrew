@@ -662,6 +662,7 @@ class AxisChart {
 
     return {
       isTimeseries: gXType === "date",
+      dateFormat: this.dateFormat,
       configuration,
       conditionsOptions,
     };
