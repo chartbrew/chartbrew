@@ -145,17 +145,17 @@ function Main(props) {
                 path="/manage/:teamId/api-keys"
                 component={ManageTeam}
               />
-              <Route
-                exact
-                path="/:teamId/:projectId/dashboard"
-                component={ProjectBoard}
-              />
 
               {/* Add all the routes for the project board here */}
               <Route exact path="/:teamId/:projectId" component={ProjectBoard} />
               <Route
                 exact
                 path="/:teamId/:projectId/connections"
+                component={ProjectBoard}
+              />
+              <Route
+                exact
+                path="/:teamId/:projectId/dashboard"
                 component={ProjectBoard}
               />
               <Route
@@ -189,6 +189,12 @@ function Main(props) {
                 path="/:teamId/:projectId/public"
                 component={ProjectBoard}
               />
+              <Route
+                exact
+                path="/:teamId/:projectId/integrations"
+                component={ProjectBoard}
+              />
+
               <Route
                 exact
                 path="/chart/:chartId/embedded"

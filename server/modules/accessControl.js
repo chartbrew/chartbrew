@@ -149,6 +149,19 @@ const grantList = [
   {
     role: "owner", resource: "apiKey", action: "delete:any", attributes: "*",
   },
+  // resource: integration ---> Team Perspective
+  {
+    role: "owner", resource: "integration", action: "create:any", attributes: "*",
+  },
+  {
+    role: "owner", resource: "integration", action: "read:any", attributes: "*",
+  },
+  {
+    role: "owner", resource: "integration", action: "update:any", attributes: "*",
+  },
+  {
+    role: "owner", resource: "integration", action: "delete:any", attributes: "*",
+  },
   //
   // --------------------
   //    ADMIN
@@ -288,6 +301,19 @@ const grantList = [
   {
     role: "admin", resource: "apiKey", action: "delete:any", attributes: "*",
   },
+  // resource: apiKey ---> Team Perspective
+  {
+    role: "admin", resource: "integration", action: "create:any", attributes: "*",
+  },
+  {
+    role: "admin", resource: "integration", action: "read:any", attributes: "*",
+  },
+  {
+    role: "admin", resource: "integration", action: "update:any", attributes: "*",
+  },
+  {
+    role: "admin", resource: "integration", action: "delete:any", attributes: "*",
+  },
   //
   // --------------------
   //    EDITOR
@@ -383,6 +409,19 @@ const grantList = [
   },
   {
     role: "editor", resource: "dataRequest", action: "delete:any", attributes: "*",
+  },
+  // resource: integration ---> Team Perspective
+  {
+    role: "editor", resource: "integration", action: "create:any", attributes: "*",
+  },
+  {
+    role: "editor", resource: "integration", action: "read:any", attributes: "*",
+  },
+  {
+    role: "editor", resource: "integration", action: "update:any", attributes: "*",
+  },
+  {
+    role: "editor", resource: "integration", action: "delete:any", attributes: "*",
   },
   //
   // --------------------

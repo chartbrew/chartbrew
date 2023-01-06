@@ -48,6 +48,9 @@ const _checkIfActive = (path) => {
     case "public":
       if (window.location.pathname.indexOf("public") > -1) return true;
       break;
+    case "integrations":
+      if (window.location.pathname.indexOf("integrations") > -1) return true;
+      break;
     default:
       return false;
   }
