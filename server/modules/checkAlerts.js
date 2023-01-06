@@ -1,4 +1,6 @@
 const { add, isPast } = require("date-fns");
+const request = require("request-promise");
+const moment = require("moment");
 
 const db = require("../models/models");
 const mail = require("./mail");
@@ -118,17 +120,19 @@ async function checkChartForAlerts(chart) {
   });
 
   const { chartData, Datasets } = chart;
+  const dateFormat = chart.getDataValue("dateFormat");
 
   Datasets.forEach((dataset, index) => {
     const chartDataset = chartData.data.datasets[index];
     const datasetAlerts = alerts.filter((alert) => alert.dataset_id === dataset.id);
 
     if (datasetAlerts.length > 0) {
-      datasetAlerts.forEach((alert) => {
+      datasetAlerts.forEach(async (alert) => {
         let dataItems = chartDataset.data;
-        if (chart.getDataValue("isTimeseries") && alert.events.length === 0) {
+        if (chart.getDataValue("isTimeseries") && alert.events.length === 0 && alert.type !== "anomaly") {
           dataItems = [chartDataset.data[chartDataset.data.length - 1]];
         }
+
         const { rules, type } = alert;
         const { value, lower, upper } = rules;
 
@@ -210,6 +214,43 @@ async function checkChartForAlerts(chart) {
           });
 
           if (alertsFound.length > 0) {
+            processAlert(chart, alert, alertsFound);
+          }
+        } else if (type === "anomaly" && dataItems && dataItems.length > 9 && dateFormat) {
+          // prepare labels and data for the anomaly detection
+          const dataForAnomalies = { series: {} };
+          dataItems.forEach((d, i) => {
+            const labelIndex = dataItems.length === 1 ? chartData.data.labels.length - 1 : i;
+            const formattedLabel = moment(chartData.data.labels[labelIndex], dateFormat).format("YYYY-MM-DD");
+            dataForAnomalies.series[formattedLabel] = d;
+          });
+
+          const anomalyOpt = {
+            url: "https://trendapi.org/anomalies",
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "accept": "application/json",
+            },
+            form: dataForAnomalies,
+            json: true,
+          };
+
+          let anomalies;
+          try {
+            anomalies = await request(anomalyOpt);
+          } catch (err) {
+            // oupsie
+          }
+
+          if (anomalies?.anomalies && anomalies.anomalies.length > 0) {
+            const alertsFound = anomalies.anomalies.map((anomaly) => {
+              return {
+                label: anomaly,
+                value: "anomaly",
+              };
+            });
+
             processAlert(chart, alert, alertsFound);
           }
         }
