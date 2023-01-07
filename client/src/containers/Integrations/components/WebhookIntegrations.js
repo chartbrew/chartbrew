@@ -119,12 +119,15 @@ function WebhookIntegrations(props) {
                 placeholder="Webhook name"
                 fullWidth
                 value={newIntegration.name}
-                onChange={(e) => setNewIntegration({ ...newIntegration, name: e.target.value })}
+                onChange={(e) => {
+                  setNewIntegration({ ...newIntegration, name: e.target.value.slice(0, 20) });
+                }}
                 bordered
                 required
+                helperText={`${newIntegration.name?.length || 0}/20 characters`}
               />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={2} />
             <Row>
               <Input
                 label="The URL where Chartbrew sends a POST request to"
