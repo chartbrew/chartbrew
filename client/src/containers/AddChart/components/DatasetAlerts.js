@@ -105,6 +105,14 @@ function DatasetAlerts(props) {
     }
   }, [charts, chartId]);
 
+  const _onRefreshIntegrationList = () => {
+    getTeamIntegrations(team.id);
+  };
+
+  const _onCreateNewIntegration = () => {
+    window.open(`/${team.id}/${projectId}/integrations`, "_blank");
+  };
+
   const _onChangeRecipient = (email) => {
     if (newAlert.recipients.includes(email)) {
       setNewAlert({ ...newAlert, recipients: newAlert.recipients.filter((r) => r !== email) });
@@ -457,6 +465,7 @@ function DatasetAlerts(props) {
                     color="primary"
                     light
                     size="sm"
+                    onClick={_onCreateNewIntegration}
                   >
                     Create integrations
                   </Button>
@@ -466,6 +475,7 @@ function DatasetAlerts(props) {
                     color="primary"
                     light
                     size="sm"
+                    onClick={_onRefreshIntegrationList}
                   >
                     Refresh list
                   </Button>
