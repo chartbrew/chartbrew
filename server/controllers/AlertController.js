@@ -10,25 +10,42 @@ function findById(id) {
 }
 
 function create(data) {
-  let createdAlert;
   return db.Alert.create(data)
+    .then((createdAlert) => {
+      return findById(createdAlert.id);
+    })
     .then((alert) => {
-      createdAlert = alert;
-      if (data.integrations) {
-        return Promise.all(data.integrations.map((integration) => {
-          const { id, enabled, type } = integration;
-          return db.AlertIntegration.create({
-            alert_id: alert.id,
-            integration_id: id,
-            enabled,
-            type,
+      if (data.alertIntegrations) {
+        data.alertIntegrations.forEach((ai) => {
+          const foundIntegration = alert.AlertIntegrations.find((alertIntegration) => {
+            return alertIntegration.id === ai.id;
           });
-        }));
+
+          if (foundIntegration) {
+            db.AlertIntegration.update({
+              enabled: ai.enabled,
+            }, {
+              where: {
+                id: foundIntegration.id,
+              },
+            });
+          } else {
+            db.AlertIntegration.create({
+              alert_id: alert.id,
+              integration_id: ai.integration_id,
+              enabled: ai.enabled,
+            });
+          }
+        });
       }
 
-      return alert;
+      return findById(alert.id);
     })
-    .then(() => findById(createdAlert.id));
+    .catch((err) => {
+      return new Promise((resolve, reject) => {
+        reject(err);
+      });
+    });
 }
 
 function update(id, data) {
@@ -37,7 +54,35 @@ function update(id, data) {
       id,
     },
   })
-    .then(() => findById(id));
+    .then(() => {
+      return findById(id);
+    })
+    .then(async (alert) => {
+      if (data.alertIntegrations) {
+        data.alertIntegrations.forEach((ai) => {
+          const foundIntegration = alert.AlertIntegrations.find((alertIntegration) => {
+            return alertIntegration.id === ai.id;
+          });
+
+          if (foundIntegration) {
+            db.AlertIntegration.update({
+              enabled: ai.enabled,
+            }, {
+              where: {
+                id: foundIntegration.id,
+              },
+            });
+          } else {
+            db.AlertIntegration.create({
+              alert_id: alert.id,
+              integration_id: ai.integration_id,
+              enabled: ai.enabled,
+            });
+          }
+        });
+      }
+      return findById(id);
+    });
 }
 
 function remove(id) {
@@ -53,6 +98,7 @@ function getByChartId(chartId) {
     where: {
       chart_id: chartId,
     },
+    include: [{ model: db.AlertIntegration }],
   });
 }
 

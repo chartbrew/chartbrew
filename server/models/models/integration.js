@@ -49,6 +49,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Integration.associate = (models) => {
     models.Integration.belongsTo(models.Team, { foreignKey: "team_id" });
+    models.Integration.hasMany(models.AlertIntegration, { foreignKey: "integration_id" });
   };
 
   return Integration;
