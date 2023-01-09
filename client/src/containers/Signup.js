@@ -308,7 +308,7 @@ function Signup(props) {
                       <Text css={{ color: "$accents8", flexDirection: "row", display: "flex" }}>
                         {"Full-stack Developer at "}
                         <Spacer x={0.2} />
-                        <LinkNext href="https://fairchain.com" rel="noopener noreferrer" target="_blank" color="secondary">
+                        <LinkNext href="https://fairchain.art" rel="noopener noreferrer" target="_blank" color="secondary">
                           {"Fairchain"}
                         </LinkNext>
                       </Text>
