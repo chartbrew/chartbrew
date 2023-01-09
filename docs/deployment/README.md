@@ -240,7 +240,7 @@ docker run -p 4019:4019 -p 4018:4018 \
 
 ### Changing environmental variables
 
-If you want to run your Docker image with new environmental variables, it's important to build the client application again withing the image. This is done by running the following command:
+If you change any of the `REACT_APP_*` variables after the first run, **it's important** to build the client application again from inside the image. This is done by running the following command:
 
 ```sh
 # replace 'your_container_name' with the name of your docker container where Chartbrew is running
