@@ -5,7 +5,10 @@ export REACT_APP_API_HOST=${REACT_APP_API_HOST}
 export REACT_APP_CLIENT_HOST=${REACT_APP_CLIENT_HOST}
 export REACT_APP_ONE_ACCOUNT_EXTERNAL_ID=${REACT_APP_ONE_ACCOUNT_EXTERNAL_ID}
 
-cd server
+cd client
+mkdir dist
+npm run build && cp -rf build/* dist/ && npx serve -s -p 4018 dist &
+
+cd ../server
 NODE_ENV=production nohup node index.js &
 
-cd ../client && npx serve -s -p 4018 build
