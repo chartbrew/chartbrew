@@ -12,6 +12,7 @@ import {
   Graph, Hide, MoreSquare, Plus, Setting, Show, TwoUsers,
 } from "react-iconly";
 import { FaPlug } from "react-icons/fa";
+import { MdExtension } from "react-icons/md";
 
 import {
   dark, lightGray, primary, secondary
@@ -46,6 +47,9 @@ const _checkIfActive = (path) => {
       break;
     case "public":
       if (window.location.pathname.indexOf("public") > -1) return true;
+      break;
+    case "integrations":
+      if (window.location.pathname.indexOf("integrations") > -1) return true;
       break;
     default:
       return false;
@@ -319,6 +323,27 @@ function ProjectNavigation(props) {
                     <Spacer x={0.2} />
                     <Text h5 css={{ color: _checkIfActive("members") ? "$blue600" : "$accents8" }}>
                       Members
+                    </Text>
+                  </Row>
+                )}
+              </Link>
+            </Row>
+            <Spacer y={0.5} />
+            <Row justify={menuSize === "large" ? "flex-start" : "center"}>
+              <Link to={`/${teamId}/${projectId}/integrations`}>
+                {menuSize === "small" && (
+                  <Row css={{ color: _checkIfActive("integrations") ? "$blue600" : "$accents8" }}>
+                    <Tooltip content="Integrations" placement="right">
+                      <MdExtension size={28} />
+                    </Tooltip>
+                  </Row>
+                )}
+                {menuSize === "large" && (
+                  <Row css={{ color: _checkIfActive("integrations") ? "$blue600" : "$accents8" }}>
+                    <MdExtension size={24} />
+                    <Spacer x={0.2} />
+                    <Text h5 css={{ color: _checkIfActive("integrations") ? "$blue600" : "$accents8" }}>
+                      Integrations
                     </Text>
                   </Row>
                 )}
