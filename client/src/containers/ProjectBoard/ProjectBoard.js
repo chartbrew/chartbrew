@@ -23,7 +23,6 @@ import Navbar from "../../components/Navbar";
 import TeamMembers from "../TeamMembers/TeamMembers";
 import TeamSettings from "../TeamSettings";
 import ProjectSettings from "../ProjectSettings";
-import Integrations from "../Integrations/Integrations";
 import canAccess from "../../config/canAccess";
 import PrintView from "../PrintView/PrintView";
 import ProjectNavigation from "./components/ProjectNavigation";
@@ -278,24 +277,30 @@ function MainContent(props) {
           path="/:teamId/:projectId/members"
           render={() => (
             <Container
-              css={styles.page}
+              css={{
+                backgroundColor: "$backgroundContrast",
+                br: "$md",
+                p: 10,
+                "@xs": {
+                  p: 20,
+                },
+                "@sm": {
+                  p: 20,
+                },
+                "@md": {
+                  p: 20,
+                  m: 20,
+                },
+                "@lg": {
+                  p: 20,
+                  m: 20,
+                },
+              }}
             >
               <TeamMembers style={styles.teamSettings} />
             </Container>
           )}
         />
-        {_canAccess("editor") && (
-          <Route
-            path="/:teamId/:projectId/integrations"
-            render={() => (
-              <Container
-                css={styles.page}
-              >
-                <Integrations />
-              </Container>
-            )}
-          />
-        )}
         {_canAccess("owner")
           && (
             <Route
@@ -339,25 +344,6 @@ const styles = {
     padding: 20,
     paddingLeft: 30,
   },
-  page: {
-    backgroundColor: "$backgroundContrast",
-    br: "$md",
-    p: 10,
-    "@xs": {
-      p: 20,
-    },
-    "@sm": {
-      p: 20,
-    },
-    "@md": {
-      p: 20,
-      m: 20,
-    },
-    "@lg": {
-      p: 20,
-      m: 20,
-    },
-  }
 };
 
 ProjectBoard.propTypes = {
