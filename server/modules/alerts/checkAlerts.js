@@ -2,12 +2,13 @@ const { add, isPast } = require("date-fns");
 const request = require("request-promise");
 const moment = require("moment");
 
-const db = require("../models/models");
-const mail = require("./mail");
+const db = require("../../models/models");
+const mail = require("../mail");
+const webhookAlerts = require("./webhookAlerts");
 
-const settings = process.env.NODE_ENV === "production" ? require("../settings") : require("../settings-dev");
+const settings = process.env.NODE_ENV === "production" ? require("../../settings") : require("../../settings-dev");
 
-function processAlert(chart, alert, alerts) {
+async function processAlert(chart, alert, alerts) {
   const {
     rules, mediums, recipients, type
   } = alert;
@@ -51,6 +52,7 @@ function processAlert(chart, alert, alerts) {
     thresholdText = `Chartbrew found some values your thresholds of ${lower} and ${upper}.`;
   }
 
+  // first process the mediums
   const stringAlerts = [];
   Object.keys(mediums).forEach((medium) => {
     const mediumData = mediums[medium];
@@ -69,6 +71,34 @@ function processAlert(chart, alert, alerts) {
       });
     }
   });
+
+  // process the integrations
+  try {
+    if (alert.AlertIntegrations?.length > 0) {
+      const getIntegrations = [];
+      alert.AlertIntegrations.forEach((ai) => {
+        getIntegrations.push(db.Integration.findByPk(ai.integration_id));
+      });
+
+      const integrations = await Promise.all(getIntegrations);
+      const integrationAlerts = [];
+      integrations.forEach((integration) => {
+        if (integration.type === "webhook") {
+          integrationAlerts.push(webhookAlerts.send({
+            integration,
+            chart,
+            alertsFound,
+            alert,
+          }));
+        }
+      });
+
+      // run the integration alerts in the background
+      Promise.all(integrationAlerts);
+    }
+  } catch (err) {
+    console.log("Could not process integration alerts", err); // eslint-disable-line no-console
+  }
 
   // deactivate alert if required
   if (alert.oneTime || alert.type === "milestone") {
@@ -100,6 +130,8 @@ async function checkChartForAlerts(chart) {
     include: [{
       model: db.AlertEvent,
       as: "events",
+    }, {
+      model: db.AlertIntegration,
     }],
     order: [[{ model: db.AlertEvent, as: "events" }, "createdAt", "DESC"]]
   });
