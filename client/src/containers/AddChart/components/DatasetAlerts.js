@@ -8,15 +8,20 @@ import {
   Delete, Message, Notification, Plus, VolumeOff
 } from "react-iconly";
 import { connect } from "react-redux";
-import { FaDiscord, FaSlack, FaTelegram } from "react-icons/fa";
+import { FaSlack } from "react-icons/fa";
 import { TbWebhook } from "react-icons/tb";
+import { HiRefresh } from "react-icons/hi";
 
 import { getTeamMembers as getTeamMembersAction } from "../../../actions/team";
 import {
+  getChartAlerts as getChartAlertsAction,
   createAlert as createAlertAction,
   updateAlert as updateAlertAction,
   deleteAlert as deleteAlertAction,
 } from "../../../actions/alert";
+import {
+  getTeamIntegrations as getTeamIntegrationsAction,
+} from "../../../actions/integration";
 import autoUpdatePicture from "../../../assets/chartbrew-auto-update.jpg";
 
 const ruleTypes = [{
@@ -54,6 +59,7 @@ function DatasetAlerts(props) {
   const {
     getTeamMembers, teamMembers, team, user, chartId, datasetId, projectId,
     createAlert, alerts, updateAlert, deleteAlert, charts,
+    getTeamIntegrations, integrations, getChartAlerts,
   } = props;
 
   const initAlert = {
@@ -79,13 +85,18 @@ function DatasetAlerts(props) {
   const [timeoutUnit, setTimeoutUnit] = useState("minutes");
   const [chart, setChart] = useState({});
   const [showAutoUpdate, setShowAutoUpdate] = useState(false);
+  const [selectedIntegrations, setSelectedIntegrations] = useState([]);
 
   useEffect(() => {
     getTeamMembers(team.id);
+    getTeamIntegrations(team.id);
   }, []);
 
   useEffect(() => {
-    setDatasetAlerts(alerts.filter((a) => a.dataset_id === datasetId));
+    if (alerts) {
+      const filteredAlerts = alerts.filter((a) => a.dataset_id === datasetId);
+      setDatasetAlerts(filteredAlerts);
+    }
   }, [alerts]);
 
   useEffect(() => {
@@ -93,6 +104,14 @@ function DatasetAlerts(props) {
       setChart(charts.find((c) => `${c.id}` === `${chartId}`));
     }
   }, [charts, chartId]);
+
+  const _onRefreshIntegrationList = () => {
+    getTeamIntegrations(team.id);
+  };
+
+  const _onCreateNewIntegration = () => {
+    window.open(`/${team.id}/${projectId}/integrations`, "_blank");
+  };
 
   const _onChangeRecipient = (email) => {
     if (newAlert.recipients.includes(email)) {
@@ -105,6 +124,7 @@ function DatasetAlerts(props) {
   const _onOpen = () => {
     setNewAlert(initAlert);
     setOpen(true);
+    setSelectedIntegrations([]);
   };
 
   const _onChangeMediums = (medium) => {
@@ -122,7 +142,7 @@ function DatasetAlerts(props) {
   const _onSaveAlert = () => {
     setLoading(true);
 
-    const alertToSave = { ...newAlert };
+    const alertToSave = { ...newAlert, alertIntegrations: selectedIntegrations };
 
     // update alert timeout
     if (displayTimeout > -1) {
@@ -134,7 +154,7 @@ function DatasetAlerts(props) {
         .then(() => {
           setOpen(false);
           setLoading(false);
-          setNewAlert(initAlert);
+          _refreshForm();
         })
         .catch(() => {
           setLoading(false);
@@ -146,7 +166,7 @@ function DatasetAlerts(props) {
       .then(() => {
         setOpen(false);
         setLoading(false);
-        setNewAlert(initAlert);
+        _refreshForm();
       })
       .catch(() => {
         setLoading(false);
@@ -167,6 +187,12 @@ function DatasetAlerts(props) {
       setTimeoutUnit("minutes");
     }
     setDisplayTimeout(newDisplayTimeout);
+
+    // set selected integrations
+    if (alert.AlertIntegrations) {
+      setSelectedIntegrations(alert.AlertIntegrations);
+    }
+
     setOpen(true);
   };
 
@@ -199,6 +225,40 @@ function DatasetAlerts(props) {
 
   const _toggleAutoUpdate = () => {
     setShowAutoUpdate(!showAutoUpdate);
+  };
+
+  const _onSelectIntegration = (integration) => {
+    // enable/disable integration
+    let found = false;
+    const newSelection = selectedIntegrations.map((si) => {
+      if (si.integration_id === integration.id) {
+        found = true;
+        return {
+          id: si.id,
+          alert_id: si.alert_id,
+          integration_id: integration.id,
+          enabled: !si.enabled
+        };
+      }
+
+      return si;
+    });
+
+    if (!found) {
+      newSelection.push({
+        alert_id: newAlert.id,
+        integration_id: integration.id,
+        enabled: true
+      });
+    }
+
+    setSelectedIntegrations(newSelection);
+  };
+
+  const _refreshForm = () => {
+    setNewAlert(initAlert);
+    setSelectedIntegrations([]);
+    getChartAlerts(projectId, chartId);
   };
 
   return (
@@ -347,131 +407,103 @@ function DatasetAlerts(props) {
 
             {newAlert.type === "anomaly" && (
               <Row>
-                <Container css={{ backgroundColor: "$blue100", p: 10, br: "$md" }}>
-                  <Row>
-                    <Text>
-                      {"The anomaly detection is done automatically. Best to use this when you want to be notified when a time series is behaving differently than usual."}
-                    </Text>
-                  </Row>
-                </Container>
+                <Text i>
+                  {"The anomaly detection is done automatically. Best to use this if you want to be notified when a time series is behaving differently than usual."}
+                </Text>
               </Row>
             )}
 
             <Spacer y={1} />
-            <Row>
-              <Text>Where should we send the alerts?</Text>
-            </Row>
-            <Spacer y={0.5} />
-            <Row wrap="wrap" align="center">
-              <Button
-                auto
-                icon={<Message size="small" />}
-                color="secondary"
-                size="sm"
-                bordered={!newAlert.mediums.email?.enabled}
-                onClick={() => _onChangeMediums("email")}
-              >
-                Email
-              </Button>
-              <Spacer x={0.5} />
-              <Badge color="secondary" content={"soon"} size="xs">
-                <Button
-                  auto
-                  icon={<FaSlack />}
-                  color="secondary"
-                  size="sm"
-                  bordered={!newAlert.mediums.slack?.enabled}
-                  onClick={() => _onChangeMediums("slack")}
-                  disabled
-                  title="Coming soon"
-                >
-                  Slack
-                </Button>
-              </Badge>
-              <Spacer x={0.5} />
-              <Badge color="secondary" content={"soon"} size="xs">
-                <Button
-                  auto
-                  icon={<FaTelegram />}
-                  color="secondary"
-                  size="sm"
-                  bordered={!newAlert.mediums.telegram?.enabled}
-                  onClick={() => _onChangeMediums("telegram")}
-                  disabled
-                  title="Coming soon"
-                >
-                  Telegram
-                </Button>
-              </Badge>
-              <Spacer x={0.5} />
-              <Badge color="secondary" content={"soon"} size="xs">
-                <Button
-                  auto
-                  icon={<FaDiscord />}
-                  color="secondary"
-                  size="sm"
-                  bordered={!newAlert.mediums.discord?.enabled}
-                  onClick={() => _onChangeMediums("discord")}
-                  disabled
-                  title="Coming soon"
-                >
-                  Discord
-                </Button>
-              </Badge>
-              <Spacer x={0.5} />
-              <Badge color="secondary" content={"soon"} size="xs">
-                <Button
-                  auto
-                  icon={<TbWebhook />}
-                  color="secondary"
-                  size="sm"
-                  bordered={!newAlert.mediums.webhook?.enabled}
-                  onClick={() => _onChangeMediums("webhook")}
-                  disabled
-                  title="Coming soon"
-                >
-                  Webhook
-                </Button>
-              </Badge>
-            </Row>
-
-            {newAlert.type && newAlert.type !== "milestone" && (
+            {newAlert.type && (
               <>
-                <Spacer y={1} />
                 <Row>
-                  <Checkbox
-                    isSelected={newAlert.oneTime}
-                    onChange={(checked) => setNewAlert({ ...newAlert, oneTime: checked })}
-                    size="sm"
-                  >
-                    Disable this alert after sending once
-                  </Checkbox>
-                </Row>
-              </>
-            )}
-
-            {newAlert.mediums.email?.enabled && (
-              <>
-                <Spacer y={1} />
-                <Row>
-                  <Text>Who should receive the alerts?</Text>
+                  <Text b>Where should we send the alerts?</Text>
                 </Row>
                 <Spacer y={0.5} />
-                <Row wrap="wrap">
-                  {teamMembers.map((member) => (
-                    <Link onClick={() => _onChangeRecipient(member.email)}>
-                      <Badge
-                        color="primary"
-                        isSquared
-                        variant={newAlert.recipients.includes(member.email) ? "default" : "bordered"}
-                        css={{ mb: 5 }}
+                <Row wrap="wrap" align="center">
+                  <Button
+                    auto
+                    icon={<Message size="small" />}
+                    color="secondary"
+                    size="sm"
+                    bordered={!newAlert.mediums.email?.enabled}
+                    onClick={() => _onChangeMediums("email")}
+                  >
+                    Email
+                  </Button>
+                  <Spacer x={0.5} />
+                  {integrations && integrations.map((integration) => (
+                    <>
+                      <Button
+                        auto
+                        icon={
+                          integration.type === "webhook" ? <TbWebhook />
+                            : integration.type === "slack" ? <FaSlack />
+                              : null
+                        }
+                        color="secondary"
+                        size="sm"
+                        bordered={
+                          selectedIntegrations.length === 0
+                          || !selectedIntegrations.find(
+                            (i) => i.integration_id === integration.id && i.enabled
+                          )
+                        }
+                        onClick={() => _onSelectIntegration(integration)}
                       >
-                        {member.email}
-                      </Badge>
-                      <Spacer x={0.2} />
-                    </Link>
+                        {integration.name}
+                      </Button>
+                      <Spacer x={0.3} />
+                    </>
                   ))}
                 </Row>
+                <Spacer y={0.5} />
+                <Row>
+                  <Button
+                    auto
+                    icon={<Plus size="small" />}
+                    color="primary"
+                    light
+                    size="sm"
+                    onClick={_onCreateNewIntegration}
+                  >
+                    Create integrations
+                  </Button>
+                  <Button
+                    auto
+                    icon={<HiRefresh size={18} />}
+                    color="primary"
+                    light
+                    size="sm"
+                    onClick={_onRefreshIntegrationList}
+                  >
+                    Refresh list
+                  </Button>
+                </Row>
+                {newAlert.mediums.email?.enabled && (
+                <>
+                  <Spacer y={1} />
+                  <Row>
+                    <Text b>Email alerts - Who should receive them?</Text>
+                  </Row>
+                  <Spacer y={0.5} />
+                  <Row wrap="wrap">
+                    {teamMembers.map((member) => (
+                      <Link onClick={() => _onChangeRecipient(member.email)}>
+                        <Badge
+                          color="primary"
+                          isSquared
+                          variant={newAlert.recipients.includes(member.email) ? "default" : "bordered"}
+                          css={{ mb: 5 }}
+                        >
+                          {member.email}
+                        </Badge>
+                        <Spacer x={0.2} />
+                      </Link>
+                    ))}
+                  </Row>
+                </>
+                )}
               </>
             )}
 
@@ -511,6 +543,21 @@ function DatasetAlerts(props) {
                       ))}
                     </Dropdown.Menu>
                   </Dropdown>
+                </Row>
+              </>
+            )}
+
+            {newAlert.type && newAlert.type !== "milestone" && (
+              <>
+                <Spacer y={1} />
+                <Row>
+                  <Checkbox
+                    isSelected={newAlert.oneTime}
+                    onChange={(checked) => setNewAlert({ ...newAlert, oneTime: checked })}
+                    size="sm"
+                  >
+                    Disable this alert after sending once
+                  </Checkbox>
                 </Row>
               </>
             )}
@@ -594,6 +641,9 @@ DatasetAlerts.propTypes = {
   updateAlert: PropTypes.func.isRequired,
   deleteAlert: PropTypes.func.isRequired,
   charts: PropTypes.array.isRequired,
+  getTeamIntegrations: PropTypes.func.isRequired,
+  integrations: PropTypes.array.isRequired,
+  getChartAlerts: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => ({
@@ -602,6 +652,7 @@ const mapStateToProps = (state) => ({
   user: state.user.data,
   alerts: state.alert.data,
   charts: state.chart.data,
+  integrations: state.integration.data,
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -615,6 +666,8 @@ const mapDispatchToProps = (dispatch) => ({
   deleteAlert: (projectId, chartId, alertId) => (
     dispatch(deleteAlertAction(projectId, chartId, alertId))
   ),
+  getTeamIntegrations: (teamId) => dispatch(getTeamIntegrationsAction(teamId)),
+  getChartAlerts: (projectId, chartId) => dispatch(getChartAlertsAction(projectId, chartId)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(DatasetAlerts);
