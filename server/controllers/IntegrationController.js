@@ -30,7 +30,14 @@ function remove(id) {
     where: {
       id,
     },
-  });
+  })
+    .then(() => {
+      return db.AlertIntegration.destroy({
+        where: {
+          integration_id: id,
+        },
+      });
+    });
 }
 
 module.exports = {
