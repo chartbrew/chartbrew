@@ -39,7 +39,8 @@ module.exports = {
         collapsable: false,
         sidebarDepth: 0,
         children: [
-          ["/integrations/google-analytics/", "Google Analytics"]
+          ["/integrations/google-analytics/", "Google Analytics"],
+          ["/integrations/webhooks/", "Webhooks"]
         ],
       },
       {
