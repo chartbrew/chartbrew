@@ -58,6 +58,7 @@ function UserDashboard(props) {
   useEffect(() => {
     if (!fetched && user.data.id && !user.loading) {
       _getTeams();
+      _checkParameters();
     }
   }, [user]);
 
@@ -77,6 +78,16 @@ function UserDashboard(props) {
       }
     }
   }, [teams]);
+
+  const _checkParameters = () => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get("__cb_goto")) {
+      const gotoPage = params.get("__cb_goto");
+      window.localStorage.removeItem("__cb_goto");
+      history.push(gotoPage);
+    }
+  };
 
   const _getTeams = () => {
     setFetched(true);

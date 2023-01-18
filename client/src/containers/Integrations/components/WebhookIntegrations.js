@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Container, Input, Link, Loading, Modal, Row, Spacer, Table, Text
+  Button, Checkbox, Container, Divider, Input, Link, Loading, Modal, Row, Spacer, Table, Text,
 } from "@nextui-org/react";
 import {
   Delete, Edit, InfoCircle, Plus
 } from "react-iconly";
 import { TbWebhook } from "react-icons/tb";
+import { FaSlack } from "react-icons/fa";
 import { formatRelative } from "date-fns";
 
 import {
@@ -30,6 +31,16 @@ function WebhookIntegrations(props) {
   const [integrationToDelete, setIntegrationToDelete] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState(false);
+  const [slackModalOpen, setSlackModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (newIntegration.url?.indexOf("https://hooks.slack.com") > -1) {
+      setNewIntegration({
+        ...newIntegration,
+        slackMode: true,
+      });
+    }
+  }, [newIntegration.url]);
 
   const _onCreate = () => {
     if (newIntegration.name === "" || newIntegration.url === "") {
@@ -43,6 +54,7 @@ function WebhookIntegrations(props) {
       type: "webhook",
       config: {
         url: newIntegration.url,
+        slackMode: newIntegration.slackMode,
       },
     })
       .then(() => {
@@ -75,6 +87,7 @@ function WebhookIntegrations(props) {
       id: integration.id,
       name: integration.name,
       url: integration.config.url,
+      slackMode: integration.config.slackMode,
     });
     setCreateOpen(true);
   };
@@ -107,10 +120,28 @@ function WebhookIntegrations(props) {
   return (
     <div>
       <Container>
-        <Row align="center">
-          <Text><TbWebhook size={24} /></Text>
-          <Spacer x={0.3} />
-          <Text h4>Webhooks</Text>
+        <Row align="center" justify="space-between">
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <Text><TbWebhook size={24} /></Text>
+            <Spacer x={0.3} />
+            <Text h4>Webhooks</Text>
+          </div>
+          <Spacer x={1} />
+          <Button
+            auto
+            onClick={() => {
+              setCreateOpen(true);
+            }}
+            icon={<Plus />}
+            light
+            color={"primary"}
+          >
+            Add a new webhook
+          </Button>
+        </Row>
+        <Spacer y={0.2} />
+        <Row>
+          <Divider />
         </Row>
         <Spacer y={0.5} />
         <Row>
@@ -118,7 +149,17 @@ function WebhookIntegrations(props) {
             <Link href="https://docs.chartbrew.com/integrations/webhooks" target="_blank" rel="noopener">
               <InfoCircle />
               <Spacer x={0.3} />
-              {"Find out more about what Chartbrew sends through webhook integrations here"}
+              {"Click to see what Chartbrew sends over the webhook"}
+            </Link>
+          </Text>
+        </Row>
+        <Spacer y={0.5} />
+        <Row>
+          <Text>
+            <Link onClick={() => setSlackModalOpen(true)}>
+              <FaSlack size={24} />
+              <Spacer x={0.3} />
+              {"Want to send events to Slack? Check out how to do it here"}
             </Link>
           </Text>
         </Row>
@@ -173,20 +214,6 @@ function WebhookIntegrations(props) {
             </Table>
           </Row>
         )}
-        <Spacer y={0.5} />
-        <Row>
-          <Button
-            auto
-            onClick={() => {
-              setCreateOpen(true);
-            }}
-            icon={<Plus />}
-            light
-            color={"primary"}
-          >
-            Create a new webhook
-          </Button>
-        </Row>
       </Container>
 
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} width="500px">
@@ -225,6 +252,25 @@ function WebhookIntegrations(props) {
               />
             </Row>
             <Spacer y={0.5} />
+            <Row>
+              <Checkbox
+                checked={newIntegration.slackMode}
+                onChange={(isSelected) => {
+                  setNewIntegration({ ...newIntegration, slackMode: isSelected });
+                }}
+                size="sm"
+                isSelected={newIntegration.slackMode}
+                label="Slack webhook"
+              />
+              <Spacer x={0.5} />
+              <Text size="small">
+                <Link onClick={() => setSlackModalOpen(true)}>
+                  <InfoCircle />
+                  <Spacer x={0.2} />
+                  {"What is this?"}
+                </Link>
+              </Text>
+            </Row>
             {error && (
               <Row>
                 <Text color="error">There was an error creating the integration. Please try again.</Text>
@@ -292,6 +338,41 @@ function WebhookIntegrations(props) {
             icon={deleteLoading ? <Loading type="spinner" /> : null}
           >
             Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal open={slackModalOpen} width="800px" onClose={() => setSlackModalOpen(false)} noPadding>
+        <Modal.Header>
+          <Text h3>How to set up Slack alerts</Text>
+        </Modal.Header>
+        <Modal.Body>
+          <Container css={{ p: 0, m: 0 }}>
+            <Row style={{
+              position: "relative", paddingBottom: "56.25%", height: 0,
+            }}>
+              <iframe
+                title="Chartbrew Slack alerts"
+                src="https://www.loom.com/embed/84e390c2e9b844748cb30812dc0591e1"
+                frameBorder="0"
+                webkitallowfullscreen
+                mozallowfullscreen
+                allowFullScreen
+                style={{
+                  position: "absolute", top: 0, left: 0, width: "100%", height: "100%", borderRadius: 20,
+                }}
+              />
+            </Row>
+          </Container>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            auto
+            onClick={() => setSlackModalOpen(false)}
+            color="warning"
+            flat
+          >
+            Close
           </Button>
         </Modal.Footer>
       </Modal>

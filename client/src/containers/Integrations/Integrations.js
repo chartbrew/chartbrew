@@ -42,6 +42,7 @@ function Integrations(props) {
             teamId={match.params.teamId}
           />
         </Row>
+        <Spacer y={2} />
       </Container>
     </div>
   );
