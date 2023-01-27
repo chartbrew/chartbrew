@@ -1032,7 +1032,7 @@ function DatasetData(props) {
                             onClick={() => _onShowField(field)}
                             color="warning"
                           >
-                            <Link css={{ ai: "center" }}>
+                            <Link css={{ ai: "center" }} onClick={() => _onShowField(field)}>
                               <Hide primaryColor="white" />
                             </Link>
                             <Spacer x={0.1} />
