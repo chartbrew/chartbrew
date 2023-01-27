@@ -5,7 +5,7 @@ import PropTypes from "prop-types";
 import { Link as LinkDom } from "react-router-dom";
 import {
   Button, Container, Grid, Input, Loading, Row, Spacer, Text,
-  Navbar, Tooltip, Popover, Divider, Modal, Badge, Link, useTheme,
+  Navbar, Tooltip, Popover, Divider, Modal, Badge, Link, useTheme, Image,
 } from "@nextui-org/react";
 import {
   ChevronLeftCircle, CloseSquare, Edit, EditSquare, Image2, People, Show, TickSquare
@@ -39,6 +39,7 @@ import logo from "../../assets/logo_inverted.png";
 import { API_HOST, SITE_HOST } from "../../config/settings";
 import canAccess from "../../config/canAccess";
 import SharingSettings from "./components/SharingSettings";
+import instructionDashboard from "../../assets/instruction-dashboard-report.png";
 
 const breakpoints = {
   mobile: 0,
@@ -388,6 +389,15 @@ function PublicDashboard(props) {
             >
               Go back
             </Button>
+          </Row>
+          <Spacer y={1} />
+          <Row justify="center">
+            <Image
+              src={instructionDashboard}
+              height={500}
+              width={1000}
+              css={{ filter: "drop-shadow(1px 5px 5px rgba(0, 0, 0, 0.5))", p: 15 }}
+            />
           </Row>
         </Container>
       </div>
