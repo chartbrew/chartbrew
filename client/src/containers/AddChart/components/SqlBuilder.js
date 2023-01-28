@@ -226,7 +226,7 @@ function SqlBuilder(props) {
                   setSavedQuery(savedQuery.id);
                   _onChangeQuery(savedQuery.query);
                 }}
-                type="mysql"
+                type={connection.type}
                 style={styles.savedQueriesContainer}
               />
             </Row>
