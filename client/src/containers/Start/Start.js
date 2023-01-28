@@ -128,7 +128,7 @@ function Start(props) {
           <Card.Header>{title}</Card.Header>
           <Card.Body>
             <Card.Image
-              src={connectionImages[connectionType]}
+              src={connectionImages(isDark)[connectionType]}
               objectFit="contain"
               width="100%"
               height={140}

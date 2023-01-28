@@ -6,7 +6,7 @@ import _ from "lodash";
 import moment from "moment";
 import {
   Grid, Tooltip, Button, Spacer, Dropdown, Input, Loading, Link, Container, Text, Modal, Image, Row,
-  Divider,
+  Divider, useTheme,
 } from "@nextui-org/react";
 import { ArrowDownSquare, ChevronDown } from "react-iconly";
 import { FaPlug } from "react-icons/fa";
@@ -53,10 +53,12 @@ function Dataset(props) {
   const [menuItem, setMenuItem] = useState("data");
   const [requestResult, setRequestResult] = useState(null);
 
+  const { isDark } = useTheme();
+
   useEffect(() => {
     const config = [];
     connections.map((connection) => {
-      const image = connectionImages[connection.type];
+      const image = connectionImages(isDark)[connection.type];
 
       config.push({
         key: connection.id,
@@ -70,7 +72,7 @@ function Dataset(props) {
       return connection;
     });
     setDropdownConfig(config);
-  }, [connections]);
+  }, [connections, isDark]);
 
   // update the dataset with the active one
   useEffect(() => {

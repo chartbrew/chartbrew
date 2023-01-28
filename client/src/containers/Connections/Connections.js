@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import moment from "moment";
 
 import {
-  Button, Card, Container, Grid, Loading, Modal, Row, Spacer, Text, Link,
+  Button, Card, Container, Grid, Loading, Modal, useTheme, Row, Spacer, Text, Link,
 } from "@nextui-org/react";
 import {
   ChevronLeft, Delete, Plus, Scan
@@ -220,7 +220,7 @@ function Connections(props) {
   const _canAccess = (role) => {
     return canAccess(role, user.id, team.TeamRoles);
   };
-
+  const { isDark } = useTheme();
   return (
     <div style={styles.container}>
       <Container style={styles.mainContent}>
@@ -338,7 +338,7 @@ function Connections(props) {
                   <Grid xs={6} sm={4} md={2}>
                     <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("api")}>
                       <Card.Body css={{ p: 0 }}>
-                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages.api} />
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages(isDark).api} />
                       </Card.Body>
                       <Card.Footer>
                         <Row wrap="wrap" justify="center" align="center">
@@ -352,7 +352,7 @@ function Connections(props) {
                   <Grid xs={6} sm={4} md={2}>
                     <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("mongodb")}>
                       <Card.Body css={{ p: 0 }}>
-                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages.mongodb} />
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages(isDark).mongodb} />
                       </Card.Body>
                       <Card.Footer>
                         <Row wrap="wrap" justify="center" align="center">
@@ -366,7 +366,7 @@ function Connections(props) {
                   <Grid xs={6} sm={4} md={2}>
                     <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("postgres")}>
                       <Card.Body css={{ p: 0 }}>
-                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages.postgres} />
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages(isDark).postgres} />
                       </Card.Body>
                       <Card.Footer>
                         <Row wrap="wrap" justify="center" align="center">
@@ -380,7 +380,7 @@ function Connections(props) {
                   <Grid xs={6} sm={4} md={2}>
                     <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("mysql")}>
                       <Card.Body css={{ p: 0 }}>
-                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages.mysql} />
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages(isDark).mysql} />
                       </Card.Body>
                       <Card.Footer>
                         <Row wrap="wrap" justify="center" align="center">
@@ -394,7 +394,7 @@ function Connections(props) {
                   <Grid xs={6} sm={4} md={2}>
                     <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("firestore")}>
                       <Card.Body css={{ p: 0 }}>
-                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages.firestore} />
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages(isDark).firestore} />
                       </Card.Body>
                       <Card.Footer>
                         <Row wrap="wrap" justify="center" align="center">
@@ -408,12 +408,12 @@ function Connections(props) {
                   <Grid xs={6} sm={4} md={2}>
                     <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("realtimedb")}>
                       <Card.Body css={{ p: 0 }}>
-                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages.realtimedb} />
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages(isDark).realtimedb} />
                       </Card.Body>
                       <Card.Footer>
                         <Row wrap="wrap" justify="center" align="center">
                           <Text h4>
-                            Realtime Database
+                            Realtime DB
                           </Text>
                         </Row>
                       </Card.Footer>
@@ -422,7 +422,7 @@ function Connections(props) {
                   <Grid xs={6} sm={4} md={2}>
                     <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("googleAnalytics")}>
                       <Card.Body css={{ p: 0 }}>
-                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages.googleAnalytics} />
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages(isDark).googleAnalytics} />
                       </Card.Body>
                       <Card.Footer>
                         <Row wrap="wrap" justify="center" align="center">
@@ -436,7 +436,7 @@ function Connections(props) {
                   <Grid xs={6} sm={4} md={2}>
                     <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("customerio")}>
                       <Card.Body css={{ p: 0 }}>
-                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages.customerio} />
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages(isDark).customerio} />
                       </Card.Body>
                       <Card.Footer>
                         <Row wrap="wrap" justify="center" align="center">
@@ -715,7 +715,7 @@ function Connections(props) {
                           <img
                             width="50px"
                             height="50px"
-                            src={connectionImages[connection.type]}
+                            src={connectionImages(isDark)[connection.type]}
                             alt={`${connection.type} logo`}
                           />
                         </Row>
