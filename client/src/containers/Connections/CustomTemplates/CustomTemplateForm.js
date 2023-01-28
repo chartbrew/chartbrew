@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import _ from "lodash";
 import {
   Avatar, Button, Card, Checkbox, Container, Divider, Grid, Loading,
-  Modal, Row, Spacer, Switch, Text, Tooltip,
+  Modal, Row, Spacer, Switch, Text, Tooltip, useTheme,
 } from "@nextui-org/react";
 
 import {
@@ -25,6 +25,8 @@ function CustomTemplateForm(props) {
   const [deleteConfirmation, setDeleteConfimation] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [formStatus, setFormStatus] = useState("");
+
+  const { isDark } = useTheme();
 
   useEffect(() => {
     if (template && template.model.Connections) {
@@ -225,7 +227,7 @@ function CustomTemplateForm(props) {
                     onChange={() => _onToggleConnection(c.id)}
                     size="xs"
                   />
-                  <img src={connectionImages[c.type]} alt={"Connection logo"} width="34px" height="34px" />
+                  <img src={connectionImages(isDark)[c.type]} alt={"Connection logo"} width="34px" height="34px" />
                   <Text>{c.name}</Text>
                 </Card.Header>
                 <Card.Body>

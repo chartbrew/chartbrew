@@ -6,7 +6,7 @@ import {
   Button,
   Card,
   Grid,
-  Loading, Row, Spacer, Text,
+  Loading, Row, Spacer, Text, useTheme,
 } from "@nextui-org/react";
 import moment from "moment";
 import { Chart } from "react-iconly";
@@ -37,6 +37,8 @@ function CustomTemplates(props) {
     return deleteTemplate(teamId, templateId)
       .then(() => setSelectedTemplate(null));
   };
+
+  const { isDark } = useTheme();
 
   if (loading) {
     return (
@@ -100,7 +102,7 @@ function CustomTemplates(props) {
                     {template.model.Connections.map((c) => (
                       <Avatar
                         key={c.id}
-                        src={connectionImages[c.type]}
+                        src={connectionImages(isDark)[c.type]}
                         pointer
                         bordered
                         stacked
