@@ -209,17 +209,17 @@ function TeamMembers(props) {
                     <Text small css={{ color: "$accents6" }}>{member.email}</Text>
                   </Table.Cell>
                   <Table.Cell key="role">
-                    {memberRole.role === "owner" && <Badge color="primary">Owner</Badge>}
-                    {memberRole.role === "admin" && <Badge color="success">Admin</Badge>}
-                    {memberRole.role === "editor" && <Badge color="secondary">Editor</Badge>}
-                    {memberRole.role === "member" && <Badge color="default">Member</Badge>}
+                    {memberRole.role === "owner" && <Badge color="primary" disableOutline>Owner</Badge>}
+                    {memberRole.role === "admin" && <Badge color="success" disableOutline>Admin</Badge>}
+                    {memberRole.role === "editor" && <Badge color="secondary" disableOutline>Editor</Badge>}
+                    {memberRole.role === "member" && <Badge color="default" disableOutline>Member</Badge>}
                   </Table.Cell>
                   <Table.Cell key="projectAccess">
                     {!memberRole.projects || memberRole.projects.length === 0 ? "None" : memberRole.projects.length}
                   </Table.Cell>
                   <Table.Cell key="export">
-                    {memberRole.canExport && <Badge color="success" variant={"flat"}>Yes</Badge>}
-                    {!memberRole.canExport && <Badge color="error" variant={"flat"}>No</Badge>}
+                    {memberRole.canExport && <Badge color="success" variant={"flat"} disableOutline>Yes</Badge>}
+                    {!memberRole.canExport && <Badge color="error" variant={"flat"} disableOutline>No</Badge>}
                   </Table.Cell>
                   <Table.Cell key="actions">
                     <Container css={{ pl: 0, pr: 0 }}>
@@ -351,7 +351,7 @@ function TeamMembers(props) {
               <Row wrap="wrap">
                 <Text>{"You are currently giving"}</Text>
                 <Spacer x={0.2} />
-                <Badge color="primary">{`${projectAccess[changedMember.id].role}`}</Badge>
+                <Badge color="primary" disableOutline>{`${projectAccess[changedMember.id].role}`}</Badge>
                 <Spacer x={0.2} />
                 <Text>{`access to ${changedMember.name}`}</Text>
                 <Spacer x={0.2} />

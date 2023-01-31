@@ -54,7 +54,14 @@ class TeamController {
     if (projects) teamRoleObj.projects = projects;
     if (canExport) teamRoleObj.canExport = canExport;
 
-    return db.TeamRole.create(teamRoleObj)
+    return db.TeamRole.findOne({ where: { team_id: teamId, user_id: userId } })
+      .then((teamRole) => {
+        if (teamRole) {
+          return db.TeamRole.update(teamRoleObj, { where: { id: teamRole.id } });
+        }
+
+        return db.TeamRole.create(teamRoleObj);
+      })
       .then((role) => {
         return role;
       })

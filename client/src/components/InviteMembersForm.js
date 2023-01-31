@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Button, Container, Row, Text, Tooltip, Spacer, Grid, Checkbox, Input,
+  Button, Container, Row, Text, Tooltip, Spacer, Grid, Checkbox, Input, Collapse, Radio, Badge,
 } from "@nextui-org/react";
 import _ from "lodash";
 import { CloseSquare, InfoCircle, TickSquare } from "react-iconly";
@@ -18,12 +18,19 @@ function InviteMembersForm(props) {
   const [loading, setLoading] = useState(false);
   const [projectAccess, setProjectAccess] = useState([]);
   const [exportAllowed, setExportAllowed] = useState(false);
+  const [role, setRole] = useState("member");
   const [inviteUrl, setInviteUrl] = useState("");
   const [urlCopied, setUrlCopied] = useState(false);
 
   const {
     style, match, projects, team, generateInviteUrl,
   } = props;
+
+  useEffect(() => {
+    if (inviteUrl) {
+      setInviteUrl("");
+    }
+  }, [projectAccess, exportAllowed, role]);
 
   const onGenerateUrl = () => {
     const teamId = team.id
@@ -35,6 +42,7 @@ function InviteMembersForm(props) {
       teamId,
       projectAccess,
       exportAllowed,
+      role,
     ).then((url) => {
       setInviteUrl(url);
       setLoading(false);
@@ -77,58 +85,57 @@ function InviteMembersForm(props) {
         <Row>
           <Text h3>Invite new members</Text>
         </Row>
-        <Spacer y={1} />
-        <Row align="center">
-          <Text size={20} b>
-            {"Project access "}
-          </Text>
-          <Spacer x={0.2} />
-          <Tooltip
-            content="The newly invited users will only be able to access the projects you select below. The project access can be changed later as well."
-            css={{ maxWidth: 400 }}
-          >
-            <InfoCircle />
-          </Tooltip>
-        </Row>
         <Spacer y={0.5} />
         <Row>
-          <Button
-            size="sm"
-            light
-            icon={<TickSquare />}
-            onClick={_onSelectAllProjects}
-            auto
-            color="primary"
+          <Collapse
+            bordered
+            title="Select project access"
+            subtitle={projectAccess.length > 0 ? `${projectAccess.length} project${projectAccess.length > 1 ? "s" : ""} selected` : "No projects selected yet"}
+            css={{
+              "& .nextui-collapse-title": {
+                fs: 20,
+              },
+            }}
           >
-            Select all
-          </Button>
-          <Spacer x={0.2} />
-          <Button
-            size="sm"
-            light
-            auto
-            icon={<CloseSquare />}
-            onClick={_onDeselectAllProjects}
-            color="secondary"
-          >
-            Deselect all
-          </Button>
+            <Grid.Container gap={0.5}>
+              <Grid xs={12} css={{ mb: 10 }}>
+                <Button
+                  size="sm"
+                  bordered
+                  icon={<TickSquare />}
+                  onClick={_onSelectAllProjects}
+                  auto
+                  color="primary"
+                >
+                  Select all
+                </Button>
+                <Spacer x={0.2} />
+                <Button
+                  size="sm"
+                  bordered
+                  auto
+                  icon={<CloseSquare />}
+                  onClick={_onDeselectAllProjects}
+                  color="secondary"
+                >
+                  Deselect all
+                </Button>
+              </Grid>
+              {projects && projects.map((project) => (
+                <Grid xs={12} sm={4} key={project.id}>
+                  <Checkbox
+                    label={project.name}
+                    isSelected={
+                      _.indexOf(projectAccess, project.id) > -1
+                    }
+                    onChange={() => _onChangeProjectAccess(project.id)}
+                    size="sm"
+                  />
+                </Grid>
+              ))}
+            </Grid.Container>
+          </Collapse>
         </Row>
-        <Spacer y={0.5} />
-        <Grid.Container gap={0.5}>
-          {projects && projects.map((project) => (
-            <Grid xs={12} sm={6} key={project.id}>
-              <Checkbox
-                label={project.name}
-                isSelected={
-                  _.indexOf(projectAccess, project.id) > -1
-                }
-                onChange={() => _onChangeProjectAccess(project.id)}
-                size="sm"
-              />
-            </Grid>
-          ))}
-        </Grid.Container>
         <Spacer y={1} />
         <Row align="center">
           <Text size={20} b>
@@ -147,9 +154,45 @@ function InviteMembersForm(props) {
           <Checkbox
             label="Allow data export"
             isSelected={exportAllowed}
-            onSelect={() => setExportAllowed(!exportAllowed)}
+            onChange={(isSelected) => setExportAllowed(isSelected)}
             size="sm"
           />
+        </Row>
+        <Spacer y={1} />
+        <Row align="center">
+          <Text size={20} b>
+            {"Team role"}
+          </Text>
+          <Spacer x={0.2} />
+          <Tooltip
+            content="The team role is applied over all the projects selected above"
+            css={{ maxWidth: 400 }}
+          >
+            <InfoCircle />
+          </Tooltip>
+        </Row>
+        <Spacer y={0.5} />
+        <Row>
+          <Radio.Group defaultValue="member" size="sm" value={role} onChange={(option) => setRole(option)}>
+            <Radio
+              value="member"
+              description={"Can view charts in assigned projects"}
+            >
+              Member
+            </Radio>
+            <Radio
+              value="editor"
+              description={"Can create, edit, and remove charts and connections in assigned projects"}
+            >
+              Editor
+            </Radio>
+            <Radio
+              value="admin"
+              description={"Full access, but can't delete the team or interact with the team's billing."}
+            >
+              Admin
+            </Radio>
+          </Radio.Group>
         </Row>
 
         <Spacer y={1} />
@@ -176,7 +219,7 @@ function InviteMembersForm(props) {
               />
             </Row>
             <Spacer y={0.5} />
-            <Row>
+            <Row wrap="wrap" align="center">
               <Button
                 iconRight={urlCopied ? <TickSquare /> : <FaClipboard />}
                 color={urlCopied ? "success" : "primary"}
@@ -187,6 +230,18 @@ function InviteMembersForm(props) {
               >
                 {urlCopied ? "Copied" : "Copy to clipboard"}
               </Button>
+              <Spacer x={1} />
+              <Badge color="warning" disableOutline>
+                {`${role} role`}
+              </Badge>
+              <Spacer x={0.3} />
+              <Badge color="primary" disableOutline>
+                {`Access to ${projectAccess.length} project${projectAccess.length !== 1 ? "s" : ""}`}
+              </Badge>
+              <Spacer x={0.3} />
+              <Badge color="secondary" disableOutline>
+                {exportAllowed ? "Data export allowed" : "Data export not allowed"}
+              </Badge>
             </Row>
           </>
         )}
@@ -218,8 +273,8 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    generateInviteUrl: (teamId, projects, canExport) => (
-      dispatch(generateInviteUrlAction(teamId, projects, canExport))
+    generateInviteUrl: (teamId, projects, canExport, role) => (
+      dispatch(generateInviteUrlAction(teamId, projects, canExport, role))
     ),
   };
 };

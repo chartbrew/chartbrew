@@ -161,7 +161,7 @@ export function updateTeam(teamId, data) {
   };
 }
 
-export function generateInviteUrl(teamId, projects, canExport) {
+export function generateInviteUrl(teamId, projects, canExport, role) {
   return (dispatch) => {
     if (!cookie.load("brewToken")) {
       return new Promise((resolve, reject) => reject(new Error("No Token")));
@@ -175,6 +175,7 @@ export function generateInviteUrl(teamId, projects, canExport) {
     const body = JSON.stringify({
       projects,
       canExport,
+      role
     });
     return fetch(`${API_HOST}/team/${teamId}/invite`, { method: "POST", headers, body })
       .then((response) => {

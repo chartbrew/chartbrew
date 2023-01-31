@@ -130,6 +130,7 @@ module.exports = (app) => {
         const payload = {
           projects: req.body.projects,
           canExport: req.body.canExport,
+          role: req.body.role,
           team_id: teamRole.team_id,
           user_id: teamRole.user_id,
         };
@@ -164,7 +165,7 @@ module.exports = (app) => {
 
     let newRole = {};
     return jwt.verify(req.body.token, app.settings.secret, (err, decoded) => {
-      return teamController.addTeamRole(decoded.team_id, req.user.id, "member", decoded.projects, decoded.canExport)
+      return teamController.addTeamRole(decoded.team_id, req.user.id, decoded.role || "member", decoded.projects, decoded.canExport)
         .then((role) => {
           newRole = role;
           return teamController.findById(newRole.team_id);
