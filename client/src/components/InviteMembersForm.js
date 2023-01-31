@@ -23,8 +23,14 @@ function InviteMembersForm(props) {
   const [urlCopied, setUrlCopied] = useState(false);
 
   const {
-    style, match, projects, team, generateInviteUrl,
+    style, match, projects, team, generateInviteUrl, selectedProjects,
   } = props;
+
+  useEffect(() => {
+    if (selectedProjects?.length > 0) {
+      setProjectAccess(selectedProjects);
+    }
+  }, [selectedProjects]);
 
   useEffect(() => {
     if (inviteUrl) {
@@ -83,59 +89,63 @@ function InviteMembersForm(props) {
     <div style={style}>
       <Container>
         <Row>
-          <Text h3>Invite new members</Text>
+          <Text h3>Invite team members</Text>
         </Row>
-        <Spacer y={0.5} />
-        <Row>
-          <Collapse
-            bordered
-            title="Select project access"
-            subtitle={projectAccess.length > 0 ? `${projectAccess.length} project${projectAccess.length > 1 ? "s" : ""} selected` : "No projects selected yet"}
-            css={{
-              "& .nextui-collapse-title": {
-                fs: 20,
-              },
-            }}
-          >
-            <Grid.Container gap={0.5}>
-              <Grid xs={12} css={{ mb: 10 }}>
-                <Button
-                  size="sm"
-                  bordered
-                  icon={<TickSquare />}
-                  onClick={_onSelectAllProjects}
-                  auto
-                  color="primary"
-                >
-                  Select all
-                </Button>
-                <Spacer x={0.2} />
-                <Button
-                  size="sm"
-                  bordered
-                  auto
-                  icon={<CloseSquare />}
-                  onClick={_onDeselectAllProjects}
-                  color="secondary"
-                >
-                  Deselect all
-                </Button>
-              </Grid>
-              {projects && projects.map((project) => (
-                <Grid xs={12} sm={4} key={project.id}>
-                  <Checkbox
-                    label={project.name}
-                    isSelected={
-                      _.indexOf(projectAccess, project.id) > -1
-                    }
-                    onChange={() => _onChangeProjectAccess(project.id)}
-                    size="sm"
-                  />
-                </Grid>
-              ))}
-            </Grid.Container>
-          </Collapse>
-        </Row>
+        {!selectedProjects && (
+          <>
+            <Spacer y={0.5} />
+            <Row>
+              <Collapse
+                bordered
+                title="Select project access"
+                subtitle={projectAccess.length > 0 ? `${projectAccess.length} project${projectAccess.length > 1 ? "s" : ""} selected` : "No projects selected yet"}
+                css={{
+                  "& .nextui-collapse-title": {
+                    fs: 20,
+                  },
+                }}
+              >
+                <Grid.Container gap={0.5}>
+                  <Grid xs={12} css={{ mb: 10 }}>
+                    <Button
+                      size="sm"
+                      bordered
+                      icon={<TickSquare />}
+                      onClick={_onSelectAllProjects}
+                      auto
+                      color="primary"
+                    >
+                      Select all
+                    </Button>
+                    <Spacer x={0.2} />
+                    <Button
+                      size="sm"
+                      bordered
+                      auto
+                      icon={<CloseSquare />}
+                      onClick={_onDeselectAllProjects}
+                      color="secondary"
+                    >
+                      Deselect all
+                    </Button>
+                  </Grid>
+                  {projects && projects.map((project) => (
+                    <Grid xs={12} sm={4} key={project.id}>
+                      <Checkbox
+                        label={project.name}
+                        isSelected={
+                          _.indexOf(projectAccess, project.id) > -1
+                        }
+                        onChange={() => _onChangeProjectAccess(project.id)}
+                        size="sm"
+                      />
+                    </Grid>
+                  ))}
+                </Grid.Container>
+              </Collapse>
+            </Row>
+          </>
+        )}
         <Spacer y={1} />
         <Row align="center">
           <Text size={20} b>
@@ -231,15 +241,15 @@ function InviteMembersForm(props) {
                 {urlCopied ? "Copied" : "Copy to clipboard"}
               </Button>
               <Spacer x={1} />
-              <Badge color="warning" disableOutline>
+              <Badge color="warning" disableOutline variant={"flat"}>
                 {`${role} role`}
               </Badge>
               <Spacer x={0.3} />
-              <Badge color="primary" disableOutline>
+              <Badge color="primary" disableOutline variant={"flat"}>
                 {`Access to ${projectAccess.length} project${projectAccess.length !== 1 ? "s" : ""}`}
               </Badge>
               <Spacer x={0.3} />
-              <Badge color="secondary" disableOutline>
+              <Badge color="success" disableOutline variant={"flat"}>
                 {exportAllowed ? "Data export allowed" : "Data export not allowed"}
               </Badge>
             </Row>
@@ -253,6 +263,7 @@ function InviteMembersForm(props) {
 
 InviteMembersForm.defaultProps = {
   style: {},
+  selectedProjects: null,
 };
 
 InviteMembersForm.propTypes = {
@@ -260,6 +271,7 @@ InviteMembersForm.propTypes = {
   team: PropTypes.object.isRequired,
   match: PropTypes.object.isRequired,
   projects: PropTypes.array.isRequired,
+  selectedProjects: PropTypes.array,
   style: PropTypes.object,
 };
 

@@ -2,17 +2,20 @@ import React, { useState } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import {
-  Container, Card, Loading, Text, Spacer, Row, Link, Input, Button, Grid, useTheme,
+  Container, Card, Loading, Text, Spacer, Row, Link, Input, Button, Grid, useTheme, Divider,
 } from "@nextui-org/react";
 import { motion } from "framer-motion/dist/framer-motion";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import {
-  ArrowRight, Category, MoreSquare, Setting
+  ArrowRight, Category, MoreSquare, Setting, TickSquare
 } from "react-iconly";
 
 import { createProject as createProjectAction } from "../../actions/project";
-import { getTeams as getTeamsAction } from "../../actions/team";
+import {
+  getTeams as getTeamsAction,
+  saveActiveTeam as saveActiveTeamAction,
+} from "../../actions/team";
 import simpleanalyticsDash from "../Connections/SimpleAnalytics/simpleanalytics-template.jpeg";
 import plausibleDash from "../Connections/Plausible/plausible-template.jpeg";
 import gaDash from "../Connections/GoogleAnalytics/ga-template.jpeg";
@@ -20,10 +23,11 @@ import chartmogulDash from "../Connections/ChartMogul/chartmogul-template.jpeg";
 import mailgunDash from "../Connections/Mailgun/mailgun-template.jpeg";
 import connectionImages from "../../config/connectionImages";
 import Navbar from "../../components/Navbar";
+import InviteMembersForm from "../../components/InviteMembersForm";
 
 function Start(props) {
   const {
-    teams, history, createProject, getTeams, user,
+    teams, history, createProject, getTeams, user, saveActiveTeam,
   } = props;
 
   const [onboardingStep, setOnboardingStep] = useState("project");
@@ -32,6 +36,7 @@ function Start(props) {
   const [showBreadcrumbs, setShowBreadcrumbs] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initiated, setInitiated] = useState(false);
+  const [newProject, setNewProject] = useState(null);
 
   const { isDark } = useTheme();
 
@@ -54,40 +59,48 @@ function Start(props) {
     if (loading) return;
 
     setLoading(true);
-    const toastId = toast.loading("Creating your project...");
-    setTimeout(() => {
-      return createProject({
-        name: projectName,
-        team_id: _getOwnedTeam().id,
-      })
-        .then((project) => {
-          // refresh teams to avoid the onboarding from appearing again
-          getTeams(user.id);
-          toast.update(toastId, { render: "🎉 Project created! One sec...", type: "success", isLoading: false });
-          if (type) {
-            setTimeout(() => {
-              setLoading(true);
-              history.push(`${_getOwnedTeam().id}/${project.id}/connections?type=${type}&edit=true`);
-            }, 1500);
-          } else {
-            setTimeout(() => {
-              setLoading(false);
-              history.push(`${_getOwnedTeam().id}/${project.id}/dashboard`);
-            }, 1500);
-          }
-        })
-        .catch(() => {
-          setLoading(true);
-          toast.update(toastId, { render: "Oups! Something went wrong. Please try again.", type: "error", isLoading: false });
-        });
-    }, 1000);
+
+    if (type) {
+      setTimeout(() => {
+        setLoading(false);
+        history.push(`${_getOwnedTeam().id}/${newProject.id}/connections?type=${type}&edit=true`);
+      }, 1000);
+    } else {
+      setLoading(false);
+      history.push(`${_getOwnedTeam().id}/${newProject.id}/dashboard`);
+    }
   };
 
   const _onSubmitProjectName = (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    setOnboardingStep("mode");
-    setShowBreadcrumbs(true);
-    setInitiated(true);
+
+    const toastId = toast.loading("Creating your project...");
+    return createProject({
+      name: projectName,
+      team_id: _getOwnedTeam().id,
+    })
+      .then((project) => {
+        toast.update(toastId, {
+          render: "🎉 Project created!", type: "success", isLoading: false, autoClose: 1500,
+        });
+
+        setOnboardingStep("team");
+        setShowBreadcrumbs(true);
+        setInitiated(true);
+        setNewProject(project);
+
+        // refresh teams to avoid the onboarding from appearing again
+        return getTeams(user.id);
+      })
+      .then((teams) => {
+        if (teams && teams[0]) {
+          saveActiveTeam(teams[0]);
+        }
+      })
+      .catch(() => {
+        setLoading(true);
+        toast.update(toastId, { render: "Oups! Something went wrong. Please try again.", type: "error", isLoading: false });
+      });
   };
 
   const renderTemplateCard = (cardImage, connectionType, title) => {
@@ -194,6 +207,9 @@ function Start(props) {
                   {onboardingStep === "project" && (
                     <Text h3>{"First, enter a name below"}</Text>
                   )}
+                  {onboardingStep === "team" && (
+                    <Text h3>{"All hands on deck! You can invite your team below"}</Text>
+                  )}
                   {onboardingStep === "mode" && (
                     <Text h3>{"Get started with one of the options below"}</Text>
                   )}
@@ -205,19 +221,40 @@ function Start(props) {
                 </Row>
               </Container>
             </motion.div>
-            <Spacer y={1} />
+            <Spacer y={0.5} />
 
             {showBreadcrumbs && (
               <Container>
                 <Row justify="center" align="center">
-                  <Link onClick={() => setOnboardingStep("project")}>
+                  <Link>
                     <Text
                       b={onboardingStep === "project"}
-                      css={{ color: onboardingStep !== "project" ? "$text" : "$secondary" }}
+                      css={{ color: onboardingStep !== "project" ? "$accents6" : "$secondary" }}
                     >
                       Project
                     </Text>
                   </Link>
+                  {newProject?.id && (
+                    <>
+                      <Spacer x={0.3} />
+                      <TickSquare color="green" />
+                    </>
+                  )}
+                  <Spacer x={1} />
+                  {projectName && (
+                    <Text css={{ color: "$accents6" }}>/</Text>
+                  )}
+                  <Spacer x={1} />
+                  {projectName && (
+                    <Link onClick={() => setOnboardingStep("team")}>
+                      <Text
+                        css={{ color: onboardingStep !== "team" ? "$text" : "$secondary" }}
+                        b={onboardingStep === "team"}
+                      >
+                        Team
+                      </Text>
+                    </Link>
+                  )}
                   <Spacer x={1} />
                   {projectName && (
                     <Text css={{ color: "$accents6" }}>/</Text>
@@ -275,15 +312,44 @@ function Start(props) {
                   <Button
                     color="gradient"
                     onClick={_onSubmitProjectName}
-                    iconRight={<ArrowRight />}
+                    iconRight={<ArrowRight set={"light"} />}
                     size="lg"
                     disabled={projectName.length < 1}
                     auto
                     shadow
                   >
-                    {"Next step"}
+                    {"Create project"}
                   </Button>
                 </form>
+              </motion.div>
+            </Container>
+            )}
+
+            {onboardingStep === "team" && newProject?.id && (
+            <Container
+              md
+              css={{
+                bc: "$backgroundContrast", br: "$md", pt: 10, pb: 20, mt: 10
+              }}
+            >
+              <Spacer y={1} />
+              <motion.div animate={{ scale: [0.8, 1] }} transition={{ duration: 0.3 }}>
+                <InviteMembersForm selectedProjects={[newProject.id]} projects={[newProject.id]} />
+                <Spacer y={0.5} />
+                <Divider />
+                <Spacer y={1} />
+                <Container>
+                  <Button
+                    color="gradient"
+                    onClick={() => {
+                      setOnboardingStep("mode");
+                    }}
+                    auto
+                    iconRight={<ArrowRight set={"light"} />}
+                  >
+                    Choose your starting mode
+                  </Button>
+                </Container>
               </motion.div>
             </Container>
             )}
@@ -449,6 +515,7 @@ Start.propTypes = {
   createProject: PropTypes.func.isRequired,
   user: PropTypes.object.isRequired,
   getTeams: PropTypes.func.isRequired,
+  saveActiveTeam: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => ({
@@ -459,6 +526,7 @@ const mapStateToProps = (state) => ({
 const mapDispatchToProps = (dispatch) => ({
   createProject: (data) => dispatch(createProjectAction(data)),
   getTeams: (userId) => dispatch(getTeamsAction(userId)),
+  saveActiveTeam: (team) => dispatch(saveActiveTeamAction(team)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Start);
