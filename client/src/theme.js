@@ -173,7 +173,7 @@ const darkTheme = {
     errorSolidContrast: "$red100",
     errorShadow: "$red600",
 
-    gradient: "linear-gradient(112deg, $blue600 -3.59%, $blue700 -20.3%, $orange800 90.46%)",
+    gradient: "linear-gradient(112deg, $blue600 -3.59%, $blue500 -20.3%, $orange200 90.46%)",
     gradientShadow: "linear-gradient(112deg, $blue600 -3.59%, $blue700 -20.3%, $orange800 90.46%)",
     link: "$orange400",
     headerBackground: darkTransparent(0.8),
