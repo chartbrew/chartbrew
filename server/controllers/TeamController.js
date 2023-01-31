@@ -54,16 +54,19 @@ class TeamController {
     if (projects) teamRoleObj.projects = projects;
     if (canExport) teamRoleObj.canExport = canExport;
 
+    let gRole;
     return db.TeamRole.findOne({ where: { team_id: teamId, user_id: userId } })
       .then((teamRole) => {
         if (teamRole) {
+          gRole = teamRole;
           return db.TeamRole.update(teamRoleObj, { where: { id: teamRole.id } });
         }
 
         return db.TeamRole.create(teamRoleObj);
       })
       .then((role) => {
-        return role;
+        if (!gRole) gRole = role;
+        return db.TeamRole.findByPk(role.id);
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
