@@ -46,7 +46,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           "legend": "New users",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": null,
             "body": "null",
             "conditions": null,
@@ -70,7 +70,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
           "Connection": null
         },
         {
@@ -95,7 +95,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           "legend": "Bounces",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": null,
             "body": "null",
             "conditions": null,
@@ -119,7 +119,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
           "Connection": null
         }
       ],
@@ -165,7 +165,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           "legend": "Referrer",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": null,
             "body": "null",
             "conditions": null,
@@ -189,7 +189,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -213,7 +213,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           "legend": "Source",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": null,
             "body": "null",
             "conditions": null,
@@ -237,7 +237,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
       ],
     },
@@ -283,7 +283,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           "legend": "30 days",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": null,
             "body": "null",
             "conditions": null,
@@ -307,7 +307,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -331,7 +331,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           "legend": "7 days",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": null,
             "body": "null",
             "conditions": null,
@@ -355,7 +355,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -379,7 +379,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           "legend": "1 day",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": null,
             "body": "null",
             "conditions": null,
@@ -403,7 +403,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
       ],
     },
@@ -452,7 +452,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           "legend": "Channel",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": null,
             "body": "null",
             "conditions": null,
@@ -476,7 +476,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
       ],
     },
@@ -525,7 +525,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           "legend": "Devices",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": null,
             "body": "null",
             "conditions": null,
@@ -549,7 +549,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
       ],
     },
@@ -594,7 +594,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           "legend": "Pages",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": null,
             "body": "null",
             "conditions": null,
@@ -618,7 +618,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
       ],
     },
@@ -662,7 +662,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           "legend": "Bounce rate",
           "pointRadius": null,
           "formula": "{val}%",
-          "DataRequest": {
+          "DataRequests": [{
             "headers": null,
             "body": "null",
             "conditions": null,
@@ -686,7 +686,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
       ],
     },
@@ -730,7 +730,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
           "legend": "Session length",
           "pointRadius": null,
           "formula": "{val}s",
-          "DataRequest": {
+          "DataRequests": [{
             "headers": null,
             "body": "null",
             "conditions": null,
@@ -753,7 +753,7 @@ const template = (configuration = {}, dashboardOrder = 0) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
       ],
     }

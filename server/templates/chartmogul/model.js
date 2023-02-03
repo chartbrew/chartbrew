@@ -71,7 +71,7 @@ const template = (token, key, dashboardOrder = 0) => ({
           "legend": "MRR",
           "pointRadius": null,
           "formula": "${val / 100}",
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -84,7 +84,7 @@ const template = (token, key, dashboardOrder = 0) => ({
             "itemsLimit": 100,
             "offset": "offset",
             "template": null
-          },
+          }],
         }
       ]
     },
@@ -135,7 +135,7 @@ const template = (token, key, dashboardOrder = 0) => ({
           "legend": "MRR",
           "pointRadius": null,
           "formula": "{val / 100}",
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -148,7 +148,7 @@ const template = (token, key, dashboardOrder = 0) => ({
             "itemsLimit": 100,
             "offset": "offset",
             "template": null
-          },
+          }],
         }
       ]
     },
@@ -194,7 +194,7 @@ const template = (token, key, dashboardOrder = 0) => ({
           "legend": "ARR",
           "pointRadius": null,
           "formula": "${val / 100}",
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -207,7 +207,7 @@ const template = (token, key, dashboardOrder = 0) => ({
             "itemsLimit": 100,
             "offset": "offset",
             "template": null
-          },
+          }],
         }
       ]
     },
@@ -252,7 +252,7 @@ const template = (token, key, dashboardOrder = 0) => ({
           "legend": "Customer Churn",
           "pointRadius": null,
           "formula": "{val}%",
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -265,7 +265,7 @@ const template = (token, key, dashboardOrder = 0) => ({
             "itemsLimit": 100,
             "offset": "offset",
             "template": null
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -289,7 +289,7 @@ const template = (token, key, dashboardOrder = 0) => ({
           "legend": "NET MRR Churn",
           "pointRadius": null,
           "formula": "{val}%",
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -302,7 +302,7 @@ const template = (token, key, dashboardOrder = 0) => ({
             "itemsLimit": 100,
             "offset": "offset",
             "template": null
-          },
+          }],
         }
       ]
     },
@@ -348,7 +348,7 @@ const template = (token, key, dashboardOrder = 0) => ({
           "legend": "Subscribers",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -361,7 +361,7 @@ const template = (token, key, dashboardOrder = 0) => ({
             "itemsLimit": 100,
             "offset": "offset",
             "template": null
-          },
+          }],
         }
       ]
     },
@@ -407,7 +407,7 @@ const template = (token, key, dashboardOrder = 0) => ({
           "legend": "ARPA",
           "pointRadius": null,
           "formula": "${val / 100}",
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -420,7 +420,7 @@ const template = (token, key, dashboardOrder = 0) => ({
             "itemsLimit": 100,
             "offset": "offset",
             "template": null
-          },
+          }],
         }
       ]
     },
@@ -470,7 +470,7 @@ const template = (token, key, dashboardOrder = 0) => ({
           "legend": "MRR in cents",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -483,7 +483,7 @@ const template = (token, key, dashboardOrder = 0) => ({
             "itemsLimit": 100,
             "offset": "offset",
             "template": null
-          },
+          }],
         }
       ]
     },

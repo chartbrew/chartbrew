@@ -50,12 +50,12 @@ class RequestController {
   }
 
   findByDataset(datasetId) {
-    return db.DataRequest.findOne({ where: { dataset_id: datasetId } })
-      .then((dataRequest) => {
-        if (!dataRequest) {
+    return db.DataRequest.findAll({ where: { dataset_id: datasetId } })
+      .then((dataRequests) => {
+        if (!dataRequests || dataRequests.length === 0) {
           return new Promise((resolve, reject) => reject(new Error(404)));
         }
-        return Promise.resolve(dataRequest);
+        return Promise.resolve(dataRequests);
       })
       .catch((error) => {
         return Promise.reject(error);

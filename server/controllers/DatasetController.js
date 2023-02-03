@@ -83,7 +83,7 @@ class DatasetController {
         gDataset = dataset;
         const connection = dataset.Connection;
         gConnection = connection;
-        const dataRequest = dataset.DataRequest;
+        const dataRequest = dataset.DataRequests[0];
 
         if (!dataRequest || (dataRequest && dataRequest.length === 0)) {
           return new Promise((resolve, reject) => reject(new Error("404")));
@@ -124,10 +124,11 @@ class DatasetController {
         }
         if (gConnection.type === "firestore") {
           data = rawData.data;
+          const dataRequest = gDataset.DataRequests[0];
 
           let newConfiguration = {};
-          if (gDataset.DataRequest.configuration && typeof gDataset.DataRequest.configuration === "object") {
-            newConfiguration = { ...gDataset.DataRequest.configuration };
+          if (dataRequest.configuration && typeof dataRequest.configuration === "object") {
+            newConfiguration = { ...dataRequest.configuration };
           }
 
           if (rawData.configuration) {
@@ -136,11 +137,11 @@ class DatasetController {
 
           const newDr = await db.DataRequest.update(
             { configuration: newConfiguration },
-            { where: { id: gDataset.DataRequest.id } },
+            { where: { id: dataRequest.id } },
           )
-            .then(() => db.DataRequest.findByPk(gDataset.DataRequest.id));
+            .then(() => db.DataRequest.findByPk(dataRequest.id));
 
-          gDataset.DataRequest = newDr;
+          gDataset.DataRequests[0] = newDr;
         }
 
         return Promise.resolve({

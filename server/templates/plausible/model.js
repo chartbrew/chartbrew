@@ -73,7 +73,7 @@ const template = (website, apiKey, dashboardOrder) => ({
           "pointRadius": null,
           "formula": null,
           "groupBy": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -88,7 +88,7 @@ const template = (website, apiKey, dashboardOrder) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -115,7 +115,7 @@ const template = (website, apiKey, dashboardOrder) => ({
           "pointRadius": null,
           "formula": null,
           "groupBy": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -130,7 +130,7 @@ const template = (website, apiKey, dashboardOrder) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         }
       ],
       "tid": 1
@@ -182,7 +182,7 @@ const template = (website, apiKey, dashboardOrder) => ({
           "pointRadius": null,
           "formula": null,
           "groupBy": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -197,7 +197,7 @@ const template = (website, apiKey, dashboardOrder) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         }
       ],
       "tid": 0
@@ -249,7 +249,7 @@ const template = (website, apiKey, dashboardOrder) => ({
           "pointRadius": null,
           "formula": "{val}s",
           "groupBy": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -264,7 +264,7 @@ const template = (website, apiKey, dashboardOrder) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -291,7 +291,7 @@ const template = (website, apiKey, dashboardOrder) => ({
           "pointRadius": null,
           "formula": "{val}%",
           "groupBy": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -306,7 +306,7 @@ const template = (website, apiKey, dashboardOrder) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         }
       ],
       "tid": 2
@@ -358,7 +358,7 @@ const template = (website, apiKey, dashboardOrder) => ({
           "pointRadius": null,
           "formula": null,
           "groupBy": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -373,7 +373,7 @@ const template = (website, apiKey, dashboardOrder) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -400,7 +400,7 @@ const template = (website, apiKey, dashboardOrder) => ({
           "pointRadius": null,
           "formula": null,
           "groupBy": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -415,7 +415,7 @@ const template = (website, apiKey, dashboardOrder) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -442,7 +442,7 @@ const template = (website, apiKey, dashboardOrder) => ({
           "pointRadius": null,
           "formula": null,
           "groupBy": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -457,7 +457,7 @@ const template = (website, apiKey, dashboardOrder) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -484,7 +484,7 @@ const template = (website, apiKey, dashboardOrder) => ({
           "pointRadius": null,
           "formula": null,
           "groupBy": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -499,7 +499,7 @@ const template = (website, apiKey, dashboardOrder) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         }
       ],
       "tid": 3
@@ -555,7 +555,7 @@ const template = (website, apiKey, dashboardOrder) => ({
           "pointRadius": null,
           "formula": null,
           "groupBy": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -570,7 +570,7 @@ const template = (website, apiKey, dashboardOrder) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         }
       ],
       "tid": 5
@@ -622,7 +622,7 @@ const template = (website, apiKey, dashboardOrder) => ({
           "pointRadius": null,
           "formula": null,
           "groupBy": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -637,7 +637,7 @@ const template = (website, apiKey, dashboardOrder) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -664,7 +664,7 @@ const template = (website, apiKey, dashboardOrder) => ({
           "pointRadius": null,
           "formula": null,
           "groupBy": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -679,7 +679,7 @@ const template = (website, apiKey, dashboardOrder) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -706,7 +706,7 @@ const template = (website, apiKey, dashboardOrder) => ({
           "pointRadius": null,
           "formula": null,
           "groupBy": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -721,7 +721,7 @@ const template = (website, apiKey, dashboardOrder) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         }
       ],
       "tid": 4
@@ -773,7 +773,7 @@ const template = (website, apiKey, dashboardOrder) => ({
           "pointRadius": null,
           "formula": null,
           "groupBy": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -788,7 +788,7 @@ const template = (website, apiKey, dashboardOrder) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -815,7 +815,7 @@ const template = (website, apiKey, dashboardOrder) => ({
           "pointRadius": null,
           "formula": null,
           "groupBy": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -830,7 +830,7 @@ const template = (website, apiKey, dashboardOrder) => ({
             "offset": "offset",
             "paginationField": null,
             "template": null
-          },
+          }],
         }
       ],
       "tid": 6

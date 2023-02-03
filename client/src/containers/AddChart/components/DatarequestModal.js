@@ -29,7 +29,7 @@ function DatarequestModal(props) {
     createDataRequest, updateDataRequest, requests, changeTutorial, updateResult, chart,
   } = props;
 
-  const [dataRequest, setDataRequest] = useState(null);
+  const [dataRequests, setDataRequests] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState(null);
@@ -38,14 +38,14 @@ function DatarequestModal(props) {
 
   useEffect(() => {
     if (!open) {
-      setDataRequest(null);
+      setDataRequests(null);
       return;
     }
     let fetched = false;
     getDataRequestByDataset(match.params.projectId, match.params.chartId, dataset.id)
-      .then((dr) => {
+      .then((drs) => {
         fetched = true;
-        setDataRequest(dr);
+        setDataRequests(drs);
 
         setTimeout(() => {
           setSaved(true);
@@ -62,7 +62,7 @@ function DatarequestModal(props) {
       })
       .then((dr) => {
         if (!fetched && dr) {
-          setDataRequest(dr);
+          setDataRequests([dr]);
           setTimeout(() => {
             setSaved(true);
           }, 100);
@@ -75,7 +75,7 @@ function DatarequestModal(props) {
 
   useEffect(() => {
     setSaved(false);
-  }, [dataRequest]);
+  }, [dataRequests]);
 
   useEffect(() => {
     const request = _.find(requests, { options: { id: dataset.id } });
@@ -126,21 +126,33 @@ function DatarequestModal(props) {
       newDr = { ...newDr, headers: newHeaders };
     }
 
-    setDataRequest(newDr);
+    // update the item in the array
+    const drIndex = _.findIndex(dataRequests, { id: newDr.id });
+    const newDrArray = _.cloneDeep(dataRequests);
+    newDrArray[drIndex] = newDr;
+
+    setDataRequests(newDrArray);
   };
 
-  const _onSaveRequest = (dr = dataRequest) => {
+  const _onSaveRequest = (drs = dataRequests) => {
     setLoading(true);
-    const newDr = _.cloneDeep(dr);
-    return updateDataRequest(
-      match.params.projectId,
-      match.params.chartId,
-      newDr.id,
-      newDr
-    )
+    const newDrs = _.cloneDeep(drs);
+    const promises = [];
+    newDrs.forEach((dr) => {
+      promises.push(
+        updateDataRequest(
+          match.params.projectId,
+          match.params.chartId,
+          dr.id,
+          dr
+        )
+      );
+    });
+
+    Promise.all(promises)
       .then((savedDr) => {
         setLoading(false);
-        setDataRequest(savedDr);
+        setDataRequests(savedDr);
 
         setTimeout(() => {
           setSaved(true);
@@ -166,7 +178,7 @@ function DatarequestModal(props) {
         <Text h3>{`Configure ${connection.name}`}</Text>
       </Modal.Header>
       <Modal.Body>
-        {!dataRequest && (
+        {!dataRequests && (
           <Container>
             <Spacer y={4} />
             <Row align="center" justify="center">
@@ -178,10 +190,10 @@ function DatarequestModal(props) {
             </Row>
           </Container>
         )}
-        {connection.type === "api" && dataRequest && (
+        {connection.type === "api" && dataRequests && (
           <ApiBuilder
             dataset={dataset}
-            dataRequest={dataRequest}
+            dataRequest={dataRequests[0]}
             connection={connection}
             onChangeRequest={_updateDataRequest}
             onSave={_onSaveRequest}
@@ -189,59 +201,59 @@ function DatarequestModal(props) {
             chart={chart}
           />
         )}
-        {(connection.type === "mysql" || connection.type === "postgres") && dataRequest && (
+        {(connection.type === "mysql" || connection.type === "postgres") && dataRequests && (
           <SqlBuilder
             dataset={dataset}
-            dataRequest={dataRequest}
+            dataRequest={dataRequests[0]}
             connection={connection}
             onChangeRequest={_updateDataRequest}
             onSave={_onSaveRequest}
             exploreData={result && JSON.stringify(result.data, null, 2)}
           />
         )}
-        {connection.type === "mongodb" && dataRequest && (
+        {connection.type === "mongodb" && dataRequests && (
           <MongoQueryBuilder
             dataset={dataset}
-            dataRequest={dataRequest}
+            dataRequest={dataRequests[0]}
             onChangeRequest={_updateDataRequest}
             onSave={_onSaveRequest}
             exploreData={result && JSON.stringify(result.data, null, 2)}
           />
         )}
-        {connection.type === "realtimedb" && dataRequest && (
+        {connection.type === "realtimedb" && dataRequests && (
           <RealtimeDbBuilder
             dataset={dataset}
-            dataRequest={dataRequest}
+            dataRequest={dataRequests[0]}
             connection={connection}
             onChangeRequest={_updateDataRequest}
             onSave={_onSaveRequest}
             exploreData={result && JSON.stringify(result.data, null, 2)}
           />
         )}
-        {connection.type === "firestore" && dataRequest && (
+        {connection.type === "firestore" && dataRequests && (
           <FirestoreBuilder
             dataset={dataset}
-            dataRequest={dataRequest}
+            dataRequest={dataRequests[0]}
             connection={connection}
             onChangeRequest={_updateDataRequest}
             onSave={_onSaveRequest}
             exploreData={result && JSON.stringify(result.data, null, 2)}
           />
         )}
-        {connection.type === "googleAnalytics" && dataRequest && (
+        {connection.type === "googleAnalytics" && dataRequests && (
           <GaBuilder
             dataset={dataset}
-            dataRequest={dataRequest}
+            dataRequest={dataRequests[0]}
             connection={connection}
             onChangeRequest={_updateDataRequest}
             onSave={_onSaveRequest}
             exploreData={result && JSON.stringify(result.data, null, 2)}
           />
         )}
-        {connection.type === "customerio" && dataRequest && (
+        {connection.type === "customerio" && dataRequests && (
           <CustomerioBuilder
             dataset={dataset}
-            dataRequest={dataRequest}
+            dataRequest={dataRequests[0]}
             connection={connection}
             onChangeRequest={_updateDataRequest}
             onSave={_onSaveRequest}

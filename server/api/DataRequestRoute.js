@@ -169,8 +169,8 @@ module.exports = (app) => {
 
         return dataRequestController.findByDataset(req.params.datasetId);
       })
-      .then((dataRequest) => {
-        return res.status(200).send(dataRequest);
+      .then((dataRequests) => {
+        return res.status(200).send(dataRequests);
       })
       .catch((error) => {
         if (error && error.message === "404") {

@@ -31,9 +31,11 @@ module.exports = async (
       datasetPromises.push(
         db.Dataset.create(d)
           .then((createdDataset) => {
-            const newDr = d.DataRequest;
-            newDr.dataset_id = createdDataset.id;
-            return db.DataRequest.create(newDr);
+            const drPromises = [];
+            d.DataRequests.forEach((dr) => {
+              drPromises.push(db.DataRequest.create({ ...dr, dataset_id: createdDataset.id }));
+            });
+            return Promise.all(drPromises);
           })
       );
     });

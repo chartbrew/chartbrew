@@ -68,7 +68,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
           "legend": "Delivered",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -82,7 +82,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
             "offset": "",
             "paginationField": "paging.next",
             "template": "url"
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -118,7 +118,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
           "legend": "Failed",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -132,7 +132,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
             "offset": "skip",
             "paginationField": "paging.next",
             "template": "url"
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -159,7 +159,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
           "legend": "Bounced",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -173,7 +173,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
             "offset": "offset",
             "paginationField": "paging.next",
             "template": "url"
-          },
+          }],
         }
       ]
     },
@@ -222,7 +222,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
           "legend": "Delivered",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -236,7 +236,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
             "offset": "skip",
             "paginationField": "paging.next",
             "template": "url"
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -272,7 +272,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
           "legend": "Failed",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -286,7 +286,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
             "offset": "skip",
             "paginationField": "paging.next",
             "template": "url"
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -311,7 +311,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
           "legend": "Opened",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -325,7 +325,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
             "offset": "skip",
             "paginationField": "paging.next",
             "template": "url"
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -350,7 +350,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
           "legend": "Clicked",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -364,7 +364,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
             "offset": "skip",
             "paginationField": "paging.next",
             "template": "url"
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -389,7 +389,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
           "legend": "Unsubscribed",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -403,7 +403,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
             "offset": "skip",
             "paginationField": "paging.next",
             "template": "url"
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -428,7 +428,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
           "legend": "Complained",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -442,7 +442,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
             "offset": "offset",
             "paginationField": "paging.next",
             "template": "url"
-          },
+          }],
         }
       ]
     },
@@ -492,7 +492,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
           "legend": "Delivered",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -506,7 +506,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
             "offset": "skip",
             "paginationField": "paging.next",
             "template": "url"
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -531,7 +531,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
           "legend": "Opens",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -545,7 +545,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
             "offset": "skip",
             "paginationField": "paging.next",
             "template": "url"
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -570,7 +570,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
           "legend": "Clicked",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -584,7 +584,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
             "offset": "skip",
             "paginationField": "paging.next",
             "template": "url"
-          },
+          }],
         }
       ]
     },
@@ -630,7 +630,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
           "legend": "Unsubscribes",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -644,7 +644,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
             "offset": "offset",
             "paginationField": "paging.next",
             "template": "url"
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -671,7 +671,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
           "legend": "Bounces",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -685,7 +685,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
             "offset": "offset",
             "paginationField": "paging.next",
             "template": "url"
-          },
+          }],
         },
         {
           "fillColor": "rgba(0,0,0,0)",
@@ -709,7 +709,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
           "legend": "Complaints",
           "pointRadius": null,
           "formula": null,
-          "DataRequest": {
+          "DataRequests": [{
             "headers": {},
             "body": "null",
             "conditions": null,
@@ -723,7 +723,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
             "offset": "offset",
             "paginationField": "paging.next",
             "template": "url"
-          },
+          }],
         }
       ]
     }

@@ -91,7 +91,7 @@ const template = (templateData, dashboardOrder = 0) => {
             "formula": null,
             "groupBy": null,
             "sort": null,
-            "DataRequest": {
+            "DataRequests": [{
               "headers": {},
               "body": "null",
               "conditions": null,
@@ -106,7 +106,7 @@ const template = (templateData, dashboardOrder = 0) => {
               "offset": "pagination[page]",
               "paginationField": null,
               "template": "pages"
-            },
+            }],
           }
         ],
         "tid": 1
@@ -159,7 +159,7 @@ const template = (templateData, dashboardOrder = 0) => {
             "formula": null,
             "groupBy": null,
             "sort": null,
-            "DataRequest": {
+            "DataRequests": [{
               "headers": {},
               "body": "null",
               "conditions": null,
@@ -174,7 +174,7 @@ const template = (templateData, dashboardOrder = 0) => {
               "offset": "pagination.page",
               "paginationField": null,
               "template": "pages"
-            },
+            }],
           }
         ],
         "tid": 2
@@ -227,7 +227,7 @@ const template = (templateData, dashboardOrder = 0) => {
             "formula": null,
             "groupBy": null,
             "sort": null,
-            "DataRequest": {
+            "DataRequests": [{
               "headers": {},
               "body": "null",
               "conditions": null,
@@ -242,7 +242,7 @@ const template = (templateData, dashboardOrder = 0) => {
               "offset": "pagination[page]",
               "paginationField": null,
               "template": "pages"
-            },
+            }],
           }
         ],
         "tid": 3
@@ -295,7 +295,7 @@ const template = (templateData, dashboardOrder = 0) => {
             "formula": null,
             "groupBy": null,
             "sort": null,
-            "DataRequest": {
+            "DataRequests": [{
               "headers": {},
               "body": "null",
               "conditions": null,
@@ -310,7 +310,7 @@ const template = (templateData, dashboardOrder = 0) => {
               "offset": "pagination[page]",
               "paginationField": null,
               "template": "pages"
-            },
+            }],
           }
         ],
         "tid": 4
