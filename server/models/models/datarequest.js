@@ -23,6 +23,15 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "cascade",
       },
     },
+    connection_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      reference: {
+        model: "Connection",
+        key: "id",
+        onDelete: "cascade",
+      },
+    },
     method: {
       type: DataTypes.STRING,
     },
@@ -117,6 +126,7 @@ module.exports = (sequelize, DataTypes) => {
 
   DataRequest.associate = (models) => {
     models.DataRequest.belongsTo(models.Dataset, { foreignKey: "dataset_id" });
+    models.DataRequest.belongsTo(models.Connection, { foreignKey: "connection_id" });
   };
 
   return DataRequest;

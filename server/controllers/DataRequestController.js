@@ -16,7 +16,7 @@ class RequestController {
         return db.DataRequest.create(data);
       })
       .then((dataRequest) => {
-        return db.DataRequest.findByPk(dataRequest.id);
+        return this.findById(dataRequest.id);
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -24,7 +24,10 @@ class RequestController {
   }
 
   findById(id) {
-    return db.DataRequest.findByPk(id)
+    return db.DataRequest.findOne({
+      where: { id },
+      include: [{ model: db.Connection, attributes: ["id", "type"] }],
+    })
       .then((dataRequest) => {
         if (!dataRequest) {
           return new Promise((resolve, reject) => reject(new Error(404)));
@@ -37,7 +40,10 @@ class RequestController {
   }
 
   findByChart(chartId) {
-    return db.DataRequest.findOne({ where: { chart_id: chartId } })
+    return db.DataRequest.findOne({
+      where: { chart_id: chartId },
+      include: [{ model: db.Connection, attributes: ["id", "type", "host"] }]
+    })
       .then((dataRequest) => {
         if (!dataRequest) {
           return new Promise((resolve, reject) => reject(new Error(404)));
@@ -50,7 +56,10 @@ class RequestController {
   }
 
   findByDataset(datasetId) {
-    return db.DataRequest.findAll({ where: { dataset_id: datasetId } })
+    return db.DataRequest.findAll({
+      where: { dataset_id: datasetId },
+      include: [{ model: db.Connection, attributes: ["id", "type", "host"] }]
+    })
       .then((dataRequests) => {
         if (!dataRequests || dataRequests.length === 0) {
           return new Promise((resolve, reject) => reject(new Error(404)));
@@ -67,7 +76,7 @@ class RequestController {
       where: { id },
     })
       .then(() => {
-        return db.DataRequest.findByPk(id);
+        return this.findById(id);
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
