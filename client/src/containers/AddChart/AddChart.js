@@ -312,7 +312,7 @@ function AddChart(props) {
 
     // check if all datasets are configured properly
     const datasetsNotConfigured = datasets.filter((dataset) => {
-      if (!dataset.xAxis || !dataset.yAxis || !dataset.connection_id) return true;
+      if (!dataset.xAxis || !dataset.yAxis) return true;
 
       return false;
     });
@@ -704,21 +704,22 @@ function AddChart(props) {
                     </Button>
                   </div>
                   <div style={{ display: "flex", "flexDirection": "row", justifyContent: "flex-end" }}>
-                    <Tooltip content={!arrangeMode ? "Arrange datasets" : "Save arrangement"} placement="leftStart">
-                      <Button
-                        onClick={() => {
-                          if (!arrangeMode) setArrangeMode(true);
-                          else _onSaveArrangement();
-                        }}
-                        icon={arrangeMode && arrangementLoading
-                          ? <Loading type="spinner" />
-                          : arrangeMode && !arrangementLoading
-                            ? <TickSquare /> : <Swap />}
-                        auto
-                        color={arrangeMode ? "success" : "primary"}
-                        light
-                      />
-                    </Tooltip>
+                    <Button
+                      onClick={() => {
+                        if (!arrangeMode) setArrangeMode(true);
+                        else _onSaveArrangement();
+                      }}
+                      icon={arrangeMode && arrangementLoading
+                        ? <Loading type="spinner" />
+                        : arrangeMode && !arrangementLoading
+                          ? <TickSquare /> : <Swap set="light" />}
+                      auto
+                      color={arrangeMode ? "success" : "primary"}
+                      light
+                    >
+                      {!arrangeMode && "Arrange datasets"}
+                      {arrangeMode && "Save"}
+                    </Button>
                     {arrangeMode && (
                       <>
                         <Tooltip content="Cancel arrangement" placement="leftStart">

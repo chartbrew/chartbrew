@@ -6,6 +6,7 @@ export const FETCHING_DATA_REQUEST = "FETCHING_DATA_REQUEST";
 export const FETCH_DATA_REQUEST_SUCCESS = "FETCH_DATA_REQUEST_SUCCESS";
 export const FETCH_DATA_REQUEST_FAIL = "FETCH_DATA_REQUEST_FAIL";
 export const FETCH_CHART_DATA_REQUESTS = "FETCH_CHART_DATA_REQUESTS";
+export const DATA_REQUEST_DELETED = "DATA_REQUEST_DELETED";
 
 export function getDataRequestByChart(projectId, chartId) {
   return (dispatch) => {
@@ -127,6 +128,37 @@ export function updateDataRequest(projectId, chartId, drId, data) {
       .then((dataRequest) => {
         dispatch({ type: FETCH_DATA_REQUEST_SUCCESS, dataRequest });
         return Promise.resolve(dataRequest);
+      })
+      .catch((err) => {
+        dispatch({ type: FETCH_DATA_REQUEST_FAIL });
+        return Promise.reject(err);
+      });
+  };
+}
+
+export function deleteDataRequest(projectId, chartId, drId) {
+  return (dispatch) => {
+    const token = cookie.load("brewToken");
+    const url = `${API_HOST}/project/${projectId}/chart/${chartId}/dataRequest/${drId}`;
+    const method = "DELETE";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`,
+    });
+
+    dispatch({ type: FETCHING_DATA_REQUEST });
+    return fetch(url, { method, headers })
+      .then((response) => {
+        if (!response.ok) {
+          dispatch(addError(response.status, "Could not delete the Data Request"));
+          throw new Error(response.status);
+        }
+
+        return response.json();
+      })
+      .then((dataRequest) => {
+        dispatch({ type: DATA_REQUEST_DELETED, id: drId });
+        return dataRequest;
       })
       .catch((err) => {
         dispatch({ type: FETCH_DATA_REQUEST_FAIL });

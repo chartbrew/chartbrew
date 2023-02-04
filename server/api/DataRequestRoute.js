@@ -182,6 +182,32 @@ module.exports = (app) => {
   });
   // -------------------------------------------------
 
+  /*
+  ** Route to delete a Data Request by ID
+  */
+  app.delete(`${root}/:id`, verifyToken, (req, res) => {
+    return checkAccess(req)
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).deleteAny("dataRequest");
+        if (!permission.granted) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
+        return dataRequestController.delete(req.params.id);
+      })
+      .then((dataRequest) => {
+        return res.status(200).send(dataRequest);
+      })
+      .catch((error) => {
+        if (error.message === "401") {
+          return res.status(401).send({ error: "Not authorized" });
+        }
+
+        return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------------
+
   return (req, res, next) => {
     next();
   };

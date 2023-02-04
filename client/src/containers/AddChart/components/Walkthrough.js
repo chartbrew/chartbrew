@@ -108,11 +108,11 @@ const steps = {
             <Text color="black">
               {"You can always create new connections by clicking the "}
               <FaPlug />
-              {" button."}
+              {" option in the left sidebar."}
             </Text>
           </Row>
           <Row>
-            <Text color="black">{"Select one of your connections from the dropdown list to get started."}</Text>
+            <Text color="black">{"Click on the \"Get data\" button to get started."}</Text>
           </Row>
         </Container>
       ),

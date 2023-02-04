@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
@@ -6,11 +6,12 @@ import _ from "lodash";
 import { toast } from "react-toastify";
 import {
   Button, Container, Grid, Link, Loading, Modal, Row, Spacer, Text, Avatar,
-  useTheme,
-  Tooltip,
-  Card,
+  useTheme, Tooltip, Card, theme,
 } from "@nextui-org/react";
-import { Plus } from "react-iconly";
+import {
+  Chart,
+  Danger, Delete, Plus,
+} from "react-iconly";
 import moment from "moment";
 
 import ApiBuilder from "./ApiBuilder";
@@ -25,6 +26,7 @@ import {
   getDataRequestByDataset as getDataRequestByDatasetAction,
   createDataRequest as createDataRequestAction,
   updateDataRequest as updateDataRequestAction,
+  deleteDataRequest as deleteDataRequestAction,
 } from "../../../actions/dataRequest";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import connectionImages from "../../../config/connectionImages";
@@ -34,10 +36,11 @@ function DatarequestModal(props) {
   const {
     open, onClose, dataset, match, getDataRequestByDataset,
     createDataRequest, updateDataRequest, requests, changeTutorial, updateResult, chart,
-    connections,
+    connections, deleteDataRequest,
   } = props;
 
-  const [dataRequests, setDataRequests] = useState(null);
+  const [initialising, setInitialising] = useState(false);
+  const [dataRequests, setDataRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -50,13 +53,14 @@ function DatarequestModal(props) {
 
   useEffect(() => {
     if (!open) {
-      setDataRequests(null);
+      setDataRequests([]);
       return;
     }
-    let fetched = false;
+
+    setInitialising(true);
     getDataRequestByDataset(match.params.projectId, match.params.chartId, dataset.id)
       .then((drs) => {
-        fetched = true;
+        setInitialising(false);
         setDataRequests(drs);
         if (!selectedRequest) {
           setSelectedRequest(drs[0]);
@@ -67,26 +71,16 @@ function DatarequestModal(props) {
         }, 100);
       })
       .catch((err) => {
+        setInitialising(false);
         if (err && err.message === "404") {
-          return createDataRequest(match.params.projectId, match.params.chartId, {
-            dataset_id: dataset.id,
-          });
+          setCreateMode(true);
+          setSaved(true);
+          return true;
         }
         setError("Cannot fetch the data request configuration. Try to refresh the page.");
         return err;
-      })
-      .then((dr) => {
-        if (!fetched && dr) {
-          setDataRequests([dr]);
-          setTimeout(() => {
-            setSaved(true);
-          }, 100);
-        }
-      })
-      .catch(() => {
-        setError("Cannot fetch the data request configuration. Try to refresh the page.");
       });
-  }, [open, dataset]);
+  }, [open]);
 
   useEffect(() => {
     setSaved(false);
@@ -160,13 +154,14 @@ function DatarequestModal(props) {
     )
       .then((savedDr) => {
         setLoading(false);
-        setDataRequests(savedDr);
+        setSelectedRequest(savedDr);
 
         setTimeout(() => {
           setSaved(true);
         }, 100);
 
-        return savedDr;
+        // update the dataRequests array and replace the item
+        _updateDataRequest(savedDr);
       })
       .catch((e) => {
         setLoading(false);
@@ -175,8 +170,49 @@ function DatarequestModal(props) {
       });
   };
 
-  const _onCreateNewRequest = () => {
+  const _onCreateNewRequest = (connection) => {
+    return createDataRequest(match.params.projectId, match.params.chartId, {
+      dataset_id: dataset.id,
+      connection_id: connection.id,
+    })
+      .then((newDr) => {
+        setSelectedRequest(newDr);
+        setCreateMode(false);
+
+        // update the dataRequests array
+        const newDrArray = _.cloneDeep(dataRequests);
+        newDrArray.push(newDr);
+        setDataRequests(newDrArray);
+      })
+      .catch((e) => {
+        toast.error("Could not create connection. Please try again or get in touch with us.");
+        setError(e);
+        return e;
+      });
+  };
+
+  const _onSelectDataRequest = (dr) => {
+    setSelectedRequest(dr);
     setCreateMode(false);
+  };
+
+  const _onDeleteRequest = () => {
+    if (selectedRequest) {
+      setLoading(true);
+      deleteDataRequest(match.params.projectId, match.params.chartId, selectedRequest.id)
+        .then(() => {
+          setLoading(false);
+          // update the dataRequests array
+          const newDrArray = _.cloneDeep(dataRequests);
+          setDataRequests(newDrArray.filter((dr) => dr.id !== selectedRequest.id));
+          setSelectedRequest(newDrArray[0]);
+        })
+        .catch((e) => {
+          setLoading(false);
+          setError(e);
+          return e;
+        });
+    }
   };
 
   return (
@@ -190,7 +226,7 @@ function DatarequestModal(props) {
         <Text h4>{"Configure your dataset"}</Text>
       </Modal.Header>
       <Modal.Body>
-        {!dataRequests && (
+        {initialising && (
           <Container>
             <Spacer y={4} />
             <Row align="center" justify="center">
@@ -204,17 +240,38 @@ function DatarequestModal(props) {
         )}
         <Grid.Container>
           <Grid xs={12} sm={0.5} direction="column">
-            {selectedRequest && dataRequests && dataRequests.map((dr) => (
-              <Avatar
-                key={dr.id}
-                bordered
-                squared
-                src={connectionImages(isDark)[dr.Connection.type]}
-                size="lg"
-                color={dr.id === selectedRequest.id ? "gradient" : "default"}
-              />
+            {selectedRequest && (
+              <>
+                <Tooltip content="Join settings" css={{ zIndex: 99999 }} placement="rightStart">
+                  <Link onClick={() => {}} css={{ cursor: "pointer" }}>
+                    <Avatar
+                      icon={<Chart primaryColor={primaryTransparent(1)} />}
+                      bordered
+                      squared
+                      size="lg"
+                      css={{ cursor: "pointer" }}
+                    />
+                  </Link>
+                </Tooltip>
+                <Spacer y={1} />
+              </>
+            )}
+            {dataRequests.map((dr) => (
+              <>
+                <Avatar
+                  key={dr.id}
+                  bordered
+                  squared
+                  src={dr.Connection ? connectionImages(isDark)[dr.Connection.type] : null}
+                  icon={!dr.Connection ? <Danger /> : null}
+                  size="lg"
+                  color={dr.id === selectedRequest?.id ? "gradient" : "default"}
+                  onClick={() => _onSelectDataRequest(dr)}
+                />
+                <Spacer y={0.3} />
+              </>
             ))}
-            <Spacer y={0.3} />
+            <Spacer y={0.7} />
             <Tooltip content="Join with a new dataset" css={{ zIndex: 99999 }} placement="rightStart">
               <Link onClick={() => setCreateMode(true)} css={{ cursor: "pointer" }}>
                 <Avatar
@@ -226,79 +283,100 @@ function DatarequestModal(props) {
                 />
               </Link>
             </Tooltip>
+            {selectedRequest && (
+              <>
+                <Spacer y={1} />
+                <Tooltip content={`Delete currently selected ${selectedRequest.Connection.type} request`} css={{ zIndex: 99999 }} placement="rightStart">
+                  <Link css={{ cursor: "pointer" }}>
+                    <Avatar
+                      icon={<Delete primaryColor={theme.colors.error.value} />}
+                      bordered
+                      squared
+                      size="lg"
+                      css={{ cursor: "pointer" }}
+                      onClick={_onDeleteRequest}
+                    />
+                  </Link>
+                </Tooltip>
+              </>
+            )}
           </Grid>
-          {!createMode && selectedRequest?.Connection && (
+          {!createMode && selectedRequest && (
             <Grid xs={12} sm={11.5}>
-              {selectedRequest.Connection.type === "api" && selectedRequest && (
-                <ApiBuilder
-                  dataset={dataset}
-                  dataRequest={selectedRequest}
-                  connection={selectedRequest.Connection}
-                  onChangeRequest={_updateDataRequest}
-                  onSave={_onSaveRequest}
-                  exploreData={result && JSON.stringify(result.data, null, 2)}
-                  chart={chart}
-                />
-              )}
-              {(selectedRequest.Connection.type === "mysql" || selectedRequest.Connection.type === "postgres") && selectedRequest && (
-                <SqlBuilder
-                  dataset={dataset}
-                  dataRequest={selectedRequest}
-                  connection={selectedRequest.Connection}
-                  onChangeRequest={_updateDataRequest}
-                  onSave={_onSaveRequest}
-                  exploreData={result && JSON.stringify(result.data, null, 2)}
-                />
-              )}
-              {selectedRequest.Connection.type === "mongodb" && selectedRequest && (
-                <MongoQueryBuilder
-                  dataset={dataset}
-                  dataRequest={selectedRequest}
-                  onChangeRequest={_updateDataRequest}
-                  onSave={_onSaveRequest}
-                  exploreData={result && JSON.stringify(result.data, null, 2)}
-                />
-              )}
-              {selectedRequest.Connection.type === "realtimedb" && selectedRequest && (
-                <RealtimeDbBuilder
-                  dataset={dataset}
-                  dataRequest={selectedRequest}
-                  connection={selectedRequest.Connection}
-                  onChangeRequest={_updateDataRequest}
-                  onSave={_onSaveRequest}
-                  exploreData={result && JSON.stringify(result.data, null, 2)}
-                />
-              )}
-              {selectedRequest.Connection.type === "firestore" && selectedRequest && (
-                <FirestoreBuilder
-                  dataset={dataset}
-                  dataRequest={selectedRequest}
-                  connection={selectedRequest.Connection}
-                  onChangeRequest={_updateDataRequest}
-                  onSave={_onSaveRequest}
-                  exploreData={result && JSON.stringify(result.data, null, 2)}
-                />
-              )}
-              {selectedRequest.Connection.type === "googleAnalytics" && selectedRequest && (
-                <GaBuilder
-                  dataset={dataset}
-                  dataRequest={selectedRequest}
-                  connection={selectedRequest.Connection}
-                  onChangeRequest={_updateDataRequest}
-                  onSave={_onSaveRequest}
-                  exploreData={result && JSON.stringify(result.data, null, 2)}
-                />
-              )}
-              {selectedRequest.Connection.type === "customerio" && selectedRequest && (
-                <CustomerioBuilder
-                  dataset={dataset}
-                  dataRequest={selectedRequest}
-                  connection={selectedRequest.Connection}
-                  onChangeRequest={_updateDataRequest}
-                  onSave={_onSaveRequest}
-                  exploreData={result && JSON.stringify(result.data, null, 2)}
-                />
-              )}
+              {dataRequests.map((dr) => (
+                <Fragment key={dr.id}>
+                  {selectedRequest.Connection.type === "api" && selectedRequest.id === dr.id && (
+                    <ApiBuilder
+                      dataset={dataset}
+                      dataRequest={dr}
+                      connection={dr.Connection}
+                      onChangeRequest={_updateDataRequest}
+                      onSave={_onSaveRequest}
+                      exploreData={result && JSON.stringify(result.data, null, 2)}
+                      chart={chart}
+                    />
+                  )}
+                  {(selectedRequest.Connection.type === "mysql" || selectedRequest.Connection.type === "postgres") && selectedRequest.id === dr.id && (
+                    <SqlBuilder
+                      dataset={dataset}
+                      dataRequest={dr}
+                      connection={dr.Connection}
+                      onChangeRequest={_updateDataRequest}
+                      onSave={_onSaveRequest}
+                      exploreData={result && JSON.stringify(result.data, null, 2)}
+                    />
+                  )}
+                  {selectedRequest.Connection.type === "mongodb" && selectedRequest.id === dr.id && (
+                    <MongoQueryBuilder
+                      dataset={dataset}
+                      dataRequest={dr}
+                      onChangeRequest={_updateDataRequest}
+                      onSave={_onSaveRequest}
+                      exploreData={result && JSON.stringify(result.data, null, 2)}
+                    />
+                  )}
+                  {selectedRequest.Connection.type === "realtimedb" && selectedRequest.id === dr.id && (
+                    <RealtimeDbBuilder
+                      dataset={dataset}
+                      dataRequest={dr}
+                      connection={dr.Connection}
+                      onChangeRequest={_updateDataRequest}
+                      onSave={_onSaveRequest}
+                      exploreData={result && JSON.stringify(result.data, null, 2)}
+                    />
+                  )}
+                  {selectedRequest.Connection.type === "firestore" && selectedRequest.id === dr.id && (
+                    <FirestoreBuilder
+                      dataset={dataset}
+                      dataRequest={dr}
+                      connection={dr.Connection}
+                      onChangeRequest={_updateDataRequest}
+                      onSave={_onSaveRequest}
+                      exploreData={result && JSON.stringify(result.data, null, 2)}
+                    />
+                  )}
+                  {selectedRequest.Connection.type === "googleAnalytics" && selectedRequest.id === dr.id && (
+                    <GaBuilder
+                      dataset={dataset}
+                      dataRequest={dr}
+                      connection={dr.Connection}
+                      onChangeRequest={_updateDataRequest}
+                      onSave={_onSaveRequest}
+                      exploreData={result && JSON.stringify(result.data, null, 2)}
+                    />
+                  )}
+                  {selectedRequest.Connection.type === "customerio" && selectedRequest.id === dr.id && (
+                    <CustomerioBuilder
+                      dataset={dataset}
+                      dataRequest={dr}
+                      connection={dr.Connection}
+                      onChangeRequest={_updateDataRequest}
+                      onSave={_onSaveRequest}
+                      exploreData={result && JSON.stringify(result.data, null, 2)}
+                    />
+                  )}
+                </Fragment>
+              ))}
             </Grid>
           )}
           {createMode && (
@@ -311,7 +389,7 @@ function DatarequestModal(props) {
               <Grid.Container gap={2}>
                 {connections.map((c) => {
                   return (
-                    <Grid xs={12} sm={3} md={4} key={c.id}>
+                    <Grid xs={12} sm={6} md={4} key={c.id}>
                       <Card
                         variant="bordered"
                         isPressable
@@ -324,9 +402,8 @@ function DatarequestModal(props) {
                             <Row align="center" justify="space-between">
                               <Text h4>{c.name}</Text>
                               <Spacer x={0.2} />
-                              <img
-                                width="50px"
-                                height="50px"
+                              <Avatar
+                                squared
                                 src={connectionImages(isDark)[c.type]}
                                 alt={`${c.type} logo`}
                               />
@@ -362,16 +439,18 @@ function DatarequestModal(props) {
         </Grid.Container>
       </Modal.Body>
       <Modal.Footer>
-        <Button
-          flat
-          color={saved ? "success" : "secondary"}
-          onClick={() => _onSaveRequest()}
-          disabled={loading}
-          auto
-        >
-          {saved && !loading ? "Saved" : "Save"}
-          {loading && <Loading type="points" />}
-        </Button>
+        {dataRequests && dataRequests.length > 0 && (
+          <Button
+            flat
+            color={saved ? "success" : "secondary"}
+            onClick={() => _onSaveRequest()}
+            disabled={loading}
+            auto
+          >
+            {saved && !loading ? "Saved" : "Save"}
+            {loading && <Loading type="points" />}
+          </Button>
+        )}
         {closeTrigger && <Text small>Are you sure? Your settings are not saved</Text>}
         <Button
           flat
@@ -403,6 +482,7 @@ DatarequestModal.propTypes = {
   updateResult: PropTypes.func.isRequired,
   chart: PropTypes.object.isRequired,
   connections: PropTypes.array.isRequired,
+  deleteDataRequest: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -424,6 +504,9 @@ const mapDispatchToProps = (dispatch) => {
       return dispatch(updateDataRequestAction(projectId, chartId, drId, data));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
+    deleteDataRequest: (projectId, chartId, drId) => {
+      return dispatch(deleteDataRequestAction(projectId, chartId, drId));
+    },
   };
 };
 

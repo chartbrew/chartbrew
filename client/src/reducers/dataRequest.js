@@ -3,6 +3,7 @@ import {
   FETCH_DATA_REQUEST_FAIL,
   FETCH_CHART_DATA_REQUESTS,
   FETCH_DATA_REQUEST_SUCCESS,
+  DATA_REQUEST_DELETED,
 } from "../actions/dataRequest";
 
 export default function dataset(state = {
@@ -34,6 +35,12 @@ export default function dataset(state = {
       return { ...state, loading: false, data: newData };
     case FETCH_DATA_REQUEST_FAIL:
       return { ...state, loading: false, error: true };
+    case DATA_REQUEST_DELETED:
+      return {
+        ...state,
+        loading: false,
+        data: state.data.filter((dataRequest) => dataRequest.id !== action.id),
+      };
     default:
       return state;
   }

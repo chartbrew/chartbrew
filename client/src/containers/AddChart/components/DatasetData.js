@@ -16,7 +16,6 @@ import {
   Button, Collapse, Container, Dropdown, Grid, Input, Link, Loading,
   Popover, Row, Spacer, Text, Tooltip, Divider, Badge, Switch, Modal, Checkbox,
 } from "@nextui-org/react";
-import { HiRefresh } from "react-icons/hi";
 import { TbDragDrop } from "react-icons/tb";
 import {
   CaretDown, CaretUp, ChevronRight, CloseSquare, Filter, Hide,
@@ -47,12 +46,10 @@ function formatColumnsForOrdering(columns) {
 
 function DatasetData(props) {
   const {
-    dataset, requestResult, onUpdate, runRequest, match, chartType, onNoRequest, chartData,
+    dataset, requestResult, onUpdate, match, chartType, chartData,
     dataLoading,
   } = props;
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
   const [fieldOptions, setFieldOptions] = useState([]);
   const [conditions, setConditions] = useState([]);
   const [formula, setFormula] = useState("");
@@ -359,23 +356,6 @@ function DatasetData(props) {
     onUpdate({ formula });
   };
 
-  const _onRefreshData = () => {
-    setLoading(true);
-    return runRequest(match.params.projectId, match.params.chartId, dataset.id)
-      .then(() => {
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (err.statusCode === 404) {
-          setError("Click on 'Make request' to create a new configuration first.");
-          onNoRequest();
-        } else {
-          setError(err.statusText || err);
-        }
-        setLoading(false);
-      });
-  };
-
   const _onExcludeField = (field) => {
     const excludedFields = dataset.excludedFields || [];
     const newExcludedFields = [...excludedFields, field];
@@ -578,36 +558,12 @@ function DatasetData(props) {
     setFieldFormatConfig(null);
   };
 
-  if ((!fieldOptions || !dataset.fieldsSchema) && dataset.connection_id) {
-    return (
-      <Container>
-        <Row>
-          <Button
-            ghost
-            iconRight={<HiRefresh />}
-            onClick={_onRefreshData}
-            disabled={loading}
-            auto
-          >
-            {loading ? <Loading type="points" /> : "Fetch the data"}
-          </Button>
-        </Row>
-        <Spacer y={1} />
-        {error && (
-          <Row>
-            <Text i css={{ color: "$error" }}>{error}</Text>
-          </Row>
-        )}
-      </Container>
-    );
-  }
-
-  if (!dataset.connection_id) {
+  if ((!fieldOptions || !dataset.fieldsSchema)) {
     return (
       <Container>
         <Row>
           <Text h4>
-            {"Connect your dataset and fetch some data above."}
+            {"Click on the \"Get data\" button above to get started."}
           </Text>
         </Row>
       </Container>
@@ -1463,8 +1419,6 @@ DatasetData.propTypes = {
   chartType: PropTypes.string,
   chartData: PropTypes.object,
   onUpdate: PropTypes.func.isRequired,
-  runRequest: PropTypes.func.isRequired,
-  onNoRequest: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   dataLoading: PropTypes.bool,
 };

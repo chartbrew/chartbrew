@@ -5,14 +5,12 @@ import { withRouter } from "react-router";
 import _ from "lodash";
 import moment from "moment";
 import {
-  Grid, Tooltip, Button, Spacer, Dropdown, Input, Loading, Link, Container, Text, Modal, Image, Row,
-  Divider, useTheme,
+  Grid, Tooltip, Button, Spacer, Input, Loading, Link, Text, Modal,
+  Divider,
 } from "@nextui-org/react";
-import { ArrowDownSquare, ChevronDown } from "react-iconly";
-import { FaPlug } from "react-icons/fa";
+import { ArrowDownSquare, Edit } from "react-iconly";
 
 import { chartColors, primary } from "../../../config/colors";
-import connectionImages from "../../../config/connectionImages";
 import DatarequestModal from "./DatarequestModal";
 import DatasetAppearance from "./DatasetAppearance";
 import DatasetData from "./DatasetData";
@@ -38,41 +36,21 @@ function replaceEmptyColors(colors) {
 
 function Dataset(props) {
   const {
-    dataset, connections, onUpdate, onDelete, chart, match, onRefresh,
+    dataset, onUpdate, onDelete, chart, onRefresh,
     changeTutorial, onRefreshPreview, loading,
   } = props;
 
   const [newDataset, setNewDataset] = useState(dataset);
-  const [dropdownConfig, setDropdownConfig] = useState([]);
   const [configOpened, setConfigOpened] = useState(false);
-  const [saveRequired, setSaveRequired] = useState(false);
   const [shouldSave, setShouldSave] = useState(null);
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [dataItems, setDataItems] = useState([]);
   const [menuItem, setMenuItem] = useState("data");
   const [requestResult, setRequestResult] = useState(null);
-
-  const { isDark } = useTheme();
-
-  useEffect(() => {
-    const config = [];
-    connections.map((connection) => {
-      const image = connectionImages(isDark)[connection.type];
-
-      config.push({
-        key: connection.id,
-        value: connection.id,
-        text: connection.name,
-        image: {
-          src: image,
-        }
-      });
-
-      return connection;
-    });
-    setDropdownConfig(config);
-  }, [connections, isDark]);
+  const [editDatasetName, setEditDatasetName] = useState(false);
+  const [datasetName, setDatasetName] = useState(dataset.legend);
+  const [savingDatasetName, setSavingDatasetName] = useState(false);
 
   // update the dataset with the active one
   useEffect(() => {
@@ -82,11 +60,8 @@ function Dataset(props) {
   // update the dataset prop based on new changes
   useEffect(() => {
     if (_.isEqual(dataset, newDataset)) {
-      setSaveRequired(false);
       return;
     }
-
-    setSaveRequired(true);
 
     if (dataset.legend !== newDataset.legend) {
       if (shouldSave === null) {
@@ -164,10 +139,6 @@ function Dataset(props) {
     }
   }, [dataItems]);
 
-  const _onChangeConnection = (key) => {
-    onUpdate({ connection_id: key });
-  };
-
   const _openConfigModal = () => {
     setConfigOpened(true);
   };
@@ -178,10 +149,6 @@ function Dataset(props) {
     }
     setConfigOpened(false);
     onRefreshPreview();
-  };
-
-  const _onSaveDataset = () => {
-    onUpdate(newDataset);
   };
 
   const _onDeleteDataset = () => {
@@ -198,27 +165,18 @@ function Dataset(props) {
       });
   };
 
-  const _onChangeLegend = (e) => {
-    if (e.target.value && e.target.value.length > 0) {
-      setNewDataset({ ...newDataset, legend: e.target.value });
+  const _onChangeLegend = () => {
+    if (datasetName) {
+      setSavingDatasetName(true);
+      onUpdate({ ...newDataset, legend: datasetName })
+        .then(() => {
+          setSavingDatasetName(false);
+          setEditDatasetName(false);
+        })
+        .catch(() => {
+          setSavingDatasetName(false);
+        });
     }
-  };
-
-  const _getActiveConnection = () => {
-    let activeConnection;
-    connections.map((connection) => {
-      if (newDataset.connection_id === connection.id) {
-        activeConnection = connection;
-      }
-
-      return connection;
-    });
-
-    return activeConnection;
-  };
-
-  const _onManageConnections = () => {
-    return `/${match.params.teamId}/${match.params.projectId}/connections`;
   };
 
   const _updateColors = (data, forceUpdate) => {
@@ -237,109 +195,64 @@ function Dataset(props) {
   return (
     <div style={styles.container}>
       <Grid.Container gap={1}>
-        <Grid xs={12} sm={6} md={6}>
-          <Input
-            placeholder="Enter the dataset name"
-            value={newDataset.legend}
-            onChange={_onChangeLegend}
-            bordered
-            fullWidth
+        <Grid xs={12}>
+          <Divider css={{ ml: 20, mr: 20 }} />
+        </Grid>
+        <Grid xs={12} alignItems="center" alignContent="center">
+          <Text b size={20}>{newDataset.legend}</Text>
+          <Button
+            light
+            icon={<Edit />}
+            onClick={() => setEditDatasetName(!editDatasetName)}
+            auto
+            color={"primary"}
+            ripple={false}
           />
         </Grid>
-        <Grid xs={12} sm={6} md={6}>
-          <Button
-            color={saveRequired ? "primary" : "success"}
-            onClick={_onSaveDataset}
-            disabled={!saveRequired}
-            auto
-          >
-            {saveRequired ? "Save" : "Saved"}
-          </Button>
-          <Spacer x={0.2} />
-          <div style={{ width: 100 }}>
-            <Tooltip content="Remove dataset">
-              <Button
-                flat
-                color="error"
-                onClick={() => setDeleteModal(true)}
-                auto
-              >
-                {"Remove"}
-              </Button>
-            </Tooltip>
-          </div>
-        </Grid>
-        <Grid xs={12} sm={6} md={6} className="dataset-manage-tut">
-          <Dropdown isDisabled={connections.length < 1} isDismissable={false}>
-            <Dropdown.Trigger type="text">
-              <Input
-                type="text"
-                placeholder="Select a connection"
-                value={
-                  (newDataset.connection_id
-                  && dropdownConfig.length > 0
-                  && dropdownConfig.find(
-                    (c) => c.value === parseInt(newDataset.connection_id, 10)
-                  )?.text) || "Select a connection"
-                }
-                disabled={connections.length < 1}
-                fullWidth
-                bordered
-                contentRight={loading ? <Loading type="spinner" /> : <ChevronDown />}
-                contentLeft={
-                  dropdownConfig.length > 0
-                  && newDataset.connection_id
-                  && (
-                    <Image
-                      src={dropdownConfig.find(
-                        (c) => c.value === parseInt(newDataset.connection_id, 10)
-                      )?.image?.src}
-                      width={30}
-                      height={30}
-                      alt="Selected connection"
-                    />
-                  )
-                }
-              />
-            </Dropdown.Trigger>
-            <Dropdown.Menu
-              onAction={_onChangeConnection}
-              selectedKeys={[newDataset.connection_id]}
-              selectionMode="single"
+        {editDatasetName && (
+          <Grid xs={12} sm={6} md={6}>
+            <Input
+              placeholder="Enter a name for the dataset"
+              value={datasetName || ""}
+              onChange={(e) => setDatasetName(e.target.value)}
+              bordered
+              fullWidth
+            />
+          </Grid>
+        )}
+        {editDatasetName && (
+          <Grid xs={12} sm={6} md={6}>
+            <Button
+              onClick={_onChangeLegend}
+              auto
+              disabled={!datasetName || savingDatasetName}
+              color="success"
             >
-              {dropdownConfig.map((option) => (
-                <Dropdown.Item key={option.value}>
-                  <Container fluid css={{ p: 0, m: 0 }}>
-                    <Row align="center" css={{ p: 0, m: 0 }}>
-                      <img src={option.image.src} width={30} height={30} alt="Connection" />
-                      <Spacer x={0.2} />
-                      <Text>{option.text}</Text>
-                    </Row>
-                  </Container>
-                </Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
-        </Grid>
-        <Grid xs={12} sm={6} md={6} alignItems="center">
+              {savingDatasetName ? <Loading type="spinner" /> : "Save"}
+            </Button>
+          </Grid>
+        )}
+        <Grid xs={12} sm={6} md={6} className="dataset-manage-tut">
           <Button
             iconRight={<ArrowDownSquare />}
-            disabled={!newDataset.connection_id}
             onClick={_openConfigModal}
             auto
+            css={{ width: "100%" }}
+            shadow
           >
             Get data
           </Button>
-          <Spacer x={0.5} />
-          <Tooltip content="Go to the connections page">
-            <Link
-              href={_onManageConnections()}
-              target="_blank"
-              rel="noopener noreferrer"
-              color="primary"
+        </Grid>
+        <Grid xs={12} sm={6} md={6} alignItems="center">
+          <Tooltip content="Remove dataset">
+            <Button
+              flat
+              color="error"
+              onClick={() => setDeleteModal(true)}
+              auto
             >
-              <FaPlug size={24} />
-            </Link>
+              {"Remove"}
+            </Button>
           </Tooltip>
         </Grid>
         <Grid xs={12}>
@@ -421,16 +334,13 @@ function Dataset(props) {
         )}
       </Grid.Container>
 
-      {newDataset.connection_id && _getActiveConnection() && (
-        <DatarequestModal
-          dataset={dataset}
-          connection={_getActiveConnection()}
-          open={configOpened}
-          onClose={_onCloseConfig}
-          updateResult={_onNewResult}
-          chart={chart}
-        />
-      )}
+      <DatarequestModal
+        dataset={dataset}
+        open={configOpened}
+        onClose={_onCloseConfig}
+        updateResult={_onNewResult}
+        chart={chart}
+      />
 
       {/* DELETE CONFIRMATION MODAL */}
       <Modal open={deleteModal} basic size="small" onClose={() => setDeleteModal(false)}>
@@ -467,11 +377,9 @@ function Dataset(props) {
 
 Dataset.propTypes = {
   dataset: PropTypes.object.isRequired,
-  connections: PropTypes.array.isRequired,
   onUpdate: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   chart: PropTypes.object.isRequired,
-  match: PropTypes.object.isRequired,
   onRefresh: PropTypes.func.isRequired,
   changeTutorial: PropTypes.func.isRequired,
   onRefreshPreview: PropTypes.func.isRequired,
