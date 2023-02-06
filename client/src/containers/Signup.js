@@ -287,41 +287,39 @@ function Signup(props) {
             </div>
           </Container>
         </Grid>
-        {width > breakpoints.tablet && (
-          <Grid xs={12} sm={6}>
-            <div
-              style={sideHovered ? styles.sideBackground : styles.sideBackgroundBlurred}
-              onMouseEnter={() => setSideHovered(true)}
-              onMouseLeave={() => setSideHovered(false)}
-            />
-            <Container md style={styles.testimonialCard}>
-              <Card style={{ minWidth: 500, padding: 10 }}>
-                <Card.Header>
-                  <Avatar color="gradient" bordered squared size="lg" src={testimonialAvatar} alt="Fairchain testimonial" />
-                  <Grid.Container css={{ pl: "$6" }}>
-                    <Grid xs={12}>
-                      <Text size={20} b css={{ lineHeight: "$xs" }}>
-                        Schuyler
-                      </Text>
-                    </Grid>
-                    <Grid xs={12}>
-                      <Text css={{ color: "$accents8", flexDirection: "row", display: "flex" }}>
-                        {"Full-stack Developer at "}
-                        <Spacer x={0.2} />
-                        <LinkNext href="https://fairchain.art" rel="noopener noreferrer" target="_blank" color="secondary">
-                          {"Fairchain"}
-                        </LinkNext>
-                      </Text>
-                    </Grid>
-                  </Grid.Container>
-                </Card.Header>
-                <Card.Body>
-                  <i>{"\"Chartbrew has helped us move away from having to constantly update clunky Google-based charts, but what most impresses me is the responsiveness and the helpfulness of the people behind Chartbrew. Highly recommend!\""}</i>
-                </Card.Body>
-              </Card>
-            </Container>
-          </Grid>
-        )}
+        <Grid xs={12} sm={6}>
+          <div
+            style={sideHovered ? styles.sideBackground : styles.sideBackgroundBlurred}
+            onMouseEnter={() => setSideHovered(true)}
+            onMouseLeave={() => setSideHovered(false)}
+          />
+          <Container sm style={styles.testimonialCard} css={{ "@smMax": { display: "none" } }}>
+            <Card style={{ minWidth: 500, padding: 10 }}>
+              <Card.Header>
+                <Avatar color="gradient" bordered squared size="lg" src={testimonialAvatar} alt="Fairchain testimonial" />
+                <Grid.Container css={{ pl: "$6" }}>
+                  <Grid xs={12}>
+                    <Text size={20} b css={{ lineHeight: "$xs" }}>
+                      Schuyler
+                    </Text>
+                  </Grid>
+                  <Grid xs={12}>
+                    <Text css={{ color: "$accents8", flexDirection: "row", display: "flex" }}>
+                      {"Full-stack Developer at "}
+                      <Spacer x={0.2} />
+                      <LinkNext href="https://fairchain.art" rel="noopener noreferrer" target="_blank" color="secondary">
+                        {"Fairchain"}
+                      </LinkNext>
+                    </Text>
+                  </Grid>
+                </Grid.Container>
+              </Card.Header>
+              <Card.Body>
+                <i>{"\"Chartbrew has helped us move away from having to constantly update clunky Google-based charts, but what most impresses me is the responsiveness and the helpfulness of the people behind Chartbrew. Highly recommend!\""}</i>
+              </Card.Body>
+            </Card>
+          </Container>
+        </Grid>
       </Grid.Container>
     </div>
   );
@@ -395,6 +393,7 @@ const styles = {
     width: "100%",
     height: "100%",
     transition: "filter 1s ease",
+    position: "relative",
   },
   sideBackgroundBlurred: {
     backgroundImage: `url(${signupBackground})`,
@@ -403,6 +402,7 @@ const styles = {
     backgroundPosition: "top",
     width: "100%",
     height: "100%",
+    position: "relative",
     transition: "filter 1s ease",
   },
   mainGrid: (height) => ({
