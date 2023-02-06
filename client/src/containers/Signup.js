@@ -35,12 +35,6 @@ import {
 } from "../config/colors";
 import signupBackground from "../assets/signup_background.webp";
 
-const breakpoints = {
-  mobile: 0,
-  tablet: 768,
-  computer: 1024,
-};
-
 const testimonialAvatar = "https://cdn2.chartbrew.com/skyguy.webp";
 
 /*
@@ -60,7 +54,7 @@ function Signup(props) {
   const [signupError, setSignupError] = useState("");
   const [sideHovered, setSideHovered] = useState(false);
 
-  const { height, width } = useWindowSize();
+  const { height } = useWindowSize();
 
   useEffect(() => {
     document.addEventListener("oneaccount-authenticated", authenticateOneaccount);
