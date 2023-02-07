@@ -174,9 +174,10 @@ function ProjectBoard(props) {
             )} />
         </Switch>
       )}
-      <Navbar />
+
       {!isPrinting && (
         <>
+          <Navbar />
           <Media greaterThan="mobile">
             {/* extract the navbar height from here */}
             <div style={{ height: height - 50 }}>
