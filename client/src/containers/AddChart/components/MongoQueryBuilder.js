@@ -3,13 +3,13 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Button, Checkbox, Container, Grid, Input, Link, Loading,
+  Button, Checkbox, Container, Divider, Grid, Input, Link, Loading,
   Modal, Popover, Row, Spacer, Text, Tooltip, useTheme,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
 import {
-  ChevronRight, Edit, InfoCircle, Play, Plus, TickSquare
+  ChevronRight, Delete, Edit, InfoCircle, Play, Plus, TickSquare
 } from "react-iconly";
 
 import "ace-builds/src-min-noconflict/mode-javascript";
@@ -28,7 +28,7 @@ function MongoQueryBuilder(props) {
   const {
     createSavedQuery, match, updateSavedQuery, onChangeRequest,
     runRequest, onSave, dataset, dataRequest, exploreData,
-    changeTutorial,
+    changeTutorial, connection, onDelete,
   } = props;
 
   const [savedQuery, setSavedQuery] = useState(null);
@@ -44,6 +44,7 @@ function MongoQueryBuilder(props) {
     query: "collection('users').find()",
   });
   const [invalidateCache, setInvalidateCache] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
 
   const { isDark } = useTheme();
 
@@ -130,13 +131,57 @@ function MongoQueryBuilder(props) {
     });
   };
 
+  const _onSavePressed = () => {
+    setSaveLoading(true);
+    onSave(mongoRequest).then(() => {
+      setSaveLoading(false);
+    }).catch(() => {
+      setSaveLoading(false);
+    });
+  };
+
   return (
     <div style={styles.container}>
       <Grid.Container gap={1}>
         <Grid xs={12} sm={6}>
           <Container>
+            <Row justify="space-between" align="center">
+              <Text b size={22}>{connection.name}</Text>
+              <div>
+                <Row>
+                  <Button
+                    color="primary"
+                    auto
+                    size="sm"
+                    onClick={() => _onSavePressed()}
+                    disabled={saveLoading || testingQuery}
+                    flat
+                  >
+                    {(!saveLoading && !testingQuery) && "Save"}
+                    {(saveLoading || testingQuery) && <Loading type="spinner" />}
+                  </Button>
+                  <Spacer x={0.3} />
+                  <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
+                    <Button
+                      color="error"
+                      icon={<Delete />}
+                      auto
+                      size="sm"
+                      bordered
+                      css={{ minWidth: "fit-content" }}
+                      onClick={() => onDelete()}
+                    />
+                  </Tooltip>
+                </Row>
+              </div>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <Divider />
+            </Row>
+            <Spacer y={0.5} />
             <Row align="center">
-              <Text>
+              <Text b>
                 {"Enter your mongodb query here"}
               </Text>
               <Spacer x={0.2} />
@@ -155,6 +200,7 @@ function MongoQueryBuilder(props) {
                 <InfoCircle size="small" />
               </Tooltip>
             </Row>
+            <Spacer y={0.5} />
             <Row>
               <div style={{ width: "100%" }}>
                 <AceEditor
@@ -299,7 +345,7 @@ function MongoQueryBuilder(props) {
                     <Spacer y={1} />
                     <Row>
                       <Link href="https://docs.mongodb.com/manual/reference/operator/query-comparison/" target="_blank" rel="noopener noreferrer" css={{ ai: "center" }}>
-                        <div><ChevronRight /></div>
+                        <div><ChevronRight set="light" /></div>
                         <Spacer x={0.2} />
                         <Text color="primary">
                           {"Use a relevant condition for your query. For example, don't fetch all the documents if you know you are going to use just the recent ones."}
@@ -309,7 +355,7 @@ function MongoQueryBuilder(props) {
                     <Spacer y={0.5} />
                     <Row>
                       <Link as="a" href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only" target="_blank" rel="noopener noreferrer" css={{ ai: "center" }}>
-                        <div><ChevronRight /></div>
+                        <div><ChevronRight set="light" /></div>
                         <Spacer x={0.2} />
                         <Text color="primary">
                           {"Remove unwanted fields from the query payload if you know for sure that they won't help to generate the chart you have in mind."}
@@ -319,7 +365,7 @@ function MongoQueryBuilder(props) {
                     <Spacer y={0.5} />
                     <Row>
                       <Link as="a" href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only" target="_blank" rel="noopener noreferrer" css={{ ai: "center" }}>
-                        <div><ChevronRight /></div>
+                        <div><ChevronRight set="light" /></div>
                         <Spacer x={0.2} />
                         <Text color="primary">
                           {"If you store files encoded in base64, make sure you exclude them using the method above"}
@@ -396,6 +442,8 @@ MongoQueryBuilder.propTypes = {
   updateSavedQuery: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   changeTutorial: PropTypes.func.isRequired,
+  connection: PropTypes.object.isRequired,
+  onDelete: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = () => {

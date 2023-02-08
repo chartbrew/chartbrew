@@ -15,7 +15,7 @@ import { format, formatISO } from "date-fns";
 import { enGB } from "date-fns/locale";
 import { HiRefresh } from "react-icons/hi";
 import {
-  CloseSquare, Danger, InfoCircle, Play, Plus, Calendar as CalendarIcon, TickSquare,
+  CloseSquare, Danger, InfoCircle, Play, Plus, Calendar as CalendarIcon, TickSquare, Delete,
 } from "react-iconly";
 import { FaUndoAlt } from "react-icons/fa";
 
@@ -27,6 +27,7 @@ import {
   runRequest as runRequestAction,
 } from "../../../actions/dataset";
 import {
+  getConnection as getConnectionAction,
   testRequest as testRequestAction,
 } from "../../../actions/connection";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
@@ -107,12 +108,15 @@ function FirestoreBuilder(props) {
   const [showSubUI, setShowSubUI] = useState(false);
   const [indexUrl, setIndexUrl] = useState("");
   const [invalidateCache, setInvalidateCache] = useState(false);
+  const [fullConnection, setFullConnection] = useState({});
+  const [saveLoading, setSaveLoading] = useState(false);
 
   const { isDark } = useTheme();
 
   const {
     dataRequest, match, onChangeRequest, runRequest, dataset,
-    connection, onSave, requests, changeTutorial, testRequest, // eslint-disable-line
+    connection, onSave, requests, changeTutorial, testRequest,
+    onDelete, getConnection,
   } = props;
 
   // on init effect
@@ -160,7 +164,6 @@ function FirestoreBuilder(props) {
       }
 
       setFirestoreRequest(dataRequest);
-      _onFetchCollections();
 
       setTimeout(() => {
         changeTutorial("firestoreBuilder");
@@ -174,6 +177,14 @@ function FirestoreBuilder(props) {
 
   useEffect(() => {
     onChangeRequest(firestoreRequest);
+    if (connection?.id && !fullConnection?.id) {
+      getConnection(match.params.projectId, connection.id)
+        .then((data) => {
+          setFullConnection(data);
+          _onFetchCollections(data);
+        })
+        .catch(() => {});
+    }
   }, [firestoreRequest, connection]);
 
   useEffect(() => {
@@ -243,6 +254,15 @@ function FirestoreBuilder(props) {
     });
   };
 
+  const _onSavePressed = () => {
+    setSaveLoading(true);
+    onSave(firestoreRequest).then(() => {
+      setSaveLoading(false);
+    }).catch(() => {
+      setSaveLoading(false);
+    });
+  };
+
   const _onRunRequest = () => {
     setIndexUrl("");
     const useCache = !invalidateCache;
@@ -263,9 +283,9 @@ function FirestoreBuilder(props) {
       });
   };
 
-  const _onFetchCollections = () => {
+  const _onFetchCollections = (conn = fullConnection) => {
     setCollectionsLoading(true);
-    return testRequest(match.params.projectId, connection)
+    return testRequest(match.params.projectId, conn)
       .then((data) => {
         return data.json();
       })
@@ -435,6 +455,41 @@ function FirestoreBuilder(props) {
       <Grid.Container>
         <Grid xs={12} sm={6} md={showSubUI ? 4 : 6}>
           <Container>
+            <Row justify="space-between" align="center">
+              <Text b size={22}>{connection.name}</Text>
+              <div>
+                <Row>
+                  <Button
+                    color="primary"
+                    auto
+                    size="sm"
+                    onClick={() => _onSavePressed()}
+                    disabled={saveLoading || requestLoading}
+                    flat
+                  >
+                    {(!saveLoading && !requestLoading) && "Save"}
+                    {(saveLoading || requestLoading) && <Loading type="spinner" />}
+                  </Button>
+                  <Spacer x={0.3} />
+                  <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
+                    <Button
+                      color="error"
+                      icon={<Delete />}
+                      auto
+                      size="sm"
+                      bordered
+                      css={{ minWidth: "fit-content" }}
+                      onClick={() => onDelete()}
+                    />
+                  </Tooltip>
+                </Row>
+              </div>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <Divider />
+            </Row>
+            <Spacer y={0.5} />
             <Row>
               <Text b>Select one of your collections:</Text>
             </Row>
@@ -460,7 +515,7 @@ function FirestoreBuilder(props) {
               <Button
                 size="sm"
                 icon={<HiRefresh />}
-                onClick={_onFetchCollections}
+                onClick={() => _onFetchCollections()}
                 disabled={collectionsLoading}
                 auto
                 bordered
@@ -708,7 +763,7 @@ function Conditions(props) {
         </Row>
       )}
 
-      {conditions && conditions.map((condition, index) => {
+      {conditions && conditions.map((condition) => {
         return (
           <Fragment key={condition.id}>
             <Row align="center" wrap="wrap">
@@ -916,11 +971,10 @@ function Conditions(props) {
                   color="error"
                   onClick={() => onRemoveCondition(condition.id)}
                   size="sm"
-                  flat
+                  light
                   css={{ minWidth: "fit-content" }}
                 />
               </Tooltip>
-              <Spacer x={0.2} />
 
               {!condition.saved && (condition.value || condition.operator === "isNotNull" || condition.operator === "isNull" || (condition.values && condition.values.length > 0)) && (
                 <>
@@ -933,11 +987,10 @@ function Conditions(props) {
                       color="success"
                       onClick={() => onApplyCondition(condition.id)}
                       size="sm"
-                      flat
+                      light
                       css={{ minWidth: "fit-content" }}
                     />
                   </Tooltip>
-                  <Spacer x={0.2} />
                 </>
               )}
 
@@ -954,33 +1007,36 @@ function Conditions(props) {
                         color="warning"
                         onClick={() => onRevertCondition(condition.id)}
                         size="sm"
-                        flat
+                        light
                         css={{ minWidth: "fit-content" }}
                       />
                     </Tooltip>
-                    <Spacer x={0.2} />
                   </>
                 )}
-
-              {index === conditions.length - 1 && (
-                <Tooltip
-                  content="Add a new filter"
-                  css={{ zIndex: 10000 }}
-                >
-                  <Button
-                    icon={<Plus />}
-                    onClick={onAddCondition}
-                    size="sm"
-                    flat
-                    css={{ minWidth: "fit-content" }}
-                  />
-                </Tooltip>
-              )}
             </Row>
-            <Spacer y={0.2} />
+            <Spacer y={0.5} />
           </Fragment>
         );
       })}
+      <Row>
+        <Tooltip
+          content="Add a new filter"
+          css={{ zIndex: 10000 }}
+        >
+          <Button
+            icon={<Plus />}
+            onClick={onAddCondition}
+            size="sm"
+            light
+            auto
+            ripple={false}
+            css={{ minWidth: "fit-content" }}
+            color="primary"
+          >
+            {"Add a new filter"}
+          </Button>
+        </Tooltip>
+      </Row>
     </Container>
   );
 }
@@ -1023,6 +1079,8 @@ FirestoreBuilder.propTypes = {
   dataRequest: PropTypes.object,
   changeTutorial: PropTypes.func.isRequired,
   testRequest: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  getConnection: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -1038,6 +1096,9 @@ const mapDispatchToProps = (dispatch) => {
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
     testRequest: (projectId, data) => dispatch(testRequestAction(projectId, data)),
+    getConnection: (projectId, connectionId) => dispatch(
+      getConnectionAction(projectId, connectionId)
+    ),
   };
 };
 

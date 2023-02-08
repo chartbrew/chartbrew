@@ -11,8 +11,7 @@ import uuid from "uuid/v4";
 import _ from "lodash";
 import { toast } from "react-toastify";
 import {
-  ChevronDown,
-  CloseSquare, InfoCircle, Play, Plus
+  ChevronDown, CloseSquare, Delete, InfoCircle, Play, Plus
 } from "react-iconly";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -25,6 +24,9 @@ import {
   runRequest as runRequestAction,
 } from "../../../actions/dataset";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
+import {
+  getConnection as getConnectionAction,
+} from "../../../actions/connection";
 import Badge from "../../../components/Badge";
 
 const methods = [{
@@ -69,12 +71,15 @@ function ApiBuilder(props) {
   const [requestLoading, setRequestLoading] = useState(false);
   const [requestError, setRequestError] = useState(false);
   const [invalidateCache, setInvalidateCache] = useState(false);
+  const [fullConnection, setFullConnection] = useState({});
+  const [saveLoading, setSaveLoading] = useState(false);
 
   const { isDark } = useTheme();
 
   const {
     dataRequest, match, onChangeRequest, runRequest, dataset,
     connection, onSave, requests, changeTutorial, chart,
+    getConnection, onDelete,
   } = props;
 
   // on init effect
@@ -119,6 +124,12 @@ function ApiBuilder(props) {
         apiRequest.template = "stripe";
       }
     }
+
+    getConnection(match.params.projectId, connection.id)
+      .then((data) => {
+        setFullConnection(data);
+      })
+      .catch(() => {});
 
     onChangeRequest(newApiRequest);
   }, [apiRequest, connection]);
@@ -242,11 +253,55 @@ function ApiBuilder(props) {
     });
   };
 
+  const _onSavePressed = () => {
+    setSaveLoading(true);
+    onSave(apiRequest).then(() => {
+      setSaveLoading(false);
+    }).catch(() => {
+      setSaveLoading(false);
+    });
+  };
+
   return (
     <div>
       <Grid.Container gap={1}>
         <Grid xs={12} sm={7} md={8}>
           <Container>
+            <Row justify="space-between" align="center">
+              <Text b size={22}>{connection.name}</Text>
+              <div>
+                <Row>
+                  <Button
+                    color="primary"
+                    auto
+                    size="sm"
+                    onClick={() => _onSavePressed()}
+                    disabled={saveLoading || requestLoading}
+                    flat
+                  >
+                    {(!saveLoading && !requestLoading) && "Save"}
+                    {(saveLoading || requestLoading) && <Loading type="spinner" />}
+                  </Button>
+                  <Spacer x={0.3} />
+                  <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
+                    <Button
+                      color="error"
+                      icon={<Delete />}
+                      auto
+                      size="sm"
+                      bordered
+                      css={{ minWidth: "fit-content" }}
+                      onClick={() => onDelete()}
+                    />
+                  </Tooltip>
+                </Row>
+              </div>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <Divider />
+            </Row>
+            <Spacer y={0.5} />
             <Row align="center" className="apibuilder-route-tut">
               <Badge type="neutral">
                 <Text>{connection.host}</Text>
@@ -365,7 +420,7 @@ function ApiBuilder(props) {
             {activeMenu === "headers" && (
               <Row className="apibuilder-headers-tut">
                 <Container css={{ pl: 0, pr: 0 }}>
-                  {connection.options && connection.options.length > 0 && (
+                  {fullConnection.options && fullConnection.options.length > 0 && (
                     <>
                       <Row>
                         <Checkbox
@@ -379,7 +434,7 @@ function ApiBuilder(props) {
                       {apiRequest.useGlobalHeaders && (
                         <>
                           <Container css={{ pl: 0, pr: 0 }}>
-                            {connection.options.map((header) => {
+                            {fullConnection.options.map((header) => {
                               return (
                                 <Row key={header}>
                                   <Input
@@ -599,6 +654,8 @@ ApiBuilder.propTypes = {
   dataRequest: PropTypes.object,
   changeTutorial: PropTypes.func.isRequired,
   chart: PropTypes.object.isRequired,
+  getConnection: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -613,6 +670,9 @@ const mapDispatchToProps = (dispatch) => {
       return dispatch(runRequestAction(projectId, chartId, datasetId, getCache));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
+    getConnection: (projectId, connectionId) => {
+      return dispatch(getConnectionAction(projectId, connectionId));
+    },
   };
 };
 

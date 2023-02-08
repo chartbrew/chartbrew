@@ -6,11 +6,10 @@ import _ from "lodash";
 import { toast } from "react-toastify";
 import {
   Button, Container, Grid, Link, Loading, Modal, Row, Spacer, Text, Avatar,
-  useTheme, Tooltip, Card, theme,
+  useTheme, Tooltip, Card,
 } from "@nextui-org/react";
 import {
-  Chart,
-  Danger, Delete, Plus,
+  Chart, Danger, Plus,
 } from "react-iconly";
 import moment from "moment";
 
@@ -196,15 +195,15 @@ function DatarequestModal(props) {
     setCreateMode(false);
   };
 
-  const _onDeleteRequest = () => {
+  const _onDeleteRequest = (drId) => {
     if (selectedRequest) {
       setLoading(true);
-      deleteDataRequest(match.params.projectId, match.params.chartId, selectedRequest.id)
+      deleteDataRequest(match.params.projectId, match.params.chartId, drId)
         .then(() => {
           setLoading(false);
           // update the dataRequests array
           const newDrArray = _.cloneDeep(dataRequests);
-          setDataRequests(newDrArray.filter((dr) => dr.id !== selectedRequest.id));
+          setDataRequests(newDrArray.filter((dr) => dr.id !== drId));
           setSelectedRequest(newDrArray[0]);
         })
         .catch((e) => {
@@ -283,23 +282,6 @@ function DatarequestModal(props) {
                 />
               </Link>
             </Tooltip>
-            {selectedRequest && (
-              <>
-                <Spacer y={1} />
-                <Tooltip content={`Delete currently selected ${selectedRequest.Connection.type} request`} css={{ zIndex: 99999 }} placement="rightStart">
-                  <Link css={{ cursor: "pointer" }}>
-                    <Avatar
-                      icon={<Delete primaryColor={theme.colors.error.value} />}
-                      bordered
-                      squared
-                      size="lg"
-                      css={{ cursor: "pointer" }}
-                      onClick={_onDeleteRequest}
-                    />
-                  </Link>
-                </Tooltip>
-              </>
-            )}
           </Grid>
           {!createMode && selectedRequest && (
             <Grid xs={12} sm={11.5}>
@@ -314,6 +296,7 @@ function DatarequestModal(props) {
                       onSave={_onSaveRequest}
                       exploreData={result && JSON.stringify(result.data, null, 2)}
                       chart={chart}
+                      onDelete={() => _onDeleteRequest(dr.id)}
                     />
                   )}
                   {(selectedRequest.Connection.type === "mysql" || selectedRequest.Connection.type === "postgres") && selectedRequest.id === dr.id && (
@@ -324,15 +307,18 @@ function DatarequestModal(props) {
                       onChangeRequest={_updateDataRequest}
                       onSave={_onSaveRequest}
                       exploreData={result && JSON.stringify(result.data, null, 2)}
+                      onDelete={() => _onDeleteRequest(dr.id)}
                     />
                   )}
                   {selectedRequest.Connection.type === "mongodb" && selectedRequest.id === dr.id && (
                     <MongoQueryBuilder
                       dataset={dataset}
                       dataRequest={dr}
+                      connection={dr.Connection}
                       onChangeRequest={_updateDataRequest}
                       onSave={_onSaveRequest}
                       exploreData={result && JSON.stringify(result.data, null, 2)}
+                      onDelete={() => _onDeleteRequest(dr.id)}
                     />
                   )}
                   {selectedRequest.Connection.type === "realtimedb" && selectedRequest.id === dr.id && (
@@ -343,6 +329,7 @@ function DatarequestModal(props) {
                       onChangeRequest={_updateDataRequest}
                       onSave={_onSaveRequest}
                       exploreData={result && JSON.stringify(result.data, null, 2)}
+                      onDelete={() => _onDeleteRequest(dr.id)}
                     />
                   )}
                   {selectedRequest.Connection.type === "firestore" && selectedRequest.id === dr.id && (
@@ -353,6 +340,7 @@ function DatarequestModal(props) {
                       onChangeRequest={_updateDataRequest}
                       onSave={_onSaveRequest}
                       exploreData={result && JSON.stringify(result.data, null, 2)}
+                      onDelete={() => _onDeleteRequest(dr.id)}
                     />
                   )}
                   {selectedRequest.Connection.type === "googleAnalytics" && selectedRequest.id === dr.id && (
@@ -363,6 +351,7 @@ function DatarequestModal(props) {
                       onChangeRequest={_updateDataRequest}
                       onSave={_onSaveRequest}
                       exploreData={result && JSON.stringify(result.data, null, 2)}
+                      onDelete={() => _onDeleteRequest(dr.id)}
                     />
                   )}
                   {selectedRequest.Connection.type === "customerio" && selectedRequest.id === dr.id && (
@@ -373,6 +362,7 @@ function DatarequestModal(props) {
                       onChangeRequest={_updateDataRequest}
                       onSave={_onSaveRequest}
                       exploreData={result && JSON.stringify(result.data, null, 2)}
+                      onDelete={() => _onDeleteRequest(dr.id)}
                     />
                   )}
                 </Fragment>

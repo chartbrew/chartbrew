@@ -4,10 +4,12 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Grid, Button, Container, Row, Text, Spacer, Loading, Modal, Input, useTheme, Tooltip, Checkbox,
+  Divider,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
 import {
+  Delete,
   Edit, InfoCircle, Play, Plus, TickSquare
 } from "react-iconly";
 
@@ -28,6 +30,7 @@ function SqlBuilder(props) {
   const {
     createSavedQuery, match, updateSavedQuery, exploreData, changeTutorial,
     dataset, dataRequest, onChangeRequest, onSave, runRequest, connection,
+    onDelete,
   } = props;
 
   const [sqlRequest, setSqlRequest] = useState({
@@ -43,6 +46,7 @@ function SqlBuilder(props) {
   const [requestError, setRequestError] = useState(false);
   const [result, setResult] = useState("");
   const [invalidateCache, setInvalidateCache] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
 
   const { isDark } = useTheme();
 
@@ -125,13 +129,57 @@ function SqlBuilder(props) {
     });
   };
 
+  const _onSavePressed = () => {
+    setSaveLoading(true);
+    onSave(sqlRequest).then(() => {
+      setSaveLoading(false);
+    }).catch(() => {
+      setSaveLoading(false);
+    });
+  };
+
   return (
     <div style={styles.container}>
       <Grid.Container gap={1}>
         <Grid xs={12} sm={6}>
           <Container>
+            <Row justify="space-between" align="center">
+              <Text b size={22}>{connection.name}</Text>
+              <div>
+                <Row>
+                  <Button
+                    color="primary"
+                    auto
+                    size="sm"
+                    onClick={() => _onSavePressed()}
+                    disabled={saveLoading || requestLoading}
+                    flat
+                  >
+                    {(!saveLoading && !requestLoading) && "Save"}
+                    {(saveLoading || requestLoading) && <Loading type="spinner" />}
+                  </Button>
+                  <Spacer x={0.3} />
+                  <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
+                    <Button
+                      color="error"
+                      icon={<Delete />}
+                      auto
+                      size="sm"
+                      bordered
+                      css={{ minWidth: "fit-content" }}
+                      onClick={() => onDelete()}
+                    />
+                  </Tooltip>
+                </Row>
+              </div>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <Divider />
+            </Row>
+            <Spacer y={0.5} />
             <Row align="center">
-              <Text>
+              <Text b>
                 {connection.type === "mysql" && "Enter your MySQL query here"}
                 {connection.type === "postgres" && "Enter your PostgreSQL query here"}
               </Text>
@@ -330,6 +378,7 @@ SqlBuilder.propTypes = {
   connection: PropTypes.object.isRequired,
   exploreData: PropTypes.string,
   changeTutorial: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = () => {

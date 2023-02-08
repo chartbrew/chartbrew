@@ -14,11 +14,14 @@ import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import { CloseSquare, InfoCircle, Play } from "react-iconly";
+import {
+  CloseSquare, Delete, InfoCircle, Play
+} from "react-iconly";
 import {
   runRequest as runRequestAction,
 } from "../../../actions/dataset";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
+import { getConnection as getConnectionAction } from "../../../actions/connection";
 
 /*
   The API Data Request builder
@@ -34,12 +37,15 @@ function RealtimeDbBuilder(props) {
   const [projectId, setProjectId] = useState("");
   const [limitValue, setLimitValue] = useState(100);
   const [invalidateCache, setInvalidateCache] = useState(false);
+  const [fullConnection, setFullConnection] = useState({});
+  const [saveLoading, setSaveLoading] = useState(false);
 
   const { isDark } = useTheme();
 
   const {
     dataRequest, match, onChangeRequest, runRequest, dataset,
     connection, onSave, requests, changeTutorial, // eslint-disable-line
+    getConnection, onDelete,
   } = props;
 
   // on init effect
@@ -49,14 +55,6 @@ function RealtimeDbBuilder(props) {
       const requestBody = _.find(requests, { options: { id: dataset.id } });
       if (requestBody) {
         setResult(JSON.stringify(requestBody.data, null, 2));
-      }
-
-      if (connection && connection.firebaseServiceAccount) {
-        try {
-          setProjectId(JSON.parse(connection.firebaseServiceAccount).project_id);
-        } catch (error) {
-          //
-        }
       }
 
       setFirebaseRequest(dataRequest);
@@ -73,6 +71,19 @@ function RealtimeDbBuilder(props) {
 
   useEffect(() => {
     const newApiRequest = firebaseRequest;
+
+    getConnection(match.params.projectId, connection.id)
+      .then((data) => {
+        setFullConnection(data);
+        if (data && data.firebaseServiceAccount) {
+          try {
+            setProjectId(JSON.parse(data.firebaseServiceAccount).project_id);
+          } catch (error) {
+            //
+          }
+        }
+      })
+      .catch(() => {});
 
     onChangeRequest(newApiRequest);
   }, [firebaseRequest, connection]);
@@ -125,14 +136,58 @@ function RealtimeDbBuilder(props) {
     }
   };
 
+  const _onSavePressed = () => {
+    setSaveLoading(true);
+    onSave(firebaseRequest).then(() => {
+      setSaveLoading(false);
+    }).catch(() => {
+      setSaveLoading(false);
+    });
+  };
+
   return (
     <div style={styles.container}>
       <Grid.Container>
-        <Grid xs={12} sm={6} md={7}>
+        <Grid xs={12} sm={7}>
           <Container>
+            <Row justify="space-between" align="center">
+              <Text b size={22}>{connection.name}</Text>
+              <div>
+                <Row>
+                  <Button
+                    color="primary"
+                    auto
+                    size="sm"
+                    onClick={() => _onSavePressed()}
+                    disabled={saveLoading || requestLoading}
+                    flat
+                  >
+                    {(!saveLoading && !requestLoading) && "Save"}
+                    {(saveLoading || requestLoading) && <Loading type="spinner" />}
+                  </Button>
+                  <Spacer x={0.3} />
+                  <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
+                    <Button
+                      color="error"
+                      icon={<Delete />}
+                      auto
+                      size="sm"
+                      bordered
+                      css={{ minWidth: "fit-content" }}
+                      onClick={() => onDelete()}
+                    />
+                  </Tooltip>
+                </Row>
+              </div>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <Divider />
+            </Row>
+            <Spacer y={0.5} />
             <Row className="RealtimeDb-route-tut">
               <Input
-                value={connection.connectionString || `https://${projectId || "<your_project>"}.firebaseio.com/`}
+                value={fullConnection.connectionString || `https://${projectId || "<your_project>"}.firebaseio.com/`}
                 fullWidth
                 css={{ pointerEvents: "none" }}
               />
@@ -376,7 +431,7 @@ function RealtimeDbBuilder(props) {
             </Row>
           </Container>
         </Grid>
-        <Grid xs={12} sm={6} md={5}>
+        <Grid xs={12} sm={5}>
           <Container>
             <Row className="RealtimeDb-request-tut">
               <Button
@@ -450,6 +505,8 @@ RealtimeDbBuilder.propTypes = {
   requests: PropTypes.array.isRequired,
   dataRequest: PropTypes.object,
   changeTutorial: PropTypes.func.isRequired,
+  getConnection: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -464,6 +521,9 @@ const mapDispatchToProps = (dispatch) => {
       return dispatch(runRequestAction(projectId, chartId, datasetId));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
+    getConnection: (projectId, connectionId) => (
+      dispatch(getConnectionAction(projectId, connectionId))
+    ),
   };
 };
 

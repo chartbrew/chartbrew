@@ -3,13 +3,13 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Button, Container, Link, Row, Spacer, Text, Loading, Checkbox, Tooltip, useTheme,
+  Grid, Button, Container, Link, Row, Spacer, Text, Loading, Checkbox, Tooltip, useTheme, Divider,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
 import { toast } from "react-toastify";
 import {
-  Chat, InfoCircle, People, Play
+  Chat, Delete, InfoCircle, People, Play
 } from "react-iconly";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -36,12 +36,14 @@ function CustomerioBuilder(props) {
   const [limitValue, setLimitValue] = useState(0);
   const [entity, setEntity] = useState("");
   const [conditions, setConditions] = useState({});
+  const [saveLoading, setSaveLoading] = useState(false);
 
   const { isDark } = useTheme();
 
   const {
     dataRequest, match, onChangeRequest, runRequest, dataset, project,
     connection, onSave, requests, changeTutorial, // eslint-disable-line
+    onDelete,
   } = props;
 
   // on init effect
@@ -159,11 +161,55 @@ function CustomerioBuilder(props) {
     });
   };
 
+  const _onSavePressed = () => {
+    setSaveLoading(true);
+    onSave(cioRequest).then(() => {
+      setSaveLoading(false);
+    }).catch(() => {
+      setSaveLoading(false);
+    });
+  };
+
   return (
     <div style={styles.container}>
       <Grid.Container>
         <Grid xs={12} sm={7}>
           <Container>
+            <Row justify="space-between" align="center">
+              <Text b size={22}>{connection.name}</Text>
+              <div>
+                <Row>
+                  <Button
+                    color="primary"
+                    auto
+                    size="sm"
+                    onClick={() => _onSavePressed()}
+                    disabled={saveLoading || requestLoading}
+                    flat
+                  >
+                    {(!saveLoading && !requestLoading) && "Save"}
+                    {(saveLoading || requestLoading) && <Loading type="spinner" />}
+                  </Button>
+                  <Spacer x={0.3} />
+                  <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
+                    <Button
+                      color="error"
+                      icon={<Delete />}
+                      auto
+                      size="sm"
+                      bordered
+                      css={{ minWidth: "fit-content" }}
+                      onClick={() => onDelete()}
+                    />
+                  </Tooltip>
+                </Row>
+              </div>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <Divider />
+            </Row>
+            <Spacer y={0.5} />
             <Row align="center" wrap="wrap">
               <Link
                 css={{
@@ -328,6 +374,7 @@ CustomerioBuilder.propTypes = {
   dataRequest: PropTypes.object,
   changeTutorial: PropTypes.func.isRequired,
   project: PropTypes.object.isRequired,
+  onDelete: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {

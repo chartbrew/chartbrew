@@ -44,6 +44,6 @@ export function getMetadata(projectId, connectionId) {
       return data;
     })
     .catch((err) => {
-      return Promise.reject(err);
+      return new Promise((resolve, reject) => reject(err));
     });
 }
