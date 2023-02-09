@@ -10,7 +10,7 @@ export default function dataset(state = {
   loading: false,
   error: false,
   data: [],
-  requests: [],
+  responses: [],
 }, action) {
   switch (action.type) {
     case FETCHING_DATA_REQUEST:
@@ -31,6 +31,33 @@ export default function dataset(state = {
         newData[indexFound] = action.dataRequest;
       } else {
         newData.push(action.dataRequest);
+      }
+
+      // if the request contains some response data (when running the request)
+      if (action?.response?.data) {
+        // look for existing datasets in the responses array and replace it if it exists
+        let indexReq = -1;
+        for (let i = 0; i < state.responses.length; i++) {
+          if (state.responses[i].id === parseInt(action.dataRequest.id, 10)) {
+            indexReq = i;
+            break;
+          }
+        }
+        const newResponses = [...state.responses];
+        if (indexReq > -1) {
+          newResponses[indexReq] = {
+            id: action.dataRequest.id,
+            data: action.response.data,
+          };
+        } else {
+          newResponses.push({
+            id: action.dataRequest.id,
+            data: action.response.data,
+          });
+        }
+        return {
+          ...state, loading: false, data: newData, responses: newResponses
+        };
       }
       return { ...state, loading: false, data: newData };
     case FETCH_DATA_REQUEST_FAIL:

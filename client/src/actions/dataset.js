@@ -173,7 +173,7 @@ export function runRequest(projectId, chartId, datasetId, getCache) {
           return Promise.reject({ ...status, message: result });
         }
 
-        dispatch({ type: FETCH_REQUESTED_DATA, request: result, id: datasetId });
+        dispatch({ type: FETCH_REQUESTED_DATA, response: result, id: datasetId });
         return Promise.resolve({ ...result, status });
       })
       .catch((err) => {

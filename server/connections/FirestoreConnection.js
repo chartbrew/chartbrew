@@ -234,8 +234,8 @@ class FirestoreConnection {
       data: finalDocs,
       configuration: {
         subCollections: subRefs,
-        mainCollectionSample: mainDocs.slice(0, 10),
-        subCollectionSample: subDocData.slice(0, 10),
+        mainCollectionSample: mainDocs.slice(0, 5),
+        subCollectionSample: subDocData.slice(0, 5),
       },
     };
   }

@@ -94,6 +94,90 @@ class RequestController {
       });
   }
 
+  runRequest(id, chartId, noSource, getCache) {
+    let gDataset;
+    let dataRequest;
+    return this.findById(id)
+      .then((dr) => {
+        dataRequest = dr;
+        return db.Dataset.findOne({ where: { id: dataRequest.dataset_id } });
+      })
+      .then((dataset) => {
+        gDataset = dataset;
+
+        // go through all data requests
+        const connection = dataRequest.Connection;
+
+        if (!dataRequest || (dataRequest && dataRequest.length === 0)) {
+          return new Promise((resolve, reject) => reject(new Error("404")));
+        }
+
+        if (!connection) {
+          return new Promise((resolve, reject) => reject(new Error("404")));
+        }
+
+        if (noSource === true) {
+          return new Promise((resolve) => resolve({}));
+        }
+
+        if (connection.type === "mongodb") {
+          return this.connectionController.runMongo(connection.id, dataRequest, getCache);
+        } else if (connection.type === "api") {
+          return this.connectionController.runApiRequest(
+            connection.id, chartId, dataRequest, getCache
+          );
+        } else if (connection.type === "postgres" || connection.type === "mysql") {
+          return this.connectionController.runMysqlOrPostgres(connection.id, dataRequest);
+        } else if (connection.type === "firestore") {
+          return this.connectionController.runFirestore(connection.id, dataRequest, getCache);
+        } else if (connection.type === "googleAnalytics") {
+          return this.connectionController.runGoogleAnalytics(connection, dataRequest);
+        } else if (connection.type === "realtimedb") {
+          return this.connectionController.runRealtimeDb(connection.id, dataRequest, getCache);
+        } else if (connection.type === "customerio") {
+          return this.connectionController.runCustomerio(connection, dataRequest, getCache);
+        } else {
+          return new Promise((resolve, reject) => reject(new Error("Invalid connection type")));
+        }
+      })
+      .then(async (response) => {
+        const processedRequest = response;
+        if (response?.dataRequest?.Connection.type === "mongodb") {
+          processedRequest.responseData = JSON.parse(
+            JSON.stringify(processedRequest.responseData)
+          );
+        }
+
+        if (response?.dataRequest?.Connection.type === "firestore") {
+          let newConfiguration = {};
+          if (response.dataRequest.configuration && typeof response.dataRequest.configuration === "object") {
+            newConfiguration = { ...response.dataRequest.configuration };
+          }
+
+          if (response?.responseData?.configuration) {
+            newConfiguration = { ...newConfiguration, ...response.responseData.configuration };
+          }
+
+          if (newConfiguration && Object.keys(newConfiguration).length === 0) {
+            processedRequest.dataRequest.configuration = newConfiguration;
+
+            db.DataRequest.update(
+              { configuration: newConfiguration },
+              { where: { id: response.dataRequest.id } },
+            );
+          }
+        }
+
+        return Promise.resolve({
+          options: gDataset,
+          dataRequest: processedRequest,
+        });
+      })
+      .catch((err) => {
+        return Promise.reject(err);
+      });
+  }
+
   delete(id) {
     return db.DataRequest.destroy({
       where: { id },

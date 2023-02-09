@@ -6,10 +6,10 @@ import _ from "lodash";
 import { toast } from "react-toastify";
 import {
   Button, Container, Grid, Link, Loading, Modal, Row, Spacer, Text, Avatar,
-  useTheme, Tooltip, Card,
+  useTheme, Tooltip, Card, theme,
 } from "@nextui-org/react";
 import {
-  Chart, Danger, Plus,
+  Danger, Plus, Setting,
 } from "react-iconly";
 import moment from "moment";
 
@@ -20,6 +20,7 @@ import RealtimeDbBuilder from "../../Connections/RealtimeDb/RealtimeDbBuilder";
 import FirestoreBuilder from "../../Connections/Firestore/FirestoreBuilder";
 import GaBuilder from "../../Connections/GoogleAnalytics/GaBuilder";
 import CustomerioBuilder from "../../Connections/Customerio/CustomerioBuilder";
+import DatarequestSettings from "./DatarequestSettings";
 
 import {
   getDataRequestByDataset as getDataRequestByDatasetAction,
@@ -29,7 +30,6 @@ import {
 } from "../../../actions/dataRequest";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import connectionImages from "../../../config/connectionImages";
-import { primaryTransparent } from "../../../config/colors";
 
 function DatarequestModal(props) {
   const {
@@ -241,14 +241,14 @@ function DatarequestModal(props) {
           <Grid xs={12} sm={0.5} direction="column">
             {selectedRequest && (
               <>
-                <Tooltip content="Join settings" css={{ zIndex: 99999 }} placement="rightStart">
-                  <Link onClick={() => {}} css={{ cursor: "pointer" }}>
+                <Tooltip content="Dataset settings" css={{ zIndex: 99999 }} placement="rightStart">
+                  <Link onClick={() => setSelectedRequest({ isSettings: true })} css={{ cursor: "pointer" }}>
                     <Avatar
-                      icon={<Chart primaryColor={primaryTransparent(1)} />}
-                      bordered
+                      icon={<Setting primaryColor={theme.colors.text.value} set="bold" />}
                       squared
                       size="lg"
                       css={{ cursor: "pointer" }}
+                      color={selectedRequest.isSettings ? "primary" : "default"}
                     />
                   </Link>
                 </Tooltip>
@@ -264,7 +264,7 @@ function DatarequestModal(props) {
                   src={dr.Connection ? connectionImages(isDark)[dr.Connection.type] : null}
                   icon={!dr.Connection ? <Danger /> : null}
                   size="lg"
-                  color={dr.id === selectedRequest?.id ? "gradient" : "default"}
+                  color={dr.id === selectedRequest?.id ? "primary" : "default"}
                   onClick={() => _onSelectDataRequest(dr)}
                 />
                 <Spacer y={0.3} />
@@ -274,7 +274,7 @@ function DatarequestModal(props) {
             <Tooltip content="Join with a new dataset" css={{ zIndex: 99999 }} placement="rightStart">
               <Link onClick={() => setCreateMode(true)} css={{ cursor: "pointer" }}>
                 <Avatar
-                  icon={<Plus primaryColor={primaryTransparent(1)} />}
+                  icon={<Plus primaryColor={theme.colors.text.value} />}
                   bordered
                   squared
                   size="lg"
@@ -283,7 +283,12 @@ function DatarequestModal(props) {
               </Link>
             </Tooltip>
           </Grid>
-          {!createMode && selectedRequest && (
+          {!createMode && selectedRequest?.isSettings && (
+            <Grid xs={12} sm={11.5}>
+              <DatarequestSettings />
+            </Grid>
+          )}
+          {!createMode && selectedRequest && selectedRequest.Connection && (
             <Grid xs={12} sm={11.5}>
               {dataRequests.map((dr) => (
                 <Fragment key={dr.id}>
@@ -334,12 +339,10 @@ function DatarequestModal(props) {
                   )}
                   {selectedRequest.Connection.type === "firestore" && selectedRequest.id === dr.id && (
                     <FirestoreBuilder
-                      dataset={dataset}
                       dataRequest={dr}
                       connection={dr.Connection}
                       onChangeRequest={_updateDataRequest}
                       onSave={_onSaveRequest}
-                      exploreData={result && JSON.stringify(result.data, null, 2)}
                       onDelete={() => _onDeleteRequest(dr.id)}
                     />
                   )}

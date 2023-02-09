@@ -34,7 +34,10 @@ async function checkAndGetCache(connection_id, dataRequest) {
     liveDataRequest.createdAt = "";
 
     if (_.isEqual(cachedDataRequest, liveDataRequest) && drCache.connection_id === connection_id) {
-      return drCache.responseData;
+      return {
+        responseData: drCache.responseData,
+        dataRequest: drCache.dataRequest,
+      };
     }
   } catch (e) {
     return false;
@@ -503,7 +506,7 @@ class ConnectionController {
         // close the mongodb connection
         mongoConnection.close();
 
-        return Promise.resolve(data);
+        return Promise.resolve(dataToCache);
       })
       .catch((error) => {
         // close the mongodb connection
@@ -536,7 +539,7 @@ class ConnectionController {
 
         drCacheController.create(dataRequest.id, dataToCache);
 
-        return new Promise((resolve) => resolve(results));
+        return new Promise((resolve) => resolve(dataToCache));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -667,7 +670,7 @@ class ConnectionController {
           };
           drCacheController.create(dataRequest.id, dataToCache);
 
-          return new Promise((resolve) => resolve(response));
+          return new Promise((resolve) => resolve(dataToCache));
         }
 
         if (response.statusCode < 300) {
@@ -690,7 +693,7 @@ class ConnectionController {
 
             drCacheController.create(dataRequest.id, dataToCache);
 
-            return new Promise((resolve) => resolve(responseData));
+            return new Promise((resolve) => resolve(dataToCache));
           } catch (e) {
             return new Promise((resolve, reject) => reject(406));
           }
@@ -724,7 +727,7 @@ class ConnectionController {
         };
         drCacheController.create(dataRequest.id, dataToCache);
 
-        return responseData;
+        return dataToCache;
       })
       .catch((err) => {
         return new Promise((resolve, reject) => reject(err));
@@ -752,7 +755,7 @@ class ConnectionController {
         };
         drCacheController.create(dataRequest.id, dataToCache);
 
-        return responseData;
+        return dataToCache;
       })
       .catch((err) => {
         return new Promise((resolve, reject) => reject(err));
@@ -778,7 +781,7 @@ class ConnectionController {
         };
         drCacheController.create(dataRequest.id, dataToCache);
 
-        return responseData;
+        return dataToCache;
       })
       .catch((err) => {
         return new Promise((resolve, reject) => reject(err));
@@ -809,7 +812,7 @@ class ConnectionController {
           };
           drCacheController.create(dataRequest.id, dataToCache);
 
-          return responseData;
+          return dataToCache;
         })
         .catch((err) => {
           return new Promise((resolve, reject) => reject(err));
@@ -825,7 +828,7 @@ class ConnectionController {
           };
           drCacheController.create(dataRequest.id, dataToCache);
 
-          return responseData;
+          return dataToCache;
         })
         .catch((err) => {
           return new Promise((resolve, reject) => reject(err));

@@ -24,8 +24,8 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import {
-  runRequest as runRequestAction,
-} from "../../../actions/dataset";
+  runDataRequest as runDataRequestAction,
+} from "../../../actions/dataRequest";
 import {
   getConnection as getConnectionAction,
   testRequest as testRequestAction,
@@ -114,19 +114,16 @@ function FirestoreBuilder(props) {
   const { isDark } = useTheme();
 
   const {
-    dataRequest, match, onChangeRequest, runRequest, dataset,
-    connection, onSave, requests, changeTutorial, testRequest,
-    onDelete, getConnection,
+    dataRequest, match, onChangeRequest, runDataRequest,
+    connection, onSave, changeTutorial, testRequest,
+    onDelete, getConnection, responses,
   } = props;
 
   // on init effect
   useEffect(() => {
     if (dataRequest) {
       // get the request data if it exists
-      const requestBody = _.find(requests, { options: { id: dataset.id } });
-      if (requestBody) {
-        setResult(JSON.stringify(requestBody.data, null, 2));
-      }
+      // _setFormattedResult();
 
       if (dataRequest && dataRequest.conditions) {
         let newConditions = [...conditions];
@@ -169,9 +166,9 @@ function FirestoreBuilder(props) {
         changeTutorial("firestoreBuilder");
       }, 1000);
 
-      if (dataRequest.query) {
-        _onRunRequest();
-      }
+      // if (dataRequest.query) {
+      //   _onRunRequest();
+      // }
     }
   }, []);
 
@@ -210,6 +207,15 @@ function FirestoreBuilder(props) {
       setShowSubUI(false);
     }
   }, [dataRequest]);
+
+  useEffect(() => {
+    if (responses && responses.length > 0) {
+      const selectedResponse = responses.find((o) => o.id === dataRequest.id);
+      if (selectedResponse?.data) {
+        setResult(JSON.stringify(selectedResponse.data, null, 2));
+      }
+    }
+  }, [responses]);
 
   const _populateFieldOptions = (sampleData, type) => {
     const tempFieldOptions = [];
@@ -266,11 +272,9 @@ function FirestoreBuilder(props) {
   const _onRunRequest = () => {
     setIndexUrl("");
     const useCache = !invalidateCache;
-    runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache)
-      .then((result) => {
+    runDataRequest(match.params.projectId, match.params.chartId, dataRequest.id, useCache)
+      .then(() => {
         setRequestLoading(false);
-        const jsonString = JSON.stringify(result.data, null, 2);
-        setResult(jsonString);
       })
       .catch((error) => {
         setRequestLoading(false);
@@ -503,10 +507,12 @@ function FirestoreBuilder(props) {
                     color="primary"
                     onClick={() => _onChangeQuery(collection._queryOptions.collectionId)}
                     as="a"
+                    disableOutline
+                    css={{ minWidth: 50 }}
                   >
                     {collection._queryOptions.collectionId}
                   </Badge>
-                  <Spacer x={0.1} />
+                  <Spacer x={0.2} />
                 </>
               ))}
             </Row>
@@ -1069,30 +1075,30 @@ FirestoreBuilder.defaultProps = {
 };
 
 FirestoreBuilder.propTypes = {
-  dataset: PropTypes.object.isRequired,
   connection: PropTypes.object.isRequired,
   match: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
-  runRequest: PropTypes.func.isRequired,
+  runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
-  requests: PropTypes.array.isRequired,
   dataRequest: PropTypes.object,
   changeTutorial: PropTypes.func.isRequired,
   testRequest: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   getConnection: PropTypes.func.isRequired,
+  responses: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
-    requests: state.dataset.requests,
+    dataRequests: state.dataRequest.data,
+    responses: state.dataRequest.responses,
   };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    runRequest: (projectId, chartId, datasetId, getCache) => {
-      return dispatch(runRequestAction(projectId, chartId, datasetId, getCache));
+    runDataRequest: (projectId, chartId, drId, getCache) => {
+      return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
     testRequest: (projectId, data) => dispatch(testRequestAction(projectId, data)),

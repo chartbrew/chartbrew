@@ -56,16 +56,22 @@ export default function dataset(state = initialState, action) {
     case FETCH_REQUESTED_DATA:
       let indexReq = -1;
       for (let i = 0; i < state.requests.length; i++) {
-        if (state.requests[i].options && state.requests[i].options.id === parseInt(action.id, 10)) {
+        if (state.requests[i].dataset_id === parseInt(action.id, 10)) {
           indexReq = i;
           break;
         }
       }
       const newRequests = [...state.requests];
       if (indexReq > -1) {
-        newRequests[indexReq] = action.request;
+        newRequests[indexReq] = {
+          dataRequests: action.response.dataRequests,
+          dataset_id: action.id,
+        };
       } else {
-        newRequests.push(action.request);
+        newRequests.push({
+          dataRequests: action.response.dataRequests,
+          dataset_id: action.id,
+        });
       }
       return { ...state, loading: false, requests: newRequests };
     case CLEAR_DATASETS:

@@ -166,3 +166,40 @@ export function deleteDataRequest(projectId, chartId, drId) {
       });
   };
 }
+
+export function runDataRequest(projectId, chartId, datasetId, getCache) {
+  return (dispatch) => {
+    const token = cookie.load("brewToken");
+    const url = `${API_HOST}/project/${projectId}/chart/${chartId}/dataRequest/${datasetId}/request`;
+    const method = "POST";
+    const body = JSON.stringify({ getCache });
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    });
+
+    dispatch({ type: FETCHING_DATA_REQUEST });
+    return fetch(url, { method, body, headers })
+      .then((response) => {
+        if (!response.ok) {
+          dispatch(addError(response.status, "Cannot fetch the dataRequests"));
+          throw new Error(response.status);
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        dispatch({
+          type: FETCH_DATA_REQUEST_SUCCESS,
+          dataRequest: data.dataRequest.dataRequest,
+          response: data.dataRequest.responseData,
+        });
+        return Promise.resolve(data.dataRequest);
+      })
+      .catch((error) => {
+        dispatch({ type: FETCH_DATA_REQUEST_FAIL });
+        return Promise.reject(error);
+      });
+  };
+}

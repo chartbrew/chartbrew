@@ -208,6 +208,34 @@ module.exports = (app) => {
   });
   // -------------------------------------------------
 
+  /*
+  ** Route to run a request
+  */
+  app.post(`${root}/:id/request`, verifyToken, (req, res) => {
+    return checkAccess(req)
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).updateAny("dataRequest");
+        if (!permission.granted) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
+        return dataRequestController.runRequest(
+          req.params.id, req.params.chart_id, req.body.noSource, req.body.getCache
+        );
+      })
+      .then((dataRequest) => {
+        return res.status(200).send(dataRequest);
+      })
+      .catch((error) => {
+        if (error.message === "401") {
+          return res.status(401).send({ error: "Not authorized" });
+        }
+
+        return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------------
+
   return (req, res, next) => {
     next();
   };
