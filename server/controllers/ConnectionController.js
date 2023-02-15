@@ -816,10 +816,19 @@ class ConnectionController {
     return googleConnector.getAccounts(oauth.refreshToken, connection.oauth_id);
   }
 
-  async runCustomerio(connection, dataRequest, getCache) {
+  async runCustomerio(conn, dataRequest, getCache) {
+    let connection = conn;
     if (getCache) {
-      const drCache = await checkAndGetCache(connection.id, dataRequest);
+      const drCache = await checkAndGetCache(conn.id, dataRequest);
       if (drCache) return drCache;
+    }
+
+    if (conn.id) {
+      try {
+        connection = await this.findById(conn.id);
+      } catch (e) {
+        connection = conn;
+      }
     }
 
     if (dataRequest.route.indexOf("customers") === 0) {
@@ -828,7 +837,9 @@ class ConnectionController {
           // cache the data for later use
           const dataToCache = {
             dataRequest,
-            responseData,
+            responseData: {
+              data: responseData,
+            },
             connection_id: connection.id,
           };
           drCacheController.create(dataRequest.id, dataToCache);
@@ -844,7 +855,9 @@ class ConnectionController {
           // cache the data for later use
           const dataToCache = {
             dataRequest,
-            responseData,
+            responseData: {
+              data: responseData,
+            },
             connection_id: connection.id,
           };
           drCacheController.create(dataRequest.id, dataToCache);

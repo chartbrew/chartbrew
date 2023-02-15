@@ -583,7 +583,7 @@ function FirestoreBuilder(props) {
                 <InfoCircle size="small" />
               </Tooltip>
             </Row>
-
+            <Spacer y={0.5} />
             <Row className="firestorebuilder-query-tut">
               <Conditions
                 conditions={
