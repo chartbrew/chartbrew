@@ -7,7 +7,6 @@ import {
   useTheme,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
-import _ from "lodash";
 import { toast } from "react-toastify";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -18,8 +17,8 @@ import {
   CloseSquare, Delete, InfoCircle, Play
 } from "react-iconly";
 import {
-  runRequest as runRequestAction,
-} from "../../../actions/dataset";
+  runDataRequest as runDataRequestAction,
+} from "../../../actions/dataRequest";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import { getConnection as getConnectionAction } from "../../../actions/connection";
 
@@ -43,20 +42,14 @@ function RealtimeDbBuilder(props) {
   const { isDark } = useTheme();
 
   const {
-    dataRequest, match, onChangeRequest, runRequest, dataset,
-    connection, onSave, requests, changeTutorial, // eslint-disable-line
-    getConnection, onDelete,
+    dataRequest, match, onChangeRequest, runDataRequest,
+    connection, onSave, changeTutorial, // eslint-disable-line
+    getConnection, onDelete, responses,
   } = props;
 
   // on init effect
   useEffect(() => {
     if (dataRequest) {
-      // get the request data if it exists
-      const requestBody = _.find(requests, { options: { id: dataset.id } });
-      if (requestBody) {
-        setResult(JSON.stringify(requestBody.data, null, 2));
-      }
-
       setFirebaseRequest(dataRequest);
       if (dataRequest?.configuration?.limitToLast) {
         setLimitValue(dataRequest.configuration.limitToLast);
@@ -88,6 +81,15 @@ function RealtimeDbBuilder(props) {
     onChangeRequest(newApiRequest);
   }, [firebaseRequest, connection]);
 
+  useEffect(() => {
+    if (responses && responses.length > 0) {
+      const selectedResponse = responses.find((o) => o.id === dataRequest.id);
+      if (selectedResponse?.data) {
+        setResult(JSON.stringify(selectedResponse.data, null, 2));
+      }
+    }
+  }, [responses]);
+
   const _onChangeRoute = (value) => {
     setFirebaseRequest({ ...firebaseRequest, route: value });
   };
@@ -99,10 +101,9 @@ function RealtimeDbBuilder(props) {
 
     onSave(firebaseRequest).then(() => {
       const useCache = !invalidateCache;
-      runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache)
-        .then((result) => {
+      runDataRequest(match.params.projectId, match.params.chartId, dataRequest.id, useCache)
+        .then(() => {
           setRequestLoading(false);
-          setResult(JSON.stringify(result.data, null, 2));
         })
         .catch((error) => {
           setRequestLoading(false);
@@ -438,7 +439,7 @@ function RealtimeDbBuilder(props) {
                 shadow
                 iconRight={requestLoading ? <Loading type="points" /> : <Play />}
                 disabled={requestLoading}
-                onClick={_onTest}
+                onClick={() => _onTest()}
                 css={{ width: "100%" }}
               >
                 Make the request
@@ -471,13 +472,20 @@ function RealtimeDbBuilder(props) {
                   height="450px"
                   width="none"
                   value={result || ""}
-                  onChange={() => setResult(result)}
                   name="resultEditor"
                   readOnly
                   editorProps={{ $blockScrolling: false }}
                   className="RealtimeDb-result-tut"
                 />
               </div>
+            </Row>
+            <Spacer y={0.5} />
+            <Row align="center">
+              <InfoCircle size="small" />
+              <Spacer x={0.2} />
+              <Text small>
+                {"This is a preview and it might not show all data in order to keep things fast in the UI."}
+              </Text>
             </Row>
           </Container>
         </Grid>
@@ -496,29 +504,28 @@ RealtimeDbBuilder.defaultProps = {
 };
 
 RealtimeDbBuilder.propTypes = {
-  dataset: PropTypes.object.isRequired,
   connection: PropTypes.object.isRequired,
   match: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
-  runRequest: PropTypes.func.isRequired,
+  runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
-  requests: PropTypes.array.isRequired,
   dataRequest: PropTypes.object,
   changeTutorial: PropTypes.func.isRequired,
   getConnection: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  responses: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
-    requests: state.dataset.requests,
+    responses: state.dataRequest.responses,
   };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    runRequest: (projectId, chartId, datasetId) => {
-      return dispatch(runRequestAction(projectId, chartId, datasetId));
+    runDataRequest: (projectId, chartId, drId, getCache) => {
+      return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
     getConnection: (projectId, connectionId) => (

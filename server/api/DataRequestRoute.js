@@ -224,7 +224,29 @@ module.exports = (app) => {
         );
       })
       .then((dataRequest) => {
-        return res.status(200).send(dataRequest);
+        const newDataRequest = dataRequest;
+        // reduce the size of the returned data. No point in showing thousands of objects
+        if (newDataRequest?.dataRequest?.responseData?.data) {
+          const { data } = newDataRequest.dataRequest.responseData;
+          if (typeof data === "object" && data instanceof Array) {
+            newDataRequest.dataRequest.responseData.data = data.slice(0, 20);
+          } else if (typeof data === "object") {
+            const resultsKey = [];
+            Object.keys(data).forEach((key) => {
+              if (data[key] instanceof Array) {
+                resultsKey.push(key);
+              }
+            });
+
+            if (resultsKey.length > 0) {
+              resultsKey.forEach((resultKey) => {
+                const slicedArray = data[resultKey].slice(0, 20);
+                newDataRequest.dataRequest.responseData.data[resultKey] = slicedArray;
+              });
+            }
+          }
+        }
+        return res.status(200).send(newDataRequest);
       })
       .catch((error) => {
         if (error.message === "401") {

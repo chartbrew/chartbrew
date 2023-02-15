@@ -322,12 +322,10 @@ function DatarequestModal(props) {
                   )}
                   {selectedRequest.Connection.type === "realtimedb" && selectedRequest.id === dr.id && (
                     <RealtimeDbBuilder
-                      dataset={dataset}
                       dataRequest={dr}
                       connection={dr.Connection}
                       onChangeRequest={_updateDataRequest}
                       onSave={_onSaveRequest}
-                      exploreData={result && JSON.stringify(result.data, null, 2)}
                       onDelete={() => _onDeleteRequest(dr.id)}
                     />
                   )}
