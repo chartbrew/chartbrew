@@ -712,7 +712,7 @@ function FirestoreBuilder(props) {
           <Container>
             <Row className="firestorebuilder-request-tut">
               <Button
-                iconRight={requestLoading ? <Loading type="points" /> : <Play />}
+                iconRight={requestLoading ? <Loading type="spinner" /> : <Play />}
                 disabled={requestLoading}
                 onClick={() => _onTest()}
                 shadow

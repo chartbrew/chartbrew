@@ -629,14 +629,12 @@ function ApiBuilder(props) {
               </div>
             </Row>
             <Spacer y={0.5} />
-            <Row>
-              <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-                <InfoCircle size="small" />
-                <Spacer x={0.2} />
-                <Text small>
-                  {"This is a preview and it might not show all data in order to keep things fast in the UI."}
-                </Text>
-              </div>
+            <Row align="center">
+              <InfoCircle size="small" />
+              <Spacer x={0.2} />
+              <Text small>
+                {"This is a preview and it might not show all data in order to keep things fast in the UI."}
+              </Text>
             </Row>
           </Container>
         </Grid>

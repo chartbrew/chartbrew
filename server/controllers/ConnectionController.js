@@ -770,7 +770,16 @@ class ConnectionController {
       });
   }
 
-  async runGoogleAnalytics(connection, dataRequest, getCache) {
+  async runGoogleAnalytics(conn, dataRequest, getCache) {
+    let connection = conn;
+    if (connection.id) {
+      try {
+        connection = await this.findById(connection.id);
+      } catch (e) {
+        connection = conn;
+      }
+    }
+
     if (getCache) {
       const drCache = await checkAndGetCache(connection.id, dataRequest);
       if (drCache) return drCache;
@@ -784,7 +793,9 @@ class ConnectionController {
         // cache the data for later use
         const dataToCache = {
           dataRequest,
-          responseData,
+          responseData: {
+            data: responseData,
+          },
           connection_id: connection.id,
         };
         drCacheController.create(dataRequest.id, dataToCache);

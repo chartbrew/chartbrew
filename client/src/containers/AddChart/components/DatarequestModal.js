@@ -294,12 +294,10 @@ function DatarequestModal(props) {
                 <Fragment key={dr.id}>
                   {selectedRequest.Connection.type === "api" && selectedRequest.id === dr.id && (
                     <ApiBuilder
-                      dataset={dataset}
                       dataRequest={dr}
                       connection={dr.Connection}
                       onChangeRequest={_updateDataRequest}
                       onSave={_onSaveRequest}
-                      exploreData={result && JSON.stringify(result.data, null, 2)}
                       chart={chart}
                       onDelete={() => _onDeleteRequest(dr.id)}
                     />
@@ -344,12 +342,10 @@ function DatarequestModal(props) {
                   )}
                   {selectedRequest.Connection.type === "googleAnalytics" && selectedRequest.id === dr.id && (
                     <GaBuilder
-                      dataset={dataset}
                       dataRequest={dr}
                       connection={dr.Connection}
                       onChangeRequest={_updateDataRequest}
                       onSave={_onSaveRequest}
-                      exploreData={result && JSON.stringify(result.data, null, 2)}
                       onDelete={() => _onDeleteRequest(dr.id)}
                     />
                   )}

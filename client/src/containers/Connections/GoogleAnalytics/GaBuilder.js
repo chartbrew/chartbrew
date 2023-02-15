@@ -22,8 +22,8 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 import "ace-builds/webpack-resolver";
 
 import {
-  runRequest as runRequestAction,
-} from "../../../actions/dataset";
+  runDataRequest as runDataRequestAction,
+} from "../../../actions/dataRequest";
 import {
   testRequest as testRequestAction,
   getConnection as getConnectionAction,
@@ -39,9 +39,9 @@ const validEndDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)
 */
 function GaBuilder(props) {
   const {
-    dataRequest, match, runRequest, dataset,
+    dataRequest, match, runDataRequest,
     connection, onSave, requests, testRequest, // eslint-disable-line
-    getConnection, onDelete,
+    getConnection, onDelete, responses,
   } = props;
 
   const [gaRequest, setGaRequest] = useState({});
@@ -189,14 +189,17 @@ function GaBuilder(props) {
     }
   }, [metricsOptions, dimensionsOptions]);
 
+  useEffect(() => {
+    if (responses && responses.length > 0) {
+      const selectedResponse = responses.find((o) => o.id === dataRequest.id);
+      if (selectedResponse?.data) {
+        setResult(JSON.stringify(selectedResponse.data, null, 2));
+      }
+    }
+  }, [responses]);
+
   const _initRequest = () => {
     if (dataRequest) {
-      // get the request data if it exists
-      const requestBody = _.find(requests, { options: { id: dataset.id } });
-      if (requestBody) {
-        setResult(JSON.stringify(requestBody.data, null, 2));
-      }
-
       setGaRequest(dataRequest);
 
       if (dataRequest.configuration
@@ -250,11 +253,9 @@ function GaBuilder(props) {
 
   const _onRunRequest = () => {
     const useCache = !invalidateCache;
-    runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache)
-      .then((result) => {
+    runDataRequest(match.params.projectId, match.params.chartId, dataRequest.id, useCache)
+      .then(() => {
         setRequestLoading(false);
-        const jsonString = JSON.stringify(result.data, null, 2);
-        setResult(jsonString);
       })
       .catch((error) => {
         setRequestLoading(false);
@@ -334,7 +335,7 @@ function GaBuilder(props) {
           <Button
             icon={<CalendarIcon set="bold" />}
             css={{ minWidth: "fit-content" }}
-            flat
+            bordered
             color="secondary"
             disabled={!configuration.viewId}
           />
@@ -406,7 +407,7 @@ function GaBuilder(props) {
                       flat
                     >
                       {(!saveLoading && !requestLoading) && "Save"}
-                      {(saveLoading || requestLoading) && <Loading type="spinner" />}
+                      {(saveLoading || requestLoading) && <Loading type="points-opacity" />}
                     </Button>
                     <Spacer x={0.3} />
                     <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
@@ -432,7 +433,7 @@ function GaBuilder(props) {
                     <Input
                       label="Account"
                       placeholder="Select an account"
-                      contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown />}
+                      contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown set="light" />}
                       bordered
                       animated={false}
                       fullWidth
@@ -463,7 +464,7 @@ function GaBuilder(props) {
                     <Input
                       label="Property"
                       placeholder="Select a property"
-                      contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown />}
+                      contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown set="light" />}
                       bordered
                       animated={false}
                       fullWidth
@@ -495,7 +496,7 @@ function GaBuilder(props) {
                     <Input
                       label="View"
                       placeholder="Select a view"
-                      contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown />}
+                      contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown set="light" />}
                       bordered
                       animated={false}
                       fullWidth
@@ -539,7 +540,7 @@ function GaBuilder(props) {
                   <Dropdown.Trigger>
                     <Input
                       placeholder="Select a metric"
-                      contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown />}
+                      contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown set="light" />}
                       bordered
                       animated={false}
                       fullWidth
@@ -582,7 +583,7 @@ function GaBuilder(props) {
                   <Dropdown.Trigger>
                     <Input
                       placeholder="Select a dimension"
-                      contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown />}
+                      contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown set="light" />}
                       bordered
                       animated={false}
                       fullWidth
@@ -689,27 +690,34 @@ function GaBuilder(props) {
                   <Badge
                     as="a"
                     onClick={() => setConfiguration({ ...configuration, endDate: "today" })}
+                    disableOutline
                   >
                     today
                   </Badge>
+                  <Spacer x={0.2} />
                   <Badge
                     as="a"
                     onClick={() => setConfiguration({ ...configuration, endDate: "yesterday" })}
+                    disableOutline
                   >
                     yesterday
                   </Badge>
+                  <Spacer x={0.2} />
                   <Badge
                     as="a"
                     onClick={() => setConfiguration({ ...configuration, endDate: "30daysAgo" })}
+                    disableOutline
                   >
                     30daysAgo
                   </Badge>
+                  <Spacer x={0.2} />
                   <Badge
                     as="a"
                     onClick={() => setDateHelp(!dateHelp)}
                     variant="flat"
                     color={dateHelp ? "secondary" : "default"}
                     size="sm"
+                    disableOutline
                   >
                     <InfoCircle size="small" />
                     <Spacer x={0.1} />
@@ -791,6 +799,14 @@ function GaBuilder(props) {
                 />
               </div>
             </Row>
+            <Spacer y={0.5} />
+            <Row align="center">
+              <InfoCircle size="small" />
+              <Spacer x={0.2} />
+              <Text small>
+                {"This is a preview and it might not show all data in order to keep things fast in the UI."}
+              </Text>
+            </Row>
           </Container>
         </Grid>
       </Grid.Container>
@@ -817,28 +833,28 @@ GaBuilder.defaultProps = {
 };
 
 GaBuilder.propTypes = {
-  dataset: PropTypes.object.isRequired,
   connection: PropTypes.object.isRequired,
   match: PropTypes.object.isRequired,
-  runRequest: PropTypes.func.isRequired,
+  runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   requests: PropTypes.array.isRequired,
   dataRequest: PropTypes.object,
   testRequest: PropTypes.func.isRequired,
   getConnection: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  responses: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
-    requests: state.dataset.requests,
+    responses: state.dataRequest.responses,
   };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    runRequest: (projectId, chartId, datasetId) => {
-      return dispatch(runRequestAction(projectId, chartId, datasetId));
+    runDataRequest: (projectId, chartId, drId, getCache) => {
+      return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
     },
     testRequest: (projectId, data) => dispatch(testRequestAction(projectId, data)),
     getConnection: (projectId, connectionId) => (
