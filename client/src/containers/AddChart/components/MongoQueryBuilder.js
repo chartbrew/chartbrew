@@ -18,7 +18,7 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { createSavedQuery, updateSavedQuery } from "../../../actions/savedQuery";
 import SavedQueries from "../../../components/SavedQueries";
-import { runRequest as runRequestAction } from "../../../actions/dataset";
+import { runDataRequest as runDataRequestAction } from "../../../actions/dataRequest";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 
 /*
@@ -27,8 +27,8 @@ import { changeTutorial as changeTutorialAction } from "../../../actions/tutoria
 function MongoQueryBuilder(props) {
   const {
     createSavedQuery, match, updateSavedQuery, onChangeRequest,
-    runRequest, onSave, dataset, dataRequest, exploreData,
-    changeTutorial, connection, onDelete,
+    runDataRequest, onSave, dataRequest,
+    changeTutorial, connection, onDelete, responses,
   } = props;
 
   const [savedQuery, setSavedQuery] = useState(null);
@@ -62,6 +62,15 @@ function MongoQueryBuilder(props) {
   useEffect(() => {
     onChangeRequest(mongoRequest);
   }, [mongoRequest]);
+
+  useEffect(() => {
+    if (responses && responses.length > 0) {
+      const selectedResponse = responses.find((o) => o.id === dataRequest.id);
+      if (selectedResponse?.data) {
+        setResult(JSON.stringify(selectedResponse.data, null, 2));
+      }
+    }
+  }, [responses]);
 
   const _onSaveQueryConfirmation = () => {
     setSaveQueryModal(true);
@@ -109,18 +118,17 @@ function MongoQueryBuilder(props) {
     setMongoRequest({ ...mongoRequest, query: value });
   };
 
-  const _onTest = () => {
+  const _onTest = (dr = mongoRequest) => {
     setTestingQuery(true);
     setTestSuccess(false);
     setTestError(false);
 
-    onSave().then(() => {
+    onSave(dr).then(() => {
       const useCache = !invalidateCache;
-      runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache)
+      runDataRequest(match.params.projectId, match.params.chartId, dataRequest.id, useCache)
         .then((result) => {
           setTestingQuery(false);
           setTestSuccess(result.status);
-          setResult(JSON.stringify(result.data, null, 2));
         })
         .catch((error) => {
           setTestingQuery(false);
@@ -142,7 +150,7 @@ function MongoQueryBuilder(props) {
 
   return (
     <div style={styles.container}>
-      <Grid.Container gap={1}>
+      <Grid.Container>
         <Grid xs={12} sm={6}>
           <Container>
             <Row justify="space-between" align="center">
@@ -219,18 +227,18 @@ function MongoQueryBuilder(props) {
                 />
               </div>
             </Row>
+            <Spacer y={0.5} />
             <Row align="center" className="mongobuilder-buttons-tut">
               <Button
                 color={testSuccess ? "success" : testError ? "error" : "primary"}
-                iconRight={testSuccess && !testingQuery ? <TickSquare /> : <Play />}
-                onClick={_onTest}
+                iconRight={testingQuery ? <Loading type="points-opacity" /> : <Play />}
+                onClick={() => _onTest()}
                 disabled={testingQuery}
                 auto
                 shadow
               >
-                {!testSuccess && !testError && !testingQuery && "Run the query"}
+                {!testSuccess && !testError && !testingQuery && "Run query"}
                 {(testSuccess || testError) && !testingQuery && "Run again"}
-                {testingQuery && <Loading type="points" />}
               </Button>
               <Spacer x={0.2} />
               <Button
@@ -240,7 +248,7 @@ function MongoQueryBuilder(props) {
                 onClick={_onSaveQueryConfirmation}
                 auto
               >
-                {!savedQuery && !savingQuery && "Save the query"}
+                {!savedQuery && !savingQuery && "Save query"}
                 {savedQuery && !savingQuery && "Save as new"}
                 {savingQuery && <Loading type="points" />}
               </Button>
@@ -258,7 +266,9 @@ function MongoQueryBuilder(props) {
                   </Button>
                 </>
               )}
-              <Spacer x={0.5} />
+            </Row>
+            <Spacer y={0.5} />
+            <Row align="center">
               <Checkbox
                 label="Use cache"
                 isSelected={!invalidateCache}
@@ -267,7 +277,7 @@ function MongoQueryBuilder(props) {
               />
               <Spacer x={0.2} />
               <Tooltip
-                content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change any call settings."}
+                content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change the query."}
                 css={{ zIndex: 10000, maxWidth: 400 }}
               >
                 <InfoCircle size="small" />
@@ -310,8 +320,7 @@ function MongoQueryBuilder(props) {
                   style={{ borderRadius: 10 }}
                   height="450px"
                   width="none"
-                  value={exploreData || result || ""}
-                  onChange={() => setResult(result)}
+                  value={result || ""}
                   name="resultEditor"
                   readOnly
                   editorProps={{ $blockScrolling: false }}
@@ -321,9 +330,12 @@ function MongoQueryBuilder(props) {
             </Row>
             <Spacer y={0.5} />
             {result && (
-              <Row>
-                <Text small>This is a sample response and might not show all the data.</Text>
-              </Row>
+              <>
+                <Row>
+                  <Text small>This is a sample response and might not show all the data.</Text>
+                </Row>
+                <Spacer y={0.5} />
+              </>
             )}
 
             <Row>
@@ -427,27 +439,23 @@ const styles = {
   },
 };
 
-MongoQueryBuilder.defaultProps = {
-  exploreData: "",
-};
-
 MongoQueryBuilder.propTypes = {
-  dataset: PropTypes.object.isRequired,
   dataRequest: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
-  runRequest: PropTypes.func.isRequired,
-  exploreData: PropTypes.string,
+  runDataRequest: PropTypes.func.isRequired,
   createSavedQuery: PropTypes.func.isRequired,
   updateSavedQuery: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   changeTutorial: PropTypes.func.isRequired,
   connection: PropTypes.object.isRequired,
   onDelete: PropTypes.func.isRequired,
+  responses: PropTypes.array.isRequired,
 };
 
-const mapStateToProps = () => {
+const mapStateToProps = (state) => {
   return {
+    responses: state.dataRequest.responses,
   };
 };
 
@@ -457,8 +465,8 @@ const mapDispatchToProps = (dispatch) => {
     updateSavedQuery: (projectId, savedQueryId, data) => (
       dispatch(updateSavedQuery(projectId, savedQueryId, data))
     ),
-    runRequest: (projectId, chartId, datasetId, getCache) => {
-      return dispatch(runRequestAction(projectId, chartId, datasetId, getCache));
+    runDataRequest: (projectId, chartId, drId, getCache) => {
+      return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };

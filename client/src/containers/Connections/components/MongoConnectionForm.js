@@ -468,7 +468,7 @@ function MongoConnectionForm(props) {
         </Row>
         <Spacer y={0.5} />
         <Row align="center">
-          <ChevronRight />
+          <ChevronRight set="light" />
           <Spacer x={0.2} />
           <Link
             target="_blank"
@@ -481,7 +481,7 @@ function MongoConnectionForm(props) {
           <FaExternalLinkSquareAlt size={12} />
         </Row>
         <Row align="center">
-          <ChevronRight />
+          <ChevronRight set="light" />
           <Spacer x={0.2} />
           <Link
             href="https://docs.mongodb.com/guides/cloud/connectionstring/"
@@ -494,7 +494,7 @@ function MongoConnectionForm(props) {
           <FaExternalLinkSquareAlt size={12} />
         </Row>
         <Row align="center">
-          <ChevronRight />
+          <ChevronRight set="light" />
           <Spacer x={0.2} />
           <Link onClick={() => setShowIp(!showIp)}>
             <Text>Front-end and back-end on different servers?</Text>
@@ -533,7 +533,7 @@ function MongoConnectionForm(props) {
             onClick={() => _onCreateConnection(true)}
             disabled={testLoading}
           >
-            {testLoading && <Loading type="points" color="currentColor" />}
+            {testLoading && <Loading type="points-opacity" color="currentColor" />}
             {!testLoading && "Test connection"}
           </Button>
           <Spacer x={0.2} />
@@ -542,21 +542,24 @@ function MongoConnectionForm(props) {
             onClick={_onCreateConnection}
             auto
           >
-            {loading && <Loading type="points" color="currentColor" />}
+            {loading && <Loading type="points-opacity" color="currentColor" />}
             {!loading && "Save connection"}
           </Button>
         </Row>
       </Container>
 
       {testLoading && (
-        <Container css={{ backgroundColor: "$backgroundContrast", br: "$md", p: 20 }} md>
-          <Row align="center">
-            <Loading type="points">
-              Test underway...
-            </Loading>
-          </Row>
-          <Spacer y={2} />
-        </Container>
+        <>
+          <Spacer y={1} />
+          <Container css={{ backgroundColor: "$backgroundContrast", br: "$md", p: 20 }} md>
+            <Row align="center">
+              <Loading type="points-opacity">
+                Test underway...
+              </Loading>
+            </Row>
+            <Spacer y={2} />
+          </Container>
+        </>
       )}
 
       {testResult && !testLoading && (

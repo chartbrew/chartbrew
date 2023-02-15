@@ -498,7 +498,9 @@ class ConnectionController {
         // cache the data for later use
         const dataToCache = {
           dataRequest,
-          responseData: data,
+          responseData: {
+            data,
+          },
           connection_id: id,
         };
         drCacheController.create(dataRequest.id, dataToCache);

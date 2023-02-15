@@ -168,10 +168,10 @@ export function deleteDataRequest(projectId, chartId, drId) {
   };
 }
 
-export function runDataRequest(projectId, chartId, datasetId, getCache) {
+export function runDataRequest(projectId, chartId, drId, getCache) {
   return (dispatch) => {
     const token = cookie.load("brewToken");
-    const url = `${API_HOST}/project/${projectId}/chart/${chartId}/dataRequest/${datasetId}/request`;
+    const url = `${API_HOST}/project/${projectId}/chart/${chartId}/dataRequest/${drId}/request`;
     const method = "POST";
     const body = JSON.stringify({ getCache });
     const headers = new Headers({
