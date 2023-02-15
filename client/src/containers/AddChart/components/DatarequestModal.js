@@ -306,12 +306,10 @@ function DatarequestModal(props) {
                   )}
                   {(selectedRequest.Connection.type === "mysql" || selectedRequest.Connection.type === "postgres") && selectedRequest.id === dr.id && (
                     <SqlBuilder
-                      dataset={dataset}
                       dataRequest={dr}
                       connection={dr.Connection}
                       onChangeRequest={_updateDataRequest}
                       onSave={_onSaveRequest}
-                      exploreData={result && JSON.stringify(result.data, null, 2)}
                       onDelete={() => _onDeleteRequest(dr.id)}
                     />
                   )}

@@ -19,7 +19,7 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { createSavedQuery, updateSavedQuery } from "../../../actions/savedQuery";
-import { runRequest as runRequestAction } from "../../../actions/dataset";
+import { runDataRequest as runDataRequestAction } from "../../../actions/dataRequest";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import SavedQueries from "../../../components/SavedQueries";
 
@@ -28,9 +28,9 @@ import SavedQueries from "../../../components/SavedQueries";
 */
 function SqlBuilder(props) {
   const {
-    createSavedQuery, match, updateSavedQuery, exploreData, changeTutorial,
-    dataset, dataRequest, onChangeRequest, onSave, runRequest, connection,
-    onDelete,
+    createSavedQuery, match, updateSavedQuery, changeTutorial,
+    dataRequest, onChangeRequest, onSave, runDataRequest, connection,
+    onDelete, responses,
   } = props;
 
   const [sqlRequest, setSqlRequest] = useState({
@@ -62,6 +62,15 @@ function SqlBuilder(props) {
   useEffect(() => {
     onChangeRequest(sqlRequest);
   }, [sqlRequest]);
+
+  useEffect(() => {
+    if (responses && responses.length > 0) {
+      const selectedResponse = responses.find((o) => o.id === dataRequest.id);
+      if (selectedResponse?.data) {
+        setResult(JSON.stringify(selectedResponse.data, null, 2));
+      }
+    }
+  }, [responses]);
 
   const _onSaveQueryConfirmation = () => {
     setSaveQueryModal(true);
@@ -107,18 +116,17 @@ function SqlBuilder(props) {
     setSqlRequest({ ...sqlRequest, query: value });
   };
 
-  const _onTest = () => {
+  const _onTest = (dr = dataRequest) => {
     setRequestLoading(true);
     setRequestSuccess(false);
     setRequestError(false);
 
-    onSave().then(() => {
+    onSave(dr).then(() => {
       const getCache = !invalidateCache;
-      runRequest(match.params.projectId, match.params.chartId, dataset.id, getCache)
+      runDataRequest(match.params.projectId, match.params.chartId, dr.id, getCache)
         .then((result) => {
           setRequestLoading(false);
           setRequestSuccess(result.status);
-          setResult(JSON.stringify(result.data, null, 2));
         })
         .catch((error) => {
           setRequestLoading(false);
@@ -207,15 +215,14 @@ function SqlBuilder(props) {
             <Row align="center" className="sqlbuilder-buttons-tut">
               <Button
                 color={requestSuccess ? "success" : requestError ? "error" : "primary"}
-                iconRight={requestSuccess && !requestLoading ? <TickSquare /> : <Play />}
-                onClick={_onTest}
+                iconRight={requestLoading ? <Loading type="points-opacity" /> : <Play />}
+                onClick={() => _onTest()}
                 disabled={requestLoading}
                 auto
                 shadow
               >
-                {!requestSuccess && !requestError && !requestLoading && "Run the query"}
+                {!requestSuccess && !requestError && !requestLoading && "Run query"}
                 {(requestSuccess || requestError) && !requestLoading && "Run again"}
-                {requestLoading && <Loading type="points" />}
               </Button>
 
               <Spacer x={0.2} />
@@ -226,9 +233,9 @@ function SqlBuilder(props) {
                 onClick={_onSaveQueryConfirmation}
                 auto
               >
-                {!savedQuery && !savingQuery && "Save the query"}
+                {!savedQuery && !savingQuery && "Save query"}
                 {savedQuery && !savingQuery && "Save as new"}
-                {savingQuery && <Loading type="points" />}
+                {savingQuery && <Loading type="points-opacity" />}
               </Button>
 
               {savedQuery && (
@@ -245,8 +252,9 @@ function SqlBuilder(props) {
                   </Button>
                 </>
               )}
-
-              <Spacer x={0.5} />
+            </Row>
+            <Spacer y={0.5} />
+            <Row align="center">
               <Checkbox
                 label="Use cache"
                 isSelected={!invalidateCache}
@@ -296,8 +304,7 @@ function SqlBuilder(props) {
                   style={{ borderRadius: 10 }}
                   height="450px"
                   width="none"
-                  value={exploreData || result || ""}
-                  onChange={() => setResult(result)}
+                  value={result || ""}
                   name="resultEditor"
                   readOnly
                   editorProps={{ $blockScrolling: false }}
@@ -362,27 +369,23 @@ const styles = {
   },
 };
 
-SqlBuilder.defaultProps = {
-  exploreData: "",
-};
-
 SqlBuilder.propTypes = {
-  dataset: PropTypes.object.isRequired,
   dataRequest: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
-  runRequest: PropTypes.func.isRequired,
+  runDataRequest: PropTypes.func.isRequired,
   createSavedQuery: PropTypes.func.isRequired,
   updateSavedQuery: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   connection: PropTypes.object.isRequired,
-  exploreData: PropTypes.string,
   changeTutorial: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  responses: PropTypes.array.isRequired,
 };
 
-const mapStateToProps = () => {
+const mapStateToProps = (state) => {
   return {
+    responses: state.dataRequest.responses,
   };
 };
 
@@ -392,8 +395,8 @@ const mapDispatchToProps = (dispatch) => {
     updateSavedQuery: (projectId, savedQueryId, data) => (
       dispatch(updateSavedQuery(projectId, savedQueryId, data))
     ),
-    runRequest: (projectId, chartId, datasetId) => {
-      return dispatch(runRequestAction(projectId, chartId, datasetId));
+    runDataRequest: (projectId, chartId, drId, getCache) => {
+      return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };
