@@ -6,6 +6,7 @@ export const FETCHING_DATA_REQUEST = "FETCHING_DATA_REQUEST";
 export const FETCH_DATA_REQUEST_SUCCESS = "FETCH_DATA_REQUEST_SUCCESS";
 export const FETCH_DATA_REQUEST_FAIL = "FETCH_DATA_REQUEST_FAIL";
 export const FETCH_CHART_DATA_REQUESTS = "FETCH_CHART_DATA_REQUESTS";
+export const FETCH_DATASET_REQUESTS = "FETCH_DATASET_REQUESTS";
 export const DATA_REQUEST_DELETED = "DATA_REQUEST_DELETED";
 
 export function getDataRequestByChart(projectId, chartId) {
@@ -59,9 +60,9 @@ export function getDataRequestByDataset(projectId, chartId, datasetId) {
 
         return response.json();
       })
-      .then((dataRequest) => {
-        dispatch({ type: FETCH_DATA_REQUEST_SUCCESS, dataRequest });
-        return Promise.resolve(dataRequest);
+      .then((dataRequests) => {
+        dispatch({ type: FETCH_DATASET_REQUESTS, dataRequests });
+        return Promise.resolve(dataRequests);
       })
       .catch((error) => {
         dispatch({ type: FETCH_DATA_REQUEST_FAIL });

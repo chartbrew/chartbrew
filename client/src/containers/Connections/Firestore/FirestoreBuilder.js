@@ -15,7 +15,8 @@ import { format, formatISO } from "date-fns";
 import { enGB } from "date-fns/locale";
 import { HiRefresh } from "react-icons/hi";
 import {
-  CloseSquare, Danger, InfoCircle, Play, Plus, Calendar as CalendarIcon, TickSquare, Delete,
+  CloseSquare, Danger, InfoCircle, Play, Plus, Calendar as CalendarIcon,
+  TickSquare, Delete, ChevronDown,
 } from "react-iconly";
 import { FaUndoAlt } from "react-icons/fa";
 
@@ -122,53 +123,11 @@ function FirestoreBuilder(props) {
   // on init effect
   useEffect(() => {
     if (dataRequest) {
-      // get the request data if it exists
-      // _setFormattedResult();
-
-      if (dataRequest && dataRequest.conditions) {
-        let newConditions = [...conditions];
-
-        // in case of initialisation, remove the first empty condition
-        if (newConditions.length === 1 && !newConditions[0].saved && !newConditions[0].value) {
-          newConditions = [];
-        }
-
-        const toAddConditions = [];
-        for (let i = 0; i < dataRequest.conditions.length; i++) {
-          let found = false;
-          for (let j = 0; j < newConditions.length; j++) {
-            if (newConditions[j].id === dataRequest.conditions[i].id) {
-              newConditions[j] = _.clone(dataRequest.conditions[i]);
-              found = true;
-            }
-          }
-
-          if (!found) toAddConditions.push(dataRequest.conditions[i]);
-        }
-
-        const finalConditions = newConditions.concat(toAddConditions);
-        if (finalConditions.length === 0) {
-          setConditions([{
-            id: uuid(),
-            field: "",
-            operator: "==",
-            value: "",
-            values: [],
-          }]);
-        } else {
-          setConditions(finalConditions);
-        }
-      }
-
-      setFirestoreRequest(dataRequest);
+      _init(dataRequest);
 
       setTimeout(() => {
         changeTutorial("firestoreBuilder");
       }, 1000);
-
-      // if (dataRequest.query) {
-      //   _onRunRequest();
-      // }
     }
   }, []);
 
@@ -194,6 +153,8 @@ function FirestoreBuilder(props) {
         _populateFieldOptions(dataRequest.configuration.subCollectionSample, "sub");
       }
     }
+
+    _initializeConditions();
   }, [dataRequest]);
 
   useEffect(() => {
@@ -216,6 +177,59 @@ function FirestoreBuilder(props) {
       }
     }
   }, [responses]);
+
+  const _init = (dr) => {
+    // get the request data if it exists
+    // _setFormattedResult();
+
+    _initializeConditions(dr);
+    setFirestoreRequest(dr);
+  };
+
+  const _initializeConditions = (dr = dataRequest) => {
+    if (dr && dr.conditions) {
+      let newConditions = [...conditions];
+
+      // in case of initialisation, remove the first empty condition
+      if (newConditions.length === 1 && !newConditions[0].saved && !newConditions[0].value) {
+        newConditions = [];
+      }
+
+      const toAddConditions = [];
+      for (let i = 0; i < dr.conditions.length; i++) {
+        let found = false;
+        for (let j = 0; j < newConditions.length; j++) {
+          if (newConditions[j].id === dr.conditions[i].id) {
+            newConditions[j] = _.clone(dr.conditions[i]);
+            found = true;
+          }
+        }
+
+        if (!found) toAddConditions.push(dr.conditions[i]);
+      }
+
+      const finalConditions = newConditions.concat(toAddConditions);
+      if (finalConditions.length === 0) {
+        setConditions([{
+          id: uuid(),
+          field: "",
+          operator: "==",
+          value: "",
+          values: [],
+        }]);
+      } else {
+        setConditions(finalConditions);
+      }
+    } else {
+      setConditions([{
+        id: uuid(),
+        field: "",
+        operator: "==",
+        value: "",
+        values: [],
+      }]);
+    }
+  };
 
   const _populateFieldOptions = (sampleData, type) => {
     const tempFieldOptions = [];
@@ -273,7 +287,10 @@ function FirestoreBuilder(props) {
     setIndexUrl("");
     const useCache = !invalidateCache;
     runDataRequest(match.params.projectId, match.params.chartId, dataRequest.id, useCache)
-      .then(() => {
+      .then((dr) => {
+        if (dr?.dataRequest) {
+          _init(dr.dataRequest);
+        }
         setRequestLoading(false);
       })
       .catch((error) => {
@@ -500,9 +517,8 @@ function FirestoreBuilder(props) {
             <Spacer y={0.5} />
             <Row wrap="wrap" css={{ pl: 0 }} className="firestorebuilder-collections-tut">
               {collectionData.map((collection) => (
-                <>
+                <Fragment key={collection._queryOptions.collectionId}>
                   <Badge
-                    key={collection._queryOptions.collectionId}
                     variant={firestoreRequest.query !== collection._queryOptions.collectionId ? "bordered" : "default"}
                     color="primary"
                     onClick={() => _onChangeQuery(collection._queryOptions.collectionId)}
@@ -513,7 +529,7 @@ function FirestoreBuilder(props) {
                     {collection._queryOptions.collectionId}
                   </Badge>
                   <Spacer x={0.2} />
-                </>
+                </Fragment>
               ))}
             </Row>
             <Spacer y={0.5} />
@@ -596,9 +612,8 @@ function FirestoreBuilder(props) {
               <Spacer y={0.5} />
               <Row wrap="wrap">
                 {dataRequest.configuration.subCollections.map((subCollection) => (
-                  <>
+                  <Fragment key={subCollection}>
                     <Badge
-                      key={subCollection}
                       color="secondary"
                       variant={dataRequest.configuration.selectedSubCollection !== subCollection ? "bordered" : "default"}
                       onClick={() => _onSelectSubCollection(subCollection)}
@@ -607,7 +622,7 @@ function FirestoreBuilder(props) {
                       {subCollection}
                     </Badge>
                     <Spacer x={0.1} />
-                  </>
+                  </Fragment>
                 ))}
               </Row>
               <Spacer y={0.5} />
@@ -789,13 +804,14 @@ function Conditions(props) {
                   <Input
                     value={(condition.field && condition.field.substring(condition.field.lastIndexOf(".") + 1)) || "field"}
                     animated={false}
+                    contentRight={<ChevronDown set="light" />}
                   />
                 </Dropdown.Trigger>
                 <Dropdown.Menu
                   onAction={(key) => updateCondition(condition.id, key, "field")}
                   selectedKeys={[condition.field]}
                   selectionMode="single"
-                  css={{ minWidth: "fit-content" }}
+                  css={{ minWidth: "max-content" }}
                 >
                   {fieldOptions.map((option) => (
                     <Dropdown.Item key={option.value} value={option.value}>
@@ -816,7 +832,7 @@ function Conditions(props) {
               <Spacer x={0.2} />
 
               <Dropdown>
-                <Dropdown.Trigger>
+                <Dropdown.Trigger css={{ minWidth: 50 }}>
                   <Input
                     value={
                       (
@@ -932,8 +948,8 @@ function Conditions(props) {
                     )}
 
                     {!condition.addingValue && condition.values && condition.values.map((item) => (
-                      <>
-                        <Badge color="secondary" key={item} size="sm">
+                      <Fragment key={item}>
+                        <Badge color="secondary" size="sm">
                           <span style={{ paddingLeft: 5 }}>{item}</span>
                           <Spacer x={0.1} />
                           <Link
@@ -949,7 +965,7 @@ function Conditions(props) {
                           </Link>
                         </Badge>
                         <Spacer x={0.1} />
-                      </>
+                      </Fragment>
                     ))}
 
                     {!condition.addingValue && (

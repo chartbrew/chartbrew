@@ -4,9 +4,10 @@ import {
   FETCH_CHART_DATA_REQUESTS,
   FETCH_DATA_REQUEST_SUCCESS,
   DATA_REQUEST_DELETED,
+  FETCH_DATASET_REQUESTS,
 } from "../actions/dataRequest";
 
-export default function dataset(state = {
+export default function dataRequest(state = {
   loading: false,
   error: false,
   data: [],
@@ -16,7 +17,7 @@ export default function dataset(state = {
     case FETCHING_DATA_REQUEST:
       return { ...state, loading: true };
     case FETCH_CHART_DATA_REQUESTS:
-      return { ...state, loading: false, data: action.dataRequests };
+      return { ...state, loading: false, data: [...action.dataRequests] };
     case FETCH_DATA_REQUEST_SUCCESS:
       // look for existing datasets in the data array and replace it if it exists
       let indexFound = -1;
@@ -60,6 +61,27 @@ export default function dataset(state = {
         };
       }
       return { ...state, loading: false, data: newData };
+    case FETCH_DATASET_REQUESTS: {
+      const newData = [...state.data];
+      if (action.dataRequests) {
+        action.dataRequests.forEach((dataRequest) => {
+          let indexFound = -1;
+          for (let i = 0; i < newData.length; i++) {
+            if (newData[i].id === parseInt(dataRequest.id, 10)) {
+              indexFound = i;
+              break;
+            }
+          }
+          if (indexFound > -1) {
+            newData[indexFound] = dataRequest;
+          } else {
+            newData.push(dataRequest);
+          }
+        });
+      }
+
+      return { ...state, loading: false, data: newData };
+    }
     case FETCH_DATA_REQUEST_FAIL:
       return { ...state, loading: false, error: true };
     case DATA_REQUEST_DELETED:

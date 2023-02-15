@@ -158,7 +158,7 @@ class RequestController {
             newConfiguration = { ...newConfiguration, ...response.responseData.configuration };
           }
 
-          if (newConfiguration && Object.keys(newConfiguration).length === 0) {
+          if (newConfiguration && Object.keys(newConfiguration).length > 0) {
             processedRequest.dataRequest.configuration = newConfiguration;
 
             db.DataRequest.update(
