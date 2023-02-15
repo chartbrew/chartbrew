@@ -148,7 +148,7 @@ function SqlBuilder(props) {
 
   return (
     <div style={styles.container}>
-      <Grid.Container gap={1}>
+      <Grid.Container>
         <Grid xs={12} sm={6}>
           <Container>
             <Row justify="space-between" align="center">

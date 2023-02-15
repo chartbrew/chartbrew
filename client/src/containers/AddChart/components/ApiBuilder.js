@@ -8,7 +8,6 @@ import {
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import uuid from "uuid/v4";
-import _ from "lodash";
 import { toast } from "react-toastify";
 import {
   ChevronDown, CloseSquare, Delete, InfoCircle, Play, Plus
@@ -21,8 +20,8 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import ApiPagination from "./ApiPagination";
 import {
-  runRequest as runRequestAction,
-} from "../../../actions/dataset";
+  runDataRequest as runDataRequestAction,
+} from "../../../actions/dataRequest";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import {
   getConnection as getConnectionAction,
@@ -77,9 +76,9 @@ function ApiBuilder(props) {
   const { isDark } = useTheme();
 
   const {
-    dataRequest, match, onChangeRequest, runRequest, dataset,
-    connection, onSave, requests, changeTutorial, chart,
-    getConnection, onDelete,
+    dataRequest, match, onChangeRequest, runDataRequest,
+    connection, onSave, changeTutorial, chart,
+    getConnection, onDelete, responses,
   } = props;
 
   // on init effect
@@ -102,12 +101,6 @@ function ApiBuilder(props) {
       formattedApiRequest.formattedHeaders = formattedHeaders;
 
       setApiRequest(formattedApiRequest);
-
-      // get the request data if it exists
-      const requestBody = _.find(requests, { options: { id: dataset.id } });
-      if (requestBody) {
-        setResult(JSON.stringify(requestBody.data, null, 2));
-      }
 
       setTimeout(() => {
         changeTutorial("apibuilder");
@@ -133,6 +126,15 @@ function ApiBuilder(props) {
 
     onChangeRequest(newApiRequest);
   }, [apiRequest, connection]);
+
+  useEffect(() => {
+    if (responses && responses.length > 0) {
+      const selectedResponse = responses.find((o) => o.id === dataRequest.id);
+      if (selectedResponse?.data) {
+        setResult(JSON.stringify(selectedResponse.data, null, 2));
+      }
+    }
+  }, [responses]);
 
   const _addHeader = () => {
     const { formattedHeaders } = apiRequest;
@@ -220,7 +222,7 @@ function ApiBuilder(props) {
     setApiRequest({ ...apiRequest, [type]: newValue });
   };
 
-  const _onTest = () => {
+  const _onTest = (dr = dataRequest) => {
     const { formattedHeaders } = apiRequest;
     let newHeaders = {};
     for (let i = 0; i < formattedHeaders.length; i++) {
@@ -236,13 +238,12 @@ function ApiBuilder(props) {
     setRequestSuccess(false);
     setRequestError(false);
 
-    onSave().then(() => {
+    onSave(dr).then(() => {
       const getCache = !invalidateCache;
-      runRequest(match.params.projectId, match.params.chartId, dataset.id, getCache)
+      runDataRequest(match.params.projectId, match.params.chartId, dr.id, getCache)
         .then((result) => {
           setRequestLoading(false);
           setRequestSuccess(result.status);
-          setResult(JSON.stringify(result.data, null, 2));
         })
         .catch((error) => {
           setRequestLoading(false);
@@ -263,9 +264,9 @@ function ApiBuilder(props) {
   };
 
   return (
-    <div>
-      <Grid.Container gap={1}>
-        <Grid xs={12} sm={7} md={8}>
+    <div style={{ flex: 1 }}>
+      <Grid.Container>
+        <Grid xs={12} sm={7} md={8} css={{ "@xs": { mb: 50 } }}>
           <Container>
             <Row justify="space-between" align="center">
               <Text b size={22}>{connection.name}</Text>
@@ -280,7 +281,7 @@ function ApiBuilder(props) {
                     flat
                   >
                     {(!saveLoading && !requestLoading) && "Save"}
-                    {(saveLoading || requestLoading) && <Loading type="spinner" />}
+                    {(saveLoading || requestLoading) && <Loading type="points-opacity" />}
                   </Button>
                   <Spacer x={0.3} />
                   <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
@@ -488,7 +489,7 @@ function ApiBuilder(props) {
                               icon={<CloseSquare />}
                               onClick={() => _removeHeader(header.id)}
                               color="error"
-                              flat
+                              light
                               css={{ minWidth: "fit-content" }}
                             />
                           </Row>
@@ -547,11 +548,10 @@ function ApiBuilder(props) {
             )}
           </Container>
         </Grid>
-
         <Grid xs={12} sm={5} md={4}>
-          <Grid.Container gap={1} css={{ pt: 0 }}>
-            <Grid xs={12} sm={6}>
-              <div className="apibuilder-type-tut" style={{ width: "100%" }}>
+          <Container>
+            <Row>
+              <div className="apibuilder-type-tut">
                 <Dropdown>
                   <Dropdown.Trigger>
                     <Input
@@ -559,7 +559,7 @@ function ApiBuilder(props) {
                       bordered
                       fullWidth
                       animated={false}
-                      contentRight={<ChevronDown />}
+                      contentRight={<ChevronDown set="light" />}
                     />
                   </Dropdown.Trigger>
                   <Dropdown.Menu
@@ -575,21 +575,22 @@ function ApiBuilder(props) {
                   </Dropdown.Menu>
                 </Dropdown>
               </div>
-            </Grid>
-            <Grid xs={12} sm={6}>
-              <div className="apibuilder-request-tut">
+              <Spacer x={1} />
+              <div className="apibuilder-request-tut" style={{ width: "100%" }}>
                 <Button
                   iconRight={requestLoading ? null : <Play />}
                   disabled={requestLoading}
-                  onClick={_onTest}
+                  onClick={() => _onTest()}
                   auto
                   shadow
+                  css={{ w: "100%" }}
                 >
-                  {requestLoading ? <Loading type="points" /> : "Send the request"}
+                  {requestLoading ? <Loading type="points-opacity" /> : "Send the request"}
                 </Button>
               </div>
-            </Grid>
-            <Grid xs={12} alignItems="center">
+            </Row>
+            <Spacer y={0.5} />
+            <Row align="center">
               <Checkbox
                 label="Use cache"
                 isSelected={!invalidateCache}
@@ -609,21 +610,26 @@ function ApiBuilder(props) {
               >
                 <InfoCircle size="small" />
               </Tooltip>
-            </Grid>
-            <Grid xs={12} direction="column">
-              <AceEditor
-                mode="json"
-                theme={isDark ? "one_dark" : "tomorrow"}
-                style={{ borderRadius: 10 }}
-                height="450px"
-                width="none"
-                value={result || ""}
-                onChange={() => setResult(result)}
-                name="resultEditor"
-                readOnly
-                editorProps={{ $blockScrolling: false }}
-                className="apibuilder-result-tut"
-              />
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <div style={{ width: "100%" }}>
+                <AceEditor
+                  mode="json"
+                  theme={isDark ? "one_dark" : "tomorrow"}
+                  style={{ borderRadius: 10 }}
+                  height="450px"
+                  width="none"
+                  value={result || ""}
+                  name="resultEditor"
+                  readOnly
+                  editorProps={{ $blockScrolling: false }}
+                  className="apibuilder-result-tut"
+                />
+              </div>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
               <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                 <InfoCircle size="small" />
                 <Spacer x={0.2} />
@@ -631,8 +637,8 @@ function ApiBuilder(props) {
                   {"This is a preview and it might not show all data in order to keep things fast in the UI."}
                 </Text>
               </div>
-            </Grid>
-          </Grid.Container>
+            </Row>
+          </Container>
         </Grid>
       </Grid.Container>
     </div>
@@ -644,30 +650,29 @@ ApiBuilder.defaultProps = {
 };
 
 ApiBuilder.propTypes = {
-  dataset: PropTypes.object.isRequired,
   connection: PropTypes.object.isRequired,
   match: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
-  runRequest: PropTypes.func.isRequired,
+  runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
-  requests: PropTypes.array.isRequired,
   dataRequest: PropTypes.object,
   changeTutorial: PropTypes.func.isRequired,
   chart: PropTypes.object.isRequired,
   getConnection: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  responses: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
-    requests: state.dataset.requests,
+    responses: state.dataRequest.responses,
   };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    runRequest: (projectId, chartId, datasetId, getCache) => {
-      return dispatch(runRequestAction(projectId, chartId, datasetId, getCache));
+    runDataRequest: (projectId, chartId, datasetId, getCache) => {
+      return dispatch(runDataRequestAction(projectId, chartId, datasetId, getCache));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
     getConnection: (projectId, connectionId) => {
