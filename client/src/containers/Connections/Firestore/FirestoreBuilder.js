@@ -516,6 +516,7 @@ function FirestoreBuilder(props) {
             </Row>
             <Spacer y={0.5} />
             <Row wrap="wrap" css={{ pl: 0 }} className="firestorebuilder-collections-tut">
+              {collectionsLoading && <Loading type="points-opacity" />}
               {collectionData.map((collection) => (
                 <Fragment key={collection._queryOptions.collectionId}>
                   <Badge
@@ -1041,23 +1042,18 @@ function Conditions(props) {
         );
       })}
       <Row>
-        <Tooltip
-          content="Add a new filter"
-          css={{ zIndex: 10000 }}
+        <Button
+          icon={<Plus />}
+          onClick={onAddCondition}
+          size="sm"
+          light
+          auto
+          ripple={false}
+          css={{ minWidth: "fit-content" }}
+          color="primary"
         >
-          <Button
-            icon={<Plus />}
-            onClick={onAddCondition}
-            size="sm"
-            light
-            auto
-            ripple={false}
-            css={{ minWidth: "fit-content" }}
-            color="primary"
-          >
-            {"Add a new filter"}
-          </Button>
-        </Tooltip>
+          {"Add a new filter"}
+        </Button>
       </Row>
     </Container>
   );

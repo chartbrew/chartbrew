@@ -6,11 +6,12 @@ import _ from "lodash";
 import { toast } from "react-toastify";
 import {
   Button, Container, Grid, Link, Loading, Modal, Row, Spacer, Text, Avatar,
-  useTheme, Tooltip, Card, theme,
+  useTheme, Tooltip, Card, theme, Badge,
 } from "@nextui-org/react";
 import {
-  Danger, Plus, Setting,
+  Danger, Plus,
 } from "react-iconly";
+import { TbArrowsJoin } from "react-icons/tb";
 import moment from "moment";
 
 import ApiBuilder from "./ApiBuilder";
@@ -30,12 +31,13 @@ import {
 } from "../../../actions/dataRequest";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import connectionImages from "../../../config/connectionImages";
+import { updateDataset as updateDatasetAction } from "../../../actions/dataset";
 
 function DatarequestModal(props) {
   const {
     open, onClose, dataset, match, getDataRequestByDataset,
     createDataRequest, updateDataRequest, requests, changeTutorial, updateResult, chart,
-    connections, deleteDataRequest,
+    connections, deleteDataRequest, updateDataset, responses,
   } = props;
 
   const [initialising, setInitialising] = useState(false);
@@ -61,8 +63,8 @@ function DatarequestModal(props) {
       .then((drs) => {
         setInitialising(false);
         setDataRequests(drs);
-        if (!selectedRequest) {
-          setSelectedRequest(drs[0]);
+        if (drs.length > 0) {
+          setSelectedRequest({ isSettings: true });
         }
 
         setTimeout(() => {
@@ -175,6 +177,10 @@ function DatarequestModal(props) {
       connection_id: connection.id,
     })
       .then((newDr) => {
+        if (dataRequests.length < 1) {
+          updateDataset({ main_dr_id: newDr.id });
+        }
+
         setSelectedRequest(newDr);
         setCreateMode(false);
 
@@ -214,6 +220,17 @@ function DatarequestModal(props) {
     }
   };
 
+  const _onUpdateDataset = (data) => {
+    return updateDataset(match.params.projectId, match.params.chartId, dataset.id, data)
+      .then((newDataset) => {
+        return newDataset;
+      })
+      .catch((e) => {
+        setError(e);
+        return e;
+      });
+  };
+
   return (
     <Modal
       open={open}
@@ -241,10 +258,19 @@ function DatarequestModal(props) {
           <Grid xs={12} sm={0.5} direction="column">
             {selectedRequest && (
               <>
-                <Tooltip content="Dataset settings" css={{ zIndex: 99999 }} placement="rightStart">
+                <Tooltip content="Join data requests" css={{ zIndex: 99999 }} placement="rightStart">
                   <Link onClick={() => setSelectedRequest({ isSettings: true })} css={{ cursor: "pointer" }}>
                     <Avatar
-                      icon={<Setting primaryColor={theme.colors.text.value} set="bold" />}
+                      icon={(
+                        <TbArrowsJoin
+                          size={28}
+                          strokeWidth={2}
+                          color={
+                            selectedRequest.isSettings
+                              ? theme.colors.accents0.value : theme.colors.text.value
+                          }
+                        />
+                      )}
                       squared
                       size="lg"
                       css={{ cursor: "pointer" }}
@@ -257,21 +283,30 @@ function DatarequestModal(props) {
             )}
             {dataRequests.map((dr) => (
               <>
-                <Avatar
-                  key={dr.id}
-                  bordered
-                  squared
-                  src={dr.Connection ? connectionImages(isDark)[dr.Connection.type] : null}
-                  icon={!dr.Connection ? <Danger /> : null}
+                <Badge
+                  content={""}
+                  color={responses.find((r) => r.id === dr.id) ? "success" : "default"}
+                  placement="top-left"
+                  shape="circle"
+                  variant={"dot"}
                   size="lg"
-                  color={dr.id === selectedRequest?.id ? "primary" : "default"}
-                  onClick={() => _onSelectDataRequest(dr)}
-                />
+                >
+                  <Avatar
+                    key={dr.id}
+                    bordered
+                    squared
+                    src={dr.Connection ? connectionImages(isDark)[dr.Connection.type] : null}
+                    icon={!dr.Connection ? <Danger /> : null}
+                    size="lg"
+                    color={dr.id === selectedRequest?.id ? "primary" : "default"}
+                    onClick={() => _onSelectDataRequest(dr)}
+                  />
+                </Badge>
                 <Spacer y={0.3} />
               </>
             ))}
             <Spacer y={0.7} />
-            <Tooltip content="Join with a new dataset" css={{ zIndex: 99999 }} placement="rightStart">
+            <Tooltip content="Add a new data source request" css={{ zIndex: 99999 }} placement="rightStart">
               <Link onClick={() => setCreateMode(true)} css={{ cursor: "pointer" }}>
                 <Avatar
                   icon={<Plus primaryColor={theme.colors.text.value} />}
@@ -285,7 +320,10 @@ function DatarequestModal(props) {
           </Grid>
           {!createMode && selectedRequest?.isSettings && (
             <Grid xs={12} sm={11.5}>
-              <DatarequestSettings />
+              <DatarequestSettings
+                dataset={dataset}
+                onChange={_onUpdateDataset}
+              />
             </Grid>
           )}
           {!createMode && selectedRequest && selectedRequest.Connection && (
@@ -464,12 +502,15 @@ DatarequestModal.propTypes = {
   chart: PropTypes.object.isRequired,
   connections: PropTypes.array.isRequired,
   deleteDataRequest: PropTypes.func.isRequired,
+  updateDataset: PropTypes.func.isRequired,
+  responses: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
     requests: state.dataset.requests,
     connections: state.connection.data,
+    responses: state.dataRequest.responses,
   };
 };
 
@@ -487,6 +528,9 @@ const mapDispatchToProps = (dispatch) => {
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
     deleteDataRequest: (projectId, chartId, drId) => {
       return dispatch(deleteDataRequestAction(projectId, chartId, drId));
+    },
+    updateDataset: (projectId, chartId, datasetId, data) => {
+      return dispatch(updateDatasetAction(projectId, chartId, datasetId, data));
     },
   };
 };

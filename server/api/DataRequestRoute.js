@@ -173,6 +173,7 @@ module.exports = (app) => {
         return res.status(200).send(dataRequests);
       })
       .catch((error) => {
+        console.log("error", error);
         if (error && error.message === "404") {
           return res.status(404).send(error);
         }
