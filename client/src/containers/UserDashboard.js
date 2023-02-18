@@ -469,11 +469,15 @@ function UserDashboard(props) {
         })}
 
         {(loading || teamLoading || (teams && teams.length === 0)) && (
-          <Row justify="center" align="center">
-            <Loading type="points" size="lg">
-              Loading your team
-            </Loading>
-          </Row>
+          <>
+            <Row align="center" justify="center">
+              <Loading type="points-opacity" color="currentColor" size="xl" />
+            </Row>
+            <Spacer y={1} />
+            <Row align="center" justify="center">
+              <Text size="1.4em" css={{ color: "$accents7" }}>Loading your space</Text>
+            </Row>
+          </>
         )}
       </Container>
     </div>
