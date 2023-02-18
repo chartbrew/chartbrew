@@ -180,7 +180,7 @@ export function runDataRequest(projectId, chartId, drId, getCache) {
       "Authorization": `Bearer ${token}`,
     });
 
-    dispatch({ type: FETCHING_DATA_REQUEST });
+    dispatch({ type: FETCHING_DATA_REQUEST, id: drId });
     return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
@@ -199,7 +199,7 @@ export function runDataRequest(projectId, chartId, drId, getCache) {
         return Promise.resolve(data.dataRequest);
       })
       .catch((error) => {
-        dispatch({ type: FETCH_DATA_REQUEST_FAIL });
+        dispatch({ type: FETCH_DATA_REQUEST_FAIL, id: drId, error: error.message });
         return Promise.reject(error);
       });
   };

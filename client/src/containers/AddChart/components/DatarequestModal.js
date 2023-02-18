@@ -37,7 +37,7 @@ function DatarequestModal(props) {
   const {
     open, onClose, dataset, match, getDataRequestByDataset,
     createDataRequest, updateDataRequest, requests, changeTutorial, updateResult, chart,
-    connections, deleteDataRequest, updateDataset, responses,
+    connections, deleteDataRequest, updateDataset, responses, stateDataRequests,
   } = props;
 
   const [initialising, setInitialising] = useState(false);
@@ -285,11 +285,15 @@ function DatarequestModal(props) {
               <>
                 <Badge
                   content={""}
-                  color={responses.find((r) => r.id === dr.id) ? "success" : "default"}
+                  color={
+                    responses.find((r) => r.id === dr.id)?.error
+                      ? "error"
+                      : responses.find((r) => r.id === dr.id) ? "success" : "default"
+                  }
                   placement="top-left"
                   shape="circle"
-                  variant={"dot"}
-                  size="lg"
+                  variant={stateDataRequests.find((o) => o.id === dr.id)?.loading ? "points" : "dot"}
+                  size={stateDataRequests.find((o) => o.id === dr.id)?.loading ? "sm" : "lg"}
                 >
                   <Avatar
                     key={dr.id}
@@ -504,6 +508,7 @@ DatarequestModal.propTypes = {
   deleteDataRequest: PropTypes.func.isRequired,
   updateDataset: PropTypes.func.isRequired,
   responses: PropTypes.array.isRequired,
+  stateDataRequests: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -511,6 +516,7 @@ const mapStateToProps = (state) => {
     requests: state.dataset.requests,
     connections: state.connection.data,
     responses: state.dataRequest.responses,
+    stateDataRequests: state.dataRequest.data,
   };
 };
 

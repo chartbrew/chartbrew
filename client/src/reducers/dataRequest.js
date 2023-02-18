@@ -15,6 +15,15 @@ export default function dataRequest(state = {
 }, action) {
   switch (action.type) {
     case FETCHING_DATA_REQUEST:
+      if (action.id) {
+        // mark data request as loading
+        const newData = [...state.data];
+        const indexFound = newData.findIndex(dr => dr.id === action.id);
+        if (indexFound > -1) {
+          newData[indexFound].loading = true;
+        }
+        return { ...state, loading: true, data: newData };
+      }
       return { ...state, loading: true };
     case FETCH_CHART_DATA_REQUESTS:
       return { ...state, loading: false, data: [...action.dataRequests] };
@@ -82,8 +91,34 @@ export default function dataRequest(state = {
 
       return { ...state, loading: false, data: newData };
     }
-    case FETCH_DATA_REQUEST_FAIL:
+    case FETCH_DATA_REQUEST_FAIL: {
+      if (action.id) {
+        // mark data request as not loading
+        const newData = [...state.data];
+        const dataIndex = newData.findIndex(dr => dr.id === action.id);
+        if (dataIndex > -1) {
+          newData[dataIndex].loading = false;
+        }
+
+        // mark data request as not loading and add error to response
+        const newResponses = [...state.responses];
+        const indexFound = newResponses.findIndex(dr => dr.id === action.id);
+        if (indexFound > -1) {
+          newResponses[indexFound].error = action.error;
+        } else {
+          newResponses.push({
+            id: action.id,
+            error: action.error,
+          });
+        }
+
+        return {
+          ...state, loading: false, error: true, data: newData, responses: newResponses,
+        };
+      }
+
       return { ...state, loading: false, error: true };
+    }
     case DATA_REQUEST_DELETED:
       return {
         ...state,
