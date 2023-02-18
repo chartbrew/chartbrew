@@ -1,6 +1,7 @@
 import React, { Fragment, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
+import { withRouter } from "react-router";
 import {
   Avatar,
   Button, Checkbox, Container, Divider, Dropdown, Grid, Row, Spacer, Text, Tooltip, useTheme,
@@ -18,12 +19,16 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 import {
   runRequest as runRequestAction,
 } from "../../../actions/dataset";
+import {
+  runDataRequest as runDataRequestAction,
+} from "../../../actions/dataRequest";
 import connectionImages from "../../../config/connectionImages";
 import fieldFinder from "../../../modules/fieldFinder";
 
 function DatarequestSettings(props) {
   const {
     dataRequests, responses, runRequest, dataset, onChange, drResponses, // eslint-disable-line
+    runDataRequest, match,
   } = props;
 
   const [result, setResult] = useState("");
@@ -43,6 +48,13 @@ function DatarequestSettings(props) {
 
   const _onChangeMainSource = (drId) => {
     onChange({ main_dr_id: drId });
+
+    // also change the first item of joins
+    const newJoins = [...joins];
+    if (newJoins.length > 0) {
+      newJoins[0].dr_id = parseInt(drId, 10);
+      setJoins(newJoins);
+    }
   };
 
   const _renderIcon = (drId, size = "md") => {
@@ -83,6 +95,16 @@ function DatarequestSettings(props) {
       newJoins[index] = { ...newJoins[index], ...data };
     } else {
       newJoins.push({ ...data, key });
+    }
+
+    if (data.dr_id || data.join_id) {
+      // check to see if there is a response for the data request
+      const drId = data.dr_id || data.join_id;
+      const response = drResponses.find((o) => o.id === drId);
+      if (!response || !response.data) {
+        runDataRequest(match.params.projectId, match.params.chartId, drId, true)
+          .catch(() => {});
+      }
     }
 
     setJoins(newJoins);
@@ -155,6 +177,7 @@ function DatarequestSettings(props) {
                           src={connectionImages(isDark)[request.Connection.type]}
                         />
                       )}
+                      command={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
                     >
                       {request.Connection.name}
                     </Dropdown.Item>
@@ -163,10 +186,6 @@ function DatarequestSettings(props) {
               </Dropdown>
             </Row>
             <Spacer y={1} />
-            <Row>
-              <Divider />
-            </Row>
-            <Spacer y={0.5} />
             {joins.map((join, index) => (
               <Fragment key={join.key}>
                 <Row align="center">
@@ -199,6 +218,7 @@ function DatarequestSettings(props) {
                               src={connectionImages(isDark)[request.Connection.type]}
                             />
                           )}
+                          command={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
                         >
                           {request.Connection.name}
                         </Dropdown.Item>
@@ -236,6 +256,7 @@ function DatarequestSettings(props) {
                               src={connectionImages(isDark)[request.Connection.type]}
                             />
                           )}
+                          command={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
                         >
                           {request.Connection.name}
                         </Dropdown.Item>
@@ -315,13 +336,6 @@ function DatarequestSettings(props) {
                 </Button>
               </Row>
             )}
-            {joins.length > 0 && (
-              <>
-                <Spacer y={1} />
-                <Divider />
-              </>
-            )}
-            <Spacer y={1} />
             <Row>
               <Button
                 auto
@@ -333,6 +347,29 @@ function DatarequestSettings(props) {
                 onClick={() => _onAddJoin()}
               >
                 Join with another source
+              </Button>
+            </Row>
+            <>
+              <Spacer y={1} />
+              <Divider />
+              <Spacer y={1} />
+            </>
+            <Row>
+              <Button
+                auto
+                onClick={() => {}}
+                size="sm"
+              >
+                Save
+              </Button>
+              <Spacer x={0.3} />
+              <Button
+                auto
+                color="warning"
+                onClick={() => {}}
+                size="sm"
+              >
+                Revert changes
               </Button>
             </Row>
           </Container>
@@ -407,6 +444,8 @@ DatarequestSettings.propTypes = {
   dataset: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
   drResponses: PropTypes.array.isRequired,
+  runDataRequest: PropTypes.func.isRequired,
+  match: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => ({
@@ -419,6 +458,9 @@ const mapDispatchToProps = (dispatch) => ({
   runRequest: (projectId, chartId, datasetId, getCache) => {
     return dispatch(runRequestAction(projectId, chartId, datasetId, getCache));
   },
+  runDataRequest: (projectId, chartId, drId, getCache) => {
+    return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
+  },
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(DatarequestSettings);
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(DatarequestSettings));

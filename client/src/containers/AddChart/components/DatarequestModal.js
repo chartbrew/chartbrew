@@ -255,46 +255,37 @@ function DatarequestModal(props) {
           </Container>
         )}
         <Grid.Container>
-          <Grid xs={12} sm={0.5} direction="column">
+          <Grid xs={12} sm={1} direction="column" css={{ borderRight: "1px solid $accents4" }}>
             {selectedRequest && (
               <>
-                <Tooltip content="Join data requests" css={{ zIndex: 99999 }} placement="rightStart">
-                  <Link onClick={() => setSelectedRequest({ isSettings: true })} css={{ cursor: "pointer" }}>
-                    <Avatar
-                      icon={(
-                        <TbArrowsJoin
-                          size={28}
-                          strokeWidth={2}
-                          color={
-                            selectedRequest.isSettings
-                              ? theme.colors.accents0.value : theme.colors.text.value
-                          }
-                        />
-                      )}
-                      squared
-                      size="lg"
-                      css={{ cursor: "pointer" }}
-                      color={selectedRequest.isSettings ? "primary" : "default"}
-                    />
-                  </Link>
-                </Tooltip>
+                <Row>
+                  <Tooltip content="Join data requests" css={{ zIndex: 99999 }} placement="rightStart">
+                    <Link onClick={() => setSelectedRequest({ isSettings: true })} css={{ cursor: "pointer" }}>
+                      <Avatar
+                        icon={(
+                          <TbArrowsJoin
+                            size={28}
+                            strokeWidth={2}
+                            color={
+                              selectedRequest.isSettings
+                                ? theme.colors.accents0.value : theme.colors.text.value
+                            }
+                          />
+                        )}
+                        squared
+                        size="lg"
+                        css={{ cursor: "pointer" }}
+                        color={selectedRequest.isSettings ? "primary" : "default"}
+                      />
+                    </Link>
+                  </Tooltip>
+                </Row>
                 <Spacer y={1} />
               </>
             )}
-            {dataRequests.map((dr) => (
+            {dataRequests.map((dr, index) => (
               <>
-                <Badge
-                  content={""}
-                  color={
-                    responses.find((r) => r.id === dr.id)?.error
-                      ? "error"
-                      : responses.find((r) => r.id === dr.id) ? "success" : "default"
-                  }
-                  placement="top-left"
-                  shape="circle"
-                  variant={stateDataRequests.find((o) => o.id === dr.id)?.loading ? "points" : "dot"}
-                  size={stateDataRequests.find((o) => o.id === dr.id)?.loading ? "sm" : "lg"}
-                >
+                <Row align="center">
                   <Avatar
                     key={dr.id}
                     bordered
@@ -305,25 +296,40 @@ function DatarequestModal(props) {
                     color={dr.id === selectedRequest?.id ? "primary" : "default"}
                     onClick={() => _onSelectDataRequest(dr)}
                   />
-                </Badge>
+                  <Spacer x={0.3} />
+                  <Badge
+                    size="sm"
+                    disableOutline
+                    variant={stateDataRequests.find((o) => o.id === dr.id)?.loading ? "points" : "bordered"}
+                    color={
+                      responses.find((r) => r.id === dr.id)?.error
+                        ? "error"
+                        : responses.find((r) => r.id === dr.id) ? "success" : "default"
+                    }
+                  >
+                    {`${index + 1}`}
+                  </Badge>
+                </Row>
                 <Spacer y={0.3} />
               </>
             ))}
             <Spacer y={0.7} />
-            <Tooltip content="Add a new data source request" css={{ zIndex: 99999 }} placement="rightStart">
-              <Link onClick={() => setCreateMode(true)} css={{ cursor: "pointer" }}>
-                <Avatar
-                  icon={<Plus primaryColor={theme.colors.text.value} />}
-                  bordered
-                  squared
-                  size="lg"
-                  css={{ cursor: "pointer" }}
-                />
-              </Link>
-            </Tooltip>
+            <Row>
+              <Tooltip content="Add a new data source request" css={{ zIndex: 99999 }} placement="rightStart">
+                <Link onClick={() => setCreateMode(true)} css={{ cursor: "pointer" }}>
+                  <Avatar
+                    icon={<Plus primaryColor={theme.colors.text.value} />}
+                    bordered
+                    squared
+                    size="lg"
+                    css={{ cursor: "pointer" }}
+                  />
+                </Link>
+              </Tooltip>
+            </Row>
           </Grid>
           {!createMode && selectedRequest?.isSettings && (
-            <Grid xs={12} sm={11.5}>
+            <Grid xs={12} sm={11}>
               <DatarequestSettings
                 dataset={dataset}
                 onChange={_onUpdateDataset}
@@ -331,7 +337,7 @@ function DatarequestModal(props) {
             </Grid>
           )}
           {!createMode && selectedRequest && selectedRequest.Connection && (
-            <Grid xs={12} sm={11.5}>
+            <Grid xs={12} sm={11}>
               {dataRequests.map((dr) => (
                 <Fragment key={dr.id}>
                   {selectedRequest.Connection.type === "api" && selectedRequest.id === dr.id && (
@@ -403,7 +409,7 @@ function DatarequestModal(props) {
             </Grid>
           )}
           {createMode && (
-            <Grid xs={12} sm={11.5} direction="column">
+            <Grid xs={12} sm={11} direction="column">
               <Spacer y={0.5} />
               <Container>
                 <Text h4>Select a connection</Text>
