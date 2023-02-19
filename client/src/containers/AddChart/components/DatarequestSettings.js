@@ -192,17 +192,17 @@ function DatarequestSettings(props) {
             </Row>
             <Spacer y={1} />
             {joins.map((join, index) => (
-              <Fragment key={join.key}>
-                <Row align="center">
+              <Grid.Container key={join.key}>
+                <Grid xs={6} sm={1} alignItems="center">
                   <Text>Join</Text>
-                  <Spacer x={0.3} />
+                </Grid>
+                <Grid xs={6} sm={5}>
                   <Dropdown>
                     <Dropdown.Button
                       auto
                       bordered
-                      css={{ justifyContent: "space-between", display: "flex" }}
+                      css={{ justifyContent: "space-between", display: "flex", width: "100%" }}
                       iconRight={null}
-                      size="sm"
                       disabled={index === 0}
                     >
                       {_renderIcon(join.dr_id, "sm")}
@@ -230,18 +230,17 @@ function DatarequestSettings(props) {
                       ))}
                     </Dropdown.Menu>
                   </Dropdown>
-
-                  <Spacer x={0.3} />
+                </Grid>
+                <Grid xs={6} sm={1} justify="center" alignItems="center">
                   <Text>with</Text>
-                  <Spacer x={0.3} />
-
+                </Grid>
+                <Grid xs={6} sm={5}>
                   <Dropdown>
                     <Dropdown.Button
                       auto
                       bordered
-                      css={{ justifyContent: "space-between", display: "flex" }}
+                      css={{ justifyContent: "space-between", display: "flex", width: "100%" }}
                       iconRight={null}
-                      size="sm"
                       color="secondary"
                     >
                       {_renderIcon(join.join_id, "sm")}
@@ -269,11 +268,14 @@ function DatarequestSettings(props) {
                       ))}
                     </Dropdown.Menu>
                   </Dropdown>
-                </Row>
-                <Spacer y={0.5} />
-                <Row align="center" wrap="wrap">
+                </Grid>
+                <Grid xs={12}>
+                  <Spacer y={0.5} />
+                </Grid>
+                <Grid xs={6} sm={1} alignItems="center">
                   <Text>where</Text>
-                  <Spacer x={0.3} />
+                </Grid>
+                <Grid xs={6} sm={5} css={styles.fieldContainer}>
                   <Dropdown>
                     <Dropdown.Trigger>
                       <Badge variant={"bordered"} isSquared color="primary">
@@ -300,21 +302,21 @@ function DatarequestSettings(props) {
                       ))}
                     </Dropdown.Menu>
                   </Dropdown>
-
-                  <Spacer x={0.3} />
-                  <Text>is equal to</Text>
-                  <Spacer x={0.3} />
-
+                </Grid>
+                <Grid xs={6} sm={1} justify="center" alignItems="center">
+                  <Text>=</Text>
+                </Grid>
+                <Grid xs={6} sm={5} css={styles.fieldContainer}>
                   <Dropdown>
-                    <Dropdown.Trigger>
+                    <Dropdown.Trigger css={{ width: "100%" }}>
                       <Badge variant={"bordered"} isSquared color="secondary">
-                        <div>
+                        <div style={styles.fieldContainer}>
                           <div style={{ display: "flex", flexDirection: "row" }}>
                             {_renderIcon(join.join_id, "xs")}
                             <Text size={12}>{dataRequests.find((dr) => dr.id === join.join_id)?.Connection?.name || "Select source"}</Text>
                           </div>
                           <Spacer y={0.2} />
-                          <div css={{ pl: 10 }}>
+                          <div style={styles.fieldContainer}>
                             <Text size={14} b>{_renderHumanField(join.join_field) || "Select field"}</Text>
                           </div>
                         </div>
@@ -331,11 +333,13 @@ function DatarequestSettings(props) {
                       ))}
                     </Dropdown.Menu>
                   </Dropdown>
-                </Row>
-                <Spacer y={1} />
-                <Divider />
-                <Spacer y={1} />
-              </Fragment>
+                </Grid>
+                <Grid xs={12} direction="column">
+                  <Spacer y={1} />
+                  <Divider />
+                  <Spacer y={1} />
+                </Grid>
+              </Grid.Container>
             ))}
             {joins.length > 0 && (
               <Row>
@@ -456,7 +460,6 @@ function DatarequestSettings(props) {
 
 const styles = {
   fieldContainer: {
-    maxWidth: 300,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
