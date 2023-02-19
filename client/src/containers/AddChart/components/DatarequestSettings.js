@@ -4,6 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Avatar,
+  Badge,
   Button, Checkbox, Container, Divider, Dropdown, Grid, Row, Spacer, Text, Tooltip, useTheme,
 } from "@nextui-org/react";
 import {
@@ -142,6 +143,10 @@ function DatarequestSettings(props) {
       .filter((o) => previousJoins.find((oj) => (oj.dr_id === o.id) || (oj.join_id === o.id)));
   };
 
+  const _renderHumanField = (field) => {
+    return field.replace("root.", "").replace("root[].", "");
+  };
+
   return (
     <div style={{ flex: 1 }}>
       <Grid.Container>
@@ -237,6 +242,7 @@ function DatarequestSettings(props) {
                       css={{ justifyContent: "space-between", display: "flex" }}
                       iconRight={null}
                       size="sm"
+                      color="secondary"
                     >
                       {_renderIcon(join.join_id, "sm")}
                       {dataRequests.find((dr) => dr.id === join.join_id)?.Connection?.name || "Select source"}
@@ -265,20 +271,24 @@ function DatarequestSettings(props) {
                   </Dropdown>
                 </Row>
                 <Spacer y={0.5} />
-                <Row>
+                <Row align="center" wrap="wrap">
                   <Text>where</Text>
                   <Spacer x={0.3} />
                   <Dropdown>
-                    <Dropdown.Button
-                      auto
-                      bordered
-                      css={{ justifyContent: "space-between", display: "flex" }}
-                      iconRight={null}
-                      size="sm"
-                      color="secondary"
-                    >
-                      {join.dr_field || "Select field"}
-                    </Dropdown.Button>
+                    <Dropdown.Trigger>
+                      <Badge variant={"bordered"} isSquared color="primary">
+                        <div style={styles.fieldContainer}>
+                          <div style={{ display: "flex", flexDirection: "row" }}>
+                            {_renderIcon(join.dr_id, "xs")}
+                            <Text size={12}>{dataRequests.find((dr) => dr.id === join.dr_id)?.Connection?.name || "Select source"}</Text>
+                          </div>
+                          <Spacer y={0.2} />
+                          <div css={styles.fieldContainer}>
+                            <Text size={14} b>{_renderHumanField(join.dr_field) || "Select field"}</Text>
+                          </div>
+                        </div>
+                      </Badge>
+                    </Dropdown.Trigger>
                     <Dropdown.Menu
                       onAction={(key) => _onChangeJoin(join.key, { dr_field: key })}
                       selectedKeys={[join.dr_field]}
@@ -286,7 +296,7 @@ function DatarequestSettings(props) {
                       css={{ minWidth: "max-content" }}
                     >
                       {_getFieldOptions(join.key, "dr_id").map((f) => (
-                        <Dropdown.Item key={f.field}>{f.field}</Dropdown.Item>
+                        <Dropdown.Item key={f.field}>{_renderHumanField(f.field)}</Dropdown.Item>
                       ))}
                     </Dropdown.Menu>
                   </Dropdown>
@@ -296,16 +306,20 @@ function DatarequestSettings(props) {
                   <Spacer x={0.3} />
 
                   <Dropdown>
-                    <Dropdown.Button
-                      auto
-                      bordered
-                      css={{ justifyContent: "space-between", display: "flex" }}
-                      iconRight={null}
-                      size="sm"
-                      color="secondary"
-                    >
-                      {join.join_field || "Select field"}
-                    </Dropdown.Button>
+                    <Dropdown.Trigger>
+                      <Badge variant={"bordered"} isSquared color="secondary">
+                        <div>
+                          <div style={{ display: "flex", flexDirection: "row" }}>
+                            {_renderIcon(join.join_id, "xs")}
+                            <Text size={12}>{dataRequests.find((dr) => dr.id === join.join_id)?.Connection?.name || "Select source"}</Text>
+                          </div>
+                          <Spacer y={0.2} />
+                          <div css={{ pl: 10 }}>
+                            <Text size={14} b>{_renderHumanField(join.join_field) || "Select field"}</Text>
+                          </div>
+                        </div>
+                      </Badge>
+                    </Dropdown.Trigger>
                     <Dropdown.Menu
                       onAction={(key) => _onChangeJoin(join.key, { join_field: key })}
                       selectedKeys={[join.join_field]}
@@ -313,11 +327,13 @@ function DatarequestSettings(props) {
                       css={{ minWidth: "max-content" }}
                     >
                       {_getFieldOptions(join.key, "join_id").map((f) => (
-                        <Dropdown.Item key={f.field}>{f.field}</Dropdown.Item>
+                        <Dropdown.Item key={f.field}>{_renderHumanField(f.field)}</Dropdown.Item>
                       ))}
                     </Dropdown.Menu>
                   </Dropdown>
                 </Row>
+                <Spacer y={1} />
+                <Divider />
                 <Spacer y={1} />
               </Fragment>
             ))}
@@ -368,6 +384,7 @@ function DatarequestSettings(props) {
                 color="warning"
                 onClick={() => {}}
                 size="sm"
+                flat
               >
                 Revert changes
               </Button>
@@ -436,6 +453,15 @@ function DatarequestSettings(props) {
     </div>
   );
 }
+
+const styles = {
+  fieldContainer: {
+    maxWidth: 300,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+};
 
 DatarequestSettings.propTypes = {
   dataRequests: PropTypes.arrayOf(PropTypes.object).isRequired,
