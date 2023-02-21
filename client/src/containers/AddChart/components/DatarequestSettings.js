@@ -1,11 +1,12 @@
-import React, { Fragment, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Avatar,
   Badge,
-  Button, Checkbox, Container, Divider, Dropdown, Grid, Row, Spacer, Text, Tooltip, useTheme,
+  Button, Checkbox, Container, Divider, Dropdown, Grid, Loading, Row, Spacer,
+  Text, Tooltip, useTheme,
 } from "@nextui-org/react";
 import {
   CloseSquare, InfoCircle, Play, Plus
@@ -35,8 +36,15 @@ function DatarequestSettings(props) {
   const [result, setResult] = useState("");
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [joins, setJoins] = useState([]);
+  const [saveLoading, setSaveLoading] = useState(false);
 
   const { isDark } = useTheme();
+
+  useEffect(() => {
+    if (dataset?.joinSettings?.joins) {
+      setJoins(dataset.joinSettings.joins);
+    }
+  }, [dataset]);
 
   useEffect(() => {
     if (responses && responses.length > 0) {
@@ -115,6 +123,17 @@ function DatarequestSettings(props) {
     const newJoins = [...joins];
     newJoins.pop();
     setJoins(newJoins);
+  };
+
+  const _onSaveJoins = () => {
+    setSaveLoading(true);
+    onChange({ joinSettings: { joins } })
+      .then(() => {
+        setSaveLoading(false);
+      })
+      .catch(() => {
+        setSaveLoading(false);
+      });
   };
 
   const _getFieldOptions = (key, type) => {
@@ -207,6 +226,11 @@ function DatarequestSettings(props) {
                     >
                       {_renderIcon(join.dr_id, "sm")}
                       {dataRequests.find((dr) => dr.id === join.dr_id)?.Connection?.name || "Select source"}
+                      {join.dr_id && (
+                        <Badge variant={"bordered"} css={{ ml: 5 }} size="xs" color="primary">
+                          {dataRequests.findIndex((o) => o.id === join.dr_id) + 1}
+                        </Badge>
+                      )}
                     </Dropdown.Button>
                     <Dropdown.Menu
                       onAction={(key) => _onChangeJoin(join.key, { dr_id: parseInt(key, 10) })}
@@ -245,6 +269,11 @@ function DatarequestSettings(props) {
                     >
                       {_renderIcon(join.join_id, "sm")}
                       {dataRequests.find((dr) => dr.id === join.join_id)?.Connection?.name || "Select source"}
+                      {join.join_id && (
+                        <Badge variant={"bordered"} css={{ ml: 5 }} size="xs" color="secondary">
+                          {dataRequests.findIndex((o) => o.id === join.join_id) + 1}
+                        </Badge>
+                      )}
                     </Dropdown.Button>
                     <Dropdown.Menu
                       onAction={(key) => _onChangeJoin(join.key, { join_id: parseInt(key, 10) })}
@@ -377,10 +406,12 @@ function DatarequestSettings(props) {
             <Row>
               <Button
                 auto
-                onClick={() => {}}
+                onClick={() => _onSaveJoins()}
                 size="sm"
+                disabled={saveLoading}
               >
-                Save
+                {saveLoading && <Loading type="points-opacity" />}
+                {!saveLoading && "Save"}
               </Button>
               <Spacer x={0.3} />
               <Button
