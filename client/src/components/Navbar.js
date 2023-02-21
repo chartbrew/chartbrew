@@ -49,7 +49,7 @@ function NavbarContainer(props) {
   const [isOsTheme, setIsOsTheme] = useLocalStorage("osTheme", false);
 
   const {
-    team, teams, user, logout,
+    team, teams, user, logout, projectProp, match,
   } = props;
 
   const darkMode = useDarkMode(false);
@@ -134,13 +134,39 @@ function NavbarContainer(props) {
         <Spacer x={1} />
         <Link to="/user">
           <LinkNext href="/user" css={{ color: "$text" }}>
-            <Row align="center">
-              <Category size="small" />
-              <Spacer x={0.2} />
-              <Text>{"Home"}</Text>
-            </Row>
+            {!match.params.teamId && (
+              <Media greaterThan="mobile">
+                <Row align="center">
+                  <Category size="small" />
+                  <Spacer x={0.2} />
+                  <Text>{"Home"}</Text>
+                </Row>
+              </Media>
+            )}
+          </LinkNext>
+          <LinkNext href="/user" css={{ color: "$text" }}>
+            {match.params.teamId && (
+            <Media greaterThan="mobile">
+              <Row align="center">
+                <Category size="small" />
+                <Spacer x={0.2} />
+                <Text>{team.name}</Text>
+              </Row>
+            </Media>
+            )}
           </LinkNext>
         </Link>
+        {match.params.projectId && (
+        <Media greaterThan="mobile">
+          <Row align="center">
+            <Spacer x={0.2} />
+            <Text>{"/"}</Text>
+            <Spacer x={0.2} />
+            <Text>{projectProp.name}</Text>
+            <Spacer x={0.2} />
+          </Row>
+        </Media>
+        )}
       </Navbar.Brand>
       <Navbar.Content>
         <Navbar.Item>
@@ -157,7 +183,6 @@ function NavbarContainer(props) {
             </span>
           </LinkNext>
         </Navbar.Item>
-
         <Dropdown isBordered>
           <Navbar.Item>
             <Dropdown.Button
@@ -416,6 +441,8 @@ NavbarContainer.propTypes = {
   team: PropTypes.object.isRequired,
   teams: PropTypes.array.isRequired,
   logout: PropTypes.func.isRequired,
+  projectProp: PropTypes.object.isRequired,
+  match: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {
