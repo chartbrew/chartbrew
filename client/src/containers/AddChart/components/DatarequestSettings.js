@@ -13,6 +13,7 @@ import {
 } from "react-iconly";
 import AceEditor from "react-ace";
 import { nanoid } from "nanoid";
+import _ from "lodash";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -37,6 +38,8 @@ function DatarequestSettings(props) {
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [joins, setJoins] = useState([]);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isCompiling, setIsCompiling] = useState(false);
 
   const { isDark } = useTheme();
 
@@ -47,8 +50,16 @@ function DatarequestSettings(props) {
   }, [dataset]);
 
   useEffect(() => {
+    if (_.isEqual(dataset?.joinSettings?.joins, joins)) {
+      setIsSaved(true);
+    } else {
+      setIsSaved(false);
+    }
+  }, [dataset, joins]);
+
+  useEffect(() => {
     if (responses && responses.length > 0) {
-      const selectedResponse = responses.find((o) => o.id === dataset.id);
+      const selectedResponse = responses.find((o) => o.dataset_id === dataset.id);
       if (selectedResponse?.data) {
         setResult(JSON.stringify(selectedResponse.data, null, 2));
       }
@@ -127,7 +138,7 @@ function DatarequestSettings(props) {
 
   const _onSaveJoins = () => {
     setSaveLoading(true);
-    onChange({ joinSettings: { joins } })
+    return onChange({ joinSettings: { joins } })
       .then(() => {
         setSaveLoading(false);
       })
@@ -166,10 +177,29 @@ function DatarequestSettings(props) {
     return field.replace("root.", "").replace("root[].", "");
   };
 
+  const _onRevertChanges = () => {
+    setJoins(dataset?.joinSettings?.joins || []);
+  };
+
+  const _onRunDataset = () => {
+    const useCache = !invalidateCache;
+    setIsCompiling(true);
+    _onSaveJoins()
+      .then(() => {
+        runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache);
+      })
+      .then(() => {
+        setIsCompiling(false);
+      })
+      .catch(() => {
+        setIsCompiling(false);
+      });
+  };
+
   return (
     <div style={{ flex: 1 }}>
       <Grid.Container>
-        <Grid xs={12} sm={6} md={7}>
+        <Grid xs={12} sm={7} md={7}>
           <Container>
             <Row>
               <Text b size={22}>Configure your dataset</Text>
@@ -408,33 +438,38 @@ function DatarequestSettings(props) {
                 auto
                 onClick={() => _onSaveJoins()}
                 size="sm"
-                disabled={saveLoading}
+                disabled={saveLoading || isSaved}
+                color={isSaved ? "success" : "primary"}
               >
                 {saveLoading && <Loading type="points-opacity" />}
-                {!saveLoading && "Save"}
+                {!saveLoading && !isSaved && "Save"}
+                {!saveLoading && isSaved && "Saved"}
               </Button>
               <Spacer x={0.3} />
-              <Button
-                auto
-                color="warning"
-                onClick={() => {}}
-                size="sm"
-                flat
-              >
-                Revert changes
-              </Button>
+              {!isSaved && (
+                <Button
+                  auto
+                  color="warning"
+                  onClick={() => _onRevertChanges()}
+                  size="sm"
+                  flat
+                >
+                  Revert changes
+                </Button>
+              )}
             </Row>
           </Container>
         </Grid>
-        <Grid xs={12} sm={6} md={5}>
+        <Grid xs={12} sm={5} md={5}>
           <Container>
             <Row>
               <Button
                 css={{ width: "100%" }}
                 color="primary"
                 shadow
-                onClick={() => {}}
-                iconRight={<Play />}
+                onClick={() => _onRunDataset()}
+                iconRight={isCompiling ? <Loading type="spinner" /> : <Play />}
+                disabled={isCompiling}
               >
                 Compile dataset data
               </Button>

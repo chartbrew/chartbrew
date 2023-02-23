@@ -1,6 +1,82 @@
+const _ = require("lodash");
+
 const db = require("../models/models");
 const ConnectionController = require("./ConnectionController");
 const DataRequestController = require("./DataRequestController");
+
+function joinData(joins, index, requests, data) {
+  const dr = requests.find((r) => r?.dataRequest?.id === joins[index].dr_id);
+  const joinDr = requests.find((r) => r?.dataRequest?.id === joins[index].join_id);
+
+  if (!dr || !joinDr) return data;
+
+  let drData = data;
+  const joinDrData = joinDr.responseData.data;
+
+  if (!drData || !joinDrData) return data;
+
+  const drField = joins[index].dr_field;
+  const joinField = joins[index].join_field;
+
+  if (!drField || !joinField) return data;
+
+  const newData = [];
+
+  // extract the selected data from the object
+  let drSelector = drField;
+  // if (index === 0) {
+  if (drField.indexOf("root[]") > -1) {
+    drSelector = drSelector.replace("root[].", "");
+    // and data stays the same
+    drData = data;
+  } else {
+    const arrayFinder = drSelector.substring(0, drSelector.indexOf("]") - 1).replace("root.", "");
+    drSelector = drSelector.substring(drSelector.indexOf("]") + 2);
+
+    drData = _.get(data, arrayFinder);
+  }
+  // }
+
+  // extract the selected data from the second request
+  let joinSelectedData = joinDrData;
+  let joinSelector = joinField;
+  if (joinField.indexOf("root[]") > -1) {
+    joinSelector = joinSelector.replace("root[].", "");
+    joinSelectedData = joinDrData;
+  } else {
+    const arrayFinder = joinSelector.substring(0, joinSelector.indexOf("]") - 1).replace("root.", "");
+    joinSelector = joinSelector.substring(joinSelector.indexOf("]") + 2);
+
+    joinSelectedData = _.get(joinDrData, arrayFinder);
+  }
+
+  drData.forEach((drItem) => {
+    // check if the dr was a join previously
+    const existingIndex = joins.findIndex((j) => j.join_id === dr?.dataRequest?.id);
+    const newObjectFields = {};
+
+    joinSelectedData.forEach((joinItem) => {
+      if (existingIndex > -1
+        && (_.get(drItem, `join${index - 1}_${drSelector}`, drItem[`join${index - 1}_${drSelector}`]) === _.get(joinItem, joinSelector, joinItem[joinSelector]))
+      ) {
+        Object.keys(joinItem).forEach((key) => {
+          newObjectFields[`join${index}_${key}`] = joinItem[key];
+        });
+      } else if (_.get(drItem, drSelector, drItem[drSelector])
+        && _.get(drItem, drSelector, drItem[drSelector])
+          === _.get(joinItem, joinSelector, joinItem[joinSelector])
+      ) {
+        Object.keys(joinItem).forEach((key) => {
+          newObjectFields[`join${index}_${key}`] = joinItem[key];
+        });
+      }
+    });
+
+    newData.push({ ...drItem, ...newObjectFields });
+  });
+
+  return newData;
+}
 
 class DatasetController {
   constructor() {
@@ -76,6 +152,7 @@ class DatasetController {
 
   runRequest(id, chartId, noSource, getCache) {
     let gDataset;
+    let mainDr;
     return db.Dataset.findOne({
       where: { id },
       include: [
@@ -84,10 +161,45 @@ class DatasetController {
     })
       .then((dataset) => {
         gDataset = dataset;
-
         const drPromises = [];
+        let dataRequests = dataset.DataRequests;
+
+        // if the dataset does not have a main data request, run just the first request
+        if (!dataset.main_dr_id) {
+          dataRequests = [dataset.DataRequests[0]];
+        } else if (dataset?.joinSettings?.joins) {
+          mainDr = dataRequests.find((dr) => dr.id === dataset.main_dr_id);
+          if (!mainDr) {
+            [mainDr] = dataRequests;
+          }
+          const newDataRequests = [mainDr];
+
+          // determine if we need to run the requests based on the join settings
+          dataset.joinSettings.joins.forEach((join) => {
+            if (join.dr_id && join.join_id && join.dr_field && join.join_field) {
+              const dr = dataRequests.find((dr) => dr.id === join.dr_id);
+              // add the data request to the new array if it's not in there already
+              if (dr && !newDataRequests.find((n) => n.id === dr.id)) {
+                newDataRequests.push(dr);
+              }
+
+              const joinDr = dataRequests.find((jDr) => jDr.id === join.join_id);
+              // add the data request to the new array if it's not in there already
+              if (joinDr && !newDataRequests.find((n) => n.id === joinDr.id)) {
+                newDataRequests.push(joinDr);
+              }
+            }
+          });
+
+          if (newDataRequests.length > 0) {
+            dataRequests = newDataRequests;
+          }
+        }
+
+        if (!mainDr) throw new Error("There is no main data request for this dataset.");
+
         // go through all data requests
-        dataset.DataRequests.forEach((dataRequest) => {
+        dataRequests.forEach((dataRequest) => {
           const connection = dataRequest.Connection;
 
           if (!dataRequest || (dataRequest && dataRequest.length === 0)) {
@@ -147,50 +259,24 @@ class DatasetController {
       })
       .then(async (promisedRequests) => {
         const filteredRequests = promisedRequests.filter((request) => request !== undefined);
-        const dataRequests = [];
-        const drUpdates = [];
+        let data = [];
+        const mainResponseData = filteredRequests
+          .find((r) => r?.dataRequest?.id === mainDr.id)?.responseData?.data;
 
-        filteredRequests.forEach((fr) => {
-          const processedRequest = fr;
-          if (fr?.dataRequest?.Connection.type === "mongodb") {
-            processedRequest.responseData = JSON.parse(
-              JSON.stringify(processedRequest.responseData)
-            );
-          }
+        if (filteredRequests.length === 1 || gDataset?.joinSettings?.joins?.length === 0) {
+          data = mainResponseData;
+        } else {
+          const { joins } = gDataset.joinSettings;
+          data = mainResponseData;
 
-          if (fr?.dataRequest?.Connection.type === "firestore") {
-            let newConfiguration = {};
-            if (fr.dataRequest.configuration && typeof fr.dataRequest.configuration === "object") {
-              newConfiguration = { ...fr.dataRequest.configuration };
-            }
-
-            if (fr?.responseData?.configuration) {
-              newConfiguration = { ...newConfiguration, ...fr.responseData.configuration };
-            }
-
-            if (newConfiguration && Object.keys(newConfiguration).length === 0) {
-              processedRequest.dataRequest.configuration = newConfiguration;
-
-              drUpdates.push(db.DataRequest.update(
-                { configuration: newConfiguration },
-                { where: { id: fr.dataRequest.id } },
-              ));
-            }
-          }
-
-          dataRequests.push(processedRequest);
-        });
-
-        // process any updates to data requests (e.g. firestore)
-        try {
-          await Promise.all(drUpdates);
-        } catch (e) {
-          console.log("e", e); // eslint-disable-line
+          joins.forEach((join, index) => {
+            data = joinData(joins, index, filteredRequests, data);
+          });
         }
 
         return Promise.resolve({
           options: gDataset,
-          dataRequests,
+          data,
         });
       })
       .catch((err) => {

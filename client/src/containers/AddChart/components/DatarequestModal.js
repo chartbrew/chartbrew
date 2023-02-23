@@ -467,7 +467,7 @@ function DatarequestModal(props) {
           )}
         </Grid.Container>
       </Modal.Body>
-      <Modal.Footer>
+      <Modal.Footer css={{ background: "$background" }}>
         {dataRequests && dataRequests.length > 0 && (
           <Button
             flat

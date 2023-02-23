@@ -169,11 +169,11 @@ export function runRequest(projectId, chartId, datasetId, getCache) {
         return response.json();
       })
       .then((result) => {
-        if (!ok) {
+        if (!ok || !result?.data) {
           return Promise.reject({ ...status, message: result });
         }
 
-        dispatch({ type: FETCH_REQUESTED_DATA, response: result, id: datasetId });
+        dispatch({ type: FETCH_REQUESTED_DATA, response: result.data, id: datasetId });
         return Promise.resolve({ ...result, status });
       })
       .catch((err) => {

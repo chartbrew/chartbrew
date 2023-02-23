@@ -55,7 +55,7 @@ export default function dataset(state = initialState, action) {
       return { ...state, loading: false, data: tempData };
     case FETCH_REQUESTED_DATA:
       let indexReq = -1;
-      for (let i = 0; i < state.requests.length; i++) {
+      for (let i = 0; i < state.responses.length; i++) {
         if (state.responses[i].dataset_id === parseInt(action.id, 10)) {
           indexReq = i;
           break;
@@ -64,12 +64,12 @@ export default function dataset(state = initialState, action) {
       const newResponses = [...state.responses];
       if (indexReq > -1) {
         newResponses[indexReq] = {
-          dataRequests: action.response.dataRequests,
+          data: action.response,
           dataset_id: action.id,
         };
       } else {
         newResponses.push({
-          dataRequests: action.response.dataRequests,
+          data: action.response,
           dataset_id: action.id,
         });
       }
