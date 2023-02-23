@@ -57,17 +57,17 @@ function joinData(joins, index, requests, data) {
 
     joinSelectedData.forEach((joinItem) => {
       if (existingIndex > -1
-        && (_.get(drItem, `join${index - 1}_${drSelector}`, drItem[`join${index - 1}_${drSelector}`]) === _.get(joinItem, joinSelector, joinItem[joinSelector]))
+        && (_.get(drItem, `${joins[index - 1].alias}_${drSelector}`, drItem[`${joins[index - 1].alias}_${drSelector}`]) === _.get(joinItem, joinSelector, joinItem[joinSelector]))
       ) {
         Object.keys(joinItem).forEach((key) => {
-          newObjectFields[`join${index}_${key}`] = joinItem[key];
+          newObjectFields[`${joins[index].alias}_${key}`] = joinItem[key];
         });
       } else if (_.get(drItem, drSelector, drItem[drSelector])
         && _.get(drItem, drSelector, drItem[drSelector])
           === _.get(joinItem, joinSelector, joinItem[joinSelector])
       ) {
         Object.keys(joinItem).forEach((key) => {
-          newObjectFields[`join${index}_${key}`] = joinItem[key];
+          newObjectFields[`${joins[index].alias}_${key}`] = joinItem[key];
         });
       }
     });

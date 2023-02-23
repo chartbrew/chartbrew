@@ -5,7 +5,7 @@ import { withRouter } from "react-router";
 import {
   Avatar,
   Badge,
-  Button, Checkbox, Container, Divider, Dropdown, Grid, Loading, Row, Spacer,
+  Button, Checkbox, Container, Divider, Dropdown, Grid, Input, Loading, Row, Spacer,
   Text, Tooltip, useTheme,
 } from "@nextui-org/react";
 import {
@@ -102,6 +102,7 @@ function DatarequestSettings(props) {
       join_id: null,
       dr_field: "",
       join_field: "",
+      alias: `join${joins.length}`,
     };
 
     setJoins([...joins, newJoinSettings]);
@@ -186,7 +187,7 @@ function DatarequestSettings(props) {
     setIsCompiling(true);
     _onSaveJoins()
       .then(() => {
-        runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache);
+        return runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache);
       })
       .then(() => {
         setIsCompiling(false);
@@ -202,9 +203,8 @@ function DatarequestSettings(props) {
         <Grid xs={12} sm={7} md={7}>
           <Container>
             <Row>
-              <Text b size={22}>Configure your dataset</Text>
+              <Text b>Main source</Text>
             </Row>
-            <Spacer y={1} />
             <Row>
               <Dropdown>
                 <Dropdown.Button
@@ -392,6 +392,23 @@ function DatarequestSettings(props) {
                       ))}
                     </Dropdown.Menu>
                   </Dropdown>
+                </Grid>
+                <Grid xs={12}>
+                  <Spacer y={0.5} />
+                </Grid>
+                <Grid xs={12} sm={1} alignItems="center">
+                  Alias
+                </Grid>
+                <Grid xs={12} sm={5}>
+                  <Input
+                    css={{ width: "100%" }}
+                    placeholder="Enter a unique join alias"
+                    value={join.alias}
+                    onChange={(e) => _onChangeJoin(join.key, { alias: e.target.value })}
+                    bordered
+                    size="sm"
+                    animated={false}
+                  />
                 </Grid>
                 <Grid xs={12} direction="column">
                   <Spacer y={1} />
