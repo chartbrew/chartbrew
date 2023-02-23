@@ -57,17 +57,23 @@ function joinData(joins, index, requests, data) {
 
     joinSelectedData.forEach((joinItem) => {
       if (existingIndex > -1
-        && (_.get(drItem, `${joins[index - 1].alias}_${drSelector}`, drItem[`${joins[index - 1].alias}_${drSelector}`]) === _.get(joinItem, joinSelector, joinItem[joinSelector]))
+        && (_.get(drItem, `${joins[index - 1].alias}.${drSelector}`, drItem[joins[index - 1].alias][drSelector]) === _.get(joinItem, joinSelector, joinItem[joinSelector]))
       ) {
         Object.keys(joinItem).forEach((key) => {
-          newObjectFields[`${joins[index].alias}_${key}`] = joinItem[key];
+          if (!newObjectFields[joins[index].alias]) {
+            newObjectFields[joins[index].alias] = {};
+          }
+          newObjectFields[joins[index].alias][key] = joinItem[key];
         });
       } else if (_.get(drItem, drSelector, drItem[drSelector])
         && _.get(drItem, drSelector, drItem[drSelector])
           === _.get(joinItem, joinSelector, joinItem[joinSelector])
       ) {
         Object.keys(joinItem).forEach((key) => {
-          newObjectFields[`${joins[index].alias}_${key}`] = joinItem[key];
+          if (!newObjectFields[joins[index].alias]) {
+            newObjectFields[joins[index].alias] = {};
+          }
+          newObjectFields[joins[index].alias][key] = joinItem[key];
         });
       }
     });
@@ -156,7 +162,7 @@ class DatasetController {
     return db.Dataset.findOne({
       where: { id },
       include: [
-        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "type"] }] },
+        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "host"] }] },
       ],
     })
       .then((dataset) => {
