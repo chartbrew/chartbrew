@@ -58,6 +58,27 @@ function DatarequestSettings(props) {
   }, [dataset, joins]);
 
   useEffect(() => {
+    if (joins && joins.length > 0) {
+      joins.forEach((data) => {
+        if (data.dr_id || data.join_id) {
+          // check to see if there is a response for the data request
+          const response = drResponses.find((o) => o.id === data.dr_id);
+          if (!response || !response.data) {
+            runDataRequest(match.params.projectId, match.params.chartId, data.dr_id, true)
+              .catch(() => {});
+          }
+
+          const responseJoin = drResponses.find((o) => o.id === data.join_id);
+          if (!responseJoin || !responseJoin.data) {
+            runDataRequest(match.params.projectId, match.params.chartId, data.join_id, true)
+              .catch(() => {});
+          }
+        }
+      });
+    }
+  }, [joins]);
+
+  useEffect(() => {
     if (responses && responses.length > 0) {
       const selectedResponse = responses.find((o) => o.dataset_id === dataset.id);
       if (selectedResponse?.data) {
@@ -116,16 +137,6 @@ function DatarequestSettings(props) {
       newJoins[index] = { ...newJoins[index], ...data };
     } else {
       newJoins.push({ ...data, key });
-    }
-
-    if (data.dr_id || data.join_id) {
-      // check to see if there is a response for the data request
-      const drId = data.dr_id || data.join_id;
-      const response = drResponses.find((o) => o.id === drId);
-      if (!response || !response.data) {
-        runDataRequest(match.params.projectId, match.params.chartId, drId, true)
-          .catch(() => {});
-      }
     }
 
     setJoins(newJoins);
@@ -339,9 +350,13 @@ function DatarequestSettings(props) {
                     <Dropdown.Trigger>
                       <Badge variant={"bordered"} isSquared color="primary">
                         <div style={styles.fieldContainer}>
-                          <div style={{ display: "flex", flexDirection: "row" }}>
+                          <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                             {_renderIcon(join.dr_id, "xs")}
                             <Text size={12}>{dataRequests.find((dr) => dr.id === join.dr_id)?.Connection?.name || "Select source"}</Text>
+                            <Spacer x={0.2} />
+                            <Text size={12} b color="primary">
+                              {dataRequests.findIndex((o) => o.id === join.dr_id) + 1}
+                            </Text>
                           </div>
                           <Spacer y={0.2} />
                           <div css={styles.fieldContainer}>
@@ -370,9 +385,13 @@ function DatarequestSettings(props) {
                     <Dropdown.Trigger css={{ width: "100%" }}>
                       <Badge variant={"bordered"} isSquared color="secondary">
                         <div style={styles.fieldContainer}>
-                          <div style={{ display: "flex", flexDirection: "row" }}>
+                          <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                             {_renderIcon(join.join_id, "xs")}
                             <Text size={12}>{dataRequests.find((dr) => dr.id === join.join_id)?.Connection?.name || "Select source"}</Text>
+                            <Spacer x={0.2} />
+                            <Text size={12} b color="secondary">
+                              {dataRequests.findIndex((o) => o.id === join.join_id) + 1}
+                            </Text>
                           </div>
                           <Spacer y={0.2} />
                           <div style={styles.fieldContainer}>
@@ -495,7 +514,7 @@ function DatarequestSettings(props) {
             <Row align="center">
               <Checkbox
                 label="Use cache"
-                checked={!invalidateCache}
+                isSelected={!invalidateCache}
                 onChange={() => setInvalidateCache(!invalidateCache)}
                 size="sm"
               />

@@ -43,10 +43,7 @@ function DatarequestModal(props) {
   const [initialising, setInitialising] = useState(false);
   const [dataRequests, setDataRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState(null);
-  const [closeTrigger, setCloseTrigger] = useState(false);
   const [result, setResult] = useState(null);
   const [createMode, setCreateMode] = useState(false);
 
@@ -66,26 +63,17 @@ function DatarequestModal(props) {
         if (drs.length > 0) {
           setSelectedRequest({ isSettings: true });
         }
-
-        setTimeout(() => {
-          setSaved(true);
-        }, 100);
       })
       .catch((err) => {
         setInitialising(false);
         if (err && err.message === "404") {
           setCreateMode(true);
-          setSaved(true);
           return true;
         }
         setError("Cannot fetch the data request configuration. Try to refresh the page.");
         return err;
       });
   }, [open]);
-
-  useEffect(() => {
-    setSaved(false);
-  }, [dataRequests]);
 
   useEffect(() => {
     const request = _.find(requests, { options: { id: dataset.id } });
@@ -108,17 +96,8 @@ function DatarequestModal(props) {
     updateResult(result);
   }, [result]);
 
-  useEffect(() => {
-    if (saved) setCloseTrigger(false);
-  }, [saved]);
-
   const _onClose = () => {
-    if (saved || closeTrigger) {
-      setCloseTrigger(false);
-      onClose();
-    } else if (!saved) {
-      setCloseTrigger(true);
-    }
+    onClose();
   };
 
   const _updateDataRequest = (newData) => {
@@ -146,7 +125,6 @@ function DatarequestModal(props) {
   };
 
   const _onSaveRequest = (dr = selectedRequest) => {
-    setLoading(true);
     return updateDataRequest(
       match.params.projectId,
       match.params.chartId,
@@ -154,18 +132,12 @@ function DatarequestModal(props) {
       dr,
     )
       .then((savedDr) => {
-        setLoading(false);
         setSelectedRequest(savedDr);
-
-        setTimeout(() => {
-          setSaved(true);
-        }, 100);
 
         // update the dataRequests array and replace the item
         _updateDataRequest(savedDr);
       })
       .catch((e) => {
-        setLoading(false);
         setError(e);
         return e;
       });
@@ -203,17 +175,14 @@ function DatarequestModal(props) {
 
   const _onDeleteRequest = (drId) => {
     if (selectedRequest) {
-      setLoading(true);
       deleteDataRequest(match.params.projectId, match.params.chartId, drId)
         .then(() => {
-          setLoading(false);
           // update the dataRequests array
           const newDrArray = _.cloneDeep(dataRequests);
           setDataRequests(newDrArray.filter((dr) => dr.id !== drId));
           setSelectedRequest(newDrArray[0]);
         })
         .catch((e) => {
-          setLoading(false);
           setError(e);
           return e;
         });
@@ -468,22 +437,7 @@ function DatarequestModal(props) {
         </Grid.Container>
       </Modal.Body>
       <Modal.Footer css={{ background: "$background" }}>
-        {dataRequests && dataRequests.length > 0 && (
-          <Button
-            flat
-            color={saved ? "success" : "secondary"}
-            onClick={() => _onSaveRequest()}
-            disabled={loading}
-            auto
-          >
-            {saved && !loading ? "Saved" : "Save"}
-            {loading && <Loading type="points" />}
-          </Button>
-        )}
-        {closeTrigger && <Text small>Are you sure? Your settings are not saved</Text>}
         <Button
-          flat
-          color={closeTrigger ? "error" : "primary"}
           onClick={_onClose}
           auto
         >

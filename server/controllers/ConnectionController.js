@@ -25,13 +25,15 @@ async function checkAndGetCache(connection_id, dataRequest) {
   // check if there is a cache available and valid
   try {
     const drCache = await drCacheController.findLast(dataRequest.id);
-    const cachedDataRequest = drCache.dataRequest;
+    const cachedDataRequest = { ...drCache.dataRequest };
     cachedDataRequest.updatedAt = "";
     cachedDataRequest.createdAt = "";
+    delete cachedDataRequest.Connection;
 
     const liveDataRequest = dataRequest.toJSON();
     liveDataRequest.updatedAt = "";
     liveDataRequest.createdAt = "";
+    delete liveDataRequest.Connection;
 
     if (_.isEqual(cachedDataRequest, liveDataRequest) && drCache.connection_id === connection_id) {
       return {
