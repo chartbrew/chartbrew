@@ -13,13 +13,13 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import update from "immutability-helper";
 import {
-  Button, Collapse, Container, Dropdown, Grid, Input, Link, Loading,
+  Button, Collapse, Container, Dropdown, Grid, Input, Link, Loading, theme,
   Popover, Row, Spacer, Text, Tooltip, Divider, Badge, Switch, Modal, Checkbox,
 } from "@nextui-org/react";
 import { TbDragDrop } from "react-icons/tb";
 import {
   CaretDown, CaretUp, ChevronRight, CloseSquare, Filter, Hide,
-  InfoCircle, Plus, Setting, Show, TickSquare, Calendar as CalendarIcon, ChevronDownCircle,
+  InfoCircle, Plus, Setting, Show, TickSquare, Calendar as CalendarIcon, ChevronDownCircle, Danger,
 } from "react-iconly";
 import { FaMagic, FaRedo } from "react-icons/fa";
 
@@ -582,7 +582,7 @@ function DatasetData(props) {
     <>
       <Grid.Container gap={1}>
         <Grid xs={12} sm={6} md={6} className="datasetdata-axes-tut" direction="column">
-          <div>
+          <div style={styles.rowDisplay}>
             <Text size={14} b>
               {chartType === "pie"
                 || chartType === "radar"
@@ -591,6 +591,14 @@ function DatasetData(props) {
                 ? "Segment "
                 : chartType === "table" ? "Collection " : "X-Axis "}
             </Text>
+            {dataset.xAxis && !_filterOptions("x").find((o) => o.value === dataset.xAxis) && (
+              <>
+                <Spacer x={0.3} />
+                <Tooltip content="The selected field is not available in the data. Please select another.">
+                  <Danger primaryColor={theme.colors.error.value} />
+                </Tooltip>
+              </>
+            )}
           </div>
           <div style={styles.rowDisplay}>
             <Dropdown>
@@ -634,8 +642,17 @@ function DatasetData(props) {
           </div>
         </Grid>
         <Grid xs={12} sm={6} md={6} className="datasetdata-date-tut" direction="column">
-          <div>
-            <Text size={14}>{"Select a date for global filtering"}</Text>
+          <div style={styles.rowDisplay}>
+            <Text size={14} b>{"Date filtering field"}</Text>
+            {dataset.dateField
+              && !_getDateFieldOptions().find((o) => o.value === dataset.dateField) && (
+              <>
+                <Spacer x={0.3} />
+                <Tooltip content="The selected field is not available in the data. Please select another.">
+                  <Danger primaryColor={theme.colors.error.value} />
+                </Tooltip>
+              </>
+            )}
           </div>
           <div style={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
             <Dropdown>
@@ -682,7 +699,7 @@ function DatasetData(props) {
         {chartType !== "table" && (
           <>
             <Grid xs={12} sm={6} md={6} direction="column">
-              <div>
+              <div style={styles.rowDisplay}>
                 <Text size={14} b>
                   {chartType === "pie"
                     || chartType === "radar"
@@ -690,6 +707,14 @@ function DatasetData(props) {
                     || chartType === "doughnut"
                     ? "Data " : "Y-Axis "}
                 </Text>
+                {dataset.yAxis && !_getYFieldOptions().find((o) => o.value === dataset.yAxis) && (
+                  <>
+                    <Spacer x={0.3} />
+                    <Tooltip content="The selected field is not available in the data. Please select another.">
+                      <Danger primaryColor={theme.colors.error.value} />
+                    </Tooltip>
+                  </>
+                )}
               </div>
               <div>
                 <Dropdown>
