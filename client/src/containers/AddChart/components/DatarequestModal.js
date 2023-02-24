@@ -36,7 +36,7 @@ import { updateDataset as updateDatasetAction } from "../../../actions/dataset";
 function DatarequestModal(props) {
   const {
     open, onClose, dataset, match, getDataRequestByDataset,
-    createDataRequest, updateDataRequest, requests, changeTutorial, updateResult, chart,
+    createDataRequest, updateDataRequest, requests, changeTutorial, chart,
     connections, deleteDataRequest, updateDataset, responses, stateDataRequests,
   } = props;
 
@@ -44,7 +44,6 @@ function DatarequestModal(props) {
   const [dataRequests, setDataRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [error, setError] = useState(null);
-  const [result, setResult] = useState(null);
   const [createMode, setCreateMode] = useState(false);
 
   const { isDark } = useTheme();
@@ -76,8 +75,6 @@ function DatarequestModal(props) {
   }, [open]);
 
   useEffect(() => {
-    const request = _.find(requests, { options: { id: dataset.id } });
-    setResult(request);
     if (open && selectedRequest?.Connection?.type !== "firestore") changeTutorial("requestmodal");
   }, [requests, dataset]);
 
@@ -91,10 +88,6 @@ function DatarequestModal(props) {
       toast.error(message);
     }
   }, [error]);
-
-  useEffect(() => {
-    updateResult(result);
-  }, [result]);
 
   const _onClose = () => {
     onClose();
@@ -462,7 +455,6 @@ DatarequestModal.propTypes = {
   updateDataRequest: PropTypes.func.isRequired,
   requests: PropTypes.array.isRequired,
   changeTutorial: PropTypes.func.isRequired,
-  updateResult: PropTypes.func.isRequired,
   chart: PropTypes.object.isRequired,
   connections: PropTypes.array.isRequired,
   deleteDataRequest: PropTypes.func.isRequired,

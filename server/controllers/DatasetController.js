@@ -122,6 +122,7 @@ class DatasetController {
         return this.findById(dataset.id);
       })
       .catch((error) => {
+        console.log("error", error);
         return new Promise((resolve, reject) => reject(error));
       });
   }

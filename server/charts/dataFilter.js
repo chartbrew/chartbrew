@@ -153,7 +153,7 @@ function compareStrings(data, field, condition) {
     const selectors = field.split(".");
     let value = obj;
     for (let i = 0; i < selectors.length; i++) {
-      value = value[selectors[i]];
+      value = value?.[selectors?.[i]];
     }
 
     if (!value && (value !== 0 || value !== "0")) {

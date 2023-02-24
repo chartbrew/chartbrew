@@ -46,8 +46,8 @@ function formatColumnsForOrdering(columns) {
 
 function DatasetData(props) {
   const {
-    dataset, requestResult, onUpdate, match, chartType, chartData,
-    dataLoading,
+    dataset, onUpdate, match, chartType, chartData,
+    dataLoading, datasetResponses,
   } = props;
 
   const [fieldOptions, setFieldOptions] = useState([]);
@@ -62,6 +62,7 @@ function DatasetData(props) {
   const [groupByFilter, setGroupByFilter] = useState("");
   const [conditionModal, setConditionModal] = useState(false);
   const [selectedCondition, setSelectedCondition] = useState({});
+  const [requestResult, setRequestResult] = useState(null);
 
   const [fieldForFormatting, setFieldForFormatting] = useState("");
   const [fieldFormatConfig, setFieldFormatConfig] = useState(null);
@@ -74,12 +75,12 @@ function DatasetData(props) {
 
   // Update the content when there is some data to work with
   useEffect(() => {
-    if (requestResult && requestResult.data) {
+    if (requestResult) {
       const tempFieldOptions = [];
       const fieldsSchema = {};
       const updateObj = {};
 
-      const fields = fieldFinder(requestResult.data);
+      const fields = fieldFinder(requestResult);
 
       fields.forEach((o) => {
         if (o.field) {
@@ -209,6 +210,13 @@ function DatasetData(props) {
   }, [chartData]);
 
   useEffect(() => { if (!dataLoading) setIsDragState(false); }, [dataLoading]);
+
+  useEffect(() => {
+    if (datasetResponses.length > 0) {
+      const dResponse = datasetResponses.find((response) => response.dataset_id === dataset.id);
+      if (dResponse?.data) setRequestResult(dResponse.data);
+    }
+  }, [datasetResponses]);
 
   const _selectXField = (key) => {
     onUpdate({ xAxis: key });
@@ -1407,7 +1415,6 @@ function DatasetData(props) {
 }
 
 DatasetData.defaultProps = {
-  requestResult: null,
   chartType: "",
   chartData: null,
   dataLoading: false,
@@ -1415,12 +1422,12 @@ DatasetData.defaultProps = {
 
 DatasetData.propTypes = {
   dataset: PropTypes.object.isRequired,
-  requestResult: PropTypes.object,
   chartType: PropTypes.string,
   chartData: PropTypes.object,
   onUpdate: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   dataLoading: PropTypes.bool,
+  datasetResponses: PropTypes.array.isRequired,
 };
 
 function FormulaTips() {
@@ -1502,7 +1509,9 @@ const styles = {
   }
 };
 
-const mapStateToProps = () => ({});
+const mapStateToProps = (state) => ({
+  datasetResponses: state.dataset.responses,
+});
 const mapDispatchToProps = (dispatch) => {
   return {
     runRequest: (projectId, chartId, datasetId) => {

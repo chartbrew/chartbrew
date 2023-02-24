@@ -37,7 +37,7 @@ function replaceEmptyColors(colors) {
 function Dataset(props) {
   const {
     dataset, onUpdate, onDelete, chart, onRefresh,
-    changeTutorial, onRefreshPreview, loading,
+    changeTutorial, onRefreshPreview, loading, datasetResponses,
   } = props;
 
   const [newDataset, setNewDataset] = useState(dataset);
@@ -139,6 +139,13 @@ function Dataset(props) {
     }
   }, [dataItems]);
 
+  useEffect(() => {
+    if (datasetResponses.length > 0) {
+      const dResponse = datasetResponses.find((response) => response.dataset_id === dataset.id);
+      if (dResponse?.data) setRequestResult(dResponse.data);
+    }
+  }, [datasetResponses]);
+
   const _openConfigModal = () => {
     setConfigOpened(true);
   };
@@ -184,10 +191,6 @@ function Dataset(props) {
     if (forceUpdate) {
       onUpdate(data, true);
     }
-  };
-
-  const _onNewResult = (result) => {
-    setRequestResult(result);
   };
 
   if (!dataset || !dataset.id || !newDataset.id) return (<span />);
@@ -338,7 +341,6 @@ function Dataset(props) {
         dataset={dataset}
         open={configOpened}
         onClose={_onCloseConfig}
-        updateResult={_onNewResult}
         chart={chart}
       />
 
@@ -384,6 +386,7 @@ Dataset.propTypes = {
   changeTutorial: PropTypes.func.isRequired,
   onRefreshPreview: PropTypes.func.isRequired,
   loading: PropTypes.bool,
+  datasetResponses: PropTypes.array.isRequired,
 };
 
 Dataset.defaultProps = {
@@ -414,6 +417,7 @@ const mapStateToProps = (state) => {
   return {
     datasetLoading: state.dataset.loading,
     connections: state.connection.data,
+    datasetResponses: state.dataset.responses,
   };
 };
 

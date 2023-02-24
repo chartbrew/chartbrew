@@ -209,7 +209,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     main_dr_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       reference: {
         model: "DataRequest",
         key: "id",
