@@ -52,7 +52,9 @@ function joinData(joins, index, requests, data) {
 
   drData.forEach((drItem) => {
     // check if the dr was a join previously
-    const existingIndex = joins.findIndex((j) => j.join_id === dr?.dataRequest?.id);
+    const existingIndex = joins.findIndex((j) => {
+      return (j.join_id === dr?.dataRequest?.id && j.dr_id !== dr?.dataRequest?.id);
+    });
     const newObjectFields = {};
 
     joinSelectedData.forEach((joinItem) => {
