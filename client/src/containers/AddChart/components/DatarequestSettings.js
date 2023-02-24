@@ -52,6 +52,8 @@ function DatarequestSettings(props) {
   useEffect(() => {
     if (_.isEqual(dataset?.joinSettings?.joins, joins)) {
       setIsSaved(true);
+    } else if (!dataset?.joinSettings?.joins && joins.length === 0) {
+      setIsSaved(true);
     } else {
       setIsSaved(false);
     }

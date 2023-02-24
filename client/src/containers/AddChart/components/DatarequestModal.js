@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import _ from "lodash";
-import { toast } from "react-toastify";
+import { Flip, toast, ToastContainer } from "react-toastify";
 import {
   Button, Container, Grid, Link, Loading, Modal, Row, Spacer, Text, Avatar,
   useTheme, Tooltip, Card, theme, Badge,
@@ -31,13 +31,17 @@ import {
 } from "../../../actions/dataRequest";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import connectionImages from "../../../config/connectionImages";
-import { updateDataset as updateDatasetAction } from "../../../actions/dataset";
+import {
+  updateDataset as updateDatasetAction,
+  runRequest as runRequestAction,
+} from "../../../actions/dataset";
 
 function DatarequestModal(props) {
   const {
     open, onClose, dataset, match, getDataRequestByDataset,
     createDataRequest, updateDataRequest, requests, changeTutorial, chart,
     connections, deleteDataRequest, updateDataset, responses, stateDataRequests,
+    datasetResponses, runRequest,
   } = props;
 
   const [initialising, setInitialising] = useState(false);
@@ -45,6 +49,7 @@ function DatarequestModal(props) {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [error, setError] = useState(null);
   const [createMode, setCreateMode] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const { isDark } = useTheme();
 
@@ -61,6 +66,15 @@ function DatarequestModal(props) {
         setDataRequests(drs);
         if (drs.length > 0) {
           setSelectedRequest({ isSettings: true });
+        }
+
+        if (drs.length > 0 && !dataset.main_dr_id) {
+          updateDataset(
+            match.params.projectId,
+            match.params.chartId,
+            dataset.id,
+            { main_dr_id: drs[0].id }
+          );
         }
       })
       .catch((err) => {
@@ -91,6 +105,25 @@ function DatarequestModal(props) {
 
   const _onClose = () => {
     onClose();
+  };
+
+  const _onBuildChart = () => {
+    // run the request of the dataset response is not available
+    const datasetResponse = datasetResponses.find((d) => d.dataset_id === dataset.id);
+    if (!datasetResponse) {
+      setLoading(true);
+      runRequest(match.params.projectId, match.params.chartId, dataset.id, true)
+        .then(() => {
+          setLoading(false);
+          onClose();
+        })
+        .catch(() => {
+          toast.error("Your request configuration is not valid. Please check the dataset settings.");
+          setLoading(false);
+        });
+    } else {
+      onClose();
+    }
   };
 
   const _updateDataRequest = (newData) => {
@@ -127,6 +160,11 @@ function DatarequestModal(props) {
       .then((savedDr) => {
         setSelectedRequest(savedDr);
 
+        // if it's the first data request, update the main_dr_id
+        if (dataRequests.length === 1 && !dataset.main_dr_id) {
+          updateDataset({ main_dr_id: savedDr.id });
+        }
+
         // update the dataRequests array and replace the item
         _updateDataRequest(savedDr);
       })
@@ -143,7 +181,12 @@ function DatarequestModal(props) {
     })
       .then((newDr) => {
         if (dataRequests.length < 1) {
-          updateDataset({ main_dr_id: newDr.id });
+          updateDataset(
+            match.params.projectId,
+            match.params.chartId,
+            dataset.id,
+            { main_dr_id: newDr.id },
+          );
         }
 
         setSelectedRequest(newDr);
@@ -246,10 +289,9 @@ function DatarequestModal(props) {
               </>
             )}
             {dataRequests.map((dr, index) => (
-              <>
+              <Fragment key={dr.id}>
                 <Row align="center">
                   <Avatar
-                    key={dr.id}
                     bordered
                     squared
                     src={dr.Connection ? connectionImages(isDark)[dr.Connection.type] : null}
@@ -273,7 +315,7 @@ function DatarequestModal(props) {
                   </Badge>
                 </Row>
                 <Spacer y={0.3} />
-              </>
+              </Fragment>
             ))}
             <Spacer y={0.7} />
             <Row>
@@ -428,13 +470,37 @@ function DatarequestModal(props) {
             </Grid>
           )}
         </Grid.Container>
+
+        <ToastContainer
+          position="bottom-right"
+          autoClose={1500}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnVisibilityChange
+          draggable
+          pauseOnHover
+          transition={Flip}
+          theme={isDark ? "dark" : "light"}
+        />
       </Modal.Body>
       <Modal.Footer css={{ background: "$background" }}>
         <Button
-          onClick={_onClose}
           auto
+          onClick={() => onClose()}
+          color="warning"
+          flat
         >
-          Build the chart
+          Close
+        </Button>
+        <Button
+          onPress={() => _onBuildChart()}
+          auto
+          disabled={loading}
+        >
+          {loading && <Loading type="points-opacity" />}
+          {!loading && "Build the chart"}
         </Button>
       </Modal.Footer>
     </Modal>
@@ -461,6 +527,8 @@ DatarequestModal.propTypes = {
   updateDataset: PropTypes.func.isRequired,
   responses: PropTypes.array.isRequired,
   stateDataRequests: PropTypes.array.isRequired,
+  datasetResponses: PropTypes.array.isRequired,
+  runRequest: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -469,6 +537,7 @@ const mapStateToProps = (state) => {
     connections: state.connection.data,
     responses: state.dataRequest.responses,
     stateDataRequests: state.dataRequest.data,
+    datasetResponses: state.dataset.responses,
   };
 };
 
@@ -489,6 +558,9 @@ const mapDispatchToProps = (dispatch) => {
     },
     updateDataset: (projectId, chartId, datasetId, data) => {
       return dispatch(updateDatasetAction(projectId, chartId, datasetId, data));
+    },
+    runRequest: (projectId, chartId, datasetId, getCache) => {
+      return dispatch(runRequestAction(projectId, chartId, datasetId, getCache));
     },
   };
 };

@@ -122,7 +122,6 @@ class DatasetController {
         return this.findById(dataset.id);
       })
       .catch((error) => {
-        console.log("error", error);
         return new Promise((resolve, reject) => reject(error));
       });
   }
@@ -170,15 +169,13 @@ class DatasetController {
         gDataset = dataset;
         const drPromises = [];
         let dataRequests = dataset.DataRequests;
+        mainDr = dataRequests.find((dr) => dr.id === dataset.main_dr_id);
+        if (!mainDr) {
+          [mainDr] = dataRequests;
+        }
 
         // if the dataset does not have a main data request, run just the first request
-        if (!dataset.main_dr_id) {
-          dataRequests = [dataset.DataRequests[0]];
-        } else if (dataset?.joinSettings?.joins) {
-          mainDr = dataRequests.find((dr) => dr.id === dataset.main_dr_id);
-          if (!mainDr) {
-            [mainDr] = dataRequests;
-          }
+        if (dataset?.joinSettings?.joins) {
           const newDataRequests = [mainDr];
 
           // determine if we need to run the requests based on the join settings
@@ -273,12 +270,14 @@ class DatasetController {
         if (filteredRequests.length === 1 || gDataset?.joinSettings?.joins?.length === 0) {
           data = mainResponseData;
         } else {
-          const { joins } = gDataset.joinSettings;
+          const joins = gDataset?.joinSettings?.joins;
           data = mainResponseData;
 
-          joins.forEach((join, index) => {
-            data = joinData(joins, index, filteredRequests, data);
-          });
+          if (joins) {
+            joins.forEach((join, index) => {
+              data = joinData(joins, index, filteredRequests, data);
+            });
+          }
         }
 
         return Promise.resolve({

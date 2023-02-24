@@ -388,8 +388,13 @@ class ChartController {
           return tableView.getTableData(extractedData, chartData);
         }
 
+        let reallySkipParsing = skipParsing;
+        if (!chartData?.chart?.chartData) {
+          reallySkipParsing = false;
+        }
+
         const axisChart = new AxisChart(chartData);
-        return axisChart.plot(skipParsing, filters, isExport);
+        return axisChart.plot(reallySkipParsing, filters, isExport);
       })
       .then(async (chartData) => {
         gChartData = chartData;

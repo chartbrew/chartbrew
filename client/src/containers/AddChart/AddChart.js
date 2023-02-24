@@ -765,7 +765,7 @@ function AddChart(props) {
                       onRefresh={_onRefreshData}
                       onRefreshPreview={_onRefreshPreview}
                       loading={updatingDataset}
-                  />
+                    />
                   </div>
                 );
               })}
