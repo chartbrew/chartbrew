@@ -591,7 +591,7 @@ function DatasetData(props) {
                 ? "Segment "
                 : chartType === "table" ? "Collection " : "X-Axis "}
             </Text>
-            {dataset.xAxis && !_filterOptions("x").find((o) => o.value === dataset.xAxis) && (
+            {chartType !== "table" && dataset.xAxis && !_filterOptions("x").find((o) => o.value === dataset.xAxis) && (
               <>
                 <Spacer x={0.3} />
                 <Tooltip content="The selected field is not available in the data. Please select another.">

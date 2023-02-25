@@ -27,11 +27,12 @@ import {
 } from "../../../actions/dataRequest";
 import connectionImages from "../../../config/connectionImages";
 import fieldFinder from "../../../modules/fieldFinder";
+import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 
 function DatarequestSettings(props) {
   const {
     dataRequests, responses, runRequest, dataset, onChange, drResponses, // eslint-disable-line
-    runDataRequest, match,
+    runDataRequest, match, changeTutorial,
   } = props;
 
   const [result, setResult] = useState("");
@@ -42,6 +43,12 @@ function DatarequestSettings(props) {
   const [isCompiling, setIsCompiling] = useState(false);
 
   const { isDark } = useTheme();
+
+  useEffect(() => {
+    setTimeout(() => {
+      changeTutorial("drsettings");
+    }, 1000);
+  }, []);
 
   useEffect(() => {
     if (dataset?.joinSettings?.joins) {
@@ -211,9 +218,9 @@ function DatarequestSettings(props) {
   };
 
   return (
-    <div style={{ flex: 1 }}>
+    <div style={{ flex: 1 }} className="drsettings-page-tut">
       <Grid.Container>
-        <Grid xs={12} sm={7} md={7}>
+        <Grid xs={12} sm={7} md={7} css={{ pb: 20 }}>
           <Container>
             <Row>
               <Text b>Main source</Text>
@@ -225,6 +232,7 @@ function DatarequestSettings(props) {
                   bordered
                   css={{ justifyContent: "space-between", display: "flex" }}
                   iconRight={null}
+                  className="drsettings-source-tut"
                 >
                   {_renderIcon(dataset.main_dr_id)}
                   {dataRequests.find((dr) => dr.id === dataset.main_dr_id)?.Connection?.name || "Select main source"}
@@ -453,7 +461,7 @@ function DatarequestSettings(props) {
                 </Button>
               </Row>
             )}
-            <Row>
+            <Row className="drsettings-join-tut">
               <Button
                 auto
                 light
@@ -499,63 +507,65 @@ function DatarequestSettings(props) {
           </Container>
         </Grid>
         <Grid xs={12} sm={5} md={5}>
-          <Container>
-            <Row>
-              <Button
-                css={{ width: "100%" }}
-                color="primary"
-                shadow
-                onClick={() => _onRunDataset()}
-                iconRight={isCompiling ? <Loading type="spinner" /> : <Play />}
-                disabled={isCompiling}
-              >
-                Compile dataset data
-              </Button>
-            </Row>
-            <Spacer y={0.5} />
-            <Row align="center">
-              <Checkbox
-                label="Use cache"
-                isSelected={!invalidateCache}
-                onChange={() => setInvalidateCache(!invalidateCache)}
-                size="sm"
-              />
-              <Spacer x={0.2} />
-              <Tooltip
-                content="If checked, Chartbrew will use cached data instead of making requests to your data source. The cache gets automatically invalidated when you change the collections and/or filters."
-                css={{ zIndex: 10000, maxWidth: 500 }}
-                placement="leftStart"
-              >
-                <InfoCircle size="small" />
-              </Tooltip>
-            </Row>
-            <Spacer y={0.5} />
-            <Row>
-              <div style={{ width: "100%" }}>
-                <AceEditor
-                  mode="json"
-                  theme={isDark ? "one_dark" : "tomorrow"}
-                  style={{ borderRadius: 10 }}
-                  height="450px"
-                  width="none"
-                  value={result || ""}
-                  name="resultEditor"
-                  readOnly
-                  editorProps={{ $blockScrolling: false }}
-                  className="Customerio-result-tut"
+          <div className="drsettings-compile-tut" style={{ display: "flex", flex: 1 }}>
+            <Container>
+              <Row>
+                <Button
+                  css={{ width: "100%" }}
+                  color="primary"
+                  shadow
+                  onClick={() => _onRunDataset()}
+                  iconRight={isCompiling ? <Loading type="spinner" /> : <Play />}
+                  disabled={isCompiling}
+                >
+                  Compile dataset data
+                </Button>
+              </Row>
+              <Spacer y={0.5} />
+              <Row align="center">
+                <Checkbox
+                  label="Use cache"
+                  isSelected={!invalidateCache}
+                  onChange={() => setInvalidateCache(!invalidateCache)}
+                  size="sm"
                 />
-              </div>
-            </Row>
-            <Spacer y={0.5} />
-            <Row align="center">
-              <InfoCircle size="small" />
-              <Spacer x={0.2} />
-              <Text small>
-                {"To keep the interface fast, not all the data might show up here."}
-              </Text>
-            </Row>
+                <Spacer x={0.2} />
+                <Tooltip
+                  content="If checked, Chartbrew will use cached data instead of making requests to your data source. The cache gets automatically invalidated when you change the collections and/or filters."
+                  css={{ zIndex: 10000, maxWidth: 500 }}
+                  placement="leftStart"
+                >
+                  <InfoCircle size="small" />
+                </Tooltip>
+              </Row>
+              <Spacer y={0.5} />
+              <Row>
+                <div style={{ width: "100%" }}>
+                  <AceEditor
+                    mode="json"
+                    theme={isDark ? "one_dark" : "tomorrow"}
+                    style={{ borderRadius: 10 }}
+                    height="450px"
+                    width="none"
+                    value={result || ""}
+                    name="resultEditor"
+                    readOnly
+                    editorProps={{ $blockScrolling: false }}
+                    className="Customerio-result-tut"
+                  />
+                </div>
+              </Row>
+              <Spacer y={0.5} />
+              <Row align="center">
+                <InfoCircle size="small" />
+                <Spacer x={0.2} />
+                <Text small>
+                  {"To keep the interface fast, not all the data might show up here."}
+                </Text>
+              </Row>
 
-          </Container>
+            </Container>
+          </div>
         </Grid>
       </Grid.Container>
     </div>
@@ -579,6 +589,7 @@ DatarequestSettings.propTypes = {
   drResponses: PropTypes.array.isRequired,
   runDataRequest: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
+  changeTutorial: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => ({
@@ -594,6 +605,7 @@ const mapDispatchToProps = (dispatch) => ({
   runDataRequest: (projectId, chartId, drId, getCache) => {
     return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
   },
+  changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
 });
 
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(DatarequestSettings));

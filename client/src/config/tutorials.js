@@ -44,6 +44,11 @@ export default function showTutorial(type, userData) {
         return true;
       }
       break;
+    case "drsettings":
+      if (userData[type] && compareVersions(userData[type], "2.4.0") < 0) {
+        return true;
+      }
+      break;
     default:
       break;
   }

@@ -380,7 +380,8 @@ function AddChart(props) {
       .then(() => completeTutorial("mongobuilder"))
       .then(() => completeTutorial("sqlbuilder"))
       .then(() => completeTutorial("requestmodal"))
-      .then(() => completeTutorial("datasetdata"));
+      .then(() => completeTutorial("datasetdata"))
+      .then(() => completeTutorial("drsettings"));
   };
 
   const _onResetTutorial = () => {
@@ -393,6 +394,7 @@ function AddChart(props) {
       "sqlbuilder",
       "requestmodal",
       "datasetdata",
+      "drsettings"
     ])
       .then(() => {
         changeTutorial("addchart");
@@ -513,7 +515,7 @@ function AddChart(props) {
                 {!editingTitle
                   && (
                     <Tooltip content="Edit the chart name">
-                      <LinkNext onClick={() => setEditingTitle(true)} css={{ ai: "center" }} color="primary">
+                      <LinkNext onPress={() => setEditingTitle(true)} css={{ ai: "center" }} color="primary">
                         <Edit />
                         <Spacer x={0.2} />
                         <Text b>
@@ -631,7 +633,7 @@ function AddChart(props) {
                 Datasets
               </Text>
               <Tooltip content="Start the chart builder tutorial" placement="leftStart">
-                <LinkNext css={{ color: "$accents6", ai: "center" }} onClick={_onResetTutorial}>
+                <LinkNext css={{ color: "$accents6", ai: "center" }} onPress={_onResetTutorial}>
                   {!resetingTutorial ? <Discovery /> : <Loading type="spinner" />}
                   <Spacer x={0.2} />
                   <Text>Tutorial</Text>
@@ -670,7 +672,7 @@ function AddChart(props) {
                       size="sm"
                     >
                       {index > 0 && (
-                        <LinkNext onClick={() => _changeDatasetOrder(dataset.id, "up")}>
+                        <LinkNext onPress={() => _changeDatasetOrder(dataset.id, "up")}>
                           <ChevronLeftCircle size={16} />
                         </LinkNext>
                       )}
@@ -678,7 +680,7 @@ function AddChart(props) {
                       {dataset.legend}
                       <Spacer x={0.2} />
                       {index < datasetsOrder.length - 1 && (
-                        <LinkNext onClick={() => _changeDatasetOrder(dataset.id, "down")}>
+                        <LinkNext onPress={() => _changeDatasetOrder(dataset.id, "down")}>
                           <ChevronRightCircle size={16} />
                         </LinkNext>
                       )}

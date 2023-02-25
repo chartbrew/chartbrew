@@ -236,12 +236,21 @@ function DatarequestModal(props) {
       });
   };
 
+  const _onSelectSettings = () => {
+    if (dataRequests.length === 0) {
+      toast.info("You need to create a data request first.");
+      return;
+    }
+    setSelectedRequest({ isSettings: true });
+  };
+
   return (
     <Modal
       open={open}
       fullScreen
       onClose={_onClose}
       closeButton
+      scroll
     >
       <Modal.Header justify="flex-start">
         <Text h4>{"Configure your dataset"}</Text>
@@ -265,7 +274,7 @@ function DatarequestModal(props) {
               <>
                 <Row>
                   <Tooltip content="Join data requests" css={{ zIndex: 99999 }} placement="rightStart">
-                    <Link onClick={() => setSelectedRequest({ isSettings: true })} css={{ cursor: "pointer" }}>
+                    <Link onPress={() => _onSelectSettings()} css={{ cursor: "pointer" }}>
                       <Avatar
                         icon={(
                           <TbArrowsJoin
@@ -472,7 +481,7 @@ function DatarequestModal(props) {
         </Grid.Container>
 
         <ToastContainer
-          position="bottom-right"
+          position="top-right"
           autoClose={1500}
           hideProgressBar={false}
           newestOnTop={false}
