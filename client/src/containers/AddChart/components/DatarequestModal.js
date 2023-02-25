@@ -250,20 +250,14 @@ function DatarequestModal(props) {
     >
       <Modal.Header justify="flex-start">
         <Text h4>{"Configure your dataset"}</Text>
+        {initialising && (
+          <>
+            <Spacer x={1} />
+            <Loading type="points-opacity" color="currentColor" size="xl" />
+          </>
+        )}
       </Modal.Header>
       <Modal.Body>
-        {initialising && (
-          <Container>
-            <Spacer y={4} />
-            <Row align="center" justify="center">
-              <Loading type="points" color="currentColor" size="xl" />
-            </Row>
-            <Spacer y={1} />
-            <Row align="center" justify="center">
-              <Text size="1.4em" css={{ color: "$accents7" }}>Preparing the data request...</Text>
-            </Row>
-          </Container>
-        )}
         <Grid.Container>
           <Grid xs={12} sm={1} direction="column" css={{ borderRight: "1px solid $accents4" }}>
             {selectedRequest && (
