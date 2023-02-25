@@ -223,7 +223,7 @@ function Connections(props) {
   const { isDark } = useTheme();
   return (
     <div style={styles.container}>
-      <Container style={styles.mainContent}>
+      <Container style={styles.mainContent} xl>
         {formType && (
           <Row>
             {removeError && (
@@ -244,8 +244,6 @@ function Connections(props) {
                 Back
               </Button>
             )}
-
-            <Spacer y={2} />
           </Row>
         )}
 
@@ -261,7 +259,7 @@ function Connections(props) {
           </Row>
         )}
 
-        <Spacer y={2} />
+        <Spacer y={1} />
 
         {(connections.length < 1 || newConnectionModal) && !formType && (
           <Container css={{
@@ -800,7 +798,7 @@ const styles = {
     flex: 1,
   },
   mainContent: {
-    padding: 20,
+    paddingTop: 20,
   },
   selectedConnection: {
     boxShadow: `${primary} 0 3px 3px 0, ${primary} 0 0 0 3px`,
