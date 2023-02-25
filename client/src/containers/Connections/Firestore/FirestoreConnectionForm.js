@@ -18,6 +18,8 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { blue } from "../../../config/colors";
 import Badge from "../../../components/Badge";
+import HelpBanner from "../../../components/HelpBanner";
+import connectionImages from "../../../config/connectionImages";
 
 /*
   The Form used to create API connections
@@ -199,7 +201,17 @@ function FirestoreConnectionForm(props) {
             {editConnection && `Edit ${editConnection.name}`}
           </Text>
         </Row>
-
+        <Spacer y={0.5} />
+        <Row>
+          <HelpBanner
+            title="How to visualize your Firestore data with Chartbrew"
+            description="Connect, query, and visualize your Firestore data with Chartbrew. A step-by-step tutorial on how you can start creating your insightful dashboard.
+            "
+            url={"https://chartbrew.com/blog/how-to-visualize-your-firestore-data-with-chartbrew/"}
+            imageUrl={connectionImages(isDark).firestore}
+            info="5 min read"
+          />
+        </Row>
         <Spacer y={1} />
         <Row align="center">
           <Input

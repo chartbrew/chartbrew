@@ -16,6 +16,8 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import Badge from "../../../components/Badge";
+import HelpBanner from "../../../components/HelpBanner";
+import connectionImages from "../../../config/connectionImages";
 
 /*
   The MongoDB connection form
@@ -216,7 +218,17 @@ function MongoConnectionForm(props) {
         <Row align="center">
           <Text h3>Connect to a MongoDB database</Text>
         </Row>
-        <Spacer y={1} />
+        <Spacer y={0.5} />
+        <Row>
+          <HelpBanner
+            title="How to visualize your MongoDB data with Chartbrew"
+            description="Chartbrew can connect to your MongoDB database and create charts that tell you more about your data."
+            url={"https://chartbrew.com/blog/how-to-visualize-your-mongodb-data-with-chartbrew/"}
+            imageUrl={connectionImages(isDark).mongodb}
+            info="7 min read"
+          />
+        </Row>
+        <Spacer y={0.5} />
         <Row align="center" style={styles.formStyle}>
           <Link
             css={{

@@ -14,6 +14,8 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import Badge from "../../../components/Badge";
+import HelpBanner from "../../../components/HelpBanner";
+import connectionImages from "../../../config/connectionImages";
 
 const authTypes = [{
   key: "no_auth",
@@ -188,6 +190,16 @@ function ApiConnectionForm(props) {
             {!editConnection && "Add a new API host"}
             {editConnection && `Edit ${editConnection.name}`}
           </Text>
+        </Row>
+        <Spacer y={0.5} />
+        <Row>
+          <HelpBanner
+            title="How to visualize your API data with Chartbrew"
+            description="Chartbrew can connect to your API data and create charts that tell you more about your data."
+            url={"https://chartbrew.com/blog/how-to-visualize-simple-analytics-data-with-chartbrew/"}
+            imageUrl={connectionImages(isDark).api}
+            info="5 min read"
+          />
         </Row>
         <Spacer y={1} />
         <Row align="center" style={styles.formStyle}>
