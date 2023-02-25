@@ -328,7 +328,7 @@ function DatarequestModal(props) {
             ))}
             <Spacer y={0.7} />
             <Row>
-              <Tooltip content="Add a new data source request" css={{ zIndex: 99999 }} placement="rightStart">
+              <Tooltip content="Add a new data source" css={{ zIndex: 99999 }} placement="rightStart">
                 <Link onClick={() => setCreateMode(true)} css={{ cursor: "pointer" }}>
                   <Avatar
                     icon={<Plus primaryColor={theme.colors.text.value} />}
