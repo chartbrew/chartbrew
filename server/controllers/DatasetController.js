@@ -236,7 +236,7 @@ class DatasetController {
             );
           } else if (connection.type === "postgres" || connection.type === "mysql") {
             drPromises.push(
-              this.connectionController.runMysqlOrPostgres(connection.id, dataRequest)
+              this.connectionController.runMysqlOrPostgres(connection.id, dataRequest, getCache)
             );
           } else if (connection.type === "firestore") {
             drPromises.push(
@@ -244,7 +244,7 @@ class DatasetController {
             );
           } else if (connection.type === "googleAnalytics") {
             drPromises.push(
-              this.connectionController.runGoogleAnalytics(connection, dataRequest)
+              this.connectionController.runGoogleAnalytics(connection, dataRequest, getCache)
             );
           } else if (connection.type === "realtimedb") {
             drPromises.push(
