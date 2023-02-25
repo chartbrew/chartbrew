@@ -77,9 +77,11 @@ module.exports = async (projectId, { template_id, charts, connections }) => {
 
       return db.Dataset.create(dataset)
         .then((createdDataset) => {
-          const newDr = dataset.DataRequest;
-          newDr.dataset_id = createdDataset.id;
-          db.DataRequest.create(newDr);
+          const drPromises = [];
+          d.DataRequests.forEach((dr) => {
+            drPromises.push(db.DataRequest.create({ ...dr, dataset_id: createdDataset.id }));
+          });
+          Promise.all(drPromises);
           return createdDataset;
         });
     });

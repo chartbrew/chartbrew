@@ -192,23 +192,29 @@ module.exports = (app) => {
         const newDataset = dataset;
 
         // reduce the size of the returned data. No point in showing thousands of objects
-        if (typeof dataset.data === "object" && dataset.data instanceof Array) {
-          newDataset.data = dataset.data.slice(0, 20);
-        } else if (typeof dataset === "object") {
-          const resultsKey = [];
-          // console.log("dataset.data", dataset);
-          Object.keys(dataset.data).forEach((key) => {
-            if (dataset.data[key] instanceof Array) {
-              resultsKey.push(key);
-            }
-          });
+        if (dataset.dataRequests && dataset.dataRequests instanceof Array) {
+          newDataset.dataRequests.map((dataRequest) => {
+            const newDataRequest = dataRequest;
+            if (typeof dataRequest.responseData === "object" && dataRequest.responseData instanceof Array) {
+              newDataRequest.responseData = dataRequest.responseData.slice(0, 20);
+            } else if (typeof dataRequest.responseData === "object") {
+              const resultsKey = [];
+              Object.keys(dataRequest.responseData).forEach((key) => {
+                if (dataRequest.responseData[key] instanceof Array) {
+                  resultsKey.push(key);
+                }
+              });
 
-          if (resultsKey.length > 0) {
-            resultsKey.forEach((resultKey) => {
-              const slicedArray = dataset.data[resultKey].slice(0, 20);
-              newDataset.data[resultKey] = slicedArray;
-            });
-          }
+              if (resultsKey.length > 0) {
+                resultsKey.forEach((resultKey) => {
+                  const slicedArray = dataRequest.responseData[resultKey].slice(0, 20);
+                  newDataRequest.responseData[resultKey] = slicedArray;
+                });
+              }
+            }
+
+            return newDataRequest;
+          });
         }
 
         return res.status(200).send(newDataset);

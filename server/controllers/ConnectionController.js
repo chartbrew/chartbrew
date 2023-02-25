@@ -25,16 +25,21 @@ async function checkAndGetCache(connection_id, dataRequest) {
   // check if there is a cache available and valid
   try {
     const drCache = await drCacheController.findLast(dataRequest.id);
-    const cachedDataRequest = drCache.dataRequest;
+    const cachedDataRequest = { ...drCache.dataRequest };
     cachedDataRequest.updatedAt = "";
     cachedDataRequest.createdAt = "";
+    delete cachedDataRequest.Connection;
 
     const liveDataRequest = dataRequest.toJSON();
     liveDataRequest.updatedAt = "";
     liveDataRequest.createdAt = "";
+    delete liveDataRequest.Connection;
 
     if (_.isEqual(cachedDataRequest, liveDataRequest) && drCache.connection_id === connection_id) {
-      return drCache.responseData;
+      return {
+        responseData: drCache.responseData,
+        dataRequest: drCache.dataRequest,
+      };
     }
   } catch (e) {
     return false;
@@ -495,7 +500,9 @@ class ConnectionController {
         // cache the data for later use
         const dataToCache = {
           dataRequest,
-          responseData: data,
+          responseData: {
+            data,
+          },
           connection_id: id,
         };
         drCacheController.create(dataRequest.id, dataToCache);
@@ -503,7 +510,7 @@ class ConnectionController {
         // close the mongodb connection
         mongoConnection.close();
 
-        return Promise.resolve(data);
+        return Promise.resolve(dataToCache);
       })
       .catch((error) => {
         // close the mongodb connection
@@ -530,13 +537,15 @@ class ConnectionController {
         // cache the data for later use
         const dataToCache = {
           dataRequest,
-          responseData: results,
+          responseData: {
+            data: results,
+          },
           connection_id: id,
         };
 
         drCacheController.create(dataRequest.id, dataToCache);
 
-        return new Promise((resolve) => resolve(results));
+        return new Promise((resolve) => resolve(dataToCache));
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
@@ -662,12 +671,14 @@ class ConnectionController {
           // cache the data for later use
           const dataToCache = {
             dataRequest,
-            responseData: response,
+            responseData: {
+              data: response,
+            },
             connection_id: id,
           };
           drCacheController.create(dataRequest.id, dataToCache);
 
-          return new Promise((resolve) => resolve(response));
+          return new Promise((resolve) => resolve(dataToCache));
         }
 
         if (response.statusCode < 300) {
@@ -684,13 +695,15 @@ class ConnectionController {
             // cache the data for later use
             const dataToCache = {
               dataRequest,
-              responseData,
+              responseData: {
+                data: responseData,
+              },
               connection_id: id,
             };
 
             drCacheController.create(dataRequest.id, dataToCache);
 
-            return new Promise((resolve) => resolve(responseData));
+            return new Promise((resolve) => resolve(dataToCache));
           } catch (e) {
             return new Promise((resolve, reject) => reject(406));
           }
@@ -724,7 +737,7 @@ class ConnectionController {
         };
         drCacheController.create(dataRequest.id, dataToCache);
 
-        return responseData;
+        return dataToCache;
       })
       .catch((err) => {
         return new Promise((resolve, reject) => reject(err));
@@ -747,19 +760,30 @@ class ConnectionController {
         // cache the data for later use
         const dataToCache = {
           dataRequest,
-          responseData,
+          responseData: {
+            data: responseData,
+          },
           connection_id: id,
         };
         drCacheController.create(dataRequest.id, dataToCache);
 
-        return responseData;
+        return dataToCache;
       })
       .catch((err) => {
         return new Promise((resolve, reject) => reject(err));
       });
   }
 
-  async runGoogleAnalytics(connection, dataRequest, getCache) {
+  async runGoogleAnalytics(conn, dataRequest, getCache) {
+    let connection = conn;
+    if (connection.id) {
+      try {
+        connection = await this.findById(connection.id);
+      } catch (e) {
+        connection = conn;
+      }
+    }
+
     if (getCache) {
       const drCache = await checkAndGetCache(connection.id, dataRequest);
       if (drCache) return drCache;
@@ -773,12 +797,14 @@ class ConnectionController {
         // cache the data for later use
         const dataToCache = {
           dataRequest,
-          responseData,
+          responseData: {
+            data: responseData,
+          },
           connection_id: connection.id,
         };
         drCacheController.create(dataRequest.id, dataToCache);
 
-        return responseData;
+        return dataToCache;
       })
       .catch((err) => {
         return new Promise((resolve, reject) => reject(err));
@@ -792,10 +818,19 @@ class ConnectionController {
     return googleConnector.getAccounts(oauth.refreshToken, connection.oauth_id);
   }
 
-  async runCustomerio(connection, dataRequest, getCache) {
+  async runCustomerio(conn, dataRequest, getCache) {
+    let connection = conn;
     if (getCache) {
-      const drCache = await checkAndGetCache(connection.id, dataRequest);
+      const drCache = await checkAndGetCache(conn.id, dataRequest);
       if (drCache) return drCache;
+    }
+
+    if (conn.id) {
+      try {
+        connection = await this.findById(conn.id);
+      } catch (e) {
+        connection = conn;
+      }
     }
 
     if (dataRequest.route.indexOf("customers") === 0) {
@@ -804,12 +839,14 @@ class ConnectionController {
           // cache the data for later use
           const dataToCache = {
             dataRequest,
-            responseData,
+            responseData: {
+              data: responseData,
+            },
             connection_id: connection.id,
           };
           drCacheController.create(dataRequest.id, dataToCache);
 
-          return responseData;
+          return dataToCache;
         })
         .catch((err) => {
           return new Promise((resolve, reject) => reject(err));
@@ -820,12 +857,14 @@ class ConnectionController {
           // cache the data for later use
           const dataToCache = {
             dataRequest,
-            responseData,
+            responseData: {
+              data: responseData,
+            },
             connection_id: connection.id,
           };
           drCacheController.create(dataRequest.id, dataToCache);
 
-          return responseData;
+          return dataToCache;
         })
         .catch((err) => {
           return new Promise((resolve, reject) => reject(err));

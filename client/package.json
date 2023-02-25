@@ -43,6 +43,7 @@
     "lodash": "^4.17.20",
     "mini-css-extract-plugin": "0.11.3",
     "moment": "^2.29.1",
+    "nanoid": "^4.0.1",
     "object-assign": "4.1.1",
     "optimize-css-assets-webpack-plugin": "5.0.4",
     "pnp-webpack-plugin": "1.6.4",

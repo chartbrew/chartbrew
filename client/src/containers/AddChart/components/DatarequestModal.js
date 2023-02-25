@@ -1,12 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import _ from "lodash";
-import { toast } from "react-toastify";
+import { Flip, toast, ToastContainer } from "react-toastify";
 import {
-  Button, Container, Loading, Modal, Row, Spacer, Text
+  Button, Container, Grid, Link, Loading, Modal, Row, Spacer, Text, Avatar,
+  useTheme, Tooltip, Card, theme, Badge,
 } from "@nextui-org/react";
+import {
+  Danger, Plus,
+} from "react-iconly";
+import { TbArrowsJoin } from "react-icons/tb";
+import moment from "moment";
 
 import ApiBuilder from "./ApiBuilder";
 import SqlBuilder from "./SqlBuilder";
@@ -15,72 +21,75 @@ import RealtimeDbBuilder from "../../Connections/RealtimeDb/RealtimeDbBuilder";
 import FirestoreBuilder from "../../Connections/Firestore/FirestoreBuilder";
 import GaBuilder from "../../Connections/GoogleAnalytics/GaBuilder";
 import CustomerioBuilder from "../../Connections/Customerio/CustomerioBuilder";
+import DatarequestSettings from "./DatarequestSettings";
 
 import {
   getDataRequestByDataset as getDataRequestByDatasetAction,
   createDataRequest as createDataRequestAction,
   updateDataRequest as updateDataRequestAction,
+  deleteDataRequest as deleteDataRequestAction,
 } from "../../../actions/dataRequest";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
+import connectionImages from "../../../config/connectionImages";
+import {
+  updateDataset as updateDatasetAction,
+  runRequest as runRequestAction,
+} from "../../../actions/dataset";
 
 function DatarequestModal(props) {
   const {
-    open, onClose, connection, dataset, match, getDataRequestByDataset,
-    createDataRequest, updateDataRequest, requests, changeTutorial, updateResult, chart,
+    open, onClose, dataset, match, getDataRequestByDataset,
+    createDataRequest, updateDataRequest, requests, changeTutorial, chart,
+    connections, deleteDataRequest, updateDataset, responses, stateDataRequests,
+    datasetResponses, runRequest,
   } = props;
 
-  const [dataRequest, setDataRequest] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [initialising, setInitialising] = useState(false);
+  const [dataRequests, setDataRequests] = useState([]);
+  const [selectedRequest, setSelectedRequest] = useState(null);
   const [error, setError] = useState(null);
-  const [closeTrigger, setCloseTrigger] = useState(false);
-  const [result, setResult] = useState(null);
+  const [createMode, setCreateMode] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const { isDark } = useTheme();
 
   useEffect(() => {
     if (!open) {
-      setDataRequest(null);
+      setDataRequests([]);
       return;
     }
-    let fetched = false;
-    getDataRequestByDataset(match.params.projectId, match.params.chartId, dataset.id)
-      .then((dr) => {
-        fetched = true;
-        setDataRequest(dr);
 
-        setTimeout(() => {
-          setSaved(true);
-        }, 100);
+    setInitialising(true);
+    getDataRequestByDataset(match.params.projectId, match.params.chartId, dataset.id)
+      .then((drs) => {
+        setInitialising(false);
+        setDataRequests(drs);
+        if (drs.length > 0) {
+          setSelectedRequest({ isSettings: true });
+        }
+
+        if (drs.length > 0 && !dataset.main_dr_id) {
+          updateDataset(
+            match.params.projectId,
+            match.params.chartId,
+            dataset.id,
+            { main_dr_id: drs[0].id }
+          );
+        }
       })
       .catch((err) => {
+        setInitialising(false);
         if (err && err.message === "404") {
-          return createDataRequest(match.params.projectId, match.params.chartId, {
-            dataset_id: dataset.id,
-          });
+          setCreateMode(true);
+          return true;
         }
         setError("Cannot fetch the data request configuration. Try to refresh the page.");
         return err;
-      })
-      .then((dr) => {
-        if (!fetched && dr) {
-          setDataRequest(dr);
-          setTimeout(() => {
-            setSaved(true);
-          }, 100);
-        }
-      })
-      .catch(() => {
-        setError("Cannot fetch the data request configuration. Try to refresh the page.");
       });
-  }, [open, dataset]);
+  }, [open]);
 
   useEffect(() => {
-    setSaved(false);
-  }, [dataRequest]);
-
-  useEffect(() => {
-    const request = _.find(requests, { options: { id: dataset.id } });
-    setResult(request);
-    if (open && connection.type !== "firestore") changeTutorial("requestmodal");
+    if (open && selectedRequest?.Connection?.type !== "firestore") changeTutorial("requestmodal");
   }, [requests, dataset]);
 
   useEffect(() => {
@@ -94,21 +103,23 @@ function DatarequestModal(props) {
     }
   }, [error]);
 
-  useEffect(() => {
-    updateResult(result);
-  }, [result]);
-
-  useEffect(() => {
-    if (saved) setCloseTrigger(false);
-  }, [saved]);
-
   const _onClose = () => {
-    if (saved || closeTrigger) {
-      setCloseTrigger(false);
-      onClose();
-    } else if (!saved) {
-      setCloseTrigger(true);
+    onClose();
+  };
+
+  const _onBuildChart = () => {
+    // run the request of the dataset response is not available
+    const datasetResponse = datasetResponses.find((d) => d.dataset_id === dataset.id);
+    if (!datasetResponse) {
+      setLoading(true);
+      runRequest(match.params.projectId, match.params.chartId, dataset.id, true)
+        .catch(() => {});
     }
+
+    setTimeout(() => {
+      setLoading(false);
+      onClose();
+    }, 2000);
   };
 
   const _updateDataRequest = (newData) => {
@@ -126,33 +137,107 @@ function DatarequestModal(props) {
       newDr = { ...newDr, headers: newHeaders };
     }
 
-    setDataRequest(newDr);
+    // update the item in the array
+    const drIndex = _.findIndex(dataRequests, { id: newDr.id });
+    if (drIndex > -1) {
+      const newDrArray = _.cloneDeep(dataRequests);
+      newDrArray[drIndex] = newDr;
+      setDataRequests(newDrArray);
+    }
   };
 
-  const _onSaveRequest = (dr = dataRequest) => {
-    setLoading(true);
-    const newDr = _.cloneDeep(dr);
+  const _onSaveRequest = (dr = selectedRequest) => {
     return updateDataRequest(
       match.params.projectId,
       match.params.chartId,
-      newDr.id,
-      newDr
+      dr.id,
+      dr,
     )
       .then((savedDr) => {
-        setLoading(false);
-        setDataRequest(savedDr);
+        setSelectedRequest(savedDr);
 
-        setTimeout(() => {
-          setSaved(true);
-        }, 100);
+        // if it's the first data request, update the main_dr_id
+        if (dataRequests.length === 1 && !dataset.main_dr_id) {
+          updateDataset({ main_dr_id: savedDr.id });
+        }
 
-        return savedDr;
+        // update the dataRequests array and replace the item
+        _updateDataRequest(savedDr);
       })
       .catch((e) => {
-        setLoading(false);
         setError(e);
         return e;
       });
+  };
+
+  const _onCreateNewRequest = (connection) => {
+    return createDataRequest(match.params.projectId, match.params.chartId, {
+      dataset_id: dataset.id,
+      connection_id: connection.id,
+    })
+      .then((newDr) => {
+        if (dataRequests.length < 1) {
+          updateDataset(
+            match.params.projectId,
+            match.params.chartId,
+            dataset.id,
+            { main_dr_id: newDr.id },
+          );
+        }
+
+        setSelectedRequest(newDr);
+        setCreateMode(false);
+
+        // update the dataRequests array
+        const newDrArray = _.cloneDeep(dataRequests);
+        newDrArray.push(newDr);
+        setDataRequests(newDrArray);
+      })
+      .catch((e) => {
+        toast.error("Could not create connection. Please try again or get in touch with us.");
+        setError(e);
+        return e;
+      });
+  };
+
+  const _onSelectDataRequest = (dr) => {
+    setSelectedRequest(dr);
+    setCreateMode(false);
+  };
+
+  const _onDeleteRequest = (drId) => {
+    if (selectedRequest) {
+      deleteDataRequest(match.params.projectId, match.params.chartId, drId)
+        .then(() => {
+          // update the dataRequests array
+          const newDrArray = _.cloneDeep(dataRequests);
+          setDataRequests(newDrArray.filter((dr) => dr.id !== drId));
+          setSelectedRequest(newDrArray[0]);
+        })
+        .catch((e) => {
+          setError(e);
+          return e;
+        });
+    }
+  };
+
+  const _onUpdateDataset = (data) => {
+    return updateDataset(match.params.projectId, match.params.chartId, dataset.id, data)
+      .then((newDataset) => {
+        return newDataset;
+      })
+      .catch((e) => {
+        setError(e);
+        return e;
+      });
+  };
+
+  const _onSelectSettings = () => {
+    if (dataRequests.length === 0) {
+      toast.info("You need to create a data request first.");
+      return;
+    }
+    setSelectedRequest({ isSettings: true });
   };
 
   return (
@@ -161,114 +246,260 @@ function DatarequestModal(props) {
       fullScreen
       onClose={_onClose}
       closeButton
+      scroll
     >
-      <Modal.Header>
-        <Text h3>{`Configure ${connection.name}`}</Text>
+      <Modal.Header justify="flex-start">
+        <Text h4>{"Configure your dataset"}</Text>
+        {initialising && (
+          <>
+            <Spacer x={1} />
+            <Loading type="points-opacity" color="currentColor" size="xl" />
+          </>
+        )}
       </Modal.Header>
       <Modal.Body>
-        {!dataRequest && (
-          <Container>
-            <Spacer y={4} />
-            <Row align="center" justify="center">
-              <Loading type="points" color="currentColor" size="xl" />
+        <Grid.Container>
+          <Grid xs={12} sm={1} direction="column" css={{ borderRight: "1px solid $accents4" }}>
+            {selectedRequest && (
+              <>
+                <Row>
+                  <Tooltip content="Join data requests" css={{ zIndex: 99999 }} placement="rightStart">
+                    <Link onPress={() => _onSelectSettings()} css={{ cursor: "pointer" }}>
+                      <Avatar
+                        icon={(
+                          <TbArrowsJoin
+                            size={28}
+                            strokeWidth={2}
+                            color={
+                              selectedRequest.isSettings
+                                ? theme.colors.accents0.value : theme.colors.text.value
+                            }
+                          />
+                        )}
+                        squared
+                        size="lg"
+                        css={{ cursor: "pointer" }}
+                        color={selectedRequest.isSettings ? "primary" : "default"}
+                      />
+                    </Link>
+                  </Tooltip>
+                </Row>
+                <Spacer y={1} />
+              </>
+            )}
+            {dataRequests.map((dr, index) => (
+              <Fragment key={dr.id}>
+                <Row align="center">
+                  <Avatar
+                    bordered
+                    squared
+                    src={dr.Connection ? connectionImages(isDark)[dr.Connection.type] : null}
+                    icon={!dr.Connection ? <Danger /> : null}
+                    size="lg"
+                    color={dr.id === selectedRequest?.id ? "primary" : "default"}
+                    onClick={() => _onSelectDataRequest(dr)}
+                  />
+                  <Spacer x={0.3} />
+                  <Badge
+                    size="sm"
+                    disableOutline
+                    variant={stateDataRequests.find((o) => o.id === dr.id)?.loading ? "points" : "bordered"}
+                    color={
+                      responses.find((r) => r.id === dr.id)?.error
+                        ? "error"
+                        : responses.find((r) => r.id === dr.id) ? "success" : "default"
+                    }
+                  >
+                    {`${index + 1}`}
+                  </Badge>
+                </Row>
+                <Spacer y={0.3} />
+              </Fragment>
+            ))}
+            <Spacer y={0.7} />
+            <Row>
+              <Tooltip content="Add a new data source" css={{ zIndex: 99999 }} placement="rightStart">
+                <Link onClick={() => setCreateMode(true)} css={{ cursor: "pointer" }}>
+                  <Avatar
+                    icon={<Plus primaryColor={theme.colors.text.value} />}
+                    bordered
+                    squared
+                    size="lg"
+                    css={{ cursor: "pointer" }}
+                  />
+                </Link>
+              </Tooltip>
             </Row>
-            <Spacer y={1} />
-            <Row align="center" justify="center">
-              <Text size="1.4em" css={{ color: "$accents7" }}>Preparing the data request...</Text>
-            </Row>
-          </Container>
-        )}
-        {connection.type === "api" && dataRequest && (
-          <ApiBuilder
-            dataset={dataset}
-            dataRequest={dataRequest}
-            connection={connection}
-            onChangeRequest={_updateDataRequest}
-            onSave={_onSaveRequest}
-            exploreData={result && JSON.stringify(result.data, null, 2)}
-            chart={chart}
-          />
-        )}
-        {(connection.type === "mysql" || connection.type === "postgres") && dataRequest && (
-          <SqlBuilder
-            dataset={dataset}
-            dataRequest={dataRequest}
-            connection={connection}
-            onChangeRequest={_updateDataRequest}
-            onSave={_onSaveRequest}
-            exploreData={result && JSON.stringify(result.data, null, 2)}
-          />
-        )}
-        {connection.type === "mongodb" && dataRequest && (
-          <MongoQueryBuilder
-            dataset={dataset}
-            dataRequest={dataRequest}
-            onChangeRequest={_updateDataRequest}
-            onSave={_onSaveRequest}
-            exploreData={result && JSON.stringify(result.data, null, 2)}
-          />
-        )}
-        {connection.type === "realtimedb" && dataRequest && (
-          <RealtimeDbBuilder
-            dataset={dataset}
-            dataRequest={dataRequest}
-            connection={connection}
-            onChangeRequest={_updateDataRequest}
-            onSave={_onSaveRequest}
-            exploreData={result && JSON.stringify(result.data, null, 2)}
-          />
-        )}
-        {connection.type === "firestore" && dataRequest && (
-          <FirestoreBuilder
-            dataset={dataset}
-            dataRequest={dataRequest}
-            connection={connection}
-            onChangeRequest={_updateDataRequest}
-            onSave={_onSaveRequest}
-            exploreData={result && JSON.stringify(result.data, null, 2)}
-          />
-        )}
-        {connection.type === "googleAnalytics" && dataRequest && (
-          <GaBuilder
-            dataset={dataset}
-            dataRequest={dataRequest}
-            connection={connection}
-            onChangeRequest={_updateDataRequest}
-            onSave={_onSaveRequest}
-            exploreData={result && JSON.stringify(result.data, null, 2)}
-          />
-        )}
-        {connection.type === "customerio" && dataRequest && (
-          <CustomerioBuilder
-            dataset={dataset}
-            dataRequest={dataRequest}
-            connection={connection}
-            onChangeRequest={_updateDataRequest}
-            onSave={_onSaveRequest}
-            exploreData={result && JSON.stringify(result.data, null, 2)}
-          />
-        )}
+          </Grid>
+          {!createMode && selectedRequest?.isSettings && (
+            <Grid xs={12} sm={11}>
+              <DatarequestSettings
+                dataset={dataset}
+                onChange={_onUpdateDataset}
+              />
+            </Grid>
+          )}
+          {!createMode && selectedRequest && selectedRequest.Connection && (
+            <Grid xs={12} sm={11}>
+              {dataRequests.map((dr) => (
+                <Fragment key={dr.id}>
+                  {selectedRequest.Connection.type === "api" && selectedRequest.id === dr.id && (
+                    <ApiBuilder
+                      dataRequest={dr}
+                      connection={dr.Connection}
+                      onChangeRequest={_updateDataRequest}
+                      onSave={_onSaveRequest}
+                      chart={chart}
+                      onDelete={() => _onDeleteRequest(dr.id)}
+                    />
+                  )}
+                  {(selectedRequest.Connection.type === "mysql" || selectedRequest.Connection.type === "postgres") && selectedRequest.id === dr.id && (
+                    <SqlBuilder
+                      dataRequest={dr}
+                      connection={dr.Connection}
+                      onChangeRequest={_updateDataRequest}
+                      onSave={_onSaveRequest}
+                      onDelete={() => _onDeleteRequest(dr.id)}
+                    />
+                  )}
+                  {selectedRequest.Connection.type === "mongodb" && selectedRequest.id === dr.id && (
+                    <MongoQueryBuilder
+                      dataRequest={dr}
+                      connection={dr.Connection}
+                      onChangeRequest={_updateDataRequest}
+                      onSave={_onSaveRequest}
+                      onDelete={() => _onDeleteRequest(dr.id)}
+                    />
+                  )}
+                  {selectedRequest.Connection.type === "realtimedb" && selectedRequest.id === dr.id && (
+                    <RealtimeDbBuilder
+                      dataRequest={dr}
+                      connection={dr.Connection}
+                      onChangeRequest={_updateDataRequest}
+                      onSave={_onSaveRequest}
+                      onDelete={() => _onDeleteRequest(dr.id)}
+                    />
+                  )}
+                  {selectedRequest.Connection.type === "firestore" && selectedRequest.id === dr.id && (
+                    <FirestoreBuilder
+                      dataRequest={dr}
+                      connection={dr.Connection}
+                      onChangeRequest={_updateDataRequest}
+                      onSave={_onSaveRequest}
+                      onDelete={() => _onDeleteRequest(dr.id)}
+                    />
+                  )}
+                  {selectedRequest.Connection.type === "googleAnalytics" && selectedRequest.id === dr.id && (
+                    <GaBuilder
+                      dataRequest={dr}
+                      connection={dr.Connection}
+                      onChangeRequest={_updateDataRequest}
+                      onSave={_onSaveRequest}
+                      onDelete={() => _onDeleteRequest(dr.id)}
+                    />
+                  )}
+                  {selectedRequest.Connection.type === "customerio" && selectedRequest.id === dr.id && (
+                    <CustomerioBuilder
+                      dataRequest={dr}
+                      connection={dr.Connection}
+                      onChangeRequest={_updateDataRequest}
+                      onSave={_onSaveRequest}
+                      onDelete={() => _onDeleteRequest(dr.id)}
+                    />
+                  )}
+                </Fragment>
+              ))}
+            </Grid>
+          )}
+          {createMode && (
+            <Grid xs={12} sm={11} direction="column">
+              <Spacer y={0.5} />
+              <Container>
+                <Text h4>Select a connection</Text>
+              </Container>
+              <Spacer y={0.5} />
+              <Grid.Container gap={2}>
+                {connections.map((c) => {
+                  return (
+                    <Grid xs={12} sm={6} md={4} key={c.id}>
+                      <Card
+                        variant="bordered"
+                        isPressable
+                        isHoverable
+                        className="project-segment"
+                        onClick={() => _onCreateNewRequest(c)}
+                      >
+                        <Card.Body css={{ p: "$4", pl: "$8" }}>
+                          <Container justify="flex-start" fluid>
+                            <Row align="center" justify="space-between">
+                              <Text h4>{c.name}</Text>
+                              <Spacer x={0.2} />
+                              <Avatar
+                                squared
+                                src={connectionImages(isDark)[c.type]}
+                                alt={`${c.type} logo`}
+                              />
+                            </Row>
+                            <Row>
+                              <Text css={{ color: "$accents7" }}>
+                                {`Created on ${moment(c.createdAt).format("LLL")}`}
+                              </Text>
+                            </Row>
+                          </Container>
+                        </Card.Body>
+                        <Card.Footer>
+                          <Container>
+                            <Row justify="center">
+                              <Button
+                                flat
+                                onClick={() => _onCreateNewRequest(c)}
+                                size="sm"
+                                css={{ width: "100%" }}
+                              >
+                                Select
+                              </Button>
+                            </Row>
+                          </Container>
+                        </Card.Footer>
+                      </Card>
+                    </Grid>
+                  );
+                })}
+              </Grid.Container>
+            </Grid>
+          )}
+        </Grid.Container>
 
+        <ToastContainer
+          position="top-right"
+          autoClose={1500}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnVisibilityChange
+          draggable
+          pauseOnHover
+          transition={Flip}
+          theme={isDark ? "dark" : "light"}
+        />
       </Modal.Body>
-      <Modal.Footer>
+      <Modal.Footer css={{ background: "$background" }}>
         <Button
-          flat
-          color={saved ? "success" : "secondary"}
-          onClick={() => _onSaveRequest()}
-          disabled={loading}
           auto
+          onClick={() => onClose()}
+          color="warning"
+          flat
         >
-          {saved && !loading ? "Saved" : "Save"}
-          {loading && <Loading type="points" />}
+          Close
         </Button>
-        {closeTrigger && <Text small>Are you sure? Your settings are not saved</Text>}
         <Button
-          flat
-          color={closeTrigger ? "error" : "primary"}
-          onClick={_onClose}
+          onPress={() => _onBuildChart()}
           auto
+          disabled={loading}
         >
-          Build the chart
+          {loading && <Loading type="points-opacity" />}
+          {!loading && "Build the chart"}
         </Button>
       </Modal.Footer>
     </Modal>
@@ -282,7 +513,6 @@ DatarequestModal.defaultProps = {
 DatarequestModal.propTypes = {
   open: PropTypes.bool,
   onClose: PropTypes.func.isRequired,
-  connection: PropTypes.object.isRequired,
   dataset: PropTypes.object.isRequired,
   getDataRequestByDataset: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
@@ -290,13 +520,23 @@ DatarequestModal.propTypes = {
   updateDataRequest: PropTypes.func.isRequired,
   requests: PropTypes.array.isRequired,
   changeTutorial: PropTypes.func.isRequired,
-  updateResult: PropTypes.func.isRequired,
   chart: PropTypes.object.isRequired,
+  connections: PropTypes.array.isRequired,
+  deleteDataRequest: PropTypes.func.isRequired,
+  updateDataset: PropTypes.func.isRequired,
+  responses: PropTypes.array.isRequired,
+  stateDataRequests: PropTypes.array.isRequired,
+  datasetResponses: PropTypes.array.isRequired,
+  runRequest: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
     requests: state.dataset.requests,
+    connections: state.connection.data,
+    responses: state.dataRequest.responses,
+    stateDataRequests: state.dataRequest.data,
+    datasetResponses: state.dataset.responses,
   };
 };
 
@@ -312,6 +552,15 @@ const mapDispatchToProps = (dispatch) => {
       return dispatch(updateDataRequestAction(projectId, chartId, drId, data));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
+    deleteDataRequest: (projectId, chartId, drId) => {
+      return dispatch(deleteDataRequestAction(projectId, chartId, drId));
+    },
+    updateDataset: (projectId, chartId, datasetId, data) => {
+      return dispatch(updateDatasetAction(projectId, chartId, datasetId, data));
+    },
+    runRequest: (projectId, chartId, datasetId, getCache) => {
+      return dispatch(runRequestAction(projectId, chartId, datasetId, getCache));
+    },
   };
 };
 

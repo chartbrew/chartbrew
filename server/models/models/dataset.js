@@ -194,6 +194,28 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+    joinSettings: {
+      type: DataTypes.TEXT,
+      set(val) {
+        return this.setDataValue("joinSettings", JSON.stringify(val));
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("joinSettings"));
+        } catch (e) {
+          return this.getDataValue("joinSettings");
+        }
+      }
+    },
+    main_dr_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      reference: {
+        model: "DataRequest",
+        key: "id",
+        onDelete: "cascade",
+      },
+    },
     order: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
@@ -205,8 +227,9 @@ module.exports = (sequelize, DataTypes) => {
   Dataset.associate = (models) => {
     models.Dataset.belongsTo(models.Chart, { foreignKey: "chart_id" });
     models.Dataset.belongsTo(models.Connection, { foreignKey: "connection_id" });
-    models.Dataset.hasOne(models.DataRequest, { foreignKey: "dataset_id" });
+    models.Dataset.hasMany(models.DataRequest, { foreignKey: "dataset_id" });
     models.Dataset.hasMany(models.Alert, { foreignKey: "dataset_id" });
+    models.Dataset.hasOne(models.DataRequest, { foreignKey: "id", as: "mainSource" });
   };
 
   return Dataset;

@@ -12,7 +12,7 @@ const initialState = {
   loading: false,
   error: false,
   data: [],
-  requests: [],
+  responses: [],
 };
 
 export default function dataset(state = initialState, action) {
@@ -55,19 +55,25 @@ export default function dataset(state = initialState, action) {
       return { ...state, loading: false, data: tempData };
     case FETCH_REQUESTED_DATA:
       let indexReq = -1;
-      for (let i = 0; i < state.requests.length; i++) {
-        if (state.requests[i].options && state.requests[i].options.id === parseInt(action.id, 10)) {
+      for (let i = 0; i < state.responses.length; i++) {
+        if (state.responses[i].dataset_id === parseInt(action.id, 10)) {
           indexReq = i;
           break;
         }
       }
-      const newRequests = [...state.requests];
+      const newResponses = [...state.responses];
       if (indexReq > -1) {
-        newRequests[indexReq] = action.request;
+        newResponses[indexReq] = {
+          data: action.response,
+          dataset_id: action.id,
+        };
       } else {
-        newRequests.push(action.request);
+        newResponses.push({
+          data: action.response,
+          dataset_id: action.id,
+        });
       }
-      return { ...state, loading: false, requests: newRequests };
+      return { ...state, loading: false, responses: newResponses };
     case CLEAR_DATASETS:
       return initialState;
     default:

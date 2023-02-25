@@ -151,11 +151,11 @@ function ProjectBoard(props) {
       <Container style={styles.container}>
         <Spacer y={4} />
         <Row align="center" justify="center">
-          <Loading type="points" color="currentColor" size="xl" />
+          <Loading type="points-opacity" color="currentColor" size="xl" />
         </Row>
         <Spacer y={1} />
         <Row align="center" justify="center">
-          <Text size="1.4em" css={{ color: "$accents7" }}>Loading the dashboard...</Text>
+          <Text size="1.4em" css={{ color: "$accents7" }}>Loading the dashboard</Text>
         </Row>
       </Container>
     );

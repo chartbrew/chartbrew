@@ -22,13 +22,15 @@ function Walkthrough(props) {
   return (
     <>
       {tourActive && (
-        <Tour
-          accentColor={secondary}
-          steps={steps[tourActive]}
-          isOpen={isActive(tourActive)}
-          onRequestClose={closeTour}
-          closeWithMask={false}
-        />
+        <div style={{ zIndex: 99999 }}>
+          <Tour
+            accentColor={secondary}
+            steps={steps[tourActive]}
+            isOpen={isActive(tourActive)}
+            onRequestClose={closeTour}
+            closeWithMask={false}
+          />
+        </div>
       )}
     </>
   );
@@ -108,11 +110,11 @@ const steps = {
             <Text color="black">
               {"You can always create new connections by clicking the "}
               <FaPlug />
-              {" button."}
+              {" option in the left sidebar."}
             </Text>
           </Row>
           <Row>
-            <Text color="black">{"Select one of your connections from the dropdown list to get started."}</Text>
+            <Text color="black">{"Click on the \"Get data\" button to get started."}</Text>
           </Row>
         </Container>
       ),
@@ -466,19 +468,6 @@ const steps = {
       )
     },
     {
-      selector: ".datasetdata-filters-tut",
-      content: () => (
-        <Container>
-          <Row>
-            <Text color="black">{"To give you more flexibility, Chartbrew also supports a wide range of filters."}</Text>
-          </Row>
-          <Row>
-            <Text color="black">{"You can select any field from your dataset and filter based on the given values and operations."}</Text>
-          </Row>
-        </Container>
-      )
-    },
-    {
       selector: ".datasetdata-date-tut",
       content: ({ close }) => ( // eslint-disable-line
         <Container>
@@ -491,6 +480,19 @@ const steps = {
               <strong>{" global date settings "}</strong>
               {"on the right to filter your data."}
             </Text>
+          </Row>
+        </Container>
+      )
+    },
+    {
+      selector: ".datasetdata-filters-tut",
+      content: () => (
+        <Container>
+          <Row>
+            <Text color="black">{"To give you more flexibility, Chartbrew also supports a wide range of filters."}</Text>
+          </Row>
+          <Row>
+            <Text color="black">{"You can select any field from your dataset and filter based on the given values and operations."}</Text>
           </Row>
         </Container>
       )
@@ -521,6 +523,72 @@ const steps = {
         </Container>
       )
     }
+  ],
+  drsettings: [
+    {
+      selector: ".drsettings-page-tut",
+      content: () => (
+        <Container>
+          <Row>
+            <Text color="black">{"In Chartbrew, the dataset data can be composed from multiple sources."}</Text>
+          </Row>
+          <Row>
+            <Text color="black">{"This is a powerful feature that allows you to join data from anywhere you like into one dataset."}</Text>
+          </Row>
+        </Container>
+      )
+    },
+    {
+      selector: ".drsettings-source-tut",
+      content: () => (
+        <Container>
+          <Row>
+            <Text color="black">{"By default, Chartbrew uses the first data source as the main source for the dataset."}</Text>
+          </Row>
+          <Row>
+            <Text color="black">{"If you add more sources, you can select here which one you want Chartbrew to fetch data from."}</Text>
+          </Row>
+        </Container>
+      )
+    },
+    {
+      selector: ".drsettings-join-tut",
+      content: () => (
+        <Container>
+          <Row>
+            <Text color="black">{"You can add a new JOIN configuration by clicking here."}</Text>
+          </Row>
+          <Row>
+            <Text color="black">{"The data sources can be of the same or even different type. For example, you can join data from Firestore with data from MongoDB if you wish."}</Text>
+          </Row>
+        </Container>
+      )
+    },
+    {
+      selector: ".drsettings-compile-tut",
+      content: ({ close }) => ( // eslint-disable-line
+        <Container>
+          <Row>
+            <Text color="black">{"After you finish the configuration, you can compile the data from here. Chartbrew will then apply all the join settings to create a single dataset."}</Text>
+          </Row>
+          <Row>
+            <Text color="black">
+              {"A sample of the compiled dataset can be previewed in the code editor."}
+            </Text>
+          </Row>
+          <Row>
+            <Button
+              iconRight={<TickSquare />}
+              color="success"
+              onClick={close}
+              auto
+            >
+              Start connecting
+            </Button>
+          </Row>
+        </Container>
+      )
+    },
   ]
 };
 

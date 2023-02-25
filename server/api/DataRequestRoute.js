@@ -169,12 +169,88 @@ module.exports = (app) => {
 
         return dataRequestController.findByDataset(req.params.datasetId);
       })
-      .then((dataRequest) => {
-        return res.status(200).send(dataRequest);
+      .then((dataRequests) => {
+        return res.status(200).send(dataRequests);
       })
       .catch((error) => {
         if (error && error.message === "404") {
           return res.status(404).send(error);
+        }
+
+        return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------------
+
+  /*
+  ** Route to delete a Data Request by ID
+  */
+  app.delete(`${root}/:id`, verifyToken, (req, res) => {
+    return checkAccess(req)
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).deleteAny("dataRequest");
+        if (!permission.granted) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
+        return dataRequestController.delete(req.params.id);
+      })
+      .then((dataRequest) => {
+        return res.status(200).send(dataRequest);
+      })
+      .catch((error) => {
+        if (error.message === "401") {
+          return res.status(401).send({ error: "Not authorized" });
+        }
+
+        return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------------
+
+  /*
+  ** Route to run a request
+  */
+  app.post(`${root}/:id/request`, verifyToken, (req, res) => {
+    return checkAccess(req)
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).updateAny("dataRequest");
+        if (!permission.granted) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
+        return dataRequestController.runRequest(
+          req.params.id, req.params.chart_id, req.body.noSource, req.body.getCache
+        );
+      })
+      .then((dataRequest) => {
+        const newDataRequest = dataRequest;
+        // reduce the size of the returned data. No point in showing thousands of objects
+        if (newDataRequest?.dataRequest?.responseData?.data) {
+          const { data } = newDataRequest.dataRequest.responseData;
+          if (typeof data === "object" && data instanceof Array) {
+            newDataRequest.dataRequest.responseData.data = data.slice(0, 20);
+          } else if (typeof data === "object") {
+            const resultsKey = [];
+            Object.keys(data).forEach((key) => {
+              if (data[key] instanceof Array) {
+                resultsKey.push(key);
+              }
+            });
+
+            if (resultsKey.length > 0) {
+              resultsKey.forEach((resultKey) => {
+                const slicedArray = data[resultKey].slice(0, 20);
+                newDataRequest.dataRequest.responseData.data[resultKey] = slicedArray;
+              });
+            }
+          }
+        }
+        return res.status(200).send(newDataRequest);
+      })
+      .catch((error) => {
+        if (error.message === "401") {
+          return res.status(401).send({ error: "Not authorized" });
         }
 
         return res.status(400).send(error);

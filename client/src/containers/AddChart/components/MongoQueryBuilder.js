@@ -3,13 +3,13 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Button, Checkbox, Container, Grid, Input, Link, Loading,
+  Button, Checkbox, Container, Divider, Grid, Input, Link, Loading,
   Modal, Popover, Row, Spacer, Text, Tooltip, useTheme,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
 import {
-  ChevronRight, Edit, InfoCircle, Play, Plus, TickSquare
+  ChevronRight, Delete, Edit, InfoCircle, Play, Plus, TickSquare
 } from "react-iconly";
 
 import "ace-builds/src-min-noconflict/mode-javascript";
@@ -18,7 +18,7 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { createSavedQuery, updateSavedQuery } from "../../../actions/savedQuery";
 import SavedQueries from "../../../components/SavedQueries";
-import { runRequest as runRequestAction } from "../../../actions/dataset";
+import { runDataRequest as runDataRequestAction } from "../../../actions/dataRequest";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 
 /*
@@ -27,8 +27,8 @@ import { changeTutorial as changeTutorialAction } from "../../../actions/tutoria
 function MongoQueryBuilder(props) {
   const {
     createSavedQuery, match, updateSavedQuery, onChangeRequest,
-    runRequest, onSave, dataset, dataRequest, exploreData,
-    changeTutorial,
+    runDataRequest, onSave, dataRequest,
+    changeTutorial, connection, onDelete, responses,
   } = props;
 
   const [savedQuery, setSavedQuery] = useState(null);
@@ -44,6 +44,7 @@ function MongoQueryBuilder(props) {
     query: "collection('users').find()",
   });
   const [invalidateCache, setInvalidateCache] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
 
   const { isDark } = useTheme();
 
@@ -61,6 +62,15 @@ function MongoQueryBuilder(props) {
   useEffect(() => {
     onChangeRequest(mongoRequest);
   }, [mongoRequest]);
+
+  useEffect(() => {
+    if (responses && responses.length > 0) {
+      const selectedResponse = responses.find((o) => o.id === dataRequest.id);
+      if (selectedResponse?.data) {
+        setResult(JSON.stringify(selectedResponse.data, null, 2));
+      }
+    }
+  }, [responses]);
 
   const _onSaveQueryConfirmation = () => {
     setSaveQueryModal(true);
@@ -108,18 +118,17 @@ function MongoQueryBuilder(props) {
     setMongoRequest({ ...mongoRequest, query: value });
   };
 
-  const _onTest = () => {
+  const _onTest = (dr = mongoRequest) => {
     setTestingQuery(true);
     setTestSuccess(false);
     setTestError(false);
 
-    onSave().then(() => {
+    onSave(dr).then(() => {
       const useCache = !invalidateCache;
-      runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache)
+      runDataRequest(match.params.projectId, match.params.chartId, dataRequest.id, useCache)
         .then((result) => {
           setTestingQuery(false);
           setTestSuccess(result.status);
-          setResult(JSON.stringify(result.data, null, 2));
         })
         .catch((error) => {
           setTestingQuery(false);
@@ -130,13 +139,57 @@ function MongoQueryBuilder(props) {
     });
   };
 
+  const _onSavePressed = () => {
+    setSaveLoading(true);
+    onSave(mongoRequest).then(() => {
+      setSaveLoading(false);
+    }).catch(() => {
+      setSaveLoading(false);
+    });
+  };
+
   return (
     <div style={styles.container}>
-      <Grid.Container gap={1}>
+      <Grid.Container>
         <Grid xs={12} sm={6}>
           <Container>
+            <Row justify="space-between" align="center">
+              <Text b size={22}>{connection.name}</Text>
+              <div>
+                <Row>
+                  <Button
+                    color="primary"
+                    auto
+                    size="sm"
+                    onClick={() => _onSavePressed()}
+                    disabled={saveLoading || testingQuery}
+                    flat
+                  >
+                    {(!saveLoading && !testingQuery) && "Save"}
+                    {(saveLoading || testingQuery) && <Loading type="spinner" />}
+                  </Button>
+                  <Spacer x={0.3} />
+                  <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
+                    <Button
+                      color="error"
+                      icon={<Delete />}
+                      auto
+                      size="sm"
+                      bordered
+                      css={{ minWidth: "fit-content" }}
+                      onClick={() => onDelete()}
+                    />
+                  </Tooltip>
+                </Row>
+              </div>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <Divider />
+            </Row>
+            <Spacer y={0.5} />
             <Row align="center">
-              <Text>
+              <Text b>
                 {"Enter your mongodb query here"}
               </Text>
               <Spacer x={0.2} />
@@ -155,6 +208,7 @@ function MongoQueryBuilder(props) {
                 <InfoCircle size="small" />
               </Tooltip>
             </Row>
+            <Spacer y={0.5} />
             <Row>
               <div style={{ width: "100%" }}>
                 <AceEditor
@@ -173,18 +227,18 @@ function MongoQueryBuilder(props) {
                 />
               </div>
             </Row>
+            <Spacer y={0.5} />
             <Row align="center" className="mongobuilder-buttons-tut">
               <Button
                 color={testSuccess ? "success" : testError ? "error" : "primary"}
-                iconRight={testSuccess && !testingQuery ? <TickSquare /> : <Play />}
-                onClick={_onTest}
+                iconRight={testingQuery ? <Loading type="points-opacity" /> : <Play />}
+                onClick={() => _onTest()}
                 disabled={testingQuery}
                 auto
                 shadow
               >
-                {!testSuccess && !testError && !testingQuery && "Run the query"}
+                {!testSuccess && !testError && !testingQuery && "Run query"}
                 {(testSuccess || testError) && !testingQuery && "Run again"}
-                {testingQuery && <Loading type="points" />}
               </Button>
               <Spacer x={0.2} />
               <Button
@@ -194,7 +248,7 @@ function MongoQueryBuilder(props) {
                 onClick={_onSaveQueryConfirmation}
                 auto
               >
-                {!savedQuery && !savingQuery && "Save the query"}
+                {!savedQuery && !savingQuery && "Save query"}
                 {savedQuery && !savingQuery && "Save as new"}
                 {savingQuery && <Loading type="points" />}
               </Button>
@@ -212,7 +266,9 @@ function MongoQueryBuilder(props) {
                   </Button>
                 </>
               )}
-              <Spacer x={0.5} />
+            </Row>
+            <Spacer y={0.5} />
+            <Row align="center">
               <Checkbox
                 label="Use cache"
                 isSelected={!invalidateCache}
@@ -221,7 +277,7 @@ function MongoQueryBuilder(props) {
               />
               <Spacer x={0.2} />
               <Tooltip
-                content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change any call settings."}
+                content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change the query."}
                 css={{ zIndex: 10000, maxWidth: 400 }}
               >
                 <InfoCircle size="small" />
@@ -264,8 +320,7 @@ function MongoQueryBuilder(props) {
                   style={{ borderRadius: 10 }}
                   height="450px"
                   width="none"
-                  value={exploreData || result || ""}
-                  onChange={() => setResult(result)}
+                  value={result || ""}
                   name="resultEditor"
                   readOnly
                   editorProps={{ $blockScrolling: false }}
@@ -275,9 +330,12 @@ function MongoQueryBuilder(props) {
             </Row>
             <Spacer y={0.5} />
             {result && (
-              <Row>
-                <Text small>This is a sample response and might not show all the data.</Text>
-              </Row>
+              <>
+                <Row>
+                  <Text small>This is a sample response and might not show all the data.</Text>
+                </Row>
+                <Spacer y={0.5} />
+              </>
             )}
 
             <Row>
@@ -299,7 +357,7 @@ function MongoQueryBuilder(props) {
                     <Spacer y={1} />
                     <Row>
                       <Link href="https://docs.mongodb.com/manual/reference/operator/query-comparison/" target="_blank" rel="noopener noreferrer" css={{ ai: "center" }}>
-                        <div><ChevronRight /></div>
+                        <div><ChevronRight set="light" /></div>
                         <Spacer x={0.2} />
                         <Text color="primary">
                           {"Use a relevant condition for your query. For example, don't fetch all the documents if you know you are going to use just the recent ones."}
@@ -309,7 +367,7 @@ function MongoQueryBuilder(props) {
                     <Spacer y={0.5} />
                     <Row>
                       <Link as="a" href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only" target="_blank" rel="noopener noreferrer" css={{ ai: "center" }}>
-                        <div><ChevronRight /></div>
+                        <div><ChevronRight set="light" /></div>
                         <Spacer x={0.2} />
                         <Text color="primary">
                           {"Remove unwanted fields from the query payload if you know for sure that they won't help to generate the chart you have in mind."}
@@ -319,7 +377,7 @@ function MongoQueryBuilder(props) {
                     <Spacer y={0.5} />
                     <Row>
                       <Link as="a" href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only" target="_blank" rel="noopener noreferrer" css={{ ai: "center" }}>
-                        <div><ChevronRight /></div>
+                        <div><ChevronRight set="light" /></div>
                         <Spacer x={0.2} />
                         <Text color="primary">
                           {"If you store files encoded in base64, make sure you exclude them using the method above"}
@@ -381,25 +439,23 @@ const styles = {
   },
 };
 
-MongoQueryBuilder.defaultProps = {
-  exploreData: "",
-};
-
 MongoQueryBuilder.propTypes = {
-  dataset: PropTypes.object.isRequired,
   dataRequest: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
-  runRequest: PropTypes.func.isRequired,
-  exploreData: PropTypes.string,
+  runDataRequest: PropTypes.func.isRequired,
   createSavedQuery: PropTypes.func.isRequired,
   updateSavedQuery: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   changeTutorial: PropTypes.func.isRequired,
+  connection: PropTypes.object.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  responses: PropTypes.array.isRequired,
 };
 
-const mapStateToProps = () => {
+const mapStateToProps = (state) => {
   return {
+    responses: state.dataRequest.responses,
   };
 };
 
@@ -409,8 +465,8 @@ const mapDispatchToProps = (dispatch) => {
     updateSavedQuery: (projectId, savedQueryId, data) => (
       dispatch(updateSavedQuery(projectId, savedQueryId, data))
     ),
-    runRequest: (projectId, chartId, datasetId, getCache) => {
-      return dispatch(runRequestAction(projectId, chartId, datasetId, getCache));
+    runDataRequest: (projectId, chartId, drId, getCache) => {
+      return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };

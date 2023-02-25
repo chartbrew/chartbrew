@@ -13,14 +13,13 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import update from "immutability-helper";
 import {
-  Button, Collapse, Container, Dropdown, Grid, Input, Link, Loading,
+  Button, Collapse, Container, Dropdown, Grid, Input, Link, Loading, theme,
   Popover, Row, Spacer, Text, Tooltip, Divider, Badge, Switch, Modal, Checkbox,
 } from "@nextui-org/react";
-import { HiRefresh } from "react-icons/hi";
 import { TbDragDrop } from "react-icons/tb";
 import {
   CaretDown, CaretUp, ChevronRight, CloseSquare, Filter, Hide,
-  InfoCircle, Plus, Setting, Show, TickSquare, Calendar as CalendarIcon, ChevronDownCircle,
+  InfoCircle, Plus, Setting, Show, TickSquare, Calendar as CalendarIcon, ChevronDownCircle, Danger,
 } from "react-iconly";
 import { FaMagic, FaRedo } from "react-icons/fa";
 
@@ -47,12 +46,10 @@ function formatColumnsForOrdering(columns) {
 
 function DatasetData(props) {
   const {
-    dataset, requestResult, onUpdate, runRequest, match, chartType, onNoRequest, chartData,
-    dataLoading,
+    dataset, onUpdate, match, chartType, chartData,
+    dataLoading, datasetResponses,
   } = props;
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
   const [fieldOptions, setFieldOptions] = useState([]);
   const [conditions, setConditions] = useState([]);
   const [formula, setFormula] = useState("");
@@ -65,6 +62,7 @@ function DatasetData(props) {
   const [groupByFilter, setGroupByFilter] = useState("");
   const [conditionModal, setConditionModal] = useState(false);
   const [selectedCondition, setSelectedCondition] = useState({});
+  const [requestResult, setRequestResult] = useState(null);
 
   const [fieldForFormatting, setFieldForFormatting] = useState("");
   const [fieldFormatConfig, setFieldFormatConfig] = useState(null);
@@ -77,12 +75,12 @@ function DatasetData(props) {
 
   // Update the content when there is some data to work with
   useEffect(() => {
-    if (requestResult && requestResult.data) {
+    if (requestResult) {
       const tempFieldOptions = [];
       const fieldsSchema = {};
       const updateObj = {};
 
-      const fields = fieldFinder(requestResult.data);
+      const fields = fieldFinder(requestResult);
 
       fields.forEach((o) => {
         if (o.field) {
@@ -212,6 +210,13 @@ function DatasetData(props) {
   }, [chartData]);
 
   useEffect(() => { if (!dataLoading) setIsDragState(false); }, [dataLoading]);
+
+  useEffect(() => {
+    if (datasetResponses.length > 0) {
+      const dResponse = datasetResponses.find((response) => response.dataset_id === dataset.id);
+      if (dResponse?.data) setRequestResult(dResponse.data);
+    }
+  }, [datasetResponses]);
 
   const _selectXField = (key) => {
     onUpdate({ xAxis: key });
@@ -357,23 +362,6 @@ function DatasetData(props) {
 
   const _onApplyFormula = () => {
     onUpdate({ formula });
-  };
-
-  const _onRefreshData = () => {
-    setLoading(true);
-    return runRequest(match.params.projectId, match.params.chartId, dataset.id)
-      .then(() => {
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (err.statusCode === 404) {
-          setError("Click on 'Make request' to create a new configuration first.");
-          onNoRequest();
-        } else {
-          setError(err.statusText || err);
-        }
-        setLoading(false);
-      });
   };
 
   const _onExcludeField = (field) => {
@@ -578,36 +566,12 @@ function DatasetData(props) {
     setFieldFormatConfig(null);
   };
 
-  if ((!fieldOptions || !dataset.fieldsSchema) && dataset.connection_id) {
-    return (
-      <Container>
-        <Row>
-          <Button
-            ghost
-            iconRight={<HiRefresh />}
-            onClick={_onRefreshData}
-            disabled={loading}
-            auto
-          >
-            {loading ? <Loading type="points" /> : "Fetch the data"}
-          </Button>
-        </Row>
-        <Spacer y={1} />
-        {error && (
-          <Row>
-            <Text i css={{ color: "$error" }}>{error}</Text>
-          </Row>
-        )}
-      </Container>
-    );
-  }
-
-  if (!dataset.connection_id) {
+  if ((!fieldOptions || !dataset.fieldsSchema)) {
     return (
       <Container>
         <Row>
           <Text h4>
-            {"Connect your dataset and fetch some data above."}
+            {"Click on the \"Get data\" button above to get started."}
           </Text>
         </Row>
       </Container>
@@ -618,7 +582,7 @@ function DatasetData(props) {
     <>
       <Grid.Container gap={1}>
         <Grid xs={12} sm={6} md={6} className="datasetdata-axes-tut" direction="column">
-          <div>
+          <div style={styles.rowDisplay}>
             <Text size={14} b>
               {chartType === "pie"
                 || chartType === "radar"
@@ -627,6 +591,14 @@ function DatasetData(props) {
                 ? "Segment "
                 : chartType === "table" ? "Collection " : "X-Axis "}
             </Text>
+            {chartType !== "table" && dataset.xAxis && !_filterOptions("x").find((o) => o.value === dataset.xAxis) && (
+              <>
+                <Spacer x={0.3} />
+                <Tooltip content="The selected field is not available in the data. Please select another.">
+                  <Danger primaryColor={theme.colors.error.value} />
+                </Tooltip>
+              </>
+            )}
           </div>
           <div style={styles.rowDisplay}>
             <Dropdown>
@@ -670,8 +642,17 @@ function DatasetData(props) {
           </div>
         </Grid>
         <Grid xs={12} sm={6} md={6} className="datasetdata-date-tut" direction="column">
-          <div>
-            <Text size={14}>{"Select a date for global filtering"}</Text>
+          <div style={styles.rowDisplay}>
+            <Text size={14} b>{"Date filtering field"}</Text>
+            {dataset.dateField
+              && !_getDateFieldOptions().find((o) => o.value === dataset.dateField) && (
+              <>
+                <Spacer x={0.3} />
+                <Tooltip content="The selected field is not available in the data. Please select another.">
+                  <Danger primaryColor={theme.colors.error.value} />
+                </Tooltip>
+              </>
+            )}
           </div>
           <div style={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
             <Dropdown>
@@ -718,7 +699,7 @@ function DatasetData(props) {
         {chartType !== "table" && (
           <>
             <Grid xs={12} sm={6} md={6} direction="column">
-              <div>
+              <div style={styles.rowDisplay}>
                 <Text size={14} b>
                   {chartType === "pie"
                     || chartType === "radar"
@@ -726,6 +707,14 @@ function DatasetData(props) {
                     || chartType === "doughnut"
                     ? "Data " : "Y-Axis "}
                 </Text>
+                {dataset.yAxis && !_getYFieldOptions().find((o) => o.value === dataset.yAxis) && (
+                  <>
+                    <Spacer x={0.3} />
+                    <Tooltip content="The selected field is not available in the data. Please select another.">
+                      <Danger primaryColor={theme.colors.error.value} />
+                    </Tooltip>
+                  </>
+                )}
               </div>
               <div>
                 <Dropdown>
@@ -1451,7 +1440,6 @@ function DatasetData(props) {
 }
 
 DatasetData.defaultProps = {
-  requestResult: null,
   chartType: "",
   chartData: null,
   dataLoading: false,
@@ -1459,14 +1447,12 @@ DatasetData.defaultProps = {
 
 DatasetData.propTypes = {
   dataset: PropTypes.object.isRequired,
-  requestResult: PropTypes.object,
   chartType: PropTypes.string,
   chartData: PropTypes.object,
   onUpdate: PropTypes.func.isRequired,
-  runRequest: PropTypes.func.isRequired,
-  onNoRequest: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   dataLoading: PropTypes.bool,
+  datasetResponses: PropTypes.array.isRequired,
 };
 
 function FormulaTips() {
@@ -1548,7 +1534,9 @@ const styles = {
   }
 };
 
-const mapStateToProps = () => ({});
+const mapStateToProps = (state) => ({
+  datasetResponses: state.dataset.responses,
+});
 const mapDispatchToProps = (dispatch) => {
   return {
     runRequest: (projectId, chartId, datasetId) => {

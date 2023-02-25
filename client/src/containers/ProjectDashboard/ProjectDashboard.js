@@ -154,18 +154,31 @@ function ProjectDashboard(props) {
       });
   };
 
+  const _throttleRefreshes = (refreshes, index) => {
+    if (index >= refreshes.length) return Promise.resolve("done");
+
+    return runQuery(refreshes[index].projectId, refreshes[index].chartId)
+      .then(() => {
+        return _throttleRefreshes(refreshes, index + 1);
+      })
+      .catch(() => {
+        return _throttleRefreshes(refreshes, index + 1);
+      });
+  };
+
   const _onRefreshData = () => {
     const { projectId } = match.params;
 
+    const queries = [];
     setRefreshLoading(true);
-    const refreshPromises = [];
     for (let i = 0; i < charts.length; i++) {
-      refreshPromises.push(
-        runQuery(projectId, charts[i].id)
-      );
+      queries.push({
+        projectId,
+        chartId: charts[i].id
+      });
     }
 
-    return Promise.all(refreshPromises)
+    return _throttleRefreshes(queries, 0)
       .then(() => {
         if (filters && filters[projectId]) {
           _onFilterCharts();
@@ -378,7 +391,7 @@ function ProjectDashboard(props) {
                       <Tooltip content="Refresh data" placement="bottomStart">
                         <Button
                           ghost
-                          icon={refreshLoading ? <Loading type="points" /> : <HiRefresh size={20} />}
+                          icon={refreshLoading ? <Loading type="spinner" /> : <HiRefresh size={20} />}
                           onClick={() => _onRefreshData()}
                           disabled={refreshLoading}
                           css={{ minWidth: "fit-content" }}

@@ -6,6 +6,8 @@ export const FETCHING_DATA_REQUEST = "FETCHING_DATA_REQUEST";
 export const FETCH_DATA_REQUEST_SUCCESS = "FETCH_DATA_REQUEST_SUCCESS";
 export const FETCH_DATA_REQUEST_FAIL = "FETCH_DATA_REQUEST_FAIL";
 export const FETCH_CHART_DATA_REQUESTS = "FETCH_CHART_DATA_REQUESTS";
+export const FETCH_DATASET_REQUESTS = "FETCH_DATASET_REQUESTS";
+export const DATA_REQUEST_DELETED = "DATA_REQUEST_DELETED";
 
 export function getDataRequestByChart(projectId, chartId) {
   return (dispatch) => {
@@ -58,9 +60,9 @@ export function getDataRequestByDataset(projectId, chartId, datasetId) {
 
         return response.json();
       })
-      .then((dataRequest) => {
-        dispatch({ type: FETCH_DATA_REQUEST_SUCCESS, dataRequest });
-        return Promise.resolve(dataRequest);
+      .then((dataRequests) => {
+        dispatch({ type: FETCH_DATASET_REQUESTS, dataRequests });
+        return Promise.resolve(dataRequests);
       })
       .catch((error) => {
         dispatch({ type: FETCH_DATA_REQUEST_FAIL });
@@ -131,6 +133,74 @@ export function updateDataRequest(projectId, chartId, drId, data) {
       .catch((err) => {
         dispatch({ type: FETCH_DATA_REQUEST_FAIL });
         return Promise.reject(err);
+      });
+  };
+}
+
+export function deleteDataRequest(projectId, chartId, drId) {
+  return (dispatch) => {
+    const token = cookie.load("brewToken");
+    const url = `${API_HOST}/project/${projectId}/chart/${chartId}/dataRequest/${drId}`;
+    const method = "DELETE";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`,
+    });
+
+    dispatch({ type: FETCHING_DATA_REQUEST });
+    return fetch(url, { method, headers })
+      .then((response) => {
+        if (!response.ok) {
+          dispatch(addError(response.status, "Could not delete the Data Request"));
+          throw new Error(response.status);
+        }
+
+        return response.json();
+      })
+      .then((dataRequest) => {
+        dispatch({ type: DATA_REQUEST_DELETED, id: drId });
+        return dataRequest;
+      })
+      .catch((err) => {
+        dispatch({ type: FETCH_DATA_REQUEST_FAIL });
+        return Promise.reject(err);
+      });
+  };
+}
+
+export function runDataRequest(projectId, chartId, drId, getCache) {
+  return (dispatch) => {
+    const token = cookie.load("brewToken");
+    const url = `${API_HOST}/project/${projectId}/chart/${chartId}/dataRequest/${drId}/request`;
+    const method = "POST";
+    const body = JSON.stringify({ getCache });
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    });
+
+    dispatch({ type: FETCHING_DATA_REQUEST, id: drId });
+    return fetch(url, { method, body, headers })
+      .then((response) => {
+        if (!response.ok) {
+          dispatch(addError(response.status, "Cannot fetch the dataRequests"));
+          throw new Error(response.status);
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        dispatch({
+          type: FETCH_DATA_REQUEST_SUCCESS,
+          dataRequest: data.dataRequest.dataRequest,
+          response: data.dataRequest.responseData,
+        });
+        return Promise.resolve(data.dataRequest);
+      })
+      .catch((error) => {
+        dispatch({ type: FETCH_DATA_REQUEST_FAIL, id: drId, error: error.message });
+        return Promise.reject(error);
       });
   };
 }

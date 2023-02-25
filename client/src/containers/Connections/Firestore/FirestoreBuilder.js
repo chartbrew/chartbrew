@@ -15,7 +15,8 @@ import { format, formatISO } from "date-fns";
 import { enGB } from "date-fns/locale";
 import { HiRefresh } from "react-icons/hi";
 import {
-  CloseSquare, Danger, InfoCircle, Play, Plus, Calendar as CalendarIcon, TickSquare,
+  CloseSquare, Danger, InfoCircle, Play, Plus, Calendar as CalendarIcon,
+  TickSquare, Delete, ChevronDown,
 } from "react-iconly";
 import { FaUndoAlt } from "react-icons/fa";
 
@@ -24,9 +25,10 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import {
-  runRequest as runRequestAction,
-} from "../../../actions/dataset";
+  runDataRequest as runDataRequestAction,
+} from "../../../actions/dataRequest";
 import {
+  getConnection as getConnectionAction,
   testRequest as testRequestAction,
 } from "../../../actions/connection";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
@@ -107,73 +109,38 @@ function FirestoreBuilder(props) {
   const [showSubUI, setShowSubUI] = useState(false);
   const [indexUrl, setIndexUrl] = useState("");
   const [invalidateCache, setInvalidateCache] = useState(false);
+  const [fullConnection, setFullConnection] = useState({});
+  const [saveLoading, setSaveLoading] = useState(false);
 
   const { isDark } = useTheme();
 
   const {
-    dataRequest, match, onChangeRequest, runRequest, dataset,
-    connection, onSave, requests, changeTutorial, testRequest, // eslint-disable-line
+    dataRequest, match, onChangeRequest, runDataRequest,
+    connection, onSave, changeTutorial, testRequest,
+    onDelete, getConnection, responses,
   } = props;
 
   // on init effect
   useEffect(() => {
     if (dataRequest) {
-      // get the request data if it exists
-      const requestBody = _.find(requests, { options: { id: dataset.id } });
-      if (requestBody) {
-        setResult(JSON.stringify(requestBody.data, null, 2));
-      }
-
-      if (dataRequest && dataRequest.conditions) {
-        let newConditions = [...conditions];
-
-        // in case of initialisation, remove the first empty condition
-        if (newConditions.length === 1 && !newConditions[0].saved && !newConditions[0].value) {
-          newConditions = [];
-        }
-
-        const toAddConditions = [];
-        for (let i = 0; i < dataRequest.conditions.length; i++) {
-          let found = false;
-          for (let j = 0; j < newConditions.length; j++) {
-            if (newConditions[j].id === dataRequest.conditions[i].id) {
-              newConditions[j] = _.clone(dataRequest.conditions[i]);
-              found = true;
-            }
-          }
-
-          if (!found) toAddConditions.push(dataRequest.conditions[i]);
-        }
-
-        const finalConditions = newConditions.concat(toAddConditions);
-        if (finalConditions.length === 0) {
-          setConditions([{
-            id: uuid(),
-            field: "",
-            operator: "==",
-            value: "",
-            values: [],
-          }]);
-        } else {
-          setConditions(finalConditions);
-        }
-      }
-
-      setFirestoreRequest(dataRequest);
-      _onFetchCollections();
+      _init(dataRequest);
 
       setTimeout(() => {
         changeTutorial("firestoreBuilder");
       }, 1000);
-
-      if (dataRequest.query) {
-        _onRunRequest();
-      }
     }
   }, []);
 
   useEffect(() => {
     onChangeRequest(firestoreRequest);
+    if (connection?.id && !fullConnection?.id) {
+      getConnection(match.params.projectId, connection.id)
+        .then((data) => {
+          setFullConnection(data);
+          _onFetchCollections(data);
+        })
+        .catch(() => {});
+    }
   }, [firestoreRequest, connection]);
 
   useEffect(() => {
@@ -186,6 +153,8 @@ function FirestoreBuilder(props) {
         _populateFieldOptions(dataRequest.configuration.subCollectionSample, "sub");
       }
     }
+
+    _initializeConditions();
   }, [dataRequest]);
 
   useEffect(() => {
@@ -199,6 +168,68 @@ function FirestoreBuilder(props) {
       setShowSubUI(false);
     }
   }, [dataRequest]);
+
+  useEffect(() => {
+    if (responses && responses.length > 0) {
+      const selectedResponse = responses.find((o) => o.id === dataRequest.id);
+      if (selectedResponse?.data) {
+        setResult(JSON.stringify(selectedResponse.data, null, 2));
+      }
+    }
+  }, [responses]);
+
+  const _init = (dr) => {
+    // get the request data if it exists
+    // _setFormattedResult();
+
+    _initializeConditions(dr);
+    setFirestoreRequest(dr);
+  };
+
+  const _initializeConditions = (dr = dataRequest) => {
+    if (dr && dr.conditions) {
+      let newConditions = [...conditions];
+
+      // in case of initialisation, remove the first empty condition
+      if (newConditions.length === 1 && !newConditions[0].saved && !newConditions[0].value) {
+        newConditions = [];
+      }
+
+      const toAddConditions = [];
+      for (let i = 0; i < dr.conditions.length; i++) {
+        let found = false;
+        for (let j = 0; j < newConditions.length; j++) {
+          if (newConditions[j].id === dr.conditions[i].id) {
+            newConditions[j] = _.clone(dr.conditions[i]);
+            found = true;
+          }
+        }
+
+        if (!found) toAddConditions.push(dr.conditions[i]);
+      }
+
+      const finalConditions = newConditions.concat(toAddConditions);
+      if (finalConditions.length === 0) {
+        setConditions([{
+          id: uuid(),
+          field: "",
+          operator: "==",
+          value: "",
+          values: [],
+        }]);
+      } else {
+        setConditions(finalConditions);
+      }
+    } else {
+      setConditions([{
+        id: uuid(),
+        field: "",
+        operator: "==",
+        value: "",
+        values: [],
+      }]);
+    }
+  };
 
   const _populateFieldOptions = (sampleData, type) => {
     const tempFieldOptions = [];
@@ -243,14 +274,24 @@ function FirestoreBuilder(props) {
     });
   };
 
+  const _onSavePressed = () => {
+    setSaveLoading(true);
+    onSave(firestoreRequest).then(() => {
+      setSaveLoading(false);
+    }).catch(() => {
+      setSaveLoading(false);
+    });
+  };
+
   const _onRunRequest = () => {
     setIndexUrl("");
     const useCache = !invalidateCache;
-    runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache)
-      .then((result) => {
+    runDataRequest(match.params.projectId, match.params.chartId, dataRequest.id, useCache)
+      .then((dr) => {
+        if (dr?.dataRequest) {
+          _init(dr.dataRequest);
+        }
         setRequestLoading(false);
-        const jsonString = JSON.stringify(result.data, null, 2);
-        setResult(jsonString);
       })
       .catch((error) => {
         setRequestLoading(false);
@@ -263,9 +304,9 @@ function FirestoreBuilder(props) {
       });
   };
 
-  const _onFetchCollections = () => {
+  const _onFetchCollections = (conn = fullConnection) => {
     setCollectionsLoading(true);
-    return testRequest(match.params.projectId, connection)
+    return testRequest(match.params.projectId, conn)
       .then((data) => {
         return data.json();
       })
@@ -435,24 +476,61 @@ function FirestoreBuilder(props) {
       <Grid.Container>
         <Grid xs={12} sm={6} md={showSubUI ? 4 : 6}>
           <Container>
+            <Row justify="space-between" align="center">
+              <Text b size={22}>{connection.name}</Text>
+              <div>
+                <Row>
+                  <Button
+                    color="primary"
+                    auto
+                    size="sm"
+                    onClick={() => _onSavePressed()}
+                    disabled={saveLoading || requestLoading}
+                    flat
+                  >
+                    {(!saveLoading && !requestLoading) && "Save"}
+                    {(saveLoading || requestLoading) && <Loading type="spinner" />}
+                  </Button>
+                  <Spacer x={0.3} />
+                  <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
+                    <Button
+                      color="error"
+                      icon={<Delete />}
+                      auto
+                      size="sm"
+                      bordered
+                      css={{ minWidth: "fit-content" }}
+                      onClick={() => onDelete()}
+                    />
+                  </Tooltip>
+                </Row>
+              </div>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <Divider />
+            </Row>
+            <Spacer y={0.5} />
             <Row>
               <Text b>Select one of your collections:</Text>
             </Row>
             <Spacer y={0.5} />
             <Row wrap="wrap" css={{ pl: 0 }} className="firestorebuilder-collections-tut">
+              {collectionsLoading && <Loading type="points-opacity" />}
               {collectionData.map((collection) => (
-                <>
+                <Fragment key={collection._queryOptions.collectionId}>
                   <Badge
-                    key={collection._queryOptions.collectionId}
                     variant={firestoreRequest.query !== collection._queryOptions.collectionId ? "bordered" : "default"}
                     color="primary"
                     onClick={() => _onChangeQuery(collection._queryOptions.collectionId)}
                     as="a"
+                    disableOutline
+                    css={{ minWidth: 50 }}
                   >
                     {collection._queryOptions.collectionId}
                   </Badge>
-                  <Spacer x={0.1} />
-                </>
+                  <Spacer x={0.2} />
+                </Fragment>
               ))}
             </Row>
             <Spacer y={0.5} />
@@ -460,7 +538,7 @@ function FirestoreBuilder(props) {
               <Button
                 size="sm"
                 icon={<HiRefresh />}
-                onClick={_onFetchCollections}
+                onClick={() => _onFetchCollections()}
                 disabled={collectionsLoading}
                 auto
                 bordered
@@ -506,7 +584,7 @@ function FirestoreBuilder(props) {
                 <InfoCircle size="small" />
               </Tooltip>
             </Row>
-
+            <Spacer y={0.5} />
             <Row className="firestorebuilder-query-tut">
               <Conditions
                 conditions={
@@ -535,9 +613,8 @@ function FirestoreBuilder(props) {
               <Spacer y={0.5} />
               <Row wrap="wrap">
                 {dataRequest.configuration.subCollections.map((subCollection) => (
-                  <>
+                  <Fragment key={subCollection}>
                     <Badge
-                      key={subCollection}
                       color="secondary"
                       variant={dataRequest.configuration.selectedSubCollection !== subCollection ? "bordered" : "default"}
                       onClick={() => _onSelectSubCollection(subCollection)}
@@ -546,7 +623,7 @@ function FirestoreBuilder(props) {
                       {subCollection}
                     </Badge>
                     <Spacer x={0.1} />
-                  </>
+                  </Fragment>
                 ))}
               </Row>
               <Spacer y={0.5} />
@@ -636,7 +713,7 @@ function FirestoreBuilder(props) {
           <Container>
             <Row className="firestorebuilder-request-tut">
               <Button
-                iconRight={requestLoading ? <Loading type="points" /> : <Play />}
+                iconRight={requestLoading ? <Loading type="spinner" /> : <Play />}
                 disabled={requestLoading}
                 onClick={() => _onTest()}
                 shadow
@@ -708,7 +785,7 @@ function Conditions(props) {
         </Row>
       )}
 
-      {conditions && conditions.map((condition, index) => {
+      {conditions && conditions.map((condition) => {
         return (
           <Fragment key={condition.id}>
             <Row align="center" wrap="wrap">
@@ -728,13 +805,14 @@ function Conditions(props) {
                   <Input
                     value={(condition.field && condition.field.substring(condition.field.lastIndexOf(".") + 1)) || "field"}
                     animated={false}
+                    contentRight={<ChevronDown set="light" />}
                   />
                 </Dropdown.Trigger>
                 <Dropdown.Menu
                   onAction={(key) => updateCondition(condition.id, key, "field")}
                   selectedKeys={[condition.field]}
                   selectionMode="single"
-                  css={{ minWidth: "fit-content" }}
+                  css={{ minWidth: "max-content" }}
                 >
                   {fieldOptions.map((option) => (
                     <Dropdown.Item key={option.value} value={option.value}>
@@ -755,7 +833,7 @@ function Conditions(props) {
               <Spacer x={0.2} />
 
               <Dropdown>
-                <Dropdown.Trigger>
+                <Dropdown.Trigger css={{ minWidth: 50 }}>
                   <Input
                     value={
                       (
@@ -871,8 +949,8 @@ function Conditions(props) {
                     )}
 
                     {!condition.addingValue && condition.values && condition.values.map((item) => (
-                      <>
-                        <Badge color="secondary" key={item} size="sm">
+                      <Fragment key={item}>
+                        <Badge color="secondary" size="sm">
                           <span style={{ paddingLeft: 5 }}>{item}</span>
                           <Spacer x={0.1} />
                           <Link
@@ -888,7 +966,7 @@ function Conditions(props) {
                           </Link>
                         </Badge>
                         <Spacer x={0.1} />
-                      </>
+                      </Fragment>
                     ))}
 
                     {!condition.addingValue && (
@@ -916,11 +994,10 @@ function Conditions(props) {
                   color="error"
                   onClick={() => onRemoveCondition(condition.id)}
                   size="sm"
-                  flat
+                  light
                   css={{ minWidth: "fit-content" }}
                 />
               </Tooltip>
-              <Spacer x={0.2} />
 
               {!condition.saved && (condition.value || condition.operator === "isNotNull" || condition.operator === "isNull" || (condition.values && condition.values.length > 0)) && (
                 <>
@@ -933,11 +1010,10 @@ function Conditions(props) {
                       color="success"
                       onClick={() => onApplyCondition(condition.id)}
                       size="sm"
-                      flat
+                      light
                       css={{ minWidth: "fit-content" }}
                     />
                   </Tooltip>
-                  <Spacer x={0.2} />
                 </>
               )}
 
@@ -954,33 +1030,31 @@ function Conditions(props) {
                         color="warning"
                         onClick={() => onRevertCondition(condition.id)}
                         size="sm"
-                        flat
+                        light
                         css={{ minWidth: "fit-content" }}
                       />
                     </Tooltip>
-                    <Spacer x={0.2} />
                   </>
                 )}
-
-              {index === conditions.length - 1 && (
-                <Tooltip
-                  content="Add a new filter"
-                  css={{ zIndex: 10000 }}
-                >
-                  <Button
-                    icon={<Plus />}
-                    onClick={onAddCondition}
-                    size="sm"
-                    flat
-                    css={{ minWidth: "fit-content" }}
-                  />
-                </Tooltip>
-              )}
             </Row>
-            <Spacer y={0.2} />
+            <Spacer y={0.5} />
           </Fragment>
         );
       })}
+      <Row>
+        <Button
+          icon={<Plus />}
+          onClick={onAddCondition}
+          size="sm"
+          light
+          auto
+          ripple={false}
+          css={{ minWidth: "fit-content" }}
+          color="primary"
+        >
+          {"Add a new filter"}
+        </Button>
+      </Row>
     </Container>
   );
 }
@@ -1013,31 +1087,36 @@ FirestoreBuilder.defaultProps = {
 };
 
 FirestoreBuilder.propTypes = {
-  dataset: PropTypes.object.isRequired,
   connection: PropTypes.object.isRequired,
   match: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
-  runRequest: PropTypes.func.isRequired,
+  runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
-  requests: PropTypes.array.isRequired,
   dataRequest: PropTypes.object,
   changeTutorial: PropTypes.func.isRequired,
   testRequest: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  getConnection: PropTypes.func.isRequired,
+  responses: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
-    requests: state.dataset.requests,
+    dataRequests: state.dataRequest.data,
+    responses: state.dataRequest.responses,
   };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    runRequest: (projectId, chartId, datasetId, getCache) => {
-      return dispatch(runRequestAction(projectId, chartId, datasetId, getCache));
+    runDataRequest: (projectId, chartId, drId, getCache) => {
+      return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
     testRequest: (projectId, data) => dispatch(testRequestAction(projectId, data)),
+    getConnection: (projectId, connectionId) => dispatch(
+      getConnectionAction(projectId, connectionId)
+    ),
   };
 };
 

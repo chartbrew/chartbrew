@@ -30,7 +30,7 @@ class ChartController {
     return db.Chart.create(data)
       .then((chart) => {
         chartId = chart.id;
-        if (data.Datasets || data.dataRequest) {
+        if (data.Datasets || data.dataRequests) {
           const createPromises = [];
 
           // add the datasets creation
@@ -44,10 +44,12 @@ class ChartController {
           }
 
           // add the dataRequest creation
-          if (data.dataRequest) {
-            const { dataRequest } = data;
-            dataRequest.chart_id = chart.id;
-            createPromises.push(this.dataRequestController.create(dataRequest));
+          if (data.dataRequests) {
+            data.dataRequests.forEach((dataRequest) => {
+              createPromises.push(
+                this.dataRequestController.create({ ...dataRequest, chart_id: chart.id })
+              );
+            });
           }
 
           // add the update promise as well
@@ -119,14 +121,18 @@ class ChartController {
         .then(() => {
           const updatePromises = [];
 
-          if (data.Datasets || data.dataRequest) {
+          if (data.Datasets || data.dataRequests) {
             if (data.Datasets) {
               updatePromises
                 .push(this.updateDatasets(id, data.Datasets));
             }
-            if (data.dataRequest) {
-              updatePromises
-                .push(this.dataRequestController.update(data.dataRequest.id, data.dataRequest));
+            if (data.dataRequests) {
+              data.dataRequests.forEach((dataRequest) => {
+                if (dataRequest.id) {
+                  updatePromises
+                    .push(this.dataRequestController.update(dataRequest.id, dataRequest));
+                }
+              });
             }
 
             return Promise.all(updatePromises).then(() => this.findById(id));
@@ -149,7 +155,7 @@ class ChartController {
         }
 
         const updatePromises = [];
-        if (data.Datasets || data.dataRequest) {
+        if (data.Datasets || data.dataRequests) {
           if (data.Datasets) {
             const datasetsToUpdate = [];
             for (const dataset of data.Datasets) {
@@ -166,14 +172,22 @@ class ChartController {
                 .push(this.updateDatasets(id, data.Datasets));
             }
           }
-          if (data.dataRequest && data.dataRequest.id) {
-            updatePromises
-              .push(this.dataRequestController.update(data.dataRequest.id, data.dataRequest));
+          if (data.dataRequests) {
+            data.dataRequests.forEach((dataRequest) => {
+              if (dataRequest.id) {
+                updatePromises
+                  .push(this.dataRequestController.update(data.dataRequest.id, data.dataRequest));
+              }
+            });
           }
 
-          if (data.dataRequest && !data.dataRequest.id) {
-            const newDataRequest = { ...data.dataRequest, chart_id: id };
-            updatePromises.push(this.dataRequestController.create(newDataRequest));
+          if (data.dataRequests) {
+            data.dataRequests.forEach((dataRequest) => {
+              if (!dataRequest.id) {
+                const newDataRequest = { ...data.dataRequest, chart_id: id };
+                updatePromises.push(this.dataRequestController.create(newDataRequest));
+              }
+            });
           }
 
           return Promise.all(updatePromises).then(() => this.findById(id));
@@ -374,8 +388,13 @@ class ChartController {
           return tableView.getTableData(extractedData, chartData);
         }
 
+        let reallySkipParsing = skipParsing;
+        if (!chartData?.chart?.chartData) {
+          reallySkipParsing = false;
+        }
+
         const axisChart = new AxisChart(chartData);
-        return axisChart.plot(skipParsing, filters, isExport);
+        return axisChart.plot(reallySkipParsing, filters, isExport);
       })
       .then(async (chartData) => {
         gChartData = chartData;

@@ -312,7 +312,7 @@ function AddChart(props) {
 
     // check if all datasets are configured properly
     const datasetsNotConfigured = datasets.filter((dataset) => {
-      if (!dataset.xAxis || !dataset.yAxis || !dataset.connection_id) return true;
+      if (!dataset.xAxis || !dataset.yAxis) return true;
 
       return false;
     });
@@ -380,7 +380,8 @@ function AddChart(props) {
       .then(() => completeTutorial("mongobuilder"))
       .then(() => completeTutorial("sqlbuilder"))
       .then(() => completeTutorial("requestmodal"))
-      .then(() => completeTutorial("datasetdata"));
+      .then(() => completeTutorial("datasetdata"))
+      .then(() => completeTutorial("drsettings"));
   };
 
   const _onResetTutorial = () => {
@@ -393,6 +394,7 @@ function AddChart(props) {
       "sqlbuilder",
       "requestmodal",
       "datasetdata",
+      "drsettings"
     ])
       .then(() => {
         changeTutorial("addchart");
@@ -513,7 +515,7 @@ function AddChart(props) {
                 {!editingTitle
                   && (
                     <Tooltip content="Edit the chart name">
-                      <LinkNext onClick={() => setEditingTitle(true)} css={{ ai: "center" }} color="primary">
+                      <LinkNext onPress={() => setEditingTitle(true)} css={{ ai: "center" }} color="primary">
                         <Edit />
                         <Spacer x={0.2} />
                         <Text b>
@@ -631,7 +633,7 @@ function AddChart(props) {
                 Datasets
               </Text>
               <Tooltip content="Start the chart builder tutorial" placement="leftStart">
-                <LinkNext css={{ color: "$accents6", ai: "center" }} onClick={_onResetTutorial}>
+                <LinkNext css={{ color: "$accents6", ai: "center" }} onPress={_onResetTutorial}>
                   {!resetingTutorial ? <Discovery /> : <Loading type="spinner" />}
                   <Spacer x={0.2} />
                   <Text>Tutorial</Text>
@@ -670,7 +672,7 @@ function AddChart(props) {
                       size="sm"
                     >
                       {index > 0 && (
-                        <LinkNext onClick={() => _changeDatasetOrder(dataset.id, "up")}>
+                        <LinkNext onPress={() => _changeDatasetOrder(dataset.id, "up")}>
                           <ChevronLeftCircle size={16} />
                         </LinkNext>
                       )}
@@ -678,7 +680,7 @@ function AddChart(props) {
                       {dataset.legend}
                       <Spacer x={0.2} />
                       {index < datasetsOrder.length - 1 && (
-                        <LinkNext onClick={() => _changeDatasetOrder(dataset.id, "down")}>
+                        <LinkNext onPress={() => _changeDatasetOrder(dataset.id, "down")}>
                           <ChevronRightCircle size={16} />
                         </LinkNext>
                       )}
@@ -704,21 +706,22 @@ function AddChart(props) {
                     </Button>
                   </div>
                   <div style={{ display: "flex", "flexDirection": "row", justifyContent: "flex-end" }}>
-                    <Tooltip content={!arrangeMode ? "Arrange datasets" : "Save arrangement"} placement="leftStart">
-                      <Button
-                        onClick={() => {
-                          if (!arrangeMode) setArrangeMode(true);
-                          else _onSaveArrangement();
-                        }}
-                        icon={arrangeMode && arrangementLoading
-                          ? <Loading type="spinner" />
-                          : arrangeMode && !arrangementLoading
-                            ? <TickSquare /> : <Swap />}
-                        auto
-                        color={arrangeMode ? "success" : "primary"}
-                        light
-                      />
-                    </Tooltip>
+                    <Button
+                      onClick={() => {
+                        if (!arrangeMode) setArrangeMode(true);
+                        else _onSaveArrangement();
+                      }}
+                      icon={arrangeMode && arrangementLoading
+                        ? <Loading type="spinner" />
+                        : arrangeMode && !arrangementLoading
+                          ? <TickSquare /> : <Swap set="light" />}
+                      auto
+                      color={arrangeMode ? "success" : "primary"}
+                      light
+                    >
+                      {!arrangeMode && "Arrange datasets"}
+                      {arrangeMode && "Save"}
+                    </Button>
                     {arrangeMode && (
                       <>
                         <Tooltip content="Cancel arrangement" placement="leftStart">
@@ -764,7 +767,7 @@ function AddChart(props) {
                       onRefresh={_onRefreshData}
                       onRefreshPreview={_onRefreshPreview}
                       loading={updatingDataset}
-                  />
+                    />
                   </div>
                 );
               })}

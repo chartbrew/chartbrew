@@ -324,6 +324,7 @@ function CampaignsQuery(props) {
             onAction={(key) => _onSelectCampaign(key)}
             selectedKeys={[config.campaignId]}
             selectionMode="single"
+            css={{ minWidth: "max-content" }}
           >
             {campaigns.map((campaign) => (
               <Dropdown.Item

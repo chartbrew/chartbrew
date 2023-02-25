@@ -3,13 +3,12 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Button, Container, Link, Row, Spacer, Text, Loading, Checkbox, Tooltip, useTheme,
+  Grid, Button, Container, Link, Row, Spacer, Text, Loading, Checkbox, Tooltip, useTheme, Divider,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
-import _ from "lodash";
 import { toast } from "react-toastify";
 import {
-  Chat, InfoCircle, People, Play
+  Chat, Delete, InfoCircle, People, Play
 } from "react-iconly";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -17,8 +16,8 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import {
-  runRequest as runRequestAction,
-} from "../../../actions/dataset";
+  runDataRequest as runDataRequestAction,
+} from "../../../actions/dataRequest";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import CustomerQuery from "./CustomerQuery";
 import CampaignsQuery from "./CampaignsQuery";
@@ -36,23 +35,19 @@ function CustomerioBuilder(props) {
   const [limitValue, setLimitValue] = useState(0);
   const [entity, setEntity] = useState("");
   const [conditions, setConditions] = useState({});
+  const [saveLoading, setSaveLoading] = useState(false);
 
   const { isDark } = useTheme();
 
   const {
-    dataRequest, match, onChangeRequest, runRequest, dataset, project,
-    connection, onSave, requests, changeTutorial, // eslint-disable-line
+    dataRequest, match, onChangeRequest, runDataRequest, project,
+    connection, onSave, responses, changeTutorial, // eslint-disable-line
+    onDelete,
   } = props;
 
   // on init effect
   useEffect(() => {
     if (dataRequest) {
-      // get the request data if it exists
-      const requestBody = _.find(requests, { options: { id: dataset.id } });
-      if (requestBody) {
-        setResult(JSON.stringify(requestBody.data, null, 2));
-      }
-
       let newRequestData = dataRequest;
 
       if (dataRequest.configuration && dataRequest.configuration.cioFilters) {
@@ -94,6 +89,15 @@ function CustomerioBuilder(props) {
     onChangeRequest(newApiRequest);
   }, [cioRequest, connection]);
 
+  useEffect(() => {
+    if (responses && responses.length > 0) {
+      const selectedResponse = responses.find((o) => o.id === dataRequest.id);
+      if (selectedResponse?.data) {
+        setResult(JSON.stringify(selectedResponse.data, null, 2));
+      }
+    }
+  }, [responses]);
+
   const _onSelectCustomers = () => {
     setEntity("customers");
     setCioRequest({ ...cioRequest, method: "POST", route: "customers" });
@@ -125,10 +129,9 @@ function CustomerioBuilder(props) {
 
     onSave(drData).then(() => {
       const useCache = !invalidateCache;
-      runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache)
-        .then((result) => {
+      runDataRequest(match.params.projectId, match.params.chartId, dataRequest.id, useCache)
+        .then(() => {
           setRequestLoading(false);
-          setResult(JSON.stringify(result.data, null, 2));
         })
         .catch((error) => {
           setRequestLoading(false);
@@ -159,11 +162,55 @@ function CustomerioBuilder(props) {
     });
   };
 
+  const _onSavePressed = () => {
+    setSaveLoading(true);
+    onSave(cioRequest).then(() => {
+      setSaveLoading(false);
+    }).catch(() => {
+      setSaveLoading(false);
+    });
+  };
+
   return (
     <div style={styles.container}>
       <Grid.Container>
         <Grid xs={12} sm={7}>
           <Container>
+            <Row justify="space-between" align="center">
+              <Text b size={22}>{connection.name}</Text>
+              <div>
+                <Row>
+                  <Button
+                    color="primary"
+                    auto
+                    size="sm"
+                    onClick={() => _onSavePressed()}
+                    disabled={saveLoading || requestLoading}
+                    flat
+                  >
+                    {(!saveLoading && !requestLoading) && "Save"}
+                    {(saveLoading || requestLoading) && <Loading type="spinner" />}
+                  </Button>
+                  <Spacer x={0.3} />
+                  <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
+                    <Button
+                      color="error"
+                      icon={<Delete />}
+                      auto
+                      size="sm"
+                      bordered
+                      css={{ minWidth: "fit-content" }}
+                      onClick={() => onDelete()}
+                    />
+                  </Tooltip>
+                </Row>
+              </div>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <Divider />
+            </Row>
+            <Spacer y={0.5} />
             <Row align="center" wrap="wrap">
               <Link
                 css={{
@@ -285,7 +332,6 @@ function CustomerioBuilder(props) {
                   height="450px"
                   width="none"
                   value={result || ""}
-                  onChange={() => setResult(result)}
                   name="resultEditor"
                   readOnly
                   editorProps={{ $blockScrolling: false }}
@@ -318,29 +364,29 @@ CustomerioBuilder.defaultProps = {
 };
 
 CustomerioBuilder.propTypes = {
-  dataset: PropTypes.object.isRequired,
   connection: PropTypes.object.isRequired,
   match: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
-  runRequest: PropTypes.func.isRequired,
+  runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
-  requests: PropTypes.array.isRequired,
+  responses: PropTypes.array.isRequired,
   dataRequest: PropTypes.object,
   changeTutorial: PropTypes.func.isRequired,
   project: PropTypes.object.isRequired,
+  onDelete: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
-    requests: state.dataset.requests,
+    responses: state.dataRequest.responses,
     project: state.project.active,
   };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    runRequest: (projectId, chartId, datasetId) => {
-      return dispatch(runRequestAction(projectId, chartId, datasetId));
+    runDataRequest: (projectId, chartId, drId, getCache) => {
+      return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };
