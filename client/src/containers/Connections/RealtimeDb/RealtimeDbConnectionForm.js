@@ -19,6 +19,8 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 import { blue } from "../../../config/colors";
 import realtimeDbImage from "../../../assets/realtime-db-url.webp";
 import Badge from "../../../components/Badge";
+import HelpBanner from "../../../components/HelpBanner";
+import connectionImages from "../../../config/connectionImages";
 
 /*
   The Form used to create API connections
@@ -196,11 +198,21 @@ function RealtimeDbConnectionForm(props) {
       >
         <Row align="center">
           <Text h3>
-            {!editConnection && "Connect to Firebase"}
+            {!editConnection && "Connect to Firebase Realtime Database"}
             {editConnection && `Edit ${editConnection.name}`}
           </Text>
         </Row>
-
+        <Spacer y={0.5} />
+        <Row>
+          <HelpBanner
+            title="How to visualize your Realtime Database data with Chartbrew"
+            description="Connect to Firebase Realtime Database to create reports and visualize your data. This tutorial will show you how to connect and create your first chart.
+            "
+            url={"https://chartbrew.com/blog/visualize-your-firebase-realtime-database-with-chartbrew/"}
+            imageUrl={connectionImages(isDark).realtimedb}
+            info="5 min read"
+          />
+        </Row>
         <Spacer y={1} />
         <Row align="center">
           <Input

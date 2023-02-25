@@ -18,6 +18,8 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { API_HOST } from "../../../config/settings";
 import Badge from "../../../components/Badge";
+import HelpBanner from "../../../components/HelpBanner";
+import connectionImages from "../../../config/connectionImages";
 
 /*
   The Form used to create GA connections
@@ -126,6 +128,16 @@ function GaConnectionForm(props) {
             {!editConnection && "Connect to Google Analytics"}
             {editConnection && `Edit ${editConnection.name}`}
           </Text>
+        </Row>
+        <Spacer y={0.5} />
+        <Row>
+          <HelpBanner
+            title="How to visualize your Google Analytics data with Chartbrew"
+            description="Learn how you can power up your Chartbrew dashboards with the Google Analytics integration. Get to know your data with Chartbrew."
+            url={"https://chartbrew.com/blog/create-your-google-analytics-dashboard-in-chartbrew/"}
+            imageUrl={connectionImages(isDark).googleAnalytics}
+            info="5 min read"
+          />
         </Row>
         <Spacer y={1} />
         <Row align="center">
