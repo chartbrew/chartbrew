@@ -143,29 +143,27 @@ function NavbarContainer(props) {
                 </Row>
               </Media>
             )}
-          </LinkNext>
-          <LinkNext href="/user" css={{ color: "$text" }}>
             {match.params.teamId && (
-            <Media greaterThan="mobile">
-              <Row align="center">
-                <Category size="small" />
-                <Spacer x={0.2} />
-                <Text>{team.name}</Text>
-              </Row>
-            </Media>
+              <Media greaterThan="mobile">
+                <Row align="center">
+                  <Category size="small" />
+                  <Spacer x={0.2} />
+                  <Text>{team.name}</Text>
+                </Row>
+              </Media>
             )}
           </LinkNext>
         </Link>
         {match.params.projectId && (
-        <Media greaterThan="mobile">
-          <Row align="center">
-            <Spacer x={0.2} />
-            <Text>{"/"}</Text>
-            <Spacer x={0.2} />
-            <Text>{projectProp.name}</Text>
-            <Spacer x={0.2} />
-          </Row>
-        </Media>
+          <Media greaterThan="mobile">
+            <Row align="center">
+              <Spacer x={0.2} />
+              <Text b>{"/"}</Text>
+              <Spacer x={0.2} />
+              <Text>{projectProp.name}</Text>
+              <Spacer x={0.2} />
+            </Row>
+          </Media>
         )}
       </Navbar.Brand>
       <Navbar.Content>
