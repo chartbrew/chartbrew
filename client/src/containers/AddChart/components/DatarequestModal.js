@@ -113,17 +113,13 @@ function DatarequestModal(props) {
     if (!datasetResponse) {
       setLoading(true);
       runRequest(match.params.projectId, match.params.chartId, dataset.id, true)
-        .then(() => {
-          setLoading(false);
-          onClose();
-        })
-        .catch(() => {
-          toast.error("Your request configuration is not valid. Please check the dataset settings.");
-          setLoading(false);
-        });
-    } else {
-      onClose();
+        .catch(() => {});
     }
+
+    setTimeout(() => {
+      setLoading(false);
+      onClose();
+    }, 2000);
   };
 
   const _updateDataRequest = (newData) => {
