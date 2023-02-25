@@ -12,7 +12,6 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import Badge from "../../../components/Badge";
-
 /*
   The Form for creating a new Mysql connection
 */
@@ -113,7 +112,6 @@ function MysqlConnectionForm(props) {
         <Row align="center">
           <Text h3>Add a new MySQL connection</Text>
         </Row>
-
         <Spacer y={0.5} />
         <Row align="center" style={styles.formStyle}>
           <Link

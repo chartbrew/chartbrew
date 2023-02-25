@@ -12,6 +12,8 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import Badge from "../../../components/Badge";
+import HelpBanner from "../../../components/HelpBanner";
+import connectionImages from "../../../config/connectionImages";
 
 /*
 ** Customer.io form uses
@@ -129,6 +131,16 @@ function CustomerioConnectionForm(props) {
             {!editConnection && "Connect to Customer.io"}
             {editConnection && `Edit ${editConnection.name}`}
           </Text>
+        </Row>
+        <Spacer y={0.5} />
+        <Row>
+          <HelpBanner
+            title="How to visualize your Customer.io data with Chartbrew"
+            description="Chartbrew can now integrate with Customer.io to get data about customers and visualize it with beautiful charts and live reports."
+            url={"https://chartbrew.com/blog/visualize-and-report-on-customerio-data-with-chartbrew/"}
+            imageUrl={connectionImages(isDark).customerio}
+            info="7 min read"
+          />
         </Row>
 
         <Spacer y={1} />
