@@ -246,6 +246,7 @@ function DatarequestModal(props) {
       fullScreen
       onClose={_onClose}
       closeButton
+      preventClose
       scroll
     >
       <Modal.Header justify="flex-start">
