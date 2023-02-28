@@ -171,7 +171,7 @@ export function deleteDataRequest(projectId, chartId, drId) {
 export function runDataRequest(projectId, chartId, drId, getCache) {
   return (dispatch) => {
     const token = cookie.load("brewToken");
-    const url = `${API_HOST}/project/${projectId}/chart/${chartId}/dataRequest/${drId}/request`;
+    let url = `${API_HOST}/project/${projectId}/chart/${chartId}/dataRequest/${drId}/request`;
     const method = "POST";
     const body = JSON.stringify({ getCache });
     const headers = new Headers({
@@ -180,17 +180,37 @@ export function runDataRequest(projectId, chartId, drId, getCache) {
       "Authorization": `Bearer ${token}`,
     });
 
+    let status = {
+      statusCode: 500,
+      statusText: "Internal Server Error",
+    };
+    let ok = true;
+
+    if (getCache) {
+      url += "?getCache=true";
+    }
+
     dispatch({ type: FETCHING_DATA_REQUEST, id: drId });
     return fetch(url, { method, body, headers })
       .then((response) => {
+        status = {
+          statusCode: response.status,
+          statusText: response.statusText,
+        };
+
         if (!response.ok) {
-          dispatch(addError(response.status, "Cannot fetch the dataRequests"));
-          throw new Error(response.status);
+          dispatch(addError(response.status, "Error while making the request"));
+          ok = false;
+          return response.text();
         }
 
         return response.json();
       })
       .then((data) => {
+        if (!ok) {
+          return Promise.reject({ ...status, message: data });
+        }
+
         dispatch({
           type: FETCH_DATA_REQUEST_SUCCESS,
           dataRequest: data.dataRequest.dataRequest,

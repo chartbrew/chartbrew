@@ -216,7 +216,7 @@ class DatasetController {
 
           if (!connection) {
             drPromises.push(
-              new Promise((resolve, reject) => reject(new Error("404")))
+              new Promise((resolve, reject) => { reject(new Error("404")); })
             );
           }
 

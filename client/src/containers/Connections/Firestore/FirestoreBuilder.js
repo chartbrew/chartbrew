@@ -123,7 +123,8 @@ function FirestoreBuilder(props) {
   // on init effect
   useEffect(() => {
     if (dataRequest) {
-      _init(dataRequest);
+      setFirestoreRequest(dataRequest);
+      _initializeConditions(dataRequest);
 
       setTimeout(() => {
         changeTutorial("firestoreBuilder");
@@ -174,17 +175,11 @@ function FirestoreBuilder(props) {
       const selectedResponse = responses.find((o) => o.id === dataRequest.id);
       if (selectedResponse?.data) {
         setResult(JSON.stringify(selectedResponse.data, null, 2));
+      } else if (selectedResponse?.error) {
+        setResult(JSON.stringify(selectedResponse.error, null, 2));
       }
     }
   }, [responses]);
-
-  const _init = (dr) => {
-    // get the request data if it exists
-    // _setFormattedResult();
-
-    _initializeConditions(dr);
-    setFirestoreRequest(dr);
-  };
 
   const _initializeConditions = (dr = dataRequest) => {
     if (dr && dr.conditions) {
@@ -209,25 +204,9 @@ function FirestoreBuilder(props) {
       }
 
       const finalConditions = newConditions.concat(toAddConditions);
-      if (finalConditions.length === 0) {
-        setConditions([{
-          id: uuid(),
-          field: "",
-          operator: "==",
-          value: "",
-          values: [],
-        }]);
-      } else {
+      if (finalConditions.length > 0) {
         setConditions(finalConditions);
       }
-    } else {
-      setConditions([{
-        id: uuid(),
-        field: "",
-        operator: "==",
-        value: "",
-        values: [],
-      }]);
     }
   };
 
@@ -289,7 +268,7 @@ function FirestoreBuilder(props) {
     runDataRequest(match.params.projectId, match.params.chartId, dataRequest.id, useCache)
       .then((dr) => {
         if (dr?.dataRequest) {
-          _init(dr.dataRequest);
+          setFirestoreRequest(dr.dataRequest);
         }
         setRequestLoading(false);
       })
@@ -298,7 +277,7 @@ function FirestoreBuilder(props) {
         toast.error("The request failed. Please check your request 🕵️‍♂️");
         setResult(JSON.stringify(error, null, 2));
 
-        if (error.message && error.message.indexOf("9 FAILED_PRECONDITION") > -1) {
+        if (error.message && error.message.indexOf("COLLECTION_GROUP_ASC") > -1) {
           setIndexUrl(error.message.substring(error.message.indexOf("https://")));
         }
       });
@@ -411,17 +390,6 @@ function FirestoreBuilder(props) {
     let newConditions = [...conditions];
     newConditions = newConditions.filter((condition) => condition.id !== id);
 
-    if (newConditions.length === 0) {
-      newConditions.push({
-        id: uuid(),
-        field: "",
-        operator: "==",
-        value: "",
-        saved: false,
-        values: [],
-      });
-    }
-
     setConditions(newConditions);
     _onSaveConditions(newConditions);
   };
@@ -430,7 +398,7 @@ function FirestoreBuilder(props) {
     const savedConditions = newConditions.filter((item) => item.saved);
     const newRequest = { ...firestoreRequest, conditions: savedConditions };
     setFirestoreRequest(newRequest);
-    _onTest(newRequest);
+    return _onTest(newRequest);
   };
 
   const _onChangeConditionValues = (id, { value }) => {
@@ -474,7 +442,7 @@ function FirestoreBuilder(props) {
   return (
     <div style={styles.container}>
       <Grid.Container>
-        <Grid xs={12} sm={6} md={showSubUI ? 4 : 6}>
+        <Grid xs={12} sm={6} md={showSubUI ? 4 : 6} css={{ mb: 20 }}>
           <Container>
             <Row justify="space-between" align="center">
               <Text b size={22}>{connection.name}</Text>
@@ -525,7 +493,7 @@ function FirestoreBuilder(props) {
                     onClick={() => _onChangeQuery(collection._queryOptions.collectionId)}
                     as="a"
                     disableOutline
-                    css={{ minWidth: 50 }}
+                    css={{ minWidth: 50, mb: 5 }}
                   >
                     {collection._queryOptions.collectionId}
                   </Badge>
@@ -619,6 +587,8 @@ function FirestoreBuilder(props) {
                       variant={dataRequest.configuration.selectedSubCollection !== subCollection ? "bordered" : "default"}
                       onClick={() => _onSelectSubCollection(subCollection)}
                       as="a"
+                      disableOutline
+                      css={{ minWidth: 50, mb: 5 }}
                     >
                       {subCollection}
                     </Badge>
@@ -687,7 +657,9 @@ function FirestoreBuilder(props) {
                       <Divider />
                       <Spacer y={0.5} />
                       <Row>
-                        <Container css={{ backgroundColor: "$blue200", p: 10 }}>
+                        <Container css={{
+                          backgroundColor: "$blue50", p: 10, br: "$sm", border: "2px solid $blue300",
+                        }}>
                           <Row>
                             <Text h5>
                               {"To be able to filter this sub-collection, you will need to set up an index."}
@@ -771,20 +743,6 @@ function Conditions(props) {
 
   return (
     <Container className="datasetdata-filters-tut" css={{ pr: 0, pl: 0 }}>
-      {conditions && conditions.length === 0 && (
-        <Row>
-          <Button
-            icon={<Plus />}
-            onClick={onAddCondition}
-            auto
-            bordered
-            css={{ border: "none" }}
-          >
-            Add filter
-          </Button>
-        </Row>
-      )}
-
       {conditions && conditions.map((condition) => {
         return (
           <Fragment key={condition.id}>
@@ -983,7 +941,7 @@ function Conditions(props) {
                   </>
                 )}
 
-              <Spacer x={0.5} />
+              <Spacer x={0.3} />
 
               <Tooltip
                 content="Remove filter"
