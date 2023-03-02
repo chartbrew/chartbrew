@@ -34,9 +34,9 @@ const template = (website, apiKey, dashboardOrder) => ({
       xAxis: "root.histogram[].date",
       yAxis: "root.histogram[].pageviews",
       yAxisOperation: "none",
-      DataRequest: {
+      DataRequests: [{
         route: `/${website}.json?version=5&fields=histogram`,
-      }
+      }]
     }, {
       legend: "Visitors",
       datasetColor: "rgba(74, 144, 226, 1)",
@@ -46,9 +46,9 @@ const template = (website, apiKey, dashboardOrder) => ({
       xAxis: "root.histogram[].date",
       yAxis: "root.histogram[].visitors",
       yAxisOperation: "none",
-      DataRequest: {
+      DataRequests: [{
         route: `/${website}.json?version=5&fields=histogram`,
-      }
+      }]
     }]
   }, {
     tid: 2,
@@ -74,9 +74,9 @@ const template = (website, apiKey, dashboardOrder) => ({
       xAxis: "root.histogram[].date",
       yAxis: "root.histogram[].pageviews",
       yAxisOperation: "none",
-      DataRequest: {
+      DataRequests: [{
         route: `/${website}.json?version=5&fields=histogram`,
-      }
+      }]
     }, {
       legend: "Visitors",
       datasetColor: "rgba(74, 144, 226, 1)",
@@ -86,9 +86,9 @@ const template = (website, apiKey, dashboardOrder) => ({
       xAxis: "root.histogram[].date",
       yAxis: "root.histogram[].visitors",
       yAxisOperation: "none",
-      DataRequest: {
+      DataRequests: [{
         route: `/${website}.json?version=5&fields=histogram`,
-      }
+      }]
     }]
   }, {
     tid: 3,
@@ -111,9 +111,9 @@ const template = (website, apiKey, dashboardOrder) => ({
       xAxis: "root.device_types[].value",
       yAxis: "root.device_types[].visitors",
       yAxisOperation: "none",
-      DataRequest: {
+      DataRequests: [{
         route: `/${website}.json?version=5&fields=device_types`,
-      },
+      }],
     }]
   }, {
     tid: 5,
@@ -135,9 +135,9 @@ const template = (website, apiKey, dashboardOrder) => ({
       xAxis: "root.referrers[].value",
       yAxis: "root.referrers[].pageviews",
       yAxisOperation: "none",
-      DataRequest: {
+      DataRequests: [{
         route: `/${website}.json?version=5&fields=referrers`,
-      },
+      }],
     }, {
       legend: "UTM Sources",
       datasetColor: "#17BECF",
@@ -146,9 +146,9 @@ const template = (website, apiKey, dashboardOrder) => ({
       xAxis: "root.utm_sources[].value",
       yAxis: "root.utm_sources[].pageviews",
       yAxisOperation: "none",
-      DataRequest: {
+      DataRequests: [{
         route: `/${website}.json?version=5&fields=utm_sources`,
-      },
+      }],
     }]
   }, {
     tid: 6,
@@ -170,9 +170,9 @@ const template = (website, apiKey, dashboardOrder) => ({
       xAxis: "root.browser_names[].value",
       yAxis: "root.browser_names[].pageviews",
       yAxisOperation: "none",
-      DataRequest: {
+      DataRequests: [{
         route: `/${website}.json?version=5&fields=browser_names`,
-      },
+      }],
     }, {
       legend: "Countries",
       datasetColor: "#17BECF",
@@ -181,9 +181,9 @@ const template = (website, apiKey, dashboardOrder) => ({
       xAxis: "root.countries[].value",
       yAxis: "root.countries[].pageviews",
       yAxisOperation: "none",
-      DataRequest: {
+      DataRequests: [{
         route: `/${website}.json?version=5&fields=countries`,
-      },
+      }],
     }]
   }],
 });

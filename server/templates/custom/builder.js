@@ -71,6 +71,9 @@ module.exports = async (projectId, { template_id, charts, connections }) => {
   const createDatasets = async (datasets) => {
     const promises = datasets.map(async (d) => {
       const dataset = d;
+      if (dataset.DataRequest) {
+        dataset.DataRequests = [dataset.DataRequest];
+      }
       if (createdConnections[dataset.connection_id]) {
         dataset.connection_id = createdConnections[dataset.connection_id];
       }
@@ -79,7 +82,11 @@ module.exports = async (projectId, { template_id, charts, connections }) => {
         .then((createdDataset) => {
           const drPromises = [];
           d.DataRequests.forEach((dr) => {
-            drPromises.push(db.DataRequest.create({ ...dr, dataset_id: createdDataset.id }));
+            drPromises.push(
+              db.DataRequest.create(
+                { ...dr, connection_id: dataset.connection_id, dataset_id: createdDataset.id },
+              ),
+            );
           });
           Promise.all(drPromises);
           return createdDataset;
