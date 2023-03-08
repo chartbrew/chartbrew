@@ -47,6 +47,18 @@ class NewBarChart {
       formattedDatasets.push(formattedDataset);
     }
 
+    let maxTickLength = 0;
+    this.axisData.x.forEach((label) => {
+      if (label?.length > maxTickLength) {
+        maxTickLength = label.length;
+      }
+    });
+
+    let maxTickRotation = 0;
+    if (maxTickLength > 10) {
+      maxTickRotation = 25;
+    }
+
     const chartJsData = {
       data: {
         labels: this.axisData.x === 0 ? ["No data"] : this.axisData.x,
@@ -113,12 +125,12 @@ class NewBarChart {
                 family: "Inter",
                 size: 10,
               },
-              maxTicksLimit: this.chart.mode === "kpichart" ? 6 : 10,
+              maxTicksLimit: this.chart.mode === "kpichart" ? 4 : 10,
               padding: this.chart.mode === "kpichart" ? 10 : 3,
-              display: !(this.chart.chartSize === 1 && this.chart.mode === "kpichart"),
+              display: true,
             },
             grid: {
-              display: !(this.chart.chartSize === 1 && this.chart.mode === "kpichart"),
+              display: true,
               drawBorder: this.chart.mode !== "kpichart",
               lineWidth: 0.5,
             },
@@ -130,6 +142,8 @@ class NewBarChart {
                 family: "Inter",
                 size: 10,
               },
+              maxRotation: this.chart.chartSize === 1 ? maxTickRotation : 90,
+              minRotation: 0,
             },
             grid: {
               display: this.chart.mode !== "kpichart",
