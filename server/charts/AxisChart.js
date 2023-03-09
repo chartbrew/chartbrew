@@ -1,5 +1,5 @@
 const _ = require("lodash");
-const moment = require("moment");
+const momentObj = require("moment");
 const {
   isSameDay, isSameHour, isSameWeek, isSameMonth, isSameYear, isSameMinute, isSameSecond,
 } = require("date-fns");
@@ -11,10 +11,7 @@ const PieChart = require("./PieChart");
 const determineType = require("../modules/determineType");
 const dataFilter = require("./dataFilter");
 
-const timezone = "America/Bangkok";
-moment.tz.setDefault(timezone);
-
-moment.suppressDeprecationWarnings = true;
+momentObj.suppressDeprecationWarnings = true;
 
 const parser = new FormulaParser();
 
@@ -50,7 +47,7 @@ const areDatesTheSame = (first, second, interval) => {
 };
 
 class AxisChart {
-  constructor(data) {
+  constructor(data, timezone = "") {
     this.chart = data.chart;
     this.datasets = data.datasets;
     this.axisData = {
@@ -58,6 +55,12 @@ class AxisChart {
       y: [],
     };
     this.dateFormat = "";
+    this.timezone = timezone;
+    if (this.timezone) {
+      this.moment = (...args) => momentObj(...args).tz(this.timezone);
+    } else {
+      this.moment = (...args) => momentObj(...args);
+    }
   }
 
   plot(skipDataProcessing, filters) {
@@ -86,14 +89,14 @@ class AxisChart {
       let endDate;
       if (this.chart.startDate && this.chart.endDate) {
         if (this.chart.timeInterval === "month" && this.chart.currentEndDate) {
-          startDate = moment(this.chart.startDate).startOf("month").startOf("day");
+          startDate = this.moment(this.chart.startDate).startOf("month").startOf("day");
         } else if (this.chart.timeInterval === "year" && this.chart.currentEndDate) {
-          startDate = moment(this.chart.startDate).startOf("year").startOf("day");
+          startDate = this.moment(this.chart.startDate).startOf("year").startOf("day");
         } else {
-          startDate = moment(this.chart.startDate).startOf("day");
+          startDate = this.moment(this.chart.startDate).startOf("day");
         }
 
-        endDate = moment(this.chart.endDate).endOf("day");
+        endDate = this.moment(this.chart.endDate).endOf("day");
       }
 
       for (let i = 0; i < this.datasets.length; i++) {
@@ -119,7 +122,7 @@ class AxisChart {
         if (dateField && this.chart.startDate && this.chart.endDate && canDateFilter) {
           if (this.chart.currentEndDate) {
             const timeDiff = endDate.diff(startDate, this.chart.timeInterval);
-            endDate = moment().endOf("day");
+            endDate = this.moment().endOf("day");
             startDate = endDate.clone().subtract(timeDiff, this.chart.timeInterval);
 
             if (this.chart.timeInterval === "month") {
@@ -359,8 +362,8 @@ class AxisChart {
             const existingDate = _
               .find(
                 this.axisData.x[xLength], (x) => {
-                  return moment(x, timestampFormat)
-                    .isSame(moment(key, timestampFormat), this.chart.timeInterval);
+                  return this.moment(x, timestampFormat)
+                    .isSame(this.moment(key, timestampFormat), this.chart.timeInterval);
                 }
               );
 
@@ -388,8 +391,8 @@ class AxisChart {
 
             if (i === tempXData.length - 1) break;
 
-            const currDate = moment(tempXData[i], this.dateFormat);
-            const nextDate = moment(tempXData[i + 1], this.dateFormat);
+            const currDate = this.moment(tempXData[i], this.dateFormat);
+            const nextDate = this.moment(tempXData[i + 1], this.dateFormat);
             const difference = nextDate.diff(currDate, this.chart.timeInterval);
             if (nextDate.diff(currDate, this.chart.timeInterval) > 1) {
               let dateModifier = 1;
@@ -459,10 +462,10 @@ class AxisChart {
         || this.chart.timeInterval === "second"
       ) {
         unifiedX = unifiedX
-          .sort((a, b) => moment(a, this.dateFormat).diff(moment(b, this.dateFormat)));
+          .sort((a, b) => this.moment(a, this.dateFormat).diff(this.moment(b, this.dateFormat)));
       } else {
         unifiedX = _.uniq(unifiedX)
-          .sort((a, b) => moment(a, this.dateFormat).diff(moment(b, this.dateFormat)));
+          .sort((a, b) => this.moment(a, this.dateFormat).diff(this.moment(b, this.dateFormat)));
       }
 
       // if we're dealing with dates, make sure to add the missing ones at the end
@@ -472,7 +475,7 @@ class AxisChart {
         && this.chart.timeInterval !== "minute"
         && this.chart.timeInterval !== "second"
       ) {
-        const lastValue = moment(unifiedX[unifiedX.length - 1], this.dateFormat);
+        const lastValue = this.moment(unifiedX[unifiedX.length - 1], this.dateFormat);
         lastValue.add(1, this.chart.timeInterval);
         while (lastValue.isBefore(endDate)) {
           unifiedX.push(lastValue.clone().format(this.dateFormat));
@@ -684,16 +687,16 @@ class AxisChart {
         && parseInt(item, 10).toString() === item.toString()
         && item.toString().length === 10
       ) {
-        if (timezone) {
-          axisData.push(moment(item, "X"));
+        if (this.timezone) {
+          axisData.push(this.moment(item, "X"));
         } else {
-          axisData.push(moment.utc(item, "X"));
+          axisData.push(momentObj.utc(item, "X"));
         }
       } else if (item) {
-        if (timezone) {
-          axisData.push(moment(item));
+        if (this.timezone) {
+          axisData.push(this.moment(item));
         } else {
-          axisData.push(moment.utc(item));
+          axisData.push(momentObj.utc(item));
         }
       }
       return item;
@@ -718,13 +721,15 @@ class AxisChart {
           } else if (startDate.month() !== endDate.month()) {
             this.dateFormat = "MMM Do HH:mm:ss";
             axisData[i] = axisData[i].format(this.dateFormat);
-          } else if (startDate.week() !== endDate.week() && moment().week() !== startDate.week()) {
+          } else if (startDate.week() !== endDate.week()
+            && this.moment().week() !== startDate.week()
+          ) {
             this.dateFormat = "ddd Do HH:mm:ss";
             axisData[i] = axisData[i].format(this.dateFormat);
-          } else if (startDate.day() !== endDate.day() && moment().day() !== startDate.day()) {
+          } else if (startDate.day() !== endDate.day() && this.moment().day() !== startDate.day()) {
             this.dateFormat = "ddd HH:mm:ss";
             axisData[i] = axisData[i].format(this.dateFormat);
-          } else if (startDate.day() === endDate.day() && moment().day() === startDate.day()) {
+          } else if (startDate.day() === endDate.day() && this.moment().day() === startDate.day()) {
             this.dateFormat = "HH:mm:ss";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else {
@@ -741,13 +746,15 @@ class AxisChart {
           } else if (startDate.month() !== endDate.month()) {
             this.dateFormat = "MMM Do HH:mm";
             axisData[i] = axisData[i].format(this.dateFormat);
-          } else if (startDate.week() !== endDate.week() && moment().week() !== startDate.week()) {
+          } else if (startDate.week() !== endDate.week()
+            && this.moment().week() !== startDate.week()
+          ) {
             this.dateFormat = "ddd Do HH:mm";
             axisData[i] = axisData[i].format(this.dateFormat);
-          } else if (startDate.day() !== endDate.day() && moment().day() !== startDate.day()) {
+          } else if (startDate.day() !== endDate.day() && this.moment().day() !== startDate.day()) {
             this.dateFormat = "ddd HH:mm";
             axisData[i] = axisData[i].format(this.dateFormat);
-          } else if (startDate.day() === endDate.day() && moment().day() === startDate.day()) {
+          } else if (startDate.day() === endDate.day() && this.moment().day() === startDate.day()) {
             this.dateFormat = "HH:mm";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else {
@@ -772,7 +779,9 @@ class AxisChart {
         case "day":
           if (this.dateFormat) {
             axisData[i] = axisData[i].format(this.dateFormat);
-          } else if (startDate.year() !== endDate.year() || moment().year() !== startDate.year()) {
+          } else if (startDate.year() !== endDate.year()
+            || this.moment().year() !== startDate.year()
+          ) {
             this.dateFormat = "YYYY MMM D";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else {
@@ -783,7 +792,9 @@ class AxisChart {
         case "week":
           if (this.dateFormat) {
             axisData[i] = axisData[i].format(this.dateFormat);
-          } else if (startDate.year() !== endDate.year() || moment().year() !== startDate.year()) {
+          } else if (startDate.year() !== endDate.year()
+            || this.moment().year() !== startDate.year()
+          ) {
             this.dateFormat = "GGGG [W] WW-E";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else {
@@ -794,7 +805,9 @@ class AxisChart {
         case "month":
           if (this.dateFormat) {
             axisData[i] = axisData[i].format(this.dateFormat);
-          } else if (startDate.year() !== endDate.year() || moment().year() !== startDate.year()) {
+          } else if (startDate.year() !== endDate.year()
+            || this.moment().year() !== startDate.year()
+          ) {
             this.dateFormat = "MMM YYYY";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else {
