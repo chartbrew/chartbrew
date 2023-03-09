@@ -731,7 +731,7 @@ class AxisChart {
             this.dateFormat = "MMM Do HH:mm";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else if (startDate.week() !== endDate.week() && moment().week() !== startDate.week()) {
-            this.dateFormat = "ddd do HH:mm";
+            this.dateFormat = "ddd Do HH:mm";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else if (startDate.day() !== endDate.day() && moment().day() !== startDate.day()) {
             this.dateFormat = "ddd HH:mm";
@@ -754,7 +754,7 @@ class AxisChart {
             this.dateFormat = "MMM Do hA";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else {
-            this.dateFormat = "ddd do hA";
+            this.dateFormat = "ddd Do hA";
             axisData[i] = axisData[i].format(this.dateFormat);
           }
           break;
@@ -773,10 +773,10 @@ class AxisChart {
           if (this.dateFormat) {
             axisData[i] = axisData[i].format(this.dateFormat);
           } else if (startDate.year() !== endDate.year() || moment().year() !== startDate.year()) {
-            this.dateFormat = "YYYY MMM [w] W";
+            this.dateFormat = "GGGG [W] WW-E";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else {
-            this.dateFormat = "MMM [w] W";
+            this.dateFormat = "MMM [W] WW-E";
             axisData[i] = axisData[i].format(this.dateFormat);
           }
           break;
