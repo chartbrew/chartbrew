@@ -11,6 +11,9 @@ const PieChart = require("./PieChart");
 const determineType = require("../modules/determineType");
 const dataFilter = require("./dataFilter");
 
+const timezone = "America/Bangkok";
+moment.tz.setDefault(timezone);
+
 moment.suppressDeprecationWarnings = true;
 
 const parser = new FormulaParser();
@@ -681,9 +684,17 @@ class AxisChart {
         && parseInt(item, 10).toString() === item.toString()
         && item.toString().length === 10
       ) {
-        axisData.push(moment.utc(item, "X"));
+        if (timezone) {
+          axisData.push(moment(item, "X"));
+        } else {
+          axisData.push(moment.utc(item, "X"));
+        }
       } else if (item) {
-        axisData.push(moment.utc(item));
+        if (timezone) {
+          axisData.push(moment(item));
+        } else {
+          axisData.push(moment.utc(item));
+        }
       }
       return item;
     });
@@ -754,7 +765,7 @@ class AxisChart {
             this.dateFormat = "MMM Do hA";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else {
-            this.dateFormat = "ddd do hA";
+            this.dateFormat = "ddd Do hA";
             axisData[i] = axisData[i].format(this.dateFormat);
           }
           break;
