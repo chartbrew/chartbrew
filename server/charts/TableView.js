@@ -1,20 +1,23 @@
 const _ = require("lodash");
-const moment = require("moment");
+const moment = require("moment-timezone");
 
 const determineType = require("../modules/determineType");
 
-function formatValue(value, config) {
+function formatValue(value, config, timezone) {
   if (!config || !config.type || !value) return value;
 
   const checkNumbersOnly = /^\d+$/;
 
   if (config.type === "date" && determineType(value) === "date") {
     if (value.toString().length === 10 && `${value}`.match(checkNumbersOnly)) {
-      return moment.utc(value, "X").format(config.format);
+      return timezone ? moment.utc(value, "X").tz(timezone).format(config.format || "")
+        : moment.utc(value, "X").format(config.format);
     } else if (value.toString().length === 10 && `${value}`.match(checkNumbersOnly)) {
-      return moment.utc(value, "x").format(config.format);
+      return timezone ? moment.utc(value, "x").tz(timezone).format(config.format || "")
+        : moment.utc(value, "x").format(config.format);
     } else {
-      return moment.utc(value).format(config.format);
+      return timezone ? moment.utc(value).tz(timezone).format(config.format || "")
+        : moment.utc(value).format(config.format);
     }
   } else if ((config.type === "number" || config.type === "currency")
     && (determineType(value) === "number" || `${value}`.match(checkNumbersOnly))
@@ -41,7 +44,7 @@ function formatValue(value, config) {
 }
 
 class TableView {
-  getTableData(data, chartData) {
+  getTableData(data, chartData, timezone = "") {
     const rawData = data.configuration;
     const tabularData = {};
     const datasetConfigs = chartData.chart?.Datasets;
@@ -101,13 +104,13 @@ class TableView {
               } else if (nestedType === "array") {
                 dataItem[`${k}?${n}`] = `__cb_array${JSON.stringify(item[k][n])}`;
               } else {
-                dataItem[`${k}?${n}`] = formatValue(item[k][n], columnConfig);
+                dataItem[`${k}?${n}`] = formatValue(item[k][n], columnConfig, timezone);
               }
             });
           } else if (determineType(item[k]) === "array") {
             dataItem[k] = `__cb_array${JSON.stringify(item[k])}`;
           } else {
-            dataItem[k] = formatValue(item[k], columnConfig);
+            dataItem[k] = formatValue(item[k], columnConfig, timezone);
           }
         });
         tab.data.push(dataItem);
