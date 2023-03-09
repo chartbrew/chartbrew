@@ -460,18 +460,18 @@ function Chart(props) {
                   <Row justify="flex-start" align="center">
                     {chart.draft && (
                       <>
-                        <Badge color="secondary">Draft</Badge>
-                        <Spacer x={0.1} />
+                        <Badge color="secondary" disableOutline size="sm">Draft</Badge>
+                        <Spacer x={0.3} />
                       </>
                     )}
                     <>
                       {_canAccess("editor") && (
                         <Link to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}>
-                          <Text b size="1.1em" css={{ color: "$text", lineHeight: "$xs" }}>{chart.name}</Text>
+                          <Text b size="1.1em" css={{ color: "$text" }}>{chart.name}</Text>
                         </Link>
                       )}
                       {!_canAccess("editor") && (
-                        <Text b size="1.1em" css={{ color: "$text", lineHeight: "$xs" }}>{chart.name}</Text>
+                        <Text b size="1.1em" css={{ color: "$text" }}>{chart.name}</Text>
                       )}
                     </>
                     <Spacer x={0.2} />
