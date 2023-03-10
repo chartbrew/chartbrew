@@ -317,11 +317,16 @@ class ChartController {
     let gCache;
     let gChartData;
     let skipCache = false;
+    let project;
     return this.findById(id)
-      .then((chart) => {
+      .then(async (chart) => {
         gChart = chart;
         if (!chart || !chart.Datasets || chart.Datasets.length === 0) {
           return new Promise((resolve, reject) => reject("The chart doesn't have any datasets"));
+        }
+
+        if (chart.project_id) {
+          project = await db.Project.findByPk(chart.project_id);
         }
 
         if (!user) {
@@ -379,13 +384,13 @@ class ChartController {
       })
       .then((chartData) => {
         if (isExport) {
-          return dataExtractor(chartData, filters);
+          return dataExtractor(chartData, filters, project?.timezone);
         }
 
         if (gChart.type === "table") {
-          const extractedData = dataExtractor(chartData, filters);
+          const extractedData = dataExtractor(chartData, filters, project?.timezone);
           const tableView = new TableView();
-          return tableView.getTableData(extractedData, chartData);
+          return tableView.getTableData(extractedData, chartData, project?.timezone);
         }
 
         let reallySkipParsing = skipParsing;
@@ -393,7 +398,7 @@ class ChartController {
           reallySkipParsing = false;
         }
 
-        const axisChart = new AxisChart(chartData);
+        const axisChart = new AxisChart(chartData, project?.timezone);
         return axisChart.plot(reallySkipParsing, filters, isExport);
       })
       .then(async (chartData) => {

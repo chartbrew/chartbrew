@@ -1,10 +1,17 @@
-const moment = require("moment");
+const momentObj = require("moment");
 const _ = require("lodash");
 
 const dataFilter = require("./dataFilter");
 
-module.exports = (data, filters) => {
+module.exports = (data, filters, timezone = "Asia/Bangkok") => {
   const { chart, datasets } = data;
+
+  let moment = null;
+  if (timezone) {
+    moment = (...args) => momentObj(...args).tz(timezone);
+  } else {
+    moment = (...args) => momentObj(...args);
+  }
 
   // check if the global date filter should be on or off
   // the filter should work only if all the datasets have a dateField

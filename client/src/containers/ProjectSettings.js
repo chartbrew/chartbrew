@@ -3,13 +3,17 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import { PropTypes } from "prop-types";
 import {
-  Button, Container, Divider, Input, Loading, Modal, Row, Spacer, Text,
+  Button, Container, Divider, Dropdown, Input, Loading, Modal, Row, Spacer, Text, useTheme,
 } from "@nextui-org/react";
-import { Delete } from "react-iconly";
+import { ChevronDown, CloseSquare, Delete, TimeCircle } from "react-iconly";
+import { ToastContainer, toast, Flip } from "react-toastify";
+import "react-toastify/dist/ReactToastify.min.css";
 
 import canAccess from "../config/canAccess";
 import { updateProject, changeActiveProject, removeProject } from "../actions/project";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
+import timezones from "../modules/timezones";
+import Callout from "../components/Callout";
 
 /*
   Project settings page
@@ -28,6 +32,11 @@ function ProjectSettings(props) {
   const [removeModal, setRemoveModal] = useState(false);
   const [removeLoading, setRemoveLoading] = useState(false);
   const [removeError, setRemoveError] = useState(false);
+  const [projectTimezone, setProjectTimezone] = useState("");
+  const [timezoneSearch, setTimezoneSearch] = useState("");
+  const [loadingTimezone, setLoadingTimezone] = useState(false);
+
+  const { isDark } = useTheme();
 
   useEffect(() => {
     cleanErrors();
@@ -48,6 +57,7 @@ function ProjectSettings(props) {
         setLoading(false);
         setSuccess(true);
         changeActiveProject(project.id);
+        toast.success("Project name updated!");
       })
       .catch(() => {
         setLoading(false);
@@ -70,6 +80,28 @@ function ProjectSettings(props) {
         setRemoveLoading(false);
         setRemoveError(true);
       });
+  };
+
+  const _onSaveTimezone = (clear) => {
+    setLoadingTimezone(true);
+    updateProject(project.id, { timezone: clear ? "" : projectTimezone })
+      .then(() => {
+        setProjectTimezone("");
+        setTimezoneSearch("");
+        setLoadingTimezone(false);
+        changeActiveProject(project.id);
+        toast.success("The timezone was updated successfully!");
+      })
+      .catch(() => {
+        setLoadingTimezone(false);
+        setError(true);
+      });
+  };
+
+  const _onGetMachineTimezone = () => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    setProjectTimezone(tz);
+    setTimezoneSearch("");
   };
 
   const _canAccess = (role) => {
@@ -134,9 +166,91 @@ function ProjectSettings(props) {
             onClick={_onSaveName}
             auto
           >
-            {loading ? <Loading type="points" /> : "Save name"}
+            {loading ? <Loading type="points-opacity" /> : "Save name"}
           </Button>
         </form>
+      </Row>
+
+      <Spacer y={1} />
+      <Divider />
+      <Spacer y={1} />
+
+      <Row align="flex-end">
+        <Dropdown>
+          <Dropdown.Trigger type="text">
+            <Input
+              label="Project timezone"
+              placeholder="Select a timezone"
+              value={timezoneSearch || projectTimezone || project.timezone || ""}
+              onChange={(e) => setTimezoneSearch(e.target.value)}
+              css={{ minWidth: 300 }}
+              bordered
+              contentRight={<ChevronDown set="light" />}
+            />
+          </Dropdown.Trigger>
+          <Dropdown.Menu
+            onAction={(key) => {
+              setTimezoneSearch("");
+              setProjectTimezone(key);
+            }}
+            selectedKeys={[projectTimezone]}
+            selectionMode="single"
+            css={{ minWidth: "max-content" }}
+          >
+            {timezones
+              .filter((timezone) => (
+                timezone.toLowerCase().indexOf(timezoneSearch.toLocaleLowerCase()) > -1
+              )).map((timezone) => (
+                <Dropdown.Item key={timezone}>
+                  {timezone}
+                </Dropdown.Item>
+              ))}
+          </Dropdown.Menu>
+        </Dropdown>
+        <Spacer x={0.3} />
+        <Button
+          color="primary"
+          bordered
+          disabled={!_canAccess("admin")}
+          onClick={() => _onGetMachineTimezone()}
+          auto
+          icon={<TimeCircle />}
+        >
+          <Text hideIn={"xs"}>
+            Get current timezone
+          </Text>
+        </Button>
+      </Row>
+      <Spacer y={0.5} />
+      <Row>
+        <Button
+          disabled={!_canAccess("admin") || loading}
+          onClick={() => _onSaveTimezone()}
+          auto
+        >
+          {loadingTimezone ? <Loading type="points-opacity" color="currentColor" /> : "Save"}
+        </Button>
+        <Spacer x={0.5} />
+        {project.timezone && (
+          <Button
+            color="warning"
+            flat
+            disabled={!_canAccess("admin")}
+            iconRight={loadingTimezone ? <Loading type="points-opacity" color="currentColor" /> : <CloseSquare />}
+            onClick={() => _onSaveTimezone(true)}
+            auto
+          >
+            Clear
+          </Button>
+        )}
+      </Row>
+      <Spacer y={1} />
+      <Row wrap="wrap" css={{ maxWidth: 500 }}>
+        <Callout
+          color="secondary"
+          title="Experimental feature"
+          text="You will need to refresh the charts to see the changes. This feature is still in beta and we appreciate your feedback if you notice something is not working as expected."
+        />
       </Row>
 
       <Spacer y={1} />
@@ -160,14 +274,11 @@ function ProjectSettings(props) {
         <>
           <Spacer y={1} />
           <Row>
-            <Container css={{ backgroundColor: "$red300", p: 10 }}>
-              <Row>
-                <Text h5>{"Oh snap! There was a problem with the request"}</Text>
-              </Row>
-              <Row>
-                <Text>{"Please refresh the page and try again, or get in touch with us directly through the chat to help you out."}</Text>
-              </Row>
-            </Container>
+            <Callout
+              title="Oh snap! There was a problem with the request"
+              color="error"
+              text={"Please refresh the page and try again, or get in touch with us directly through the chat to help you out."}
+            />
           </Row>
         </>
       )}
@@ -193,7 +304,7 @@ function ProjectSettings(props) {
           <Button
             color="error"
             disabled={removeLoading}
-            iconRight={removeLoading ? <Loading type="points" /> : <Delete />}
+            iconRight={removeLoading ? <Loading type="points-opacity" /> : <Delete />}
             onClick={_onRemove}
             auto
           >
@@ -201,6 +312,20 @@ function ProjectSettings(props) {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      <ToastContainer
+        position="bottom-center"
+        autoClose={1500}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnVisibilityChange
+        draggable
+        pauseOnHover
+        transition={Flip}
+        theme={isDark ? "dark" : "light"}
+      />
     </Container>
   );
 }

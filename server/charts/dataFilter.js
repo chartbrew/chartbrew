@@ -1,10 +1,17 @@
 const _ = require("lodash");
-const moment = require("moment");
+const momentObj = require("moment");
 
 const determineType = require("../modules/determineType");
 
-function compareDates(data, field, condition) {
+function compareDates(data, field, condition, timezone = "") {
   let newData = data;
+
+  let moment = null;
+  if (timezone) {
+    moment = (...args) => momentObj(...args).tz(timezone);
+  } else {
+    moment = (...args) => momentObj(...args);
+  }
 
   if (!condition.value
     && (condition.operator !== "isNull" && condition.operator !== "isNotNull")) {
@@ -256,7 +263,7 @@ function compareBooleans(data, field, condition) {
   return newData;
 }
 
-module.exports = (data, selectedField, conditions) => {
+module.exports = (data, selectedField, conditions, timezone = "") => {
   if (!conditions || conditions.length < 1) {
     return { data };
   }
@@ -314,7 +321,7 @@ module.exports = (data, selectedField, conditions) => {
         foundData = compareBooleans(foundData, exactField, condition);
         break;
       case "date":
-        foundData = compareDates(foundData, exactField, condition);
+        foundData = compareDates(foundData, exactField, condition, timezone);
         break;
       default:
         break;

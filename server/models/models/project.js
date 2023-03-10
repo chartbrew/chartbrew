@@ -58,6 +58,9 @@ module.exports = (sequelize, DataTypes) => {
     password: {
       type: DataTypes.STRING,
     },
+    timezone: {
+      type: DataTypes.STRING,
+    },
   }, {
     freezeTableName: true,
   });

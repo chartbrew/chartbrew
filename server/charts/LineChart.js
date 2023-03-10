@@ -133,7 +133,7 @@ class NewLineChart {
                 family: "Inter",
                 size: 10,
               },
-              maxRotation: this.chart.chartSize === 1 ? maxTickRotation : 90,
+              maxRotation: this.chart.chartSize === 1 ? maxTickRotation : 45,
               minRotation: 0,
             },
             grid: {
