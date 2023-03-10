@@ -5,7 +5,9 @@ import { PropTypes } from "prop-types";
 import {
   Button, Container, Divider, Dropdown, Input, Loading, Modal, Row, Spacer, Text, useTheme,
 } from "@nextui-org/react";
-import { ChevronDown, CloseSquare, Delete, TimeCircle } from "react-iconly";
+import {
+  ChevronDown, CloseSquare, Delete, TimeCircle
+} from "react-iconly";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 
