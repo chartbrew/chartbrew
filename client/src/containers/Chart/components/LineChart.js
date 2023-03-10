@@ -14,6 +14,7 @@ import {
 } from "chart.js";
 import { useTheme } from "@nextui-org/react";
 
+import ChartDataLabels from "chartjs-plugin-datalabels";
 import KpiChartSegment from "./KpiChartSegment";
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import KpiMode from "./KpiMode";
@@ -21,6 +22,35 @@ import KpiMode from "./KpiMode";
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler
 );
+
+const dataLabelsPlugin = {
+  font: {
+    weight: "bold",
+    size: 12,
+    family: "Inter",
+  },
+  padding: 4,
+  formatter: (value) => {
+    let formattedValue = value;
+    try {
+      formattedValue = parseFloat(value);
+    } catch (e) {
+      // do nothing
+    }
+    return formattedValue;
+  },
+  display(context) {
+    const { dataset } = context;
+    const count = dataset.data.length;
+    const value = dataset.data[context.dataIndex];
+    return value > count * 1.5;
+  },
+  backgroundColor(context) {
+    return context.dataset.backgroundColor;
+  },
+  borderRadius: 2,
+  borderWidth: 2,
+};
 
 function LineChart(props) {
   const {
@@ -82,7 +112,13 @@ function LineChart(props) {
               <ChartErrorBoundary>
                 <Line
                   data={chart.chartData.data}
-                  options={_getChartOptions()}
+                  options={{
+                    ..._getChartOptions(),
+                    plugins: {
+                      ..._getChartOptions().plugins,
+                      datalabels: dataLabelsPlugin,
+                    },
+                  }}
                   height={
                     height - (
                       (chart.mode === "kpichart" && chart.chartSize > 1 && 80)
@@ -91,6 +127,7 @@ function LineChart(props) {
                     )
                   }
                   redraw={redraw}
+                  plugins={chart.pointRadius > 0 && [ChartDataLabels]}
                 />
               </ChartErrorBoundary>
             </div>
