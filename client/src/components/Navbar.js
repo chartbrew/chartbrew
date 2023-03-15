@@ -155,15 +155,17 @@ function NavbarContainer(props) {
           </LinkNext>
         </Link>
         {match.params.projectId && (
-          <Media greaterThan="mobile">
-            <Row align="center">
-              <Spacer x={0.2} />
-              <Text b>{"/"}</Text>
-              <Spacer x={0.2} />
-              <Text>{projectProp.name}</Text>
-              <Spacer x={0.2} />
-            </Row>
-          </Media>
+          <Link to={`/${match.params.teamId}/${match.params.projectId}/dashboard`}>
+            <Media greaterThan="mobile">
+              <Row align="center">
+                <Spacer x={0.2} />
+                <Text b>{"/"}</Text>
+                <Spacer x={0.2} />
+                <Text>{projectProp.name}</Text>
+                <Spacer x={0.2} />
+              </Row>
+            </Media>
+          </Link>
         )}
       </Navbar.Brand>
       <Navbar.Content>
