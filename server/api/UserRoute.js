@@ -71,8 +71,19 @@ module.exports = (app) => {
   /*
   ** Route for creating a new user
   */
-  app.post("/user", (req, res) => {
+  app.post("/user", async (req, res) => {
     if (!req.body.email || !req.body.password) return res.status(400).send("no email or password");
+
+    if (app.settings.signupRestricted) {
+      try {
+        const areThereAnyUsers = await userController.areThereAnyUsers();
+        if (areThereAnyUsers) {
+          return res.status(401).send("Signups are restricted");
+        }
+      } catch (e) {
+        // do nothing
+      }
+    }
 
     const icon = req.body.name.substring(0, 2);
     const userObj = {

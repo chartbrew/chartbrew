@@ -19,5 +19,6 @@ module.exports = {
     redirect_url: "/google-auth",
   },
   teamRestricted: process.env.CB_RESTRICT_TEAMS_DEV,
+  signupRestricted: process.env.CB_RESTRICT_SIGNUP_DEV,
   chartbrewMainAPI: "https://api.chartbrew.com",
 };

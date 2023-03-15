@@ -272,8 +272,9 @@ class UserController {
   }
 
   areThereAnyUsers() {
-    return db.User.findAll()
+    return db.User.findAll({ limit: 1 })
       .then((users) => {
+        console.log("users", users);
         if (!users || users.length === 0) {
           return false;
         }
