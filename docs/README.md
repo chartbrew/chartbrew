@@ -125,6 +125,8 @@ The table below shows the `production` variables. The `development` variables ha
 | CB_MAIL_HOST | `smtp.gmail.com` | The server host of the email provider |
 | CB_MAIL_USER | No default | The username used to log in on the email server |
 | CB_MAIL_PASS | No deafult | The password used to log in on the email server |
+| CB_MAIL_PORT | `465` | The port used to connect to the email server |
+| CB_MAIL_SECURE | `true` | `true` - Use SSL to connect to the email server <br /><br />`false` - Use TLS to connect to the email server |
 | CB_ADMIN_MAIL | `hello@example.com` | The email address used to send the emails from |
 | CB_RESTRICT_TEAMS | `0` | `0` - New users will have their own team created on sign-up. <br /><br />`1` - New users don't have a team on signup and can't create their own. |
 | CB_RESTRICT_SIGNUP | `0` | `0` - Anyone can create accounts from the signup page <br /><br />`1` - New users can only sign up using invite links |

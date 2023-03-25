@@ -6,8 +6,8 @@ module.exports = {
   adminMail: process.env.CB_ADMIN_MAIL_DEV,
   mailSettings: {
     host: process.env.CB_MAIL_HOST_DEV,
-    port: 465,
-    secure: true,
+    port: process.env.CB_MAIL_PORT_DEV || 465,
+    secure: process.env.CB_MAIL_SECURE_DEV,
     auth: {
       user: process.env.CB_MAIL_USER_DEV,
       pass: process.env.CB_MAIL_PASS_DEV,
