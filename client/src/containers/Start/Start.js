@@ -59,14 +59,20 @@ function Start(props) {
     if (loading) return;
 
     setLoading(true);
-
+    const toastId = toast.loading("Setting up your project...");
     if (type) {
       setTimeout(() => {
         setLoading(false);
+        toast.update(toastId, {
+          render: "🎉 All done!", type: "success", isLoading: false, autoClose: 1500,
+        });
         history.push(`${_getOwnedTeam().id}/${newProject.id}/connections?type=${type}&edit=true`);
       }, 1000);
     } else {
       setLoading(false);
+      toast.update(toastId, {
+        render: "🎉 All done!", type: "success", isLoading: false, autoClose: 1500,
+      });
       history.push(`${_getOwnedTeam().id}/${newProject.id}/dashboard`);
     }
   };
@@ -137,8 +143,7 @@ function Start(props) {
   const renderConnectionCard = (connectionType, title) => {
     return (
       <Grid xs={6} sm={4} md={3}>
-        <Card isHoverable>
-          <Card.Header>{title}</Card.Header>
+        <Card isHoverable onPress={() => _onSelect(connectionType)} isPressable>
           <Card.Body>
             <Card.Image
               src={connectionImages(isDark)[connectionType]}
@@ -149,14 +154,9 @@ function Start(props) {
             />
           </Card.Body>
           <Card.Footer>
-            <Button
-              onClick={() => _onSelect(connectionType)}
-              auto
-              disabled={loading}
-            >
-              {!loading && "Select"}
-              {loading && <Loading type="points" />}
-            </Button>
+            <Row justify="center">
+              <Text b>{title}</Text>
+            </Row>
           </Card.Footer>
         </Card>
       </Grid>
@@ -472,6 +472,7 @@ function Start(props) {
                   {renderConnectionCard("realtimedb", "Realtime Database")}
                   {renderConnectionCard("googleAnalytics", "Google Analytics")}
                   {renderConnectionCard("customerio", "Customer.io")}
+                  {renderConnectionCard("timescaledb", "Timescale")}
                 </Grid.Container>
               </motion.div>
               )}
