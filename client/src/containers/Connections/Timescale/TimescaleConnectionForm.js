@@ -304,7 +304,7 @@ function TimescaleConnectionForm(props) {
             target="_blank"
             rel="noopener"
           >
-            <Text>{"Find out how get your TimescaleDB connection credentials"}</Text>
+            <Text>{"Find out how to get your TimescaleDB connection credentials"}</Text>
           </Link>
           <Spacer x={0.2} />
           <FaExternalLinkSquareAlt size={12} />
