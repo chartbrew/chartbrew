@@ -2,11 +2,17 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Checkbox, Container, Divider, Dropdown, Image, Input, Loading,
+  Button, Checkbox, Container, Divider, Dropdown, Input, Loading,
   Row, Spacer, Text, Tooltip,
 } from "@nextui-org/react";
 import { ChevronDown, InfoCircle } from "react-iconly";
 import { HiRefresh } from "react-icons/hi";
+import {
+  TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbMathAvg,
+} from "react-icons/tb";
+import { TiChartPie } from "react-icons/ti";
+import { FaChartLine } from "react-icons/fa";
+import { BsTable } from "react-icons/bs";
 
 import LineChart from "../../Chart/components/LineChart";
 import BarChart from "../../Chart/components/BarChart";
@@ -15,16 +21,6 @@ import DoughnutChart from "../../Chart/components/DoughnutChart";
 import PolarChart from "../../Chart/components/PolarChart";
 import PieChart from "../../Chart/components/PieChart";
 import TableContainer from "../../Chart/components/TableView/TableContainer";
-
-import radarSvg from "../../../assets/chart-icons/svg/014-analytics-56.svg";
-import lineSvg from "../../../assets/chart-icons/svg/line.svg";
-import barSvg from "../../../assets/chart-icons/svg/042-analytics-28.svg";
-import pieSvg from "../../../assets/chart-icons/svg/027-analytics-43.svg";
-import accumulateSvg from "../../../assets/chart-icons/svg/004-analytics-66.svg";
-import polarSvg from "../../../assets/chart-icons/svg/009-analytics-61.svg";
-import doughnutSvg from "../../../assets/chart-icons/svg/011-analytics-59.svg";
-import tableSvg from "../../../assets/chart-icons/svg/table.svg";
-import avgSvg from "../../../assets/chart-icons/svg/average_kpi.svg";
 
 const chartModes = [{
   key: "chart",
@@ -249,9 +245,9 @@ function ChartPreview(props) {
                   onClick={() => _onChangeChartType({ type: "avg" })}
                   auto
                   size="sm"
-                >
-                  <Image src={avgSvg} height={25} width={25} />
-                </Button>
+                  icon={<TbMathAvg size={24} />}
+                  css={{ minWidth: "fit-content" }}
+                />
               </Tooltip>
               <Spacer x={0.1} />
               <Tooltip
@@ -264,9 +260,9 @@ function ChartPreview(props) {
                   disabled={chart.type !== "line" && chart.type !== "bar" && chart.type !== "avg"}
                   auto
                   size="sm"
-                >
-                  <Image src={accumulateSvg} height={25} width={25} />
-                </Button>
+                  icon={<FaChartLine size={20} />}
+                  css={{ minWidth: "fit-content" }}
+                />
               </Tooltip>
               <Spacer x={0.5} />
 
@@ -276,9 +272,9 @@ function ChartPreview(props) {
                   onClick={() => _onChangeChartType({ type: "table" })}
                   auto
                   size="sm"
-                >
-                  <Image src={tableSvg} height={25} width={25} />
-                </Button>
+                  icon={<BsTable size={20} />}
+                  css={{ minWidth: "fit-content" }}
+                />
               </Tooltip>
               <Spacer x={0.5} />
 
@@ -288,9 +284,9 @@ function ChartPreview(props) {
                   onClick={() => _onChangeChartType({ type: "line" })}
                   auto
                   size="sm"
-                >
-                  <Image src={lineSvg} height={25} width={25} />
-                </Button>
+                  icon={<TbChartLine size={24} />}
+                  css={{ minWidth: "fit-content" }}
+                />
               </Tooltip>
               <Spacer x={0.1} />
               <Tooltip content="Display as bar chart">
@@ -299,9 +295,9 @@ function ChartPreview(props) {
                   onClick={() => _onChangeChartType({ type: "bar" })}
                   auto
                   size="sm"
-                >
-                  <Image src={barSvg} width={25} height={25} />
-                </Button>
+                  icon={<TbChartBar size={24} />}
+                  css={{ minWidth: "fit-content" }}
+                />
               </Tooltip>
               <Spacer x={0.5} />
 
@@ -311,20 +307,9 @@ function ChartPreview(props) {
                   onClick={() => _onChangeChartType({ type: "pie" })}
                   auto
                   size="sm"
-                >
-                  <Image src={pieSvg} height={25} width={25} />
-                </Button>
-              </Tooltip>
-              <Spacer x={0.1} />
-              <Tooltip content="Display as radar chart">
-                <Button
-                  bordered={chart.type !== "radar"}
-                  onClick={() => _onChangeChartType({ type: "radar" })}
-                  auto
-                  size="sm"
-                >
-                  <Image src={radarSvg} height={25} width={25} />
-                </Button>
+                  icon={<TbChartPie2 size={24} />}
+                  css={{ minWidth: "fit-content" }}
+                />
               </Tooltip>
               <Spacer x={0.1} />
               <Tooltip content="Display as doughnut chart">
@@ -333,9 +318,20 @@ function ChartPreview(props) {
                   onClick={() => _onChangeChartType({ type: "doughnut" })}
                   auto
                   size="sm"
-                >
-                  <Image src={doughnutSvg} height={25} width={25} />
-                </Button>
+                  icon={<TbChartDonut4 size={24} />}
+                  css={{ minWidth: "fit-content" }}
+                />
+              </Tooltip>
+              <Spacer x={0.1} />
+              <Tooltip content="Display as radar chart">
+                <Button
+                  bordered={chart.type !== "radar"}
+                  onClick={() => _onChangeChartType({ type: "radar" })}
+                  auto
+                  size="sm"
+                  icon={<TbChartRadar size={24} />}
+                  css={{ minWidth: "fit-content" }}
+                />
               </Tooltip>
               <Spacer x={0.1} />
               <Tooltip content="Display as polar chart">
@@ -344,9 +340,9 @@ function ChartPreview(props) {
                   onClick={() => _onChangeChartType({ type: "polar" })}
                   auto
                   size="sm"
-                >
-                  <Image src={polarSvg} height={25} width={25} />
-                </Button>
+                  icon={<TiChartPie size={24} />}
+                  css={{ minWidth: "fit-content" }}
+                />
               </Tooltip>
             </Row>
           </Container>
