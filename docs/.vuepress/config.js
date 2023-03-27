@@ -16,8 +16,8 @@ module.exports = {
     displayAllHeaders: true,
     nav: [
       { text: 'Home', link: '/' },
-      { text: '🍺 Chartbrew website', link: 'https://chartbrew.com' },
-      { text: '🤘 Join our Discord', link: 'https://discord.gg/KwGEbFk' },
+      { text: '☕️ Chartbrew website', link: 'https://chartbrew.com' },
+      { text: '👾 Join our Discord', link: 'https://discord.gg/KwGEbFk' },
       { text: '👨‍💻 GitHub', link: 'https://github.com/chartbrew/chartbrew' },
     ],
     sidebar: [
