@@ -28,28 +28,18 @@ link:
 The setup doesn't work in Windows PowerShell or cmd.exe. If you're using Windows, please use a bash command line like [Git Bash](https://git-scm.com/downloads) or [cygwin](https://www.cygwin.com/install.html)
 :::
 
-#### Run your database instance and create the chartbrew database
+#### Create a Chartbrew database
 
-**Important!** Make sure you have a MySQL or PostgreSQL instance running and you have created a database for Chartbrew. [Follow the instruction here >>](/database/#mysql)
+Chartbrew works with both MySQL and PostgreSQL. You can use any of the two, but you need to create a database first.
 
-#### Quickstart
+[Follow the instruction here >>](/database/#mysql)
 
-```sh
-npx create-chartbrew-app chartbrew
-```
-
-The CLI tool creates a `chartbrew/.env` file which you can configure at any time if you want to change the database, API & client host, etc. The file contains comments explaining what each environmental variable is for.
-
-#### Developing and extending the application
-
-If you plan on doing this, setup the app like so:
+#### Get and setup the project
 
 ```sh
 git clone https://github.com/chartbrew/chartbrew.git
 cd chartbrew && npm run setup
 ```
-
-If you submit any PRs, please [follow the guidelines here](https://github.com/chartbrew/chartbrew/blob/master/CONTRIBUTING.md).
 
 ### Set up the environmental variables
 
@@ -60,7 +50,7 @@ Make sure you fill out the `production` and `development` sections accordingly.
 [See the full list of variables here](/#environmental-variables)
 
 
-### Run the project in Development
+### Run the project locally
 
 Open two terminals, one for front-end and the other for back-end.
 

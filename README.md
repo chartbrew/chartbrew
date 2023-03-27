@@ -46,8 +46,7 @@
 
 ## Prerequisites
 
-* NodeJS v14+
-* NPM
+* NodeJS v14, v16, v18
 * MySQL (5+) or PostgreSQL (12.5+)
 
 ## Start
@@ -56,17 +55,20 @@ It is recommended you head over to the more detailed documentation to find out h
 
 [📚 You can find it here](https://docs.chartbrew.com/#getting-started)
 
-## Run locally with the CLI tool
+## Set up Chartbrew locally
 
-If you already have a MySQL or PostgreSQL server running, create a database called `chartbrew` and follow the prompts of the `create-chartbrew-app` command below.
+### Create a new database
 
-**Important** Windows command line is not supported at the moment. Use something like [Cygwin](http://www.cygwin.com/) on Windows.
+Chartbrew can run on MySQL or PostgreSQL. Create an empty database that Chartbrew can use.
+
+### Clone and setup
 
 ```sh
-npx create-chartbrew-app chartbrew
+git clone https://github.com/chartbrew/chartbrew.git
+cd chartbrew && npm run setup
 ```
 
-The CLI tool creates a `chartbrew/.env` file which you can configure at any time if you want to change the database, API & client host, etc. The file contains comments explaining what each environmental variable is for. [Check out which need to be set here.](https://docs.chartbrew.com/#set-up-environmental-variables)
+Complete the required environmental variables in `chartbrew/.env`. [Check out which need to be set here.](https://docs.chartbrew.com/#set-up-environmental-variables)
 
 ### Run the project in Development
 
@@ -81,6 +83,8 @@ npm run start
 cd server/
 npm run start-dev
 ```
+
+Head over to `http://localhost:4018` to see the app running and create your first user account.
 
 ## Deploy Chartbrew on Render
 
@@ -100,8 +104,6 @@ A [Chartbrew docker image](https://hub.docker.com/r/razvanilin/chartbrew) is bui
 
 Before running the commands below, make sure you have a MySQL server already running and an empty database that Chartbrew can use. The database name should match the value of the `CB_DB_NAME` variable.
 
-For `amd64` architecture:
-
 ```sh
 docker pull razvanilin/chartbrew
 
@@ -117,35 +119,6 @@ docker run -p 4019:4019 -p 4018:4018 \
   -e REACT_APP_CLIENT_HOST=http://localhost:4018 \
   -e REACT_APP_API_HOST=http://localhost:4019 \
   razvanilin/chartbrew
-```
-
-For `arm64` architecture:
-
-```sh
-docker pull razvanilin/chartbrew:latest-arm64
-
-docker run -p 4019:4019 -p 4018:4018 \
-  -e CB_SECRET=enter_a_secure_string \
-  -e CB_API_HOST=0.0.0.0 \
-  -e CB_API_PORT=4019 \
-  -e CB_DB_HOST=host.docker.internal \
-  -e CB_DB_PORT=3306 \
-  -e CB_DB_NAME=chartbrew \
-  -e CB_DB_USERNAME=root \
-  -e CB_DB_PASSWORD=password \
-  -e REACT_APP_CLIENT_HOST=http://localhost:4018 \
-  -e REACT_APP_API_HOST=http://localhost:4019 \
-  razvanilin/chartbrew:latest-arm64
-```
-
-### Changing environmental variables
-
-If you want to run your Docker image with new environmental variables, it's important to build the client application again withing the image. This is done by running the following command:
-
-```sh
-# replace 'your_container_name' with the name of your docker container where Chartbrew is running
-
-docker exec -it -w /code/client your_container_name npm run build
 ```
 
 ## Acknowledgements
