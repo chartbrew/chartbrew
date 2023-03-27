@@ -126,7 +126,7 @@ class RequestController {
           return this.connectionController.runApiRequest(
             connection.id, chartId, dataRequest, getCache
           );
-        } else if (connection.type === "postgres" || connection.type === "mysql") {
+        } else if (connection.type === "postgres" || connection.type === "mysql" || connection.type === "timescaledb") {
           return this.connectionController.runMysqlOrPostgres(connection.id, dataRequest);
         } else if (connection.type === "firestore") {
           return this.connectionController.runFirestore(connection.id, dataRequest, getCache);

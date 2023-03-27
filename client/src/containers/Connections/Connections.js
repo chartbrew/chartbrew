@@ -47,6 +47,7 @@ import simpleanalyticsDash from "./SimpleAnalytics/simpleanalytics-template.jpeg
 import chartmogulDash from "./ChartMogul/chartmogul-template.jpeg";
 import mailgunDash from "./Mailgun/mailgun-template.jpeg";
 import gaDash from "./GoogleAnalytics/ga-template.jpeg";
+import TimescaleConnectionForm from "./Timescale/TimescaleConnectionForm";
 
 /*
   The page that contains all the connections
@@ -445,6 +446,20 @@ function Connections(props) {
                       </Card.Footer>
                     </Card>
                   </Grid>
+                  <Grid xs={6} sm={4} md={2}>
+                    <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("timescaledb")}>
+                      <Card.Body css={{ p: 0 }}>
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages(isDark).timescaledb} />
+                      </Card.Body>
+                      <Card.Footer>
+                        <Row wrap="wrap" justify="center" align="center">
+                          <Text h4>
+                            Timescale
+                          </Text>
+                        </Row>
+                      </Card.Footer>
+                    </Card>
+                  </Grid>
                 </Grid.Container>
               )}
 
@@ -619,6 +634,16 @@ function Connections(props) {
           )}
           {formType === "customerio" && (
             <CustomerioConnectionForm
+              projectId={match.params.projectId}
+              onTest={_onTestRequest}
+              onComplete={_onAddNewConnection}
+              editConnection={editConnection}
+              addError={addError}
+              testResult={testResult}
+            />
+          )}
+          {formType === "timescaledb" && (
+            <TimescaleConnectionForm
               projectId={match.params.projectId}
               onTest={_onTestRequest}
               onComplete={_onAddNewConnection}

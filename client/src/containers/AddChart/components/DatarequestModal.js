@@ -354,7 +354,7 @@ function DatarequestModal(props) {
                       onDelete={() => _onDeleteRequest(dr.id)}
                     />
                   )}
-                  {(selectedRequest.Connection.type === "mysql" || selectedRequest.Connection.type === "postgres") && selectedRequest.id === dr.id && (
+                  {(selectedRequest.Connection.type === "mysql" || selectedRequest.Connection.type === "postgres" || selectedRequest.Connection.type === "timescaledb") && selectedRequest.id === dr.id && (
                     <SqlBuilder
                       dataRequest={dr}
                       connection={dr.Connection}

@@ -6,7 +6,7 @@ module.exports = (connection) => {
   const password = connection.password || "";
   const host = connection.host || "localhost";
   const { port, connectionString } = connection;
-  const dialect = connection.type;
+  const dialect = connection.type === "timescaledb" ? "postgres" : connection.type;
 
   let sequelize;
 
@@ -16,6 +16,15 @@ module.exports = (connection) => {
     dialect,
     logging: false,
   };
+
+  if (connection.type === "timescaledb") {
+    connectionConfig.dialectOptions = {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false,
+      },
+    };
+  }
 
   if (connectionString) {
     // extract each element from the string so that we can encode the password

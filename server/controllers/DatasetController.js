@@ -234,7 +234,7 @@ class DatasetController {
                 connection.id, chartId, dataRequest, getCache,
               )
             );
-          } else if (connection.type === "postgres" || connection.type === "mysql") {
+          } else if (connection.type === "postgres" || connection.type === "mysql" || connection.type === "timescaledb") {
             drPromises.push(
               this.connectionController.runMysqlOrPostgres(connection.id, dataRequest, getCache)
             );

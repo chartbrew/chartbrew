@@ -16,6 +16,8 @@ import mysqlDarkLogo from "../assets/mysql-dark.png";
 import apiDarkLogo from "../assets/api-dark.png";
 import plausibleDarkLogo from "../assets/plausible-dark.png";
 import customerioDarkLogo from "../assets/customerio-dark.png";
+import timescaledbLogo from "../assets/timescaledb.jpg";
+import timescaledbDarkLogo from "../assets/timescaledb-dark.jpeg";
 
 export default (isDark) => ({
   mongodb: isDark ? mongoDarkLogo : mongoLogo,
@@ -27,4 +29,5 @@ export default (isDark) => ({
   googleAnalytics: isDark ? googleanalyticsDarkLogo : gAnalyticsLogo,
   plausible: isDark ? plausibleDarkLogo : plausibleLogo,
   customerio: isDark ? customerioDarkLogo : customerioLogo,
+  timescaledb: isDark ? timescaledbDarkLogo : timescaledbLogo,
 });
