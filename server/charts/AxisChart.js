@@ -305,7 +305,7 @@ class AxisChart {
             yAxisData = this.count(xAxisData.formatted, yType, yAxisData, yAxis);
             break;
           case "count_unique":
-            yAxisData = this.countUnique(xAxisData.formatted, yType, yAxisData, yAxis);
+            yAxisData = this.countUnique(yAxisData, yType);
             break;
           case "avg":
             if (yType === "array") {
@@ -991,11 +991,16 @@ class AxisChart {
     return countData;
   }
 
-  countUnique(xData, type) {
+  countUnique(yData, type) {
     if (type === "array") return {};
     const countData = {};
-    xData.forEach((item) => {
-      if (!countData[item]) countData[item] = 1;
+    yData.forEach((item) => {
+      if (!countData[item.x]) countData[item.x] = [];
+      if (countData[item.x].indexOf(item.y) === -1) countData[item.x].push(item.y);
+    });
+
+    Object.keys(countData).forEach((key) => {
+      countData[key] = countData[key].length;
     });
 
     return countData;
