@@ -133,7 +133,7 @@ function Filters(props) {
                 selectedKeys={[filter.field]}
                 onSelectionChange={(selection) => _updateFilter(Object.values(selection)[0], "field")}
                 selectionMode="single"
-                css={{ minWidth: "fit-content" }}
+                css={{ maxWidth: "min-content" }}
               >
                 {fieldOptions.map((field) => (
                   <Dropdown.Item key={field.value}>
