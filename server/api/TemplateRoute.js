@@ -170,7 +170,6 @@ module.exports = (app) => {
 
         data.model = await templateController.getDashboardModel(req.body.project_id);
       } catch (error) {
-        console.log("error", error);
         return formatError(error, res);
       }
     }
