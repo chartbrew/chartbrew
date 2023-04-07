@@ -247,14 +247,16 @@ function DatarequestSettings(props) {
                       key={request.id}
                       css={{ height: "fit-content", mb: 5, p: 2 }}
                       icon={(
-                        <Avatar
-                          squared
-                          src={connectionImages(isDark)[request.Connection.type]}
-                        />
+                        (request.Connection?.type && (
+                          <Avatar
+                            squared
+                            src={connectionImages(isDark)[request.Connection.type]}
+                          />
+                        )) || null
                       )}
                       command={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
                     >
-                      {request.Connection.name}
+                      {request.Connection?.name || ""}
                     </Dropdown.Item>
                   ))}
                 </Dropdown.Menu>

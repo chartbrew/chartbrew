@@ -159,7 +159,9 @@ function CustomTemplateForm(props) {
     let dependency = "";
 
     for (let i = 0; i < datasets.length; i++) {
-      if (!selectedConnections[datasets[i].Connection].active) {
+      if (selectedConnections[datasets[i].Connection]
+        && !selectedConnections[datasets[i].Connection].active
+      ) {
         dependency = selectedConnections[datasets[i].Connection].name;
         break;
       }

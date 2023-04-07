@@ -38,9 +38,10 @@ module.exports.getDashboardModel = (projectId) => {
       include: [{
         model: db.DataRequest,
         attributes: { exclude: ["id", "dataset_id", "createdAt", "updatedAt"] },
-      }, {
-        model: db.Connection,
-        attributes: { exclude: ["project_id", "oauth_id", "createdAt", "updatedAt"] },
+        include: [{
+          model: db.Connection,
+          attributes: { exclude: ["project_id", "oauth_id", "createdAt", "updatedAt"] },
+        }]
       }],
     }],
   })
@@ -56,19 +57,27 @@ module.exports.getDashboardModel = (projectId) => {
           && newChart.Datasets.length > 0
         ) {
           newChart.Datasets.forEach((d) => {
-            let found = false;
-            connections.forEach((c) => {
-              if (d.Connection.id === c.id) found = true;
+            d?.DataRequests.forEach((dr) => {
+              if (dr.Connection) {
+                const foundConnection = connections.find((c) => c.id === dr.Connection.id);
+                if (!foundConnection) connections.push(dr.Connection);
+              }
             });
-
-            if (!found) connections.push(d.Connection);
           });
 
           // remove the connection objects
           newChart.Datasets = chart.Datasets.map((d) => {
             const newDataset = d;
-            newDataset.setDataValue("Connection", d.Connection.id);
-            return newDataset;
+            return {
+              ...newDataset,
+              DataRequests: d.DataRequests.map((dr) => {
+                const newDataRequest = dr;
+                if (dr.Connection?.id) {
+                  delete newDataRequest.setDataValue("Connection", dr.Connection.id);
+                }
+                return newDataRequest;
+              }),
+            };
           });
         }
 
@@ -77,5 +86,8 @@ module.exports.getDashboardModel = (projectId) => {
       });
 
       return template;
+    })
+    .catch((err) => {
+      throw err;
     });
 };

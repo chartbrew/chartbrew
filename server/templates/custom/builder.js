@@ -25,47 +25,62 @@ module.exports = async (projectId, { template_id, charts, connections }) => {
   const createdConnections = {};
   const avoidConnectionCreationList = [];
 
-  // TODO: find a way to create the connections and attach the c_id to the right dataset
-  const attachConnection = async (dataset, chartId) => {
-    if (_.indexOf(avoidConnectionCreationList, dataset.connection_id) > -1) {
-      return new Promise((resolve) => resolve({
-        ...dataset, chart_id: chartId, connection_id: dataset.connection_id,
-      }));
+  if (project.Connections && project.Connections.length > 0) {
+    project.Connections.forEach((c) => {
+      avoidConnectionCreationList.push(c.id);
+    });
+  }
+
+  const createAndRecordConnection = async (connection) => {
+    if (_.indexOf(avoidConnectionCreationList, connection.id) > -1
+      && !connections[connection.id]?.createNew
+    ) {
+      return new Promise((resolve) => resolve(connection));
     }
 
-    // check wether the connections need to be re-used or created
-    const projectConnection = _.findLast(project.Connections, { id: dataset.connection_id });
-    const connectionOpt = connections[dataset.connection_id];
+    const newConnection = _.clone(connection);
+    newConnection.project_id = projectId;
+    delete newConnection.id;
 
-    let newConnection = _.clone(projectConnection);
-    if ((projectConnection && connectionOpt && connectionOpt.createNew) || !projectConnection) {
-      newConnection = _.clone(model.Connections.filter((c) => c.id === dataset.connection_id)[0]);
-      newConnection.project_id = projectId;
-      delete newConnection.id;
+    avoidConnectionCreationList.push(connection.id);
 
-      avoidConnectionCreationList.push(dataset.connection_id);
-      newConnection = await db.Connection.create(newConnection);
-      // update which connection have been created
-      createdConnections[dataset.connection_id] = newConnection.id;
-    }
+    const createdConnection = await db.Connection.create(newConnection);
+    createdConnections[connection.id] = createdConnection.id;
 
-    const newDataset = { ...dataset, connection_id: newConnection.id, chart_id: chartId };
-
-    return new Promise((resolve) => resolve(newDataset));
+    return createdConnection;
   };
 
-  const preparedDatasets = async (datasets, chartId) => {
-    // now go through the datasets
-    const formattedDatasets = datasets.map(async (d) => {
-      const newDataset = await attachConnection(d, chartId)
-        .then((preparedDataset) => {
-          return preparedDataset;
-        });
-
-      return newDataset;
+  const createConnections = async (connections) => {
+    const promises = connections.map(async (c) => {
+      return createAndRecordConnection(c);
     });
 
-    return Promise.all(formattedDatasets);
+    return Promise.all(promises);
+  };
+
+  const prepareDataRequests = async (dataRequests, datasetId) => {
+    const newDataRequests = dataRequests;
+
+    // first create the connections
+    const connectionsToCreate = model.Connections.filter((c) => {
+      return newDataRequests.find((dr) => dr.Connection === c.id);
+    });
+
+    const createdConnections = await createConnections(connectionsToCreate);
+
+    const drsToCreate = [];
+    dataRequests.forEach((dr) => {
+      const newDr = { ...dr, dataset_id: datasetId };
+      if (createdConnections[dr.Connection]) {
+        newDr.connection_id = createdConnections[dr.Connection];
+      } else {
+        newDr.connection_id = dr.Connection;
+      }
+
+      drsToCreate.push(newDr);
+    });
+
+    return drsToCreate;
   };
 
   const createDatasets = async (datasets) => {
@@ -74,18 +89,18 @@ module.exports = async (projectId, { template_id, charts, connections }) => {
       if (dataset.DataRequest) {
         dataset.DataRequests = [dataset.DataRequest];
       }
-      if (createdConnections[dataset.connection_id]) {
-        dataset.connection_id = createdConnections[dataset.connection_id];
-      }
 
       return db.Dataset.create(dataset)
-        .then((createdDataset) => {
+        .then(async (createdDataset) => {
+          const drsToCreate = await prepareDataRequests(
+            dataset.DataRequests,
+            createdDataset.id
+          );
+
           const drPromises = [];
-          d.DataRequests.forEach((dr) => {
+          drsToCreate.forEach((dr) => {
             drPromises.push(
-              db.DataRequest.create(
-                { ...dr, connection_id: dataset.connection_id, dataset_id: createdDataset.id },
-              ),
+              db.DataRequest.create(dr),
             );
           });
           Promise.all(drPromises);
@@ -102,10 +117,16 @@ module.exports = async (projectId, { template_id, charts, connections }) => {
     newChart.project_id = projectId;
     const newPromise = await db.Chart.create(newChart)
       .then(async (createdChart) => {
-        const datasetsToCreate = await preparedDatasets(
-          chart.Datasets,
-          createdChart.id
-        );
+        // const datasetsToCreate = await preparedDatasets(
+        //   chart.Datasets,
+        //   createdChart.id
+        // );
+        const datasetsToCreate = chart.Datasets.map((d) => {
+          return {
+            ...d,
+            chart_id: createdChart.id,
+          };
+        });
 
         const createdDatasets = await createDatasets(datasetsToCreate);
 
