@@ -795,10 +795,11 @@ class AxisChart {
           } else if (startDate.year() !== endDate.year()
             || this.moment().year() !== startDate.year()
           ) {
-            this.dateFormat = "GGGG [W] WW-E";
+            this.dateFormat = "GGGG [W] WW";
             axisData[i] = axisData[i].format(this.dateFormat);
           } else {
-            this.dateFormat = "MMM [W] WW-E";
+            // format to group by weeks in the same year without year
+            this.dateFormat = "GGGG [W] WW";
             axisData[i] = axisData[i].format(this.dateFormat);
           }
           break;
