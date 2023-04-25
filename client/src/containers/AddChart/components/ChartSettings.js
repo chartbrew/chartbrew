@@ -83,7 +83,7 @@ function ChartSettings(props) {
 
   const {
     type, pointRadius, displayLegend,
-    endDate, currentEndDate, timeInterval,
+    endDate, fixedStartDate, currentEndDate, timeInterval,
     includeZeros, startDate, onChange, onComplete,
     maxValue, minValue, xLabelTicks, stacked,
   } = props;
@@ -131,13 +131,16 @@ function ChartSettings(props) {
       if (currentEndDate) {
         const timeDiff = newEndDate.diff(newStartDate, "days");
         newEndDate = moment().endOf("day");
-        newStartDate = newEndDate.clone().subtract(timeDiff, "days").startOf("day");
+
+        if (!fixedStartDate) {
+          newStartDate = newEndDate.clone().subtract(timeDiff, "days").startOf("day");
+        }
       }
 
       setLabelStartDate(newStartDate.format("ll"));
       setLabelEndDate(newEndDate.format("ll"));
     }
-  }, [currentEndDate, dateRange]);
+  }, [currentEndDate, dateRange, fixedStartDate]);
 
   const _onViewRange = (value, init) => {
     if (!value) {
@@ -268,7 +271,7 @@ function ChartSettings(props) {
               </div>
             </div>
           </Grid>
-          <Grid xs={12} sm={6} md={6} alignItems="flex-start">
+          <Grid xs={12} sm={6} md={6} direction="column">
             <Checkbox
               isSelected={currentEndDate}
               isDisabled={!dateRange.endDate}
@@ -278,6 +281,17 @@ function ChartSettings(props) {
               size="sm"
             >
               Make the date range relative to present
+            </Checkbox>
+            <Spacer y={0.5} />
+            <Checkbox
+              isSelected={fixedStartDate}
+              isDisabled={!currentEndDate}
+              onChange={(selected) => {
+                onChange({ fixedStartDate: selected });
+              }}
+              size="sm"
+            >
+              Fix the start date
             </Checkbox>
           </Grid>
         </Grid.Container>
@@ -563,6 +577,7 @@ ChartSettings.defaultProps = {
   endDate: null,
   includeZeros: true,
   currentEndDate: false,
+  fixedStartDate: false,
   timeInterval: "day",
   onChange: () => { },
   onComplete: () => { },
@@ -580,6 +595,7 @@ ChartSettings.propTypes = {
   endDate: PropTypes.object,
   includeZeros: PropTypes.bool,
   currentEndDate: PropTypes.bool,
+  fixedStartDate: PropTypes.bool,
   timeInterval: PropTypes.string,
   onChange: PropTypes.func,
   onComplete: PropTypes.func,

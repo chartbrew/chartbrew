@@ -88,11 +88,11 @@ class AxisChart {
       let startDate;
       let endDate;
       if (this.chart.startDate && this.chart.endDate) {
-        if (this.chart.timeInterval === "month" && this.chart.currentEndDate) {
+        if (this.chart.timeInterval === "month" && this.chart.currentEndDate && !this.chart.fixedStartDate) {
           startDate = this.moment(this.chart.startDate).startOf("month").startOf("day");
-        } else if (this.chart.timeInterval === "year" && this.chart.currentEndDate) {
+        } else if (this.chart.timeInterval === "year" && this.chart.currentEndDate && !this.chart.fixedStartDate) {
           startDate = this.moment(this.chart.startDate).startOf("year").startOf("day");
-        } else {
+        } else if (!this.chart.fixedStartDate) {
           startDate = this.moment(this.chart.startDate).startOf("day");
         }
 
@@ -123,17 +123,21 @@ class AxisChart {
           if (this.chart.currentEndDate) {
             const timeDiff = endDate.diff(startDate, this.chart.timeInterval);
             endDate = this.moment().endOf("day");
-            startDate = endDate.clone().subtract(timeDiff, this.chart.timeInterval);
-
-            if (this.chart.timeInterval === "month") {
-              startDate = startDate.startOf("month");
-            } else if (this.chart.timeInterval === "year") {
-              startDate = startDate.startOf("year");
+            if (!this.chart.fixedStartDate) {
+              startDate = endDate.clone().subtract(timeDiff, this.chart.timeInterval);
+              if (this.chart.timeInterval === "month") {
+                startDate = startDate.startOf("month");
+              } else if (this.chart.timeInterval === "year") {
+                startDate = startDate.startOf("year");
+              } else {
+                startDate = startDate.startOf("day");
+              }
+            } else {
+              startDate = this.moment(this.chart.startDate).startOf("day");
             }
-
-            startDate = startDate.startOf("day");
           }
 
+          // console.log("startDate", startDate);
           const dateConditions = [{
             field: dateField,
             value: startDate,

@@ -247,7 +247,7 @@ function AddChart(props) {
 
   const _onChangeGlobalSettings = ({
     pointRadius, displayLegend, dateRange, includeZeros, timeInterval, currentEndDate,
-    maxValue, minValue, xLabelTicks, stacked,
+    fixedStartDate, maxValue, minValue, xLabelTicks, stacked,
   }) => {
     const tempChart = {
       pointRadius: typeof pointRadius !== "undefined" ? pointRadius : newChart.pointRadius,
@@ -257,6 +257,7 @@ function AddChart(props) {
       timeInterval: timeInterval || newChart.timeInterval,
       includeZeros: typeof includeZeros !== "undefined" ? includeZeros : newChart.includeZeros,
       currentEndDate: typeof currentEndDate !== "undefined" ? currentEndDate : newChart.currentEndDate,
+      fixedStartDate: typeof fixedStartDate !== "undefined" ? fixedStartDate : newChart.fixedStartDate,
       minValue: typeof minValue !== "undefined" ? minValue : newChart.minValue,
       maxValue: typeof maxValue !== "undefined" ? maxValue : newChart.maxValue,
       xLabelTicks: typeof xLabelTicks !== "undefined" ? xLabelTicks : newChart.xLabelTicks,
@@ -599,6 +600,7 @@ function AddChart(props) {
                   displayLegend={newChart.displayLegend}
                   includeZeros={newChart.includeZeros}
                   currentEndDate={newChart.currentEndDate}
+                  fixedStartDate={newChart.fixedStartDate}
                   timeInterval={newChart.timeInterval}
                   onChange={_onChangeGlobalSettings}
                   onComplete={(skipParsing = false) => _onRefreshPreview(skipParsing)}

@@ -83,6 +83,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: false,
     },
+    fixedStartDate: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
     timeInterval: {
       type: DataTypes.STRING,
       allowNull: false,

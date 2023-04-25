@@ -54,7 +54,10 @@ module.exports = (data, filters, timezone = "Asia/Bangkok") => {
       if (chart.currentEndDate) {
         const timeDiff = endDate.diff(startDate, "days");
         endDate = moment().endOf("day");
-        startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+
+        if (!chart.fixedStartDate) {
+          startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+        }
       }
 
       const dateConditions = [{

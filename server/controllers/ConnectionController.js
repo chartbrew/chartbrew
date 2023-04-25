@@ -595,12 +595,16 @@ class ConnectionController {
                 if (value === "startDate" && chart.currentEndDate) {
                   const timeDiff = endDate.diff(startDate, "days");
                   endDate = moment().endOf("day");
-                  startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+                  if (!chart.fixedStartDate) {
+                    startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+                  }
                   queryParams[q] = startDate.format();
                 } else if (value === "endDate" && chart.currentEndDate) {
                   const timeDiff = endDate.diff(startDate, "days");
                   endDate = moment().endOf("day");
-                  startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+                  if (!chart.fixedStartDate) {
+                    startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+                  }
                   queryParams[q] = endDate.format();
                 } else {
                   queryParams[q] = chart[value];
