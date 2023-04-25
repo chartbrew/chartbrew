@@ -252,8 +252,8 @@ function AddChart(props) {
     const tempChart = {
       pointRadius: typeof pointRadius !== "undefined" ? pointRadius : newChart.pointRadius,
       displayLegend: typeof displayLegend !== "undefined" ? displayLegend : newChart.displayLegend,
-      startDate: dateRange ? dateRange.startDate : newChart.startDate,
-      endDate: dateRange ? dateRange.endDate : newChart.endDate,
+      startDate: dateRange?.startDate || newChart.startDate,
+      endDate: dateRange?.endDate || newChart.endDate,
       timeInterval: timeInterval || newChart.timeInterval,
       includeZeros: typeof includeZeros !== "undefined" ? includeZeros : newChart.includeZeros,
       currentEndDate: typeof currentEndDate !== "undefined" ? currentEndDate : newChart.currentEndDate,

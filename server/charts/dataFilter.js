@@ -5,12 +5,11 @@ const determineType = require("../modules/determineType");
 
 function compareDates(data, field, condition, timezone = "") {
   let newData = data;
-
   let moment = null;
   if (timezone) {
     moment = (...args) => momentObj(...args).tz(timezone);
   } else {
-    moment = (...args) => momentObj(...args);
+    moment = (...args) => momentObj.utc(...args);
   }
 
   if (!condition.value
@@ -32,8 +31,11 @@ function compareDates(data, field, condition, timezone = "") {
     if (parseInt(value, 10).toString() === value.toString() && value.toString().length === 10) {
       return moment(value, "X");
     }
+    if (parseInt(value, 10).toString() === value.toString() && value.toString().length === 13) {
+      return moment(value, "x");
+    }
 
-    return moment(value);
+    return momentObj.utc(value);
   };
 
   switch (condition.operator) {
@@ -57,7 +59,7 @@ function compareDates(data, field, condition, timezone = "") {
       });
       break;
     case "greaterOrEqual":
-      newData = _.filter(newData, (o) => {
+      newData = newData.filter((o) => {
         const val = getValue(o);
         return val ? val.isSameOrAfter(condition.value) : false;
       });
@@ -69,7 +71,7 @@ function compareDates(data, field, condition, timezone = "") {
       });
       break;
     case "lessOrEqual":
-      newData = _.filter(newData, (o) => {
+      newData = newData.filter((o) => {
         const val = getValue(o);
         return val ? val.isSameOrBefore(condition.value) : false;
       });

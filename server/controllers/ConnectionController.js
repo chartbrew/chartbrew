@@ -589,19 +589,19 @@ class ConnectionController {
             if (chart.startDate && chart.endDate) {
               Object.keys(keysFound).forEach((q) => {
                 const value = keysFound[q];
-                let startDate = moment(chart.startDate);
-                let endDate = moment(chart.endDate);
+                let startDate = moment.utc(chart.startDate).startOf("day");
+                let endDate = moment.utc(chart.endDate).endOf("day");
 
                 if (value === "startDate" && chart.currentEndDate) {
                   const timeDiff = endDate.diff(startDate, "days");
-                  endDate = moment().endOf("day");
+                  endDate = moment.utc().endOf("day");
                   if (!chart.fixedStartDate) {
                     startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
                   }
                   queryParams[q] = startDate.format();
                 } else if (value === "endDate" && chart.currentEndDate) {
                   const timeDiff = endDate.diff(startDate, "days");
-                  endDate = moment().endOf("day");
+                  endDate = moment.utc().endOf("day");
                   if (!chart.fixedStartDate) {
                     startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
                   }

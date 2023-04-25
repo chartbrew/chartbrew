@@ -1,5 +1,4 @@
 import cookie from "react-cookies";
-import moment from "moment";
 
 import { API_HOST } from "../config/settings";
 import { addError } from "./error";
@@ -126,10 +125,10 @@ export function updateChart(projectId, chartId, data, justUpdates) {
   return (dispatch) => {
     const formattedData = data;
 
-    if (data && data.startDate && data.endDate) {
-      formattedData.startDate = moment(data.startDate).endOf("day").format();
-      formattedData.endDate = moment(data.endDate).endOf("day").format();
-    }
+    // if (data && data.startDate && data.endDate) {
+    //   formattedData.startDate = moment(data.startDate).endOf("day").format();
+    //   formattedData.endDate = moment(data.endDate).endOf("day").format();
+    // }
 
     const token = cookie.load("brewToken");
     let url = `${API_HOST}/project/${projectId}/chart/${chartId}`;

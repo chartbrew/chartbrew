@@ -130,10 +130,10 @@ function ChartSettings(props) {
       let newEndDate = moment(endDate);
       if (currentEndDate) {
         const timeDiff = newEndDate.diff(newStartDate, "days");
-        newEndDate = moment().endOf("day");
+        newEndDate = moment();
 
         if (!fixedStartDate) {
-          newStartDate = newEndDate.clone().subtract(timeDiff, "days").startOf("day");
+          newStartDate = newEndDate.clone().subtract(timeDiff, "days");
         }
       }
 
@@ -175,14 +175,18 @@ function ChartSettings(props) {
   };
 
   const _onChangeDateRange = (range) => {
-    const startDate = moment(range.selection.startDate).toDate();
-    const endDate = moment(range.selection.endDate).toDate();
+    const { startDate, endDate } = range.selection;
     setDateRange({ startDate, endDate });
   };
 
   const _onComplete = () => {
     const { startDate, endDate } = dateRange;
-    onChange({ dateRange: { startDate, endDate } });
+    onChange({
+      dateRange: {
+        startDate: moment(startDate).utcOffset(0, true).format(),
+        endDate: moment(endDate).utcOffset(0, true).format(),
+      }
+    });
 
     setDateRangeModal(false);
 
@@ -536,8 +540,8 @@ function ChartSettings(props) {
                 rangeColors={[secondary, primary]}
                 ranges={[
                   dateRange.startDate && dateRange.endDate ? {
-                    startDate: moment(dateRange.startDate).toDate(),
-                    endDate: moment(dateRange.endDate).toDate(),
+                    startDate: new Date(dateRange.startDate),
+                    endDate: new Date(dateRange.endDate),
                     key: "selection",
                   } : initSelectionRange
                 ]}

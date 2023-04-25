@@ -87,16 +87,25 @@ class AxisChart {
 
       let startDate;
       let endDate;
+
+      if (this.timezone) {
+        startDate = this.moment(this.chart.startDate);
+        endDate = this.moment(this.chart.endDate);
+      } else {
+        startDate = momentObj.utc(this.chart.startDate);
+        endDate = momentObj.utc(this.chart.endDate);
+      }
+
       if (this.chart.startDate && this.chart.endDate) {
         if (this.chart.timeInterval === "month" && this.chart.currentEndDate && !this.chart.fixedStartDate) {
-          startDate = this.moment(this.chart.startDate).startOf("month").startOf("day");
+          startDate = startDate.startOf("month").startOf("day");
         } else if (this.chart.timeInterval === "year" && this.chart.currentEndDate && !this.chart.fixedStartDate) {
-          startDate = this.moment(this.chart.startDate).startOf("year").startOf("day");
+          startDate = startDate.startOf("year").startOf("day");
         } else if (!this.chart.fixedStartDate) {
-          startDate = this.moment(this.chart.startDate).startOf("day");
+          startDate = startDate.startOf("day");
         }
 
-        endDate = this.moment(this.chart.endDate).endOf("day");
+        endDate = endDate.endOf("day");
       }
 
       for (let i = 0; i < this.datasets.length; i++) {
@@ -133,11 +142,10 @@ class AxisChart {
                 startDate = startDate.startOf("day");
               }
             } else {
-              startDate = this.moment(this.chart.startDate).startOf("day");
+              startDate = startDate.startOf("day");
             }
           }
 
-          // console.log("startDate", startDate);
           const dateConditions = [{
             field: dateField,
             value: startDate,
@@ -148,7 +156,7 @@ class AxisChart {
             operator: "lessOrEqual",
           }];
 
-          filteredData = dataFilter(filteredData, dateField, dateConditions).data;
+          filteredData = dataFilter(filteredData, dateField, dateConditions, this.timezone).data;
         }
 
         if (filters && filters.length > 0) {
