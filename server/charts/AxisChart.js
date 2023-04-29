@@ -534,9 +534,9 @@ class AxisChart {
 
             const newVal = parser.parse(expression);
 
-            let finalVal = `${before}${newVal.result.toLocaleString()}${after}`;
+            let finalVal = `${before}${newVal.result?.toLocaleString() || 0}${after}`;
             if (this.chart.mode !== "kpi") {
-              finalVal = +(newVal.result.toFixed(2)).toLocaleString();
+              finalVal = +(newVal.result?.toFixed(2) || 0).toLocaleString();
             }
 
             return finalVal;
