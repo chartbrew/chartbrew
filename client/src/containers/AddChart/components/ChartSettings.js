@@ -5,7 +5,7 @@ import {
   Text, Input, Dropdown, Tooltip, Modal, Badge,
 } from "@nextui-org/react";
 import {
-  Calendar, ChevronDown, TickSquare
+  Calendar, ChevronDown, CloseSquare, TickSquare
 } from "react-iconly";
 import moment from "moment";
 import { DateRangePicker } from "react-date-range";
@@ -155,15 +155,8 @@ function ChartSettings(props) {
     setDateRangeModal(isModalOpen);
   };
 
-  const _onActivateRange = (checked) => {
-    if (!checked) {
-      _onViewRange(false);
-      return;
-    }
-
-    if (startDate == null || endDate == null) {
-      _onViewRange(true);
-    }
+  const _onRemoveDateFiltering = () => {
+    onChange({ dateRange: { startDate: null, endDate: null } });
   };
 
   const _onAddPoints = (value) => {
@@ -247,13 +240,18 @@ function ChartSettings(props) {
                   >
                     Date filter
                   </Button>
-                  <Spacer x={0.5} />
-                  <Tooltip content="Toggle date filtering">
-                    <Checkbox
-                      isSelected={startDate != null || endDate != null}
-                      onChange={(checked) => _onActivateRange(checked)}
-                    />
-                  </Tooltip>
+                  <Spacer x={0.3} />
+                  {(startDate || endDate) && (
+                    <Tooltip content="Remove date filtering">
+                      <Button
+                        light
+                        icon={<CloseSquare />}
+                        color="error"
+                        onClick={() => _onRemoveDateFiltering()}
+                        auto
+                      />
+                    </Tooltip>
+                  )}
                 </Row>
               </Container>
               <div style={{ marginTop: 5 }}>
