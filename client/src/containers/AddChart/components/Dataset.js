@@ -37,7 +37,7 @@ function replaceEmptyColors(colors) {
 function Dataset(props) {
   const {
     dataset, onUpdate, onDelete, chart, onRefresh,
-    changeTutorial, onRefreshPreview, loading, datasetResponses,
+    changeTutorial, loading, datasetResponses,
   } = props;
 
   const [newDataset, setNewDataset] = useState(dataset);
@@ -155,7 +155,6 @@ function Dataset(props) {
       changeTutorial("datasetdata");
     }
     setConfigOpened(false);
-    onRefreshPreview();
   };
 
   const _onDeleteDataset = () => {
@@ -241,7 +240,6 @@ function Dataset(props) {
             onClick={_openConfigModal}
             auto
             css={{ width: "100%" }}
-            shadow
           >
             Get data
           </Button>
@@ -384,7 +382,6 @@ Dataset.propTypes = {
   chart: PropTypes.object.isRequired,
   onRefresh: PropTypes.func.isRequired,
   changeTutorial: PropTypes.func.isRequired,
-  onRefreshPreview: PropTypes.func.isRequired,
   loading: PropTypes.bool,
   datasetResponses: PropTypes.array.isRequired,
 };

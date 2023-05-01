@@ -108,10 +108,10 @@ function DatarequestModal(props) {
   };
 
   const _onBuildChart = () => {
+    setLoading(true);
     // run the request of the dataset response is not available
     const datasetResponse = datasetResponses.find((d) => d.dataset_id === dataset.id);
     if (!datasetResponse) {
-      setLoading(true);
       runRequest(match.params.projectId, match.params.chartId, dataset.id, true)
         .catch(() => {});
     }
