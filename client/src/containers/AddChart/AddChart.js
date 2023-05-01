@@ -310,7 +310,7 @@ function AddChart(props) {
       });
   };
 
-  const _onRefreshData = (skipParsing = false, skipConfCheck = false) => {
+  const _onRefreshData = (skipParsing, skipConfCheck = false) => {
     if (!match.params.chartId) return;
 
     const getCache = !invalidateCache;
@@ -333,7 +333,7 @@ function AddChart(props) {
       }
     }
 
-    runQuery(match.params.projectId, match.params.chartId, false, skipParsing, getCache)
+    runQuery(match.params.projectId, match.params.chartId, false, false, getCache)
       .then(() => {
         if (conditions.length > 0) {
           return runQueryWithFilters(match.params.projectId, newChart.id, conditions);

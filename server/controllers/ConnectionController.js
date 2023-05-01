@@ -498,7 +498,7 @@ class ConnectionController {
       .catch(() => {
         return Function(`'use strict';return (mongoConnection, ObjectId) => mongoConnection.${formattedQuery}`)()(mongoConnection, ObjectId); // eslint-disable-line
       })
-      .then((data) => {
+      .then(async (data) => {
         // cache the data for later use
         const dataToCache = {
           dataRequest,
@@ -507,7 +507,8 @@ class ConnectionController {
           },
           connection_id: id,
         };
-        drCacheController.create(dataRequest.id, dataToCache);
+
+        await drCacheController.create(dataRequest.id, dataToCache);
 
         // close the mongodb connection
         mongoConnection.close();
@@ -535,7 +536,7 @@ class ConnectionController {
       .then((dbConnection) => {
         return dbConnection.query(dataRequest.query, { type: Sequelize.QueryTypes.SELECT });
       })
-      .then((results) => {
+      .then(async (results) => {
         // cache the data for later use
         const dataToCache = {
           dataRequest,
@@ -545,7 +546,7 @@ class ConnectionController {
           connection_id: id,
         };
 
-        drCacheController.create(dataRequest.id, dataToCache);
+        await drCacheController.create(dataRequest.id, dataToCache);
 
         return new Promise((resolve) => resolve(dataToCache));
       })
@@ -672,7 +673,7 @@ class ConnectionController {
 
         return request(options);
       })
-      .then((response) => {
+      .then(async (response) => {
         if (dataRequest.pagination) {
           // cache the data for later use
           const dataToCache = {
@@ -682,7 +683,8 @@ class ConnectionController {
             },
             connection_id: id,
           };
-          drCacheController.create(dataRequest.id, dataToCache);
+
+          await drCacheController.create(dataRequest.id, dataToCache);
 
           return new Promise((resolve) => resolve(dataToCache));
         }
@@ -707,7 +709,7 @@ class ConnectionController {
               connection_id: id,
             };
 
-            drCacheController.create(dataRequest.id, dataToCache);
+            await drCacheController.create(dataRequest.id, dataToCache);
 
             return new Promise((resolve) => resolve(dataToCache));
           } catch (e) {
@@ -734,14 +736,15 @@ class ConnectionController {
 
         return firestoreConnection.get(dataRequest);
       })
-      .then((responseData) => {
+      .then(async (responseData) => {
         // cache the data for later use
         const dataToCache = {
           dataRequest,
           responseData,
           connection_id: id,
         };
-        drCacheController.create(dataRequest.id, dataToCache);
+
+        await drCacheController.create(dataRequest.id, dataToCache);
 
         return dataToCache;
       })
@@ -762,7 +765,7 @@ class ConnectionController {
 
         return realtimeDatabase.getData(dataRequest);
       })
-      .then((responseData) => {
+      .then(async (responseData) => {
         // cache the data for later use
         const dataToCache = {
           dataRequest,
@@ -771,7 +774,8 @@ class ConnectionController {
           },
           connection_id: id,
         };
-        drCacheController.create(dataRequest.id, dataToCache);
+
+        await drCacheController.create(dataRequest.id, dataToCache);
 
         return dataToCache;
       })
@@ -799,7 +803,7 @@ class ConnectionController {
 
     const oauth = await oauthController.findById(connection.oauth_id);
     return googleConnector.getAnalytics(oauth, dataRequest)
-      .then((responseData) => {
+      .then(async (responseData) => {
         // cache the data for later use
         const dataToCache = {
           dataRequest,
@@ -808,7 +812,8 @@ class ConnectionController {
           },
           connection_id: connection.id,
         };
-        drCacheController.create(dataRequest.id, dataToCache);
+
+        await drCacheController.create(dataRequest.id, dataToCache);
 
         return dataToCache;
       })
@@ -841,7 +846,7 @@ class ConnectionController {
 
     if (dataRequest.route.indexOf("customers") === 0) {
       return CustomerioConnection.getCustomers(connection, dataRequest)
-        .then((responseData) => {
+        .then(async (responseData) => {
           // cache the data for later use
           const dataToCache = {
             dataRequest,
@@ -850,7 +855,8 @@ class ConnectionController {
             },
             connection_id: connection.id,
           };
-          drCacheController.create(dataRequest.id, dataToCache);
+
+          await drCacheController.create(dataRequest.id, dataToCache);
 
           return dataToCache;
         })
@@ -859,7 +865,7 @@ class ConnectionController {
         });
     } else if (dataRequest.route.indexOf("campaigns") === 0) {
       return CustomerioConnection.getCampaignMetrics(connection, dataRequest)
-        .then((responseData) => {
+        .then(async (responseData) => {
           // cache the data for later use
           const dataToCache = {
             dataRequest,
@@ -868,7 +874,8 @@ class ConnectionController {
             },
             connection_id: connection.id,
           };
-          drCacheController.create(dataRequest.id, dataToCache);
+
+          await drCacheController.create(dataRequest.id, dataToCache);
 
           return dataToCache;
         })

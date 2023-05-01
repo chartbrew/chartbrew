@@ -376,6 +376,7 @@ class ChartController {
             return tempItem;
           });
         } else if (!skipCache && user?.id) {
+          // console.log("resolvingData", JSON.stringify(resolvingData, null, 4));
           // create a new cache for the data that was fetched
           this.chartCache.create(user.id, gChart.id, resolvingData);
         }

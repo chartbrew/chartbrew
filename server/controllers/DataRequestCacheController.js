@@ -21,6 +21,7 @@ const findLast = (drId, includeData = true) => {
             return new Promise((resolve) => resolve({ ...cache, ...parsedData }));
           }
         }
+
         return cache;
       } catch (e) {
         return new Promise((resolve) => resolve(false));
