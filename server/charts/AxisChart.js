@@ -906,7 +906,7 @@ class AxisChart {
           // get the objects in the nested array
           if (op !== "count" && yType === "number") {
             nestedData.forEach((current) => {
-              nestedResult += _.get(current, nestedArray[1].slice(1));
+              nestedResult += _.get(current, nestedArray[1].slice(1)) || 0;
             });
           }
         });
@@ -981,8 +981,8 @@ class AxisChart {
         });
       } else {
         yData.forEach((item) => {
-          if (!countData[item.x] && item.y) countData[item.x] = item.y.reduce((a, b) => a + b);
-          else if (item.y) countData[item.x] += item.y.reduce((a, b) => a + b);
+          if (!countData[item.x] && item.y) countData[item.x] = item.y.reduce((a, b) => a + b, 0);
+          else if (item.y) countData[item.x] += item.y.reduce((a, b) => a + b, 0);
 
           if (!avgCounter[item.x]) avgCounter[item.x] = item.y.length;
           else avgCounter[item.x] += item.y.length;
