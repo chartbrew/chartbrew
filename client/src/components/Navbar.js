@@ -28,6 +28,7 @@ import canAccess from "../config/canAccess";
 import { DOCUMENTATION_HOST, SITE_HOST } from "../config/settings";
 import { dark, darkBlue } from "../config/colors";
 import useThemeDetector from "../modules/useThemeDetector";
+import InviteMembersForm from "./InviteMembersForm";
 
 const AppMedia = createMedia({
   breakpoints: {
@@ -47,6 +48,8 @@ function NavbarContainer(props) {
   const [teamOwned, setTeamOwned] = useState({});
   const [showAppearance, setShowAppearance] = useState(false);
   const [isOsTheme, setIsOsTheme] = useLocalStorage("osTheme", false);
+  const [showInvite, setShowInvite] = useState(false);
+  const [showButton, setShowButton] = useState(false);
 
   const {
     team, teams, user, logout, projectProp, match,
@@ -66,6 +69,10 @@ function NavbarContainer(props) {
         // ---
       }
     }, 1000);
+
+    if (!window.localStorage.getItem("_cb_hide_invite")) {
+      setShowButton(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -112,6 +119,16 @@ function NavbarContainer(props) {
     }
   };
 
+  const _onShowInvite = () => {
+    setShowInvite(true);
+  };
+
+  const _onHideInvite = () => {
+    setShowInvite(false);
+    setShowButton(false);
+    window.localStorage.setItem("_cb_hide_invite", "true");
+  };
+
   if (!team.id && !teams) {
     return (
       <Modal open blur>
@@ -125,6 +142,7 @@ function NavbarContainer(props) {
       </Modal>
     );
   }
+
   return (
     <Navbar variant="sticky" disableShadow isBordered isCompact maxWidth="fluid" css={{ zIndex: 999 }}>
       <Navbar.Brand>
@@ -169,6 +187,20 @@ function NavbarContainer(props) {
         )}
       </Navbar.Brand>
       <Navbar.Content>
+        { showButton && (
+        <Navbar.Item>
+          <Button
+            bordered
+            auto
+            ghost
+            ripple={false}
+            onClick={_onShowInvite}
+            css={{ minWidth: "fit-content" }}
+          >
+            Invite Members
+          </Button>
+        </Navbar.Item>
+        )}
         <Navbar.Item>
           <LinkNext
             className="changelog-trigger"
@@ -400,6 +432,30 @@ function NavbarContainer(props) {
             auto
           >
             Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      <Modal
+        open={showInvite}
+        onClose={() => setShowInvite(false)}
+        width="800px"
+        closeButton
+        >
+        <Modal.Header />
+        <Modal.Body>
+          <InviteMembersForm />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button auto flat color="error" onPress={() => setShowInvite(false)}>
+            Close
+          </Button>
+          <Button
+            flat
+            color="warning"
+            onClick={() => _onHideInvite()}
+            auto
+          >
+            Do not show again
           </Button>
         </Modal.Footer>
       </Modal>

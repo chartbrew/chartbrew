@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import {
-  Container, Card, Loading, Text, Spacer, Row, Link, Input, Button, Grid, useTheme, Divider,
+  Container, Card, Loading, Text, Spacer, Row, Link, Input, Button, Grid, useTheme,
 } from "@nextui-org/react";
 import { motion } from "framer-motion/dist/framer-motion";
 import { ToastContainer, toast, Flip } from "react-toastify";
@@ -23,7 +23,7 @@ import chartmogulDash from "../Connections/ChartMogul/chartmogul-template.jpeg";
 import mailgunDash from "../Connections/Mailgun/mailgun-template.jpeg";
 import connectionImages from "../../config/connectionImages";
 import Navbar from "../../components/Navbar";
-import InviteMembersForm from "../../components/InviteMembersForm";
+// import InviteMembersForm from "../../components/InviteMembersForm";
 
 function Start(props) {
   const {
@@ -90,7 +90,7 @@ function Start(props) {
           render: "🎉 Project created!", type: "success", isLoading: false, autoClose: 1500,
         });
 
-        setOnboardingStep("team");
+        setOnboardingStep("mode");
         setShowBreadcrumbs(true);
         setInitiated(true);
         setNewProject(project);
@@ -246,21 +246,6 @@ function Start(props) {
                   )}
                   <Spacer x={1} />
                   {projectName && (
-                    <Link onClick={() => setOnboardingStep("team")}>
-                      <Text
-                        css={{ color: onboardingStep !== "team" ? "$text" : "$secondary" }}
-                        b={onboardingStep === "team"}
-                      >
-                        Team
-                      </Text>
-                    </Link>
-                  )}
-                  <Spacer x={1} />
-                  {projectName && (
-                    <Text css={{ color: "$accents6" }}>/</Text>
-                  )}
-                  <Spacer x={1} />
-                  {projectName && (
                     <Link onClick={() => setOnboardingStep("mode")}>
                       <Text
                         css={{ color: onboardingStep !== "mode" ? "$text" : "$secondary" }}
@@ -324,37 +309,7 @@ function Start(props) {
               </motion.div>
             </Container>
             )}
-
-            {onboardingStep === "team" && newProject?.id && (
-            <Container
-              md
-              css={{
-                bc: "$backgroundContrast", br: "$md", pt: 10, pb: 20, mt: 10
-              }}
-            >
-              <Spacer y={1} />
-              <motion.div animate={{ scale: [0.8, 1] }} transition={{ duration: 0.3 }}>
-                <InviteMembersForm selectedProjects={[newProject.id]} projects={[newProject.id]} />
-                <Spacer y={0.5} />
-                <Divider />
-                <Spacer y={1} />
-                <Container>
-                  <Button
-                    color="gradient"
-                    onClick={() => {
-                      setOnboardingStep("mode");
-                    }}
-                    auto
-                    iconRight={<ArrowRight set={"light"} />}
-                  >
-                    Choose your starting mode
-                  </Button>
-                </Container>
-              </motion.div>
-            </Container>
-            )}
-
-            {onboardingStep === "mode" && (
+            {onboardingStep === "mode" && newProject?.id && (
             <Container md>
               <motion.div animate={{ scale: [0.8, 1] }} transition={{ duration: 0.3 }}>
                 <Grid.Container gap={3}>
