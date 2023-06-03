@@ -615,6 +615,7 @@ function AddChart(props) {
                   minValue={newChart.minValue}
                   xLabelTicks={newChart.xLabelTicks}
                   stacked={newChart.stacked}
+                  dateVarsFormat={newChart.dateVarsFormat}
                 />
               )}
             </Row>

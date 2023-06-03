@@ -73,6 +73,9 @@ module.exports = (sequelize, DataTypes) => {
     endDate: {
       type: DataTypes.DATE,
     },
+    dateVarsFormat: {
+      type: DataTypes.STRING,
+    },
     includeZeros: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
