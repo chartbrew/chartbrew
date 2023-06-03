@@ -19,7 +19,9 @@ const areDatesTheSame = (first, second, interval) => {
   let firstDate = first;
   if (`${first}` === `${parseInt(first, 10)}`) {
     firstDate = parseInt(first, 10);
-    firstDate *= 1000;
+    if (`${firstDate}`.length === 10) {
+      firstDate *= 1000;
+    }
   }
   // regex to detect this format 2022-07-16 11:38:30 - to avoid Date() modifying the date to UTC
   if (`${firstDate}`.match(/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/)) {
@@ -253,7 +255,7 @@ class AxisChart {
               const valToCompare = _.get(yDataTemp[y], xAxis);
               if (valToCompare
                 && ((
-                  valToCompare.toString().length === 10
+                  (valToCompare.toString().length === 10 || valToCompare.toString().length === 13)
                   && areDatesTheSame(parseInt(valToCompare, 10), xItem, this.chart.interval))
                 || areDatesTheSame(valToCompare, xItem, this.chart.timeInterval))
               ) {
@@ -934,7 +936,7 @@ class AxisChart {
         }
       } else {
         finalItem = finalItem[yData[key].length - 1];
-        if (op === "sum" && yType === "number") finalItem = _.reduce(yData[key], (sum, n) => sum + n);
+        if (op === "sum" && yType === "number") finalItem = _.reduce(yData[key], (sum, n) => sum + n, 0);
         if (op === "avg" && yType === "number") {
           if (averageByTotal) {
             totalNumberOfItems += yData[key].length;
