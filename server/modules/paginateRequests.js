@@ -194,7 +194,6 @@ function PaginateUrl(options, paginationField, limit, totalResults = []) {
 }
 
 function PaginateCursor(options, limit, items, offset, totalResults = []) {
-  // console.log("options", options);
   return request(options)
     .then((response) => {
       const resultsKey = [];
@@ -216,7 +215,8 @@ function PaginateCursor(options, limit, items, offset, totalResults = []) {
             && totalResults[resultKey].concat(result[resultKey])
           ) || result[resultKey];
 
-          if (!result[items]
+          const nextCursor = _.get(result, items);
+          if (!nextCursor
             || (tempResults[resultKey] && tempResults[resultKey].length >= limit && limit !== 0)
           ) {
             if (tempResults[resultKey].length > limit && limit !== 0) {
@@ -233,8 +233,8 @@ function PaginateCursor(options, limit, items, offset, totalResults = []) {
 
         // continue the recursion
         const newOptions = options;
-        newOptions.qs = {};
-        newOptions.qs[offset] = tempResults[items];
+        const nextCursor = _.get(tempResults, items);
+        newOptions.qs[offset] = nextCursor;
 
         return PaginateCursor(newOptions, limit, items, offset, tempResults);
       } catch (error) {
