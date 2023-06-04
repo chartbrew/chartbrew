@@ -236,7 +236,7 @@ function ChartSettings(props) {
       <Spacer y={0.5} />
       <Row>
         <Grid.Container gap={1}>
-          <Grid xs={12} sm={6} md={6} alignItems="center">
+          <Grid xs={12} sm={12} md={6} alignItems="center">
             <div>
               <Container css={{ ml: 0, pl: 0 }}>
                 <Row css={{ ml: 0, pl: 0 }} align="center">
@@ -256,6 +256,18 @@ function ChartSettings(props) {
                         color="error"
                         onClick={() => _onRemoveDateFiltering()}
                         auto
+                      />
+                    </Tooltip>
+                  )}
+                  {startDate && endDate && (
+                    <Tooltip content="Date formatting">
+                      <Button
+                        light
+                        icon={<Setting />}
+                        onClick={() => setDateFormattingModal(true)}
+                        auto
+                        size="xs"
+                        css={{ minWidth: "fit-content" }}
                       />
                     </Tooltip>
                   )}
@@ -279,23 +291,10 @@ function ChartSettings(props) {
                     </Link>
                   </Badge>
                 )}
-                <Spacer x={0.3} />
-                {startDate && endDate && (
-                  <Tooltip content="Date formatting">
-                    <Button
-                      light
-                      icon={<Setting />}
-                      onClick={() => setDateFormattingModal(true)}
-                      auto
-                      size="xs"
-                      css={{ minWidth: "fit-content" }}
-                    />
-                  </Tooltip>
-                )}
               </Row>
             </div>
           </Grid>
-          <Grid xs={12} sm={6} md={6} direction="column">
+          <Grid xs={12} sm={12} md={6} direction="column">
             <Checkbox
               isSelected={currentEndDate}
               isDisabled={!dateRange.endDate}
