@@ -87,7 +87,7 @@ function ChartSettings(props) {
     type, pointRadius, displayLegend,
     endDate, fixedStartDate, currentEndDate, timeInterval,
     includeZeros, startDate, onChange, onComplete,
-    maxValue, minValue, xLabelTicks, stacked, dateVarsFormat,
+    maxValue, minValue, xLabelTicks, stacked, dateVarsFormat, horizontal,
   } = props;
 
   useEffect(() => {
@@ -167,6 +167,10 @@ function ChartSettings(props) {
 
   const _onChangeStacked = () => {
     onChange({ stacked: !stacked });
+  };
+
+  const _onChangeHorizontal = () => {
+    onChange({ horizontal: !horizontal });
   };
 
   const _onChangeDateRange = (range) => {
@@ -363,7 +367,7 @@ function ChartSettings(props) {
       <Spacer y={0.5} />
 
       <Grid.Container gap={1}>
-        <Grid xs={12} sm={6} md={6}>
+        <Grid xs={12} sm={6} md={6} direction="column">
           {type === "line"
             && (
               <Checkbox
@@ -387,6 +391,16 @@ function ChartSettings(props) {
               size="sm"
             >
               Stack datasets
+            </Checkbox>
+          )}
+          <Spacer y={0.5} />
+          {type === "bar" && (
+            <Checkbox
+              isSelected={horizontal}
+              onChange={_onChangeHorizontal}
+              size="sm"
+            >
+              Horizontal bars
             </Checkbox>
           )}
         </Grid>
@@ -718,6 +732,7 @@ ChartSettings.defaultProps = {
   minValue: null,
   xLabelTicks: "",
   stacked: false,
+  horizontal: false,
   dateVarsFormat: "",
 };
 
@@ -737,6 +752,7 @@ ChartSettings.propTypes = {
   minValue: PropTypes.number,
   xLabelTicks: PropTypes.number,
   stacked: PropTypes.bool,
+  horizontal: PropTypes.bool,
   dateVarsFormat: PropTypes.string,
 };
 

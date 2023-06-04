@@ -134,6 +134,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    horizontal: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
     showGrowth: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,

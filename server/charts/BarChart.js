@@ -98,8 +98,9 @@ class NewBarChart {
       };
     } else {
       chartJsData.options = {
+        indexAxis: this.chart.horizontal ? "y" : "x",
         interaction: {
-          intersect: false,
+          intersect: this.chart.horizontal,
           mode: "index",
         },
         maintainAspectRatio: false,
@@ -130,7 +131,7 @@ class NewBarChart {
               display: true,
             },
             grid: {
-              display: true,
+              display: !this.chart.horizontal,
               drawBorder: this.chart.mode !== "kpichart",
               lineWidth: 0.5,
             },
@@ -146,8 +147,8 @@ class NewBarChart {
               minRotation: 0,
             },
             grid: {
-              display: this.chart.mode !== "kpichart",
-              drawBorder: this.chart.mode !== "kpichart",
+              display: this.chart.mode !== "kpichart" || this.chart.horizontal,
+              drawBorder: this.chart.mode !== "kpichart" || this.chart.horizontal,
               lineWidth: 0.5,
             },
           },
