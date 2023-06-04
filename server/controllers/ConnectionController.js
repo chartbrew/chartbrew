@@ -227,6 +227,7 @@ class ConnectionController {
 
   testApi(data) {
     const testOpt = this.getApiTestOptions(data);
+    testOpt.url = encodeURI(testOpt.url);
 
     return request(testOpt);
   }
@@ -621,7 +622,7 @@ class ConnectionController {
         }
 
         const options = {
-          url,
+          url: encodeURI(url),
           method: dataRequest.method || "GET",
           headers: {},
           qs: queryParams,
