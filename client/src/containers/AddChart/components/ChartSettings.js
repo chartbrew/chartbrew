@@ -326,7 +326,7 @@ function ChartSettings(props) {
       <Spacer y={0.5} />
       <Grid.Container gap={1}>
         <Grid xs={12} sm={6} md={6}>
-          <Dropdown>
+          <Dropdown isBordered>
             <Dropdown.Trigger>
               <Input
                 placeholder="Select the frequency"
@@ -504,7 +504,7 @@ function ChartSettings(props) {
 
       <Grid.Container gap={1}>
         <Grid xs={12} sm={12} md={12}>
-          <Dropdown>
+          <Dropdown isBordered>
             <Dropdown.Trigger>
               <Input
                 label="Number of labels on the X Axis"

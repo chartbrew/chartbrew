@@ -178,7 +178,7 @@ function ProjectSettings(props) {
       <Spacer y={1} />
 
       <Row align="flex-end">
-        <Dropdown>
+        <Dropdown isBordered>
           <Dropdown.Trigger type="text">
             <Input
               label="Project timezone"

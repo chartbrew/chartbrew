@@ -226,7 +226,7 @@ function DatarequestSettings(props) {
               <Text b>Main source</Text>
             </Row>
             <Row>
-              <Dropdown>
+              <Dropdown isBordered>
                 <Dropdown.Button
                   auto
                   bordered
@@ -269,7 +269,7 @@ function DatarequestSettings(props) {
                   <Text>Join</Text>
                 </Grid>
                 <Grid xs={6} sm={5}>
-                  <Dropdown>
+                  <Dropdown isBordered>
                     <Dropdown.Button
                       auto
                       bordered
@@ -312,7 +312,7 @@ function DatarequestSettings(props) {
                   <Text>with</Text>
                 </Grid>
                 <Grid xs={6} sm={5}>
-                  <Dropdown>
+                  <Dropdown isBordered>
                     <Dropdown.Button
                       auto
                       bordered
@@ -358,7 +358,7 @@ function DatarequestSettings(props) {
                   <Text>where</Text>
                 </Grid>
                 <Grid xs={6} sm={5} css={styles.fieldContainer}>
-                  <Dropdown>
+                  <Dropdown isBordered>
                     <Dropdown.Trigger>
                       <Badge variant={"bordered"} isSquared color="primary">
                         <div style={styles.fieldContainer}>
@@ -393,7 +393,7 @@ function DatarequestSettings(props) {
                   <Text>=</Text>
                 </Grid>
                 <Grid xs={6} sm={5} css={styles.fieldContainer}>
-                  <Dropdown>
+                  <Dropdown isBordered>
                     <Dropdown.Trigger css={{ width: "100%" }}>
                       <Badge variant={"bordered"} isSquared color="secondary">
                         <div style={styles.fieldContainer}>

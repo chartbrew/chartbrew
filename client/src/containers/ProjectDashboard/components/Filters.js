@@ -125,7 +125,7 @@ function Filters(props) {
           </Row>
           <Spacer y={1} />
           <Row align="center">
-            <Dropdown>
+            <Dropdown isBordered>
               <Dropdown.Button flat>
                 {(filter.field && filter.field.substring(filter.field.lastIndexOf(".") + 1)) || "Select a field"}
               </Dropdown.Button>
@@ -151,7 +151,7 @@ function Filters(props) {
               </Dropdown.Menu>
             </Dropdown>
             <Spacer x={0.2} />
-            <Dropdown>
+            <Dropdown isBordered>
               <Dropdown.Button flat>
                 {(_.find(operators, { value: filter.operator })
                   && _.find(operators, { value: filter.operator }).key)

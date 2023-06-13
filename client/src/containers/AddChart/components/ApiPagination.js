@@ -84,7 +84,7 @@ function ApiPagination(props) {
     <Grid.Container gap={1}>
       <Grid xs={12} sm={8} direction="column">
         <Text size={16}>Pagination type</Text>
-        <Dropdown>
+        <Dropdown isBordered>
           <Dropdown.Trigger>
             <Input
               value={(template && templates.find((t) => t.value === template).text) || "Custom"}
@@ -190,7 +190,7 @@ function ApiPagination(props) {
           <Grid xs={12} direction="column">
             <Text size={16}>{"Click here to select a field that contains the pagination URL"}</Text>
             <div style={styles.rowDisplay}>
-              <Dropdown>
+              <Dropdown isBordered>
                 <Dropdown.Trigger>
                   <Input
                     value={paginationField || "Select a field"}

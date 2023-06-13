@@ -252,7 +252,7 @@ function NavbarContainer(props) {
           </Dropdown.Menu>
         </Dropdown>
 
-        <Dropdown>
+        <Dropdown isBordered>
           <Navbar.Item>
             <Dropdown.Button light ripple={false} css={{ minWidth: "fit-content" }} icon={<User />} />
           </Navbar.Item>

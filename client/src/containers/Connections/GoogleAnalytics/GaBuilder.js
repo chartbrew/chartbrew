@@ -428,7 +428,7 @@ function GaBuilder(props) {
                 <Divider />
               </Grid>
               <Grid xs={12} sm={4} className="gabuilder-collections-tut">
-                <Dropdown>
+                <Dropdown isBordered>
                   <Dropdown.Trigger>
                     <Input
                       label="Account"
@@ -459,7 +459,7 @@ function GaBuilder(props) {
                 </Dropdown>
               </Grid>
               <Grid xs={12} sm={4}>
-                <Dropdown isDisabled={!configuration.accountId}>
+                <Dropdown isDisabled={!configuration.accountId} isBordered>
                   <Dropdown.Trigger>
                     <Input
                       label="Property"
@@ -491,7 +491,10 @@ function GaBuilder(props) {
                 </Dropdown>
               </Grid>
               <Grid xs={12} sm={4}>
-                <Dropdown isDisabled={!configuration.accountId || !configuration.propertyId}>
+                <Dropdown
+                  isDisabled={!configuration.accountId || !configuration.propertyId}
+                  isBordered
+                >
                   <Dropdown.Trigger>
                     <Input
                       label="View"
@@ -579,7 +582,7 @@ function GaBuilder(props) {
               <Grid xs={12} direction="column">
                 <Text size={16}>Choose a dimension</Text>
 
-                <Dropdown isDisabled={!configuration.viewId}>
+                <Dropdown isDisabled={!configuration.viewId} isBordered>
                   <Dropdown.Trigger>
                     <Input
                       placeholder="Select a dimension"

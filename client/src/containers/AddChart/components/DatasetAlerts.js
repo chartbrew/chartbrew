@@ -331,7 +331,7 @@ function DatasetAlerts(props) {
         <Modal.Body>
           <Container>
             <Row align="center">
-              <Dropdown>
+              <Dropdown isBordered>
                 <Dropdown.Button auto color="primary" bordered>
                   {ruleTypes.find((r) => r.value === newAlert.type)?.label || "Select an alert type"}
                 </Dropdown.Button>
@@ -527,7 +527,7 @@ function DatasetAlerts(props) {
                     onChange={(e) => setDisplayTimeout(e.target.value)}
                   />
                   <Spacer x={0.5} />
-                  <Dropdown>
+                  <Dropdown isBordered>
                     <Dropdown.Button bordered>
                       {timeoutUnit}
                     </Dropdown.Button>

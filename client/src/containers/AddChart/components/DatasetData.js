@@ -601,7 +601,7 @@ function DatasetData(props) {
             )}
           </div>
           <div style={styles.rowDisplay}>
-            <Dropdown>
+            <Dropdown isBordered>
               <Dropdown.Trigger type="text">
                 <Input
                   type="text"
@@ -655,7 +655,7 @@ function DatasetData(props) {
             )}
           </div>
           <div style={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
-            <Dropdown>
+            <Dropdown isBordered>
               <Dropdown.Trigger type="text">
                 <Input
                   type="text"
@@ -717,7 +717,7 @@ function DatasetData(props) {
                 )}
               </div>
               <div>
-                <Dropdown>
+                <Dropdown isBordered>
                   <Dropdown.Trigger type="text">
                     <Input
                       type="text"
@@ -944,7 +944,7 @@ function DatasetData(props) {
                               <Spacer x={0.2} />
                               {`${field.accessor.replace("?", ".")}`}
                               <Spacer x={0.2} />
-                              <Dropdown>
+                              <Dropdown isBordered>
                                 <Dropdown.Trigger>
                                   <Link
                                     css={{ ai: "center" }}
@@ -1067,7 +1067,7 @@ function DatasetData(props) {
                 <Text size={14}>{"Group by"}</Text>
               </div>
               <div style={styles.rowDisplay}>
-                <Dropdown>
+                <Dropdown isBordered>
                   <Dropdown.Trigger type="text">
                     <Input
                       type="text"
@@ -1179,7 +1179,7 @@ function DatasetData(props) {
                   {index === 0 && (<Text size={14}>{"where "}</Text>)}
                   {index > 0 && (<Text size={14}>{"and "}</Text>)}
                   <Spacer x={0.2} />
-                  <Dropdown>
+                  <Dropdown isBordered>
                     <Dropdown.Trigger>
                       <Input
                         value={(condition.field && condition.field.substring(condition.field.lastIndexOf(".") + 1)) || "field"}
@@ -1206,7 +1206,7 @@ function DatasetData(props) {
                     </Dropdown.Menu>
                   </Dropdown>
                   <Spacer x={0.2} />
-                  <Dropdown>
+                  <Dropdown isBordered>
                     <Dropdown.Trigger>
                       <Input
                         value={

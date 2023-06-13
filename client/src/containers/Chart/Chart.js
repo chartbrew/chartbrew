@@ -544,7 +544,7 @@ function Chart(props) {
                   </Popover>
                 )}
                 {projectId && !print && (
-                  <Dropdown closeOnSelect={false}>
+                  <Dropdown closeOnSelect={false} isBordered>
                     <Dropdown.Trigger>
                       <LinkNext color="text">
                         <MoreSquare set="light" />
@@ -597,7 +597,7 @@ function Chart(props) {
                       )}
                       {_canAccess("editor") && (
                         <Dropdown.Item icon={<ChevronDownCircle />} withDivider>
-                          <Dropdown>
+                          <Dropdown isBordered>
                             <Dropdown.Trigger>
                               <Text>Chart size</Text>
                             </Dropdown.Trigger>
@@ -629,7 +629,7 @@ function Chart(props) {
                       )}
                       {_canAccess("editor") && (
                         <Dropdown.Item icon={<ChevronDownCircle />}>
-                          <Dropdown>
+                          <Dropdown isBordered>
                             <Dropdown.Trigger>
                               <Text>Change order</Text>
                             </Dropdown.Trigger>
@@ -696,7 +696,7 @@ function Chart(props) {
                 )}
 
                 {showExport && (
-                  <Dropdown closeOnSelect={false}>
+                  <Dropdown closeOnSelect={false} isBordered>
                     <Dropdown.Trigger>
                       <LinkNext color="text">
                         <MoreSquare set="light" />
@@ -925,7 +925,7 @@ function Chart(props) {
                 min={updateFreqType === "seconds" ? 10 : 1}
               />
               <Spacer x={0.5} />
-              <Dropdown>
+              <Dropdown isBordered>
                 <Dropdown.Button auto bordered size="sm">
                   {updateFreqType}
                 </Dropdown.Button>

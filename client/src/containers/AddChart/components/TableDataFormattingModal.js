@@ -146,7 +146,7 @@ function TableDataFormattingModal(props) {
             <Text b>Data type</Text>
           </Row>
           <Row>
-            <Dropdown>
+            <Dropdown isBordered>
               <Dropdown.Button auto bordered>
                 {dataTypes.find((d) => d.value === dataType)?.text}
               </Dropdown.Button>
@@ -172,7 +172,7 @@ function TableDataFormattingModal(props) {
           )}
           {dataType === "date" && (
             <Row>
-              <Dropdown>
+              <Dropdown isBordered>
                 <Dropdown.Button auto bordered>
                   {dateFormats.find((d) => d.value === formatValue)?.text}
                 </Dropdown.Button>

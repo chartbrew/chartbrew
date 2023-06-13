@@ -420,7 +420,7 @@ function GaTemplate(props) {
                 {selectedConnection && !formVisible && (
                   <>
                     <Grid xs={12} sm={12} md={4}>
-                      <Dropdown>
+                      <Dropdown isBordered>
                         <Dropdown.Trigger>
                           <Input
                             placeholder="Select an account"
@@ -445,7 +445,7 @@ function GaTemplate(props) {
                       </Dropdown>
                     </Grid>
                     <Grid xs={12} sm={12} md={4}>
-                      <Dropdown isDisabled={!configuration.accountId}>
+                      <Dropdown isDisabled={!configuration.accountId} isBordered>
                         <Dropdown.Trigger>
                           <Input
                             placeholder="Select a property"
@@ -470,7 +470,10 @@ function GaTemplate(props) {
                       </Dropdown>
                     </Grid>
                     <Grid xs={12} sm={12} md={4}>
-                      <Dropdown isDisabled={!configuration.accountId || !configuration.propertyId}>
+                      <Dropdown
+                        isDisabled={!configuration.accountId || !configuration.propertyId}
+                        isBordered
+                      >
                         <Dropdown.Trigger>
                           <Input
                             placeholder="Select a view"

@@ -165,7 +165,7 @@ function TableComponent(props) {
                 size="sm"
               />
               <Spacer x={0.5} />
-              <Dropdown>
+              <Dropdown isBordered>
                 <Dropdown.Button bordered size="sm">
                   {paginationOptions.find((option) => option.value === pageSize).text}
                 </Dropdown.Button>

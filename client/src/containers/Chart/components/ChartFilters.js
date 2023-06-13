@@ -100,7 +100,7 @@ function ChartFilters(props) {
                         <Spacer y={0.2} />
                         <div style={{ display: "flex", alignItems: "center" }}>
                           {condition.type !== "date" && !condition.hideValues && (
-                            <Dropdown>
+                            <Dropdown isBordered>
                               <Dropdown.Trigger type="text">
                                 <Input
                                   type="text"

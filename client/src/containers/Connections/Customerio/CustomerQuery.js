@@ -226,7 +226,7 @@ function CustomerQuery(props) {
         || (conditions.or && conditions.or.length > 0)
       ) && (
         <Row>
-          <Dropdown>
+          <Dropdown isBordered>
             <Dropdown.Trigger>
               <Input
                 bordered
@@ -439,7 +439,7 @@ function CustomerQuery(props) {
       )}
       {segmentConfig && (
         <Row>
-          <Dropdown>
+          <Dropdown isBordered>
             <Dropdown.Trigger>
               <Input
                 size="sm"
@@ -467,7 +467,7 @@ function CustomerQuery(props) {
             </Dropdown.Menu>
           </Dropdown>
           <Spacer x={0.2} />
-          <Dropdown>
+          <Dropdown isBordered>
             <Dropdown.Button size="sm" flat>
               Segments
               <Spacer x={0.2} />
@@ -541,7 +541,7 @@ function CustomerQuery(props) {
             size="sm"
           />
           <Spacer x={0.5} />
-          <Dropdown>
+          <Dropdown isBordered>
             <Dropdown.Trigger>
               <Input
                 size="sm"

@@ -552,7 +552,7 @@ function ApiBuilder(props) {
           <Container>
             <Row>
               <div className="apibuilder-type-tut">
-                <Dropdown>
+                <Dropdown isBordered>
                   <Dropdown.Trigger>
                     <Input
                       value={apiRequest.method}

@@ -292,7 +292,7 @@ function MailgunTemplate(props) {
             )}
             <Spacer y={1} />
             <Row align="center">
-              <Dropdown>
+              <Dropdown isBordered>
                 <Dropdown.Trigger css={{ ta: "left" }}>
                   <Input
                     label="Select your Mailgun domain location"

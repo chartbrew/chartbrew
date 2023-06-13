@@ -307,7 +307,7 @@ function CampaignsQuery(props) {
   return (
     <Container css={{ pr: 0, pl: 0 }}>
       <Row>
-        <Dropdown>
+        <Dropdown isBordered>
           <Dropdown.Trigger>
             <Input
               bordered
@@ -400,7 +400,7 @@ function CampaignsQuery(props) {
 
       {config.campaignId && config.requestRoute.indexOf("actions") === 0 && (
         <Row>
-          <Dropdown>
+          <Dropdown isBordered>
             <Dropdown.Trigger>
               <Input
                 bordered
@@ -481,7 +481,7 @@ function CampaignsQuery(props) {
           <Row>
             <Grid.Container gap={0.5}>
               <Grid xs={12} sm={(config.series || config.actionId) ? 4 : 6}>
-                <Dropdown>
+                <Dropdown isBordered>
                   <Dropdown.Trigger>
                     <Input
                       bordered
@@ -506,7 +506,7 @@ function CampaignsQuery(props) {
                 </Dropdown>
               </Grid>
               <Grid xs={12} sm={(config.series || config.actionId) ? 4 : 6}>
-                <Dropdown>
+                <Dropdown isBordered>
                   <Dropdown.Trigger>
                     <Input
                       bordered
@@ -534,7 +534,7 @@ function CampaignsQuery(props) {
               {(config.series || config.actionId) && (
                 <Grid xs={12} sm={4} direction="column" justify="center">
                   <Text size={14}>Leave empty for *all* types</Text>
-                  <Dropdown>
+                  <Dropdown isBordered>
                     <Dropdown.Button flat>
                       Message types
                       <Spacer x={0.2} />
@@ -617,7 +617,7 @@ function CampaignsQuery(props) {
                   <Row align="center">
                     <Grid.Container gap={0.5}>
                       <Grid xs={12} sm={9}>
-                        <Dropdown>
+                        <Dropdown isBordered>
                           <Dropdown.Trigger>
                             <Input
                               bordered
@@ -695,7 +695,7 @@ function CampaignsQuery(props) {
               </Popover.Content>
             </Popover>
             <Spacer x={0.5} />
-            <Dropdown>
+            <Dropdown isBordered>
               <Dropdown.Trigger>
                 <Input
                   bordered
@@ -725,7 +725,7 @@ function CampaignsQuery(props) {
           <Row>
             <Col>
               <Text size={14}>Type of messages. Leave empty for *all* types</Text>
-              <Dropdown>
+              <Dropdown isBordered>
                 <Dropdown.Button flat>
                   Message types
                   <Spacer x={0.2} />

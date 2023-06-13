@@ -758,7 +758,7 @@ function Conditions(props) {
                   <Spacer x={0.2} />
                 </>
               )}
-              <Dropdown>
+              <Dropdown isBordered>
                 <Dropdown.Trigger>
                   <Input
                     value={(condition.field && condition.field.substring(condition.field.lastIndexOf(".") + 1)) || "field"}
@@ -790,7 +790,7 @@ function Conditions(props) {
 
               <Spacer x={0.2} />
 
-              <Dropdown>
+              <Dropdown isBordered>
                 <Dropdown.Trigger css={{ minWidth: 50 }}>
                   <Input
                     value={

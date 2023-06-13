@@ -241,7 +241,7 @@ function TeamMembers(props) {
                         {_canAccess("admin") && user.id !== member.id && (
                           <>
                             <Tooltip content="Change member role">
-                              <Dropdown>
+                              <Dropdown isBordered>
                                 <Dropdown.Button light auto icon={<People />} color="secondary" />
                                 <Dropdown.Menu
                                   onAction={(key) => _onChangeRole(key, member)}

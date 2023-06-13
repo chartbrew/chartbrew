@@ -206,7 +206,7 @@ function CustomerioConnectionForm(props) {
         </Row>
         <Spacer y={1} />
         <Row align="flex-start">
-          <Dropdown>
+          <Dropdown isBordered>
             <Dropdown.Trigger>
               <Input
                 label="Where is your Customer.io data located?"
