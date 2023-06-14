@@ -27,13 +27,14 @@ const options = {
   },
   dialectOptions: {
     charset: "utf8mb4",
+    ssl: {
+      rejectUnauthorized: config.rejectUnauthorized,
+    },
   },
 };
 
 if (config.cert) {
-  options.dialectOptions.ssl = {
-    ca: Buffer.from(config.cert, "base64").toString("ascii")
-  };
+  options.dialectOptions.ssl.ca = Buffer.from(config.cert, "base64").toString("ascii");
 }
 
 const sequelize = new Sequelize(config.database, config.username, config.password, options);
