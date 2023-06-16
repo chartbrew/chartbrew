@@ -2,7 +2,7 @@ import _ from "lodash";
 
 import determineType from "./determineType";
 
-function findFields(coll, currentKey, first, fields) {
+function findFields(coll, currentKey, first, fields, onlyObjects) {
   let newFields = fields;
   if (!coll) return newFields;
   if (Object.keys(coll).length === 0) return newFields;
@@ -12,32 +12,37 @@ function findFields(coll, currentKey, first, fields) {
     let newKey = field;
     if (currentKey) {
       newKey = `${currentKey}.${field}`;
-      if (first) {
+      if (first && !onlyObjects) {
         newKey = `root.${currentKey}[].${field}`;
       }
 
       const fieldType = determineType(coll[field]);
-      newFields.push({
-        field: newKey,
-        value: coll[field],
-        type: fieldType,
-      });
+      if (!newFields.find((f) => f.field === newKey)) {
+        newFields.push({
+          field: newKey,
+          value: coll[field],
+          type: fieldType,
+        });
+      }
 
       // include fields from a nested array (2 levels max!)
-      if (fieldType === "array" && newKey.split("[]").length < 3) {
+      if (fieldType === "array" && newKey.split("[]").length < 3 && !onlyObjects) {
         return findFields(coll[field][0], `${newKey}[]`, false, newFields);
       }
     } else {
-      if (first) newKey = `root[].${newKey}`;
+      if (first && !onlyObjects) newKey = `root[].${newKey}`;
+      else if (first && onlyObjects) newKey = `root.${newKey}`;
       const fieldType = determineType(coll[field]);
-      newFields.push({
-        field: newKey,
-        value: coll[field],
-        type: fieldType,
-      });
+      if (!newFields.find((f) => f.field === newKey)) {
+        newFields.push({
+          field: newKey,
+          value: coll[field],
+          type: fieldType,
+        });
+      }
 
       // include fields from a nested array (2 levels max!)
-      if (fieldType === "array" && newKey.split("[]").length < 3) {
+      if (fieldType === "array" && newKey.split("[]").length < 3 && !onlyObjects) {
         return findFields(coll[field][0], `${newKey}[]`, false, newFields);
       }
     }
@@ -52,12 +57,17 @@ function findFields(coll, currentKey, first, fields) {
   return newFields;
 }
 
-export default function init(collection, checkObjects) {
+export default function init(collection, checkObjects, onlyObjects) {
   let fields = [];
   const explorationSet = [];
 
   if (checkObjects) {
     fields = findFields(collection, "", true, fields);
+    return fields;
+  }
+
+  if (onlyObjects) {
+    fields = findFields(collection, "", true, fields, true);
     return fields;
   }
 
