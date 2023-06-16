@@ -225,7 +225,6 @@ function ChartDescription(props) {
                   type="submit"
                   onClick={_onCreatePressed}
                   form="create-chart"
-                  shadow
                   auto
                   size="lg"
                 >

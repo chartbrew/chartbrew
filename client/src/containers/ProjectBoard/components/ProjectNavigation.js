@@ -191,7 +191,7 @@ function ProjectNavigation(props) {
                     iconRight={<Plus />}
                     auto
                     color="primary"
-                    onClick={(e) => { e.preventDefault(); }}
+                    css={{ pointerEvents: "none" }}
                   >
                     Create a chart
                   </Button>
