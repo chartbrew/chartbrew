@@ -309,7 +309,7 @@ function CustomerioBuilder(props) {
             <Row align="center">
               <Checkbox
                 label="Use cache"
-                checked={!invalidateCache}
+                isSelected={!invalidateCache}
                 onChange={() => setInvalidateCache(!invalidateCache)}
                 size="sm"
               />
