@@ -234,6 +234,7 @@ function PaginateCursor(options, limit, items, offset, totalResults = []) {
         // continue the recursion
         const newOptions = options;
         const nextCursor = _.get(tempResults, items);
+        if (!newOptions.qs) newOptions.qs = {};
         newOptions.qs[offset] = nextCursor;
 
         return PaginateCursor(newOptions, limit, items, offset, tempResults);
