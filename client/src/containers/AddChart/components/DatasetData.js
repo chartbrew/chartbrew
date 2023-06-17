@@ -752,10 +752,14 @@ function DatasetData(props) {
                 )}
               </div>
               <div>
-                <Dropdown isBordered>
-                  <Dropdown.Trigger type="text">
+                <Dropdown
+                  isBordered
+                  isDisabled={fieldOptions.find((o) => o.key === dataset.xAxis)?.isObject}
+                >
+                  <Dropdown.Trigger type={fieldOptions.find((o) => o.key === dataset.xAxis)?.isObject ? null : "text"}>
                     <Input
                       type="text"
+                      disabled={fieldOptions.find((o) => o.key === dataset.xAxis)?.isObject}
                       value={
                         yFieldFilter
                         || dataset.yAxis?.substring(dataset.yAxis.lastIndexOf(".") + 1)
