@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Button, Checkbox, Container, Divider, Dropdown, Grid, Input,
-  Link, Loading, Row, Spacer, Text, Tooltip, useTheme,
+  Link, Loading, Row, Spacer, Text, Tooltip, useTheme, Badge,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import uuid from "uuid/v4";
@@ -26,7 +26,6 @@ import { changeTutorial as changeTutorialAction } from "../../../actions/tutoria
 import {
   getConnection as getConnectionAction,
 } from "../../../actions/connection";
-import Badge from "../../../components/Badge";
 
 const methods = [{
   key: 1,
@@ -304,11 +303,8 @@ function ApiBuilder(props) {
             </Row>
             <Spacer y={0.5} />
             <Row align="center" className="apibuilder-route-tut">
-              <Badge type="neutral">
-                <Text>{connection.host}</Text>
-              </Badge>
-              <Spacer x={0.2} />
               <Input
+                labelLeft={connection.host}
                 placeholder="/route?key=value"
                 autoFocus
                 value={apiRequest.route || ""}
@@ -316,6 +312,9 @@ function ApiBuilder(props) {
                 fullWidth
                 bordered
                 animated={false}
+                css={{
+                  "& .nextui-input-label--left": { minWidth: "max-content" }
+                }}
               />
             </Row>
             <Spacer y={0.5} />
@@ -326,22 +325,22 @@ function ApiBuilder(props) {
                 content={chart.startDate || "Set this value in chart date settings first"}
                 css={{ zIndex: 10000 }}
               >
-                <Badge type="primary">
-                  <Link onClick={() => chart.startDate && _onChangeRoute(`${apiRequest.route}{{start_date}}`)}>
-                    <Text size={14}>{"{{start_date}}"}</Text>
-                  </Link>
-                </Badge>
+                <Link onClick={() => chart.startDate && _onChangeRoute(`${apiRequest.route}{{start_date}}`)}>
+                  <Badge color="primary">
+                    {"{{start_date}}"}
+                  </Badge>
+                </Link>
               </Tooltip>
               <Spacer x={0.2} />
               <Tooltip
                 content={chart.endDate || "Set this value in chart date settings first"}
                 css={{ zIndex: 10000 }}
               >
-                <Badge type="primary">
-                  <Link onClick={() => chart.endDate && _onChangeRoute(`${apiRequest.route}{{end_date}}`)}>
-                    <Text size={14}>{"{{end_date}}"}</Text>
-                  </Link>
-                </Badge>
+                <Link onClick={() => chart.endDate && _onChangeRoute(`${apiRequest.route}{{end_date}}`)}>
+                  <Badge color="primary">
+                    {"{{end_date}}"}
+                  </Badge>
+                </Link>
               </Tooltip>
             </Row>
             <Spacer y={1} />
@@ -399,14 +398,14 @@ function ApiBuilder(props) {
               <div style={{ position: "absolute", right: 15 }}>
                 {requestSuccess && (
                 <>
-                  <Badge type="success">
-                    <Text size={14}>{`${requestSuccess.statusCode} ${requestSuccess.statusText}`}</Text>
+                  <Badge color="success">
+                    {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
                   </Badge>
                 </>
                 )}
                 {requestError && (
                   <Badge color="error">
-                    <Text size={14}>{`${requestError.statusCode} ${requestError.statusText}`}</Text>
+                    {`${requestError.statusCode} ${requestError.statusText}`}
                   </Badge>
                 )}
               </div>
