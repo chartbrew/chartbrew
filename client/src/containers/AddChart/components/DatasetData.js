@@ -76,11 +76,13 @@ function DatasetData(props) {
   // Update the content when there is some data to work with
   useEffect(() => {
     if (requestResult) {
-      const tempFieldOptions = [];
+      let tempFieldOptions = [];
+      const tempObjectOptions = [];
       const fieldsSchema = {};
       const updateObj = {};
 
       const fields = fieldFinder(requestResult);
+      const objectFields = fieldFinder(requestResult, false, true);
 
       fields.forEach((o) => {
         if (o.field) {
@@ -99,14 +101,41 @@ function DatasetData(props) {
                 : o.type === "number" ? "primary"
                   : o.type === "string" ? "success"
                     : o.type === "boolean" ? "warning"
-                      : "neutral"
+                      : "default"
             },
           });
         }
         fieldsSchema[o.field] = o.type;
       });
 
+      objectFields.forEach((obj) => {
+        if (obj.field) {
+          let text = obj.field && obj.field.replace("root[].", "").replace("root.", "");
+          if (obj.type === "array") text += "(get element count)";
+          tempObjectOptions.push({
+            key: obj.field,
+            text: obj.field && text,
+            value: obj.field,
+            type: obj.type,
+            isObject: true,
+            label: {
+              style: { width: 55, textAlign: "center" },
+              content: obj.type || "unknown",
+              size: "mini",
+              color: obj.type === "date" ? "secondary"
+                : obj.type === "number" ? "primary"
+                  : obj.type === "string" ? "success"
+                    : obj.type === "boolean" ? "warning"
+                      : "default"
+            },
+          });
+        }
+        fieldsSchema[obj.field] = obj.type;
+      });
+
       if (Object.keys(fieldsSchema).length > 0) updateObj.fieldsSchema = fieldsSchema;
+
+      tempFieldOptions = tempFieldOptions.concat(tempObjectOptions);
 
       setFieldOptions(tempFieldOptions);
 
@@ -166,6 +195,7 @@ function DatasetData(props) {
           text: key && key.replace("root[].", "").replace("root.", ""),
           value: key,
           type,
+          isObject: key.indexOf("[]") === -1,
           label: {
             style: { width: 55, textAlign: "center" },
             content: type || "unknown",
@@ -174,7 +204,7 @@ function DatasetData(props) {
               : type === "number" ? "primary"
                 : type === "string" ? "success"
                   : type === "boolean" ? "warning"
-                    : "neutral"
+                    : "default"
           },
         });
       });
@@ -623,7 +653,11 @@ function DatasetData(props) {
                 css={{ minWidth: "max-content" }}
               >
                 {_filterOptions("x").map((option) => (
-                  <Dropdown.Item key={option.value} icon={<Badge size="xs" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}>
+                  <Dropdown.Item
+                    key={option.value}
+                    icon={<Badge size="xs" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}
+                    description={option.isObject ? "Key-Value visualization" : null}
+                  >
                     <Text>{option.text}</Text>
                   </Dropdown.Item>
                 ))}
@@ -680,6 +714,7 @@ function DatasetData(props) {
                   <Dropdown.Item
                     key={option.value}
                     icon={<Badge size="xs" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}
+                    description={option.isObject ? "Key-Value visualization" : null}
                   >
                     <Text>{option.text}</Text>
                   </Dropdown.Item>
@@ -717,10 +752,14 @@ function DatasetData(props) {
                 )}
               </div>
               <div>
-                <Dropdown isBordered>
-                  <Dropdown.Trigger type="text">
+                <Dropdown
+                  isBordered
+                  isDisabled={fieldOptions.find((o) => o.key === dataset.xAxis)?.isObject}
+                >
+                  <Dropdown.Trigger type={fieldOptions.find((o) => o.key === dataset.xAxis)?.isObject ? null : "text"}>
                     <Input
                       type="text"
+                      disabled={fieldOptions.find((o) => o.key === dataset.xAxis)?.isObject}
                       value={
                         yFieldFilter
                         || dataset.yAxis?.substring(dataset.yAxis.lastIndexOf(".") + 1)
@@ -739,14 +778,12 @@ function DatasetData(props) {
                     css={{ minWidth: "max-content" }}
                   >
                     {_getYFieldOptions().map((option) => (
-                      <Dropdown.Item key={option.value}>
-                        <Container css={{ p: 0, m: 0 }}>
-                          <Row>
-                            <Badge size="sm" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>
-                            <Spacer x={0.2} />
-                            <Text>{option.text}</Text>
-                          </Row>
-                        </Container>
+                      <Dropdown.Item
+                        key={option.value}
+                        icon={<Badge size="sm" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}
+                        description={option.isObject ? "Key-Value visualization" : null}
+                      >
+                        <Text>{option.text}</Text>
                       </Dropdown.Item>
                     ))}
                   </Dropdown.Menu>
@@ -767,6 +804,7 @@ function DatasetData(props) {
                   value={dataset.yAxisOperation}
                   onChange={_selectYOp}
                   scrolling
+                  isBordered
                 >
                   <Dropdown.Trigger>
                     <Input
@@ -1192,7 +1230,7 @@ function DatasetData(props) {
                       selectionMode="single"
                       css={{ minWidth: "max-content" }}
                     >
-                      {fieldOptions.map((field) => (
+                      {fieldOptions.filter((f) => !f.isObject).map((field) => (
                         <Dropdown.Item key={field.value}>
                           <Container css={{ p: 0, m: 0 }}>
                             <Row>

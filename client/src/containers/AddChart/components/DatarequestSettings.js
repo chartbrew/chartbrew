@@ -515,7 +515,6 @@ function DatarequestSettings(props) {
                 <Button
                   css={{ width: "100%" }}
                   color="primary"
-                  shadow
                   onClick={() => _onRunDataset()}
                   iconRight={isCompiling ? <Loading type="spinner" /> : <Play />}
                   disabled={isCompiling}
