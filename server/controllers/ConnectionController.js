@@ -257,18 +257,17 @@ class ConnectionController {
       });
   }
 
-  testMysql(data) {
-    return externalDbConnection(data)
-      .then((sequelize) => {
-        return sequelize.getQueryInterface().showAllSchemas();
-      })
-      .then((tables) => {
-        return Promise.resolve({
-          success: true,
-          tables,
-        });
-      })
-      .catch((err) => Promise.reject(err.message || err));
+  async testMysql(data) {
+    try {
+      const sqlDb = await externalDbConnection(data);
+      const tables = await sqlDb.getQueryInterface().showAllSchemas();
+      return Promise.resolve({
+        success: true,
+        tables,
+      });
+    } catch (err) {
+      return Promise.reject(err.message || err);
+    }
   }
 
   testFirebase(data) {
