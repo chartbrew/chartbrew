@@ -620,7 +620,7 @@ class ConnectionController {
         }
 
         const options = {
-          url: encodeURI(url),
+          url,
           method: dataRequest.method || "GET",
           headers: {},
           qs: queryParams,
