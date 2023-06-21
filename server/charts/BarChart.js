@@ -41,6 +41,10 @@ class NewBarChart {
           formattedDataset.datalabels.align = "start";
           formattedDataset.datalabels.anchor = "end";
           if (this.chart.stacked) {
+            if (i === this.datasets.length - 1 && this.datasets.length > 1) {
+              formattedDataset.datalabels.offset = -16;
+              formattedDataset.datalabels.color = dataset.options.fillColor;
+            }
             formattedDataset.datalabels.display = true;
           }
         }
@@ -54,6 +58,10 @@ class NewBarChart {
           formattedDataset.datalabels.align = "start";
           formattedDataset.datalabels.anchor = "end";
           if (this.chart.stacked) {
+            if (i === this.datasets.length - 1 && this.datasets.length > 1) {
+              formattedDataset.datalabels.offset = -16;
+              formattedDataset.datalabels.color = dataset.options.fillColor;
+            }
             formattedDataset.datalabels.display = true;
           }
         }
