@@ -51,6 +51,10 @@ function ChartPreview(props) {
     _onRefreshPreview();
   }, [chart.type]);
 
+  useEffect(() => {
+    setRedraw(true);
+  }, [chart.dataLabels]);
+
   const _onChangeChartType = (data) => {
     const newType = data;
     if (data.type === "polar" || data.type === "pie" || data.type === "doughnut" || data.type === "radar" || data.type === "table") {

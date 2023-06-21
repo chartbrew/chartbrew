@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Line } from "react-chartjs-2";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,7 +15,6 @@ import {
 } from "chart.js";
 import { useTheme } from "@nextui-org/react";
 
-import ChartDataLabels from "chartjs-plugin-datalabels";
 import KpiChartSegment from "./KpiChartSegment";
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import KpiMode from "./KpiMode";
@@ -26,30 +26,21 @@ ChartJS.register(
 const dataLabelsPlugin = {
   font: {
     weight: "bold",
-    size: 12,
+    size: 10,
     family: "Inter",
   },
   padding: 4,
-  formatter: (value) => {
-    let formattedValue = value;
-    try {
-      formattedValue = parseFloat(value);
-    } catch (e) {
-      // do nothing
-    }
-    return formattedValue;
-  },
-  display(context) {
-    const { dataset } = context;
-    const count = dataset.data.length;
-    const value = dataset.data[context.dataIndex];
-    return value > count * 1.5;
-  },
   backgroundColor(context) {
+    if (context.dataset.backgroundColor === "transparent"
+      || context.dataset.backgroundColor === "rgba(0,0,0,0)"
+    ) {
+      return context.dataset.borderColor;
+    }
     return context.dataset.backgroundColor;
   },
-  borderRadius: 2,
-  borderWidth: 2,
+  borderRadius: 4,
+  color: "white",
+  formatter: Math.round,
 };
 
 function LineChart(props) {
@@ -116,7 +107,7 @@ function LineChart(props) {
                     ..._getChartOptions(),
                     plugins: {
                       ..._getChartOptions().plugins,
-                      datalabels: dataLabelsPlugin,
+                      datalabels: chart.dataLabels && dataLabelsPlugin,
                     },
                   }}
                   height={
@@ -127,7 +118,7 @@ function LineChart(props) {
                     )
                   }
                   redraw={redraw}
-                  plugins={chart.pointRadius > 0 && [ChartDataLabels]}
+                  plugins={chart.dataLabels ? [ChartDataLabels] : []}
                 />
               </ChartErrorBoundary>
             </div>

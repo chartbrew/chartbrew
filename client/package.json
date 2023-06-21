@@ -60,7 +60,7 @@
     "react-ace": "^9.2.1",
     "react-anchor-link-smooth-scroll": "^1.0.12",
     "react-app-polyfill": "^2.0.0",
-    "react-chartjs-2": "^4.0.0",
+    "react-chartjs-2": "^4.3.1",
     "react-color": "^2.19.3",
     "react-cookies": "^0.1.1",
     "react-date-range": "^1.1.3",

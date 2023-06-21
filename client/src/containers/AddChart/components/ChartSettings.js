@@ -88,6 +88,7 @@ function ChartSettings(props) {
     endDate, fixedStartDate, currentEndDate, timeInterval,
     includeZeros, startDate, onChange, onComplete,
     maxValue, minValue, xLabelTicks, stacked, dateVarsFormat, horizontal,
+    dataLabels,
   } = props;
 
   useEffect(() => {
@@ -367,24 +368,25 @@ function ChartSettings(props) {
       <Spacer y={0.5} />
 
       <Grid.Container gap={1}>
-        <Grid xs={12} sm={6} md={6} direction="column">
-          {type === "line"
-            && (
-              <Checkbox
-                isSelected={pointRadius > 0}
-                onChange={() => {
-                  if (pointRadius > 0) {
-                    _onAddPoints(0);
-                  } else {
-                    _onAddPoints(3);
-                  }
-                }}
-                size="sm"
-              >
-                Data points
-              </Checkbox>
-            )}
-          {type === "bar" && (
+        {type === "line" && (
+          <Grid xs={12} sm={6} md={6}>
+            <Checkbox
+              isSelected={pointRadius > 0}
+              onChange={() => {
+                if (pointRadius > 0) {
+                  _onAddPoints(0);
+                } else {
+                  _onAddPoints(3);
+                }
+              }}
+              size="sm"
+            >
+              Data points
+            </Checkbox>
+          </Grid>
+        )}
+        {type === "bar" && (
+          <Grid xs={12} sm={6} md={6}>
             <Checkbox
               isSelected={stacked}
               onChange={_onChangeStacked}
@@ -392,9 +394,10 @@ function ChartSettings(props) {
             >
               Stack datasets
             </Checkbox>
-          )}
-          <Spacer y={0.5} />
-          {type === "bar" && (
+          </Grid>
+        )}
+        {type === "bar" && (
+          <Grid xs={12} sm={6} md={6}>
             <Checkbox
               isSelected={horizontal}
               onChange={_onChangeHorizontal}
@@ -402,8 +405,8 @@ function ChartSettings(props) {
             >
               Horizontal bars
             </Checkbox>
-          )}
-        </Grid>
+          </Grid>
+        )}
         <Grid xs={12} sm={6} md={6}>
           <Checkbox
             isSelected={displayLegend}
@@ -411,6 +414,15 @@ function ChartSettings(props) {
             size="sm"
           >
             Legend
+          </Checkbox>
+        </Grid>
+        <Grid xs={12} sm={6} md={6}>
+          <Checkbox
+            isSelected={dataLabels}
+            onChange={() => onChange({ dataLabels: !dataLabels })}
+            size="sm"
+          >
+            Data labels
           </Checkbox>
         </Grid>
       </Grid.Container>
@@ -734,6 +746,7 @@ ChartSettings.defaultProps = {
   stacked: false,
   horizontal: false,
   dateVarsFormat: "",
+  dataLabels: false,
 };
 
 ChartSettings.propTypes = {
@@ -754,6 +767,7 @@ ChartSettings.propTypes = {
   stacked: PropTypes.bool,
   horizontal: PropTypes.bool,
   dateVarsFormat: PropTypes.string,
+  dataLabels: PropTypes.bool,
 };
 
 export default ChartSettings;
