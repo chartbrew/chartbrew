@@ -67,6 +67,10 @@ module.exports = (sequelize, DataTypes) => {
     pointRadius: {
       type: DataTypes.INTEGER,
     },
+    dataLabels: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
     startDate: {
       type: DataTypes.DATE,
     },

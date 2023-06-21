@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Line } from "react-chartjs-2";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -21,6 +22,26 @@ import KpiMode from "./KpiMode";
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler
 );
+
+const dataLabelsPlugin = {
+  font: {
+    weight: "bold",
+    size: 10,
+    family: "Inter",
+  },
+  padding: 4,
+  backgroundColor(context) {
+    if (context.dataset.backgroundColor === "transparent"
+      || context.dataset.backgroundColor === "rgba(0,0,0,0)"
+    ) {
+      return context.dataset.borderColor;
+    }
+    return context.dataset.backgroundColor;
+  },
+  borderRadius: 4,
+  color: "white",
+  formatter: Math.round,
+};
 
 function LineChart(props) {
   const {
@@ -82,7 +103,13 @@ function LineChart(props) {
               <ChartErrorBoundary>
                 <Line
                   data={chart.chartData.data}
-                  options={_getChartOptions()}
+                  options={{
+                    ..._getChartOptions(),
+                    plugins: {
+                      ..._getChartOptions().plugins,
+                      datalabels: chart.dataLabels && dataLabelsPlugin,
+                    },
+                  }}
                   height={
                     height - (
                       (chart.mode === "kpichart" && chart.chartSize > 1 && 80)
@@ -91,6 +118,7 @@ function LineChart(props) {
                     )
                   }
                   redraw={redraw}
+                  plugins={chart.dataLabels ? [ChartDataLabels] : []}
                 />
               </ChartErrorBoundary>
             </div>

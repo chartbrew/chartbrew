@@ -37,11 +37,20 @@ class NewBarChart {
           color: dataset.options.fillColor.map((color) => getContrastYIQ(color)),
           display: "auto",
         };
+        if (this.chart.type === "bar") {
+          formattedDataset.datalabels.align = "start";
+          formattedDataset.datalabels.anchor = "end";
+        }
       } else {
         formattedDataset.datalabels = {
           color: getContrastYIQ(dataset.options.fillColor),
           display: "auto",
         };
+
+        if (this.chart.type === "bar") {
+          formattedDataset.datalabels.align = "start";
+          formattedDataset.datalabels.anchor = "end";
+        }
       }
 
       formattedDatasets.push(formattedDataset);

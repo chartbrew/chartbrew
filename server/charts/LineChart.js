@@ -1,4 +1,5 @@
 const tooltipsStyle = require("./tooltipsStyle");
+const getContrastYIQ = require("../modules/getContrastYIQ");
 
 class NewLineChart {
   constructor(chart, datasets, axisData) {
@@ -26,6 +27,30 @@ class NewLineChart {
         formattedDataset.backgroundColor = dataset.options.fillColor;
       }
       formattedDataset.fill = dataset.options.fill;
+
+      if (dataset.options.fillColor !== null
+        && typeof dataset.options.fillColor === "object"
+        && dataset.options.fillColor instanceof Array
+      ) {
+        formattedDataset.datalabels = {
+          color: dataset.options.fillColor.map((color) => getContrastYIQ(color)),
+          display: "auto",
+        };
+        if (this.chart.type === "bar") {
+          formattedDataset.datalabels.align = "end";
+          formattedDataset.datalabels.anchor = "end";
+        }
+      } else {
+        formattedDataset.datalabels = {
+          color: getContrastYIQ(dataset.options.fillColor),
+          display: "auto",
+        };
+
+        if (this.chart.type === "bar") {
+          formattedDataset.datalabels.align = "end";
+          formattedDataset.datalabels.anchor = "end";
+        }
+      }
 
       formattedDatasets.push(formattedDataset);
 
