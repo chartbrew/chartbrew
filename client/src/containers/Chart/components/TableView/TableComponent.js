@@ -98,7 +98,7 @@ function TableComponent(props) {
                 prepareRow(row);
                 return (
                   <Table.Row {...row.getRowProps()}>
-                    {row.cells.map((cell) => {
+                    {row.cells.map((cell, cellIndex) => {
                       // identify collections to render them differently
                       const cellObj = cell.render("Cell");
                       // console.log("cellObj.key", cellObj.props.column.Header);
@@ -120,7 +120,7 @@ function TableComponent(props) {
                             maxWidth: 300,
                             pr: 10,
                             pl: 10,
-                            borderRight: "$accents3 solid 1px",
+                            borderRight: cellIndex === row.cells.length - 1 ? "none" : "$accents3 solid 1px",
                           }}
                         >
                           {(!isObject && !isArray) && (
