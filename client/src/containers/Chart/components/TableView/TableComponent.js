@@ -58,6 +58,7 @@ function TableComponent(props) {
             {...getTableProps()}
             shadow={false}
             lined
+            sticked
           >
             <Table.Header>
               {headerGroups[headerGroups.length - 1].headers.map((column) => {
@@ -119,7 +120,6 @@ function TableComponent(props) {
                             maxWidth: 300,
                             pr: 10,
                             pl: 10,
-                            borderBottom: "$accents3 solid 1px",
                             borderRight: "$accents3 solid 1px",
                           }}
                         >
