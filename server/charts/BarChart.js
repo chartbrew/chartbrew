@@ -40,6 +40,9 @@ class NewBarChart {
         if (this.chart.type === "bar") {
           formattedDataset.datalabels.align = "start";
           formattedDataset.datalabels.anchor = "end";
+          if (this.chart.stacked) {
+            formattedDataset.datalabels.display = true;
+          }
         }
       } else {
         formattedDataset.datalabels = {
@@ -50,6 +53,9 @@ class NewBarChart {
         if (this.chart.type === "bar") {
           formattedDataset.datalabels.align = "start";
           formattedDataset.datalabels.anchor = "end";
+          if (this.chart.stacked) {
+            formattedDataset.datalabels.display = true;
+          }
         }
       }
 
