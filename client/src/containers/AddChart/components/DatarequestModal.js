@@ -336,6 +336,7 @@ function DatarequestModal(props) {
             <Grid xs={12} sm={11}>
               <DatarequestSettings
                 dataset={dataset}
+                dataRequests={dataRequests}
                 onChange={_onUpdateDataset}
               />
             </Grid>

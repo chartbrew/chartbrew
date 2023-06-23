@@ -594,7 +594,6 @@ DatarequestSettings.propTypes = {
 };
 
 const mapStateToProps = (state) => ({
-  dataRequests: state.dataRequest.data,
   responses: state.dataset.responses,
   drResponses: state.dataRequest.responses,
 });
