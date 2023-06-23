@@ -248,6 +248,7 @@ function AddChart(props) {
   const _onChangeGlobalSettings = ({
     pointRadius, displayLegend, dateRange, includeZeros, timeInterval, currentEndDate,
     fixedStartDate, maxValue, minValue, xLabelTicks, stacked, horizontal, dataLabels,
+    dateVarsFormat,
   }) => {
     const tempChart = {
       pointRadius: typeof pointRadius !== "undefined" ? pointRadius : newChart.pointRadius,
@@ -266,6 +267,7 @@ function AddChart(props) {
       stacked: typeof stacked !== "undefined" ? stacked : newChart.stacked,
       horizontal: typeof horizontal !== "undefined" ? horizontal : newChart.horizontal,
       dataLabels: typeof dataLabels !== "undefined" ? dataLabels : newChart.dataLabels,
+      dateVarsFormat: dateVarsFormat || newChart.dateVarsFormat,
     };
 
     let skipParsing = false;
