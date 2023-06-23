@@ -25,7 +25,7 @@ export default function determineType(data) {
 
   try {
     if (data
-      && ((!Number.isNaN(new Date(data).getTime()) && `${data}`.length > 9 && `${data}`.replace(/\D/g, "").length > 3 && `${data}`.replace(/\D/g, "").length < 14)
+      && ((!Number.isNaN(new Date(data).getTime()) && `${data}`.length > 9 && `${data}`.replace(/\D/g, "").length > 3 && `${data}`.replace(/\D/g, "").length < 14 && (`${data}`[0] === "1" || `${data}`[0] === "2"))
       || (moment(`${data}`).isValid() && !checkNumbersOnlyAndLength.test(data) && ((typeof data === "number" && data.toString().length === 10) || typeof data !== "number"))
       || (moment(`${data}`, "X").isValid() && (typeof data === "string" && data.length === 10) && checkNumbersOnlyAndLength.test(data))
       || (data && `${data}`.length === 10 && `${data}`[0] === "1" && moment(data, "X").isValid() && typeof data === "number"))) {
