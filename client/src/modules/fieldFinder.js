@@ -7,6 +7,18 @@ function findFields(coll, currentKey, first, fields, onlyObjects) {
   if (!coll) return newFields;
   if (Object.keys(coll).length === 0) return newFields;
 
+  // check if coll is a string and if so, don't iterate over it and return it as an array
+  if (typeof coll === "string") {
+    if (!newFields.find((f) => f.field === currentKey)) {
+      newFields.push({
+        field: currentKey.substring(0, currentKey.lastIndexOf("[]")),
+        value: coll,
+        type: "array",
+      });
+    }
+    return newFields;
+  }
+
   Object.keys(coll).forEach((field) => {
     const data = coll[field];
     let newKey = field;
