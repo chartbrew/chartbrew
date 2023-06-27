@@ -38,7 +38,7 @@ class NewBarChart {
           display: "auto",
         };
         if (this.chart.type === "bar") {
-          formattedDataset.datalabels.align = "start";
+          formattedDataset.datalabels.align = this.chart.horizontal ? "end" : "start";
           formattedDataset.datalabels.anchor = "end";
           if (this.chart.stacked) {
             if (i === this.datasets.length - 1 && this.datasets.length > 1) {
@@ -55,7 +55,7 @@ class NewBarChart {
         };
 
         if (this.chart.type === "bar") {
-          formattedDataset.datalabels.align = "start";
+          formattedDataset.datalabels.align = this.chart.horizontal ? "end" : "start";
           formattedDataset.datalabels.anchor = "end";
           if (this.chart.stacked) {
             if (i === this.datasets.length - 1 && this.datasets.length > 1) {
@@ -233,7 +233,11 @@ class NewBarChart {
         }
       }
 
-      chartJsData.options.scales.x.ticks.maxTicksLimit = maxTicksLimit;
+      if (this.chart.horizontal) {
+        chartJsData.options.scales.y.ticks.maxTicksLimit = maxTicksLimit;
+      } else {
+        chartJsData.options.scales.x.ticks.maxTicksLimit = maxTicksLimit;
+      }
     }
 
     return chartJsData;
