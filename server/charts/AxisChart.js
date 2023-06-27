@@ -311,7 +311,7 @@ class AxisChart {
                 yAxisData.push({ x: xAxisData.formatted[index], y: yValue });
               }
             } else {
-              let newItem = item;
+              let newItem = 0;
               if (yValue === 0) {
                 yType = "number";
               } else if (yType === "array") {
@@ -616,6 +616,7 @@ class AxisChart {
           }
 
           if (sortCondition) {
+            // console.log("newDatasets[sortIndex].data[i]", newDatasets[sortIndex].data[i]);
             // first, sort the dataset with the sorting option enabled
             const saved = newDatasets[sortIndex].data[i];
             newDatasets[sortIndex].data[i] = newDatasets[sortIndex].data[j];
@@ -953,6 +954,7 @@ class AxisChart {
         }
       } else {
         finalItem = finalItem[yData[key].length - 1];
+        // console.log("yData[key]", yData[key]);
         if (op === "sum" && yType === "number") finalItem = _.reduce(yData[key], (sum, n) => sum + n, 0);
         if (op === "avg" && yType === "number") {
           if (averageByTotal) {
