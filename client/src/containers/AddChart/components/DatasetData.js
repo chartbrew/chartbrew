@@ -63,6 +63,7 @@ function DatasetData(props) {
   const [conditionModal, setConditionModal] = useState(false);
   const [selectedCondition, setSelectedCondition] = useState({});
   const [requestResult, setRequestResult] = useState(null);
+  const [datasetMaxRecords, setDatasetMaxRecords] = useState(null);
 
   const [fieldForFormatting, setFieldForFormatting] = useState("");
   const [fieldFormatConfig, setFieldFormatConfig] = useState(null);
@@ -834,7 +835,7 @@ function DatasetData(props) {
             </Grid>
             <Grid xs={12} sm={6} md={6} direction="column">
               <div>
-                <Text size={14}>Sort on Y-Axis</Text>
+                <Text size={14}>Sort records</Text>
               </div>
               <div style={styles.rowDisplay}>
                 <Tooltip content="Sort the dataset in ascending order">
@@ -889,6 +890,41 @@ function DatasetData(props) {
                     onChange={() => onUpdate({ averageByTotal: !dataset.averageByTotal })}
                   />
                 </div>
+              )}
+              {dataset.sort && (
+                <>
+                  <div>
+                    <Text size={14}>{"Max number of records"}</Text>
+                  </div>
+                  <div style={styles.rowDisplay}>
+                    <Input
+                      labelRight="records"
+                      bordered
+                      size="sm"
+                      initialValue={dataset.maxRecords}
+                      value={datasetMaxRecords || dataset.maxRecords || ""}
+                      onChange={(e) => setDatasetMaxRecords(e.target.value)}
+                    />
+                    <Spacer x={0.2} />
+                    <Tooltip content="Save">
+                      <Link css={{ color: "$success" }} onClick={() => onUpdate({ maxRecords: datasetMaxRecords })}>
+                        <TickSquare />
+                      </Link>
+                    </Tooltip>
+                    <Spacer x={0.2} />
+                    <Tooltip content="Clear limit">
+                      <Link
+                        css={{ color: "$error" }}
+                        onClick={() => {
+                          onUpdate({ maxRecords: null });
+                          setDatasetMaxRecords(null);
+                        }}
+                      >
+                        <CloseSquare />
+                      </Link>
+                    </Tooltip>
+                  </div>
+                </>
               )}
             </Grid>
             <Grid xs={12} css={{ mt: 10 }}>

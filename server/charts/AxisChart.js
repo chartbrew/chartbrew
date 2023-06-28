@@ -593,7 +593,7 @@ class AxisChart {
     const configuration = chart.getConfiguration();
 
     const newDatasets = configuration.data.datasets;
-    const newLabels = configuration.data.labels;
+    let newLabels = configuration.data.labels;
 
     // apply sorting if available
     let shouldSort = false;
@@ -639,6 +639,14 @@ class AxisChart {
         }
       }
     }
+
+    // apply max records if available
+    this.datasets.forEach((d, index) => {
+      if (d.options.maxRecords) {
+        newDatasets[index].data = newDatasets[index].data.slice(0, d.options.maxRecords);
+        newLabels = newLabels.slice(0, d.options.maxRecords);
+      }
+    });
 
     configuration.data.datasets = newDatasets;
     configuration.data.labels = newLabels;
