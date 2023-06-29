@@ -141,6 +141,7 @@ function ChartFilters(props) {
                                   });
                                 }}
                                 selectionMode="single"
+                                css={{ minWidth: "max-content" }}
                               >
                                 {_getFilteredOptions(filterOptions, condition.id).map((opt) => (
                                   <Dropdown.Item key={opt.value}>
