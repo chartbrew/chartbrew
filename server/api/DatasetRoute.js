@@ -190,31 +190,25 @@ module.exports = (app) => {
       })
       .then((dataset) => {
         const newDataset = dataset;
-
-        // reduce the size of the returned data. No point in showing thousands of objects
-        if (dataset.dataRequests && dataset.dataRequests instanceof Array) {
-          newDataset.dataRequests.map((dataRequest) => {
-            const newDataRequest = dataRequest;
-            if (typeof dataRequest.responseData === "object" && dataRequest.responseData instanceof Array) {
-              newDataRequest.responseData = dataRequest.responseData.slice(0, 20);
-            } else if (typeof dataRequest.responseData === "object") {
-              const resultsKey = [];
-              Object.keys(dataRequest.responseData).forEach((key) => {
-                if (dataRequest.responseData[key] instanceof Array) {
-                  resultsKey.push(key);
-                }
-              });
-
-              if (resultsKey.length > 0) {
-                resultsKey.forEach((resultKey) => {
-                  const slicedArray = dataRequest.responseData[resultKey].slice(0, 20);
-                  newDataRequest.responseData[resultKey] = slicedArray;
-                });
+        if (newDataset?.data) {
+          const { data } = newDataset;
+          if (typeof data === "object" && data instanceof Array) {
+            newDataset.data = data.slice(0, 20);
+          } else if (typeof data === "object") {
+            const resultsKey = [];
+            Object.keys(data).forEach((key) => {
+              if (data[key] instanceof Array) {
+                resultsKey.push(key);
               }
-            }
+            });
 
-            return newDataRequest;
-          });
+            if (resultsKey.length > 0) {
+              resultsKey.forEach((resultKey) => {
+                const slicedArray = data[resultKey].slice(0, 20);
+                newDataset.data[resultKey] = slicedArray;
+              });
+            }
+          }
         }
 
         return res.status(200).send(newDataset);
