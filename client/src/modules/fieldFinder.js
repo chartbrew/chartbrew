@@ -19,6 +19,10 @@ function findFields(coll, currentKey, first, fields, onlyObjects) {
     return newFields;
   }
 
+  if (determineType(coll) === "array" && onlyObjects) {
+    return newFields;
+  }
+
   Object.keys(coll).forEach((field) => {
     const data = coll[field];
     let newKey = field;
@@ -43,7 +47,7 @@ function findFields(coll, currentKey, first, fields, onlyObjects) {
       }
     } else {
       if (first && !onlyObjects) newKey = `root[].${newKey}`;
-      else if (first && onlyObjects) newKey = `root.${newKey}`;
+      else if (first && onlyObjects && `${newKey}` !== `${parseInt(newKey, 10)}`) newKey = `root.${newKey}`;
       const fieldType = determineType(coll[field]);
       if (!newFields.find((f) => f.field === newKey)) {
         newFields.push({

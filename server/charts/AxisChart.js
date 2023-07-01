@@ -311,7 +311,7 @@ class AxisChart {
                 yAxisData.push({ x: xAxisData.formatted[index], y: yValue });
               }
             } else {
-              let newItem = 0;
+              let newItem = item;
               if (yValue === 0) {
                 yType = "number";
               } else if (yType === "array") {
