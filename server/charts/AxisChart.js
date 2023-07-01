@@ -963,12 +963,12 @@ class AxisChart {
       } else {
         finalItem = finalItem[yData[key].length - 1];
         // console.log("yData[key]", yData[key]);
-        if (op === "sum" && yType === "number") finalItem = _.reduce(yData[key], (sum, n) => sum + n, 0);
+        if (op === "sum" && yType === "number") finalItem = _.reduce(yData[key], (sum, n) => sum + (n instanceof Object ? 0 : n), 0);
         if (op === "avg" && yType === "number") {
           if (averageByTotal) {
             totalNumberOfItems += yData[key].length;
           } else {
-            finalItem = _.reduce(yData[key], (avg, n) => avg + n);
+            finalItem = _.reduce(yData[key], (avg, n) => avg + (n instanceof Object ? 0 : n));
             finalItem /= yData[key].length;
             finalItem = parseFloat(finalItem.toFixed(2));
           }
