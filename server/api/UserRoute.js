@@ -74,7 +74,7 @@ module.exports = (app) => {
   app.post("/user", async (req, res) => {
     if (!req.body.email || !req.body.password) return res.status(400).send("no email or password");
 
-    if (app.settings.signupRestricted) {
+    if (app.settings.signupRestricted === "1") {
       try {
         const areThereAnyUsers = await userController.areThereAnyUsers();
         if (areThereAnyUsers) {
