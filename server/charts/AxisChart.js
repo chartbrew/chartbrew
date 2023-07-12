@@ -332,7 +332,7 @@ class AxisChart {
               yAxisData = this.operate(yAxisData, xAxisData.formatted, xType, yType, yAxis);
               break;
             case "count":
-              yAxisData = this.count(xAxisData.formatted, yType, yAxisData, yAxis);
+              yAxisData = this.count(xAxisData.formatted, yType, yAxisData, "count", yAxis);
               break;
             case "count_unique":
               yAxisData = this.countUnique(yAxisData, yType);
