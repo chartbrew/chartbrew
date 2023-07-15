@@ -1,5 +1,7 @@
 const { google } = require("googleapis");
 const { formatISO } = require("date-fns");
+const { BetaAnalyticsDataClient } = require("@google-analytics/data");
+const analyticsAdmin = require("@google-analytics/admin");
 
 const oauthController = require("../controllers/OAuthController");
 
@@ -63,8 +65,10 @@ module.exports.getAccounts = async (refreshToken, oauth_id) => {
     oauth2Client.setCredentials({ refresh_token: refreshToken });
     google.options({ auth: oauth2Client });
 
-    const admin = google.analytics("v3");
-    const accounts = await admin.management.accountSummaries.list();
+    const analyticsAdminClient = new analyticsAdmin.AnalyticsAdminServiceClient({
+      authClient: oauth2Client
+    });
+    const ga4Accounts = await analyticsAdminClient.listAccountSummaries();
 
     // record the new refresh token in the DB as it's created
     if (oauth_id) {
@@ -75,23 +79,23 @@ module.exports.getAccounts = async (refreshToken, oauth_id) => {
       });
     }
 
-    return accounts.data;
+    return ga4Accounts;
   } catch (e) {
     return Promise.reject(e);
   }
 };
 
-module.exports.getMetadata = async (refreshToken) => {
+module.exports.getMetadata = async (refreshToken, propertyId) => {
   const oauth2Client = getOAuthClient();
 
   try {
     oauth2Client.setCredentials({ refresh_token: refreshToken });
     google.options({ auth: oauth2Client });
 
-    const admin = google.analytics("v3");
-    const metadata = await admin.metadata.columns.list({ reportType: "ga" });
+    const analyticsDataClient = new BetaAnalyticsDataClient({ authClient: oauth2Client });
+    const ga4Metadata = await analyticsDataClient.getMetadata({ name: `properties/${propertyId}/metadata` });
 
-    return metadata.data;
+    return ga4Metadata;
   } catch (e) {
     return Promise.reject(e);
   }
@@ -115,30 +119,28 @@ module.exports.getAnalytics = async (oauth, dataRequest) => {
       });
     }
 
-    const reporting = google.analyticsreporting("v4");
+    const analyticsDataClient = new BetaAnalyticsDataClient({ authClient: oauth2Client });
 
     const getOptions = {
-      requestBody: {
-        reportRequests: [{
-          viewId: configuration.viewId,
-          dateRanges: [{
-            startDate: configuration.startDate,
-            endDate: configuration.endDate,
-          }],
-          metrics: [{
-            expression: configuration.metrics,
-          }],
-        }],
-      },
+      property: `properties/${configuration.propertyId}`,
+      dateRanges: [{
+        startDate: configuration.startDate,
+        endDate: configuration.endDate,
+      }],
+      metrics: [{
+        name: configuration.metrics,
+      }],
     };
+
     if (configuration.dimensions) {
-      getOptions.requestBody.reportRequests[0].dimensions = [{
+      getOptions.dimensions = [{
         name: configuration.dimensions,
       }];
     }
-    const res = await reporting.reports.batchGet(getOptions);
 
-    return this.formatGaData(res.data);
+    const [response] = await analyticsDataClient.runReport(getOptions);
+
+    return this.formatGaData(response);
   } catch (e) {
     return Promise.reject(e);
   }
@@ -146,20 +148,19 @@ module.exports.getAnalytics = async (oauth, dataRequest) => {
 
 module.exports.formatGaData = (data) => {
   try {
-    const { rows } = data.reports[0].data;
+    const { rows } = data;
     const newRows = [];
 
-    const headers = data.reports[0].columnHeader;
-    const xAxis = headers.dimensions && headers.dimensions[0];
-    const yAxis = headers.metricHeader.metricHeaderEntries[0].name;
+    const xAxis = data?.dimensionHeaders?.[0] && data?.dimensionHeaders?.[0].name;
+    const yAxis = data?.metricHeaders?.[0] && data?.metricHeaders?.[0].name;
 
     if (!rows) return Promise.reject("No data found");
 
     rows.forEach((row) => {
       const newRow = {};
-      if (row.dimensions) {
-        let [dimension] = row.dimensions;
-        if (xAxis === "ga:date") {
+      if (row.dimensionValues?.length > 0) {
+        let [dimension] = row.dimensionValues[0];
+        if (xAxis === "date") {
           dimension = new Date(
             dimension.substring(0, 4),
             parseInt(dimension.substring(4, 6), 10) - 1,
@@ -167,7 +168,7 @@ module.exports.formatGaData = (data) => {
           );
           dimension = formatISO(dimension);
         }
-        if (xAxis === "ga:dateHour") {
+        if (xAxis === "dateHour") {
           dimension = new Date(
             dimension.substring(0, 4),
             parseInt(dimension.substring(4, 6), 10) - 1,
@@ -176,7 +177,7 @@ module.exports.formatGaData = (data) => {
           );
           dimension = formatISO(dimension);
         }
-        if (xAxis === "ga:dateHourMinute") {
+        if (xAxis === "dateHourMinute") {
           dimension = new Date(
             dimension.substring(0, 4),
             parseInt(dimension.substring(4, 6), 10) - 1,
@@ -188,7 +189,10 @@ module.exports.formatGaData = (data) => {
         }
         newRow[xAxis] = dimension;
       }
-      [newRow[yAxis]] = row.metrics[0].values;
+
+      if (row.metricValues?.length > 0) {
+        newRow[yAxis] = row.metricValues[0].value;
+      }
 
       newRows.push(newRow);
     });
