@@ -105,6 +105,10 @@ module.exports = (app) => {
   ** Get GA fields metadata
   */
   app.get(`${url}/google/ga/metadata`, verifyToken, async (req, res) => {
+    const { property_id } = req.query;
+
+    if (!property_id) return res.status(400).send("Missing property_id");
+
     const teamRole = await checkAccess(req);
     const permission = accessControl.can(teamRole.role).createAny("connection");
     if (!permission.granted) {
@@ -115,7 +119,7 @@ module.exports = (app) => {
     const oauth = await oauthController.findById(connection.oauth_id);
     if (!oauth) return res.status(400).send("OAuth is not registered properly");
 
-    return googleConnector.getMetadata(oauth.refreshToken)
+    return googleConnector.getMetadata(oauth.refreshToken, property_id)
       .then((metadata) => {
         return res.status(200).send(metadata);
       })

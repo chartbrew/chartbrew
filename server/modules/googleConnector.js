@@ -68,7 +68,7 @@ module.exports.getAccounts = async (refreshToken, oauth_id) => {
     const analyticsAdminClient = new analyticsAdmin.AnalyticsAdminServiceClient({
       authClient: oauth2Client
     });
-    const ga4Accounts = await analyticsAdminClient.listAccountSummaries();
+    const [ga4Accounts] = await analyticsAdminClient.listAccountSummaries();
 
     // record the new refresh token in the DB as it's created
     if (oauth_id) {
@@ -79,7 +79,16 @@ module.exports.getAccounts = async (refreshToken, oauth_id) => {
       });
     }
 
-    return ga4Accounts;
+    const accountSummaries = [];
+    if (ga4Accounts) {
+      ga4Accounts.forEach((a) => {
+        if (a) {
+          accountSummaries.push(a);
+        }
+      });
+    }
+
+    return accountSummaries;
   } catch (e) {
     return Promise.reject(e);
   }
@@ -93,7 +102,9 @@ module.exports.getMetadata = async (refreshToken, propertyId) => {
     google.options({ auth: oauth2Client });
 
     const analyticsDataClient = new BetaAnalyticsDataClient({ authClient: oauth2Client });
-    const ga4Metadata = await analyticsDataClient.getMetadata({ name: `properties/${propertyId}/metadata` });
+    const ga4Metadata = await analyticsDataClient.getMetadata({ name: `${propertyId}/metadata` });
+
+    if (ga4Metadata?.[0]) return ga4Metadata[0];
 
     return ga4Metadata;
   } catch (e) {
@@ -122,7 +133,7 @@ module.exports.getAnalytics = async (oauth, dataRequest) => {
     const analyticsDataClient = new BetaAnalyticsDataClient({ authClient: oauth2Client });
 
     const getOptions = {
-      property: `properties/${configuration.propertyId}`,
+      property: `${configuration.propertyId}`,
       dateRanges: [{
         startDate: configuration.startDate,
         endDate: configuration.endDate,
@@ -159,7 +170,7 @@ module.exports.formatGaData = (data) => {
     rows.forEach((row) => {
       const newRow = {};
       if (row.dimensionValues?.length > 0) {
-        let [dimension] = row.dimensionValues[0];
+        let dimension = row.dimensionValues?.[0]?.value;
         if (xAxis === "date") {
           dimension = new Date(
             dimension.substring(0, 4),
