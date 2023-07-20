@@ -48,7 +48,6 @@ function GaBuilder(props) {
   const [configuration, setConfiguration] = useState({
     accountId: "",
     propertyId: "",
-    viewId: "",
     filters: [],
     metrics: "",
     startDate: "30daysAgo",
@@ -89,6 +88,7 @@ function GaBuilder(props) {
     if (accountOptions.length > 0
       && dataRequest.configuration
       && dataRequest.configuration.accountId
+      && !configuration.accountId
     ) {
       setConfiguration({ ...configuration, accountId: dataRequest.configuration.accountId });
     }
@@ -166,15 +166,30 @@ function GaBuilder(props) {
     if (dataRequest) {
       setGaRequest(dataRequest);
 
-      if (dataRequest.configuration
-        && dataRequest.configuration.startDate
-        && dataRequest.configuration.endDate
-      ) {
+      if (dataRequest?.configuration?.startDate && dataRequest?.configuration?.endDate) {
         setConfiguration({
           ...configuration,
           startDate: dataRequest.configuration.startDate,
           endDate: dataRequest.configuration.endDate,
         });
+      }
+
+      if (dataRequest?.configuration?.metrics) {
+        setConfiguration({
+          ...configuration,
+          metrics: dataRequest.configuration.metrics,
+        });
+      }
+
+      if (dataRequest?.configuration?.dimensions) {
+        setConfiguration({
+          ...configuration,
+          dimensions: dataRequest.configuration.dimensions,
+        });
+      }
+
+      if (dataRequest?.configuration?.propertyId) {
+        _populateMetadata(connection, dataRequest.configuration.propertyId);
       }
     }
   };
@@ -293,7 +308,7 @@ function GaBuilder(props) {
             css={{ minWidth: "fit-content" }}
             bordered
             color="secondary"
-            disabled={!configuration.viewId}
+            disabled={!configuration.propertyId}
           />
         </Popover.Trigger>
         <Popover.Content>
@@ -437,6 +452,7 @@ function GaBuilder(props) {
                     onAction={(key) => _onPropertySelected(key)}
                     selectedKeys={[configuration.propertyId]}
                     selectionMode="single"
+                    css={{ minWidth: "max-content" }}
                   >
                     {propertyOptions.map((property) => (
                       <Dropdown.Item key={property.value}>
