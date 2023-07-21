@@ -17,7 +17,7 @@ class NewLineChart {
 
       const formattedDataset = {
         label: dataset.options.legend,
-        data: this.axisData.y[i],
+        data: this.axisData.y[i]?.length === 0 ? [0] : this.axisData.y[i],
       };
 
       if (dataset.options.datasetColor) {
@@ -61,11 +61,13 @@ class NewLineChart {
     }
 
     let maxTickLength = 0;
-    selectedDatasetLabels.forEach((label) => {
-      if (label?.length > maxTickLength) {
-        maxTickLength = label.length;
-      }
-    });
+    if (selectedDatasetLabels !== 0 && selectedDatasetLabels.length > 0) {
+      selectedDatasetLabels.forEach((label) => {
+        if (label?.length > maxTickLength) {
+          maxTickLength = label.length;
+        }
+      });
+    }
 
     let maxTickRotation = 0;
     if (maxTickLength > 10) {

@@ -16,7 +16,7 @@ class NewBarChart {
 
       const formattedDataset = {
         label: dataset.options.legend,
-        data: this.axisData.y[i],
+        data: this.axisData.y[i]?.length === 0 ? [0] : this.axisData.y[i],
         borderWidth: 1.5,
         hoverBorderWidth: 3,
       };
