@@ -435,7 +435,13 @@ class ChartController {
         }
 
         await Promise.all(datasetsPromises);
-        return this.update(id, { chartData: chartData.configuration, chartDataUpdated: moment() });
+
+        const updateData = { chartData: chartData.configuration };
+        if (!getCache) {
+          updateData.chartDataUpdated = moment();
+        }
+
+        return this.update(id, updateData);
       })
       .then(() => {
         if (filters && !isExport) {
