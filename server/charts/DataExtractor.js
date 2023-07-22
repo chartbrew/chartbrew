@@ -3,7 +3,7 @@ const _ = require("lodash");
 
 const dataFilter = require("./dataFilter");
 
-module.exports = (data, filters, timezone = "Asia/Bangkok") => {
+module.exports = (data, filters, timezone) => {
   const { chart, datasets } = data;
 
   let moment = null;
