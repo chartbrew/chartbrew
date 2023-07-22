@@ -6,17 +6,6 @@ const { checkChartForAlerts } = require("../alerts/checkAlerts");
 
 const chartController = new ChartController();
 
-function runUpdate(chart) {
-  return chartController.updateChartData(chart.id, null, {})
-    .then((chartData) => {
-      checkChartForAlerts(chartData);
-      return true;
-    })
-    .catch(() => {
-      return true;
-    });
-}
-
 function updateDate(chart) {
   if (moment(chart.lastAutoUpdate).add(chart.autoUpdate, "seconds").isBefore(moment())) {
     return chartController.update(chart.id, { lastAutoUpdate: moment() })
@@ -29,6 +18,22 @@ function updateDate(chart) {
   }
 
   return new Promise((resolve) => resolve(true));
+}
+
+function runUpdate(chart) {
+  return chartController.updateChartData(chart.id, null, {})
+    .then(async (chartData) => {
+      checkChartForAlerts(chartData);
+      try {
+        await updateDate(chart);
+      } catch (err) {
+        //
+      }
+      return true;
+    })
+    .catch(() => {
+      return true;
+    });
 }
 
 // configure the worker
