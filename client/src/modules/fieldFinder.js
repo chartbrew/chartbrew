@@ -2,6 +2,8 @@ import _ from "lodash";
 
 import determineType from "./determineType";
 
+const maxIterations = 20;
+
 function findFields(coll, currentKey, first, fields, onlyObjects) {
   let newFields = fields;
   if (!coll) return newFields;
@@ -102,8 +104,8 @@ export default function init(collection, checkObjects, onlyObjects) {
   if (explorationSet.length > 0) {
     const multiFields = [];
     for (let i = 0; i < explorationSet.length; i++) {
-      const iterations = collection[explorationSet[i].field].length < 10
-        ? collection[explorationSet[i].field].length : 10;
+      const iterations = collection[explorationSet[i].field].length < maxIterations
+        ? collection[explorationSet[i].field].length : maxIterations;
       for (let j = 0; j < iterations; j++) {
         multiFields.push(findFields(
           collection[explorationSet[i].field][j],
@@ -122,7 +124,7 @@ export default function init(collection, checkObjects, onlyObjects) {
       });
     });
   } else {
-    const iterations = collection.length < 10 ? collection.length : 10;
+    const iterations = collection.length < maxIterations ? collection.length : maxIterations;
     const multiFields = [];
     for (let i = 0; i < iterations; i++) {
       multiFields.push(findFields(collection[i], "", true, []));
