@@ -180,10 +180,10 @@ function compareStrings(data, field, condition) {
       newData = _.filter(newData, (o) => getValue(o) !== condition.value);
       break;
     case "contains":
-      newData = _.filter(newData, (o) => getValue(o).indexOf(condition.value) > -1);
+      newData = _.filter(newData, (o) => getValue(o)?.indexOf(condition.value) > -1);
       break;
     case "notContains":
-      newData = _.filter(newData, (o) => getValue(o).indexOf(condition.value) === -1);
+      newData = _.filter(newData, (o) => getValue(o)?.indexOf(condition.value) === -1);
       break;
     case "greaterThan":
       newData = _.filter(newData, (o) => getValue(o) > condition.value);
