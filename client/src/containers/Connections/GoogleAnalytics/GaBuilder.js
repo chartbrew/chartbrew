@@ -48,7 +48,6 @@ function GaBuilder(props) {
   const [configuration, setConfiguration] = useState({
     accountId: "",
     propertyId: "",
-    viewId: "",
     filters: [],
     metrics: "",
     startDate: "30daysAgo",
@@ -60,7 +59,6 @@ function GaBuilder(props) {
   const [collectionsLoading, setCollectionsLoading] = useState(false);
   const [accountOptions, setAccountOptions] = useState([]);
   const [propertyOptions, setPropertyOptions] = useState([]);
-  const [viewOptions, setViewOptions] = useState([]);
   const [formErrors, setFormErrors] = useState({});
   const [dateHelp, setDateHelp] = useState(false);
   const [metricsOptions, setMetricsOptions] = useState([]);
@@ -81,7 +79,6 @@ function GaBuilder(props) {
         .then((data) => {
           setFullConnection(data);
           _onFetchAccountData(data);
-          _populateMetadata(data);
         })
         .catch(() => {});
     }
@@ -91,6 +88,7 @@ function GaBuilder(props) {
     if (accountOptions.length > 0
       && dataRequest.configuration
       && dataRequest.configuration.accountId
+      && !configuration.accountId
     ) {
       setConfiguration({ ...configuration, accountId: dataRequest.configuration.accountId });
     }
@@ -107,42 +105,30 @@ function GaBuilder(props) {
   }, [propertyOptions]);
 
   useEffect(() => {
-    if (accountOptions.length > 0
-      && dataRequest.configuration
-      && dataRequest.configuration.viewId
-      && configuration.propertyId
-    ) {
-      setConfiguration({ ...configuration, viewId: dataRequest.configuration.viewId });
-    }
-  }, [viewOptions, configuration.propertyId]);
-
-  useEffect(() => {
-    if (analyticsData && analyticsData.username) {
-      if (analyticsData.items && analyticsData.items.length > 0) {
-        const accountOpt = [];
-        analyticsData.items.forEach((acc) => {
-          accountOpt.push({
-            key: acc.id,
-            value: acc.id,
-            text: acc.name,
-          });
+    if (analyticsData && analyticsData.length > 0) {
+      const accountOpt = [];
+      analyticsData.forEach((acc) => {
+        accountOpt.push({
+          key: acc.account,
+          value: acc.account,
+          text: acc.displayName,
         });
+      });
 
-        setAccountOptions(accountOpt);
-      }
+      setAccountOptions(accountOpt);
     }
   }, [analyticsData]);
 
   useEffect(() => {
     if (configuration.accountId) {
-      const acc = _.findLast(analyticsData.items, { id: configuration.accountId });
+      const acc = _.findLast(analyticsData, { account: configuration.accountId });
       const propertyOpt = [];
-      if (acc && acc.webProperties) {
-        acc.webProperties.forEach((prop) => {
+      if (acc && acc.propertySummaries) {
+        acc.propertySummaries.forEach((prop) => {
           propertyOpt.push({
-            key: prop.id,
-            value: prop.id,
-            text: prop.name,
+            key: prop.property,
+            value: prop.property,
+            text: prop.displayName,
           });
         });
       }
@@ -150,28 +136,6 @@ function GaBuilder(props) {
       setPropertyOptions(propertyOpt);
     }
   }, [configuration.accountId]);
-
-  useEffect(() => {
-    if (configuration.propertyId && configuration.accountId) {
-      const acc = _.findLast(analyticsData.items, { id: configuration.accountId });
-
-      if (acc) {
-        const prop = _.findLast(acc.webProperties, { id: configuration.propertyId });
-        const viewOpt = [];
-        if (prop && prop.profiles) {
-          prop.profiles.forEach((view) => {
-            viewOpt.push({
-              key: view.id,
-              value: view.id,
-              text: view.name,
-            });
-          });
-        }
-
-        setViewOptions(viewOpt);
-      }
-    }
-  }, [configuration.propertyId, configuration.accountId]);
 
   useEffect(() => {
     if (metricsOptions.length > 0
@@ -202,41 +166,57 @@ function GaBuilder(props) {
     if (dataRequest) {
       setGaRequest(dataRequest);
 
-      if (dataRequest.configuration
-        && dataRequest.configuration.startDate
-        && dataRequest.configuration.endDate
-      ) {
+      if (dataRequest?.configuration?.startDate && dataRequest?.configuration?.endDate) {
         setConfiguration({
           ...configuration,
           startDate: dataRequest.configuration.startDate,
           endDate: dataRequest.configuration.endDate,
         });
       }
+
+      if (dataRequest?.configuration?.metrics) {
+        setConfiguration({
+          ...configuration,
+          metrics: dataRequest.configuration.metrics,
+        });
+      }
+
+      if (dataRequest?.configuration?.dimensions) {
+        setConfiguration({
+          ...configuration,
+          dimensions: dataRequest.configuration.dimensions,
+        });
+      }
+
+      if (dataRequest?.configuration?.propertyId) {
+        _populateMetadata(connection, dataRequest.configuration.propertyId);
+      }
     }
   };
 
-  const _populateMetadata = (conn = fullConnection) => {
-    getMetadata(conn.project_id, conn.id)
+  const _populateMetadata = (conn = fullConnection, propertyId) => {
+    getMetadata(match.params.projectId, conn.id, propertyId)
       .then((metadata) => {
-        if (metadata && metadata.items) {
-          const metrics = [];
-          const dimensions = [];
-          metadata.items.forEach((m) => {
-            if (m.attributes && m.attributes.type === "METRIC") {
-              metrics.push({
-                ...m, text: m.attributes.uiName, key: m.id, value: m.id
-              });
-            }
-            if (m.attributes && m.attributes.type === "DIMENSION") {
-              dimensions.push({
-                ...m, text: m.attributes.uiName, key: m.id, value: m.id
-              });
-            }
+        const metrics = [];
+        const dimensions = [];
+        if (metadata?.metrics?.length > 0) {
+          metadata.metrics.forEach((m) => {
+            metrics.push({
+              ...m, text: m.uiName, key: m.apiName, value: m.apiName
+            });
           });
-
-          setMetricsOptions(metrics);
-          setDimensionsOptions(dimensions);
         }
+
+        if (metadata?.dimensions?.length > 0) {
+          metadata.dimensions.forEach((d) => {
+            dimensions.push({
+              ...d, text: d.uiName, key: d.apiName, value: d.apiName
+            });
+          });
+        }
+
+        setMetricsOptions(metrics);
+        setDimensionsOptions(dimensions);
       });
   };
 
@@ -305,11 +285,9 @@ function GaBuilder(props) {
   const _onAccountSelected = (value) => {
     if (value !== configuration.accountId) {
       setPropertyOptions([]);
-      setViewOptions([]);
       setConfiguration({
         ...configuration,
         propertyId: "",
-        viewId: "",
       });
     }
 
@@ -317,15 +295,8 @@ function GaBuilder(props) {
   };
 
   const _onPropertySelected = (value) => {
-    if (value !== configuration.propertyId) {
-      setViewOptions([]);
-      setConfiguration({ ...configuration, viewId: "" });
-    }
     setConfiguration({ ...configuration, propertyId: value });
-  };
-
-  const _onViewSelected = (value) => {
-    setConfiguration({ ...configuration, viewId: value });
+    _populateMetadata(connection, value);
   };
 
   const _renderCalendar = (type) => (
@@ -337,7 +308,7 @@ function GaBuilder(props) {
             css={{ minWidth: "fit-content" }}
             bordered
             color="secondary"
-            disabled={!configuration.viewId}
+            disabled={!configuration.propertyId}
           />
         </Popover.Trigger>
         <Popover.Content>
@@ -427,7 +398,7 @@ function GaBuilder(props) {
               <Grid xs={12}>
                 <Divider />
               </Grid>
-              <Grid xs={12} sm={4} className="gabuilder-collections-tut">
+              <Grid xs={12} sm={6} className="gabuilder-collections-tut">
                 <Dropdown isBordered>
                   <Dropdown.Trigger>
                     <Input
@@ -458,7 +429,7 @@ function GaBuilder(props) {
                   </Dropdown.Menu>
                 </Dropdown>
               </Grid>
-              <Grid xs={12} sm={4}>
+              <Grid xs={12} sm={6}>
                 <Dropdown isDisabled={!configuration.accountId} isBordered>
                   <Dropdown.Trigger>
                     <Input
@@ -481,45 +452,11 @@ function GaBuilder(props) {
                     onAction={(key) => _onPropertySelected(key)}
                     selectedKeys={[configuration.propertyId]}
                     selectionMode="single"
+                    css={{ minWidth: "max-content" }}
                   >
                     {propertyOptions.map((property) => (
                       <Dropdown.Item key={property.value}>
                         {property.text}
-                      </Dropdown.Item>
-                    ))}
-                  </Dropdown.Menu>
-                </Dropdown>
-              </Grid>
-              <Grid xs={12} sm={4}>
-                <Dropdown
-                  isDisabled={!configuration.accountId || !configuration.propertyId}
-                  isBordered
-                >
-                  <Dropdown.Trigger>
-                    <Input
-                      label="View"
-                      placeholder="Select a view"
-                      contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown set="light" />}
-                      bordered
-                      animated={false}
-                      fullWidth
-                      disabled={!configuration.accountId || !configuration.propertyId}
-                      value={
-                        (viewOptions
-                        && configuration.viewId
-                        && viewOptions.find((view) => view.value === configuration.viewId)?.text)
-                        || "Select a view"
-                      }
-                    />
-                  </Dropdown.Trigger>
-                  <Dropdown.Menu
-                    onAction={(key) => _onViewSelected(key)}
-                    selectedKeys={[configuration.viewId]}
-                    selectionMode="single"
-                  >
-                    {viewOptions.map((view) => (
-                      <Dropdown.Item key={view.value}>
-                        {view.text}
                       </Dropdown.Item>
                     ))}
                   </Dropdown.Menu>
@@ -539,7 +476,7 @@ function GaBuilder(props) {
                     <InfoCircle size="small" />
                   </Tooltip>
                 </div>
-                <Dropdown isDisabled={!configuration.viewId}>
+                <Dropdown isDisabled={!configuration.propertyId}>
                   <Dropdown.Trigger>
                     <Input
                       placeholder="Select a metric"
@@ -550,7 +487,7 @@ function GaBuilder(props) {
                       helperColor="error"
                       helperText={formErrors.metrics}
                       color={formErrors.metrics ? "error" : "default"}
-                      disabled={!configuration.viewId}
+                      disabled={!configuration.propertyId}
                       value={
                         (metricsOptions
                         && configuration.metrics
@@ -569,10 +506,16 @@ function GaBuilder(props) {
                       return (
                         <Dropdown.Item
                           key={item.key}
-                          command={item.attributes.group}
-                          description={item.value}
+                          command={item.category}
+                          description={item.description}
                         >
-                          <Text size={16}>{item.text}</Text>
+                          <Text size={16}>
+                            {item.text}
+                            <Text small color="$accents8">
+                              {" - "}
+                              {item.key}
+                            </Text>
+                          </Text>
                         </Dropdown.Item>
                       );
                     })}
@@ -582,7 +525,7 @@ function GaBuilder(props) {
               <Grid xs={12} direction="column">
                 <Text size={16}>Choose a dimension</Text>
 
-                <Dropdown isDisabled={!configuration.viewId} isBordered>
+                <Dropdown isDisabled={!configuration.propertyId} isBordered>
                   <Dropdown.Trigger>
                     <Input
                       placeholder="Select a dimension"
@@ -593,7 +536,7 @@ function GaBuilder(props) {
                       helperColor="error"
                       helperText={formErrors.dimensions}
                       color={formErrors.dimensions ? "error" : "default"}
-                      disabled={!configuration.viewId}
+                      disabled={!configuration.propertyId}
                       value={
                         (dimensionsOptions
                         && configuration.dimensions
@@ -613,8 +556,8 @@ function GaBuilder(props) {
                       return (
                         <Dropdown.Item
                           key={item.key}
-                          command={item.attributes.group}
-                          description={item.value}
+                          command={item.category}
+                          description={item.description}
                         >
                           <Text size={16}>{item.text}</Text>
                         </Dropdown.Item>
@@ -623,14 +566,14 @@ function GaBuilder(props) {
                   </Dropdown.Menu>
                 </Dropdown>
               </Grid>
-              <Grid xs={12} sm={6} direction="column">
+              <Grid xs={12} direction="column">
                 <Text size={16}>Start date</Text>
                 <Input
                   contentRight={_renderCalendar("startDate")}
                   contentRightStyling={false}
                   placeholder="YYYY-MM-DD"
                   value={configuration.startDate}
-                  disabled={!configuration.viewId}
+                  disabled={!configuration.propertyId}
                   onChange={(e) => {
                     setConfiguration({ ...configuration, startDate: e.target.value });
                   }}
@@ -674,14 +617,14 @@ function GaBuilder(props) {
                   </Badge>
                 </div>
               </Grid>
-              <Grid xs={12} sm={6} direction="column">
+              <Grid xs={12} direction="column">
                 <Text size={16}>End date</Text>
                 <Input
                   contentRight={_renderCalendar("endDate")}
                   contentRightStyling={false}
                   placeholder="YYYY-MM-DD"
                   value={configuration.endDate}
-                  disabled={!configuration.viewId}
+                  disabled={!configuration.propertyId}
                   onChange={(e) => {
                     setConfiguration({ ...configuration, endDate: e.target.value });
                   }}
@@ -732,21 +675,21 @@ function GaBuilder(props) {
                 <Grid xs={12}>
                   <Container
                     css={{
-                      backgroundColor: "$accents3", br: 20, p: 10, pl: 15, pr: 15
+                      backgroundColor: "$accents1", br: 20, p: 10, pl: 15, pr: 15
                     }}
                   >
                     <Row>
                       <Text>{"You can use relative dates such as "}</Text>
                       <Spacer x={0.1} />
-                      <Badge>today</Badge>
+                      <code>today</code>
                       <Spacer x={0.1} />
                       <Text>{", "}</Text>
                       <Spacer x={0.1} />
-                      <Badge>yesterday</Badge>
+                      <code>yesterday</code>
                       <Spacer x={0.1} />
                       <Text>{", and "}</Text>
                       <Spacer x={0.1} />
-                      <Badge>NdaysAgo</Badge>
+                      <code>NdaysAgo</code>
                     </Row>
                     <Row>
                       <Text>{"Alternatively, you can type in any date in YYYY-MM-DD format or use the calendar picker next to each field."}</Text>
