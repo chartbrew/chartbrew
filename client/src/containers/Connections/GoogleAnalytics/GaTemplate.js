@@ -34,7 +34,6 @@ function GaTemplate(props) {
   const [configuration, setConfiguration] = useState({
     accountId: "",
     propertyId: "",
-    viewId: "",
   });
   const [selectedCharts, setSelectedCharts] = useState(false);
   const [availableConnections, setAvailableConnections] = useState([]);
@@ -42,7 +41,6 @@ function GaTemplate(props) {
   const [formVisible, setFormVisible] = useState(true);
   const [accountOptions, setAccountOptions] = useState([]);
   const [propertyOptions, setPropertyOptions] = useState([]);
-  const [viewOptions, setViewOptions] = useState([]);
   const [accountsData, setAccountsData] = useState(null);
 
   useEffect(() => {
@@ -58,36 +56,33 @@ function GaTemplate(props) {
   useEffect(() => {
     setAccountOptions([]);
     setPropertyOptions([]);
-    setViewOptions([]);
   }, [selectedConnection]);
 
   useEffect(() => {
-    if (accountsData && accountsData.username) {
-      if (accountsData.items && accountsData.items.length > 0) {
-        const accountOpt = [];
-        accountsData.items.forEach((acc) => {
-          accountOpt.push({
-            key: acc.id,
-            value: acc.id,
-            text: acc.name,
-          });
+    if (accountsData && accountsData.length > 0) {
+      const accountOpt = [];
+      accountsData.forEach((acc) => {
+        accountOpt.push({
+          key: acc.account,
+          value: acc.account,
+          text: acc.displayName,
         });
+      });
 
-        setAccountOptions(accountOpt);
-      }
+      setAccountOptions(accountOpt);
     }
   }, [accountsData]);
 
   useEffect(() => {
     if (configuration.accountId) {
-      const acc = _.findLast(accountsData.items, { id: configuration.accountId });
+      const acc = _.findLast(accountsData, { account: configuration.accountId });
       const propertyOpt = [];
-      if (acc && acc.webProperties) {
-        acc.webProperties.forEach((prop) => {
+      if (acc && acc.propertySummaries) {
+        acc.propertySummaries.forEach((prop) => {
           propertyOpt.push({
-            key: prop.id,
-            value: prop.id,
-            text: prop.name,
+            key: prop.property,
+            value: prop.property,
+            text: prop.displayName,
           });
         });
       }
@@ -95,28 +90,6 @@ function GaTemplate(props) {
       setPropertyOptions(propertyOpt);
     }
   }, [configuration.accountId]);
-
-  useEffect(() => {
-    if (configuration.propertyId && configuration.accountId) {
-      const acc = _.findLast(accountsData.items, { id: configuration.accountId });
-
-      if (acc) {
-        const prop = _.findLast(acc.webProperties, { id: configuration.propertyId });
-        const viewOpt = [];
-        if (prop && prop.profiles) {
-          prop.profiles.forEach((view) => {
-            viewOpt.push({
-              key: view.id,
-              value: view.id,
-              text: view.name,
-            });
-          });
-        }
-
-        setViewOptions(viewOpt);
-      }
-    }
-  }, [configuration.propertyId, configuration.accountId]);
 
   useEffect(() => {
     if (selection > -1) {
@@ -145,13 +118,6 @@ function GaTemplate(props) {
     if (!configuration.propertyId) {
       setTimeout(() => {
         setErrors({ ...errors, propertyId: "Please select an account property" });
-      }, 100);
-      return;
-    }
-
-    if (!configuration.viewId) {
-      setTimeout(() => {
-        setErrors({ ...errors, viewId: "Please select a View" });
       }, 100);
       return;
     }
@@ -222,11 +188,9 @@ function GaTemplate(props) {
   const _onAccountSelected = (value) => {
     if (value !== configuration.accountId) {
       setPropertyOptions([]);
-      setViewOptions([]);
       setConfiguration({
         ...configuration,
         propertyId: "",
-        viewId: "",
       });
     }
 
@@ -234,15 +198,7 @@ function GaTemplate(props) {
   };
 
   const _onPropertySelected = (value) => {
-    if (value !== configuration.propertyId) {
-      setViewOptions([]);
-      setConfiguration({ ...configuration, viewId: "" });
-    }
     setConfiguration({ ...configuration, propertyId: value });
-  };
-
-  const _onViewSelected = (value) => {
-    setConfiguration({ ...configuration, viewId: value });
   };
 
   const _getTemplateConfig = () => {
@@ -419,7 +375,7 @@ function GaTemplate(props) {
               <Grid.Container gap={1}>
                 {selectedConnection && !formVisible && (
                   <>
-                    <Grid xs={12} sm={12} md={4}>
+                    <Grid xs={12} sm={12} md={6}>
                       <Dropdown isBordered>
                         <Dropdown.Trigger>
                           <Input
@@ -444,7 +400,7 @@ function GaTemplate(props) {
                         </Dropdown.Menu>
                       </Dropdown>
                     </Grid>
-                    <Grid xs={12} sm={12} md={4}>
+                    <Grid xs={12} sm={12} md={6}>
                       <Dropdown isDisabled={!configuration.accountId} isBordered>
                         <Dropdown.Trigger>
                           <Input
@@ -462,34 +418,6 @@ function GaTemplate(props) {
                           selectionMode="single"
                         >
                           {propertyOptions.map((option) => (
-                            <Dropdown.Item key={option.key}>
-                              {option.text}
-                            </Dropdown.Item>
-                          ))}
-                        </Dropdown.Menu>
-                      </Dropdown>
-                    </Grid>
-                    <Grid xs={12} sm={12} md={4}>
-                      <Dropdown
-                        isDisabled={!configuration.accountId || !configuration.propertyId}
-                        isBordered
-                      >
-                        <Dropdown.Trigger>
-                          <Input
-                            placeholder="Select a view"
-                            label="View"
-                            value={_getListName(viewOptions, configuration.viewId)}
-                            bordered
-                            fullWidth
-                            contentRight={<ChevronDown />}
-                          />
-                        </Dropdown.Trigger>
-                        <Dropdown.Menu
-                          onAction={(key) => _onViewSelected(key)}
-                          selectedKeys={[configuration.viewId]}
-                          selectionMode="single"
-                        >
-                          {viewOptions.map((option) => (
                             <Dropdown.Item key={option.key}>
                               {option.text}
                             </Dropdown.Item>
@@ -611,7 +539,6 @@ function GaTemplate(props) {
               (!formVisible && !selectedConnection)
               || !configuration.accountId
               || !configuration.propertyId
-              || !configuration.viewId
               || (!selectedCharts || selectedCharts.length < 1)
             }
             onClick={_onGenerateDashboard}

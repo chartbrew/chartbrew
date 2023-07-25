@@ -509,7 +509,13 @@ function GaBuilder(props) {
                           command={item.category}
                           description={item.description}
                         >
-                          <Text size={16}>{item.text}</Text>
+                          <Text size={16}>
+                            {item.text}
+                            <Text small color="$accents8">
+                              {" - "}
+                              {item.key}
+                            </Text>
+                          </Text>
                         </Dropdown.Item>
                       );
                     })}
