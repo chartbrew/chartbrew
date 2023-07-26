@@ -17,7 +17,7 @@ The Google Analytics integration can be used once a new project is created and c
 1. [Create a new project here](https://console.cloud.google.com/projectcreate)
 2. Click on [**APIs and Services**](https://console.cloud.google.com/apis/dashboard) in the side menu
 3. Click on [**Library**](https://console.cloud.google.com/apis/library) in the side menu and type **analytics** in the search bar
-4. Click and enable both **Google Analytics Reporting API** and **Google Analytics API**
+4. Click and enable both **Google Analytics Reporting API**, **Google Analytics API**, and **Google Analytics Admin API**
 5. Head back to the [**APIs and Services**](https://console.cloud.google.com/apis/dashboard) page and click on [**OAuth Consent Screen**](https://console.cloud.google.com/apis/credentials/consent) option in the side menu
 6. Select on either **Internal** or **External** depending on how you plan to use the integration
 7. You will have to fill in all the required details in the form (no need for domain yet) then continue without filling anything on the rest of the tabs
