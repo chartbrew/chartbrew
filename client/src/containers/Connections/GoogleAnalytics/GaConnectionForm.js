@@ -134,7 +134,7 @@ function GaConnectionForm(props) {
           <HelpBanner
             title="How to visualize your Google Analytics data with Chartbrew"
             description="Learn how you can power up your Chartbrew dashboards with the Google Analytics integration. Get to know your data with Chartbrew."
-            url={"https://chartbrew.com/blog/create-your-google-analytics-dashboard-in-chartbrew/"}
+            url={"https://chartbrew.com/blog/integrate-google-analytics-ga4-with-your-chartbrew-dashboards/"}
             imageUrl={connectionImages(isDark).googleAnalytics}
             info="5 min read"
           />

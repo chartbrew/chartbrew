@@ -31,4 +31,4 @@ The Google Analytics integration can be used once a new project is created and c
 
 ## Usage
 
-To learn how to use the Google Analytics integration, you can read [the tutorial on Chartbrew's blog](https://chartbrew.com/blog/create-your-google-analytics-dashboard-in-chartbrew/).
+To learn how to use the Google Analytics integration, you can read [the tutorial on Chartbrew's blog](https://chartbrew.com/blog/integrate-google-analytics-ga4-with-your-chartbrew-dashboards/).
