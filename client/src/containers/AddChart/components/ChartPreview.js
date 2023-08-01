@@ -154,7 +154,7 @@ function ChartPreview(props) {
               </Checkbox>
               <Spacer x={0.2} />
               <Tooltip
-                content="Chartbrew will use cached data for extra editing speed ⚡️⚡️⚡️"
+                content="Chartbrew will use cached data for extra editing speed ⚡️"
               >
                 <InfoCircle size="small" />
               </Tooltip>

@@ -15,6 +15,22 @@ momentObj.suppressDeprecationWarnings = true;
 
 const parser = new FormulaParser();
 
+function formatCompactNumber(number) {
+  if (number < 1000) {
+    return number;
+  } else if (number >= 1000 && number < 1_000_000) {
+    return `${(number / 1000).toFixed(1)}K`;
+  } else if (number >= 1_000_000 && number < 1_000_000_000) {
+    return `${(number / 1_000_000).toFixed(1)}M`;
+  } else if (number >= 1_000_000_000 && number < 1_000_000_000_000) {
+    return `${(number / 1_000_000_000).toFixed(1)}B`;
+  } else if (number >= 1_000_000_000_000 && number < 1_000_000_000_000_000) {
+    return `${(number / 1_000_000_000_000).toFixed(1)}T`;
+  } else {
+    return 0;
+  }
+}
+
 const areDatesTheSame = (first, second, interval) => {
   let firstDate = first;
   if (`${first}` === `${parseInt(first, 10)}`) {
@@ -652,21 +668,24 @@ class AxisChart {
     configuration.data.labels = newLabels;
     // calculate the growth values
     configuration.growth = [];
+    configuration.goals = [];
     configuration.data.datasets.forEach((d, index) => {
-      const { formula } = this.datasets[index].options;
+      const { formula, goal } = this.datasets[index].options;
       const before = formula ? formula.substring(0, formula.indexOf("{")) : "";
       const after = formula ? formula.substring(formula.indexOf("}") + 1) : "";
 
       if (d.data && d.data.length > 1 && d.data[d.data.length - 2] !== 0) {
         // get the last and previous values and make sure to format them as numbers
+        let numericCurrValue;
+        let numericPrevValue;
         let currentValue;
         let previousValue;
 
         try {
-          const currArr = `${d.data[d.data.length - 1]}`.replace(",", "").match(/[\d.]+/g);
-          const prevArr = `${d.data[d.data.length - 2]}`.replace(",", "").match(/[\d.]+/g);
-          currentValue = parseFloat(currArr.filter((n) => n !== "." && n !== ",")[0]);
-          previousValue = parseFloat(prevArr.filter((n) => n !== "." && n !== ",")[0]);
+          numericCurrValue = `${d.data[d.data.length - 1]}`.replace(",", "").match(/[\d.]+/g);
+          numericPrevValue = `${d.data[d.data.length - 2]}`.replace(",", "").match(/[\d.]+/g);
+          currentValue = parseFloat(numericCurrValue.filter((n) => n !== "." && n !== ",")[0]);
+          previousValue = parseFloat(numericPrevValue.filter((n) => n !== "." && n !== ",")[0]);
         } catch (e) { /** */ }
 
         if (determineType(currentValue) === "number" && determineType(previousValue) === "number") {
@@ -680,6 +699,15 @@ class AxisChart {
             status: (result > 0 && "positive") || (result < 0 && "negative") || "neutral",
             label: d.label,
           });
+
+          if (goal) {
+            configuration.goals.push({
+              max: goal,
+              formattedMax: `${before}${formatCompactNumber(goal)}${after}`,
+              value: result,
+              formattedValue: `${before}${currentValue.toLocaleString()}${after}`,
+            });
+          }
         }
       } else if (d.data && d.data.length === 1) {
         configuration.growth.push({
@@ -688,6 +716,16 @@ class AxisChart {
           status: "positive",
           label: d.label,
         });
+
+        if (goal) {
+          const numericVal = `${d.data[0]}`.replace(",", "").match(/[\d.]+/g);
+          configuration.goals.push({
+            max: goal,
+            formattedMax: `${before}${formatCompactNumber(goal)}${after}`,
+            value: numericVal,
+            formattedValue: `${before}${numericVal.toLocaleString()}${after}`,
+          });
+        }
       } else if (d.data.length > 1) {
         let currentValue;
         try {
@@ -703,6 +741,15 @@ class AxisChart {
           status: (currentValue > 0 && "positive") || (currentValue < 0 && "negative") || "neutral",
           label: d.label,
         });
+
+        if (goal) {
+          configuration.goals.push({
+            max: goal,
+            formattedMax: `${before}${formatCompactNumber(goal)}${after}`,
+            value: d.data[d.data.length - 1],
+            formattedValue: `${before}${d.data[d.data.length - 1]}${after}`,
+          });
+        }
       }
     });
 

@@ -223,6 +223,9 @@ module.exports = (sequelize, DataTypes) => {
     maxRecords: {
       type: DataTypes.INTEGER,
     },
+    goal: {
+      type: DataTypes.INTEGER,
+    },
   }, {
     freezeTableName: true,
   });

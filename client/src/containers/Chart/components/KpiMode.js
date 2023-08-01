@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {
-  Container, Row, Spacer, Text, Tooltip,
+  Container, Progress, Row, Spacer, Text, Tooltip,
 } from "@nextui-org/react";
 import { ChevronDownCircle, ChevronUpCircle } from "react-iconly";
 
@@ -64,6 +64,33 @@ function KpiMode(props) {
     );
   };
 
+  const _renderGoal = (goal, color) => {
+    if (!goal) return (<span />);
+    const {
+      max, value, formattedMax,
+    } = goal;
+    if ((!max && max !== 0) || (!value && value !== 0)) return (<span />);
+
+    return (
+      <div style={{ width: "100%", paddingTop: 20 }}>
+        <Progress
+          value={value}
+          max={max}
+          size="sm"
+          css={{
+            "& .nextui-progress-bar": {
+              background: color
+            }
+          }}
+        />
+        <Row justify="space-between">
+          <Text size="0.8em">{`${((value / max) * 100).toFixed()}%`}</Text>
+          <Text size="0.8em">{formattedMax}</Text>
+        </Row>
+      </div>
+    );
+  };
+
   return (
     <Container
       css={{
@@ -103,6 +130,12 @@ function KpiMode(props) {
                     {dataset.label}
                   </span>
                 </Text>
+              </Row>
+            )}
+
+            {chart.chartData.goals && (
+              <Row justify="center" align="center">
+                {_renderGoal(chart.chartData.goals[index], chart.Datasets[index].datasetColor)}
               </Row>
             )}
           </div>

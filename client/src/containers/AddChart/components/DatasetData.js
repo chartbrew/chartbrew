@@ -16,7 +16,7 @@ import {
   Button, Collapse, Container, Dropdown, Grid, Input, Link, Loading, theme,
   Popover, Row, Spacer, Text, Tooltip, Divider, Badge, Switch, Modal, Checkbox,
 } from "@nextui-org/react";
-import { TbDragDrop } from "react-icons/tb";
+import { TbDragDrop, TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import {
   CaretDown, CaretUp, ChevronRight, CloseSquare, Filter, Hide,
   InfoCircle, Plus, Setting, Show, TickSquare, Calendar as CalendarIcon, ChevronDownCircle, Danger,
@@ -53,6 +53,7 @@ function DatasetData(props) {
   const [fieldOptions, setFieldOptions] = useState([]);
   const [conditions, setConditions] = useState([]);
   const [formula, setFormula] = useState("");
+  const [goal, setGoal] = useState(null);
   const [tableFields, setTableFields] = useState([]);
   const [isDragState, setIsDragState] = useState(false);
   const [tableColumns, setTableColumns] = useState([]);
@@ -185,6 +186,10 @@ function DatasetData(props) {
 
     if (dataset.formula) {
       setFormula(dataset.formula);
+    }
+
+    if (dataset.goal) {
+      setGoal(dataset.goal);
     }
 
     if (dataset.fieldsSchema) {
@@ -393,6 +398,19 @@ function DatasetData(props) {
 
   const _onApplyFormula = () => {
     onUpdate({ formula });
+  };
+
+  const _onAddGoal = () => {
+    setGoal(100);
+  };
+
+  const _onRemoveGoal = () => {
+    setGoal(null);
+    onUpdate({ goal: null });
+  };
+
+  const _onApplyGoal = () => {
+    onUpdate({ goal });
   };
 
   const _onExcludeField = (field) => {
@@ -930,7 +948,7 @@ function DatasetData(props) {
             <Grid xs={12} css={{ mt: 10 }}>
               {!formula && (
                 <Link onClick={_onAddFormula} css={{ ai: "center", color: "$text" }}>
-                  <Plus />
+                  <TbMathFunctionY size={24} />
                   <Spacer x={0.2} />
                   <Text b>Add Y-Axis formula</Text>
                 </Link>
@@ -984,6 +1002,48 @@ function DatasetData(props) {
                 </Link>
               </Tooltip>
             </div>
+          </Grid>
+        )}
+        {!goal && chartType !== "table" && (
+          <Grid xs={12} css={{ mt: 10 }}>
+            <Link onClick={_onAddGoal} css={{ ai: "center", color: "$text" }}>
+              <TbProgressCheck size={24} />
+              <Spacer x={0.2} />
+              <Text b>Set a goal</Text>
+            </Link>
+          </Grid>
+        )}
+        {goal && chartType !== "table" && (
+          <Grid xs={12} css={{ mt: 10 }} direction="column">
+            <Row align="center">
+              <Text size={16}>{"Goal "}</Text>
+              <Spacer x={0.2} />
+              <Tooltip content="A goal can be displayed as a progress bar in your KPI charts. Enter a number without any other characters. (e.g. 1000 instead of 1k)">
+                <InfoCircle size="small" />
+              </Tooltip>
+            </Row>
+            <Row align="center">
+              <Input
+                placeholder="Enter your goal here"
+                value={goal}
+                onChange={(e) => setGoal(e.target.value)}
+                bordered
+              />
+              <Spacer x={0.5} />
+              <Tooltip
+                content={goal === dataset.goal ? "The goal is already applied" : "Save goal"}
+              >
+                <Link onClick={goal === dataset.goal ? () => { } : _onApplyGoal}>
+                  <TickSquare primaryColor={goal === dataset.goal ? neutral : positive} />
+                </Link>
+              </Tooltip>
+              <Spacer x={0.2} />
+              <Tooltip content="Remove goal">
+                <Link onClick={_onRemoveGoal}>
+                  <CloseSquare primaryColor={negative} />
+                </Link>
+              </Tooltip>
+            </Row>
           </Grid>
         )}
         {chartType === "table" && (
