@@ -704,8 +704,8 @@ class AxisChart {
             configuration.goals.push({
               max: goal,
               formattedMax: `${before}${formatCompactNumber(goal)}${after}`,
-              value: result,
-              formattedValue: `${before}${currentValue.toLocaleString()}${after}`,
+              value: numericCurrValue,
+              formattedValue: `${before}${numericCurrValue.toLocaleString()}${after}`,
             });
           }
         }
@@ -718,7 +718,7 @@ class AxisChart {
         });
 
         if (goal) {
-          const numericVal = `${d.data[0]}`.replace(",", "").match(/[\d.]+/g);
+          const numericVal = `${d.data[d.data.length - 1]}`.replace(",", "").match(/[\d.]+/g);
           configuration.goals.push({
             max: goal,
             formattedMax: `${before}${formatCompactNumber(goal)}${after}`,
