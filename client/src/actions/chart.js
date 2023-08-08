@@ -232,22 +232,26 @@ export function removeChart(projectId, chartId) {
   };
 }
 
-export function runQuery(projectId, chartId, noSource = false, skipParsing = false, getCache) {
+export function runQuery(
+  projectId, chartId, noSource = false, skipParsing = false, getCache, filters
+) {
   return (dispatch) => {
     const token = cookie.load("brewToken");
-    let url = `${API_HOST}/project/${projectId}/chart/${chartId}?no_source=${noSource}&skip_parsing=${skipParsing}`;
-    const method = "GET";
+    let url = `${API_HOST}/project/${projectId}/chart/${chartId}/query?no_source=${noSource}&skip_parsing=${skipParsing}`;
+    const method = "POST";
     const headers = new Headers({
       "Accept": "application/json",
       "authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
     });
+    const body = JSON.stringify({ filters: filters && !filters.length ? [filters] : filters });
 
     if (getCache) {
       url += "&getCache=true";
     }
 
     dispatch({ type: FETCH_CHART, chartId });
-    return fetch(url, { method, headers })
+    return fetch(url, { method, body, headers })
       .then((response) => {
         if (!response.ok) {
           dispatch(addError(response.status));

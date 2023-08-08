@@ -126,6 +126,14 @@ class AxisChart {
         endDate = endDate.endOf("day");
       }
 
+      if (filters?.length > 0) {
+        const dateDashboardFilter = filters.find((f) => f.type === "date");
+        if (dateDashboardFilter) {
+          startDate = momentObj(dateDashboardFilter.startDate).startOf("day");
+          endDate = momentObj(dateDashboardFilter.endDate).endOf("day");
+        }
+      }
+
       for (let i = 0; i < this.datasets.length; i++) {
         const dataset = this.datasets[i];
         const { yAxisOperation, dateField } = dataset.options;

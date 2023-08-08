@@ -185,7 +185,12 @@ function Filters(props) {
 
   const _onApplyFilter = () => {
     if (filterType === "date") {
-      //
+      onAddFilter({
+        id: uuid(),
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
+        type: "date",
+      });
     } else {
       _onAddFilter();
     }

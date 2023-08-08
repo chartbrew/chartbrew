@@ -315,6 +315,7 @@ module.exports = (app) => {
 
   /*
   ** Route to run the query for a chart
+  ** [Deprecated] Use the POST /project/:project_id/chart/:id/query route instead
   */
   app.get("/project/:project_id/chart/:id", verifyToken, (req, res) => {
     return checkAccess(req)
@@ -351,20 +352,68 @@ module.exports = (app) => {
   // --------------------------------------------------------
 
   /*
+  ** Route to run the query for a chart
+  */
+  app.post("/project/:project_id/chart/:id/query", verifyToken, (req, res) => {
+    return checkAccess(req)
+      .then((teamRole) => {
+        const permission = accessControl.can(teamRole.role).readAny("chart");
+        if (!permission.granted) {
+          return new Promise((resolve, reject) => reject(new Error(401)));
+        }
+
+        return chartController.updateChartData(
+          req.params.id,
+          req.user,
+          {
+            noSource: req.query.no_source === "true",
+            skipParsing: req.query.skip_parsing === "true",
+            getCache: req.query.getCache,
+            filters: req.body.filters,
+          },
+        );
+      })
+      .then((chart) => {
+        return res.status(200).send(chart);
+      })
+      .catch((error) => {
+        console.error((error && error.message) || error); // eslint-disable-line
+        if (`${error}` === "401" || error.message === "401") {
+          return res.status(401).send({ error: "Not authorized" });
+        }
+        if (`${error}` === "413" && error.message === "413") {
+          return res.status(413).send(error);
+        }
+        return res.status(400).send((error && error.message) || error);
+      });
+  });
+  // --------------------------------------------------------
+
+  /*
   ** Route to filter the charts from the dashboard
   */
   app.post("/project/:project_id/chart/:id/filter", (req, res) => {
     if (!req.body.filters) return res.status(400).send("No filters selected");
+    let noSource = req.query.no_source === "true";
+    let skipParsing = req.query.skip_parsing === "true";
+    let getCache = true;
+
+    // if it's a date range filter, we need to query the source and disable the cache
+    if (req.body.filters.length === 1 && req.body.filters.find((f) => f.type === "date")) {
+      noSource = false;
+      skipParsing = false;
+      getCache = false;
+    }
 
     // filters are being passed, so the chart is not updated in the database
     return chartController.updateChartData(
       req.params.id,
       req.user,
       {
-        noSource: req.query.no_source === "true",
-        skipParsing: req.query.skip_parsing === "true",
+        noSource,
+        skipParsing,
         filters: req.body.filters,
-        getCache: true,
+        getCache,
       },
     )
       .then(async (chart) => {

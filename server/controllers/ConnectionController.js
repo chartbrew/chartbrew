@@ -554,7 +554,7 @@ class ConnectionController {
       });
   }
 
-  async runApiRequest(id, chartId, dataRequest, getCache) {
+  async runApiRequest(id, chartId, dataRequest, getCache, filters) {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
       if (drCache) return drCache;
@@ -591,6 +591,14 @@ class ConnectionController {
                 const value = keysFound[q];
                 let startDate = moment.utc(chart.startDate).startOf("day");
                 let endDate = moment.utc(chart.endDate).endOf("day");
+
+                if (filters && filters.length > 0) {
+                  const dateRangeFilter = filters.find((o) => o.type === "date");
+                  if (dateRangeFilter) {
+                    startDate = moment(dateRangeFilter.startDate).startOf("day");
+                    endDate = moment(dateRangeFilter.endDate).endOf("day");
+                  }
+                }
 
                 if (value === "startDate" && chart.currentEndDate) {
                   const timeDiff = endDate.diff(startDate, "days");
