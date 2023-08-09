@@ -238,11 +238,20 @@ function Filters(props) {
           </Row>
           <Spacer y={0.5} />
           <Divider />
-          <Spacer y={0.3} />
-          <Spacer y={1} />
+          <Spacer y={0.5} />
 
           {filterType === "date" && (
             <>
+              <Row>
+                <Text>
+                  {"The dashboard date filter will overwrite the global date settings in the selected charts as well as the "}
+                  <code>{"{{start_date}}"}</code>
+                  {" and "}
+                  <code>{"{{end_date}}"}</code>
+                  {" variables in the queries."}
+                </Text>
+              </Row>
+              <Spacer y={1} />
               <Row wrap="wrap">
                 <LinkNext onPress={() => _onSelectRange("last_7_days")}>
                   <Badge color="primary" size="sm" variant={"bordered"}>
