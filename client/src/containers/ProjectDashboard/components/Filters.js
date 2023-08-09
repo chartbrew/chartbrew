@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
 import moment from "moment";
 import _ from "lodash";
@@ -17,7 +17,7 @@ import { primary, secondary } from "../../../config/colors";
 
 function Filters(props) {
   const {
-    charts, projectId, onAddFilter, open, onClose
+    charts, projectId, onAddFilter, open, onClose, filterGroups, onEditFilterGroup,
   } = props;
 
   const [fieldOptions, setFieldOptions] = useState([]);
@@ -328,6 +328,29 @@ function Filters(props) {
                 </Popover>
               </Row>
               <Spacer y={1} />
+              <Row>
+                <Text>
+                  Select the charts that will be affected by the date filter
+                </Text>
+              </Row>
+              <Spacer y={0.5} />
+              <Row wrap="wrap">
+                {charts.map((chart) => (
+                  <Fragment key={chart.id}>
+                    <LinkNext onPress={() => onEditFilterGroup(chart.id)} css={{ pb: 5 }}>
+                      <Badge
+                        color="primary"
+                        isSquared
+                        variant={filterGroups.find(c => c === chart.id) ? "default" : "bordered"}
+                        disableOutline
+                      >
+                        {chart.name}
+                      </Badge>
+                    </LinkNext>
+                    <Spacer x={0.3} />
+                  </Fragment>
+                ))}
+              </Row>
             </>
           )}
 
@@ -468,6 +491,8 @@ Filters.propTypes = {
   onAddFilter: PropTypes.func.isRequired,
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.bool.isRequired,
+  filterGroups: PropTypes.array.isRequired,
+  onEditFilterGroup: PropTypes.func.isRequired,
 };
 
 export default Filters;

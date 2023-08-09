@@ -53,6 +53,15 @@ const getFiltersFromStorage = () => {
   }
 };
 
+const getFilterGroupsFromStorage = () => {
+  try {
+    const filterGroups = JSON.parse(window.localStorage.getItem("_cb_filter_groups"));
+    return filterGroups || null;
+  } catch (e) {
+    return null;
+  }
+};
+
 /*
   Dashboard container (for the charts)
 */
@@ -63,6 +72,7 @@ function ProjectDashboard(props) {
   } = props;
 
   const [filters, setFilters] = useState(getFiltersFromStorage());
+  const [filterGroups, setFilterGroups] = useState(getFilterGroupsFromStorage());
   const [showFilters, setShowFilters] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
   const [refreshLoading, setRefreshLoading] = useState(false);
@@ -84,14 +94,36 @@ function ProjectDashboard(props) {
     }
   }, [filters]);
 
+  const _onEditFilterGroup = (chartId) => {
+    const { projectId } = match.params;
+    const newFilterGroups = _.clone(filterGroups) || {};
+    if (!newFilterGroups[projectId]) newFilterGroups[projectId] = [];
+
+    if (newFilterGroups[projectId].find((c) => c === chartId)) {
+      newFilterGroups[projectId] = newFilterGroups[projectId].filter((c) => c !== chartId);
+    } else {
+      newFilterGroups[projectId].push(chartId);
+    }
+
+    setFilterGroups(newFilterGroups);
+    window.localStorage.setItem("_cb_filter_groups", JSON.stringify(newFilterGroups));
+  };
+
   const _onAddFilter = (filter) => {
     const { projectId } = match.params;
 
     const newFilters = _.clone(filters) || {};
     if (!newFilters[projectId]) newFilters[projectId] = [];
+
+    if (filter.type === "date") {
+      newFilters[projectId] = newFilters[projectId].filter((f) => f.type !== "date");
+    }
+
     newFilters[projectId].push(filter);
     setFilters(newFilters);
+
     window.localStorage.setItem("_cb_filters", JSON.stringify(newFilters));
+
     setShowFilters(false);
   };
 
@@ -165,6 +197,7 @@ function ProjectDashboard(props) {
 
         if (currentFilters?.[projectId]?.length > 0
           && currentFilters?.[projectId]?.find((o) => o.type === "date")
+          && filterGroups?.[projectId]?.find((c) => c === charts[i].id)
         ) {
           queries.push({
             projectId,
@@ -197,11 +230,15 @@ function ProjectDashboard(props) {
     const queries = [];
     setRefreshLoading(true);
     for (let i = 0; i < charts.length; i++) {
-      queries.push({
+      const queryOpt = {
         projectId,
         chartId: charts[i].id,
-        dateFilter: filters?.[projectId]?.find((o) => o.type === "date"),
-      });
+      };
+      if (filterGroups?.[projectId]?.find((c) => c === charts[i].id)) {
+        queryOpt.dateFilter = filters?.[projectId]?.find((o) => o.type === "date");
+      }
+
+      queries.push(queryOpt);
     }
 
     return _throttleRefreshes(queries, 0)
@@ -330,14 +367,14 @@ function ProjectDashboard(props) {
                   <Media greaterThan="mobile">
                     <Button
                       ghost
-                      iconRight={<Filter2 size="small" />}
+                      iconRight={!filterLoading ? <Filter2 size="small" /> : null}
                       disabled={filterLoading}
                       onClick={_onShowFilters}
                       css={{ minWidth: "fit-content" }}
                       size="sm"
                       auto
                     >
-                      {filterLoading && <Loading type="points" />}
+                      {filterLoading && <Loading type="points-opacity" />}
                       {!filterLoading && "Add filter"}
                     </Button>
                   </Media>
@@ -555,6 +592,8 @@ function ProjectDashboard(props) {
         onAddFilter={_onAddFilter}
         open={showFilters}
         onClose={() => setShowFilters(false)}
+        filterGroups={filterGroups?.[match?.params?.projectId] || []}
+        onEditFilterGroup={_onEditFilterGroup}
       />
 
       <Modal open={viewExport} closeButton onClose={() => setViewExport(false)} width="800px">

@@ -592,14 +592,6 @@ class ConnectionController {
                 let startDate = moment.utc(chart.startDate).startOf("day");
                 let endDate = moment.utc(chart.endDate).endOf("day");
 
-                if (filters && filters.length > 0) {
-                  const dateRangeFilter = filters.find((o) => o.type === "date");
-                  if (dateRangeFilter) {
-                    startDate = moment(dateRangeFilter.startDate).startOf("day");
-                    endDate = moment(dateRangeFilter.endDate).endOf("day");
-                  }
-                }
-
                 if (value === "startDate" && chart.currentEndDate) {
                   const timeDiff = endDate.diff(startDate, "days");
                   endDate = moment.utc().endOf("day");
@@ -614,6 +606,14 @@ class ConnectionController {
                   }
                 } else {
                   queryParams[q] = chart[value];
+                }
+
+                if (filters && filters.length > 0) {
+                  const dateRangeFilter = filters.find((o) => o.type === "date");
+                  if (dateRangeFilter) {
+                    startDate = moment(dateRangeFilter.startDate).startOf("day");
+                    endDate = moment(dateRangeFilter.endDate).endOf("day");
+                  }
                 }
 
                 if (value === "startDate") {
