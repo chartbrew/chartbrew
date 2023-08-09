@@ -267,7 +267,7 @@ function AddChart(props) {
       stacked: typeof stacked !== "undefined" ? stacked : newChart.stacked,
       horizontal: typeof horizontal !== "undefined" ? horizontal : newChart.horizontal,
       dataLabels: typeof dataLabels !== "undefined" ? dataLabels : newChart.dataLabels,
-      dateVarsFormat: dateVarsFormat || newChart.dateVarsFormat,
+      dateVarsFormat: dateVarsFormat !== "undefined" ? dateVarsFormat : newChart.dateVarsFormat,
     };
 
     let skipParsing = false;

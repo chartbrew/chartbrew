@@ -81,7 +81,7 @@ function ChartSettings(props) {
   const [ticksNumber, setTicksNumber] = useState("");
   const [ticksSelection, setTicksSelection] = useState("default");
   const [dateFormattingModal, setDateFormattingModal] = useState(false);
-  const [datesFormat, setDatesFormat] = useState("");
+  const [datesFormat, setDatesFormat] = useState(null);
 
   const {
     type, pointRadius, displayLegend,
@@ -114,6 +114,9 @@ function ChartSettings(props) {
 
   useEffect(() => {
     setDateRange({ startDate, endDate });
+    if (dateVarsFormat) {
+      setDatesFormat(dateVarsFormat);
+    }
   }, [startDate, endDate]);
 
   useEffect(() => {
@@ -639,7 +642,7 @@ function ChartSettings(props) {
               <Input
                 labelPlaceholder="Enter a date format"
                 initialValue={dateVarsFormat}
-                value={datesFormat || dateVarsFormat}
+                value={datesFormat}
                 onChange={(e) => setDatesFormat(e.target.value)}
                 bordered
                 fullWidth
