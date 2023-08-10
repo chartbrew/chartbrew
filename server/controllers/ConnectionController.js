@@ -616,11 +616,11 @@ class ConnectionController {
                   }
                 }
 
-                if (value === "startDate") {
+                if (value === "startDate" && startDate) {
                   queryParams[q] = startDate.format(chart.dateVarsFormat || "");
                 }
 
-                if (value === "endDate") {
+                if (value === "endDate" && endDate) {
                   queryParams[q] = endDate.format(chart.dateVarsFormat || "");
                 }
               });
@@ -669,6 +669,8 @@ class ConnectionController {
             pass: connection.authentication.pass,
           };
         }
+
+        console.log("options", options);
 
         if (dataRequest.pagination) {
           if ((options.url.indexOf(`?${dataRequest.items}=`) || options.url.indexOf(`&${dataRequest.items}=`))
