@@ -670,8 +670,6 @@ class ConnectionController {
           };
         }
 
-        console.log("options", options);
-
         if (dataRequest.pagination) {
           if ((options.url.indexOf(`?${dataRequest.items}=`) || options.url.indexOf(`&${dataRequest.items}=`))
             && (options.url.indexOf(`?${dataRequest.offset}=`) || options.url.indexOf(`&${dataRequest.offset}=`))
