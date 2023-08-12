@@ -6,6 +6,7 @@ const template = (website, apiKey, dashboardOrder) => ({
   Connections: [{
     name: "SimpleAnalyticsAPI",
     type: "api",
+    subType: "simpleanalytics",
     host: "https://simpleanalytics.com",
     options: [{
       "Api-Key": apiKey || "none",

@@ -32,7 +32,9 @@ function RealtimeDbConnectionForm(props) {
 
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
-  const [connection, setConnection] = useState({ type: "realtimedb", optionsArray: [], firebaseServiceAccount: "" });
+  const [connection, setConnection] = useState({
+    type: "realtimedb", subType: "realtimedb", optionsArray: [], firebaseServiceAccount: "",
+  });
   const [errors, setErrors] = useState({});
   const [jsonVisible, setJsonVisible] = useState(false);
 

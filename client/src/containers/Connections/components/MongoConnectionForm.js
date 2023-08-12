@@ -30,7 +30,9 @@ function MongoConnectionForm(props) {
   const [showIp, setShowIp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
-  const [connection, setConnection] = useState({ type: "mongodb", optionsArray: [], srv: false });
+  const [connection, setConnection] = useState({
+    type: "mongodb", subType: "mongodb", optionsArray: [], srv: false
+  });
   const [errors, setErrors] = useState({});
   const [formStyle, setFormStyle] = useState("string");
 

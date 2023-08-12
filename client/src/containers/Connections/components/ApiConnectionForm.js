@@ -41,7 +41,9 @@ function ApiConnectionForm(props) {
 
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
-  const [connection, setConnection] = useState({ type: "api", optionsArray: [] });
+  const [connection, setConnection] = useState({
+    type: "api", subType: "api", optionsArray: []
+  });
   const [errors, setErrors] = useState({});
   const [menuType, setMenuType] = useState("authentication");
 

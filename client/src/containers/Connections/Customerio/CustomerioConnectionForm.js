@@ -25,7 +25,9 @@ function CustomerioConnectionForm(props) {
     editConnection, onTest, projectId, onComplete, addError, testResult
   } = props;
 
-  const [connection, setConnection] = useState({ type: "customerio", host: "us", optionsArray: [] });
+  const [connection, setConnection] = useState({
+    type: "customerio", subType: "customerio", host: "us", optionsArray: []
+  });
   const [errors, setErrors] = useState({});
   const [testLoading, setTestLoading] = useState(false);
   const [loading, setLoading] = useState(false);

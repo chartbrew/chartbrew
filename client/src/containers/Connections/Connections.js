@@ -738,8 +738,10 @@ function Connections(props) {
                           <img
                             width="50px"
                             height="50px"
-                            src={connectionImages(isDark)[connection.type]}
-                            alt={`${connection.type} logo`}
+                            src={connectionImages(isDark)[
+                              connection.subType || connection.type
+                            ]}
+                            alt={`${connection.subType} logo`}
                           />
                         </Row>
                         <Row>

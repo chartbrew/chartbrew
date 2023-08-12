@@ -31,7 +31,9 @@ function FirestoreConnectionForm(props) {
 
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
-  const [connection, setConnection] = useState({ type: "firestore", optionsArray: [], firebaseServiceAccount: "" });
+  const [connection, setConnection] = useState({
+    type: "firestore", subType: "firestore", optionsArray: [], firebaseServiceAccount: ""
+  });
   const [errors, setErrors] = useState({});
   const [jsonVisible, setJsonVisible] = useState(false);
 

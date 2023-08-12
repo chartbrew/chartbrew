@@ -6,7 +6,7 @@ module.exports = (connection) => {
   const password = connection.password || "";
   const host = connection.host || "localhost";
   const { port, connectionString } = connection;
-  const dialect = connection.type === "timescaledb" ? "postgres" : connection.type;
+  const dialect = connection.type;
 
   let sequelize;
 
@@ -17,7 +17,7 @@ module.exports = (connection) => {
     logging: false,
   };
 
-  if (connection.type === "timescaledb") {
+  if (connection.subType === "timescaledb") {
     connectionConfig.dialectOptions = {
       ssl: {
         require: true,

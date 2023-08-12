@@ -164,7 +164,7 @@ class DatasetController {
     return db.Dataset.findOne({
       where: { id },
       include: [
-        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "host"] }] },
+        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }] },
       ],
     })
       .then((dataset) => {
@@ -234,7 +234,7 @@ class DatasetController {
                 connection.id, chartId, dataRequest, getCache, filters,
               )
             );
-          } else if (connection.type === "postgres" || connection.type === "mysql" || connection.type === "timescaledb") {
+          } else if (connection.type === "postgres" || connection.type === "mysql") {
             drPromises.push(
               this.connectionController.runMysqlOrPostgres(connection.id, dataRequest, getCache)
             );

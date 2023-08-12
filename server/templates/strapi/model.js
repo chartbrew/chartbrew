@@ -38,6 +38,7 @@ const template = (templateData, dashboardOrder = 0) => {
         "firebaseServiceAccount": null,
         "name": "Strapi API",
         "type": "api",
+        "subType": "strapi",
         "active": true,
         "srv": false
       }

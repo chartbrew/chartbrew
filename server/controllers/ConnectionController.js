@@ -210,7 +210,7 @@ class ConnectionController {
       return this.testApi(data);
     } else if (data.type === "mongodb") {
       return this.testMongo(data);
-    } else if (data.type === "mysql" || data.type === "postgres" || data.type === "timescaledb") {
+    } else if (data.type === "mysql" || data.type === "postgres") {
       return this.testMysql(data);
     } else if (data.type === "realtimedb") {
       return this.testFirebase(data);
@@ -330,7 +330,6 @@ class ConnectionController {
             return request(this.getApiTestOptions(connection));
           case "postgres":
           case "mysql":
-          case "timescaledb":
             return externalDbConnection(connection);
           case "realtimedb":
           case "firestore":
@@ -356,7 +355,6 @@ class ConnectionController {
             return new Promise((resolve, reject) => reject(new Error(400)));
           case "postgres":
           case "mysql":
-          case "timescaledb":
             return new Promise((resolve) => resolve({ success: true }));
           case "realtimedb":
           case "firestore":

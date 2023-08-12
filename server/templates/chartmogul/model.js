@@ -20,6 +20,7 @@ const template = (token, key, dashboardOrder = 0) => ({
     "firebaseServiceAccount": null,
     "name": "ChartMogul",
     "type": "api",
+    "subType": "chartmogul",
     "active": true,
     "srv": false
   }],

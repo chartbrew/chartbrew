@@ -31,7 +31,9 @@ function GaConnectionForm(props) {
 
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
-  const [connection, setConnection] = useState({ type: "googleAnalytics", optionsArray: [], name: "Google Analytics" });
+  const [connection, setConnection] = useState({
+    type: "googleAnalytics", subType: "googleAnalytics", optionsArray: [], name: "Google Analytics"
+  });
   const [errors, setErrors] = useState({});
 
   const { isDark } = useTheme();

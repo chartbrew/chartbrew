@@ -19,7 +19,7 @@ class RequestController {
   findById(id) {
     return db.DataRequest.findOne({
       where: { id },
-      include: [{ model: db.Connection, attributes: ["id", "name", "type", "host"] }],
+      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }],
     })
       .then((dataRequest) => {
         if (!dataRequest) {
@@ -35,7 +35,7 @@ class RequestController {
   findByChart(chartId) {
     return db.DataRequest.findOne({
       where: { chart_id: chartId },
-      include: [{ model: db.Connection, attributes: ["id", "name", "type", "host"] }]
+      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }]
     })
       .then((dataRequest) => {
         if (!dataRequest) {
@@ -51,7 +51,7 @@ class RequestController {
   findByDataset(datasetId) {
     return db.DataRequest.findAll({
       where: { dataset_id: datasetId },
-      include: [{ model: db.Connection, attributes: ["id", "name", "type", "host"] }]
+      include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType", "host"] }]
     })
       .then((dataRequests) => {
         if (!dataRequests || dataRequests.length === 0) {
@@ -126,7 +126,7 @@ class RequestController {
           return this.connectionController.runApiRequest(
             connection.id, chartId, dataRequest, getCache
           );
-        } else if (connection.type === "postgres" || connection.type === "mysql" || connection.type === "timescaledb") {
+        } else if (connection.type === "postgres" || connection.type === "mysql") {
           return this.connectionController.runMysqlOrPostgres(connection.id, dataRequest);
         } else if (connection.type === "firestore") {
           return this.connectionController.runFirestore(connection.id, dataRequest, getCache);

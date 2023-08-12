@@ -21,6 +21,7 @@ const template = (website, apiKey, dashboardOrder) => ({
       "firebaseServiceAccount": null,
       "name": "Plausible API",
       "type": "api",
+      "subType": "plausible",
       "active": true,
       "srv": false
     }

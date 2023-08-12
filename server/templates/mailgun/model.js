@@ -19,6 +19,7 @@ const template = (apiKey, domain, apiRoot, dashboardOrder = 0) => ({
     "firebaseServiceAccount": null,
     "name": "MailgunAPI",
     "type": "api",
+    "subType": "mailgun",
     "active": true,
     "srv": false
   }],

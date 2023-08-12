@@ -40,11 +40,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    subType: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     active: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
-
     host: {
       type: DataTypes.STRING,
       set(val) {

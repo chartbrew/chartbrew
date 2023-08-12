@@ -1372,6 +1372,7 @@ const template = (configuration = {}, dashboardOrder = 1) => ({
       "firebaseServiceAccount": null,
       "name": "Google Analytics - GA4",
       "type": "googleAnalytics",
+      "subType": "googleAnalytics",
       "active": true,
       "srv": false
     }

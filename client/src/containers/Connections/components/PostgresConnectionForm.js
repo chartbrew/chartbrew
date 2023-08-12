@@ -25,7 +25,7 @@ function PostgresConnectionForm(props) {
 
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
-  const [connection, setConnection] = useState({ type: "postgres" });
+  const [connection, setConnection] = useState({ type: "postgres", subType: "postgres" });
   const [errors, setErrors] = useState({});
   const [formStyle, setFormStyle] = useState("string");
 

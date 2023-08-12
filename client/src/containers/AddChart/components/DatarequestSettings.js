@@ -114,7 +114,9 @@ function DatarequestSettings(props) {
         <>
           <Avatar
             squared
-            src={connectionImages(isDark)[dr.Connection.type]}
+            src={connectionImages(isDark)[
+              dr.Connection.subType || dr.Connection.type
+            ]}
             size={size}
           />
           <Spacer x={0.3} />
@@ -250,7 +252,11 @@ function DatarequestSettings(props) {
                         (request.Connection?.type && (
                           <Avatar
                             squared
-                            src={connectionImages(isDark)[request.Connection.type]}
+                            src={
+                              connectionImages(isDark)[
+                                request.Connection.subType || request.Connection.type
+                              ]
+                            }
                           />
                         )) || null
                       )}
@@ -297,7 +303,9 @@ function DatarequestSettings(props) {
                           icon={(
                             <Avatar
                               squared
-                              src={connectionImages(isDark)[request.Connection.type]}
+                              src={connectionImages(isDark)[
+                                request.Connection.subType || request.Connection.type
+                              ]}
                             />
                           )}
                           command={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
@@ -340,7 +348,9 @@ function DatarequestSettings(props) {
                           icon={(
                             <Avatar
                               squared
-                              src={connectionImages(isDark)[request.Connection.type]}
+                              src={connectionImages(isDark)[
+                                request.Connection.subType || request.Connection.type
+                              ]}
                             />
                           )}
                           command={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
