@@ -472,6 +472,7 @@ function Start(props) {
                   {renderConnectionCard("realtimedb", "Realtime Database")}
                   {renderConnectionCard("googleAnalytics", "Google Analytics")}
                   {renderConnectionCard("customerio", "Customer.io")}
+                  {renderConnectionCard("strapi", "Strapi")}
                   {renderConnectionCard("timescaledb", "Timescale")}
                 </Grid.Container>
               </motion.div>
