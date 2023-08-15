@@ -64,7 +64,9 @@ function KpiMode(props) {
     );
   };
 
-  const _renderGoal = (goal, color) => {
+  const _renderGoal = (goals, index) => {
+    const goal = goals.find((g) => g.goalIndex === index); // eslint-disable-line
+    const color = chart.Datasets[index] && chart.Datasets[index].datasetColor;
     if (!goal) return (<span />);
     const {
       max, value, formattedMax,
@@ -135,7 +137,7 @@ function KpiMode(props) {
 
             {chart.chartData.goals && (
               <Row justify="center" align="center">
-                {_renderGoal(chart.chartData.goals[index], chart.Datasets[index].datasetColor)}
+                {_renderGoal(chart.chartData.goals, index)}
               </Row>
             )}
           </div>

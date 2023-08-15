@@ -709,11 +709,15 @@ class AxisChart {
           });
 
           if (goal) {
+            const valueIndex = this.chart.subType.indexOf("AddTimeseries") > -1
+              ? d.data.length - 1 : index;
+            const goalCurrentValue = `${d.data[valueIndex]}`.replace(",", "").match(/[\d.]+/g);
             configuration.goals.push({
               max: goal,
               formattedMax: `${before}${formatCompactNumber(goal)}${after}`,
-              value: numericCurrValue,
+              value: goalCurrentValue,
               formattedValue: `${before}${numericCurrValue.toLocaleString()}${after}`,
+              goalIndex: index,
             });
           }
         }
@@ -732,6 +736,7 @@ class AxisChart {
             formattedMax: `${before}${formatCompactNumber(goal)}${after}`,
             value: numericVal,
             formattedValue: `${before}${numericVal.toLocaleString()}${after}`,
+            goalIndex: index,
           });
         }
       } else if (d.data.length > 1) {
@@ -756,6 +761,7 @@ class AxisChart {
             formattedMax: `${before}${formatCompactNumber(goal)}${after}`,
             value: d.data[d.data.length - 1],
             formattedValue: `${before}${d.data[d.data.length - 1]}${after}`,
+            goalIndex: index,
           });
         }
       }
