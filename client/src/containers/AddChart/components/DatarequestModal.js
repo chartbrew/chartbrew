@@ -442,7 +442,7 @@ function DatarequestModal(props) {
                               <Spacer x={0.2} />
                               <Avatar
                                 squared
-                                src={connectionImages(isDark)[c.type]}
+                                src={connectionImages(isDark)[c.subType || c.type]}
                                 alt={`${c.type} logo`}
                               />
                             </Row>

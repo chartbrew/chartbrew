@@ -48,6 +48,7 @@ import chartmogulDash from "./ChartMogul/chartmogul-template.jpeg";
 import mailgunDash from "./Mailgun/mailgun-template.jpeg";
 import gaDash from "./GoogleAnalytics/ga-template.jpeg";
 import TimescaleConnectionForm from "./Timescale/TimescaleConnectionForm";
+import StrapiConnectionForm from "./Strapi/StrapiConnectionForm";
 
 /*
   The page that contains all the connections
@@ -433,6 +434,20 @@ function Connections(props) {
                     </Card>
                   </Grid>
                   <Grid xs={6} sm={4} md={2}>
+                    <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("strapi")}>
+                      <Card.Body css={{ p: 0 }}>
+                        <Card.Image objectFit="cover" width="300" height="300" src={connectionImages(isDark).strapi} />
+                      </Card.Body>
+                      <Card.Footer>
+                        <Row wrap="wrap" justify="center" align="center">
+                          <Text h4>
+                            Strapi
+                          </Text>
+                        </Row>
+                      </Card.Footer>
+                    </Card>
+                  </Grid>
+                  <Grid xs={6} sm={4} md={2}>
                     <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType("customerio")}>
                       <Card.Body css={{ p: 0 }}>
                         <Card.Image objectFit="cover" width="300" height="300" src={connectionImages(isDark).customerio} />
@@ -624,6 +639,16 @@ function Connections(props) {
           )}
           {formType === "googleAnalytics" && (
             <GaConnectionForm
+              projectId={match.params.projectId}
+              onTest={_onTestRequest}
+              onComplete={_onAddNewConnection}
+              editConnection={editConnection}
+              addError={addError}
+              testResult={testResult}
+            />
+          )}
+          {formType === "strapi" && (
+            <StrapiConnectionForm
               projectId={match.params.projectId}
               onTest={_onTestRequest}
               onComplete={_onAddNewConnection}
