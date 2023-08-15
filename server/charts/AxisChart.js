@@ -984,8 +984,9 @@ class AxisChart {
         let nestedResult = 0;
         let minValue;
         let maxValue;
+        let nestedData = [];
         collection.forEach((c) => {
-          const nestedData = _.get(c, nestedArray[0]);
+          nestedData = _.get(c, nestedArray[0]);
           // get the objects in the nested array
           if (op !== "count" && yType === "number") {
             nestedData.forEach((current) => {
@@ -999,7 +1000,7 @@ class AxisChart {
         }
 
         if (op === "avg" && !averageByTotal) {
-          finalItem = nestedResult / collection.length;
+          finalItem = nestedResult / nestedData.length;
         } else if (op === "min") {
           if (nestedResult < minValue || (!minValue && minValue !== 0)) {
             finalItem = nestedResult;
