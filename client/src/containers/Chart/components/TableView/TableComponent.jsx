@@ -1,5 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
-
 import React from "react";
 import { usePagination, useSortBy, useTable } from "react-table";
 import PropTypes from "prop-types";
@@ -97,7 +95,7 @@ function TableComponent(props) {
               {page.map((row) => {
                 prepareRow(row);
                 return (
-                  <Table.Row {...row.getRowProps()}>
+                  <Table.Row key={row.getRowProps().key} {...row.getRowProps()}>
                     {row.cells.map((cell, cellIndex) => {
                       // identify collections to render them differently
                       const cellObj = cell.render("Cell");
@@ -114,6 +112,7 @@ function TableComponent(props) {
 
                       return (
                         <Table.Cell
+                          key={`${row.id}-${cell.column.Header}`}
                           {...cell.getCellProps()}
                           css={{
                             userSelect: "text",

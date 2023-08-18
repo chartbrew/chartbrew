@@ -76,7 +76,7 @@ const steps = {
     },
     {
       selector: ".add-dataset-tut",
-      content: ({ close }) => ( // eslint-disable-line
+      content: ({ close }) => (
         <Container>
           <Row>
             <Text color="black">{"Here is the place where you prepare the data for brewing. You can create different datasets, connect them to data sources and get the data flowing."}</Text>
@@ -121,7 +121,7 @@ const steps = {
     },
     {
       selector: ".dataset-actions-tut",
-      content: ({ close }) => ( // eslint-disable-line
+      content: ({ close }) => (
         <Container>
           <Row>
             <Text color="black">{"The dataset settings are saved automatically, but you can always save manually from here."}</Text>
@@ -197,7 +197,7 @@ const steps = {
     },
     {
       selector: ".apibuilder-result-tut",
-      content: ({ close }) => ( // eslint-disable-line
+      content: ({ close }) => (
         <Container>
           <Row>
             <Text color="black">{"If the request is successful you will see the JSON data in this section."}</Text>
@@ -271,7 +271,7 @@ const steps = {
     },
     {
       selector: ".mongobuilder-result-tut",
-      content: ({ close }) => ( // eslint-disable-line
+      content: ({ close }) => (
         <Container>
           <Row>
             <Text color="black">{"The JSON-formatted data will appear here when you run a successful query."}</Text>
@@ -335,7 +335,7 @@ const steps = {
     },
     {
       selector: ".sqlbuilder-result-tut",
-      content: ({ close }) => ( // eslint-disable-line
+      content: ({ close }) => (
         <Container>
           <Row>
             <Text color="black">{"The JSON-formatted data will appear here when you run a successful query."}</Text>
@@ -400,7 +400,7 @@ const steps = {
     },
     {
       selector: ".firestorebuilder-query-tut",
-      content: ({ close }) => ( // eslint-disable-line
+      content: ({ close }) => (
         <Container>
           <Row>
             <Text color="black">{"One last thing!"}</Text>
@@ -431,7 +431,7 @@ const steps = {
   requestmodal: [
     {
       selector: ".requestmodal-fields-tut",
-      content: ({ close }) => ( // eslint-disable-line
+      content: ({ close }) => (
         <Container>
           <Row>
             <Text color="black">{"Great! You have some data now."}</Text>
@@ -499,7 +499,7 @@ const steps = {
     },
     {
       selector: ".dataset-alerts-tut",
-      content: ({ close }) => ( // eslint-disable-line
+      content: ({ close }) => (
         <Container>
           <Row>
             <Text color="black">{"Set up alerts to always be notified about your data."}</Text>
@@ -566,7 +566,7 @@ const steps = {
     },
     {
       selector: ".drsettings-compile-tut",
-      content: ({ close }) => ( // eslint-disable-line
+      content: ({ close }) => (
         <Container>
           <Row>
             <Text color="black">{"After you finish the configuration, you can compile the data from here. Chartbrew will then apply all the join settings to create a single dataset."}</Text>

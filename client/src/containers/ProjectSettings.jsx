@@ -152,7 +152,7 @@ function ProjectSettings(props) {
           <Input
             label="Project name"
             placeholder="Type a project name"
-            value={projectName ? projectName /* eslint-disable-line */
+            value={projectName ? projectName
               : project.name ? project.name : ""}
             onChange={(e) => setProjectName(e.target.value)}
             css={{ minWidth: 300 }}

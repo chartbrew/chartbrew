@@ -246,7 +246,7 @@ function FirestoreBuilder(props) {
   const _onTest = (request = firestoreRequest) => {
     setRequestLoading(true);
 
-    if (request === null) request = firestoreRequest; // eslint-disable-line
+    if (request === null) request = firestoreRequest;
     const requestToSave = _.cloneDeep(request);
     onSave(requestToSave).then(() => {
       _onRunRequest();

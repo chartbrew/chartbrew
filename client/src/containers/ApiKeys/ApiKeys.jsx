@@ -72,7 +72,7 @@ function ApiKeys(props) {
 
   const _onCopyToken = () => {
     setTokenCopied(true);
-    navigator.clipboard.writeText(createdKey.token); // eslint-disable-line
+    navigator.clipboard.writeText(createdKey.token);
   };
 
   return (

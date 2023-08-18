@@ -437,7 +437,7 @@ export function exportChart(projectId, chartIds, filters) {
       return response.blob();
     })
     .then((file) => {
-      const url = window.URL.createObjectURL(new Blob([file])); // eslint-disable-line
+      const url = window.URL.createObjectURL(new Blob([file]));
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", "chartbrew-export.xlsx");
@@ -475,7 +475,7 @@ export function exportChartPublic(chart, password) {
       return response.blob();
     })
     .then((file) => {
-      const url = window.URL.createObjectURL(new Blob([file])); // eslint-disable-line
+      const url = window.URL.createObjectURL(new Blob([file]));
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", `${chart.name}-chartbrew.xlsx`);

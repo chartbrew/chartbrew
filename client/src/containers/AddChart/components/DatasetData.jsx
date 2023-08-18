@@ -388,8 +388,8 @@ function DatasetData(props) {
   };
 
   const _onExampleFormula = () => {
-    setFormula("${val / 100}"); // eslint-disable-line
-    onUpdate({ formula: "${val / 100}" }); // eslint-disable-line
+    setFormula("${val / 100}");
+    onUpdate({ formula: "${val / 100}" });
   };
 
   const _onRemoveFormula = () => {

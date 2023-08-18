@@ -34,12 +34,12 @@ function SharingSettings(props) {
 
   const _onCopyUrl = () => {
     setUrlCopied(true);
-    navigator.clipboard.writeText(`${SITE_HOST}/b/${newBrewName}`); // eslint-disable-line
+    navigator.clipboard.writeText(`${SITE_HOST}/b/${newBrewName}`);
   };
 
   const _onCopyEmbed = () => {
     setEmbedCopied(true);
-    navigator.clipboard.writeText(`<iframe src="${SITE_HOST}/b/${newBrewName}" allowTransparency="true" width="1200" height="600" frameborder="0" style="background-color: #ffffff"></iframe>`); // eslint-disable-line
+    navigator.clipboard.writeText(`<iframe src="${SITE_HOST}/b/${newBrewName}" allowTransparency="true" width="1200" height="600" frameborder="0" style="background-color: #ffffff"></iframe>`);
   };
 
   const _getEmbedString = () => {

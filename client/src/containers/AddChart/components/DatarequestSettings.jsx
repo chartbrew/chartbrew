@@ -31,7 +31,7 @@ import { changeTutorial as changeTutorialAction } from "../../../actions/tutoria
 
 function DatarequestSettings(props) {
   const {
-    dataRequests, responses, runRequest, dataset, onChange, drResponses, // eslint-disable-line
+    dataRequests, responses, runRequest, dataset, onChange, drResponses,
     runDataRequest, match, changeTutorial,
   } = props;
 
@@ -381,7 +381,9 @@ function DatarequestSettings(props) {
                             </Text>
                           </div>
                           <Spacer y={0.2} />
-                          <div css={styles.fieldContainer}>
+                          <div
+                            style={styles.fieldContainer}
+                          >
                             <Text size={14} b>{_renderHumanField(join.dr_field) || "Select field"}</Text>
                           </div>
                         </div>

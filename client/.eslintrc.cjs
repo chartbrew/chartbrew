@@ -54,5 +54,18 @@ module.exports = {
         "varsIgnorePattern": "React"
       }
     ],
+    "no-console": [
+      "warn",
+      {
+        "allow": [
+          "warn",
+          "error"
+        ]
+      }
+    ]
+  },
+  globals: {
+    Headway: true,
+    HW_config: true,
   },
 }

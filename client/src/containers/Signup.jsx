@@ -141,7 +141,7 @@ function Signup(props) {
             <Spacer size={1} />
             <Row justify="center">
               <Link to="/">
-                <img centered src={cbLogoSmall} width="70" alt="Chartbrew logo" />
+                <img src={cbLogoSmall} width="70" alt="Chartbrew logo" />
               </Link>
             </Row>
             <Spacer size={1} />

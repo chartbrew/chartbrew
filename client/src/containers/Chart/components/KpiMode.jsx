@@ -65,7 +65,7 @@ function KpiMode(props) {
   };
 
   const _renderGoal = (goals, index) => {
-    const goal = goals.find((g) => g.goalIndex === index); // eslint-disable-line
+    const goal = goals.find((g) => g.goalIndex === index);
     const color = chart.Datasets[index] && chart.Datasets[index].datasetColor;
     if (!goal) return (<span />);
     const {

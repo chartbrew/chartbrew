@@ -82,7 +82,7 @@ function InviteMembersForm(props) {
 
   const _onCopyUrl = () => {
     setUrlCopied(true);
-    navigator.clipboard.writeText(inviteUrl); // eslint-disable-line
+    navigator.clipboard.writeText(inviteUrl);
   };
 
   return (

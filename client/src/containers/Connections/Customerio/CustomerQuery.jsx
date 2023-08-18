@@ -308,7 +308,7 @@ function CustomerQuery(props) {
                         </span>
                       );
                     }
-                    return (<span />);
+                    return (<span />); // eslint-disable-line
                   })}
                   <Spacer x={0.1} />
                   <Link onClick={() => _onRemoveCondition("segment", condition.or)} color="secondary">
@@ -331,7 +331,7 @@ function CustomerQuery(props) {
                         </span>
                       );
                     }
-                    return (<span />);
+                    return (<span />); // eslint-disable-line
                   })}
                   <Spacer x={0.1} />
                   <Link onClick={() => _onRemoveCondition("segment", condition.not)} color="secondary">

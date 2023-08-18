@@ -160,7 +160,7 @@ function SavedQueries(props) {
           <Input
             label="Edit the description of the query"
             placeholder="Type a summary here"
-            value={savedQuerySummary ? savedQuerySummary /* eslint-disable-line */
+            value={savedQuerySummary ? savedQuerySummary
               : editQuery ? editQuery.summary : ""}
             fluid
             onChange={(e) => setSavedQuerySummary(e.target.value)}

@@ -560,7 +560,7 @@ function ProjectDashboard(props) {
           >
             {charts.map((chart, index) => {
               if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
-              if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />); // eslint-disable-line
+              if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />);
               return (
                 <Grid
                   xs={12}

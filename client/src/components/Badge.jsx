@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import { styled } from "@nextui-org/react";
 
 // Badge component will be available as part of the core library soon

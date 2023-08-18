@@ -12,12 +12,6 @@ export default class ChartErrorBoundary extends React.Component {
     return { hasError: true };
   }
 
-  componentDidCatch(error, errorInfo) {
-    // You can also log the error to an error reporting service
-    console.log("error", error); // eslint-disable-line
-    console.log("errorInfo", errorInfo); // eslint-disable-line
-  }
-
   render() {
     const { hasError } = this.state;
     const { children } = this.props; // eslint-disable-line

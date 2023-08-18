@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
@@ -669,10 +669,9 @@ function AddChart(props) {
             <Row wrap="wrap">
               {!arrangeMode && datasets && datasets.map((dataset) => {
                 return (
-                  <>
+                  <Fragment key={dataset.id}>
                     <Button
                       style={styles.datasetButtons}
-                      key={dataset.id}
                       onClick={() => _onDatasetChanged(dataset)}
                       ghost={dataset.id !== activeDataset.id}
                       size="sm"
@@ -680,7 +679,7 @@ function AddChart(props) {
                     >
                       {dataset.legend}
                     </Button>
-                  </>
+                  </Fragment>
                 );
               })}
               {arrangeMode && datasets && datasetsOrder.map((dataset, index) => {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button, Row, Spacer, Text
@@ -51,20 +51,19 @@ function TableContainer(props) {
       <Row align="center" wrap="wrap">
         {activeDataset && datasets.map((dataset) => {
           return (
-            <>
+            <Fragment key={dataset.id}>
               <Button
                 onClick={() => setActiveDataset(dataset)}
                 color="primary"
                 light={activeDataset.id !== dataset.id}
                 bordered={activeDataset.id === dataset.id}
                 auto
-                key={dataset.id}
                 size={chartSize === 1 ? "xs" : "sm"}
               >
                 {dataset.legend}
               </Button>
               <Spacer x={0.2} />
-            </>
+            </Fragment>
           );
         })}
         <Spacer x={0.2} />

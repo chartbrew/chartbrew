@@ -224,7 +224,7 @@ function GaBuilder(props) {
     setRequestLoading(true);
     _onChangeRequest({ configuration });
 
-    if (request === null) request = gaRequest; // eslint-disable-line
+    if (request === null) request = gaRequest;
     const requestToSave = { ...request, configuration };
     onSave(requestToSave).then(() => {
       _onRunRequest();

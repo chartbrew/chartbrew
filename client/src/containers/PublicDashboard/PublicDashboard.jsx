@@ -1,5 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
-
 import React, { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import { Link as LinkDom } from "react-router-dom";
@@ -86,7 +84,7 @@ function PublicDashboard(props) {
     setNewChanges({ ...newChanges, logo: acceptedFiles });
     setIsSaved(false);
 
-    const reader = new FileReader(); // eslint-disable-line
+    const reader = new FileReader();
     reader.onloadend = () => {
       setLogoPreview(reader.result);
     };

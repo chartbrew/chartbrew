@@ -489,7 +489,7 @@ function DatasetAlerts(props) {
                   <Spacer y={0.5} />
                   <Row wrap="wrap">
                     {teamMembers.map((member) => (
-                      <Link onClick={() => _onChangeRecipient(member.email)}>
+                      <Link key={member.email} onClick={() => _onChangeRecipient(member.email)}>
                         <Badge
                           color="primary"
                           isSquared

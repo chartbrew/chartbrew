@@ -1,5 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
-
 import React, {
   useState, useEffect, useCallback, useMemo
 } from "react";
@@ -79,7 +77,7 @@ function FirestoreConnectionForm(props) {
 
   function StyledDropzone() {
     const onDrop = useCallback((acceptedFiles) => {
-      const reader = new FileReader(); // eslint-disable-line
+      const reader = new FileReader();
       reader.readAsText(acceptedFiles[0]);
       reader.onload = () => {
         let jsonData = reader.result;

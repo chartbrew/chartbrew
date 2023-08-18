@@ -7,7 +7,7 @@ export default (callback, delay) => {
     savedCallback.current = callback;
   }, [callback]);
 
-  useEffect(() => { // eslint-disable-line
+  useEffect(() => {
     function tick() {
       savedCallback.current();
     }

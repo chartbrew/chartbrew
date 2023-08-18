@@ -52,7 +52,7 @@ function DraggableLabel({ field, index, onMove }) {
       }
 
       onMove(dragIndex, hoverIndex);
-      item.index = hoverIndex; // eslint-disable-line
+      item.index = hoverIndex;
     },
   });
 
