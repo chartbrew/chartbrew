@@ -7,8 +7,9 @@ import {
 } from "@nextui-org/react";
 
 import {
-  ArrowRight, CaretLeft, CloseSquare, Delete, InfoSquare, Swap, TickSquare,
+  ArrowRight, CloseSquare, Delete, InfoSquare, Swap, TickSquare,
 } from "react-iconly";
+import { IoCaretForward } from "react-icons/io5";
 
 import connectionImages from "../../../config/connectionImages";
 import { generateDashboard } from "../../../actions/project";
@@ -202,7 +203,7 @@ function CustomTemplateForm(props) {
   return (
     <Container>
       <Row align="center">
-        <Avatar icon={<CaretLeft />} onClick={onBack} squared />
+        <Avatar icon={<IoCaretForward />} onClick={onBack} squared />
         <Spacer x={0.5} />
         <Text h4>
           {template.name}

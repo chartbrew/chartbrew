@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import {
   Container, Card, Loading, Text, Spacer, Row, Link, Input, Button, Grid, useTheme, Divider,
 } from "@nextui-org/react";
-import { motion } from "framer-motion/dist/framer-motion";
+import { motion } from "framer-motion";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import {

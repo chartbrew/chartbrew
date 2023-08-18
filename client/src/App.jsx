@@ -1,8 +1,8 @@
 import React from "react";
 import { Provider } from "react-redux";
-
+import { Router } from "react-router";
 import { createBrowserHistory } from "history";
-import { ConnectedRouter, routerMiddleware } from "connected-react-router";
+import { createReduxHistoryContext } from "redux-first-history";
 import { createStore, applyMiddleware, compose } from "redux";
 import thunk from "redux-thunk";
 import logger from "redux-logger";
@@ -15,19 +15,24 @@ import reducer from "./reducers";
 import getThemeConfig from "./theme";
 import useThemeDetector from "./modules/useThemeDetector";
 
-const history = createBrowserHistory();
+const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
+  history: createBrowserHistory(),
+  //other options if needed 
+});
 
-let middlewares = [thunk, routerMiddleware(history)];
+let middlewares = [thunk, routerMiddleware];
 
-if (process.env.NODE_ENV !== "production") {
+if (import.meta.env.DEV) {
   middlewares = [...middlewares, logger];
 }
 
 const store = createStore(
-  reducer(history),
+  reducer(routerReducer),
   undefined,
   compose(applyMiddleware(...middlewares)),
 );
+
+const history = createReduxHistory(store);
 
 export default function App() {
   const darkMode = useDarkMode(window.localStorage.getItem("darkMode"));
@@ -45,13 +50,13 @@ export default function App() {
 
   return (
     <Provider store={store}>
-      <ConnectedRouter history={history}>
+      <Router history={history}>
         <NextUIProvider theme={_getTheme()}>
           <IconlyProvider set="bulk">
             <Main />
           </IconlyProvider>
         </NextUIProvider>
-      </ConnectedRouter>
+      </Router>
     </Provider>
   );
 }

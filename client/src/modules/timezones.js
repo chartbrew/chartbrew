@@ -1,4 +1,4 @@
-module.exports = [
+export default [
   "Africa/Abidjan",
   "Africa/Accra",
   "Africa/Algiers",

@@ -16,7 +16,7 @@ import moment from "moment";
 import _ from "lodash";
 import { enGB } from "date-fns/locale";
 import { format } from "date-fns";
-import { motion } from "framer-motion/dist/framer-motion";
+import { motion } from "framer-motion";
 import { HiRefresh, HiExternalLink } from "react-icons/hi";
 
 import {

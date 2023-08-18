@@ -18,10 +18,11 @@ import {
 } from "@nextui-org/react";
 import { TbDragDrop, TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import {
-  CaretDown, CaretUp, ChevronRight, CloseSquare, Filter, Hide,
+  ChevronRight, CloseSquare, Filter, Hide,
   InfoCircle, Plus, Setting, Show, TickSquare, Calendar as CalendarIcon, ChevronDownCircle, Danger,
 } from "react-iconly";
 import { FaMagic, FaRedo } from "react-icons/fa";
+import { IoCaretUp, IoCaretDown } from "react-icons/io5";
 
 import { runRequest as runRequestAction } from "../../../actions/dataset";
 import fieldFinder from "../../../modules/fieldFinder";
@@ -868,7 +869,7 @@ function DatasetData(props) {
                       }
                     }}
                     css={{ minWidth: "fit-content" }}
-                    icon={<CaretUp />}
+                    icon={<IoCaretUp />}
                   />
                 </Tooltip>
                 <Spacer x={0.2} />
@@ -884,7 +885,7 @@ function DatasetData(props) {
                       }
                     }}
                     css={{ minWidth: "fit-content" }}
-                    icon={<CaretDown />}
+                    icon={<IoCaretDown />}
                   />
                 </Tooltip>
                 {dataset.sort && (
@@ -1055,9 +1056,10 @@ function DatasetData(props) {
                     {!isDragState && (
                       <Row wrap="wrap">
                         {tableFields.map((field) => {
-                          if (!field || !field.accessor || field.Header.indexOf("__cb_group") > -1) return (<span />);
+                          if (!field || !field.accessor || field.Header.indexOf("__cb_group") > -1) return (<span key={field.accessor} />);
                           return (
                             <Badge
+                              key={field.accessor}
                               color="primary"
                               css={{
                                 border: dataset?.configuration?.sum === field.accessor
