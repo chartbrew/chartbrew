@@ -180,7 +180,11 @@ function Filters(props) {
   };
 
   const _onChangeDateRange = (ranges) => {
-    setDateRange(ranges.selection);
+    const range = ranges.selection;
+    setDateRange({
+      startDate: range.startDate,
+      endDate: moment(range.endDate).endOf("day").toDate(),
+    });
   };
 
   const _onApplyFilter = () => {
