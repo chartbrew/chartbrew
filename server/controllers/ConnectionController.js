@@ -21,6 +21,14 @@ const drCacheController = require("./DataRequestCacheController");
 const RealtimeDatabase = require("../connections/RealtimeDatabase");
 const CustomerioConnection = require("../connections/CustomerioConnection");
 
+const getMomentObj = (timezone) => {
+  if (timezone) {
+    return (...args) => moment(...args).tz(timezone);
+  } else {
+    return (...args) => moment.utc(...args);
+  }
+};
+
 async function checkAndGetCache(connection_id, dataRequest) {
   // check if there is a cache available and valid
   try {
@@ -552,7 +560,7 @@ class ConnectionController {
       });
   }
 
-  async runApiRequest(id, chartId, dataRequest, getCache, filters) {
+  async runApiRequest(id, chartId, dataRequest, getCache, filters, timezone = "") {
     if (getCache) {
       const drCache = await checkAndGetCache(id, dataRequest);
       if (drCache) return drCache;
@@ -587,18 +595,18 @@ class ConnectionController {
             if (chart.startDate && chart.endDate) {
               Object.keys(keysFound).forEach((q) => {
                 const value = keysFound[q];
-                let startDate = moment.utc(chart.startDate).startOf("day");
-                let endDate = moment.utc(chart.endDate).endOf("day");
+                let startDate = getMomentObj(timezone)(chart.startDate).startOf("day");
+                let endDate = getMomentObj(timezone)(chart.endDate).endOf("day");
 
                 if (value === "startDate" && chart.currentEndDate) {
                   const timeDiff = endDate.diff(startDate, "days");
-                  endDate = moment.utc().endOf("day");
+                  endDate = getMomentObj(timezone)().endOf("day");
                   if (!chart.fixedStartDate) {
                     startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
                   }
                 } else if (value === "endDate" && chart.currentEndDate) {
                   const timeDiff = endDate.diff(startDate, "days");
-                  endDate = moment.utc().endOf("day");
+                  endDate = getMomentObj(timezone)().endOf("day");
                   if (!chart.fixedStartDate) {
                     startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
                   }
@@ -609,8 +617,8 @@ class ConnectionController {
                 if (filters && filters.length > 0) {
                   const dateRangeFilter = filters.find((o) => o.type === "date");
                   if (dateRangeFilter) {
-                    startDate = moment(dateRangeFilter.startDate).startOf("day");
-                    endDate = moment(dateRangeFilter.endDate).endOf("day");
+                    startDate = getMomentObj(timezone)(dateRangeFilter.startDate).startOf("day");
+                    endDate = getMomentObj(timezone)(dateRangeFilter.endDate).endOf("day");
                   }
                 }
 

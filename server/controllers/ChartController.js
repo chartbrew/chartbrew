@@ -349,7 +349,9 @@ class ChartController {
             );
           } else {
             requestPromises.push(
-              this.datasetController.runRequest(dataset.id, gChart.id, false, getCache, filters)
+              this.datasetController.runRequest(
+                dataset.id, gChart.id, false, getCache, filters, project.timezone
+              )
             );
           }
           return dataset;
