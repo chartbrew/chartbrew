@@ -120,6 +120,14 @@ function Filters(props) {
   };
 
   const _onSelectRange = (type) => {
+    if (type === "this_month") {
+      setDateRange({
+        startDate: moment().startOf("month").startOf("day").toDate(),
+        endDate: moment().endOf("month").endOf("day").toDate(),
+        key: "selection",
+      });
+    }
+
     if (type === "last_7_days") {
       setDateRange({
         startDate: moment().subtract(7, "days").startOf("day").toDate(),
@@ -257,43 +265,49 @@ function Filters(props) {
               </Row>
               <Spacer y={1} />
               <Row wrap="wrap">
-                <LinkNext onPress={() => _onSelectRange("last_7_days")}>
+                <LinkNext onPress={() => _onSelectRange("this_month")} css={{ mb: 5 }}>
+                  <Badge color="primary" size="sm" variant={"bordered"}>
+                    This month
+                  </Badge>
+                </LinkNext>
+                <Spacer x={0.2} />
+                <LinkNext onPress={() => _onSelectRange("last_7_days")} css={{ mb: 5 }}>
                   <Badge color="primary" size="sm" variant={"bordered"}>
                     Last 7 days
                   </Badge>
                 </LinkNext>
                 <Spacer x={0.2} />
-                <LinkNext onPress={() => _onSelectRange("last_30_days")}>
+                <LinkNext onPress={() => _onSelectRange("last_30_days")} css={{ mb: 5 }}>
                   <Badge color="primary" size="sm" variant={"bordered"}>
                     Last 30 days
                   </Badge>
                 </LinkNext>
                 <Spacer x={0.2} />
-                <LinkNext onPress={() => _onSelectRange("last_90_days")}>
+                <LinkNext onPress={() => _onSelectRange("last_90_days")} css={{ mb: 5 }}>
                   <Badge color="primary" size="sm" variant={"bordered"}>
                     Last 90 days
                   </Badge>
                 </LinkNext>
                 <Spacer x={0.2} />
-                <LinkNext onPress={() => _onSelectRange("last_year")}>
+                <LinkNext onPress={() => _onSelectRange("last_year")} css={{ mb: 5 }}>
                   <Badge color="primary" size="sm" variant={"bordered"}>
                     Last year
                   </Badge>
                 </LinkNext>
                 <Spacer x={0.2} />
-                <LinkNext onPress={() => _onSelectRange("quarter_to_date")}>
+                <LinkNext onPress={() => _onSelectRange("quarter_to_date")} css={{ mb: 5 }}>
                   <Badge color="primary" size="sm" variant={"bordered"}>
                     Quarter to date
                   </Badge>
                 </LinkNext>
                 <Spacer x={0.2} />
-                <LinkNext onPress={() => _onSelectRange("last_quarter")}>
+                <LinkNext onPress={() => _onSelectRange("last_quarter")} css={{ mb: 5 }}>
                   <Badge color="primary" size="sm" variant={"bordered"}>
                     Last quarter
                   </Badge>
                 </LinkNext>
                 <Spacer x={0.2} />
-                <LinkNext onPress={() => _onSelectRange("year_to_date")}>
+                <LinkNext onPress={() => _onSelectRange("year_to_date")} css={{ mb: 5 }}>
                   <Badge color="primary" size="sm" variant={"bordered"}>
                     Year to date
                   </Badge>

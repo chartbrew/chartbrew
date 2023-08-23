@@ -158,7 +158,7 @@ class DatasetController {
       });
   }
 
-  runRequest(id, chartId, noSource, getCache, filters) {
+  runRequest(id, chartId, noSource, getCache, filters, timezone) {
     let gDataset;
     let mainDr;
     return db.Dataset.findOne({
@@ -231,7 +231,7 @@ class DatasetController {
           } else if (connection.type === "api") {
             drPromises.push(
               this.connectionController.runApiRequest(
-                connection.id, chartId, dataRequest, getCache, filters,
+                connection.id, chartId, dataRequest, getCache, filters, timezone,
               )
             );
           } else if (connection.type === "postgres" || connection.type === "mysql") {
