@@ -3,10 +3,13 @@ import { connect } from "react-redux";
 import { PropTypes } from "prop-types";
 import { withRouter } from "react-router";
 import {
-  Grid, Container, Button, Row, Text, Spacer,
+  Button, Spacer,
 } from "@nextui-org/react";
-
 import cookie from "react-cookies";
+
+import Container from "../components/Container";
+import Text from "../components/Text";
+import Row from "../components/Row";
 
 /*
   Component for inviting user to the team
@@ -39,14 +42,10 @@ function UserInvite(props) {
 
   return (
     <div style={styles.container}>
-      <Grid.Container
-        justify="center"
-        alignContent="center"
-        alignItems="center"
-      >
-        <Grid xs={12} sm={6}>
-          <Container textAlign="center" style={{ marginTop: "3em" }}>
-            <Row justify="center" align="center" css={{ ta: "center" }}>
+      <div className="grid grid-cols-12 justify-center align-middle items-center">
+        <div className="col-span-12 md:col-span-6">
+          <Container textAlign="center" className={"mt-unit-3"}>
+            <Row justify="center" align="center" className={"text-center"}>
               <Text h2>
                 Your Chartbrew team invitation
               </Text>
@@ -60,7 +59,7 @@ function UserInvite(props) {
                 color="secondary"
                 onClick={() => redirectUser("login")}
                 auto
-                css={{ mb: 10 }}
+                className={"mb-10"}
               >
                 Login with an existing account
               </Button>
@@ -68,14 +67,14 @@ function UserInvite(props) {
               <Button
                 onClick={() => redirectUser("signup")}
                 auto
-                css={{ mb: 10 }}
+                className={"mb-10"}
               >
                 Create a new account
               </Button>
             </Row>
           </Container>
-        </Grid>
-      </Grid.Container>
+        </div>
+      </div>
     </div>
   );
 }

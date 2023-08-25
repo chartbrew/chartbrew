@@ -6,15 +6,12 @@ import { useWindowSize } from "react-use";
 import {
   Button,
   Card,
-  Container,
-  Grid,
-  Loading,
-  Row,
   Spacer,
-  Text,
   Input,
   Link as LinkNext,
   Avatar,
+  CardHeader,
+  CardBody,
 } from "@nextui-org/react";
 
 import { ArrowRight, Message, User } from "react-iconly";
@@ -34,6 +31,9 @@ import {
   negative, positive, secondary,
 } from "../config/colors";
 import signupBackground from "../assets/signup_background.webp";
+import Container from "../components/Container";
+import Row from "../components/Row";
+import Text from "../components/Text";
 
 const testimonialAvatar = "https://cdn2.chartbrew.com/skyguy.webp";
 
@@ -132,9 +132,9 @@ function Signup(props) {
 
   return (
     <div style={styles.container(height)}>
-      <Grid.Container style={styles.mainGrid(height)} css={{ backgroundColor: "$backgroundContrast" }}>
-        <Grid xs={12} sm={6}>
-          <Container xs>
+      <div style={styles.mainGrid(height)} className="grid grid-cols-12">
+        <div className="col-span-12 md:col-span-6">
+          <Container size="xs">
             <Row>
               &nbsp;
             </Row>
@@ -173,7 +173,7 @@ function Signup(props) {
                   value={name}
                   fullWidth
                   size="lg"
-                  />
+                />
               </Row>
               <Spacer y={1} />
               {errors.name && (
@@ -200,7 +200,7 @@ function Signup(props) {
                   value={email}
                   fullWidth
                   size="lg"
-                  />
+                />
               </Row>
               {errors.email && (
               <Row>
@@ -211,7 +211,7 @@ function Signup(props) {
               )}
               <Spacer y={1} />
               <Row>
-                <Input.Password
+                <Input
                   bordered
                   icon="lock"
                   iconPosition="left"
@@ -224,7 +224,7 @@ function Signup(props) {
                   value={password}
                   fullWidth
                   size="lg"
-                  />
+                />
               </Row>
               {errors.password && (
               <Row>
@@ -237,15 +237,14 @@ function Signup(props) {
               <Row>
                 <Button
                   onClick={submitUser}
-                  disabled={loading}
+                  isLoading={loading}
                   type="submit"
                   size="lg"
                   iconRight={<ArrowRight />}
                   auto
-                  shadow
+                  color="primary"
                 >
-                  {!loading && "Continue"}
-                  {loading && <Loading type="points" color="currentColor" />}
+                  Continue
                 </Button>
               </Row>
               {signupError && (
@@ -263,7 +262,7 @@ function Signup(props) {
             </form>
 
             <Spacer y={1} />
-            <Text size={14}>
+            <Text size="sm">
               {"By signing up for a Chartbrew account, you agree to our "}
               <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/TermsAndConditions.md" rel="noopener noreferrer" target="_blank">Terms of Service</a>
               {" and "}
@@ -271,7 +270,7 @@ function Signup(props) {
             </Text>
             <Spacer y={0.5} />
             <div>
-              <Text size={14}>
+              <Text size="sm">
                 {" "}
                 Already have an account?
                 {" "}
@@ -280,41 +279,41 @@ function Signup(props) {
               </Text>
             </div>
           </Container>
-        </Grid>
-        <Grid xs={12} sm={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <div
             style={sideHovered ? styles.sideBackground : styles.sideBackgroundBlurred}
             onMouseEnter={() => setSideHovered(true)}
             onMouseLeave={() => setSideHovered(false)}
           />
-          <Container sm style={styles.testimonialCard} css={{ "@smMax": { display: "none" } }}>
+          <Container sm style={styles.testimonialCard} className="sm:hidden">
             <Card style={{ minWidth: 500, padding: 10 }}>
-              <Card.Header>
+              <CardHeader>
                 <Avatar color="gradient" bordered squared size="lg" src={testimonialAvatar} alt="Fairchain testimonial" />
-                <Grid.Container css={{ pl: "$6" }}>
-                  <Grid xs={12}>
-                    <Text size={20} b css={{ lineHeight: "$xs" }}>
+                <div className="grid grid-cols-12 pl-6">
+                  <div className="col-span-12">
+                    <Text size={20} b className={"leading-4"}>
                       Schuyler
                     </Text>
-                  </Grid>
-                  <Grid xs={12}>
-                    <Text css={{ color: "$accents8", flexDirection: "row", display: "flex" }}>
+                  </div>
+                  <div className="col-span-12">
+                    <Text className="text-gray-400 flex flex-row">
                       {"Full-stack Developer at "}
                       <Spacer x={0.2} />
                       <LinkNext href="https://fairchain.art" rel="noopener noreferrer" target="_blank" color="secondary">
                         {"Fairchain"}
                       </LinkNext>
                     </Text>
-                  </Grid>
-                </Grid.Container>
-              </Card.Header>
-              <Card.Body>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardBody>
                 <i>{"\"Chartbrew has helped us move away from having to constantly update clunky Google-based charts, but what most impresses me is the responsiveness and the helpfulness of the people behind Chartbrew. Highly recommend!\""}</i>
-              </Card.Body>
+              </CardBody>
             </Card>
           </Container>
-        </Grid>
-      </Grid.Container>
+        </div>
+      </div>
     </div>
   );
 }

@@ -3,11 +3,14 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Container, Input, Checkbox, Loading, Row, Text, Spacer, Button, Divider,
+  Input, Checkbox, Spacer, Button, Divider, CircularProgress,
 } from "@nextui-org/react";
 
 import { getTeam, updateTeam } from "../actions/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
+import Container from "../components/Container";
+import Row from "../components/Row";
+import Text from "../components/Text";
 
 /*
   Contains team update functionality
@@ -52,9 +55,9 @@ function TeamSettings(props) {
 
   if (!team) {
     return (
-      <Container css={{ pt: 50 }} justify="center">
+      <Container className={"pt-60"} justify="center">
         <Row justify="center" align="center">
-          <Loading type="spinner" size="lg" />
+          <CircularProgress aria-label="Loading" size="lg" />
         </Row>
       </Container>
     );
@@ -94,7 +97,7 @@ function TeamSettings(props) {
         <Row>
           <Button
             color={success ? "success" : "primary"}
-            disabled={loading}
+            isLoading={loading}
             onClick={_onTeamUpdate}
             auto
           >

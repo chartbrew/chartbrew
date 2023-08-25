@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Loading, Modal, Spacer, Text,
+  Button, Input, Modal, ModalBody, ModalFooter, ModalHeader, Spacer,
 } from "@nextui-org/react";
 
 import {
   createTemplate as createTemplateAction,
 } from "../actions/template";
+import Text from "./Text";
 
 function CreateTemplateForm(props) {
   const {
@@ -40,10 +41,10 @@ function CreateTemplateForm(props) {
 
   return (
     <Modal open={visible} closeIcon onClose={() => onClose()} size="small">
-      <Modal.Header>
+      <ModalHeader>
         <Text h3>Create a template</Text>
-      </Modal.Header>
-      <Modal.Body>
+      </ModalHeader>
+      <ModalBody>
         <Spacer y={1} />
         <form onSubmit={(e) => {
           e.preventDefault();
@@ -60,8 +61,8 @@ function CreateTemplateForm(props) {
           />
         </form>
         <Spacer y={1} />
-      </Modal.Body>
-      <Modal.Footer>
+      </ModalBody>
+      <ModalFooter>
         <Button
           flat
           color="warning"
@@ -71,14 +72,13 @@ function CreateTemplateForm(props) {
           Close
         </Button>
         <Button
-          disabled={loading}
           onClick={_onSaveTemplate}
           auto
+          isLoading={loading}
         >
-          {loading && <Loading type="points" />}
-          {!loading && "Save template"}
+          Save template
         </Button>
-      </Modal.Footer>
+      </ModalFooter>
     </Modal>
   );
 }

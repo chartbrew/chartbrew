@@ -1244,7 +1244,7 @@ function DatasetData(props) {
                 <Spacer x={0.2} />
                 <Tooltip content="Clear the grouping">
                   <Link
-                    color="error"
+                    color="danger"
                     onClick={_onChangeGroupBy}
                   >
                     <CloseSquare />
@@ -1405,7 +1405,7 @@ function DatasetData(props) {
                   </div>
                   <Spacer x={0.2} />
                   <Tooltip content="Remove condition">
-                    <Link color="error" onClick={() => _onRemoveCondition(condition.id)}>
+                    <Link color="danger" onClick={() => _onRemoveCondition(condition.id)}>
                       <CloseSquare />
                     </Link>
                   </Tooltip>
@@ -1494,7 +1494,7 @@ function DatasetData(props) {
                   <Badge key={condition.id} color={"primary"} size="sm">
                     {condition.field.replace("root[].", "")}
                     <Spacer x={0.2} />
-                    <Link onClick={() => _onHideCondition(condition.id)} color="error">
+                    <Link onClick={() => _onHideCondition(condition.id)} color="danger">
                       <CloseSquare size="small" color="white" />
                     </Link>
                   </Badge>

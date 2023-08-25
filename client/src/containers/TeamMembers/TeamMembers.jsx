@@ -219,7 +219,7 @@ function TeamMembers(props) {
                   </Table.Cell>
                   <Table.Cell key="export">
                     {memberRole.canExport && <Badge color="success" variant={"flat"} disableOutline>Yes</Badge>}
-                    {!memberRole.canExport && <Badge color="error" variant={"flat"} disableOutline>No</Badge>}
+                    {!memberRole.canExport && <Badge color="danger" variant={"flat"} disableOutline>No</Badge>}
                   </Table.Cell>
                   <Table.Cell key="actions">
                     <Container css={{ pl: 0, pr: 0 }}>
@@ -293,7 +293,7 @@ function TeamMembers(props) {
                                 auto
                                 onClick={() => _onDeleteConfirmation(member.id)}
                                 icon={<CloseSquare />}
-                                color="error"
+                                color="danger"
                               />
                             </Tooltip>
                           )}
@@ -326,7 +326,7 @@ function TeamMembers(props) {
           </Button>
           <Button
             auto
-            color="error"
+            color="danger"
             disabled={loading}
             onClick={() => _onDeleteTeamMember(deleteMember)}
             iconRight={loading ? <Loading type="spinner" color={"currentColor"} /> : <CloseSquare />}

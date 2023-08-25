@@ -3,14 +3,16 @@ import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import {
-  Text, Container, Card, Row, Spacer,
+  Card, CardBody, CardFooter, CardHeader, Spacer,
 } from "@nextui-org/react";
 import _ from "lodash";
 
 import LoginForm from "../components/LoginForm";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
-import { negative } from "../config/colors";
 import cbLogoSmall from "../assets/logo_inverted.png";
+import Container from "../components/Container";
+import Row from "../components/Row";
+import Text from "../components/Text";
 
 /*
   Login container with an embedded login form
@@ -25,7 +27,7 @@ function Login(props) {
 
   return (
     <div style={styles.container}>
-      <Container md>
+      <Container size="md">
         <Row justify="center" align="center">
           <Link to="/">
             <img size="tiny" src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
@@ -33,28 +35,28 @@ function Login(props) {
         </Row>
         <Spacer y={1} />
         <Row justify="center" align="center">
-          <Container sm>
+          <Container size="sm">
             <Row justify="center" align="center">
               <Card style={styles.verticalPadding}>
-                <Card.Header css={{ textAlign: "center", ai: "center" }}>
+                <CardHeader className={"text-center items-center"}>
                   <Container justify="center">
-                    <Text h3 css={{ marginTop: 0 }}>{"Welcome back to Chartbrew"}</Text>
+                    <Text h3 className={"mt-0"}>{"Welcome back to Chartbrew"}</Text>
                   </Container>
-                </Card.Header>
-                <Card.Body>
+                </CardHeader>
+                <CardBody>
                   <LoginForm />
-                </Card.Body>
+                </CardBody>
                 {loginError && (
-                  <Card.Footer>
+                  <CardFooter>
                     <Container justify="center">
                       <Row justify="center">
-                        <Text h4 color={negative}>{loginError.message}</Text>
+                        <Text h4 color="danger">{loginError.message}</Text>
                       </Row>
                       <Row justify="center">
-                        <Text color={negative}>{"Please try again."}</Text>
+                        <Text color="danger">{"Please try again."}</Text>
                       </Row>
                     </Container>
-                  </Card.Footer>
+                  </CardFooter>
                 )}
               </Card>
             </Row>

@@ -383,7 +383,7 @@ function GaBuilder(props) {
                     <Spacer x={0.3} />
                     <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
                       <Button
-                        color="error"
+                        color="danger"
                         icon={<Delete />}
                         auto
                         size="sm"

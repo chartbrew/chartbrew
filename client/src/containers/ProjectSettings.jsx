@@ -3,10 +3,10 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import { PropTypes } from "prop-types";
 import {
-  Button, Container, Divider, Dropdown, Input, Loading, Modal, Row, Spacer, Text, useTheme,
+  Button, CircularProgress, Divider, Input, Modal, ModalBody, ModalFooter, ModalHeader, Select, SelectItem, Spacer,
 } from "@nextui-org/react";
 import {
-  ChevronDown, CloseSquare, Delete, TimeCircle
+  CloseSquare, Delete, TimeCircle
 } from "react-iconly";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
@@ -16,6 +16,10 @@ import { updateProject, changeActiveProject, removeProject } from "../actions/pr
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import timezones from "../modules/timezones";
 import Callout from "../components/Callout";
+import Container from "../components/Container";
+import Row from "../components/Row";
+import Text from "../components/Text";
+import useThemeDetector from "../modules/useThemeDetector";
 
 /*
   Project settings page
@@ -38,7 +42,7 @@ function ProjectSettings(props) {
   const [timezoneSearch, setTimezoneSearch] = useState("");
   const [loadingTimezone, setLoadingTimezone] = useState(false);
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     cleanErrors();
@@ -113,24 +117,7 @@ function ProjectSettings(props) {
   return (
     <Container
       style={style}
-      css={{
-        backgroundColor: "$backgroundContrast",
-        br: "$md",
-        "@xs": {
-          p: 20,
-        },
-        "@sm": {
-          p: 20,
-        },
-        "@md": {
-          p: 20,
-          m: 20,
-        },
-        "@lg": {
-          p: 20,
-          m: 20,
-        },
-      }}
+      size="md"
     >
       <Row>
         <Text h3>Project settings</Text>
@@ -139,7 +126,7 @@ function ProjectSettings(props) {
       {!project.id && (
         <>
           <Row>
-            <Loading type="spinner" />
+            <CircularProgress aria-label="Loading" />
           </Row>
           <Spacer y={1} />
         </>
@@ -164,11 +151,12 @@ function ProjectSettings(props) {
           <Button
             type="submit"
             color={success ? "success" : error ? "error" : "primary"}
-            disabled={!_canAccess("admin") || loading}
+            disabled={!_canAccess("admin")}
             onClick={_onSaveName}
             auto
+            isLoading={loading}
           >
-            {loading ? <Loading type="points-opacity" /> : "Save name"}
+            {"Save name"}
           </Button>
         </form>
       </Row>
@@ -178,45 +166,35 @@ function ProjectSettings(props) {
       <Spacer y={1} />
 
       <Row align="flex-end">
-        <Dropdown isBordered>
-          <Dropdown.Trigger type="text">
-            <Input
-              label="Project timezone"
-              placeholder="Select a timezone"
-              value={timezoneSearch || projectTimezone || project.timezone || ""}
-              onChange={(e) => setTimezoneSearch(e.target.value)}
-              css={{ minWidth: 300 }}
-              bordered
-              contentRight={<ChevronDown set="light" />}
-            />
-          </Dropdown.Trigger>
-          <Dropdown.Menu
-            onAction={(key) => {
-              setTimezoneSearch("");
-              setProjectTimezone(key);
-            }}
-            selectedKeys={[projectTimezone]}
-            selectionMode="single"
-            css={{ minWidth: "max-content" }}
-          >
-            {timezones
-              .filter((timezone) => (
-                timezone.toLowerCase().indexOf(timezoneSearch.toLocaleLowerCase()) > -1
-              )).map((timezone) => (
-                <Dropdown.Item key={timezone}>
-                  {timezone}
-                </Dropdown.Item>
-              ))}
-          </Dropdown.Menu>
-        </Dropdown>
+        <Select
+          label="Project timezone"
+          placeholder="Select a timezone"
+          variant="bordered"
+          onAction={(key) => {
+            setTimezoneSearch("");
+            setProjectTimezone(key);
+          }}
+          selectedKeys={[projectTimezone]}
+          selectionMode="single"
+          className={"min-w-max"}
+        >
+          {timezones
+            .filter((timezone) => (
+              timezone.toLowerCase().indexOf(timezoneSearch.toLocaleLowerCase()) > -1
+            )).map((timezone) => (
+              <SelectItem key={timezone} value={timezone}>
+                {timezone}
+              </SelectItem>
+            ))}
+        </Select>
         <Spacer x={0.3} />
         <Button
           color="primary"
-          bordered
+          variant="bordered"
           disabled={!_canAccess("admin")}
           onClick={() => _onGetMachineTimezone()}
           auto
-          icon={<TimeCircle />}
+          startContent={<TimeCircle />}
         >
           <Text hideIn={"xs"}>
             Get current timezone
@@ -229,16 +207,17 @@ function ProjectSettings(props) {
           disabled={!_canAccess("admin") || loading}
           onClick={() => _onSaveTimezone()}
           auto
+          isLoading={loadingTimezone}
         >
-          {loadingTimezone ? <Loading type="points-opacity" color="currentColor" /> : "Save"}
+          Save
         </Button>
         <Spacer x={0.5} />
         {project.timezone && (
           <Button
             color="warning"
-            flat
+            variant="flat"
             disabled={!_canAccess("admin")}
-            iconRight={loadingTimezone ? <Loading type="points-opacity" color="currentColor" /> : <CloseSquare />}
+            endContent={<CloseSquare />}
             onClick={() => _onSaveTimezone(true)}
             auto
           >
@@ -247,7 +226,7 @@ function ProjectSettings(props) {
         )}
       </Row>
       <Spacer y={1} />
-      <Row wrap="wrap" css={{ maxWidth: 500 }}>
+      <Row wrap="wrap" style={{ maxWidth: 500 }}>
         <Callout
           color="secondary"
           title="Experimental feature"
@@ -261,12 +240,12 @@ function ProjectSettings(props) {
 
       <Row>
         <Button
-          color="error"
+          color="danger"
           disabled={!_canAccess("admin")}
-          iconRight={<Delete />}
+          endContent={<Delete />}
           onClick={_onRemoveConfirmation}
           auto
-          bordered
+          variant="bordered"
         >
           Remove project
         </Button>
@@ -278,7 +257,7 @@ function ProjectSettings(props) {
           <Row>
             <Callout
               title="Oh snap! There was a problem with the request"
-              color="error"
+              color="danger"
               text={"Please refresh the page and try again, or get in touch with us directly through the chat to help you out."}
             />
           </Row>
@@ -286,17 +265,17 @@ function ProjectSettings(props) {
       )}
 
       <Modal open={removeModal} blur onClose={() => setRemoveModal(false)}>
-        <Modal.Header>
+        <ModalHeader>
           <Text h3>Are you sure you want to remove this project?</Text>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <Text>
             {"This action will be PERMANENT. All the charts, connections and saved queries associated with this project will be deleted as well."}
           </Text>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
-            flat
+            variant="flat"
             color="warning"
             onClick={() => setRemoveModal(false)}
             auto
@@ -304,15 +283,15 @@ function ProjectSettings(props) {
             Go back
           </Button>
           <Button
-            color="error"
+            color="danger"
             disabled={removeLoading}
-            iconRight={removeLoading ? <Loading type="points-opacity" /> : <Delete />}
+            endContent={<Delete />}
             onClick={_onRemove}
             auto
           >
             Remove completely
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       <ToastContainer

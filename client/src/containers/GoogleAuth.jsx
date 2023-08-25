@@ -3,12 +3,15 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import {
-  Container, Row, Text, Spacer, Button, Loading,
+  Spacer, Button, CircularProgress,
 } from "@nextui-org/react";
 import cookie from "react-cookies";
 import { ChevronRightCircle } from "react-iconly";
 
 import { API_HOST } from "../config/settings";
+import Container from "../components/Container";
+import Row from "../components/Row";
+import Text from "../components/Text";
 
 /*
   Component for processing the authentication code from Google
@@ -69,14 +72,12 @@ function GoogleAuth(props) {
 
   return (
     <Container
-      sm
-      css={{
-        backgroundColor: "$backgroundContrast", br: 10, mt: 20, p: 20
-      }}
+      size="sm"
+      className="rounded-md mt-20 p-20"
     >
       {loading && (
         <Row>
-          <Loading>Authenticating with Google...</Loading>
+          <CircularProgress>Authenticating with Google...</CircularProgress>
         </Row>
       )}
 
@@ -92,7 +93,7 @@ function GoogleAuth(props) {
             <Link to="/user">
               <Button
                 color="success"
-                iconRight={<ChevronRightCircle />}
+                endContent={<ChevronRightCircle />}
                 auto
               >
                 Go to connections
@@ -105,7 +106,7 @@ function GoogleAuth(props) {
       {error && (
         <>
           <Row>
-            <Text h2 color="error">
+            <Text h2 color="danger">
               The authentication could not be completed
             </Text>
           </Row>
@@ -119,7 +120,7 @@ function GoogleAuth(props) {
             <Link to="/user">
               <Button
                 color="secondary"
-                iconRight={<ChevronRightCircle />}
+                endContent={<ChevronRightCircle />}
                 auto
               >
                 Back to the dashboard

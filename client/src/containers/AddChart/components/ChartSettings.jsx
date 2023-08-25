@@ -261,7 +261,7 @@ function ChartSettings(props) {
                       <Button
                         light
                         icon={<CloseSquare />}
-                        color="error"
+                        color="danger"
                         onClick={() => _onRemoveDateFiltering()}
                         auto
                       />
@@ -461,7 +461,7 @@ function ChartSettings(props) {
               <Spacer x={0.1} />
               <Button
                 flat
-                color="error"
+                color="danger"
                 onClick={() => {
                   onChange({ maxValue: null });
                   setMax("");
@@ -499,7 +499,7 @@ function ChartSettings(props) {
               <Spacer x={0.1} />
               <Button
                 flat
-                color="error"
+                color="danger"
                 onClick={() => {
                   onChange({ minValue: null });
                   setMin("");

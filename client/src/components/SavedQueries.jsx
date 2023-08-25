@@ -2,12 +2,15 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Container, Input, Loading, Modal, Row, Spacer, Text, Tooltip,
+  Button, Input, CircularProgress, Modal, Spacer, Tooltip, ModalHeader, ModalBody, ModalFooter,
 } from "@nextui-org/react";
 import { CloseSquare, Edit, TickSquare } from "react-iconly";
 
 import { getSavedQueries, updateSavedQuery, deleteSavedQuery } from "../actions/savedQuery";
 import { secondaryTransparent } from "../config/colors";
+import Container from "./Container";
+import Row from "./Row";
+import Text from "./Text";
 
 /*
   Contains the project creation functionality
@@ -83,19 +86,19 @@ function SavedQueries(props) {
   return (
     <div style={{ ...styles.container, ...style }}>
       {loading && (
-        <Loading type="spinner">
+        <CircularProgress>
           Loading queries
-        </Loading>
+        </CircularProgress>
       )}
 
       {error && (
-        <Text color="error">
+        <Text color="danger">
           {"Could not get your saved queries. Try to refresh the page or get in touch with us to fix the issue"}
         </Text>
       )}
 
       {savedQueries.length > 0 && (
-        <Container css={{ pl: 0, width: "100%" }}>
+        <Container size={"fluid"}>
           {savedQueries.map((query) => {
             return (
               <Row
@@ -104,7 +107,7 @@ function SavedQueries(props) {
                 justify="space-between"
                 align="center"
                 gap={1}
-                css={{ pb: 10 }}
+                className={"pb-10"}
               >
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   <Text b>{query.summary}</Text>
@@ -112,9 +115,9 @@ function SavedQueries(props) {
                   <Text small>{`created by ${query.User.name}`}</Text>
                 </div>
                 <div style={{ display: "flex", flexDirection: "row", justifyContent: "flex-end" }}>
-                  <Tooltip content="Use this query" css={{ zIndex: 10000 }}>
+                  <Tooltip content="Use this query" style={{ zIndex: 10000 }}>
                     <Button
-                      icon={<TickSquare />}
+                      startContent={<TickSquare />}
                       color="success"
                       onClick={() => onSelectQuery(query)}
                       css={{ minWidth: "fit-content" }}
@@ -122,23 +125,24 @@ function SavedQueries(props) {
                     />
                   </Tooltip>
                   <Spacer x={0.2} />
-                  <Tooltip content="Edit the summary" css={{ zIndex: 10000 }}>
+                  <Tooltip content="Edit the summary" style={{ zIndex: 10000 }}>
                     <Button
-                      icon={editQuery && editLoading && editQuery.id === query.id ? <Loading type="spinner" /> : <Edit />}
+                      startContent={<Edit />}
                       color="secondary"
-                      disabled={editQuery && editLoading && editQuery.id === query.id}
+                      disabled={editQuery && editQuery.id === query.id}
                       onClick={() => _onEditQueryConfirmation(query)}
-                      css={{ minWidth: "fit-content" }}
+                      className="min-w-fit"
                       size="sm"
+                      isLoading={editLoading}
                     />
                   </Tooltip>
                   <Spacer x={0.2} />
-                  <Tooltip content="Remove the saved query" css={{ zIndex: 10000 }}>
+                  <Tooltip content="Remove the saved query" style={{ zIndex: 10000 }}>
                     <Button
-                      icon={<CloseSquare />}
-                      color="error"
+                      startContent={<CloseSquare />}
+                      color="danger"
                       onClick={() => _onRemoveQueryConfirmation(query.id)}
-                      css={{ minWidth: "fit-content" }}
+                      className="min-w-fit"
                       size="sm"
                     />
                   </Tooltip>
@@ -153,10 +157,10 @@ function SavedQueries(props) {
 
       {/* Update query modal */}
       <Modal open={!!editQuery} size="small" onClose={() => setEditQuery(null)}>
-        <Modal.Header>
+        <ModalHeader>
           <Text h3>Edit the query</Text>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <Input
             label="Edit the description of the query"
             placeholder="Type a summary here"
@@ -167,8 +171,8 @@ function SavedQueries(props) {
             bordered
             fullWidth
           />
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
             flat
             color="warning"
@@ -178,24 +182,25 @@ function SavedQueries(props) {
             Close
           </Button>
           <Button
-            disabled={editLoading || !savedQuerySummary}
+            disabled={!savedQuerySummary}
             onClick={_onEditQuery}
             auto
+            isLoading={editLoading}
           >
             Save the query
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       {/* Update query modal */}
       <Modal open={!!removeQuery} size="small" basic onClose={() => setRemoveQuery(null)}>
-        <Modal.Header>
+        <ModalHeader>
           <Text h3>Are you sure you want to remove the query?</Text>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <Text>{"This action will be permanent."}</Text>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
             flat
             color="warning"
@@ -205,14 +210,14 @@ function SavedQueries(props) {
             Close
           </Button>
           <Button
-            color="error"
-            disabled={removeLoading}
+            color="danger"
             onClick={_onRemoveQuery}
             auto
+            isLoading={removeLoading}
           >
             Remove the query
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
     </div>
   );

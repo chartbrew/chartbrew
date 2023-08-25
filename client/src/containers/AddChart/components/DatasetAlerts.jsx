@@ -601,7 +601,7 @@ function DatasetAlerts(props) {
           {newAlert.id && (
             <Button
               auto
-              color="error"
+              color="danger"
               icon={deleteLoading ? <Loading type="spinner" color="currentColor" /> : <Delete />}
               light
               onClick={() => _onDelete()}

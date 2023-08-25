@@ -443,7 +443,7 @@ function Chart(props) {
       style={styles.container}
     >
       {error && (
-        <Text color="error" onClick={() => setError(false)}>
+        <Text color="danger" onClick={() => setError(false)}>
           {"There was a problem with your request. Please refresh the page and try again."}
         </Text>
       )}
@@ -687,7 +687,7 @@ function Chart(props) {
                         </Dropdown.Item>
                       )}
                       {_canAccess("editor") && (
-                        <Dropdown.Item icon={<Delete />} color="error" withDivider>
+                        <Dropdown.Item icon={<Delete />} color="danger" withDivider>
                           <Text onClick={_onDeleteChartConfirmation}>Delete chart</Text>
                         </Dropdown.Item>
                       )}
@@ -813,7 +813,7 @@ function Chart(props) {
             Go back
           </Button>
           <Button
-            color="error"
+            color="danger"
             iconRight={<Delete />}
             onClick={_onDeleteChart}
             auto
@@ -949,7 +949,7 @@ function Chart(props) {
               <>
                 <Spacer y={1} />
                 <Row>
-                  <Text color="error">{autoUpdateError}</Text>
+                  <Text color="danger">{autoUpdateError}</Text>
                 </Row>
               </>
             )}
@@ -969,7 +969,7 @@ function Chart(props) {
             iconRight={autoUpdateLoading ? <Loading type="spinner" /> : <CloseSquare />}
             auto
             flat
-            color="error"
+            color="danger"
             disabled={autoUpdateLoading}
             onClick={() => {
               setUpdateFrequency(0);
@@ -1035,7 +1035,7 @@ function Chart(props) {
                 <>
                   <Spacer y={1} />
                   <Row>
-                    <Text color="error">
+                    <Text color="danger">
                       {"You do not have the permission to enable sharing on this chart. Only editors and admins can enable this."}
                     </Text>
                   </Row>

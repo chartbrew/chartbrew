@@ -171,7 +171,7 @@ function TimescaleConnectionForm(props) {
             </Row>
             {errors.name && (
               <Row css={{ p: 5 }}>
-                <Text small color="error">
+                <Text small color="danger">
                   {errors.name}
                 </Text>
               </Row>
@@ -192,7 +192,7 @@ function TimescaleConnectionForm(props) {
             </Row>
             {errors.connectionString && (
               <Row css={{ p: 5 }}>
-                <Text small color="error">
+                <Text small color="danger">
                   {errors.connectionString}
                 </Text>
               </Row>

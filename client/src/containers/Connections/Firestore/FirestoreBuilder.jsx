@@ -462,7 +462,7 @@ function FirestoreBuilder(props) {
                   <Spacer x={0.3} />
                   <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
                     <Button
-                      color="error"
+                      color="danger"
                       icon={<Delete />}
                       auto
                       size="sm"
@@ -599,7 +599,7 @@ function FirestoreBuilder(props) {
               <Spacer y={0.5} />
               <Row>
                 <Button
-                  color="error"
+                  color="danger"
                   onClick={() => _onSelectSubCollection("")}
                   icon={<CloseSquare />}
                   disabled={!dataRequest.configuration.selectedSubCollection}
@@ -949,7 +949,7 @@ function Conditions(props) {
               >
                 <Button
                   icon={<CloseSquare />}
-                  color="error"
+                  color="danger"
                   onClick={() => onRemoveCondition(condition.id)}
                   size="sm"
                   light

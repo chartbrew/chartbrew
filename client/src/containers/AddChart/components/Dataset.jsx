@@ -248,7 +248,7 @@ function Dataset(props) {
           <Tooltip content="Remove dataset">
             <Button
               flat
-              color="error"
+              color="danger"
               onClick={() => setDeleteModal(true)}
               auto
             >
@@ -362,7 +362,7 @@ function Dataset(props) {
             Go back
           </Button>
           <Button
-            color="error"
+            color="danger"
             disabled={deleteLoading}
             onClick={_onDeleteDataset}
             auto

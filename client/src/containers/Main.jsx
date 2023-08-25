@@ -2,7 +2,7 @@ import React, { useEffect, lazy, Suspense } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Route, Switch, withRouter } from "react-router";
-import { Container, useTheme } from "@nextui-org/react";
+import { semanticColors } from "@nextui-org/theme";
 import { createMedia } from "@artsy/fresnel";
 import { Helmet } from "react-helmet";
 
@@ -15,6 +15,8 @@ import {
 } from "../actions/user";
 import { getTeams } from "../actions/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
+import useThemeDetector from "../modules/useThemeDetector";
+import Container from "../components/Container";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
@@ -48,7 +50,7 @@ function Main(props) {
     relog, getTeams, location, cleanErrors, history,
   } = props;
 
-  const { isDark, theme } = useTheme();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     cleanErrors();
@@ -65,7 +67,7 @@ function Main(props) {
   }, []);
 
   return (
-    <div style={styles.container}>
+    <main className={isDark ? "dark" : "light"} style={styles.container}>
       <Helmet>
         {isDark && (
           <style type="text/css">
@@ -73,29 +75,29 @@ function Main(props) {
               .rdrDateRangePickerWrapper, .rdrDefinedRangesWrapper, .rdrStaticRanges .rdrStaticRange,
               .rdrDateDisplayWrapper, .rdrMonthAndYearWrapper, .rdrMonths, .rdrDefinedRangesWrapper
               {
-                background-color: ${theme.colors.backgroundContrast.value};
-                background: ${theme.colors.backgroundContrast.value};
+                background-color: ${semanticColors.dark.content1.DEFAULT};
+                background: ${semanticColors.dark.content1.DEFAULT};
               }
 
               .rdrStaticRange:hover, .rdrStaticRangeLabel:hover {
-                background: ${theme.colors.background.value};
+                background: ${semanticColors.dark.content2.DEFAULT};
               }
 
               .rdrInputRange span {
-                color: ${theme.colors.text.value};
+                color: ${semanticColors.dark.default[800]};
               }
 
               .rdrDay span {
-                color: ${theme.colors.text.value};
+                color: ${semanticColors.dark.default[800]};
               }
 
               .rdrMonthPicker select, .rdrYearPicker select {
-                color: ${theme.colors.text.value};
+                color: ${semanticColors.dark.default[800]};
               }
 
               .rdrDateInput, .rdrInputRangeInput {
-                background-color: ${theme.colors.accents0.value};
-                color: ${theme.colors.text.value};
+                background-color: ${semanticColors.dark.content3.DEFAULT};
+                color: ${semanticColors.dark.default[800]};
               }
             `}
           </style>
@@ -112,7 +114,7 @@ function Main(props) {
                 exact
                 path="/feedback"
                 render={() => (
-                  <Container justify="center" css={{ pt: 100, pb: 50 }} sm>
+                  <Container justify="center" className={"pt-96 pb-48"} size="sm">
                     <FeedbackForm />
                   </Container>
                 )}
@@ -209,7 +211,7 @@ function Main(props) {
           </Suspense>
         </div>
       </MediaContextProvider>
-    </div>
+    </main>
   );
 }
 

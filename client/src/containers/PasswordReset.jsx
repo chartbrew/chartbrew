@@ -4,13 +4,18 @@ import { PropTypes } from "prop-types";
 import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
-  Button, Input, Container, Row, Spacer, useTheme, Text, Loading,
+  Button, Input, Spacer,
 } from "@nextui-org/react";
 
 import { changePasswordWithToken } from "../actions/user";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import cbLogoSmall from "../assets/logo_inverted.png";
 import cbLogo from "../assets/logo_blue.png";
+import Container from "../components/Container";
+import Row from "../components/Row";
+import Text from "../components/Text";
+import useThemeDetector from "../modules/useThemeDetector";
+import Callout from "../components/Callout";
 
 /*
   Component for verifying a new user
@@ -24,7 +29,7 @@ function PasswordReset(props) {
 
   const { cleanErrors, changePasswordWithToken, history } = props;
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     cleanErrors();
@@ -67,7 +72,7 @@ function PasswordReset(props) {
 
   return (
     <div style={styles.container}>
-      <Container sm>
+      <Container size="sm">
         <Row>
           <Link to="/">
             <img src={isDark ? cbLogoSmall : cbLogo} style={{ width: 70 }} alt="Chartbrew logo" />
@@ -84,7 +89,7 @@ function PasswordReset(props) {
         </Row>
         <Spacer y={1} />
         <Row>
-          <Input.Password
+          <Input
             label="New password"
             placeholder="Enter your new password"
             type="password"
@@ -96,7 +101,7 @@ function PasswordReset(props) {
         </Row>
         <Spacer y={0.5} />
         <Row>
-          <Input.Password
+          <Input
             label="Confirm your new password"
             placeholder="Write your new password again"
             type="password"
@@ -111,10 +116,10 @@ function PasswordReset(props) {
           <Button
             type="submit"
             size="lg"
-            disabled={success || loading}
+            disabled={success}
             onClick={_onSubmit}
             auto
-            iconRight={loading ? <Loading type="points" /> : null}
+            isLoading={loading}
           >
             Change password
           </Button>
@@ -122,24 +127,21 @@ function PasswordReset(props) {
         <Spacer y={1} />
         {success && (
           <Row>
-            <Container css={{ backgroundColor: "$green200", p: 10, br: 10 }}>
-              <Row>
-                <Text h5>{"Your password was changed successfully"}</Text>
-              </Row>
-              <Row>
-                <Text>{"You will now be redirected to the Login page where you can use your new password to authenticate."}</Text>
-              </Row>
-            </Container>
+            <Callout
+              type="success"
+              title="Your password was changed successfully"
+              description="You will now be redirected to the Login page where you can use your new password to authenticate."
+            />
           </Row>
         )}
 
         {error && (
           <Row>
-            <Container css={{ backgroundColor: "$red200", p: 10, br: 10 }}>
-              <Row>
-                <Text h5>{error}</Text>
-              </Row>
-            </Container>
+            <Callout
+              type="error"
+              title="The password could not be changed"
+              description={error}
+            />
           </Row>
         )}
       </Container>

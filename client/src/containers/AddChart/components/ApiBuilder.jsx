@@ -285,7 +285,7 @@ function ApiBuilder(props) {
                   <Spacer x={0.3} />
                   <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
                     <Button
-                      color="error"
+                      color="danger"
                       icon={<Delete />}
                       auto
                       size="sm"
@@ -404,7 +404,7 @@ function ApiBuilder(props) {
                 </>
                 )}
                 {requestError && (
-                  <Badge color="error">
+                  <Badge color="danger">
                     {`${requestError.statusCode} ${requestError.statusText}`}
                   </Badge>
                 )}
@@ -487,7 +487,7 @@ function ApiBuilder(props) {
                             <Button
                               icon={<CloseSquare />}
                               onClick={() => _removeHeader(header.id)}
-                              color="error"
+                              color="danger"
                               light
                               css={{ minWidth: "fit-content" }}
                             />

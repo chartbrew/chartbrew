@@ -7,14 +7,13 @@
     "start": "vite",
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tailwind": "npx tailwindcss -i ./src/input.css -o ./dist/output.css --watch"
   },
   "dependencies": {
     "@artsy/fresnel": "^5.0.2",
     "@fisch0920/use-dark-mode": "^2.4.0",
-    "@nextui-org/react": "^1.0.0-beta.13",
-    "@react-stately/collections": "^3.4.1",
-    "@react-stately/menu": "^3.3.1",
+    "@nextui-org/react": "^2.1.5",
     "ace-builds": "^1.4.12",
     "allotment": "1.13.0",
     "chart.js": "^3.7.0",
@@ -24,7 +23,7 @@
     "dotenv": "8.2.0",
     "dotenv-expand": "5.1.0",
     "file-loader": "6.1.1",
-    "framer-motion": "^6.3.3",
+    "framer-motion": "^10.16.1",
     "fs-extra": "^9.0.1",
     "history": "^4.10.1",
     "immutability-helper": "^3.1.1",
@@ -60,16 +59,20 @@
     "redux-logger": "^3.0.6",
     "redux-thunk": "^2.3.0",
     "styled-components": "^4.4.1",
+    "tailwind-variants": "^0.1.13",
     "uuid": "^3.4.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react-swc": "^3.3.2",
+    "autoprefixer": "^10.4.15",
     "eslint": "^8.45.0",
     "eslint-plugin-react": "^7.32.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
+    "postcss": "^8.4.28",
+    "tailwindcss": "^3.3.3",
     "vite": "^4.4.5"
   }
 }

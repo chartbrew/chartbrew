@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import {
-  Button, Loading, Input, Row, Spacer, Link, Modal, Text, Container,
+  Button, Input, Spacer, Link, Modal, ModalHeader, ModalBody, ModalFooter,
 } from "@nextui-org/react";
 import { ChevronRightCircle, Message } from "react-iconly";
 
@@ -17,6 +17,10 @@ import { required, email as validateEmail } from "../config/validations";
 
 import { ONE_ACCOUNT_ENABLED } from "../config/settings";
 import { negative } from "../config/colors";
+
+import Container from "./Container";
+import Row from "./Row";
+import Text from "./Text";
 
 /*
   Contains login functionality
@@ -78,7 +82,7 @@ function LoginForm(props) {
         <Spacer y={2} />
         <Row justify="center" align="center">
           <Button
-            loading={oaloading}
+            isLoading={oaloading}
             className="oneaccount-button oneaccount-show"
             style={styles.oneaccount}
           >
@@ -160,7 +164,7 @@ function LoginForm(props) {
           )}
           <Spacer y={1} />
           <Row>
-            <Input.Password
+            <Input
               type="password"
               placeholder="Enter your password"
               onChange={(e) => {
@@ -179,17 +183,15 @@ function LoginForm(props) {
           <Row justify="center" align="center">
             <Button
               onClick={loginUser}
-              iconRight={!loading && <ChevronRightCircle />}
+              iconRight={<ChevronRightCircle />}
               size="lg"
               primary
               shadow
-              disabled={loading}
-              loading={loading}
+              isLoading={loading}
               type="submit"
               auto
             >
-              {loading && (<Loading type="points" color="currentColor" size="sm" />)}
-              {!loading && "Login"}
+              {"Login"}
             </Button>
           </Row>
           <Spacer y={0.5} />
@@ -205,17 +207,17 @@ function LoginForm(props) {
       </form>
 
       <Modal open={forgotModal} onClose={() => setForgotModal(false)} closeButton>
-        <Modal.Header>
+        <ModalHeader>
           <Text h3>Reset your password</Text>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <Spacer y={1} />
           <Input
             labelPlaceholder="Enter your email here"
             fullWidth
             onChange={(e) => setResetEmail(e.target.value)}
             contentRight={<Message />}
-            />
+          />
           <Spacer y={1} />
           {resetDone && (
           <Row>
@@ -227,8 +229,8 @@ function LoginForm(props) {
             <Text color={negative}>{resetError}</Text>
           </Row>
           )}
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button onClick={() => setForgotModal(false)} flat auto color="warning">
             Close
           </Button>
@@ -236,11 +238,11 @@ function LoginForm(props) {
             disabled={resetDone}
             onClick={_onSendResetRequest}
             auto
+            isLoading={resetLoading}
           >
-            {!resetLoading && (resetDone ? "Request received" : "Send password reset email")}
-            {resetLoading && (<Loading type="points" color="currentColor" />)}
+            {resetDone ? "Request received" : "Send password reset email"}
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
       {ONE_ACCOUNT_ENABLED && (
         <>

@@ -1,12 +1,15 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Container, Loading, Row, Spacer, Text
+  Spacer, CircularProgress
 } from "@nextui-org/react";
 import { withRouter } from "react-router-dom";
 import { connect } from "react-redux";
 
 import { getProject as getProjectAction } from "../actions/project";
+import Container from "../components/Container";
+import Row from "../components/Row";
+import Text from "../components/Text";
 
 function ProjectRedirect(props) {
   const { match, getProject, history } = props;
@@ -25,11 +28,11 @@ function ProjectRedirect(props) {
     <Container>
       <Spacer y={4} />
       <Row align="center" justify="center">
-        <Loading type="points" color="currentColor" size="xl" />
+        <CircularProgress color="default" size="xl" aria-label="Loading" />
       </Row>
       <Spacer y={1} />
       <Row align="center" justify="center">
-        <Text size="1.4em" css={{ color: "$accents7" }}>Loading the dashboard...</Text>
+        <Text size="lg" color="gray">Loading the dashboard...</Text>
       </Row>
     </Container>
   );

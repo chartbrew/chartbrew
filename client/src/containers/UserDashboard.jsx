@@ -4,11 +4,10 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { useWindowSize } from "react-use";
 import {
-  Button, Col, Container, Input, Loading, Row,
-  Spacer, Table, Text, Tooltip, Link as LinkNext, Badge, Modal,
+  Button, Input, Spacer, Table, Tooltip, Link as LinkNext, Chip, Modal, CircularProgress, TableHeader, TableColumn, TableCell, TableBody, TableRow, ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
 import {
-  Chart, Delete, Edit, People, Plus, Search, Setting, Swap, User
+  Chart, Delete, Edit, People, Search, Setting, Swap, User
 } from "react-iconly";
 
 import {
@@ -28,6 +27,10 @@ import ProjectForm from "../components/ProjectForm";
 import Navbar from "../components/Navbar";
 import canAccess from "../config/canAccess";
 import { secondary } from "../config/colors";
+import Container from "../components/Container";
+import Row from "../components/Row";
+import Text from "../components/Text";
+import { HiPlus } from "react-icons/hi";
 
 /*
   The user dashboard with all the teams and projects
@@ -197,7 +200,7 @@ function UserDashboard(props) {
       <div style={styles.container(height)}>
         <Container sm>
           <Row justify="center" align="center">
-            <Loading size="xl" />
+            <CircularProgress aria-label="Loading" size="xl" />
           </Row>
         </Container>
       </div>
@@ -207,89 +210,89 @@ function UserDashboard(props) {
   return (
     <div style={styles.container(height)}>
       <Navbar hideTeam transparent />
-      <Container style={styles.mainContent}>
-        <Spacer y={1} />
+      <Container className={"py-48"} size="sm">
+        <Spacer y={4} />
         {newProjectModal()}
 
         {teams && teams.map((key) => {
           return (
             <>
               <Container
-                justify="space-between"
                 key={key.id}
-                fluid
-                display="flex"
-                wrap="nowrap"
-                alignItems="center"
-                css={{ pl: 0, pr: 0 }}
+                size="fluid"
+                className={"px-0 flex flex-row justify-between"}
               >
-                <Col>
+                <div className="flex flex-col">
                   <Row justify="flex-start" align="center">
                     {key.TeamRoles.length > 1 && <People />}
                     {key.TeamRoles.length < 2 && <User />}
-                    <Spacer x={0.2} />
+                    <Spacer x={1} />
                     <Text
-                      size={24}
+                      size={"xl"}
                       b
-                      style={styles.teamHeader}
+                      className={"inline"}
                       title={`${key.TeamRoles.length} member${key.TeamRoles.length > 1 ? "s" : ""}`}
                     >
                       {key.name}
                     </Text>
-                    <Spacer x={0.5} />
+                    <Spacer x={2} />
                     {key.TeamRoles[0] && (
-                      <Badge color="secondary">
+                      <Chip color="secondary" size="sm">
                         {_getTeamRole(key.TeamRoles)}
-                      </Badge>
+                      </Chip>
                     )}
                   </Row>
-                </Col>
+                </div>
                 {_canAccess("admin", key.TeamRoles)
                   && (
-                    <Col>
+                    <div className="flex flex-col">
                       <Row justify="flex-end" align="center">
                         <Tooltip content="Team settings">
-                          <Link to={`/manage/${key.id}/settings`}>
-                            <Button
-                              style={width >= 768 ? styles.settingsBtn : {}}
-                              ghost
-                              icon={<Setting />}
-                              css={{ minWidth: "fit-content" }}
-                              size="sm"
-                            />
-                          </Link>
+                          <div>
+                            <Link to={`/manage/${key.id}/settings`}>
+                              <Button
+                                style={width >= 768 ? styles.settingsBtn : {}}
+                                className={"min-w-fit"}
+                                size="sm"
+                                isIconOnly
+                              >
+                                <Setting />
+                              </Button>
+                            </Link>
+                          </div>
                         </Tooltip>
                       </Row>
-                    </Col>
+                    </div>
                   )}
               </Container>
-              <Container css={{ pl: 0, pr: 0 }}>
-                <Spacer y={1} />
-                <Row justify="flex-start" align="center" wrap="wrap">
+              <Container className={"px-0"}>
+                <Spacer y={2} />
+                <Row justify="flex-start" align="center">
                   {_canAccess("admin", key.TeamRoles) && (
                     <>
                       <Button
+                        color="primary"
                         onClick={() => _onNewProject(key)}
-                        iconRight={<Plus />}
-                        auto
-                        css={{ mb: 10 }}
+                        endContent={<HiPlus />}
+                        className={"mb-10"}
+                        fullWidth
                       >
                         Create new project
                       </Button>
-                      <Spacer x={0.5} />
+                      <Spacer x={2} />
                     </>
                   )}
                   <Input
                     type="text"
                     placeholder="Search projects"
-                    clearable
-                    bordered
-                    contentRight={<Search set="light" />}
+                    variant="bordered"
+                    endContent={<Search set="light" />}
                     onChange={(e) => setSearch({ ...search, [key.id]: e.target.value })}
-                    css={{ mb: 10 }}
+                    className={"mb-10"}
+                    fullWidth={false}
                   />
                 </Row>
-                <Spacer y={0.5} />
+                <Spacer y={2} />
                 {key.Projects && (
                   <Table
                     aria-label="Projects list"
@@ -298,95 +301,93 @@ function UserDashboard(props) {
                       minWidth: "100%",
                       backgroundColor: "$backgroundContrast"
                     }}
-                    sticked
-                    striped
-                    headerLined
+                    className="h-auto min-w-full bg-background"
                   >
-                    <Table.Header>
-                      <Table.Column key="name">Project name</Table.Column>
-                      <Table.Column key="connections" align="center">
+                    <TableHeader>
+                      <TableColumn key="name">Project name</TableColumn>
+                      <TableColumn key="connections" align="center">
                         <Row align="center" justify="center">
                           <Swap size="small" />
                           <Spacer x={0.2} />
                           Connections
                         </Row>
-                      </Table.Column>
-                      <Table.Column key="charts" align="center">
+                      </TableColumn>
+                      <TableColumn key="charts" align="center">
                         <Row align="center" justify="center">
                           <Chart size="small" />
                           <Spacer x={0.2} />
                           Charts
                         </Row>
-                      </Table.Column>
-                      <Table.Column key="actions" align="center" hideHeader>Actions</Table.Column>
-                    </Table.Header>
+                      </TableColumn>
+                      <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
+                    </TableHeader>
                     {_getFilteredProjects(key).length > 0 && (
-                      <Table.Body items={_getFilteredProjects(key)}>
+                      <TableBody items={_getFilteredProjects(key)}>
                         {(project) => (
-                          <Table.Row key={project.id}>
-                            <Table.Cell key="name">
+                          <TableRow key={project.id}>
+                            <TableCell key="name">
                               <LinkNext onClick={() => directToProject(key, project.id)}>
-                                <Text b css={{ color: "$text" }}>{project.name}</Text>
+                                <Text b className={"text-default-foreground"}>{project.name}</Text>
                               </LinkNext>
-                            </Table.Cell>
-                            <Table.Cell key="connections">
+                            </TableCell>
+                            <TableCell key="connections">
                               <Row justify="center" align="center">
                                 <Text b>
                                   {project.Connections && project.Connections.length}
                                 </Text>
                               </Row>
-                            </Table.Cell>
-                            <Table.Cell key="charts">
+                            </TableCell>
+                            <TableCell key="charts">
                               <Row justify="center" align="center">
                                 <Text b>
                                   {project.Charts.length}
                                 </Text>
                               </Row>
-                            </Table.Cell>
-                            <Table.Cell key="actions">
+                            </TableCell>
+                            <TableCell key="actions">
                               {_canAccess("admin", key.TeamRoles) && (
                                 <Row justify="flex-end" align="center">
                                   <Tooltip content="Rename the project">
                                     <Button
-                                      icon={<Edit set="light" />}
-                                      light
+                                      startContent={<Edit set="light" />}
+                                      variant="light"
                                       size="sm"
-                                      css={{ minWidth: "fit-content" }}
+                                      className={"min-w-fit"}
                                       onClick={() => _onEditProject(project)}
                                     />
                                   </Tooltip>
                                   <Tooltip
                                     content="Delete project"
-                                    color="error"
+                                    color="danger"
                                   >
                                     <Button
-                                      color="error"
-                                      icon={<Delete set="light" />}
-                                      light
+                                      color="danger"
+                                      startContent={<Delete set="light" />}
+                                      variant="light"
                                       size="sm"
-                                      css={{ minWidth: "fit-content" }}
+                                      className={"min-w-fit"}
                                       onClick={() => _onDeleteProject(project)}
                                     />
                                   </Tooltip>
                                   <Spacer x={0.5} />
                                 </Row>
                               )}
-                            </Table.Cell>
-                          </Table.Row>
+                            </TableCell>
+                          </TableRow>
                         )}
-                      </Table.Body>
+                      </TableBody>
                     )}
                     {_getFilteredProjects(key).length === 0 && (
-                      <Table.Body>
-                        <Table.Row>
-                          <Table.Cell key="name">
+                      <TableBody>
+                        <TableRow>
+                          <TableCell key="name">
                             <Text i>No projects found</Text>
-                          </Table.Cell>
-                          <Table.Cell key="connections" align="center" />
-                          <Table.Cell key="charts" align="center" />
-                          <Table.Cell key="actions" align="center" />
-                        </Table.Row>
-                      </Table.Body>
+                          </TableCell>
+                          <TableCell key="connections" align="center" />
+                          <TableCell key="charts" align="center" />
+                          <TableCell key="actions" align="center" />
+                        </TableRow>
+                      </TableBody>
                     )}
                   </Table>
                 )}
@@ -399,70 +400,74 @@ function UserDashboard(props) {
                     </Container>
                   )}
               </Container>
-              <Spacer y={3} />
+              <Spacer y={20} />
 
-              <Modal open={!!projectToEdit} onClose={() => setProjectToEdit(null)}>
-                <Modal.Header>
-                  <Text h3>Rename your project</Text>
-                </Modal.Header>
-                <Modal.Body>
-                  <Input
-                    label="Project name"
-                    placeholder="Enter the project name"
-                    value={projectToEdit?.name || ""}
-                    onChange={(e) => setProjectToEdit({ ...projectToEdit, name: e.target.value })}
-                    bordered
-                    fullWidth
-                  />
-                </Modal.Body>
-                <Modal.Footer>
-                  <Button
-                    flat
-                    color="warning"
-                    onClick={() => setProjectToEdit(null)}
-                    auto
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    auto
-                    onClick={() => _onEditProjectSubmit()}
-                    disabled={!projectToEdit?.name || modifyingProject}
-                    iconRight={modifyingProject ? <Loading size="xs" /> : null}
-                  >
-                    Save
-                  </Button>
-                </Modal.Footer>
+              <Modal isOpen={!!projectToEdit} onClose={() => setProjectToEdit(null)}>
+                <ModalContent>
+                  <ModalHeader>
+                    <Text h3>Rename your project</Text>
+                  </ModalHeader>
+                  <ModalBody>
+                    <Input
+                      label="Project name"
+                      placeholder="Enter the project name"
+                      value={projectToEdit?.name || ""}
+                      onChange={(e) => setProjectToEdit({ ...projectToEdit, name: e.target.value })}
+                      variant="bordered"
+                      fullWidth
+                    />
+                  </ModalBody>
+                  <ModalFooter>
+                    <Button
+                      variant="flat"
+                      color="warning"
+                      onClick={() => setProjectToEdit(null)}
+                      auto
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      color="primary"
+                      onClick={() => _onEditProjectSubmit()}
+                      disabled={!projectToEdit?.name || modifyingProject}
+                      isLoading={modifyingProject}
+                    >
+                      Save
+                    </Button>
+                  </ModalFooter>
+                </ModalContent>
               </Modal>
 
-              <Modal open={!!projectToDelete} onClose={() => setProjectToDelete(null)}>
-                <Modal.Header>
-                  <Text h4>Are you sure you want to delete the project?</Text>
-                </Modal.Header>
-                <Modal.Body>
-                  <Text>
-                    {"Deleting a project will delete all the charts and connections associated with it. This action cannot be undone."}
-                  </Text>
-                </Modal.Body>
-                <Modal.Footer>
-                  <Button
-                    flat
-                    color="warning"
-                    onClick={() => setProjectToDelete(null)}
-                    auto
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    auto
-                    color="error"
-                    iconRight={modifyingProject ? <Loading size="xs" /> : <Delete />}
-                    onClick={() => _onDeleteProjectSubmit()}
-                    disabled={modifyingProject}
-                  >
-                    Delete
-                  </Button>
-                </Modal.Footer>
+              <Modal isOpen={!!projectToDelete} onClose={() => setProjectToDelete(null)}>
+                <ModalContent>
+                  <ModalHeader>
+                    <Text h4>Are you sure you want to delete the project?</Text>
+                  </ModalHeader>
+                  <ModalBody>
+                    <Text>
+                      {"Deleting a project will delete all the charts and connections associated with it. This action cannot be undone."}
+                    </Text>
+                  </ModalBody>
+                  <ModalFooter>
+                    <Button
+                      variant="flat"
+                      color="warning"
+                      onClick={() => setProjectToDelete(null)}
+                      auto
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      auto
+                      color="danger"
+                      endContent={<Delete />}
+                      onClick={() => _onDeleteProjectSubmit()}
+                      isLoading={modifyingProject}
+                    >
+                      Delete
+                    </Button>
+                  </ModalFooter>
+                </ModalContent>
               </Modal>
             </>
           );
@@ -471,11 +476,11 @@ function UserDashboard(props) {
         {(loading || teamLoading || (teams && teams.length === 0)) && (
           <>
             <Row align="center" justify="center">
-              <Loading type="points-opacity" color="currentColor" size="xl" />
+              <CircularProgress aria-label="Loading" size="xl" />
             </Row>
             <Spacer y={1} />
             <Row align="center" justify="center">
-              <Text size="1.4em" css={{ color: "$accents7" }}>Loading your space</Text>
+              <Text size="lg" className={"text-gray-400"}>Loading your space</Text>
             </Row>
           </>
         )}
@@ -502,10 +507,6 @@ const styles = {
   },
   card: {
     backgroundColor: "white",
-  },
-  mainContent: {
-    paddingTop: 50,
-    paddingBottom: 50,
   },
   violetSection: {
     backgroundColor: "#1a7fa0",

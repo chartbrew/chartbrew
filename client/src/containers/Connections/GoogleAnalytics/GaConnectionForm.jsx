@@ -198,7 +198,7 @@ function GaConnectionForm(props) {
         )}
         {errors.auth && (
           <Row>
-            <Text color="error">{errors.auth}</Text>
+            <Text color="danger">{errors.auth}</Text>
           </Row>
         )}
         <Spacer y={1} />

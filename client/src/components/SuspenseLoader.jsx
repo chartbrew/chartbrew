@@ -1,9 +1,9 @@
 import React from "react";
-import { Loading } from "@nextui-org/react";
+import { CircularProgress } from "@nextui-org/react";
 
 function SuspenseLoader() {
   return (
-    <Loading />
+    <CircularProgress aria-label="Loading" />
   );
 }
 

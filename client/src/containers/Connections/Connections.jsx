@@ -230,7 +230,7 @@ function Connections(props) {
           <Row>
             {removeError && (
               <Row align="center">
-                <Text color="error" b>
+                <Text color="danger" b>
                   {"Oups! A server error intrerruped the request. Please refresh the page and try again."}
                 </Text>
               </Row>
@@ -789,7 +789,7 @@ function Connections(props) {
                             </Button>
                             <Spacer x={0.5} />
                             <Button
-                              color="error"
+                              color="danger"
                               flat
                               disabled={removeLoading === connection.id}
                               onClick={() => _onRemoveConfirmation(connection)}
@@ -831,7 +831,7 @@ function Connections(props) {
           </Button>
           <Button
             flat
-            color="error"
+            color="danger"
             disabled={!!removeLoading}
             onClick={_onRemoveConnection}
             iconRight={<Delete />}

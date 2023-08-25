@@ -126,7 +126,7 @@ function ApiKeys(props) {
                 <Button
                   icon={<Delete />}
                   light
-                  color="error"
+                  color="danger"
                   onClick={() => _onRemoveConfirmation(key)}
                   css={{ minWidth: "fit-content" }}
                 />
@@ -242,7 +242,7 @@ function ApiKeys(props) {
             Go back
           </Button>
           <Button
-            color="error"
+            color="danger"
             onClick={_onRemoveKey}
             disabled={createLoading}
             auto

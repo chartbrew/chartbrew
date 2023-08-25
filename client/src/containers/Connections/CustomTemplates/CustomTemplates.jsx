@@ -2,11 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Avatar,
-  Button,
-  Card,
-  Grid,
-  Loading, Row, Spacer, Text, useTheme,
+  Avatar, Button, Card, Spacer, CircularProgress,
 } from "@nextui-org/react";
 import moment from "moment";
 import { Chart } from "react-iconly";
@@ -15,6 +11,9 @@ import CreateTemplateForm from "../../../components/CreateTemplateForm";
 import connectionImages from "../../../config/connectionImages";
 import CustomTemplateForm from "./CustomTemplateForm";
 import { deleteTemplate as deleteTemplateAction } from "../../../actions/template";
+import Text from "../../../components/Text";
+import Row from "../../../components/Row";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 function CustomTemplates(props) {
   const {
@@ -38,13 +37,13 @@ function CustomTemplates(props) {
       .then(() => setSelectedTemplate(null));
   };
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   if (loading) {
     return (
-      <Loading type="spinner">
+      <CircularProgress aria-label="Loading">
         Loading templates...
-      </Loading>
+      </CircularProgress>
     );
   }
 
@@ -90,9 +89,9 @@ function CustomTemplates(props) {
   }
 
   return (
-    <Grid.Container gap={2}>
+    <div className="grid grid-cols-12 gap-2">
       {templates && templates.map((template) => (
-        <Grid key={template.id} xs={12} sm={6} md={4}>
+        <div className="col-span-12 sm:col-span-6 md:col-span-4" key={template.id}>
           <Card onClick={() => setSelectedTemplate(template)} isHoverable isPressable variant="bordered">
             <Card.Header>{template.name}</Card.Header>
             <Card.Body>
@@ -124,9 +123,9 @@ function CustomTemplates(props) {
               <Text small>{`Updated ${_getUpdatedTime(template.updatedAt)}`}</Text>
             </Card.Footer>
           </Card>
-        </Grid>
+        </div>
       ))}
-    </Grid.Container>
+    </div>
   );
 }
 

@@ -201,7 +201,7 @@ function WebhookIntegrations(props) {
                           <Button
                             icon={<Delete />}
                             light
-                            color="error"
+                            color="danger"
                             onClick={() => setIntegrationToDelete(i.id)}
                             css={{ minWidth: "fit-content" }}
                           />
@@ -273,7 +273,7 @@ function WebhookIntegrations(props) {
             </Row>
             {error && (
               <Row>
-                <Text color="error">There was an error creating the integration. Please try again.</Text>
+                <Text color="danger">There was an error creating the integration. Please try again.</Text>
               </Row>
             )}
           </Container>
@@ -315,7 +315,7 @@ function WebhookIntegrations(props) {
               <>
                 <Spacer y={1} />
                 <Row>
-                  <Text color="error">There was an error deleting the integration. Please try again.</Text>
+                  <Text color="danger">There was an error deleting the integration. Please try again.</Text>
                 </Row>
               </>
             )}
@@ -333,7 +333,7 @@ function WebhookIntegrations(props) {
           <Button
             auto
             onClick={_onDelete}
-            color="error"
+            color="danger"
             disabled={deleteLoading}
             icon={deleteLoading ? <Loading type="spinner" /> : null}
           >

@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Route, Switch, withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
-  Grid, Container, Row, Loading, Text, Spacer, Button,
+  Spacer, Button, CircularProgress,
 } from "@nextui-org/react";
 
 import { getTeam, saveActiveTeam } from "../actions/team";
@@ -14,6 +14,9 @@ import TeamSettings from "./TeamSettings";
 import Navbar from "../components/Navbar";
 import canAccess from "../config/canAccess";
 import ApiKeys from "./ApiKeys/ApiKeys";
+import Container from "../components/Container";
+import Row from "../components/Row";
+import Text from "../components/Text";
 
 /*
   Description
@@ -69,9 +72,9 @@ function ManageTeam(props) {
 
   if (!team.id || loading) {
     return (
-      <Container sm justify="center" css={{ pt: 100 }}>
+      <Container size="sm" justify="center" style={{ paddingTop: 100 }}>
         <Row justify="center" align="center">
-          <Loading type="points" size="lg">Loading your team</Loading>
+          <CircularProgress size="lg">Loading your team</CircularProgress>
         </Row>
       </Container>
     );
@@ -80,9 +83,9 @@ function ManageTeam(props) {
   return (
     <div>
       <Navbar />
-      <Grid.Container gap={1}>
-        <Grid xs={12} sm={3} md={2}>
-          <Container css={{ pt: 20 }}>
+      <div className="grid grid-cols-12 gap-1">
+        <div className="col-span-12 sm:col-span-3 md:col-span-2">
+          <Container style={{ paddingTop: 20 }}>
             <Row>
               <Text h4>
                 Manage the team
@@ -93,7 +96,7 @@ function ManageTeam(props) {
                 <Row>
                   <Link to={`/manage/${match.params.teamId}/settings`}>
                     <Button
-                      light
+                      variant="light"
                       auto
                       color={checkIfActive("settings") ? "primary" : "default"}
                       disabled={!checkIfActive("settings")}
@@ -109,7 +112,7 @@ function ManageTeam(props) {
             <Row>
               <Link to={`/manage/${match.params.teamId}/members`}>
                 <Button
-                  light
+                  variant="light"
                   auto
                   color={checkIfActive("members") ? "primary" : "default"}
                   disabled={!checkIfActive("members")}
@@ -131,7 +134,7 @@ function ManageTeam(props) {
                 <Row>
                   <Link to={`/manage/${match.params.teamId}/api-keys`}>
                     <Button
-                      light
+                      variant="light"
                       color={checkIfActive("api-keys") ? "primary" : "default"}
                       auto
                       disabled={!checkIfActive("api-keys")}
@@ -144,30 +147,10 @@ function ManageTeam(props) {
               </>
             )}
           </Container>
-        </Grid>
+        </div>
 
-        <Grid xs={12} sm={9} md={10}>
-          <Container
-            css={{
-              backgroundColor: "$backgroundContrast",
-              br: "$md",
-              p: 10,
-              "@xs": {
-                p: 20,
-              },
-              "@sm": {
-                p: 20,
-              },
-              "@md": {
-                p: 20,
-                m: 20,
-              },
-              "@lg": {
-                p: 20,
-                m: 20,
-              },
-            }}
-          >
+        <div className="col-span-12 sm:col-span-9 md:col-span-10">
+          <Container size="md">
             <Switch>
               <Route path="/manage/:teamId/members" component={TeamMembers} />
               {_canAccess("owner") && (
@@ -184,8 +167,8 @@ function ManageTeam(props) {
               )}
             </Switch>
           </Container>
-        </Grid>
-      </Grid.Container>
+        </div>
+      </div>
     </div>
   );
 }

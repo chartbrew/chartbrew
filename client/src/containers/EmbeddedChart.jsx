@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Container, Loading, Row, Text, Popover, Link, Badge, Spacer,
+  Popover, Link, Spacer, CircularProgress, Chip,
 } from "@nextui-org/react";
 import moment from "moment";
 import { format } from "date-fns";
@@ -23,6 +23,10 @@ import RadarChart from "./Chart/components/RadarChart";
 import PolarChart from "./Chart/components/PolarChart";
 import logo from "../assets/logo_inverted.png";
 import useInterval from "../modules/useInterval";
+import Container from "../components/Container";
+import Row from "../components/Row";
+import Text from "../components/Text";
+import Callout from "../components/Callout";
 
 const pageHeight = window.innerHeight;
 
@@ -132,9 +136,9 @@ function EmbeddedChart(props) {
 
   if (loading || !chart.id) {
     return (
-      <Container justify="center" css={{ ...styles.loaderContainer, pt: 50 }}>
+      <Container justify="center" style={{ ...styles.loaderContainer, paddingTop: 50 }}>
         <Row justify="center" align="center">
-          <Loading type="points">Loading the chart</Loading>
+          <CircularProgress>Loading the chart</CircularProgress>
         </Row>
       </Container>
     );
@@ -142,34 +146,30 @@ function EmbeddedChart(props) {
 
   if (error) {
     return (
-      <Container css={{ backgroundColor: "$blue300", p: 10 }}>
-        <Row>
-          <Text h5>{"Error loading the Chart"}</Text>
-        </Row>
-        <Row>
-          <Text>The Chart might not be public in the ChartBrew dashboard.</Text>
-        </Row>
-      </Container>
+      <Callout
+        title={"Error loading the chart"}
+        text="The chart might not be public in the Chartbrew dashboard."
+      />
     );
   }
 
   return (
     <div style={styles.container}>
-      <Container fluid css={{ pl: "$sm" }} style={styles.header(chart.type)} xl>
+      <Container size="fluid" className="pl-unit-sm" style={styles.header(chart.type)} xl>
         <Row justify="space-between">
           <div style={{ display: "flex", alignItems: "center" }}>
             <Text b size="1.1em" css={{ color: "$text", lineHeight: "$xs" }}>{chart.name}</Text>
             <Spacer x={0.5} />
             {chart.Datasets && conditions.map((c) => {
               return (
-                <Badge color="primary" variant={"flat"} key={c.id} size="sm" css={{ p: 0, pl: 5, pr: 5 }}>
+                <Chip color="primary" variant={"flat"} key={c.id} size="sm" className={"py-0 px-5"}>
                   {c.type !== "date" && `${c.value}`}
                   {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
                   <Spacer x={0.2} />
                   <Link onClick={() => _onClearFilter(c)} css={{ color: "$text" }}>
                     <CloseSquare size="small" />
                   </Link>
-                </Badge>
+                </Chip>
               );
             })}
           </div>
@@ -269,7 +269,7 @@ function EmbeddedChart(props) {
               <>
                 {dataLoading && (
                   <>
-                    <Loading type="spinner" size="xs" inlist />
+                    <CircularProgress aria-label="loading" size="xs" />
                     <Spacer x={0.2} />
                     <Text small>{"Updating..."}</Text>
                   </>
@@ -283,21 +283,21 @@ function EmbeddedChart(props) {
             )}
             {loading && (
               <>
-                <Loading type="spinner" size="xs" inlist />
+                <CircularProgress aria-label="loading" />
                 <Spacer x={0.2} />
                 <Text small css={{ color: "$accents6" }}>{"Updating..."}</Text>
               </>
             )}
           </div>
           {chart.showBranding && (
-            <Link href="https://chartbrew.com" target="_blank" rel="noreferrer" css={{ color: "$primary", ai: "flex-end" }}>
+            <Link href="https://chartbrew.com" target="_blank" rel="noreferrer" className={"text-primary items-end"}>
               <img
                 src={logo}
                 width="15"
                 alt="Chartbrew logo"
               />
               <Spacer x={0.2} />
-              <Text small css={{ color: "$accents6" }}>
+              <Text small color="gray">
                 <strong>Chart</strong>
                 brew
               </Text>

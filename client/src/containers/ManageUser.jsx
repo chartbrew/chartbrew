@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { Route, Switch, withRouter } from "react-router";
-import { Grid } from "@nextui-org/react";
 
 import EditUserForm from "../components/EditUserForm";
 import Navbar from "../components/Navbar";
@@ -21,13 +20,13 @@ function ManageUser(props) {
   return (
     <div style={styles.container}>
       <Navbar hideTeam />
-      <Grid.Container justify="center">
-        <Grid xs={12} sm={10} md={8}>
+      <div className="grid grid-cols-12 justify-center">
+        <div className="col-span-12 sm:col-span-10 md:col-span-8">
           <Switch>
             <Route path="/edit" component={EditUserForm} />
           </Switch>
-        </Grid>
-      </Grid.Container>
+        </div>
+      </div>
     </div>
   );
 }

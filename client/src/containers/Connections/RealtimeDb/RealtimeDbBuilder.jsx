@@ -169,7 +169,7 @@ function RealtimeDbBuilder(props) {
                   <Spacer x={0.3} />
                   <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
                     <Button
-                      color="error"
+                      color="danger"
                       icon={<Delete />}
                       auto
                       size="sm"
@@ -219,7 +219,7 @@ function RealtimeDbBuilder(props) {
                     </>
                   )}
                   {requestError && (
-                    <Badge color="error">
+                    <Badge color="danger">
                       {`${requestError.statusCode} ${requestError.statusText}`}
                     </Badge>
                   )}
@@ -292,7 +292,7 @@ function RealtimeDbBuilder(props) {
                 <>
                   <Spacer x={0.2} />
                   <Button
-                    color="error"
+                    color="danger"
                     bordered
                     icon={<CloseSquare size="small" />}
                     onClick={() => (
@@ -405,7 +405,7 @@ function RealtimeDbBuilder(props) {
                     )}
                     auto
                     bordered
-                    color="error"
+                    color="danger"
                     size="xs"
                   >
                     Disable limit

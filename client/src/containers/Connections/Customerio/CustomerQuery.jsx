@@ -521,7 +521,7 @@ function CustomerQuery(props) {
           <Spacer x={0.2} />
           <Button
             icon={<CloseSquare />}
-            color="error"
+            color="danger"
             flat
             onClick={() => setSegmentConfig(null)}
             size="sm"
@@ -595,7 +595,7 @@ function CustomerQuery(props) {
             icon={<CloseSquare />}
             onClick={() => setAttributeConfig(null)}
             size="sm"
-            color="error"
+            color="danger"
             flat
             css={{ minWidth: "fit-content" }}
           />

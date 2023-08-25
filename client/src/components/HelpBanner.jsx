@@ -1,9 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {
-  Card, Grid, Text, Link, Spacer, Row
+  Card, CardBody, Image, Link, Spacer,
 } from "@nextui-org/react";
 import { FcGraduationCap } from "react-icons/fc";
+
+import Row from "./Row";
+import Text from "./Text";
+import Container from "./Container";
 
 function HelpBanner(props) {
   const {
@@ -16,17 +20,17 @@ function HelpBanner(props) {
   };
 
   return (
-    <Grid.Container>
-      <Grid xs={12} md={8}>
+    <Container size={"sm"}>
+      <div className="grid grid-cols-12">
         <Card
           variant="bordered"
           isPressable
           isHoverable
           onClick={() => _onOpenHelp()}
         >
-          <Card.Body css={{ p: 0 }}>
-            <Grid.Container>
-              <Grid xs={12} sm={9} css={{ px: 20, py: 20 }} direction="column">
+          <CardBody>
+            <div className="grid grid-cols-12">
+              <div className="col-span-12 md:col-span-9 py-20 px-20 flex-col">
                 <Text h4 css={{ py: 5 }}>
                   <Link css={{ color: "$text" }} href={url} target="_blank" rel="noopener">{title}</Link>
                 </Text>
@@ -46,20 +50,20 @@ function HelpBanner(props) {
                     {info}
                   </Text>
                 </Row>
-              </Grid>
-              <Grid xs={0} sm={3}>
-                <Card.Image
+              </div>
+              <div className="md:col-span-3 sm:hidden">
+                <Image
                   src={imageUrl}
                   objectFit="cover"
                   width={200}
                   height={200}
                 />
-              </Grid>
-            </Grid.Container>
-          </Card.Body>
+              </div>
+            </div>
+          </CardBody>
         </Card>
-      </Grid>
-    </Grid.Container>
+      </div>
+    </Container>
   );
 }
 

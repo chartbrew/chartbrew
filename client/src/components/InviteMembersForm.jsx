@@ -3,13 +3,16 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Button, Container, Row, Text, Tooltip, Spacer, Grid, Checkbox, Input, Collapse, Radio, Badge,
+  Button, Tooltip, Spacer, Checkbox, Input, Accordion, Radio, AccordionItem, RadioGroup, Chip,
 } from "@nextui-org/react";
 import _ from "lodash";
 import { CloseSquare, InfoCircle, TickSquare } from "react-iconly";
 import { FaClipboard } from "react-icons/fa";
 
 import { generateInviteUrl as generateInviteUrlAction } from "../actions/team";
+import Container from "./Container";
+import Row from "./Row";
+import Text from "./Text";
 
 /*
   Contains the team members invitation functionality
@@ -95,54 +98,52 @@ function InviteMembersForm(props) {
           <>
             <Spacer y={0.5} />
             <Row>
-              <Collapse
-                bordered
-                title="Select project access"
-                subtitle={projectAccess.length > 0 ? `${projectAccess.length} project${projectAccess.length > 1 ? "s" : ""} selected` : "No projects selected yet"}
-                css={{
-                  "& .nextui-collapse-title": {
-                    fs: 20,
-                  },
-                }}
+              <Accordion
+                variant="bordered"
               >
-                <Grid.Container gap={0.5}>
-                  <Grid xs={12} css={{ mb: 10 }}>
-                    <Button
-                      size="sm"
-                      bordered
-                      icon={<TickSquare />}
-                      onClick={_onSelectAllProjects}
-                      auto
-                      color="primary"
-                    >
-                      Select all
-                    </Button>
-                    <Spacer x={0.2} />
-                    <Button
-                      size="sm"
-                      bordered
-                      auto
-                      icon={<CloseSquare />}
-                      onClick={_onDeselectAllProjects}
-                      color="secondary"
-                    >
-                      Deselect all
-                    </Button>
-                  </Grid>
-                  {projects && projects.map((project) => (
-                    <Grid xs={12} sm={4} key={project.id}>
-                      <Checkbox
-                        label={project.name}
-                        isSelected={
-                          _.indexOf(projectAccess, project.id) > -1
-                        }
-                        onChange={() => _onChangeProjectAccess(project.id)}
+                <AccordionItem
+                  title="Select project access"
+                  subtitle={projectAccess.length > 0 ? `${projectAccess.length} project${projectAccess.length > 1 ? "s" : ""} selected` : "No projects selected yet"}
+                >
+                  <div className="grid grid-cols-12 gap-1">
+                    <div className="col-span-12 mb-10">
+                      <Button
                         size="sm"
-                      />
-                    </Grid>
-                  ))}
-                </Grid.Container>
-              </Collapse>
+                        bordered
+                        icon={<TickSquare />}
+                        onClick={_onSelectAllProjects}
+                        auto
+                        color="primary"
+                      >
+                        Select all
+                      </Button>
+                      <Spacer x={0.2} />
+                      <Button
+                        size="sm"
+                        bordered
+                        auto
+                        icon={<CloseSquare />}
+                        onClick={_onDeselectAllProjects}
+                        color="secondary"
+                      >
+                        Deselect all
+                      </Button>
+                    </div>
+                    {projects && projects.map((project) => (
+                      <div className="col-span-12 sm:col-span-4" key={project.id}>
+                        <Checkbox
+                          label={project.name}
+                          isSelected={
+                            _.indexOf(projectAccess, project.id) > -1
+                          }
+                          onChange={() => _onChangeProjectAccess(project.id)}
+                          size="sm"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </AccordionItem>
+              </Accordion>
             </Row>
           </>
         )}
@@ -154,7 +155,7 @@ function InviteMembersForm(props) {
           <Spacer x={0.2} />
           <Tooltip
             content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
-            css={{ maxWidth: 400 }}
+            style={{ maxWidth: 400 }}
           >
             <InfoCircle />
           </Tooltip>
@@ -176,14 +177,14 @@ function InviteMembersForm(props) {
           <Spacer x={0.2} />
           <Tooltip
             content="The team role is applied over all the projects selected above"
-            css={{ maxWidth: 400 }}
+            style={{ maxWidth: 400 }}
           >
             <InfoCircle />
           </Tooltip>
         </Row>
         <Spacer y={0.5} />
         <Row>
-          <Radio.Group defaultValue="member" size="sm" value={role} onChange={(option) => setRole(option)}>
+          <RadioGroup defaultValue="member" size="sm" value={role} onChange={(option) => setRole(option)}>
             <Radio
               value="member"
               description={"Can view charts in assigned projects"}
@@ -202,13 +203,13 @@ function InviteMembersForm(props) {
             >
               Admin
             </Radio>
-          </Radio.Group>
+          </RadioGroup>
         </Row>
 
         <Spacer y={1} />
         <Row>
           <Button
-            disabled={loading}
+            isLoading={loading}
             onClick={onGenerateUrl}
             auto
           >
@@ -241,17 +242,17 @@ function InviteMembersForm(props) {
                 {urlCopied ? "Copied" : "Copy to clipboard"}
               </Button>
               <Spacer x={1} />
-              <Badge color="warning" disableOutline variant={"flat"}>
+              <Chip color="warning" disableOutline variant={"flat"}>
                 {`${role} role`}
-              </Badge>
+              </Chip>
               <Spacer x={0.3} />
-              <Badge color="primary" disableOutline variant={"flat"}>
+              <Chip color="primary" disableOutline variant={"flat"}>
                 {`Access to ${projectAccess.length} project${projectAccess.length !== 1 ? "s" : ""}`}
-              </Badge>
+              </Chip>
               <Spacer x={0.3} />
-              <Badge color="success" disableOutline variant={"flat"}>
+              <Chip color="success" disableOutline variant={"flat"}>
                 {exportAllowed ? "Data export allowed" : "Data export not allowed"}
-              </Badge>
+              </Chip>
             </Row>
           </>
         )}

@@ -465,7 +465,7 @@ function DatarequestSettings(props) {
                 <Button
                   auto
                   light
-                  color="error"
+                  color="danger"
                   icon={<CloseSquare />}
                   ripple={false}
                   css={{ p: 0 }}

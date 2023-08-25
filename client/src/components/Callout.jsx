@@ -1,42 +1,21 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {
-  Container, Link, Row, Spacer, Text, useTheme,
+  Link, Spacer,
 } from "@nextui-org/react";
 
-function Callout({
-  title, text, actionUrl, color, actionText,
-}) {
-  const { isDark } = useTheme();
+import Row from "./Row";
+import Text from "./Text";
 
-  let bgColor;
-  switch (color) {
-    case "primary":
-      bgColor = isDark ? "$primaryContrast" : "$blue100";
-      break;
-    case "secondary":
-      bgColor = isDark ? "$secondaryContrast" : "$orange100";
-      break;
-    case "success":
-      bgColor = isDark ? "$successContrast" : "$green100";
-      break;
-    case "error":
-      bgColor = isDark ? "$errorContrast" : "$red100";
-      break;
-    case "warning":
-      bgColor = isDark ? "$warningContrast" : "$warningLight";
-      break;
-    default:
-      bgColor = isDark ? "$primaryContrast" : "$blue100";
-  }
+function Callout({
+  title, text, actionUrl, actionText,
+}) {
 
   return (
-    <Container css={{
-      backgroundColor: bgColor, p: 10, br: "$sm", border: `2px solid $${color}Border`,
-    }}>
+    <blockquote className="border px-4 my-6 py-3 rounded-xl [&>p]:m-0 border-default-200 dark:border-default-100 bg-default-200/20">
       {title && (
         <Row>
-          <Text h5>
+          <Text h4>
             {title}
           </Text>
         </Row>
@@ -60,7 +39,7 @@ function Callout({
           </Row>
         </>
       )}
-    </Container>
+    </blockquote>
   );
 }
 

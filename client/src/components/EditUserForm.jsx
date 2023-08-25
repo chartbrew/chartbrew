@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Container, Divider, Input, Loading, Modal, Row, Spacer, Text, useTheme,
+  Button, Divider, Input, CircularProgress, Modal, Spacer, ModalHeader, ModalBody, ModalFooter,
 } from "@nextui-org/react";
 import { Delete } from "react-iconly";
 import { ToastContainer, toast, Flip } from "react-toastify";
@@ -14,6 +14,11 @@ import {
   requestEmailUpdate as requestEmailUpdateAction,
   updateEmail as updateEmailAction,
 } from "../actions/user";
+import Container from "./Container";
+import Row from "./Row";
+import Text from "./Text";
+import Callout from "./Callout";
+import useThemeDetector from "../modules/useThemeDetector";
 
 /*
   Component for editting/deleting user account
@@ -33,7 +38,7 @@ function EditUserForm(props) {
     userProp, updateUser, deleteUser, history, requestEmailUpdate, updateEmail,
   } = props;
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     const params = new URLSearchParams(document.location.search);
@@ -124,28 +129,13 @@ function EditUserForm(props) {
   if (!user.name) {
     return (
       <Container>
-        <Loading type={"spinner"} size="lg" />
+        <CircularProgress aria-label="Loading" size="lg" />
       </Container>
     );
   }
 
   return (
-    <Container
-      css={{
-        backgroundColor: "$backgroundContrast",
-        br: "$md",
-        "@xs": {
-          p: 20,
-        },
-        "@sm": {
-          p: 20,
-        },
-        "@md": {
-          p: 20,
-          m: 20,
-        },
-      }}
-    >
+    <Container>
       <Row>
         <Text h3>Profile settings</Text>
       </Row>
@@ -180,11 +170,11 @@ function EditUserForm(props) {
       )}
       <Row>
         <Button
-          disabled={!user.name || loading}
+          disabled={!user.name}
           color={success ? "success" : "primary"}
           onClick={_onUpdateUser}
           auto
-          iconRight={loading ? <Loading type="points" /> : null}
+          isLoading={loading}
         >
           {success ? "Saved" : "Save" }
         </Button>
@@ -213,11 +203,11 @@ function EditUserForm(props) {
       <Spacer y={0.5} />
       <Row>
         <Button
-          disabled={!userEmail || loading || userEmail === userProp.email}
+          disabled={!userEmail || userEmail === userProp.email}
           color={successEmail ? "success" : "primary"}
           onClick={_onUpdateEmail}
           auto
-          iconRight={loading ? <Loading type="points" /> : null}
+          isLoading={loading}
         >
           {successEmail ? "We sent you an email" : "Update email" }
         </Button>
@@ -230,7 +220,7 @@ function EditUserForm(props) {
       <Row>
         <Button
           iconRight={<Delete />}
-          color="error"
+          color="danger"
           onClick={() => setOpenDeleteModal(true)}
           bordered
           auto
@@ -240,10 +230,10 @@ function EditUserForm(props) {
       </Row>
 
       <Modal blur open={openDeleteModal} width="500px" onClose={() => setOpenDeleteModal(false)}>
-        <Modal.Header>
+        <ModalHeader>
           <Text h3>Delete Account</Text>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <Container>
             <Row>
               <Text>{"This action will delete your account permanently, including your team and everything associated with it (projects, connections, and charts)."}</Text>
@@ -257,8 +247,8 @@ function EditUserForm(props) {
               <Text b>Are you sure you want to delete your user and team?</Text>
             </Row>
           </Container>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
             onClick={() => setOpenDeleteModal(false)}
             color="warning"
@@ -268,25 +258,24 @@ function EditUserForm(props) {
             {"Go back"}
           </Button>
           <Button
-            color="error"
-            disabled={loading}
+            color="danger"
             onClick={_onDeleteUser}
-            iconRight={loading ? <Loading type="points" /> : <Delete />}
+            isLoading={loading}
             auto
           >
             {"Delete forever"}
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       <Modal open={!!updateEmailToken}>
-        <Modal.Header>
+        <ModalHeader>
           <Text h3>Update email</Text>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <Text>Are you sure you want to update your email?</Text>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
             color="warning"
             flat
@@ -302,19 +291,16 @@ function EditUserForm(props) {
           >
             Confirm
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       {deleteUserError && (
         <Row>
-          <Container css={{ backgroundColor: "$red300", p: 10 }}>
-            <Row>
-              <Text h5>{"Something went wrong while deleting your account"}</Text>
-            </Row>
-            <Row>
-              <Text>Please try refreshing the page.</Text>
-            </Row>
-          </Container>
+          <Callout
+            title="Something went wrong while deleting your account"
+            text={"Please try refreshing the page."}
+            color="danger"
+          />
         </Row>
       )}
 

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
 import {
-  Avatar, Button, Card, Checkbox, Container, Divider, Grid, Loading,
-  Modal, Row, Spacer, Switch, Text, Tooltip, useTheme,
+  Avatar, Button, Card, Checkbox, Divider,
+  Modal, Spacer, Switch, Tooltip,
 } from "@nextui-org/react";
 
 import {
@@ -13,6 +13,10 @@ import { IoCaretForward } from "react-icons/io5";
 
 import connectionImages from "../../../config/connectionImages";
 import { generateDashboard } from "../../../actions/project";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 function CustomTemplateForm(props) {
   const {
@@ -27,7 +31,7 @@ function CustomTemplateForm(props) {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [formStatus, setFormStatus] = useState("");
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     if (template && template.model.Connections) {
@@ -216,12 +220,12 @@ function CustomTemplateForm(props) {
         <Text b>Connections</Text>
       </Row>
       <Spacer y={0.5} />
-      <Grid.Container gap={2}>
+      <div className="grid grid-cols-12 gap-2">
         {template.model.Connections && template.model.Connections.map((c) => {
           const existingConnections = _getExistingConnections(c);
 
           return (
-            <Grid xs={12} sm={6} md={4} xl={3} key={c.id}>
+            <div className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-3" key={c.id}>
               <Card variant="bordered">
                 <Card.Header>
                   <Switch
@@ -258,10 +262,10 @@ function CustomTemplateForm(props) {
                   </Card.Footer>
                 )}
               </Card>
-            </Grid>
+            </div>
           );
         })}
-      </Grid.Container>
+      </div>
 
       {template && template.model && (
         <>
@@ -270,9 +274,9 @@ function CustomTemplateForm(props) {
             <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
           </Row>
           <Spacer y={0.5} />
-          <Grid.Container gap={1}>
+          <div className="grid grid-cols-12 gap-1">
             {template.model.Charts && template.model.Charts.map((chart) => (
-              <Grid key={chart.tid} xs={12} sm={6}>
+              <div className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-3" key={chart.tid}>
                 <Checkbox
                   isSelected={
                     _.indexOf(selectedCharts, chart.tid) > -1
@@ -293,9 +297,9 @@ function CustomTemplateForm(props) {
                     </Tooltip>
                   </>
                 )}
-              </Grid>
+              </div>
             ))}
-          </Grid.Container>
+          </div>
 
           <Spacer y={1} />
           <Row>
@@ -326,7 +330,7 @@ function CustomTemplateForm(props) {
       <Row justify="flex-end">
         {isAdmin && (
           <Button
-            color="error"
+            color="danger"
             flat
             iconRight={<Delete />}
             onClick={() => setDeleteConfimation(true)}
@@ -339,12 +343,12 @@ function CustomTemplateForm(props) {
         <Button
           primary
           onClick={_generateTemplate}
-          disabled={isCreating || !selectedCharts.length}
+          disabled={!selectedCharts.length}
           iconRight={<ArrowRight />}
           auto
+          isLoading={isCreating}
         >
-          {!isCreating && "Generate from template"}
-          {isCreating && <Loading type="points" />}
+          Generate from template
         </Button>
       </Row>
 
@@ -370,17 +374,16 @@ function CustomTemplateForm(props) {
               Close
             </Button>
             <Button
-              color="error"
+              color="danger"
               iconRight={<Delete />}
-              disabled={deleteLoading}
               onClick={() => {
                 setDeleteLoading(true);
                 onDelete(template.id);
               }}
               auto
+              isLoading={deleteLoading}
             >
-              {!deleteLoading && "Delete template"}
-              {deleteLoading && <Loading type="points" />}
+              Delete template
             </Button>
           </Modal.Footer>
         </Modal>

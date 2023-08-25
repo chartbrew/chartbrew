@@ -2,10 +2,13 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Container, Input, Row, Spacer, Text, Textarea,
+  Button, Input, Spacer, Textarea,
 } from "@nextui-org/react";
 
 import { sendFeedback } from "../actions/user";
+import Container from "./Container";
+import Row from "./Row";
+import Text from "./Text";
 
 function FeedbackForm(props) {
   const [success, setSuccess] = useState(false);
@@ -71,14 +74,15 @@ function FeedbackForm(props) {
         {success
             && <Text color="success">{"We received your feedback and will work on it! Thank you."}</Text>}
         {submitError
-            && <Text color="error">{"Something went wront, please try again or email us directly on support@chartbrew.com"}</Text>}
+            && <Text color="danger">{"Something went wront, please try again or email us directly on support@chartbrew.com"}</Text>}
       </Row>
       <Spacer y={0.5} />
       <Row>
         <Button
-          disabled={loading || !feedback}
+          disabled={!feedback}
           onClick={() => _onSendFeedback()}
           auto
+          isLoading={loading}
         >
           Send feedback
         </Button>

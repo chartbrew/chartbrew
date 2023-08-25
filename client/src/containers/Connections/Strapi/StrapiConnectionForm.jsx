@@ -203,7 +203,7 @@ function StrapiConnectionForm(props) {
           </Row>
           {errors.name && (
             <Row>
-              <Text color="error">
+              <Text color="danger">
                 {errors.name}
               </Text>
             </Row>
@@ -226,7 +226,7 @@ function StrapiConnectionForm(props) {
           </Row>
           {errors.host && (
             <Row>
-              <Text color="error">
+              <Text color="danger">
                 {errors.host}
               </Text>
             </Row>
@@ -247,7 +247,7 @@ function StrapiConnectionForm(props) {
           </Row>
           {errors.host && (
             <Row>
-              <Text color="error">
+              <Text color="danger">
                 {errors.host}
               </Text>
             </Row>
@@ -318,9 +318,9 @@ function StrapiConnectionForm(props) {
           <>
             <Spacer y={1} />
             <Row>
-              <Text b color="error">{"Server error while trying to save your connection"}</Text>
+              <Text b color="danger">{"Server error while trying to save your connection"}</Text>
               <br />
-              <Text color="error">Please try adding your connection again.</Text>
+              <Text color="danger">Please try adding your connection again.</Text>
             </Row>
           </>
         )}

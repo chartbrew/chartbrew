@@ -276,7 +276,7 @@ function MongoConnectionForm(props) {
             </Row>
             {errors.name && (
               <Row>
-                <Text color="error">
+                <Text color="danger">
                   {errors.name}
                 </Text>
               </Row>
@@ -297,7 +297,7 @@ function MongoConnectionForm(props) {
             </Row>
             {errors.connectionString && (
               <Row>
-                <Text color="error">
+                <Text color="danger">
                   {errors.connectionString}
                 </Text>
               </Row>
@@ -442,7 +442,7 @@ function MongoConnectionForm(props) {
                         onClick={() => _removeOption(option.id)}
                         auto
                         flat
-                        color="error"
+                        color="danger"
                       />
                     </Grid>
                     <Grid xs={0} sm={4} />
