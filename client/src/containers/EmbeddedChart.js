@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Container, Loading, Row, Text, Popover, Link, Badge, Spacer, theme,
+  Container, Loading, Row, Text, Popover, Link, Badge, Spacer,
 } from "@nextui-org/react";
 import moment from "moment";
 import { format } from "date-fns";
@@ -138,11 +138,11 @@ function EmbeddedChart(props) {
           <style type="text/css">
             {`
             body, html {
-              background-color: ${theme.colors.backgroundContrast.value} !important;
+              background-color: transparent;
             }
 
             #root {
-              background-color: ${theme.colors.backgroundContrast.value} !important;
+              background-color: transparent;
             }
           `}
           </style>
@@ -175,11 +175,11 @@ function EmbeddedChart(props) {
         <style type="text/css">
           {`
             body, html {
-              background-color: ${theme.colors.backgroundContrast.value} !important;
+              background-color: transparent;
             }
 
             #root {
-              background-color: ${theme.colors.backgroundContrast.value} !important;
+              background-color: transparent;
             }
           `}
         </style>
