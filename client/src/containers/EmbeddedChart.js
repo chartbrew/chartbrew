@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Container, Loading, Row, Text, Popover, Link, Badge, Spacer,
+  Container, Loading, Row, Text, Popover, Link, Badge, Spacer, theme,
 } from "@nextui-org/react";
 import moment from "moment";
 import { format } from "date-fns";
 import { enGB } from "date-fns/locale";
 import { CloseSquare, Filter2 } from "react-iconly";
+import { Helmet } from "react-helmet";
 
 import {
   getEmbeddedChart as getEmbeddedChartAction,
@@ -132,11 +133,26 @@ function EmbeddedChart(props) {
 
   if (loading || !chart.id) {
     return (
-      <Container justify="center" css={{ ...styles.loaderContainer, pt: 50 }}>
-        <Row justify="center" align="center">
-          <Loading type="points">Loading the chart</Loading>
-        </Row>
-      </Container>
+      <>
+        <Helmet>
+          <style type="text/css">
+            {`
+            body, html {
+              background-color: ${theme.colors.backgroundContrast.value} !important;
+            }
+
+            #root {
+              background-color: ${theme.colors.backgroundContrast.value} !important;
+            }
+          `}
+          </style>
+        </Helmet>
+        <Container justify="center" css={{ ...styles.loaderContainer, pt: 50 }}>
+          <Row justify="center" align="center">
+            <Loading type="points">Loading the chart</Loading>
+          </Row>
+        </Container>
+      </>
     );
   }
 
@@ -155,6 +171,19 @@ function EmbeddedChart(props) {
 
   return (
     <div style={styles.container}>
+      <Helmet>
+        <style type="text/css">
+          {`
+            body, html {
+              background-color: ${theme.colors.backgroundContrast.value} !important;
+            }
+
+            #root {
+              background-color: ${theme.colors.backgroundContrast.value} !important;
+            }
+          `}
+        </style>
+      </Helmet>
       <Container fluid css={{ pl: "$sm" }} style={styles.header(chart.type)} xl>
         <Row justify="space-between">
           <div style={{ display: "flex", alignItems: "center" }}>
