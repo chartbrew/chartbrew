@@ -149,7 +149,7 @@ function EmbeddedChart(props) {
         </Helmet>
         <Container justify="center" css={{ ...styles.loaderContainer, pt: 50 }}>
           <Row justify="center" align="center">
-            <Loading type="points">Loading the chart</Loading>
+            <Loading type="points-opacity" color="currentColor" size="xl" aria-label="Loading" />
           </Row>
         </Container>
       </>
