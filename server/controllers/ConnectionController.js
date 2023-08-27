@@ -504,11 +504,16 @@ class ConnectionController {
         return Function(`'use strict';return (mongoConnection, ObjectId) => mongoConnection.${formattedQuery}`)()(mongoConnection, ObjectId); // eslint-disable-line
       })
       .then(async (data) => {
+        let finalData = data;
+        // MonogoDB returns a plain number when count() is used, transform this into an object
+        if (formattedQuery.indexOf("count(") > -1) {
+          finalData = { count: data };
+        }
         // cache the data for later use
         const dataToCache = {
           dataRequest,
           responseData: {
-            data,
+            data: finalData,
           },
           connection_id: id,
         };
