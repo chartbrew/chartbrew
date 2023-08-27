@@ -61,7 +61,7 @@ function PublicDashboard(props) {
   } = props;
 
   const [project, setProject] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [editingTitle, setEditingTitle] = useState(false);
   const [editorVisible, setEditorVisible] = useState(false);
   const [isSaved, setIsSaved] = useState(true);
@@ -283,16 +283,27 @@ function PublicDashboard(props) {
 
   if (loading && !project.id && !noCharts) {
     return (
-      <Container style={styles.container}>
-        <Spacer y={4} />
-        <Row align="center" justify="center">
-          <Loading type="points" color="currentColor" size="xl" />
-        </Row>
-        <Spacer y={1} />
-        <Row align="center" justify="center">
-          <Text size="1.4em" css={{ color: "$accents7" }}>Loading the dashboard...</Text>
-        </Row>
-      </Container>
+      <>
+        <Helmet>
+          <style type="text/css">
+            {`
+            body, html {
+              background-color: transparent;
+            }
+
+            #root {
+              background-color: transparent;
+            }
+          `}
+          </style>
+        </Helmet>
+        <Container style={styles.container}>
+          <Spacer y={4} />
+          <Row align="center" justify="center">
+            <Loading type="points-opacity" color="currentColor" size="xl" aria-label="Loading" />
+          </Row>
+        </Container>
+      </>
     );
   }
 
@@ -569,11 +580,7 @@ function PublicDashboard(props) {
             <Container style={styles.container}>
               <Spacer y={4} />
               <Row align="center" justify="center">
-                <Loading type="points" color="currentColor" size="xl" />
-              </Row>
-              <Spacer y={1} />
-              <Row align="center" justify="center">
-                <Text size="1.4em" css={{ color: "$accents7" }}>Loading the dashboard...</Text>
+                <Loading type="points-opacity" color="currentColor" size="xl" aria-label="Loading" />
               </Row>
             </Container>
           )}
