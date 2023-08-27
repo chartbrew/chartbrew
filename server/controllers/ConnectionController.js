@@ -462,7 +462,7 @@ class ConnectionController {
           try {
             return new Promise((resolve) => resolve(JSON.parse(response.body)));
           } catch (e) {
-            return new Promise((resolve, reject) => reject(406));
+            return new Promise((resolve, reject) => reject(400));
           }
         } else {
           return new Promise((resolve, reject) => reject(response.statusCode));
@@ -737,7 +737,7 @@ class ConnectionController {
 
             return new Promise((resolve) => resolve(dataToCache));
           } catch (e) {
-            return new Promise((resolve, reject) => reject(406));
+            return new Promise((resolve, reject) => reject(400));
           }
         } else {
           return new Promise((resolve, reject) => reject(response.statusCode));
