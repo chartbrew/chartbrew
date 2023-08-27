@@ -30,8 +30,8 @@ function Filters(props) {
   });
   const [filterType, setFilterType] = useState("date");
   const [initSelectionRange] = useState({
-    startDate: moment().startOf("month").toDate(),
-    endDate: moment().endOf("month").toDate(),
+    startDate: moment().startOf("month").toISOString(),
+    endDate: moment().endOf("month").toISOString(),
     key: "selection",
   });
   const [dateRange, setDateRange] = useState(initSelectionRange);
@@ -122,66 +122,66 @@ function Filters(props) {
   const _onSelectRange = (type) => {
     if (type === "this_month") {
       setDateRange({
-        startDate: moment().startOf("month").startOf("day").toDate(),
-        endDate: moment().endOf("month").endOf("day").toDate(),
+        startDate: moment.utc().startOf("month").startOf("day").toISOString(),
+        endDate: moment.utc().endOf("month").endOf("day").toISOString(),
         key: "selection",
       });
     }
 
     if (type === "last_7_days") {
       setDateRange({
-        startDate: moment().subtract(7, "days").startOf("day").toDate(),
-        endDate: moment().endOf("day").toDate(),
+        startDate: moment.utc().subtract(7, "days").startOf("day").toISOString(),
+        endDate: moment.utc().endOf("day").toISOString(),
         key: "selection",
       });
     }
 
     if (type === "last_30_days") {
       setDateRange({
-        startDate: moment().subtract(30, "days").startOf("day").toDate(),
-        endDate: moment().endOf("day").toDate(),
+        startDate: moment.utc().subtract(30, "days").startOf("day").toISOString(),
+        endDate: moment.utc().endOf("day").toISOString(),
         key: "selection",
       });
     }
 
     if (type === "last_90_days") {
       setDateRange({
-        startDate: moment().subtract(90, "days").startOf("day").toDate(),
-        endDate: moment().endOf("day").toDate(),
+        startDate: moment.utc().subtract(90, "days").startOf("day").toISOString(),
+        endDate: moment.utc().endOf("day").toISOString(),
         key: "selection",
       });
     }
 
     if (type === "last_year") {
       setDateRange({
-        startDate: moment().subtract(1, "year").startOf("day").toDate(),
-        endDate: moment().endOf("day").toDate(),
+        startDate: moment.utc().subtract(1, "year").startOf("day").toISOString(),
+        endDate: moment.utc().endOf("day").toISOString(),
         key: "selection",
       });
     }
 
     if (type === "quarter_to_date") {
       setDateRange({
-        startDate: moment().startOf("quarter").startOf("day").toDate(),
-        endDate: moment().endOf("day").toDate(),
+        startDate: moment.utc().startOf("quarter").startOf("day").toISOString(),
+        endDate: moment.utc().endOf("day").toISOString(),
         key: "selection",
       });
     }
 
     if (type === "last_quarter") {
       setDateRange({
-        startDate: moment().subtract(1, "quarter").startOf("quarter").startOf("day")
-          .toDate(),
-        endDate: moment().subtract(1, "quarter").endOf("quarter").endOf("day")
-          .toDate(),
+        startDate: moment.utc().subtract(1, "quarter").startOf("quarter").startOf("day")
+          .toISOString(),
+        endDate: moment.utc().subtract(1, "quarter").endOf("quarter").endOf("day")
+          .toISOString(),
         key: "selection",
       });
     }
 
     if (type === "year_to_date") {
       setDateRange({
-        startDate: moment().startOf("year").startOf("day").toDate(),
-        endDate: moment().endOf("day").toDate(),
+        startDate: moment.utc().startOf("year").startOf("day").toISOString(),
+        endDate: moment.utc().endOf("day").toISOString(),
         key: "selection",
       });
     }
@@ -190,8 +190,8 @@ function Filters(props) {
   const _onChangeDateRange = (ranges) => {
     const range = ranges.selection;
     setDateRange({
-      startDate: range.startDate,
-      endDate: moment(range.endDate).endOf("day").toDate(),
+      startDate: moment.utc(range.startDate).startOf("day").toISOString(),
+      endDate: moment.utc(range.endDate).endOf("day").toISOString(),
     });
   };
 
@@ -199,8 +199,8 @@ function Filters(props) {
     if (filterType === "date") {
       onAddFilter({
         id: uuid(),
-        startDate: dateRange.startDate,
-        endDate: dateRange.endDate,
+        startDate: moment.utc(dateRange.startDate).toISOString(),
+        endDate: moment.utc(dateRange.endDate).toISOString(),
         type: "date",
       });
     } else {
@@ -321,7 +321,7 @@ function Filters(props) {
                       <Input
                         placeholder="Start date"
                         label="Start date"
-                        value={dateRange.startDate && format(new Date(dateRange.startDate), "Pp", { locale: enGB })}
+                        value={dateRange.startDate && moment.utc(dateRange.startDate).format("Do MMM YYYY")}
                         readOnly
                         bordered
                       />
@@ -329,7 +329,7 @@ function Filters(props) {
                       <Input
                         placeholder="End date"
                         label="End date"
-                        value={dateRange.endDate && format(new Date(dateRange.endDate), "Pp", { locale: enGB })}
+                        value={dateRange.endDate && moment.utc(dateRange.endDate).format("Do MMM YYYY")}
                         readOnly
                         bordered
                       />
