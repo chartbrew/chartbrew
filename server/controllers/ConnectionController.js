@@ -604,16 +604,20 @@ class ConnectionController {
                 let endDate = getMomentObj(timezone)(chart.endDate).endOf("day");
 
                 if (value === "startDate" && chart.currentEndDate) {
-                  const timeDiff = endDate.diff(startDate, "days");
-                  endDate = getMomentObj(timezone)().endOf("day");
+                  const timeDiff = endDate.diff(startDate, chart.timeInterval);
+                  endDate = getMomentObj(timezone)().endOf(chart.timeInterval);
                   if (!chart.fixedStartDate) {
-                    startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+                    startDate = endDate.clone()
+                      .subtract(timeDiff, chart.timeInterval)
+                      .startOf(chart.timeInterval);
                   }
                 } else if (value === "endDate" && chart.currentEndDate) {
-                  const timeDiff = endDate.diff(startDate, "days");
-                  endDate = getMomentObj(timezone)().endOf("day");
+                  const timeDiff = endDate.diff(startDate, chart.timeInterval);
+                  endDate = getMomentObj(timezone)().endOf(chart.timeInterval);
                   if (!chart.fixedStartDate) {
-                    startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+                    startDate = endDate.clone()
+                      .subtract(timeDiff, chart.timeInterval)
+                      .startOf(chart.timeInterval);
                   }
                 } else {
                   queryParams[q] = chart[value];
