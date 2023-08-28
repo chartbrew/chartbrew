@@ -8,6 +8,7 @@ import moment from "moment";
 import { format } from "date-fns";
 import { enGB } from "date-fns/locale";
 import { CloseSquare, Filter2 } from "react-iconly";
+import { Helmet } from "react-helmet";
 
 import {
   getEmbeddedChart as getEmbeddedChartAction,
@@ -136,11 +137,26 @@ function EmbeddedChart(props) {
 
   if (loading || !chart.id) {
     return (
-      <Container justify="center" style={{ ...styles.loaderContainer, paddingTop: 50 }}>
-        <Row justify="center" align="center">
-          <CircularProgress>Loading the chart</CircularProgress>
-        </Row>
-      </Container>
+      <>
+        <Helmet>
+          <style type="text/css">
+            {`
+            body, html {
+              background-color: transparent;
+            }
+
+            #root {
+              background-color: transparent;
+            }
+          `}
+          </style>
+        </Helmet>
+        <Container justify="center" style={{ ...styles.loaderContainer, paddingTop: 50 }}>
+          <Row justify="center" align="center">
+            <CircularProgress color="default" />
+          </Row>
+        </Container>
+      </>
     );
   }
 
@@ -155,6 +171,19 @@ function EmbeddedChart(props) {
 
   return (
     <div style={styles.container}>
+      <Helmet>
+        <style type="text/css">
+          {`
+            body, html {
+              background-color: transparent;
+            }
+
+            #root {
+              background-color: transparent;
+            }
+          `}
+        </style>
+      </Helmet>
       <Container size="fluid" className="pl-unit-sm" style={styles.header(chart.type)} xl>
         <Row justify="space-between">
           <div style={{ display: "flex", alignItems: "center" }}>

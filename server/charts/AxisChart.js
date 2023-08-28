@@ -126,6 +126,19 @@ class AxisChart {
         endDate = endDate.endOf("day");
       }
 
+      if (this.chart.startDate && this.chart.endDate) {
+        if (this.chart.currentEndDate) {
+          const timeDiff = endDate.diff(startDate, this.chart.timeInterval);
+          endDate = this.moment().endOf(this.chart.timeInterval);
+
+          if (!this.chart.fixedStartDate) {
+            startDate = endDate.clone()
+              .subtract(timeDiff, this.chart.timeInterval)
+              .startOf(this.chart.timeInterval);
+          }
+        }
+      }
+
       for (let i = 0; i < this.datasets.length; i++) {
         const dataset = this.datasets[i];
         const { yAxisOperation, dateField } = dataset.options;
@@ -147,23 +160,6 @@ class AxisChart {
         let filteredData = filterData.data;
 
         if (dateField && this.chart.startDate && this.chart.endDate && canDateFilter) {
-          if (this.chart.currentEndDate) {
-            const timeDiff = endDate.diff(startDate, this.chart.timeInterval);
-            endDate = this.moment().endOf("day");
-            if (!this.chart.fixedStartDate) {
-              startDate = endDate.clone().subtract(timeDiff, this.chart.timeInterval);
-              if (this.chart.timeInterval === "month") {
-                startDate = startDate.startOf("month");
-              } else if (this.chart.timeInterval === "year") {
-                startDate = startDate.startOf("year");
-              } else {
-                startDate = startDate.startOf("day");
-              }
-            } else {
-              startDate = startDate.startOf("day");
-            }
-          }
-
           if (filters?.length > 0) {
             const dateDashboardFilter = filters.find((f) => f.type === "date");
             if (dateDashboardFilter) {
@@ -533,7 +529,9 @@ class AxisChart {
         const lastValue = this.moment(unifiedX[unifiedX.length - 1], this.dateFormat);
         lastValue.add(1, this.chart.timeInterval);
         while (lastValue.isBefore(endDate)) {
-          unifiedX.push(lastValue.clone().format(this.dateFormat));
+          if (unifiedX.indexOf(lastValue.clone().format(this.dateFormat)) === -1) {
+            unifiedX.push(lastValue.clone().format(this.dateFormat));
+          }
           lastValue.add(1, this.chart.timeInterval);
         }
       }

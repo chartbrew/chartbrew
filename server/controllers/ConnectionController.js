@@ -462,7 +462,7 @@ class ConnectionController {
           try {
             return new Promise((resolve) => resolve(JSON.parse(response.body)));
           } catch (e) {
-            return new Promise((resolve, reject) => reject(406));
+            return new Promise((resolve, reject) => reject(400));
           }
         } else {
           return new Promise((resolve, reject) => reject(response.statusCode));
@@ -504,11 +504,16 @@ class ConnectionController {
         return Function(`'use strict';return (mongoConnection, ObjectId) => mongoConnection.${formattedQuery}`)()(mongoConnection, ObjectId); // eslint-disable-line
       })
       .then(async (data) => {
+        let finalData = data;
+        // MonogoDB returns a plain number when count() is used, transform this into an object
+        if (formattedQuery.indexOf("count(") > -1) {
+          finalData = { count: data };
+        }
         // cache the data for later use
         const dataToCache = {
           dataRequest,
           responseData: {
-            data,
+            data: finalData,
           },
           connection_id: id,
         };
@@ -599,16 +604,20 @@ class ConnectionController {
                 let endDate = getMomentObj(timezone)(chart.endDate).endOf("day");
 
                 if (value === "startDate" && chart.currentEndDate) {
-                  const timeDiff = endDate.diff(startDate, "days");
-                  endDate = getMomentObj(timezone)().endOf("day");
+                  const timeDiff = endDate.diff(startDate, chart.timeInterval);
+                  endDate = getMomentObj(timezone)().endOf(chart.timeInterval);
                   if (!chart.fixedStartDate) {
-                    startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+                    startDate = endDate.clone()
+                      .subtract(timeDiff, chart.timeInterval)
+                      .startOf(chart.timeInterval);
                   }
                 } else if (value === "endDate" && chart.currentEndDate) {
-                  const timeDiff = endDate.diff(startDate, "days");
-                  endDate = getMomentObj(timezone)().endOf("day");
+                  const timeDiff = endDate.diff(startDate, chart.timeInterval);
+                  endDate = getMomentObj(timezone)().endOf(chart.timeInterval);
                   if (!chart.fixedStartDate) {
-                    startDate = endDate.clone().subtract(timeDiff, "days").startOf("day");
+                    startDate = endDate.clone()
+                      .subtract(timeDiff, chart.timeInterval)
+                      .startOf(chart.timeInterval);
                   }
                 } else {
                   queryParams[q] = chart[value];
@@ -732,7 +741,7 @@ class ConnectionController {
 
             return new Promise((resolve) => resolve(dataToCache));
           } catch (e) {
-            return new Promise((resolve, reject) => reject(406));
+            return new Promise((resolve, reject) => reject(400));
           }
         } else {
           return new Promise((resolve, reject) => reject(response.statusCode));
