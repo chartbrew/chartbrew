@@ -3,7 +3,7 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Container, Input, Loading, Row, Spacer, Text, useTheme,
+  Button, Container, Input, Loading, Row, Spacer, Text, useTheme, Chip,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import cookie from "react-cookies";
@@ -15,7 +15,6 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { API_HOST } from "../../../config/settings";
-import Badge from "../../../components/Badge";
 import HelpBanner from "../../../components/HelpBanner";
 import connectionImages from "../../../config/connectionImages";
 
@@ -260,11 +259,11 @@ function GaConnectionForm(props) {
           <Row align="center">
             <Text>
               {"Test Result "}
-              <Badge
-                type={testResult.status < 400 ? "success" : "error"}
+              <Chip
+                color={testResult.status < 400 ? "success" : "danger"}
               >
                 {`Status code: ${testResult.status}`}
-              </Badge>
+              </Chip>
             </Text>
           </Row>
           <Spacer y={1} />

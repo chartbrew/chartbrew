@@ -6,7 +6,8 @@ import { Allotment } from "allotment";
 import { createMedia } from "@artsy/fresnel";
 import { useWindowSize } from "react-use";
 import {
-  Container, Grid, Loading, Row, Spacer, Text
+  CircularProgress,
+  Spacer,
 } from "@nextui-org/react";
 
 import "allotment/dist/style.css";
@@ -28,6 +29,9 @@ import canAccess from "../../config/canAccess";
 import PrintView from "../PrintView/PrintView";
 import ProjectNavigation from "./components/ProjectNavigation";
 import checkForUpdates from "../../modules/checkForUpdates";
+import Container from "../../components/Container";
+import Text from "../../components/Text";
+import Row from "../../components/Row";
 
 const breakpoints = {
   mobile: 0,
@@ -149,13 +153,13 @@ function ProjectBoard(props) {
   if (!project.id && loading) {
     return (
       <Container style={styles.container}>
-        <Spacer y={4} />
+        <Spacer y={10} />
         <Row align="center" justify="center">
-          <Loading type="points-opacity" color="currentColor" size="xl" />
+          <CircularProgress color="primary" size="xl" />
         </Row>
-        <Spacer y={1} />
+        <Spacer y={3} />
         <Row align="center" justify="center">
-          <Text size="1.4em" css={{ color: "$accents7" }}>Loading the dashboard</Text>
+          <Text size="xl" className="text-gray-400">Loading the dashboard</Text>
         </Row>
       </Container>
     );
@@ -207,15 +211,15 @@ function ProjectBoard(props) {
                   <div
                     style={{ overflowY: "auto", height: "100%", overflowX: "hidden" }}
                   >
-                    <Grid.Container>
-                      <Grid xs={12} style={{ paddingLeft: 0 }}>
+                    <div className="grid grid-cols-12">
+                      <div className="col-span-12 pl-0">
                         <MainContent
                           showDrafts={showDrafts}
                           onPrint={_onPrint}
                           _canAccess={_canAccess}
                         />
-                      </Grid>
-                    </Grid.Container>
+                      </div>
+                    </div>
                   </div>
                 </Allotment.Pane>
               </Allotment>
@@ -223,18 +227,18 @@ function ProjectBoard(props) {
           </Media>
 
           <Media at="mobile">
-            <Grid.Container>
-              <Grid xs={12}>
+            <div className="grid grid-cols-12">
+              <div className="col-span-12">
                 <MainContent
                   showDrafts={showDrafts}
                   onPrint={_onPrint}
                   _canAccess={_canAccess}
                   mobile
-                    />
-              </Grid>
-            </Grid.Container>
+                />
+              </div>
+            </div>
 
-            <Spacer y={4} />
+            <Spacer y={8} />
 
             <ProjectNavigation
               project={project}
@@ -279,7 +283,7 @@ function MainContent(props) {
           path="/:teamId/:projectId/members"
           render={() => (
             <Container
-              css={styles.page}
+              className={"p-10"}
             >
               <TeamMembers style={styles.teamSettings} />
             </Container>
@@ -290,7 +294,7 @@ function MainContent(props) {
             path="/:teamId/:projectId/integrations"
             render={() => (
               <Container
-                css={styles.page}
+                className={"p-10"}
               >
                 <Integrations />
               </Container>

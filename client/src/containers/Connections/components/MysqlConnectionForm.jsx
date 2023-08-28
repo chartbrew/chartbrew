@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Container, Grid, Input, Link, Loading, Row, Spacer, Text, useTheme,
+  Button, Container, Grid, Input, Link, Loading, Row, Spacer, Text, useTheme, Chip,
 } from "@nextui-org/react";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import { ChevronRight } from "react-iconly";
@@ -11,7 +11,6 @@ import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import Badge from "../../../components/Badge";
 /*
   The Form for creating a new Mysql connection
 */
@@ -367,11 +366,11 @@ function MysqlConnectionForm(props) {
           <Row align="center">
             <Text>
               {"Test Result "}
-              <Badge
-                type={testResult.status < 400 ? "success" : "error"}
+              <Chip
+                color={testResult.status < 400 ? "success" : "danger"}
               >
                 {`Status code: ${testResult.status}`}
-              </Badge>
+              </Chip>
             </Text>
           </Row>
           <Spacer y={1} />

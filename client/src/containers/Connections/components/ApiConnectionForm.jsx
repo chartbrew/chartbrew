@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 
 import {
-  Button,
-  Container, Divider, Dropdown, Grid, Input, Loading, Row, Spacer, Text, useTheme,
+  Button, Divider, Input, Spacer,Chip, Tabs, Tab, Select, SelectItem, CircularProgress,
 } from "@nextui-org/react";
 import { CloseSquare, Plus } from "react-iconly";
 import uuid from "uuid/v4";
@@ -13,9 +12,12 @@ import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import Badge from "../../../components/Badge";
 import HelpBanner from "../../../components/HelpBanner";
 import connectionImages from "../../../config/connectionImages";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 const authTypes = [{
   key: "no_auth",
@@ -47,7 +49,7 @@ function ApiConnectionForm(props) {
   const [errors, setErrors] = useState({});
   const [menuType, setMenuType] = useState("authentication");
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     _addOption();
@@ -170,30 +172,14 @@ function ApiConnectionForm(props) {
 
   return (
     <div style={styles.container}>
-      <Container
-        css={{
-          backgroundColor: "$backgroundContrast",
-          br: "$md",
-          p: 10,
-          "@xs": {
-            p: 20,
-          },
-          "@sm": {
-            p: 20,
-          },
-          "@md": {
-            p: 20,
-          },
-        }}
-        md
-      >
+      <Container className={"bg-content2"} size="md">
         <Row align="center">
-          <Text h3>
+          <Text size="lg">
             {!editConnection && "Add a new API host"}
             {editConnection && `Edit ${editConnection.name}`}
           </Text>
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={2} />
         <Row>
           <HelpBanner
             title="How to visualize your API data with Chartbrew"
@@ -203,10 +189,10 @@ function ApiConnectionForm(props) {
             info="5 min read"
           />
         </Row>
-        <Spacer y={1} />
+        <Spacer y={4} />
         <Row align="center" style={styles.formStyle}>
-          <Grid.Container gap={1}>
-            <Grid xs={12} sm={12} md={5}>
+          <div className="grid grid-cols-12 gap-1">
+            <div className="col-span-12 sm:col-span-12 md:col-span-5 lg:col-span-5 xl:col-span-5">
               <Container>
                 <Row>
                   <Input
@@ -223,15 +209,15 @@ function ApiConnectionForm(props) {
                 </Row>
                 {errors.name && (
                   <Row>
-                    <Text color="danger">
+                    <Text className="text-danger">
                       {errors.name}
                     </Text>
                   </Row>
                 )}
               </Container>
-            </Grid>
+            </div>
 
-            <Grid xs={12} sm={12} md={7}>
+            <div className="col-span-12 sm:col-span-12 md:col-span-7 lg:col-span-7 xl:col-span-7">
               <Container>
                 <Row>
                   <Input
@@ -248,95 +234,58 @@ function ApiConnectionForm(props) {
                 </Row>
                 {errors.host && (
                   <Row>
-                    <Text color="danger">
+                    <Text className="text-danger">
                       {errors.host}
                     </Text>
                   </Row>
                 )}
-                <Spacer y={1} />
+                <Spacer y={4} />
               </Container>
-            </Grid>
+            </div>
 
-            <Grid sm={12} md={12}>
+            <div className="col-span-12">
               <Container>
                 <Row>
-                  <Button
-                    color="secondary"
-                    ghost={menuType !== "authentication"}
-                    onClick={() => setMenuType("authentication")}
-                    auto
-                    size="sm"
-                  >
-                    Authentication
-                  </Button>
-                  <Spacer x={0.2} />
-                  <Button
-                    color="secondary"
-                    ghost={menuType !== "headers"}
-                    onClick={() => setMenuType("headers")}
-                    iconRight={(
-                      <Badge type="primary">
-                        {connection.optionsArray.length}
-                      </Badge>
-                    )}
-                    auto
-                    size="sm"
-                  >
-                    Headers
-                  </Button>
+                  <Tabs selectedKey={menuType} onSelectionChange={(key) => setMenuType(key)}>
+                    <Tab key="authentication" title="Authentication" />
+                    <Tab key="headers" title="Headers" />
+                  </Tabs>
                 </Row>
               </Container>
-            </Grid>
+            </div>
 
-            <Grid xs={12}>
+            <div className="col-span-12">
               <Container>
-                <Spacer y={1} />
+                <Spacer y={4} />
                 <Divider />
-                <Spacer y={1} />
+                <Spacer y={4} />
               </Container>
-            </Grid>
+            </div>
 
             {menuType === "authentication" && (
-              <Grid xs={12}>
-                <Grid.Container gap={2}>
-                  <Grid xs={12} sm={4}>
+              <div className="col-span-12">
+                <div className="grid grid-cols-12 gap-2">
+                  <div className="col-span-12 sm:col-span-12 md:col-span-4 lg:col-span-4 xl:col-span-4">
                     <Container>
                       <Row>
-                        <Dropdown
-                          options={authTypes}
-                          selection
-                          fluid
+                        <Select
+                          label="Authentication type"
+                          placeholder="Select an authentication type"
                           defaultValue="no_auth"
-                          value={connection.authentication && connection.authentication.type}
-                          onChange={(e) => _onChangeAuthParams("type", e.target.value)}
+                          selectedKeys={[connection?.authentication?.type]}
+                          onSelectionChange={(key) => _onChangeAuthParams("type", key)}
                         >
-                          <Dropdown.Trigger>
-                            <Input
-                              label="Select an authentication type"
-                              initialValue="Authentication type"
-                              value={connection.authentication && connection.authentication.type}
-                              fullWidth
-                            />
-                          </Dropdown.Trigger>
-                          <Dropdown.Menu
-                            onAction={(key) => _onChangeAuthParams("type", key)}
-                            selectedKeys={[
-                              connection.authentication && connection.authentication.type
-                            ]}
-                            selectionMode="single"
-                          >
-                            {authTypes.map((type) => (
-                              <Dropdown.Item key={type.value}>
-                                {type.text}
-                              </Dropdown.Item>
-                            ))}
-                          </Dropdown.Menu>
-                        </Dropdown>
+                          {authTypes.map((type) => (
+                            <SelectItem key={type.value}>
+                              {type.text}
+                            </SelectItem>
+                          ))}
+                        </Select>
                       </Row>
                     </Container>
-                  </Grid>
+                  </div>
                   {connection.authentication && connection.authentication.type === "basic_auth" && (
-                    <Grid xs={12} sm={5}>
+                    <div className="col-span-12 sm:col-span-12 md:col-span-5 lg:col-span-5 xl:col-span-5">
                       <Container>
                         <Row align="center">
                           <Input
@@ -348,41 +297,43 @@ function ApiConnectionForm(props) {
                             bordered
                           />
                         </Row>
-                        <Spacer y={0.5} />
+                        <Spacer y={2} />
                         <Row align="center">
-                          <Input.Password
+                          <Input
+                            type="password"
                             label="Enter a Password or API Key Value"
                             placeholder="Password or API Key Value"
                             onChange={(e) => _onChangeAuthParams("pass", e.target.value)}
                             value={connection.authentication.pass}
                             fullWidth
-                            bordered
+                            variant="bordered"
                           />
                         </Row>
                       </Container>
-                    </Grid>
+                    </div>
                   )}
                   {connection.authentication && connection.authentication.type === "bearer_token" && (
-                    <Grid xs={12} sm={5}>
-                      <Input.Password
+                    <div className="col-span-12 sm:col-span-12 md:col-span-5 lg:col-span-5 xl:col-span-5">
+                      <Input
+                        type="password"
                         label="Enter the token"
                         placeholder="Authentication token"
                         onChange={(e) => _onChangeAuthParams("token", e.target.value)}
                         value={connection.authentication.token}
                         fullWidth
-                        bordered
+                        variant="bordered"
                       />
-                    </Grid>
+                    </div>
                   )}
-                </Grid.Container>
-              </Grid>
+                </div>
+              </div>
             )}
 
             {menuType === "headers" && (
-              <Grid md={12}>
+              <div className="col-span-12">
                 <Container>
                   <Row>
-                    <Text h5>
+                    <Text b>
                       Global headers to send with the requests
                     </Text>
                   </Row>
@@ -392,136 +343,132 @@ function ApiConnectionForm(props) {
                     </Text>
                   </Row>
                 </Container>
-              </Grid>
+              </div>
             )}
 
-            <Grid md={12}>
+            <div className="col-span-12">
               <Container>
-                <Grid.Container gap={2}>
+                <div className="grid grid-cols-12 gap-2">
                   {menuType === "headers" && connection.optionsArray && connection.optionsArray.map((option) => {
                     return (
                       <>
-                        <Grid xs={12} sm={4}>
+                        <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6 xl:col-span-6">
                           <Input
                             placeholder="Header name"
                             value={option.key}
                             onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
                             fullWidth
                           />
-                        </Grid>
-                        <Grid xs={12} sm={4}>
+                        </div>
+                        <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6 xl:col-span-6">
                           <Input
                             onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
                             value={option.value}
                             placeholder="Value"
                             fullWidth
                           />
-                          <Spacer x={0.5} />
+                          <Spacer x={2} />
                           <Button
-                            icon={<CloseSquare />}
+                            isIconOnly
                             onClick={() => _removeOption(option.id)}
                             auto
-                            flat
+                            variant="flat"
                             color="warning"
-                          />
-                        </Grid>
-                        <Grid xs={0} sm={4} />
+                          >
+                            <CloseSquare />
+                          </Button>
+                        </div>
                       </>
                     );
                   })}
-                </Grid.Container>
+                </div>
               </Container>
-            </Grid>
+            </div>
             {menuType === "headers" && (
-              <Grid xs={12}>
+              <div className="col-span-12">
                 <Container>
-                  <Spacer y={0.5} />
+                  <Spacer y={2} />
                   <Button
                     size="sm"
-                    iconRight={<Plus />}
+                    endContent={<Plus />}
                     onClick={_addOption}
-                    bordered
+                    variant="bordered"
                     auto
                   >
                     Add a header
                   </Button>
                 </Container>
-              </Grid>
+              </div>
             )}
-          </Grid.Container>
+          </div>
         </Row>
 
         {addError && (
           <>
-            <Spacer y={1} />
+            <Spacer y={4} />
             <Row>
-              <Text b color="danger">{"Server error while trying to save your connection"}</Text>
+              <Text b className="text-danger">{"Server error while trying to save your connection"}</Text>
               <br />
-              <Text color="danger">Please try adding your connection again.</Text>
+              <Text className="text-danger">Please try adding your connection again.</Text>
             </Row>
           </>
         )}
 
-        <Spacer y={2} />
+        <Spacer y={4} />
         <Row align="center">
           <Button
-            ghost
+            variant="ghost"
             onClick={() => _onCreateConnection(true)}
-            disabled={testLoading}
+            isLoading={testLoading}
             auto
           >
-            {testLoading && <Loading type="points" color="currentColor" />}
-            {!testLoading && "Test connection"}
+            {"Test connection"}
           </Button>
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           {!editConnection && (
             <Button
-              disabled={loading}
+              isLoading={loading}
               onClick={_onCreateConnection}
               auto
             >
-              {loading && <Loading type="points" color="currentColor" />}
-              {!loading && "Save connection"}
+              {"Save connection"}
             </Button>
           )}
           {editConnection && (
             <Button
-              disabled={loading}
+              isLoading={loading}
               onClick={_onCreateConnection}
               auto
             >
-              {loading && <Loading type="points" color="currentColor" />}
-              {!loading && "Save connection"}
+              {"Save connection"}
             </Button>
           )}
         </Row>
       </Container>
-      <Spacer y={2} />
+      <Spacer y={4} />
 
       {testLoading && (
-        <Container css={{ backgroundColor: "$backgroundContrast", br: "$md", p: 20 }} md>
+        <Container size="md" className={"bg-content2"}>
           <Row align="center">
-            <Loading type="points">
-              Test underway...
-            </Loading>
+            <CircularProgress aria-label="Loading" />
           </Row>
-          <Spacer y={2} />
+          <Spacer y={4} />
         </Container>
       )}
 
       {testResult && !testLoading && (
-        <Container css={{ backgroundColor: "$backgroundContrast", br: "$md", p: 20 }} md>
+        <Container className={"bg-content2"} size="md">
           <Row align="center">
             <Text>
               {"Test Result "}
-              <Badge
-                type={testResult.status < 400 ? "success" : "error"}
+              <Chip
+                color={testResult.status < 400 ? "success" : "danger"}
               >
                 {`Status code: ${testResult.status}`}
-              </Badge>
+              </Chip>
             </Text>
           </Row>
-          <Spacer y={1} />
+          <Spacer y={4} />
           <AceEditor
             mode="json"
             theme={isDark ? "one_dark" : "tomorrow"}

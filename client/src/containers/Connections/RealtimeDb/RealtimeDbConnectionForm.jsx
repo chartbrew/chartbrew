@@ -3,7 +3,7 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Collapse, Container, Input, Link, Loading, Row, Spacer, Text, Image, useTheme,
+  Button, Collapse, Container, Input, Link, Loading, Row, Spacer, Text, Image, useTheme, Chip,
 } from "@nextui-org/react";
 import { PaperUpload } from "react-iconly";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
@@ -16,7 +16,6 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { blue } from "../../../config/colors";
 import realtimeDbImage from "../../../assets/realtime-db-url.webp";
-import Badge from "../../../components/Badge";
 import HelpBanner from "../../../components/HelpBanner";
 import connectionImages from "../../../config/connectionImages";
 
@@ -427,11 +426,11 @@ function RealtimeDbConnectionForm(props) {
           <Row align="center">
             <Text>
               {"Test Result "}
-              <Badge
-                type={testResult.status < 400 ? "success" : "error"}
+              <Chip
+                color={testResult.status < 400 ? "success" : "danger"}
               >
                 {`Status code: ${testResult.status}`}
-              </Badge>
+              </Chip>
             </Text>
           </Row>
           <Spacer y={1} />

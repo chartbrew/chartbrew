@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Container, Grid, Input, Link, Loading, Row, Spacer, Text, useTheme,
+  Button, Container, Grid, Input, Link, Loading, Row, Spacer, Text, useTheme, Chip,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 
@@ -11,7 +11,6 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { ChevronRight } from "react-iconly";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
-import Badge from "../../../components/Badge";
 import HelpBanner from "../../../components/HelpBanner";
 import connectionImages from "../../../config/connectionImages";
 
@@ -380,11 +379,11 @@ function PostgresConnectionForm(props) {
           <Row align="center">
             <Text>
               {"Test Result "}
-              <Badge
-                type={testResult.status < 400 ? "success" : "error"}
+              <Chip
+                type={testResult.status < 400 ? "success" : "danger"}
               >
                 {`Status code: ${testResult.status}`}
-              </Badge>
+              </Chip>
             </Text>
           </Row>
           <Spacer y={1} />

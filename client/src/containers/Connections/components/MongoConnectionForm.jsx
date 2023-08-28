@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Container, Row, Spacer, Text, Link, Input, Grid, Checkbox, Tooltip, Button, Loading,
-  useTheme,
+  Spacer,Link, Input,Checkbox, Tooltip, Button, Chip, Tabs, Tab, CircularProgress,
 } from "@nextui-org/react";
 import {
   ChevronRight, CloseSquare, InfoCircle, Plus
@@ -15,9 +14,12 @@ import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import Badge from "../../../components/Badge";
 import HelpBanner from "../../../components/HelpBanner";
 import connectionImages from "../../../config/connectionImages";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 /*
   The MongoDB connection form
@@ -36,7 +38,7 @@ function MongoConnectionForm(props) {
   const [errors, setErrors] = useState({});
   const [formStyle, setFormStyle] = useState("string");
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     _init();
@@ -200,27 +202,11 @@ function MongoConnectionForm(props) {
 
   return (
     <div style={styles.container}>
-      <Container
-        css={{
-          backgroundColor: "$backgroundContrast",
-          br: "$md",
-          p: 10,
-          "@xs": {
-            p: 20,
-          },
-          "@sm": {
-            p: 20,
-          },
-          "@md": {
-            p: 20,
-          },
-        }}
-        md
-      >
+      <Container size="md">
         <Row align="center">
-          <Text h3>Connect to a MongoDB database</Text>
+          <Text size="lg">Connect to a MongoDB database</Text>
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={2} />
         <Row>
           <HelpBanner
             title="How to visualize your MongoDB data with Chartbrew"
@@ -230,33 +216,12 @@ function MongoConnectionForm(props) {
             info="7 min read"
           />
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={2} />
         <Row align="center" style={styles.formStyle}>
-          <Link
-            css={{
-              background: formStyle === "string" ? "$background" : "$backgroundContrast",
-              p: 5,
-              pr: 10,
-              pl: 10,
-              br: "$sm"
-            }}
-            onClick={() => setFormStyle("string")}
-          >
-            <Text>Connection string</Text>
-          </Link>
-          <Spacer x={0.5} />
-          <Link
-            css={{
-              background: formStyle === "form" ? "$background" : "$backgroundContrast",
-              p: 5,
-              pr: 10,
-              pl: 10,
-              br: "$sm"
-            }}
-            onClick={() => setFormStyle("form")}
-          >
-            <Text>Connection form</Text>
-          </Link>
+          <Tabs selectedKey={formStyle} onChange={(key) => setFormStyle(key)}>
+            <Tab key="string" title="Connection string" />
+            <Tab key="form" title="Connection form" />
+          </Tabs>
         </Row>
 
         {formStyle === "string" && (
@@ -269,28 +234,28 @@ function MongoConnectionForm(props) {
                 onChange={(e) => {
                   setConnection({ ...connection, name: e.target.value });
                 }}
-                color={errors.name ? "error" : "default"}
+                color={errors.name ? "danger" : "default"}
                 bordered
                 fullWidth
               />
             </Row>
             {errors.name && (
               <Row>
-                <Text color="danger">
+                <Text className={"text-danger"}>
                   {errors.name}
                 </Text>
               </Row>
             )}
-            <Spacer y={0.5} />
+            <Spacer y={2} />
             <Row align="center">
-              <Input.Password
+              <Input
                 label="Enter your MongoDB connection string"
                 placeholder="mongodb://username:password@mongodb.example.com:27017/dbname"
                 value={connection.connectionString || ""}
                 onChange={(e) => {
                   setConnection({ ...connection, connectionString: e.target.value });
                 }}
-                helperText={"mongodb://username:password@mongodb.example.com:27017/dbname"}
+                description={"mongodb://username:password@mongodb.example.com:27017/dbname"}
                 bordered
                 fullWidth
               />
@@ -308,8 +273,8 @@ function MongoConnectionForm(props) {
 
         {formStyle === "form" && (
           <Row>
-            <Grid.Container gap={1.5}>
-              <Grid xs={12} sm={8}>
+            <div className="grid grid-cols-12 gap-1">
+              <div className="col-span-12 md:col-span-8">
                 <Input
                   label="Name your connection"
                   placeholder="Enter a name that you can recognise later"
@@ -317,14 +282,14 @@ function MongoConnectionForm(props) {
                   onChange={(e) => {
                     setConnection({ ...connection, name: e.target.value });
                   }}
-                  helperColor="error"
+                  color={errors.name ? "danger" : "default"}
                   helperText={errors.name}
                   bordered
                   fullWidth
                 />
-              </Grid>
+              </div>
 
-              <Grid xs={12} sm={10} md={8}>
+              <div className="col-span-12 md:col-span-10 lg:col-span-8 xl:col-span-8">
                 <Input
                   label="Hostname or IP address"
                   placeholder="'yourmongodomain.com' or '0.0.0.0' "
@@ -332,13 +297,13 @@ function MongoConnectionForm(props) {
                   onChange={(e) => {
                     setConnection({ ...connection, host: e.target.value });
                   }}
-                  helperColor="error"
-                  helperText={errors.host}
+                  color={errors.host ? "danger" : "default"}
+                  description={errors.host}
                   bordered
                   fullWidth
                 />
-              </Grid>
-              <Grid xs={12} sm={2} md={4}>
+              </div>
+              <div className="col-span-12 md:col-span-2 lg:col-span-4 xl:col-span-4">
                 <Input
                   label="Port"
                   placeholder="Leave empty if using the default"
@@ -347,13 +312,14 @@ function MongoConnectionForm(props) {
                     setConnection({ ...connection, port: e.target.value });
                   }}
                   helperColor="error"
-                  helperText={errors.port}
+                  description={errors.port}
                   bordered
                   fullWidth
                 />
-              </Grid>
+              </div>
 
-              <Grid xs={12} sm={4} md={4}>
+              <div className="col-span-12 md:col-span-4 lg:col-span-4 xl:col-span-4">
+              
                 <Input
                   label="Database name"
                   placeholder="Enter your database name"
@@ -361,14 +327,14 @@ function MongoConnectionForm(props) {
                   onChange={(e) => {
                     setConnection({ ...connection, dbName: e.target.value });
                   }}
-                  helperColor="error"
-                  helperText={errors.dbName}
+                  color={errors.dbName ? "danger" : "default"}
+                  description={errors.dbName}
                   bordered
                   fullWidth
                 />
-              </Grid>
-
-              <Grid xs={12} sm={4} md={4}>
+              </div>
+              
+              <div className="col-span-12 md:col-span-4 lg:col-span-4 xl:col-span-4">
                 <Input
                   label="Database username"
                   placeholder="Username"
@@ -376,28 +342,29 @@ function MongoConnectionForm(props) {
                   onChange={(e) => {
                     setConnection({ ...connection, username: e.target.value });
                   }}
-                  helperColor="error"
-                  helperText={errors.username}
+                  color={errors.username ? "danger" : "default"}
+                  description={errors.username}
                   bordered
                   fullWidth
                 />
-              </Grid>
+              </div>
 
-              <Grid xs={12} sm={4} md={4}>
-                <Input.Password
+              <div className="col-span-12 md:col-span-4 lg:col-span-4 xl:col-span-4">
+                <Input
+                  type="password"
                   label="Database password"
                   placeholder="Database user password"
                   onChange={(e) => {
                     setConnection({ ...connection, password: e.target.value });
                   }}
-                  helperColor="error"
-                  helperText={errors.password}
+                  color={errors.password ? "danger" : "default"}
+                  description={errors.password}
                   bordered
                   fullWidth
                 />
-              </Grid>
+              </div>
 
-              <Grid xs={12}>
+              <div className="col-span-12">
                 <Checkbox
                   defaultChecked={connection.srv}
                   onChange={_onChangeSrv}
@@ -411,62 +378,64 @@ function MongoConnectionForm(props) {
                 >
                   <InfoCircle />
                 </Tooltip>
-              </Grid>
+              </div>
 
               {connection.optionsArray.length > 0 && (
-                <Grid xs={12}>
-                  <Text h5>Connection options</Text>
-                </Grid>
+                <div className="col-span-12">
+                  <Text b>Connection options</Text>
+                </div>
               )}
               {connection.optionsArray.map((option) => {
                 return (
                   <>
-                    <Grid xs={12} sm={4}>
+                    <div className="sm:col-span-12 md:col-span-4">
                       <Input
                         placeholder="Key"
                         value={option.key}
                         onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
                         fullWidth
                       />
-                    </Grid>
-                    <Grid xs={12} sm={4}>
+                    </div>
+                    <div className="sm:col-span-12 md:col-span-8">
                       <Input
                         onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
                         value={option.value}
                         placeholder="Value"
                         fullWidth
                       />
-                      <Spacer x={0.5} />
+                      <Spacer x={2} />
                       <Button
-                        icon={<CloseSquare />}
+                        isIconOnly
                         onClick={() => _removeOption(option.id)}
                         auto
-                        flat
+                        variant="flat"
                         color="danger"
-                      />
-                    </Grid>
-                    <Grid xs={0} sm={4} />
+                      >
+                        <CloseSquare />
+                      </Button>
+                    </div>
+                    <div className="md:col-span-4" />
                   </>
                 );
               })}
-              <Grid xs={12}>
+              <div className="col-span-12">
                 <Button
                   size="sm"
-                  iconRight={<Plus />}
+                  endContent={<Plus />}
                   onClick={_addOption}
-                  ghost
+                  variant="ghost"
                   auto
                 >
                   Add options
                 </Button>
-              </Grid>
-            </Grid.Container>
+              </div>
+            </div>
           </Row>
         )}
 
-        <Spacer y={1} />
-        <Row xs={12}>
-          <Container css={{ backgroundColor: "$blue50", br: "$md", p: 20 }} md>
+        <Spacer y={4} />
+        <Row>
+          <Container className={"bg-primary-50"} size="md">
             <Row>
               <Text b>Avoid using credentials that can write data</Text>
             </Row>
@@ -480,10 +449,10 @@ function MongoConnectionForm(props) {
             </Row>
           </Container>
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={2} />
         <Row align="center">
           <ChevronRight set="light" />
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           <Link
             target="_blank"
             rel="noopener noreferrer"
@@ -491,12 +460,12 @@ function MongoConnectionForm(props) {
           >
             <Text>Find out more about MongoDB connection strings</Text>
           </Link>
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           <FaExternalLinkSquareAlt size={12} />
         </Row>
         <Row align="center">
           <ChevronRight set="light" />
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           <Link
             href="https://docs.mongodb.com/guides/cloud/connectionstring/"
             target="_blank"
@@ -504,22 +473,22 @@ function MongoConnectionForm(props) {
           >
             <Text>Find out how to get your MongoDB Atlas connection string</Text>
           </Link>
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           <FaExternalLinkSquareAlt size={12} />
         </Row>
         <Row align="center">
           <ChevronRight set="light" />
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           <Link onClick={() => setShowIp(!showIp)}>
             <Text>Front-end and back-end on different servers?</Text>
           </Link>
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={2} />
         {showIp && (
           <Row>
-            <Container css={{ backgroundColor: "$blue100", p: 10, br: "$sm" }}>
+            <Container className={"bg-primary-50"}>
               <Row>
-                <Text h5>{"You might need to whitelist the front-end IP in the back-end"}</Text>
+                <Text b>{"You might need to whitelist the front-end IP in the back-end"}</Text>
               </Row>
               <Row>
                 <Text>{"This is sometimes required when the database and the Chartbrew app are running on separate servers."}</Text>
@@ -529,9 +498,9 @@ function MongoConnectionForm(props) {
         )}
         {addError && (
           <Row>
-            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+            <Container className={"bg-danger-100"}>
               <Row>
-                <Text h5>{"Server error while trying to save your connection"}</Text>
+                <Text b>{"Server error while trying to save your connection"}</Text>
               </Row>
               <Row>
                 <Text>Please try adding your connection again.</Text>
@@ -539,25 +508,23 @@ function MongoConnectionForm(props) {
             </Container>
           </Row>
         )}
-        <Spacer y={1} />
+        <Spacer y={4} />
         <Row>
           <Button
-            ghost
+            variant="ghost"
             auto
             onClick={() => _onCreateConnection(true)}
-            disabled={testLoading}
+            isLoading={testLoading}
           >
-            {testLoading && <Loading type="points-opacity" color="currentColor" />}
-            {!testLoading && "Test connection"}
+            Test connection
           </Button>
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           <Button
-            disabled={loading}
+            isLoading={loading}
             onClick={_onCreateConnection}
             auto
           >
-            {loading && <Loading type="points-opacity" color="currentColor" />}
-            {!loading && "Save connection"}
+            {"Save connection"}
           </Button>
         </Row>
       </Container>
@@ -565,35 +532,28 @@ function MongoConnectionForm(props) {
       {testLoading && (
         <>
           <Spacer y={1} />
-          <Container css={{ backgroundColor: "$backgroundContrast", br: "$md", p: 20 }} md>
+          <Container className={"bg-content2"} size="md">
             <Row align="center">
-              <Loading type="points-opacity">
-                Test underway...
-              </Loading>
+              <CircularProgress aria-label="Loading" />
             </Row>
-            <Spacer y={2} />
+            <Spacer y={4} />
           </Container>
         </>
       )}
 
       {testResult && !testLoading && (
-        <Container
-          css={{
-            backgroundColor: "$backgroundContrast", br: "$md", p: 20, mt: 20
-          }}
-          md
-        >
+        <Container className={"bg-content2"} size="md">
           <Row align="center">
             <Text>
               {"Test Result "}
-              <Badge
-                type={testResult.status < 400 ? "success" : "error"}
+              <Chip
+                color={testResult.status < 400 ? "success" : "danger"}
               >
                 {`Status code: ${testResult.status}`}
-              </Badge>
+              </Chip>
             </Text>
           </Row>
-          <Spacer y={1} />
+          <Spacer y={4} />
           <AceEditor
             mode="json"
             theme={isDark ? "one_dark" : "tomorrow"}

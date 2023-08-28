@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Divider, Dropdown, Grid, Input, Spacer, Switch, Text, Tooltip,
+  Divider, Dropdown, Grid, Input, Spacer, Switch, Text, Tooltip, Chip,
 } from "@nextui-org/react";
 
 import { ChevronDown, InfoCircle } from "react-iconly";
 import fieldFinder from "../../../modules/fieldFinder";
-import Badge from "../../../components/Badge";
 
 const templates = [{
   key: "custom",
@@ -318,40 +317,40 @@ function ApiPagination(props) {
           <Text>{"You should include these query parameters: "}</Text>
           <Spacer y={0.5} />
           <div style={styles.rowDisplay}>
-            <Badge>
+            <Chip>
               <Text size={16}>{`${items}=<xxx>&${offset}=<xxx> `}</Text>
-            </Badge>
+            </Chip>
             <Spacer x={0.5} />
             {(apiRoute.indexOf(`?${items}=`) > -1 || apiRoute.indexOf(`&${items}=`) > -1) && (
               <>
-                <Badge type="success">
+                <Chip color="success">
                   <Text size={16}>{`${items} was found`}</Text>
-                </Badge>
+                </Chip>
                 <Spacer x={0.2} />
               </>
             )}
             {(apiRoute.indexOf(`?${items}=`) === -1 && apiRoute.indexOf(`&${items}=`) === -1) && (
               <>
                 <Spacer x={0.2} />
-                <Badge type="error">
+                <Chip color="danger">
                   <Text size={16}>{`${items} not found in route`}</Text>
-                </Badge>
+                </Chip>
               </>
             )}
             {(apiRoute.indexOf(`?${offset}=`) > -1 || apiRoute.indexOf(`&${offset}=`) > -1) && (
               <>
                 <Spacer x={0.2} />
-                <Badge type="success">
+                <Chip color="success">
                   <Text size={16}>{`${offset} was found`}</Text>
-                </Badge>
+                </Chip>
               </>
             )}
             {(apiRoute.indexOf(`?${offset}=`) === -1 && apiRoute.indexOf(`&${offset}=`) === -1) && (
               <>
                 <Spacer x={0.2} />
-                <Badge type="error">
+                <Chip color="error">
                   <Text size={16}>{`${offset} not found in route`}</Text>
-                </Badge>
+                </Chip>
               </>
             )}
           </div>
@@ -360,9 +359,9 @@ function ApiPagination(props) {
             <Text>
               {"The maximum amount of item that you're going to get is: "}
             </Text>
-            <Badge>
+            <Chip>
               <Text size={16}>{itemsLimit === "0" || !itemsLimit ? "no max" : itemsLimit}</Text>
-            </Badge>
+            </Chip>
           </div>
         </Grid>
       )}

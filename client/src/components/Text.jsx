@@ -48,8 +48,8 @@ function Text(props) {
 
 Text.propTypes = {
   children: PropTypes.node.isRequired,
-  size: PropTypes.oneOf(["xs", "sm", "md", "lg"]),
-  color: PropTypes.oneOf(["primary", "secondary", "success", "warning", "error", "default"]),
+  size: PropTypes.oneOf(["xs", "sm", "md", "lg", "xl"]),
+  color: PropTypes.oneOf(["primary", "secondary", "success", "warning", "error", "default", "gray"]),
   h1: PropTypes.bool,
   h2: PropTypes.bool,
   h3: PropTypes.bool,

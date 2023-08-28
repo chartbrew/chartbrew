@@ -55,7 +55,7 @@ function Row(props) {
 Row.propTypes = {
   children: PropTypes.node.isRequired,
   align: PropTypes.oneOf(["start", "center", "end", "stretch", "baseline"]),
-  justify: PropTypes.oneOf(["start", "center", "end", "between", "around", "evenly"]),
+  justify: PropTypes.oneOf(["flex-start", "center", "flex-end", "flex-between", "flex-around", "flex-evenly"]),
   content: PropTypes.oneOf(["start", "center", "end", "between", "around", "evenly", "stretch"]),
   wrap: PropTypes.oneOf(["none", "reverse", "wrap"]),
   className: PropTypes.string,
