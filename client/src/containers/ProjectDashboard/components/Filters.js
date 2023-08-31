@@ -122,57 +122,57 @@ function Filters(props) {
   const _onSelectRange = (type) => {
     if (type === "this_month") {
       setDateRange({
-        startDate: moment.utc().startOf("month").startOf("day").toISOString(),
-        endDate: moment.utc().endOf("month").endOf("day").toISOString(),
+        startDate: moment().startOf("month").startOf("day").toISOString(),
+        endDate: moment().endOf("month").endOf("day").toISOString(),
         key: "selection",
       });
     }
 
     if (type === "last_7_days") {
       setDateRange({
-        startDate: moment.utc().subtract(7, "days").startOf("day").toISOString(),
-        endDate: moment.utc().endOf("day").toISOString(),
+        startDate: moment().subtract(7, "days").startOf("day").toISOString(),
+        endDate: moment().endOf("day").toISOString(),
         key: "selection",
       });
     }
 
     if (type === "last_30_days") {
       setDateRange({
-        startDate: moment.utc().subtract(30, "days").startOf("day").toISOString(),
-        endDate: moment.utc().endOf("day").toISOString(),
+        startDate: moment().subtract(30, "days").startOf("day").toISOString(),
+        endDate: moment().endOf("day").toISOString(),
         key: "selection",
       });
     }
 
     if (type === "last_90_days") {
       setDateRange({
-        startDate: moment.utc().subtract(90, "days").startOf("day").toISOString(),
-        endDate: moment.utc().endOf("day").toISOString(),
+        startDate: moment().subtract(90, "days").startOf("day").toISOString(),
+        endDate: moment().endOf("day").toISOString(),
         key: "selection",
       });
     }
 
     if (type === "last_year") {
       setDateRange({
-        startDate: moment.utc().subtract(1, "year").startOf("day").toISOString(),
-        endDate: moment.utc().endOf("day").toISOString(),
+        startDate: moment().subtract(1, "year").startOf("day").toISOString(),
+        endDate: moment().endOf("day").toISOString(),
         key: "selection",
       });
     }
 
     if (type === "quarter_to_date") {
       setDateRange({
-        startDate: moment.utc().startOf("quarter").startOf("day").toISOString(),
-        endDate: moment.utc().endOf("day").toISOString(),
+        startDate: moment().startOf("quarter").startOf("day").toISOString(),
+        endDate: moment().endOf("day").toISOString(),
         key: "selection",
       });
     }
 
     if (type === "last_quarter") {
       setDateRange({
-        startDate: moment.utc().subtract(1, "quarter").startOf("quarter").startOf("day")
+        startDate: moment().subtract(1, "quarter").startOf("quarter").startOf("day")
           .toISOString(),
-        endDate: moment.utc().subtract(1, "quarter").endOf("quarter").endOf("day")
+        endDate: moment().subtract(1, "quarter").endOf("quarter").endOf("day")
           .toISOString(),
         key: "selection",
       });
@@ -180,8 +180,8 @@ function Filters(props) {
 
     if (type === "year_to_date") {
       setDateRange({
-        startDate: moment.utc().startOf("year").startOf("day").toISOString(),
-        endDate: moment.utc().endOf("day").toISOString(),
+        startDate: moment().startOf("year").startOf("day").toISOString(),
+        endDate: moment().endOf("day").toISOString(),
         key: "selection",
       });
     }
@@ -190,8 +190,8 @@ function Filters(props) {
   const _onChangeDateRange = (ranges) => {
     const range = ranges.selection;
     setDateRange({
-      startDate: moment.utc(range.startDate).startOf("day").toISOString(),
-      endDate: moment.utc(range.endDate).endOf("day").toISOString(),
+      startDate: moment(range.startDate).toISOString(),
+      endDate: moment(range.endDate).toISOString(),
     });
   };
 
@@ -321,7 +321,7 @@ function Filters(props) {
                       <Input
                         placeholder="Start date"
                         label="Start date"
-                        value={dateRange.startDate && moment.utc(dateRange.startDate).format("Do MMM YYYY")}
+                        value={dateRange.startDate && moment(dateRange.startDate).format("Do MMM YYYY")}
                         readOnly
                         bordered
                       />
@@ -329,7 +329,7 @@ function Filters(props) {
                       <Input
                         placeholder="End date"
                         label="End date"
-                        value={dateRange.endDate && moment.utc(dateRange.endDate).format("Do MMM YYYY")}
+                        value={dateRange.endDate && moment(dateRange.endDate).format("Do MMM YYYY")}
                         readOnly
                         bordered
                       />

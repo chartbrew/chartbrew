@@ -626,8 +626,8 @@ class ConnectionController {
                 if (filters && filters.length > 0) {
                   const dateRangeFilter = filters.find((o) => o.type === "date");
                   if (dateRangeFilter) {
-                    startDate = getMomentObj(timezone)(dateRangeFilter.startDate).startOf("day");
-                    endDate = getMomentObj(timezone)(dateRangeFilter.endDate).endOf("day");
+                    startDate = getMomentObj(timezone)(dateRangeFilter.startDate);
+                    endDate = getMomentObj(timezone)(dateRangeFilter.endDate);
                   }
                 }
 
