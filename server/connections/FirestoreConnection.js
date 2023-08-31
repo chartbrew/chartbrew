@@ -188,7 +188,24 @@ class FirestoreConnection {
   }
 
   async get(dataRequest) {
-    let docsRef = await this.db.collection(dataRequest.query);
+    const { configuration } = dataRequest;
+
+    let docsRef;
+    if (!configuration?.limit && !configuration?.orderBy) {
+      docsRef = await this.db.collection(dataRequest.query);
+    } else if (configuration?.limit && !configuration?.orderBy) {
+      docsRef = await this.db.collection(dataRequest.query)
+        .limit(parseInt(configuration.limit, 10));
+    } else if (!configuration?.limit && configuration?.orderBy) {
+      docsRef = await this.db.collection(dataRequest.query)
+        .orderBy(configuration.orderBy);
+    } else if (configuration?.limit && configuration?.orderBy) {
+      docsRef = await this.db.collection(dataRequest.query)
+        .orderBy(configuration.orderBy, configuration.orderByDirection || "desc")
+        .limit(parseInt(configuration.limit, 10));
+    } else {
+      docsRef = await this.db.collection(dataRequest.query);
+    }
 
     if (dataRequest.conditions) {
       dataRequest.conditions.forEach((c) => {
@@ -210,13 +227,13 @@ class FirestoreConnection {
     });
 
     let subData = [];
-    if (dataRequest.configuration && dataRequest.configuration.showSubCollections) {
+    if (configuration?.showSubCollections) {
       subData = await this.getSubCollectionsData(docs);
     }
 
     let subDocData = [];
     let finalDocs;
-    if (dataRequest.configuration && dataRequest.configuration.selectedSubCollection) {
+    if (configuration?.selectedSubCollection) {
       subDocData = await this.getSubCollections(dataRequest);
       finalDocs = populateReferences(subDocData);
       // filter the docs based on what docs from the main collection are available
