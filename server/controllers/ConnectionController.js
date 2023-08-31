@@ -600,8 +600,8 @@ class ConnectionController {
             if (chart.startDate && chart.endDate) {
               Object.keys(keysFound).forEach((q) => {
                 const value = keysFound[q];
-                let startDate = getMomentObj(timezone)(chart.startDate).startOf("day");
-                let endDate = getMomentObj(timezone)(chart.endDate).endOf("day");
+                let startDate = getMomentObj(timezone)(chart.startDate);
+                let endDate = getMomentObj(timezone)(chart.endDate);
 
                 if (value === "startDate" && chart.currentEndDate) {
                   const timeDiff = endDate.diff(startDate, chart.timeInterval);
@@ -626,7 +626,7 @@ class ConnectionController {
                 if (filters && filters.length > 0) {
                   const dateRangeFilter = filters.find((o) => o.type === "date");
                   if (dateRangeFilter) {
-                    startDate = getMomentObj(timezone)(dateRangeFilter.startDate);
+                    startDate = getMomentObj(timezone)(dateRangeFilter.startDate).startOf("day");
                     endDate = getMomentObj(timezone)(dateRangeFilter.endDate);
                   }
                 }

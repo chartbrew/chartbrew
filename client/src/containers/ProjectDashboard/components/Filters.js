@@ -199,8 +199,8 @@ function Filters(props) {
     if (filterType === "date") {
       onAddFilter({
         id: uuid(),
-        startDate: moment.utc(dateRange.startDate).toISOString(),
-        endDate: moment.utc(dateRange.endDate).toISOString(),
+        startDate: moment(dateRange.startDate).utcOffset(0, true).format(),
+        endDate: moment(dateRange.endDate).utcOffset(0, true).format(),
         type: "date",
       });
     } else {

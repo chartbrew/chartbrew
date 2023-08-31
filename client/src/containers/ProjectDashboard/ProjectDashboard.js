@@ -396,7 +396,7 @@ function ProjectDashboard(props) {
                         <Fragment key={filter.id}>
                           {filter.type === "date" && (
                             <Badge color="primary" variant={"bordered"} isSquared>
-                              {`${moment(filter.startDate).format("YYYY/MM/DD")} - ${moment(filter.endDate).format("YYYY/MM/DD")}`}
+                              {`${moment.utc(filter.startDate).format("YYYY/MM/DD")} - ${moment.utc(filter.endDate).format("YYYY/MM/DD")}`}
                               <Spacer x={0.2} />
                               <LinkNext onClick={() => _onRemoveFilter(filter.id)} css={{ color: "$text" }}>
                                 <CloseSquare size="small" style={{ padding: 0 }} />
