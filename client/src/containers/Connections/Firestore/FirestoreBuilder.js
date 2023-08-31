@@ -111,6 +111,9 @@ function FirestoreBuilder(props) {
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [fullConnection, setFullConnection] = useState({});
   const [saveLoading, setSaveLoading] = useState(false);
+  const [limit, setLimit] = useState(0);
+  const [orderBy, setOrderBy] = useState("");
+  const [orderByDirection, setOrderByDirection] = useState("desc");
 
   const { isDark } = useTheme();
 
@@ -152,6 +155,18 @@ function FirestoreBuilder(props) {
 
       if (dataRequest.configuration.subCollectionSample) {
         _populateFieldOptions(dataRequest.configuration.subCollectionSample, "sub");
+      }
+
+      if (dataRequest.configuration.limit) {
+        setLimit(dataRequest.configuration.limit);
+      }
+
+      if (dataRequest.configuration.orderBy) {
+        setOrderBy(dataRequest.configuration.orderBy);
+      }
+
+      if (dataRequest.configuration.orderByDirection) {
+        setOrderByDirection(dataRequest.configuration.orderByDirection);
       }
     }
 
@@ -248,6 +263,13 @@ function FirestoreBuilder(props) {
 
     if (request === null) request = firestoreRequest; // eslint-disable-line
     const requestToSave = _.cloneDeep(request);
+    requestToSave.configuration = {
+      ...requestToSave.configuration,
+      limit,
+      orderBy,
+      orderByDirection,
+    };
+
     onSave(requestToSave).then(() => {
       _onRunRequest();
     });
@@ -255,7 +277,18 @@ function FirestoreBuilder(props) {
 
   const _onSavePressed = () => {
     setSaveLoading(true);
-    onSave(firestoreRequest).then(() => {
+
+    const tempRequest = {
+      ...firestoreRequest,
+      configuration: {
+        ...firestoreRequest.configuration,
+        limit,
+        orderBy,
+        orderByDirection,
+      },
+    };
+
+    onSave(tempRequest).then(() => {
       setSaveLoading(false);
     }).catch(() => {
       setSaveLoading(false);
@@ -568,6 +601,55 @@ function FirestoreBuilder(props) {
                 updateCondition={_updateCondition}
                 onChangeConditionValues={_onChangeConditionValues}
                 collection={dataRequest.query}
+              />
+            </Row>
+            <Spacer y={0.5} />
+            <Divider />
+            <Spacer y={0.5} />
+            <Row className="firestorebuilder-query-tut">
+              <Text b>
+                {"Order and limit"}
+              </Text>
+            </Row>
+            <Spacer y={0.5} />
+            <Row align="flex-end">
+              <Input
+                label="Order by"
+                placeholder="Enter field name"
+                value={orderBy}
+                onChange={(e) => setOrderBy(e.target.value)}
+                css={{ width: 200 }}
+                bordered
+                size="sm"
+              />
+              <Spacer x={0.2} />
+              <Dropdown
+                isBordered
+                css={{ minWidth: "max-content" }}
+              >
+                <Dropdown.Button bordered size={"sm"}>
+                  {orderByDirection || "desc"}
+                </Dropdown.Button>
+                <Dropdown.Menu
+                  onAction={(key) => setOrderByDirection(key)}
+                  selectedKeys={[orderByDirection]}
+                  selectionMode="single"
+                >
+                  <Dropdown.Item key="desc">Desc</Dropdown.Item>
+                  <Dropdown.Item key="asc">Asc</Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
+            </Row>
+            <Spacer y={0.5} />
+            <Row>
+              <Input
+                label="Limit (leave empty or 0 for unlimited)"
+                placeholder="Enter limit"
+                value={limit}
+                onChange={(e) => setLimit(e.target.value)}
+                css={{ width: 300 }}
+                bordered
+                size="sm"
               />
             </Row>
           </Container>
