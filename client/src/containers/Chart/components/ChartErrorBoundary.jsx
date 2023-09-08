@@ -1,5 +1,6 @@
 import React from "react";
-import { Text } from "@nextui-org/react";
+
+import Text from "../../../components/Text";
 
 export default class ChartErrorBoundary extends React.Component {
   constructor(props) {

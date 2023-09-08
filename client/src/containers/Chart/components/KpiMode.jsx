@@ -1,12 +1,15 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {
-  Container, Progress, Row, Spacer, Text, Tooltip,
+  Progress, Spacer, Tooltip,
 } from "@nextui-org/react";
 import { ChevronDownCircle, ChevronUpCircle } from "react-iconly";
 
 import determineType from "../../../modules/determineType";
 import { negative, positive } from "../../../config/colors";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
 
 function KpiMode(props) {
   const { chart } = props;
@@ -41,21 +44,21 @@ function KpiMode(props) {
     return (
       <div>
         <Tooltip content={`compared to last ${chart.timeInterval}`}>
-          <Container fluid>
+          <Container className={"w-full"}>
             {status === "neutral" && (
-              <Text b css={{ color: "$accents6" }}>{`${comparison}%`}</Text>
+              <Text b className={"text-gray-500"}>{`${comparison}%`}</Text>
             )}
             {status === "negative" && (
               <Row align="center">
                 <ChevronDownCircle size="small" primaryColor={negative} />
-                <Spacer x={0.1} />
-                <Text b css={{ color: "$errorLightContrast" }}>{` ${comparison}%`}</Text>
+                <Spacer x={0.5} />
+                <Text b className={"text-danger-300"}>{` ${comparison}%`}</Text>
               </Row>
             )}
             {status === "positive" && (
               <Row align="center">
                 <ChevronUpCircle size="small" primaryColor={positive} />
-                <Text b css={{ color: "$successLightContrast" }}>{` ${comparison}%`}</Text>
+                <Text b className={"text-success-300"}>{` ${comparison}%`}</Text>
               </Row>
             )}
           </Container>
@@ -77,7 +80,7 @@ function KpiMode(props) {
       <div style={{ width: "100%", paddingTop: 20 }}>
         <Progress
           value={value}
-          max={max}
+          maxValue={max}
           size="sm"
           css={{
             "& .nextui-progress-bar": {
@@ -86,8 +89,8 @@ function KpiMode(props) {
           }}
         />
         <Row justify="space-between">
-          <Text size="0.8em">{`${((value / max) * 100).toFixed()}%`}</Text>
-          <Text size="0.8em">{formattedMax}</Text>
+          <Text size="sm">{`${((value / max) * 100).toFixed()}%`}</Text>
+          <Text size="sm">{formattedMax}</Text>
         </Row>
       </div>
     );
@@ -95,22 +98,15 @@ function KpiMode(props) {
 
   return (
     <Container
-      css={{
-        height: 300,
-        pl: 0,
-        pr: 0,
-      }}
-      justify="center"
-      alignContent="center"
-      alignItems="center"
+      className={"pl-0 pr-0 h-[300px] items-center align-middle justify-center"}
     >
-      <Row wrap="wrap" justify="space-around" align="center" css={{ height: "100%" }}>
+      <Row wrap="wrap" justify="space-around" align="center" className={"h-full"}>
         {chart.chartData.data.datasets.map((dataset, index) => (
           <div key={dataset.label} style={{ padding: 10 }}>
             <Row justify="center" align="center">
               <Text
                 b
-                size={chart.chartSize === 1 ? "2.4em" : "2.6em"}
+                size={chart.chartSize === 1 ? "text-3xl" : "text-4xl"}
                 key={dataset.label}
               >
                 {dataset.data && _getKpi(dataset.data)}
@@ -119,7 +115,7 @@ function KpiMode(props) {
 
             {chart.Datasets[index] && (
               <Row justify="center" align="center">
-                <Text style={{ marginTop: chart.showGrowth ? -5 : 0, textAlign: "center" }}>
+                <Text className={`mt-${chart.showGrowth ? "[-5px]" : 0} text-center`}>
                   {chart.showGrowth && chart.chartData.growth && (
                     _renderGrowth(chart.chartData.growth[index])
                   )}

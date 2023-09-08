@@ -24,7 +24,7 @@ const text = tv({
       secondary: "text-secondary",
       success: "text-success",
       warning: "text-warning",
-      error: "text-error",
+      danger: "text-danger",
       default: "text-default",
       gray: "text-gray-500",
     }

@@ -1,24 +1,22 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {
-  Row, Spacer, Text, Tooltip, Container,
+  Spacer, Tooltip,
 } from "@nextui-org/react";
 
 import { ChevronDownCircle, ChevronUpCircle } from "react-iconly";
 import { negative, positive } from "../../../config/colors";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
 
 function KpiChartSegment(props) {
   const { chart, editMode } = props;
 
   return (
     <Container
-      css={{
-        pl: "$sm",
-        pr: "$sm",
-        "@xs": {
-          maxWidth: "100%",
-        },
-      }}>
+      className={"pl-unit-sm pr-unit-sm sm:max-w-full"}
+    >
       <Row wrap="wrap">
         {chart.chartData.growth.map((c, index) => {
           if (chart.chartSize === 1 && index > 1) return (<span key={c.label} />);
@@ -37,34 +35,33 @@ function KpiChartSegment(props) {
               key={c.label}
             >
               <Row align="center">
-                <Text b size={chart.chartSize === 1 ? "1.2em" : "1.4em"}>
+                <Text b className={chart.chartSize === 1 ? "text-xl" : "text-2xl"}>
                   {`${c.value?.toLocaleString()} `}
                 </Text>
-                <Spacer x={0.2} />
+                <Spacer x={1} />
                 {chart.showGrowth && (
                   <Tooltip content={`compared to last ${chart.timeInterval}`}>
                     {c.status === "neutral" && (
-                      <Text size={"0.8em"}>{`${c.comparison}%`}</Text>
+                      <Text size="sm">{`${c.comparison}%`}</Text>
                     )}
                     {c.status === "negative" && (
                       <Row align="center">
                         <ChevronDownCircle size="small" primaryColor={negative} />
-                        <Spacer x={0.1} />
+                        <Spacer x={0.5} />
                         <Text b size={"0.8em"} css={{ color: "$errorLightContrast" }}>{` ${c.comparison}%`}</Text>
                       </Row>
                     )}
                     {c.status === "positive" && (
                       <Row align="center">
                         <ChevronUpCircle size="small" primaryColor={positive} />
-                        {/* <Spacer x={0.1} /> */}
-                        <Text b size={"0.8em"} css={{ color: "$successLightContrast" }}>{` ${c.comparison}%`}</Text>
+                        <Text b size={"sm"} className={"text-success-300"}>{` ${c.comparison}%`}</Text>
                       </Row>
                     )}
                   </Tooltip>
                 )}
               </Row>
               <Row>
-                <Text size={chart.chartSize === 1 ? "0.9em" : "1em"} css={{ fontWeight: "normal" }}>
+                <Text size={chart.chartSize === 1 ? "sm" : "md"} css={{ fontWeight: "normal" }}>
                   <span
                     style={
                       chart.Datasets
