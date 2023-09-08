@@ -3,7 +3,7 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Container, Input, Loading, Row, Spacer, Text, useTheme, Chip,
+  Button, Input, Spacer, Chip, CircularProgress,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import cookie from "react-cookies";
@@ -17,6 +17,10 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 import { API_HOST } from "../../../config/settings";
 import HelpBanner from "../../../components/HelpBanner";
 import connectionImages from "../../../config/connectionImages";
+import Container from "../../../components/Container";
+import Text from "../../../components/Text";
+import Row from "../../../components/Row";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 /*
   The Form used to create GA connections
@@ -33,7 +37,7 @@ function GaConnectionForm(props) {
   });
   const [errors, setErrors] = useState({});
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     _init();
@@ -105,21 +109,8 @@ function GaConnectionForm(props) {
   return (
     <div style={styles.container}>
       <Container
-        css={{
-          backgroundColor: "$backgroundContrast",
-          br: "$md",
-          p: 10,
-          "@xs": {
-            p: 20,
-          },
-          "@sm": {
-            p: 20,
-          },
-          "@md": {
-            p: 20,
-          },
-        }}
-        md
+        className={"bg-content2 rounded-md"}
+        size="md"
         justify="flex-start"
       >
         <Row align="center">
@@ -128,7 +119,7 @@ function GaConnectionForm(props) {
             {editConnection && `Edit ${editConnection.name}`}
           </Text>
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={2} />
         <Row>
           <HelpBanner
             title="How to visualize your Google Analytics data with Chartbrew"
@@ -138,7 +129,7 @@ function GaConnectionForm(props) {
             info="5 min read"
           />
         </Row>
-        <Spacer y={1} />
+        <Spacer y={4} />
         <Row align="center">
           <Input
             label="Name your connection"
@@ -149,28 +140,27 @@ function GaConnectionForm(props) {
             }}
             helperColor="error"
             helperText={errors.name}
-            bordered
+            variant="bordered"
             fullWidth
-            css={{ "@md": { width: "600px" } }}
+            className="md:w-[600px]"
           />
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={2} />
         <Row>
           {!editConnection && (
             <Button
               color={"secondary"}
-              disabled={loading || !connection.name}
+              isLoading={loading || !connection.name}
               onClick={_onCreateConnection}
               auto
             >
-              {loading && <Loading type="points" />}
-              {!loading && "Create connection"}
+              {"Create connection"}
             </Button>
           )}
           {editConnection && !connection.OAuth && (
             <Button
               color={"secondary"}
-              iconRight={<FaGoogle size={20} />}
+              endContent={<FaGoogle size={20} />}
               onClick={_onGoogleAuth}
               auto
             >
@@ -180,7 +170,7 @@ function GaConnectionForm(props) {
           {editConnection && connection.OAuth && (
             <Button
               color={"secondary"}
-              iconRight={<HiRefresh size={22} />}
+              endContent={<HiRefresh size={22} />}
               onClick={_onGoogleAuth}
               auto
             >
@@ -190,21 +180,21 @@ function GaConnectionForm(props) {
         </Row>
         {editConnection && connection.OAuth && (
           <Row>
-            <Text color="success">
+            <Text className="text-success">
               {`Authenticated as ${connection.OAuth.email}`}
             </Text>
           </Row>
         )}
         {errors.auth && (
           <Row>
-            <Text color="danger">{errors.auth}</Text>
+            <Text className="textdanger">{errors.auth}</Text>
           </Row>
         )}
-        <Spacer y={1} />
+        <Spacer y={4} />
 
         {addError && (
           <Row>
-            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+            <Container className={"bg-danger-100 p-10"}>
               <Row>
                 <Text h5>{"Server error while trying to save your connection"}</Text>
               </Row>
@@ -217,44 +207,40 @@ function GaConnectionForm(props) {
         <Spacer y={1} />
         <Row>
           <Button
-            ghost
+            variant="ghost"
             auto
             onClick={() => _onCreateConnection(true)}
-            disabled={!connection.name || !connection.oauth_id || testLoading}
+            disabled={!connection.name || !connection.oauth_id}
+            isLoading={testLoading}
           >
-            {testLoading && <Loading type="points" color="currentColor" />}
-            {!testLoading && "Test connection"}
+            {"Test connection"}
           </Button>
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           <Button
-            disabled={loading || !connection.oauth_id}
+            disabled={!connection.oauth_id}
+            isLoading={loading}
             onClick={_onCreateConnection}
             auto
           >
-            {loading && <Loading type="points" color="currentColor" />}
-            {!loading && "Save connection"}
+            {"Save connection"}
           </Button>
         </Row>
       </Container>
-      <Spacer y={1} />
+      <Spacer y={4} />
 
       {testLoading && (
-        <Container css={{ backgroundColor: "$backgroundContrast", br: "$md", p: 20 }} md>
+        <Container className="bg-content2 rounded-md" size="md">
           <Row align="center">
-            <Loading type="points">
-              Test underway...
-            </Loading>
+            <CircularProgress aria-label="Loading" />
           </Row>
-          <Spacer y={2} />
+          <Spacer y={4} />
         </Container>
       )}
 
       {testResult && !testLoading && (
         <Container
-          css={{
-            backgroundColor: "$backgroundContrast", br: "$md", p: 20, mt: 20
-          }}
-          md
+          className={"bg-content2 rounded-md mt-20"}
+          size="md"
         >
           <Row align="center">
             <Text>
@@ -266,7 +252,7 @@ function GaConnectionForm(props) {
               </Chip>
             </Text>
           </Row>
-          <Spacer y={1} />
+          <Spacer y={4} />
           <AceEditor
             mode="json"
             theme={isDark ? "one_dark" : "tomorrow"}

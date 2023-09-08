@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Container, Grid, Input, Link, Loading, Row, Spacer, Text, useTheme, Chip,
+  Button, Input, Link, Spacer, Chip, Tabs, Tab, CircularProgress,
 } from "@nextui-org/react";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import { ChevronRight } from "react-iconly";
@@ -10,6 +10,11 @@ import AceEditor from "react-ace";
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
+
+import Text from "../../../components/Text";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 /*
   The Form for creating a new Mysql connection
@@ -25,7 +30,7 @@ function MysqlConnectionForm(props) {
   const [errors, setErrors] = useState({});
   const [formStyle, setFormStyle] = useState("string");
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     _init();
@@ -92,52 +97,21 @@ function MysqlConnectionForm(props) {
   return (
     <div style={styles.container}>
       <Container
-        css={{
-          backgroundColor: "$backgroundContrast",
-          br: "$md",
-          p: 10,
-          "@xs": {
-            p: 20,
-          },
-          "@sm": {
-            p: 20,
-          },
-          "@md": {
-            p: 20,
-          },
-        }}
-        md
+        className={"bg-content2 rounded-md"}
+        size={"md"}
       >
         <Row align="center">
           <Text h3>Add a new MySQL connection</Text>
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={2} />
         <Row align="center" style={styles.formStyle}>
-          <Link
-            css={{
-              background: formStyle === "string" ? "$background" : "$backgroundContrast",
-              p: 5,
-              pr: 10,
-              pl: 10,
-              br: "$sm"
-            }}
-            onClick={() => setFormStyle("string")}
+          <Tabs
+            selectedKey={formStyle}
+            onSelectionChange={(key) => setFormStyle(key)}
           >
-            <Text>Connection string</Text>
-          </Link>
-          <Spacer x={0.5} />
-          <Link
-            css={{
-              background: formStyle === "form" ? "$background" : "$backgroundContrast",
-              p: 5,
-              pr: 10,
-              pl: 10,
-              br: "$sm"
-            }}
-            onClick={() => setFormStyle("form")}
-          >
-            <Text>Connection form</Text>
-          </Link>
+            <Tab key="string" title="Connection string" />
+            <Tab key="form" title="Connection form" />
+          </Tabs>
         </Row>
 
         {formStyle === "string" && (
@@ -150,19 +124,19 @@ function MysqlConnectionForm(props) {
                 onChange={(e) => {
                   setConnection({ ...connection, name: e.target.value });
                 }}
-                color={errors.name ? "error" : "default"}
-                bordered
+                color={errors.name ? "danger" : "default"}
+                variant="bordered"
                 fullWidth
               />
             </Row>
             {errors.name && (
               <Row css={{ p: 5 }}>
-                <Text small color="danger">
+                <Text small className="text-danger">
                   {errors.name}
                 </Text>
               </Row>
             )}
-            <Spacer y={0.5} />
+            <Spacer y={2} />
             <Row align="center">
               <Input.Password
                 label="Enter your MySQL connection string"
@@ -171,26 +145,26 @@ function MysqlConnectionForm(props) {
                 onChange={(e) => {
                   setConnection({ ...connection, connectionString: e.target.value });
                 }}
-                helperText={"mysql://username:password@mysql.example.com:3306/dbname"}
-                bordered
+                description={"mysql://username:password@mysql.example.com:3306/dbname"}
+                variant="bordered"
                 fullWidth
               />
             </Row>
             {errors.connectionString && (
-              <Row css={{ p: 5 }}>
-                <Text small color="danger">
+              <Row className={"p-5"}>
+                <Text small className="text-danger">
                   {errors.connectionString}
                 </Text>
               </Row>
             )}
-            <Spacer y={0.5} />
+            <Spacer y={2} />
           </>
         )}
 
         {formStyle === "form" && (
           <Row>
-            <Grid.Container gap={1.5}>
-              <Grid xs={12} sm={8}>
+            <div className="grid grid-cols-12 gap-2">
+              <div className="sm:col-span-12 md:col-span-8">
                 <Input
                   label="Name your connection"
                   placeholder="Enter a name that you can recognise later"
@@ -198,14 +172,14 @@ function MysqlConnectionForm(props) {
                   onChange={(e) => {
                     setConnection({ ...connection, name: e.target.value });
                   }}
-                  helperColor="error"
-                  helperText={errors.name}
-                  bordered
+                  color={errors.name ? "danger" : "default"}
+                  description={errors.name}
+                  variant="bordered"
                   fullWidth
                 />
-              </Grid>
+              </div>
 
-              <Grid xs={12} sm={10} md={8}>
+              <div className="sm:col-span-12 md:col-span-10 lg:col-span-8">
                 <Input
                   label="Hostname or IP address"
                   placeholder="mysql.example.com"
@@ -213,13 +187,13 @@ function MysqlConnectionForm(props) {
                   onChange={(e) => {
                     setConnection({ ...connection, host: e.target.value });
                   }}
-                  helperColor="error"
-                  helperText={errors.host}
-                  bordered
+                  color={errors.host ? "danger" : "default"}
+                  description={errors.host}
+                  variant="bordered"
                   fullWidth
                 />
-              </Grid>
-              <Grid xs={12} sm={2} md={4}>
+              </div>
+              <div className="sm:col-span-12 md:col-span-2 lg:col-span-4">
                 <Input
                   label="Port"
                   placeholder="Optional, defaults to 3306"
@@ -227,14 +201,14 @@ function MysqlConnectionForm(props) {
                   onChange={(e) => {
                     setConnection({ ...connection, port: e.target.value });
                   }}
-                  helperColor="error"
-                  helperText={errors.port}
-                  bordered
+                  color={errors.port ? "danger" : "default"}
+                  description={errors.port}
+                  variant="bordered"
                   fullWidth
                 />
-              </Grid>
+              </div>
 
-              <Grid xs={12} sm={4} md={4}>
+              <div className="sm:col-span-12 md:col-span-6">
                 <Input
                   label="Database name"
                   placeholder="Enter your database name"
@@ -242,14 +216,14 @@ function MysqlConnectionForm(props) {
                   onChange={(e) => {
                     setConnection({ ...connection, dbName: e.target.value });
                   }}
-                  helperColor="error"
-                  helperText={errors.dbName}
-                  bordered
+                  color={errors.dbName ? "danger" : "default"}
+                  description={errors.dbName}
+                  variant="bordered"
                   fullWidth
                 />
-              </Grid>
+              </div>
 
-              <Grid xs={12} sm={4} md={4}>
+              <div className="sm:col-span-12 md:col-span-4 lg:col-span-4">
                 <Input
                   label="Database username"
                   placeholder="Username"
@@ -257,34 +231,34 @@ function MysqlConnectionForm(props) {
                   onChange={(e) => {
                     setConnection({ ...connection, username: e.target.value });
                   }}
-                  helperColor="error"
-                  helperText={errors.username}
-                  bordered
+                  color={errors.username ? "danger" : "default"}
+                  description={errors.username}
+                  variant="bordered"
                   fullWidth
                 />
-              </Grid>
+              </div>
 
-              <Grid xs={12} sm={4} md={4}>
+              <div className="sm:col-span-12 md:col-span-4 lg:col-span-4">
                 <Input.Password
                   label="Database password"
                   placeholder="Database user password"
                   onChange={(e) => {
                     setConnection({ ...connection, password: e.target.value });
                   }}
-                  helperColor="error"
-                  helperText={errors.password}
-                  bordered
+                  color={errors.password ? "danger" : "default"}
+                  description={errors.password}
+                  variant="bordered"
                   fullWidth
                 />
-              </Grid>
-            </Grid.Container>
+              </div>
+            </div>
           </Row>
         )}
 
-        <Spacer y={2} />
+        <Spacer y={4} />
         <Row align="center">
           <ChevronRight />
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           <Link
             target="_blank"
             rel="noopener noreferrer"
@@ -292,12 +266,12 @@ function MysqlConnectionForm(props) {
           >
             <Text>{"For security reasons, connect to your MySQL database with read-only credentials"}</Text>
           </Link>
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           <FaExternalLinkSquareAlt size={12} />
         </Row>
         <Row align="center">
           <ChevronRight />
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           <Link
             href="https://www.cyberciti.biz/tips/how-do-i-enable-remote-access-to-mysql-database-server.html"
             target="_blank"
@@ -305,13 +279,13 @@ function MysqlConnectionForm(props) {
           >
             <Text>{"Find out how to allow remote connections to your MySQL database"}</Text>
           </Link>
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           <FaExternalLinkSquareAlt size={12} />
         </Row>
 
         {addError && (
           <Row>
-            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+            <Container className={"bg-danger-100 p-10"}>
               <Row>
                 <Text h5>{"Server error while trying to save your connection"}</Text>
               </Row>
@@ -322,46 +296,40 @@ function MysqlConnectionForm(props) {
           </Row>
         )}
 
-        <Spacer y={1} />
+        <Spacer y={4} />
         <Row>
           <Button
-            ghost
+            variant="ghost"
             auto
             onClick={() => _onCreateConnection(true)}
-            disabled={testLoading}
+            isLoading={testLoading}
           >
-            {testLoading && <Loading type="points" color="currentColor" />}
-            {!testLoading && "Test connection"}
+            {"Test connection"}
           </Button>
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           <Button
-            disabled={loading}
+            isLoading={loading}
             onClick={_onCreateConnection}
             auto
           >
-            {loading && <Loading type="points" color="currentColor" />}
-            {!loading && "Save connection"}
+            {"Save connection"}
           </Button>
         </Row>
       </Container>
 
       {testLoading && (
-        <Container css={{ backgroundColor: "$backgroundContrast", br: "$md", p: 20 }} md>
+        <Container className={"bg-content2 rounded-md"} size="md">
           <Row align="center">
-            <Loading type="points">
-              Test underway...
-            </Loading>
+            <CircularProgress aria-label="loading" />
           </Row>
-          <Spacer y={2} />
+          <Spacer y={4} />
         </Container>
       )}
 
       {testResult && !testLoading && (
         <Container
-          css={{
-            backgroundColor: "$backgroundContrast", br: "$md", p: 20, mt: 20
-          }}
-          md
+          className={"bg-content2 rounded-md mt-20"}
+          size="md"
         >
           <Row align="center">
             <Text>
@@ -373,7 +341,7 @@ function MysqlConnectionForm(props) {
               </Chip>
             </Text>
           </Row>
-          <Spacer y={1} />
+          <Spacer y={4} />
           <AceEditor
             mode="json"
             theme={isDark ? "one_dark" : "tomorrow"}

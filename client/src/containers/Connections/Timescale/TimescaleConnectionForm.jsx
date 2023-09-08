@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Container, Grid, Input, Link, Loading, Row, Spacer, Text, useTheme, Chip
+  Button, Input, Link, Spacer, Chip, Tabs, Tab
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 
@@ -13,6 +13,10 @@ import { ChevronRight } from "react-iconly";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import HelpBanner from "../../../components/HelpBanner";
 import connectionImages from "../../../config/connectionImages";
+import Container from "../../../components/Container";
+import Text from "../../../components/Text";
+import Row from "../../../components/Row";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 /*
   A form for creating a new Timescale connection
@@ -28,7 +32,7 @@ function TimescaleConnectionForm(props) {
   const [errors, setErrors] = useState({});
   const [formStyle, setFormStyle] = useState("string");
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     _init();
@@ -95,26 +99,13 @@ function TimescaleConnectionForm(props) {
   return (
     <div style={styles.container}>
       <Container
-        css={{
-          backgroundColor: "$backgroundContrast",
-          br: "$md",
-          p: 10,
-          "@xs": {
-            p: 20,
-          },
-          "@sm": {
-            p: 20,
-          },
-          "@md": {
-            p: 20,
-          },
-        }}
-        md
+        className={"bg-content2 rounded-md"}
+        size="md"
       >
         <Row align="center">
           <Text h3>Add a new Timescale connection</Text>
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={1} />
         <Row>
           <HelpBanner
             title="How to connect and visualize TimescaleDB data with Chartbrew"
@@ -124,33 +115,16 @@ function TimescaleConnectionForm(props) {
             info="6 min read"
           />
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={1} />
         <Row align="center" style={styles.formStyle}>
-          <Link
-            css={{
-              background: formStyle === "string" ? "$background" : "$backgroundContrast",
-              p: 5,
-              pr: 10,
-              pl: 10,
-              br: "$sm"
-            }}
-            onClick={() => setFormStyle("string")}
+          <Tabs
+            aria-label="Connection options"
+            selectedKey={formStyle}
+            onSelectionChange={(selected) => setFormStyle(selected)}
           >
-            <Text>Connection string</Text>
-          </Link>
-          <Spacer x={0.5} />
-          <Link
-            css={{
-              background: formStyle === "form" ? "$background" : "$backgroundContrast",
-              p: 5,
-              pr: 10,
-              pl: 10,
-              br: "$sm"
-            }}
-            onClick={() => setFormStyle("form")}
-          >
-            <Text>Connection form</Text>
-          </Link>
+            <Tab key="string" value="string" title="Connection string" />
+            <Tab key="form" value="form" label="Connection form" />
+          </Tabs>
         </Row>
 
         {formStyle === "string" && (
@@ -163,47 +137,48 @@ function TimescaleConnectionForm(props) {
                 onChange={(e) => {
                   setConnection({ ...connection, name: e.target.value });
                 }}
-                color={errors.name ? "error" : "default"}
-                bordered
+                color={errors.name ? "danger" : "default"}
+                variant="bordered"
                 fullWidth
               />
             </Row>
             {errors.name && (
-              <Row css={{ p: 5 }}>
+              <Row className="p-5">
                 <Text small color="danger">
                   {errors.name}
                 </Text>
               </Row>
             )}
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center">
-              <Input.Password
+              <Input
+                type="password"
                 label="Enter your TimescaleDB connection string"
                 placeholder="postgres://username:password@helpful.example.tsdb.cloud.timescale.com:35646/dbname"
                 value={connection.connectionString || ""}
                 onChange={(e) => {
                   setConnection({ ...connection, connectionString: e.target.value });
                 }}
-                helperText={"postgres://username:password@helpful.example.tsdb.cloud.timescale.com:35646/dbname"}
-                bordered
+                description={"postgres://username:password@helpful.example.tsdb.cloud.timescale.com:35646/dbname"}
+                variant="bordered"
                 fullWidth
               />
             </Row>
             {errors.connectionString && (
-              <Row css={{ p: 5 }}>
+              <Row className="p-5">
                 <Text small color="danger">
                   {errors.connectionString}
                 </Text>
               </Row>
             )}
-            <Spacer y={0.5} />
+            <Spacer y={1} />
           </>
         )}
 
         {formStyle === "form" && (
           <Row>
-            <Grid.Container gap={1.5}>
-              <Grid xs={12} sm={8}>
+            <div className="grid grid-cols-12 gap-2">
+              <div className="col-span-12 sm:col-span-12 md:col-span-8 lg:col-span-8 xl:col-span-8">
                 <Input
                   label="Name your connection"
                   placeholder="Enter a name that you can recognise later"
@@ -211,14 +186,14 @@ function TimescaleConnectionForm(props) {
                   onChange={(e) => {
                     setConnection({ ...connection, name: e.target.value });
                   }}
-                  helperColor="error"
-                  helperText={errors.name}
-                  bordered
+                  color={errors.name ? "danger" : "default"}
+                  description={errors.name}
+                  variant="bordered"
                   fullWidth
                 />
-              </Grid>
+              </div>
 
-              <Grid xs={12} sm={10} md={8}>
+              <div className="col-span-12 sm:col-span-12 md:col-span-10 lg:col-span-8 xl:col-span-8">
                 <Input
                   label="Hostname or IP address"
                   placeholder="helpful.example.tsdb.cloud.timescale.com"
@@ -226,13 +201,14 @@ function TimescaleConnectionForm(props) {
                   onChange={(e) => {
                     setConnection({ ...connection, host: e.target.value });
                   }}
-                  helperColor="error"
-                  helperText={errors.host}
-                  bordered
+                  color={errors.host ? "danger" : "default"}
+                  description={errors.host}
+                  variant="bordered"
                   fullWidth
                 />
-              </Grid>
-              <Grid xs={12} sm={2} md={4}>
+              </div>
+              
+              <div className="col-span-12 sm:col-span-12 md:col-span-2 lg:col-span-2 xl:col-span-2">
                 <Input
                   label="Port"
                   placeholder="Optional, defaults to 5432"
@@ -240,14 +216,14 @@ function TimescaleConnectionForm(props) {
                   onChange={(e) => {
                     setConnection({ ...connection, port: e.target.value });
                   }}
-                  helperColor="error"
-                  helperText={errors.port}
-                  bordered
+                  color={errors.port ? "danger" : "default"}
+                  description={errors.port}
+                  variant="bordered"
                   fullWidth
                 />
-              </Grid>
+              </div>
 
-              <Grid xs={12} sm={4} md={4}>
+              <div className="col-span-12 sm:col-span-12 md:col-span-4 lg:col-span-4 xl:col-span-4">
                 <Input
                   label="Database name"
                   placeholder="Enter your database name"
@@ -255,14 +231,14 @@ function TimescaleConnectionForm(props) {
                   onChange={(e) => {
                     setConnection({ ...connection, dbName: e.target.value });
                   }}
-                  helperColor="error"
-                  helperText={errors.dbName}
-                  bordered
+                  color={errors.dbName ? "danger" : "default"}
+                  description={errors.dbName}
+                  variant="bordered"
                   fullWidth
                 />
-              </Grid>
+              </div>
 
-              <Grid xs={12} sm={4} md={4}>
+              <div className="col-span-12 sm:col-span-12 md:col-span-4 lg:col-span-4 xl:col-span-4">
                 <Input
                   label="Database username"
                   placeholder="Username"
@@ -270,34 +246,34 @@ function TimescaleConnectionForm(props) {
                   onChange={(e) => {
                     setConnection({ ...connection, username: e.target.value });
                   }}
-                  helperColor="error"
-                  helperText={errors.username}
-                  bordered
+                  color={errors.username ? "danger" : "default"}
+                  description={errors.username}
+                  variant="bordered"
                   fullWidth
                 />
-              </Grid>
+              </div>
 
-              <Grid xs={12} sm={4} md={4}>
-                <Input.Password
+              <div className="col-span-12 sm:col-span-12 md:col-span-4 lg:col-span-4 xl:col-span-4">
+                <Input
                   label="Database password"
                   placeholder="Database user password"
                   onChange={(e) => {
                     setConnection({ ...connection, password: e.target.value });
                   }}
-                  helperColor="error"
-                  helperText={errors.password}
-                  bordered
+                  color={errors.password ? "danger" : "default"}
+                  description={errors.password}
+                  variant="bordered"
                   fullWidth
                 />
-              </Grid>
-            </Grid.Container>
+              </div>
+            </div>
           </Row>
         )}
 
         <Spacer y={1} />
         <Row align="center">
           <ChevronRight set="light" />
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           <Link
             href="https://docs.timescale.com/timescaledb/latest/how-to-guides/connecting/about-connecting/#find-connection-details-in-timescale-cloud"
             target="_blank"
@@ -305,13 +281,13 @@ function TimescaleConnectionForm(props) {
           >
             <Text>{"Find out how to get your TimescaleDB connection credentials"}</Text>
           </Link>
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           <FaExternalLinkSquareAlt size={12} />
         </Row>
 
         {addError && (
           <Row>
-            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+            <Container className={"bg-danger-100 rounded-md p-10"}>
               <Row>
                 <Text h5>{"Server error while trying to save your connection"}</Text>
               </Row>
@@ -322,47 +298,43 @@ function TimescaleConnectionForm(props) {
           </Row>
         )}
 
-        <Spacer y={2} />
+        <Spacer y={4} />
         <Row>
           <Button
-            ghost
+            variant="ghost"
             auto
             onClick={() => _onCreateConnection(true)}
-            disabled={testLoading}
+            isLoading={testLoading}
           >
-            {testLoading && <Loading type="points-opacity" color="currentColor" />}
-            {!testLoading && "Test connection"}
+            {"Test connection"}
           </Button>
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           <Button
-            disabled={loading}
+            isLoading={loading}
             onClick={_onCreateConnection}
             auto
           >
-            {loading && <Loading type="points-opacity" color="currentColor" />}
-            {!loading && "Save connection"}
+            {"Save connection"}
           </Button>
         </Row>
       </Container>
 
       {testLoading && (
         <>
-          <Spacer y={1} />
-          <Container css={{ backgroundColor: "$backgroundContrast", br: "$md", p: 20 }} md>
+          <Spacer y={2} />
+          <Container className={"bg-danger-100 rounded-md p-20"}>
             <Row align="center">
               <Text b>Test underway...</Text>
             </Row>
-            <Spacer y={2} />
+            <Spacer y={4} />
           </Container>
         </>
       )}
 
       {testResult && !testLoading && (
         <Container
-          css={{
-            backgroundColor: "$backgroundContrast", br: "$md", p: 20, mt: 20
-          }}
-          md
+          className="bg-content2 rounded-md mt-20"
+          size="md"
         >
           <Row align="center">
             <Text>
@@ -374,7 +346,7 @@ function TimescaleConnectionForm(props) {
               </Chip>
             </Text>
           </Row>
-          <Spacer y={1} />
+          <Spacer y={2} />
           <AceEditor
             mode="json"
             theme={isDark ? "one_dark" : "tomorrow"}

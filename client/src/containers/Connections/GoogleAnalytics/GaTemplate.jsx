@@ -2,11 +2,10 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Checkbox, Container, Divider, Dropdown, Grid, Input,
-  Loading, Row, Spacer, Text,
+  Button, Checkbox, Divider, Input, Select, SelectItem, Spacer,
 } from "@nextui-org/react";
 import {
-  ChevronDown, CloseSquare, Plus, TickSquare
+  CloseSquare, Plus, TickSquare
 } from "react-iconly";
 import { FaGoogle } from "react-icons/fa";
 import _ from "lodash";
@@ -18,6 +17,9 @@ import {
 } from "../../../actions/connection";
 import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
+import Container from "../../../components/Container";
+import Text from "../../../components/Text";
+import Row from "../../../components/Row";
 
 /*
   The Form used to configure the SimpleAnalytics template
@@ -297,21 +299,8 @@ function GaTemplate(props) {
   return (
     <div style={styles.container}>
       <Container
-        css={{
-          backgroundColor: "$backgroundContrast",
-          br: "$md",
-          p: 10,
-          "@xs": {
-            p: 20,
-          },
-          "@sm": {
-            p: 20,
-          },
-          "@md": {
-            p: 20,
-          },
-        }}
-        md
+        className={"bg-content2 rounded-md"}
+        size="md"
         justify="flex-start"
       >
         <Row align="center">
@@ -321,39 +310,29 @@ function GaTemplate(props) {
         {availableConnections && availableConnections.length > 0 && (
           <>
             <Row align="center">
-              <Dropdown
+              <Select
                 isDisabled={formVisible}
+                label="Select an existing connection"
+                placeholder="Click to select a connection"
+                value={_getListName(availableConnections, selectedConnection, true)}
+                selectedKeys={[selectedConnection]}
+                onSelectionChange={(key) => _onSelectConnection(key)}
+                selectionMode="single"
+                variant="bordered"
               >
-                <Dropdown.Trigger>
-                  <Input
-                    label="Select an existing connection"
-                    value={_getListName(availableConnections, selectedConnection, true)}
-                    placeholder="Click to select a connection"
-                    bordered
-                    fullWidth
-                    contentRight={<ChevronDown />}
-                  />
-                </Dropdown.Trigger>
-                <Dropdown.Menu
-                  onAction={(key) => _onSelectConnection(key)}
-                  selectedKeys={[selectedConnection]}
-                  selectionMode="single"
-                  disabled={formVisible}
-                >
-                  {availableConnections.map((connection) => (
-                    <Dropdown.Item key={connection.key}>
-                      {connection.text}
-                    </Dropdown.Item>
-                  ))}
-                </Dropdown.Menu>
-              </Dropdown>
+                {availableConnections.map((connection) => (
+                  <SelectItem key={connection.key}>
+                    {connection.text}
+                  </SelectItem>
+                ))}
+              </Select>
             </Row>
             <Spacer y={1} />
             <Row align="center">
               {!formVisible && (
                 <Button
-                  ghost
-                  icon={<Plus />}
+                  variant="ghost"
+                  startContent={<Plus />}
                   onClick={() => setFormVisible(true)}
                   auto
                 >
@@ -362,7 +341,7 @@ function GaTemplate(props) {
               )}
               {formVisible && (
                 <Button
-                  ghost
+                  variant="ghost"
                   auto
                   onClick={() => setFormVisible(false)}
                 >
@@ -370,64 +349,49 @@ function GaTemplate(props) {
                 </Button>
               )}
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row>
-              <Grid.Container gap={1}>
+              <div className="grid grid-cols-12 gap-1">
                 {selectedConnection && !formVisible && (
                   <>
-                    <Grid xs={12} sm={12} md={6}>
-                      <Dropdown isBordered>
-                        <Dropdown.Trigger>
-                          <Input
-                            placeholder="Select an account"
-                            label="Account"
-                            value={_getListName(accountOptions, configuration.accountId)}
-                            bordered
-                            fullWidth
-                            contentRight={<ChevronDown />}
-                          />
-                        </Dropdown.Trigger>
-                        <Dropdown.Menu
-                          onAction={(key) => _onAccountSelected(key)}
-                          selectedKeys={[configuration.accountId]}
-                          selectionMode="single"
-                        >
-                          {accountOptions.map((option) => (
-                            <Dropdown.Item key={option.key}>
-                              {option.text}
-                            </Dropdown.Item>
-                          ))}
-                        </Dropdown.Menu>
-                      </Dropdown>
-                    </Grid>
-                    <Grid xs={12} sm={12} md={6}>
-                      <Dropdown isDisabled={!configuration.accountId} isBordered>
-                        <Dropdown.Trigger>
-                          <Input
-                            placeholder="Select a property"
-                            label="Property"
-                            value={_getListName(propertyOptions, configuration.propertyId)}
-                            bordered
-                            fullWidth
-                            contentRight={<ChevronDown />}
-                          />
-                        </Dropdown.Trigger>
-                        <Dropdown.Menu
-                          onAction={(key) => _onPropertySelected(key)}
-                          selectedKeys={[configuration.propertyId]}
-                          selectionMode="single"
-                        >
-                          {propertyOptions.map((option) => (
-                            <Dropdown.Item key={option.key}>
-                              {option.text}
-                            </Dropdown.Item>
-                          ))}
-                        </Dropdown.Menu>
-                      </Dropdown>
-                    </Grid>
+                    <div className="col-span-12 lg:col-span-6 xl:col-span-6">
+                      <Select
+                        variant="bordered"
+                        label="Account"
+                        placeholder="Select an account"
+                        value={_getListName(accountOptions, configuration.accountId)}
+                        selectedKeys={[configuration.accountId]}
+                        onSelectionChange={(key) => _onAccountSelected(key)}
+                        selectionMode="single"
+                      >
+                        {accountOptions.map((option) => (
+                          <SelectItem key={option.key}>
+                            {option.text}
+                          </SelectItem>
+                        ))}
+                      </Select>
+                    </div>
+                    <div className="col-span-12 lg:col-span-6 xl:col-span-6">
+                      <Select
+                        isDisabled={!configuration.accountId}
+                        variant="bordered"
+                        label="Property"
+                        placeholder="Select a property"
+                        value={_getListName(propertyOptions, configuration.propertyId)}
+                        selectedKeys={[configuration.propertyId]}
+                        onSelectionChange={(key) => _onPropertySelected(key)}
+                        selectionMode="single"
+                      >
+                        {propertyOptions.map((option) => (
+                          <SelectItem key={option.key}>
+                            {option.text}
+                          </SelectItem>
+                        ))}
+                      </Select>
+                    </div>
                   </>
                 )}
-              </Grid.Container>
+              </div>
             </Row>
           </>
         )}
@@ -439,7 +403,7 @@ function GaTemplate(props) {
                 <Divider />
               </Row>
             )}
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row align="center">
               <Input
                 placeholder="Google analytics"
@@ -448,17 +412,17 @@ function GaTemplate(props) {
                 onChange={(e) => {
                   setConnection({ ...connection, name: e.target.value });
                 }}
-                bordered
+                variant="bordered"
                 fullWidth
-                helperColor="error"
-                helperText={errors.name}
+                color={errors.name ? "danger" : "primary"}
+                description={errors.name}
               />
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row align="center">
               <Button
                 color={"secondary"}
-                iconRight={<FaGoogle size={20} />}
+                endContent={<FaGoogle size={20} />}
                 onClick={_onGoogleAuth}
                 auto
               >
@@ -471,15 +435,15 @@ function GaTemplate(props) {
 
         {configuration && (
           <>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row>
               <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row align="center">
-              <Grid.Container>
+              <div className="grid grid-cols-12">
                 {configuration.Charts && configuration.Charts.map((chart) => (
-                  <Grid key={chart.tid} xs={12} sm={6}>
+                  <div className="col-span-12 md:col-span-6 lg:col-span-4 xl:col-span-3" key={chart.tid}>
                     <Checkbox
                       isSelected={
                         _.indexOf(selectedCharts, chart.tid) > -1
@@ -489,26 +453,26 @@ function GaTemplate(props) {
                     >
                       {chart.name}
                     </Checkbox>
-                  </Grid>
+                  </div>
                 ))}
-              </Grid.Container>
+              </div>
             </Row>
 
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row>
               <Button
-                bordered
-                icon={<TickSquare />}
+                variant="bordered"
+                startContent={<TickSquare />}
                 auto
                 onClick={_onSelectAll}
                 size="sm"
               >
                 Select all
               </Button>
-              <Spacer x={0.2} />
+              <Spacer x={1} />
               <Button
-                bordered
-                icon={<CloseSquare />}
+                variant="bordered"
+                startContent={<CloseSquare />}
                 auto
                 onClick={_onDeselectAll}
                 size="sm"
@@ -521,7 +485,7 @@ function GaTemplate(props) {
 
         {addError && (
           <Row>
-            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+            <Container className={"bg-danger-100 rounded-md p-10"}>
               <Row>
                 <Text h5>{"Server error while trying to save your connection"}</Text>
               </Row>
@@ -532,7 +496,7 @@ function GaTemplate(props) {
           </Row>
         )}
 
-        <Spacer y={2} />
+        <Spacer y={4} />
         <Row>
           <Button
             disabled={
@@ -543,9 +507,9 @@ function GaTemplate(props) {
             }
             onClick={_onGenerateDashboard}
             auto
+            isLoading={loading}
           >
-            {loading && <Loading type="points" color="currentColor" />}
-            {!loading && "Create the charts"}
+            {"Create the charts"}
           </Button>
         </Row>
       </Container>

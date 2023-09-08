@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Container, Divider, Dropdown, Grid, Input,
-  Link, Loading, Row, Spacer, Text,
+  Button, Checkbox, Divider, Input, Link, Select, SelectItem, Spacer,
 } from "@nextui-org/react";
 import {
   ChevronDown, CloseSquare, Plus, TickSquare
@@ -13,6 +12,9 @@ import cookie from "react-cookies";
 
 import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
+import Container from "../../../components/Container";
+import Text from "../../../components/Text";
+import Row from "../../../components/Row";
 
 const countryOptions = [{
   key: "eu", value: "eu", text: "🇪🇺 Europe", flag: "eu"
@@ -190,21 +192,8 @@ function MailgunTemplate(props) {
   return (
     <div style={styles.container}>
       <Container
-        css={{
-          backgroundColor: "$backgroundContrast",
-          br: "$md",
-          p: 10,
-          "@xs": {
-            p: 20,
-          },
-          "@sm": {
-            p: 20,
-          },
-          "@md": {
-            p: 20,
-          },
-        }}
-        md
+        className={"bg-content2 rounded-md"}
+        size="md"
         justify="flex-start"
       >
         <Row align="center">
@@ -214,34 +203,26 @@ function MailgunTemplate(props) {
         {availableConnections && availableConnections.length > 0 && (
           <>
             <Row>
-              <Grid.Container gap={1}>
-                <Grid xs={12} sm={6} md={6}>
-                  <Dropdown
+              <div className="grid grid-cols-12 gap-1">
+                <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6">
+                  <Select
                     isDisabled={formVisible}
+                    label="Select an existing connection"
+                    placeholder="Click to select a connection"
+                    value={_getConnectionName()}
+                    onSelectionChange={(key) => setSelectedConnection(key)}
+                    variant="bordered"
+                    selectionMode="single"
+                    selectedKeys={[selectedConnection]}
                   >
-                    <Dropdown.Trigger>
-                      <Input
-                        label="Select an existing connection"
-                        value={_getConnectionName()}
-                        placeholder="Click to select a connection"
-                        fullWidth
-                      />
-                    </Dropdown.Trigger>
-                    <Dropdown.Menu
-                      onAction={(key) => setSelectedConnection(key)}
-                      selectedKeys={[selectedConnection]}
-                      selectionMode="single"
-                      disabled={formVisible}
-                    >
-                      {availableConnections.map((connection) => (
-                        <Dropdown.Item key={connection.key}>
-                          {connection.text}
-                        </Dropdown.Item>
-                      ))}
-                    </Dropdown.Menu>
-                  </Dropdown>
-                </Grid>
-                <Grid xs={12} sm={6} md={6}>
+                    {availableConnections.map((connection) => (
+                      <SelectItem key={connection.key}>
+                        {connection.text}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                </div>
+                <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6">
                   <Input
                     label="Enter your Mailgun domain"
                     placeholder="mg.domain.com"
@@ -249,21 +230,21 @@ function MailgunTemplate(props) {
                     onChange={(e) => {
                       setConnection({ ...connection, domain: e.target.value });
                     }}
-                    helperColor="error"
-                    helperText={errors.domain}
-                    bordered
+                    color={errors.domain ? "danger" : "default"}
+                    description={errors.domain}
+                    variant="bordered"
                     fullWidth
                     disabled={formVisible}
                   />
-                </Grid>
-              </Grid.Container>
+                </div>
+              </div>
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row align="center">
               {!formVisible && (
                 <Button
-                  ghost
-                  icon={<Plus />}
+                  variant="ghost"
+                  startContent={<Plus />}
                   onClick={() => setFormVisible(true)}
                   auto
                 >
@@ -272,7 +253,7 @@ function MailgunTemplate(props) {
               )}
               {formVisible && (
                 <Button
-                  ghost
+                  variant="ghost"
                   auto
                   onClick={() => setFormVisible(false)}
                 >
@@ -282,7 +263,7 @@ function MailgunTemplate(props) {
             </Row>
           </>
         )}
-        <Spacer y={1} />
+        <Spacer y={2} />
         {formVisible && (
           <>
             {availableConnections && availableConnections.length > 0 && (
@@ -290,36 +271,26 @@ function MailgunTemplate(props) {
                 <Divider />
               </Row>
             )}
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row align="center">
-              <Dropdown isBordered>
-                <Dropdown.Trigger css={{ ta: "left" }}>
-                  <Input
-                    label="Select your Mailgun domain location"
-                    placeholder="Domain location"
-                    value={_getCountryName() || ""}
-                    contentRight={<ChevronDown />}
-                    bordered
-                    fullWidth
-                    helperColor="error"
-                    helperText={errors.domainLocation}
-                    style={{ textAlign: "left" }}
-                  />
-                </Dropdown.Trigger>
-                <Dropdown.Menu
-                  onAction={(key) => setConnection({ ...connection, domainLocation: key })}
-                  selectedKeys={[connection.domainLocation]}
-                  selectionMode="single"
-                >
-                  {countryOptions.map((location) => (
-                    <Dropdown.Item key={location.key}>
-                      {location.text}
-                    </Dropdown.Item>
-                  ))}
-                </Dropdown.Menu>
-              </Dropdown>
+              <Select
+                variant="bordered"
+                label="Select your Mailgun domain location"
+                placeholder="Domain location"
+                value={_getCountryName() || ""}
+                selectedKeys={[connection.domainLocation]}
+                onSelectionChange={(key) => setConnection({ ...connection, domainLocation: key })}
+                selectionMode="single"
+                endContent={<ChevronDown />}
+              >
+                {countryOptions.map((location) => (
+                  <SelectItem key={location.key}>
+                    {location.text}
+                  </SelectItem>
+                ))}
+              </Select>
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row align="center">
               <Input
                 label="Enter your Mailgun domain"
@@ -328,13 +299,13 @@ function MailgunTemplate(props) {
                 onChange={(e) => {
                   setConnection({ ...connection, domain: e.target.value });
                 }}
-                helperColor="error"
-                helperText={errors.domain}
-                bordered
+                color={errors.domain ? "danger" : "default"}
+                description={errors.domain}
+                variant="bordered"
                 fullWidth
               />
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row align="center">
               <Input
                 label="Enter your Mailgun Private API Key"
@@ -343,24 +314,24 @@ function MailgunTemplate(props) {
                 onChange={(e) => {
                   setConnection({ ...connection, apiKey: e.target.value });
                 }}
-                helperColor="error"
-                helperText={errors.apiKey}
-                bordered
+                color={errors.apiKey ? "danger" : "default"}
+                description={errors.apiKey}
+                variant="bordered"
                 fullWidth
               />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center">
               <Link
                 href="https://app.mailgun.com/app/account/security/api_keys"
                 target="_blank"
                 rel="noreferrer noopener"
-                css={{ color: "$secondary", ai: "center" }}
+                className="flex items-center text-secondary"
               >
-                <Text css={{ color: "$secondary" }}>
+                <Text className={"text-secondary"}>
                   {"Get your Private API Key from here"}
                 </Text>
-                <Spacer x={0.2} />
+                <Spacer x={1} />
                 <FaExternalLinkSquareAlt size={16} />
               </Link>
             </Row>
@@ -369,15 +340,15 @@ function MailgunTemplate(props) {
 
         {configuration && (
           <>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row>
               <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row align="center">
-              <Grid.Container>
+              <div className="grid grid-cols-12">
                 {configuration.Charts && configuration.Charts.map((chart) => (
-                  <Grid key={chart.tid} xs={12} sm={6}>
+                  <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6" key={chart.tid}>
                     <Checkbox
                       isSelected={
                         _.indexOf(selectedCharts, chart.tid) > -1
@@ -387,26 +358,26 @@ function MailgunTemplate(props) {
                     >
                       {chart.name}
                     </Checkbox>
-                  </Grid>
+                  </div>
                 ))}
-              </Grid.Container>
+              </div>
             </Row>
 
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row>
               <Button
-                bordered
-                icon={<TickSquare />}
+                variant="bordered"
+                startContent={<TickSquare />}
                 auto
                 onClick={_onSelectAll}
                 size="sm"
               >
                 Select all
               </Button>
-              <Spacer x={0.2} />
+              <Spacer x={1} />
               <Button
-                bordered
-                icon={<CloseSquare />}
+                variant="bordered"
+                startContent={<CloseSquare />}
                 auto
                 onClick={_onDeselectAll}
                 size="sm"
@@ -419,7 +390,7 @@ function MailgunTemplate(props) {
 
         {addError && (
           <Row>
-            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+            <Container className={"bg-danger-100 p-10 rounded-md"}>
               <Row>
                 <Text h5>{"Server error while trying to save your connection"}</Text>
               </Row>
@@ -432,7 +403,7 @@ function MailgunTemplate(props) {
 
         {testError && (
           <Row>
-            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+            <Container className={"bg-danger-100 p-10 rounded-md"}>
               <Row>
                 <Text h5>{"Cannot make the connection"}</Text>
               </Row>
@@ -442,7 +413,7 @@ function MailgunTemplate(props) {
               <Row align="center">
                 <Link href="https://app.mailgun.com/app/account/security/api_keys" target="_blank" rel="noreferrer">
                   <Text>{"Click here to go to the dashboard"}</Text>
-                  <Spacer x={0.2} />
+                  <Spacer x={1} />
                   <FaExternalLinkSquareAlt size={12} />
                 </Link>
               </Row>
@@ -450,7 +421,7 @@ function MailgunTemplate(props) {
           </Row>
         )}
 
-        <Spacer y={2} />
+        <Spacer y={4} />
         <Row>
           <Button
             disabled={
@@ -460,11 +431,11 @@ function MailgunTemplate(props) {
               )
               || (!selectedCharts || selectedCharts.length < 1)
             }
+            isLoading={loading}
             onClick={_onGenerateDashboard}
             auto
           >
-            {loading && <Loading type="points" color="currentColor" />}
-            {!loading && "Create the charts"}
+            {"Create the charts"}
           </Button>
         </Row>
       </Container>

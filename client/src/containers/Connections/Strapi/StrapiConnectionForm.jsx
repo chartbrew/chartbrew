@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 
 import {
-  Button,
-  Container, Grid, Input, Loading, Row, Spacer, Text, useTheme,
+  Button, Input, Spacer,
 } from "@nextui-org/react";
 import { CloseSquare, Plus } from "react-iconly";
 import uuid from "uuid/v4";
@@ -14,6 +13,10 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import HelpBanner from "../../../components/HelpBanner";
 import connectionImages from "../../../config/connectionImages";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 /*
   The Form used to create a Strapi API connection
@@ -33,7 +36,7 @@ function StrapiConnectionForm(props) {
   });
   const [errors, setErrors] = useState({});
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     _init();
@@ -153,21 +156,8 @@ function StrapiConnectionForm(props) {
   return (
     <div style={styles.container}>
       <Container
-        css={{
-          backgroundColor: "$backgroundContrast",
-          br: "$md",
-          p: 10,
-          "@xs": {
-            p: 20,
-          },
-          "@sm": {
-            p: 20,
-          },
-          "@md": {
-            p: 20,
-          },
-        }}
-        md
+        className={"bg-content2 rounded-md"}
+        size="md"
       >
         <Row align="center">
           <Text h3>
@@ -175,7 +165,7 @@ function StrapiConnectionForm(props) {
             {editConnection && `Edit ${editConnection.name}`}
           </Text>
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={1} />
         <Row>
           <HelpBanner
             title="How to visualize your Strapi data with Chartbrew"
@@ -185,7 +175,7 @@ function StrapiConnectionForm(props) {
             info="5 min read"
           />
         </Row>
-        <Spacer y={1} />
+        <Spacer y={2} />
         <div style={styles.formStyle}>
           <Row>
             <Input
@@ -195,10 +185,10 @@ function StrapiConnectionForm(props) {
               onChange={(e) => {
                 setConnection({ ...connection, name: e.target.value });
               }}
-              color={errors.name ? "error" : "default"}
+              color={errors.name ? "danger" : "default"}
               fullWidth
-              bordered
-              css={{ mw: 500 }}
+              variant="bordered"
+              className={"max-w-[500px]"}
             />
           </Row>
           {errors.name && (
@@ -219,9 +209,9 @@ function StrapiConnectionForm(props) {
                 setConnection({ ...connection, host: e.target.value });
               }}
               fullWidth
-              color={errors.host ? "error" : "default"}
-              bordered
-              css={{ mw: 500 }}
+              color={errors.host ? "danger" : "default"}
+              variant="bordered"
+              className={"max-w-[500px]"}
             />
           </Row>
           {errors.host && (
@@ -232,17 +222,17 @@ function StrapiConnectionForm(props) {
             </Row>
           )}
 
-          <Spacer y={1} />
+          <Spacer y={2} />
           <Row>
-            <Input.Password
+            <Input
               label="Strapi API token"
               placeholder="Enter the API token"
               value={connection?.authentication?.token || ""}
               onChange={(e) => _onChangeAuthParams("token", e.target.value)}
               fullWidth
-              color={errors.authentication ? "error" : "default"}
-              bordered
-              css={{ mw: 500 }}
+              color={errors.authentication ? "danger" : "default"}
+              variant="bordered"
+              className={"max-w-[500px]"}
             />
           </Row>
           {errors.host && (
@@ -253,7 +243,7 @@ function StrapiConnectionForm(props) {
             </Row>
           )}
 
-          <Spacer y={1} />
+          <Spacer y={2} />
           <Row>
             <Text h5>
               Global headers to send with the requests
@@ -266,47 +256,48 @@ function StrapiConnectionForm(props) {
           </Row>
 
           <Container>
-            <Grid.Container gap={2}>
+            <div className="grid grid-cols-12 gap-2">
               {connection.optionsArray && connection.optionsArray.map((option) => {
                 return (
                   <>
-                    <Grid xs={12} sm={4}>
+                    <div className="sm:col-span-12 md:col-span-4">
                       <Input
                         placeholder="Header name"
                         value={option.key}
                         onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
                         fullWidth
                         />
-                    </Grid>
-                    <Grid xs={12} sm={4}>
+                    </div>
+
+                    <div className="sm:col-span-12 md:col-span-4">
                       <Input
                         onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
                         value={option.value}
                         placeholder="Value"
                         fullWidth
-                        />
-                      <Spacer x={0.5} />
+                      />
+                      <Spacer x={1} />
                       <Button
-                        icon={<CloseSquare />}
+                        startContent={<CloseSquare />}
                         onClick={() => _removeOption(option.id)}
                         auto
-                        light
+                        variant="light"
                         color="warning"
                       />
-                    </Grid>
-                    <Grid xs={0} sm={4} />
+                    </div>
+                    <div className="md:col-span-4" />
                   </>
                 );
               })}
-            </Grid.Container>
+            </div>
           </Container>
           <Container>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Button
               size="sm"
-              icon={<Plus />}
+              startContent={<Plus />}
               onClick={_addOption}
-              light
+              variant="light"
               auto
             >
               Add a header
@@ -316,7 +307,7 @@ function StrapiConnectionForm(props) {
 
         {addError && (
           <>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row>
               <Text b color="danger">{"Server error while trying to save your connection"}</Text>
               <br />
@@ -325,31 +316,29 @@ function StrapiConnectionForm(props) {
           </>
         )}
 
-        <Spacer y={2} />
+        <Spacer y={4} />
         <Row align="center">
           {!editConnection && (
             <Button
-              disabled={loading}
+              isLoading={loading}
               onClick={_onCreateConnection}
               auto
             >
-              {loading && <Loading type="points" color="currentColor" />}
-              {!loading && "Save connection"}
+              {"Save connection"}
             </Button>
           )}
           {editConnection && (
             <Button
-              disabled={loading}
+              isLoading={loading}
               onClick={_onCreateConnection}
               auto
             >
-              {loading && <Loading type="points" color="currentColor" />}
-              {!loading && "Save connection"}
+              {"Save connection"}
             </Button>
           )}
         </Row>
       </Container>
-      <Spacer y={2} />
+      <Spacer y={4} />
     </div>
   );
 }

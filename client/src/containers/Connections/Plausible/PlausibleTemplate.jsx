@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Container, Divider, Dropdown, Grid, Input,
-  Link, Loading, Row, Spacer, Text,
+  Button, Checkbox, Divider, Input, Link, Select, SelectItem, Spacer,
 } from "@nextui-org/react";
 import _ from "lodash";
 import cookie from "react-cookies";
@@ -13,6 +12,9 @@ import { FaExternalLinkSquareAlt } from "react-icons/fa";
 
 import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
+import Container from "../../../components/Container";
+import Text from "../../../components/Text";
+import Row from "../../../components/Row";
 
 /*
   The Form used to configure the Plausible template
@@ -159,21 +161,8 @@ function PlausibleTemplate(props) {
   return (
     <div style={styles.container}>
       <Container
-        css={{
-          backgroundColor: "$backgroundContrast",
-          br: "$md",
-          p: 10,
-          "@xs": {
-            p: 20,
-          },
-          "@sm": {
-            p: 20,
-          },
-          "@md": {
-            p: 20,
-          },
-        }}
-        md
+        className={"bg-content2 rounded-md"}
+        size="md"
         justify="flex-start"
       >
         <Row align="center">
@@ -183,36 +172,28 @@ function PlausibleTemplate(props) {
         {availableConnections && availableConnections.length > 0 && (
           <>
             <Row>
-              <Grid.Container gap={1}>
-                <Grid xs={12} sm={6} md={6}>
-                  <Dropdown
+              <div className="grid grid-cols-12 gap-1">
+                <div className="col-span-12 md:col-span-6 lg:col-span-6">
+                  <Select
                     isDisabled={formVisible}
+                    variant="bordered"
+                    label="Select an existing connection"
+                    placeholder="Click to select a connection"
+                    value={
+                      availableConnections.find((c) => c.value === selectedConnection)?.text
+                    }
+                    selectedKeys={[selectedConnection]}
+                    selectionMode="single"
+                    onSelectionChange={(key) => setSelectedConnection(key)}
                   >
-                    <Dropdown.Trigger>
-                      <Input
-                        label="Select an existing connection"
-                        value={
-                          availableConnections.find((c) => c.value === selectedConnection)?.text
-                        }
-                        placeholder="Click to select a connection"
-                        fullWidth
-                      />
-                    </Dropdown.Trigger>
-                    <Dropdown.Menu
-                      onAction={(key) => setSelectedConnection(key)}
-                      selectedKeys={[selectedConnection]}
-                      selectionMode="single"
-                      disabled={formVisible}
-                    >
-                      {availableConnections.map((connection) => (
-                        <Dropdown.Item key={connection.key}>
-                          {connection.text}
-                        </Dropdown.Item>
-                      ))}
-                    </Dropdown.Menu>
-                  </Dropdown>
-                </Grid>
-                <Grid xs={12} sm={6} md={6}>
+                    {availableConnections.map((connection) => (
+                      <SelectItem key={connection.key}>
+                        {connection.text}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                </div>
+                <div className="col-span-12 md:col-span-6 lg:col-span-6">
                   <Input
                     label="Enter your Plausible site ID"
                     placeholder="example.com"
@@ -226,21 +207,21 @@ function PlausibleTemplate(props) {
                       }
                       setConnection({ ...connection, website: e.target.value });
                     }}
-                    helperColor="error"
-                    helperText={errors.website}
-                    bordered
+                    color={errors.website ? "danger" : "default"}
+                    description={errors.website}
+                    variant="bordered"
                     fullWidth
                     disabled={formVisible}
                   />
-                </Grid>
-              </Grid.Container>
+                </div>
+              </div>
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row align="center">
               {!formVisible && (
                 <Button
-                  ghost
-                  icon={<Plus />}
+                  variant="ghost"
+                  startContent={<Plus />}
                   onClick={() => setFormVisible(true)}
                   auto
                 >
@@ -249,7 +230,7 @@ function PlausibleTemplate(props) {
               )}
               {formVisible && (
                 <Button
-                  ghost
+                  variant="ghost"
                   auto
                   onClick={() => setFormVisible(false)}
                 >
@@ -259,7 +240,7 @@ function PlausibleTemplate(props) {
             </Row>
           </>
         )}
-        <Spacer y={1} />
+        <Spacer y={2} />
         {formVisible && (
           <>
             {availableConnections && availableConnections.length > 0 && (
@@ -267,7 +248,7 @@ function PlausibleTemplate(props) {
                 <Divider />
               </Row>
             )}
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row align="center">
               <Input
                 label="Enter your Plausible site ID"
@@ -276,13 +257,13 @@ function PlausibleTemplate(props) {
                 onChange={(e) => {
                   setConnection({ ...connection, website: e.target.value });
                 }}
-                helperColor="error"
-                helperText={errors.website}
-                bordered
+                color={errors.website ? "danger" : "default"}
+                description={errors.website}
+                variant="bordered"
                 fullWidth
               />
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row align="center">
               <Input
                 label="Enter your Plausible API key."
@@ -291,15 +272,20 @@ function PlausibleTemplate(props) {
                 onChange={(e) => {
                   setConnection({ ...connection, apiKey: e.target.value });
                 }}
-                bordered
+                variant="bordered"
                 fullWidth
               />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center">
-              <Link href="https://plausible.io/settings#api-keys" target="_blank" rel="noreferrer" css={{ ai: "center", color: "$secondary" }}>
-                <Text css={{ color: "$secondary" }}>{"Get your API key here "}</Text>
-                <Spacer x={0.2} />
+              <Link
+                href="https://plausible.io/settings#api-keys"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center text-secondary"
+              >
+                <Text className={"text-secondary"}>{"Get your API key here "}</Text>
+                <Spacer x={1} />
                 <FaExternalLinkSquareAlt size={12} />
               </Link>
             </Row>
@@ -308,15 +294,15 @@ function PlausibleTemplate(props) {
 
         {configuration && (
           <>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row>
               <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row align="center">
-              <Grid.Container>
+              <div className="grid grid-cols-12">
                 {configuration.Charts && configuration.Charts.map((chart) => (
-                  <Grid key={chart.tid} xs={12} sm={6}>
+                  <div className="col-span-12 md:col-span-6 lg:col-span-6" key={chart.tid}>
                     <Checkbox
                       isSelected={
                         _.indexOf(selectedCharts, chart.tid) > -1
@@ -326,26 +312,26 @@ function PlausibleTemplate(props) {
                     >
                       {chart.name}
                     </Checkbox>
-                  </Grid>
+                  </div>
                 ))}
-              </Grid.Container>
+              </div>
             </Row>
 
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row>
               <Button
-                bordered
-                icon={<TickSquare />}
+                variant="bordered"
+                startContent={<TickSquare />}
                 auto
                 onClick={_onSelectAll}
                 size="sm"
               >
                 Select all
               </Button>
-              <Spacer x={0.2} />
+              <Spacer x={1} />
               <Button
-                bordered
-                icon={<CloseSquare />}
+                variant="bordered"
+                startContent={<CloseSquare />}
                 auto
                 onClick={_onDeselectAll}
                 size="sm"
@@ -358,7 +344,7 @@ function PlausibleTemplate(props) {
 
         {addError && (
           <Row>
-            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+            <Container className={"bg-danger-100 rounded-md p-10"}>
               <Row>
                 <Text h5>{"Server error while trying to save your connection"}</Text>
               </Row>
@@ -371,7 +357,7 @@ function PlausibleTemplate(props) {
 
         {generationError && (
           <Row>
-            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+            <Container className={"bg-danger-100 rounded-md p-10"}>
               <Row>
                 <Text h5>{"Invalid site ID or API Key"}</Text>
               </Row>
@@ -380,7 +366,7 @@ function PlausibleTemplate(props) {
               </Row>
               <Row align="center">
                 <ChevronRight />
-                <Spacer x={0.2} />
+                <Spacer x={1} />
                 <Link
                   target="_blank"
                   rel="noopener noreferrer"
@@ -388,12 +374,12 @@ function PlausibleTemplate(props) {
                 >
                   <Text>You can log in and check if your site ID exists here</Text>
                 </Link>
-                <Spacer x={0.2} />
+                <Spacer x={1} />
                 <FaExternalLinkSquareAlt size={12} />
               </Row>
               <Row align="center">
                 <ChevronRight />
-                <Spacer x={0.2} />
+                <Spacer x={1} />
                 <Link
                   href="https://plausible.io/settings#api-keys"
                   target="_blank"
@@ -401,14 +387,14 @@ function PlausibleTemplate(props) {
                 >
                   <Text>{"Then check if your API Key is correct or generate a new one here"}</Text>
                 </Link>
-                <Spacer x={0.2} />
+                <Spacer x={1} />
                 <FaExternalLinkSquareAlt size={12} />
               </Row>
             </Container>
           </Row>
         )}
 
-        <Spacer y={2} />
+        <Spacer y={4} />
         <Row>
           <Button
             disabled={
@@ -418,9 +404,9 @@ function PlausibleTemplate(props) {
             }
             onClick={_onGenerateDashboard}
             auto
+            isLoading={loading}
           >
-            {loading && <Loading type="points" color="currentColor" />}
-            {!loading && "Create the charts"}
+            {"Create the charts"}
           </Button>
         </Row>
       </Container>

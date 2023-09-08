@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Container, Divider, Dropdown, Grid, Input,
-  Link, Loading, Row, Spacer, Text,
+  Button, Checkbox, Divider, Input, Link, Select, SelectItem, Spacer,
 } from "@nextui-org/react";
 import {
   ArrowUp, CloseSquare, Plus, TickSquare
@@ -13,6 +12,9 @@ import _ from "lodash";
 
 import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
+import Container from "../../../components/Container";
+import Text from "../../../components/Text";
+import Row from "../../../components/Row";
 
 /*
   The Form used to configure the ChartMogul template
@@ -160,21 +162,8 @@ function ChartMogulTemplate(props) {
   return (
     <div style={styles.container}>
       <Container
-        css={{
-          backgroundColor: "$backgroundContrast",
-          br: "$md",
-          p: 10,
-          "@xs": {
-            p: 20,
-          },
-          "@sm": {
-            p: 20,
-          },
-          "@md": {
-            p: 20,
-          },
-        }}
-        md
+        className={"bg-content2 rounded-md"}
+        size="md"
         justify="flex-start"
       >
         <Row align="center">
@@ -184,35 +173,28 @@ function ChartMogulTemplate(props) {
         {availableConnections && availableConnections.length > 0 && (
           <>
             <Row>
-              <Dropdown isDisabled={formVisible}>
-                <Dropdown.Trigger>
-                  <Input
-                    label="Select an existing connection"
-                    value={_getConnectionName()}
-                    placeholder="Click to select a connection"
-                    disabled={formVisible}
-                  />
-                </Dropdown.Trigger>
-                <Dropdown.Menu
-                  onAction={(key) => setSelectedConnection(key)}
-                  selectedKeys={[selectedConnection]}
-                  selectionMode="single"
-                  disabled={formVisible}
-                >
-                  {availableConnections.map((connection) => (
-                    <Dropdown.Item key={connection.key}>
-                      {connection.text}
-                    </Dropdown.Item>
-                  ))}
-                </Dropdown.Menu>
-              </Dropdown>
+              <Select
+                isDisabled={formVisible}
+                label="Select an existing connection"
+                placeholder="Click to select a connection"
+                value={_getConnectionName()}
+                selectedKeys={[selectedConnection]}
+                onSelectionChange={(key) => setSelectedConnection(key)}
+                selectionMode="single"
+              >
+                {availableConnections.map((connection) => (
+                  <SelectItem key={connection.key}>
+                    {connection.text}
+                  </SelectItem>
+                ))}
+              </Select>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={2} />
             <Row align="center">
               {!formVisible && (
                 <Button
-                  ghost
-                  icon={<Plus />}
+                  variant="ghost"
+                  startContent={<Plus />}
                   onClick={() => setFormVisible(true)}
                   auto
                 >
@@ -221,8 +203,8 @@ function ChartMogulTemplate(props) {
               )}
               {formVisible && (
                 <Button
-                  icon={<ArrowUp />}
-                  ghost
+                  startContent={<ArrowUp />}
+                  variant="ghost"
                   auto
                   onClick={() => setFormVisible(false)}
                 >
@@ -232,7 +214,7 @@ function ChartMogulTemplate(props) {
             </Row>
           </>
         )}
-        <Spacer y={1} />
+        <Spacer y={4} />
         {formVisible && (
           <>
             {availableConnections && availableConnections.length > 0 && (
@@ -240,7 +222,7 @@ function ChartMogulTemplate(props) {
                 <Divider />
               </Row>
             )}
-            <Spacer y={1} />
+            <Spacer y={4} />
             <Row align="center">
               <Input
                 label="Enter your ChartMogul API key"
@@ -249,24 +231,24 @@ function ChartMogulTemplate(props) {
                 onChange={(e) => {
                   setConnection({ ...connection, key: e.target.value, token: e.target.value });
                 }}
-                helperColor="error"
-                helperText={errors.key}
-                bordered
+                color={errors.key ? "danger" : "primary"}
+                description={errors.key}
+                variant="bordered"
                 fullWidth
               />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={2} />
             <Row align="center">
               <Link
                 href="https://chartbrew.com/blog/how-to-create-chartmogul-charts-in-chartbrew/#connecting-to-the-chartmogul-data-source"
                 target="_blank"
                 rel="noreferrer noopener"
-                css={{ color: "$secondary", ai: "center" }}
+                className="flex items-center text-secondary"
               >
-                <Text css={{ color: "$secondary" }}>
+                <Text className={"text-secondary"}>
                   {"Click here to learn how to find your ChartMogul API key"}
                 </Text>
-                <Spacer x={0.2} />
+                <Spacer x={1} />
                 <FaExternalLinkSquareAlt size={16} />
               </Link>
             </Row>
@@ -275,15 +257,15 @@ function ChartMogulTemplate(props) {
 
         {configuration && (
           <>
-            <Spacer y={1} />
+            <Spacer y={4} />
             <Row>
               <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row align="center">
-              <Grid.Container>
+              <div className="grid grid-cols-12">
                 {configuration.Charts && configuration.Charts.map((chart) => (
-                  <Grid key={chart.tid} xs={12} sm={6}>
+                  <div key={chart.tid} className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-3">
                     <Checkbox
                       isSelected={
                         _.indexOf(selectedCharts, chart.tid) > -1
@@ -293,26 +275,26 @@ function ChartMogulTemplate(props) {
                     >
                       {chart.name}
                     </Checkbox>
-                  </Grid>
+                  </div>
                 ))}
-              </Grid.Container>
+              </div>
             </Row>
 
-            <Spacer y={1} />
+            <Spacer y={4} />
             <Row>
               <Button
-                bordered
-                icon={<TickSquare />}
+                variant="bordered"
+                startContent={<TickSquare />}
                 auto
                 onClick={_onSelectAll}
                 size="sm"
               >
                 Select all
               </Button>
-              <Spacer x={0.2} />
+              <Spacer x={1} />
               <Button
-                bordered
-                icon={<CloseSquare />}
+                variant="bordered"
+                startContent={<CloseSquare />}
                 auto
                 onClick={_onDeselectAll}
                 size="sm"
@@ -325,7 +307,7 @@ function ChartMogulTemplate(props) {
 
         {addError && (
           <Row>
-            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+            <Container className={"bg-danger-100 p-10 rounded-md"}>
               <Row>
                 <Text h5>{"Server error while trying to save your connection"}</Text>
               </Row>
@@ -338,7 +320,7 @@ function ChartMogulTemplate(props) {
 
         {testError && (
           <Row>
-            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+            <Container className={"bg-danger-100 p-10 rounded-md"}>
               <Row>
                 <Text h5>{"Cannot make the connection"}</Text>
               </Row>
@@ -348,7 +330,7 @@ function ChartMogulTemplate(props) {
               <Row align="center">
                 <Link href="https://app.chartmogul.com/#/admin/api" target="_blank" rel="noreferrer">
                   <Text>{"Click here to go to the dashboard"}</Text>
-                  <Spacer x={0.2} />
+                  <Spacer x={1} />
                   <FaExternalLinkSquareAlt size={12} />
                 </Link>
               </Row>
@@ -356,7 +338,7 @@ function ChartMogulTemplate(props) {
           </Row>
         )}
 
-        <Spacer y={2} />
+        <Spacer y={4} />
         <Row>
           <Button
             disabled={
@@ -364,9 +346,9 @@ function ChartMogulTemplate(props) {
             }
             onClick={_onGenerateDashboard}
             auto
+            isLoading={loading}
           >
-            {loading && <Loading type="points" color="currentColor" />}
-            {!loading && "Create the charts"}
+            {"Create the charts"}
           </Button>
         </Row>
       </Container>

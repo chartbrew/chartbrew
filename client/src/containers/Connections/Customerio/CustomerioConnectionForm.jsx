@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Collapse, Container, Dropdown, Input, Link, Loading, Row, Spacer, Text,
-  useTheme, Chip,
+  Button, Input, Link, Spacer, Chip, Accordion, AccordionItem, Select, SelectItem, CircularProgress,
 } from "@nextui-org/react";
 import { InfoCircle } from "react-iconly";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
@@ -13,6 +12,10 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import HelpBanner from "../../../components/HelpBanner";
 import connectionImages from "../../../config/connectionImages";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 /*
 ** Customer.io form uses
@@ -31,7 +34,7 @@ function CustomerioConnectionForm(props) {
   const [testLoading, setTestLoading] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   const regionOptions = [
     {
@@ -110,21 +113,8 @@ function CustomerioConnectionForm(props) {
   return (
     <div style={styles.container}>
       <Container
-        css={{
-          backgroundColor: "$backgroundContrast",
-          br: "$md",
-          p: 10,
-          "@xs": {
-            p: 20,
-          },
-          "@sm": {
-            p: 20,
-          },
-          "@md": {
-            p: 20,
-          },
-        }}
-        md
+        className={"bg-content2 rounded-md p-10"}
+        size="md"
         justify="flex-start"
       >
         <Row align="center">
@@ -133,7 +123,7 @@ function CustomerioConnectionForm(props) {
             {editConnection && `Edit ${editConnection.name}`}
           </Text>
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={2} />
         <Row>
           <HelpBanner
             title="How to visualize your Customer.io data with Chartbrew"
@@ -144,7 +134,7 @@ function CustomerioConnectionForm(props) {
           />
         </Row>
 
-        <Spacer y={1} />
+        <Spacer y={4} />
         <Row align="center">
           <Input
             label="Name your connection"
@@ -153,91 +143,92 @@ function CustomerioConnectionForm(props) {
             onChange={(e) => {
               setConnection({ ...connection, name: e.target.value });
             }}
-            helperColor="error"
-            helperText={errors.name}
-            bordered
+            color={errors.name ? "danger" : "primary"}
+            description={errors.name}
+            variant="bordered"
             fullWidth
-            css={{ "@md": { width: "600px" } }}
+            className="md:w-[600px]"
           />
         </Row>
-        <Spacer y={1} />
+        <Spacer y={4} />
         <Row align="center">
-          <Input.Password
+          <Input
+            type="password"
             label="Your Customer.io API key"
             placeholder="Enter your Customer.io API key"
             value={connection.password || ""}
             onChange={(e) => {
               setConnection({ ...connection, password: e.target.value });
             }}
-            helperColor="error"
-            helperText={errors.password}
-            bordered
+            color={errors.password ? "danger" : "primary"}
+            description={errors.password}
+            variant="bordered"
             fullWidth
-            css={{ "@md": { width: "600px" } }}
+            className="md:w-[600px]"
           />
         </Row>
         <Spacer y={1} />
         <Row align="center">
-          <Collapse.Group bordered css={{ maxWidth: 600 }}>
-            <Collapse title={<Text b>How to get the API key</Text>}>
+          <Accordion variant="bordered" className={"max-w-[600px]"}>
+            <AccordionItem title={<Text b>How to get the API key</Text>}>
               <Container>
                 <Row align="center">
                   <Link
                     href="https://fly.customer.io/settings/api_credentials?keyType=app"
                     target="_blank"
                     rel="noreferrer noopener"
-                    css={{ ai: "center", color: "$primary" }}
+                    className="align-middle text-primary"
                   >
-                    <Text b color="primary">{"1. Create a Customer.io App API Key "}</Text>
-                    <Spacer x={0.2} />
+                    <Text b className="text-primary">{"1. Create a Customer.io App API Key "}</Text>
+                    <Spacer x={1} />
                     <FaExternalLinkSquareAlt size={14} />
                   </Link>
                 </Row>
-                <Spacer y={0.5} />
+                <Spacer y={2} />
                 <Row>
                   <Text b>{"2. (Optional) Add your server's IP address to the allowlist"}</Text>
                 </Row>
-                <Spacer y={0.5} />
+                <Spacer y={2} />
                 <Row>
                   <Text b>{"3. Copy and paste the API Key here"}</Text>
                 </Row>
               </Container>
-            </Collapse>
-          </Collapse.Group>
+            </AccordionItem>
+          </Accordion>
         </Row>
-        <Spacer y={1} />
+        <Spacer y={4} />
         <Row align="flex-start">
-          <Dropdown isBordered>
-            <Dropdown.Trigger>
-              <Input
-                label="Where is your Customer.io data located?"
-                initialValue="us"
-                value={_getRegionText(connection.host)}
-              />
-            </Dropdown.Trigger>
-            <Dropdown.Menu
-              onAction={(key) => setConnection({ ...connection, host: key })}
-              selectedKeys={[connection.host]}
-              selectionMode="single"
-            >
-              {regionOptions.map((option) => (
-                <Dropdown.Item key={option.value}>
-                  {option.text}
-                </Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
-          <Spacer x={0.5} />
-          <Link href="https://fly.customer.io/settings/privacy" target="_blank" rel="noopener noreferrer" title="Locate the region" css={{ color: "$primary" }}>
+          <Select
+            variant="bordered"
+            label="Where is your Customer.io data located?"
+            value={_getRegionText(connection.host)}
+            selectedKeys={[connection.host]}
+            selectionMode="single"
+            onSelectionChange={(key) => setConnection({ ...connection, host: key })}
+          >
+            {regionOptions.map((option) => (
+              <SelectItem key={option.value}>
+                {option.text}
+              </SelectItem>
+            ))}
+          </Select>
+          <Spacer x={1} />
+          <Link
+            href="https://fly.customer.io/settings/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Locate the region"
+            className={"text-primary"}
+          >
             <InfoCircle />
           </Link>
         </Row>
 
-        <Spacer y={1} />
+        <Spacer y={4} />
 
         {addError && (
           <Row>
-            <Container css={{ backgroundColor: "$red300", p: 10 }}>
+            <Container className={"bg-danger-100 p-10"}>
               <Row>
                 <Text h5>{"Server error while trying to save your connection"}</Text>
               </Row>
@@ -248,46 +239,40 @@ function CustomerioConnectionForm(props) {
           </Row>
         )}
 
-        <Spacer y={1} />
+        <Spacer y={4} />
         <Row>
           <Button
-            ghost
+            variant="ghost"
             auto
             onClick={() => _onCreateConnection(true)}
-            disabled={testLoading}
+            isLoading={testLoading}
           >
-            {testLoading && <Loading type="points" color="currentColor" />}
-            {!testLoading && "Test connection"}
+            {"Test connection"}
           </Button>
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           <Button
-            disabled={loading}
+            isLoading={loading}
             onClick={_onCreateConnection}
             auto
           >
-            {loading && <Loading type="points" color="currentColor" />}
-            {!loading && "Save connection"}
+            {"Save connection"}
           </Button>
         </Row>
       </Container>
 
       {testLoading && (
-        <Container css={{ backgroundColor: "$backgroundContrast", br: "$md", p: 20 }} md>
+        <Container className="bg-content2 rounded-md p-20" size="md">
           <Row align="center">
-            <Loading type="points">
-              Test underway...
-            </Loading>
+            <CircularProgress aria-label="Loading" />
           </Row>
-          <Spacer y={2} />
+          <Spacer y={4} />
         </Container>
       )}
 
       {testResult && !testLoading && (
         <Container
-          css={{
-            backgroundColor: "$backgroundContrast", br: "$md", p: 20, mt: 20
-          }}
-          md
+          className={"bg-content2 rounded-md mt-20 p-20"}
+          size="md"
         >
           <Row align="center">
             <Text>
@@ -299,7 +284,7 @@ function CustomerioConnectionForm(props) {
               </Chip>
             </Text>
           </Row>
-          <Spacer y={1} />
+          <Spacer y={4} />
           <AceEditor
             mode="json"
             theme={isDark ? "one_dark" : "tomorrow"}
