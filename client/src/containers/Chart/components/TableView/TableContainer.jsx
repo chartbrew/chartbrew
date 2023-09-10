@@ -1,11 +1,13 @@
 import React, { Fragment, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Row, Spacer, Text
+  Button, Spacer,
 } from "@nextui-org/react";
 import { ChevronDownCircle, ChevronUpCircle } from "react-iconly";
 
 import TableComponent from "./TableComponent";
+import Row from "../../../../components/Row";
+import Text from "../../../../components/Text";
 
 function TableContainer(props) {
   const {
@@ -55,25 +57,24 @@ function TableContainer(props) {
               <Button
                 onClick={() => setActiveDataset(dataset)}
                 color="primary"
-                light={activeDataset.id !== dataset.id}
-                bordered={activeDataset.id === dataset.id}
+                variant={activeDataset.id !== dataset.id ? "light" : "bordered"}
                 auto
                 size={chartSize === 1 ? "xs" : "sm"}
               >
                 {dataset.legend}
               </Button>
-              <Spacer x={0.2} />
+              <Spacer x={0.4} />
             </Fragment>
           );
         })}
-        <Spacer x={0.2} />
+        <Spacer x={1} />
         {!embedded && (
           <Button
-            icon={expanded ? <ChevronUpCircle /> : <ChevronDownCircle />}
+            startContent={expanded ? <ChevronUpCircle /> : <ChevronDownCircle />}
             onClick={() => _onExpand()}
             auto
             size={chartSize === 1 ? "xs" : "sm"}
-            light
+            variant="light"
           >
             {expanded ? "See less" : "See more"}
           </Button>
@@ -82,12 +83,12 @@ function TableContainer(props) {
         {activeDataset?.configuration?.sum && (
           <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
             <Text>{`Total ${activeDataset.configuration.sum}:`}</Text>
-            <Spacer x={0.3} />
+            <Spacer x={0.6} />
             <Text b>{totalValue.toLocaleString()}</Text>
           </div>
         )}
       </Row>
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       {activeDataset?.legend
         && tabularData[activeDataset.legend]
         && tabularData[activeDataset.legend].columns

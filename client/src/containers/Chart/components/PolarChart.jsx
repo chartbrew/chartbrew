@@ -1,8 +1,7 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { PolarArea } from "react-chartjs-2";
-import { useTheme } from "@nextui-org/react";
-
+import { semanticColors } from "@nextui-org/react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,7 +13,9 @@ import {
   Legend,
   Filler,
 } from "chart.js";
+
 import ChartErrorBoundary from "./ChartErrorBoundary";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler
@@ -33,7 +34,7 @@ function PolarChart(props) {
     }
   }, [redraw]);
 
-  const { theme } = useTheme();
+  const theme = useThemeDetector() ? "dark" : "light";
 
   const _getChartOptions = () => {
     // add any dynamic changes to the chartJS options here
@@ -44,19 +45,19 @@ function PolarChart(props) {
         newOptions.scales = {
           r: {
             grid: {
-              color: theme.colors.accents7.value,
+              color: semanticColors[theme].content4.DEFAULT,
             },
             angleLines: {
-              color: theme.colors.accents7.value,
+              color: semanticColors[theme].content4.DEFAULT,
             },
             pointLabels: {
-              color: theme.colors.accents9.value,
+              color: semanticColors[theme].foreground.DEFAULT,
             },
           }
         };
       }
       if (newOptions.plugins?.legend?.labels) {
-        newOptions.plugins.legend.labels.color = theme.colors.accents9.value;
+        newOptions.plugins.legend.labels.color = semanticColors[theme].foreground.DEFAULT;
       }
 
       return newOptions;

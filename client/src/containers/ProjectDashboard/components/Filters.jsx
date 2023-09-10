@@ -7,13 +7,16 @@ import { formatISO, format } from "date-fns";
 import { Calendar, DateRange } from "react-date-range";
 import { enGB } from "date-fns/locale";
 import {
-  Container, Dropdown, Row, Spacer, Text, Link as LinkNext, Input, Popover,
-  Tooltip, Button, Modal, Badge, Divider,
+  Dropdown, Spacer, Link as LinkNext, Input, Popover,
+  Tooltip, Button, Modal, Chip, Divider, ModalHeader, ModalBody, ModalFooter, Tabs, Tab, PopoverTrigger, PopoverContent, DropdownTrigger, DropdownMenu, DropdownItem,
 } from "@nextui-org/react";
 import { Calendar as CalendarIcon, InfoCircle, Plus } from "react-iconly";
 
 import { operators } from "../../../modules/filterOperations";
 import { primary, secondary } from "../../../config/colors";
+import Container from "../../../components/Container";
+import Text from "../../../components/Text";
+import Row from "../../../components/Row";
 
 function Filters(props) {
   const {
@@ -209,48 +212,24 @@ function Filters(props) {
   };
 
   return (
-    <Modal open={open} onClose={onClose} closeButton width="800px">
-      <Modal.Header>
+    <Modal isOpen={open} onClose={onClose} closeButton className="w-[800px]">
+      <ModalHeader>
         <Text h3>Dashboard filters</Text>
-      </Modal.Header>
-      <Modal.Body>
+      </ModalHeader>
+      <ModalBody>
         <Container>
           <Row>
-            <LinkNext
-              css={{
-                background: filterType === "date" ? "$blue100" : "$backgroundContrast",
-                p: 5,
-                pr: 10,
-                pl: 10,
-                br: "$sm",
-                "@xsMax": { width: "90%" },
-                ai: "center",
-                color: "$text",
-              }}
-              onPress={() => setFilterType("date")}
+            <Tabs
+              selectedKey={filterType}
+              onSelectionChange={(selection) => setFilterType(selection)}
             >
-              Date filters
-            </LinkNext>
-            <Spacer x={0.5} />
-            <LinkNext
-              css={{
-                background: filterType === "custom" ? "$blue100" : "$backgroundContrast",
-                p: 5,
-                pr: 10,
-                pl: 10,
-                br: "$sm",
-                "@xsMax": { width: "90%" },
-                ai: "center",
-                color: "$text",
-              }}
-              onPress={() => setFilterType("custom")}
-            >
-              Field-based filters
-            </LinkNext>
+              <Tab key="date" title="Date" />
+              <Tab key="custom" title="Custom" />
+            </Tabs>
           </Row>
-          <Spacer y={0.5} />
+          <Spacer y={1} />
           <Divider />
-          <Spacer y={0.5} />
+          <Spacer y={1} />
 
           {filterType === "date" && (
             <>
@@ -263,79 +242,79 @@ function Filters(props) {
                   {" variables in the queries."}
                 </Text>
               </Row>
-              <Spacer y={1} />
+              <Spacer y={2} />
               <Row wrap="wrap">
-                <LinkNext onPress={() => _onSelectRange("this_month")} css={{ mb: 5 }}>
-                  <Badge color="primary" size="sm" variant={"bordered"}>
+                <LinkNext onPress={() => _onSelectRange("this_month")} className="mb-5">
+                  <Chip color="primary" size="sm" variant={"bordered"}>
                     This month
-                  </Badge>
+                  </Chip>
                 </LinkNext>
-                <Spacer x={0.2} />
-                <LinkNext onPress={() => _onSelectRange("last_7_days")} css={{ mb: 5 }}>
-                  <Badge color="primary" size="sm" variant={"bordered"}>
+                <Spacer x={0.5} />
+                <LinkNext onPress={() => _onSelectRange("last_7_days")} className="mb-5">
+                  <Chip color="primary" size="sm" variant={"bordered"}>
                     Last 7 days
-                  </Badge>
+                  </Chip>
                 </LinkNext>
-                <Spacer x={0.2} />
-                <LinkNext onPress={() => _onSelectRange("last_30_days")} css={{ mb: 5 }}>
-                  <Badge color="primary" size="sm" variant={"bordered"}>
+                <Spacer x={0.5} />
+                <LinkNext onPress={() => _onSelectRange("last_30_days")} className="mb-5">
+                  <Chip color="primary" size="sm" variant={"bordered"}>
                     Last 30 days
-                  </Badge>
+                  </Chip>
                 </LinkNext>
-                <Spacer x={0.2} />
-                <LinkNext onPress={() => _onSelectRange("last_90_days")} css={{ mb: 5 }}>
-                  <Badge color="primary" size="sm" variant={"bordered"}>
+                <Spacer x={0.5} />
+                <LinkNext onPress={() => _onSelectRange("last_90_days")} className="mb-5">
+                  <Chip color="primary" size="sm" variant={"bordered"}>
                     Last 90 days
-                  </Badge>
+                  </Chip>
                 </LinkNext>
-                <Spacer x={0.2} />
-                <LinkNext onPress={() => _onSelectRange("last_year")} css={{ mb: 5 }}>
-                  <Badge color="primary" size="sm" variant={"bordered"}>
+                <Spacer x={0.5} />
+                <LinkNext onPress={() => _onSelectRange("last_year")} className="mb-5">
+                  <Chip color="primary" size="sm" variant={"bordered"}>
                     Last year
-                  </Badge>
+                  </Chip>
                 </LinkNext>
-                <Spacer x={0.2} />
-                <LinkNext onPress={() => _onSelectRange("quarter_to_date")} css={{ mb: 5 }}>
-                  <Badge color="primary" size="sm" variant={"bordered"}>
+                <Spacer x={0.5} />
+                <LinkNext onPress={() => _onSelectRange("quarter_to_date")} className="mb-5">
+                  <Chip color="primary" size="sm" variant={"bordered"}>
                     Quarter to date
-                  </Badge>
+                  </Chip>
                 </LinkNext>
-                <Spacer x={0.2} />
-                <LinkNext onPress={() => _onSelectRange("last_quarter")} css={{ mb: 5 }}>
-                  <Badge color="primary" size="sm" variant={"bordered"}>
+                <Spacer x={0.5} />
+                <LinkNext onPress={() => _onSelectRange("last_quarter")} className="mb-5">
+                  <Chip color="primary" size="sm" variant={"bordered"}>
                     Last quarter
-                  </Badge>
+                  </Chip>
                 </LinkNext>
-                <Spacer x={0.2} />
-                <LinkNext onPress={() => _onSelectRange("year_to_date")} css={{ mb: 5 }}>
-                  <Badge color="primary" size="sm" variant={"bordered"}>
+                <Spacer x={0.5} />
+                <LinkNext onPress={() => _onSelectRange("year_to_date")} className="mb-5">
+                  <Chip color="primary" size="sm" variant={"bordered"}>
                     Year to date
-                  </Badge>
+                  </Chip>
                 </LinkNext>
               </Row>
-              <Spacer y={1} />
+              <Spacer y={2} />
               <Row align="center">
-                <Popover css={{ zIndex: 99999 }}>
-                  <Popover.Trigger>
+                <Popover className={"z-[99999]"}>
+                  <PopoverTrigger>
                     <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                       <Input
                         placeholder="Start date"
                         label="Start date"
                         value={dateRange.startDate && moment(dateRange.startDate).format("Do MMM YYYY")}
                         readOnly
-                        bordered
+                        variant="bordered"
                       />
-                      <Spacer x={0.5} />
+                      <Spacer x={1} />
                       <Input
                         placeholder="End date"
                         label="End date"
                         value={dateRange.endDate && moment(dateRange.endDate).format("Do MMM YYYY")}
                         readOnly
-                        bordered
+                        variant="bordered"
                       />
                     </div>
-                  </Popover.Trigger>
-                  <Popover.Content>
+                  </PopoverTrigger>
+                  <PopoverContent>
                     <DateRange
                       direction="horizontal"
                       rangeColors={[secondary, primary]}
@@ -351,30 +330,29 @@ function Filters(props) {
                       showPreview={false}
                       showDateDisplay={false}
                     />
-                  </Popover.Content>
+                  </PopoverContent>
                 </Popover>
               </Row>
-              <Spacer y={1} />
+              <Spacer y={2} />
               <Row>
                 <Text>
                   Select the charts that will be affected by the date filter
                 </Text>
               </Row>
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               <Row wrap="wrap">
                 {charts.map((chart) => (
                   <Fragment key={chart.id}>
                     <LinkNext onPress={() => onEditFilterGroup(chart.id)} css={{ pb: 5 }}>
-                      <Badge
+                      <Chip
                         color="primary"
-                        isSquared
+                        radius="sm"
                         variant={filterGroups.find(c => c === chart.id) ? "default" : "bordered"}
-                        disableOutline
                       >
                         {chart.name}
-                      </Badge>
+                      </Chip>
                     </LinkNext>
-                    <Spacer x={0.3} />
+                    <Spacer x={0.6} />
                   </Fragment>
                 ))}
               </Row>
@@ -384,51 +362,63 @@ function Filters(props) {
           {filterType === "custom" && (
             <>
               <Row align="center">
-                <Dropdown isBordered>
-                  <Dropdown.Button flat>
-                    {(filter.field && filter.field.substring(filter.field.lastIndexOf(".") + 1)) || "Select a field"}
-                  </Dropdown.Button>
-                  <Dropdown.Menu
+                <Dropdown>
+                  <DropdownTrigger>
+                    <Button
+                      variant="flat"
+                      color="default"
+                    >
+                      {(filter.field && filter.field.substring(filter.field.lastIndexOf(".") + 1)) || "Select a field"}
+                    </Button>
+                  </DropdownTrigger>
+                  <DropdownMenu
+                    variant="bordered"
                     selectedKeys={[filter.field]}
                     onSelectionChange={(selection) => _updateFilter(Object.values(selection)[0], "field")}
                     selectionMode="single"
-                    css={{ maxWidth: "max-content" }}
+                    className="min-w-max"
                   >
                     {fieldOptions.map((field) => (
-                      <Dropdown.Item key={field.value}>
-                        <LinkNext css={{ ai: "center", color: "$text" }}>
-                          <Badge size="sm" color={field.label.color} css={{ minWidth: 70 }}>
+                      <DropdownItem key={field.value}>
+                        <LinkNext className="flex align-middle text-default">
+                          <Chip size="sm" color={field.label.color} className="min-w-[70px]">
                             {field.type}
-                          </Badge>
-                          <Spacer x={0.2} />
+                          </Chip>
+                          <Spacer x={0.5} />
                           <Text>
                             {field.text}
                           </Text>
                         </LinkNext>
-                      </Dropdown.Item>
+                      </DropdownItem>
                     ))}
-                  </Dropdown.Menu>
+                  </DropdownMenu>
                 </Dropdown>
-                <Spacer x={0.2} />
-                <Dropdown isBordered>
-                  <Dropdown.Button flat>
-                    {(_.find(operators, { value: filter.operator })
-                      && _.find(operators, { value: filter.operator }).key)
-                      || "="}
-                  </Dropdown.Button>
-                  <Dropdown.Menu
+                <Spacer x={0.5} />
+                <Dropdown>
+                  <DropdownTrigger>
+                    <Button
+                      variant="flat"
+                      color="default"
+                    >
+                      {(_.find(operators, { value: filter.operator })
+                        && _.find(operators, { value: filter.operator }).key)
+                        || "="}
+                    </Button>
+                  </DropdownTrigger>
+                  <DropdownMenu
+                    variant="bordered"
                     selectionMode="single"
                     selectedKeys={[filter.operator]}
                     onSelectionChange={(selection) => _updateFilter(Object.values(selection)[0], "operator")}
                   >
                     {operators.map((op) => (
-                      <Dropdown.Item key={op.value}>
+                      <DropdownItem key={op.value}>
                         {op.text}
-                      </Dropdown.Item>
+                      </DropdownItem>
                     ))}
-                  </Dropdown.Menu>
+                  </DropdownMenu>
                 </Dropdown>
-                <Spacer x={0.2} />
+                <Spacer x={0.5} />
                 {(!filter.field
                   || (_.find(fieldOptions, { value: filter.field })
                     && _.find(fieldOptions, { value: filter.field }).type !== "date")) && (
@@ -441,54 +431,53 @@ function Filters(props) {
                 {_.find(fieldOptions, { value: filter.field })
                   && _.find(fieldOptions, { value: filter.field }).type === "date" && (
                     <Popover placement="bottom">
-                      <Popover.Trigger>
+                      <PopoverTrigger>
                         <Input
                           placeholder="Click to open calendar"
-                          contentLeft={<CalendarIcon />}
+                          startContent={<CalendarIcon />}
                           value={(filter.value && format(new Date(filter.value), "Pp", { locale: enGB })) || ""}
                         />
-                      </Popover.Trigger>
-                      <Popover.Content>
+                      </PopoverTrigger>
+                      <PopoverContent>
                         <Calendar
                           date={(filter.value && new Date(filter.value)) || new Date()}
                           onChange={(date) => _updateFilter(formatISO(date), "value")}
                           locale={enGB}
                           color={secondary}
                         />
-                      </Popover.Content>
+                      </PopoverContent>
                     </Popover>
                 )}
-                <Spacer x={0.2} />
+                <Spacer x={0.5} />
                 <Tooltip content={"If you can't see your fields, please go in each chart and re-run the queries. Chartbrew will then index the fields and then they will appear here."} css={{ zIndex: 99999 }}>
-                  <LinkNext css={{ color: "$blue400" }}>
+                  <LinkNext className="text-primary-400">
                     <InfoCircle />
                   </LinkNext>
                 </Tooltip>
               </Row>
-              <Spacer y={1} />
+              <Spacer y={2} />
               {filter.field && (
                 <>
                   <Row align="center">
                     <Text b>The filter will affect the following charts:</Text>
                   </Row>
-                  <Spacer y={0.5} />
+                  <Spacer y={1} />
                   <Row wrap="wrap">
                     {_getChartsWithField(filter.field).map((chart) => (
                       <>
-                        <Badge color="primary" key={chart.id} isSquared>
+                        <Chip color="primary" key={chart.id} radius="sm">
                           {chart.name}
-                        </Badge>
-                        <Spacer x={0.1} />
+                        </Chip>
+                        <Spacer x={0.3} />
                       </>
                     ))}
                   </Row>
                 </>
               )}
-              <Spacer y={1} />
+              <Spacer y={2} />
               <Row>
                 <Button
-                  iconRight={<Plus />}
-                  content="Apply filter"
+                  endContent={<Plus />}
                   disabled={!filter.value}
                   onClick={_onAddFilter}
                   auto
@@ -499,15 +488,15 @@ function Filters(props) {
             </>
           )}
         </Container>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button auto onClick={onClose} color="warning" flat>
+      </ModalBody>
+      <ModalFooter>
+        <Button auto onClick={onClose} color="warning" variant="flat">
           Close
         </Button>
         <Button auto onClick={_onApplyFilter}>
           Apply filter
         </Button>
-      </Modal.Footer>
+      </ModalFooter>
     </Modal>
   );
 }

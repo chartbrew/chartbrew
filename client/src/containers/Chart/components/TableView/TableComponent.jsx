@@ -2,12 +2,16 @@ import React from "react";
 import { usePagination, useSortBy, useTable } from "react-table";
 import PropTypes from "prop-types";
 import {
-  Dropdown, Row, Spacer, Text, Link as LinkNext, Table,
-  Popover, Pagination, Badge,
+  Dropdown, Spacer, Link as LinkNext, Table, Popover, Pagination, Chip,
+  TableHeader, TableColumn, TableBody, TableRow, TableCell, PopoverTrigger,
+  PopoverContent,
 } from "@nextui-org/react";
 import {
   ChevronDownCircle, ChevronUpCircle
 } from "react-iconly";
+
+import Row from "../../../../components/Row";
+import Text from "../../../../components/Text";
 
 const paginationOptions = [5, 10, 20, 30, 40, 50].map((pageSize) => ({
   key: pageSize,
@@ -54,18 +58,50 @@ function TableComponent(props) {
         <>
           <Table
             {...getTableProps()}
-            shadow={false}
-            lined
-            sticked
+            isStriped
+            shadow="none"
+            bottomContent={(
+              <div>
+                <Row align="center">
+                  <Pagination
+                    total={pageCount}
+                    initialPage={1}
+                    onChange={(page) => {
+                      gotoPage(page - 1);
+                    }}
+                    size="sm"
+                  />
+                  <Spacer x={0.5} />
+                  <Dropdown isBordered>
+                    <Dropdown.Button bordered size="sm">
+                      {paginationOptions.find((option) => option.value === pageSize).text}
+                    </Dropdown.Button>
+                    <Dropdown.Menu
+                      selectionMode="single"
+                      selectedKeys={[`${pageSize}`]}
+                      onSelectionChange={(selection) => {
+                        setPageSize(Number(Object.values(selection)[0]));
+                      }}
+                    >
+                      {paginationOptions.map((option) => (
+                        <Dropdown.Item key={`${option.value}`}>
+                          <Text css={{ color: "$text" }}>{option.text}</Text>
+                        </Dropdown.Item>
+                      ))}
+                    </Dropdown.Menu>
+                  </Dropdown>
+                </Row>
+              </div>
+            )}
           >
-            <Table.Header>
+            <TableHeader>
               {headerGroups[headerGroups.length - 1].headers.map((column) => {
                 return (
-                  <Table.Column
+                  <TableColumn
                     key={column.getHeaderProps(column.getSortByToggleProps()).key}
-                    style={{ maxWidth: 400, whiteSpace: "unset" }}
+                    style={{ whiteSpace: "unset" }}
                     justify="center"
-                    css={{ pl: 10, pr: 10 }}
+                    className={"pl-10 pr-10 max-w-[400px]"}
                   >
                     <Row align="center">
                       {column.isSorted
@@ -82,20 +118,20 @@ function TableComponent(props) {
                         </Text>
                       </LinkNext>
                     </Row>
-                  </Table.Column>
+                  </TableColumn>
                 );
               })}
-            </Table.Header>
-            <Table.Body {...getTableBodyProps()}>
+            </TableHeader>
+            <TableBody {...getTableBodyProps()}>
               {page.length < 1 && (
-                <Table.Row>
-                  <Table.Cell key="noresult">No Results</Table.Cell>
-                </Table.Row>
+                <TableRow>
+                  <TableCell key="noresult">No Results</TableCell>
+                </TableRow>
               )}
               {page.map((row) => {
                 prepareRow(row);
                 return (
-                  <Table.Row key={row.getRowProps().key} {...row.getRowProps()}>
+                  <TableRow key={row.getRowProps().key} {...row.getRowProps()}>
                     {row.cells.map((cell, cellIndex) => {
                       // identify collections to render them differently
                       const cellObj = cell.render("Cell");
@@ -111,19 +147,21 @@ function TableComponent(props) {
                       const isShort = isObject && Object.keys(objDetails).length === 1;
 
                       return (
-                        <Table.Cell
+                        <TableCell
                           key={`${row.id}-${cell.column.Header}`}
                           {...cell.getCellProps()}
+                          className={"max-w-[300px] pr-10 pl-10"}
                           css={{
                             userSelect: "text",
-                            maxWidth: 300,
-                            pr: 10,
-                            pl: 10,
                             borderRight: cellIndex === row.cells.length - 1 ? "none" : "$accents3 solid 1px",
                           }}
                         >
                           {(!isObject && !isArray) && (
-                            <Text size={"0.9em"} title={cellObj.props.value} css={{ whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
+                            <Text
+                              size={"sm"}
+                              title={cellObj.props.value}
+                              className="whitespace-nowrap overflow-ellipsis overflow-hidden"
+                            >
                               <span
                                 style={{ cursor: "text", WebkitUserSelect: "text", whiteSpace: "nowrap" }}
                                 onPointerDown={(e) => e.stopPropagation()}
@@ -137,53 +175,24 @@ function TableComponent(props) {
                           )}
                           {(isObject || isArray) && (
                             <Popover>
-                              <Popover.Trigger>
-                                <LinkNext><Badge color="primary" variant={"flat"}>{(isShort && `${Object.values(objDetails)[0]}`) || "Collection"}</Badge></LinkNext>
-                              </Popover.Trigger>
-                              <Popover.Content>
+                              <PopoverTrigger>
+                                <LinkNext>
+                                  <Chip color="primary" variant={"flat"}>{(isShort && `${Object.values(objDetails)[0]}`) || "Collection"}</Chip>
+                                </LinkNext>
+                              </PopoverTrigger>
+                              <PopoverContent>
                                 <pre><code>{JSON.stringify(objDetails, null, 4)}</code></pre>
-                              </Popover.Content>
+                              </PopoverContent>
                             </Popover>
                           )}
-                        </Table.Cell>
+                        </TableCell>
                       );
                     })}
-                  </Table.Row>
+                  </TableRow>
                 );
               })}
-            </Table.Body>
+            </TableBody>
           </Table>
-          <div>
-            <Row align="center">
-              <Pagination
-                total={pageCount}
-                initialPage={1}
-                onChange={(page) => {
-                  gotoPage(page - 1);
-                }}
-                size="sm"
-              />
-              <Spacer x={0.5} />
-              <Dropdown isBordered>
-                <Dropdown.Button bordered size="sm">
-                  {paginationOptions.find((option) => option.value === pageSize).text}
-                </Dropdown.Button>
-                <Dropdown.Menu
-                  selectionMode="single"
-                  selectedKeys={[`${pageSize}`]}
-                  onSelectionChange={(selection) => {
-                    setPageSize(Number(Object.values(selection)[0]));
-                  }}
-                >
-                  {paginationOptions.map((option) => (
-                    <Dropdown.Item key={`${option.value}`}>
-                      <Text css={{ color: "$text" }}>{option.text}</Text>
-                    </Dropdown.Item>
-                  ))}
-                </Dropdown.Menu>
-              </Dropdown>
-            </Row>
-          </div>
         </>
         )}
     </div>

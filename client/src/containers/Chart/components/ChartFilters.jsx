@@ -4,7 +4,7 @@ import { Calendar } from "react-date-range";
 import { enGB } from "date-fns/locale";
 import { format, formatISO } from "date-fns";
 import {
-  Container, Row, Button, Dropdown, Spacer, Text, Input,
+  Button, Dropdown, Spacer, Input, DropdownTrigger, DropdownMenu, DropdownItem,
 } from "@nextui-org/react";
 import { Calendar as CalendarIcon, CloseSquare, TickSquare } from "react-iconly";
 
@@ -14,6 +14,9 @@ import "react-date-range/dist/theme/default.css"; // theme css file
 import { secondary } from "../../../config/colors";
 import determineType from "../../../modules/determineType";
 import * as operations from "../../../modules/filterOperations";
+import Text from "../../../components/Text";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
 
 function ChartFilters(props) {
   const {
@@ -72,7 +75,7 @@ function ChartFilters(props) {
 
   return (
     <div>
-      <Container css={{ pl: 0, pr: 0 }}>
+      <Container className={"pl-0 pr-0"}>
         {!_checkIfFilters() && (
           <Row>
             <p>No filters available</p>
@@ -88,20 +91,20 @@ function ChartFilters(props) {
                     <Row align="center">
                       <div>
                         <Row align="center">
-                          <Text b size={14}>
+                          <Text b>
                             {condition.displayName || condition.field.substring(condition.field.lastIndexOf(".") + 1)}
                           </Text>
-                          <Spacer x={0.2} />
-                          <Text size={14}>
+                          <Spacer x={0.5} />
+                          <Text>
                             {operations
                               .operators?.find((o) => condition.operator === o.value)?.text}
                           </Text>
                         </Row>
-                        <Spacer y={0.2} />
+                        <Spacer y={0.5} />
                         <div style={{ display: "flex", alignItems: "center" }}>
                           {condition.type !== "date" && !condition.hideValues && (
-                            <Dropdown isBordered>
-                              <Dropdown.Trigger type="text">
+                            <Dropdown>
+                              <DropdownTrigger type="text">
                                 <Input
                                   type="text"
                                   value={
@@ -114,25 +117,25 @@ function ChartFilters(props) {
                                       ...optionFilter, [condition.id]: e.target.value
                                     });
                                   }}
-                                  bordered
+                                  variant="bordered"
                                   size="sm"
-                                  contentRightStyling={false}
-                                  contentRight={(
+                                  endContent={(
                                     <Button
                                       auto
-                                      icon={<TickSquare />}
+                                      startContent={<TickSquare />}
                                       color="success"
                                       size="sm"
-                                      css={{ minWidth: "fit-content" }}
-                                      flat
+                                      className={"min-w-fit"}
+                                      variant="flat"
                                       onClick={() => {
                                         _onOptionSelected(optionFilter[condition.id], condition);
                                       }}
                                     />
                                   )}
                                 />
-                              </Dropdown.Trigger>
-                              <Dropdown.Menu
+                              </DropdownTrigger>
+                              <DropdownMenu
+                                variant="bordered"
                                 selectedKeys={[`${_getConditionValue(condition.id)}`]}
                                 onSelectionChange={(selection) => {
                                   _onOptionSelected(Object.values(selection)[0], condition);
@@ -141,14 +144,14 @@ function ChartFilters(props) {
                                   });
                                 }}
                                 selectionMode="single"
-                                css={{ minWidth: "max-content" }}
+                                className="min-w-max"
                               >
                                 {_getFilteredOptions(filterOptions, condition.id).map((opt) => (
-                                  <Dropdown.Item key={opt.value}>
+                                  <DropdownItem key={opt.value}>
                                     {opt.text}
-                                  </Dropdown.Item>
+                                  </DropdownItem>
                                 ))}
-                              </Dropdown.Menu>
+                              </DropdownMenu>
                             </Dropdown>
                           )}
                           {condition.type !== "date" && condition.hideValues && (
@@ -164,17 +167,16 @@ function ChartFilters(props) {
                                   ...optionFilter, [condition.id]: e.target.value
                                 });
                               }}
-                              bordered
+                              variant="bordered"
                               size="sm"
-                              contentRightStyling={false}
-                              contentRight={(
+                              endContent={(
                                 <Button
                                   auto
-                                  icon={<TickSquare />}
+                                  startContent={<TickSquare />}
                                   color="success"
                                   size="sm"
-                                  css={{ minWidth: "fit-content" }}
-                                  flat
+                                  className="min-w-fit"
+                                  variant="flat"
                                   onClick={() => {
                                     _onOptionSelected(optionFilter[condition.id], condition);
                                   }}
@@ -185,22 +187,24 @@ function ChartFilters(props) {
                           {condition.type === "date" && calendarOpen !== condition.id && (
                             <>
                               <Button
-                                bordered
-                                icon={<CalendarIcon />}
+                                variant="bordered"
+                                startContent={<CalendarIcon />}
                                 onClick={() => setCalendarOpen(condition.id)}
                                 auto
                                 size="sm"
                               >
                                 {(_getConditionValue(condition.id) && format(new Date(_getConditionValue(condition.id)), "Pp", { locale: enGB })) || "Select a date"}
                               </Button>
-                              <Spacer x={0.2} />
+                              <Spacer x={0.5} />
                               {_getConditionValue(condition.id) && (
                                 <Button
-                                  light
-                                  icon={<CloseSquare />}
+                                  variant="light"
+                                  isIconOnly
                                   onClick={() => _onOptionSelected("", condition)}
                                   auto
-                                />
+                                >
+                                  <CloseSquare />
+                                </Button>
                               )}
                             </>
                           )}
@@ -221,7 +225,7 @@ function ChartFilters(props) {
                         </div>
                       </div>
                     </Row>
-                    <Spacer y={0.5} />
+                    <Spacer y={1} />
                   </Fragment>
                 );
               });

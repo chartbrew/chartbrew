@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Checkbox, Container, Divider, Dropdown, Input, Loading,
-  Row, Spacer, Text, Tooltip,
+  Button, Checkbox, CircularProgress, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Spacer, Tooltip,
 } from "@nextui-org/react";
 import { ChevronDown, InfoCircle } from "react-iconly";
 import { HiRefresh } from "react-icons/hi";
@@ -21,6 +20,9 @@ import DoughnutChart from "../../Chart/components/DoughnutChart";
 import PolarChart from "../../Chart/components/PolarChart";
 import PieChart from "../../Chart/components/PieChart";
 import TableContainer from "../../Chart/components/TableView/TableContainer";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
 
 const chartModes = [{
   key: "chart",
@@ -114,37 +116,23 @@ function ChartPreview(props) {
   };
 
   return (
-    <Container
-      css={{
-        backgroundColor: "$backgroundContrast",
-        br: "$md",
-        "@xs": {
-          p: 20,
-        },
-        "@sm": {
-          p: 20,
-        },
-        "@md": {
-          p: 20,
-        },
-      }}
-    >
+    <Container className={"bg-content2 rounded-md"}>
       {chart && chart.chartData && chart.Datasets && (
         <>
-          <Container style={{ minHeight: 350 }}>
+          <Container className={"min-h-[350px]"}>
             <Row justify="flex-start" align="center">
               <Button
                 onClick={_onRefreshData}
-                disabled={chartLoading}
+                isLoading={chartLoading}
                 size="sm"
-                iconRight={chartLoading ? <Loading type="spinner" /> : <HiRefresh size={18} />}
+                endContent={<HiRefresh size={18} />}
                 auto
                 color="primary"
-                ghost
+                variant="ghost"
               >
                 {"Refresh chart"}
               </Button>
-              <Spacer x={0.5} />
+              <Spacer x={1} />
               <Checkbox
                 isSelected={!invalidateCache}
                 onChange={changeCache}
@@ -152,18 +140,18 @@ function ChartPreview(props) {
               >
                 {"Use cached data"}
               </Checkbox>
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Tooltip
                 content="Chartbrew will use cached data for extra editing speed ⚡️"
               >
                 <InfoCircle size="small" />
               </Tooltip>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <Divider />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             {chart.type === "line"
               && (
                 <LineChart
@@ -237,116 +225,125 @@ function ChartPreview(props) {
                 />
               )}
           </Container>
-          <Spacer y={1} />
+          <Spacer y={2} />
           <Container textAlign="center">
-            <Row align="center" wrap="wrap" gap={1} justify="center">
+            <Row align="center" wrap="wrap" className={"gap-1"} justify="center">
               <Tooltip
                 content={"Get the average value of all the points on the chart"}
               >
                 <Button
-                  bordered={chart.type !== "avg"}
+                  variant={chart.type !== "avg" ? "bordered" : "solid"}
                   color={chart.type === "avg" ? "secondary" : "primary"}
                   onClick={() => _onChangeChartType({ type: "avg" })}
                   auto
                   size="sm"
-                  icon={<TbMathAvg size={24} />}
-                  css={{ minWidth: "fit-content" }}
-                />
+                  isIconOnly
+                >
+                  <TbMathAvg size={24} />
+                </Button>
               </Tooltip>
-              <Spacer x={0.1} />
+              <Spacer x={0.3} />
               <Tooltip
                 content={chart.subType.indexOf("AddTimeseries") > -1 ? "Turn accumulation off" : "Accumulate datasets"}
               >
                 <Button
-                  bordered={chart.subType.indexOf("AddTimeseries") === -1}
+                  variant={chart.subType.indexOf("AddTimeseries") === -1 ? "bordered" : "filled"}
                   color={chart.subType.indexOf("AddTimeseries") > -1 ? "secondary" : "primary"}
                   onClick={_toggleAccumulation}
                   disabled={chart.type !== "line" && chart.type !== "bar" && chart.type !== "avg"}
                   auto
                   size="sm"
-                  icon={<FaChartLine size={20} />}
-                  css={{ minWidth: "fit-content" }}
-                />
+                  isIconOnly
+                >
+                  <FaChartLine size={20} />
+                </Button>
               </Tooltip>
-              <Spacer x={0.5} />
+              <Spacer x={1} />
 
               <Tooltip content="Display data in a table view">
                 <Button
-                  bordered={chart.type !== "table"}
+                  variant={chart.type !== "table" ? "bordered" : "filled"}
                   onClick={() => _onChangeChartType({ type: "table" })}
                   auto
                   size="sm"
-                  icon={<BsTable size={20} />}
-                  css={{ minWidth: "fit-content" }}
-                />
+                  isIconOnly
+                >
+                  <BsTable size={20} />
+                </Button>
               </Tooltip>
-              <Spacer x={0.5} />
+              <Spacer x={1} />
 
               <Tooltip content="Display as line chart">
                 <Button
-                  bordered={chart.type !== "line"}
+                  variant={chart.type !== "line" ? "bordered" : "filled"}
                   onClick={() => _onChangeChartType({ type: "line" })}
                   auto
                   size="sm"
-                  icon={<TbChartLine size={24} />}
-                  css={{ minWidth: "fit-content" }}
-                />
+                  isIconOnly
+                >
+                  <TbChartLine size={24} />
+                </Button>
               </Tooltip>
-              <Spacer x={0.1} />
+              <Spacer x={0.3} />
               <Tooltip content="Display as bar chart">
                 <Button
-                  bordered={chart.type !== "bar"}
+                  variant={chart.type !== "bar" ? "bordered" : "filled"}
                   onClick={() => _onChangeChartType({ type: "bar" })}
                   auto
                   size="sm"
-                  icon={<TbChartBar size={24} />}
-                  css={{ minWidth: "fit-content" }}
-                />
+                  isIconOnly
+                >
+                  <TbChartBar size={24} />
+                </Button>
               </Tooltip>
-              <Spacer x={0.5} />
+              <Spacer x={1} />
 
               <Tooltip content="Display as pie chart">
                 <Button
-                  bordered={chart.type !== "pie"}
+                  variant={chart.type !== "pie" ? "bordered" : "filled"}
                   onClick={() => _onChangeChartType({ type: "pie" })}
                   auto
                   size="sm"
-                  icon={<TbChartPie2 size={24} />}
-                  css={{ minWidth: "fit-content" }}
-                />
+                  isIconOnly
+                >
+                  <TbChartPie2 size={24} />
+                </Button>
               </Tooltip>
-              <Spacer x={0.1} />
+              <Spacer x={0.6} />
               <Tooltip content="Display as doughnut chart">
                 <Button
-                  bordered={chart.type !== "doughnut"}
+                  variant={chart.type !== "doughnut" ? "bordered" : "filled"}
                   onClick={() => _onChangeChartType({ type: "doughnut" })}
                   auto
                   size="sm"
-                  icon={<TbChartDonut4 size={24} />}
-                  css={{ minWidth: "fit-content" }}
-                />
+                  isIconOnly
+                >
+                  <TbChartDonut4 size={24} />
+                </Button>
               </Tooltip>
-              <Spacer x={0.1} />
+              <Spacer x={0.3} />
               <Tooltip content="Display as radar chart">
                 <Button
-                  bordered={chart.type !== "radar"}
+                  variant={chart.type !== "radar" ? "bordered" : "filled"}
                   onClick={() => _onChangeChartType({ type: "radar" })}
                   auto
                   size="sm"
-                  icon={<TbChartRadar size={24} />}
-                  css={{ minWidth: "fit-content" }}
-                />
+                  isIconOnly
+                >
+                  <TbChartRadar size={24} />
+                </Button>
               </Tooltip>
               <Spacer x={0.1} />
               <Tooltip content="Display as polar chart">
                 <Button
-                  bordered={chart.type !== "polar"}
+                  variant={chart.type !== "polar" ? "bordered" : "filled"}
                   onClick={() => _onChangeChartType({ type: "polar" })}
                   auto
                   size="sm"
-                  icon={<TiChartPie size={24} />}
-                  css={{ minWidth: "fit-content" }}
-                />
+                  isIconOnly
+                >
+                  <TiChartPie size={24} />
+                </Button>
               </Tooltip>
             </Row>
           </Container>
@@ -359,12 +356,12 @@ function ChartPreview(props) {
             {chartLoading && (
               <>
                 <Row>
-                  <Loading type="spinner" size="lg" />
+                  <CircularProgress size="lg" />
                 </Row>
                 <Row>
                   <Text b>Loading chart data...</Text>
                 </Row>
-                <Spacer y={1} />
+                <Spacer y={2} />
               </>
             )}
             {!chartLoading && (
@@ -372,7 +369,7 @@ function ChartPreview(props) {
                 <Row justify="center">
                   <Text h3>{"Create a dataset to get started"}</Text>
                 </Row>
-                <Spacer y={0.2} />
+                <Spacer y={0.5} />
               </>
             )}
           </>
@@ -383,27 +380,27 @@ function ChartPreview(props) {
         <Container style={styles.topBuffer}>
           <Row align="center" justify="center">
             <Dropdown isDisabled={chart.type !== "line" && chart.type !== "bar"}>
-              <Dropdown.Trigger>
+              <DropdownTrigger>
                 <Input
                   value={chart.mode && chartModes.find((mode) => mode.value === chart.mode).text}
-                  bordered
-                  contentRight={<ChevronDown />}
+                  variant="bordered"
+                  endContent={<ChevronDown />}
                   disabled={chart.type !== "line" && chart.type !== "bar"}
                 />
-              </Dropdown.Trigger>
-              <Dropdown.Menu
+              </DropdownTrigger>
+              <DropdownMenu
                 onAction={(key) => _onChangeMode(key)}
                 selectedKeys={[chart.mode]}
                 selectionMode="single"
               >
                 {chartModes.map((mode) => (
-                  <Dropdown.Item key={mode.value}>
+                  <DropdownItem key={mode.value}>
                     {mode.text}
-                  </Dropdown.Item>
+                  </DropdownItem>
                 ))}
-              </Dropdown.Menu>
+              </DropdownMenu>
             </Dropdown>
-            <Spacer x={0.5} />
+            <Spacer x={1} />
             <Checkbox
               isSelected={chart.showGrowth}
               onChange={_onChangeGrowth}
@@ -413,7 +410,7 @@ function ChartPreview(props) {
               Show growth
             </Checkbox>
           </Row>
-          <Spacer y={1} />
+          <Spacer y={2} />
         </Container>
       )}
     </Container>

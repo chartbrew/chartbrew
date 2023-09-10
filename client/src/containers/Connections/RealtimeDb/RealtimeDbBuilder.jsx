@@ -3,8 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Button, Container, Row, Input, Spacer, Divider, Badge, Text, Loading, Checkbox, Tooltip,
-  useTheme,
+  Button, Input, Spacer, Divider, Chip, Checkbox, Tooltip,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
@@ -21,6 +20,10 @@ import {
 } from "../../../actions/dataRequest";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import { getConnection as getConnectionAction } from "../../../actions/connection";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 /*
   The API Data Request builder
@@ -39,7 +42,7 @@ function RealtimeDbBuilder(props) {
   const [fullConnection, setFullConnection] = useState({});
   const [saveLoading, setSaveLoading] = useState(false);
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   const {
     dataRequest, match, onChangeRequest, runDataRequest,
@@ -148,11 +151,11 @@ function RealtimeDbBuilder(props) {
 
   return (
     <div style={styles.container}>
-      <Grid.Container>
-        <Grid xs={12} sm={7}>
+      <div className="grid grid-cols-12">
+        <div className="col-span-7 sm:col-span-12">
           <Container>
             <Row justify="space-between" align="center">
-              <Text b size={22}>{connection.name}</Text>
+              <Text b size={"lg"}>{connection.name}</Text>
               <div>
                 <Row>
                   <Button
@@ -160,86 +163,86 @@ function RealtimeDbBuilder(props) {
                     auto
                     size="sm"
                     onClick={() => _onSavePressed()}
-                    disabled={saveLoading || requestLoading}
-                    flat
+                    isLoading={saveLoading || requestLoading}
+                    variant="flat"
                   >
-                    {(!saveLoading && !requestLoading) && "Save"}
-                    {(saveLoading || requestLoading) && <Loading type="spinner" />}
+                    {"Save"}
                   </Button>
-                  <Spacer x={0.3} />
+                  <Spacer x={0.6} />
                   <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
                     <Button
                       color="danger"
-                      icon={<Delete />}
+                      isIconOnly
                       auto
                       size="sm"
-                      bordered
-                      css={{ minWidth: "fit-content" }}
+                      variant="bordered"
                       onClick={() => onDelete()}
-                    />
+                    >
+                      <Delete />
+                    </Button>
                   </Tooltip>
                 </Row>
               </div>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <Divider />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row className="RealtimeDb-route-tut">
               <Input
                 value={fullConnection.connectionString || `https://${projectId || "<your_project>"}.firebaseio.com/`}
                 fullWidth
-                css={{ pointerEvents: "none" }}
+                className={"pointer-events-none"}
               />
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Input
                 placeholder={"Enter the data path"}
                 autoFocus
                 value={firebaseRequest.route || ""}
                 onChange={(e) => _onChangeRoute(e.target.value)}
-                bordered
+                variant="bordered"
                 fullWidth
-                animated={false}
+                disableAnimation
               />
             </Row>
             {(requestSuccess || requestError) && (
               <>
-                <Spacer y={0.5} />
+                <Spacer y={1} />
                 <Row>
                   {requestSuccess && (
                     <>
-                      <Badge color="success">
+                      <Chip color="success">
                         {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
-                      </Badge>
-                      <Spacer x={0.2} />
-                      <Badge>
+                      </Chip>
+                      <Spacer x={0.5} />
+                      <Chip>
                         {`Length: ${result ? JSON.parse(result).length : 0}`}
-                      </Badge>
+                      </Chip>
                     </>
                   )}
                   {requestError && (
-                    <Badge color="danger">
+                    <Chip color="danger">
                       {`${requestError.statusCode} ${requestError.statusText}`}
-                    </Badge>
+                    </Chip>
                   )}
                 </Row>
               </>
             )}
 
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Divider />
-            <Spacer y={0.5} />
+            <Spacer y={1} />
 
             <Row>
               <Text b>
                 Order By
               </Text>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center">
-              <Badge
-                isSquared
+              <Chip
+                radius="sm"
                 variant={"bordered"}
                 color={!firebaseRequest.configuration || (firebaseRequest.configuration && firebaseRequest.configuration.orderBy !== "child") ? "netral" : "secondary"}
                 onClick={() => (
@@ -253,10 +256,10 @@ function RealtimeDbBuilder(props) {
                 )}
               >
                 {"Child key"}
-              </Badge>
-              <Spacer x={0.2} />
-              <Badge
-                isSquared
+              </Chip>
+              <Spacer x={0.5} />
+              <Chip
+                radius="sm"
                 variant="bordered"
                 color={!firebaseRequest.configuration || (firebaseRequest.configuration && firebaseRequest.configuration.orderBy !== "key") ? "neutral" : "secondary"}
                 onClick={() => (
@@ -270,10 +273,10 @@ function RealtimeDbBuilder(props) {
                 )}
               >
                 {"Key"}
-              </Badge>
+              </Chip>
               <Spacer x={0.2} />
-              <Badge
-                isSquared
+              <Chip
+                radius="sm"
                 variant={"bordered"}
                 color={!firebaseRequest.configuration || (firebaseRequest.configuration && firebaseRequest.configuration.orderBy !== "value") ? "bordered" : "secondary"}
                 onClick={() => (
@@ -287,14 +290,14 @@ function RealtimeDbBuilder(props) {
                 )}
               >
                 {"Value"}
-              </Badge>
+              </Chip>
               {firebaseRequest.configuration && firebaseRequest.configuration.orderBy && (
                 <>
-                  <Spacer x={0.2} />
+                  <Spacer x={0.5} />
                   <Button
                     color="danger"
-                    bordered
-                    icon={<CloseSquare size="small" />}
+                    variant="bordered"
+                    startContent={<CloseSquare size="small" />}
                     onClick={() => (
                       setFirebaseRequest({
                         ...firebaseRequest,
@@ -312,7 +315,7 @@ function RealtimeDbBuilder(props) {
                 </>
               )}
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             {firebaseRequest.configuration && firebaseRequest.configuration.orderBy === "child" && (
               <Row>
                 <Input
@@ -327,24 +330,24 @@ function RealtimeDbBuilder(props) {
                       }
                     })
                   )}
-                  bordered
+                  variant="bordered"
                   fullWidth
                 />
               </Row>
             )}
 
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Divider />
-            <Spacer y={0.5} />
+            <Spacer y={1} />
 
             <Row>
               <Text b>Limit results</Text>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
 
             <Row align="center">
-              <Badge
-                isSquared
+              <Chip
+                radius="sm"
                 variant={"bordered"}
                 color={
                   !firebaseRequest.configuration
@@ -363,10 +366,10 @@ function RealtimeDbBuilder(props) {
                 )}
               >
                 Limit to last
-              </Badge>
-              <Spacer x={0.2} />
-              <Badge
-                isSquared
+              </Chip>
+              <Spacer x={0.5} />
+              <Chip
+                radius="sm"
                 variant={"bordered"}
                 color={
                   !firebaseRequest.configuration
@@ -385,14 +388,14 @@ function RealtimeDbBuilder(props) {
                 )}
               >
                 Limit to first
-              </Badge>
-              <Spacer x={0.2} />
+              </Chip>
+              <Spacer x={0.5} />
               {firebaseRequest.configuration
                 && (firebaseRequest.configuration.limitToLast
                   || firebaseRequest.configuration.limitToFirst)
                 && (
                   <Button
-                    icon={<CloseSquare size="small" />}
+                    startContent={<CloseSquare size="small" />}
                     onClick={() => (
                       setFirebaseRequest({
                         ...firebaseRequest,
@@ -404,7 +407,7 @@ function RealtimeDbBuilder(props) {
                       })
                     )}
                     auto
-                    bordered
+                    variant="bordered"
                     color="danger"
                     size="xs"
                   >
@@ -412,7 +415,7 @@ function RealtimeDbBuilder(props) {
                   </Button>
                 )}
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <Input
                 placeholder="How many records should return?"
@@ -426,26 +429,26 @@ function RealtimeDbBuilder(props) {
                       && !firebaseRequest.configuration.limitToFirst
                     )
                 }
-                bordered
+                variant="bordered"
                 fullWidth
               />
             </Row>
           </Container>
-        </Grid>
-        <Grid xs={12} sm={5}>
+        </div>
+        <div className="col-span-5 sm:col-span-12">
           <Container>
             <Row className="RealtimeDb-request-tut">
               <Button
                 shadow
-                iconRight={requestLoading ? <Loading type="points" /> : <Play />}
-                disabled={requestLoading}
+                endContent={<Play />}
+                isLoading={requestLoading}
                 onClick={() => _onTest()}
-                css={{ width: "100%" }}
+                className="w-full"
               >
                 Make the request
               </Button>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center">
               <Checkbox
                 isSelected={!invalidateCache}
@@ -454,17 +457,17 @@ function RealtimeDbBuilder(props) {
               >
                 Use cache
               </Checkbox>
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Tooltip
                 content="Use cache to avoid hitting the Firebase API every time you request data. The cache will be cleared when you change any of the settings."
-                css={{ minWidth: 600, zIndex: 10000 }}
+                className="min-w-[600px]"
               >
                 <InfoCircle size="small" />
               </Tooltip>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center">
-              <div style={{ width: "100%" }}>
+              <div className="w-full">
                 <AceEditor
                   mode="json"
                   theme={isDark ? "one_dark" : "tomorrow"}
@@ -479,17 +482,17 @@ function RealtimeDbBuilder(props) {
                 />
               </div>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center">
               <InfoCircle size="small" />
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Text small>
                 {"This is a preview and it might not show all data in order to keep things fast in the UI."}
               </Text>
             </Row>
           </Container>
-        </Grid>
-      </Grid.Container>
+        </div>
+      </div>
     </div>
   );
 }

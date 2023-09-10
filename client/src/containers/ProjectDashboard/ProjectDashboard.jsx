@@ -3,8 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Container, Row, Button, Loading, Spacer, Text, Link as LinkNext, Tooltip, Grid,
-  Card, Modal, useTheme, Badge,
+  Button, Spacer, Link as LinkNext, Tooltip, Card, Modal, Chip, CardBody, ModalHeader, ModalBody,
 } from "@nextui-org/react";
 import { Link } from "react-router-dom";
 import { useWindowSize } from "react-use";
@@ -33,6 +32,10 @@ import {
 import canAccess from "../../config/canAccess";
 import ChartExport from "./components/ChartExport";
 import CreateTemplateForm from "../../components/CreateTemplateForm";
+import useThemeDetector from "../../modules/useThemeDetector";
+import Row from "../../components/Row";
+import Container from "../../components/Container";
+import Text from "../../components/Text";
 
 const breakpoints = {
   mobile: 0,
@@ -82,7 +85,7 @@ function ProjectDashboard(props) {
   const [templateVisible, setTemplateVisible] = useState(false);
 
   const { height, width } = useWindowSize();
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     cleanErrors();
@@ -358,61 +361,59 @@ function ProjectDashboard(props) {
         && (
           <div>
             <Container
-              fluid
+              className={"bg-content2 w-full"}
               style={mobile ? styles.actionBarMobile : styles.actionBar}
-              css={{ backgroundColor: "$backgroundContrast" }}
             >
               <Row justify="space-between" align="center">
                 <Row justify="flex-start" align="center">
                   <Media greaterThan="mobile">
                     <Button
-                      ghost
-                      iconRight={!filterLoading ? <Filter2 size="small" /> : null}
-                      disabled={filterLoading}
+                      variant="ghost"
+                      endContent={<Filter2 size="small" />}
+                      isLoading={filterLoading}
                       onClick={_onShowFilters}
-                      css={{ minWidth: "fit-content" }}
                       size="sm"
                       auto
                     >
-                      {filterLoading && <Loading type="points-opacity" />}
-                      {!filterLoading && "Add filter"}
+                      {"Add filter"}
                     </Button>
                   </Media>
                   <Media at="mobile">
                     <Button
-                      icon={<Filter2 />}
+                      isIconOnly
                       onClick={_onShowFilters}
-                      disabled={filterLoading}
-                      ghost
-                      css={{ minWidth: "fit-content" }}
+                      isLoading={filterLoading}
+                      variant="ghost"
                       size="sm"
-                    />
+                    >
+                      <Filter2 />
+                    </Button>
                   </Media>
-                  <Spacer x={0.5} />
+                  <Spacer x={1} />
                   <div style={mobile ? {} : { borderLeft: "solid 1px #d4d4d5", paddingLeft: 10 }}>
                     {filters
                       && filters[match.params.projectId]
                       && filters[match.params.projectId].map((filter) => (
                         <Fragment key={filter.id}>
                           {filter.type === "date" && (
-                            <Badge color="primary" variant={"bordered"} isSquared>
+                            <Chip color="primary" variant={"bordered"} radius="sm">
                               {`${moment.utc(filter.startDate).format("YYYY/MM/DD")} - ${moment.utc(filter.endDate).format("YYYY/MM/DD")}`}
-                              <Spacer x={0.2} />
-                              <LinkNext onClick={() => _onRemoveFilter(filter.id)} css={{ color: "$text" }}>
+                              <Spacer x={0.5} />
+                              <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default">
                                 <CloseSquare size="small" style={{ padding: 0 }} />
                               </LinkNext>
-                            </Badge>
+                            </Chip>
                           )}
                           {filter.type !== "date" && (
-                            <Badge color="primary" variant={"bordered"} isSquared>
+                            <Chip color="primary" variant={"bordered"} radius="sm">
                               <span>{`${filter.field.substring(filter.field.lastIndexOf(".") + 1)}`}</span>
                               <strong>{` ${_getOperator(filter.operator)} `}</strong>
                               <span>{`${filter.value}`}</span>
-                              <Spacer x={0.2} />
-                              <LinkNext onClick={() => _onRemoveFilter(filter.id)} css={{ color: "$text" }}>
+                              <Spacer x={0.5} />
+                              <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default">
                                 <CloseSquare size="small" />
                               </LinkNext>
-                            </Badge>
+                            </Chip>
                           )}
                         </Fragment>
                       ))}
@@ -423,57 +424,59 @@ function ProjectDashboard(props) {
                     <>
                       <Tooltip content="Create a template from this dashboard" placement="bottom">
                         <Button
-                          ghost
-                          icon={<Scan />}
+                          variant="ghost"
+                          isIconOnly
                           onClick={() => setTemplateVisible(true)}
                           auto
-                          css={{ minWidth: "fit-content" }}
                           size="sm"
-                        />
+                        >
+                          <Scan />
+                        </Button>
                       </Tooltip>
                     </>
                   )}
                   {_canExport() && (
                     <>
-                      <Spacer x={0.2} />
+                      <Spacer x={0.5} />
                       <Tooltip content="Export charts to Excel" placement="bottom">
                         <Button
-                          ghost
-                          icon={<PaperDownload />}
+                          variant="ghost"
+                          isIconOnly
                           onClick={_openExport}
                           auto
-                          css={{ minWidth: "fit-content" }}
                           size="sm"
-                        />
+                        >
+                          <PaperDownload />
+                        </Button>
                       </Tooltip>
                     </>
                   )}
                   {!mobile && (
                     <>
-                      <Spacer x={0.2} />
-                      <Tooltip content="Open print view" placement="bottomEnd">
+                      <Spacer x={0.5} />
+                      <Tooltip content="Open print view" placement="bottom-end">
                         <Button
-                          ghost
-                          icon={<Image2 />}
+                          variant="ghost"
+                          isIconOnly
                           onClick={onPrint}
                           auto
-                          css={{ minWidth: "fit-content" }}
                           size="sm"
-                        />
+                        >
+                          <Image2 />
+                        </Button>
                       </Tooltip>
                     </>
                   )}
 
                   <>
-                    <Spacer x={0.2} />
+                    <Spacer x={0.5} />
                     <Media greaterThan="mobile">
-                      <Tooltip content="Refresh data" placement="bottomStart">
+                      <Tooltip content="Refresh data" placement="bottom-start">
                         <Button
-                          ghost
-                          icon={refreshLoading ? <Loading type="spinner" /> : <HiRefresh size={20} />}
+                          variant="ghost"
+                          startContent={<HiRefresh size={20} />}
                           onClick={() => _onRefreshData()}
-                          disabled={refreshLoading}
-                          css={{ minWidth: "fit-content" }}
+                          isLoading={refreshLoading}
                           size="sm"
                           auto
                         >
@@ -483,13 +486,12 @@ function ProjectDashboard(props) {
                     </Media>
                     <Media at="mobile">
                       <>
-                        <Tooltip content="Refresh all charts" placement="bottomEnd">
+                        <Tooltip content="Refresh all charts" placement="bottom-end">
                           <Button
-                            ghost
-                            icon={refreshLoading ? <Loading type="points" /> : <HiRefresh size={22} />}
+                            variant="ghost"
+                            startContent={<HiRefresh size={22} />}
                             onClick={() => _onRefreshData()}
-                            disabled={refreshLoading}
-                            css={{ minWidth: "fit-content" }}
+                            isLoading={refreshLoading}
                             size="sm"
                           />
                         </Tooltip>
@@ -504,19 +506,19 @@ function ProjectDashboard(props) {
       <div style={styles.container(width < breakpoints.tablet)}>
         {connections.length === 0 && charts.length === 0
           && (
-            <Container justify="center" style={{ paddingTop: height / 3 }}>
+            <Container justify="center" className={`pt-[${height / 3}]`}>
               <Row justify="center" align="center">
                 <Text h1>
                   Welcome to your dashboard
                 </Text>
               </Row>
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               <Row justify="center" align="center">
                 <Text h3>
                   {"Connect to a data source and start visualizing your data. "}
                 </Text>
               </Row>
-              <Spacer y={1} />
+              <Spacer y={2} />
               <Row justify="center" align="center">
                 <Link
                   to={{
@@ -524,7 +526,7 @@ function ProjectDashboard(props) {
                     state: { onboarding: true },
                   }}
                 >
-                  <Button shadow iconRight={<Play />} size="lg" auto>
+                  <Button variant="shadow" endContent={<Play />} size="lg" auto>
                     Get started
                   </Button>
                 </Link>
@@ -540,37 +542,29 @@ function ProjectDashboard(props) {
                   isHoverable
                   isPressable
                 >
-                  <Card.Body>
+                  <CardBody>
                     <Row justify="center" align="center">
                       <Plus size="large" />
                     </Row>
                     <Row justify="center" align="center">
                       <Text h3>Add your first chart</Text>
                     </Row>
-                  </Card.Body>
+                  </CardBody>
                 </Card>
               </Link>
             </Row>
           </Container>
         )}
 
-        <Container css={width < breakpoints.tablet ? { p: 0, pl: 10, pr: 10 } : { p: 0, m: 0 }} xl>
-          <Grid.Container
-            gap={1.5}
-          >
+        <Container className={"p-0 m-0 sm:pl-10 sm:pr-10"} size="xl">
+          <div className="grid grid-cols-12 gap-2">
             {charts.map((chart, index) => {
               if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
               if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />);
               return (
-                <Grid
-                  xs={12}
-                  sm={chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4}
-                  md={chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3}
+                <div
+                  className={`min-h-[400px] overflow-y-hidden col-span-12 md:col-span-${chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4} lg:col-span-${chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3} xl:col-span-${chart.chartSize * 2 > 12 ? 12 : chart.chartSize * 2}`}
                   key={chart.id}
-                  css={{
-                    minHeight: 400,
-                    overflowY: "hidden",
-                  }}
                 >
                   <Chart
                     key={chart.id}
@@ -579,10 +573,10 @@ function ProjectDashboard(props) {
                     showDrafts={showDrafts}
                     onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
                   />
-                </Grid>
+                </div>
               );
             })}
-          </Grid.Container>
+          </div>
         </Container>
       </div>
 
@@ -596,11 +590,11 @@ function ProjectDashboard(props) {
         onEditFilterGroup={_onEditFilterGroup}
       />
 
-      <Modal open={viewExport} closeButton onClose={() => setViewExport(false)} width="800px">
-        <Modal.Header>
+      <Modal isOpen={viewExport} closeButton onClose={() => setViewExport(false)} className="w-[800px]">
+        <ModalHeader>
           <Text h3>Export to Excel (.xlsx)</Text>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <ChartExport
             charts={charts}
             onExport={_onExport}
@@ -609,7 +603,7 @@ function ProjectDashboard(props) {
             onUpdate={(chartId, disabled) => _onUpdateExport(chartId, disabled)}
             showDisabled={_canAccess("admin")}
           />
-        </Modal.Body>
+        </ModalBody>
       </Modal>
 
       <CreateTemplateForm

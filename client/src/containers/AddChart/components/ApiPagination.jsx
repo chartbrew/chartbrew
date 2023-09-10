@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Divider, Dropdown, Grid, Input, Spacer, Switch, Text, Tooltip, Chip,
+  Divider, Dropdown, Input, Spacer, Switch, Tooltip, Chip, DropdownTrigger, DropdownMenu, DropdownItem,
 } from "@nextui-org/react";
 
 import { ChevronDown, InfoCircle } from "react-iconly";
 import fieldFinder from "../../../modules/fieldFinder";
+import Text from "../../../components/Text";
 
 const templates = [{
   key: "custom",
@@ -80,59 +81,59 @@ function ApiPagination(props) {
   };
 
   return (
-    <Grid.Container gap={1}>
-      <Grid xs={12} sm={8} direction="column">
-        <Text size={16}>Pagination type</Text>
-        <Dropdown isBordered>
-          <Dropdown.Trigger>
+    <div className="grid grid-cols-12 gap-1">
+      <div className="col-span-8 sm:col-span-12">
+        <Text b>Pagination type</Text>
+        <Dropdown>
+          <DropdownTrigger>
             <Input
               value={(template && templates.find((t) => t.value === template).text) || "Custom"}
-              bordered
+              variant="bordered"
               fullWidth
-              animated={false}
-              contentRight={<ChevronDown />}
+              disableAnimation
+              endContent={<ChevronDown />}
             />
-          </Dropdown.Trigger>
-          <Dropdown.Menu
+          </DropdownTrigger>
+          <DropdownMenu
+            variant="bordered"
             onAction={(key) => onPaginationChanged("template", key)}
             selectedKeys={[template]}
             selectionMode="single"
           >
             {templates.map((t) => (
-              <Dropdown.Item key={t.value} value={t.value}>
+              <DropdownItem key={t.value} value={t.value}>
                 {t.text}
-              </Dropdown.Item>
+              </DropdownItem>
             ))}
-          </Dropdown.Menu>
+          </DropdownMenu>
         </Dropdown>
-      </Grid>
-      <Grid xs={12} sm={4} alignItems="center" direction="column">
-        <Text size={16}>Enable pagination on this request</Text>
+      </div>
+      <div className="col-span-4 sm:col-span-12 flex items-center">
+        <Text b>Enable pagination on this request</Text>
         <Switch
-          checked={pagination}
+          isSelected={pagination}
           onChange={() => onPaginationChanged("pagination", !pagination)}
         />
-      </Grid>
+      </div>
 
-      <Grid xs={12} direction="column">
-        <Spacer y={1} />
+      <div className="col-span-12">
+        <Spacer y={2} />
         <Divider />
-        <Spacer y={0.5} />
-      </Grid>
+        <Spacer y={1} />
+      </div>
 
       {/* CUSTOM */}
       {template === "custom" && (
-        <Grid xs={12} sm={6} direction="column">
+        <div className="col-span-6 sm:col-span-12">
           <Tooltip
             content={"The query parameter name that limits the number of item per request."}
-            css={{ zIndex: 10000 }}
-            placement="topStart"
+            placement="top-start"
           >
             <div style={styles.rowDisplay}>
-              <Text size={16}>
+              <Text b>
                 {"Items per page"}
               </Text>
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <InfoCircle size="small" />
             </div>
           </Tooltip>
@@ -141,21 +142,20 @@ function ApiPagination(props) {
             placeholder="Items per page"
             value={items}
             onChange={(e) => onPaginationChanged("items", e.target.value)}
-            bordered
+            variant="bordered"
             fullWidth
           />
-        </Grid>
+        </div>
       )}
       {template === "custom" && (
-        <Grid xs={12} sm={6} direction="column">
+        <div className="col-span-6 sm:col-span-12">
           <Tooltip
             content={"The query parameter name used for the starting point of the first request."}
-            css={{ zIndex: 10000 }}
-            placement="topStart"
+            placement="top-start"
           >
             <div style={styles.rowDisplay}>
-              <Text size={16}>{"Offset"}</Text>
-              <Spacer x={0.2} />
+              <Text b>{"Offset"}</Text>
+              <Spacer x={0.5} />
               <InfoCircle size="small" />
             </div>
           </Tooltip>
@@ -164,90 +164,90 @@ function ApiPagination(props) {
             placeholder="Offset"
             value={offset}
             onChange={(e) => onPaginationChanged("offset", e.target.value)}
-            bordered
+            variant="bordered"
             fullWidth
           />
-        </Grid>
+        </div>
       )}
       {template === "pages" && pagination && (
-        <Grid xs={12} sm={6}>
+        <div className="col-span-6 sm:col-span-12">
           <Input
             label={"Enter the query parameter name for the page"}
             disabled={!pagination}
             placeholder="page"
             value={offset}
             onChange={(e) => onPaginationChanged("offset", e.target.value)}
-            bordered
+            variant="bordered"
             fullWidth
           />
-        </Grid>
+        </div>
       )}
 
       {/* URL */}
       {template === "url" && pagination && (
         <>
-          <Grid xs={12} direction="column">
-            <Text size={16}>{"Click here to select a field that contains the pagination URL"}</Text>
+          <div className="col-span-12">
+            <Text b>{"Click here to select a field that contains the pagination URL"}</Text>
             <div style={styles.rowDisplay}>
-              <Dropdown isBordered>
-                <Dropdown.Trigger>
+              <Dropdown>
+                <DropdownTrigger>
                   <Input
                     value={paginationField || "Select a field"}
-                    bordered
+                    variant="bordered"
                     fullWidth
-                    animated={false}
-                    contentRight={<ChevronDown />}
+                    disableAnimation
+                    endContent={<ChevronDown />}
                     disabled={!result}
                   />
-                </Dropdown.Trigger>
-                <Dropdown.Menu
+                </DropdownTrigger>
+                <DropdownMenu
+                  variant="bordered"
                   onAction={_onChangePaginationField}
                   selectedKeys={[paginationField]}
                   selectionMode="single"
                 >
                   {fieldOptions.map((o) => (
-                    <Dropdown.Item key={o.key} value={o.key}>
+                    <DropdownItem key={o.key} value={o.key}>
                       {o.text}
-                    </Dropdown.Item>
+                    </DropdownItem>
                   ))}
-                </Dropdown.Menu>
+                </DropdownMenu>
               </Dropdown>
               {!result && (
                 <Text small>{" You will have to run a request before you can use this feature"}</Text>
               )}
             </div>
-          </Grid>
-          <Grid xs={12} direction="column">
-            <Text size={16}>Or enter the object path manually here</Text>
+          </div>
+          <div className="col-span-12">
+            <Text b>Or enter the object path manually here</Text>
             <Input
               placeholder="pagination.next"
               value={paginationField || ""}
               onChange={(e) => _onChangePaginationField(e.target.value)}
-              bordered
+              variant="bordered"
               fullWidth
             />
-          </Grid>
+          </div>
         </>
       )}
 
       {/* STRIPE */}
       {template === "stripe" && pagination && (
-        <Grid xs={12}>
+        <div className="col-span-12">
           <Text>Your request will now be paginated automatically</Text>
-        </Grid>
+        </div>
       )}
 
       {/* CURSOR-BASED */}
       {template === "cursor" && (
-        <Grid xs={12} sm={6} direction="column">
+        <div className="col-span-6 sm:col-span-12">
           <Tooltip
             content={"Enter the name of the query parameter that acts like a cursor for the pagination. Usually, this field is named 'start'."}
-            css={{ zIndex: 10000 }}
-            placement="topStart"
+            placement="top-start"
           >
             <div style={styles.rowDisplay}>
-              <Text size={16}>{"Cursor query parameter"}</Text>
-              <Spacer x={0.2} />
+              <Text b>{"Cursor query parameter"}</Text>
+              <Spacer x={0.5} />
               <InfoCircle size="small" />
             </div>
           </Tooltip>
@@ -256,21 +256,21 @@ function ApiPagination(props) {
             placeholder="Cursor query parameter name"
             value={offset}
             onChange={(e) => onPaginationChanged("offset", e.target.value)}
-            bordered
+            variant="bordered"
             fullWidth
           />
-        </Grid>
+        </div>
       )}
       {template === "cursor" && (
-        <Grid xs={12} sm={6} direction="column">
+        <div className="col-span-6 sm:col-span-12">
           <Tooltip
             content={"This should be the name of the field in the response that points to the next cursor position. This will help Chartbrew automatically set the cursor start position. "}
-            css={{ zIndex: 10000, maxWidth: 400 }}
-            placement="topStart"
+            className="max-w-[400px]"
+            placement="top-start"
           >
             <div style={styles.rowDisplay}>
-              <Text size={16}>{"Next cursor field name"}</Text>
-              <Spacer x={0.2} />
+              <Text b>{"Next cursor field name"}</Text>
+              <Spacer x={0.5} />
               <InfoCircle size="small" />
             </div>
           </Tooltip>
@@ -279,21 +279,20 @@ function ApiPagination(props) {
             placeholder="Next cursor field name"
             value={items}
             onChange={(e) => onPaginationChanged("items", e.target.value)}
-            bordered
+            variant="bordered"
             fullWidth
           />
-        </Grid>
+        </div>
       )}
 
-      <Grid xs={12} sm={6} direction="column">
+      <div className="col-span-6 sm:col-span-12">
         <Tooltip
           content={"The total amount of items to get (all the paged items put together) - Leave empty or 0 for unlimited"}
-          css={{ zIndex: 10000 }}
-          placement="topStart"
+          placement="top-start"
         >
           <div style={styles.rowDisplay}>
-            <Text size={16}>{"Maximum number of items (0 = unlimited)"}</Text>
-            <Spacer x={0.2} />
+            <Text b>{"Maximum number of items (0 = unlimited)"}</Text>
+            <Spacer x={0.5} />
             <InfoCircle size="small" />
           </div>
         </Tooltip>
@@ -303,69 +302,69 @@ function ApiPagination(props) {
           type="number"
           value={itemsLimit}
           onChange={(e) => onPaginationChanged("itemsLimit", e.target.value)}
-          bordered
+          variant="bordered"
           fullWidth
         />
-      </Grid>
+      </div>
 
-      <Grid xs={12} direction="column">
-        <Spacer y={0.5} />
-      </Grid>
+      <div className="col-span-12">
+        <Spacer y={1} />
+      </div>
 
       {pagination && template === "custom" && (
-        <Grid xs={12} direction="column">
+        <div className="col-span-12">
           <Text>{"You should include these query parameters: "}</Text>
-          <Spacer y={0.5} />
+          <Spacer y={1} />
           <div style={styles.rowDisplay}>
             <Chip>
-              <Text size={16}>{`${items}=<xxx>&${offset}=<xxx> `}</Text>
+              <Text>{`${items}=<xxx>&${offset}=<xxx> `}</Text>
             </Chip>
-            <Spacer x={0.5} />
+            <Spacer x={1} />
             {(apiRoute.indexOf(`?${items}=`) > -1 || apiRoute.indexOf(`&${items}=`) > -1) && (
               <>
                 <Chip color="success">
-                  <Text size={16}>{`${items} was found`}</Text>
+                  <Text>{`${items} was found`}</Text>
                 </Chip>
-                <Spacer x={0.2} />
+                <Spacer x={0.5} />
               </>
             )}
             {(apiRoute.indexOf(`?${items}=`) === -1 && apiRoute.indexOf(`&${items}=`) === -1) && (
               <>
-                <Spacer x={0.2} />
+                <Spacer x={0.5} />
                 <Chip color="danger">
-                  <Text size={16}>{`${items} not found in route`}</Text>
+                  <Text>{`${items} not found in route`}</Text>
                 </Chip>
               </>
             )}
             {(apiRoute.indexOf(`?${offset}=`) > -1 || apiRoute.indexOf(`&${offset}=`) > -1) && (
               <>
-                <Spacer x={0.2} />
+                <Spacer x={0.5} />
                 <Chip color="success">
-                  <Text size={16}>{`${offset} was found`}</Text>
+                  <Text>{`${offset} was found`}</Text>
                 </Chip>
               </>
             )}
             {(apiRoute.indexOf(`?${offset}=`) === -1 && apiRoute.indexOf(`&${offset}=`) === -1) && (
               <>
-                <Spacer x={0.2} />
+                <Spacer x={0.5} />
                 <Chip color="error">
-                  <Text size={16}>{`${offset} not found in route`}</Text>
+                  <Text>{`${offset} not found in route`}</Text>
                 </Chip>
               </>
             )}
           </div>
-          <Spacer y={0.5} />
+          <Spacer y={1} />
           <div style={styles.rowDisplay}>
             <Text>
               {"The maximum amount of item that you're going to get is: "}
             </Text>
             <Chip>
-              <Text size={16}>{itemsLimit === "0" || !itemsLimit ? "no max" : itemsLimit}</Text>
+              <Text>{itemsLimit === "0" || !itemsLimit ? "no max" : itemsLimit}</Text>
             </Chip>
           </div>
-        </Grid>
+        </div>
       )}
-    </Grid.Container>
+    </div>
   );
 }
 

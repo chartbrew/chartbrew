@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Link, Checkbox, Container, Divider, Grid, Row, Spacer,
-  Text, Input, Dropdown, Tooltip, Modal, Badge,
+  Button, Link, Checkbox, Divider, Spacer, Input, Dropdown, Tooltip, Modal, Chip, DropdownTrigger, DropdownMenu, DropdownItem, ModalHeader, ModalBody, ModalFooter,
 } from "@nextui-org/react";
 import {
   Calendar, ChevronDown, CloseSquare, InfoCircle, Setting, TickSquare
@@ -16,6 +15,9 @@ import "react-date-range/dist/theme/default.css"; // theme css file
 
 import { secondary, primary } from "../../../config/colors";
 import { defaultStaticRanges, defaultInputRanges } from "../../../config/dateRanges";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
 
 const xLabelOptions = [{
   key: "default",
@@ -216,95 +218,83 @@ function ChartSettings(props) {
   };
 
   return (
-    <Container
-      css={{
-        backgroundColor: "$backgroundContrast",
-        br: "$md",
-        p: 10,
-        "@xs": {
-          p: 20,
-        },
-        "@sm": {
-          p: 20,
-        },
-        "@md": {
-          p: 20,
-        },
-      }}
-    >
+    <Container className={"bg-content2 rounded-md"}>
       <Row>
         <Text b>Chart Settings</Text>
       </Row>
 
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <Divider />
-      <Spacer y={0.5} />
+      <Spacer y={1} />
 
       <Row>
         <Text>Global date settings</Text>
       </Row>
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <Row>
-        <Grid.Container gap={1}>
-          <Grid xs={12} sm={12} md={6} alignItems="center">
+        <div className="grid grid-cols-12 gap-1">
+          <div className="col-span-6 sm:col-span-12 md:col-span-12 lg:col-span-6 flex items-center">
             <div>
-              <Container css={{ ml: 0, pl: 0 }}>
-                <Row css={{ ml: 0, pl: 0 }} align="center">
+              <Container className={"pl-0 ml-0"}>
+                <Row className={"pl-0 ml-0"} align="center">
                   <Button
-                    iconRight={<Calendar set="bold" />}
+                    endContent={<Calendar set="bold" />}
                     onClick={() => _onViewRange(true)}
                     auto
                   >
                     Date filter
                   </Button>
-                  <Spacer x={0.3} />
+                  <Spacer x={0.6} />
                   {(startDate || endDate) && (
                     <Tooltip content="Remove date filtering">
                       <Button
-                        light
-                        icon={<CloseSquare />}
+                        variant="light"
+                        isIconOnly
                         color="danger"
                         onClick={() => _onRemoveDateFiltering()}
                         auto
-                      />
+                      >
+                        <CloseSquare />
+                      </Button>
                     </Tooltip>
                   )}
                   {startDate && endDate && (
                     <Tooltip content="Date formatting">
                       <Button
-                        light
-                        icon={<Setting />}
+                        variant="light"
+                        isIconOnly
                         onClick={() => setDateFormattingModal(true)}
                         auto
                         size="xs"
-                        css={{ minWidth: "fit-content" }}
-                      />
+                      >
+                        <Setting />
+                      </Button>
                     </Tooltip>
                   )}
                 </Row>
               </Container>
-              <Row style={{ marginTop: 5 }} align="center">
+              <Row className={"mt-5"} align="center">
                 {startDate && (
-                  <Badge color="secondary" size="sm">
-                    <Link onClick={() => setDateRangeModal(true)} css={{ color: "$accents0" }}>
+                  <Chip color="secondary" size="sm">
+                    <Link onClick={() => setDateRangeModal(true)} className="text-background">
                       {labelStartDate}
                     </Link>
-                  </Badge>
+                  </Chip>
                 )}
-                <Spacer x={0.3} />
+                <Spacer x={0.6} />
                 {startDate && (<span> to </span>)}
-                <Spacer x={0.3} />
+                <Spacer x={0.6} />
                 {endDate && (
-                  <Badge color="secondary" size="sm">
-                    <Link onClick={() => setDateRangeModal(true)} css={{ color: "$accents0" }}>
+                  <Chip color="secondary" size="sm">
+                    <Link onClick={() => setDateRangeModal(true)} className="text-background">
                       {labelEndDate}
                     </Link>
-                  </Badge>
+                  </Chip>
                 )}
               </Row>
             </div>
-          </Grid>
-          <Grid xs={12} sm={12} md={6} direction="column">
+          </div>
+          <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6">
             <Checkbox
               isSelected={currentEndDate}
               isDisabled={!dateRange.endDate}
@@ -314,18 +304,18 @@ function ChartSettings(props) {
               size="sm"
             >
               Auto-update the date range
-              <Spacer x={0.3} />
+              <Spacer x={0.6} />
               <Tooltip
                 content={(
                   <div style={{ padding: 5 }}>
                     <Text>
                       {"When this is enabled, the end date will be automatically updated to the current date and the date range length will be preserved."}
                     </Text>
-                    <Spacer y={0.3} />
+                    <Spacer y={0.6} />
                     <Text>
                       {"This option takes into account the date interval as well."}
                     </Text>
-                    <Spacer y={0.3} />
+                    <Spacer y={0.6} />
                     <ul>
                       <li>
                         <Text>
@@ -349,7 +339,7 @@ function ChartSettings(props) {
                 <InfoCircle set="light" size="small" />
               </Tooltip>
             </Checkbox>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Checkbox
               isSelected={fixedStartDate}
               isDisabled={!currentEndDate}
@@ -360,38 +350,39 @@ function ChartSettings(props) {
             >
               Fix the start date
             </Checkbox>
-          </Grid>
-        </Grid.Container>
+          </div>
+        </div>
       </Row>
-      <Spacer y={0.5} />
-      <Grid.Container gap={1}>
-        <Grid xs={12} sm={6} md={6}>
-          <Dropdown isBordered>
-            <Dropdown.Trigger>
+      <Spacer y={1} />
+      <div className="grid grid-cols-12 gap-1">
+        <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6">
+          <Dropdown>
+            <DropdownTrigger>
               <Input
                 placeholder="Select the frequency"
                 value={
                   timeInterval
                   && timeIntervalOptions.find((option) => option.value === timeInterval).text
                 }
-                bordered
-                contentRight={<ChevronDown />}
+                variant="bordered"
+                endContent={<ChevronDown />}
               />
-            </Dropdown.Trigger>
-            <Dropdown.Menu
+            </DropdownTrigger>
+            <DropdownMenu
+              variant="bordered"
               onAction={(key) => onChange({ timeInterval: key })}
               selectedKeys={[timeInterval]}
               selectionMode="single"
             >
               {timeIntervalOptions.map((option) => (
-                <Dropdown.Item key={option.value}>
+                <DropdownItem key={option.value}>
                   {option.text}
-                </Dropdown.Item>
+                </DropdownItem>
               ))}
-            </Dropdown.Menu>
+            </DropdownMenu>
           </Dropdown>
-        </Grid>
-        <Grid xs={12} sm={6} md={6} alignItems="center">
+        </div>
+        <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6 flex items-center">
           <Checkbox
             isSelected={includeZeros}
             onChange={() => onChange({ includeZeros: !includeZeros })}
@@ -399,16 +390,16 @@ function ChartSettings(props) {
           >
             Allow zero values
           </Checkbox>
-        </Grid>
-      </Grid.Container>
+        </div>
+      </div>
 
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <Divider />
-      <Spacer y={0.5} />
+      <Spacer y={1} />
 
-      <Grid.Container gap={1}>
+      <div className="grid grid-cols-12 gap-1">          
         {type === "line" && (
-          <Grid xs={12} sm={6} md={6}>
+          <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6">
             <Checkbox
               isSelected={pointRadius > 0}
               onChange={() => {
@@ -422,10 +413,10 @@ function ChartSettings(props) {
             >
               Data points
             </Checkbox>
-          </Grid>
+          </div>
         )}
         {type === "bar" && (
-          <Grid xs={12} sm={6} md={6}>
+          <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6">
             <Checkbox
               isSelected={stacked}
               onChange={_onChangeStacked}
@@ -433,10 +424,10 @@ function ChartSettings(props) {
             >
               Stack datasets
             </Checkbox>
-          </Grid>
+          </div>
         )}
         {type === "bar" && (
-          <Grid xs={12} sm={6} md={6}>
+          <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6">
             <Checkbox
               isSelected={horizontal}
               onChange={_onChangeHorizontal}
@@ -444,9 +435,9 @@ function ChartSettings(props) {
             >
               Horizontal bars
             </Checkbox>
-          </Grid>
+          </div>
         )}
-        <Grid xs={12} sm={6} md={6}>
+        <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6">
           <Checkbox
             isSelected={displayLegend}
             onChange={() => onChange({ displayLegend: !displayLegend })}
@@ -454,8 +445,8 @@ function ChartSettings(props) {
           >
             Legend
           </Checkbox>
-        </Grid>
-        <Grid xs={12} sm={6} md={6}>
+        </div>
+        <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6">
           <Checkbox
             isSelected={dataLabels}
             onChange={() => onChange({ dataLabels: !dataLabels })}
@@ -463,40 +454,40 @@ function ChartSettings(props) {
           >
             Data labels
           </Checkbox>
-        </Grid>
-      </Grid.Container>
+        </div>
+      </div>
 
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <Divider />
-      <Spacer y={0.5} />
+      <Spacer y={1} />
 
-      <Grid.Container gap={1}>
-        <Grid xs={12} sm={6} md={6}>
+      <div className="grid grid-cols-12 gap-1">
+        <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6">
           <Input
             label="Max Y Axis value"
             placeholder="Enter a number"
             type="number"
             value={max}
             onChange={(e) => setMax(e.target.value)}
-            bordered
+            variant="bordered"
             fullWidth
           />
-        </Grid>
-        <Grid xs={12} sm={6} md={6} justify="center" alignItems="flex-end">
+        </div>
+        <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6 flex items-end justify-center">
           {max && (
             <>
               <Button
                 disabled={!max || (max === maxValue)}
                 onClick={() => onChange({ maxValue: max })}
                 color="success"
-                flat
+                variant="flat"
                 auto
               >
                 Save
               </Button>
-              <Spacer x={0.1} />
+              <Spacer x={0.3} />
               <Button
-                flat
+                variant="flat"
                 color="danger"
                 onClick={() => {
                   onChange({ maxValue: null });
@@ -508,19 +499,19 @@ function ChartSettings(props) {
               </Button>
             </>
           )}
-        </Grid>
-        <Grid xs={12} sm={6} md={6}>
+        </div>
+        <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6">
           <Input
             label="Min Y Axis value"
             placeholder="Enter a number"
             type="number"
             value={min}
             onChange={(e) => setMin(e.target.value)}
-            bordered
+            variant="bordered"
             fullWidth
           />
-        </Grid>
-        <Grid xs={12} sm={6} md={6} justify="center" alignItems="flex-end">
+        </div>
+        <div className="col-span-6 sm:col-span-12 md:col-span-6 lg:col-span-6 flex items-end justify-center">
           {min && (
             <>
               <Button
@@ -528,13 +519,13 @@ function ChartSettings(props) {
                 onClick={() => onChange({ minValue: min })}
                 color="success"
                 auto
-                flat
+                variant="flat"
               >
                 Save
               </Button>
-              <Spacer x={0.1} />
+              <Spacer x={0.3} />
               <Button
-                flat
+                variant="flat"
                 color="danger"
                 onClick={() => {
                   onChange({ minValue: null });
@@ -546,17 +537,17 @@ function ChartSettings(props) {
               </Button>
             </>
           )}
-        </Grid>
-      </Grid.Container>
+        </div>
+      </div>
 
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <Divider />
-      <Spacer y={0.5} />
+      <Spacer y={1} />
 
-      <Grid.Container gap={1}>
-        <Grid xs={12} sm={12} md={12}>
-          <Dropdown isBordered>
-            <Dropdown.Trigger>
+      <div className="grid grid-cols-12 gap-1">
+        <div className="col-span-12">
+          <Dropdown>
+            <DropdownTrigger>
               <Input
                 label="Number of labels on the X Axis"
                 placeholder="Select the number of labels"
@@ -564,26 +555,27 @@ function ChartSettings(props) {
                   ticksSelection
                   && xLabelOptions.find((option) => option.value === ticksSelection).text
                 }
-                bordered
+                variant="bordered"
                 fullWidth
-                contentRight={<ChevronDown />}
+                endContent={<ChevronDown />}
               />
-            </Dropdown.Trigger>
-            <Dropdown.Menu
+            </DropdownTrigger>
+            <DropdownMenu
+              variant="bordered"
               onAction={(key) => _onChangeTicks(key)}
               selectedKeys={[ticksSelection]}
               selectionMode="single"
             >
               {xLabelOptions.map((option) => (
-                <Dropdown.Item key={option.value}>
+                <DropdownItem key={option.value}>
                   {option.text}
-                </Dropdown.Item>
+                </DropdownItem>
               ))}
-            </Dropdown.Menu>
+            </DropdownMenu>
           </Dropdown>
-        </Grid>
+        </div>
         {ticksSelection === "custom" && (
-          <Grid xs={12} sm={12} md={12}>
+          <div className="col-span-12">
             <Input
               label="Enter the number of labels"
               placeholder="Enter a number"
@@ -596,9 +588,9 @@ function ChartSettings(props) {
                 content: "Save",
                 onClick: () => _onConfirmTicksNumber(),
               }}
-              contentRight={(
+              endContent={(
                 <Button
-                  flat
+                  variant="flat"
                   color="success"
                   onClick={() => _onConfirmTicksNumber()}
                   auto
@@ -607,15 +599,15 @@ function ChartSettings(props) {
                 </Button>
               )}
             />
-          </Grid>
+          </div>
         )}
-      </Grid.Container>
+      </div>
 
-      <Modal open={dateRangeModal} onClose={() => setDateRangeModal(false)} width="800px">
-        <Modal.Header>
+      <Modal isOpen={dateRangeModal} onClose={() => setDateRangeModal(false)} className="w-[800px]">
+        <ModalHeader>
           <Text h3>Set a custom date range for your chart</Text>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <Container>
             {currentEndDate && (
               <>
@@ -624,7 +616,7 @@ function ChartSettings(props) {
                     {"The date range is set to auto-update to the current date. If you want to set an exact custom date range, disable the auto-update option."}
                   </Text>
                 </Row>
-                <Spacer y={0.5} />
+                <Spacer y={1} />
               </>
             )}
             <Row justify="center">
@@ -645,10 +637,10 @@ function ChartSettings(props) {
               />
             </Row>
           </Container>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
-            flat
+            variant="flat"
             color="warning"
             onClick={() => setDateRangeModal(false)}
             auto
@@ -656,20 +648,20 @@ function ChartSettings(props) {
             Cancel
           </Button>
           <Button
-            iconRight={<TickSquare />}
+            endContent={<TickSquare />}
             onClick={_onComplete}
             auto
           >
             Apply date filter
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
-      <Modal open={dateFormattingModal} onClose={() => setDateFormattingModal(false)} width="600px">
-        <Modal.Header>
+      <Modal isOpen={dateFormattingModal} onClose={() => setDateFormattingModal(false)} className="w-[600px]">
+        <ModalHeader>
           <Text h3>Set a custom format for your dates</Text>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <Container>
             <Row>
               <Text>
@@ -683,7 +675,7 @@ function ChartSettings(props) {
                 {"."}
               </Text>
             </Row>
-            <Spacer y={2} />
+            <Spacer y={4} />
             <Row>
               <Input
                 labelPlaceholder="Enter a date format"
@@ -694,53 +686,50 @@ function ChartSettings(props) {
                 fullWidth
               />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row wrap="wrap">
               <Button
                 color="primary"
                 size="xs"
                 onClick={() => setDatesFormat("YYYY-MM-DD")}
                 auto
-                css={{ marginBottom: 5 }}
-                bordered
+                className="mb-5"
+                variant="bordered"
               >
                 {"YYYY-MM-DD"}
               </Button>
-              <Spacer x={0.3} />
+              <Spacer x={0.6} />
               <Button
                 color="primary"
                 size="xs"
-                disableOutline
                 onClick={() => setDatesFormat("YYYY-MM-DD HH:mm:ss")}
                 auto
-                bordered
+                variant="bordered"
               >
                 {"YYYY-MM-DD HH:mm:ss"}
               </Button>
-              <Spacer x={0.3} />
+              <Spacer x={0.6} />
               <Button
                 color="primary"
                 size="xs"
-                disableOutline
                 onClick={() => setDatesFormat("X")}
                 auto
-                bordered
+                variant="bordered"
               >
                 {"Timestamp (in seconds)"}
               </Button>
-              <Spacer x={0.3} />
+              <Spacer x={0.6} />
               <Button
                 color="primary"
                 size="xs"
-                disableOutline
                 onClick={() => setDatesFormat("x")}
                 auto
-                bordered
+                variant="bordered"
               >
                 {"Timestamp (in ms)"}
               </Button>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <Text small>
                 {"See "}
@@ -755,10 +744,10 @@ function ChartSettings(props) {
               </Text>
             </Row>
           </Container>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
-            flat
+            variant="flat"
             color="warning"
             onClick={() => setDateFormattingModal(false)}
             auto
@@ -766,13 +755,13 @@ function ChartSettings(props) {
             Cancel
           </Button>
           <Button
-            iconRight={<TickSquare />}
+            endContent={<TickSquare />}
             onClick={_onChangeDateFormat}
             auto
           >
             Apply date format
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
     </Container>
   );

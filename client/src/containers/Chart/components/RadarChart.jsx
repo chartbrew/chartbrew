@@ -1,8 +1,6 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Radar } from "react-chartjs-2";
-import { useTheme } from "@nextui-org/react";
-
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,7 +12,10 @@ import {
   Legend,
   Filler,
 } from "chart.js";
+import { semanticColors } from "@nextui-org/react";
+
 import ChartErrorBoundary from "./ChartErrorBoundary";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 ChartJS.register(
   CategoryScale, RadialLinearScale, PointElement, ArcElement, Title, Tooltip, Legend, Filler,
@@ -33,7 +34,7 @@ function RadarChart(props) {
     }
   }, [redraw]);
 
-  const { theme } = useTheme();
+  const theme = useThemeDetector() ? "dark" : "light";
 
   const _getChartOptions = () => {
     // add any dynamic changes to the chartJS options here
@@ -44,19 +45,19 @@ function RadarChart(props) {
         newOptions.scales = {
           r: {
             grid: {
-              color: theme.colors.accents5.value,
+              color: semanticColors[theme].content3.DEFAULT,
             },
             angleLines: {
-              color: theme.colors.accents5.value,
+              color: semanticColors[theme].content3.DEFAULT,
             },
             pointLabels: {
-              color: theme.colors.accents9.value,
+              color: semanticColors[theme].foreground.DEFAULT,
             },
           }
         };
       }
       if (newOptions.plugins?.legend?.labels) {
-        newOptions.plugins.legend.labels.color = theme.colors.accents9.value;
+        newOptions.plugins.legend.labels.color = semanticColors[theme].foreground.DEFAULT;
       }
 
       return newOptions;

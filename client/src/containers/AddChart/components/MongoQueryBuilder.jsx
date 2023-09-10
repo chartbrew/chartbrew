@@ -3,8 +3,8 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Button, Checkbox, Container, Divider, Grid, Input, Link, Loading,
-  Modal, Popover, Row, Spacer, Text, Tooltip, useTheme,
+  Button, Checkbox, Divider, Input, Link, Modal, ModalBody, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Spacer,
+  Tooltip,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
@@ -20,6 +20,10 @@ import { createSavedQuery, updateSavedQuery } from "../../../actions/savedQuery"
 import SavedQueries from "../../../components/SavedQueries";
 import { runDataRequest as runDataRequestAction } from "../../../actions/dataRequest";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 /*
   MongoDB query builder
@@ -46,7 +50,7 @@ function MongoQueryBuilder(props) {
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     if (dataRequest) {
@@ -150,11 +154,11 @@ function MongoQueryBuilder(props) {
 
   return (
     <div style={styles.container}>
-      <Grid.Container>
-        <Grid xs={12} sm={6}>
+      <div className="grid grid-cols-12">
+        <div className="col-span-6 sm:col-span-12">
           <Container>
             <Row justify="space-between" align="center">
-              <Text b size={22}>{connection.name}</Text>
+              <Text b size={"lg"}>{connection.name}</Text>
               <div>
                 <Row>
                   <Button
@@ -162,37 +166,37 @@ function MongoQueryBuilder(props) {
                     auto
                     size="sm"
                     onClick={() => _onSavePressed()}
-                    disabled={saveLoading || testingQuery}
-                    flat
+                    isLoading={saveLoading || testingQuery}
+                    variant="flat"
                   >
-                    {(!saveLoading && !testingQuery) && "Save"}
-                    {(saveLoading || testingQuery) && <Loading type="spinner" />}
+                    {"Save"}
                   </Button>
-                  <Spacer x={0.3} />
+                  <Spacer x={0.6} />
                   <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
                     <Button
                       color="danger"
-                      icon={<Delete />}
+                      isIconOnly
                       auto
                       size="sm"
-                      bordered
-                      css={{ minWidth: "fit-content" }}
+                      variant="bordered"
                       onClick={() => onDelete()}
-                    />
+                    >
+                      <Delete />
+                    </Button>
                   </Tooltip>
                 </Row>
               </div>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <Divider />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center">
               <Text b>
                 {"Enter your mongodb query here"}
               </Text>
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Tooltip
                 content={(
                   <>
@@ -208,9 +212,9 @@ function MongoQueryBuilder(props) {
                 <InfoCircle size="small" />
               </Tooltip>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
-              <div style={{ width: "100%" }}>
+              <div className="w-full">
                 <AceEditor
                   mode="javascript"
                   theme={isDark ? "one_dark" : "tomorrow"}
@@ -227,47 +231,46 @@ function MongoQueryBuilder(props) {
                 />
               </div>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center" className="mongobuilder-buttons-tut">
               <Button
-                color={testSuccess ? "success" : testError ? "error" : "primary"}
-                iconRight={testingQuery ? <Loading type="points-opacity" /> : <Play />}
+                color={testSuccess ? "success" : testError ? "danger" : "primary"}
+                endContent={<Play />}
                 onClick={() => _onTest()}
-                disabled={testingQuery}
+                isLoading={testingQuery}
                 auto
-                shadow
+                variant="shadow"
               >
-                {!testSuccess && !testError && !testingQuery && "Run query"}
-                {(testSuccess || testError) && !testingQuery && "Run again"}
+                {!testSuccess && !testError && "Run query"}
+                {(testSuccess || testError) && "Run again"}
               </Button>
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Button
                 color="secondary"
-                iconRight={<Plus />}
-                disabled={savingQuery}
+                endContent={<Plus />}
+                isLoading={savingQuery}
                 onClick={_onSaveQueryConfirmation}
                 auto
               >
-                {!savedQuery && !savingQuery && "Save query"}
-                {savedQuery && !savingQuery && "Save as new"}
-                {savingQuery && <Loading type="points" />}
+                {!savedQuery && "Save query"}
+                {savedQuery && "Save as new"}
               </Button>
               {savedQuery && (
                 <>
-                  <Spacer x={0.2} />
+                  <Spacer x={0.5} />
                   <Button
-                    bordered
-                    icon={<Edit />}
+                    variant="bordered"
+                    startContent={<Edit />}
                     onClick={_onUpdateSavedQuery}
-                    disabled={updatingSavedQuery}
+                    isLoading={updatingSavedQuery}
                     auto
                   >
-                    {updatingSavedQuery ? <Loading type="points" /> : "Update the query"}
+                    {"Update the query"}
                   </Button>
                 </>
               )}
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center">
               <Checkbox
                 label="Use cache"
@@ -275,17 +278,17 @@ function MongoQueryBuilder(props) {
                 onChange={() => setInvalidateCache(!invalidateCache)}
                 size="sm"
               />
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Tooltip
                 content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change the query."}
-                css={{ zIndex: 10000, maxWidth: 400 }}
+                className="max-w-[400px]"
               >
                 <InfoCircle size="small" />
               </Tooltip>
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
 
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row>
               <Text b>Saved queries</Text>
             </Row>
@@ -302,18 +305,18 @@ function MongoQueryBuilder(props) {
               />
             </Row>
           </Container>
-        </Grid>
-        <Grid xs={12} sm={6}>
+        </div>
+        <div className="col-span-6 sm:col-span-12">
           <Container>
             <Row>
               <Text b>
                 {"Query result"}
               </Text>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
 
             <Row>
-              <div style={{ width: "100%" }}>
+              <div className="w-full">
                 <AceEditor
                   mode="json"
                   theme={isDark ? "one_dark" : "tomorrow"}
@@ -328,45 +331,56 @@ function MongoQueryBuilder(props) {
                 />
               </div>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             {result && (
               <>
                 <Row>
                   <Text small>This is a sample response and might not show all the data.</Text>
                 </Row>
-                <Spacer y={0.5} />
+                <Spacer y={1} />
               </>
             )}
 
             <Row>
               <Popover>
-                <Popover.Trigger>
-                  <Link css={{ color: "$secondary", ai: "center" }}>
-                    <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                <PopoverTrigger>
+                  <Link className="text-secondary flex items-center">
+                    <div className="flex flex-row items-center">
                       <InfoCircle size="small" />
-                      <Spacer x={0.2} />
+                      <Spacer x={0.5} />
                       <Text>How to optimise your queries?</Text>
                     </div>
                   </Link>
-                </Popover.Trigger>
-                <Popover.Content css={{ maxWidth: 600, p: 10 }}>
-                  <Container fluid>
+                </PopoverTrigger>
+                <PopoverContent className="max-w-[600px] p-10">
+                  <Container className={"w-full"}>
                     <Row>
                       <Text>{"You can use the following methods to optimize your queries and make them significantly smaller in size."}</Text>
                     </Row>
-                    <Spacer y={1} />
+                    <Spacer y={2} />
                     <Row>
-                      <Link href="https://docs.mongodb.com/manual/reference/operator/query-comparison/" target="_blank" rel="noopener noreferrer" css={{ ai: "center" }}>
+                      <Link
+                        href="https://docs.mongodb.com/manual/reference/operator/query-comparison/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center"
+                      >
                         <div><ChevronRight set="light" /></div>
-                        <Spacer x={0.2} />
+                        <Spacer x={0.5} />
                         <Text color="primary">
                           {"Use a relevant condition for your query. For example, don't fetch all the documents if you know you are going to use just the recent ones."}
                         </Text>
                       </Link>
                     </Row>
-                    <Spacer y={0.5} />
+                    <Spacer y={1} />
                     <Row>
-                      <Link as="a" href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only" target="_blank" rel="noopener noreferrer" css={{ ai: "center" }}>
+                      <Link
+                        as="a"
+                        href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center"
+                      >
                         <div><ChevronRight set="light" /></div>
                         <Spacer x={0.2} />
                         <Text color="primary">
@@ -374,41 +388,48 @@ function MongoQueryBuilder(props) {
                         </Text>
                       </Link>
                     </Row>
-                    <Spacer y={0.5} />
+                    <Spacer y={1} />
                     <Row>
-                      <Link as="a" href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only" target="_blank" rel="noopener noreferrer" css={{ ai: "center" }}>
+                      <Link
+                        as="a"
+                        href="https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#return-the-specified-fields-and-the-id-field-only"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center"
+                      >
                         <div><ChevronRight set="light" /></div>
-                        <Spacer x={0.2} />
+                        <Spacer x={1} />
                         <Text color="primary">
                           {"If you store files encoded in base64, make sure you exclude them using the method above"}
                         </Text>
                       </Link>
                     </Row>
                   </Container>
-                </Popover.Content>
+                </PopoverContent>
               </Popover>
             </Row>
           </Container>
-        </Grid>
-      </Grid.Container>
+        </div>
+      </div>
 
       {/* Save query modal */}
-      <Modal open={saveQueryModal} size="small" onClose={() => setSaveQueryModal(false)}>
-        <Modal.Header>
+      <Modal isOpen={saveQueryModal} size="small" onClose={() => setSaveQueryModal(false)}>
+        <ModalHeader>
           <Text h3>{"Save your query and use it later in this project"}</Text>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <Input
             label="Write a short description for your query"
             placeholder="Type a summary here"
-            fluid
+            fullWidth
             onChange={(e) => setSavedQuerySummary(e.target.value)}
             size="lg"
+            variant="bordered"
           />
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
-            flat
+            variant="flat"
             color="warning"
             onClick={() => setSaveQueryModal(false)}
             auto
@@ -417,13 +438,13 @@ function MongoQueryBuilder(props) {
           </Button>
           <Button
             disabled={!savedQuerySummary}
-            iconRight={<TickSquare />}
+            endContent={<TickSquare />}
             onClick={_onSaveQuery}
             auto
           >
             Save the query
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
     </div>
   );

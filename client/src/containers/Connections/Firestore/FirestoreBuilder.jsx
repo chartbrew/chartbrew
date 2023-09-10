@@ -3,8 +3,8 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Button, Row, Text, Spacer, Divider, Badge, Switch, Tooltip,
-  Link, Loading, Checkbox, Dropdown, Input, Popover, Container, useTheme,
+  Button,Spacer, Divider, Chip, Switch, Tooltip,
+  Link, Checkbox, Dropdown, Input, Popover, CircularProgress, DropdownMenu, DropdownItem, DropdownTrigger, Select, SelectItem, PopoverTrigger, PopoverContent,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -16,7 +16,7 @@ import { enGB } from "date-fns/locale";
 import { HiRefresh } from "react-icons/hi";
 import {
   CloseSquare, Danger, InfoCircle, Play, Plus, Calendar as CalendarIcon,
-  TickSquare, Delete, ChevronDown,
+  TickSquare, Delete,
 } from "react-iconly";
 import { FaUndoAlt } from "react-icons/fa";
 
@@ -35,6 +35,10 @@ import { changeTutorial as changeTutorialAction } from "../../../actions/tutoria
 import fieldFinder from "../../../modules/fieldFinder";
 import { secondary } from "../../../config/colors";
 import determineType from "../../../modules/determineType";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 export const operators = [{
   key: "=",
@@ -115,7 +119,7 @@ function FirestoreBuilder(props) {
   const [orderBy, setOrderBy] = useState("");
   const [orderByDirection, setOrderByDirection] = useState("desc");
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   const {
     dataRequest, match, onChangeRequest, runDataRequest,
@@ -474,11 +478,11 @@ function FirestoreBuilder(props) {
 
   return (
     <div style={styles.container}>
-      <Grid.Container>
-        <Grid xs={12} sm={6} md={showSubUI ? 4 : 6} css={{ mb: 20 }}>
+      <div className="grid grid-cols-12">
+        <div className={`col-span-${showSubUI ? "4" : "6"} sm:col-span-12 md:col-span-6 mb-20`}>
           <Container>
             <Row justify="space-between" align="center">
-              <Text b size={22}>{connection.name}</Text>
+              <Text b size={"lg"}>{connection.name}</Text>
               <div>
                 <Row>
                   <Button
@@ -486,98 +490,95 @@ function FirestoreBuilder(props) {
                     auto
                     size="sm"
                     onClick={() => _onSavePressed()}
-                    disabled={saveLoading || requestLoading}
-                    flat
+                    isLoading={saveLoading || requestLoading}
+                    variant="flat"
                   >
-                    {(!saveLoading && !requestLoading) && "Save"}
-                    {(saveLoading || requestLoading) && <Loading type="spinner" />}
+                    {"Save"}
                   </Button>
-                  <Spacer x={0.3} />
+                  <Spacer x={0.6} />
                   <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
                     <Button
                       color="danger"
-                      icon={<Delete />}
+                      isIconOnly
                       auto
                       size="sm"
-                      bordered
-                      css={{ minWidth: "fit-content" }}
+                      variant="bordered"
                       onClick={() => onDelete()}
-                    />
+                    >
+                      <Delete />
+                    </Button>
                   </Tooltip>
                 </Row>
               </div>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <Divider />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <Text b>Select one of your collections:</Text>
             </Row>
-            <Spacer y={0.5} />
-            <Row wrap="wrap" css={{ pl: 0 }} className="firestorebuilder-collections-tut">
-              {collectionsLoading && <Loading type="points-opacity" />}
+            <Spacer y={1} />
+            <Row wrap="wrap" className="pl-0 firestorebuilder-collections-tut">
+              {collectionsLoading && <CircularProgress />}
               {collectionData.map((collection) => (
                 <Fragment key={collection._queryOptions.collectionId}>
-                  <Badge
+                  <Chip
                     variant={firestoreRequest.query !== collection._queryOptions.collectionId ? "bordered" : "default"}
                     color="primary"
                     onClick={() => _onChangeQuery(collection._queryOptions.collectionId)}
-                    as="a"
-                    disableOutline
-                    css={{ minWidth: 50, mb: 5 }}
+                    className="min-w-[50px] mb-5"
                   >
                     {collection._queryOptions.collectionId}
-                  </Badge>
-                  <Spacer x={0.2} />
+                  </Chip>
+                  <Spacer x={0.5} />
                 </Fragment>
               ))}
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <Button
                 size="sm"
-                icon={<HiRefresh />}
+                startContent={<HiRefresh />}
                 onClick={() => _onFetchCollections()}
-                disabled={collectionsLoading}
+                isLoading={collectionsLoading}
                 auto
-                bordered
-                css={{ border: "none" }}
+                variant="light"
               >
                 Refresh collections
               </Button>
             </Row>
 
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Divider />
-            <Spacer y={0.5} />
+            <Spacer y={1} />
 
             <Row>
               <Text b>{"Data settings"}</Text>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row className="firestorebuilder-settings-tut" align="flex-start">
               <Switch
                 onChange={_toggleSubCollections}
-                checked={
+                isSelected={
                   dataRequest.configuration && dataRequest.configuration.showSubCollections
                 }
                 size="sm"
               />
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Text>Add sub-collections to the response</Text>
             </Row>
 
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Divider />
-            <Spacer y={0.5} />
+            <Spacer y={1} />
 
             <Row align="center">
               <Text b>
                 {"Filter the collection "}
               </Text>
-              <Spacer x={0.5} />
+              <Spacer x={1} />
               <Tooltip
                 content="These filters are applied on the main collection only."
                 css={{ zIndex: 10000 }}
@@ -585,7 +586,7 @@ function FirestoreBuilder(props) {
                 <InfoCircle size="small" />
               </Tooltip>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row className="firestorebuilder-query-tut">
               <Conditions
                 conditions={
@@ -603,99 +604,96 @@ function FirestoreBuilder(props) {
                 collection={dataRequest.query}
               />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Divider />
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row className="firestorebuilder-query-tut">
               <Text b>
                 {"Order and limit"}
               </Text>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="flex-end">
               <Input
                 label="Order by"
                 placeholder="Enter field name"
                 value={orderBy}
                 onChange={(e) => setOrderBy(e.target.value)}
-                css={{ width: 200 }}
-                bordered
+                className={"w-[200px]"}
+                variant="bordered"
                 size="sm"
               />
-              <Spacer x={0.2} />
-              <Dropdown
-                isBordered
-                css={{ minWidth: "max-content" }}
-              >
-                <Dropdown.Button bordered size={"sm"}>
-                  {orderByDirection || "desc"}
-                </Dropdown.Button>
-                <Dropdown.Menu
+              <Spacer x={0.5} />
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button variant="bordered" size={"sm"}>
+                    {orderByDirection || "desc"}
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  variant="bordered"
                   onAction={(key) => setOrderByDirection(key)}
                   selectedKeys={[orderByDirection]}
                   selectionMode="single"
                 >
-                  <Dropdown.Item key="desc">Desc</Dropdown.Item>
-                  <Dropdown.Item key="asc">Asc</Dropdown.Item>
-                </Dropdown.Menu>
+                  <DropdownItem key="desc">Desc</DropdownItem>
+                  <DropdownItem key="asc">Asc</DropdownItem>
+                </DropdownMenu>
               </Dropdown>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <Input
                 label="Limit (leave empty or 0 for unlimited)"
                 placeholder="Enter limit"
                 value={limit}
                 onChange={(e) => setLimit(e.target.value)}
-                css={{ width: 300 }}
-                bordered
+                className={"w-[300px]"}
+                variant="bordered"
                 size="sm"
               />
             </Row>
           </Container>
-        </Grid>
+        </div>
         {showSubUI && dataRequest && dataRequest.configuration && (
-          <Grid xs={12} sm={6} md={4}>
+          <div className="col-span-4 sm:col-span-12 md:col-span-6">
             <Container>
               <Row>
                 <Text b>Fetch sub-collection data</Text>
               </Row>
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               <Row wrap="wrap">
                 {dataRequest.configuration.subCollections.map((subCollection) => (
                   <Fragment key={subCollection}>
-                    <Badge
+                    <Chip
                       color="secondary"
                       variant={dataRequest.configuration.selectedSubCollection !== subCollection ? "bordered" : "default"}
                       onClick={() => _onSelectSubCollection(subCollection)}
-                      as="a"
-                      disableOutline
-                      css={{ minWidth: 50, mb: 5 }}
+                      className="min-w-[50px] mb-5"
                     >
                       {subCollection}
-                    </Badge>
-                    <Spacer x={0.1} />
+                    </Chip>
+                    <Spacer x={0.3} />
                   </Fragment>
                 ))}
               </Row>
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               <Row>
                 <Button
                   color="danger"
                   onClick={() => _onSelectSubCollection("")}
-                  icon={<CloseSquare />}
+                  startContent={<CloseSquare />}
                   disabled={!dataRequest.configuration.selectedSubCollection}
                   auto
-                  css={{ border: "none" }}
-                  bordered
+                  variant="light"
                 >
                   Clear selection
                 </Button>
               </Row>
 
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               <Divider />
-              <Spacer y={0.5} />
+              <Spacer y={1} />
 
               {dataRequest.configuration.selectedSubCollection && (
                 <>
@@ -703,7 +701,7 @@ function FirestoreBuilder(props) {
                     <Text b>
                       {"Filter the sub-collection "}
                     </Text>
-                    <Spacer x={0.2} />
+                    <Spacer x={0.5} />
                     <Tooltip
                       content="These filters are applied on the sub-collection only."
                       css={{ zIndex: 10000 }}
@@ -711,7 +709,7 @@ function FirestoreBuilder(props) {
                       <InfoCircle size="small" />
                     </Tooltip>
                   </Row>
-                  <Spacer y={0.5} />
+                  <Spacer y={1} />
                   <Row>
                     <Conditions
                       conditions={
@@ -735,13 +733,11 @@ function FirestoreBuilder(props) {
                   </Row>
                   {indexUrl && (
                     <>
-                      <Spacer y={0.5} />
+                      <Spacer y={1} />
                       <Divider />
-                      <Spacer y={0.5} />
+                      <Spacer y={1} />
                       <Row>
-                        <Container css={{
-                          backgroundColor: "$blue50", p: 10, br: "$sm", border: "2px solid $blue300",
-                        }}>
+                        <Container className={"bg-blue-50 p-10 rounded-sm border-[2px] border-blue-300 border-solid"}>
                           <Row>
                             <Text h5>
                               {"To be able to filter this sub-collection, you will need to set up an index."}
@@ -761,22 +757,21 @@ function FirestoreBuilder(props) {
                 </>
               )}
             </Container>
-          </Grid>
+          </div>
         )}
-        <Grid xs={12} sm={showSubUI ? 12 : 6} md={showSubUI ? 4 : 6}>
+        <div className={`col-span-${showSubUI ? "4" : "6"} sm:col-span-12 md:col-span-${showSubUI ? "12" : "6"}`}>
           <Container>
             <Row className="firestorebuilder-request-tut">
               <Button
-                iconRight={requestLoading ? <Loading type="spinner" /> : <Play />}
-                disabled={requestLoading}
+                endContent={<Play />}
+                isLoading={requestLoading}
                 onClick={() => _onTest()}
-                shadow
-                css={{ width: "100%" }}
+                className={"w-full"}
               >
                 Get Firestore data
               </Button>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center">
               <Checkbox
                 label="Use cache"
@@ -784,17 +779,17 @@ function FirestoreBuilder(props) {
                 onChange={() => setInvalidateCache(!invalidateCache)}
                 size="sm"
               />
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Tooltip
                 content="Use cache to avoid hitting the Firestore API every time you request data. The cache will be cleared when you change any of the settings."
-                css={{ zIndex: 10000, maxWidth: 500 }}
+                className="max-w-[500px]"
               >
                 <InfoCircle size="small" />
               </Tooltip>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row className="firestorebuilder-result-tut">
-              <div style={{ width: "100%" }}>
+              <div className="w-full">
                 <AceEditor
                   mode="json"
                   theme={isDark ? "one_dark" : "tomorrow"}
@@ -809,8 +804,8 @@ function FirestoreBuilder(props) {
               </div>
             </Row>
           </Container>
-        </Grid>
-      </Grid.Container>
+        </div>
+      </div>
     </div>
   );
 }
@@ -824,7 +819,7 @@ function Conditions(props) {
   const [tempConditionValue, setTempConditionValue] = useState("");
 
   return (
-    <Container className="datasetdata-filters-tut" css={{ pr: 0, pl: 0 }}>
+    <Container className="datasetdata-filters-tut pr-0 pl-0">
       {conditions && conditions.map((condition) => {
         return (
           <Fragment key={condition.id}>
@@ -837,67 +832,53 @@ function Conditions(props) {
                   >
                     <Danger primaryColor={secondary} />
                   </Tooltip>
-                  <Spacer x={0.2} />
+                  <Spacer x={0.5} />
                 </>
               )}
-              <Dropdown isBordered>
-                <Dropdown.Trigger>
-                  <Input
-                    value={(condition.field && condition.field.substring(condition.field.lastIndexOf(".") + 1)) || "field"}
-                    animated={false}
-                    contentRight={<ChevronDown set="light" />}
-                  />
-                </Dropdown.Trigger>
-                <Dropdown.Menu
-                  onAction={(key) => updateCondition(condition.id, key, "field")}
-                  selectedKeys={[condition.field]}
-                  selectionMode="single"
-                  css={{ minWidth: "max-content" }}
-                >
-                  {fieldOptions.map((option) => (
-                    <Dropdown.Item key={option.value} value={option.value}>
-                      <Container css={{ p: 0, m: 0 }}>
-                        <Row>
-                          <Badge color={option.label.color} css={{ minWidth: 70 }}>
-                            {option.label.content}
-                          </Badge>
-                          <Spacer x={0.2} />
-                          <Text>{option.text}</Text>
-                        </Row>
-                      </Container>
-                    </Dropdown.Item>
-                  ))}
-                </Dropdown.Menu>
-              </Dropdown>
+              <Select
+                variant="bordered"
+                selectedKeys={[condition.collection]}
+                value={(condition.field && condition.field.substring(condition.field.lastIndexOf(".") + 1)) || "field"}
+                selectionMode="single"
+                onSelectionChange={(key) => updateCondition(condition.id, key, "field")}
+              >
+                {fieldOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    <Container className={"p-0 m-0"}>
+                      <Row>
+                        <Chip color={option.label.color} className="min-w-[70px]">
+                          {option.label.content}
+                        </Chip>
+                        <Spacer x={0.5} />
+                        <Text>{option.text}</Text>
+                      </Row>
+                    </Container>
+                  </SelectItem>
+                ))}
+              </Select>
 
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
 
-              <Dropdown isBordered>
-                <Dropdown.Trigger css={{ minWidth: 50 }}>
-                  <Input
-                    value={
-                      (
-                        _.find(operators, { value: condition.operator })
-                        && _.find(operators, { value: condition.operator }).key
-                      )
-                      || "="
-                    }
-                    animated={false}
-                  />
-                </Dropdown.Trigger>
-                <Dropdown.Menu
-                  onAction={(key) => updateCondition(condition.id, key, "operator")}
-                  selectedKeys={[condition.operator]}
-                  selectionMode="single"
-                >
-                  {operators.map((option) => (
-                    <Dropdown.Item key={option.value}>
-                      {option.text}
-                    </Dropdown.Item>
-                  ))}
-                </Dropdown.Menu>
-              </Dropdown>
-              <Spacer x={0.3} />
+              <Select
+                variant="bordered"
+                selectedKeys={[condition.operator]}
+                onSelectionChange={(key) => updateCondition(condition.id, key, "operator")}
+                selectionMode="single"
+                value={
+                  (
+                    _.find(operators, { value: condition.operator })
+                    && _.find(operators, { value: condition.operator }).key
+                  )
+                  || "="
+                }
+              >
+                {operators.map((option) => (
+                  <SelectItem key={option.value}>
+                    {option.text}
+                  </SelectItem>
+                ))}
+              </Select>
+              <Spacer x={0.6} />
               {(!condition.field
                 || (_.find(fieldOptions, { value: condition.field })
                   && _.find(fieldOptions, { value: condition.field }).type !== "date"))
@@ -910,33 +891,33 @@ function Conditions(props) {
                     value={condition.value}
                     onChange={(e) => updateCondition(condition.id, e.target.value, "value")}
                     disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
-                    bordered
-                    animated={false}
+                    variant="bordered"
+                    disableAnimation
                     size="sm"
                   />
                 )}
               {_.find(fieldOptions, { value: condition.field })
                 && _.find(fieldOptions, { value: condition.field }).type === "date" && (
                   <Popover>
-                    <Popover.Trigger>
+                    <PopoverTrigger>
                       <Input
                         placeholder="Enter a value"
-                        contentRight={<CalendarIcon />}
+                        endContent={<CalendarIcon />}
                         value={(condition.value && format(new Date(condition.value), "Pp", { locale: enGB })) || "Click to select a date"}
                         disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
-                        bordered
-                        animated={false}
+                        variant="bordered"
+                        disableAnimation
                         size="sm"
                       />
-                    </Popover.Trigger>
-                    <Popover.Content>
+                    </PopoverTrigger>
+                    <PopoverContent>
                       <Calendar
                         date={(condition.value && new Date(condition.value)) || new Date()}
                         onChange={(date) => updateCondition(condition.id, formatISO(date), "value")}
                         locale={enGB}
                         color={secondary}
                       />
-                    </Popover.Content>
+                    </PopoverContent>
                   </Popover>
               )}
 
@@ -951,13 +932,13 @@ function Conditions(props) {
                           placeholder="Enter a value"
                           value={tempConditionValue}
                           onChange={(e) => setTempConditionValue(e.target.value)}
-                          bordered
+                          variant="bordered"
                           size="sm"
-                          animated={false}
+                          disableAnimation
                         />
-                        <Spacer x={0.2} />
+                        <Spacer x={0.5} />
                         <Button
-                          icon={<Plus />}
+                          isIconOnly
                           color="success"
                           onClick={() => {
                             onChangeConditionValues(
@@ -970,29 +951,31 @@ function Conditions(props) {
                             setTempConditionValue("");
                           }}
                           size="sm"
-                          bordered
-                          css={{ minWidth: "fit-content" }}
-                        />
-                        <Spacer x={0.1} />
+                          variant="light"
+                        >
+                          <Plus />
+                        </Button>
+                        <Spacer x={0.3} />
                         <Button
-                          icon={<CloseSquare />}
+                          isIconOnly
                           color="warning"
                           onClick={() => {
                             setTempConditionValue("");
                             updateCondition(condition.id, false, "addingValue");
                           }}
                           size="sm"
-                          bordered
-                          css={{ minWidth: "fit-content" }}
-                        />
+                          variant="light"
+                        >
+                          <CloseSquare />
+                        </Button>
                       </>
                     )}
 
                     {!condition.addingValue && condition.values && condition.values.map((item) => (
                       <Fragment key={item}>
-                        <Badge color="secondary" size="sm">
+                        <Chip color="secondary" size="sm">
                           <span style={{ paddingLeft: 5 }}>{item}</span>
-                          <Spacer x={0.1} />
+                          <Spacer x={0.3} />
                           <Link
                             onClick={() => {
                               onChangeConditionValues(
@@ -1004,55 +987,55 @@ function Conditions(props) {
                           >
                             <CloseSquare size="small" primaryColor="white" />
                           </Link>
-                        </Badge>
-                        <Spacer x={0.1} />
+                        </Chip>
+                        <Spacer x={0.3} />
                       </Fragment>
                     ))}
 
                     {!condition.addingValue && (
-                      <Badge
+                      <Chip
                         variant="bordered"
                         onClick={() => updateCondition(condition.id, true, "addingValue")}
                         size="sm"
                       >
                         <Plus size="small" />
-                        <Spacer x={0.1} />
+                        <Spacer x={0.3} />
                         <span>{"Add a Value"}</span>
-                      </Badge>
+                      </Chip>
                     )}
                   </>
                 )}
 
-              <Spacer x={0.3} />
+              <Spacer x={0.6} />
 
               <Tooltip
                 content="Remove filter"
-                css={{ zIndex: 10000 }}
               >
                 <Button
-                  icon={<CloseSquare />}
+                  isIconOnly
                   color="danger"
                   onClick={() => onRemoveCondition(condition.id)}
                   size="sm"
-                  light
-                  css={{ minWidth: "fit-content" }}
-                />
+                  variant="light"
+                >
+                  <CloseSquare />
+                </Button>
               </Tooltip>
 
               {!condition.saved && (condition.value || condition.operator === "isNotNull" || condition.operator === "isNull" || (condition.values && condition.values.length > 0)) && (
                 <>
                   <Tooltip
                     content="Apply this filter"
-                    css={{ zIndex: 10000 }}
                   >
                     <Button
-                      icon={<TickSquare />}
+                      isIconOnly
                       color="success"
                       onClick={() => onApplyCondition(condition.id)}
                       size="sm"
-                      light
-                      css={{ minWidth: "fit-content" }}
-                    />
+                      variant="light"
+                    >
+                      <TickSquare />
+                    </Button>
                   </Tooltip>
                 </>
               )}
@@ -1063,33 +1046,32 @@ function Conditions(props) {
                   <>
                     <Tooltip
                       content="Undo changes"
-                      css={{ zIndex: 10000 }}
                     >
                       <Button
-                        icon={<FaUndoAlt />}
+                        isIconOnly
                         color="warning"
                         onClick={() => onRevertCondition(condition.id)}
                         size="sm"
-                        light
-                        css={{ minWidth: "fit-content" }}
-                      />
+                        variant="light"
+                      >
+                        <FaUndoAlt />
+                      </Button>
                     </Tooltip>
                   </>
                 )}
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
           </Fragment>
         );
       })}
       <Row>
         <Button
-          icon={<Plus />}
+          startContent={<Plus />}
           onClick={onAddCondition}
           size="sm"
-          light
+          variant="light"
           auto
-          ripple={false}
-          css={{ minWidth: "fit-content" }}
+          disableRipple
           color="primary"
         >
           {"Add a new filter"}

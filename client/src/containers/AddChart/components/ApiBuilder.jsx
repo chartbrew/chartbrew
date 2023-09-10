@@ -3,14 +3,14 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Button, Checkbox, Container, Divider, Dropdown, Grid, Input,
-  Link, Loading, Row, Spacer, Text, Tooltip, useTheme, Badge,
+  Button, Checkbox, Divider, Input, Link, Spacer, Tooltip, Chip,
+  Tabs, Tab, Select, SelectItem,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import uuid from "uuid/v4";
 import { toast } from "react-toastify";
 import {
-  ChevronDown, CloseSquare, Delete, InfoCircle, Play, Plus
+  CloseSquare, Delete, InfoCircle, Play, Plus
 } from "react-iconly";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -26,6 +26,10 @@ import { changeTutorial as changeTutorialAction } from "../../../actions/tutoria
 import {
   getConnection as getConnectionAction,
 } from "../../../actions/connection";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 const methods = [{
   key: 1,
@@ -72,7 +76,7 @@ function ApiBuilder(props) {
   const [fullConnection, setFullConnection] = useState({});
   const [saveLoading, setSaveLoading] = useState(false);
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   const {
     dataRequest, match, onChangeRequest, runDataRequest,
@@ -264,11 +268,11 @@ function ApiBuilder(props) {
 
   return (
     <div style={{ flex: 1 }}>
-      <Grid.Container>
-        <Grid xs={12} sm={7} md={8} css={{ "@xs": { mb: 50 } }}>
+      <div className="grid grid-cols-12">
+        <div className="col-span-8 sm:col-span-12 md:col-span-7 sm:mb-[50px]">
           <Container>
             <Row justify="space-between" align="center">
-              <Text b size={22}>{connection.name}</Text>
+              <Text b size={"lg"}>{connection.name}</Text>
               <div>
                 <Row>
                   <Button
@@ -276,150 +280,112 @@ function ApiBuilder(props) {
                     auto
                     size="sm"
                     onClick={() => _onSavePressed()}
-                    disabled={saveLoading || requestLoading}
-                    flat
+                    isLoading={saveLoading || requestLoading}
+                    variant="flat"
                   >
-                    {(!saveLoading && !requestLoading) && "Save"}
-                    {(saveLoading || requestLoading) && <Loading type="points-opacity" />}
+                    {"Save"}
                   </Button>
-                  <Spacer x={0.3} />
+                  <Spacer x={0.6} />
                   <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
                     <Button
                       color="danger"
-                      icon={<Delete />}
+                      isIconOnly
                       auto
                       size="sm"
-                      bordered
-                      css={{ minWidth: "fit-content" }}
+                      variant="bordered"
                       onClick={() => onDelete()}
-                    />
+                    >
+                      <Delete />
+                    </Button>
                   </Tooltip>
                 </Row>
               </div>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <Divider />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center" className="apibuilder-route-tut">
               <Input
-                labelLeft={connection.host}
+                startContent={(
+                  <div className="pointer-events-none flex items-center">
+                    <span className="text-default-400 text-small">
+                      {`${connection.host}`}
+                    </span>
+                  </div>
+                )}
                 placeholder="/route?key=value"
                 autoFocus
                 value={apiRequest.route || ""}
                 onChange={(e) => _onChangeRoute(e.target.value)}
                 fullWidth
-                bordered
-                animated={false}
+                variant="bordered"
+                disableAnimation
                 css={{
                   "& .nextui-input-label--left": { minWidth: "max-content" }
                 }}
               />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center">
               <Text>{"Available variables: "}</Text>
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Tooltip
                 content={chart.startDate || "Set this value in chart date settings first"}
-                css={{ zIndex: 10000 }}
               >
                 <Link onClick={() => chart.startDate && _onChangeRoute(`${apiRequest.route}{{start_date}}`)}>
-                  <Badge color="primary">
+                  <Chip color="primary">
                     {"{{start_date}}"}
-                  </Badge>
+                  </Chip>
                 </Link>
               </Tooltip>
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Tooltip
                 content={chart.endDate || "Set this value in chart date settings first"}
-                css={{ zIndex: 10000 }}
               >
                 <Link onClick={() => chart.endDate && _onChangeRoute(`${apiRequest.route}{{end_date}}`)}>
-                  <Badge color="primary">
+                  <Chip color="primary">
                     {"{{end_date}}"}
-                  </Badge>
+                  </Chip>
                 </Link>
               </Tooltip>
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row className="apibuilder-menu-tut">
-              <Link
-                css={{
-                  background: activeMenu === "headers" ? "$background" : "$backgroundContrast",
-                  p: 5,
-                  pr: 10,
-                  pl: 10,
-                  br: "$sm",
-                  "@xsMax": { width: "90%" },
-                  ai: "center",
-                  color: "$text",
-                }}
-                onClick={() => setActiveMenu("headers")}
+              <Tabs
+                selectedKey={activeMenu}
+                onSelectionChange={(key) => setActiveMenu(key)}
               >
-                <Text>{"Headers"}</Text>
-              </Link>
-              <Spacer x={0.2} />
-              <Link
-                css={{
-                  background: activeMenu === "body" ? "$background" : "$backgroundContrast",
-                  p: 5,
-                  pr: 10,
-                  pl: 10,
-                  br: "$sm",
-                  "@xsMax": { width: "90%" },
-                  ai: "center",
-                  cursor: apiRequest.method === "GET" || apiRequest.method === "OPTIONS" ? "not-allowed" : "pointer",
-                }}
-                onClick={() => {
-                  if (apiRequest.method === "GET" || apiRequest.method === "OPTIONS") return;
-                  setActiveMenu("body");
-                }}
-              >
-                <Text css={{ color: apiRequest.method === "GET" || apiRequest.method === "OPTIONS" ? "$accents5" : "$text" }}>{"Body"}</Text>
-              </Link>
-              <Spacer x={0.2} />
-              <Link
-                css={{
-                  background: activeMenu === "pagination" ? "$background" : "$backgroundContrast",
-                  p: 5,
-                  pr: 10,
-                  pl: 10,
-                  br: "$sm",
-                  "@xsMax": { width: "90%" },
-                  ai: "center",
-                  color: "$text",
-                }}
-                onClick={() => setActiveMenu("pagination")}
-              >
-                <Text>{"Pagination"}</Text>
-              </Link>
+                <Tab key="headers" title="Headers" />
+                <Tab key="body" title="Body" />
+                <Tab key="pagination" title="Pagination" />
+              </Tabs>
               <div style={{ position: "absolute", right: 15 }}>
                 {requestSuccess && (
                 <>
-                  <Badge color="success">
+                  <Chip color="success">
                     {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
-                  </Badge>
+                  </Chip>
                 </>
                 )}
                 {requestError && (
-                  <Badge color="danger">
+                  <Chip color="danger">
                     {`${requestError.statusCode} ${requestError.statusText}`}
-                  </Badge>
+                  </Chip>
                 )}
               </div>
             </Row>
 
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <Divider />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
 
             {activeMenu === "headers" && (
               <Row className="apibuilder-headers-tut">
-                <Container css={{ pl: 0, pr: 0 }}>
+                <Container className={"pl-0 pr-0"}>
                   {fullConnection.options && fullConnection.options.length > 0 && (
                     <>
                       <Row>
@@ -430,38 +396,38 @@ function ApiBuilder(props) {
                           size="sm"
                         />
                       </Row>
-                      <Spacer y={0.5} />
+                      <Spacer y={1} />
                       {apiRequest.useGlobalHeaders && (
                         <>
-                          <Container css={{ pl: 0, pr: 0 }}>
+                          <Container className={"pl-0 pr-0"}>
                             {fullConnection.options.map((header) => {
                               return (
                                 <Row key={header}>
                                   <Input
                                     value={Object.keys(header)[0]}
-                                    bordered
+                                    variant="bordered"
                                     fullWidth
-                                    animated={false}
+                                    disableAnimation
                                   />
-                                  <Spacer x={0.5} />
+                                  <Spacer x={1} />
                                   <Input
                                     value={header[Object.keys(header)[0]]}
-                                    bordered
+                                    variant="bordered"
                                     fullWidth
-                                    animated={false}
+                                    disableAnimation
                                   />
                                 </Row>
                               );
                             })}
                           </Container>
-                          <Spacer y={1} />
+                          <Spacer y={2} />
                           <Divider />
-                          <Spacer y={0.5} />
+                          <Spacer y={1} />
                         </>
                       )}
                     </>
                   )}
-                  <Container css={{ pl: 0, pr: 0 }} gap={1}>
+                  <Container className={"pl-0 pr-0 gap-1"}>
                     {apiRequest.formattedHeaders && apiRequest.formattedHeaders.map((header) => {
                       return (
                         <div key={header.id}>
@@ -472,38 +438,39 @@ function ApiBuilder(props) {
                               onChange={(e) => {
                                 _onChangeHeader(header.id, e.target.value);
                               }}
-                              bordered
+                              variant="bordered"
                             />
-                            <Spacer x={0.5} />
+                            <Spacer x={1} />
                             <Input
                               placeholder="Value"
                               value={header.value}
                               onChange={(e) => {
                                 _onChangeHeaderValue(header.id, e.target.value);
                               }}
-                              bordered
+                              variant="bordered"
                             />
-                            <Spacer x={0.5} />
+                            <Spacer x={1} />
                             <Button
-                              icon={<CloseSquare />}
+                              isIconOnly
                               onClick={() => _removeHeader(header.id)}
                               color="danger"
-                              light
-                              css={{ minWidth: "fit-content" }}
-                            />
+                              variant="light"
+                            >
+                              <CloseSquare />
+                            </Button>
                           </Row>
-                          <Spacer y={0.5} />
+                          <Spacer y={1} />
                         </div>
                       );
                     })}
                   </Container>
 
-                  <Spacer y={1} />
+                  <Spacer y={2} />
                   <Button
-                    iconRight={<Plus />}
+                    endContent={<Plus />}
                     size="sm"
                     onClick={_addHeader}
-                    bordered
+                    variant="bordered"
                     auto
                   >
                     Add header
@@ -531,7 +498,7 @@ function ApiBuilder(props) {
               </Row>
             )}
             {activeMenu === "pagination" && (
-              <Row xs={12}>
+              <Row>
                 <ApiPagination
                   items={apiRequest.items}
                   itemsLimit={apiRequest.itemsLimit}
@@ -546,49 +513,39 @@ function ApiBuilder(props) {
               </Row>
             )}
           </Container>
-        </Grid>
-        <Grid xs={12} sm={5} md={4}>
+        </div>
+        <div className="col-span-4 sm:col-span-12 md:col-span-5">
           <Container>
             <Row>
               <div className="apibuilder-type-tut">
-                <Dropdown isBordered>
-                  <Dropdown.Trigger>
-                    <Input
-                      value={apiRequest.method}
-                      bordered
-                      fullWidth
-                      animated={false}
-                      contentRight={<ChevronDown set="light" />}
-                    />
-                  </Dropdown.Trigger>
-                  <Dropdown.Menu
-                    onAction={(key) => _changeMethod(key)}
-                    selectedKeys={[apiRequest.method]}
-                    selectionMode="single"
-                  >
-                    {methods.map((method) => (
-                      <Dropdown.Item key={method.value}>
-                        {method.text}
-                      </Dropdown.Item>
-                    ))}
-                  </Dropdown.Menu>
-                </Dropdown>
+                <Select
+                  variant="bordered"
+                  disableAnimation
+                  onSelectionChange={(key) => _changeMethod(key)}
+                  selectedKeys={[apiRequest.method]}
+                  selectionMode="single"
+                >
+                  {methods.map((method) => (
+                    <SelectItem key={method.value}>
+                      {method.text}
+                    </SelectItem>
+                  ))}
+                </Select>
               </div>
-              <Spacer x={1} />
+              <Spacer x={2} />
               <div className="apibuilder-request-tut" style={{ width: "100%" }}>
                 <Button
-                  iconRight={requestLoading ? null : <Play />}
-                  disabled={requestLoading}
+                  endContent={<Play />}
+                  isLoading={requestLoading}
                   onClick={() => _onTest()}
                   auto
-                  shadow
-                  css={{ w: "100%" }}
+                  className={"w-full"}
                 >
-                  {requestLoading ? <Loading type="points-opacity" /> : "Send the request"}
+                  {"Send the request"}
                 </Button>
               </div>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center">
               <Checkbox
                 label="Use cache"
@@ -596,7 +553,7 @@ function ApiBuilder(props) {
                 onChange={() => setInvalidateCache(!invalidateCache)}
                 size="sm"
               />
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Tooltip
                 content={(
                   <>
@@ -604,15 +561,14 @@ function ApiBuilder(props) {
                     <p>{"The cache gets automatically invalidated when you change the configuration of the request."}</p>
                   </>
                 )}
-                css={{ zIndex: 10000 }}
                 placement="bottom"
               >
                 <InfoCircle size="small" />
               </Tooltip>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
-              <div style={{ width: "100%" }}>
+              <div className="w-full">
                 <AceEditor
                   mode="json"
                   theme={isDark ? "one_dark" : "tomorrow"}
@@ -627,17 +583,17 @@ function ApiBuilder(props) {
                 />
               </div>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center">
               <InfoCircle size="small" />
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Text small>
                 {"This is a preview and it might not show all data in order to keep things fast in the UI."}
               </Text>
             </Row>
           </Container>
-        </Grid>
-      </Grid.Container>
+        </div>
+      </div>
     </div>
   );
 }

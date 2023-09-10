@@ -2,12 +2,15 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
 import {
-  Button, Checkbox, Container, Divider, Grid, Loading, Row, Spacer, Text, Tooltip,
-  Link as LinkNext,
+  Button, Checkbox, Divider, Spacer, Tooltip, Link as LinkNext,
 } from "@nextui-org/react";
 import {
   CloseSquare, Download, Hide, Show, TickSquare
 } from "react-iconly";
+
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
 
 function ChartExport(props) {
   const {
@@ -48,35 +51,35 @@ function ChartExport(props) {
           Select which charts you want to export
         </Text>
       </Row>
-      <Spacer y={1} />
+      <Spacer y={2} />
       <Row align="center">
         <Button
-          bordered
+          variant="bordered"
           onClick={_onSelectAll}
-          iconRight={<TickSquare />}
+          endContent={<TickSquare />}
           auto
           size="sm"
         >
           Select all
         </Button>
-        <Spacer x={0.2} />
+        <Spacer x={0.5} />
         <Button
-          bordered
+          variant="bordered"
           onClick={_onDeselectAll}
           size="sm"
-          iconRight={<CloseSquare />}
+          endContent={<CloseSquare />}
           auto
         >
           Deselect all
         </Button>
       </Row>
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <Row align="center">
-        <Grid.Container gap={2}>
+        <div className="grid grid-cols-12 gap-2">
           {charts && charts.filter((c) => !c.disabledExport).map((chart) => {
             return (
-              <Grid key={chart.id} xs={12} sm={6}>
-                <div style={{ flex: 1, alignItems: "center" }}>
+              <div className="col-span-6 sm:col-span-12" key={chart.id}>
+                <div className="flex items-center align-middle">
                   <Row align="center">
                     <Checkbox
                       isSelected={_.indexOf(selectedIds, chart.id) > -1}
@@ -87,9 +90,9 @@ function ChartExport(props) {
                     </Checkbox>
                     {showDisabled && (
                     <>
-                      <Spacer x={0.2} />
+                      <Spacer x={0.5} />
                       <Tooltip content="Disable the export function for this chart" css={{ zIndex: 999999 }}>
-                        <LinkNext css={{ color: "$warning" }} onClick={() => onUpdate(chart.id, true)}>
+                        <LinkNext className={"text-warning"} onClick={() => onUpdate(chart.id, true)}>
                           <Show />
                         </LinkNext>
                       </Tooltip>
@@ -97,17 +100,17 @@ function ChartExport(props) {
                     )}
                   </Row>
                 </div>
-              </Grid>
+              </div>
             );
           })}
-        </Grid.Container>
+        </div>
       </Row>
-      <Spacer y={0.5} />
+      <Spacer y={1} />
 
       {showDisabled && (
         <>
           <Divider />
-          <Spacer y={1} />
+          <Spacer y={2} />
           {charts && charts.filter((c) => c.disabledExport).length > 0 && (
             <Row>
               <Text b>
@@ -116,39 +119,38 @@ function ChartExport(props) {
             </Row>
           )}
           <Row align="center">
-            <Grid.Container gap={2}>
+            <div className="grid grid-cols-12 gap-2">
               {charts && charts.filter((c) => c.disabledExport).map((chart) => {
                 return (
-                  <Grid key={chart.id} xs={12} sm={6}>
+                  <div className="col-span-6 sm:col-span-12" key={chart.id}>
                     <Tooltip content="Enable the export function for this chart" css={{ zIndex: 99999 }}>
-                      <LinkNext css={{ color: "$success", ai: "center" }} onClick={() => onUpdate(chart.id, false)}>
+                      <LinkNext className="text-success" onClick={() => onUpdate(chart.id, false)}>
                         <Hide />
                         {chart.name}
                       </LinkNext>
                     </Tooltip>
-                  </Grid>
+                  </div>
                 );
               })}
-            </Grid.Container>
+            </div>
           </Row>
-          <Spacer y={1} />
+          <Spacer y={2} />
         </>
       )}
       <Row align="center">
         <Button
           onClick={() => onExport(selectedIds)}
-          iconRight={<Download />}
-          disabled={loading}
+          endContent={<Download />}
+          isLoading={loading}
           auto
         >
-          {loading && <Loading type="points" />}
-          {!loading && "Export"}
+          {"Export"}
         </Button>
       </Row>
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       {error && (
         <Row>
-          <Text css={{ color: "$error" }} i>{"One or more of the charts failed to export. Check that all your requests are still running correctly before exporting."}</Text>
+          <Text color="danger" i>{"One or more of the charts failed to export. Check that all your requests are still running correctly before exporting."}</Text>
         </Row>
       )}
     </Container>

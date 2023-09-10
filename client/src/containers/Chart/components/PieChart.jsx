@@ -1,8 +1,7 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Pie } from "react-chartjs-2";
-import { useTheme } from "@nextui-org/react";
-
+import { semanticColors } from "@nextui-org/react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,7 +14,9 @@ import {
   Filler,
 } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
+
 import ChartErrorBoundary from "./ChartErrorBoundary";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, ArcElement, Title, Tooltip, Legend, Filler
@@ -86,14 +87,14 @@ function PieChart(props) {
     }
   }, [redraw]);
 
-  const { theme } = useTheme();
+  const theme = useThemeDetector() ? "dark" : "light";
 
   const _getChartOptions = () => {
     // add any dynamic changes to the chartJS options here
     if (chart.chartData?.options) {
       const newOptions = { ...chart.chartData.options };
       if (newOptions.plugins?.legend?.labels) {
-        newOptions.plugins.legend.labels.color = theme.colors.accents9.value;
+        newOptions.plugins.legend.labels.color = semanticColors[theme].foreground.DEFAULT;
       }
       return newOptions;
     }

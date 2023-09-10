@@ -13,11 +13,12 @@ import {
   Legend,
   Filler,
 } from "chart.js";
-import { useTheme } from "@nextui-org/react";
+import { semanticColors } from "@nextui-org/react";
 
 import KpiChartSegment from "./KpiChartSegment";
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import KpiMode from "./KpiMode";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler
@@ -56,26 +57,26 @@ function LineChart(props) {
     }
   }, [redraw]);
 
-  const { theme } = useTheme();
+  const theme = useThemeDetector() ? "dark" : "light";
 
   const _getChartOptions = () => {
     // add any dynamic changes to the chartJS options here
     if (chart.chartData?.options) {
       const newOptions = { ...chart.chartData.options };
       if (newOptions.scales?.y?.grid) {
-        newOptions.scales.y.grid.color = theme.colors.accents5.value;
+        newOptions.scales.y.grid.color = semanticColors[theme].content3.DEFAULT;
       }
       if (newOptions.scales?.x?.grid) {
-        newOptions.scales.x.grid.color = theme.colors.accents5.value;
+        newOptions.scales.x.grid.color = semanticColors[theme].content3.DEFAULT;
       }
       if (newOptions.scales?.y?.ticks) {
-        newOptions.scales.y.ticks.color = theme.colors.accents9.value;
+        newOptions.scales.y.ticks.color = semanticColors[theme].foreground.DEFAULT;
       }
       if (newOptions.scales?.x?.ticks) {
-        newOptions.scales.x.ticks.color = theme.colors.accents9.value;
+        newOptions.scales.x.ticks.color = semanticColors[theme].foreground.DEFAULT;
       }
       if (newOptions.plugins?.legend?.labels) {
-        newOptions.plugins.legend.labels.color = theme.colors.accents9.value;
+        newOptions.plugins.legend.labels.color = semanticColors[theme].foreground.DEFAULT;
       }
       return newOptions;
     }
