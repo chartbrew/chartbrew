@@ -3,8 +3,8 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Button, Popover, Container, Row, Text, Divider, Dropdown,
-  Input, Loading, Tooltip, Spacer, Badge, useTheme, Checkbox,
+  Button, Popover, Divider, Input, Tooltip, Spacer, Chip, Checkbox,
+  Select, SelectItem,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -13,7 +13,7 @@ import { Calendar } from "react-date-range";
 import { format, sub } from "date-fns";
 import { enGB } from "date-fns/locale";
 import {
-  ChevronDown, InfoCircle, Play, Calendar as CalendarIcon, Delete,
+  InfoCircle, Play, Calendar as CalendarIcon, Delete,
 } from "react-iconly";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -30,6 +30,10 @@ import {
 } from "../../../actions/connection";
 import { getMetadata } from "./apiBoilerplate";
 import { secondary } from "../../../config/colors";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 const validDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)/g;
 const validEndDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)/g;
@@ -67,7 +71,7 @@ function GaBuilder(props) {
   const [fullConnection, setFullConnection] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     _initRequest();
@@ -361,12 +365,12 @@ function GaBuilder(props) {
 
   return (
     <div style={styles.container}>
-      <Grid.Container>
-        <Grid xs={12} sm={7} md={7}>
+      <div className="grid grid-cols-12">
+        <div className="col-span-7 sm:col-span-12">
           <Container>
-            <Grid.Container gap={1}>
-              <Grid xs={12} justify={"space-between"}>
-                <Text b size={22}>{connection.name}</Text>
+            <div className="grid grid-cols-12 gap-1">
+              <div className="col-span-12 flex justify-between">
+                <Text b size={"lg"}>{connection.name}</Text>
                 <div>
                   <Row>
                     <Button
@@ -374,346 +378,300 @@ function GaBuilder(props) {
                       auto
                       size="sm"
                       onClick={() => _onSavePressed()}
-                      disabled={saveLoading || requestLoading}
-                      flat
+                      isLoading={saveLoading || requestLoading}
+                      variant="flat"
                     >
-                      {(!saveLoading && !requestLoading) && "Save"}
-                      {(saveLoading || requestLoading) && <Loading type="points-opacity" />}
+                      {"Save"}
                     </Button>
-                    <Spacer x={0.3} />
+                    <Spacer x={0.6} />
                     <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
                       <Button
                         color="danger"
-                        icon={<Delete />}
+                        isIconOnly
                         auto
                         size="sm"
-                        bordered
-                        css={{ minWidth: "fit-content" }}
+                        variant="bordered"
                         onClick={() => onDelete()}
-                      />
+                      >
+                        <Delete />
+                      </Button>
                     </Tooltip>
                   </Row>
                 </div>
-              </Grid>
-              <Grid xs={12}>
+              </div>
+              <div className="col-span-12">
                 <Divider />
-              </Grid>
-              <Grid xs={12} sm={6} className="gabuilder-collections-tut">
-                <Dropdown isBordered>
-                  <Dropdown.Trigger>
-                    <Input
-                      label="Account"
-                      placeholder="Select an account"
-                      contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown set="light" />}
-                      bordered
-                      animated={false}
-                      fullWidth
-                      value={
-                        (accountOptions
-                        && configuration.accountId
-                        && accountOptions.find((a) => a.value === configuration.accountId)?.text)
-                        || "Select an account"
-                      }
-                    />
-                  </Dropdown.Trigger>
-                  <Dropdown.Menu
-                    onAction={(key) => _onAccountSelected(key)}
-                    selectedKeys={[configuration.accountId]}
-                    selectionMode="single"
-                  >
-                    {accountOptions.map((account) => (
-                      <Dropdown.Item key={account.value}>
-                        {account.text}
-                      </Dropdown.Item>
-                    ))}
-                  </Dropdown.Menu>
-                </Dropdown>
-              </Grid>
-              <Grid xs={12} sm={6}>
-                <Dropdown isDisabled={!configuration.accountId} isBordered>
-                  <Dropdown.Trigger>
-                    <Input
-                      label="Property"
-                      placeholder="Select a property"
-                      contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown set="light" />}
-                      bordered
-                      animated={false}
-                      fullWidth
-                      disabled={!configuration.accountId}
-                      value={
-                        (propertyOptions
-                        && configuration.propertyId
-                        && propertyOptions.find((p) => p.value === configuration.propertyId)?.text)
-                        || "Select a property"
-                      }
-                    />
-                  </Dropdown.Trigger>
-                  <Dropdown.Menu
-                    onAction={(key) => _onPropertySelected(key)}
-                    selectedKeys={[configuration.propertyId]}
-                    selectionMode="single"
-                    css={{ minWidth: "max-content" }}
-                  >
-                    {propertyOptions.map((property) => (
-                      <Dropdown.Item key={property.value}>
-                        {property.text}
-                      </Dropdown.Item>
-                    ))}
-                  </Dropdown.Menu>
-                </Dropdown>
-              </Grid>
-              <Grid xs={12} className="gabuilder-query-tut" direction="column">
+              </div>
+              <div className="col-span-6 sm:col-span-12 gabuilder-collections-tut">
+                <Select
+                  variant="bordered"
+                  selectedKeys={[configuration.accountId]}
+                  placeholder="Select an account"
+                  label="Account"
+                  isLoading={collectionsLoading}
+                  value={
+                    (accountOptions
+                      && configuration.accountId
+                      && accountOptions.find((a) => a.value === configuration.accountId)?.text)
+                    || "Select an account"
+                  }
+                  onSelectionChange={(key) => _onAccountSelected(key)}
+                  selectionMode="single"
+                >
+                  {accountOptions.map((account) => (
+                    <SelectItem key={account.value}>
+                      {account.text}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </div>
+              <div className="col-span-6 sm:col-span-12">
+                <Select
+                  isDisabled={!configuration.accountId}
+                  variant="bordered"
+                  isLoading={collectionsLoading}
+                  selectedKeys={[configuration.propertyId]}
+                  placeholder="Select a property"
+                  label="Property"
+                  value={
+                    (propertyOptions
+                      && configuration.propertyId
+                      && propertyOptions.find((p) => p.value === configuration.propertyId)?.text)
+                    || "Select a property"
+                  }
+                  onSelectionChange={(key) => _onPropertySelected(key)}
+                  selectionMode="single"
+                >
+                  {propertyOptions.map((property) => (
+                    <SelectItem key={property.value}>
+                      {property.text}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </div>
+              <div className="col-span-12 gabuilder-query-tut">
                 <div style={styles.row}>
-                  <Text size={16}>
+                  <Text>
                     {"Choose a metric "}
                   </Text>
-                  <Spacer x={0.2} />
+                  <Spacer x={0.5} />
                   <Tooltip
                     content="You can add multiple metrics by creating another dataset for this chart. Click on 'Build chart', then 'Add new dataset' on the right."
                     css={{ zIndex: 10000, maxWidth: 500 }}
-                    placement="rightStart"
+                    className="max-w-[500px]"
+                    placement="right-start"
                   >
                     <InfoCircle size="small" />
                   </Tooltip>
                 </div>
-                <Dropdown isDisabled={!configuration.propertyId}>
-                  <Dropdown.Trigger>
-                    <Input
-                      placeholder="Select a metric"
-                      contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown set="light" />}
-                      bordered
-                      animated={false}
-                      fullWidth
-                      helperColor="error"
-                      helperText={formErrors.metrics}
-                      color={formErrors.metrics ? "error" : "default"}
-                      disabled={!configuration.propertyId}
-                      value={
-                        (metricsOptions
-                        && configuration.metrics
-                        && metricsOptions.find((m) => m.value === configuration.metrics)?.text)
-                        || "Select a metric"
-                      }
-                    />
-                  </Dropdown.Trigger>
-                  <Dropdown.Menu
-                    onAction={(key) => setConfiguration({ ...configuration, metrics: key })}
-                    selectedKeys={[configuration.metrics]}
-                    selectionMode="single"
-                    css={{ minWidth: "max-content" }}
-                  >
-                    {metricsOptions.map((item) => {
-                      return (
-                        <Dropdown.Item
-                          key={item.key}
-                          command={item.category}
-                          description={item.description}
-                        >
-                          <Text size={16}>
-                            {item.text}
-                            <Text small color="$accents8">
-                              {" - "}
-                              {item.key}
-                            </Text>
+                <Select
+                  isDisabled={!configuration.propertyId}
+                  variant="bordered"
+                  isLoading={collectionsLoading}
+                  selectedKeys={[configuration.metrics]}
+                  placeholder="Select a metric"
+                  errorMessage={formErrors.metrics}
+                  color={formErrors.metrics ? "danger" : "default"}
+                  value={
+                    (metricsOptions
+                      && configuration.metrics
+                      && metricsOptions.find((m) => m.value === configuration.metrics)?.text)
+                    || "Select a metric"
+                  }
+                  onSelectionChange={(key) => setConfiguration({ ...configuration, metrics: key })}
+                  selectionMode="single"
+                >
+                  {metricsOptions.map((item) => {
+                    return (
+                      <SelectItem
+                        key={item.key}
+                        endContent={item.category}
+                        description={item.description}
+                      >
+                        <Text>
+                          {item.text}
+                          <Text small className={"text-default-400"}>
+                            {" - "}
+                            {item.key}
                           </Text>
-                        </Dropdown.Item>
-                      );
-                    })}
-                  </Dropdown.Menu>
-                </Dropdown>
-              </Grid>
-              <Grid xs={12} direction="column">
-                <Text size={16}>Choose a dimension</Text>
-
-                <Dropdown isDisabled={!configuration.propertyId} isBordered>
-                  <Dropdown.Trigger>
-                    <Input
-                      placeholder="Select a dimension"
-                      contentRight={collectionsLoading ? <Loading type="spinner" /> : <ChevronDown set="light" />}
-                      bordered
-                      animated={false}
-                      fullWidth
-                      helperColor="error"
-                      helperText={formErrors.dimensions}
-                      color={formErrors.dimensions ? "error" : "default"}
-                      disabled={!configuration.propertyId}
-                      value={
-                        (dimensionsOptions
-                        && configuration.dimensions
-                        && dimensionsOptions
-                          .find((d) => d.value === configuration.dimensions)?.text)
-                        || "Select a dimension"
-                      }
-                    />
-                  </Dropdown.Trigger>
-                  <Dropdown.Menu
-                    onAction={(key) => setConfiguration({ ...configuration, dimensions: key })}
-                    selectedKeys={[configuration.dimensions]}
-                    selectionMode="single"
-                    css={{ minWidth: "max-content" }}
-                  >
-                    {dimensionsOptions.map((item) => {
-                      return (
-                        <Dropdown.Item
-                          key={item.key}
-                          command={item.category}
-                          description={item.description}
-                        >
-                          <Text size={16}>{item.text}</Text>
-                        </Dropdown.Item>
-                      );
-                    })}
-                  </Dropdown.Menu>
-                </Dropdown>
-              </Grid>
-              <Grid xs={12} direction="column">
-                <Text size={16}>Start date</Text>
+                        </Text>
+                      </SelectItem>
+                    );
+                  })}
+                </Select>
+              </div>
+              <div className="col-span-12">
+                <Text>Choose a dimension</Text>
+                <Select
+                  isDisabled={!configuration.propertyId}
+                  variant="bordered"
+                  selectedKeys={[configuration.dimensions]}
+                  onSelectionChange={(key) => setConfiguration({ ...configuration, dimensions: key })}
+                  selectionMode="single"
+                  placeholder="Select a dimension"
+                  errorMessage={formErrors.dimensions}
+                  color={formErrors.dimensions ? "danger" : "default"}
+                  value={
+                    (dimensionsOptions
+                      && configuration.dimensions
+                      && dimensionsOptions
+                        .find((d) => d.value === configuration.dimensions)?.text)
+                    || "Select a dimension"
+                  }
+                >
+                  {dimensionsOptions.map((item) => {
+                    return (
+                      <SelectItem
+                        key={item.key}
+                        endContent={item.category}
+                        description={item.description}
+                      >
+                        <Text>{item.text}</Text>
+                      </SelectItem>
+                    );
+                  })}
+                </Select>
+              </div>
+              <div className="col-span-12">
+                <Text>Start date</Text>
                 <Input
-                  contentRight={_renderCalendar("startDate")}
-                  contentRightStyling={false}
+                  endContent={_renderCalendar("startDate")}
                   placeholder="YYYY-MM-DD"
                   value={configuration.startDate}
                   disabled={!configuration.propertyId}
                   onChange={(e) => {
                     setConfiguration({ ...configuration, startDate: e.target.value });
                   }}
-                  bordered
+                  variant="bordered"
                   fullWidth
                 />
-                <Spacer y={0.2} />
+                <Spacer y={0.5} />
                 <div style={styles.row}>
-                  <Badge
-                    as="a"
+                  <Chip
+                    is="a"
                     onClick={() => setConfiguration({ ...configuration, startDate: "today" })}
                   >
                     today
-                  </Badge>
-                  <Spacer x={0.2} />
-                  <Badge
-                    as="a"
+                  </Chip>
+                  <Spacer x={0.5} />
+                  <Chip
+                    is="a"
                     onClick={() => setConfiguration({ ...configuration, startDate: "yesterday" })}
                   >
                     yesterday
-                  </Badge>
-                  <Spacer x={0.2} />
-                  <Badge
-                    as="a"
+                  </Chip>
+                  <Spacer x={0.5} />
+                  <Chip
+                    is="a"
                     onClick={() => setConfiguration({ ...configuration, startDate: "30daysAgo" })}
                     variant="default"
                   >
                     30daysAgo
-                  </Badge>
-                  <Spacer x={0.2} />
-                  <Badge
-                    as="a"
+                  </Chip>
+                  <Spacer x={0.5} />
+                  <Chip
+                    is="a"
                     onClick={() => setDateHelp(!dateHelp)}
                     variant="flat"
                     color={dateHelp ? "secondary" : "default"}
                     size="sm"
                   >
                     <InfoCircle size="small" />
-                    <Spacer x={0.1} />
+                    <Spacer x={0.3} />
                     <span>info</span>
-                  </Badge>
+                  </Chip>
                 </div>
-              </Grid>
-              <Grid xs={12} direction="column">
-                <Text size={16}>End date</Text>
+              </div>
+              <div className="col-span-12">
+                <Text>End date</Text>
                 <Input
-                  contentRight={_renderCalendar("endDate")}
-                  contentRightStyling={false}
+                  endContent={_renderCalendar("endDate")}
                   placeholder="YYYY-MM-DD"
                   value={configuration.endDate}
                   disabled={!configuration.propertyId}
                   onChange={(e) => {
                     setConfiguration({ ...configuration, endDate: e.target.value });
                   }}
-                  bordered
+                  variant="bordered"
                   fullWidth
                 />
-                <Spacer y={0.2} />
+                <Spacer y={0.5} />
                 <div style={styles.row}>
-                  <Badge
-                    as="a"
+                  <Chip
+                    is="a"
                     onClick={() => setConfiguration({ ...configuration, endDate: "today" })}
-                    disableOutline
                   >
                     today
-                  </Badge>
-                  <Spacer x={0.2} />
-                  <Badge
-                    as="a"
+                  </Chip>
+                  <Spacer x={0.5} />
+                  <Chip
+                    is="a"
                     onClick={() => setConfiguration({ ...configuration, endDate: "yesterday" })}
-                    disableOutline
                   >
                     yesterday
-                  </Badge>
-                  <Spacer x={0.2} />
-                  <Badge
-                    as="a"
+                  </Chip>
+                  <Spacer x={0.5} />
+                  <Chip
+                    is="a"
                     onClick={() => setConfiguration({ ...configuration, endDate: "30daysAgo" })}
-                    disableOutline
                   >
                     30daysAgo
-                  </Badge>
-                  <Spacer x={0.2} />
-                  <Badge
-                    as="a"
+                  </Chip>
+                  <Spacer x={0.5} />
+                  <Chip
+                    is="a"
                     onClick={() => setDateHelp(!dateHelp)}
                     variant="flat"
                     color={dateHelp ? "secondary" : "default"}
                     size="sm"
-                    disableOutline
                   >
                     <InfoCircle size="small" />
-                    <Spacer x={0.1} />
+                    <Spacer x={0.3} />
                     <span>info</span>
-                  </Badge>
+                  </Chip>
                 </div>
-              </Grid>
+              </div>
               {dateHelp && (
-                <Grid xs={12}>
+                <div className="col-span-12">
                   <Container
-                    css={{
-                      backgroundColor: "$accents1", br: 20, p: 10, pl: 15, pr: 15
-                    }}
+                    className={"bg-content2 rounded-md p-10 pl-15 pr-15"}
                   >
                     <Row>
                       <Text>{"You can use relative dates such as "}</Text>
-                      <Spacer x={0.1} />
+                      <Spacer x={0.3} />
                       <code>today</code>
-                      <Spacer x={0.1} />
+                      <Spacer x={0.3} />
                       <Text>{", "}</Text>
-                      <Spacer x={0.1} />
+                      <Spacer x={0.3} />
                       <code>yesterday</code>
-                      <Spacer x={0.1} />
+                      <Spacer x={0.3} />
                       <Text>{", and "}</Text>
-                      <Spacer x={0.1} />
+                      <Spacer x={0.3} />
                       <code>NdaysAgo</code>
                     </Row>
                     <Row>
                       <Text>{"Alternatively, you can type in any date in YYYY-MM-DD format or use the calendar picker next to each field."}</Text>
                     </Row>
                   </Container>
-                </Grid>
+                </div>
               )}
-            </Grid.Container>
+            </div>
           </Container>
-        </Grid>
-        <Grid xs={12} sm={5} md={5}>
+        </div>
+        <div className="col-span-5 sm:col-span-12">
           <Container>
             <Row className="gabuilder-request-tut">
               <Button
-                iconRight={requestLoading ? <Loading type="spinner" /> : <Play />}
-                disabled={requestLoading}
+                endContent={<Play />}
+                isLoading={requestLoading}
                 onClick={() => _onTest()}
-                css={{ width: "100%" }}
-                shadow
+                className="w-full"
+                variant="shadow"
               >
                 Get analytics data
               </Button>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center">
               <Checkbox
                 label="Use cache"
@@ -721,17 +679,17 @@ function GaBuilder(props) {
                 onChange={() => setInvalidateCache(!invalidateCache)}
                 size="sm"
               />
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Tooltip
                 content="Chartbrew will cache the data to make the edit process faster. The cache will be cleared when you change any of the settings."
-                css={{ zIndex: 10000, maxWidth: 500 }}
+                className="max-w-[500px]"
               >
                 <InfoCircle size="small" />
               </Tooltip>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row className="gabuilder-result-tut">
-              <div style={{ width: "100%" }}>
+              <div className="w-full">
                 <AceEditor
                   mode="json"
                   theme={isDark ? "one_dark" : "tomorrow"}
@@ -745,17 +703,17 @@ function GaBuilder(props) {
                 />
               </div>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center">
               <InfoCircle size="small" />
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Text small>
                 {"This is a preview and it might not show all data in order to keep things fast in the UI."}
               </Text>
             </Row>
           </Container>
-        </Grid>
-      </Grid.Container>
+        </div>
+      </div>
     </div>
   );
 }

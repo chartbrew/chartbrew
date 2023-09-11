@@ -1,18 +1,21 @@
 import React, { Fragment, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Container, Dropdown, Input, Loading, Row, Spacer, Badge,
-  Link, Checkbox, Divider,
+  Button, Input, Spacer, Chip, Link, Checkbox, Divider,
+  CircularProgress, Select, SelectItem,
 } from "@nextui-org/react";
 import { isEqual } from "lodash";
 
 import {
-  ChevronDown, CloseSquare, Folder, TickSquare, User
+  CloseSquare, Folder, TickSquare, User
 } from "react-iconly";
 import { FaCloud, FaWrench } from "react-icons/fa";
 import { runHelperMethod } from "../../../actions/connection";
 import { primary, secondary } from "../../../config/colors";
 import determineType from "../../../modules/determineType";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
 
 const customerOperations = [
   { text: "All conditions match", key: "and", value: "and" },
@@ -214,46 +217,38 @@ function CustomerQuery(props) {
     return (
       <Container>
         <Row>
-          <Loading type="spinner" color="primary" size="xl" />
+          <CircularProgress size="xl" />
         </Row>
       </Container>
     );
   }
 
   return (
-    <Container css={{ pr: 0, pl: 0 }}>
+    <Container className={"pl-0 pr-0"}>
       {((conditions.and && conditions.and.length > 0)
         || (conditions.or && conditions.or.length > 0)
       ) && (
         <Row>
-          <Dropdown isBordered>
-            <Dropdown.Trigger>
-              <Input
-                bordered
-                placeholder="Select an operation"
-                contentRight={<ChevronDown />}
-                value={
-                  (mainOperation
-                  && customerOperations
-                    .find((operation) => operation.value === mainOperation)?.text)
-                  || "Select an operation"
-                }
-              />
-            </Dropdown.Trigger>
-            <Dropdown.Menu
-              onAction={(key) => _onChangeOperation(key)}
-              selectedKeys={[mainOperation]}
-              selectionMode="single"
-              css={{ minWidth: "max-content" }}
-            >
-              {customerOperations.map((operation) => (
-                <Dropdown.Item key={operation.key}>{operation.text}</Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
+          <Select
+            variant="bordered"
+            placeholder="Select an operation"
+            onSelectionChange={(key) => _onChangeOperation(key)}
+            selectedKeys={[mainOperation]}
+            selectionMode="single"
+            value={
+              (mainOperation
+                && customerOperations
+                  .find((operation) => operation.value === mainOperation)?.text)
+              || "Select an operation"
+            }
+          >
+            {customerOperations.map((operation) => (
+              <SelectItem key={operation.key}>{operation.text}</SelectItem>
+            ))}
+          </Select>
         </Row>
       )}
-      <Spacer y={1} />
+      <Spacer y={2} />
 
       <Row wrap="wrap" align="center">
         {conditions[mainOperation] && conditions[mainOperation].map((condition) => {
@@ -266,37 +261,37 @@ function CustomerQuery(props) {
             >
               {/** SEGMENTS */}
               {condition.segment && (
-                <Badge as="a" variant={"bordered"}>
+                <Chip is="a" variant={"bordered"}>
                   <Folder size="small" />
-                  <Spacer x={0.1} />
+                  <Spacer x={0.3} />
                   <span style={{ color: primary }}>
                     {`in ${_getSegmentName(condition.segment.id)}`}
                   </span>
-                  <Spacer x={0.1} />
+                  <Spacer x={0.3} />
                   <Link onClick={() => _onRemoveCondition("segment", condition.segment.id)} color="secondary">
                     <CloseSquare size="small" />
                   </Link>
-                </Badge>
+                </Chip>
               )}
               {condition.not && condition.not.segment && (
-                <Badge as="a" variant={"bordered"}>
+                <Chip is="a" variant={"bordered"}>
                   <Folder size="small" />
-                  <Spacer x={0.1} />
+                  <Spacer x={0.3} />
                   <span style={{ color: primary }}>
                     {`not in  ${_getSegmentName(condition.not.segment.id)}`}
                   </span>
-                  <Spacer x={0.1} />
+                  <Spacer x={0.3} />
                   <Link onClick={() => _onRemoveCondition("segment", condition.not.segment.id)} color="secondary">
                     <CloseSquare size="small" />
                   </Link>
-                </Badge>
+                </Chip>
               )}
               {condition.or && (
-                <Badge as="a" variant={"bordered"}>
+                <Chip is="a" variant={"bordered"}>
                   <Folder size="small" />
-                  <Spacer x={0.1} />
+                  <Spacer x={0.3} />
                   <span>{"in"}</span>
-                  <Spacer x={0.1} />
+                  <Spacer x={0.3} />
                   {condition.or.map((sub, index) => {
                     if (sub.segment && sub.segment.id) {
                       return (
@@ -310,18 +305,18 @@ function CustomerQuery(props) {
                     }
                     return (<span />); // eslint-disable-line
                   })}
-                  <Spacer x={0.1} />
+                  <Spacer x={0.3} />
                   <Link onClick={() => _onRemoveCondition("segment", condition.or)} color="secondary">
                     <CloseSquare size="small" />
                   </Link>
-                </Badge>
+                </Chip>
               )}
               {condition.not && condition.not.or && (
-                <Badge as="a" variant={"bordered"}>
+                <Chip is="a" variant={"bordered"}>
                   <Folder size="small" />
-                  <Spacer x={0.1} />
+                  <Spacer x={0.3} />
                   <span>{"not in"}</span>
-                  <Spacer x={0.1} />
+                  <Spacer x={0.3} />
                   {condition.not.or.map((sub, index) => {
                     if (sub.segment && sub.segment.id) {
                       return (
@@ -333,104 +328,104 @@ function CustomerQuery(props) {
                     }
                     return (<span />); // eslint-disable-line
                   })}
-                  <Spacer x={0.1} />
+                  <Spacer x={0.3} />
                   <Link onClick={() => _onRemoveCondition("segment", condition.not)} color="secondary">
                     <CloseSquare size="small" />
                   </Link>
-                </Badge>
+                </Chip>
               )}
 
               {/** ATTRIBUTES */}
               {condition.attribute && (
-                <Badge as="a" variant={"bordered"}>
+                <Chip is="a" variant={"bordered"}>
                   <User size="small" />
-                  <Spacer x={0.1} />
+                  <Spacer x={0.3} />
                   <span style={{ color: primary }}>
                     {`${condition.attribute.field}`}
                   </span>
-                  <Spacer x={0.1} />
+                  <Spacer x={0.3} />
                   {condition.attribute.operator === "eq" && (
                     <>
-                      <Spacer x={0.1} />
+                      <Spacer x={0.3} />
                       <span>is</span>
-                      <Spacer x={0.1} />
+                      <Spacer x={0.3} />
                     </>
                   )}
                   <span style={{ color: secondary }}>
                     {`${_getOperatorName(condition.attribute.operator)}`}
                   </span>
-                  <Spacer x={0.1} />
+                  <Spacer x={0.3} />
                   {condition.attribute.operator === "eq" && (
                     <>
-                      <Spacer x={0.1} />
+                      <Spacer x={0.3} />
                       <span style={{ color: primary }}>
                         {`to ${condition.attribute.value}`}
                       </span>
-                      <Spacer x={0.1} />
+                      <Spacer x={0.3} />
                     </>
                   )}
                   <Link onClick={() => _onRemoveCondition("attribute", condition.attribute.field)} color="secondary">
                     <CloseSquare size="small" />
                   </Link>
-                </Badge>
+                </Chip>
               )}
               {condition.not && condition.not.attribute && (
-                <Badge as="a" isSquared>
+                <Chip is="a" isSquared>
                   <User size="small" />
-                  <Spacer x={0.1} />
+                  <Spacer x={0.3} />
                   <span style={{ color: primary }}>
                     {`${condition.not.attribute.field}`}
                   </span>
-                  <Spacer x={0.1} />
+                  <Spacer x={0.3} />
                   {condition.not.attribute.operator === "eq" && (
                     <>
-                      <Spacer x={0.1} />
+                      <Spacer x={0.3} />
                       <span>is</span>
-                      <Spacer x={0.1} />
+                      <Spacer x={0.3} />
                     </>
                   )}
                   <span style={{ color: secondary }}>
                     {`${_getOperatorName(`not,${condition.not.attribute.operator}`)}`}
                   </span>
-                  <Spacer x={0.1} />
+                  <Spacer x={0.3} />
                   {condition.not.attribute.operator === "eq" && (
                     <>
-                      <Spacer x={0.1} />
+                      <Spacer x={0.3} />
                       <span style={{ color: primary }}>
                         {`to ${condition.not.attribute.value}`}
                       </span>
-                      <Spacer x={0.1} />
+                      <Spacer x={0.3} />
                     </>
                   )}
                   <Link onClick={() => _onRemoveCondition("attribute", condition.not)} color="secondary">
                     <CloseSquare size="small" />
                   </Link>
-                </Badge>
+                </Chip>
               )}
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
             </Fragment>
           );
         })}
       </Row>
 
-      <Spacer y={1} />
+      <Spacer y={2} />
       {!segmentConfig && !attributeConfig && (
         <Row align="center">
           <Button
             size="sm"
-            icon={<Folder />}
+            startContent={<Folder />}
             onClick={() => _onConfigureSegment()}
-            bordered
+            variant="bordered"
             auto
           >
             Add segment condition
           </Button>
-          <Spacer x={0.2} />
+          <Spacer x={0.5} />
           <Button
             size="sm"
-            icon={<User />}
+            startContent={<User />}
             onClick={() => _onConfigureAttribute()}
-            bordered
+            variant="bordered"
             auto
           >
             Add attribute condition
@@ -439,94 +434,82 @@ function CustomerQuery(props) {
       )}
       {segmentConfig && (
         <Row>
-          <Dropdown isBordered>
-            <Dropdown.Trigger>
-              <Input
-                size="sm"
-                bordered
-                contentRight={<ChevronDown />}
-                animated={false}
-                value={
-                  (segmentConfig.operation
-                  && filterOperations.find((op) => op.value === segmentConfig.operation)?.text)
-                  || "Select operation"
-                }
-              />
-            </Dropdown.Trigger>
-            <Dropdown.Menu
-              onAction={(key) => setSegmentConfig({ ...segmentConfig, operation: key })}
-              selectedKeys={[segmentConfig.operation]}
-              selectionMode="single"
-              defaultSelectedKeys={["in"]}
-            >
-              {filterOperations.map((operation) => (
-                <Dropdown.Item key={operation.value}>
-                  {operation.text}
-                </Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
-          <Spacer x={0.2} />
-          <Dropdown isBordered>
-            <Dropdown.Button size="sm" flat>
-              Segments
-              <Spacer x={0.2} />
-              {segmentConfig.ids && segmentConfig.ids.length > 0 && (
-                <Badge variant="default" color="secondary" size="sm">
-                  {segmentConfig.ids.length}
-                </Badge>
-              )}
-              {(!segmentConfig.ids || (segmentConfig.ids && segmentConfig.ids.length === 0)) && (
-                <Badge color="secondary" size="sm" variant="flat">
-                  None
-                </Badge>
-              )}
-            </Dropdown.Button>
-            <Dropdown.Menu
-              selectionMode="multiple"
-              selectedKeys={segmentConfig.ids || []}
-              onAction={(key) => {
-                // add to the list if not already in it
-                if (!segmentConfig.ids || !segmentConfig.ids.includes(key)) {
-                  setSegmentConfig({
-                    ...segmentConfig,
-                    ids: !segmentConfig.ids ? [key] : [...segmentConfig.ids, key]
-                  });
-                } else {
-                  setSegmentConfig({
-                    ...segmentConfig, ids: segmentConfig.ids.filter((t) => t !== key)
-                  });
-                }
-              }}
-              css={{ minWidth: "max-content" }}
-            >
-              {segments.map((segment) => (
-                <Dropdown.Item
-                  key={segment.value}
-                  icon={segment.icon}
-                >
-                  {segment.text}
-                </Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
+          <Select
+            variant="bordered"
+            placeholder="Select an operation"
+            onSelectionChange={(key) => setSegmentConfig({ ...segmentConfig, operation: key })}
+            selectedKeys={[segmentConfig.operation]}
+            selectionMode="single"
+            value={
+              (segmentConfig.operation
+                && filterOperations.find((op) => op.value === segmentConfig.operation)?.text)
+              || "Select operation"
+            }
+            defaultSelectedKeys={["in"]}
+          >
+            {filterOperations.map((operation) => (
+              <SelectItem key={operation.value}>
+                {operation.text}
+              </SelectItem>
+            ))}
+          </Select>
           <Spacer x={0.5} />
+          <Select
+            variant="bordered"
+            placeholder="Select a segment"
+            onSelectionChange={(key) => {
+              // add to the list if not already in it
+              if (!segmentConfig.ids || !segmentConfig.ids.includes(key)) {
+                setSegmentConfig({
+                  ...segmentConfig,
+                  ids: !segmentConfig.ids ? [key] : [...segmentConfig.ids, key]
+                });
+              } else {
+                setSegmentConfig({
+                  ...segmentConfig, ids: segmentConfig.ids.filter((t) => t !== key)
+                });
+              }
+            }}
+            selectedKeys={segmentConfig.ids || []}
+            selectionMode="multiple"
+            renderValue={(items) => (
+              <div className="flex flex-wrap gap-2">
+                {items.map((item) => (
+                  <Chip key={item}>
+                    {segments.find((segment) => segment.value === item)?.text}
+                  </Chip>
+                ))}
+              </div>
+            )}
+          >
+            {segments.map((segment) => (
+              <SelectItem
+                key={segment.value}
+                startContent={segment.icon}
+              >
+                {segment.text}
+              </SelectItem>
+            ))}
+          </Select>
+          <Spacer x={1} />
           <Button
-            icon={<TickSquare />}
+            isIconOnly
             onClick={_onAddSegmentCondition}
             size="sm"
             color="success"
-            css={{ minWidth: "fit-content" }}
-          />
-          <Spacer x={0.2} />
+          >
+            <TickSquare />
+          </Button>
+          <Spacer x={0.5} />
           <Button
-            icon={<CloseSquare />}
+            isIconOnly
             color="danger"
-            flat
+            variant="flat"
             onClick={() => setSegmentConfig(null)}
             size="sm"
-            css={{ minWidth: "fit-content" }}
-          />
+          >
+            <CloseSquare />
+          </Button>
         </Row>
       )}
       {attributeConfig && (
@@ -537,40 +520,34 @@ function CustomerQuery(props) {
             onChange={(e) => {
               setAttributeConfig({ ...attributeConfig, field: e.target.value });
             }}
-            bordered
+            variant="bordered"
             size="sm"
           />
-          <Spacer x={0.5} />
-          <Dropdown isBordered>
-            <Dropdown.Trigger>
-              <Input
-                size="sm"
-                bordered
-                contentRight={<ChevronDown />}
-                animated={false}
-                value={
-                  (attributeConfig.operator
+          <Spacer x={1} />
+          <Select
+            variant="bordered"
+            placeholder="Select an operation"
+            onSelectionChange={(key) => setAttributeConfig({ ...attributeConfig, operator: key })}
+            selectedKeys={[attributeConfig.operator]}
+            selectionMode="single"
+            renderValue={(
+              <Text>
+                {(attributeConfig.operator
                   && attributeOperations.find((op) => op.value === attributeConfig.operator)?.text)
-                  || "Select operation"
-                }
-              />
-            </Dropdown.Trigger>
-            <Dropdown.Menu
-              onAction={(key) => setAttributeConfig({ ...attributeConfig, operator: key })}
-              selectedKeys={[attributeConfig.operator]}
-              selectionMode="single"
-              defaultSelectedKeys={["eq"]}
-            >
-              {attributeOperations.map((operation) => (
-                <Dropdown.Item key={operation.value}>
-                  {operation.text}
-                </Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
+                || "Select operation"}
+              </Text>
+            )}
+            defaultSelectedKeys={["eq"]}
+          >
+            {attributeOperations.map((operation) => (
+              <SelectItem key={operation.value}>
+                {operation.text}
+              </SelectItem>
+            ))}
+          </Select>
           {(attributeConfig.operator === "eq" || attributeConfig.operator === "not,eq") && (
             <>
-              <Spacer x={0.5} />
+              <Spacer x={1} />
               <Input
                 placeholder="Value"
                 value={attributeConfig.value}
@@ -578,33 +555,35 @@ function CustomerQuery(props) {
                   setAttributeConfig({ ...attributeConfig, value: e.target.value });
                 }}
                 size="sm"
-                bordered
+                variant="bordered"
               />
             </>
           )}
-          <Spacer x={0.5} />
+          <Spacer x={1} />
           <Button
-            icon={<TickSquare />}
+            isIconOnly
             onClick={_onAddAttributeCondition}
             size="sm"
             color="success"
-            css={{ minWidth: "fit-content" }}
-          />
-          <Spacer x={0.2} />
+          >
+            <TickSquare />
+          </Button>
+          <Spacer x={0.5} />
           <Button
-            icon={<CloseSquare />}
+            isIconOnly
             onClick={() => setAttributeConfig(null)}
             size="sm"
             color="danger"
-            flat
-            css={{ minWidth: "fit-content" }}
-          />
+            variant="flat" 
+          >
+            <CloseSquare />
+          </Button>
         </Row>
       )}
 
-      <Spacer y={1} />
+      <Spacer y={2} />
       <Divider />
-      <Spacer y={1} />
+      <Spacer y={2} />
 
       <Row>
         <Checkbox
@@ -622,7 +601,7 @@ function CustomerQuery(props) {
           placeholder="Limit the number of records to return"
           value={limit}
           onChange={(e) => onUpdateLimit(e.target.value)}
-          bordered
+          variant="bordered"
         />
       </Row>
     </Container>

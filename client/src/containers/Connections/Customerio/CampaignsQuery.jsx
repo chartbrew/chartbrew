@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Badge, Button, Col, Container, Divider, Dropdown, Grid, Input, Link,
-  Loading, Popover, Row, Spacer, Switch, Text, Tooltip,
+  Chip, Button, Divider, Input, Popover, Spacer, Switch, Tooltip, Select,
+  SelectItem, Tabs, Tab, PopoverTrigger, PopoverContent,
 } from "@nextui-org/react";
 import {
   format, getUnixTime, subDays, endOfDay, startOfDay
@@ -10,11 +10,14 @@ import {
 import { DateRangePicker } from "react-date-range";
 import { enGB } from "date-fns/locale";
 
-import { ChevronDown, InfoCircle, Calendar } from "react-iconly";
+import { InfoCircle, Calendar } from "react-iconly";
 import { runHelperMethod } from "../../../actions/connection";
 import { primary, secondary } from "../../../config/colors";
 import MessageTypeLabels from "./MessageTypeLabels";
 import { defaultStaticRanges, defaultInputRanges } from "../../../config/dateRanges";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
 
 const periodOptions = [
   { key: "hours", value: "hours", text: "Hourly" },
@@ -304,130 +307,89 @@ function CampaignsQuery(props) {
     });
   };
 
+  const _getSelectedTab = () => {
+    if (config.requestRoute.indexOf("metrics") === 0) return "metrics";
+    if (config.requestRoute.indexOf("actions") === 0) return "actions";
+    if (config.requestRoute.indexOf("journey_metrics") === 0) return "journey_metrics";
+    return "";  
+  }
+
   return (
-    <Container css={{ pr: 0, pl: 0 }}>
+    <Container className={"pl-0 pr-0"}>
       <Row>
-        <Dropdown isBordered>
-          <Dropdown.Trigger>
-            <Input
-              bordered
-              label="Choose one of your campaigns"
-              animated={false}
-              contentRight={loading ? <Loading type="spinner" /> : <ChevronDown />}
-              value={
-                (config.campaignId && campaigns.find((c) => c.value === config.campaignId)?.text)
-                || "Choose a campaign"
-              }
-            />
-          </Dropdown.Trigger>
-          <Dropdown.Menu
-            onAction={(key) => _onSelectCampaign(key)}
-            selectedKeys={[config.campaignId]}
-            selectionMode="single"
-            css={{ minWidth: "max-content" }}
-          >
-            {campaigns.map((campaign) => (
-              <Dropdown.Item
-                key={campaign.key}
-                icon={(
-                  <Badge color={campaign.label.color} css={{ minWidth: 70 }}>
-                    {campaign.label.content}
-                  </Badge>
-                )}
-              >
-                {campaign.text}
-              </Dropdown.Item>
-            ))}
-          </Dropdown.Menu>
-        </Dropdown>
+        <Select
+          variant="bordered"
+          label="Choose one of your campaigns"
+          renderValue={(
+            <Text>
+              {(config.campaignId && campaigns.find((c) => c.value === config.campaignId)?.text)
+              || "Choose a campaign"}
+            </Text>
+          )}
+          onSelectionChange={(value) => _onSelectCampaign(value)}
+          selectedKeys={[config.campaignId]}
+          selectionMode="single"
+          isLoading={loading}
+        >
+          {campaigns.map((campaign) => (
+            <SelectItem
+              key={campaign.key}
+              startContent={(
+                <Chip color={campaign.label.color} className="min-w-[70px]">
+                  {campaign.label.content}
+                </Chip>
+              )}
+            >
+              {campaign.text}
+            </SelectItem>
+          ))}
+        </Select>
       </Row>
-      <Spacer y={1} />
+      <Spacer y={2} />
       {config.campaignId && (
         <Row wrap="wrap">
-          <Link
-            css={{
-              background: config.requestRoute.indexOf("metrics") === 0 ? "$background" : "$backgroundContrast",
-              p: 5,
-              pr: 10,
-              pl: 10,
-              br: "$sm",
-              "@xsMax": { width: "90%" },
-              ai: "center",
-              color: "$text",
+          <Tabs
+            selectedKey={_getSelectedTab()}
+            onSelectionChange={(key) => {
+              if (key === "metrics") _onSelectCampaignMetrics();
+              if (key === "actions") _onSelectActionMetrics();
+              if (key === "journey_metrics") _onSelectJourneyMetrics();
             }}
-            onClick={_onSelectCampaignMetrics}
           >
-            <Text>{"Campaign metrics"}</Text>
-          </Link>
-          <Spacer x={0.2} />
-          <Link
-            css={{
-              background: config.requestRoute.indexOf("actions") === 0 ? "$background" : "$backgroundContrast",
-              p: 5,
-              pr: 10,
-              pl: 10,
-              br: "$sm",
-              "@xsMax": { width: "90%" },
-              ai: "center",
-              color: "$text",
-            }}
-            onClick={_onSelectActionMetrics}
-          >
-            <Text>{"Action metrics"}</Text>
-          </Link>
-          <Spacer x={0.2} />
-          <Link
-            css={{
-              background: config.requestRoute.indexOf("journey_metrics") === 0 ? "$background" : "$backgroundContrast",
-              p: 5,
-              pr: 10,
-              pl: 10,
-              br: "$sm",
-              "@xsMax": { width: "90%" },
-              ai: "center",
-              color: "$text",
-            }}
-            onClick={_onSelectJourneyMetrics}
-          >
-            <Text>{"Journey metrics"}</Text>
-          </Link>
+            <Tab key="metrics" title="Metrics" />
+            <Tab key="actions" title="Actions" />
+            <Tab key="journey_metrics" title="Journey metrics" />
+          </Tabs>
         </Row>
       )}
 
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <Divider />
-      <Spacer y={0.5} />
+      <Spacer y={1} />
 
       {config.campaignId && config.requestRoute.indexOf("actions") === 0 && (
         <Row>
-          <Dropdown isBordered>
-            <Dropdown.Trigger>
-              <Input
-                bordered
-                label="Select an action to view the metrics"
-                animated={false}
-                contentRight={actionsLoading ? <Loading type="spinner" /> : <ChevronDown />}
-                fullWidth
-                value={
-                  (config.actionId
-                    && availableActions.find((a) => a.value === config.actionId)?.text)
-                  || "Select an action"
-                }
-              />
-            </Dropdown.Trigger>
-            <Dropdown.Menu
-              onAction={(key) => _onSelectAction(key)}
-              selectedKeys={[config.actionId]}
-              selectionMode="single"
-              css={{ minWidth: "max-content" }}
-            >
-              {availableActions.map((action) => (
-                <Dropdown.Item key={action.key} value={action.value}>
-                  {action.text}
-                </Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
+          <Select
+            variant="bordered"
+            label="Select an action to view the metrics"
+            isLoading={actionsLoading}
+            renderValue={(
+              <Text>
+                {(config.actionId
+                  && availableActions.find((a) => a.value === config.actionId)?.text)
+                || "Select an action"}
+              </Text>
+            )}
+            onSelectionChange={(value) => _onSelectAction(value)}
+            selectedKeys={[config.actionId]}
+            selectionMode="single"
+          >
+            {availableActions.map((action) => (
+              <SelectItem key={action.key} value={action.value}>
+                {action.text}
+              </SelectItem>
+            ))}
+          </Select>
         </Row>
       )}
       {config.campaignId
@@ -436,11 +398,11 @@ function CampaignsQuery(props) {
           || config.requestRoute === "journey_metrics")
         && (
         <>
-          <Spacer y={0.5} />
+          <Spacer y={1} />
           <Row>
-            <Text size={14}>What would you like this dataset to show?</Text>
+            <Text>What would you like this dataset to show?</Text>
           </Row>
-          <Spacer y={0.2} />
+          <Spacer y={0.5} />
           <Row wrap="wrap">
             <MessageTypeLabels
               selected={config.series}
@@ -449,22 +411,22 @@ function CampaignsQuery(props) {
               showPrimary={config.requestRoute !== "journey_metrics"}
             />
           </Row>
-          <Spacer y={0.5} />
+          <Spacer y={1} />
           {(config.requestRoute.indexOf("/metrics") > -1 || config.requestRoute.indexOf("metrics") === 0) && (
             <>
               <Row>
-                <Text size={14}>Or show the campaign link metrics</Text>
+                <Text>Or show the campaign link metrics</Text>
               </Row>
-              <Spacer y={0.2} />
+              <Spacer y={0.5} />
               <Row>
-                <Badge
+                <Chip
                   onClick={_onShowCampaingLinkMetrics}
                   color="primary"
                   variant={config.requestRoute.indexOf("metrics/links") > -1 ? "default" : "bordered"}
-                  css={{ cursor: "pointer" }}
+                  className="cursor-pointer"
                 >
                   {`Show ${config.requestRoute.indexOf("actions") > -1 ? "action" : "campaign"} link metrics`}
-                </Badge>
+                </Chip>
               </Row>
             </>
           )}
@@ -477,122 +439,109 @@ function CampaignsQuery(props) {
         )
         && (
         <>
-          <Spacer y={0.5} />
+          <Spacer y={1} />
           <Row>
-            <Grid.Container gap={0.5}>
-              <Grid xs={12} sm={(config.series || config.actionId) ? 4 : 6}>
-                <Dropdown isBordered>
-                  <Dropdown.Trigger>
-                    <Input
-                      bordered
-                      label="Choose the period"
-                      animated={false}
-                      contentRight={<ChevronDown />}
-                      fullWidth
-                      value={(periodOptions.find((p) => p.value === config.period)?.text) || "Choose a period"}
-                    />
-                  </Dropdown.Trigger>
-                  <Dropdown.Menu
-                    onAction={(key) => _onChangePeriod(key)}
-                    selectedKeys={[config.period]}
-                    selectionMode="single"
-                  >
-                    {periodOptions.map((period) => (
-                      <Dropdown.Item key={period.key}>
-                        {period.text}
-                      </Dropdown.Item>
-                    ))}
-                  </Dropdown.Menu>
-                </Dropdown>
-              </Grid>
-              <Grid xs={12} sm={(config.series || config.actionId) ? 4 : 6}>
-                <Dropdown isBordered>
-                  <Dropdown.Trigger>
-                    <Input
-                      bordered
-                      label="Max number of steps"
-                      animated={false}
-                      contentRight={<ChevronDown />}
-                      fullWidth
-                      value={(stepsOptions.find((p) => p.value === config.steps)?.text) || "Choose a number"}
-                    />
-                  </Dropdown.Trigger>
-                  <Dropdown.Menu
-                    onAction={(key) => _onChangeSteps(key)}
-                    selectedKeys={[config.steps]}
-                    selectionMode="single"
-                  >
-                    {stepsOptions.map((steps) => (
-                      <Dropdown.Item key={steps.key}>
-                        {steps.text}
-                      </Dropdown.Item>
-                    ))}
-                  </Dropdown.Menu>
-                </Dropdown>
-              </Grid>
+            <div className="grid grid-cols-12 gap-1">
+              <div className={`col-span-${(config.series || config.actionId) ? 4 : 6} sm:col-span-12 md:col-span-${(config.series || config.actionId) ? 4 : 6}`}>
+                <Select
+                  variant="bordered"
+                  label="Choose the period"
+                  renderValue={(
+                    <Text>
+                      {(config.period && periodOptions.find((p) => p.value === config.period)?.text)
+                      || "Choose a period"}
+                    </Text>
+                  )}
+                  onSelectionChange={(value) => _onChangePeriod(value)}
+                  selectedKeys={[config.period]}
+                  selectionMode="single"
+                >
+                  {periodOptions.map((period) => (
+                    <SelectItem key={period.key}>
+                      {period.text}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </div>
+              <div className={`col-span-${(config.series || config.actionId) ? 4 : 6} sm:col-span-12 md:col-span-${(config.series || config.actionId) ? 4 : 6}`}>
+                <Select
+                  variant="bordered"
+                  label="Max number of steps"
+                  renderValue={(
+                    <Text>
+                      {(config.steps && stepsOptions.find((p) => p.value === config.steps)?.text)
+                      || "Choose a number"}
+                    </Text>
+                  )}
+                  onSelectionChange={(value) => _onChangeSteps(value)}
+                  selectedKeys={[config.steps]}
+                  selectionMode="single"
+                >
+                  {stepsOptions.map((steps) => (
+                    <SelectItem key={steps.key}>
+                      {steps.text}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </div>
 
               {(config.series || config.actionId) && (
-                <Grid xs={12} sm={4} direction="column" justify="center">
-                  <Text size={14}>Leave empty for *all* types</Text>
-                  <Dropdown isBordered>
-                    <Dropdown.Button flat>
-                      Message types
-                      <Spacer x={0.2} />
-                      {config.type && config.type.length > 0 && (
-                        <Badge variant="default" color="secondary" size="sm">
-                          {config.type.length}
-                        </Badge>
-                      )}
-                      {config.type && config.type.length === 0 && (
-                        <Badge color="secondary" size="sm" variant="flat">
-                          All
-                        </Badge>
-                      )}
-                    </Dropdown.Button>
-                    <Dropdown.Menu
-                      onAction={(key) => {
-                        // add to the list if not already in it
-                        if (!config.type || !config.type.includes(key)) {
-                          _onChangeMessageTypes(!config.type ? [key] : [...config.type, key]);
-                        } else {
-                          setConfig({ ...config, type: config.type.filter((t) => t !== key) });
-                        }
-                      }}
-                      selectedKeys={config.type || []}
-                      selectionMode="multiple"
-                    >
-                      {messageOptions.map((message) => (
-                        <Dropdown.Item key={message.key}>
-                          {message.text}
-                        </Dropdown.Item>
-                      ))}
-                    </Dropdown.Menu>
-                  </Dropdown>
-                </Grid>
+                <div className="col-span-4 sm:col-span-12 flex justify-center">
+                  <Text>Leave empty for *all* types</Text>
+                  <Select
+                    variant="bordered"
+                    label="Message types"
+                    renderValue={(items) => (
+                      <div className="flex flex-wrap gap-2">
+                        {items.map((item) => (
+                          <Chip key={item}>
+                            {config.type && config.type.find((t) => t === item)?.text}
+                          </Chip>
+                        ))}
+                      </div>
+                    )}
+                    onSelectionChange={(key) => {
+                      // add to the list if not already in it
+                      if (!config.type || !config.type.includes(key)) {
+                        _onChangeMessageTypes(!config.type ? [key] : [...config.type, key]);
+                      } else {
+                        setConfig({ ...config, type: config.type.filter((t) => t !== key) });
+                      }
+                    }}
+                    selectedKeys={config.type || []}
+                    selectionMode="multiple"
+                  >
+                    {messageOptions.map((message) => (
+                      <SelectItem key={message.key}>
+                        {message.text}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                </div>
               )}
-            </Grid.Container>
+            </div>
           </Row>
           {config.requestRoute.indexOf("links") > -1 && (
             <>
-              <Spacer y={1} />
+              <Spacer y={2} />
               <Row>
-                <Grid.Container gap={0.5}>
-                  <Grid xs={12} sm={6} direction="column">
-                    <Text size={14}>Visualization type</Text>
+                <div className="grid grid-cols-12 gap-1">
+                  <div className="col-span-6 sm:col-span-12">
+                    <Text>Visualization type</Text>
                     <div style={styles.row}>
                       <Button
                         onClick={() => setConfig({ ...config, linksMode: "total" })}
                         size="sm"
-                        bordered={config.linksMode !== "total"}
+                        variant={config.linksMode !== "total" ? "bordered" : "solid"}
                         auto
                         color="secondary"
                       >
                         Total clicks
                       </Button>
-                      <Spacer x={0.2} />
+                      <Spacer x={0.5} />
                       <Button
                         onClick={() => _onSelectClickTimeseries()}
-                        bordered={config.linksMode !== "links"}
+                        variant={config.linksMode !== "links" ? "bordered" : "solid"}
                         size="sm"
                         auto
                         color="secondary"
@@ -600,49 +549,42 @@ function CampaignsQuery(props) {
                         Click timeseries
                       </Button>
                     </div>
-                  </Grid>
-                  <Grid xs={12} sm={6} direction="column" justify="center">
-                    <Text size={14}>Unique clicks per customer</Text>
+                  </div>
+                  <div className="col-span-6 sm:col-span-12 flex justify-center">
+                    <Text>Unique clicks per customer</Text>
                     <Switch
-                      checked={config.unique}
+                      isSelected={config.unique}
                       onChange={() => setConfig({ ...config, unique: !config.unique })}
                       size="sm"
                     />
-                  </Grid>
-                </Grid.Container>
+                  </div>
+                </div>
               </Row>
               {config.linksMode === "links" && (
                 <>
-                  <Spacer y={1} />
+                  <Spacer y={2} />
                   <Row align="center">
-                    <Grid.Container gap={0.5}>
-                      <Grid xs={12} sm={9}>
-                        <Dropdown isBordered>
-                          <Dropdown.Trigger>
-                            <Input
-                              bordered
-                              label="Select a link"
-                              animated={false}
-                              contentRight={linksLoading ? <Loading type="spinner" /> : <ChevronDown />}
-                              fullWidth
-                              value={config.selectedLink || "Select a link"}
-                            />
-                          </Dropdown.Trigger>
-                          <Dropdown.Menu
-                            onAction={(key) => setConfig({ ...config, selectedLink: key })}
-                            selectedKeys={[config.selectedLink]}
-                            selectionMode="single"
-                            css={{ minWidth: "max-content" }}
-                          >
-                            {availableLinks.map((link) => (
-                              <Dropdown.Item key={link.key}>
-                                {link.text}
-                              </Dropdown.Item>
-                            ))}
-                          </Dropdown.Menu>
-                        </Dropdown>
-                      </Grid>
-                      <Grid xs={12} sm={3} alignItems="flex-end">
+                    <div className="grid grid-cols-12 gap-1">
+                      <div className="col-span-9 sm:col-span-12">
+                        <Select
+                          variant="bordered"
+                          label="Select a link"
+                          isLoading={linksLoading}
+                          renderValue={(
+                            <Text>{(config.selectedLink || "Select a link")}</Text>
+                          )}
+                          onSelectionChange={(value) => setConfig({ ...config, selectedLink: value })}
+                          selectedKeys={[config.selectedLink]}
+                          selectionMode="single"
+                        >
+                          {availableLinks.map((link) => (
+                            <SelectItem key={link.key}>
+                              {link.text}
+                            </SelectItem>
+                          ))}
+                        </Select>
+                      </div>
+                      <div className="col-span-3 sm:col-span-12 flex items-end">
                         <Button
                           onClick={() => _onSelectClickTimeseries()}
                           auto
@@ -650,15 +592,15 @@ function CampaignsQuery(props) {
                         >
                           Refresh links
                         </Button>
-                        <Spacer x={0.2} />
+                        <Spacer x={0.5} />
                         <Tooltip
                           content="You can select only one link, but if you wish to compare multiple links on the same chart, you can create a new dataset with another link."
-                          css={{ zIndex: 10000, maxWidth: 500 }}
+                          className="max-w-[500px]"
                         >
                           <InfoCircle />
                         </Tooltip>
-                      </Grid>
-                    </Grid.Container>
+                      </div>
+                    </div>
                   </Row>
                 </>
               )}
@@ -669,20 +611,20 @@ function CampaignsQuery(props) {
 
       {config.campaignId && config.requestRoute === "journey_metrics" && config.series && (
         <>
-          <Spacer y={0.5} />
+          <Spacer y={1} />
           <Row>
             <Popover>
-              <Popover.Trigger>
+              <PopoverTrigger>
                 <Input
                   label="Select the start and end date of the journey"
                   placeholder="Click to select a date"
-                  contentLeft={<Calendar />}
-                  bordered
+                  startContent={<Calendar />}
+                  variant="bordered"
                   fullWidth
                   value={`${format(journeyStart, "dd MMMM yyyy")} - ${format(journeyEnd, "dd MMMM yyyy")}`}
                 />
-              </Popover.Trigger>
-              <Popover.Content>
+              </PopoverTrigger>
+              <PopoverContent>
                 <DateRangePicker
                   locale={enGB}
                   direction="horizontal"
@@ -692,74 +634,60 @@ function CampaignsQuery(props) {
                   staticRanges={defaultStaticRanges}
                   inputRanges={defaultInputRanges}
                 />
-              </Popover.Content>
+              </PopoverContent>
             </Popover>
-            <Spacer x={0.5} />
-            <Dropdown isBordered>
-              <Dropdown.Trigger>
-                <Input
-                  bordered
-                  label="Select the period"
-                  animated={false}
-                  contentRight={<ChevronDown />}
-                  fullWidth
-                  value={
-                    config.period && periodOptions.find((p) => p.value === config.period)?.text
-                  }
-                />
-              </Dropdown.Trigger>
-              <Dropdown.Menu
-                onAction={(key) => _onChangePeriod(key)}
-                selectedKeys={[config.period]}
-                selectionMode="single"
-              >
-                {periodOptions.map((period) => (
-                  <Dropdown.Item key={period.value}>
-                    {period.text}
-                  </Dropdown.Item>
-                ))}
-              </Dropdown.Menu>
-            </Dropdown>
+            <Spacer x={1} />
+            <Select
+              variant="bordered"
+              label="Select the period"
+              renderValue={(
+                <Text>
+                  {(config.period && periodOptions.find((p) => p.value === config.period)?.text)}
+                </Text>
+              )}
+              onSelectionChange={(value) => _onChangePeriod(value)}
+              selectedKeys={[config.period]}
+              selectionMode="single"
+            >
+              {periodOptions.map((period) => (
+                <SelectItem key={period.value}>
+                  {period.text}
+                </SelectItem>
+              ))}
+            </Select>
           </Row>
-          <Spacer y={0.5} />
+          <Spacer y={1} />
           <Row>
-            <Col>
-              <Text size={14}>Type of messages. Leave empty for *all* types</Text>
-              <Dropdown isBordered>
-                <Dropdown.Button flat>
-                  Message types
-                  <Spacer x={0.2} />
-                  {config.type && config.type.length > 0 && (
-                    <Badge variant="default" color="secondary" size="sm">
-                      {config.type.length}
-                    </Badge>
-                  )}
-                  {config.type && config.type.length === 0 && (
-                    <Badge color="secondary" size="sm" variant="flat">
-                      All
-                    </Badge>
-                  )}
-                </Dropdown.Button>
-                <Dropdown.Menu
-                  onAction={(key) => {
-                    // add to the list if not already in it
-                    if (!config.type || !config.type.includes(key)) {
-                      _onChangeMessageTypes(!config.type ? [key] : [...config.type, key]);
-                    } else {
-                      setConfig({ ...config, type: config.type.filter((t) => t !== key) });
-                    }
-                  }}
-                  selectedKeys={config.type || []}
-                  selectionMode="multiple"
-                >
-                  {messageOptions.map((message) => (
-                    <Dropdown.Item key={message.key}>
-                      {message.text}
-                    </Dropdown.Item>
+            <Text>Type of messages. Leave empty for *all* types</Text>
+            <Select
+              variant="bordered"
+              label="Message types"
+              renderValue={(items) => (
+                <div className="flex flex-wrap gap-2">
+                  {items.map((item) => (
+                    <Chip key={item}>
+                      {config.type && config.type.find((t) => t === item)?.text}
+                    </Chip>
                   ))}
-                </Dropdown.Menu>
-              </Dropdown>
-            </Col>
+                </div>
+              )}
+              onSelectionChange={(key) => {
+                // add to the list if not already in it
+                if (!config.type || !config.type.includes(key)) {
+                  _onChangeMessageTypes(!config.type ? [key] : [...config.type, key]);
+                } else {
+                  setConfig({ ...config, type: config.type.filter((t) => t !== key) });
+                }
+              }}
+              selectedKeys={config.type || []}
+              selectionMode="multiple"
+            >
+              {messageOptions.map((message) => (
+                <SelectItem key={message.key}>
+                  {message.text}
+                </SelectItem>
+              ))}
+            </Select>
           </Row>
         </>
       )}
@@ -770,7 +698,7 @@ function CampaignsQuery(props) {
         || (config.actionId && config.period && config.steps && (config.series || config.requestRoute.indexOf("metrics/links") > -1))
       ) && (
         <>
-          <Spacer y={1} />
+          <Spacer y={2} />
           <Text>
             Looking good! You can now press the
             <strong style={{ color: primary }}>{" \"Make the request\" "}</strong>
