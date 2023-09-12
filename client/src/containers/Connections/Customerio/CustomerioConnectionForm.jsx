@@ -118,7 +118,7 @@ function CustomerioConnectionForm(props) {
         justify="flex-start"
       >
         <Row align="center">
-          <Text h3>
+          <Text size="h3">
             {!editConnection && "Connect to Customer.io"}
             {editConnection && `Edit ${editConnection.name}`}
           </Text>

@@ -140,7 +140,7 @@ function TableDataFormattingModal(props) {
   return (
     <Modal isOpen={open} className="w-[500px]">
       <ModalHeader>
-        <Text h4>
+        <Text size="h4">
           {"Change data format"}
         </Text>
       </ModalHeader>

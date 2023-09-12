@@ -84,7 +84,7 @@ function GoogleAuth(props) {
       {success && (
         <>
           <Row>
-            <Text h2 color="success">
+            <Text size="h2" color="success">
               Authentication successful!
             </Text>
           </Row>
@@ -106,12 +106,12 @@ function GoogleAuth(props) {
       {error && (
         <>
           <Row>
-            <Text h2 color="danger">
+            <Text size="h2" color="danger">
               The authentication could not be completed
             </Text>
           </Row>
           <Row>
-            <Text h4>
+            <Text size="h4">
               Please try refreshing the page or get in touch for help.
             </Text>
           </Row>

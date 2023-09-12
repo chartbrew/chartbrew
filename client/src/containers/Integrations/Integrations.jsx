@@ -26,7 +26,7 @@ function Integrations(props) {
     <div>
       <Container className={"bg-content2 rounded-md"} size="md">
         <Row>
-          <Text h3>Integrations</Text>
+          <Text size="h3">Integrations</Text>
         </Row>
         <Spacer y={1} />
         <Row>

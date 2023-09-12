@@ -101,7 +101,7 @@ function MysqlConnectionForm(props) {
         size={"md"}
       >
         <Row align="center">
-          <Text h3>Add a new MySQL connection</Text>
+          <Text size="h3">Add a new MySQL connection</Text>
         </Row>
         <Spacer y={2} />
         <Row align="center" style={styles.formStyle}>

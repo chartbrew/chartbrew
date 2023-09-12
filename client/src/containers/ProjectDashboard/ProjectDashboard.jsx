@@ -356,15 +356,16 @@ function ProjectDashboard(props) {
   };
 
   return (
-    <div>
+    <div className="w-full">
       {charts && charts.length > 0
         && (
           <div>
-            <Container
+            <div
               className={"bg-content2 w-full"}
+              size="xl"
               style={mobile ? styles.actionBarMobile : styles.actionBar}
             >
-              <Row justify="space-between" align="center">
+              <Row justify="space-between" align="center" className={"w-full"}>
                 <Row justify="flex-start" align="center">
                   <Media greaterThan="mobile">
                     <Button
@@ -500,10 +501,10 @@ function ProjectDashboard(props) {
                   </>
                 </Row>
               </Row>
-            </Container>
+            </div>
           </div>
         )}
-      <div style={styles.container(width < breakpoints.tablet)}>
+      <div className="w-full" style={styles.container(width < breakpoints.tablet)}>
         {connections.length === 0 && charts.length === 0
           && (
             <Container justify="center" className={`pt-[${height / 3}]`}>
@@ -514,7 +515,7 @@ function ProjectDashboard(props) {
               </Row>
               <Spacer y={1} />
               <Row justify="center" align="center">
-                <Text h3>
+              <Text size="h3">
                   {"Connect to a data source and start visualizing your data. "}
                 </Text>
               </Row>
@@ -547,7 +548,7 @@ function ProjectDashboard(props) {
                       <Plus size="large" />
                     </Row>
                     <Row justify="center" align="center">
-                      <Text h3>Add your first chart</Text>
+                      <Text size="h3">Add your first chart</Text>
                     </Row>
                   </CardBody>
                 </Card>
@@ -556,14 +557,14 @@ function ProjectDashboard(props) {
           </Container>
         )}
 
-        <Container className={"p-0 m-0 sm:pl-10 sm:pr-10"} size="xl">
+        {/* <Container className={"p-0 m-0 sm:pl-10 sm:pr-10"} size="fluid"> */}
           <div className="grid grid-cols-12 gap-2">
             {charts.map((chart, index) => {
               if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
               if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />);
               return (
                 <div
-                  className={`min-h-[400px] overflow-y-hidden col-span-12 md:col-span-${chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4} lg:col-span-${chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3} xl:col-span-${chart.chartSize * 2 > 12 ? 12 : chart.chartSize * 2}`}
+                  className={`min-h-[400px] overflow-y-hidden col-span-12 md:col-span-${chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4} lg:col-span-${chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4} xl:col-span-${chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3}`}
                   key={chart.id}
                 >
                   <Chart
@@ -577,7 +578,7 @@ function ProjectDashboard(props) {
               );
             })}
           </div>
-        </Container>
+        {/* </Container> */}
       </div>
       
       <Filters
@@ -592,7 +593,7 @@ function ProjectDashboard(props) {
 
       <Modal isOpen={viewExport} closeButton onClose={() => setViewExport(false)} className="w-[800px]">
         <ModalHeader>
-          <Text h3>Export to Excel (.xlsx)</Text>
+          <Text size="h3">Export to Excel (.xlsx)</Text>
         </ModalHeader>
         <ModalBody>
           <ChartExport

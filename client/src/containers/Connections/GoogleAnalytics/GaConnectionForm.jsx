@@ -114,7 +114,7 @@ function GaConnectionForm(props) {
         justify="flex-start"
       >
         <Row align="center">
-          <Text h3>
+          <Text size="h3">
             {!editConnection && "Connect to Google Analytics"}
             {editConnection && `Edit ${editConnection.name}`}
           </Text>

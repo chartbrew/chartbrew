@@ -40,7 +40,7 @@ function Login(props) {
               <Card style={styles.verticalPadding}>
                 <CardHeader className={"text-center items-center"}>
                   <Container justify="center">
-                    <Text h3 className={"mt-0"}>{"Welcome back to Chartbrew"}</Text>
+                    <Text size="h3" className={"mt-0"}>{"Welcome back to Chartbrew"}</Text>
                   </Container>
                 </CardHeader>
                 <CardBody>
@@ -50,7 +50,7 @@ function Login(props) {
                   <CardFooter>
                     <Container justify="center">
                       <Row justify="center">
-                        <Text h4 color="danger">{loginError.message}</Text>
+                        <Text size="h4" color="danger">{loginError.message}</Text>
                       </Row>
                       <Row justify="center">
                         <Text color="danger">{"Please try again."}</Text>

@@ -186,7 +186,7 @@ function FirestoreConnectionForm(props) {
         justify="flex-start"
       >
         <Row align="center">
-          <Text h3>
+          <Text size="h3">
             {!editConnection && "Connect to Firestore"}
             {editConnection && `Edit ${editConnection.name}`}
           </Text>

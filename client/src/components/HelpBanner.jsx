@@ -31,8 +31,8 @@ function HelpBanner(props) {
           <CardBody>
             <div className="grid grid-cols-12">
               <div className="col-span-12 md:col-span-9 py-20 px-20 flex-col">
-                <Text h4 css={{ py: 5 }}>
-                  <Link css={{ color: "$text" }} href={url} target="_blank" rel="noopener">{title}</Link>
+                <Text size="h4" className={"py-5"}>
+                  <Link className={"text-default"} href={url} target="_blank" rel="noopener">{title}</Link>
                 </Text>
                 <Text>
                   {description}
@@ -45,7 +45,7 @@ function HelpBanner(props) {
                     css={{ py: 5 }}
                     color="primary"
                     target="_blank"
-                    b
+                    variant="b"
                   >
                     {info}
                   </Text>

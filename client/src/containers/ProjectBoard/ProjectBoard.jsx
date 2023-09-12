@@ -185,40 +185,39 @@ function ProjectBoard(props) {
           <Media greaterThan="mobile">
             {/* extract the navbar height from here */}
             <div style={{ height: height - 50 }}>
-              <Allotment
-                defaultSizes={[sideMinSize, sideMaxSize]}
-              >
+              <Allotment>
                 <Allotment.Pane
                   minSize={_getDefaultMenuSize()}
                   maxSize={_getDefaultMenuSize()}
                   preferredSize={_getDefaultMenuSize()}
+                  className="bg-content2"
                 >
-                  <ProjectNavigation
-                    project={project}
-                    projects={projects}
-                    projectId={match.params.projectId}
-                    teamId={match.params.teamId}
-                    onChangeDrafts={_setDraftsVisible}
-                    onSetMenuSize={(mSize) => _setMenuSize(mSize)}
-                    canAccess={_canAccess}
-                    menuSize={menuSize}
-                    showDrafts={showDrafts}
-                    onChangeProject={_onChangeProject}
-                    update={update}
-                  />
+                  <div>
+                    <ProjectNavigation
+                      project={project}
+                      projects={projects}
+                      projectId={match.params.projectId}
+                      teamId={match.params.teamId}
+                      onChangeDrafts={_setDraftsVisible}
+                      onSetMenuSize={(mSize) => _setMenuSize(mSize)}
+                      canAccess={_canAccess}
+                      menuSize={menuSize}
+                      showDrafts={showDrafts}
+                      onChangeProject={_onChangeProject}
+                      update={update}
+                    />
+                  </div>
                 </Allotment.Pane>
                 <Allotment.Pane>
                   <div
                     style={{ overflowY: "auto", height: "100%", overflowX: "hidden" }}
                   >
-                    <div className="grid grid-cols-12">
-                      <div className="col-span-12 pl-0">
-                        <MainContent
-                          showDrafts={showDrafts}
-                          onPrint={_onPrint}
-                          _canAccess={_canAccess}
-                        />
-                      </div>
+                    <div className="pl-0">
+                      <MainContent
+                        showDrafts={showDrafts}
+                        onPrint={_onPrint}
+                        _canAccess={_canAccess}
+                      />
                     </div>
                   </div>
                 </Allotment.Pane>

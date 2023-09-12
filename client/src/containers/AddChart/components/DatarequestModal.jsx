@@ -255,7 +255,7 @@ function DatarequestModal(props) {
       shouldBlockScroll={false}
     >
       <ModalHeader className="flex justify-start">
-        <Text h4>{"Configure your dataset"}</Text>
+        <Text size="h4">{"Configure your dataset"}</Text>
         {initialising && (
           <>
             <Spacer x={1} />
@@ -424,7 +424,7 @@ function DatarequestModal(props) {
             <div className="col-span-11 sm:col-span-12">
               <Spacer y={1} />
               <Container>
-                <Text h4>Select a connection</Text>
+                <Text size="h4">Select a connection</Text>
               </Container>
               <Spacer y={1} />
               <div className="grid grid-cols-12 gap-2">
@@ -441,7 +441,7 @@ function DatarequestModal(props) {
                         <CardBody className="p-unit-4 pl-unit-8">
                           <Container justify="flex-start" fluid>
                             <Row align="center" justify="space-between">
-                              <Text h4>{c.name}</Text>
+                              <Text size="h4">{c.name}</Text>
                               <Spacer x={0.5} />
                               <Avatar
                                 radius="sm"

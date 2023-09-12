@@ -210,7 +210,7 @@ function UserDashboard(props) {
   return (
     <div style={styles.container(height)}>
       <Navbar hideTeam transparent />
-      <Container className={"py-48"} size="sm">
+      <Container size="md">
         <Spacer y={4} />
         {newProjectModal()}
 
@@ -219,67 +219,60 @@ function UserDashboard(props) {
             <>
               <Container
                 key={key.id}
-                size="fluid"
-                className={"px-0 flex flex-row justify-between"}
+                size="md"
+                className={"flex flex-row justify-center align-middle"}
               >
-                <div className="flex flex-col">
-                  <Row justify="flex-start" align="center">
-                    {key.TeamRoles.length > 1 && <People />}
-                    {key.TeamRoles.length < 2 && <User />}
-                    <Spacer x={1} />
-                    <Text
-                      size={"xl"}
-                      b
-                      className={"inline"}
-                      title={`${key.TeamRoles.length} member${key.TeamRoles.length > 1 ? "s" : ""}`}
-                    >
-                      {key.name}
-                    </Text>
-                    <Spacer x={2} />
-                    {key.TeamRoles[0] && (
-                      <Chip color="secondary" size="sm">
-                        {_getTeamRole(key.TeamRoles)}
-                      </Chip>
-                    )}
-                  </Row>
-                </div>
+                <Row justify="flex-start" align="center">
+                  {key.TeamRoles.length > 1 && <People />}
+                  {key.TeamRoles.length < 2 && <User />}
+                  <Spacer x={1} />
+                  <Text
+                    size={"xl"}
+                    b
+                    className={"inline"}
+                    title={`${key.TeamRoles.length} member${key.TeamRoles.length > 1 ? "s" : ""}`}
+                  >
+                    {key.name}
+                  </Text>
+                  <Spacer x={2} />
+                  {key.TeamRoles[0] && (
+                    <Chip color="secondary" size="sm">
+                      {_getTeamRole(key.TeamRoles)}
+                    </Chip>
+                  )}
+                </Row>
                 {_canAccess("admin", key.TeamRoles)
                   && (
-                    <div className="flex flex-col">
-                      <Row justify="flex-end" align="center">
-                        <Tooltip content="Team settings">
-                          <div>
-                            <Link to={`/manage/${key.id}/settings`}>
-                              <Button
-                                style={width >= 768 ? styles.settingsBtn : {}}
-                                className={"min-w-fit"}
-                                size="sm"
-                                isIconOnly
-                              >
-                                <Setting />
-                              </Button>
-                            </Link>
-                          </div>
-                        </Tooltip>
-                      </Row>
-                    </div>
+                    <Row justify="flex-end" align="center">
+                      <Tooltip content="Team settings">
+                        <div>
+                          <Link to={`/manage/${key.id}/settings`}>
+                            <Button
+                              style={width >= 768 ? styles.settingsBtn : {}}
+                              className={"min-w-fit"}
+                              size="sm"
+                              isIconOnly
+                            >
+                              <Setting />
+                            </Button>
+                          </Link>
+                        </div>
+                      </Tooltip>
+                    </Row>
                   )}
               </Container>
-              <Container className={"px-0"}>
+              <Container>
                 <Spacer y={2} />
-                <Row justify="flex-start" align="center">
+                <Row className={"gap-2"} justify="flex-start" align="center">
                   {_canAccess("admin", key.TeamRoles) && (
                     <>
                       <Button
                         color="primary"
                         onClick={() => _onNewProject(key)}
                         endContent={<HiPlus />}
-                        className={"mb-10"}
-                        fullWidth
                       >
                         Create new project
                       </Button>
-                      <Spacer x={2} />
                     </>
                   )}
                   <Input
@@ -288,8 +281,7 @@ function UserDashboard(props) {
                     variant="bordered"
                     endContent={<Search set="light" />}
                     onChange={(e) => setSearch({ ...search, [key.id]: e.target.value })}
-                    className={"mb-10"}
-                    fullWidth={false}
+                    className="max-w-[300px]"
                   />
                 </Row>
                 <Spacer y={2} />
@@ -394,18 +386,18 @@ function UserDashboard(props) {
                 {key.Projects && key.Projects.length === 0 && !_canAccess("admin", key.TeamRoles)
                   && (
                     <Container>
-                      <Text h3>
+                    <Text size="h3">
                         {"No project over here"}
                       </Text>
                     </Container>
                   )}
               </Container>
-              <Spacer y={20} />
+              <Spacer y={4} />
 
               <Modal isOpen={!!projectToEdit} onClose={() => setProjectToEdit(null)}>
                 <ModalContent>
                   <ModalHeader>
-                    <Text h3>Rename your project</Text>
+                    <Text size="h3">Rename your project</Text>
                   </ModalHeader>
                   <ModalBody>
                     <Input
@@ -441,7 +433,7 @@ function UserDashboard(props) {
               <Modal isOpen={!!projectToDelete} onClose={() => setProjectToDelete(null)}>
                 <ModalContent>
                   <ModalHeader>
-                    <Text h4>Are you sure you want to delete the project?</Text>
+                    <Text size="h4">Are you sure you want to delete the project?</Text>
                   </ModalHeader>
                   <ModalBody>
                     <Text>

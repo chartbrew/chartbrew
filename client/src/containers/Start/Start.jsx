@@ -172,7 +172,7 @@ function Start(props) {
             animate={{ opacity: [1, 1, 1, 1, 1, 1, 0], scale: 1, translateY: [0, 0, 0, 0, 0, -50] }}
             transition={{ duration: 2 }}
           >
-            <Text h1>
+            <Text size="h1">
               <motion.div
                 style={{ fontSize: "2em", marginBottom: 20 }}
                 animate={{
@@ -199,22 +199,22 @@ function Start(props) {
             >
               <Container fluid>
                 <Row justify="center" align="center">
-                  <Text h1>
+                  <Text size="h1">
                     {"Set up your new Chartbrew project"}
                   </Text>
                 </Row>
                 <Row justify="center" align="center">
                   {onboardingStep === "project" && (
-                    <Text h3>{"First, enter a name below"}</Text>
+                    <Text size="h3">{"First, enter a name below"}</Text>
                   )}
                   {onboardingStep === "team" && (
-                    <Text h3>{"All hands on deck! You can invite your team below"}</Text>
+                    <Text size="h3">{"All hands on deck! You can invite your team below"}</Text>
                   )}
                   {onboardingStep === "mode" && (
-                    <Text h3>{"Get started with one of the options below"}</Text>
+                    <Text size="h3">{"Get started with one of the options below"}</Text>
                   )}
                   {onboardingStep === "data" && (
-                    <Text h3>
+                    <Text size="h3">
                       {mode === "template" ? "Select a template to start with" : "Select a connection to start with"}
                     </Text>
                   )}
@@ -374,7 +374,7 @@ function Start(props) {
                           <Category size={"xlarge"} />
                         </Row>
                         <Row>
-                          <Text h3>
+                            <Text size="h3">
                             {"Start with a template"}
                           </Text>
                         </Row>
@@ -403,7 +403,7 @@ function Start(props) {
                           <Setting size={"xlarge"} />
                         </Row>
                         <Row>
-                          <Text h3>
+                            <Text size="h3">
                             {"Start with a connection"}
                           </Text>
                         </Row>
@@ -429,7 +429,7 @@ function Start(props) {
                           <MoreSquare size={"xlarge"} />
                         </Row>
                         <Row>
-                          <Text h3>
+                            <Text size="h3">
                             {"Empty project"}
                           </Text>
                         </Row>

@@ -185,7 +185,7 @@ function TeamMembers(props) {
 
       <Container>
         <Row>
-          <Text h3>{"Team members"}</Text>
+          <Text size="h3">{"Team members"}</Text>
         </Row>
 
         <Table shadow="none" isStriped>
@@ -323,7 +323,7 @@ function TeamMembers(props) {
       {/* Remove user modal */}
       <Modal isOpen={!!deleteMember} backdrop="blur" onClose={() => setDeleteMember(false)}>
         <ModalHeader>
-          <Text h4>Are you sure you want to remove the user from the team?</Text>
+          <Text size="h4">Are you sure you want to remove the user from the team?</Text>
         </ModalHeader>
         <ModalBody>
           <p>{"This action will remove the user from the team and restrict them from accessing the dashboards."}</p>
@@ -352,7 +352,7 @@ function TeamMembers(props) {
       {/* Project access modal */}
       <Modal isOpen={projectModal} onClose={() => setProjectModal(false)} className="w-[700px]">
         <ModalHeader>
-          <Text h4>Assign project access</Text>
+          <Text size="h4">Assign project access</Text>
         </ModalHeader>
         <ModalBody>
           {changedMember && projectAccess[changedMember.id] && (

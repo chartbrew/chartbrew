@@ -50,7 +50,7 @@ function CustomTemplates(props) {
   if (templates.length === 0) {
     return (
       <div>
-        <Text h4>No custom templates yet</Text>
+        <Text size="h4">No custom templates yet</Text>
         <Text>{"You can create custom templates from any project with data source connections and charts."}</Text>
         {projectId && connections.length > 0 && (
           <Button

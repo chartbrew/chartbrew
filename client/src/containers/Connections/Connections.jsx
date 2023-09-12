@@ -268,7 +268,7 @@ function Connections(props) {
           <Container className={"p-unit-sm rounded-md bg-content2"}>
             {connections.length < 1 && (
               <Row align="center">
-                <Text h1>
+                <Text size="h1">
                   {"Create a connection or start with a template"}
                 </Text>
                 <Spacer y={2} />
@@ -298,7 +298,7 @@ function Connections(props) {
                         </CardBody>
                         <CardFooter>
                           <Row wrap="wrap" justify="center" align="center">
-                            <Text h4>
+                            <Text size="h4">
                               {c.name}
                             </Text>
                           </Row>
@@ -319,7 +319,7 @@ function Connections(props) {
                         </CardBody>
                         <CardFooter>
                           <Row wrap="wrap" justify="center" align="center">
-                            <Text h4>
+                            <Text size="h4">
                               {t.name}
                             </Text>
                           </Row>
@@ -509,7 +509,7 @@ function Connections(props) {
         {connections.length > 0 && (
           <Row align="center">
             <Spacer x={1} />
-            <Text h2>
+            <Text size="h2">
               {"Your connections"}
             </Text>
           </Row>
@@ -534,7 +534,7 @@ function Connections(props) {
                     <CardBody className="p-4 pl-8">
                       <Container justify="flex-start" size="xl">
                         <Row align="center" justify="space-between">
-                          <Text h4>{connection.name}</Text>
+                          <Text size="h4">{connection.name}</Text>
                           <Spacer x={1} />
                           <img
                             width="50px"
@@ -588,7 +588,7 @@ function Connections(props) {
       {/* REMOVE CONFIRMATION MODAL */}
       <Modal isOpen={removeModal} backdrop="blur" onClose={() => setRemoveModal(false)}>
         <ModalHeader>
-          <Text h4>Are you sure you want to remove this connection?</Text>
+          <Text size="h4">Are you sure you want to remove this connection?</Text>
         </ModalHeader>
         <ModalBody>
           <p>

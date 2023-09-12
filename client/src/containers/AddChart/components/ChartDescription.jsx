@@ -83,7 +83,7 @@ function ChartDescription(props) {
           {selectedMenu === "emptyChart" && (
             <>
               <Row align="center">
-                <Text h3>
+                <Text size="h3">
                   {"What are you brewing today?"}
                 </Text>
               </Row>
@@ -174,7 +174,7 @@ function ChartDescription(props) {
                     </CardBody>
                     <CardFooter>
                       <Row wrap="wrap" justify="center" align="center">
-                        <Text h4>
+                        <Text size="h4">
                           Simple Analytics
                         </Text>
                       </Row>
@@ -188,7 +188,7 @@ function ChartDescription(props) {
                     </CardBody>
                     <CardFooter>
                       <Row wrap="wrap" justify="center" align="center">
-                        <Text h4>
+                        <Text size="h4">
                           ChartMogul
                         </Text>
                       </Row>
@@ -202,7 +202,7 @@ function ChartDescription(props) {
                     </CardBody>
                     <CardFooter>
                       <Row wrap="wrap" justify="center" align="center">
-                        <Text h4>
+                        <Text size="h4">
                           Mailgun
                         </Text>
                       </Row>
@@ -216,7 +216,7 @@ function ChartDescription(props) {
                     </CardBody>
                     <CardFooter>
                       <Row wrap="wrap" justify="center" align="center">
-                        <Text h4>
+                        <Text size="h4">
                           Google Analytics
                         </Text>
                       </Row>
@@ -230,7 +230,7 @@ function ChartDescription(props) {
                     </CardBody>
                     <CardFooter>
                       <Row wrap="wrap" justify="center" align="center">
-                        <Text h4>
+                        <Text size="h4">
                           Plausible Analytics
                         </Text>
                       </Row>

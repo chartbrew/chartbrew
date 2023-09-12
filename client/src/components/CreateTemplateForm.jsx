@@ -43,7 +43,7 @@ function CreateTemplateForm(props) {
     <>
       <Modal isOpen={visible} onClose={() => onClose()} size="small">
         <ModalHeader>
-          <Text h3>Create a template</Text>
+          <Text size="h3">Create a template</Text>
         </ModalHeader>
         <ModalBody>
           <Spacer y={1} />

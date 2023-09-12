@@ -415,7 +415,7 @@ function MongoQueryBuilder(props) {
       {/* Save query modal */}
       <Modal isOpen={saveQueryModal} size="small" onClose={() => setSaveQueryModal(false)}>
         <ModalHeader>
-          <Text h3>{"Save your query and use it later in this project"}</Text>
+          <Text size="h3">{"Save your query and use it later in this project"}</Text>
         </ModalHeader>
         <ModalBody>
           <Input

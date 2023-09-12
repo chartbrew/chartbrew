@@ -87,7 +87,7 @@ function ManageTeam(props) {
         <div className="col-span-12 sm:col-span-3 md:col-span-2">
           <Container style={{ paddingTop: 20 }}>
             <Row>
-              <Text h4>
+              <Text size="h4">
                 Manage the team
               </Text>
             </Row>
@@ -127,7 +127,7 @@ function ManageTeam(props) {
             {_canAccess("admin") && (
               <>
                 <Row>
-                  <Text h4>
+                  <Text size="h4">
                     Developers
                   </Text>
                 </Row>

@@ -41,7 +41,7 @@ function FeedbackForm(props) {
   return (
     <Container>
       <Row>
-        <Text h4>{"Feedback & Suggestions"}</Text>
+        <Text size="h4">{"Feedback & Suggestions"}</Text>
       </Row>
       <Spacer y={1} />
       <Row>

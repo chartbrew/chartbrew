@@ -137,7 +137,7 @@ function EditUserForm(props) {
   return (
     <Container>
       <Row>
-        <Text h3>Profile settings</Text>
+        <Text size="h3">Profile settings</Text>
       </Row>
       <Spacer y={1} />
       <Row>
@@ -231,7 +231,7 @@ function EditUserForm(props) {
 
       <Modal blur open={openDeleteModal} width="500px" onClose={() => setOpenDeleteModal(false)}>
         <ModalHeader>
-          <Text h3>Delete Account</Text>
+          <Text size="h3">Delete Account</Text>
         </ModalHeader>
         <ModalBody>
           <Container>
@@ -270,7 +270,7 @@ function EditUserForm(props) {
 
       <Modal open={!!updateEmailToken}>
         <ModalHeader>
-          <Text h3>Update email</Text>
+          <Text size="h3">Update email</Text>
         </ModalHeader>
         <ModalBody>
           <Text>Are you sure you want to update your email?</Text>

@@ -605,7 +605,7 @@ function ChartSettings(props) {
 
       <Modal isOpen={dateRangeModal} onClose={() => setDateRangeModal(false)} className="w-[800px]">
         <ModalHeader>
-          <Text h3>Set a custom date range for your chart</Text>
+          <Text size="h3">Set a custom date range for your chart</Text>
         </ModalHeader>
         <ModalBody>
           <Container>
@@ -659,7 +659,7 @@ function ChartSettings(props) {
 
       <Modal isOpen={dateFormattingModal} onClose={() => setDateFormattingModal(false)} className="w-[600px]">
         <ModalHeader>
-          <Text h3>Set a custom format for your dates</Text>
+          <Text size="h3">Set a custom format for your dates</Text>
         </ModalHeader>
         <ModalBody>
           <Container>

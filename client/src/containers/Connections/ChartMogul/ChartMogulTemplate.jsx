@@ -167,7 +167,7 @@ function ChartMogulTemplate(props) {
         justify="flex-start"
       >
         <Row align="center">
-          <Text h3>Configure the template</Text>
+          <Text size="h3">Configure the template</Text>
         </Row>
 
         {availableConnections && availableConnections.length > 0 && (

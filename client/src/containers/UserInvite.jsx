@@ -46,12 +46,12 @@ function UserInvite(props) {
         <div className="col-span-12 md:col-span-6">
           <Container textAlign="center" className={"mt-unit-3"}>
             <Row justify="center" align="center" className={"text-center"}>
-              <Text h2>
+              <Text size="h2">
                 Your Chartbrew team invitation
               </Text>
             </Row>
             <Row justify="center" align="center">
-              <Text h4>Please select an option below</Text>
+              <Text size="h4">Please select an option below</Text>
             </Row>
             <Spacer y={1} />
             <Row justify="center" align="center" wrap="wrap">

@@ -158,7 +158,7 @@ function SavedQueries(props) {
       {/* Update query modal */}
       <Modal open={!!editQuery} size="small" onClose={() => setEditQuery(null)}>
         <ModalHeader>
-          <Text h3>Edit the query</Text>
+          <Text size="h3">Edit the query</Text>
         </ModalHeader>
         <ModalBody>
           <Input
@@ -195,7 +195,7 @@ function SavedQueries(props) {
       {/* Update query modal */}
       <Modal open={!!removeQuery} size="small" basic onClose={() => setRemoveQuery(null)}>
         <ModalHeader>
-          <Text h3>Are you sure you want to remove the query?</Text>
+          <Text size="h3">Are you sure you want to remove the query?</Text>
         </ModalHeader>
         <ModalBody>
           <Text>{"This action will be permanent."}</Text>

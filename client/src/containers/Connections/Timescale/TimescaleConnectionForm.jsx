@@ -103,7 +103,7 @@ function TimescaleConnectionForm(props) {
         size="md"
       >
         <Row align="center">
-          <Text h3>Add a new Timescale connection</Text>
+          <Text size="h3">Add a new Timescale connection</Text>
         </Row>
         <Spacer y={1} />
         <Row>

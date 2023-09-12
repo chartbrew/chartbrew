@@ -128,7 +128,7 @@ function WebhookIntegrations(props) {
           <div className="flex items-center">
             <Text><TbWebhook size={24} /></Text>
             <Spacer x={0.6} />
-            <Text h4>Webhooks</Text>
+            <Text size="h4">Webhooks</Text>
           </div>
           <Spacer x={2} />
           <Button
@@ -224,7 +224,7 @@ function WebhookIntegrations(props) {
 
       <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} className="w-[500px]">
         <ModalHeader>
-          <Text h4>
+          <Text size="h4">
             {!newIntegration.id && "Create a new webhook integration"}
             {newIntegration.id && "Update the webhook"}
           </Text>
@@ -307,7 +307,7 @@ function WebhookIntegrations(props) {
 
       <Modal isOpen={!!integrationToDelete} onClose={() => setIntegrationToDelete(false)} className="w-[500px]">
         <ModalHeader>
-          <Text h4>Are you sure you want to delete this integration?</Text>
+          <Text size="h4">Are you sure you want to delete this integration?</Text>
         </ModalHeader>
         <ModalBody>
           <Container>
@@ -348,7 +348,7 @@ function WebhookIntegrations(props) {
 
       <Modal isOpen={slackModalOpen} className="w-[800px]" onClose={() => setSlackModalOpen(false)}>
         <ModalHeader>
-          <Text h3>How to set up Slack alerts</Text>
+          <Text size="h3">How to set up Slack alerts</Text>
         </ModalHeader>
         <ModalBody className={"p-0 m-0"}>
           <Container className={"p-0 m-0"}>

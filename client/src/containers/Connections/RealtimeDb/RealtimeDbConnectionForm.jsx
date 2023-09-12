@@ -187,7 +187,7 @@ function RealtimeDbConnectionForm(props) {
         justify="flex-start"
       >
         <Row align="center">
-          <Text h3>
+          <Text size="h3">
             {!editConnection && "Connect to Firebase Realtime Database"}
             {editConnection && `Edit ${editConnection.name}`}
           </Text>

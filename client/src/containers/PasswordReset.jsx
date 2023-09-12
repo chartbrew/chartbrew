@@ -80,12 +80,12 @@ function PasswordReset(props) {
         </Row>
         <Spacer y={1} />
         <Row>
-          <Text h2>
+          <Text size="h2">
             Forgot your password?
           </Text>
         </Row>
         <Row>
-          <Text h4>{"No worries, complete the form below to change to a brand new one"}</Text>
+          <Text size="h4">{"No worries, complete the form below to change to a brand new one"}</Text>
         </Row>
         <Spacer y={1} />
         <Row>

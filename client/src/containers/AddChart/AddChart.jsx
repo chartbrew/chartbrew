@@ -800,7 +800,7 @@ function AddChart(props) {
 
       <Modal isOpen={startTutorial} onClose={() => setStartTutorial(false)}>
         <ModalHeader>
-          <Text h3>
+          <Text size="h3">
             Welcome to the chart builder!
           </Text>
         </ModalHeader>

@@ -100,7 +100,7 @@ function PostgresConnectionForm(props) {
     <div style={styles.container}>
       <Container className={"bg-content2 p-10"} size="md">
         <Row align="center">
-          <Text size="lg" h3>Add a new PostgreSQL connection</Text>
+          <Text size="h3">Add a new PostgreSQL connection</Text>
         </Row>
         <Spacer y={2} />
         <Row>

@@ -321,7 +321,7 @@ function DatasetAlerts(props) {
       </Container>
       <Modal isOpen={open} onClose={() => setOpen(false)} className="w-[800px]">
         <ModalHeader>
-          <Text h4>
+          <Text size="h4">
             {newAlert.id ? "Edit alert" : "Set up a new alert"}
           </Text>
         </ModalHeader>

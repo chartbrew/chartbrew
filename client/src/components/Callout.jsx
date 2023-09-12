@@ -15,7 +15,7 @@ function Callout({
     <blockquote className="border px-4 my-6 py-3 rounded-xl [&>p]:m-0 border-default-200 dark:border-default-100 bg-default-200/20">
       {title && (
         <Row>
-          <Text h4>
+          <Text size="h4">
             {title}
           </Text>
         </Row>
@@ -31,7 +31,7 @@ function Callout({
         <>
           <Spacer y={0.5} />
           <Row>
-            <Text b>
+            <Text variant={"b"}>
               <Link href={actionUrl} target="_blank" rel="noopener noreferrer">
                 {actionText}
               </Link>

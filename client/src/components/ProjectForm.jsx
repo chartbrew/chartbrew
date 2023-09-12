@@ -59,7 +59,7 @@ function ProjectForm(props) {
     >
       <ModalContent>
         <ModalHeader>
-          <Text h3>Create a new project</Text>
+          <Text size="h3">Create a new project</Text>
         </ModalHeader>
         <ModalBody>
           <form onSubmit={(e) => {

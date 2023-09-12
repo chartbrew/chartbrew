@@ -92,7 +92,7 @@ function InviteMembersForm(props) {
     <div style={style}>
       <Container>
         <Row>
-          <Text h3>Invite team members</Text>
+          <Text size="h3">Invite team members</Text>
         </Row>
         {!selectedProjects && (
           <>

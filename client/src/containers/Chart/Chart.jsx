@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import {
   Card, Spacer, Tooltip, Dropdown, Button, Modal, Input,
-  Link as LinkNext, Textarea, Switch, Popover, Chip, CardHeader, CircularProgress, PopoverTrigger, PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, ModalHeader, ModalBody, ModalFooter, CardBody,
+  Link as LinkNext, Textarea, Switch, Popover, Chip, CardHeader, CircularProgress, PopoverTrigger, PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, ModalHeader, ModalBody, ModalFooter, CardBody, ModalContent,
 } from "@nextui-org/react";
 import {
   ArrowDown, ArrowUp, ChevronDown, ChevronDownCircle, ChevronUp, CloseSquare,
@@ -502,17 +502,23 @@ function Chart(props) {
                       <Spacer x={0.5} />
                       {chart.autoUpdate > 0 && (
                         <Tooltip content={`Updates every ${_getUpdateFreqText(chart.autoUpdate)}`}>
-                          <TimeCircle size="small" set="light" />
+                          <div>
+                            <TimeCircle size="small" set="light" />
+                          </div>
                         </Tooltip>
                       )}
                       {chart.public && !isPublic && !print && (
                         <Tooltip content="This chart is public">
-                          <Unlock size="small" set="light" />
+                          <div>
+                            <Unlock size="small" set="light" />
+                          </div>
                         </Tooltip>
                       )}
                       {chart.onReport && !isPublic && !print && (
                         <Tooltip content="This chart is on a report">
-                          <Graph size="small" set="light" />
+                          <div>
+                            <Graph size="small" set="light" />
+                          </div>
                         </Tooltip>
                       )}
                     </Row>
@@ -549,12 +555,13 @@ function Chart(props) {
                     <DropdownMenu variant="bordered">
                       <DropdownItem
                         startContent={(chartLoading || chart.loading) ? <CircularProgress size="sm" /> : <HiRefresh size={22} />}
+                        onClick={_onGetChartData}
                       >
-                        <Text onClick={_onGetChartData}>Refresh chart</Text>
+                        <Text>Refresh chart</Text>
                       </DropdownItem>
                       {_canAccess("editor") && (
-                        <DropdownItem startContent={<TimeCircle />}>
-                          <Text onClick={_openUpdateModal}>Auto-update</Text>
+                        <DropdownItem startContent={<TimeCircle />} onClick={_openUpdateModal}>
+                          <Text>Auto-update</Text>
                         </DropdownItem>
                       )}
                       {_canAccess("editor") && (
@@ -793,7 +800,7 @@ function Chart(props) {
       {/* DELETE CONFIRMATION MODAL */}
       <Modal isOpen={deleteModal} onClose={() => setDeleteModal(false)} backdrop="blur">
         <ModalHeader>
-          <Text h4>Are you sure you want to remove this chart?</Text>
+          <Text size="h4">Are you sure you want to remove this chart?</Text>
         </ModalHeader>
         <ModalBody>
           <Text>
@@ -823,7 +830,7 @@ function Chart(props) {
       {/* MAKE CHART PUBLIC MODAL */}
       <Modal onClose={() => setPublicModal(false)} isOpen={publicModal}>
         <ModalHeader>
-          <Text h4>Are you sure you want to make your chart public?</Text>
+          <Text size="h4">Are you sure you want to make your chart public?</Text>
         </ModalHeader>
         <ModalBody>
           <Text>
@@ -853,7 +860,7 @@ function Chart(props) {
       {/* AUTO-UPDATE MODAL */}
       <Modal isOpen={updateModal} className="w-[500px]" onClose={() => setUpdateModal(false)}>
         <ModalHeader>
-          <Text h4>Set up auto-update for your chart</Text>
+          <Text size="h4">Set up auto-update for your chart</Text>
         </ModalHeader>
         <ModalBody>
           <Container className={"w-full"}>
@@ -1003,142 +1010,144 @@ function Chart(props) {
       {/* EMBED CHART MODAL */}
       {chart && (
         <Modal isOpen={embedModal} onClose={() => setEmbedModal(false)} className="w-[600px]">
-          <ModalHeader>
-            <Text h4>{"Embed your chart on other websites"}</Text>
-          </ModalHeader>
-          <ModalBody>
-            <Container>
-              <Row align="center">
-                <Switch
-                  label={chart.shareable ? "Disable sharing" : "Enable sharing"}
-                  onChange={_onToggleShareable}
-                  isSelected={chart.shareable}
-                  disabled={!_canAccess("editor")}
-                />
-                <Spacer x={0.5} />
-                <Text>
-                  {chart.shareable ? "Disable sharing" : "Enable sharing"}
-                </Text>
-                <Spacer x={0.5} />
-                {shareLoading && (<CircularProgress size="sm" />)}
-              </Row>
-              <Spacer y={2} />
-              {chart.public && !chart.shareable && (
-                <Row>
-                  <Text color="primary">
-                    {"The chart is public. A public chart can be shared even if the sharing toggle is disabled. This gives you more flexibility if you want to hide the chart from the public dashboard but you still want to individually share it."}
+          <ModalContent>
+            <ModalHeader>
+              <Text size="h4">{"Embed your chart on other websites"}</Text>
+            </ModalHeader>
+            <ModalBody>
+              <Container>
+                <Row align="center">
+                  <Switch
+                    label={chart.shareable ? "Disable sharing" : "Enable sharing"}
+                    onChange={_onToggleShareable}
+                    isSelected={chart.shareable}
+                    disabled={!_canAccess("editor")}
+                  />
+                  <Spacer x={0.5} />
+                  <Text>
+                    {chart.shareable ? "Disable sharing" : "Enable sharing"}
                   </Text>
+                  <Spacer x={0.5} />
+                  {shareLoading && (<CircularProgress size="sm" />)}
                 </Row>
-              )}
-              {!chart.public && !chart.shareable && (
-                <>
-                  <Spacer y={2} />
-                  <Row align="center">
-                    <Text>
-                      {"The chart is private. A private chart can only be seen by members of the team. If you enable sharing, others outside of your team can see the chart and you can also embed it on other websites."}
-                    </Text>
-                  </Row>
-                </>
-              )}
-              {!_canAccess("editor") && !chart.public && !chart.shareable && (
-                <>
-                  <Spacer y={2} />
+                <Spacer y={2} />
+                {chart.public && !chart.shareable && (
                   <Row>
-                    <Text color="danger">
-                      {"You do not have the permission to enable sharing on this chart. Only editors and admins can enable this."}
+                    <Text color="primary">
+                      {"The chart is public. A public chart can be shared even if the sharing toggle is disabled. This gives you more flexibility if you want to hide the chart from the public dashboard but you still want to individually share it."}
                     </Text>
                   </Row>
-                </>
-              )}
-              {(chart.public || chart.shareable)
-              && (!chart.Chartshares || chart.Chartshares.length === 0)
+                )}
+                {!chart.public && !chart.shareable && (
+                  <>
+                    <Spacer y={2} />
+                    <Row align="center">
+                      <Text>
+                        {"The chart is private. A private chart can only be seen by members of the team. If you enable sharing, others outside of your team can see the chart and you can also embed it on other websites."}
+                      </Text>
+                    </Row>
+                  </>
+                )}
+                {!_canAccess("editor") && !chart.public && !chart.shareable && (
+                  <>
+                    <Spacer y={2} />
+                    <Row>
+                      <Text color="danger">
+                        {"You do not have the permission to enable sharing on this chart. Only editors and admins can enable this."}
+                      </Text>
+                    </Row>
+                  </>
+                )}
+                {(chart.public || chart.shareable)
+                && (!chart.Chartshares || chart.Chartshares.length === 0)
+                && (
+                  <>
+                    <Spacer y={2} />
+                    <Row align="center">
+                      <Button
+                        endContent={<Plus />}
+                        auto
+                        onClick={_onCreateSharingString}
+                      >
+                        Create a sharing code
+                      </Button>
+                    </Row>
+                  </>
+                )}
+                <Spacer y={2} />
+                {shareLoading && (
+                  <Row><CircularProgress /></Row>
+                )}
+
+                {(chart.shareable || chart.public)
+              && !chartLoading
+              && (chart.Chartshares && chart.Chartshares.length > 0)
               && (
                 <>
-                  <Spacer y={2} />
-                  <Row align="center">
+                  <Row>
+                    <Text>
+                      {"Copy the following code on the website you wish to add your chart in."}
+                    </Text>
+                  </Row>
+                  <Spacer y={1} />
+                  <Row>
+                    <Textarea
+                      id="iframe-text"
+                      value={_getEmbedString()}
+                      fullWidth
+                      readOnly
+                    />
+                  </Row>
+                  <Spacer y={1} />
+                  <Row>
                     <Button
-                      endContent={<Plus />}
+                      color={iframeCopied ? "success" : "primary"}
+                      endContent={iframeCopied ? <TickSquare /> : <Paper />}
+                      onClick={_onCopyIframe}
+                      variant="ghost"
                       auto
-                      onClick={_onCreateSharingString}
                     >
-                      Create a sharing code
+                      {!iframeCopied && "Copy the code"}
+                      {iframeCopied && "Copied to your clipboard"}
+                    </Button>
+                  </Row>
+
+                  <Spacer y={2} />
+                  <Row>
+                    <Text>{"Or get just the URL"}</Text>
+                  </Row>
+                  <Spacer y={1} />
+                  <Row>
+                    <Input value={_getEmbedUrl()} id="url-text" fullWidth readOnly />
+                  </Row>
+                  <Spacer y={1} />
+                  <Row>
+                    <Button
+                      color={urlCopied ? "success" : "primary"}
+                      endContent={iframeCopied ? <TickSquare /> : <Paper />}
+                      variant="ghost"
+                      onClick={_onCopyUrl}
+                      auto
+                    >
+                      {!urlCopied && "Copy URL"}
+                      {urlCopied && "Copied to your clipboard"}
                     </Button>
                   </Row>
                 </>
               )}
-              <Spacer y={2} />
-              {shareLoading && (
-                <Row><CircularProgress /></Row>
-              )}
-
-              {(chart.shareable || chart.public)
-            && !chartLoading
-            && (chart.Chartshares && chart.Chartshares.length > 0)
-            && (
-              <>
-                <Row>
-                  <Text>
-                    {"Copy the following code on the website you wish to add your chart in."}
-                  </Text>
-                </Row>
-                <Spacer y={1} />
-                <Row>
-                  <Textarea
-                    id="iframe-text"
-                    value={_getEmbedString()}
-                    fullWidth
-                    readOnly
-                  />
-                </Row>
-                <Spacer y={1} />
-                <Row>
-                  <Button
-                    color={iframeCopied ? "success" : "primary"}
-                    endContent={iframeCopied ? <TickSquare /> : <Paper />}
-                    onClick={_onCopyIframe}
-                    variant="ghost"
-                    auto
-                  >
-                    {!iframeCopied && "Copy the code"}
-                    {iframeCopied && "Copied to your clipboard"}
-                  </Button>
-                </Row>
-
-                <Spacer y={2} />
-                <Row>
-                  <Text>{"Or get just the URL"}</Text>
-                </Row>
-                <Spacer y={1} />
-                <Row>
-                  <Input value={_getEmbedUrl()} id="url-text" fullWidth readOnly />
-                </Row>
-                <Spacer y={1} />
-                <Row>
-                  <Button
-                    color={urlCopied ? "success" : "primary"}
-                    endContent={iframeCopied ? <TickSquare /> : <Paper />}
-                    variant="ghost"
-                    onClick={_onCopyUrl}
-                    auto
-                  >
-                    {!urlCopied && "Copy URL"}
-                    {urlCopied && "Copied to your clipboard"}
-                  </Button>
-                </Row>
-              </>
-            )}
-            </Container>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="flat"
-              color="warning"
-              onClick={() => setEmbedModal(false)}
-              auto
-            >
-              Close
-            </Button>
-          </ModalFooter>
+              </Container>
+            </ModalBody>
+            <ModalFooter>
+              <Button
+                variant="flat"
+                color="warning"
+                onClick={() => setEmbedModal(false)}
+                auto
+              >
+                Close
+              </Button>
+            </ModalFooter>
+          </ModalContent>
         </Modal>
       )}
     </motion.div>

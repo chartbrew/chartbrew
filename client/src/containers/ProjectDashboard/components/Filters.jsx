@@ -215,7 +215,7 @@ function Filters(props) {
     <Modal isOpen={open} onClose={onClose} closeButton size="3xl">
       <ModalContent>
         <ModalHeader>
-          <Text h3>Dashboard filters</Text>
+          <Text size="h3">Dashboard filters</Text>
         </ModalHeader>
         <ModalBody>
           <Container>

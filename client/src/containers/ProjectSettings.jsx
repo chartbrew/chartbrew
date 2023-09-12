@@ -120,7 +120,7 @@ function ProjectSettings(props) {
       size="md"
     >
       <Row>
-        <Text h3>Project settings</Text>
+        <Text size="h3">Project settings</Text>
       </Row>
       <Spacer y={1} />
       {!project.id && (
@@ -266,7 +266,7 @@ function ProjectSettings(props) {
 
       <Modal open={removeModal} blur onClose={() => setRemoveModal(false)}>
         <ModalHeader>
-          <Text h3>Are you sure you want to remove this project?</Text>
+          <Text size="h3">Are you sure you want to remove this project?</Text>
         </ModalHeader>
         <ModalBody>
           <Text>

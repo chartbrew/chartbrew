@@ -604,7 +604,7 @@ function DatasetData(props) {
     return (
       <Container>
         <Row>
-          <Text h4>
+          <Text size="h4">
             {"Click on the \"Get data\" button above to get started."}
           </Text>
         </Row>
@@ -1421,7 +1421,7 @@ function DatasetData(props) {
 
       <Modal isOpen={conditionModal} className="w-[500px]" onClose={() => setConditionModal(false)}>
         <ModalHeader>
-          <Text h4>Condition settings</Text>
+          <Text size="h4">Condition settings</Text>
         </ModalHeader>
         <ModalBody>
           <Container>

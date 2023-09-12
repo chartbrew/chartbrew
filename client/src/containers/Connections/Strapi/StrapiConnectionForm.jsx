@@ -160,7 +160,7 @@ function StrapiConnectionForm(props) {
         size="md"
       >
         <Row align="center">
-          <Text h3>
+          <Text size="h3">
             {!editConnection && "Connect to Strapi"}
             {editConnection && `Edit ${editConnection.name}`}
           </Text>

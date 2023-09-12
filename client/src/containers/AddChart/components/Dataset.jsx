@@ -6,7 +6,7 @@ import _ from "lodash";
 import moment from "moment";
 import {
   Tooltip, Button, Spacer, Input, Modal, Divider, Tabs, Tab,
-  ModalHeader, ModalBody, ModalFooter,
+  ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
 import { ArrowDownSquare, Edit } from "react-iconly";
 
@@ -306,32 +306,34 @@ function Dataset(props) {
 
       {/* DELETE CONFIRMATION MODAL */}
       <Modal isOpen={deleteModal} size="sm" onClose={() => setDeleteModal(false)}>
-        <ModalHeader>
-          <Text h3>{"Are you sure you want to remove this dataset?"}</Text>
-        </ModalHeader>
-        <ModalBody>
-          <Text>
-            {"This action cannot be reversed."}
-          </Text>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            variant="flat"
-            color="warning"
-            onClick={() => setDeleteModal(false)}
-            auto
-          >
-            Go back
-          </Button>
-          <Button
-            color="danger"
-            isLoading={deleteLoading}
-            onClick={_onDeleteDataset}
-            auto
-          >
-            {"Remove dataset"}
-          </Button>
-        </ModalFooter>
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h3">{"Are you sure you want to remove this dataset?"}</Text>
+          </ModalHeader>
+          <ModalBody>
+            <Text>
+              {"This action cannot be reversed."}
+            </Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="flat"
+              color="warning"
+              onClick={() => setDeleteModal(false)}
+              auto
+            >
+              Go back
+            </Button>
+            <Button
+              color="danger"
+              isLoading={deleteLoading}
+              onClick={_onDeleteDataset}
+              auto
+            >
+              {"Remove dataset"}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
     </div>
   );

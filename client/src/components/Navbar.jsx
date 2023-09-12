@@ -331,7 +331,7 @@ function NavbarContainer(props) {
       <Modal isOpen={showAppearance} onClose={() => setShowAppearance(false)} width="500px">
         <ModalContent>
           <ModalHeader>
-            <Text h4>Chartbrew UI Appearance</Text>
+            <Text size="h4">Chartbrew UI Appearance</Text>
           </ModalHeader>
           <ModalBody>
             <Container className={"py-20"}>

@@ -15,7 +15,7 @@
     "@fisch0920/use-dark-mode": "^2.4.0",
     "@nextui-org/react": "^2.1.5",
     "ace-builds": "^1.4.12",
-    "allotment": "1.13.0",
+    "allotment": "^1.19.3",
     "chart.js": "^3.7.0",
     "chartjs-plugin-datalabels": "^2.0.0",
     "compare-versions": "^3.6.0",

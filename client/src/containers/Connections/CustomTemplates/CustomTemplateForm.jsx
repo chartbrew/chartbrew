@@ -209,7 +209,7 @@ function CustomTemplateForm(props) {
       <Row align="center">
         <Avatar icon={<IoCaretForward />} onClick={onBack} squared />
         <Spacer x={0.5} />
-        <Text h4>
+        <Text size="h4">
           {template.name}
         </Text>
       </Row>
@@ -359,7 +359,7 @@ function CustomTemplateForm(props) {
           onClose={() => setDeleteConfimation(false)}
         >
           <Modal.Header>
-            <Text h4>Are you sure you want to delete this template?</Text>
+            <Text size="h4">Are you sure you want to delete this template?</Text>
           </Modal.Header>
           <Modal.Body>
             {"After you delete this template you will not be able to create charts from it. Deleting the template will not affect any dashboards."}

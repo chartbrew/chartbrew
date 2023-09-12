@@ -49,7 +49,7 @@ function SharingSettings(props) {
   return (
     <Modal open={open} onClose={onClose} width={600}>
       <Modal.Header>
-        <Text h3>Sharing settings</Text>
+        <Text size="h3">Sharing settings</Text>
       </Modal.Header>
       <Modal.Body>
         <Container>

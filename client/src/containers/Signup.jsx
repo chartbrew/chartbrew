@@ -146,7 +146,7 @@ function Signup(props) {
             </Row>
             <Spacer size={1} />
             <Row>
-              <Text h2>
+              <Text size="h2">
                 {"Let's get you started with your new Chartbrew account"}
               </Text>
             </Row>

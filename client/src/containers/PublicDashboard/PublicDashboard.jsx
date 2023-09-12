@@ -324,7 +324,7 @@ function PublicDashboard(props) {
         {passwordRequired && (
           <Container css={{ mt: 100, maxWidth: 500 }} justify="center">
             <Row justify="center">
-              <Text h3>
+              <Text size="h3">
                 Please enter the password to access this report
               </Text>
             </Row>
@@ -379,7 +379,7 @@ function PublicDashboard(props) {
       <div>
         <Container justify="center" css={{ mt: 100 }}>
           <Row justify="center">
-            <Text h3>
+            <Text size="h3">
               {"This report does not contain any charts"}
             </Text>
           </Row>
@@ -418,7 +418,7 @@ function PublicDashboard(props) {
       <div>
         <Container css={{ mt: 100 }}>
           <Row justify="center">
-            <Text h3>{"This dashbord does not contain any public charts"}</Text>
+            <Text size="h3">{"This dashbord does not contain any public charts"}</Text>
           </Row>
           <Spacer y={2} />
         </Container>
@@ -777,7 +777,7 @@ function PublicDashboard(props) {
       )}
 
       <Modal open={editingTitle} onClose={() => setEditingTitle(false)} width={600}>
-        <Modal.Header><Text h4>Edit the title and description</Text></Modal.Header>
+        <Modal.Header><Text size="h4">Edit the title and description</Text></Modal.Header>
         <Modal.Body>
           <Container>
             <Row>

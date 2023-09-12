@@ -67,7 +67,7 @@ function TeamSettings(props) {
     <div style={style}>
       <Container>
         <Row>
-          <Text h3>Team settings</Text>
+          <Text size="h3">Team settings</Text>
         </Row>
         <Spacer y={0.5} />
         <Row>

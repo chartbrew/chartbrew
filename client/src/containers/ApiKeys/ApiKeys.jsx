@@ -78,7 +78,7 @@ function ApiKeys(props) {
   return (
     <Container>
       <Row>
-        <Text h3>Team settings</Text>
+        <Text size="h3">Team settings</Text>
       </Row>
       <Spacer y={0.5} />
       {loading && (
@@ -138,7 +138,7 @@ function ApiKeys(props) {
 
       <Modal open={!!createdKey.id} onClose={() => setCreatedKey({})} width="500px">
         <Modal.Header>
-          <Text h4>Your new API Key</Text>
+          <Text size="h4">Your new API Key</Text>
         </Modal.Header>
         <Modal.Body>
           <Container>
@@ -186,7 +186,7 @@ function ApiKeys(props) {
 
       <Modal open={createMode} onClose={() => setCreateMode(false)} width="500px">
         <Modal.Header>
-          <Text h4>Create a new API Key</Text>
+          <Text size="h4">Create a new API Key</Text>
         </Modal.Header>
         <Modal.Body>
           <Container>
@@ -227,7 +227,7 @@ function ApiKeys(props) {
 
       <Modal blur open={!!confirmDelete} onClose={() => setConfirmDelete(false)}>
         <Modal.Header>
-          <Text h4>Are you sure you want to delete the key?</Text>
+          <Text size="h4">Are you sure you want to delete the key?</Text>
         </Modal.Header>
         <Modal.Body>
           <Text>{"This key will lose access to Chartbrew. This action cannot be undone."}</Text>

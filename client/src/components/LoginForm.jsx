@@ -208,7 +208,7 @@ function LoginForm(props) {
 
       <Modal open={forgotModal} onClose={() => setForgotModal(false)} closeButton>
         <ModalHeader>
-          <Text h3>Reset your password</Text>
+          <Text size="h3">Reset your password</Text>
         </ModalHeader>
         <ModalBody>
           <Spacer y={1} />

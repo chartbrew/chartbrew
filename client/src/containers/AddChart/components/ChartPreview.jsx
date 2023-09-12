@@ -367,7 +367,7 @@ function ChartPreview(props) {
             {!chartLoading && (
               <>
                 <Row justify="center">
-                  <Text h3>{"Create a dataset to get started"}</Text>
+                  <Text size="h3">{"Create a dataset to get started"}</Text>
                 </Row>
                 <Spacer y={0.5} />
               </>
