@@ -19,6 +19,11 @@ const row = tv({
       "flex-between": "justify-between",
       "flex-around": "justify-around",
       "flex-evenly": "justify-evenly",
+      "start": "justify-start",
+      "end": "justify-end",
+      "space-between": "justify-between",
+      "space-around": "justify-around",
+      "space-evenly": "justify-evenly",
     },
     content: {
       start: "content-start",
@@ -55,7 +60,7 @@ function Row(props) {
 Row.propTypes = {
   children: PropTypes.node.isRequired,
   align: PropTypes.oneOf(["start", "center", "end", "stretch", "baseline"]),
-  justify: PropTypes.oneOf(["flex-start", "center", "flex-end", "flex-between", "flex-around", "flex-evenly"]),
+  justify: PropTypes.oneOf(["flex-start", "center", "flex-end", "flex-between", "flex-around", "flex-evenly", "start", "end", "space-between", "space-around", "space-evenly"]),
   content: PropTypes.oneOf(["start", "center", "end", "between", "around", "evenly", "stretch"]),
   wrap: PropTypes.oneOf(["none", "reverse", "wrap"]),
   className: PropTypes.string,

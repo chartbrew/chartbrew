@@ -5,6 +5,10 @@ import {
   Dropdown, Spacer, Link as LinkNext, Table, Popover, Pagination, Chip,
   TableHeader, TableColumn, TableBody, TableRow, TableCell, PopoverTrigger,
   PopoverContent,
+  DropdownTrigger,
+  DropdownMenu,
+  Button,
+  DropdownItem,
 } from "@nextui-org/react";
 import {
   ChevronDownCircle, ChevronUpCircle
@@ -72,11 +76,14 @@ function TableComponent(props) {
                     size="sm"
                   />
                   <Spacer x={0.5} />
-                  <Dropdown isBordered>
-                    <Dropdown.Button bordered size="sm">
-                      {paginationOptions.find((option) => option.value === pageSize).text}
-                    </Dropdown.Button>
-                    <Dropdown.Menu
+                  <Dropdown>
+                    <DropdownTrigger>
+                      <Button variant="bordered" size="sm">
+                        {paginationOptions.find((option) => option.value === pageSize).text}
+                      </Button>
+                    </DropdownTrigger>
+                    <DropdownMenu
+                      variant="bordered"
                       selectionMode="single"
                       selectedKeys={[`${pageSize}`]}
                       onSelectionChange={(selection) => {
@@ -84,11 +91,11 @@ function TableComponent(props) {
                       }}
                     >
                       {paginationOptions.map((option) => (
-                        <Dropdown.Item key={`${option.value}`}>
-                          <Text css={{ color: "$text" }}>{option.text}</Text>
-                        </Dropdown.Item>
+                        <DropdownItem key={`${option.value}`}>
+                          <Text>{option.text}</Text>
+                        </DropdownItem>
                       ))}
-                    </Dropdown.Menu>
+                    </DropdownMenu>
                   </Dropdown>
                 </Row>
               </div>

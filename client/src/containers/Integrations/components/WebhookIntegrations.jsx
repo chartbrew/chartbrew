@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Checkbox, Container, Divider, Input, Link, Loading, Modal, Row, Spacer, Table, Text,
+  Button, Checkbox, Divider, Input, Link, Modal, ModalBody, ModalFooter,
+  ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
 } from "@nextui-org/react";
 import {
   Delete, Edit, InfoCircle, Plus
@@ -17,6 +18,9 @@ import {
   updateIntegration as updateIntegrationAction,
   getTeamIntegrations as getTeamIntegrationsAction,
 } from "../../../actions/integration";
+import Container from "../../../components/Container";
+import Text from "../../../components/Text";
+import Row from "../../../components/Row";
 
 function WebhookIntegrations(props) {
   const {
@@ -121,109 +125,111 @@ function WebhookIntegrations(props) {
     <div>
       <Container>
         <Row align="center" justify="space-between">
-          <div style={{ display: "flex", alignItems: "center" }}>
+          <div className="flex items-center">
             <Text><TbWebhook size={24} /></Text>
-            <Spacer x={0.3} />
+            <Spacer x={0.6} />
             <Text h4>Webhooks</Text>
           </div>
-          <Spacer x={1} />
+          <Spacer x={2} />
           <Button
             auto
             onClick={() => {
               setCreateOpen(true);
             }}
-            icon={<Plus />}
-            light
+            startContent={<Plus />}
+            variant="light"
             color={"primary"}
           >
             Add a new webhook
           </Button>
         </Row>
-        <Spacer y={0.2} />
+        <Spacer y={0.5} />
         <Row>
           <Divider />
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={1} />
         <Row>
           <Text>
             <Link href="https://docs.chartbrew.com/integrations/webhooks" target="_blank" rel="noopener">
               <InfoCircle />
-              <Spacer x={0.3} />
+              <Spacer x={0.6} />
               {"Click to see what Chartbrew sends over the webhook"}
             </Link>
           </Text>
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={1} />
         <Row>
           <Text>
             <Link onClick={() => setSlackModalOpen(true)}>
               <FaSlack size={24} />
-              <Spacer x={0.3} />
+              <Spacer x={0.6} />
               {"Want to send events to Slack? Check out how to do it here"}
             </Link>
           </Text>
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={1} />
         {integrations.length > 0 && (
           <Row>
-            <Table shadow={false}>
-              <Table.Header>
-                <Table.Column key="name">Name</Table.Column>
-                <Table.Column key="url">URL</Table.Column>
-                <Table.Column key="created" align="flex-end">Date created</Table.Column>
-                <Table.Column key="actions" hideHeader align="flex-end">Actions</Table.Column>
-              </Table.Header>
+            <Table shadow={"none"}>
+              <TableHeader>
+                <TableColumn key="name">Name</TableColumn>
+                <TableColumn key="url">URL</TableColumn>
+                <TableColumn key="created" align="flex-end">Date created</TableColumn>
+                <TableColumn key="actions" hideHeader align="flex-end">Actions</TableColumn>
+              </TableHeader>
 
-              <Table.Body>
+              <TableBody>
                 {integrations.map((i) => (
-                  <Table.Row key={i.id}>
-                    <Table.Cell key="name">
+                  <TableRow key={i.id}>
+                    <TableCell key="name">
                       {i.name}
-                    </Table.Cell>
-                    <Table.Cell key="url" css={{ maxWidth: 300 }}>
-                      <Text css={{ whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
+                    </TableCell>
+                    <TableCell key="url" className="max-w-[300px]">
+                      <Text className={"overflow-hidden text-ellipsis whitespace-nowrap"}>
                         {i.config?.url || "No URL"}
                       </Text>
-                    </Table.Cell>
-                    <Table.Cell key="created">
+                    </TableCell>
+                    <TableCell key="created">
                       {formatRelative(new Date(i.createdAt), new Date())}
-                    </Table.Cell>
-                    <Table.Cell key="actions">
+                    </TableCell>
+                    <TableCell key="actions">
                       <Container>
                         <Row>
                           <Button
-                            icon={<Edit />}
-                            light
+                            isIconOnly
+                            variant="light"
                             color="secondary"
                             onClick={() => _onEditOpen(i)}
-                            css={{ minWidth: "fit-content" }}
-                          />
+                          >
+                            <Edit />
+                          </Button>
                           <Button
-                            icon={<Delete />}
-                            light
+                            isIconOnly
+                            variant="light"
                             color="danger"
                             onClick={() => setIntegrationToDelete(i.id)}
-                            css={{ minWidth: "fit-content" }}
-                          />
+                          >
+                            <Delete />
+                          </Button>
                         </Row>
                       </Container>
-                    </Table.Cell>
-                  </Table.Row>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </Table.Body>
+              </TableBody>
             </Table>
           </Row>
         )}
       </Container>
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} width="500px">
-        <Modal.Header>
+      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} className="w-[500px]">
+        <ModalHeader>
           <Text h4>
             {!newIntegration.id && "Create a new webhook integration"}
             {newIntegration.id && "Update the webhook"}
           </Text>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <Container>
             <Row>
               <Input
@@ -234,12 +240,12 @@ function WebhookIntegrations(props) {
                 onChange={(e) => {
                   setNewIntegration({ ...newIntegration, name: e.target.value.slice(0, 20) });
                 }}
-                bordered
+                variant="bordered"
                 required
-                helperText={`${newIntegration.name?.length || 0}/20 characters`}
+                description={`${newIntegration.name?.length || 0}/20 characters`}
               />
             </Row>
-            <Spacer y={2} />
+            <Spacer y={4} />
             <Row>
               <Input
                 label="The URL where Chartbrew sends a POST request to"
@@ -247,11 +253,11 @@ function WebhookIntegrations(props) {
                 fullWidth
                 value={newIntegration.url}
                 onChange={(e) => setNewIntegration({ ...newIntegration, url: e.target.value })}
-                bordered
+                variant="bordered"
                 required
               />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <Checkbox
                 checked={newIntegration.slackMode}
@@ -262,11 +268,11 @@ function WebhookIntegrations(props) {
                 isSelected={newIntegration.slackMode}
                 label="Slack webhook"
               />
-              <Spacer x={0.5} />
+              <Spacer x={1} />
               <Text size="small">
                 <Link onClick={() => setSlackModalOpen(true)}>
                   <InfoCircle />
-                  <Spacer x={0.2} />
+                  <Spacer x={0.5} />
                   {"What is this?"}
                 </Link>
               </Text>
@@ -277,13 +283,13 @@ function WebhookIntegrations(props) {
               </Row>
             )}
           </Container>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
             auto
             onClick={() => setCreateOpen(false)}
             color="warning"
-            flat
+            variant="flat"
           >
             Close
           </Button>
@@ -291,20 +297,19 @@ function WebhookIntegrations(props) {
             auto
             onClick={!newIntegration.id ? _onCreate : _onEdit}
             color="primary"
-            disabled={createLoading}
-            icon={createLoading ? <Loading type="spinner" /> : null}
+            isLoading={createLoading}
           >
             {!newIntegration.id && "Create"}
             {newIntegration.id && "Update"}
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
-      <Modal open={!!integrationToDelete} onClose={() => setIntegrationToDelete(false)} width="500px">
-        <Modal.Header>
+      <Modal isOpen={!!integrationToDelete} onClose={() => setIntegrationToDelete(false)} className="w-[500px]">
+        <ModalHeader>
           <Text h4>Are you sure you want to delete this integration?</Text>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <Container>
             <Row>
               <Text>
@@ -313,20 +318,20 @@ function WebhookIntegrations(props) {
             </Row>
             {deleteError && (
               <>
-                <Spacer y={1} />
+                <Spacer y={2} />
                 <Row>
                   <Text color="danger">There was an error deleting the integration. Please try again.</Text>
                 </Row>
               </>
             )}
           </Container>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
             auto
             onClick={() => setIntegrationToDelete(false)}
             color="warning"
-            flat
+            variant="flat"
           >
             Close
           </Button>
@@ -334,20 +339,19 @@ function WebhookIntegrations(props) {
             auto
             onClick={_onDelete}
             color="danger"
-            disabled={deleteLoading}
-            icon={deleteLoading ? <Loading type="spinner" /> : null}
+            isLoading={deleteLoading}
           >
             Delete
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
-      <Modal open={slackModalOpen} width="800px" onClose={() => setSlackModalOpen(false)} noPadding>
-        <Modal.Header>
+      <Modal isOpen={slackModalOpen} className="w-[800px]" onClose={() => setSlackModalOpen(false)}>
+        <ModalHeader>
           <Text h3>How to set up Slack alerts</Text>
-        </Modal.Header>
-        <Modal.Body>
-          <Container css={{ p: 0, m: 0 }}>
+        </ModalHeader>
+        <ModalBody className={"p-0 m-0"}>
+          <Container className={"p-0 m-0"}>
             <Row style={{
               position: "relative", paddingBottom: "56.25%", height: 0,
             }}>
@@ -364,17 +368,17 @@ function WebhookIntegrations(props) {
               />
             </Row>
           </Container>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
             auto
             onClick={() => setSlackModalOpen(false)}
             color="warning"
-            flat
+            variant="flat"
           >
             Close
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
     </div>
   );

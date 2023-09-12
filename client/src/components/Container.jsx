@@ -3,7 +3,7 @@ import { tv } from "tailwind-variants";
 import PropTypes from "prop-types";
 
 const container = tv({
-  base: "md:container md:mx-auto px-4",
+  base: "md:container md:mx-auto px-4 flex flex-col",
   variants: {
     size: {
       sm: "sm:px-6 md:px-20 lg:px-40 xl:px-80",

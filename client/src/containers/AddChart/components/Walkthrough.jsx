@@ -2,13 +2,16 @@ import React from "react";
 import PropTypes from "prop-types";
 import Tour from "reactour";
 import {
-  Button, Container, Row, Spacer, Text
+  Button, Spacer,
 } from "@nextui-org/react";
 import { FaPlug } from "react-icons/fa";
 import { Edit, Setting, TickSquare } from "react-iconly";
 
 import { secondary } from "../../../config/colors";
 import showTutorial from "../../../config/tutorials";
+import Container from "../../../components/Container";
+import Text from "../../../components/Text";
+import Row from "../../../components/Row";
 
 function Walkthrough(props) {
   const {
@@ -43,10 +46,10 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"You can change the summary of the chart at any time by clicking on the text."}</Text>
+            <Text className={"text-black"}>{"You can change the summary of the chart at any time by clicking on the text."}</Text>
           </Row>
           <Row>
-            <Text color="black">{"This will be displayed above your chart in the dashboard."}</Text>
+            <Text className={"text-black"}>{"This will be displayed above your chart in the dashboard."}</Text>
           </Row>
         </Container>
       ),
@@ -56,10 +59,10 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"The chart saves automatically and the button will be green when everything is synced."}</Text>
+            <Text className={"text-black"}>{"The chart saves automatically and the button will be green when everything is synced."}</Text>
           </Row>
           <Row>
-            <Text color="black">{" You have the option to manually save from here and to change the draft status of the chart at any time."}</Text>
+            <Text className={"text-black"}>{" You have the option to manually save from here and to change the draft status of the chart at any time."}</Text>
           </Row>
         </Container>
       ),
@@ -69,7 +72,7 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"When you have the data set up, your chart will appear here. You can also query for new data or refresh the style at any time."}</Text>
+            <Text className={"text-black"}>{"When you have the data set up, your chart will appear here. You can also query for new data or refresh the style at any time."}</Text>
           </Row>
         </Container>
       ),
@@ -79,10 +82,10 @@ const steps = {
       content: ({ close }) => (
         <Container>
           <Row>
-            <Text color="black">{"Here is the place where you prepare the data for brewing. You can create different datasets, connect them to data sources and get the data flowing."}</Text>
+            <Text className={"text-black"}>{"Here is the place where you prepare the data for brewing. You can create different datasets, connect them to data sources and get the data flowing."}</Text>
           </Row>
           <Row>
-            <Text color="black">{"You will need at least one dataset to generate a chart. Create one now and get acquainted with how it works 👩‍💻"}</Text>
+            <Text className={"text-black"}>{"You will need at least one dataset to generate a chart. Create one now and get acquainted with how it works 👩‍💻"}</Text>
           </Row>
           <Spacer y={0.5} />
           <Row>
@@ -104,17 +107,17 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"Each dataset will need to be connected to one of your data sources. Chartbrew will then know where to fetch the data from."}</Text>
+            <Text className={"text-black"}>{"Each dataset will need to be connected to one of your data sources. Chartbrew will then know where to fetch the data from."}</Text>
           </Row>
           <Row>
-            <Text color="black">
+            <Text className={"text-black"}>
               {"You can always create new connections by clicking the "}
               <FaPlug />
               {" option in the left sidebar."}
             </Text>
           </Row>
           <Row>
-            <Text color="black">{"Click on the \"Get data\" button to get started."}</Text>
+            <Text className={"text-black"}>{"Click on the \"Get data\" button to get started."}</Text>
           </Row>
         </Container>
       ),
@@ -124,10 +127,10 @@ const steps = {
       content: ({ close }) => (
         <Container>
           <Row>
-            <Text color="black">{"The dataset settings are saved automatically, but you can always save manually from here."}</Text>
+            <Text className={"text-black"}>{"The dataset settings are saved automatically, but you can always save manually from here."}</Text>
           </Row>
           <Row>
-            <Text color="black">{"If you no longer need one of the datasets, the delete button is also here for you."}</Text>
+            <Text className={"text-black"}>{"If you no longer need one of the datasets, the delete button is also here for you."}</Text>
           </Row>
           <Spacer y={0.5} />
           <Row>
@@ -150,7 +153,7 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"Here, you will have to enter the route and query parameters that you need for your API request."}</Text>
+            <Text className={"text-black"}>{"Here, you will have to enter the route and query parameters that you need for your API request."}</Text>
           </Row>
         </Container>
       ),
@@ -160,7 +163,7 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"You can further configure your requests by adding headers, a body of data and you can also paginate requests if the API allows it."}</Text>
+            <Text className={"text-black"}>{"You can further configure your requests by adding headers, a body of data and you can also paginate requests if the API allows it."}</Text>
           </Row>
         </Container>
       ),
@@ -170,7 +173,7 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"The global headers are enabled by default. These are set in the Connections page and it's best used for headers that need to be included often, such as the 'Authorization' header."}</Text>
+            <Text className={"text-black"}>{"The global headers are enabled by default. These are set in the Connections page and it's best used for headers that need to be included often, such as the 'Authorization' header."}</Text>
           </Row>
         </Container>
       ),
@@ -180,7 +183,7 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"You can select what type of API request you want to send from here."}</Text>
+            <Text className={"text-black"}>{"You can select what type of API request you want to send from here."}</Text>
           </Row>
         </Container>
       ),
@@ -190,7 +193,7 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"Once you have everything ready, send the request away and get the data."}</Text>
+            <Text className={"text-black"}>{"Once you have everything ready, send the request away and get the data."}</Text>
           </Row>
         </Container>
       ),
@@ -200,15 +203,15 @@ const steps = {
       content: ({ close }) => (
         <Container>
           <Row>
-            <Text color="black">{"If the request is successful you will see the JSON data in this section."}</Text>
+            <Text className={"text-black"}>{"If the request is successful you will see the JSON data in this section."}</Text>
           </Row>
           <Row>
-            <Text color="black">{"If the API supports it, you will also get the error message in case the request is not successful."}</Text>
+            <Text className={"text-black"}>{"If the API supports it, you will also get the error message in case the request is not successful."}</Text>
           </Row>
           <Spacer y={0.5} />
           <Row>
             <Button
-              icon={<Setting />}
+              startContent={<Setting />}
               color="success"
               onClick={close}
               auto
@@ -226,7 +229,7 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">
+            <Text className={"text-black"}>
               {"Here you can enter your MongoDB query to get data from your database. You can have a look at "}
               <a
                 href="https://docs.mongodb.com/manual/tutorial/query-documents/"
@@ -238,7 +241,7 @@ const steps = {
             </Text>
           </Row>
           <Row>
-            <Text color="black">
+            <Text className={"text-black"}>
               {"Note that you should always start the query with: "}
               <pre>{"collection(\"your_collection\")..."}</pre>
             </Text>
@@ -251,10 +254,10 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"Once you write the query, you can run it from here."}</Text>
+            <Text className={"text-black"}>{"Once you write the query, you can run it from here."}</Text>
           </Row>
           <Row>
-            <Text color="black">{"To make things easier later on you can also save the query and use it for other charts."}</Text>
+            <Text className={"text-black"}>{"To make things easier later on you can also save the query and use it for other charts."}</Text>
           </Row>
         </Container>
       ),
@@ -264,7 +267,7 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"Once you save some queries they will appear in this section. You can update and delete them from here as well."}</Text>
+            <Text className={"text-black"}>{"Once you save some queries they will appear in this section. You can update and delete them from here as well."}</Text>
           </Row>
         </Container>
       ),
@@ -274,12 +277,12 @@ const steps = {
       content: ({ close }) => (
         <Container>
           <Row>
-            <Text color="black">{"The JSON-formatted data will appear here when you run a successful query."}</Text>
+            <Text className={"text-black"}>{"The JSON-formatted data will appear here when you run a successful query."}</Text>
           </Row>
           <Spacer y={0.5} />
           <Row>
             <Button
-              iconRight={<Edit />}
+              endContent={<Edit />}
               color="success"
               onClick={close}
               auto
@@ -297,12 +300,12 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">
+            <Text className={"text-black"}>
               {"Here you can enter your SQL query to get data from your database."}
             </Text>
           </Row>
           <Row>
-            <Text color="black">
+            <Text className={"text-black"}>
               {"As an example, it should look like this: "}
               <pre>{"SELECT * from users WHERE age > 43;"}</pre>
             </Text>
@@ -315,10 +318,10 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"Once you write the query, you can run it from here."}</Text>
+            <Text className={"text-black"}>{"Once you write the query, you can run it from here."}</Text>
           </Row>
           <Row>
-            <Text color="black">{"To make things easier later on you can also save the query and use it for other charts."}</Text>
+            <Text className={"text-black"}>{"To make things easier later on you can also save the query and use it for other charts."}</Text>
           </Row>
         </Container>
       ),
@@ -328,7 +331,7 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"Once you save some queries they will appear in this section. You can update and delete them from here as well."}</Text>
+            <Text className={"text-black"}>{"Once you save some queries they will appear in this section. You can update and delete them from here as well."}</Text>
           </Row>
         </Container>
       ),
@@ -338,12 +341,12 @@ const steps = {
       content: ({ close }) => (
         <Container>
           <Row>
-            <Text color="black">{"The JSON-formatted data will appear here when you run a successful query."}</Text>
+            <Text className={"text-black"}>{"The JSON-formatted data will appear here when you run a successful query."}</Text>
           </Row>
-          <Spacer y={0.5} />
+          <Spacer y={1} />
           <Row>
             <Button
-              iconRight={<Edit />}
+              endContent={<Edit />}
               color="success"
               onClick={close}
               auto
@@ -361,17 +364,17 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">
+            <Text className={"text-black"}>
               {"You Firestore collections will appear here."}
             </Text>
           </Row>
           <Row>
-            <Text color="black">
+            <Text className={"text-black"}>
               {"In case you can't see them or you added a new collection just now, press the refresh link to get the latest data."}
             </Text>
           </Row>
           <Row>
-            <Text color="black">
+            <Text className={"text-black"}>
               {"Once you see the collection you want to use, just click on it to select it."}
             </Text>
           </Row>
@@ -383,7 +386,7 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"Once you select a collection, click here to get data from your Firestore database."}</Text>
+            <Text className={"text-black"}>{"Once you select a collection, click here to get data from your Firestore database."}</Text>
           </Row>
         </Container>
       ),
@@ -393,7 +396,7 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"You can see the results of your query in JSON format over here."}</Text>
+            <Text className={"text-black"}>{"You can see the results of your query in JSON format over here."}</Text>
           </Row>
         </Container>
       ),
@@ -403,18 +406,18 @@ const steps = {
       content: ({ close }) => (
         <Container>
           <Row>
-            <Text color="black">{"One last thing!"}</Text>
+            <Text className={"text-black"}>{"One last thing!"}</Text>
           </Row>
           <Row>
-            <Text color="black">{"You can query the data from your Firestore database using the built-in query editor here."}</Text>
+            <Text className={"text-black"}>{"You can query the data from your Firestore database using the built-in query editor here."}</Text>
           </Row>
           <Row>
-            <Text color="black">{"You will have to select which field you want to query on, the operation, and value(s)."}</Text>
+            <Text className={"text-black"}>{"You will have to select which field you want to query on, the operation, and value(s)."}</Text>
           </Row>
           <Row>
-            <Text color="black">{"Chartbrew supports all Firestore operations, but more custom query options will be added soon."}</Text>
+            <Text className={"text-black"}>{"Chartbrew supports all Firestore operations, but more custom query options will be added soon."}</Text>
           </Row>
-          <Spacer y={0.5} />
+          <Spacer y={1} />
           <Row>
             <Button
               color="success"
@@ -434,12 +437,12 @@ const steps = {
       content: ({ close }) => (
         <Container>
           <Row>
-            <Text color="black">{"Great! You have some data now."}</Text>
+            <Text className={"text-black"}>{"Great! You have some data now."}</Text>
           </Row>
           <Row>
             <Text>{"You can explore your data and press 'Done' to continue configuring your chart."}</Text>
           </Row>
-          <Spacer y={0.5} />
+          <Spacer y={1} />
           <Row>
             <Button
               color="success"
@@ -459,10 +462,10 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"This is the place where you can configure what data appears on the chart axes. You will notice that the chart preview will update automatically when you change these."}</Text>
+            <Text className={"text-black"}>{"This is the place where you can configure what data appears on the chart axes. You will notice that the chart preview will update automatically when you change these."}</Text>
           </Row>
           <Row>
-            <Text color="black">{"You can also apply an operation on the Y axis, like count, sum and average."}</Text>
+            <Text className={"text-black"}>{"You can also apply an operation on the Y axis, like count, sum and average."}</Text>
           </Row>
         </Container>
       )
@@ -472,10 +475,10 @@ const steps = {
       content: ({ close }) => ( // eslint-disable-line
         <Container>
           <Row>
-            <Text color="black">{"To simplify the date filtering across datasets, Chartbrew allows you to select date ranges to filter your data."}</Text>
+            <Text className={"text-black"}>{"To simplify the date filtering across datasets, Chartbrew allows you to select date ranges to filter your data."}</Text>
           </Row>
           <Row>
-            <Text color="black">
+            <Text className={"text-black"}>
               {"If this is your use-case, select a date field here and then you can use the"}
               <strong>{" global date settings "}</strong>
               {"on the right to filter your data."}
@@ -489,10 +492,10 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"To give you more flexibility, Chartbrew also supports a wide range of filters."}</Text>
+            <Text className={"text-black"}>{"To give you more flexibility, Chartbrew also supports a wide range of filters."}</Text>
           </Row>
           <Row>
-            <Text color="black">{"You can select any field from your dataset and filter based on the given values and operations."}</Text>
+            <Text className={"text-black"}>{"You can select any field from your dataset and filter based on the given values and operations."}</Text>
           </Row>
         </Container>
       )
@@ -502,17 +505,17 @@ const steps = {
       content: ({ close }) => (
         <Container>
           <Row>
-            <Text color="black">{"Set up alerts to always be notified about your data."}</Text>
+            <Text className={"text-black"}>{"Set up alerts to always be notified about your data."}</Text>
           </Row>
           <Row>
-            <Text color="black">
+            <Text className={"text-black"}>
               {"Configure the way you want to be notified and the conditions that will trigger the alert. Chartbrew will then send you an email or notification when the conditions are met."}
             </Text>
           </Row>
           <Spacer y={0.5} />
           <Row>
             <Button
-              iconRight={<TickSquare />}
+              endContent={<TickSquare />}
               color="success"
               onClick={close}
               auto
@@ -530,10 +533,10 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"In Chartbrew, the dataset data can be composed from multiple sources."}</Text>
+            <Text className={"text-black"}>{"In Chartbrew, the dataset data can be composed from multiple sources."}</Text>
           </Row>
           <Row>
-            <Text color="black">{"This is a powerful feature that allows you to join data from anywhere you like into one dataset."}</Text>
+            <Text className={"text-black"}>{"This is a powerful feature that allows you to join data from anywhere you like into one dataset."}</Text>
           </Row>
         </Container>
       )
@@ -543,10 +546,10 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"By default, Chartbrew uses the first data source as the main source for the dataset."}</Text>
+            <Text className={"text-black"}>{"By default, Chartbrew uses the first data source as the main source for the dataset."}</Text>
           </Row>
           <Row>
-            <Text color="black">{"If you add more sources, you can select here which one you want Chartbrew to fetch data from."}</Text>
+            <Text className={"text-black"}>{"If you add more sources, you can select here which one you want Chartbrew to fetch data from."}</Text>
           </Row>
         </Container>
       )
@@ -556,10 +559,10 @@ const steps = {
       content: () => (
         <Container>
           <Row>
-            <Text color="black">{"You can add a new JOIN configuration by clicking here."}</Text>
+            <Text className={"text-black"}>{"You can add a new JOIN configuration by clicking here."}</Text>
           </Row>
           <Row>
-            <Text color="black">{"The data sources can be of the same or even different type. For example, you can join data from Firestore with data from MongoDB if you wish."}</Text>
+            <Text className={"text-black"}>{"The data sources can be of the same or even different type. For example, you can join data from Firestore with data from MongoDB if you wish."}</Text>
           </Row>
         </Container>
       )
@@ -569,16 +572,16 @@ const steps = {
       content: ({ close }) => (
         <Container>
           <Row>
-            <Text color="black">{"After you finish the configuration, you can compile the data from here. Chartbrew will then apply all the join settings to create a single dataset."}</Text>
+            <Text className={"text-black"}>{"After you finish the configuration, you can compile the data from here. Chartbrew will then apply all the join settings to create a single dataset."}</Text>
           </Row>
           <Row>
-            <Text color="black">
+            <Text className={"text-black"}>
               {"A sample of the compiled dataset can be previewed in the code editor."}
             </Text>
           </Row>
           <Row>
             <Button
-              iconRight={<TickSquare />}
+              endContent={<TickSquare />}
               color="success"
               onClick={close}
               auto

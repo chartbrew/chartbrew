@@ -1,16 +1,12 @@
 import React, { Fragment } from "react";
 import PropTypes from "prop-types";
 import {
-  Badge,
-  Checkbox,
-  Grid,
-  Popover,
-  Spacer,
-  Text,
+  Chip, Checkbox, Popover, Spacer, PopoverTrigger, PopoverContent,
 } from "@nextui-org/react";
 import { SketchPicker } from "react-color";
 
 import { primary, chartColors } from "../../../config/colors";
+import Text from "../../../components/Text";
 
 function DatasetAppearance(props) {
   const {
@@ -18,26 +14,26 @@ function DatasetAppearance(props) {
   } = props;
 
   return (
-    <Grid.Container gap={1}>
-      <Grid xs={12} sm={6} direction="column">
+    <div className="grid grid-cols-12 gap-2">
+      <div className="col-span-6 sm:col-span-12">
         <Text>Dataset Color</Text>
         <Popover>
-          <Popover.Trigger>
-            <Badge
+          <PopoverTrigger>
+            <Chip
               css={styles.datasetColorBtn(dataset.datasetColor)}
               size="lg"
-              isSquared
+              radius="sm"
             >
               Click to select
-            </Badge>
-          </Popover.Trigger>
-          <Popover.Content>
+            </Chip>
+          </PopoverTrigger>
+          <PopoverContent>
             <ColorPicker type="dataset" onUpdate={onUpdate} dataset={dataset} />
-          </Popover.Content>
+          </PopoverContent>
         </Popover>
-      </Grid>
+      </div>
 
-      <Grid xs={12} sm={6} direction="column">
+      <div className="col-span-6 sm:col-span-12">
         <Text>Fill Color</Text>
         {chart.type !== "line" && (
           <>
@@ -49,7 +45,7 @@ function DatasetAppearance(props) {
               label="Multiple colors"
               size="sm"
             />
-            <Spacer y={0.5} />
+            <Spacer y={1} />
           </>
         )}
         <div>
@@ -57,29 +53,29 @@ function DatasetAppearance(props) {
             <div style={styles.row}>
               <Popover
                 style={{ padding: 0, margin: 0 }}
-                on="click"
-                position="right center"
+                className="p-0 m-0"
+                placement="right"
               >
-                <Popover.Trigger>
-                  <Badge
+                <PopoverTrigger>
+                  <Chip
                     style={styles.datasetColorBtn(dataset.fillColor)}
                     size="lg"
-                    isSquared
+                    radius="sm"
                   >
                     Click to select
-                  </Badge>
-                </Popover.Trigger>
-                <Popover.Content>
+                  </Chip>
+                </PopoverTrigger>
+                <PopoverContent>
                   <ColorPicker type="fill" onUpdate={onUpdate} dataset={dataset} />
-                </Popover.Content>
+                </PopoverContent>
               </Popover>
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Checkbox
                 isSelected={dataset.fill || false}
                 onChange={(checked) => {
                   onUpdate({ ...dataset, fill: checked });
                 }}
-                style={{ verticalAlign: "middle", marginLeft: 10 }}
+                className="ml-10 align-middle"
               />
             </div>
           )}
@@ -90,28 +86,28 @@ function DatasetAppearance(props) {
                 return (
                   <Fragment key={dataItems && dataItems.labels[fillIndex]}>
                     <Popover>
-                      <Popover.Trigger>
-                        <Badge
+                      <PopoverTrigger>
+                        <Chip
                           style={styles.datasetColorBtn(dataset.fillColor[fillIndex])}
                           size="lg"
-                          isSquared
+                          radius="sm"
                         >
                           {dataItems && dataItems.labels[fillIndex]}
-                        </Badge>
-                      </Popover.Trigger>
-                      <Popover.Content>
+                        </Chip>
+                      </PopoverTrigger>
+                      <PopoverContent>
                         <ColorPicker type="fill" fillIndex={fillIndex} onUpdate={onUpdate} dataset={dataset} />
-                      </Popover.Content>
+                      </PopoverContent>
                     </Popover>
-                    <Spacer x={0.1} />
+                    <Spacer x={0.3} />
                   </Fragment>
                 );
               })}
             </div>
           )}
         </div>
-      </Grid>
-    </Grid.Container>
+      </div>
+    </div>
   );
 }
 

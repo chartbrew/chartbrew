@@ -40,46 +40,48 @@ function CreateTemplateForm(props) {
   };
 
   return (
-    <Modal open={visible} closeIcon onClose={() => onClose()} size="small">
-      <ModalHeader>
-        <Text h3>Create a template</Text>
-      </ModalHeader>
-      <ModalBody>
-        <Spacer y={1} />
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          _onSaveTemplate();
-        }}>
-          <Input
-            labelPlaceholder="Enter a name for the template"
-            value={templateName}
-            onChange={(e) => setTemplateName(e.target.value)}
-            color={validationError ? "error" : "default"}
-            bordered
-            fullWidth
-            autoFocus
-          />
-        </form>
-        <Spacer y={1} />
-      </ModalBody>
-      <ModalFooter>
-        <Button
-          flat
-          color="warning"
-          onClick={() => onClose()}
-          auto
-        >
-          Close
-        </Button>
-        <Button
-          onClick={_onSaveTemplate}
-          auto
-          isLoading={loading}
-        >
-          Save template
-        </Button>
-      </ModalFooter>
-    </Modal>
+    <>
+      <Modal isOpen={visible} onClose={() => onClose()} size="small">
+        <ModalHeader>
+          <Text h3>Create a template</Text>
+        </ModalHeader>
+        <ModalBody>
+          <Spacer y={1} />
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            _onSaveTemplate();
+          }}>
+            <Input
+              labelPlaceholder="Enter a name for the template"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              color={validationError ? "error" : "default"}
+              variant="bordered"
+              fullWidth
+              autoFocus
+            />
+          </form>
+          <Spacer y={1} />
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="flat"
+            color="warning"
+            onClick={() => onClose()}
+            auto
+          >
+            Close
+          </Button>
+          <Button
+            onClick={_onSaveTemplate}
+            auto
+            isLoading={loading}
+          >
+            Save template
+          </Button>
+        </ModalFooter>
+      </Modal>  
+    </>
   );
 }
 

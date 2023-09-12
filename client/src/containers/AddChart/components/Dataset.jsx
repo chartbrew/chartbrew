@@ -5,8 +5,8 @@ import { withRouter } from "react-router";
 import _ from "lodash";
 import moment from "moment";
 import {
-  Grid, Tooltip, Button, Spacer, Input, Loading, Link, Text, Modal,
-  Divider,
+  Tooltip, Button, Spacer, Input, Modal, Divider, Tabs, Tab,
+  ModalHeader, ModalBody, ModalFooter,
 } from "@nextui-org/react";
 import { ArrowDownSquare, Edit } from "react-iconly";
 
@@ -15,6 +15,7 @@ import DatarequestModal from "./DatarequestModal";
 import DatasetAppearance from "./DatasetAppearance";
 import DatasetData from "./DatasetData";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
+import Text from "../../../components/Text";
 
 const emptyColor = "rgba(0,0,0,0)";
 
@@ -196,58 +197,61 @@ function Dataset(props) {
 
   return (
     <div style={styles.container}>
-      <Grid.Container gap={1}>
-        <Grid xs={12}>
-          <Divider css={{ ml: 20, mr: 20 }} />
-        </Grid>
-        <Grid xs={12} alignItems="center" alignContent="center">
-          <Text b size={20}>{newDataset.legend}</Text>
+      <div className="grid grid-cols-12 gap-1">
+        <div className="col-span-12">
+          <Divider className={"ml-10 mr-10"} />
+        </div>
+        <div className="col-span-12 flex items-center content-center">
+          <Text b size={"lg"}>{newDataset.legend}</Text>
           <Button
-            light
-            icon={<Edit />}
+            variant="light"
+            isIconOnly
             onClick={() => setEditDatasetName(!editDatasetName)}
             auto
             color={"primary"}
-            ripple={false}
-          />
-        </Grid>
+            disableRipple
+          >
+            <Edit />
+          </Button>
+        </div>
         {editDatasetName && (
-          <Grid xs={12} sm={6} md={6}>
+          <div className="col-span-6 sm:col-span-12">
             <Input
               placeholder="Enter a name for the dataset"
               value={datasetName || ""}
               onChange={(e) => setDatasetName(e.target.value)}
-              bordered
+              variant="bordered"
               fullWidth
             />
-          </Grid>
+          </div>
         )}
         {editDatasetName && (
-          <Grid xs={12} sm={6} md={6}>
+          <div className="col-span-6 sm:col-span-12">
             <Button
               onClick={_onChangeLegend}
               auto
-              disabled={!datasetName || savingDatasetName}
+              disabled={!datasetName}
+              isLoading={savingDatasetName}
               color="success"
             >
-              {savingDatasetName ? <Loading type="spinner" /> : "Save"}
+              {"Save"}
             </Button>
-          </Grid>
+          </div>
         )}
-        <Grid xs={12} sm={6} md={6} className="dataset-manage-tut">
+        <div className="col-span-12 sm:col-span-6 dataset-manage-tut">
           <Button
-            iconRight={<ArrowDownSquare />}
+            endContent={<ArrowDownSquare />}
             onClick={_openConfigModal}
             auto
-            css={{ width: "100%" }}
+            fullWidth
           >
             Get data
           </Button>
-        </Grid>
-        <Grid xs={12} sm={6} md={6} alignItems="center">
+        </div>
+        <div className="col-span-6 sm:col-span-12 flex items-center">
           <Tooltip content="Remove dataset">
             <Button
-              flat
+              variant="flat"
               color="danger"
               onClick={() => setDeleteModal(true)}
               auto
@@ -255,63 +259,21 @@ function Dataset(props) {
               {"Remove"}
             </Button>
           </Tooltip>
-        </Grid>
-        <Grid xs={12}>
-          <Divider css={{ m: 20 }} />
-        </Grid>
-        <Grid
-          xs={12}
-          sm={6}
-          md={6}
-          justify="center"
-          css={{
-            background: menuItem === "data" ? "$background" : "$backgroundContrast",
-            br: "$sm",
-          }}
-        >
-          <Link
-            css={{
-              p: 5,
-              pr: 10,
-              pl: 10,
-              "@xsMax": { width: "90%" },
-              ai: "center",
-              color: "$text",
-            }}
-            onClick={() => setMenuItem("data")}
-          >
-            <Text b>{"Data"}</Text>
-          </Link>
-        </Grid>
-        <Grid
-          xs={12}
-          sm={6}
-          md={6}
-          justify="center"
-          css={{
-            background: menuItem === "appearance" ? "$background" : "$backgroundContrast",
-            br: "$sm",
-          }}
-        >
-          <Link
-            css={{
-              p: 5,
-              pr: 10,
-              pl: 10,
-              "@xsMax": { width: "90%" },
-              ai: "center",
-              color: "$secondary",
-            }}
-            onClick={() => setMenuItem("appearance")}
-          >
-            <Text b>{"Chart colors"}</Text>
-          </Link>
-        </Grid>
-        <Grid xs={12}>
-          <Spacer y={1} />
-        </Grid>
+        </div>
+        <div className="col-span-12">
+          <Divider className="m-20" />
+        </div>
+        <div className="col-span-12">
+          <Tabs selectedKey={menuItem} onSelectionChange={(key) => setMenuItem(key)}>
+            <Tab key="data" title="Data" />
+            <Tab key="appearance" title="Chart colors" />
+          </Tabs>
+        </div>
+        <div className="col-span-12">
+          <Spacer y={2} />
+        </div>
         {menuItem === "data" && (
-          <Grid xs={12} sm={12} md={12}>
+          <div className="col-span-12">
             <DatasetData
               dataset={newDataset}
               requestResult={requestResult}
@@ -321,19 +283,19 @@ function Dataset(props) {
               onNoRequest={_openConfigModal}
               dataLoading={loading}
             />
-          </Grid>
+          </div>
         )}
         {menuItem === "appearance" && (
-          <Grid xs={12} sm={12} md={12}>
+          <div className="col-span-12">
             <DatasetAppearance
               dataset={newDataset}
               chart={chart}
               onUpdate={_updateColors}
               dataItems={dataItems}
             />
-          </Grid>
+          </div>
         )}
-      </Grid.Container>
+      </div>
 
       <DatarequestModal
         dataset={dataset}
@@ -343,18 +305,18 @@ function Dataset(props) {
       />
 
       {/* DELETE CONFIRMATION MODAL */}
-      <Modal open={deleteModal} basic size="small" onClose={() => setDeleteModal(false)}>
-        <Modal.Header>
+      <Modal isOpen={deleteModal} size="sm" onClose={() => setDeleteModal(false)}>
+        <ModalHeader>
           <Text h3>{"Are you sure you want to remove this dataset?"}</Text>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <Text>
             {"This action cannot be reversed."}
           </Text>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
-            flat
+            variant="flat"
             color="warning"
             onClick={() => setDeleteModal(false)}
             auto
@@ -363,13 +325,13 @@ function Dataset(props) {
           </Button>
           <Button
             color="danger"
-            disabled={deleteLoading}
+            isLoading={deleteLoading}
             onClick={_onDeleteDataset}
             auto
           >
-            {deleteLoading ? <Loading type="points" /> : "Remove dataset"}
+            {"Remove dataset"}
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
     </div>
   );

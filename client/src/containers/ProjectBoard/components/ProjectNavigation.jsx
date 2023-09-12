@@ -5,7 +5,7 @@ import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import {
-  Container, Row, Link as LinkNext, Dropdown, Text, Tooltip, Spacer, Button, Avatar, Modal,
+  Link as LinkNext, Dropdown, Tooltip, Spacer, Button, Avatar, Modal, DropdownTrigger, DropdownMenu, DropdownItem, ModalHeader, ModalBody, ModalFooter,
 } from "@nextui-org/react";
 import {
   Activity, Category, ChevronLeftCircle, ChevronRightCircle, ChevronUpCircle,
@@ -18,7 +18,9 @@ import {
   dark, lightGray, primary, secondary
 } from "../../../config/colors";
 import { APP_VERSION } from "../../../config/settings";
-import StyledNavContainer from "../../../components/StyledNavContainer";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
 
 const sideMaxSize = 220;
 
@@ -87,14 +89,8 @@ function ProjectNavigation(props) {
       <nav
         style={styles.mobileMenu}
       >
-        <StyledNavContainer detached showBlur>
-          <Container
-            fluid
-            as="nav"
-            display="flex"
-            wrap="nowrap"
-            alignItems="center"
-          >
+        <div className="flex items-center justify-center shadow-md bg-content1 w-full backdrop-blur-[10px] backdrop-saturate-[180%]">
+          <Container className="flex flex-nowrap items-center justify-center w-full">
             <Row justify="space-between" align="center">
               <Link to={`/${teamId}/${projectId}/dashboard`}>
                 <LinkNext>
@@ -131,67 +127,69 @@ function ProjectNavigation(props) {
                 )}
             </Row>
           </Container>
-        </StyledNavContainer>
+        </div>
       </nav>
     );
   }
 
   return (
     <div>
-      <Container justify="space-between" style={styles.mainSideMenu(height)} css={{ background: "$backgroundContrast" }}>
-        <Row justify="center" align="center" css={{ pt: 20 }}>
+      <Container className={"bg-content2 flex justify-between"} style={styles.mainSideMenu(height)}>
+        <Row justify="center" align="center" className={"pt-20"}>
           <Dropdown
             style={{ ...styles.centered, fontSize: 14 }}
             title={project.name}
           >
-            <Dropdown.Trigger>
-              <LinkNext>
+            <DropdownTrigger>
+              <div>
                 {menuSize === "small" && (
                   <Tooltip content="Switch project" placement="right">
-                    <Text css={{ color: "$accents8" }}><Category size="large" /></Text>
+                    <div>
+                      <Text className={"text-default-800"}><Category size="large" /></Text>
+                    </div>
                   </Tooltip>
                 )}
                 {menuSize === "large" && (
-                  <Text b css={{ color: "$blue600" }}>{_formatProjectName(project.name)}</Text>
+                  <Text b className={"text-blue-600"}>{_formatProjectName(project.name)}</Text>
                 )}
-              </LinkNext>
-            </Dropdown.Trigger>
-            <Dropdown.Menu
-              css={{ fontSize: 14, minWidth: "max-content" }}
+              </div>
+            </DropdownTrigger>
+            <DropdownMenu
               onAction={(pId) => onChangeProject(pId)}
               selectedKeys={[projectId]}
               selectionMode="single"
             >
               {projects.map((p) => {
                 return (
-                  <Dropdown.Item key={p.id}>
+                  <DropdownItem key={p.id} className="text-sm">
                     {p.name}
-                  </Dropdown.Item>
+                  </DropdownItem>
                 );
               })}
-            </Dropdown.Menu>
+            </DropdownMenu>
           </Dropdown>
         </Row>
-        <Spacer y={1.5} />
+        <Spacer y={3} />
         {canAccess("editor")
           && (
             <Row justify="center" align="center">
               {menuSize === "small" && (
                 <Tooltip content="Create a new chart" placement="right">
-                  <Link to={`/${teamId}/${projectId}/chart`}>
-                    <Text color="primary">
-                      <Avatar icon={<Plus size="large" />} squared />
-                    </Text>
-                  </Link>
+                  <div>
+                    <Link to={`/${teamId}/${projectId}/chart`}>
+                      <Text color="primary">
+                        <Avatar icon={<Plus size="large" />} radius="sm" />
+                      </Text>
+                    </Link>
+                  </div>
                 </Tooltip>
               )}
               {menuSize === "large" && (
                 <Link to={`/${teamId}/${projectId}/chart`}>
                   <Button
-                    iconRight={<Plus />}
+                    endContent={<Plus />}
                     auto
                     color="primary"
-                    css={{ pointerEvents: "none" }}
                   >
                     Create a chart
                   </Button>
@@ -199,21 +197,21 @@ function ProjectNavigation(props) {
               )}
             </Row>
           )}
-        <Spacer y={1.5} />
+        <Spacer y={3} />
         <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
           <Link to={`/${teamId}/${projectId}/dashboard`}>
             {menuSize === "small" && (
-              <Row css={{ color: _checkIfActive("dashboard") ? "$blue600" : "$accents8" }}>
+              <Row className={`${_checkIfActive("dashboard") ? "text-blue-600" : "text-default-800" }`}>
                 <Tooltip content="Dashboard" placement="right">
                   <Activity size="large" />
                 </Tooltip>
               </Row>
             )}
             {menuSize === "large" && (
-              <Row css={{ color: _checkIfActive("dashboard") ? "$blue600" : "$accents8" }}>
+              <Row className={`${_checkIfActive("dashboard") ? "text-blue-600" : "text-default-800"}`}>
                 <Activity />
-                <Spacer x={0.2} />
-                <Text h5 css={{ color: _checkIfActive("dashboard") ? "$blue600" : "$accents8" }}>
+                <Spacer x={0.5} />
+                <Text h5 className={`${_checkIfActive("dashboard") ? "text-blue-600" : "text-default-800"}`}>
                   Dashboard
                 </Text>
               </Row>
@@ -222,21 +220,21 @@ function ProjectNavigation(props) {
         </Row>
         {canAccess("editor") && (
           <>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row justify={menuSize === "large" ? "flex-start" : "center"}>
               <Link to={`/${teamId}/${projectId}/connections`}>
                 {menuSize === "small" && (
-                  <Row css={{ color: _checkIfActive("connections") ? "$blue600" : "$accents8" }}>
+                  <Row className={`${_checkIfActive("connections") ? "text-blue-600" : "text-default-800"}`}>
                     <Tooltip content="Connections" placement="right">
                       <FaPlug size={28} />
                     </Tooltip>
                   </Row>
                 )}
                 {menuSize === "large" && (
-                  <Row css={{ color: _checkIfActive("connections") ? "$blue600" : "$accents8" }}>
+                  <Row className={`${_checkIfActive("connections") ? "text-blue-600" : "text-default-800"}`}>
                     <FaPlug size={22} />
-                    <Spacer x={0.2} />
-                    <Text h5 css={{ color: _checkIfActive("connections") ? "$blue600" : "$accents8" }}>
+                    <Spacer x={0.5} />
+                    <Text h5 className={`${_checkIfActive("connections") ? "text-blue-600" : "text-default-800"}`}>
                       Connections
                     </Text>
                   </Row>
@@ -246,22 +244,22 @@ function ProjectNavigation(props) {
           </>
         )}
 
-        <Spacer y={0.5} />
+        <Spacer y={1} />
         <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
           <Link to={`/b/${project.brewName}`}>
-            <LinkNext css={{ color: _checkIfActive("public") ? "$blue600" : "$accents8" }}>
+            <LinkNext className={`${_checkIfActive("public") ? "text-blue-600" : "text-default-800"}`}>
               {menuSize === "small" && (
-                <Row css={{ color: _checkIfActive("public") ? "$blue600" : "$accents8" }}>
+                <Row className={`${_checkIfActive("public") ? "text-blue-600" : "text-default-800"}`}>
                   <Tooltip content="Dashboard report" placement="right">
                     <Graph size="large" />
                   </Tooltip>
                 </Row>
               )}
               {menuSize === "large" && (
-                <Row css={{ color: _checkIfActive("public") ? "$blue600" : "$accents8" }}>
+                <Row className={`${_checkIfActive("public") ? "text-blue-600" : "text-default-800"}`}>
                   <Graph />
-                  <Spacer x={0.2} />
-                  <Text h5 css={{ color: _checkIfActive("public") ? "$blue600" : "$accents8" }}>
+                  <Spacer x={0.5} />
+                  <Text h5 className={`${_checkIfActive("public") ? "text-blue-600" : "text-default-800"}`}>
                     Dashboard report
                   </Text>
                 </Row>
@@ -272,21 +270,21 @@ function ProjectNavigation(props) {
 
         {canAccess("admin") && (
           <>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row justify={menuSize === "large" ? "flex-start" : "center"}>
               <Link to={`/${teamId}/${projectId}/projectSettings`}>
                 {menuSize === "small" && (
-                  <Row css={{ color: _checkIfActive("projectSettings") ? "$blue600" : "$accents8" }}>
+                  <Row className={`${_checkIfActive("projectSettings") ? "text-blue-600" : "text-default-800"}`}>
                     <Tooltip content="Project settings" placement="right">
                       <Setting size="large" />
                     </Tooltip>
                   </Row>
                 )}
                 {menuSize === "large" && (
-                  <Row css={{ color: _checkIfActive("projectSettings") ? "$blue600" : "$accents8" }}>
+                  <Row className={`${_checkIfActive("projectSettings") ? "text-blue-600" : "text-default-800"}`}>
                     <Setting />
-                    <Spacer x={0.2} />
-                    <Text h5 css={{ color: _checkIfActive("projectSettings") ? "$blue600" : "$accents8" }}>
+                    <Spacer x={0.5} />
+                    <Text h5 className={`${_checkIfActive("projectSettings") ? "text-blue-600" : "text-default-800"}`}>
                       Project settings
                     </Text>
                   </Row>
@@ -295,76 +293,76 @@ function ProjectNavigation(props) {
             </Row>
           </>
         )}
-        <Spacer y={1.5} />
+        <Spacer y={3} />
         {canAccess("editor") && (
           <>
             {menuSize === "large" && (
               <>
                 <Row justify="flex-start" align="center">
-                  <Text h6 css={{ color: "$accents8" }}>
+                  <Text b className={"text-default-800"}>
                     Team
                   </Text>
                 </Row>
-                <Spacer y={0.5} />
+                <Spacer y={1} />
               </>
             )}
             <Row justify={menuSize === "large" ? "flex-start" : "center"}>
               <Link to={`/${teamId}/${projectId}/members`}>
                 {menuSize === "small" && (
-                  <Row css={{ color: _checkIfActive("members") ? "$blue600" : "$accents8" }}>
+                  <Row className={`${_checkIfActive("members") ? "text-blue-600" : "text-default-800"}`}>
                     <Tooltip content="Team members" placement="right">
                       <TwoUsers size="large" />
                     </Tooltip>
                   </Row>
                 )}
                 {menuSize === "large" && (
-                  <Row css={{ color: _checkIfActive("members") ? "$blue600" : "$accents8" }}>
+                  <Row className={`${_checkIfActive("members") ? "text-blue-600" : "text-default-800"}`}>
                     <TwoUsers />
-                    <Spacer x={0.2} />
-                    <Text h5 css={{ color: _checkIfActive("members") ? "$blue600" : "$accents8" }}>
+                    <Spacer x={0.5} />
+                    <Text h5 className={`${_checkIfActive("members") ? "text-blue-600" : "text-default-800"}`}>
                       Members
                     </Text>
                   </Row>
                 )}
               </Link>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row justify={menuSize === "large" ? "flex-start" : "center"}>
               <Link to={`/${teamId}/${projectId}/integrations`}>
                 {menuSize === "small" && (
-                  <Row css={{ color: _checkIfActive("integrations") ? "$blue600" : "$accents8" }}>
+                  <Row className={`${_checkIfActive("integrations") ? "text-blue-600" : "text-default-800"}`}>
                     <Tooltip content="Integrations" placement="right">
                       <MdExtension size={28} />
                     </Tooltip>
                   </Row>
                 )}
                 {menuSize === "large" && (
-                  <Row css={{ color: _checkIfActive("integrations") ? "$blue600" : "$accents8" }}>
+                  <Row className={`${_checkIfActive("integrations") ? "text-blue-600" : "text-default-800"}`}>
                     <MdExtension size={24} />
-                    <Spacer x={0.2} />
-                    <Text h5 css={{ color: _checkIfActive("integrations") ? "$blue600" : "$accents8" }}>
+                    <Spacer x={0.5} />
+                    <Text h5 className={`${_checkIfActive("integrations") ? "text-blue-600" : "text-default-800"}`}>
                       Integrations
                     </Text>
                   </Row>
                 )}
               </Link>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             {canAccess("owner") && (
               <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
                 <Link to={`/${teamId}/${projectId}/settings`}>
                   {menuSize === "small" && (
-                    <Row css={{ color: _checkIfActive("settings") ? "$blue600" : "$accents8" }}>
+                    <Row className={`${_checkIfActive("settings") ? "text-blue-600" : "text-default-800"}`}>
                       <Tooltip content="Team settings" placement="right">
                         <MoreSquare size="large" />
                       </Tooltip>
                     </Row>
                   )}
                   {menuSize === "large" && (
-                    <Row css={{ color: _checkIfActive("settings") ? "$blue600" : "$accents8" }}>
+                    <Row className={`${_checkIfActive("settings") ? "text-blue-600" : "text-default-800"}`}>
                       <MoreSquare />
-                      <Spacer x={0.2} />
-                      <Text h5 css={{ color: _checkIfActive("settings") ? "$blue600" : "$accents8" }}>
+                      <Spacer x={0.5} />
+                      <Text h5 className={`${_checkIfActive("settings") ? "text-blue-600" : "text-default-800"}`}>
                         Settings
                       </Text>
                     </Row>
@@ -374,10 +372,10 @@ function ProjectNavigation(props) {
             )}
           </>
         )}
-        <Spacer y={1.5} />
+        <Spacer y={3} />
         <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
           {_checkIfActive("dashboard") && canAccess("editor") && (
-            <LinkNext css={{ color: "$accents8" }} onClick={() => onChangeDrafts(!showDrafts)}>
+            <LinkNext className={"text-default-800"} onClick={() => onChangeDrafts(!showDrafts)}>
               <Tooltip
                 content={showDrafts ? "Click to hide drafts" : "Click to show drafts"}
                 placement="right"
@@ -387,9 +385,9 @@ function ProjectNavigation(props) {
                     showDrafts ? (<Show size="large" />) : (<Hide size="large" />)
                   )}
                   {menuSize === "large" && (showDrafts ? (<Show />) : (<Hide />))}
-                  {menuSize === "large" && <Spacer x={0.2} />}
+                  {menuSize === "large" && <Spacer x={0.5} />}
                   {menuSize === "large" && (
-                    <Text h5 css={{ color: "$accents8" }}>
+                    <Text h5 className={"text-default-800"}>
                       {showDrafts ? "Showing drafts" : "Hiding drafts"}
                     </Text>
                   )}
@@ -398,11 +396,11 @@ function ProjectNavigation(props) {
             </LinkNext>
           )}
         </Row>
-        {menuSize === "small" && <Spacer y={0.5} />}
-        {menuSize === "large" && <Spacer y={1.5} />}
+        {menuSize === "small" && <Spacer y={1} />}
+        {menuSize === "large" && <Spacer y={3} />}
         {menuSize === "large" && (
           <Row justify="flex-end" align="center">
-            <LinkNext css={{ color: "$accents8" }} onClick={() => onSetMenuSize(70)}>
+            <LinkNext className={"text-default-800"} onClick={() => onSetMenuSize(70)}>
               <Tooltip content="Click to collapse menu" placement="right">
                 <ChevronLeftCircle size="large" />
               </Tooltip>
@@ -411,7 +409,7 @@ function ProjectNavigation(props) {
         )}
         {menuSize === "small" && (
           <Row justify="center" align="center">
-            <LinkNext css={{ color: "$accents8" }} onClick={() => onSetMenuSize(sideMaxSize)}>
+            <LinkNext className={"text-default-800"} onClick={() => onSetMenuSize(sideMaxSize)}>
               <Tooltip content="Click to expand menu" placement="right">
                 <ChevronRightCircle size="large" />
               </Tooltip>
@@ -428,7 +426,7 @@ function ProjectNavigation(props) {
               style={{ color: "white" }}
               title={(update && update.tag_name && "New version available") || "Current Chartbrew version"}
             >
-              <Text b css={{ color: "$accents8", fs: 12 }} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
+              <Text b className={"text-default-800 text-[12px]"} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
                 {update && update.tag_name && (
                   <ChevronUpCircle primaryColor={secondary} size="small" />
                 )}
@@ -446,7 +444,7 @@ function ProjectNavigation(props) {
               style={{ color: "white" }}
               title={(update && update.tag_name && "New version available") || "Current Chartbrew version"}
             >
-              <Text b css={{ color: "$accents8", fs: 12 }} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
+              <Text b className={"text-default-800 text-[12px]"} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
                 {update && update.tag_name && (
                   <ChevronUpCircle primaryColor={secondary} size="small" />
                 )}
@@ -457,16 +455,16 @@ function ProjectNavigation(props) {
         </Row>
       </Container>
 
-      <Modal open={showUpdate} closeIcon onClose={() => setShowUpdate(false)}>
-        <Modal.Header>
+      <Modal isOpen={showUpdate} closeButton onClose={() => setShowUpdate(false)}>
+        <ModalHeader>
           <Text h4>{`${update.tag_name} is available`}</Text>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <ReactMarkdown>{update.body}</ReactMarkdown>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
-            flat
+            variant="flat"
             color="warning"
             auto
             onClick={() => setShowUpdate(false)}
@@ -484,7 +482,7 @@ function ProjectNavigation(props) {
               Check the release
             </Button>
           </LinkNext>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
     </div>
   );

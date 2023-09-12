@@ -351,7 +351,7 @@ function NavbarContainer(props) {
                   <CardBody>
                     <BsSun size={24} color="black" />
                     <Spacer x={0.2} />
-                    <Text h5 color="black">Light</Text>
+                    <Text h5 className={"text-black"}>Light</Text>
                   </CardBody>
                 </Card>
 

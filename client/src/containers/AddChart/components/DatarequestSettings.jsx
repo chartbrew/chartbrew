@@ -3,10 +3,8 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Avatar,
-  Badge,
-  Button, Checkbox, Container, Divider, Dropdown, Grid, Input, Loading, Row, Spacer,
-  Text, Tooltip, useTheme,
+  Avatar, Chip, Button, Checkbox, Divider, Input, Spacer, Tooltip,
+  Select, SelectItem,
 } from "@nextui-org/react";
 import {
   CloseSquare, InfoCircle, Play, Plus
@@ -28,6 +26,10 @@ import {
 import connectionImages from "../../../config/connectionImages";
 import fieldFinder from "../../../modules/fieldFinder";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 function DatarequestSettings(props) {
   const {
@@ -42,7 +44,7 @@ function DatarequestSettings(props) {
   const [isSaved, setIsSaved] = useState(false);
   const [isCompiling, setIsCompiling] = useState(false);
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     setTimeout(() => {
@@ -113,13 +115,13 @@ function DatarequestSettings(props) {
       return (
         <>
           <Avatar
-            squared
+            radius="sm"
             src={connectionImages(isDark)[
               dr.Connection.subType || dr.Connection.type
             ]}
             size={size}
           />
-          <Spacer x={0.3} />
+          <Spacer x={0.6} />
         </>
       );
     }
@@ -221,254 +223,236 @@ function DatarequestSettings(props) {
 
   return (
     <div style={{ flex: 1 }} className="drsettings-page-tut">
-      <Grid.Container>
-        <Grid xs={12} sm={7} md={7} css={{ pb: 20 }}>
+      <div className="grid grid-cols-12">
+        <div className="col-span-7 sm:col-span-12 pb-20">
           <Container>
             <Row>
-              <Text b>Main source</Text>
+              <Select
+                variant="bordered"
+                placeholder="Select main source"
+                label="Main source"
+                renderValue={(
+                  <div className="flex items-center gap-2">
+                    { _renderIcon(dataset.main_dr_id)}
+                    {dataRequests.find((dr) => dr.id === dataset.main_dr_id)?.Connection?.name || "Select main source"}  
+                  </div>
+                )}
+                selectedKeys={[dataset.main_dr_id]}
+                onSelectionChange={(key) => _onChangeMainSource(key)}
+                selectionMode="single"
+              >
+                {dataRequests.map((request) => (
+                  <SelectItem
+                    key={request.id}
+                    startContent={(
+                      (request.Connection?.type && (
+                        <Avatar
+                          radius="sm"
+                          src={
+                            connectionImages(isDark)[
+                              request.Connection.subType || request.Connection.type
+                            ]
+                          }
+                        />
+                      )) || null
+                    )}
+                    endContent={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
+                  >
+                    {request.Connection?.name || ""}
+                  </SelectItem>
+                ))}
+              </Select>
             </Row>
-            <Row>
-              <Dropdown isBordered>
-                <Dropdown.Button
-                  auto
-                  bordered
-                  css={{ justifyContent: "space-between", display: "flex" }}
-                  iconRight={null}
-                  className="drsettings-source-tut"
-                >
-                  {_renderIcon(dataset.main_dr_id)}
-                  {dataRequests.find((dr) => dr.id === dataset.main_dr_id)?.Connection?.name || "Select main source"}
-                </Dropdown.Button>
-                <Dropdown.Menu
-                  onAction={(key) => _onChangeMainSource(key)}
-                  selectedKeys={[dataset.main_dr_id]}
-                  selectionMode="single"
-                >
-                  {dataRequests.map((request) => (
-                    <Dropdown.Item
-                      key={request.id}
-                      css={{ height: "fit-content", mb: 5, p: 2 }}
-                      icon={(
-                        (request.Connection?.type && (
-                          <Avatar
-                            squared
-                            src={
-                              connectionImages(isDark)[
-                                request.Connection.subType || request.Connection.type
-                              ]
-                            }
-                          />
-                        )) || null
-                      )}
-                      command={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
-                    >
-                      {request.Connection?.name || ""}
-                    </Dropdown.Item>
-                  ))}
-                </Dropdown.Menu>
-              </Dropdown>
-            </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             {joins.map((join, index) => (
-              <Grid.Container key={join.key}>
-                <Grid xs={6} sm={1} alignItems="center">
+              <div className="grid grid-cols-12" key={join.key}>
+                <div className="col-span-1 sm:col-span-6 flex items-center">
                   <Text>Join</Text>
-                </Grid>
-                <Grid xs={6} sm={5}>
-                  <Dropdown isBordered>
-                    <Dropdown.Button
-                      auto
-                      bordered
-                      css={{ justifyContent: "space-between", display: "flex", width: "100%" }}
-                      iconRight={null}
-                      disabled={index === 0}
-                    >
-                      {_renderIcon(join.dr_id, "sm")}
-                      {dataRequests.find((dr) => dr.id === join.dr_id)?.Connection?.name || "Select source"}
-                      {join.dr_id && (
-                        <Badge variant={"bordered"} css={{ ml: 5 }} size="xs" color="primary">
-                          {dataRequests.findIndex((o) => o.id === join.dr_id) + 1}
-                        </Badge>
-                      )}
-                    </Dropdown.Button>
-                    <Dropdown.Menu
-                      onAction={(key) => _onChangeJoin(join.key, { dr_id: parseInt(key, 10) })}
-                      selectedKeys={[join.dr_id]}
-                      selectionMode="single"
-                    >
-                      {_getAllowedDataRequests(index).map((request) => (
-                        <Dropdown.Item
-                          key={request.id}
-                          css={{ height: "fit-content", mb: 5, p: 2 }}
-                          icon={(
-                            <Avatar
-                              squared
-                              src={connectionImages(isDark)[
-                                request.Connection.subType || request.Connection.type
-                              ]}
-                            />
-                          )}
-                          command={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
-                        >
-                          {request.Connection.name}
-                        </Dropdown.Item>
-                      ))}
-                    </Dropdown.Menu>
-                  </Dropdown>
-                </Grid>
-                <Grid xs={6} sm={1} justify="center" alignItems="center">
+                </div>
+                <div className="col-span-5 sm:col-span-6">
+                  <Select
+                    variant="bordered"
+                    placeholder="Select source"
+                    renderValue={(
+                      <div className="flex items-center gap-2">
+                        {_renderIcon(join.dr_id, "sm")}
+                        {dataRequests.find((dr) => dr.id === join.dr_id)?.Connection?.name || "Select source"}
+                        {join.dr_id && (
+                          <Chip variant={"bordered"} size="xs" color="primary">
+                            {dataRequests.findIndex((o) => o.id === join.dr_id) + 1}
+                          </Chip>
+                        )}
+                      </div>
+                    )}
+                    selectedKeys={[join.dr_id]}
+                    onSelectionChange={(key) => _onChangeJoin(join.key, { dr_id: parseInt(key, 10) })}
+                    selectionMode="single"
+                    color="primary"
+                  >
+                    {_getAllowedDataRequests(index).map((request) => (
+                      <SelectItem
+                        key={request.id}
+                        startContent={(
+                          <Avatar
+                            radius="sm"
+                            src={connectionImages(isDark)[
+                              request.Connection.subType || request.Connection.type
+                            ]}
+                          />
+                        )}
+                        endContent={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
+                      >
+                        {request.Connection.name}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                </div>
+                <div className="col-span-1 sm:col-span-6 flex justify-center items-center">
                   <Text>with</Text>
-                </Grid>
-                <Grid xs={6} sm={5}>
-                  <Dropdown isBordered>
-                    <Dropdown.Button
-                      auto
-                      bordered
-                      css={{ justifyContent: "space-between", display: "flex", width: "100%" }}
-                      iconRight={null}
-                      color="secondary"
-                    >
-                      {_renderIcon(join.join_id, "sm")}
-                      {dataRequests.find((dr) => dr.id === join.join_id)?.Connection?.name || "Select source"}
-                      {join.join_id && (
-                        <Badge variant={"bordered"} css={{ ml: 5 }} size="xs" color="secondary">
-                          {dataRequests.findIndex((o) => o.id === join.join_id) + 1}
-                        </Badge>
-                      )}
-                    </Dropdown.Button>
-                    <Dropdown.Menu
-                      onAction={(key) => _onChangeJoin(join.key, { join_id: parseInt(key, 10) })}
-                      selectedKeys={[join.join_id]}
-                      selectionMode="single"
-                    >
-                      {dataRequests.map((request) => (
-                        <Dropdown.Item
-                          key={request.id}
-                          css={{ height: "fit-content", mb: 5, p: 2 }}
-                          icon={(
-                            <Avatar
-                              squared
-                              src={connectionImages(isDark)[
-                                request.Connection.subType || request.Connection.type
-                              ]}
-                            />
-                          )}
-                          command={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
-                        >
-                          {request.Connection.name}
-                        </Dropdown.Item>
-                      ))}
-                    </Dropdown.Menu>
-                  </Dropdown>
-                </Grid>
-                <Grid xs={12}>
-                  <Spacer y={0.5} />
-                </Grid>
-                <Grid xs={6} sm={1} alignItems="center">
+                </div>
+                <div className="col-span-5 sm:col-span-6">
+                  <Select
+                    variant="bordered"
+                    placeholder="Select source"
+                    renderValue={(
+                      <div className="flex items-center gap-2">
+                        { _renderIcon(join.join_id, "sm")}
+                        {dataRequests.find((dr) => dr.id === join.join_id)?.Connection?.name || "Select source"}
+                        {join.join_id && (
+                          <Chip variant={"bordered"} size="xs" color="secondary">
+                            {dataRequests.findIndex((o) => o.id === join.join_id) + 1}
+                          </Chip>
+                        )}
+                      </div>
+                    )}
+                    selectedKeys={[join.join_id]}
+                    onSelectionChange={(key) => _onChangeJoin(join.key, { join_id: parseInt(key, 10) })}
+                    selectionMode="single"
+                    color="secondary"
+                  >
+                    {dataRequests.map((request) => (
+                      <SelectItem
+                        key={request.id}
+                        startContent={(
+                          <Avatar
+                            radius="sm"
+                            src={connectionImages(isDark)[
+                              request.Connection.subType || request.Connection.type
+                            ]}
+                          />
+                        )}
+                        endContent={`${dataRequests.findIndex((o) => o.id === request.id) + 1}`}
+                      >
+                        {request.Connection.name}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                </div>
+                <div className="col-span-12">
+                  <Spacer y={1} />
+                </div>
+                <div className="col-span-1 sm:col-span-6 flex items-center">
                   <Text>where</Text>
-                </Grid>
-                <Grid xs={6} sm={5} css={styles.fieldContainer}>
-                  <Dropdown isBordered>
-                    <Dropdown.Trigger>
-                      <Badge variant={"bordered"} isSquared color="primary">
+                </div>
+                <div className="col-span-5 sm:col-span-6" style={styles.fieldContainer}>
+                  <Select
+                    variant="bordered"
+                    placeholder="Select field"
+                    renderValue={(
+                      <Chip variant={"bordered"} radius="sm" color="primary">
                         <div style={styles.fieldContainer}>
                           <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                             {_renderIcon(join.dr_id, "xs")}
-                            <Text size={12}>{dataRequests.find((dr) => dr.id === join.dr_id)?.Connection?.name || "Select source"}</Text>
-                            <Spacer x={0.2} />
-                            <Text size={12} b color="primary">
+                            <Text size={"sm"}>{dataRequests.find((dr) => dr.id === join.dr_id)?.Connection?.name || "Select source"}</Text>
+                            <Spacer x={0.5} />
+                            <Text size={"sm"} b color="primary">
                               {dataRequests.findIndex((o) => o.id === join.dr_id) + 1}
                             </Text>
                           </div>
-                          <Spacer y={0.2} />
+                          <Spacer y={0.5} />
                           <div
                             style={styles.fieldContainer}
                           >
-                            <Text size={14} b>{_renderHumanField(join.dr_field) || "Select field"}</Text>
+                            <Text b>{_renderHumanField(join.dr_field) || "Select field"}</Text>
                           </div>
                         </div>
-                      </Badge>
-                    </Dropdown.Trigger>
-                    <Dropdown.Menu
-                      onAction={(key) => _onChangeJoin(join.key, { dr_field: key })}
-                      selectedKeys={[join.dr_field]}
-                      selectionMode="single"
-                      css={{ minWidth: "max-content" }}
-                    >
-                      {_getFieldOptions(join.key, "dr_id").map((f) => (
-                        <Dropdown.Item key={f.field}>{_renderHumanField(f.field)}</Dropdown.Item>
-                      ))}
-                    </Dropdown.Menu>
-                  </Dropdown>
-                </Grid>
-                <Grid xs={6} sm={1} justify="center" alignItems="center">
+                      </Chip>
+                    )}
+                    selectedKeys={[join.dr_field]}
+                    onSelectionChange={(key) => _onChangeJoin(join.key, { dr_field: key })}
+                    selectionMode="single"
+                    color="primary"
+                  >
+                    {_getFieldOptions(join.key, "dr_id").map((f) => (
+                      <SelectItem key={f.field}>{_renderHumanField(f.field)}</SelectItem>
+                    ))}
+                  </Select>
+                </div>
+                <div className="col-span-1 sm:col-span-6 flex justify-center items-center">
                   <Text>=</Text>
-                </Grid>
-                <Grid xs={6} sm={5} css={styles.fieldContainer}>
-                  <Dropdown isBordered>
-                    <Dropdown.Trigger css={{ width: "100%" }}>
-                      <Badge variant={"bordered"} isSquared color="secondary">
+                </div>
+                <div className="col-span-5 sm:col-span-6" style={styles.fieldContainer}>
+                  <Select
+                    variant="bordered"
+                    placeholder="Select field"
+                    renderValue={(
+                      <Chip variant={"bordered"} radius="sm" color="secondary">
                         <div style={styles.fieldContainer}>
                           <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                             {_renderIcon(join.join_id, "xs")}
-                            <Text size={12}>{dataRequests.find((dr) => dr.id === join.join_id)?.Connection?.name || "Select source"}</Text>
-                            <Spacer x={0.2} />
-                            <Text size={12} b color="secondary">
+                            <Text size={"sm"}>{dataRequests.find((dr) => dr.id === join.join_id)?.Connection?.name || "Select source"}</Text>
+                            <Spacer x={0.5} />
+                            <Text size={"sm"} b color="secondary">
                               {dataRequests.findIndex((o) => o.id === join.join_id) + 1}
                             </Text>
                           </div>
-                          <Spacer y={0.2} />
+                          <Spacer y={0.5} />
                           <div style={styles.fieldContainer}>
-                            <Text size={14} b>{_renderHumanField(join.join_field) || "Select field"}</Text>
+                            <Text b>{_renderHumanField(join.join_field) || "Select field"}</Text>
                           </div>
                         </div>
-                      </Badge>
-                    </Dropdown.Trigger>
-                    <Dropdown.Menu
-                      onAction={(key) => _onChangeJoin(join.key, { join_field: key })}
-                      selectedKeys={[join.join_field]}
-                      selectionMode="single"
-                      css={{ minWidth: "max-content" }}
-                    >
-                      {_getFieldOptions(join.key, "join_id").map((f) => (
-                        <Dropdown.Item key={f.field}>{_renderHumanField(f.field)}</Dropdown.Item>
-                      ))}
-                    </Dropdown.Menu>
-                  </Dropdown>
-                </Grid>
-                <Grid xs={12}>
-                  <Spacer y={0.5} />
-                </Grid>
-                <Grid xs={12} sm={1} alignItems="center">
+                      </Chip>
+                    )}
+                    selectedKeys={[join.join_field]}
+                    onSelectionChange={(key) => _onChangeJoin(join.key, { join_field: key })}
+                    selectionMode="single"
+                    color="secondary"
+                  >
+                    {_getFieldOptions(join.key, "join_id").map((f) => (
+                      <SelectItem key={f.field}>{_renderHumanField(f.field)}</SelectItem>
+                    ))}
+                  </Select>
+                </div>
+                <div className="col-span-12">
+                  <Spacer y={1} />
+                </div>
+                <div className="col-span-1 sm:col-span-12 flex items-center">
                   Alias
-                </Grid>
-                <Grid xs={12} sm={5}>
+                </div>
+                <div className="col-span-5 sm:col-span-12">
                   <Input
-                    css={{ width: "100%" }}
+                    fullWidth
                     placeholder="Enter a unique join alias"
                     value={join.alias}
                     onChange={(e) => _onChangeJoin(join.key, { alias: e.target.value })}
-                    bordered
+                    variant="bordered"
                     size="sm"
-                    animated={false}
                   />
-                </Grid>
-                <Grid xs={12} direction="column">
-                  <Spacer y={1} />
+                </div>
+                <div className="col-span-12">
+                  <Spacer y={2} />
                   <Divider />
-                  <Spacer y={1} />
-                </Grid>
-              </Grid.Container>
+                  <Spacer y={2} />
+                </div>
+              </div>
             ))}
             {joins.length > 0 && (
               <Row>
                 <Button
                   auto
-                  light
+                  variant="light"
                   color="danger"
-                  icon={<CloseSquare />}
-                  ripple={false}
-                  css={{ p: 0 }}
+                  startContent={<CloseSquare />}
                   onClick={() => _onRemoveLastJoin()}
                 >
                   Remove last join
@@ -478,49 +462,47 @@ function DatarequestSettings(props) {
             <Row className="drsettings-join-tut">
               <Button
                 auto
-                light
+                variant="light"
                 color="primary"
-                icon={<Plus />}
-                ripple={false}
-                css={{ p: 0 }}
+                startContent={<Plus />}
                 onClick={() => _onAddJoin()}
               >
                 Join with another source
               </Button>
             </Row>
             <>
-              <Spacer y={1} />
+              <Spacer y={2} />
               <Divider />
-              <Spacer y={1} />
+              <Spacer y={2} />
             </>
             <Row>
               <Button
                 auto
                 onClick={() => _onSaveJoins()}
                 size="sm"
-                disabled={saveLoading || isSaved}
+                disabled={isSaved}
+                isLoading={saveLoading}
                 color={isSaved ? "success" : "primary"}
               >
-                {saveLoading && <Loading type="points-opacity" />}
-                {!saveLoading && !isSaved && "Save"}
-                {!saveLoading && isSaved && "Saved"}
+                {!isSaved && "Save"}
+                {isSaved && "Saved"}
               </Button>
-              <Spacer x={0.3} />
+              <Spacer x={0.6} />
               {!isSaved && (
                 <Button
                   auto
                   color="warning"
                   onClick={() => _onRevertChanges()}
                   size="sm"
-                  flat
+                  variant="flat"
                 >
                   Revert changes
                 </Button>
               )}
             </Row>
           </Container>
-        </Grid>
-        <Grid xs={12} sm={5} md={5}>
+        </div>
+        <div className="col-span-5 sm:col-span-12">
           <div className="drsettings-compile-tut" style={{ display: "flex", flex: 1 }}>
             <Container>
               <Row>
@@ -528,13 +510,13 @@ function DatarequestSettings(props) {
                   css={{ width: "100%" }}
                   color="primary"
                   onClick={() => _onRunDataset()}
-                  iconRight={isCompiling ? <Loading type="spinner" /> : <Play />}
-                  disabled={isCompiling}
+                  endContent={<Play />}
+                  isLoading={isCompiling}
                 >
                   Compile dataset data
                 </Button>
               </Row>
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               <Row align="center">
                 <Checkbox
                   label="Use cache"
@@ -542,18 +524,18 @@ function DatarequestSettings(props) {
                   onChange={() => setInvalidateCache(!invalidateCache)}
                   size="sm"
                 />
-                <Spacer x={0.2} />
+                <Spacer x={0.5} />
                 <Tooltip
                   content="If checked, Chartbrew will use cached data instead of making requests to your data source. The cache gets automatically invalidated when you change the collections and/or filters."
-                  css={{ zIndex: 10000, maxWidth: 500 }}
                   placement="leftStart"
+                  className="max-w-[500px]"
                 >
                   <InfoCircle size="small" />
                 </Tooltip>
               </Row>
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               <Row>
-                <div style={{ width: "100%" }}>
+                <div className="w-full">
                   <AceEditor
                     mode="json"
                     theme={isDark ? "one_dark" : "tomorrow"}
@@ -568,10 +550,10 @@ function DatarequestSettings(props) {
                   />
                 </div>
               </Row>
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               <Row align="center">
                 <InfoCircle size="small" />
-                <Spacer x={0.2} />
+                <Spacer x={0.5} />
                 <Text small>
                   {"To keep the interface fast, not all the data might show up here."}
                 </Text>
@@ -579,8 +561,8 @@ function DatarequestSettings(props) {
 
             </Container>
           </div>
-        </Grid>
-      </Grid.Container>
+        </div>
+      </div>
     </div>
   );
 }

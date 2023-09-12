@@ -579,7 +579,7 @@ function ProjectDashboard(props) {
           </div>
         </Container>
       </div>
-
+      
       <Filters
         charts={charts}
         projectId={match.params.projectId}

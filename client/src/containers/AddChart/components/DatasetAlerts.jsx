@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Badge, Button, Checkbox, Container, Dropdown, Input, Link, Loading,
-  Modal, Row, Spacer, Switch, Text,
+  Chip, Button, Checkbox, Dropdown, Input, Link, Modal, Spacer,
+  Switch, ModalHeader, ModalBody, ModalFooter, Select,
 } from "@nextui-org/react";
 import {
   Delete, Message, Notification, Plus, VolumeOff
@@ -23,6 +23,9 @@ import {
   getTeamIntegrations as getTeamIntegrationsAction,
 } from "../../../actions/integration";
 import autoUpdatePicture from "../../../assets/chartbrew-auto-update.jpg";
+import Container from "../../../components/Container";
+import Text from "../../../components/Text";
+import Row from "../../../components/Row";
 
 const ruleTypes = [{
   label: "When reaching a milestone",
@@ -263,31 +266,29 @@ function DatasetAlerts(props) {
 
   return (
     <div className="dataset-alerts-tut">
-      <Container css={{ pl: 0, pr: 0 }}>
+      <Container className={"pl-0 pr-0"}>
         <Row wrap="wrap">
           {datasetAlerts.length === 0 && (
-            <Badge color="secondary" content={"New"} size="xs">
-              <Button
-                color="primary"
-                auto
-                iconRight={<Notification />}
-                size="sm"
-                onClick={_onOpen}
-              >
-                Set up alerts
-              </Button>
-            </Badge>
+            <Button
+              color="primary"
+              auto
+              endContent={<Notification />}
+              size="sm"
+              onClick={_onOpen}
+            >
+              Set up alerts
+            </Button>
           )}
           {datasetAlerts.length > 0 && datasetAlerts.map((alert) => (
             <>
               <Button
                 color={alert.active ? "primary" : "secondary"}
                 auto
-                bordered
+                variant="bordered"
                 size="sm"
-                css={{ mb: 5 }}
+                className="mb-5"
                 onClick={() => _onEdit(alert)}
-                iconRight={alert.active ? <Notification size="small" /> : <VolumeOff size="small" />}
+                endContent={alert.active ? <Notification size="small" /> : <VolumeOff size="small" />}
               >
                 {alert.type === "milestone" && "Milestone"}
                 {alert.type === "threshold_above" && "Above threshold"}
@@ -296,21 +297,21 @@ function DatasetAlerts(props) {
                 {alert.type === "threshold_outside" && "Outside thresholds"}
                 {alert.type === "anomaly" && "Anomaly detection"}
               </Button>
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
             </>
           ))}
         </Row>
         {datasetAlerts.length > 0 && (
           <>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <Button
                 color="primary"
                 auto
-                icon={<Plus />}
+                startContent={<Plus />}
                 size="sm"
                 onClick={_onOpen}
-                light
+                variant="light"
               >
                 Set up new alert
               </Button>
@@ -318,38 +319,34 @@ function DatasetAlerts(props) {
           </>
         )}
       </Container>
-      <Modal open={open} onClose={() => setOpen(false)} width="800px">
-        <Modal.Header>
-          <Text h4 css={{ ac: "center", d: "flex", flexDirection: "row" }}>
+      <Modal isOpen={open} onClose={() => setOpen(false)} className="w-[800px]">
+        <ModalHeader>
+          <Text h4>
             {newAlert.id ? "Edit alert" : "Set up a new alert"}
-            <Spacer x={0.5} />
-            <Badge color="secondary" size="sm" css={{ pl: 10, pr: 10 }}>
-              Beta
-            </Badge>
           </Text>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <Container>
             <Row align="center">
-              <Dropdown isBordered>
-                <Dropdown.Button auto color="primary" bordered>
-                  {ruleTypes.find((r) => r.value === newAlert.type)?.label || "Select an alert type"}
-                </Dropdown.Button>
-                <Dropdown.Menu
-                  onAction={(key) => setNewAlert({ ...newAlert, type: key })}
-                  selectedKeys={[newAlert.type]}
-                  selectionMode="single"
-                  css={{ minWidth: "max-content" }}
-                >
-                  {ruleTypes.map((rule) => (
-                    <Dropdown.Item key={rule.value}>
-                      {rule.label}
-                    </Dropdown.Item>
-                  ))}
-                </Dropdown.Menu>
-              </Dropdown>
+              <Select
+                variant="bordered"
+                renderValue={(
+                  <Text>
+                    {ruleTypes.find((r) => r.value === newAlert.type)?.label || "Select an alert type"}
+                  </Text>
+                )}
+                selectedKeys={[newAlert.type]}
+                onSelectionChange={(key) => setNewAlert({ ...newAlert, type: key })}
+                selectionMode="single"
+              >
+                {ruleTypes.map((rule) => (
+                  <Dropdown.Item key={rule.value}>
+                    {rule.label}
+                  </Dropdown.Item>
+                ))}
+              </Select>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
 
             {(newAlert.type === "milestone" || newAlert.type === "threshold_above" || newAlert.type === "threshold_below")
               && (
@@ -359,7 +356,7 @@ function DatasetAlerts(props) {
                     label={newAlert.type === "milestone" ? "Milestone" : "Threshold"}
                     type="number"
                     fullWidth
-                    bordered
+                    variant="bordered"
                     value={newAlert.rules.value}
                     onChange={(e) => {
                       setNewAlert({
@@ -378,7 +375,7 @@ function DatasetAlerts(props) {
                   label="Lower threshold"
                   type="number"
                   fullWidth
-                  bordered
+                  variant="bordered"
                   value={newAlert.rules.lower}
                   onChange={(e) => {
                     setNewAlert({
@@ -387,13 +384,13 @@ function DatasetAlerts(props) {
                     });
                   }}
                 />
-                <Spacer x={0.5} />
+                <Spacer x={1} />
                 <Input
                   placeholder="Enter a threshold"
                   label="Upper threshold"
                   type="number"
                   fullWidth
-                  bordered
+                  variant="bordered"
                   value={newAlert.rules.upper}
                   onChange={(e) => {
                     setNewAlert({
@@ -413,57 +410,57 @@ function DatasetAlerts(props) {
               </Row>
             )}
 
-            <Spacer y={1} />
+            <Spacer y={2} />
             {newAlert.type && (
               <>
                 <Row>
                   <Text b>Where should we send the alerts?</Text>
                 </Row>
-                <Spacer y={0.5} />
+                <Spacer y={1} />
                 <Row wrap="wrap" align="center">
                   <Button
                     auto
-                    icon={<Message size="small" />}
+                    startContent={<Message size="small" />}
                     color="secondary"
                     size="sm"
-                    bordered={!newAlert.mediums.email?.enabled}
+                    variant={!newAlert.mediums.email?.enabled ? "bordered": "filled"}
                     onClick={() => _onChangeMediums("email")}
                   >
                     Email
                   </Button>
-                  <Spacer x={0.5} />
+                  <Spacer x={1} />
                   {integrations && integrations.map((integration) => (
                     <>
                       <Button
                         auto
-                        icon={
+                        startContent={
                           integration.type === "webhook" ? <TbWebhook />
                             : integration.type === "slack" ? <FaSlack />
                               : null
                         }
                         color="secondary"
                         size="sm"
-                        bordered={
+                        variant={
                           selectedIntegrations.length === 0
                           || !selectedIntegrations.find(
                             (i) => i.integration_id === integration.id && i.enabled
-                          )
+                          ) ? "bordered" : "filled"
                         }
                         onClick={() => _onSelectIntegration(integration)}
                       >
                         {integration.name}
                       </Button>
-                      <Spacer x={0.3} />
+                      <Spacer x={0.6} />
                     </>
                   ))}
                 </Row>
-                <Spacer y={0.5} />
+                <Spacer y={1} />
                 <Row>
                   <Button
                     auto
-                    icon={<Plus size="small" />}
+                    startContent={<Plus size="small" />}
                     color="primary"
-                    light
+                    variant="light"
                     size="sm"
                     onClick={_onCreateNewIntegration}
                   >
@@ -471,9 +468,9 @@ function DatasetAlerts(props) {
                   </Button>
                   <Button
                     auto
-                    icon={<HiRefresh size={18} />}
+                    startContent={<HiRefresh size={18} />}
                     color="primary"
-                    light
+                    variant="light"
                     size="sm"
                     onClick={_onRefreshIntegrationList}
                   >
@@ -482,23 +479,23 @@ function DatasetAlerts(props) {
                 </Row>
                 {newAlert.mediums.email?.enabled && (
                 <>
-                  <Spacer y={1} />
+                  <Spacer y={2} />
                   <Row>
                     <Text b>Email alerts - Who should receive them?</Text>
                   </Row>
-                  <Spacer y={0.5} />
+                  <Spacer y={1} />
                   <Row wrap="wrap">
                     {teamMembers.map((member) => (
                       <Link key={member.email} onClick={() => _onChangeRecipient(member.email)}>
-                        <Badge
+                        <Chip
                           color="primary"
-                          isSquared
+                          radius="sm"
                           variant={newAlert.recipients.includes(member.email) ? "default" : "bordered"}
-                          css={{ mb: 5 }}
+                          className="mb-5"
                         >
                           {member.email}
-                        </Badge>
-                        <Spacer x={0.2} />
+                        </Chip>
+                        <Spacer x={0.5} />
                       </Link>
                     ))}
                   </Row>
@@ -509,47 +506,46 @@ function DatasetAlerts(props) {
 
             {newAlert.type && (
               <>
-                <Spacer y={1} />
+                <Spacer y={2} />
                 <Row>
                   <Text b>Add a timeout between alerts of the same type</Text>
                 </Row>
                 <Row>
                   <Text small>By default, data is checked after each automatic chart update</Text>
                 </Row>
-                <Spacer y={0.5} />
+                <Spacer y={1} />
                 <Row>
                   <Input
                     placeholder="Enter a timeout"
                     type="number"
                     fullWidth
-                    bordered
+                    variant="bordered"
                     value={displayTimeout}
                     onChange={(e) => setDisplayTimeout(e.target.value)}
                   />
-                  <Spacer x={0.5} />
-                  <Dropdown isBordered>
-                    <Dropdown.Button bordered>
-                      {timeoutUnit}
-                    </Dropdown.Button>
-                    <Dropdown.Menu
-                      onAction={(key) => setTimeoutUnit(key)}
-                      selectedKeys={[timeoutUnit]}
-                      selectionMode="single"
-                    >
-                      {timePeriods.map((period) => (
-                        <Dropdown.Item key={period.value}>
-                          {period.label}
-                        </Dropdown.Item>
-                      ))}
-                    </Dropdown.Menu>
-                  </Dropdown>
+                  <Spacer x={1} />
+                  <Select
+                    variant="bordered"
+                    renderValue={(
+                      <Text>{timeoutUnit}</Text>
+                    )}
+                    selectedKeys={[timeoutUnit]}
+                    onSelectionChange={(key) => setTimeoutUnit(key)}
+                    selectionMode="single"
+                  >
+                    {timePeriods.map((period) => (
+                      <Dropdown.Item key={period.value}>
+                        {period.label}
+                      </Dropdown.Item>
+                    ))}
+                  </Select>
                 </Row>
               </>
             )}
 
             {newAlert.type && newAlert.type !== "milestone" && (
               <>
-                <Spacer y={1} />
+                <Spacer y={2} />
                 <Row>
                   <Checkbox
                     isSelected={newAlert.oneTime}
@@ -564,9 +560,9 @@ function DatasetAlerts(props) {
 
             {chart && !chart.autoUpdate && (
               <>
-                <Spacer y={1} />
+                <Spacer y={2} />
                 <Row>
-                  <Container css={{ backgroundColor: "$yellow100", p: 10, br: "$md" }}>
+                  <Container className={"bg-secondary-100 p-10 rounded-md"}>
                     <Row>
                       <Text>
                         {"In order for the alert to trigger, you must enable automatic chart updates from the dashboard."}
@@ -582,47 +578,47 @@ function DatasetAlerts(props) {
 
             {showAutoUpdate && (
               <>
-                <Spacer y={1} />
+                <Spacer y={2} />
                 <Row justify="center">
                   <img width="400" src={autoUpdatePicture} alt="Auto update tutorial" />
                 </Row>
               </>
             )}
           </Container>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Switch
-            checked={newAlert.active}
+            isSelected={newAlert.active}
             onChange={(e) => setNewAlert({ ...newAlert, active: e.target.checked })}
             size="sm"
-            css={{ p: 0 }}
+            className="p-0"
           />
           <Text>{newAlert.active ? "Alert enabled" : "Alert disabled"}</Text>
           {newAlert.id && (
             <Button
               auto
               color="danger"
-              icon={deleteLoading ? <Loading type="spinner" color="currentColor" /> : <Delete />}
-              light
+              endContent={<Delete />}
+              variant="light"
               onClick={() => _onDelete()}
-              disabled={deleteLoading}
+              isLoading={deleteLoading}
             >
               Delete alert
             </Button>
           )}
-          <Button auto onClick={() => setOpen(false)} color="warning" flat>
+          <Button auto onClick={() => setOpen(false)} color="warning" variant="flat">
             Close
           </Button>
           <Button
             auto
             onClick={() => _onSaveAlert()}
             color="primary"
-            disabled={newAlert.mediums.length === 0 || !newAlert.type || loading}
-            icon={loading ? <Loading type="spinner" color="currentColor" /> : null}
+            disabled={newAlert.mediums.length === 0 || !newAlert.type}
+            isLoading={loading}
           >
             {newAlert.id ? "Update alert" : "Create alert"}
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
     </div>
   );

@@ -3,15 +3,27 @@ import { tv } from "tailwind-variants";
 import PropTypes from "prop-types";
 
 const text = tv({
-  base: "text-base",
+  base: "text-base text-default",
   variants: {
     small: "text-sm",
-    h4: "text-lg",
-    h3: "text-xl",
-    h2: "text-2xl",
-    h1: "text-3xl",
-    b: "font-bold",
-    i: "italic",
+    h4: {
+      true: "text-lg",
+    },
+    h3: {
+      true: "text-xl",
+    },
+    h2: {
+      true: "text-2xl"
+    },
+    h1: {
+      true: "text-3xl",
+    },
+    b: {
+      true: "font-bold",
+    },
+    i: {
+      true: "italic",
+    },
     size: {
       xs: "text-xs",
       sm: "text-sm",

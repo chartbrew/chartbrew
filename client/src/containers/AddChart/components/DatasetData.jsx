@@ -13,8 +13,8 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import update from "immutability-helper";
 import {
-  Button, Collapse, Container, Dropdown, Grid, Input, Link, Loading, theme,
-  Popover, Row, Spacer, Text, Tooltip, Divider, Badge, Switch, Modal, Checkbox,
+  Button, Accordion, Dropdown, Input, Link, semanticColors,
+  Popover, Spacer, Tooltip, Divider, Chip, Badge, Switch, Modal, Checkbox, DropdownMenu, DropdownTrigger, DropdownItem, PopoverTrigger, PopoverContent, AccordionItem, ModalHeader, ModalBody, ModalFooter,
 } from "@nextui-org/react";
 import { TbDragDrop, TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import {
@@ -34,6 +34,10 @@ import { operations, operators } from "../../../modules/filterOperations";
 import DraggableLabel from "./DraggableLabel";
 import TableDataFormattingModal from "./TableDataFormattingModal";
 import DatasetAlerts from "./DatasetAlerts";
+import Container from "../../../components/Container";
+import Text from "../../../components/Text";
+import Row from "../../../components/Row";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 function formatColumnsForOrdering(columns) {
   if (!columns) {
@@ -61,7 +65,6 @@ function DatasetData(props) {
   const [xFieldFilter, setXFieldFilter] = useState("");
   const [yFieldFilter, setYFieldFilter] = useState("");
   const [dateFieldFilter, setDateFieldFilter] = useState("");
-  const [groupByFilter, setGroupByFilter] = useState("");
   const [conditionModal, setConditionModal] = useState(false);
   const [selectedCondition, setSelectedCondition] = useState({});
   const [requestResult, setRequestResult] = useState(null);
@@ -74,7 +77,8 @@ function DatasetData(props) {
   const yFieldRef = useRef(null);
   const xFieldRef = useRef(null);
   const dateFieldRef = useRef(null);
-  const groupByRef = useRef(null);
+
+  const theme = useThemeDetector() ? "dark" : "light";
 
   // Update the content when there is some data to work with
   useEffect(() => {
@@ -517,26 +521,6 @@ function DatasetData(props) {
     return filteredOptions;
   };
 
-  const _getGroupByFields = () => {
-    const filtered = fieldOptions.filter((f) => {
-      if (f.type !== "object" && f.type !== "array") {
-        if (f.key.replace("root[].", "").indexOf(".") === -1) return true;
-      }
-
-      return false;
-    });
-
-    if (!groupByFilter) return filtered;
-
-    return filtered
-      .filter((o) => o.text?.toString().toLowerCase().includes(groupByFilter.toLowerCase()));
-  };
-
-  const _onChangeGroupBy = (e, key) => {
-    onUpdate({ groupBy: key || null });
-    setGroupByFilter("");
-  };
-
   const _onDragStateClicked = () => {
     setIsDragState(!isDragState);
 
@@ -630,10 +614,10 @@ function DatasetData(props) {
 
   return (
     <>
-      <Grid.Container gap={1}>
-        <Grid xs={12} sm={6} md={6} className="datasetdata-axes-tut" direction="column">
+      <div className="grid grid-cols-12 gap-1">
+        <div className="col-span-6 sm:col-span-12 datasetdata-axes-tut">
           <div style={styles.rowDisplay}>
-            <Text size={14} b>
+            <Text b>
               {chartType === "pie"
                 || chartType === "radar"
                 || chartType === "polar"
@@ -645,13 +629,13 @@ function DatasetData(props) {
               <>
                 <Spacer x={0.3} />
                 <Tooltip content="The selected field is not available in the data. Please select another.">
-                  <Danger primaryColor={theme.colors.error.value} />
+                  <Danger primaryColor={semanticColors[theme].danger.DEFAULT} />
                 </Tooltip>
               </>
             )}
           </div>
           <div style={styles.rowDisplay}>
-            <Dropdown isBordered>
+            <Dropdown>
               <Dropdown.Trigger type="text">
                 <Input
                   type="text"
@@ -694,8 +678,8 @@ function DatasetData(props) {
               </>
             )}
           </div>
-        </Grid>
-        <Grid xs={12} sm={6} md={6} className="datasetdata-date-tut" direction="column">
+        </div>
+        <div className="col-span-6 sm:col-span-12 datasetdata-date-tut" direction="column">
           <div style={styles.rowDisplay}>
             <Text size={14} b>{"Date filtering field"}</Text>
             {dataset.dateField
@@ -709,8 +693,8 @@ function DatasetData(props) {
             )}
           </div>
           <div style={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
-            <Dropdown isBordered>
-              <Dropdown.Trigger type="text">
+            <Dropdown>
+              <DropdownTrigger type="text">
                 <Input
                   type="text"
                   value={
@@ -721,41 +705,41 @@ function DatasetData(props) {
                   placeholder="Double-click to search"
                   onChange={(e) => setDateFieldFilter(e.target.value)}
                   ref={dateFieldRef}
-                  contentRight={document.activeElement === dateFieldRef.current ? "↵" : null}
+                  endContent={document.activeElement === dateFieldRef.current ? "↵" : null}
                 />
-              </Dropdown.Trigger>
-              <Dropdown.Menu
+              </DropdownTrigger>
+              <DropdownMenu
+                variant="bordered"
                 onAction={_selectDateField}
                 selectedKeys={[dataset.dateField]}
                 selectionMode="single"
-                css={{ minWidth: "max-content" }}
               >
                 {_getDateFieldOptions().map((option) => (
-                  <Dropdown.Item
+                  <DropdownItem
                     key={option.value}
-                    icon={<Badge size="xs" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}
+                    startContent={<Badge size="xs" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}
                     description={option.isObject ? "Key-Value visualization" : null}
                   >
                     <Text>{option.text}</Text>
-                  </Dropdown.Item>
+                  </DropdownItem>
                 ))}
-              </Dropdown.Menu>
+              </DropdownMenu>
             </Dropdown>
-            <Spacer x={0.2} />
+            <Spacer x={0.5} />
             {dataset.dateField && (
               <Tooltip content="Clear field">
-                <Link onClick={() => onUpdate({ dateField: "" })} css={{ color: "$error" }}>
+                <Link onClick={() => onUpdate({ dateField: "" })} className="text-danger">
                   <CloseSquare />
                 </Link>
               </Tooltip>
             )}
           </div>
-        </Grid>
+        </div>
         {chartType !== "table" && (
           <>
-            <Grid xs={12} sm={6} md={6} direction="column">
+            <div className="col-span-6 sm:col-span-12">
               <div style={styles.rowDisplay}>
-                <Text size={14} b>
+                <Text b>
                   {chartType === "pie"
                     || chartType === "radar"
                     || chartType === "polar"
@@ -764,19 +748,18 @@ function DatasetData(props) {
                 </Text>
                 {dataset.yAxis && !_getYFieldOptions().find((o) => o.value === dataset.yAxis) && (
                   <>
-                    <Spacer x={0.3} />
+                    <Spacer x={0.6} />
                     <Tooltip content="The selected field is not available in the data. Please select another.">
-                      <Danger primaryColor={theme.colors.error.value} />
+                      <Danger primaryColor={semanticColors[theme].danger.DEFAULT} />
                     </Tooltip>
                   </>
                 )}
               </div>
               <div>
                 <Dropdown
-                  isBordered
                   isDisabled={fieldOptions.find((o) => o.key === dataset.xAxis)?.isObject}
                 >
-                  <Dropdown.Trigger type={fieldOptions.find((o) => o.key === dataset.xAxis)?.isObject ? null : "text"}>
+                  <DropdownTrigger type={fieldOptions.find((o) => o.key === dataset.xAxis)?.isObject ? null : "text"}>
                     <Input
                       type="text"
                       disabled={fieldOptions.find((o) => o.key === dataset.xAxis)?.isObject}
@@ -788,45 +771,29 @@ function DatasetData(props) {
                       placeholder="Double-click to search"
                       onChange={(e) => setYFieldFilter(e.target.value)}
                       ref={yFieldRef}
-                      contentRight={document.activeElement === yFieldRef.current ? "↵" : null}
+                      endContent={document.activeElement === yFieldRef.current ? "↵" : null}
                     />
-                  </Dropdown.Trigger>
-                  <Dropdown.Menu
+                  </DropdownTrigger>
+                  <DropdownMenu
+                    variant="bordered"
                     onAction={_selectYField}
                     selectedKeys={[dataset.yAxis]}
                     selectionMode="single"
-                    css={{ minWidth: "max-content" }}
                   >
                     {_getYFieldOptions().map((option) => (
-                      <Dropdown.Item
+                      <DropdownItem
                         key={option.value}
-                        icon={<Badge size="sm" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}
+                        startContent={<Badge size="sm" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}
                         description={option.isObject ? "Key-Value visualization" : null}
                       >
                         <Text>{option.text}</Text>
-                      </Dropdown.Item>
+                      </DropdownItem>
                     ))}
-                  </Dropdown.Menu>
+                  </DropdownMenu>
                 </Dropdown>
-                <Spacer x={0.2} />
-                <Dropdown
-                  icon={null}
-                  button
-                  className="small button"
-                  options={operations}
-                  search
-                  text={
-                    (dataset.yAxisOperation
-                      && operations.find((i) => i.value === dataset.yAxisOperation).text
-                    )
-                    || "Operation"
-                  }
-                  value={dataset.yAxisOperation}
-                  onChange={_selectYOp}
-                  scrolling
-                  isBordered
-                >
-                  <Dropdown.Trigger>
+                <Spacer x={0.5} />
+                <Dropdown>
+                  <DropdownTrigger>
                     <Input
                       value={
                         (dataset.yAxisOperation
@@ -836,31 +803,31 @@ function DatasetData(props) {
                       }
                       fullWidth
                     />
-                  </Dropdown.Trigger>
-                  <Dropdown.Menu
+                  </DropdownTrigger>
+                  <DropdownMenu
                     onAction={_selectYOp}
                     selectedKeys={[dataset.yAxisOperation]}
                     selectionMode="single"
-                    css={{ minWidth: "max-content" }}
+                    variant="bordered"
                   >
                     {operations.map((option) => (
-                      <Dropdown.Item key={option.value}>
+                      <DropdownItem key={option.value}>
                         {option.text}
-                      </Dropdown.Item>
+                      </DropdownItem>
                     ))}
-                  </Dropdown.Menu>
+                  </DropdownMenu>
                 </Dropdown>
               </div>
-            </Grid>
-            <Grid xs={12} sm={6} md={6} direction="column">
+            </div>
+            <div className="col-span-6 sm:col-span-12">
               <div>
-                <Text size={14}>Sort records</Text>
+                <Text>Sort records</Text>
               </div>
               <div style={styles.rowDisplay}>
                 <Tooltip content="Sort the dataset in ascending order">
                   <Button
                     color={dataset.sort === "asc" ? "secondary" : "primary"}
-                    bordered={dataset.sort !== "asc"}
+                    variant={dataset.sort !== "asc" ? "bordered" : "filled"}
                     onClick={() => {
                       if (dataset.sort === "asc") {
                         onUpdate({ sort: "" });
@@ -868,15 +835,16 @@ function DatasetData(props) {
                         onUpdate({ sort: "asc" });
                       }
                     }}
-                    css={{ minWidth: "fit-content" }}
-                    icon={<IoCaretUp />}
-                  />
+                    isIconOnly
+                  >
+                    <IoCaretUp />
+                  </Button>
                 </Tooltip>
-                <Spacer x={0.2} />
+                <Spacer x={0.5} />
                 <Tooltip content="Sort the dataset in descending order">
                   <Button
                     color={dataset.sort === "desc" ? "secondary" : "primary"}
-                    bordered={dataset.sort !== "desc"}
+                    variant={dataset.sort !== "desc" ? "bordered" : "filled"}
                     onClick={() => {
                       if (dataset.sort === "desc") {
                         onUpdate({ sort: "" });
@@ -884,28 +852,29 @@ function DatasetData(props) {
                         onUpdate({ sort: "desc" });
                       }
                     }}
-                    css={{ minWidth: "fit-content" }}
-                    icon={<IoCaretDown />}
-                  />
+                    isIconOnly
+                  >
+                    <IoCaretDown />
+                  </Button>
                 </Tooltip>
                 {dataset.sort && (
                   <>
-                    <Spacer x={0.2} />
+                    <Spacer x={0.5} />
                     <Tooltip content="Clear sorting">
-                      <Link css={{ color: "$error" }} onClick={() => onUpdate({ sort: "" })}>
+                      <Link className="text-danger" onClick={() => onUpdate({ sort: "" })}>
                         <CloseSquare />
                       </Link>
                     </Tooltip>
                   </>
                 )}
               </div>
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               {dataset.yAxisOperation === "avg" && (
                 <div>
-                  <Text size={14}>Average by the total items on the chart</Text>
+                  <Text>Average by the total items on the chart</Text>
                   <Switch
                     size="sm"
-                    checked={dataset.averageByTotal}
+                    isSelected={dataset.averageByTotal}
                     onChange={() => onUpdate({ averageByTotal: !dataset.averageByTotal })}
                   />
                 </div>
@@ -913,27 +882,27 @@ function DatasetData(props) {
               {dataset.sort && (
                 <>
                   <div>
-                    <Text size={14}>{"Max number of records"}</Text>
+                    <Text>{"Max number of records"}</Text>
                   </div>
                   <div style={styles.rowDisplay}>
                     <Input
-                      labelRight="records"
-                      bordered
+                      endContent="records"
+                      variant="bordered"
                       size="sm"
-                      initialValue={dataset.maxRecords}
+                      defaultValue={dataset.maxRecords}
                       value={datasetMaxRecords || dataset.maxRecords || ""}
                       onChange={(e) => setDatasetMaxRecords(e.target.value)}
                     />
-                    <Spacer x={0.2} />
+                    <Spacer x={0.5} />
                     <Tooltip content="Save">
-                      <Link css={{ color: "$success" }} onClick={() => onUpdate({ maxRecords: datasetMaxRecords })}>
+                      <Link className="text-success" onClick={() => onUpdate({ maxRecords: datasetMaxRecords })}>
                         <TickSquare />
                       </Link>
                     </Tooltip>
-                    <Spacer x={0.2} />
+                    <Spacer x={0.5} />
                     <Tooltip content="Clear limit">
                       <Link
-                        css={{ color: "$error" }}
+                        className="text-danger"
                         onClick={() => {
                           onUpdate({ maxRecords: null });
                           setDatasetMaxRecords(null);
@@ -945,34 +914,34 @@ function DatasetData(props) {
                   </div>
                 </>
               )}
-            </Grid>
-            <Grid xs={12} css={{ mt: 10 }}>
+            </div>
+            <div className="col-span-12 mt-10">
               {!formula && (
-                <Link onClick={_onAddFormula} css={{ ai: "center", color: "$text" }}>
+                <Link onClick={_onAddFormula} className="flex items-center text-default">
                   <TbMathFunctionY size={24} />
-                  <Spacer x={0.2} />
+                  <Spacer x={0.5} />
                   <Text b>Add Y-Axis formula</Text>
                 </Link>
               )}
-            </Grid>
+            </div>
           </>
         )}
         {formula && (
-          <Grid xs={12} direction="column">
+          <div className="col-span-12">
             <div>
               <Popover>
-                <Popover.Trigger>
+                <PopoverTrigger>
                   <div style={styles.rowDisplay}>
-                    <Text size={16}>
+                    <Text>
                       {"Formula "}
                     </Text>
-                    <Spacer x={0.2} />
+                    <Spacer x={0.5} />
                     <InfoCircle size="small" />
                   </div>
-                </Popover.Trigger>
-                <Popover.Content>
+                </PopoverTrigger>
+                <PopoverContent>
                   <FormulaTips />
-                </Popover.Content>
+                </PopoverContent>
               </Popover>
             </div>
             <div style={styles.rowDisplay}>
@@ -980,9 +949,9 @@ function DatasetData(props) {
                 placeholder="Enter your formula here: {val}"
                 value={formula}
                 onChange={(e) => setFormula(e.target.value)}
-                bordered
+                variant="bordered"
               />
-              <Spacer x={0.5} />
+              <Spacer x={1} />
               <Tooltip
                 content={formula === dataset.formula ? "The formula is already applied" : "Apply the formula"}
               >
@@ -990,35 +959,35 @@ function DatasetData(props) {
                   <TickSquare primaryColor={formula === dataset.formula ? neutral : positive} />
                 </Link>
               </Tooltip>
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Tooltip content="Remove formula">
                 <Link onClick={_onRemoveFormula}>
                   <CloseSquare primaryColor={negative} />
                 </Link>
               </Tooltip>
-              <Spacer x={0.5} />
+              <Spacer x={1} />
               <Tooltip content="Click for an example">
                 <Link onClick={_onExampleFormula}>
                   <FaMagic size={18} color={primary} />
                 </Link>
               </Tooltip>
             </div>
-          </Grid>
+          </div>
         )}
         {!goal && chartType !== "table" && (
-          <Grid xs={12} css={{ mt: 10 }}>
-            <Link onClick={_onAddGoal} css={{ ai: "center", color: "$text" }}>
+          <div className="col-span-12 mt-10">
+            <Link onClick={_onAddGoal} className="flex items-center text-default">
               <TbProgressCheck size={24} />
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Text b>Set a goal</Text>
             </Link>
-          </Grid>
+          </div>
         )}
         {goal && chartType !== "table" && (
-          <Grid xs={12} css={{ mt: 10 }} direction="column">
+          <div className="col-span-12 mt-10">
             <Row align="center">
-              <Text size={16}>{"Goal "}</Text>
-              <Spacer x={0.2} />
+              <Text>{"Goal "}</Text>
+              <Spacer x={0.5} />
               <Tooltip content="A goal can be displayed as a progress bar in your KPI charts. Enter a number without any other characters. (e.g. 1000 instead of 1k)">
                 <InfoCircle size="small" />
               </Tooltip>
@@ -1028,9 +997,9 @@ function DatasetData(props) {
                 placeholder="Enter your goal here"
                 value={goal}
                 onChange={(e) => setGoal(e.target.value)}
-                bordered
+                variant="bordered"
               />
-              <Spacer x={0.5} />
+              <Spacer x={1} />
               <Tooltip
                 content={goal === dataset.goal ? "The goal is already applied" : "Save goal"}
               >
@@ -1038,65 +1007,58 @@ function DatasetData(props) {
                   <TickSquare primaryColor={goal === dataset.goal ? neutral : positive} />
                 </Link>
               </Tooltip>
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Tooltip content="Remove goal">
                 <Link onClick={_onRemoveGoal}>
                   <CloseSquare primaryColor={negative} />
                 </Link>
               </Tooltip>
             </Row>
-          </Grid>
+          </div>
         )}
         {chartType === "table" && (
           <>
-            <Grid xs={12} css={{ pt: 20, pb: 20 }}>
-              <Collapse.Group css={{ width: "100%", fs: 16, fontWeight: "$bold" }} bordered>
-                <Collapse subtitle="Table columns options" css={{ color: "$text" }} arrowIcon={<Setting />}>
-                  <Container css={{ pl: 0, pr: 0 }}>
+            <div className="col-span-12 pt-20 pb-20">
+              <Accordion fullWidth variant="bordered">
+                <AccordionItem subtitle="Table columns options" className="text-default" indicator={<Setting />}>
+                  <Container className={"p-0 m-0"}>
                     {!isDragState && (
                       <Row wrap="wrap">
                         {tableFields.map((field) => {
                           if (!field || !field.accessor || field.Header.indexOf("__cb_group") > -1) return (<span key={field.accessor} />);
                           return (
-                            <Badge
+                            <Chip
                               key={field.accessor}
-                              color="primary"
-                              css={{
-                                border: dataset?.configuration?.sum === field.accessor
-                                  ? "solid 2px $secondary"
-                                  : "solid 2px $border",
-                                mr: 3,
-                                minWidth: 70,
-                              }}
-                              style={{ marginBottom: 3 }}
+                              color={dataset?.configuration?.sum === field.accessor ? "secondary" : "default"}
+                              className="mr-3 min-w-[70px] mb-3"
                             >
                               <Link
-                                css={{ ai: "center" }}
+                                className="flex items-center"
                                 onClick={() => _onExcludeField(field.accessor)}
                                 title="Hide field"
                               >
                                 <Show primaryColor="white" />
                               </Link>
-                              <Spacer x={0.2} />
+                              <Spacer x={0.5} />
                               {`${field.accessor.replace("?", ".")}`}
-                              <Spacer x={0.2} />
-                              <Dropdown isBordered>
-                                <Dropdown.Trigger>
+                              <Spacer x={0.5} />
+                              <Dropdown>
+                                <DropdownTrigger>
                                   <Link
-                                    css={{ ai: "center" }}
+                                    className="flex items-center"
                                     title="Sum values on this field"
                                   >
                                     <ChevronDownCircle primaryColor="white" />
                                   </Link>
-                                </Dropdown.Trigger>
-                                <Dropdown.Menu>
-                                  <Dropdown.Item icon={<Setting />}>
-                                    <Link css={{ width: "100%" }} onClick={() => _onSelectFieldForFormatting(field.accessor)}>
+                                </DropdownTrigger>
+                                <DropdownMenu variant="bordered">
+                                  <DropdownItem startContent={<Setting />}>
+                                    <Link className="w-full" onClick={() => _onSelectFieldForFormatting(field.accessor)}>
                                       <Text>Data formatting</Text>
                                     </Link>
-                                  </Dropdown.Item>
-                                  <Dropdown.Item icon={<Plus />}>
-                                    <Link css={{ width: "100%" }} onClick={() => _onSumField(field.accessor)}>
+                                  </DropdownItem>
+                                  <DropdownItem startContent={<Plus />}>
+                                    <Link className="w-full" onClick={() => _onSumField(field.accessor)}>
                                       {dataset.configuration
                                         && dataset.configuration.sum === field.accessor
                                         && (
@@ -1108,10 +1070,10 @@ function DatasetData(props) {
                                           <Text>Enable sum calculation</Text>
                                         )}
                                     </Link>
-                                  </Dropdown.Item>
-                                </Dropdown.Menu>
+                                  </DropdownItem>
+                                </DropdownMenu>
                               </Dropdown>
-                            </Badge>
+                            </Chip>
                           );
                         })}
                       </Row>
@@ -1145,127 +1107,73 @@ function DatasetData(props) {
                         && dataset.excludedFields
                         && dataset.excludedFields.length > 0
                         && (
-                          <Spacer y={0.5} />
+                          <Spacer y={1} />
                         )}
 
                     <Row wrap="wrap" align="center">
                       {!isDragState
                         && dataset.excludedFields
                         && dataset.excludedFields.map((field) => (
-                          <Badge
+                          <Chip
                             key={field}
                             onClick={() => _onShowField(field)}
                             color="warning"
                           >
-                            <Link css={{ ai: "center" }} onClick={() => _onShowField(field)}>
+                            <Link className="flex items-center" onClick={() => _onShowField(field)}>
                               <Hide primaryColor="white" />
                             </Link>
-                            <Spacer x={0.1} />
+                            <Spacer x={0.3} />
                             {field.replace("?", ".")}
-                          </Badge>
+                          </Chip>
                         ))}
                     </Row>
-                    <Spacer y={1} />
+                    <Spacer y={2} />
                     <Row>
                       <Button
                         color={isDragState ? "success" : "primary"}
-                        bordered
+                        variant="bordered"
                         onClick={isDragState ? _onConfirmColumnOrder : _onDragStateClicked}
-                        disabled={dataLoading}
+                        isLoading={dataLoading}
                         auto
                         size="sm"
-                        icon={<TbDragDrop size={20} />}
+                        startContent={<TbDragDrop size={20} />}
                       >
-                        {isDragState && !dataLoading ? "Confirm ordering" : "Reorder columns"}
-                        {dataLoading && <Loading type="points" />}
+                        {isDragState ? "Confirm ordering" : "Reorder columns"}
                       </Button>
                       {isDragState && (
                         <>
                           <Spacer x={0.2} />
                           <Button
-                            icon={<CloseSquare />}
-                            flat
-                            color={"error"}
+                            isIconOnly
+                            variant="flat"
+                            color={"danger"}
                             onClick={_onCancelColumnOrder}
                             title="Cancel ordering"
-                            css={{ minWidth: "fit-content" }}
                             size="sm"
-                          />
+                          >
+                            <CloseSquare />
+                          </Button>
                         </>
                       )}
                     </Row>
                   </Container>
-                </Collapse>
-              </Collapse.Group>
-            </Grid>
-            <Grid xs={12} direction="column">
-              <div>
-                <Text size={14}>{"Group by"}</Text>
-              </div>
-              <div style={styles.rowDisplay}>
-                <Dropdown isBordered>
-                  <Dropdown.Trigger type="text">
-                    <Input
-                      type="text"
-                      value={
-                        groupByFilter
-                        || dataset.groupBy
-                        || ""
-                      }
-                      placeholder="Double-click to search"
-                      onChange={(e) => setGroupByFilter(e.target.value)}
-                      ref={groupByRef}
-                      contentRight={document.activeElement === groupByRef.current ? "↵" : null}
-                    />
-                  </Dropdown.Trigger>
-                  <Dropdown.Menu
-                    onAction={(key) => {
-                      if (key !== "$.0") _onChangeGroupBy(null, key);
-                    }}
-                    selectedKeys={[dataset.groupBy]}
-                    selectionMode="single"
-                    css={{ minWidth: "max-content" }}
-                  >
-                    {_getGroupByFields().map((field) => (
-                      <Dropdown.Item
-                        key={field.value}
-                        icon={<Badge size="xs" css={{ minWidth: 70 }} color={field.label.color}>{field.label.content}</Badge>}
-                      >
-                        <Text>{field.text}</Text>
-                      </Dropdown.Item>
-                    ))}
-                    {_getGroupByFields().length === 0 && (
-                      <Dropdown.Item>
-                        <Text>No fields available</Text>
-                      </Dropdown.Item>
-                    )}
-                  </Dropdown.Menu>
-                </Dropdown>
-                <Spacer x={0.2} />
-                <Tooltip content="Clear the grouping">
-                  <Link
-                    color="danger"
-                    onClick={_onChangeGroupBy}
-                  >
-                    <CloseSquare />
-                  </Link>
-                </Tooltip>
-              </div>
-            </Grid>
+                </AccordionItem>
+              </Accordion>
+            </div>
           </>
         )}
 
         {chartType !== "table" && (
           <>
-            <Grid xs={12} direction="column">
-              <Spacer y={0.5} />
+            <div className="col-span-12">
+              <Spacer y={1} />
               <Divider />
-              <Spacer y={0.5} />
-            </Grid>
+              <Spacer y={1} />
+            </div>
 
-            <Grid xs={12} direction="column">
+            <div className="col-span-12">
               <Text b>Alerts</Text>
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               <DatasetAlerts
                 chartType={chartType === "pie"
                     || chartType === "radar"
@@ -1277,73 +1185,73 @@ function DatasetData(props) {
                 datasetId={dataset.id}
                 projectId={match.params.projectId}
               />
-            </Grid>
+            </div>
           </>
         )}
 
-        <Grid xs={12} direction="column">
-          <Spacer y={0.5} />
+        <div className="col-span-12">
+          <Spacer y={1} />
           <Divider />
-          <Spacer y={0.5} />
-        </Grid>
+          <Spacer y={1} />
+        </div>
         {conditions && conditions.length === 0 && (
-          <Grid xs={12} className="datasetdata-filters-tut">
+          <div className="col-span-12 datasetdata-filters-tut">
             <Button
-              bordered
-              icon={<Filter />}
+              variant="bordered"
+              startContent={<Filter />}
               onClick={_onAddCondition}
               auto
               size={"sm"}
             >
               Add data filters
             </Button>
-          </Grid>
+          </div>
         )}
         {conditions.map((condition, index) => {
           return (
-            <Grid xs={12} key={condition.id} style={styles.conditionRow} className="datasetdata-filters-tut">
-              <Container css={{ pl: 0, pr: 0 }}>
+            <div key={condition.id} className="col-span-12 pb-5 pt-5 datasetdata-filters-tut">
+              <Container className={"pl-0 pr-0"}>
                 {index === 0 && (
                   <>
                     <Row>
                       <Text b>{"Filters"}</Text>
                     </Row>
-                    <Spacer y={0.5} />
+                    <Spacer y={1} />
                   </>
                 )}
-                <Row warp="wrap" gap={0.5} align="center" css={{ ml: 0, mr: 0 }}>
-                  {index === 0 && (<Text size={14}>{"where "}</Text>)}
-                  {index > 0 && (<Text size={14}>{"and "}</Text>)}
-                  <Spacer x={0.2} />
-                  <Dropdown isBordered>
-                    <Dropdown.Trigger>
+                <Row warp="wrap" className={"ml-0 mr-0 flex gap-2"} align="center">
+                  {index === 0 && (<Text>{"where "}</Text>)}
+                  {index > 0 && (<Text>{"and "}</Text>)}
+                  <Spacer x={1} />
+                  <Dropdown>
+                    <DropdownTrigger>
                       <Input
                         value={(condition.field && condition.field.substring(condition.field.lastIndexOf(".") + 1)) || "field"}
                         size="sm"
                       />
-                    </Dropdown.Trigger>
-                    <Dropdown.Menu
+                    </DropdownTrigger>
+                    <DropdownMenu
+                      variant="bordered"
                       onAction={(key) => _updateCondition(condition.id, key, "field")}
                       selectedKeys={[condition.field]}
                       selectionMode="single"
-                      css={{ minWidth: "max-content" }}
                     >
                       {fieldOptions.filter((f) => !f.isObject).map((field) => (
-                        <Dropdown.Item key={field.value}>
-                          <Container css={{ p: 0, m: 0 }}>
+                        <DropdownItem key={field.value}>
+                          <Container className={"p-0 m-0"}>
                             <Row>
-                              <Badge size="sm" css={{ minWidth: 70 }} color={field.label.color}>{field.label.content}</Badge>
-                              <Spacer x={0.2} />
+                              <Chip size="sm" className="min-w-[70px]" color={field.label.color}>{field.label.content}</Chip>
+                              <Spacer x={0.5} />
                               <Text>{field.text}</Text>
                             </Row>
                           </Container>
-                        </Dropdown.Item>
+                        </DropdownItem>
                       ))}
-                    </Dropdown.Menu>
+                    </DropdownMenu>
                   </Dropdown>
-                  <Spacer x={0.2} />
-                  <Dropdown isBordered>
-                    <Dropdown.Trigger>
+                  <Spacer x={0.5} />
+                  <Dropdown>
+                    <DropdownTrigger>
                       <Input
                         value={
                           (
@@ -1354,21 +1262,21 @@ function DatasetData(props) {
                         }
                         size="sm"
                       />
-                    </Dropdown.Trigger>
-                    <Dropdown.Menu
+                    </DropdownTrigger>
+                    <DropdownMenu
+                      variant="bordered"
                       onAction={(key) => _updateCondition(condition.id, key, "operator")}
                       selectedKeys={[condition.operator]}
                       selectionMode="single"
-                      css={{ minWidth: "max-content" }}
                     >
                       {operators.map((operator) => (
-                        <Dropdown.Item key={operator.value}>
+                        <DropdownItem key={operator.value}>
                           {operator.text}
-                        </Dropdown.Item>
+                        </DropdownItem>
                       ))}
-                    </Dropdown.Menu>
+                    </DropdownMenu>
                   </Dropdown>
-                  <Spacer x={0.2} />
+                  <Spacer x={0.5} />
                   <div>
                     {(!condition.field
                       || (_.find(fieldOptions, { value: condition.field })
@@ -1384,26 +1292,26 @@ function DatasetData(props) {
                     {_.find(fieldOptions, { value: condition.field })
                       && _.find(fieldOptions, { value: condition.field }).type === "date" && (
                       <Popover>
-                        <Popover.Trigger>
+                        <PopoverTrigger>
                           <Input
-                            contentRight={<CalendarIcon />}
+                            endContent={<CalendarIcon />}
                             value={(condition.value && format(new Date(condition.value), "Pp", { locale: enGB })) || "Enter a value"}
                             disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                             size="sm"
                           />
-                        </Popover.Trigger>
-                        <Popover.Content>
+                        </PopoverTrigger>
+                        <PopoverContent>
                           <Calendar
                             date={(condition.value && new Date(condition.value)) || new Date()}
                             onChange={(date) => _updateCondition(condition.id, formatISO(date), "value", _.find(fieldOptions, { value: condition.field }).type)}
                             locale={enGB}
                             color={secondary}
                           />
-                        </Popover.Content>
+                        </PopoverContent>
                       </Popover>
                     )}
                   </div>
-                  <Spacer x={0.2} />
+                  <Spacer x={0.5} />
                   <Tooltip content="Remove condition">
                     <Link color="danger" onClick={() => _onRemoveCondition(condition.id)}>
                       <CloseSquare />
@@ -1411,7 +1319,7 @@ function DatasetData(props) {
                   </Tooltip>
 
                   {condition.field && condition.operator && !condition.exposed && (
-                    <Tooltip content="Expose filter to viewers" color={"invert"}>
+                    <Tooltip content="Expose filter to viewers" color={"foreground"}>
                       <Link
                         color="secondary"
                         onClick={() => _onApplyCondition(
@@ -1465,7 +1373,7 @@ function DatasetData(props) {
                   {condition.saved && (
                     <Tooltip content="Condition settings">
                       <Link
-                        css={{ color: "$accents8" }}
+                        className="text-defaul-800"
                         onClick={() => _onEditConditionSettings(condition)}
                       >
                         <Setting />
@@ -1474,41 +1382,48 @@ function DatasetData(props) {
                   )}
                 </Row>
               </Container>
-            </Grid>
+            </div>
           );
         })}
         {conditions?.length > 0 && (
-          <Grid xs={12}>
-            <Button light color="primary" onClick={_onAddCondition} icon={<Plus />} auto css={{ p: 0 }}>
+          <div className="col-span-12">
+            <Button
+              variant="light"
+              color="primary"
+              onClick={_onAddCondition}
+              startContent={<Plus />}
+              auto 
+            >
               Add a new condition
             </Button>
-          </Grid>
+          </div>
         )}
         {conditions.filter((c) => c.exposed).length > 0 && (
-          <Grid xs={12} direction="column">
+          <div className="col-span-12">
             <div><Text>{"Exposed filters on the chart"}</Text></div>
-            <Spacer y={0.2} />
+            <Spacer y={0.5} />
             <div>
               {conditions.filter((c) => c.exposed).map((condition) => {
                 return (
-                  <Badge key={condition.id} color={"primary"} size="sm">
+                  <Chip key={condition.id} color={"primary"} size="sm">
                     {condition.field.replace("root[].", "")}
-                    <Spacer x={0.2} />
+                    <Spacer x={0.5} />
                     <Link onClick={() => _onHideCondition(condition.id)} color="danger">
                       <CloseSquare size="small" color="white" />
                     </Link>
-                  </Badge>
+                  </Chip>
                 );
               })}
             </div>
-          </Grid>
+          </div>
         )}
-      </Grid.Container>
-      <Modal open={conditionModal} width="500px" onClose={() => setConditionModal(false)}>
-        <Modal.Header>
+      </div>
+
+      <Modal isOpen={conditionModal} className="w-[500px]" onClose={() => setConditionModal(false)}>
+        <ModalHeader>
           <Text h4>Condition settings</Text>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <Container>
             <Row>
               <Input
@@ -1523,10 +1438,10 @@ function DatasetData(props) {
                   || ""
                 }
                 fullWidth
-                bordered
+                variant="bordered"
               />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <Checkbox
                 label="Hide existing values from the filter dropdown"
@@ -1541,13 +1456,13 @@ function DatasetData(props) {
               />
             </Row>
           </Container>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
             auto
             onClick={() => setConditionModal(false)}
             color="warning"
-            flat
+            variant="flat"
           >
             Close
           </Button>
@@ -1558,7 +1473,7 @@ function DatasetData(props) {
           >
             Save settings
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       <TableDataFormattingModal
@@ -1593,44 +1508,44 @@ DatasetData.propTypes = {
 
 function FormulaTips() {
   return (
-    <Container css={{ p: 10 }}>
+    <Container className={"p-10"}>
       <Row>
         <Text b>{"Formulas allow you to manipulate the final results on the Y-Axis"}</Text>
       </Row>
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <Row>
         <Text>{"For"}</Text>
-        <Spacer x={0.2} />
+        <Spacer x={0.5} />
         <Text b>{"val = 12345"}</Text>
       </Row>
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <Row align="center">
         <ChevronRight />
-        <Spacer x={0.2} />
+        <Spacer x={0.5} />
         <Text>
           {"{val} => 12345"}
         </Text>
       </Row>
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <Row align="center">
         <ChevronRight />
-        <Spacer x={0.2} />
+        <Spacer x={0.5} />
         <Text>
           {"{val / 100} => 123.45"}
         </Text>
       </Row>
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <Row align="center">
         <ChevronRight />
-        <Spacer x={0.2} />
+        <Spacer x={0.5} />
         <Text>
           {"$ {val / 100} => $ 123.45"}
         </Text>
       </Row>
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <Row align="center">
         <ChevronRight />
-        <Spacer x={0.2} />
+        <Spacer x={0.5} />
         <Text>
           {"{val / 100} USD => 123.45 USD"}
         </Text>

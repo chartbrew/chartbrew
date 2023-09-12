@@ -5,8 +5,8 @@ import { withRouter } from "react-router";
 import _ from "lodash";
 import { Flip, toast, ToastContainer } from "react-toastify";
 import {
-  Button, Container, Grid, Link, Loading, Modal, Row, Spacer, Text, Avatar,
-  useTheme, Tooltip, Card, theme, Badge,
+  Button, Link, Modal, Spacer, Avatar, Badge, Tooltip, Card, semanticColors,
+  CircularProgress, ModalHeader, ModalBody, ModalFooter, CardBody, CardFooter,
 } from "@nextui-org/react";
 import {
   Danger, Plus,
@@ -22,6 +22,10 @@ import FirestoreBuilder from "../../Connections/Firestore/FirestoreBuilder";
 import GaBuilder from "../../Connections/GoogleAnalytics/GaBuilder";
 import CustomerioBuilder from "../../Connections/Customerio/CustomerioBuilder";
 import DatarequestSettings from "./DatarequestSettings";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 import {
   getDataRequestByDataset as getDataRequestByDatasetAction,
@@ -51,7 +55,7 @@ function DatarequestModal(props) {
   const [createMode, setCreateMode] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { isDark } = useTheme();
+  const theme = useThemeDetector() ? "dark" : "light";
 
   useEffect(() => {
     if (!open) {
@@ -242,30 +246,31 @@ function DatarequestModal(props) {
 
   return (
     <Modal
-      open={open}
-      fullScreen
+      isOpen={open}
+      size="full"
       onClose={_onClose}
       closeButton
-      preventClose
-      scroll
+      isDismissable={false}
+      scrollBehavior="inside"
+      shouldBlockScroll={false}
     >
-      <Modal.Header justify="flex-start">
+      <ModalHeader className="flex justify-start">
         <Text h4>{"Configure your dataset"}</Text>
         {initialising && (
           <>
             <Spacer x={1} />
-            <Loading type="points-opacity" color="currentColor" size="xl" />
+            <CircularProgress size="xl" />
           </>
         )}
-      </Modal.Header>
-      <Modal.Body>
-        <Grid.Container>
-          <Grid xs={12} sm={1} direction="column" css={{ borderRight: "1px solid $accents4" }}>
+      </ModalHeader>
+      <ModalBody>
+        <div className="grid grid-cols-12">
+          <div className="col-span-1 sm:col-span-12 flex flex-col sm:flex-row border-r-1 border-solid border-default-400 sm:border-none">
             {selectedRequest && (
               <>
                 <Row>
-                  <Tooltip content="Join data requests" css={{ zIndex: 99999 }} placement="rightStart">
-                    <Link onPress={() => _onSelectSettings()} css={{ cursor: "pointer" }}>
+                  <Tooltip content="Join data requests" css={{ zIndex: 99999 }} placement="right-start">
+                    <Link onPress={() => _onSelectSettings()} className="cursor-pointer">
                       <Avatar
                         icon={(
                           <TbArrowsJoin
@@ -273,80 +278,78 @@ function DatarequestModal(props) {
                             strokeWidth={2}
                             color={
                               selectedRequest.isSettings
-                                ? theme.colors.accents0.value : theme.colors.text.value
+                                ? semanticColors[theme].default[100] : semanticColors[theme].default[500]
                             }
                           />
                         )}
-                        squared
+                        radius="sm"
                         size="lg"
-                        css={{ cursor: "pointer" }}
+                        className="cursor-pointer"
                         color={selectedRequest.isSettings ? "primary" : "default"}
                       />
                     </Link>
                   </Tooltip>
                 </Row>
-                <Spacer y={1} />
+                <Spacer y={2} />
               </>
             )}
             {dataRequests.map((dr, index) => (
               <Fragment key={dr.id}>
                 <Row align="center">
-                  <Avatar
-                    bordered
-                    squared
-                    src={
-                      dr.Connection
-                        ? connectionImages(isDark)[dr.Connection.subType || dr.Connection.type]
-                        : null
-                    }
-                    icon={!dr.Connection ? <Danger /> : null}
-                    size="lg"
-                    color={dr.id === selectedRequest?.id ? "primary" : "default"}
-                    onClick={() => _onSelectDataRequest(dr)}
-                  />
-                  <Spacer x={0.3} />
                   <Badge
                     size="sm"
-                    disableOutline
                     variant={stateDataRequests.find((o) => o.id === dr.id)?.loading ? "points" : "bordered"}
                     color={
                       responses.find((r) => r.id === dr.id)?.error
-                        ? "error"
+                        ? "danger"
                         : responses.find((r) => r.id === dr.id) ? "success" : "default"
                     }
+                    content={`${index + 1}`}
                   >
-                    {`${index + 1}`}
+                    <Avatar
+                      isBordered
+                      radius="sm"
+                      src={
+                        dr.Connection
+                          ? connectionImages(theme === "dark")[dr.Connection.subType || dr.Connection.type]
+                          : null
+                      }
+                      icon={!dr.Connection ? <Danger /> : null}
+                      size="lg"
+                      color={dr.id === selectedRequest?.id ? "primary" : "default"}
+                      onClick={() => _onSelectDataRequest(dr)}
+                    />
                   </Badge>
                 </Row>
-                <Spacer y={0.3} />
+                <Spacer y={0.6} />
               </Fragment>
             ))}
-            <Spacer y={0.7} />
+            <Spacer y={1.5} />
             <Row>
-              <Tooltip content="Add a new data source" css={{ zIndex: 99999 }} placement="rightStart">
-                <Link onClick={() => setCreateMode(true)} css={{ cursor: "pointer" }}>
+              <Tooltip content="Add a new data source" css={{ zIndex: 99999 }} placement="right-start">
+                <Link onClick={() => setCreateMode(true)} className="cursor-pointer">
                   <Avatar
                     icon={<Plus primaryColor={theme.colors.text.value} />}
-                    bordered
-                    squared
+                    isBordered
+                    radius="sm"
                     size="lg"
-                    css={{ cursor: "pointer" }}
+                    className="cursor-pointer"
                   />
                 </Link>
               </Tooltip>
             </Row>
-          </Grid>
+          </div>
           {!createMode && selectedRequest?.isSettings && (
-            <Grid xs={12} sm={11}>
+            <div className="col-span-11 sm:col-span-12">
               <DatarequestSettings
                 dataset={dataset}
                 dataRequests={dataRequests}
                 onChange={_onUpdateDataset}
               />
-            </Grid>
+            </div>
           )}
           {!createMode && selectedRequest && selectedRequest.Connection && (
-            <Grid xs={12} sm={11}>
+            <div className="col-span-12 sm:col-span-12">
               {dataRequests.map((dr) => (
                 <Fragment key={dr.id}>
                   {selectedRequest.Connection.type === "api" && selectedRequest.id === dr.id && (
@@ -415,19 +418,19 @@ function DatarequestModal(props) {
                   )}
                 </Fragment>
               ))}
-            </Grid>
+            </div>
           )}
           {createMode && (
-            <Grid xs={12} sm={11} direction="column">
-              <Spacer y={0.5} />
+            <div className="col-span-11 sm:col-span-12">
+              <Spacer y={1} />
               <Container>
                 <Text h4>Select a connection</Text>
               </Container>
-              <Spacer y={0.5} />
-              <Grid.Container gap={2}>
+              <Spacer y={1} />
+              <div className="grid grid-cols-12 gap-2">
                 {connections.map((c) => {
                   return (
-                    <Grid xs={12} sm={6} md={4} key={c.id}>
+                    <div className="col-span-4 sm:col-span-12 md:col-span-6" key={c.id}>
                       <Card
                         variant="bordered"
                         isPressable
@@ -435,46 +438,46 @@ function DatarequestModal(props) {
                         className="project-segment"
                         onClick={() => _onCreateNewRequest(c)}
                       >
-                        <Card.Body css={{ p: "$4", pl: "$8" }}>
+                        <CardBody className="p-unit-4 pl-unit-8">
                           <Container justify="flex-start" fluid>
                             <Row align="center" justify="space-between">
                               <Text h4>{c.name}</Text>
-                              <Spacer x={0.2} />
+                              <Spacer x={0.5} />
                               <Avatar
-                                squared
-                                src={connectionImages(isDark)[c.subType || c.type]}
+                                radius="sm"
+                                src={connectionImages(theme === "dark")[c.subType || c.type]}
                                 alt={`${c.type} logo`}
                               />
                             </Row>
                             <Row>
-                              <Text css={{ color: "$accents7" }}>
+                              <Text className={"text-default-700"}>
                                 {`Created on ${moment(c.createdAt).format("LLL")}`}
                               </Text>
                             </Row>
                           </Container>
-                        </Card.Body>
-                        <Card.Footer>
+                        </CardBody>
+                        <CardFooter>
                           <Container>
                             <Row justify="center">
                               <Button
-                                flat
+                                variant="flat"
                                 onClick={() => _onCreateNewRequest(c)}
                                 size="sm"
-                                css={{ width: "100%" }}
+                                fullWidth
                               >
                                 Select
                               </Button>
                             </Row>
                           </Container>
-                        </Card.Footer>
+                        </CardFooter>
                       </Card>
-                    </Grid>
+                    </div>
                   );
                 })}
-              </Grid.Container>
-            </Grid>
+              </div>
+            </div>
           )}
-        </Grid.Container>
+        </div>
 
         <ToastContainer
           position="top-right"
@@ -487,27 +490,26 @@ function DatarequestModal(props) {
           draggable
           pauseOnHover
           transition={Flip}
-          theme={isDark ? "dark" : "light"}
+          theme={theme}
         />
-      </Modal.Body>
-      <Modal.Footer css={{ background: "$background" }}>
+      </ModalBody>
+      <ModalFooter className="bg-content1">
         <Button
           auto
           onClick={() => onClose()}
           color="warning"
-          flat
+          variant="flat"
         >
           Close
         </Button>
         <Button
           onPress={() => _onBuildChart()}
           auto
-          disabled={loading}
+          isLoading={loading}
         >
-          {loading && <Loading type="points-opacity" />}
-          {!loading && "Build the chart"}
+          {"Build the chart"}
         </Button>
-      </Modal.Footer>
+      </ModalFooter>
     </Modal>
   );
 }

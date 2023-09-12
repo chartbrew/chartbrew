@@ -93,7 +93,7 @@ function BarChart(props) {
 
     chart.chartData.data?.datasets?.forEach((dataset, index) => {
       if (dataset?.datalabels && index === chart.chartData.data.datasets.length - 1) {
-        chart.chartData.data.datasets[index].datalabels.color = theme.colors.accents8.value;
+        chart.chartData.data.datasets[index].datalabels.color = semanticColors[theme].default[800];
       }
     });
 
@@ -111,7 +111,7 @@ function BarChart(props) {
         )}
 
       {chart.mode !== "kpi" && chart.chartData && chart.chartData.data && (
-        <div className={chart.mode === "kpi" && "chart-kpi"}>
+        <div className={chart.mode === "kpi" ? "chart-kpi" : ""}>
           {chart.chartData.growth && chart.mode === "kpichart" && (
             <KpiChartSegment chart={chart} editMode={editMode} />
           )}

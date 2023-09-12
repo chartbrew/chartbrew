@@ -3,8 +3,8 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Container, Link as LinkNext, Grid, Spacer, Tooltip, Row, Input, Button,
-  Switch, Text, Loading, Modal, Divider, Badge, useTheme,
+  Link as LinkNext, Spacer, Tooltip, Input, Button,
+  Switch, Modal, Divider, Chip, CircularProgress, ModalHeader, ModalBody, ModalFooter,
 } from "@nextui-org/react";
 import {
   ChevronLeftCircle,
@@ -47,6 +47,10 @@ import {
   completeTutorial as completeTutorialAction,
   resetTutorial as resetTutorialAction,
 } from "../../actions/tutorial";
+import Container from "../../components/Container";
+import Row from "../../components/Row";
+import Text from "../../components/Text";
+import useThemeDetector from "../../modules/useThemeDetector";
 
 /*
   Container used for setting up a new chart
@@ -83,7 +87,7 @@ function AddChart(props) {
     runQueryWithFilters, getChartAlerts, clearAlerts,
   } = props;
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     clearDatasets();
@@ -526,17 +530,17 @@ function AddChart(props) {
         transition={Flip}
         theme={isDark ? "dark" : "light"}
       />
-      <Grid.Container>
-        <Grid xs={12} sm={6} md={7}>
-          <Container css={{ "@xsMax": { pl: 0, pr: 0 } }}>
+      <div className="grid grid-cols-12">
+        <div className="col-span-7 sm:col-span-12 md:col-span-6">
+          <Container className={"sm:pl-0 sm:pr-0"}>
             <Row align="center" wrap="wrap" justify="space-between">
-              <Row style={{ flex: 0.6 }} className="chart-name-tut">
+              <Row className="flex-[0.6] chart-name-tut">
                 {!editingTitle
                   && (
                     <Tooltip content="Edit the chart name">
-                      <LinkNext onPress={() => setEditingTitle(true)} css={{ ai: "center" }} color="primary">
+                      <LinkNext onPress={() => setEditingTitle(true)} className="flex items-center" color="primary">
                         <Edit />
-                        <Spacer x={0.2} />
+                        <Spacer x={0.5} />
                         <Text b>
                           {newChart.name}
                         </Text>
@@ -554,9 +558,9 @@ function AddChart(props) {
                         placeholder="Enter a title"
                         value={chartName}
                         onChange={(e) => _onNameChange(e.target.value)}
-                        bordered
+                        variant="bordered"
                       />
-                      <Spacer x={0.2} />
+                      <Spacer x={0.5} />
                       <Button
                         color="secondary"
                         type="submit"
@@ -569,21 +573,21 @@ function AddChart(props) {
                   </form>
                 )}
               </Row>
-              <Row style={{ flex: 0.4 }} className="chart-actions-tut" align="center" justify="flex-end">
+              <Row className="flex-[0.4] chart-actions-tut" align="center" justify="flex-end">
                 <div style={{ display: "flex" }}>
                   <Switch
-                    checked={newChart.draft}
+                    isSelected={newChart.draft}
                     onChange={() => _onChangeChart({ draft: !newChart.draft })}
                     size="sm"
                   />
-                  <Spacer x={0.2} />
+                  <Spacer x={0.5} />
                   <Text>Draft</Text>
                 </div>
-                <Spacer x={1} />
+                <Spacer x={2} />
                 <Button
                   color={saveRequired ? "primary" : "success"}
                   onClick={() => _onChangeChart({})}
-                  loading={loading}
+                  isLoading={loading}
                   size="sm"
                   auto
                 >
@@ -592,7 +596,7 @@ function AddChart(props) {
                 </Button>
               </Row>
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row className="chart-type-tut">
               <ChartPreview
                 chart={newChart}
@@ -607,7 +611,7 @@ function AddChart(props) {
                 changeCache={() => setInvalidateCache(!invalidateCache)}
               />
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row>
               {match.params.chartId && newChart.type && datasets.length > 0 && (
                 <ChartSettings
@@ -633,39 +637,27 @@ function AddChart(props) {
               )}
             </Row>
           </Container>
-        </Grid>
+        </div>
 
-        <Grid xs={12} sm={6} md={5} className="add-dataset-tut" css={{ pr: 10 }}>
+        <div className="col-span-5 sm:col-span-12 md:col-span-6 pr-10 add-dataset-tut">
           <Container
-            css={{
-              backgroundColor: "$backgroundContrast",
-              br: "$md",
-              "@xs": {
-                p: 20,
-              },
-              "@sm": {
-                p: 20,
-              },
-              "@md": {
-                p: 20,
-              },
-            }}
+            className={"bg-content2 rounded-md"}
           >
             <Row justify="space-between">
               <Text b>
                 Datasets
               </Text>
               <Tooltip content="Start the chart builder tutorial" placement="leftStart">
-                <LinkNext css={{ color: "$accents6", ai: "center" }} onPress={_onResetTutorial}>
-                  {!resetingTutorial ? <Discovery /> : <Loading type="spinner" />}
-                  <Spacer x={0.2} />
+                <LinkNext className="text-default-600 flex items-center" onPress={_onResetTutorial}>
+                  {!resetingTutorial ? <Discovery /> : <CircularProgress  />}
+                  <Spacer x={0.5} />
                   <Text>Tutorial</Text>
                 </LinkNext>
               </Tooltip>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Divider />
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row wrap="wrap">
               {!arrangeMode && datasets && datasets.map((dataset) => {
                 return (
@@ -673,7 +665,7 @@ function AddChart(props) {
                     <Button
                       style={styles.datasetButtons}
                       onClick={() => _onDatasetChanged(dataset)}
-                      ghost={dataset.id !== activeDataset.id}
+                      variant={dataset.id !== activeDataset.id ? "ghost" : "solid"}
                       size="sm"
                       auto
                     >
@@ -685,10 +677,10 @@ function AddChart(props) {
               {arrangeMode && datasets && datasetsOrder.map((dataset, index) => {
                 return (
                   <>
-                    <Badge
+                    <Chip
                       style={styles.datasetButtons}
                       key={dataset.id}
-                      isSquared
+                      radius="sm"
                       variant={"bordered"}
                       color="primary"
                       size="sm"
@@ -698,15 +690,15 @@ function AddChart(props) {
                           <ChevronLeftCircle size={16} />
                         </LinkNext>
                       )}
-                      <Spacer x={0.2} />
+                      <Spacer x={0.5} />
                       {dataset.legend}
-                      <Spacer x={0.2} />
+                      <Spacer x={0.5} />
                       {index < datasetsOrder.length - 1 && (
                         <LinkNext onPress={() => _changeDatasetOrder(dataset.id, "down")}>
                           <ChevronRightCircle size={16} />
                         </LinkNext>
                       )}
-                    </Badge>
+                    </Chip>
                   </>
                 );
               })}
@@ -718,13 +710,12 @@ function AddChart(props) {
                   <div>
                     <Button
                       onClick={() => _onSaveNewDataset()}
-                      icon={!savingDataset ? <Plus /> : <Loading type="spinner" />}
+                      startContent={<Plus />}
                       auto
                       color="primary"
-                      light
-                      css={{ p: 0 }}
+                      variant="light"
                     >
-                      {!savingDataset ? <Text>{"Add a new dataset"}</Text> : <Text>{"Saving dataset"}</Text>}
+                      {"Saving dataset"}
                     </Button>
                   </div>
                   <div style={{ display: "flex", "flexDirection": "row", justifyContent: "flex-end" }}>
@@ -733,27 +724,27 @@ function AddChart(props) {
                         if (!arrangeMode) setArrangeMode(true);
                         else _onSaveArrangement();
                       }}
-                      icon={arrangeMode && arrangementLoading
-                        ? <Loading type="spinner" />
-                        : arrangeMode && !arrangementLoading
-                          ? <TickSquare /> : <Swap set="light" />}
+                      startContent={arrangeMode ? <TickSquare /> : <Swap set="light" />}
                       auto
                       color={arrangeMode ? "success" : "primary"}
-                      light
+                      variant="light"
+                      isLoading={arrangementLoading}
                     >
                       {!arrangeMode && "Arrange datasets"}
                       {arrangeMode && "Save"}
                     </Button>
                     {arrangeMode && (
                       <>
-                        <Tooltip content="Cancel arrangement" placement="leftStart">
+                        <Tooltip content="Cancel arrangement" placement="left-start">
                           <Button
                             onClick={() => setArrangeMode(false)}
-                            icon={<CloseSquare />}
-                            light
+                            isIconOnly
+                            variant="light"
                             color="warning"
                             auto
-                          />
+                          >
+                            <CloseSquare />
+                          </Button>
                         </Tooltip>
                       </>
                     )}
@@ -765,17 +756,16 @@ function AddChart(props) {
                 <Button
                   size="lg"
                   onClick={() => _onSaveNewDataset()}
-                  disabled={savingDataset}
-                  iconRight={savingDataset ? null : <Plus />}
+                  isLoading={savingDataset}
+                  endContent={<Plus />}
                   auto
                 >
-                  {savingDataset && <Loading type="points-opacity" />}
-                  {!savingDataset && "Add the first dataset"}
+                  {"Add the first dataset"}
                 </Button>
               )}
             </Row>
 
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row align="center">
               {activeDataset.id && datasets.map((dataset) => {
                 return (
@@ -793,14 +783,14 @@ function AddChart(props) {
                 );
               })}
               {!activeDataset.id && (
-                <Text css={{ color: "$accents6" }} h3>
+                <Text className={"text-default-600"} h3>
                   {"Select or create a dataset above"}
                 </Text>
               )}
             </Row>
           </Container>
-        </Grid>
-      </Grid.Container>
+        </div>
+      </div>
 
       <Walkthrough
         tourActive={tutorial}
@@ -808,24 +798,24 @@ function AddChart(props) {
         userTutorials={user.tutorials}
       />
 
-      <Modal open={startTutorial} onClose={() => setStartTutorial(false)}>
-        <Modal.Header>
+      <Modal isOpen={startTutorial} onClose={() => setStartTutorial(false)}>
+        <ModalHeader>
           <Text h3>
             Welcome to the chart builder!
           </Text>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <Text b>{"This is the place where your charts will take shape."}</Text>
-          <Spacer y={0.5} />
+          <Spacer y={1} />
           <Text>
             {"It is recommended that you read through the next steps to get familiar with the interface. "}
             {"You can always restart the tutorial from the upper right corner at any later time."}
           </Text>
-          <Spacer y={0.5} />
+          <Spacer y={1} />
           <Text>{"But without further ado, let's get started"}</Text>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={_onCancelWalkthrough} flat color="warning">
+        </ModalBody>
+        <ModalFooter>
+          <Button onClick={_onCancelWalkthrough} variant="flat" color="warning">
             Cancel walkthrough
           </Button>
           <Button
@@ -834,12 +824,12 @@ function AddChart(props) {
               setStartTutorial(false);
               _changeTour("addchart");
             }}
-            iconRight={<ChevronRight />}
+            endContent={<ChevronRight />}
             auto
           >
             Get started
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
     </div>
   );

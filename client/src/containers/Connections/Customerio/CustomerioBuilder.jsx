@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Grid, Button, Container, Link, Row, Spacer, Text, Loading, Checkbox, Tooltip, useTheme, Divider,
+  Button, Spacer, Checkbox, Tooltip, Divider, Tabs, Tab,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
@@ -21,6 +21,10 @@ import {
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import CustomerQuery from "./CustomerQuery";
 import CampaignsQuery from "./CampaignsQuery";
+import Container from "../../../components/Container";
+import Row from "../../../components/Row";
+import Text from "../../../components/Text";
+import useThemeDetector from "../../../modules/useThemeDetector";
 
 /*
   The Customer.io data request builder
@@ -37,7 +41,7 @@ function CustomerioBuilder(props) {
   const [conditions, setConditions] = useState({});
   const [saveLoading, setSaveLoading] = useState(false);
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   const {
     dataRequest, match, onChangeRequest, runDataRequest, project,
@@ -173,11 +177,11 @@ function CustomerioBuilder(props) {
 
   return (
     <div style={styles.container}>
-      <Grid.Container>
-        <Grid xs={12} sm={7}>
+      <div className="grid grid-cols-12">
+        <div className="col-span-7 sm:col-span-12">
           <Container>
             <Row justify="space-between" align="center">
-              <Text b size={22}>{connection.name}</Text>
+              <Text b size={"lg"}>{connection.name}</Text>
               <div>
                 <Row>
                   <Button
@@ -185,69 +189,62 @@ function CustomerioBuilder(props) {
                     auto
                     size="sm"
                     onClick={() => _onSavePressed()}
-                    disabled={saveLoading || requestLoading}
-                    flat
+                    isLoading={saveLoading || requestLoading}
+                    variant="flat"
                   >
-                    {(!saveLoading && !requestLoading) && "Save"}
-                    {(saveLoading || requestLoading) && <Loading type="spinner" />}
+                    {"Save"}
                   </Button>
-                  <Spacer x={0.3} />
+                  <Spacer x={0.6} />
                   <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
                     <Button
                       color="danger"
-                      icon={<Delete />}
+                      isIconOnly
                       auto
                       size="sm"
-                      bordered
-                      css={{ minWidth: "fit-content" }}
+                      variant="bordered"
                       onClick={() => onDelete()}
-                    />
+                    >
+                      <Delete />
+                    </Button>
                   </Tooltip>
                 </Row>
               </div>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <Divider />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center" wrap="wrap">
-              <Link
-                css={{
-                  background: entity === "customers" ? "$background" : "$backgroundContrast",
-                  p: 5,
-                  pr: 10,
-                  pl: 10,
-                  br: "$sm",
-                  "@xsMax": { width: "90%" },
-                  ai: "center",
-                  color: "$text",
+              <Tabs
+                selectedKey={entity}
+                onSelectionChange={(key) => {
+                  if (key === "customers") {
+                    _onSelectCustomers();
+                  } else if (key === "campaigns") {
+                    _onSelectCampaigns();
+                  }
                 }}
-                onClick={() => _onSelectCustomers()}
               >
-                <People />
-                <Spacer x={0.2} />
-                <Text>{"Customers"}</Text>
-              </Link>
-              <Spacer x={0.2} />
-              <Link
-                css={{
-                  background: entity === "campaigns" ? "$background" : "$backgroundContrast",
-                  p: 5,
-                  pr: 10,
-                  pl: 10,
-                  br: "$sm",
-                  "@xsMax": { width: "90%" },
-                  ai: "center",
-                  color: "$text",
-                }}
-                onClick={() => _onSelectCampaigns()}
-              >
-                <Chat />
-                <Spacer x={0.2} />
-                <Text>{"Campaigns"}</Text>
-              </Link>
-              <Spacer x={0.2} />
+                <Tab
+                  key="customers"
+                  title={(
+                    <div className="flex items-center space-x-2">
+                      <People />
+                      <span>Customers</span>
+                    </div>
+                  )}
+                />
+                <Tab
+                  key="campaigns"
+                  title={(
+                    <div className="flex items-center space-x-2">
+                      <Chat />
+                      <span>Campaigns</span>
+                    </div>
+                  )}
+                /> 
+              </Tabs>
             </Row>
 
             {!entity && (
@@ -291,21 +288,21 @@ function CustomerioBuilder(props) {
               </Row>
             )}
           </Container>
-        </Grid>
-        <Grid xs={12} sm={5}>
+        </div>
+        <div className="col-span-5 sm:col-span-12">
           <Container>
             <Row className="Customerio-request-tut">
               <Button
-                iconRight={requestLoading ? <Loading type="spinner" /> : <Play />}
-                disabled={requestLoading}
+                endContent={<Play />}
+                isLoading={requestLoading}
                 onClick={_onTest}
-                css={{ width: "100%" }}
+                className="w-full"
                 shadow
               >
                 Make the request
               </Button>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center">
               <Checkbox
                 label="Use cache"
@@ -313,16 +310,16 @@ function CustomerioBuilder(props) {
                 onChange={() => setInvalidateCache(!invalidateCache)}
                 size="sm"
               />
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Tooltip
                 content="If checked, Chartbrew will use cached data instead of making requests to your data source. The cache gets automatically invalidated when you change the collections and/or filters."
-                css={{ zIndex: 10000, maxWidth: 500 }}
-                placement="leftStart"
+                placement="left-start"
+                className="max-w-[500px]"
               >
                 <InfoCircle size="small" />
               </Tooltip>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <div style={{ width: "100%" }}>
                 <AceEditor
@@ -339,17 +336,17 @@ function CustomerioBuilder(props) {
                 />
               </div>
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row align="center">
               <InfoCircle size="small" />
-              <Spacer x={0.2} />
+              <Spacer x={0.5} />
               <Text small>
                 {"To keep the interface fast, not all the data might show up here."}
               </Text>
             </Row>
           </Container>
-        </Grid>
-      </Grid.Container>
+        </div>
+      </div>
     </div>
   );
 }

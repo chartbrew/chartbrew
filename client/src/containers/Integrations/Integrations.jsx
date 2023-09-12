@@ -3,13 +3,17 @@ import PropTypes from "prop-types";
 import { withRouter } from "react-router";
 import { connect } from "react-redux";
 import {
-  Container, Row, Spacer, Text
+  Spacer,
 } from "@nextui-org/react";
+
 
 import WebhookIntegrations from "./components/WebhookIntegrations";
 import {
   getTeamIntegrations as getTeamIntegrationsAction,
 } from "../../actions/integration";
+import Container from "../../components/Container";
+import Text from "../../components/Text";
+import Row from "../../components/Row";
 
 function Integrations(props) {
   const { integrations, getTeamIntegrations, match } = props;
@@ -20,21 +24,17 @@ function Integrations(props) {
 
   return (
     <div>
-      <Container
-        css={{
-          background: "$backgroundContrast", p: "$6", br: "$md"
-        }}
-      >
+      <Container className={"bg-content2 rounded-md"} size="md">
         <Row>
           <Text h3>Integrations</Text>
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={1} />
         <Row>
           <Text>
             {"Create new integrations that you can use across your team's projects. Currently, the integrations are mainly used for chart alerts and notifications."}
           </Text>
         </Row>
-        <Spacer y={1} />
+        <Spacer y={2} />
 
         <Row>
           <WebhookIntegrations
@@ -42,7 +42,7 @@ function Integrations(props) {
             teamId={match.params.teamId}
           />
         </Row>
-        <Spacer y={2} />
+        <Spacer y={4} />
       </Container>
     </div>
   );

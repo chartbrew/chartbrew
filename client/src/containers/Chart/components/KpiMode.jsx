@@ -106,7 +106,7 @@ function KpiMode(props) {
             <Row justify="center" align="center">
               <Text
                 b
-                size={chart.chartSize === 1 ? "text-3xl" : "text-4xl"}
+                className={chart.chartSize === 1 ? "text-3xl" : "text-4xl"}
                 key={dataset.label}
               >
                 {dataset.data && _getKpi(dataset.data)}

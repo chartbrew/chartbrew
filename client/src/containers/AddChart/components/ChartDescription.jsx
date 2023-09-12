@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Container, Input, Row, Spacer, Text, Link, Grid, Card,
+  Button, Input, Spacer, Link, Card, Tabs, Tab, CardBody, Image, CardFooter,
 } from "@nextui-org/react";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
-import { Edit, Scan } from "react-iconly";
-import { FaMagic } from "react-icons/fa";
 import { Link as RouterLink } from "react-router-dom";
 
 import SimpleAnalyticsTemplate from "../../Connections/SimpleAnalytics/SimpleAnalyticsTemplate";
@@ -21,6 +19,9 @@ import simpleanalyticsDash from "../../Connections/SimpleAnalytics/simpleanalyti
 import chartmogulDash from "../../Connections/ChartMogul/chartmogul-template.jpeg";
 import mailgunDash from "../../Connections/Mailgun/mailgun-template.jpeg";
 import gaDash from "../../Connections/GoogleAnalytics/ga-template.jpeg";
+import Container from "../../../components/Container";
+import Text from "../../../components/Text";
+import Row from "../../../components/Row";
 
 function ChartDescription(props) {
   const {
@@ -68,92 +69,15 @@ function ChartDescription(props) {
   };
 
   return (
-    <Container
-      css={{
-        backgroundColor: "$backgroundContrast",
-        br: "$md",
-        p: 10,
-        "@xs": {
-          p: 20,
-        },
-        "@sm": {
-          p: 20,
-        },
-        "@md": {
-          p: 20,
-          m: 20,
-        },
-        "@lg": {
-          p: 20,
-          m: 20,
-        },
-      }}
-    >
-      <Row align="center" wrap="wrap" gap={1} css={{ marginLeft: 0 }}>
-        <Link
-          css={{
-            background: selectedMenu === "emptyChart" ? "$background" : "$backgroundContrast",
-            p: 5,
-            pr: 10,
-            pl: 10,
-            br: "$sm",
-            "@xsMax": { width: "90%" },
-            ai: "center",
-            color: "$text",
-          }}
-          onClick={() => {
-            setSelectedMenu("emptyChart");
-            setFormType("");
-          }}
-        >
-          <Edit />
-          <Spacer x={0.2} />
-          <Text>{" Create from scratch"}</Text>
-        </Link>
-        <Spacer x={0.2} />
-        <Link
-          css={{
-            background: selectedMenu === "communityTemplates" ? "$background" : "$backgroundContrast",
-            p: 5,
-            pr: 10,
-            pl: 10,
-            br: "$sm",
-            "@xsMax": { width: "90%" },
-            ai: "center",
-            color: "$text",
-          }}
-          onClick={() => {
-            setSelectedMenu("communityTemplates");
-            setFormType("");
-          }}
-        >
-          <FaMagic size={20} />
-          <Spacer x={0.2} />
-          <Text>{" Community templates"}</Text>
-        </Link>
-        <Spacer x={0.2} />
-        <Link
-          css={{
-            background: selectedMenu === "customTemplates" ? "$background" : "$backgroundContrast",
-            p: 5,
-            pr: 10,
-            pl: 10,
-            br: "$sm",
-            "@xsMax": { width: "90%" },
-            ai: "center",
-            color: "$text",
-          }}
-          onClick={() => {
-            setSelectedMenu("customTemplates");
-            setFormType("");
-          }}
-        >
-          <Scan />
-          <Spacer x={0.2} />
-          <Text>{" Custom templates"}</Text>
-        </Link>
+    <Container className={"bg-content2 rounded-md p-10"}>
+      <Row align="center" wrap="wrap" className={"flex gap-1 ml-0"}>
+        <Tabs selectedKey={selectedMenu} onSelectionChange={(key) => setSelectedMenu(key)}>
+          <Tab key="emptyChart" value="emptyChart" label="Create from scratch" />
+          <Tab key="communityTemplates" value="communityTemplates" label="Community templates" />
+          <Tab key="customTemplates" value="customTemplates" label="Custom templates" />
+        </Tabs>
       </Row>
-      <Spacer y={1} />
+      <Spacer y={2} />
       {!formType && (
         <>
           {selectedMenu === "emptyChart" && (
@@ -168,7 +92,7 @@ function ChartDescription(props) {
                   {"Write a short summary of your visualization"}
                 </Text>
               </Row>
-              <Spacer y={1} />
+              <Spacer y={2} />
               <Row align="center">
                 <form
                   id="create-chart"
@@ -180,31 +104,31 @@ function ChartDescription(props) {
                 >
                   <Input
                     placeholder="'User growth in the last month'"
-                    helperColor="error"
-                    helperText={error}
+                    color={error ? "danger" : "primary"}
+                    description={error}
                     value={name}
                     onChange={_onNameChange}
                     size="lg"
                     fullWidth
                     autoFocus
-                    bordered
+                    variant="bordered"
                   />
                 </form>
               </Row>
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               <Row align="center">
                 <Link
                   onClick={_populateName}
                 >
-                  <Text css={{ color: "$primary", userSelect: "none" }}>{"Can't think of something?"}</Text>
+                  <Text className={"text-primary"}>{"Can't think of something?"}</Text>
                 </Link>
               </Row>
 
               {noConnections && (
                 <>
-                  <Spacer y={1} />
+                  <Spacer y={2} />
                   <Row>
-                    <Container css={{ backgroundColor: "$blue100", p: 10, br: 10 }}>
+                    <Container className={"bg-blue-100 p-10 rounded-md"}>
                       <Row>
                         <Text h5>
                           {"You haven't connected to any data source yet. Create charts from a template instead or "}
@@ -218,10 +142,11 @@ function ChartDescription(props) {
                 </>
               )}
 
-              <Spacer y={1} />
+              <Spacer y={2} />
               <Row align="center">
                 <Button
-                  disabled={loading || !name}
+                  disabled={!name}
+                  isLoading={loading}
                   type="submit"
                   onClick={_onCreatePressed}
                   form="create-chart"
@@ -230,89 +155,89 @@ function ChartDescription(props) {
                 >
                   Start editing
                 </Button>
-                <Spacer x={0.5} />
+                <Spacer x={1} />
                 <Link
                   onClick={() => history.goBack()}
                 >
-                  <Text b css={{ color: "$secondary" }}>Go back</Text>
+                  <Text b className={"text-secondary"}>Go back</Text>
                 </Link>
               </Row>
             </>
           )}
           {selectedMenu === "communityTemplates" && (
             <Row align="center">
-              <Grid.Container gap={2}>
-                <Grid xs={12} sm={6} md={4}>
+              <div className="grid grid-cols-12 gap-2">
+                <div className="col-span-4 sm:col-span-12 md:col-span-6">
                   <Card variant="flat" isPressable isHoverable className="project-segment" onClick={() => setFormType("saTemplate")}>
-                    <Card.Body css={{ p: 0 }}>
-                      <Card.Image objectFit="cover" width="300" height="300" src={simpleanalyticsDash} />
-                    </Card.Body>
-                    <Card.Footer>
+                    <CardBody className="p-10">
+                      <Image className="object-cover" width="300" height="300" src={simpleanalyticsDash} />
+                    </CardBody>
+                    <CardFooter>
                       <Row wrap="wrap" justify="center" align="center">
                         <Text h4>
                           Simple Analytics
                         </Text>
                       </Row>
-                    </Card.Footer>
+                    </CardFooter>
                   </Card>
-                </Grid>
-                <Grid xs={12} sm={6} md={4}>
+                </div>
+                <div className="col-span-4 sm:col-span-12 md:col-span-6">
                   <Card variant="flat" isPressable isHoverable className="project-segment" onClick={() => setFormType("cmTemplate")}>
-                    <Card.Body css={{ p: 0 }}>
-                      <Card.Image objectFit="cover" width="300" height="300" src={chartmogulDash} />
-                    </Card.Body>
-                    <Card.Footer>
+                    <CardBody className="p-0">
+                      <Image className="object-cover" width="300" height="300" src={chartmogulDash} />
+                    </CardBody>
+                    <CardFooter>
                       <Row wrap="wrap" justify="center" align="center">
                         <Text h4>
                           ChartMogul
                         </Text>
                       </Row>
-                    </Card.Footer>
+                    </CardFooter>
                   </Card>
-                </Grid>
-                <Grid xs={12} sm={6} md={4}>
+                </div>
+                <div className="col-span-4 sm:col-span-12 md:col-span-6">
                   <Card variant="flat" isPressable isHoverable className="project-segment" onClick={() => setFormType("mailgunTemplate")}>
-                    <Card.Body css={{ p: 0 }}>
-                      <Card.Image objectFit="cover" width="300" height="300" src={mailgunDash} />
-                    </Card.Body>
-                    <Card.Footer>
+                    <CardBody className="p-0">
+                      <Image className="object-cover" width="300" height="300" src={mailgunDash} />
+                    </CardBody>
+                    <CardFooter>
                       <Row wrap="wrap" justify="center" align="center">
                         <Text h4>
                           Mailgun
                         </Text>
                       </Row>
-                    </Card.Footer>
+                    </CardFooter>
                   </Card>
-                </Grid>
-                <Grid xs={12} sm={6} md={4}>
+                </div>
+                <div className="col-span-4 sm:col-span-12 md:col-span-6">
                   <Card variant="flat" isPressable isHoverable className="project-segment" onClick={() => setFormType("googleAnalyticsTemplate")}>
-                    <Card.Body css={{ p: 0 }}>
-                      <Card.Image objectFit="cover" width="300" height="300" src={gaDash} />
-                    </Card.Body>
-                    <Card.Footer>
+                    <CardBody className="p-0">
+                      <Image className="object-cover" width="300" height="300" src={gaDash} />
+                    </CardBody>
+                    <CardFooter>
                       <Row wrap="wrap" justify="center" align="center">
                         <Text h4>
                           Google Analytics
                         </Text>
                       </Row>
-                    </Card.Footer>
+                    </CardFooter>
                   </Card>
-                </Grid>
-                <Grid xs={12} sm={6} md={4}>
+                </div>
+                <div className="col-span-4 sm:col-span-12 md:col-span-6">
                   <Card variant="flat" isPressable isHoverable className="project-segment" onClick={() => setFormType("plausibleTemplate")}>
-                    <Card.Body css={{ p: 0 }}>
-                      <Card.Image objectFit="cover" width="300" height="300" src={plausibleDash} />
-                    </Card.Body>
-                    <Card.Footer>
+                    <CardBody className="p-0">
+                      <Image className="object-cover" width="300" height="300" src={plausibleDash} />
+                    </CardBody>
+                    <CardFooter>
                       <Row wrap="wrap" justify="center" align="center">
                         <Text h4>
                           Plausible Analytics
                         </Text>
                       </Row>
-                    </Card.Footer>
+                    </CardFooter>
                   </Card>
-                </Grid>
-              </Grid.Container>
+                </div>
+              </div>
             </Row>
           )}
 

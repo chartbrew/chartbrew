@@ -5,7 +5,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Button, Container, Grid, Input, Row, Spacer, Text, Tooltip,
+  Button, Input, Spacer, Tooltip,
 } from "@nextui-org/react";
 import { Helmet } from "react-helmet";
 import uuid from "uuid/v4";
@@ -16,6 +16,9 @@ import {
   runQueryWithFilters as runQueryWithFiltersAction,
 } from "../../actions/chart";
 import Chart from "../Chart/Chart";
+import Container from "../../components/Container";
+import Text from "../../components/Text";
+import Row from "../../components/Row";
 
 function PrintView(props) {
   const {
@@ -113,23 +116,24 @@ function PrintView(props) {
         {showMenu && (
           <Row style={styles.orientationBtn}>
             <Button
-              icon={<ChevronLeftCircle />}
-              bordered
+              isIconOnly
+              variant="bordered"
               onClick={_togglePrint}
-              css={{ minWidth: "fit-content" }}
-            />
-            <Spacer x={0.2} />
+            >
+              <ChevronLeftCircle />
+            </Button>
+            <Spacer x={0.5} />
             <Button
-              icon={<FaRedo />}
-              bordered
+              startContent={<FaRedo />}
+              variant="bordered"
               onClick={_changeOrientation}
               auto
             >
               {orientation === "portrait" ? "Switch to Landscape" : "Switch to Portrait"}
             </Button>
-            <Spacer x={0.2} />
+            <Spacer x={0.5} />
             <Button
-              icon={<FaPrint />}
+              startContent={<FaPrint />}
               onClick={_onStartPrint}
               auto
             >
@@ -139,7 +143,7 @@ function PrintView(props) {
         )}
       </Container>
       <div onMouseEnter={_onDisplayMenu}>
-        <Text size="2.5em" onClick={() => setEditingTitle(true)}>
+        <Text className="text-[2.5em]" onClick={() => setEditingTitle(true)}>
           <Tooltip content="Edit your public dashboard title">
             <a style={styles.editTitle}>
               {printTitle || project.name}
@@ -155,12 +159,12 @@ function PrintView(props) {
                   placeholder="Enter a title"
                   value={printTitle || project.name}
                   onChange={(e) => setPrintTitle(e.target.value)}
-                  bordered
+                  variant="bordered"
                 />
                 <Spacer x={0.2} />
                 <Button
                   color="secondary"
-                  icon={<TickSquare />}
+                  startContent={<TickSquare />}
                   onClick={() => setEditingTitle(false)}
                   auto
                 >
@@ -170,17 +174,17 @@ function PrintView(props) {
             </Container>
           )}
       </div>
-      <Grid.Container style={styles.mainGrid}>
+      <div className="grid grid-cols-12" style={styles.mainGrid}>
         {orientation && printCharts && printCharts.map((chart) => {
           if (chart === "row") {
             return (
-              <Grid xs={12} style={{ paddingTop: orientation === "landscape" ? 50 : 230 }} key={uuid()} />
+              <div className="col-span-12" style={{ paddingTop: orientation === "landscape" ? 50 : 230 }} key={uuid()} />
             );
           }
           if (chart.draft) return (<span style={{ display: "none" }} key={chart.id} />);
           return (
-            <Grid
-              xs={chart.chartSize * 3}
+            <div
+              className={`col-span-${chart.chartSize * 3}`}
               key={chart.id}
               style={styles.chartGrid}
             >
@@ -191,10 +195,10 @@ function PrintView(props) {
                 print={orientation}
                 height={orientation === "landscape" ? 230 : 300}
               />
-            </Grid>
+            </div>
           );
         })}
-      </Grid.Container>
+      </div>
     </div>
   );
 }
