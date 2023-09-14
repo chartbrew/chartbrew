@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Button, Spacer, Link as LinkNext, Tooltip, Card, Modal, Chip, CardBody, ModalHeader, ModalBody,
+  Button, Spacer, Link as LinkNext, Tooltip, Card, Modal, Chip, CardBody, ModalHeader, ModalBody, ModalContent,
 } from "@nextui-org/react";
 import { Link } from "react-router-dom";
 import { useWindowSize } from "react-use";
@@ -361,7 +361,7 @@ function ProjectDashboard(props) {
         && (
           <div>
             <div
-              className={"bg-content2 w-full"}
+              className={"bg-content1 w-full border-b-1 border-solid border-content3"}
               size="xl"
               style={mobile ? styles.actionBarMobile : styles.actionBar}
             >
@@ -397,23 +397,33 @@ function ProjectDashboard(props) {
                       && filters[match.params.projectId].map((filter) => (
                         <Fragment key={filter.id}>
                           {filter.type === "date" && (
-                            <Chip color="primary" variant={"bordered"} radius="sm">
+                            <Chip
+                              color="primary"
+                              variant={"flat"}
+                              radius="sm"
+                              endContent={(
+                                <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default-500">
+                                  <CloseSquare size="small" />
+                                </LinkNext>
+                              )}
+                            >
                               {`${moment.utc(filter.startDate).format("YYYY/MM/DD")} - ${moment.utc(filter.endDate).format("YYYY/MM/DD")}`}
-                              <Spacer x={0.5} />
-                              <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default">
-                                <CloseSquare size="small" style={{ padding: 0 }} />
-                              </LinkNext>
                             </Chip>
                           )}
                           {filter.type !== "date" && (
-                            <Chip color="primary" variant={"bordered"} radius="sm">
+                            <Chip
+                              color="primary"
+                              variant={"flat"}
+                              radius="sm"
+                              endContent={(
+                                <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default">
+                                  <CloseSquare size="small" />
+                                </LinkNext>
+                              )}
+                            >
                               <span>{`${filter.field.substring(filter.field.lastIndexOf(".") + 1)}`}</span>
                               <strong>{` ${_getOperator(filter.operator)} `}</strong>
                               <span>{`${filter.value}`}</span>
-                              <Spacer x={0.5} />
-                              <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default">
-                                <CloseSquare size="small" />
-                              </LinkNext>
                             </Chip>
                           )}
                         </Fragment>
@@ -504,7 +514,7 @@ function ProjectDashboard(props) {
             </div>
           </div>
         )}
-      <div className="w-full" style={styles.container(width < breakpoints.tablet)}>
+      <div className="bg-content2 w-full" style={styles.container(width < breakpoints.tablet)}>
         {connections.length === 0 && charts.length === 0
           && (
             <Container justify="center" className={`pt-[${height / 3}]`}>
@@ -558,7 +568,7 @@ function ProjectDashboard(props) {
         )}
 
         {/* <Container className={"p-0 m-0 sm:pl-10 sm:pr-10"} size="fluid"> */}
-          <div className="grid grid-cols-12 gap-2">
+          <div className="grid grid-cols-12 gap-4">
             {charts.map((chart, index) => {
               if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
               if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />);
@@ -591,20 +601,22 @@ function ProjectDashboard(props) {
         onEditFilterGroup={_onEditFilterGroup}
       />
 
-      <Modal isOpen={viewExport} closeButton onClose={() => setViewExport(false)} className="w-[800px]">
-        <ModalHeader>
-          <Text size="h3">Export to Excel (.xlsx)</Text>
-        </ModalHeader>
-        <ModalBody>
-          <ChartExport
-            charts={charts}
-            onExport={_onExport}
-            loading={exportLoading}
-            error={exportError}
-            onUpdate={(chartId, disabled) => _onUpdateExport(chartId, disabled)}
-            showDisabled={_canAccess("admin")}
-          />
-        </ModalBody>
+      <Modal isOpen={viewExport} closeButton onClose={() => setViewExport(false)} size="2xl">
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h3">Export to Excel (.xlsx)</Text>
+          </ModalHeader>
+          <ModalBody>
+            <ChartExport
+              charts={charts}
+              onExport={_onExport}
+              loading={exportLoading}
+              error={exportError}
+              onUpdate={(chartId, disabled) => _onUpdateExport(chartId, disabled)}
+              showDisabled={_canAccess("admin")}
+            />
+          </ModalBody>
+        </ModalContent>
       </Modal>
 
       <CreateTemplateForm

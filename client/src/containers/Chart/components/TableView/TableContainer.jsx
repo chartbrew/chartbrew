@@ -50,7 +50,7 @@ function TableContainer(props) {
 
   return (
     <div>
-      <Row align="center" wrap="wrap">
+      <Row align="center" wrap="wrap" className={"gap-1"}>
         {activeDataset && datasets.map((dataset) => {
           return (
             <Fragment key={dataset.id}>
@@ -63,18 +63,17 @@ function TableContainer(props) {
               >
                 {dataset.legend}
               </Button>
-              <Spacer x={0.4} />
             </Fragment>
           );
         })}
-        <Spacer x={1} />
         {!embedded && (
           <Button
             startContent={expanded ? <ChevronUpCircle /> : <ChevronDownCircle />}
             onClick={() => _onExpand()}
-            auto
+            color="default"
             size={chartSize === 1 ? "xs" : "sm"}
             variant="light"
+            className="text-default-500"
           >
             {expanded ? "See less" : "See more"}
           </Button>
@@ -94,7 +93,7 @@ function TableContainer(props) {
         && tabularData[activeDataset.legend].columns
         && (
           <TableComponent
-            height={expanded ? height + 200 : chartSize > 1 ? height + 3 : height + 12}
+            height={expanded ? height + 200 : chartSize > 1 ? height + 12 : height + 12}
             columns={tabularData[activeDataset.legend].columns}
             data={tabularData[activeDataset.legend].data}
             embedded={embedded}

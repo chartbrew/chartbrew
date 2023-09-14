@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import {
   Card, Spacer, Tooltip, Dropdown, Button, Modal, Input,
-  Link as LinkNext, Textarea, Switch, Popover, Chip, CardHeader, CircularProgress, PopoverTrigger, PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, ModalHeader, ModalBody, ModalFooter, CardBody, ModalContent,
+  Link as LinkNext, Textarea, Switch, Popover, Chip, CardHeader, CircularProgress, PopoverTrigger, PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, ModalHeader, ModalBody, ModalFooter, CardBody, ModalContent, Select, SelectItem,
 } from "@nextui-org/react";
 import {
   ArrowDown, ArrowUp, ChevronDown, ChevronDownCircle, ChevronUp, CloseSquare,
@@ -17,7 +17,7 @@ import _ from "lodash";
 import { enGB } from "date-fns/locale";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
-import { HiRefresh, HiExternalLink } from "react-icons/hi";
+import { HiRefresh, HiExternalLink, HiChevronDown } from "react-icons/hi";
 
 import {
   removeChart as removeChartAction,
@@ -60,7 +60,7 @@ function Chart(props) {
   const {
     updateChart, match, runQuery, removeChart, runQueryWithFilters,
     team, user, chart, isPublic, charts, onChangeOrder, print, height,
-    createShareString, getChart, showExport, password,
+    createShareString, getChart, showExport, password, history,
   } = props;
 
   const [chartLoading, setChartLoading] = useState(false);
@@ -445,279 +445,287 @@ function Chart(props) {
       )}
       {chart && (
         <Card
-          style={styles.chartContainer(print)}
-          variant="bordered"
-          className="h-full"
+          shadow="none"
+          className={`h-full border-solid border-1 border-content3 ${!print ? "min-h-[350px]" : "min-h-[350px] shadow-none border-solid border-1 border-content4"}`}
         >
-          <CardHeader className="pb-0">
-            <div className="grid grid-cols-12">
-              <div className="col-span-10 sm:col-span-8 flex items-start justify-start">
-                <div>
-                  <Row justify="flex-start" align="center">
-                    {chart.draft && (
-                      <>
-                        <Chip color="secondary" size="sm">Draft</Chip>
-                        <Spacer x={0.6} />
-                      </>
-                    )}
+          <CardHeader className="pb-0 grid grid-cols-12 items-start">
+            <div className="col-span-10 sm:col-span-8 flex items-start justify-start">
+              <div>
+                <Row justify="flex-start" align="center">
+                  {chart.draft && (
                     <>
-                      {_canAccess("editor") && (
-                        <Link to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}>
-                          <Text b size="lg" className={"text-default"}>{chart.name}</Text>
-                        </Link>
-                      )}
-                      {!_canAccess("editor") && (
-                        <Text b size="lg">{chart.name}</Text>
-                      )}
+                      <Chip color="secondary" size="sm">Draft</Chip>
+                      <Spacer x={1} />
                     </>
-                    <Spacer x={0.5} />
-                    {chart.Datasets && conditions.map((c) => {
-                      return (
-                        <Chip color="primary" variant={"flat"} key={c.id} size="sm" className="p-0 pl-5 pr-5">
-                          {c.type !== "date" && `${c.value}`}
-                          {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
-                          <Spacer x={0.5} />
-                          <LinkNext onClick={() => _onClearFilter(c)} className="text-default">
+                  )}
+                  <>
+                    {_canAccess("editor") && (
+                      <Link to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}>
+                        <Text b size="lg" className={"text-default"}>{chart.name}</Text>
+                      </Link>
+                    )}
+                    {!_canAccess("editor") && (
+                      <Text b size="lg">{chart.name}</Text>
+                    )}
+                  </>
+                  <Spacer x={0.5} />
+                  {chart.Datasets && conditions.map((c) => {
+                    return (
+                      <Chip
+                        color="primary"
+                        variant={"flat"}
+                        key={c.id}
+                        size="sm"
+                        endContent={(
+                          <LinkNext onClick={() => _onClearFilter(c)} className="text-default-500 flex items-center">
                             <CloseSquare size="small" />
                           </LinkNext>
-                        </Chip>
-                      );
-                    })}
-                  </Row>
-                  {chart.chartData && (
-                    <Row justify="flex-start" align="center">
-                      {!chartLoading && !chart.loading && (
-                        <>
-                          {!print && <Text size="xs" i title="Last updated">{`${_getUpdatedTime(chart.chartDataUpdated)}`}</Text>}
-                          {print && <Text size="xs" i>{`${moment(chart.chartDataUpdated).format("LLL")}`}</Text>}
-                        </>
-                      )}
-                      {(chartLoading || chart.loading) && (
-                        <>
-                          <CircularProgress size="xs" />
-                          <Spacer x={0.5} />
-                          <Text size="xs">{"Updating..."}</Text>
-                        </>
-                      )}
-                      <Spacer x={0.5} />
-                      {chart.autoUpdate > 0 && (
-                        <Tooltip content={`Updates every ${_getUpdateFreqText(chart.autoUpdate)}`}>
-                          <div>
-                            <TimeCircle size="small" set="light" />
-                          </div>
-                        </Tooltip>
-                      )}
-                      {chart.public && !isPublic && !print && (
-                        <Tooltip content="This chart is public">
-                          <div>
-                            <Unlock size="small" set="light" />
-                          </div>
-                        </Tooltip>
-                      )}
-                      {chart.onReport && !isPublic && !print && (
-                        <Tooltip content="This chart is on a report">
-                          <div>
-                            <Graph size="small" set="light" />
-                          </div>
-                        </Tooltip>
-                      )}
-                    </Row>
-                  )}
-                </div>
-              </div>
-              <div className="col-span-2 sm:col-span-4 flex items-start justify-end">
-                {_checkIfFilters() && (
-                  <Popover placement="bottom-right">
-                    <PopoverTrigger>
-                      <LinkNext className="text-gray-400">
-                        <Filter2 set="light" />
-                      </LinkNext>
-                    </PopoverTrigger>
-                    <PopoverContent>
-                      <Container className={"pt-10 pb-10"}>
-                        <ChartFilters
-                          chart={chart}
-                          onAddFilter={_onAddFilter}
-                          onClearFilter={_onClearFilter}
-                          conditions={conditions}
-                        />
-                      </Container>
-                    </PopoverContent>
-                  </Popover>
-                )}
-                {projectId && !print && (
-                  <Dropdown closeOnSelect={false}>
-                    <DropdownTrigger>
-                      <LinkNext color="foreground">
-                        <MoreSquare set="light" />
-                      </LinkNext>
-                    </DropdownTrigger>
-                    <DropdownMenu variant="bordered">
-                      <DropdownItem
-                        startContent={(chartLoading || chart.loading) ? <CircularProgress size="sm" /> : <HiRefresh size={22} />}
-                        onClick={_onGetChartData}
+                        )}
                       >
-                        <Text>Refresh chart</Text>
-                      </DropdownItem>
-                      {_canAccess("editor") && (
-                        <DropdownItem startContent={<TimeCircle />} onClick={_openUpdateModal}>
-                          <Text>Auto-update</Text>
-                        </DropdownItem>
-                      )}
-                      {_canAccess("editor") && (
-                        <DropdownItem startContent={<EditSquare />}>
-                          <Link to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}>
-                            <Text>Edit chart</Text>
-                          </Link>
-                        </DropdownItem>
-                      )}
-                      <DropdownItem startContent={exportLoading ? <CircularProgress size="sm" /> : <PaperDownload />}>
-                        <Text onClick={_onExport}>Export to Excel</Text>
-                      </DropdownItem>
-                      {!chart.draft && _canAccess("editor") && (
-                        <DropdownItem startContent={<Graph />}>
-                          <Text onClick={_onChangeReport}>
-                            {chart.onReport ? "Remove from report" : "Add to report"}
-                          </Text>
-                        </DropdownItem>
-                      )}
-                      {!chart.draft && _canAccess("editor") && (
-                        <DropdownItem showDivider startContent={chart.public ? <Unlock /> : <Lock />}>
-                          <Text onClick={_onPublicConfirmation}>
-                            {chart.public ? "Make private" : "Make public"}
-                          </Text>
-                        </DropdownItem>
-                      )}
-                      {!chart.draft && (
-                        <DropdownItem startContent={<Send />}>
-                          <Text onClick={_onEmbed}>{"Embed & Share"}</Text>
-                        </DropdownItem>
-                      )}
-                      {!chart.draft && chart.shareable && (
-                        <DropdownItem startContent={<HiExternalLink size={24} />}>
-                          <Text onClick={_onOpenEmbed}>{"Open in a new tab"}</Text>
-                        </DropdownItem>
-                      )}
-                      {_canAccess("editor") && (
-                        <DropdownItem startContent={<ChevronDownCircle />}>
-                          <Dropdown>
-                            <DropdownTrigger>
-                              <Text>Chart size</Text>
-                            </DropdownTrigger>
-                            <DropdownMenu
-                              variant="bordered"
-                              disallowEmptySelection
-                              onSelectionChange={(key) => {
-                                if (key && Object.values(key)) {
-                                  _onChangeSize(Object.values(key)[0]);
-                                }
-                              }}
-                              selectedKeys={[`${chart.chartSize}`]}
-                              selectionMode="single"
-                            >
-                              <DropdownItem key={1}>
-                                <Text>Small</Text>
-                              </DropdownItem>
-                              <DropdownItem key={2}>
-                                <Text>Medium</Text>
-                              </DropdownItem>
-                              <DropdownItem key={3}>
-                                <Text>Large</Text>
-                              </DropdownItem>
-                              <DropdownItem key={4}>
-                                <Text>Full width</Text>
-                              </DropdownItem>
-                            </DropdownMenu>
-                          </Dropdown>
-                        </DropdownItem>
-                      )}
-                      {_canAccess("editor") && (
-                        <DropdownItem showDivider startContent={<ChevronDownCircle />}>
-                          <Dropdown>
-                            <DropdownTrigger>
-                              <Text>Change order</Text>
-                            </DropdownTrigger>
-                            <DropdownMenu variant="bordered">
-                              <DropdownItem startContent={<ArrowUp />}>
-                                {_getChartIndex() === 0 && (
-                                  <Text className={"text-gray-300"}>
-                                    Move to top
-                                  </Text>
-                                )}
-                                {_getChartIndex() !== 0 && (
-                                  <Text onClick={() => onChangeOrder(chart.id, "top")}>
-                                    Move to top
-                                  </Text>
-                                )}
-                              </DropdownItem>
-                              <DropdownItem startContent={<ChevronUp />}>
-                                {_getChartIndex() === 0 && (
-                                  <Text className={"text-gray-300"}>
-                                    Move up
-                                  </Text>
-                                )}
-                                {_getChartIndex() !== 0 && (
-                                  <Text onClick={() => onChangeOrder(chart.id, "up")}>
-                                    Move up
-                                  </Text>
-                                )}
-                              </DropdownItem>
-                              <DropdownItem startContent={<ChevronDown />}>
-                                {_getChartIndex() === charts.length - 1 && (
-                                  <Text css={{ color: "$accents4" }}>
-                                    Move down
-                                  </Text>
-                                )}
-                                {_getChartIndex() < charts.length - 1 && (
-                                  <Text onClick={() => onChangeOrder(chart.id, "down")}>
-                                    Move down
-                                  </Text>
-                                )}
-                              </DropdownItem>
-                              <DropdownItem startContent={<ArrowDown />}>
-                                {_getChartIndex() === charts.length - 1 && (
-                                  <Text className={"text-gray-300"}>
-                                    Move to bottom
-                                  </Text>
-                                )}
-                                {_getChartIndex() !== charts.length - 1 && (
-                                  <Text onClick={() => onChangeOrder(chart.id, "bottom")}>
-                                    Move to bottom
-                                  </Text>
-                                )}
-                              </DropdownItem>
-                            </DropdownMenu>
-                          </Dropdown>
-                        </DropdownItem>
-                      )}
-                      {_canAccess("editor") && (
-                        <DropdownItem startContent={<Delete />} color="danger" showDivider>
-                          <Text onClick={_onDeleteChartConfirmation}>Delete chart</Text>
-                        </DropdownItem>
-                      )}
-                    </DropdownMenu>
-                  </Dropdown>
-                )}
-
-                {showExport && (
-                  <Dropdown closeOnSelect={false}>
-                    <DropdownTrigger>
-                      <LinkNext className="text-default">
-                        <MoreSquare set="light" />
-                      </LinkNext>
-                    </DropdownTrigger>
-                    <DropdownMenu variant="bordered">
-                      <DropdownItem startContent={exportLoading ? <CircularProgress size="sm" /> : <PaperDownload />}>
-                        <Text onClick={() => _onPublicExport(chart)}>Export to Excel</Text>
-                      </DropdownItem>
-                    </DropdownMenu>
-                  </Dropdown>
+                        <Text size="sm">
+                          {c.type !== "date" && `${c.value}`}
+                          {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
+                        </Text>
+                      </Chip>
+                    );
+                  })}
+                </Row>
+                {chart.chartData && (
+                  <Row justify="flex-start" align="center">
+                    {!chartLoading && !chart.loading && (
+                      <>
+                        {!print && <Text size="xs" i title="Last updated">{`${_getUpdatedTime(chart.chartDataUpdated)}`}</Text>}
+                        {print && <Text size="xs" i>{`${moment(chart.chartDataUpdated).format("LLL")}`}</Text>}
+                      </>
+                    )}
+                    {(chartLoading || chart.loading) && (
+                      <>
+                        <CircularProgress classNames={{ svg: "w-5 h-5" }} />
+                        <Spacer x={0.5} />
+                        <Text size="xs">{"Updating..."}</Text>
+                      </>
+                    )}
+                    <Spacer x={0.5} />
+                    {chart.autoUpdate > 0 && (
+                      <Tooltip content={`Updates every ${_getUpdateFreqText(chart.autoUpdate)}`}>
+                        <div>
+                          <TimeCircle size="small" set="light" />
+                        </div>
+                      </Tooltip>
+                    )}
+                    {chart.public && !isPublic && !print && (
+                      <Tooltip content="This chart is public">
+                        <div>
+                          <Unlock size="small" set="light" />
+                        </div>
+                      </Tooltip>
+                    )}
+                    {chart.onReport && !isPublic && !print && (
+                      <Tooltip content="This chart is on a report">
+                        <div>
+                          <Graph size="small" set="light" />
+                        </div>
+                      </Tooltip>
+                    )}
+                  </Row>
                 )}
               </div>
             </div>
+            <div className="col-span-2 sm:col-span-4 flex items-start justify-end">
+              {_checkIfFilters() && (
+                <Popover placement="bottom-right">
+                  <PopoverTrigger>
+                    <LinkNext className="text-gray-400">
+                      <Filter2 set="light" />
+                    </LinkNext>
+                  </PopoverTrigger>
+                  <PopoverContent>
+                    <Container className={"pt-10 pb-10"}>
+                      <ChartFilters
+                        chart={chart}
+                        onAddFilter={_onAddFilter}
+                        onClearFilter={_onClearFilter}
+                        conditions={conditions}
+                      />
+                    </Container>
+                  </PopoverContent>
+                </Popover>
+              )}
+              {projectId && !print && (
+                <Dropdown>
+                  <DropdownTrigger>
+                    <LinkNext color="foreground">
+                      <MoreSquare set="light" />
+                    </LinkNext>
+                  </DropdownTrigger>
+                  <DropdownMenu>
+                    <DropdownItem
+                      startContent={(chartLoading || chart.loading) ? <CircularProgress classNames={{ svg: "w-5 h-5" }} size="sm" /> : <HiRefresh size={22} />}
+                      onClick={_onGetChartData}
+                    >
+                      Refresh chart
+                    </DropdownItem>
+                    {_canAccess("editor") && (
+                      <DropdownItem startContent={<TimeCircle />} onClick={_openUpdateModal}>
+                        Auto-update
+                      </DropdownItem>
+                    )}
+                    {_canAccess("editor") && (
+                      <DropdownItem
+                        startContent={<EditSquare />}
+                        onClick={() => history.push(`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`)}
+                      >
+                        Edit chart
+                      </DropdownItem>
+                    )}
+                    <DropdownItem
+                      startContent={exportLoading ? <CircularProgress size="sm" /> : <PaperDownload />}
+                      onClick={_onExport}
+                    >
+                      Export to Excel
+                    </DropdownItem>
+                    {!chart.draft && _canAccess("editor") && (
+                      <DropdownItem startContent={<Graph />} onClick={_onChangeReport}>
+                        {chart.onReport ? "Remove from report" : "Add to report"}
+                      </DropdownItem>
+                    )}
+                    {!chart.draft && _canAccess("editor") && (
+                      <DropdownItem
+                        showDivider
+                        startContent={chart.public ? <Unlock /> : <Lock />}
+                        onClick={_onPublicConfirmation}
+                      >
+                        {chart.public ? "Make private" : "Make public"}
+                      </DropdownItem>
+                    )}
+                    {!chart.draft && (
+                      <DropdownItem startContent={<Send />} onClick={_onEmbed}>
+                        {"Embed & Share"}
+                      </DropdownItem>
+                    )}
+                    {!chart.draft && chart.shareable && (
+                      <DropdownItem startContent={<HiExternalLink size={24} />} onClick={_onOpenEmbed}>
+                        {"Open in a new tab"}
+                      </DropdownItem>
+                    )}
+                    {_canAccess("editor") && (
+                      <DropdownItem startContent={<ChevronDownCircle />}>
+                        <Dropdown>
+                          <DropdownTrigger>
+                            <Text>Chart size</Text>
+                          </DropdownTrigger>
+                          <DropdownMenu
+                            disallowEmptySelection
+                            onSelectionChange={(key) => {
+                              if (key && Object.values(key)) {
+                                _onChangeSize(Object.values(key)[0]);
+                              }
+                            }}
+                            selectedKeys={[`${chart.chartSize}`]}
+                            selectionMode="single"
+                          >
+                            <DropdownItem key={1}>
+                              <Text>Small</Text>
+                            </DropdownItem>
+                            <DropdownItem key={2}>
+                              <Text>Medium</Text>
+                            </DropdownItem>
+                            <DropdownItem key={3}>
+                              <Text>Large</Text>
+                            </DropdownItem>
+                            <DropdownItem key={4}>
+                              <Text>Full width</Text>
+                            </DropdownItem>
+                          </DropdownMenu>
+                        </Dropdown>
+                      </DropdownItem>
+                    )}
+                    {_canAccess("editor") && (
+                      <DropdownItem showDivider startContent={<ChevronDownCircle />}>
+                        <Dropdown>
+                          <DropdownTrigger>
+                            <Text>Change order</Text>
+                          </DropdownTrigger>
+                          <DropdownMenu>
+                            <DropdownItem startContent={<ArrowUp />}>
+                              {_getChartIndex() === 0 && (
+                                <Text className={"text-gray-300"}>
+                                  Move to top
+                                </Text>
+                              )}
+                              {_getChartIndex() !== 0 && (
+                                <Text onClick={() => onChangeOrder(chart.id, "top")}>
+                                  Move to top
+                                </Text>
+                              )}
+                            </DropdownItem>
+                            <DropdownItem startContent={<ChevronUp />}>
+                              {_getChartIndex() === 0 && (
+                                <Text className={"text-gray-300"}>
+                                  Move up
+                                </Text>
+                              )}
+                              {_getChartIndex() !== 0 && (
+                                <Text onClick={() => onChangeOrder(chart.id, "up")}>
+                                  Move up
+                                </Text>
+                              )}
+                            </DropdownItem>
+                            <DropdownItem startContent={<ChevronDown />}>
+                              {_getChartIndex() === charts.length - 1 && (
+                                <Text css={{ color: "$accents4" }}>
+                                  Move down
+                                </Text>
+                              )}
+                              {_getChartIndex() < charts.length - 1 && (
+                                <Text onClick={() => onChangeOrder(chart.id, "down")}>
+                                  Move down
+                                </Text>
+                              )}
+                            </DropdownItem>
+                            <DropdownItem startContent={<ArrowDown />}>
+                              {_getChartIndex() === charts.length - 1 && (
+                                <Text className={"text-gray-300"}>
+                                  Move to bottom
+                                </Text>
+                              )}
+                              {_getChartIndex() !== charts.length - 1 && (
+                                <Text onClick={() => onChangeOrder(chart.id, "bottom")}>
+                                  Move to bottom
+                                </Text>
+                              )}
+                            </DropdownItem>
+                          </DropdownMenu>
+                        </Dropdown>
+                      </DropdownItem>
+                    )}
+                    {_canAccess("editor") && (
+                      <DropdownItem startContent={<Delete />} color="danger" onClick={_onDeleteChartConfirmation}>
+                        Delete chart
+                      </DropdownItem>
+                    )}
+                  </DropdownMenu>
+                </Dropdown>
+              )}
+
+              {showExport && (
+                <Dropdown>
+                  <DropdownTrigger>
+                    <LinkNext className="text-default">
+                      <MoreSquare set="light" />
+                    </LinkNext>
+                  </DropdownTrigger>
+                  <DropdownMenu>
+                    <DropdownItem startContent={exportLoading ? <CircularProgress size="sm" /> : <PaperDownload />}>
+                      <Text onClick={() => _onPublicExport(chart)}>Export to Excel</Text>
+                    </DropdownItem>
+                  </DropdownMenu>
+                </Dropdown>
+              )}
+            </div>
           </CardHeader>
-          {chart.chartData && (
-            <CardBody className="pt-5 overflow-y-hidden">
+          <CardBody className="pt-5 overflow-y-hidden">
+            {chart.chartData && (
               <div style={styles.mainChartArea(_isKpi(chart))}>
                 {chart.type === "line"
                   && (
@@ -776,7 +784,7 @@ function Chart(props) {
                 {chart.type === "table"
                   && (
                     <TableContainer
-                      height={height - 55}
+                      height={height - 32}
                       tabularData={chart.chartData}
                       chartSize={chart.chartSize}
                       datasets={chart.Datasets}
@@ -792,230 +800,230 @@ function Chart(props) {
                     />
                   )}
               </div>
-            </CardBody>
-          )}
+            )}
+          </CardBody>
         </Card>
       )}
 
       {/* DELETE CONFIRMATION MODAL */}
       <Modal isOpen={deleteModal} onClose={() => setDeleteModal(false)} backdrop="blur">
-        <ModalHeader>
-          <Text size="h4">Are you sure you want to remove this chart?</Text>
-        </ModalHeader>
-        <ModalBody>
-          <Text>
-            {"All the chart data will be removed and you won't be able to see it on your dashboard anymore if you proceed with the removal."}
-          </Text>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            variant="flat"
-            color="warning"
-            onClick={() => setDeleteModal(false)}
-            auto
-          >
-            Go back
-          </Button>
-          <Button
-            color="danger"
-            endContent={<Delete />}
-            onClick={_onDeleteChart}
-            auto
-          >
-            Remove completely
-          </Button>
-        </ModalFooter>
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h4">Are you sure you want to remove this chart?</Text>
+          </ModalHeader>
+          <ModalBody>
+            <Text>
+              {"All the chart data will be removed and you won't be able to see it on your dashboard anymore if you proceed with the removal."}
+            </Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="flat"
+              color="warning"
+              onClick={() => setDeleteModal(false)}
+              auto
+            >
+              Go back
+            </Button>
+            <Button
+              color="danger"
+              endContent={<Delete />}
+              onClick={_onDeleteChart}
+              isLoading={chartLoading}
+            >
+              Remove completely
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
 
       {/* MAKE CHART PUBLIC MODAL */}
       <Modal onClose={() => setPublicModal(false)} isOpen={publicModal}>
-        <ModalHeader>
-          <Text size="h4">Are you sure you want to make your chart public?</Text>
-        </ModalHeader>
-        <ModalBody>
-          <Text>
-            {"Public charts will show in your Public Dashboard page and it can be viewed by everyone with access to the unique sharing link. Nobody other than you and your team will be able to edit or update the chart data."}
-          </Text>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            variant="flat"
-            color="warning"
-            auto
-            onClick={() => setPublicModal(false)}
-          >
-            Go back
-          </Button>
-          <Button
-            isLoading={publicLoading}
-            auto
-            endContent={<Unlock />}
-            onClick={_onPublic}
-          >
-            Make the chart public
-          </Button>
-        </ModalFooter>
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h4">Are you sure you want to make your chart public?</Text>
+          </ModalHeader>
+          <ModalBody>
+            <Text>
+              {"Public charts will show in your Public Dashboard page and it can be viewed by everyone with access to the unique sharing link. Nobody other than you and your team will be able to edit or update the chart data."}
+            </Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="flat"
+              color="warning"
+              auto
+              onClick={() => setPublicModal(false)}
+            >
+              Go back
+            </Button>
+            <Button
+              isLoading={publicLoading}
+              color="primary"
+              endContent={<Unlock />}
+              onClick={_onPublic}
+            >
+              Make the chart public
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
 
       {/* AUTO-UPDATE MODAL */}
       <Modal isOpen={updateModal} className="w-[500px]" onClose={() => setUpdateModal(false)}>
-        <ModalHeader>
-          <Text size="h4">Set up auto-update for your chart</Text>
-        </ModalHeader>
-        <ModalBody>
-          <Container className={"w-full"}>
-            <Row align="center">
-              <Text>Select a preset:</Text>
-            </Row>
-            <Row align="center">
-              <Dropdown selectionMode="single" selectedKeys={[`${updateFrequency}`]}>
-                <DropdownTrigger>
-                  <Button
-                    variant="bordered"
-                    size="sm"
-                    color="default"
-                  >
-                    {_getUpdateFreqText(updateFrequency)}
-                  </Button>
-                </DropdownTrigger>
-                <DropdownMenu variant="bordered">
-                  <DropdownItem key="0">
-                    <Text onClick={() => setUpdateFrequency(0)}>{"Don't auto update"}</Text>
-                  </DropdownItem>
-                  <DropdownItem key="60">
-                    <Text onClick={() => setUpdateFrequency(60)}>Every minute</Text>
-                  </DropdownItem>
-                  <DropdownItem key="300">
-                    <Text onClick={() => setUpdateFrequency(300)}>Every 5 minutes</Text>
-                  </DropdownItem>
-                  <DropdownItem key="900">
-                    <Text onClick={() => setUpdateFrequency(900)}>Every 15 minutes</Text>
-                  </DropdownItem>
-                  <DropdownItem key="1800">
-                    <Text onClick={() => setUpdateFrequency(1800)}>Every 30 minutes</Text>
-                  </DropdownItem>
-                  <DropdownItem key="3600">
-                    <Text onClick={() => setUpdateFrequency(3600)}>Every hour</Text>
-                  </DropdownItem>
-                  <DropdownItem key="10800">
-                    <Text onClick={() => setUpdateFrequency(10800)}>Every 3 hours</Text>
-                  </DropdownItem>
-                  <DropdownItem key="21600">
-                    <Text onClick={() => setUpdateFrequency(21600)}>Every 6 hours</Text>
-                  </DropdownItem>
-                  <DropdownItem key="43200">
-                    <Text onClick={() => setUpdateFrequency(43200)}>Every 12 hours</Text>
-                  </DropdownItem>
-                  <DropdownItem key="86400">
-                    <Text onClick={() => setUpdateFrequency(86400)}>Every day</Text>
-                  </DropdownItem>
-                  <DropdownItem key="604800">
-                    <Text onClick={() => setUpdateFrequency(604800)}>Every week</Text>
-                  </DropdownItem>
-                  <DropdownItem key="2592000">
-                    <Text onClick={() => setUpdateFrequency(2592000)}>Every month</Text>
-                  </DropdownItem>
-                </DropdownMenu>
-              </Dropdown>
-            </Row>
-            <Spacer y={2} />
-            <Row>
-              <Text>Or enter a custom frequency:</Text>
-            </Row>
-            <Row align="center">
-              <Text>Every</Text>
-              <Spacer x={1} />
-              <Input
-                type="number"
-                onChange={(e) => setCustomUpdateFreq(e.target.value)}
-                value={customUpdateFreq}
-                variant="bordered"
-                disableAnimation
-                size="sm"
-                min={updateFreqType === "seconds" ? 10 : 1}
-              />
-              <Spacer x={1} />
-              <Dropdown size="sm">
-                <DropdownTrigger>
-                  <Button
-                    variant="bordered"
-                    size="sm"
-                    color="default"
-                  >
-                    {updateFreqType}
-                  </Button>
-                </DropdownTrigger>
-                <DropdownMenu variant="bordered">
-                  <DropdownItem key="seconds">
-                    <Text onClick={() => setUpdateFreqType("seconds")}>Seconds</Text>
-                  </DropdownItem>
-                  <DropdownItem key="minutes">
-                    <Text onClick={() => setUpdateFreqType("minutes")}>Minutes</Text>
-                  </DropdownItem>
-                  <DropdownItem key="hours">
-                    <Text onClick={() => setUpdateFreqType("hours")}>Hours</Text>
-                  </DropdownItem>
-                  <DropdownItem key="days">
-                    <Text onClick={() => setUpdateFreqType("days")}>Days</Text>
-                  </DropdownItem>
-                </DropdownMenu>
-              </Dropdown>
-            </Row>
-            {autoUpdateError && (
-              <>
-                <Spacer y={2} />
-                <Row>
-                  <Text color="danger">{autoUpdateError}</Text>
-                </Row>
-              </>
-            )}
-          </Container>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            variant="flat"
-            color={"warning"}
-            auto
-            onClick={() => setUpdateModal(false)}
-            size="sm"
-          >
-            Cancel
-          </Button>
-          <Button
-            endContent={<CloseSquare />}
-            auto
-            variant="flat"
-            color="danger"
-            isLoading={autoUpdateLoading}
-            onClick={() => {
-              setUpdateFrequency(0);
-              _onChangeAutoUpdate(0);
-            }}
-            size="sm"
-          >
-            Stop auto-updating
-          </Button>
-          <Button
-            endContent={<TickSquare />}
-            auto
-            isLoading={autoUpdateLoading}
-            onClick={() => _onChangeAutoUpdate()}
-            size="sm"
-          >
-            Save
-          </Button>
-        </ModalFooter>
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h4">Set up auto-update for your chart</Text>
+          </ModalHeader>
+          <ModalBody>
+            <div>
+              <Row align="center">
+                <Select
+                  label="Select a preset"
+                  selectionMode="single"
+                  selectedKeys={[`${updateFrequency}`]}
+                  onSelectionChange={(key) => {
+                    setUpdateFrequency(parseInt(key[0].value));
+                  }}
+                >
+                    <SelectItem key="0" onClick={() => setUpdateFrequency(0)}>
+                      {"Don't auto update"}
+                    </SelectItem>
+                    <SelectItem key="60" onClick={() => setUpdateFrequency(60)}>
+                      Every minute
+                    </SelectItem>
+                    <SelectItem key="300" onClick={() => setUpdateFrequency(300)}>
+                      Every 5 minutes
+                    </SelectItem>
+                    <SelectItem key="900" onClick={() => setUpdateFrequency(900)}>
+                      Every 15 minutes
+                    </SelectItem>
+                    <SelectItem key="1800" onClick={() => setUpdateFrequency(1800)}>
+                      Every 30 minutes
+                    </SelectItem>
+                    <SelectItem key="3600" onClick={() => setUpdateFrequency(3600)}>
+                      Every hour
+                    </SelectItem>
+                    <SelectItem key="10800" onClick={() => setUpdateFrequency(10800)}>
+                      Every 3 hours
+                    </SelectItem>
+                    <SelectItem key="21600" onClick={() => setUpdateFrequency(21600)}>
+                      Every 6 hours
+                    </SelectItem>
+                    <SelectItem key="43200" onClick={() => setUpdateFrequency(43200)}>
+                      Every 12 hours
+                    </SelectItem>
+                    <SelectItem key="86400" onClick={() => setUpdateFrequency(86400)}>
+                      Every day
+                    </SelectItem>
+                    <SelectItem key="604800" onClick={() => setUpdateFrequency(604800)}>
+                      Every week
+                    </SelectItem>
+                    <SelectItem key="2592000" onClick={() => setUpdateFrequency(2592000)}>
+                      Every month
+                    </SelectItem>
+                </Select>
+              </Row>
+              <Spacer y={4} />
+              <Row>
+                <Text>Or enter a custom frequency:</Text>
+              </Row>
+              <Row align="center" className={"gap-2"}>
+                <Input
+                  type="number"
+                  startContent={(<Text className={"text-default-400"}>Every</Text>)}
+                  onChange={(e) => setCustomUpdateFreq(e.target.value)}
+                  value={customUpdateFreq}
+                  variant="bordered"
+                  disableAnimation
+                  min={updateFreqType === "seconds" ? 10 : 1}
+                />
+                <Dropdown>
+                  <DropdownTrigger>
+                    <Button
+                      variant="bordered"
+                      color="default"
+                      endContent={(
+                        <div>
+                          <HiChevronDown />
+                        </div>
+                      )}
+                    >
+                      {updateFreqType}
+                    </Button>
+                  </DropdownTrigger>
+                  <DropdownMenu>
+                    <DropdownItem key="seconds" onClick={() => setUpdateFreqType("seconds")}>
+                      <Text>Seconds</Text>
+                    </DropdownItem>
+                    <DropdownItem key="minutes" onClick={() => setUpdateFreqType("minutes")}>
+                      <Text>Minutes</Text>
+                    </DropdownItem>
+                    <DropdownItem key="hours" onClick={() => setUpdateFreqType("hours")}>
+                      <Text>Hours</Text>
+                    </DropdownItem>
+                    <DropdownItem key="days" onClick={() => setUpdateFreqType("days")}>
+                      <Text>Days</Text>
+                    </DropdownItem>
+                  </DropdownMenu>
+                </Dropdown>
+              </Row>
+              {autoUpdateError && (
+                <>
+                  <Spacer y={2} />
+                  <Row>
+                    <Text color="danger">{autoUpdateError}</Text>
+                  </Row>
+                </>
+              )}
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="flat"
+              color={"warning"}
+              auto
+              onClick={() => setUpdateModal(false)}
+              size="sm"
+            >
+              Cancel
+            </Button>
+            <Button
+              endContent={<CloseSquare />}
+              auto
+              variant="flat"
+              color="danger"
+              isLoading={autoUpdateLoading}
+              onClick={() => {
+                setUpdateFrequency(0);
+                _onChangeAutoUpdate(0);
+              }}
+              size="sm"
+            >
+              Stop auto-updating
+            </Button>
+            <Button
+              endContent={<TickSquare />}
+              color="primary"
+              isLoading={autoUpdateLoading}
+              onClick={() => _onChangeAutoUpdate()}
+              size="sm"
+            >
+              Save
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
 
       {/* EMBED CHART MODAL */}
       {chart && (
-        <Modal isOpen={embedModal} onClose={() => setEmbedModal(false)} className="w-[600px]">
+        <Modal isOpen={embedModal} onClose={() => setEmbedModal(false)} size="xl">
           <ModalContent>
             <ModalHeader>
               <Text size="h4">{"Embed your chart on other websites"}</Text>
             </ModalHeader>
             <ModalBody>
-              <Container>
+              <div>
                 <Row align="center">
                   <Switch
                     label={chart.shareable ? "Disable sharing" : "Enable sharing"}
@@ -1135,7 +1143,7 @@ function Chart(props) {
                   </Row>
                 </>
               )}
-              </Container>
+              </div>
             </ModalBody>
             <ModalFooter>
               <Button
@@ -1216,6 +1224,7 @@ Chart.propTypes = {
   getChart: PropTypes.func.isRequired,
   showExport: PropTypes.bool,
   password: PropTypes.string,
+  history: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {

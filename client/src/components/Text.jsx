@@ -5,7 +5,9 @@ import PropTypes from "prop-types";
 const text = tv({
   base: "text-base text-default-500",
   variants: {
-    small: "text-sm",
+    small: {
+      true: "text-sm",
+    },
     h4: {
       true: "text-lg",
     },
@@ -27,7 +29,7 @@ const text = tv({
     size: {
       xs: "text-xs",
       sm: "text-sm",
-      md: "text-base",
+      md: "text-md",
       lg: "text-lg",
       xl: "text-xl",
       h5: "text-md font-bold",

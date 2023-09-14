@@ -8,7 +8,6 @@ import {
   CloseSquare, Download, Hide, Show, TickSquare
 } from "react-iconly";
 
-import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 
@@ -45,7 +44,7 @@ function ChartExport(props) {
   };
 
   return (
-    <Container>
+    <div>
       <Row>
         <Text b>
           Select which charts you want to export
@@ -78,7 +77,7 @@ function ChartExport(props) {
         <div className="grid grid-cols-12 gap-2">
           {charts && charts.filter((c) => !c.disabledExport).map((chart) => {
             return (
-              <div className="col-span-6 sm:col-span-12" key={chart.id}>
+              <div className="col-span-6" key={chart.id}>
                 <div className="flex items-center align-middle">
                   <Row align="center">
                     <Checkbox
@@ -105,12 +104,12 @@ function ChartExport(props) {
           })}
         </div>
       </Row>
-      <Spacer y={1} />
+      <Spacer y={2} />
 
       {showDisabled && (
         <>
           <Divider />
-          <Spacer y={2} />
+          <Spacer y={4} />
           {charts && charts.filter((c) => c.disabledExport).length > 0 && (
             <Row>
               <Text b>
@@ -118,13 +117,14 @@ function ChartExport(props) {
               </Text>
             </Row>
           )}
+          <Spacer y={2} />
           <Row align="center">
             <div className="grid grid-cols-12 gap-2">
               {charts && charts.filter((c) => c.disabledExport).map((chart) => {
                 return (
                   <div className="col-span-6 sm:col-span-12" key={chart.id}>
                     <Tooltip content="Enable the export function for this chart" css={{ zIndex: 99999 }}>
-                      <LinkNext className="text-success" onClick={() => onUpdate(chart.id, false)}>
+                      <LinkNext className="text-success cursor-pointer" onClick={() => onUpdate(chart.id, false)}>
                         <Hide />
                         {chart.name}
                       </LinkNext>
@@ -137,23 +137,25 @@ function ChartExport(props) {
           <Spacer y={2} />
         </>
       )}
+      <Spacer y={4} />
       <Row align="center">
         <Button
           onClick={() => onExport(selectedIds)}
           endContent={<Download />}
           isLoading={loading}
-          auto
+          color="primary"
+          fullWidth
         >
           {"Export"}
         </Button>
       </Row>
-      <Spacer y={1} />
+      <Spacer y={4} />
       {error && (
         <Row>
           <Text color="danger" i>{"One or more of the charts failed to export. Check that all your requests are still running correctly before exporting."}</Text>
         </Row>
       )}
-    </Container>
+    </div>
   );
 }
 

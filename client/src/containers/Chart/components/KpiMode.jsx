@@ -46,19 +46,20 @@ function KpiMode(props) {
         <Tooltip content={`compared to last ${chart.timeInterval}`}>
           <Container className={"w-full"}>
             {status === "neutral" && (
-              <Text b className={"text-gray-500"}>{`${comparison}%`}</Text>
+              <Text className={"text-gray-500"}>{`${comparison}%`}</Text>
             )}
             {status === "negative" && (
               <Row align="center">
                 <ChevronDownCircle size="small" primaryColor={negative} />
-                <Spacer x={0.5} />
-                <Text b className={"text-danger-300"}>{` ${comparison}%`}</Text>
+                <Spacer x={1} />
+                <Text className={"text-danger-300"}>{` ${comparison}%`}</Text>
               </Row>
             )}
             {status === "positive" && (
               <Row align="center">
                 <ChevronUpCircle size="small" primaryColor={positive} />
-                <Text b className={"text-success-300"}>{` ${comparison}%`}</Text>
+                <Spacer x={1} />
+                <Text className={"text-success-300"}>{` ${comparison}%`}</Text>
               </Row>
             )}
           </Container>
@@ -100,9 +101,9 @@ function KpiMode(props) {
     <Container
       className={"pl-0 pr-0 h-[300px] items-center align-middle justify-center"}
     >
-      <Row wrap="wrap" justify="space-around" align="center" className={"h-full"}>
+      <Row wrap="wrap" justify="space-around" align="center" className={`h-full flex ${chart.chartSize === 1 ? "flex-col" : "flex-row"} gap-5 items-center justify-center`}>
         {chart.chartData.data.datasets.map((dataset, index) => (
-          <div key={dataset.label} style={{ padding: 10 }}>
+          <div key={dataset.label} style={{ padding: 3 }}>
             <Row justify="center" align="center">
               <Text
                 b

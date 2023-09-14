@@ -78,6 +78,7 @@ function PieChart(props) {
   const {
     chart, redraw, redrawComplete, height
   } = props;
+  const [maxHeight, setMaxHeight] = React.useState(height);
 
   useEffect(() => {
     if (redraw) {
@@ -86,6 +87,10 @@ function PieChart(props) {
       }, 1000);
     }
   }, [redraw]);
+
+  useEffect(() => {
+    setMaxHeight(height - 10);
+  }, [chart, height]);
 
   const theme = useThemeDetector() ? "dark" : "light";
 
@@ -103,7 +108,7 @@ function PieChart(props) {
   };
 
   return (
-    <div>
+    <div style={{ height: maxHeight }}>
       {chart.chartData.data && chart.chartData.data.labels && (
         <ChartErrorBoundary>
           <Pie
@@ -115,7 +120,7 @@ function PieChart(props) {
                 datalabels: dataLabelsPlugin,
               },
             }}
-            height={height - 10}
+            height={maxHeight}
             redraw={redraw}
             plugins={[ChartDataLabels]}
           />

@@ -25,6 +25,7 @@ function RadarChart(props) {
   const {
     chart, redraw, redrawComplete, height
   } = props;
+  const [maxHeight, setMaxHeight] = React.useState(height);
 
   useEffect(() => {
     if (redraw) {
@@ -33,6 +34,10 @@ function RadarChart(props) {
       }, 1000);
     }
   }, [redraw]);
+
+  useEffect(() => {
+    setMaxHeight(height - 10);
+  }, [chart, height]);
 
   const theme = useThemeDetector() ? "dark" : "light";
 
@@ -67,13 +72,13 @@ function RadarChart(props) {
   };
 
   return (
-    <div>
+    <div style={{ height: maxHeight }}>
       {chart.chartData.data && chart.chartData.data.labels && (
         <ChartErrorBoundary>
           <Radar
             data={chart.chartData.data}
             options={_getChartOptions()}
-            height={height - 10}
+            height={maxHeight}
             redraw={redraw}
           />
         </ChartErrorBoundary>

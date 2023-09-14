@@ -6,7 +6,6 @@ import {
 
 import { ChevronDownCircle, ChevronUpCircle } from "react-iconly";
 import { negative, positive } from "../../../config/colors";
-import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 
@@ -14,7 +13,7 @@ function KpiChartSegment(props) {
   const { chart, editMode } = props;
 
   return (
-    <Container
+    <div
       className={"pl-unit-sm pr-unit-sm sm:max-w-full"}
     >
       <Row wrap="wrap">
@@ -35,7 +34,7 @@ function KpiChartSegment(props) {
               key={c.label}
             >
               <Row align="center">
-                <Text b className={chart.chartSize === 1 ? "text-xl" : "text-2xl"}>
+                <Text b className={chart.chartSize === 1 ? "text-lg" : "text-xl"}>
                   {`${c.value?.toLocaleString()} `}
                 </Text>
                 <Spacer x={1} />
@@ -61,7 +60,7 @@ function KpiChartSegment(props) {
                 )}
               </Row>
               <Row>
-                <Text size={chart.chartSize === 1 ? "sm" : "md"} css={{ fontWeight: "normal" }}>
+                <Text size="sm" css={{ fontWeight: "normal" }}>
                   <span
                     style={
                       chart.Datasets
@@ -77,7 +76,7 @@ function KpiChartSegment(props) {
           );
         })}
       </Row>
-    </Container>
+    </div>
   );
 }
 

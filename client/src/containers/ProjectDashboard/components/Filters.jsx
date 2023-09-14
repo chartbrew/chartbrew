@@ -8,13 +8,12 @@ import { Calendar, DateRange } from "react-date-range";
 import { enGB } from "date-fns/locale";
 import {
   Dropdown, Spacer, Link as LinkNext, Input, Popover,
-  Tooltip, Button, Modal, Chip, Divider, ModalHeader, ModalBody, ModalFooter, Tabs, Tab, PopoverTrigger, PopoverContent, DropdownTrigger, DropdownMenu, DropdownItem, ModalContent,
+  Tooltip, Button, Modal, Chip, Divider, ModalHeader, ModalBody, ModalFooter, Tabs, Tab, PopoverTrigger, PopoverContent, DropdownTrigger, DropdownMenu, DropdownItem, ModalContent, Select, SelectItem,
 } from "@nextui-org/react";
 import { Calendar as CalendarIcon, InfoCircle, Plus } from "react-iconly";
 
 import { operators } from "../../../modules/filterOperations";
 import { primary, secondary } from "../../../config/colors";
-import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 
@@ -218,277 +217,266 @@ function Filters(props) {
           <Text size="h3">Dashboard filters</Text>
         </ModalHeader>
         <ModalBody>
-          <Container>
-            <Row>
-              <Tabs
-                selectedKey={filterType}
-                onSelectionChange={(selection) => setFilterType(selection)}
-              >
-                <Tab key="date" title="Date" />
-                <Tab key="custom" title="Custom" />
-              </Tabs>
-            </Row>
-            <Spacer y={1} />
-            <Divider />
-            <Spacer y={1} />
+          <Row>
+            <Tabs
+              selectedKey={filterType}
+              onSelectionChange={(selection) => setFilterType(selection)}
+            >
+              <Tab key="date" title="Date" />
+              <Tab key="custom" title="Custom" />
+            </Tabs>
+          </Row>
+          <Spacer y={1} />
+          <Divider />
+          <Spacer y={1} />
 
-            {filterType === "date" && (
-              <>
-                <Row>
-                  <Text>
-                    {"The dashboard date filter will overwrite the global date settings in the selected charts as well as the "}
-                    <code>{"{{start_date}}"}</code>
-                    {" and "}
-                    <code>{"{{end_date}}"}</code>
-                    {" variables in the queries."}
-                  </Text>
-                </Row>
-                <Spacer y={2} />
-                <Row wrap="wrap">
-                  <LinkNext onPress={() => _onSelectRange("this_month")} className="mb-5">
-                    <Chip color="primary" size="sm" variant={"bordered"}>
-                      This month
-                    </Chip>
-                  </LinkNext>
-                  <Spacer x={0.5} />
-                  <LinkNext onPress={() => _onSelectRange("last_7_days")} className="mb-5">
-                    <Chip color="primary" size="sm" variant={"bordered"}>
-                      Last 7 days
-                    </Chip>
-                  </LinkNext>
-                  <Spacer x={0.5} />
-                  <LinkNext onPress={() => _onSelectRange("last_30_days")} className="mb-5">
-                    <Chip color="primary" size="sm" variant={"bordered"}>
-                      Last 30 days
-                    </Chip>
-                  </LinkNext>
-                  <Spacer x={0.5} />
-                  <LinkNext onPress={() => _onSelectRange("last_90_days")} className="mb-5">
-                    <Chip color="primary" size="sm" variant={"bordered"}>
-                      Last 90 days
-                    </Chip>
-                  </LinkNext>
-                  <Spacer x={0.5} />
-                  <LinkNext onPress={() => _onSelectRange("last_year")} className="mb-5">
-                    <Chip color="primary" size="sm" variant={"bordered"}>
-                      Last year
-                    </Chip>
-                  </LinkNext>
-                  <Spacer x={0.5} />
-                  <LinkNext onPress={() => _onSelectRange("quarter_to_date")} className="mb-5">
-                    <Chip color="primary" size="sm" variant={"bordered"}>
-                      Quarter to date
-                    </Chip>
-                  </LinkNext>
-                  <Spacer x={0.5} />
-                  <LinkNext onPress={() => _onSelectRange("last_quarter")} className="mb-5">
-                    <Chip color="primary" size="sm" variant={"bordered"}>
-                      Last quarter
-                    </Chip>
-                  </LinkNext>
-                  <Spacer x={0.5} />
-                  <LinkNext onPress={() => _onSelectRange("year_to_date")} className="mb-5">
-                    <Chip color="primary" size="sm" variant={"bordered"}>
-                      Year to date
-                    </Chip>
-                  </LinkNext>
-                </Row>
-                <Spacer y={2} />
-                <Row align="center">
-                  <Popover className={"z-[99999]"}>
-                    <PopoverTrigger>
-                      <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-                        <Input
-                          placeholder="Start date"
-                          label="Start date"
-                          value={dateRange.startDate && moment(dateRange.startDate).format("Do MMM YYYY")}
-                          readOnly
-                          variant="bordered"
-                        />
-                        <Spacer x={1} />
-                        <Input
-                          placeholder="End date"
-                          label="End date"
-                          value={dateRange.endDate && moment(dateRange.endDate).format("Do MMM YYYY")}
-                          readOnly
-                          variant="bordered"
-                        />
-                      </div>
-                    </PopoverTrigger>
-                    <PopoverContent>
-                      <DateRange
-                        direction="horizontal"
-                        rangeColors={[secondary, primary]}
-                        ranges={[
-                          dateRange.startDate && dateRange.endDate ? {
-                            startDate: new Date(dateRange.startDate),
-                            endDate: new Date(dateRange.endDate),
-                            key: "selection",
-                          } : initSelectionRange
-                        ]}
-                        onChange={_onChangeDateRange}
-                        months={2}
-                        showPreview={false}
-                        showDateDisplay={false}
+          {filterType === "date" && (
+            <>
+              <Row>
+                <Text>
+                  {"The dashboard date filter will overwrite the global date settings in the selected charts as well as the "}
+                  <code>{"{{start_date}}"}</code>
+                  {" and "}
+                  <code>{"{{end_date}}"}</code>
+                  {" variables in the queries."}
+                </Text>
+              </Row>
+              <Row wrap="wrap" className={"gap-1"}>
+                <LinkNext onPress={() => _onSelectRange("this_month")}>
+                  <Chip color="primary" size="sm" variant={"bordered"}>
+                    This month
+                  </Chip>
+                </LinkNext>
+                
+                <LinkNext onPress={() => _onSelectRange("last_7_days")}>
+                  <Chip color="primary" size="sm" variant={"bordered"}>
+                    Last 7 days
+                  </Chip>
+                </LinkNext>
+                
+                <LinkNext onPress={() => _onSelectRange("last_30_days")}>
+                  <Chip color="primary" size="sm" variant={"bordered"}>
+                    Last 30 days
+                  </Chip>
+                </LinkNext>
+                
+                <LinkNext onPress={() => _onSelectRange("last_90_days")}>
+                  <Chip color="primary" size="sm" variant={"bordered"}>
+                    Last 90 days
+                  </Chip>
+                </LinkNext>
+                
+                <LinkNext onPress={() => _onSelectRange("last_year")}>
+                  <Chip color="primary" size="sm" variant={"bordered"}>
+                    Last year
+                  </Chip>
+                </LinkNext>
+                
+                <LinkNext onPress={() => _onSelectRange("quarter_to_date")}>
+                  <Chip color="primary" size="sm" variant={"bordered"}>
+                    Quarter to date
+                  </Chip>
+                </LinkNext>
+                
+                <LinkNext onPress={() => _onSelectRange("last_quarter")}>
+                  <Chip color="primary" size="sm" variant={"bordered"}>
+                    Last quarter
+                  </Chip>
+                </LinkNext>
+                
+                <LinkNext onPress={() => _onSelectRange("year_to_date")}>
+                  <Chip color="primary" size="sm" variant={"bordered"}>
+                    Year to date
+                  </Chip>
+                </LinkNext>
+              </Row>
+              <Spacer y={2} />
+              <Row align="center">
+                <Popover className={"z-[99999]"}>
+                  <PopoverTrigger>
+                    <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                      <Input
+                        placeholder="Start date"
+                        label="Start date"
+                        value={dateRange.startDate && moment(dateRange.startDate).format("Do MMM YYYY")}
+                        readOnly
+                        variant="bordered"
                       />
-                    </PopoverContent>
-                  </Popover>
-                </Row>
-                <Spacer y={2} />
-                <Row>
-                  <Text>
-                    Select the charts that will be affected by the date filter
-                  </Text>
-                </Row>
-                <Spacer y={1} />
-                <Row wrap="wrap">
-                  {charts.map((chart) => (
-                    <Fragment key={chart.id}>
-                      <LinkNext onPress={() => onEditFilterGroup(chart.id)} css={{ pb: 5 }}>
-                        <Chip
-                          color="primary"
-                          radius="sm"
-                          variant={filterGroups.find(c => c === chart.id) ? "default" : "bordered"}
-                        >
+                      <Spacer x={1} />
+                      <Input
+                        placeholder="End date"
+                        label="End date"
+                        value={dateRange.endDate && moment(dateRange.endDate).format("Do MMM YYYY")}
+                        readOnly
+                        variant="bordered"
+                      />
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent>
+                    <DateRange
+                      direction="horizontal"
+                      rangeColors={[secondary, primary]}
+                      ranges={[
+                        dateRange.startDate && dateRange.endDate ? {
+                          startDate: new Date(dateRange.startDate),
+                          endDate: new Date(dateRange.endDate),
+                          key: "selection",
+                        } : initSelectionRange
+                      ]}
+                      onChange={_onChangeDateRange}
+                      months={2}
+                      showPreview={false}
+                      showDateDisplay={false}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </Row>
+              <Spacer y={2} />
+              <Row>
+                <Text>
+                  Select the charts that will be affected by the date filter
+                </Text>
+              </Row>
+              <Row wrap="wrap" className={"gap-1"}>
+                {charts.map((chart) => (
+                  <Fragment key={chart.id}>
+                    <LinkNext onPress={() => onEditFilterGroup(chart.id)}>
+                      <Chip
+                        className="cursor-pointer"
+                        color="primary"
+                        radius="sm"
+                        variant={filterGroups.find(c => c === chart.id) ? "solid" : "bordered"}
+                      >
+                        {chart.name}
+                      </Chip>
+                    </LinkNext>
+                    <Spacer x={0.6} />
+                  </Fragment>
+                ))}
+              </Row>
+            </>
+          )}
+
+          {filterType === "custom" && (
+            <>
+              <Row align="center">
+                <Select
+                  label="Select a field"
+                  renderValue={() => (
+                    <Text>{(filter.field && filter.field.substring(filter.field.lastIndexOf(".") + 1)) || "Select a field"}</Text>
+                  )}
+                  selectedKeys={[filter.field]}
+                  selectionMode="single"
+                  onSelectionChange={(keys) => _updateFilter(keys[0]?.value, "field")}
+                  size="sm"
+                >
+                  {fieldOptions.map((field) => (
+                    <SelectItem
+                      key={field.value}
+                      startContent={(
+                        <Chip variant="flat" size="sm" color={field.label.color} className="min-w-[70px]">
+                          {field.type}
+                        </Chip>
+                      )}
+                    >
+                      {field.text}
+                    </SelectItem>
+                  ))}
+                </Select>
+                <Spacer x={0.5} />
+                <Dropdown>
+                  <DropdownTrigger>
+                    <Button
+                      variant="flat"
+                      color="default"
+                    >
+                      {(_.find(operators, { value: filter.operator })
+                        && _.find(operators, { value: filter.operator }).key)
+                        || "="}
+                    </Button>
+                  </DropdownTrigger>
+                  <DropdownMenu
+                    selectionMode="single"
+                    selectedKeys={[filter.operator]}
+                    onSelectionChange={(selection) => _updateFilter(Object.values(selection)[0], "operator")}
+                  >
+                    {operators.map((op) => (
+                      <DropdownItem key={op.value}>
+                        {op.text}
+                      </DropdownItem>
+                    ))}
+                  </DropdownMenu>
+                </Dropdown>
+                <Spacer x={0.5} />
+                {(!filter.field
+                  || (_.find(fieldOptions, { value: filter.field })
+                    && _.find(fieldOptions, { value: filter.field }).type !== "date")) && (
+                    <Input
+                      placeholder="Enter a value"
+                      value={filter.value}
+                      onChange={(e) => _updateFilter(e.target.value, "value")}
+                      variant="bordered"
+                    />
+                )}
+                {_.find(fieldOptions, { value: filter.field })
+                  && _.find(fieldOptions, { value: filter.field }).type === "date" && (
+                    <Popover placement="bottom">
+                      <PopoverTrigger>
+                        <Input
+                          placeholder="Click to open calendar"
+                          startContent={<CalendarIcon />}
+                          value={(filter.value && format(new Date(filter.value), "Pp", { locale: enGB })) || ""}
+                        />
+                      </PopoverTrigger>
+                      <PopoverContent>
+                        <Calendar
+                          date={(filter.value && new Date(filter.value)) || new Date()}
+                          onChange={(date) => _updateFilter(formatISO(date), "value")}
+                          locale={enGB}
+                          color={secondary}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                )}
+                <Spacer x={0.5} />
+                <Tooltip content={"If you can't see your fields, please go in each chart and re-run the queries. Chartbrew will then index the fields and then they will appear here."} css={{ zIndex: 99999 }}>
+                  <LinkNext className="text-primary-400">
+                    <InfoCircle />
+                  </LinkNext>
+                </Tooltip>
+              </Row>
+              <Spacer y={2} />
+              {filter.field && (
+                <>
+                  <Row align="center">
+                    <Text b>The filter will affect the following charts:</Text>
+                  </Row>
+                  <Spacer y={1} />
+                  <Row wrap="wrap">
+                    {_getChartsWithField(filter.field).map((chart) => (
+                      <>
+                        <Chip color="primary" key={chart.id} radius="sm">
                           {chart.name}
                         </Chip>
-                      </LinkNext>
-                      <Spacer x={0.6} />
-                    </Fragment>
-                  ))}
-                </Row>
-              </>
-            )}
-
-            {filterType === "custom" && (
-              <>
-                <Row align="center">
-                  <Dropdown>
-                    <DropdownTrigger>
-                      <Button
-                        variant="flat"
-                        color="default"
-                      >
-                        {(filter.field && filter.field.substring(filter.field.lastIndexOf(".") + 1)) || "Select a field"}
-                      </Button>
-                    </DropdownTrigger>
-                    <DropdownMenu
-                      variant="bordered"
-                      selectedKeys={[filter.field]}
-                      onSelectionChange={(selection) => _updateFilter(Object.values(selection)[0], "field")}
-                      selectionMode="single"
-                      className="min-w-max"
-                    >
-                      {fieldOptions.map((field) => (
-                        <DropdownItem key={field.value}>
-                          <LinkNext className="flex align-middle text-default">
-                            <Chip size="sm" color={field.label.color} className="min-w-[70px]">
-                              {field.type}
-                            </Chip>
-                            <Spacer x={0.5} />
-                            <Text>
-                              {field.text}
-                            </Text>
-                          </LinkNext>
-                        </DropdownItem>
-                      ))}
-                    </DropdownMenu>
-                  </Dropdown>
-                  <Spacer x={0.5} />
-                  <Dropdown>
-                    <DropdownTrigger>
-                      <Button
-                        variant="flat"
-                        color="default"
-                      >
-                        {(_.find(operators, { value: filter.operator })
-                          && _.find(operators, { value: filter.operator }).key)
-                          || "="}
-                      </Button>
-                    </DropdownTrigger>
-                    <DropdownMenu
-                      variant="bordered"
-                      selectionMode="single"
-                      selectedKeys={[filter.operator]}
-                      onSelectionChange={(selection) => _updateFilter(Object.values(selection)[0], "operator")}
-                    >
-                      {operators.map((op) => (
-                        <DropdownItem key={op.value}>
-                          {op.text}
-                        </DropdownItem>
-                      ))}
-                    </DropdownMenu>
-                  </Dropdown>
-                  <Spacer x={0.5} />
-                  {(!filter.field
-                    || (_.find(fieldOptions, { value: filter.field })
-                      && _.find(fieldOptions, { value: filter.field }).type !== "date")) && (
-                      <Input
-                        placeholder="Enter a value"
-                        value={filter.value}
-                        onChange={(e) => _updateFilter(e.target.value, "value")}
-                      />
-                  )}
-                  {_.find(fieldOptions, { value: filter.field })
-                    && _.find(fieldOptions, { value: filter.field }).type === "date" && (
-                      <Popover placement="bottom">
-                        <PopoverTrigger>
-                          <Input
-                            placeholder="Click to open calendar"
-                            startContent={<CalendarIcon />}
-                            value={(filter.value && format(new Date(filter.value), "Pp", { locale: enGB })) || ""}
-                          />
-                        </PopoverTrigger>
-                        <PopoverContent>
-                          <Calendar
-                            date={(filter.value && new Date(filter.value)) || new Date()}
-                            onChange={(date) => _updateFilter(formatISO(date), "value")}
-                            locale={enGB}
-                            color={secondary}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                  )}
-                  <Spacer x={0.5} />
-                  <Tooltip content={"If you can't see your fields, please go in each chart and re-run the queries. Chartbrew will then index the fields and then they will appear here."} css={{ zIndex: 99999 }}>
-                    <LinkNext className="text-primary-400">
-                      <InfoCircle />
-                    </LinkNext>
-                  </Tooltip>
-                </Row>
-                <Spacer y={2} />
-                {filter.field && (
-                  <>
-                    <Row align="center">
-                      <Text b>The filter will affect the following charts:</Text>
-                    </Row>
-                    <Spacer y={1} />
-                    <Row wrap="wrap">
-                      {_getChartsWithField(filter.field).map((chart) => (
-                        <>
-                          <Chip color="primary" key={chart.id} radius="sm">
-                            {chart.name}
-                          </Chip>
-                          <Spacer x={0.3} />
-                        </>
-                      ))}
-                    </Row>
-                  </>
-                )}
-                <Spacer y={2} />
-                <Row>
-                  <Button
-                    endContent={<Plus />}
-                    disabled={!filter.value}
-                    onClick={_onAddFilter}
-                    auto
-                  >
-                    Apply filter
-                  </Button>
-                </Row>
-              </>
-            )}
-          </Container>
+                        <Spacer x={0.3} />
+                      </>
+                    ))}
+                  </Row>
+                </>
+              )}
+              <Spacer y={2} />
+              <Row>
+                <Button
+                  endContent={<Plus />}
+                  disabled={!filter.value}
+                  onClick={_onAddFilter}
+                  auto
+                >
+                  Apply filter
+                </Button>
+              </Row>
+            </>
+          )}
         </ModalBody>
         <ModalFooter>
           <Button auto onClick={onClose} color="warning" variant="flat">

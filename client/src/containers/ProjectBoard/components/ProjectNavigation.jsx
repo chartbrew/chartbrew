@@ -134,7 +134,7 @@ function ProjectNavigation(props) {
 
   return (
     <div>
-      <div className={"bg-content2 flex flex-col justify-start"} style={styles.mainSideMenu(height)}>
+      <div className={"bg-content1 flex flex-col justify-start"} style={styles.mainSideMenu(height)}>
         <Row justify="center" align="center" className={"pt-10"}>
           <Dropdown title={project.name}>
             <DropdownTrigger>
@@ -201,12 +201,11 @@ function ProjectNavigation(props) {
           <Link to={`/${teamId}/${projectId}/dashboard`}>
             {menuSize === "small" && (
               <Tooltip content="Dashboard" placement="right">
-                <div>
+                <div className="pointer-events-none">
                   <Button
                     isIconOnly
                     variant="light"
                     color={_checkIfActive("dashboard") ? "primary" : "default"}
-                    className="pointer-events-none"
                   >
                     <Activity size="large" />
                   </Button>
@@ -232,12 +231,11 @@ function ProjectNavigation(props) {
               <Link to={`/${teamId}/${projectId}/connections`}>
                 {menuSize === "small" && (
                   <Tooltip content="Connections" placement="right">
-                    <div>
+                    <div className="pointer-events-none">
                       <Button
                         isIconOnly
                         variant="light"
                         color={_checkIfActive("connections") ? "primary" : "default"}
-                        className="pointer-events-none"
                       >
                         <FaPlug size="28" />
                       </Button>
@@ -265,12 +263,11 @@ function ProjectNavigation(props) {
             <LinkNext className={`${_checkIfActive("public") ? "text-blue-600" : "text-default-800"}`}>
               {menuSize === "small" && (
                 <Tooltip content="Dashboard report" placement="right">
-                  <div>
+                  <div className="pointer-events-none">
                     <Button
                       isIconOnly
                       variant="light"
                       color={_checkIfActive("public") ? "primary" : "default"}
-                      className="pointer-events-none"
                     >
                       <Graph size="large" />
                     </Button>
@@ -298,12 +295,11 @@ function ProjectNavigation(props) {
               <Link to={`/${teamId}/${projectId}/projectSettings`}>
                 {menuSize === "small" && (
                   <Tooltip content="Project settings" placement="right">
-                    <div>
+                    <div className="pointer-events-none">
                       <Button
                         isIconOnly
                         variant="light"
                         color={_checkIfActive("projectSettings") ? "primary" : "default"}
-                        className="pointer-events-none"
                       >
                         <Setting size="large" />
                       </Button>
@@ -341,12 +337,11 @@ function ProjectNavigation(props) {
               <Link to={`/${teamId}/${projectId}/members`}>
                 {menuSize === "small" && (
                   <Tooltip content="Team members" placement="right">
-                    <div>
+                    <div className="pointer-events-none">
                       <Button
                         isIconOnly
                         variant="light"
                         color={_checkIfActive("members") ? "primary" : "default"}
-                        className="pointer-events-none"
                       >
                         <TwoUsers size="large" />
                       </Button>
@@ -370,12 +365,11 @@ function ProjectNavigation(props) {
               <Link to={`/${teamId}/${projectId}/integrations`}>
                 {menuSize === "small" && (
                   <Tooltip content="Integrations" placement="right">
-                    <div>
+                    <div className="pointer-events-none">
                       <Button
                         isIconOnly
                         variant="light"
                         color={_checkIfActive("integrations") ? "primary" : "default"}
-                        className="pointer-events-none"
                       >
                         <MdExtension size={28} />
                       </Button>
@@ -400,12 +394,11 @@ function ProjectNavigation(props) {
                 <Link to={`/${teamId}/${projectId}/settings`}>
                   {menuSize === "small" && (
                     <Tooltip content="Team settings" placement="right">
-                      <div>
+                      <div className="pointer-events-none">
                         <Button
                           isIconOnly
                           variant="light"
                           color={_checkIfActive("settings") ? "primary" : "default"}
-                          className="pointer-events-none"
                         >
                           <MoreSquare size="large" />
                         </Button>

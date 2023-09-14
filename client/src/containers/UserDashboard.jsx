@@ -208,7 +208,7 @@ function UserDashboard(props) {
   }
 
   return (
-    <div style={styles.container(height)}>
+    <div className="bg-content2" style={styles.container(height)}>
       <Navbar hideTeam transparent />
       <Container size="md">
         <Spacer y={4} />
@@ -288,12 +288,7 @@ function UserDashboard(props) {
                 {key.Projects && (
                   <Table
                     aria-label="Projects list"
-                    css={{
-                      height: "auto",
-                      minWidth: "100%",
-                      backgroundColor: "$backgroundContrast"
-                    }}
-                    className="h-auto min-w-full bg-background"
+                    className="h-auto min-w-full bg-content2"
                   >
                     <TableHeader>
                       <TableColumn key="name">Project name</TableColumn>

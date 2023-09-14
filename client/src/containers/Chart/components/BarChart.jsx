@@ -28,6 +28,7 @@ function BarChart(props) {
   const {
     chart, redraw, redrawComplete, height, editMode,
   } = props;
+  const [maxHeight, setMaxHeight] = React.useState(height);
 
   useEffect(() => {
     if (redraw) {
@@ -36,6 +37,16 @@ function BarChart(props) {
       }, 1000);
     }
   }, [redraw]);
+
+  useEffect(() => {
+    if (chart.mode === "kpichart" && chart.chartSize > 1) {
+      setMaxHeight(height - 70);
+    } else if (chart.mode === "kpichart" && chart.chartSize === 1) {
+      setMaxHeight(height - 40);
+    } else {
+      setMaxHeight(height - 10);
+    }
+  }, []);
 
   const theme = useThemeDetector() ? "dark" : "light";
 
@@ -116,7 +127,7 @@ function BarChart(props) {
             <KpiChartSegment chart={chart} editMode={editMode} />
           )}
           {chart.chartData.data && chart.chartData.data.labels && (
-            <div>
+            <div style={{ height: maxHeight }}>
               <ChartErrorBoundary>
                 <Bar
                   data={_getChartData()}
@@ -127,14 +138,9 @@ function BarChart(props) {
                       datalabels: chart.dataLabels && _getDatalabelsOptions(),
                     },
                   }}
-                  height={
-                    height - (
-                      (chart.mode === "kpichart" && chart.chartSize > 1 && 80)
-                      || (chart.mode === "kpichart" && chart.chartSize === 1 && 74)
-                      || 10
-                    )
-                  }
+                  height={maxHeight}
                   redraw={redraw}
+                  responsive={false}
                   plugins={chart.dataLabels ? [ChartDataLabels] : []}
                 />
               </ChartErrorBoundary>
