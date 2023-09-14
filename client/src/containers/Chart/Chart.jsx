@@ -446,7 +446,7 @@ function Chart(props) {
       {chart && (
         <Card
           shadow="none"
-          className={`h-full border-solid border-1 border-content3 ${!print ? "min-h-[350px]" : "min-h-[350px] shadow-none border-solid border-1 border-content4"}`}
+          className={`h-full bg-content2 border-solid border-1 border-content3 ${!print ? "min-h-[350px]" : "min-h-[350px] shadow-none border-solid border-1 border-content4"}`}
         >
           <CardHeader className="pb-0 grid grid-cols-12 items-start">
             <div className="col-span-10 sm:col-span-8 flex items-start justify-start">
@@ -500,7 +500,7 @@ function Chart(props) {
                     )}
                     {(chartLoading || chart.loading) && (
                       <>
-                        <CircularProgress classNames={{ svg: "w-5 h-5" }} />
+                        <CircularProgress classNames={{ svg: "w-4 h-4" }} />
                         <Spacer x={0.5} />
                         <Text size="xs">{"Updating..."}</Text>
                       </>

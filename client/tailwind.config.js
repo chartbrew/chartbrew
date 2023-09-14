@@ -92,10 +92,10 @@ export default {
               DEFAULT: "#F17041",
             },
             content2: {
-              DEFAULT: "#27272B"
+              DEFAULT: "#09151C"
             },
             content1: {
-              DEFAULT: "#1E1E22"
+              DEFAULT: "#000206"
             }
           }, // dark theme colors
         },

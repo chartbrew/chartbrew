@@ -89,7 +89,7 @@ function ProjectNavigation(props) {
       <nav
         style={styles.mobileMenu}
       >
-        <div className="flex items-center justify-center shadow-md bg-content1 w-full backdrop-blur-[10px] backdrop-saturate-[180%]">
+        <div className="flex items-center justify-center shadow-md bg-content2 w-full backdrop-blur-[10px] backdrop-saturate-[180%]">
           <Container className="flex flex-nowrap items-center justify-center w-full">
             <Row justify="space-between" align="center">
               <Link to={`/${teamId}/${projectId}/dashboard`}>
@@ -134,7 +134,7 @@ function ProjectNavigation(props) {
 
   return (
     <div>
-      <div className={"bg-content1 flex flex-col justify-start"} style={styles.mainSideMenu(height)}>
+      <div className={"bg-content2 flex flex-col justify-start"} style={styles.mainSideMenu(height)}>
         <Row justify="center" align="center" className={"pt-10"}>
           <Dropdown title={project.name}>
             <DropdownTrigger>

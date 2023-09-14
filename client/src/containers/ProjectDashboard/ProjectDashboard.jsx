@@ -361,7 +361,7 @@ function ProjectDashboard(props) {
         && (
           <div>
             <div
-              className={"bg-content1 w-full border-b-1 border-solid border-content3"}
+              className={"bg-content2 w-full border-b-1 border-solid border-content3"}
               size="xl"
               style={mobile ? styles.actionBarMobile : styles.actionBar}
             >
@@ -514,7 +514,7 @@ function ProjectDashboard(props) {
             </div>
           </div>
         )}
-      <div className="bg-content2 w-full" style={styles.container(width < breakpoints.tablet)}>
+      <div className="bg-content1 w-full" style={styles.container(width < breakpoints.tablet)}>
         {connections.length === 0 && charts.length === 0
           && (
             <Container justify="center" className={`pt-[${height / 3}]`}>
@@ -568,7 +568,7 @@ function ProjectDashboard(props) {
         )}
 
         {/* <Container className={"p-0 m-0 sm:pl-10 sm:pr-10"} size="fluid"> */}
-          <div className="grid grid-cols-12 gap-4">
+          <div className="grid grid-cols-12 gap-4 p-2">
             {charts.map((chart, index) => {
               if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
               if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />);
