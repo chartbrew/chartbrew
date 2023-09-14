@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Provider } from "react-redux";
 import { Router } from "react-router";
 import { createBrowserHistory } from "history";
@@ -11,6 +11,7 @@ import { IconlyProvider } from "react-iconly";
 
 import Main from "./containers/Main";
 import reducer from "./reducers";
+import useThemeDetector from "./modules/useThemeDetector";
 
 const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
   history: createBrowserHistory(),
@@ -32,6 +33,18 @@ const store = createStore(
 const history = createReduxHistory(store);
 
 export default function App() {
+  const isDark = useThemeDetector();
+
+  useEffect(() => {
+    if (isDark) {
+      document.body.classList.add("dark");
+      document.body.classList.remove("light");
+    } else {
+      document.body.classList.add("light");
+      document.body.classList.remove("dark");
+    }
+  }, [isDark]);
+
   return (
     <Provider store={store}>
       <Router history={history}>

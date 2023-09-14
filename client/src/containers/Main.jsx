@@ -67,7 +67,7 @@ function Main(props) {
   }, []);
 
   return (
-    <main className={isDark ? "dark" : "light"} style={styles.container}>
+    <div style={styles.container}>
       <Helmet>
         {isDark && (
           <style type="text/css">
@@ -211,7 +211,7 @@ function Main(props) {
           </Suspense>
         </div>
       </MediaContextProvider>
-    </main>
+    </div>
   );
 }
 

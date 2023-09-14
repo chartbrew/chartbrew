@@ -59,6 +59,9 @@ export default {
               900: "#730C0D",
               DEFAULT: "#F17041",
             },
+            content2: {
+              DEFAULT: "#F2F6FC"
+            }
           }, // light theme colors
         },
         dark: {
@@ -88,6 +91,12 @@ export default {
               900: "#730C0D",
               DEFAULT: "#F17041",
             },
+            content2: {
+              DEFAULT: "#27272B"
+            },
+            content1: {
+              DEFAULT: "#1E1E22"
+            }
           }, // dark theme colors
         },
       },
