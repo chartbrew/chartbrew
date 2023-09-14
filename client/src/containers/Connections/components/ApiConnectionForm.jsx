@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
 
 import {
   Button, Divider, Input, Spacer,Chip, Tabs, Tab, Select, SelectItem, CircularProgress,
 } from "@nextui-org/react";
-import { CloseSquare, Plus } from "react-iconly";
 import uuid from "uuid/v4";
 import AceEditor from "react-ace";
 
@@ -18,6 +17,7 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
+import { HiPlus, HiX } from "react-icons/hi";
 
 const authTypes = [{
   key: "no_auth",
@@ -50,10 +50,14 @@ function ApiConnectionForm(props) {
   const [menuType, setMenuType] = useState("authentication");
 
   const isDark = useThemeDetector();
+  const initRef = React.useRef(null);
 
   useEffect(() => {
-    _addOption();
-    _init();
+    if (!initRef.current) {
+      initRef.current = true;
+      _addOption();
+      _init();
+    }
   }, []);
 
   const _init = () => {
@@ -166,242 +170,191 @@ function ApiConnectionForm(props) {
   const _onChangeAuthParams = (type, value) => {
     const auth = connection.authentication || {};
     auth[type] = value;
-
+    
     setConnection({ ...connection, authentication: auth });
   };
 
   return (
-    <div style={styles.container}>
-      <Container className={"bg-content2"} size="md">
+    <div className="p-unit-lg bg-content1 shadow-md border-1 border-solid border-content3 rounded-lg">
+      <div>
         <Row align="center">
-          <Text size="lg">
+          <Text size="lg" b>
             {!editConnection && "Add a new API host"}
             {editConnection && `Edit ${editConnection.name}`}
           </Text>
         </Row>
-        <Spacer y={2} />
+        <Spacer y={4} />
         <Row>
           <HelpBanner
-            title="How to visualize your API data with Chartbrew"
+            title="Learn how to visualize your API data with Chartbrew"
             description="Chartbrew can connect to your API data and create charts that tell you more about your data."
             url={"https://chartbrew.com/blog/how-to-visualize-simple-analytics-data-with-chartbrew/"}
             imageUrl={connectionImages(isDark).api}
             info="5 min read"
           />
         </Row>
+        <Spacer y={8} />
+        <Row className={"gap-4"}>
+          <Input
+            label="Enter a name for your connection"
+            placeholder="Enter a name you can recognize later"
+            value={connection.name || ""}
+            onChange={(e) => {
+              setConnection({ ...connection, name: e.target.value });
+            }}
+            color={errors.name ? "error" : "default"}
+            fullWidth
+            variant="bordered"
+            description={errors.name}
+          />
+
+          <Input
+            label="The hostname of your API"
+            placeholder="https://api.example.com"
+            value={connection.host || ""}
+            onChange={(e) => {
+              setConnection({ ...connection, host: e.target.value });
+            }}
+            fullWidth
+            color={errors.host ? "error" : "default"}
+            variant="bordered"
+            description={errors.host}
+          />
+        </Row>
         <Spacer y={4} />
-        <Row align="center" style={styles.formStyle}>
-          <div className="grid grid-cols-12 gap-1">
-            <div className="col-span-12 sm:col-span-12 md:col-span-5 lg:col-span-5 xl:col-span-5">
-              <Container>
-                <Row>
+
+        <Tabs selectedKey={menuType} onSelectionChange={(key) => setMenuType(key)}>
+          <Tab key="authentication" title="Authentication" />
+          <Tab key="headers" title="Headers" />
+        </Tabs>
+        <Spacer y={4} />
+        <Divider />
+        <Spacer y={4} />
+
+        {menuType === "authentication" && (
+          <div className="grid grid-cols-12 gap-4">
+            <div className="col-span-12 sm:col-span-12 md:col-span-4 lg:col-span-4 xl:col-span-4">
+              <Row>
+                <Select
+                  label="Authentication type"
+                  placeholder="Select an authentication type"
+                  defaultValue="no_auth"
+                  selectedKeys={[connection?.authentication?.type]}
+                  onSelectionChange={(keys) => _onChangeAuthParams("type", keys?.currentKey)}
+                  selectionMode="single"
+                  variant="bordered"
+                >
+                  {authTypes.map((type) => (
+                    <SelectItem key={type.value}>
+                      {type.text}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </Row>
+            </div>
+            {connection.authentication && connection.authentication.type === "basic_auth" && (
+              <div className="col-span-12 sm:col-span-12 md:col-span-5 lg:col-span-5 xl:col-span-5">
+                <Row align="center">
                   <Input
-                    label="Enter a name for your connection"
-                    placeholder="Enter a name you can recognize later"
-                    value={connection.name || ""}
-                    onChange={(e) => {
-                      setConnection({ ...connection, name: e.target.value });
-                    }}
-                    color={errors.name ? "error" : "default"}
+                    label="Enter a Username or API Key"
+                    placeholder="Username or API Key"
+                    onChange={(e) => _onChangeAuthParams("user", e.target.value)}
+                    value={connection.authentication.user}
                     fullWidth
-                    bordered
-                  />
-                </Row>
-                {errors.name && (
-                  <Row>
-                    <Text className="text-danger">
-                      {errors.name}
-                    </Text>
-                  </Row>
-                )}
-              </Container>
-            </div>
-
-            <div className="col-span-12 sm:col-span-12 md:col-span-7 lg:col-span-7 xl:col-span-7">
-              <Container>
-                <Row>
-                  <Input
-                    label="The hostname of your API"
-                    placeholder="https://api.example.com"
-                    value={connection.host || ""}
-                    onChange={(e) => {
-                      setConnection({ ...connection, host: e.target.value });
-                    }}
-                    fullWidth
-                    color={errors.host ? "error" : "default"}
-                    bordered
-                  />
-                </Row>
-                {errors.host && (
-                  <Row>
-                    <Text className="text-danger">
-                      {errors.host}
-                    </Text>
-                  </Row>
-                )}
-                <Spacer y={4} />
-              </Container>
-            </div>
-
-            <div className="col-span-12">
-              <Container>
-                <Row>
-                  <Tabs selectedKey={menuType} onSelectionChange={(key) => setMenuType(key)}>
-                    <Tab key="authentication" title="Authentication" />
-                    <Tab key="headers" title="Headers" />
-                  </Tabs>
-                </Row>
-              </Container>
-            </div>
-
-            <div className="col-span-12">
-              <Container>
-                <Spacer y={4} />
-                <Divider />
-                <Spacer y={4} />
-              </Container>
-            </div>
-
-            {menuType === "authentication" && (
-              <div className="col-span-12">
-                <div className="grid grid-cols-12 gap-2">
-                  <div className="col-span-12 sm:col-span-12 md:col-span-4 lg:col-span-4 xl:col-span-4">
-                    <Container>
-                      <Row>
-                        <Select
-                          label="Authentication type"
-                          placeholder="Select an authentication type"
-                          defaultValue="no_auth"
-                          selectedKeys={[connection?.authentication?.type]}
-                          onSelectionChange={(key) => _onChangeAuthParams("type", key)}
-                        >
-                          {authTypes.map((type) => (
-                            <SelectItem key={type.value}>
-                              {type.text}
-                            </SelectItem>
-                          ))}
-                        </Select>
-                      </Row>
-                    </Container>
-                  </div>
-                  {connection.authentication && connection.authentication.type === "basic_auth" && (
-                    <div className="col-span-12 sm:col-span-12 md:col-span-5 lg:col-span-5 xl:col-span-5">
-                      <Container>
-                        <Row align="center">
-                          <Input
-                            label="Enter a Username or API Key"
-                            placeholder="Username or API Key"
-                            onChange={(e) => _onChangeAuthParams("user", e.target.value)}
-                            value={connection.authentication.user}
-                            fullWidth
-                            bordered
-                          />
-                        </Row>
-                        <Spacer y={2} />
-                        <Row align="center">
-                          <Input
-                            type="password"
-                            label="Enter a Password or API Key Value"
-                            placeholder="Password or API Key Value"
-                            onChange={(e) => _onChangeAuthParams("pass", e.target.value)}
-                            value={connection.authentication.pass}
-                            fullWidth
-                            variant="bordered"
-                          />
-                        </Row>
-                      </Container>
-                    </div>
-                  )}
-                  {connection.authentication && connection.authentication.type === "bearer_token" && (
-                    <div className="col-span-12 sm:col-span-12 md:col-span-5 lg:col-span-5 xl:col-span-5">
-                      <Input
-                        type="password"
-                        label="Enter the token"
-                        placeholder="Authentication token"
-                        onChange={(e) => _onChangeAuthParams("token", e.target.value)}
-                        value={connection.authentication.token}
-                        fullWidth
-                        variant="bordered"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {menuType === "headers" && (
-              <div className="col-span-12">
-                <Container>
-                  <Row>
-                    <Text b>
-                      Global headers to send with the requests
-                    </Text>
-                  </Row>
-                  <Row>
-                    <Text>
-                      {"These headers will be included with all the future requests"}
-                    </Text>
-                  </Row>
-                </Container>
-              </div>
-            )}
-
-            <div className="col-span-12">
-              <Container>
-                <div className="grid grid-cols-12 gap-2">
-                  {menuType === "headers" && connection.optionsArray && connection.optionsArray.map((option) => {
-                    return (
-                      <>
-                        <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6 xl:col-span-6">
-                          <Input
-                            placeholder="Header name"
-                            value={option.key}
-                            onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
-                            fullWidth
-                          />
-                        </div>
-                        <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6 xl:col-span-6">
-                          <Input
-                            onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
-                            value={option.value}
-                            placeholder="Value"
-                            fullWidth
-                          />
-                          <Spacer x={2} />
-                          <Button
-                            isIconOnly
-                            onClick={() => _removeOption(option.id)}
-                            auto
-                            variant="flat"
-                            color="warning"
-                          >
-                            <CloseSquare />
-                          </Button>
-                        </div>
-                      </>
-                    );
-                  })}
-                </div>
-              </Container>
-            </div>
-            {menuType === "headers" && (
-              <div className="col-span-12">
-                <Container>
-                  <Spacer y={2} />
-                  <Button
-                    size="sm"
-                    endContent={<Plus />}
-                    onClick={_addOption}
                     variant="bordered"
-                    auto
-                  >
-                    Add a header
-                  </Button>
-                </Container>
+                  />
+                </Row>
+                <Spacer y={2} />
+                <Row align="center">
+                  <Input
+                    type="password"
+                    label="Enter a Password or API Key Value"
+                    placeholder="Password or API Key Value"
+                    onChange={(e) => _onChangeAuthParams("pass", e.target.value)}
+                    value={connection.authentication.pass}
+                    fullWidth
+                    variant="bordered"
+                  />
+                </Row>
+              </div>
+            )}
+            {connection.authentication && connection.authentication.type === "bearer_token" && (
+              <div className="col-span-12 sm:col-span-12 md:col-span-5 lg:col-span-5 xl:col-span-5">
+                <Input
+                  type="password"
+                  label="Enter the token"
+                  placeholder="Authentication token"
+                  onChange={(e) => _onChangeAuthParams("token", e.target.value)}
+                  value={connection.authentication.token}
+                  fullWidth
+                  variant="bordered"
+                />
               </div>
             )}
           </div>
-        </Row>
+        )}
+        <Spacer y={4} />
+
+        {menuType === "headers" && (
+          <>
+            <Row>
+              <Text b>
+                Global headers to send with the requests
+              </Text>
+            </Row>
+            <Row>
+              <Text>
+                {"These headers will be included with all the future requests"}
+              </Text>
+            </Row>
+            <Spacer y={2} />
+          </>
+        )}
+
+        {menuType === "headers" && connection.optionsArray && connection.optionsArray.map((option) => {
+          return (
+            <Fragment key={option.id}>
+              <Row className={"gap-4"}>
+                <Input
+                  placeholder="Header name"
+                  value={option.key}
+                  onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
+                  fullWidth
+                />
+                <Input
+                  onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
+                  value={option.value}
+                  placeholder="Value"
+                  fullWidth
+                />
+                <Button
+                  isIconOnly
+                  onClick={() => _removeOption(option.id)}
+                  variant="faded"
+                  color="secondary"
+                >
+                  <HiX />
+                </Button>
+              </Row>
+              <Spacer y={2} />
+            </Fragment>
+          );
+        })}
+
+        {menuType === "headers" && (
+          <>
+            <Spacer y={2} />
+            <Button
+              endContent={<HiPlus />}
+              onClick={_addOption}
+              variant="bordered"
+              auto
+            >
+              Add a header
+            </Button>
+            <Spacer y={4} />
+          </>
+        )}
 
         {addError && (
           <>
@@ -429,7 +382,7 @@ function ApiConnectionForm(props) {
             <Button
               isLoading={loading}
               onClick={_onCreateConnection}
-              auto
+              color="primary"
             >
               {"Save connection"}
             </Button>
@@ -444,7 +397,7 @@ function ApiConnectionForm(props) {
             </Button>
           )}
         </Row>
-      </Container>
+      </div>
       <Spacer y={4} />
 
       {testLoading && (
@@ -485,21 +438,6 @@ function ApiConnectionForm(props) {
     </div>
   );
 }
-const styles = {
-  container: {
-    flex: 1,
-  },
-  mainSegment: {
-    padding: 20,
-  },
-  formStyle: {
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  saveBtn: {
-    marginRight: 0,
-  },
-};
 
 ApiConnectionForm.defaultProps = {
   editConnection: null,

@@ -1,13 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {
-  Card, CardBody, Image, Link, Spacer,
+  Card, CardBody, CardFooter, CardHeader, Divider, Image, Link, Spacer,
 } from "@nextui-org/react";
 import { FcGraduationCap } from "react-icons/fc";
 
 import Row from "./Row";
 import Text from "./Text";
-import Container from "./Container";
 
 function HelpBanner(props) {
   const {
@@ -20,50 +19,48 @@ function HelpBanner(props) {
   };
 
   return (
-    <Container size={"sm"}>
-      <div className="grid grid-cols-12">
-        <Card
-          variant="bordered"
-          isPressable
-          isHoverable
-          onClick={() => _onOpenHelp()}
-        >
-          <CardBody>
-            <div className="grid grid-cols-12">
-              <div className="col-span-12 md:col-span-9 py-20 px-20 flex-col">
-                <Text size="h4" className={"py-5"}>
-                  <Link className={"text-default"} href={url} target="_blank" rel="noopener">{title}</Link>
-                </Text>
-                <Text>
-                  {description}
-                </Text>
-                <Spacer y={0.5} />
-                <Row align="center">
-                  <FcGraduationCap size={24} />
-                  <Spacer x={0.3} />
-                  <Text
-                    css={{ py: 5 }}
-                    color="primary"
-                    target="_blank"
-                    variant="b"
-                  >
-                    {info}
-                  </Text>
-                </Row>
-              </div>
-              <div className="md:col-span-3 sm:hidden">
-                <Image
-                  src={imageUrl}
-                  objectFit="cover"
-                  width={200}
-                  height={200}
-                />
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-      </div>
-    </Container>
+    <Card
+      variant="bordered"
+      isPressable
+      isHoverable
+      onClick={() => _onOpenHelp()}
+      className="max-w-[400px] border-1 border-content3"
+      shadow="sm"
+    >
+      <CardHeader className="flex gap-3">
+        <Image
+          src={imageUrl}
+          width={80}
+          height={80}
+          radius="sm"
+        />
+        <div>
+          <Link className={"text-lg font-bold text-start"} href={url} target="_blank" rel="noopener">{title}</Link>
+        </div>
+      </CardHeader>
+      <Divider />
+      <CardBody>
+        <div>
+          <Text>
+            {description}
+          </Text>
+        </div>
+      </CardBody>
+      <Divider />
+      <CardFooter>
+        <Row align="center">
+          <FcGraduationCap size={24} />
+          <Spacer x={1} />
+          <Text
+            css={{ py: 5 }}
+            color="default"
+            target="_blank"
+          >
+            {info}
+          </Text>
+        </Row>
+      </CardFooter>
+    </Card>
   );
 }
 

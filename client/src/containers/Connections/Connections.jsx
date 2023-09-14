@@ -7,9 +7,6 @@ import {
   Button, Modal, Spacer, Tabs, Tab, CardBody, Image, CardFooter, Card,
   ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
-import {
-  ChevronLeft, Delete, Plus,
-} from "react-iconly";
 
 import MongoConnectionForm from "./components/MongoConnectionForm";
 import ApiConnectionForm from "./components/ApiConnectionForm";
@@ -50,6 +47,7 @@ import Text from "../../components/Text";
 import useThemeDetector from "../../modules/useThemeDetector";
 import availableConnections from "../../modules/availableConnections";
 import availableTemplates from "../../modules/availableTemplates";
+import { HiArrowLeft, HiPlus, HiTrash } from "react-icons/hi";
 
 /*
   The page that contains all the connections
@@ -239,10 +237,10 @@ function Connections(props) {
 
             {formType && (
               <Button
-                color="secondary"
-                startContent={<ChevronLeft set="bold" />}
+                color="default"
+                startContent={<HiArrowLeft />}
                 onClick={_closeConnectionForm}
-                auto
+                variant="solid"
               >
                 Back
               </Button>
@@ -253,8 +251,8 @@ function Connections(props) {
         {connections.length > 0 && !formType && (
           <Row>
             <Button
-              endContent={<Plus />}
-              auto
+              endContent={<HiPlus />}
+              color="primary"
               onClick={_onOpenConnectionForm}
             >
               Add a new connection
@@ -265,7 +263,7 @@ function Connections(props) {
         <Spacer y={8} />
 
         {(connections.length < 1 || newConnectionModal) && !formType && (
-          <Container className={"p-unit-sm rounded-md bg-content3"} size="lg">
+          <Container className={"p-unit-sm rounded-lg bg-content1 border-1 border-content3 pt-8 pb-8 mb-8"} size="lg">
             {connections.length < 1 && (
               <Row align="center">
                 <Text size="h1">
@@ -289,10 +287,15 @@ function Connections(props) {
             <Spacer y={2} />
             <Row>
               {selectedMenu === "connections" && (
-                <div className="grid grid-cols-12 gap-2">
+                <div className="grid grid-cols-12 gap-4">
                   {availableConnections.map((c) => (
                     <div key={c.type} className="col-span-3 sm:col-span-6 md:col-span-4 lg:col-span-2">
-                      <Card variant="bordered" isPressable isHoverable className="project-segment" onClick={() => setFormType(c.type)}>
+                      <Card
+                        isPressable
+                        isHoverable
+                        className="border border-content3"
+                        onClick={() => setFormType(c.type)}
+                      >
                         <CardBody className={"p-0"}>
                           <Image className="object-cover" width="300" height="300" src={connectionImages(isDark)[c.type]} />
                         </CardBody>
@@ -341,7 +344,7 @@ function Connections(props) {
                 />
               )}
             </Row>
-            <Spacer y={4} />
+            <Spacer y={8} />
             <Row>
               <Text>
                 {"Need access to another data source? "}
@@ -505,7 +508,7 @@ function Connections(props) {
           )}
         </div>
 
-        {(formType || newConnectionModal) && <Spacer y={4} />}
+        {formType && <Spacer y={8} />}
 
         {connections.length > 0 && (
           <Row align="center">
@@ -554,7 +557,6 @@ function Connections(props) {
                         <Button
                           variant="flat"
                           onClick={() => _onEditConnection(connection)}
-                          size="sm"
                           fullWidth
                         >
                           Edit
@@ -563,7 +565,6 @@ function Connections(props) {
                           color="danger"
                           variant="flat"
                           onClick={() => _onRemoveConfirmation(connection)}
-                          size="sm"
                           isLoading={removeLoading === connection.id}
                           fullWidth
                         >
@@ -602,11 +603,10 @@ function Connections(props) {
               Go back
             </Button>
             <Button
-              variant="flat"
               color="danger"
               isLoading={!!removeLoading}
               onClick={_onRemoveConnection}
-              endContent={<Delete />}
+              endContent={<HiTrash />}
               auto
             >
               Remove completely
