@@ -361,7 +361,7 @@ function ProjectDashboard(props) {
         && (
           <div>
             <div
-              className={"bg-content2 w-full border-b-1 border-solid border-content3"}
+              className={"bg-content1 w-full border-b-1 border-solid border-content3"}
               size="xl"
               style={mobile ? styles.actionBarMobile : styles.actionBar}
             >
@@ -514,7 +514,7 @@ function ProjectDashboard(props) {
             </div>
           </div>
         )}
-      <div className="bg-content1 w-full" style={styles.container(width < breakpoints.tablet)}>
+      <div className="bg-content2 w-full" style={styles.container(width < breakpoints.tablet)}>
         {connections.length === 0 && charts.length === 0
           && (
             <Container justify="center" className={`pt-[${height / 3}]`}>

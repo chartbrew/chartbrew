@@ -64,7 +64,7 @@ function TableComponent(props) {
             {...getTableProps()}
             isStriped
             shadow="none"
-            classNames={{ wrapper: "bg-content2" }}
+            classNames={{ wrapper: "bg-content1" }}
             bottomContent={(
               <div>
                 <Row align="center">

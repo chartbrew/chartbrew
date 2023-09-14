@@ -5,7 +5,8 @@ import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import {
-  Link as LinkNext, Dropdown, Tooltip, Spacer, Button, Avatar, Modal, DropdownTrigger, DropdownMenu, DropdownItem, ModalHeader, ModalBody, ModalFooter, ModalContent,
+  Link as LinkNext, Tooltip, Spacer, Button, Avatar, Modal, ModalHeader, ModalBody,ModalFooter,
+  ModalContent, Popover, PopoverTrigger, PopoverContent, Listbox, ListboxItem, Input,
 } from "@nextui-org/react";
 import {
   Activity, Category, ChevronLeftCircle, ChevronRightCircle, ChevronUpCircle,
@@ -21,6 +22,7 @@ import { APP_VERSION } from "../../../config/settings";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
+import { HiSearch } from "react-icons/hi";
 
 const sideMaxSize = 220;
 
@@ -67,6 +69,7 @@ function ProjectNavigation(props) {
   } = props;
 
   const [showUpdate, setShowUpdate] = useState(false);
+  const [projectSearch, setProjectSearch] = useState("");
 
   const { height } = useWindowSize();
 
@@ -89,7 +92,7 @@ function ProjectNavigation(props) {
       <nav
         style={styles.mobileMenu}
       >
-        <div className="flex items-center justify-center shadow-md bg-content2 w-full backdrop-blur-[10px] backdrop-saturate-[180%]">
+        <div className="flex items-center justify-center shadow-md bg-content1 w-full backdrop-blur-[10px] backdrop-saturate-[180%]">
           <Container className="flex flex-nowrap items-center justify-center w-full">
             <Row justify="space-between" align="center">
               <Link to={`/${teamId}/${projectId}/dashboard`}>
@@ -134,38 +137,43 @@ function ProjectNavigation(props) {
 
   return (
     <div>
-      <div className={"bg-content2 flex flex-col justify-start"} style={styles.mainSideMenu(height)}>
-        <Row justify="center" align="center" className={"pt-10"}>
-          <Dropdown title={project.name}>
-            <DropdownTrigger>
+      <div className={"bg-content1 flex flex-col justify-start"} style={styles.mainSideMenu(height)}>
+        <Row justify="center" align="center" className={"pt-4"}>
+          <Popover>
+            <PopoverTrigger>
               <div>
                 {menuSize === "small" && (
                   // <Tooltip content="Switch project" placement="right">
-                    <div>
-                      <Text className={"text-default-800"}><Category size="large" /></Text>
-                    </div>
+                  <div>
+                    <Text className={"text-default-800"}><Category size="large" /></Text>
+                  </div>
                   // </Tooltip>
                 )}
                 {menuSize === "large" && (
                   <Text b className={"text-blue-600"}>{_formatProjectName(project.name)}</Text>
                 )}
               </div>
-            </DropdownTrigger>
-            <DropdownMenu
-              variant="bordered"
-              onAction={(pId) => onChangeProject(pId)}
-              selectedKeys={[projectId]}
-              selectionMode="single"
-            >
-              {projects.map((p) => {
-                return (
-                  <DropdownItem key={p.id}>
-                    {p.name}
-                  </DropdownItem>
-                );
-              })}
-            </DropdownMenu>
-          </Dropdown>
+            </PopoverTrigger>
+            <PopoverContent className="max-w-[200px] max-h-[400px]">
+              <div className="flex flex-col gap-2 overflow-y-auto">
+                <Input
+                  placeholder="Search for a project"
+                  fullWidth
+                  size="small"
+                  variant="bordered"
+                  endContent={<HiSearch />}
+                  onChange={(e) => setProjectSearch(e.target.value)}
+                />
+                <Listbox aria-label="Project switch list">
+                  {projects.filter((p) => p.name.toLowerCase().indexOf(projectSearch) > -1).map((p) => (
+                    <ListboxItem key={p.id} onClick={() => onChangeProject(p.id)}>
+                      {p.name}
+                    </ListboxItem>
+                  ))}
+                </Listbox>
+              </div>
+            </PopoverContent>
+          </Popover>
         </Row>
         <Spacer y={10} />
         {canAccess("editor")
