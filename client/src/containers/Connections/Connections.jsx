@@ -5,7 +5,7 @@ import moment from "moment";
 
 import {
   Button, Modal, Spacer, Tabs, Tab, CardBody, Image, CardFooter, Card,
-  ModalHeader, ModalBody, ModalFooter,
+  ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
 import {
   ChevronLeft, Delete, Plus,
@@ -226,7 +226,7 @@ function Connections(props) {
   const isDark = useThemeDetector();
   return (
     <div style={styles.container}>
-      <Container className={"pt-20"} size="xl">
+      <Container className={"pt-10"} size="xl">
         {formType && (
           <Row>
             {removeError && (
@@ -262,10 +262,10 @@ function Connections(props) {
           </Row>
         )}
 
-        <Spacer y={1} />
+        <Spacer y={8} />
 
         {(connections.length < 1 || newConnectionModal) && !formType && (
-          <Container className={"p-unit-sm rounded-md bg-content2"}>
+          <Container className={"p-unit-sm rounded-md bg-content3"} size="lg">
             {connections.length < 1 && (
               <Row align="center">
                 <Text size="h1">
@@ -341,7 +341,7 @@ function Connections(props) {
                 />
               )}
             </Row>
-            <Spacer y={2} />
+            <Spacer y={4} />
             <Row>
               <Text>
                 {"Need access to another data source? "}
@@ -353,6 +353,7 @@ function Connections(props) {
           </Container>
         )}
 
+        <Spacer y={4} />
         <div id="connection-form-area">
           {formType === "api" && (
             <ApiConnectionForm
@@ -508,7 +509,6 @@ function Connections(props) {
 
         {connections.length > 0 && (
           <Row align="center">
-            <Spacer x={1} />
             <Text size="h2">
               {"Your connections"}
             </Text>
@@ -516,7 +516,7 @@ function Connections(props) {
         )}
         <Spacer y={2} />
         <Row align="center">
-          <div className="grid grid-cols-12 gap-2">
+          <div className="grid grid-cols-12 gap-4 w-full">
             {connections.map(connection => {
               return (
                 <div className="col-span-3 sm:col-span-12 md:col-span-6 lg:col-span-4" key={connection.id}>
@@ -524,57 +524,51 @@ function Connections(props) {
                     variant="bordered"
                     isPressable
                     isHoverable
-                    className="project-segment"
                     style={
                       editConnection && connection.id === editConnection.id
                         ? styles.selectedConnection : {}
                     }
                     onClick={() => _onEditConnection(connection)}
+                    className="w-full"
                   >
-                    <CardBody className="p-4 pl-8">
-                      <Container justify="flex-start" size="xl">
-                        <Row align="center" justify="space-between">
+                    <CardBody className="p-4">
+                      <Row align="center">
+                        <Image
+                          src={connectionImages(isDark)[connection.subType || connection.type]}
+                          height={50}
+                          width={50}
+                          radius="sm"
+                          alt="connection image"
+                        />
+                        <Spacer x={4} />
+                        <div className="flex flex-col">
                           <Text size="h4">{connection.name}</Text>
-                          <Spacer x={1} />
-                          <img
-                            width="50px"
-                            height="50px"
-                            src={connectionImages(isDark)[
-                              connection.subType || connection.type
-                            ]}
-                            alt={`${connection.subType} logo`}
-                          />
-                        </Row>
-                        <Row>
                           <Text className={"text-gray-500"}>
-                            {`Created on ${moment(connection.createdAt).format("LLL")}`}
+                            {`Created on ${moment(connection.createdAt).format("LL")}`}
                           </Text>
-                        </Row>
-                      </Container>
+                        </div>
+                      </Row>
                     </CardBody>
                     {_canAccess("editor") && (
-                      <CardFooter>
-                        <Container>
-                          <Row justify="center">
-                            <Button
-                              variant="flat"
-                              onClick={() => _onEditConnection(connection)}
-                              size="sm"
-                            >
-                              Edit
-                            </Button>
-                            <Spacer x={1} />
-                            <Button
-                              color="danger"
-                              variant="flat"
-                              onClick={() => _onRemoveConfirmation(connection)}
-                              size="sm"
-                              isLoading={removeLoading === connection.id}
-                            >
-                              {"Remove"}
-                            </Button>
-                          </Row>
-                        </Container>
+                      <CardFooter className="gap-2">
+                        <Button
+                          variant="flat"
+                          onClick={() => _onEditConnection(connection)}
+                          size="sm"
+                          fullWidth
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          color="danger"
+                          variant="flat"
+                          onClick={() => _onRemoveConfirmation(connection)}
+                          size="sm"
+                          isLoading={removeLoading === connection.id}
+                          fullWidth
+                        >
+                          {"Remove"}
+                        </Button>
                       </CardFooter>
                     )}
                   </Card>
@@ -583,38 +577,42 @@ function Connections(props) {
             })}
           </div>
         </Row>
+
+        <Spacer y={10} />
       </Container>
 
       {/* REMOVE CONFIRMATION MODAL */}
       <Modal isOpen={removeModal} backdrop="blur" onClose={() => setRemoveModal(false)}>
-        <ModalHeader>
-          <Text size="h4">Are you sure you want to remove this connection?</Text>
-        </ModalHeader>
-        <ModalBody>
-          <p>
-            {"All the charts that are using this connection will stop working."}
-          </p>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            variant="flat"
-            color="warning"
-            onClick={() => setRemoveModal(false)}
-            auto
-          >
-            Go back
-          </Button>
-          <Button
-            variant="flat"
-            color="danger"
-            isLoading={!!removeLoading}
-            onClick={_onRemoveConnection}
-            endContent={<Delete />}
-            auto
-          >
-            Remove completely
-          </Button>
-        </ModalFooter>
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h4">Are you sure you want to remove this connection?</Text>
+          </ModalHeader>
+          <ModalBody>
+            <p>
+              {"All the charts that are using this connection will stop working."}
+            </p>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="flat"
+              color="default"
+              onClick={() => setRemoveModal(false)}
+              auto
+            >
+              Go back
+            </Button>
+            <Button
+              variant="flat"
+              color="danger"
+              isLoading={!!removeLoading}
+              onClick={_onRemoveConnection}
+              endContent={<Delete />}
+              auto
+            >
+              Remove completely
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
     </div>
   );

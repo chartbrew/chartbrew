@@ -34,8 +34,8 @@ function KpiChartSegment(props) {
               key={c.label}
             >
               <Row align="center">
-                <Text b className={chart.chartSize === 1 ? "text-lg" : "text-xl"}>
-                  {`${c.value?.toLocaleString()} `}
+                <Text b className={`${chart.chartSize === 1 ? "text-lg" : "text-xl"} text-default-800`}>
+                  {`${c.value?.toLocaleString()}`}
                 </Text>
                 <Spacer x={1} />
                 {chart.showGrowth && (
@@ -60,7 +60,7 @@ function KpiChartSegment(props) {
                 )}
               </Row>
               <Row>
-                <Text size="sm" css={{ fontWeight: "normal" }}>
+                <Text size="sm" className={"text-default-600"}>
                   <span
                     style={
                       chart.Datasets

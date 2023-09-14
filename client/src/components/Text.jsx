@@ -3,7 +3,7 @@ import { tv } from "tailwind-variants";
 import PropTypes from "prop-types";
 
 const text = tv({
-  base: "text-base text-default-500",
+  base: "text-base text-foreground",
   variants: {
     small: {
       true: "text-sm",
@@ -49,7 +49,7 @@ const text = tv({
       success: "text-success",
       warning: "text-warning",
       danger: "text-danger",
-      default: "text-default-500",
+      default: "text-foreground",
       gray: "text-default-500",
     }
   },

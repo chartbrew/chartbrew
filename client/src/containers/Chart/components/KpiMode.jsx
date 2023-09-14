@@ -107,7 +107,7 @@ function KpiMode(props) {
             <Row justify="center" align="center">
               <Text
                 b
-                className={chart.chartSize === 1 ? "text-3xl" : "text-4xl"}
+                className={`${chart.chartSize === 1 ? "text-3xl" : "text-4xl"} text-default-800`}
                 key={dataset.label}
               >
                 {dataset.data && _getKpi(dataset.data)}
@@ -116,7 +116,7 @@ function KpiMode(props) {
 
             {chart.Datasets[index] && (
               <Row justify="center" align="center">
-                <Text className={`mt-${chart.showGrowth ? "[-5px]" : 0} text-center`}>
+                <Text className={`mt-${chart.showGrowth ? "[-5px]" : 0} text-center text-default-600`}>
                   {chart.showGrowth && chart.chartData.growth && (
                     _renderGrowth(chart.chartData.growth[index])
                   )}
