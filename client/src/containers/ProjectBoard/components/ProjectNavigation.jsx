@@ -6,14 +6,13 @@ import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import {
   Link as LinkNext, Tooltip, Spacer, Button, Avatar, Modal, ModalHeader, ModalBody,ModalFooter,
-  ModalContent, Popover, PopoverTrigger, PopoverContent, Listbox, ListboxItem, Input,
+  ModalContent, Popover, PopoverTrigger, PopoverContent, Listbox, ListboxItem, Input, Divider,
 } from "@nextui-org/react";
-import {
-  Activity, Category, ChevronLeftCircle, ChevronRightCircle, ChevronUpCircle,
-  Graph, Hide, MoreSquare, Plus, Setting, Show, TwoUsers,
-} from "react-iconly";
-import { FaPlug } from "react-icons/fa";
 import { MdExtension } from "react-icons/md";
+import {
+  RiAddCircleFill, RiArrowUpDoubleFill, RiDashboardFill, RiEyeLine, RiEyeOffLine, RiLayoutGridFill,
+  RiMenuFoldFill, RiMenuUnfoldFill, RiMoreFill, RiPlugFill, RiSettings4Fill, RiSlideshowFill, RiTeamFill,
+} from "react-icons/ri";
 
 import {
   dark, lightGray, primary, secondary
@@ -92,39 +91,39 @@ function ProjectNavigation(props) {
       <nav
         style={styles.mobileMenu}
       >
-        <div className="flex items-center justify-center shadow-md bg-content1 w-full backdrop-blur-[10px] backdrop-saturate-[180%]">
-          <Container className="flex flex-nowrap items-center justify-center w-full">
+        <div className="flex items-center justify-center shadow-md bg-content3-foreground w-full backdrop-blur-[10px] backdrop-saturate-[180%]">
+          <Container className="flex flex-nowrap justify-between w-full p-2">
             <Row justify="space-between" align="center">
               <Link to={`/${teamId}/${projectId}/dashboard`}>
-                <LinkNext>
-                  <Category color={_checkIfActive("dashboard") ? secondary : "white"} />
+                <LinkNext className="pointer-events-none">
+                  <RiDashboardFill color={_checkIfActive("dashboard") ? secondary : "white"} size={24} />
                 </LinkNext>
               </Link>
               {canAccess("editor") && (
                 <Link to={`/${teamId}/${projectId}/connections`}>
-                  <LinkNext>
-                    <FaPlug size={22} color={_checkIfActive("connections") ? secondary : "white"} />
+                  <LinkNext className="pointer-events-none">
+                    <RiPlugFill size={24} color={_checkIfActive("connections") ? secondary : "white"} />
                   </LinkNext>
                 </Link>
               )}
               <Link to={`/b/${project.brewName}`}>
-                <LinkNext>
-                  <Graph color={_checkIfActive("public") ? secondary : "white"} />
+                <LinkNext className="pointer-events-none">
+                  <RiSlideshowFill color={_checkIfActive("public") ? secondary : "white"} size={24} />
                 </LinkNext>
               </Link>
               {canAccess("editor")
                 && (
                   <Link to={`/${teamId}/${projectId}/members`}>
-                    <LinkNext>
-                      <TwoUsers color={_checkIfActive("members") ? secondary : "white"} />
+                    <LinkNext className="pointer-events-none">
+                      <RiTeamFill color={_checkIfActive("members") ? secondary : "white"} size={24} />
                     </LinkNext>
                   </Link>
                 )}
               {canAccess("admin")
                 && (
                   <Link to={`/${teamId}/${projectId}/projectSettings`}>
-                    <LinkNext>
-                      <Setting color={_checkIfActive("projectSettings") ? secondary : "white"} />
+                    <LinkNext className="pointer-events-none">
+                      <RiSettings4Fill color={_checkIfActive("projectSettings") ? secondary : "white"} size={24} />
                     </LinkNext>
                   </Link>
                 )}
@@ -145,7 +144,7 @@ function ProjectNavigation(props) {
                 {menuSize === "small" && (
                   // <Tooltip content="Switch project" placement="right">
                   <div>
-                    <Text className={"text-default-800"}><Category size="large" /></Text>
+                    <Text className={"text-default-800"}><RiLayoutGridFill size={28} /></Text>
                   </div>
                   // </Tooltip>
                 )}
@@ -175,7 +174,7 @@ function ProjectNavigation(props) {
             </PopoverContent>
           </Popover>
         </Row>
-        <Spacer y={10} />
+        <Spacer y={8} />
         {canAccess("editor")
           && (
             <Row justify="center" align="center">
@@ -184,19 +183,20 @@ function ProjectNavigation(props) {
                   <div>
                     <Link to={`/${teamId}/${projectId}/chart`}>
                       <Text color="primary">
-                        <Avatar icon={<Plus size="large" />} radius="sm" />
+                        <Avatar icon={<RiAddCircleFill size={28} />} radius="sm" />
                       </Text>
                     </Link>
                   </div>
                 </Tooltip>
               )}
               {menuSize === "large" && (
-                <Link to={`/${teamId}/${projectId}/chart`}>
+                <Link to={`/${teamId}/${projectId}/chart`} className={"w-full pl-4 pr-4"}>
                   <Button
-                    endContent={<Plus />}
-                    auto
+                    endContent={<RiAddCircleFill size={24} />}
+                    fullWidth
                     color="primary"
                     className="pointer-events-none"
+                    variant="solid"
                   >
                     Create a chart
                   </Button>
@@ -204,7 +204,7 @@ function ProjectNavigation(props) {
               )}
             </Row>
           )}
-        <Spacer y={3} />
+        <Spacer y={6} />
         <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
           <Link to={`/${teamId}/${projectId}/dashboard`}>
             {menuSize === "small" && (
@@ -215,7 +215,7 @@ function ProjectNavigation(props) {
                     variant="light"
                     color={_checkIfActive("dashboard") ? "primary" : "default"}
                   >
-                    <Activity size="large" />
+                    <RiDashboardFill size={28} />
                   </Button>
                 </div>
               </Tooltip>
@@ -224,7 +224,7 @@ function ProjectNavigation(props) {
               <Button
                 variant="light"
                 color={_checkIfActive("dashboard") ? "primary" : "default"}
-                startContent={<Activity />}
+                startContent={<RiDashboardFill size={24} />}
                 className="pointer-events-none"
               >
                 Dashboard
@@ -245,7 +245,7 @@ function ProjectNavigation(props) {
                         variant="light"
                         color={_checkIfActive("connections") ? "primary" : "default"}
                       >
-                        <FaPlug size="28" />
+                        <RiPlugFill size="28" />
                       </Button>
                     </div>
                   </Tooltip>
@@ -254,7 +254,7 @@ function ProjectNavigation(props) {
                   <Button
                     variant="light"
                     color={_checkIfActive("connections") ? "primary" : "default"}
-                    startContent={<FaPlug size="22" />}
+                    startContent={<RiPlugFill size="24" />}
                     className="pointer-events-none"
                   >
                     Connections
@@ -277,7 +277,7 @@ function ProjectNavigation(props) {
                       variant="light"
                       color={_checkIfActive("public") ? "primary" : "default"}
                     >
-                      <Graph size="large" />
+                      <RiSlideshowFill size={28} />
                     </Button>
                   </div>
                 </Tooltip>
@@ -286,7 +286,7 @@ function ProjectNavigation(props) {
                 <Button
                   variant="light"
                   color={_checkIfActive("public") ? "primary" : "default"}
-                  startContent={<Graph />}
+                  startContent={<RiSlideshowFill size={24} />}
                   className="pointer-events-none"
                 >
                   Dashboard report
@@ -309,7 +309,7 @@ function ProjectNavigation(props) {
                         variant="light"
                         color={_checkIfActive("projectSettings") ? "primary" : "default"}
                       >
-                        <Setting size="large" />
+                        <RiSettings4Fill size={28} />
                       </Button>
                     </div>
                   </Tooltip>
@@ -318,7 +318,7 @@ function ProjectNavigation(props) {
                   <Button
                     variant="light"
                     color={_checkIfActive("projectSettings") ? "primary" : "default"}
-                    startContent={<Setting />}
+                    startContent={<RiSettings4Fill size={24} />}
                     className="pointer-events-none"
                   >
                     Project settings
@@ -328,19 +328,11 @@ function ProjectNavigation(props) {
             </Row>
           </>
         )}
-        <Spacer y={3} />
+        <Spacer y={4} />
+        <Divider />
+        <Spacer y={4} />
         {canAccess("editor") && (
           <>
-            {menuSize === "large" && (
-              <>
-                <Row justify="flex-start" align="center">
-                  <Text b className={"text-default-800"}>
-                    Team
-                  </Text>
-                </Row>
-                <Spacer y={1} />
-              </>
-            )}
             <Row justify={menuSize === "large" ? "flex-start" : "center"}>
               <Link to={`/${teamId}/${projectId}/members`}>
                 {menuSize === "small" && (
@@ -351,7 +343,7 @@ function ProjectNavigation(props) {
                         variant="light"
                         color={_checkIfActive("members") ? "primary" : "default"}
                       >
-                        <TwoUsers size="large" />
+                        <RiTeamFill size={28} />
                       </Button>
                     </div>
                   </Tooltip>
@@ -360,7 +352,7 @@ function ProjectNavigation(props) {
                   <Button
                     variant="light"
                     color={_checkIfActive("members") ? "primary" : "default"}
-                    startContent={<TwoUsers />}
+                    startContent={<RiTeamFill size={24} />}
                     className="pointer-events-none"
                   >
                     Team members
@@ -388,7 +380,7 @@ function ProjectNavigation(props) {
                   <Button
                     variant="light"
                     color={_checkIfActive("integrations") ? "primary" : "default"}
-                    startContent={<MdExtension />}
+                    startContent={<MdExtension size={24} />}
                     className="pointer-events-none"
                   >
                     Integrations
@@ -408,7 +400,7 @@ function ProjectNavigation(props) {
                           variant="light"
                           color={_checkIfActive("settings") ? "primary" : "default"}
                         >
-                          <MoreSquare size="large" />
+                          <RiMoreFill size={28} />
                         </Button>
                       </div>
                     </Tooltip>
@@ -417,7 +409,7 @@ function ProjectNavigation(props) {
                     <Button
                       variant="light"
                       color={_checkIfActive("settings") ? "primary" : "default"}
-                      startContent={<MoreSquare />}
+                      startContent={<RiMoreFill size={24} />}
                       className="pointer-events-none"
                     >
                       Team settings
@@ -443,7 +435,7 @@ function ProjectNavigation(props) {
                     color="default"
                     onClick={() => onChangeDrafts(!showDrafts)}
                   >
-                    {showDrafts ? (<Show size="large" />) : (<Hide size="large" />)}
+                    {showDrafts ? (<RiEyeLine size={28} />) : (<RiEyeOffLine size={28} />)}
                   </Button>
                 </div>
               )}
@@ -453,7 +445,7 @@ function ProjectNavigation(props) {
                     variant="light"
                     color="default"
                     onClick={() => onChangeDrafts(!showDrafts)}
-                    startContent={showDrafts ? (<Show />) : (<Hide />)}
+                    startContent={showDrafts ? (<RiEyeLine size={24} />) : (<RiEyeOffLine size={24} />)}
                   >
                     {showDrafts ? "Show drafts" : "Hide drafts"}
                   </Button>
@@ -465,7 +457,7 @@ function ProjectNavigation(props) {
         {menuSize === "small" && <Spacer y={1} />}
         {menuSize === "large" && <Spacer y={3} />}
         {menuSize === "large" && (
-          <Row justify="flex-end" align="center">
+          <Row justify="flex-end" align="center" className={"mr-5"}>
             <Tooltip content="Click to collapse menu" placement="right">
               <Button
                 isIconOnly
@@ -473,7 +465,7 @@ function ProjectNavigation(props) {
                 color="default"
                 onClick={() => onSetMenuSize(70)}
               >
-                <ChevronLeftCircle size="large" />
+                <RiMenuFoldFill size={28} />
               </Button>
             </Tooltip>
           </Row>
@@ -487,7 +479,7 @@ function ProjectNavigation(props) {
                 color="default"
                 onClick={() => onSetMenuSize(sideMaxSize)}
               >
-                <ChevronRightCircle size="large" />
+                <RiMenuUnfoldFill size={28} />
               </Button>
             </Tooltip>
           </Row>
@@ -504,7 +496,7 @@ function ProjectNavigation(props) {
             >
               <Text b className={"text-default-800 text-[10px]"} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
                 {update && update.tag_name && (
-                  <ChevronUpCircle primaryColor={secondary} size="small" />
+                  <RiArrowUpDoubleFill color={secondary} />
                 )}
                 Chartbrew
                 { ` ${APP_VERSION || "v3.0.0"}`}
@@ -522,7 +514,7 @@ function ProjectNavigation(props) {
             >
               <Text b className={"text-default-800 text-[10px]"} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
                 {update && update.tag_name && (
-                  <ChevronUpCircle primaryColor={secondary} size="small" />
+                  <RiArrowUpDoubleFill color={secondary} />
                 )}
                 {APP_VERSION || "v3.0.0"}
               </Text>

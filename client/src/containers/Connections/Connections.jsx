@@ -223,7 +223,7 @@ function Connections(props) {
   };
   const isDark = useThemeDetector();
   return (
-    <div style={styles.container}>
+    <div className="bg-content2">
       <Container className={"pt-10"} size="xl">
         {formType && (
           <Row>

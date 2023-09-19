@@ -12,9 +12,9 @@ import { createMedia } from "@artsy/fresnel";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import {
-  CloseSquare, Filter2, Image2, PaperDownload, Play, Plus, Scan
-} from "react-iconly";
-import { HiRefresh } from "react-icons/hi";
+  RiAddCircleFill, RiCloseCircleFill, RiFileCopyFill, RiFileExcel2Line, RiFilter2Line,
+  RiPlayCircleLine, RiPrinterLine, RiRefreshLine,
+} from "react-icons/ri";
 import moment from "moment";
 
 import Chart from "../Chart/Chart";
@@ -370,7 +370,7 @@ function ProjectDashboard(props) {
                   <Media greaterThan="mobile">
                     <Button
                       variant="ghost"
-                      endContent={<Filter2 size="small" />}
+                      startContent={<RiFilter2Line size={20} />}
                       isLoading={filterLoading}
                       onClick={_onShowFilters}
                       size="sm"
@@ -387,7 +387,7 @@ function ProjectDashboard(props) {
                       variant="ghost"
                       size="sm"
                     >
-                      <Filter2 />
+                      <RiFilter2Line size={24} />
                     </Button>
                   </Media>
                   <Spacer x={1} />
@@ -399,11 +399,11 @@ function ProjectDashboard(props) {
                           {filter.type === "date" && (
                             <Chip
                               color="primary"
-                              variant={"flat"}
+                              variant={"faded"}
                               radius="sm"
                               endContent={(
                                 <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default-500">
-                                  <CloseSquare size="small" />
+                                  <RiCloseCircleFill />
                                 </LinkNext>
                               )}
                             >
@@ -417,7 +417,7 @@ function ProjectDashboard(props) {
                               radius="sm"
                               endContent={(
                                 <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default">
-                                  <CloseSquare size="small" />
+                                  <RiCloseCircleFill />
                                 </LinkNext>
                               )}
                             >
@@ -441,7 +441,7 @@ function ProjectDashboard(props) {
                           auto
                           size="sm"
                         >
-                          <Scan />
+                          <RiFileCopyFill size={22} />
                         </Button>
                       </Tooltip>
                     </>
@@ -457,7 +457,7 @@ function ProjectDashboard(props) {
                           auto
                           size="sm"
                         >
-                          <PaperDownload />
+                          <RiFileExcel2Line size={22} />
                         </Button>
                       </Tooltip>
                     </>
@@ -473,7 +473,7 @@ function ProjectDashboard(props) {
                           auto
                           size="sm"
                         >
-                          <Image2 />
+                          <RiPrinterLine size={22} />
                         </Button>
                       </Tooltip>
                     </>
@@ -485,7 +485,7 @@ function ProjectDashboard(props) {
                       <Tooltip content="Refresh data" placement="bottom-start">
                         <Button
                           variant="ghost"
-                          startContent={<HiRefresh size={20} />}
+                          startContent={refreshLoading ? null : <RiRefreshLine size={22} />}
                           onClick={() => _onRefreshData()}
                           isLoading={refreshLoading}
                           size="sm"
@@ -500,7 +500,7 @@ function ProjectDashboard(props) {
                         <Tooltip content="Refresh all charts" placement="bottom-end">
                           <Button
                             variant="ghost"
-                            startContent={<HiRefresh size={22} />}
+                            startContent={<RiRefreshLine size={24} />}
                             onClick={() => _onRefreshData()}
                             isLoading={refreshLoading}
                             size="sm"
@@ -537,7 +537,7 @@ function ProjectDashboard(props) {
                     state: { onboarding: true },
                   }}
                 >
-                  <Button variant="shadow" endContent={<Play />} size="lg" auto>
+                  <Button variant="shadow" endContent={<RiPlayCircleLine size={24} />} size="lg" auto>
                     Get started
                   </Button>
                 </Link>
@@ -555,7 +555,7 @@ function ProjectDashboard(props) {
                 >
                   <CardBody>
                     <Row justify="center" align="center">
-                      <Plus size="large" />
+                      <RiAddCircleFill size={28} />
                     </Row>
                     <Row justify="center" align="center">
                       <Text size="h3">Add your first chart</Text>

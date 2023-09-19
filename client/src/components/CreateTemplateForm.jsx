@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Modal, ModalBody, ModalFooter, ModalHeader, Spacer,
+  Button, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer,
 } from "@nextui-org/react";
 
 import {
@@ -42,44 +42,46 @@ function CreateTemplateForm(props) {
   return (
     <>
       <Modal isOpen={visible} onClose={() => onClose()} size="small">
-        <ModalHeader>
-          <Text size="h3">Create a template</Text>
-        </ModalHeader>
-        <ModalBody>
-          <Spacer y={1} />
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            _onSaveTemplate();
-          }}>
-            <Input
-              labelPlaceholder="Enter a name for the template"
-              value={templateName}
-              onChange={(e) => setTemplateName(e.target.value)}
-              color={validationError ? "error" : "default"}
-              variant="bordered"
-              fullWidth
-              autoFocus
-            />
-          </form>
-          <Spacer y={1} />
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            variant="flat"
-            color="warning"
-            onClick={() => onClose()}
-            auto
-          >
-            Close
-          </Button>
-          <Button
-            onClick={_onSaveTemplate}
-            auto
-            isLoading={loading}
-          >
-            Save template
-          </Button>
-        </ModalFooter>
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h3">Create a template</Text>
+          </ModalHeader>
+          <ModalBody>
+            <Spacer y={1} />
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              _onSaveTemplate();
+            }}>
+              <Input
+                labelPlaceholder="Enter a name for the template"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                color={validationError ? "error" : "default"}
+                variant="bordered"
+                fullWidth
+                autoFocus
+              />
+            </form>
+            <Spacer y={1} />
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="flat"
+              color="warning"
+              onClick={() => onClose()}
+              auto
+            >
+              Close
+            </Button>
+            <Button
+              onClick={_onSaveTemplate}
+              color="primary"
+              isLoading={loading}
+            >
+              Save template
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>  
     </>
   );

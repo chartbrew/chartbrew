@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import {
   Card, Spacer, Tooltip, Dropdown, Button, Modal, Input,
-  Link as LinkNext, Textarea, Switch, Popover, Chip, CardHeader, CircularProgress, PopoverTrigger, PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, ModalHeader, ModalBody, ModalFooter, CardBody, ModalContent, Select, SelectItem,
+  Link as LinkNext, Textarea, Switch, Popover, Chip, CardHeader, CircularProgress, PopoverTrigger, PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, ModalHeader, ModalBody, ModalFooter, CardBody, ModalContent, Select, SelectItem, Listbox, ListboxItem,
 } from "@nextui-org/react";
 import {
   ArrowDown, ArrowUp, ChevronDown, ChevronDownCircle, ChevronUp, CloseSquare,
@@ -609,35 +609,36 @@ function Chart(props) {
                       </DropdownItem>
                     )}
                     {_canAccess("editor") && (
-                      <DropdownItem startContent={<ChevronDownCircle />}>
-                        <Dropdown>
-                          <DropdownTrigger>
+                      <DropdownItem startContent={<ChevronDownCircle />} closeOnSelect={false}>
+                        <Popover>
+                          <PopoverTrigger>
                             <Text>Chart size</Text>
-                          </DropdownTrigger>
-                          <DropdownMenu
-                            disallowEmptySelection
-                            onSelectionChange={(key) => {
-                              if (key && Object.values(key)) {
-                                _onChangeSize(Object.values(key)[0]);
-                              }
-                            }}
-                            selectedKeys={[`${chart.chartSize}`]}
-                            selectionMode="single"
-                          >
-                            <DropdownItem key={1}>
-                              <Text>Small</Text>
-                            </DropdownItem>
-                            <DropdownItem key={2}>
-                              <Text>Medium</Text>
-                            </DropdownItem>
-                            <DropdownItem key={3}>
-                              <Text>Large</Text>
-                            </DropdownItem>
-                            <DropdownItem key={4}>
-                              <Text>Full width</Text>
-                            </DropdownItem>
-                          </DropdownMenu>
-                        </Dropdown>
+                          </PopoverTrigger>
+                          <PopoverContent>
+                            <Listbox
+                              onSelectionChange={(keys) => {
+                                if (keys?.currentKey) {
+                                  _onChangeSize(keys.currentKey);
+                                }
+                              }}
+                              selectedKeys={[`${chart.chartSize}`]}
+                              selectionMode="single"
+                            >
+                                <ListboxItem key={1}>
+                                  <Text>Small</Text>
+                                </ListboxItem>
+                                <ListboxItem key={2}>
+                                  <Text>Medium</Text>
+                                </ListboxItem>
+                                <ListboxItem key={3}>
+                                  <Text>Large</Text>
+                                </ListboxItem>
+                                <ListboxItem key={4}>
+                                  <Text>Full width</Text>
+                                </ListboxItem>
+                              </Listbox>
+                          </PopoverContent>
+                        </Popover>
                       </DropdownItem>
                     )}
                     {_canAccess("editor") && (

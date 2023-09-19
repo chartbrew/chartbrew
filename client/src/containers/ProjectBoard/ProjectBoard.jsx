@@ -166,7 +166,7 @@ function ProjectBoard(props) {
   }
 
   return (
-    <div>
+    <div className="bg-content2">
       {isPrinting && (
         <Switch>
           <Route
