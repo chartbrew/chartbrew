@@ -4,7 +4,6 @@ import {
   Button, Input, Link, Spacer, Chip, Tabs, Tab, CircularProgress,
 } from "@nextui-org/react";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
-import { ChevronRight } from "react-iconly";
 import AceEditor from "react-ace";
 
 import "ace-builds/src-min-noconflict/mode-json";
@@ -15,6 +14,7 @@ import Text from "../../../components/Text";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import useThemeDetector from "../../../modules/useThemeDetector";
+import { RiArrowRightSLine } from "react-icons/ri";
 
 /*
   The Form for creating a new Mysql connection
@@ -95,15 +95,12 @@ function MysqlConnectionForm(props) {
   };
 
   return (
-    <div style={styles.container}>
-      <Container
-        className={"bg-content2 rounded-md"}
-        size={"md"}
-      >
+    <div className="p-unit-lg bg-content1 shadow-md border-1 border-solid border-content3 rounded-lg">
+      <div>
         <Row align="center">
-          <Text size="h3">Add a new MySQL connection</Text>
+          <Text size="lg">Add a new MySQL connection</Text>
         </Row>
-        <Spacer y={2} />
+        <Spacer y={4} />
         <Row align="center" style={styles.formStyle}>
           <Tabs
             selectedKey={formStyle}
@@ -113,6 +110,7 @@ function MysqlConnectionForm(props) {
             <Tab key="form" title="Connection form" />
           </Tabs>
         </Row>
+        <Spacer y={2} />
 
         {formStyle === "string" && (
           <>
@@ -138,7 +136,8 @@ function MysqlConnectionForm(props) {
             )}
             <Spacer y={2} />
             <Row align="center">
-              <Input.Password
+              <Input
+                type="password"
                 label="Enter your MySQL connection string"
                 placeholder="mysql://username:password@mysql.example.com:3306/dbname"
                 value={connection.connectionString || ""}
@@ -179,7 +178,7 @@ function MysqlConnectionForm(props) {
                 />
               </div>
 
-              <div className="sm:col-span-12 md:col-span-10 lg:col-span-8">
+              <div className="sm:col-span-12 md:col-span-10">
                 <Input
                   label="Hostname or IP address"
                   placeholder="mysql.example.com"
@@ -193,7 +192,7 @@ function MysqlConnectionForm(props) {
                   fullWidth
                 />
               </div>
-              <div className="sm:col-span-12 md:col-span-2 lg:col-span-4">
+              <div className="sm:col-span-12 md:col-span-2">
                 <Input
                   label="Port"
                   placeholder="Optional, defaults to 3306"
@@ -208,10 +207,9 @@ function MysqlConnectionForm(props) {
                 />
               </div>
 
-              <div className="sm:col-span-12 md:col-span-6">
+              <div className="sm:col-span-12 md:col-span-4">
                 <Input
                   label="Database name"
-                  placeholder="Enter your database name"
                   value={connection.dbName || ""}
                   onChange={(e) => {
                     setConnection({ ...connection, dbName: e.target.value });
@@ -223,10 +221,9 @@ function MysqlConnectionForm(props) {
                 />
               </div>
 
-              <div className="sm:col-span-12 md:col-span-4 lg:col-span-4">
+              <div className="sm:col-span-12 md:col-span-4">
                 <Input
                   label="Database username"
-                  placeholder="Username"
                   value={connection.username || ""}
                   onChange={(e) => {
                     setConnection({ ...connection, username: e.target.value });
@@ -238,10 +235,10 @@ function MysqlConnectionForm(props) {
                 />
               </div>
 
-              <div className="sm:col-span-12 md:col-span-4 lg:col-span-4">
-                <Input.Password
+              <div className="sm:col-span-12 md:col-span-4">
+                <Input
+                  type="password"
                   label="Database password"
-                  placeholder="Database user password"
                   onChange={(e) => {
                     setConnection({ ...connection, password: e.target.value });
                   }}
@@ -257,7 +254,7 @@ function MysqlConnectionForm(props) {
 
         <Spacer y={4} />
         <Row align="center">
-          <ChevronRight />
+          <RiArrowRightSLine />
           <Spacer x={1} />
           <Link
             target="_blank"
@@ -270,7 +267,7 @@ function MysqlConnectionForm(props) {
           <FaExternalLinkSquareAlt size={12} />
         </Row>
         <Row align="center">
-          <ChevronRight />
+          <RiArrowRightSLine />
           <Spacer x={1} />
           <Link
             href="https://www.cyberciti.biz/tips/how-do-i-enable-remote-access-to-mysql-database-server.html"
@@ -310,12 +307,12 @@ function MysqlConnectionForm(props) {
           <Button
             isLoading={loading}
             onClick={_onCreateConnection}
-            auto
+            color="primary"
           >
             {"Save connection"}
           </Button>
         </Row>
-      </Container>
+      </div>
 
       {testLoading && (
         <Container className={"bg-content2 rounded-md"} size="md">

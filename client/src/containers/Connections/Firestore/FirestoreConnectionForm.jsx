@@ -5,10 +5,9 @@ import PropTypes from "prop-types";
 import {
   Button, Input, Link, Spacer, Chip, semanticColors, Accordion, AccordionItem, CircularProgress,
 } from "@nextui-org/react";
-import { PaperUpload } from "react-iconly";
-import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import AceEditor from "react-ace";
 import { useDropzone } from "react-dropzone";
+import { RiExternalLinkFill, RiFileCodeLine } from "react-icons/ri";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -109,14 +108,14 @@ function FirestoreConnectionForm(props) {
     ]);
 
     return (
-      <div className="container" style={{ cursor: "pointer" }}>
+      <div style={{ cursor: "pointer" }}>
         <div {...getRootProps({ style })}>
           <input {...getInputProps()} />
-          <Link css={{ ai: "center", color: "$primary" }}>
-            <PaperUpload />
-            <Spacer x={1} />
+          <a className={"text-primary flex items-center"}>
+            <RiFileCodeLine size={24} />
+            <Spacer x={2} />
             {" Drag and drop your JSON authentication file here"}
-          </Link>
+          </a>
         </div>
       </div>
     );
@@ -179,12 +178,8 @@ function FirestoreConnectionForm(props) {
   };
 
   return (
-    <div style={styles.container}>
-      <Container
-        className={"bg-content2"}
-        size="md"
-        justify="flex-start"
-      >
+    <div className="p-unit-lg bg-content1 shadow-md border-1 border-solid border-content3 rounded-lg">
+      <div>
         <Row align="center">
           <Text size="h3">
             {!editConnection && "Connect to Firestore"}
@@ -202,7 +197,7 @@ function FirestoreConnectionForm(props) {
             info="5 min read"
           />
         </Row>
-        <Spacer y={4} />
+        <Spacer y={8} />
         <Row align="center">
           <Input
             label="Name your connection"
@@ -230,8 +225,8 @@ function FirestoreConnectionForm(props) {
             <Button
               onClick={() => setJsonVisible(true)}
               size="sm"
-              auto
-              variant="ghost"
+              color="primary"
+              variant="faded"
             >
               Click here to copy the JSON manually
             </Button>
@@ -267,37 +262,35 @@ function FirestoreConnectionForm(props) {
         <Row align="center">
           <Accordion variant="bordered" className="max-w-[600px]">
             <AccordionItem title={<Text b>How to authenticate</Text>}>
-              <Container>
-                <Row align="center">
-                  <Link
-                    href="https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk?authuser=0"
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="align-middle text-primary"
-                  >
-                    <Text b className={"text-primary"}>{"1. Create a Firebase Service Account "}</Text>
-                    <Spacer x={0.2} />
-                    <FaExternalLinkSquareAlt size={14} />
-                  </Link>
-                </Row>
-                <Row align="center">
-                  <Text>{"Log in with your Google account and select the project you want to connect to."}</Text>
-                </Row>
-                <Spacer y={2} />
-                <Row>
-                  <Text b>{"2. Once authenticated, press on 'Generate new private key'"}</Text>
-                </Row>
-                <Row>
-                  <Text>{"This will start a download with a JSON file on your computer."}</Text>
-                </Row>
-                <Spacer y={2} />
-                <Row>
-                  <Text b>{"3. Drag and drop the file below or copy the contents in the text editor."}</Text>
-                </Row>
-                <Row>
-                  <Text>{"The JSON file contains authentication details that Chartbrew needs in order to connect to your Firebase."}</Text>
-                </Row>
-              </Container>
+              <Row align="center">
+                <Link
+                  href="https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk?authuser=0"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="align-middle text-primary"
+                >
+                  <Text b className={"text-primary"}>{"1. Create a Firebase Service Account "}</Text>
+                  <Spacer x={0.2} />
+                  <RiExternalLinkFill size={14} />
+                </Link>
+              </Row>
+              <Row align="center">
+                <Text>{"Log in with your Google account and select the project you want to connect to."}</Text>
+              </Row>
+              <Spacer y={2} />
+              <Row>
+                <Text b>{"2. Once authenticated, press on 'Generate new private key'"}</Text>
+              </Row>
+              <Row>
+                <Text>{"This will start a download with a JSON file on your computer."}</Text>
+              </Row>
+              <Spacer y={2} />
+              <Row>
+                <Text b>{"3. Drag and drop the file below or copy the contents in the text editor."}</Text>
+              </Row>
+              <Row>
+                <Text>{"The JSON file contains authentication details that Chartbrew needs in order to connect to your Firebase."}</Text>
+              </Row>
             </AccordionItem>
           </Accordion>
         </Row>
@@ -330,12 +323,12 @@ function FirestoreConnectionForm(props) {
           <Button
             isLoading={loading}
             onClick={_onCreateConnection}
-            auto
+            color="primary"
           >
             {"Save connection"}
           </Button>
         </Row>
-      </Container>
+      </div>
 
       {testLoading && (
         <Container className={"bg-content2 p-20"} size="md">
@@ -375,45 +368,6 @@ function FirestoreConnectionForm(props) {
     </div>
   );
 }
-const styles = {
-  container: {
-    flex: 1,
-  },
-  mainSegment: {
-    padding: 20,
-  },
-  formStyle: {
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  saveBtn: {
-    marginRight: 0,
-  },
-  baseStyle: {
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    padding: "20px",
-    borderWidth: 2,
-    borderRadius: 2,
-    borderColor: "#eeeeee",
-    borderStyle: "dashed",
-    backgroundColor: "#fafafa",
-    color: "#bdbdbd",
-    outline: "none",
-    transition: "border .24s ease-in-out"
-  },
-  activeStyle: {
-    borderColor: "#2196f3"
-  },
-  acceptStyle: {
-    borderColor: "#00e676"
-  },
-  rejectStyle: {
-    borderColor: "#ff1744"
-  },
-};
 
 FirestoreConnectionForm.defaultProps = {
   editConnection: null,

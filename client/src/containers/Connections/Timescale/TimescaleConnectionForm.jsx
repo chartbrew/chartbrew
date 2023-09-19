@@ -4,13 +4,12 @@ import {
   Button, Input, Link, Spacer, Chip, Tabs, Tab
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
+import { RiArrowRightSLine, RiExternalLinkFill } from "react-icons/ri";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import { ChevronRight } from "react-iconly";
-import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import HelpBanner from "../../../components/HelpBanner";
 import connectionImages from "../../../config/connectionImages";
 import Container from "../../../components/Container";
@@ -97,15 +96,12 @@ function TimescaleConnectionForm(props) {
   };
 
   return (
-    <div style={styles.container}>
-      <Container
-        className={"bg-content2 rounded-md"}
-        size="md"
-      >
+    <div className="p-unit-lg bg-content1 shadow-md border-1 border-solid border-content3 rounded-lg">
+      <div>
         <Row align="center">
-          <Text size="h3">Add a new Timescale connection</Text>
+          <Text size="lg">Add a new Timescale connection</Text>
         </Row>
-        <Spacer y={1} />
+        <Spacer y={4} />
         <Row>
           <HelpBanner
             title="How to connect and visualize TimescaleDB data with Chartbrew"
@@ -115,7 +111,7 @@ function TimescaleConnectionForm(props) {
             info="6 min read"
           />
         </Row>
-        <Spacer y={1} />
+        <Spacer y={8} />
         <Row align="center" style={styles.formStyle}>
           <Tabs
             aria-label="Connection options"
@@ -123,9 +119,10 @@ function TimescaleConnectionForm(props) {
             onSelectionChange={(selected) => setFormStyle(selected)}
           >
             <Tab key="string" value="string" title="Connection string" />
-            <Tab key="form" value="form" label="Connection form" />
+            <Tab key="form" value="form" title="Connection form" />
           </Tabs>
         </Row>
+        <Spacer y={2} />
 
         {formStyle === "string" && (
           <>
@@ -149,7 +146,7 @@ function TimescaleConnectionForm(props) {
                 </Text>
               </Row>
             )}
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row align="center">
               <Input
                 type="password"
@@ -178,7 +175,7 @@ function TimescaleConnectionForm(props) {
         {formStyle === "form" && (
           <Row>
             <div className="grid grid-cols-12 gap-2">
-              <div className="col-span-12 sm:col-span-12 md:col-span-8 lg:col-span-8 xl:col-span-8">
+              <div className="col-span-12 sm:col-span-12 md:col-span-8">
                 <Input
                   label="Name your connection"
                   placeholder="Enter a name that you can recognise later"
@@ -193,7 +190,7 @@ function TimescaleConnectionForm(props) {
                 />
               </div>
 
-              <div className="col-span-12 sm:col-span-12 md:col-span-10 lg:col-span-8 xl:col-span-8">
+              <div className="col-span-12 sm:col-span-12 md:col-span-10">
                 <Input
                   label="Hostname or IP address"
                   placeholder="helpful.example.tsdb.cloud.timescale.com"
@@ -208,10 +205,10 @@ function TimescaleConnectionForm(props) {
                 />
               </div>
               
-              <div className="col-span-12 sm:col-span-12 md:col-span-2 lg:col-span-2 xl:col-span-2">
+              <div className="col-span-12 sm:col-span-12 md:col-span-2">
                 <Input
                   label="Port"
-                  placeholder="Optional, defaults to 5432"
+                  placeholder="Defaults to 5432"
                   value={connection.port || ""}
                   onChange={(e) => {
                     setConnection({ ...connection, port: e.target.value });
@@ -223,7 +220,7 @@ function TimescaleConnectionForm(props) {
                 />
               </div>
 
-              <div className="col-span-12 sm:col-span-12 md:col-span-4 lg:col-span-4 xl:col-span-4">
+              <div className="col-span-12 sm:col-span-12 md:col-span-4">
                 <Input
                   label="Database name"
                   placeholder="Enter your database name"
@@ -238,7 +235,7 @@ function TimescaleConnectionForm(props) {
                 />
               </div>
 
-              <div className="col-span-12 sm:col-span-12 md:col-span-4 lg:col-span-4 xl:col-span-4">
+              <div className="col-span-12 sm:col-span-12 md:col-span-4">
                 <Input
                   label="Database username"
                   placeholder="Username"
@@ -253,7 +250,7 @@ function TimescaleConnectionForm(props) {
                 />
               </div>
 
-              <div className="col-span-12 sm:col-span-12 md:col-span-4 lg:col-span-4 xl:col-span-4">
+              <div className="col-span-12 sm:col-span-12 md:col-span-4">
                 <Input
                   label="Database password"
                   placeholder="Database user password"
@@ -270,9 +267,9 @@ function TimescaleConnectionForm(props) {
           </Row>
         )}
 
-        <Spacer y={1} />
+        <Spacer y={4} />
         <Row align="center">
-          <ChevronRight set="light" />
+          <RiArrowRightSLine />
           <Spacer x={1} />
           <Link
             href="https://docs.timescale.com/timescaledb/latest/how-to-guides/connecting/about-connecting/#find-connection-details-in-timescale-cloud"
@@ -282,7 +279,7 @@ function TimescaleConnectionForm(props) {
             <Text>{"Find out how to get your TimescaleDB connection credentials"}</Text>
           </Link>
           <Spacer x={1} />
-          <FaExternalLinkSquareAlt size={12} />
+          <RiExternalLinkFill />
         </Row>
 
         {addError && (
@@ -298,7 +295,7 @@ function TimescaleConnectionForm(props) {
           </Row>
         )}
 
-        <Spacer y={4} />
+        <Spacer y={8} />
         <Row>
           <Button
             variant="ghost"
@@ -312,12 +309,12 @@ function TimescaleConnectionForm(props) {
           <Button
             isLoading={loading}
             onClick={_onCreateConnection}
-            auto
+            color="primary"
           >
             {"Save connection"}
           </Button>
         </Row>
-      </Container>
+      </div>
 
       {testLoading && (
         <>
@@ -332,10 +329,8 @@ function TimescaleConnectionForm(props) {
       )}
 
       {testResult && !testLoading && (
-        <Container
-          className="bg-content2 rounded-md mt-20"
-          size="md"
-        >
+        <div>
+          <Spacer y={8} />
           <Row align="center">
             <Text>
               {"Test Result "}
@@ -358,7 +353,7 @@ function TimescaleConnectionForm(props) {
             name="queryEditor"
             editorProps={{ $blockScrolling: true }}
           />
-        </Container>
+        </div>
       )}
     </div>
   );

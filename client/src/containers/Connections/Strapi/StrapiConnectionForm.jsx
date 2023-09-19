@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-
 import {
   Button, Input, Spacer,
 } from "@nextui-org/react";
-import { CloseSquare, Plus } from "react-iconly";
 import uuid from "uuid/v4";
+import { RiAddCircleFill, RiCloseCircleFill } from "react-icons/ri";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -13,7 +12,6 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import HelpBanner from "../../../components/HelpBanner";
 import connectionImages from "../../../config/connectionImages";
-import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
@@ -154,11 +152,8 @@ function StrapiConnectionForm(props) {
   };
 
   return (
-    <div style={styles.container}>
-      <Container
-        className={"bg-content2 rounded-md"}
-        size="md"
-      >
+    <div className="p-unit-lg bg-content1 shadow-md border-1 border-solid border-content3 rounded-lg">
+      <div>
         <Row align="center">
           <Text size="h3">
             {!editConnection && "Connect to Strapi"}
@@ -175,7 +170,7 @@ function StrapiConnectionForm(props) {
             info="5 min read"
           />
         </Row>
-        <Spacer y={2} />
+        <Spacer y={4} />
         <div style={styles.formStyle}>
           <Row>
             <Input
@@ -243,66 +238,58 @@ function StrapiConnectionForm(props) {
             </Row>
           )}
 
-          <Spacer y={2} />
+          <Spacer y={4} />
           <Row>
-            <Text h5>
+            <Text b>
               Global headers to send with the requests
             </Text>
           </Row>
           <Row>
-            <Text>
+            <Text size="sm">
               {"These headers are optional and will be included with all the data requests that go to Strapi"}
             </Text>
           </Row>
-
-          <Container>
-            <div className="grid grid-cols-12 gap-2">
-              {connection.optionsArray && connection.optionsArray.map((option) => {
-                return (
-                  <>
-                    <div className="sm:col-span-12 md:col-span-4">
-                      <Input
-                        placeholder="Header name"
-                        value={option.key}
-                        onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
-                        fullWidth
-                        />
-                    </div>
-
-                    <div className="sm:col-span-12 md:col-span-4">
-                      <Input
-                        onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
-                        value={option.value}
-                        placeholder="Value"
-                        fullWidth
-                      />
-                      <Spacer x={1} />
-                      <Button
-                        startContent={<CloseSquare />}
-                        onClick={() => _removeOption(option.id)}
-                        auto
-                        variant="light"
-                        color="warning"
-                      />
-                    </div>
-                    <div className="md:col-span-4" />
-                  </>
-                );
-              })}
-            </div>
-          </Container>
-          <Container>
-            <Spacer y={1} />
-            <Button
-              size="sm"
-              startContent={<Plus />}
-              onClick={_addOption}
-              variant="light"
-              auto
-            >
-              Add a header
-            </Button>
-          </Container>
+          <Spacer y={2} />
+          <div className="flex flex-col gap-2">
+            {connection.optionsArray && connection.optionsArray.map((option) => {
+              return (
+                <Row key={option.id} className={"gap-2"}>
+                  <Input
+                    placeholder="Header name"
+                    value={option.key}
+                    onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
+                    fullWidth
+                    variant="bordered"
+                  />
+                  <Input
+                    onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
+                    value={option.value}
+                    placeholder="Value"
+                    fullWidth
+                    variant="bordered"
+                  />
+                  <Button
+                    isIconOnly
+                    onClick={() => _removeOption(option.id)}
+                    variant="flat"
+                    color="warning"
+                  >
+                    <RiCloseCircleFill size={24} />
+                  </Button>
+                </Row>
+              );
+            })}
+          </div>
+          {connection.optionsArray?.length > 0 && (<Spacer y={2} />)}
+          <Button
+            size="sm"
+            startContent={<RiAddCircleFill size={20} />}
+            onClick={_addOption}
+            variant="faded"
+            color="primary"
+          >
+            Add a header
+          </Button>
         </div>
 
         {addError && (
@@ -316,13 +303,13 @@ function StrapiConnectionForm(props) {
           </>
         )}
 
-        <Spacer y={4} />
+        <Spacer y={8} />
         <Row align="center">
           {!editConnection && (
             <Button
               isLoading={loading}
               onClick={_onCreateConnection}
-              auto
+              color="primary"
             >
               {"Save connection"}
             </Button>
@@ -331,14 +318,14 @@ function StrapiConnectionForm(props) {
             <Button
               isLoading={loading}
               onClick={_onCreateConnection}
-              auto
+              color="primary"
             >
               {"Save connection"}
             </Button>
           )}
         </Row>
-      </Container>
-      <Spacer y={4} />
+      </div>
+      <Spacer y={2} />
     </div>
   );
 }

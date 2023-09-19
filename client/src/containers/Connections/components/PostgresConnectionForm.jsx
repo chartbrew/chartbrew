@@ -4,12 +4,12 @@ import {
   Button, Input, Link, Spacer, Chip, Tabs, Tab, CircularProgress,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
+import { RiArrowRightSLine } from "react-icons/ri";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import { ChevronRight } from "react-iconly";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import HelpBanner from "../../../components/HelpBanner";
 import connectionImages from "../../../config/connectionImages";
@@ -97,12 +97,12 @@ function PostgresConnectionForm(props) {
   };
 
   return (
-    <div style={styles.container}>
-      <Container className={"bg-content2 p-10"} size="md">
+    <div className="p-unit-lg bg-content1 shadow-md border-1 border-solid border-content3 rounded-lg">
+      <div>
         <Row align="center">
-          <Text size="h3">Add a new PostgreSQL connection</Text>
+          <Text size="lg">Add a new PostgreSQL connection</Text>
         </Row>
-        <Spacer y={2} />
+        <Spacer y={4} />
         <Row>
           <HelpBanner
             title="How to visualize your PostgreSQL data with Chartbrew"
@@ -112,17 +112,18 @@ function PostgresConnectionForm(props) {
             info="5 min read"
           />
         </Row>
-        <Spacer y={2} />
-        <Row align="center" style={styles.formStyle}>
+        <Spacer y={8} />
+        <Row align="center">
           <Tabs
             aria-label="Connection options"
             selectedKey={formStyle}
             onSelectionChange={(selected) => setFormStyle(selected)}
           >
             <Tab key="string" value="string" title="Connection string" />
-            <Tab key="form" value="form" label="Connection form" />
+            <Tab key="form" value="form" title="Connection form" />
           </Tabs>
         </Row>
+        <Spacer y={2} />
 
         {formStyle === "string" && (
           <>
@@ -148,7 +149,8 @@ function PostgresConnectionForm(props) {
             )}
             <Spacer y={2} />
             <Row align="center">
-              <Input.Password
+              <Input
+                type="password"
                 label="Enter your Postgres connection string"
                 placeholder="postgres://username:password@postgres.example.com:5432/dbname"
                 value={connection.connectionString || ""}
@@ -189,7 +191,7 @@ function PostgresConnectionForm(props) {
                 />
               </div>
 
-              <div className="sm:col-span-12 md:col-span-10 lg:col-span-8">
+              <div className="sm:col-span-12 md:col-span-10">
                 <Input
                   label="Hostname or IP address"
                   placeholder="postgres.example.com"
@@ -203,10 +205,9 @@ function PostgresConnectionForm(props) {
                   fullWidth
                 />
               </div>
-              <div className="sm:col-span-12 md:col-span-2 lg:col-span-4">
+              <div className="sm:col-span-12 md:col-span-2">
                 <Input
                   label="Port"
-                  placeholder="Optional, defaults to 5432"
                   value={connection.port || ""}
                   onChange={(e) => {
                     setConnection({ ...connection, port: e.target.value });
@@ -218,10 +219,9 @@ function PostgresConnectionForm(props) {
                 />
               </div>
 
-              <div className="sm:col-span-12 md:col-span-4 lg:col-span-4">
+              <div className="sm:col-span-12 md:col-span-4">
                 <Input
                   label="Database name"
-                  placeholder="Enter your database name"
                   value={connection.dbName || ""}
                   onChange={(e) => {
                     setConnection({ ...connection, dbName: e.target.value });
@@ -233,10 +233,9 @@ function PostgresConnectionForm(props) {
                 />
               </div>
 
-              <div className="sm:col-span-12 md:col-span-4 lg:col-span-4">
+              <div className="sm:col-span-12 md:col-span-4">
                 <Input
                   label="Database username"
-                  placeholder="Username"
                   value={connection.username || ""}
                   onChange={(e) => {
                     setConnection({ ...connection, username: e.target.value });
@@ -248,11 +247,10 @@ function PostgresConnectionForm(props) {
                 />
               </div>
 
-              <div className="sm:col-span-12 md:col-span-4 lg:col-span-4">
+              <div className="sm:col-span-12 md:col-span-4">
                 <Input
                   type="password"
                   label="Database password"
-                  placeholder="Database user password"
                   onChange={(e) => {
                     setConnection({ ...connection, password: e.target.value });
                   }}
@@ -266,9 +264,9 @@ function PostgresConnectionForm(props) {
           </Row>
         )}
 
-        <Spacer y={2} />
+        <Spacer y={4} />
         <Row align="center">
-          <ChevronRight />
+          <RiArrowRightSLine />
           <Spacer x={1} />
           <Link
             target="_blank"
@@ -281,7 +279,7 @@ function PostgresConnectionForm(props) {
           <FaExternalLinkSquareAlt size={12} />
         </Row>
         <Row align="center">
-          <ChevronRight />
+          <RiArrowRightSLine />
           <Spacer x={1} />
           <Link
             href="https://coderwall.com/p/cr2a1a/allowing-remote-connections-to-your-postgresql-vps-installation"
@@ -321,12 +319,12 @@ function PostgresConnectionForm(props) {
           <Button
             isLoading={loading}
             onClick={_onCreateConnection}
-            auto
+            color="primary"
           >
             {"Save connection"}
           </Button>
         </Row>
-      </Container>
+      </div>
 
       {testLoading && (
         <Container className={"bg-content2 p-20 rounded-md"} size="md">
@@ -369,25 +367,6 @@ function PostgresConnectionForm(props) {
     </div>
   );
 }
-
-const styles = {
-  container: {
-    flex: 1,
-  },
-  mainSegment: {
-    padding: 20,
-  },
-  formStyle: {
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  helpList: {
-    display: "inline-block",
-  },
-  saveBtn: {
-    marginRight: 0,
-  },
-};
 
 PostgresConnectionForm.defaultProps = {
   onComplete: () => {},

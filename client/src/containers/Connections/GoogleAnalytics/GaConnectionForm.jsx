@@ -107,14 +107,10 @@ function GaConnectionForm(props) {
   };
 
   return (
-    <div style={styles.container}>
-      <Container
-        className={"bg-content2 rounded-md"}
-        size="md"
-        justify="flex-start"
-      >
+    <div className="p-unit-lg bg-content1 shadow-md border-1 border-solid border-content3 rounded-lg">
+      <div>
         <Row align="center">
-          <Text size="h3">
+          <Text size="lg">
             {!editConnection && "Connect to Google Analytics"}
             {editConnection && `Edit ${editConnection.name}`}
           </Text>
@@ -129,7 +125,7 @@ function GaConnectionForm(props) {
             info="5 min read"
           />
         </Row>
-        <Spacer y={4} />
+        <Spacer y={8} />
         <Row align="center">
           <Input
             label="Name your connection"
@@ -145,7 +141,7 @@ function GaConnectionForm(props) {
             className="md:w-[600px]"
           />
         </Row>
-        <Spacer y={2} />
+        <Spacer y={4} />
         <Row>
           {!editConnection && (
             <Button
@@ -205,27 +201,29 @@ function GaConnectionForm(props) {
           </Row>
         )}
         <Spacer y={1} />
-        <Row>
-          <Button
-            variant="ghost"
-            auto
-            onClick={() => _onCreateConnection(true)}
-            disabled={!connection.name || !connection.oauth_id}
-            isLoading={testLoading}
-          >
-            {"Test connection"}
-          </Button>
-          <Spacer x={1} />
-          <Button
-            disabled={!connection.oauth_id}
-            isLoading={loading}
-            onClick={_onCreateConnection}
-            auto
-          >
-            {"Save connection"}
-          </Button>
-        </Row>
-      </Container>
+        {editConnection && (
+          <Row>
+            <Button
+              variant="ghost"
+              auto
+              onClick={() => _onCreateConnection(true)}
+              disabled={!connection.name || !connection.oauth_id}
+              isLoading={testLoading}
+            >
+              {"Test connection"}
+            </Button>
+            <Spacer x={1} />
+            <Button
+              disabled={!connection.oauth_id}
+              isLoading={loading}
+              onClick={_onCreateConnection}
+              color="primary"
+            >
+              {"Save connection"}
+            </Button>
+          </Row>
+        )}
+      </div>
       <Spacer y={4} />
 
       {testLoading && (
@@ -269,45 +267,6 @@ function GaConnectionForm(props) {
     </div>
   );
 }
-const styles = {
-  container: {
-    flex: 1,
-  },
-  mainSegment: {
-    padding: 20,
-  },
-  formStyle: {
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  saveBtn: {
-    marginRight: 0,
-  },
-  baseStyle: {
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    padding: "20px",
-    borderWidth: 2,
-    borderRadius: 2,
-    borderColor: "#eeeeee",
-    borderStyle: "dashed",
-    backgroundColor: "#fafafa",
-    color: "#bdbdbd",
-    outline: "none",
-    transition: "border .24s ease-in-out"
-  },
-  activeStyle: {
-    borderColor: "#2196f3"
-  },
-  acceptStyle: {
-    borderColor: "#00e676"
-  },
-  rejectStyle: {
-    borderColor: "#ff1744"
-  },
-};
 
 GaConnectionForm.defaultProps = {
   editConnection: null,

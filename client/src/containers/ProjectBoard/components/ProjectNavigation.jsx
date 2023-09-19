@@ -10,7 +10,7 @@ import {
 } from "@nextui-org/react";
 import { MdExtension } from "react-icons/md";
 import {
-  RiAddCircleFill, RiArrowUpDoubleFill, RiDashboardFill, RiEyeLine, RiEyeOffLine, RiLayoutGridFill,
+  RiAddCircleFill, RiArrowUpDoubleFill, RiBarChartBoxFill, RiEyeLine, RiEyeOffLine, RiLayoutGridFill,
   RiMenuFoldFill, RiMenuUnfoldFill, RiMoreFill, RiPlugFill, RiSettings4Fill, RiSlideshowFill, RiTeamFill,
 } from "react-icons/ri";
 
@@ -96,7 +96,7 @@ function ProjectNavigation(props) {
             <Row justify="space-between" align="center">
               <Link to={`/${teamId}/${projectId}/dashboard`}>
                 <LinkNext className="pointer-events-none">
-                  <RiDashboardFill color={_checkIfActive("dashboard") ? secondary : "white"} size={24} />
+                  <RiBarChartBoxFill color={_checkIfActive("dashboard") ? secondary : "white"} size={24} />
                 </LinkNext>
               </Link>
               {canAccess("editor") && (
@@ -215,7 +215,7 @@ function ProjectNavigation(props) {
                     variant="light"
                     color={_checkIfActive("dashboard") ? "primary" : "default"}
                   >
-                    <RiDashboardFill size={28} />
+                    <RiBarChartBoxFill size={28} />
                   </Button>
                 </div>
               </Tooltip>
@@ -224,7 +224,7 @@ function ProjectNavigation(props) {
               <Button
                 variant="light"
                 color={_checkIfActive("dashboard") ? "primary" : "default"}
-                startContent={<RiDashboardFill size={24} />}
+                startContent={<RiBarChartBoxFill size={24} />}
                 className="pointer-events-none"
               >
                 Dashboard

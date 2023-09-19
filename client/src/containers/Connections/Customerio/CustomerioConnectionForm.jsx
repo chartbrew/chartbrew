@@ -111,14 +111,10 @@ function CustomerioConnectionForm(props) {
   };
 
   return (
-    <div style={styles.container}>
-      <Container
-        className={"bg-content2 rounded-md p-10"}
-        size="md"
-        justify="flex-start"
-      >
+    <div className="p-unit-lg bg-content1 shadow-md border-1 border-solid border-content3 rounded-lg">
+      <div>
         <Row align="center">
-          <Text size="h3">
+          <Text size="lg">
             {!editConnection && "Connect to Customer.io"}
             {editConnection && `Edit ${editConnection.name}`}
           </Text>
@@ -134,7 +130,7 @@ function CustomerioConnectionForm(props) {
           />
         </Row>
 
-        <Spacer y={4} />
+        <Spacer y={8} />
         <Row align="center">
           <Input
             label="Name your connection"
@@ -167,37 +163,35 @@ function CustomerioConnectionForm(props) {
             className="md:w-[600px]"
           />
         </Row>
-        <Spacer y={1} />
+        <Spacer y={2} />
         <Row align="center">
           <Accordion variant="bordered" className={"max-w-[600px]"}>
-            <AccordionItem title={<Text b>How to get the API key</Text>}>
-              <Container>
-                <Row align="center">
-                  <Link
-                    href="https://fly.customer.io/settings/api_credentials?keyType=app"
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="align-middle text-primary"
-                  >
-                    <Text b className="text-primary">{"1. Create a Customer.io App API Key "}</Text>
-                    <Spacer x={1} />
-                    <FaExternalLinkSquareAlt size={14} />
-                  </Link>
-                </Row>
-                <Spacer y={2} />
-                <Row>
-                  <Text b>{"2. (Optional) Add your server's IP address to the allowlist"}</Text>
-                </Row>
-                <Spacer y={2} />
-                <Row>
-                  <Text b>{"3. Copy and paste the API Key here"}</Text>
-                </Row>
-              </Container>
+            <AccordionItem title={<Text>How to get the API key</Text>}>
+              <Row align="center">
+                <Link
+                  href="https://fly.customer.io/settings/api_credentials?keyType=app"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="align-middle text-primary"
+                >
+                  <Text className="text-primary">{"1. Create a Customer.io App API Key "}</Text>
+                  <Spacer x={1} />
+                  <FaExternalLinkSquareAlt size={14} />
+                </Link>
+              </Row>
+              <Spacer y={2} />
+              <Row>
+                <Text>{"2. (Optional) Add your server's IP address to the allowlist"}</Text>
+              </Row>
+              <Spacer y={2} />
+              <Row>
+                <Text>{"3. Copy and paste the API Key here"}</Text>
+              </Row>
             </AccordionItem>
           </Accordion>
         </Row>
         <Spacer y={4} />
-        <Row align="flex-start">
+        <Row align="flex-start" className={"max-w-[600px] items-center"}>
           <Select
             variant="bordered"
             label="Where is your Customer.io data located?"
@@ -253,12 +247,12 @@ function CustomerioConnectionForm(props) {
           <Button
             isLoading={loading}
             onClick={_onCreateConnection}
-            auto
+            color="primary"
           >
             {"Save connection"}
           </Button>
         </Row>
-      </Container>
+      </div>
 
       {testLoading && (
         <Container className="bg-content2 rounded-md p-20" size="md">
@@ -301,22 +295,6 @@ function CustomerioConnectionForm(props) {
     </div>
   );
 }
-
-const styles = {
-  container: {
-    flex: 1,
-  },
-  mainSegment: {
-    padding: 20,
-  },
-  formStyle: {
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  saveBtn: {
-    marginRight: 0,
-  },
-};
 
 CustomerioConnectionForm.defaultProps = {
   editConnection: null,

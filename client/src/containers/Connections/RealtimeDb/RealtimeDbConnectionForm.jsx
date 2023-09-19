@@ -5,10 +5,10 @@ import PropTypes from "prop-types";
 import {
   Button, Input, Link, Spacer, Image, Chip, semanticColors, Accordion, AccordionItem, CircularProgress,
 } from "@nextui-org/react";
-import { PaperUpload } from "react-iconly";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import AceEditor from "react-ace";
 import { useDropzone } from "react-dropzone";
+import { RiFileCodeLine } from "react-icons/ri";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -110,11 +110,11 @@ function RealtimeDbConnectionForm(props) {
     ]);
 
     return (
-      <div className="container" style={{ cursor: "pointer" }}>
+      <div style={{ cursor: "pointer" }}>
         <div {...getRootProps({ style })}>
           <input {...getInputProps()} />
           <Link css={{ ai: "center", color: "$primary" }}>
-            <PaperUpload />
+            <RiFileCodeLine size={24} />
             <Spacer x={0.2} />
             {" Drag and drop your JSON authentication file here"}
           </Link>
@@ -180,12 +180,8 @@ function RealtimeDbConnectionForm(props) {
   };
 
   return (
-    <div style={styles.container}>
-      <Container
-        className={"bg-content2"}
-        size="md"
-        justify="flex-start"
-      >
+    <div className="p-unit-lg bg-content1 shadow-md border-1 border-solid border-content3 rounded-lg">
+      <div>
         <Row align="center">
           <Text size="h3">
             {!editConnection && "Connect to Firebase Realtime Database"}
@@ -203,7 +199,7 @@ function RealtimeDbConnectionForm(props) {
             info="5 min read"
           />
         </Row>
-        <Spacer y={4} />
+        <Spacer y={8} />
         <Row align="center">
           <Input
             label="Name your connection"
@@ -214,7 +210,7 @@ function RealtimeDbConnectionForm(props) {
             }}
             color={errors.name ? "danger" : "primary"}
             description={errors.name}
-            bordered
+            variant="bordered"
             fullWidth
           />
         </Row>
@@ -244,8 +240,8 @@ function RealtimeDbConnectionForm(props) {
             <Button
               onClick={() => setJsonVisible(true)}
               size="sm"
-              auto
-              variant="ghost"
+              color="primary"
+              variant="faded"
             >
               Click here to copy the JSON manually
             </Button>
@@ -257,7 +253,7 @@ function RealtimeDbConnectionForm(props) {
               <Text>Add your Service Account details here</Text>
             </Row>
             <Row justify="flex-start" className={"max-w-[600px]"}>
-              <Container className={"p-0"}>
+              <div className="w-full">
                 <AceEditor
                   mode="json"
                   theme={isDark ? "one_dark" : "tomorrow"}
@@ -271,7 +267,7 @@ function RealtimeDbConnectionForm(props) {
                   }}
                   editorProps={{ $blockScrolling: true }}
                 />
-              </Container>
+              </div>
             </Row>
           </>
         )}
@@ -280,37 +276,35 @@ function RealtimeDbConnectionForm(props) {
         <Row align="center">
           <Accordion variant="bordered" className="max-w-[600px]">
             <AccordionItem title={<Text b>How to authenticate</Text>}>
-              <Container>
-                <Row align="center">
-                  <Link
-                    href="https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk?authuser=0"
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="align-middle text-primary"
-                  >
-                    <Text b className={"text-primary"}>{"1. Create a Firebase Service Account "}</Text>
-                    <Spacer x={1} />
-                    <FaExternalLinkSquareAlt size={14} />
-                  </Link>
-                </Row>
-                <Row align="center">
-                  <Text>{"Log in with your Google account and select the project you want to connect to."}</Text>
-                </Row>
-                <Spacer y={2} />
-                <Row>
-                  <Text b>{"2. Once authenticated, press on 'Generate new private key'"}</Text>
-                </Row>
-                <Row>
-                  <Text>{"This will start a download with a JSON file on your computer."}</Text>
-                </Row>
-                <Spacer y={2} />
-                <Row>
-                  <Text b>{"3. Drag and drop the file below or copy the contents in the text editor."}</Text>
-                </Row>
-                <Row>
-                  <Text>{"The JSON file contains authentication details that Chartbrew needs in order to connect to your Firebase."}</Text>
-                </Row>
-              </Container>
+              <Row align="center">
+                <Link
+                  href="https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk?authuser=0"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="align-middle text-primary"
+                >
+                  <Text b className={"text-primary"}>{"1. Create a Firebase Service Account "}</Text>
+                  <Spacer x={1} />
+                  <FaExternalLinkSquareAlt size={14} />
+                </Link>
+              </Row>
+              <Row align="center">
+                <Text>{"Log in with your Google account and select the project you want to connect to."}</Text>
+              </Row>
+              <Spacer y={2} />
+              <Row>
+                <Text b>{"2. Once authenticated, press on 'Generate new private key'"}</Text>
+              </Row>
+              <Row>
+                <Text>{"This will start a download with a JSON file on your computer."}</Text>
+              </Row>
+              <Spacer y={2} />
+              <Row>
+                <Text b>{"3. Drag and drop the file below or copy the contents in the text editor."}</Text>
+              </Row>
+              <Row>
+                <Text>{"The JSON file contains authentication details that Chartbrew needs in order to connect to your Firebase."}</Text>
+              </Row>
             </AccordionItem>
             <AccordionItem title={<Text b>How to get the database URL</Text>}>
               <Container>
@@ -354,14 +348,14 @@ function RealtimeDbConnectionForm(props) {
 
         {addError && (
           <Row>
-            <Container className={"bg-red-100 p-10 rounded-md"}>
+            <div className={"bg-red-100 p-10 rounded-md"}>
               <Row>
                 <Text b>{"Server error while trying to save your connection"}</Text>
               </Row>
               <Row>
                 <Text>Please try adding your connection again.</Text>
               </Row>
-            </Container>
+            </div>
           </Row>
         )}
 
@@ -379,12 +373,12 @@ function RealtimeDbConnectionForm(props) {
           <Button
             isLoading={loading}
             onClick={_onCreateConnection}
-            auto
+            color="primary"
           >
             {"Save connection"}
           </Button>
         </Row>
-      </Container>
+      </div>
 
       {testLoading && (
         <Container className={"bg-content2 p-20"} size="md">
@@ -424,21 +418,6 @@ function RealtimeDbConnectionForm(props) {
     </div>
   );
 }
-const styles = {
-  container: {
-    flex: 1,
-  },
-  mainSegment: {
-    padding: 20,
-  },
-  formStyle: {
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  saveBtn: {
-    marginRight: 0,
-  },
-};
 
 RealtimeDbConnectionForm.defaultProps = {
   editConnection: null,
