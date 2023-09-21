@@ -348,7 +348,6 @@ function ApiConnectionForm(props) {
               endContent={<HiPlus />}
               onClick={_addOption}
               variant="bordered"
-              auto
             >
               Add a header
             </Button>
@@ -391,9 +390,9 @@ function ApiConnectionForm(props) {
             <Button
               isLoading={loading}
               onClick={_onCreateConnection}
-              auto
+              color="primary"
             >
-              {"Save connection"}
+              {"Save changes"}
             </Button>
           )}
         </Row>

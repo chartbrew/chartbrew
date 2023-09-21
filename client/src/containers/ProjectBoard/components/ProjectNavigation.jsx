@@ -9,10 +9,11 @@ import {
   ModalContent, Popover, PopoverTrigger, PopoverContent, Listbox, ListboxItem, Input, Divider,
 } from "@nextui-org/react";
 import { MdExtension } from "react-icons/md";
+import { BsPlugin } from "react-icons/bs";
 import {
-  RiAddCircleFill, RiArrowUpDoubleFill, RiBarChartBoxFill, RiEyeLine, RiEyeOffLine, RiLayoutGridFill,
-  RiMenuFoldFill, RiMenuUnfoldFill, RiMoreFill, RiPlugFill, RiSettings4Fill, RiSlideshowFill, RiTeamFill,
-} from "react-icons/ri";
+  IoAdd, IoAddCircle, IoBarChart, IoCaretBackCircleOutline, IoCaretForwardCircleOutline, IoChevronUpCircle,
+  IoEasel, IoEyeOffOutline, IoEyeOutline, IoGridOutline, IoPeople, IoSettings,
+} from "react-icons/io5";
 
 import {
   dark, lightGray, primary, secondary
@@ -96,26 +97,26 @@ function ProjectNavigation(props) {
             <Row justify="space-between" align="center">
               <Link to={`/${teamId}/${projectId}/dashboard`}>
                 <LinkNext className="pointer-events-none">
-                  <RiBarChartBoxFill color={_checkIfActive("dashboard") ? secondary : "white"} size={24} />
+                  <IoBarChart color={_checkIfActive("dashboard") ? secondary : "white"} size={24} />
                 </LinkNext>
               </Link>
               {canAccess("editor") && (
                 <Link to={`/${teamId}/${projectId}/connections`}>
                   <LinkNext className="pointer-events-none">
-                    <RiPlugFill size={24} color={_checkIfActive("connections") ? secondary : "white"} />
+                    <BsPlugin size={24} color={_checkIfActive("connections") ? secondary : "white"} />
                   </LinkNext>
                 </Link>
               )}
               <Link to={`/b/${project.brewName}`}>
                 <LinkNext className="pointer-events-none">
-                  <RiSlideshowFill color={_checkIfActive("public") ? secondary : "white"} size={24} />
+                  <IoEasel color={_checkIfActive("public") ? secondary : "white"} size={24} />
                 </LinkNext>
               </Link>
               {canAccess("editor")
                 && (
                   <Link to={`/${teamId}/${projectId}/members`}>
                     <LinkNext className="pointer-events-none">
-                      <RiTeamFill color={_checkIfActive("members") ? secondary : "white"} size={24} />
+                      <IoPeople color={_checkIfActive("members") ? secondary : "white"} size={24} />
                     </LinkNext>
                   </Link>
                 )}
@@ -123,7 +124,7 @@ function ProjectNavigation(props) {
                 && (
                   <Link to={`/${teamId}/${projectId}/projectSettings`}>
                     <LinkNext className="pointer-events-none">
-                      <RiSettings4Fill color={_checkIfActive("projectSettings") ? secondary : "white"} size={24} />
+                      <IoSettings color={_checkIfActive("projectSettings") ? secondary : "white"} size={24} />
                     </LinkNext>
                   </Link>
                 )}
@@ -144,7 +145,7 @@ function ProjectNavigation(props) {
                 {menuSize === "small" && (
                   // <Tooltip content="Switch project" placement="right">
                   <div>
-                    <Text className={"text-default-800"}><RiLayoutGridFill size={28} /></Text>
+                    <Text className={"text-default-800"}><IoGridOutline size={28} /></Text>
                   </div>
                   // </Tooltip>
                 )}
@@ -183,7 +184,7 @@ function ProjectNavigation(props) {
                   <div>
                     <Link to={`/${teamId}/${projectId}/chart`}>
                       <Text color="primary">
-                        <Avatar icon={<RiAddCircleFill size={28} />} radius="sm" />
+                        <Avatar icon={<IoAddCircle size={28} />} radius="sm" />
                       </Text>
                     </Link>
                   </div>
@@ -192,7 +193,7 @@ function ProjectNavigation(props) {
               {menuSize === "large" && (
                 <Link to={`/${teamId}/${projectId}/chart`} className={"w-full pl-4 pr-4"}>
                   <Button
-                    endContent={<RiAddCircleFill size={24} />}
+                    endContent={<IoAdd size={24} />}
                     fullWidth
                     color="primary"
                     className="pointer-events-none"
@@ -215,7 +216,7 @@ function ProjectNavigation(props) {
                     variant="light"
                     color={_checkIfActive("dashboard") ? "primary" : "default"}
                   >
-                    <RiBarChartBoxFill size={28} />
+                    <IoBarChart size={28} />
                   </Button>
                 </div>
               </Tooltip>
@@ -224,7 +225,7 @@ function ProjectNavigation(props) {
               <Button
                 variant="light"
                 color={_checkIfActive("dashboard") ? "primary" : "default"}
-                startContent={<RiBarChartBoxFill size={24} />}
+                startContent={<IoBarChart size={24} />}
                 className="pointer-events-none"
               >
                 Dashboard
@@ -245,7 +246,7 @@ function ProjectNavigation(props) {
                         variant="light"
                         color={_checkIfActive("connections") ? "primary" : "default"}
                       >
-                        <RiPlugFill size="28" />
+                        <BsPlugin size="28" />
                       </Button>
                     </div>
                   </Tooltip>
@@ -254,7 +255,7 @@ function ProjectNavigation(props) {
                   <Button
                     variant="light"
                     color={_checkIfActive("connections") ? "primary" : "default"}
-                    startContent={<RiPlugFill size="24" />}
+                    startContent={<BsPlugin size="24" />}
                     className="pointer-events-none"
                   >
                     Connections
@@ -277,7 +278,7 @@ function ProjectNavigation(props) {
                       variant="light"
                       color={_checkIfActive("public") ? "primary" : "default"}
                     >
-                      <RiSlideshowFill size={28} />
+                      <IoEasel size={28} />
                     </Button>
                   </div>
                 </Tooltip>
@@ -286,7 +287,7 @@ function ProjectNavigation(props) {
                 <Button
                   variant="light"
                   color={_checkIfActive("public") ? "primary" : "default"}
-                  startContent={<RiSlideshowFill size={24} />}
+                  startContent={<IoEasel size={24} />}
                   className="pointer-events-none"
                 >
                   Dashboard report
@@ -309,7 +310,7 @@ function ProjectNavigation(props) {
                         variant="light"
                         color={_checkIfActive("projectSettings") ? "primary" : "default"}
                       >
-                        <RiSettings4Fill size={28} />
+                        <IoSettings size={28} />
                       </Button>
                     </div>
                   </Tooltip>
@@ -318,7 +319,7 @@ function ProjectNavigation(props) {
                   <Button
                     variant="light"
                     color={_checkIfActive("projectSettings") ? "primary" : "default"}
-                    startContent={<RiSettings4Fill size={24} />}
+                    startContent={<IoSettings size={24} />}
                     className="pointer-events-none"
                   >
                     Project settings
@@ -343,7 +344,7 @@ function ProjectNavigation(props) {
                         variant="light"
                         color={_checkIfActive("members") ? "primary" : "default"}
                       >
-                        <RiTeamFill size={28} />
+                        <IoPeople size={28} />
                       </Button>
                     </div>
                   </Tooltip>
@@ -352,7 +353,7 @@ function ProjectNavigation(props) {
                   <Button
                     variant="light"
                     color={_checkIfActive("members") ? "primary" : "default"}
-                    startContent={<RiTeamFill size={24} />}
+                    startContent={<IoPeople size={24} />}
                     className="pointer-events-none"
                   >
                     Team members
@@ -388,36 +389,6 @@ function ProjectNavigation(props) {
                 )}
               </Link>
             </Row>
-            <Spacer y={1} />
-            {canAccess("owner") && (
-              <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
-                <Link to={`/${teamId}/${projectId}/settings`}>
-                  {menuSize === "small" && (
-                    <Tooltip content="Team settings" placement="right">
-                      <div className="pointer-events-none">
-                        <Button
-                          isIconOnly
-                          variant="light"
-                          color={_checkIfActive("settings") ? "primary" : "default"}
-                        >
-                          <RiMoreFill size={28} />
-                        </Button>
-                      </div>
-                    </Tooltip>
-                  )}
-                  {menuSize === "large" && (
-                    <Button
-                      variant="light"
-                      color={_checkIfActive("settings") ? "primary" : "default"}
-                      startContent={<RiMoreFill size={24} />}
-                      className="pointer-events-none"
-                    >
-                      Team settings
-                    </Button>
-                  )}
-                </Link>
-              </Row>
-            )}
           </>
         )}
         <Spacer y={3} />
@@ -435,7 +406,7 @@ function ProjectNavigation(props) {
                     color="default"
                     onClick={() => onChangeDrafts(!showDrafts)}
                   >
-                    {showDrafts ? (<RiEyeLine size={28} />) : (<RiEyeOffLine size={28} />)}
+                    {showDrafts ? (<IoEyeOutline size={28} />) : (<IoEyeOffOutline size={28} />)}
                   </Button>
                 </div>
               )}
@@ -445,7 +416,7 @@ function ProjectNavigation(props) {
                     variant="light"
                     color="default"
                     onClick={() => onChangeDrafts(!showDrafts)}
-                    startContent={showDrafts ? (<RiEyeLine size={24} />) : (<RiEyeOffLine size={24} />)}
+                    startContent={showDrafts ? (<IoEyeOutline size={24} />) : (<IoEyeOffOutline size={24} />)}
                   >
                     {showDrafts ? "Show drafts" : "Hide drafts"}
                   </Button>
@@ -465,7 +436,7 @@ function ProjectNavigation(props) {
                 color="default"
                 onClick={() => onSetMenuSize(70)}
               >
-                <RiMenuFoldFill size={28} />
+                <IoCaretBackCircleOutline size={28} />
               </Button>
             </Tooltip>
           </Row>
@@ -479,7 +450,7 @@ function ProjectNavigation(props) {
                 color="default"
                 onClick={() => onSetMenuSize(sideMaxSize)}
               >
-                <RiMenuUnfoldFill size={28} />
+                <IoCaretForwardCircleOutline size={28} />
               </Button>
             </Tooltip>
           </Row>
@@ -496,7 +467,7 @@ function ProjectNavigation(props) {
             >
               <Text b className={"text-default-800 text-[10px]"} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
                 {update && update.tag_name && (
-                  <RiArrowUpDoubleFill color={secondary} />
+                  <IoChevronUpCircle color={secondary} />
                 )}
                 Chartbrew
                 { ` ${APP_VERSION || "v3.0.0"}`}
@@ -514,7 +485,7 @@ function ProjectNavigation(props) {
             >
               <Text b className={"text-default-800 text-[10px]"} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
                 {update && update.tag_name && (
-                  <RiArrowUpDoubleFill color={secondary} />
+                  <IoChevronUpCircle color={secondary} />
                 )}
                 {APP_VERSION || "v3.0.0"}
               </Text>

@@ -11,11 +11,9 @@ import _ from "lodash";
 import { createMedia } from "@artsy/fresnel";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
-import {
-  RiAddCircleFill, RiCloseCircleFill, RiFileCopyFill, RiFileExcel2Line, RiFilter2Line,
-  RiPlayCircleLine, RiPrinterLine, RiRefreshLine,
-} from "react-icons/ri";
 import moment from "moment";
+import { IoAddCircle, IoCloseCircle, IoCopyOutline, IoFilterCircleOutline, IoPlay, IoPrintOutline, IoReload } from "react-icons/io5";
+import { RiFileExcel2Line } from "react-icons/ri";
 
 import Chart from "../Chart/Chart";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
@@ -370,7 +368,7 @@ function ProjectDashboard(props) {
                   <Media greaterThan="mobile">
                     <Button
                       variant="ghost"
-                      startContent={<RiFilter2Line size={20} />}
+                      startContent={<IoFilterCircleOutline size={20} />}
                       isLoading={filterLoading}
                       onClick={_onShowFilters}
                       size="sm"
@@ -387,7 +385,7 @@ function ProjectDashboard(props) {
                       variant="ghost"
                       size="sm"
                     >
-                      <RiFilter2Line size={24} />
+                    <IoFilterCircleOutline size={24} />
                     </Button>
                   </Media>
                   <Spacer x={1} />
@@ -403,7 +401,7 @@ function ProjectDashboard(props) {
                               radius="sm"
                               endContent={(
                                 <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default-500">
-                                  <RiCloseCircleFill />
+                                  <IoCloseCircle />
                                 </LinkNext>
                               )}
                             >
@@ -417,7 +415,7 @@ function ProjectDashboard(props) {
                               radius="sm"
                               endContent={(
                                 <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default">
-                                  <RiCloseCircleFill />
+                                  <IoCloseCircle />
                                 </LinkNext>
                               )}
                             >
@@ -435,13 +433,13 @@ function ProjectDashboard(props) {
                     <>
                       <Tooltip content="Create a template from this dashboard" placement="bottom">
                         <Button
-                          variant="ghost"
+                          variant="light"
                           isIconOnly
                           onClick={() => setTemplateVisible(true)}
                           auto
                           size="sm"
                         >
-                          <RiFileCopyFill size={22} />
+                          <IoCopyOutline size={22} />
                         </Button>
                       </Tooltip>
                     </>
@@ -451,7 +449,7 @@ function ProjectDashboard(props) {
                       <Spacer x={0.5} />
                       <Tooltip content="Export charts to Excel" placement="bottom">
                         <Button
-                          variant="ghost"
+                          variant="light"
                           isIconOnly
                           onClick={_openExport}
                           auto
@@ -467,25 +465,25 @@ function ProjectDashboard(props) {
                       <Spacer x={0.5} />
                       <Tooltip content="Open print view" placement="bottom-end">
                         <Button
-                          variant="ghost"
+                          variant="light"
                           isIconOnly
                           onClick={onPrint}
                           auto
                           size="sm"
                         >
-                          <RiPrinterLine size={22} />
+                          <IoPrintOutline size={22} />
                         </Button>
                       </Tooltip>
                     </>
                   )}
 
                   <>
-                    <Spacer x={0.5} />
+                    <Spacer x={2} />
                     <Media greaterThan="mobile">
                       <Tooltip content="Refresh data" placement="bottom-start">
                         <Button
                           variant="ghost"
-                          startContent={refreshLoading ? null : <RiRefreshLine size={22} />}
+                          startContent={refreshLoading ? null : <IoReload size={22} />}
                           onClick={() => _onRefreshData()}
                           isLoading={refreshLoading}
                           size="sm"
@@ -500,7 +498,7 @@ function ProjectDashboard(props) {
                         <Tooltip content="Refresh all charts" placement="bottom-end">
                           <Button
                             variant="ghost"
-                            startContent={<RiRefreshLine size={24} />}
+                            startContent={<IoReload size={24} />}
                             onClick={() => _onRefreshData()}
                             isLoading={refreshLoading}
                             size="sm"
@@ -537,7 +535,7 @@ function ProjectDashboard(props) {
                     state: { onboarding: true },
                   }}
                 >
-                  <Button variant="shadow" endContent={<RiPlayCircleLine size={24} />} size="lg" auto>
+                  <Button variant="shadow" endContent={<IoPlay size={24} />} size="lg" auto>
                     Get started
                   </Button>
                 </Link>
@@ -555,7 +553,7 @@ function ProjectDashboard(props) {
                 >
                   <CardBody>
                     <Row justify="center" align="center">
-                      <RiAddCircleFill size={28} />
+                      <IoAddCircle size={28} />
                     </Row>
                     <Row justify="center" align="center">
                       <Text size="h3">Add your first chart</Text>
