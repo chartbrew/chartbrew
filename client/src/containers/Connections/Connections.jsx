@@ -278,6 +278,7 @@ function Connections(props) {
                 aria-label="Connection types"
                 selectedKey={selectedMenu}
                 onSelectionChange={(selected) => setSelectedMenu(selected)}
+                fullWidth
               >
                 <Tab key="connections" title="Connections" />
                 <Tab key="templates" title="Templates" />
@@ -285,11 +286,11 @@ function Connections(props) {
               </Tabs>
             </Row>
             <Spacer y={2} />
-            <Row>
+            <Row align="center" justify={"center"}>
               {selectedMenu === "connections" && (
                 <div className="grid grid-cols-12 gap-4">
                   {availableConnections.map((c) => (
-                    <div key={c.type} className="col-span-3 sm:col-span-6 md:col-span-4 lg:col-span-2">
+                    <div key={c.type} className="col-span-6 md:col-span-3 xl:col-span-2 sm:col-span-6">
                       <Card
                         isPressable
                         isHoverable
@@ -301,7 +302,7 @@ function Connections(props) {
                         </CardBody>
                         <CardFooter>
                           <Row wrap="wrap" justify="center" align="center">
-                            <Text size="h4">
+                            <Text b>
                               {c.name}
                             </Text>
                           </Row>
@@ -315,8 +316,12 @@ function Connections(props) {
               {selectedMenu === "templates" && (
                 <div className="grid grid-cols-12 gap-2">
                   {availableTemplates.map((t) => (
-                    <div key={t.type} className="col-span-3 sm:col-span-6 md:col-span-4 lg:col-span-3">
-                      <Card variant="flat" isPressable isHoverable className="project-segment" onClick={() => setFormType(t.type)}>
+                    <div key={t.type} className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-3">
+                      <Card
+                        isPressable
+                        isHoverable
+                        onClick={() => setFormType(t.type)}
+                      >
                         <CardBody className="p-0">
                           <Image className="object-cover" width="300" height="300" src={t.image} />
                         </CardBody>
@@ -522,7 +527,7 @@ function Connections(props) {
           <div className="grid grid-cols-12 gap-4 w-full">
             {connections.map(connection => {
               return (
-                <div className="col-span-3 sm:col-span-12 md:col-span-6 lg:col-span-4" key={connection.id}>
+                <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-4" key={connection.id}>
                   <Card
                     variant="bordered"
                     isPressable
