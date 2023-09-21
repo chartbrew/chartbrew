@@ -53,7 +53,8 @@ function CreateTemplateForm(props) {
               _onSaveTemplate();
             }}>
               <Input
-                labelPlaceholder="Enter a name for the template"
+                label="Template name"
+                placeholder="Enter a name for the template"
                 value={templateName}
                 onChange={(e) => setTemplateName(e.target.value)}
                 color={validationError ? "error" : "default"}

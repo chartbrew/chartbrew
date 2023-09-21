@@ -4,12 +4,10 @@ import _ from "lodash";
 import {
   Button, Checkbox, Divider, Spacer, Tooltip, Link as LinkNext,
 } from "@nextui-org/react";
-import {
-  CloseSquare, Download, Hide, Show, TickSquare
-} from "react-iconly";
 
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
+import { IoCheckmarkDone, IoClose, IoDownload, IoEye, IoEyeOff } from "react-icons/io5";
 
 function ChartExport(props) {
   const {
@@ -53,31 +51,29 @@ function ChartExport(props) {
       <Spacer y={2} />
       <Row align="center">
         <Button
-          variant="bordered"
+          variant="ghost"
           onClick={_onSelectAll}
-          endContent={<TickSquare />}
-          auto
+          endContent={<IoCheckmarkDone />}
           size="sm"
         >
           Select all
         </Button>
         <Spacer x={0.5} />
         <Button
-          variant="bordered"
+          variant="ghost"
           onClick={_onDeselectAll}
           size="sm"
-          endContent={<CloseSquare />}
-          auto
+          endContent={<IoClose />}
         >
           Deselect all
         </Button>
       </Row>
-      <Spacer y={1} />
+      <Spacer y={2} />
       <Row align="center">
         <div className="grid grid-cols-12 gap-2">
           {charts && charts.filter((c) => !c.disabledExport).map((chart) => {
             return (
-              <div className="col-span-6" key={chart.id}>
+              <div className="col-span-12 md:col-span-6" key={chart.id}>
                 <div className="flex items-center align-middle">
                   <Row align="center">
                     <Checkbox
@@ -92,7 +88,7 @@ function ChartExport(props) {
                       <Spacer x={0.5} />
                       <Tooltip content="Disable the export function for this chart" css={{ zIndex: 999999 }}>
                         <LinkNext className={"text-warning"} onClick={() => onUpdate(chart.id, true)}>
-                          <Show />
+                          <IoEye />
                         </LinkNext>
                       </Tooltip>
                     </>
@@ -125,7 +121,7 @@ function ChartExport(props) {
                   <div className="col-span-6 sm:col-span-12" key={chart.id}>
                     <Tooltip content="Enable the export function for this chart" css={{ zIndex: 99999 }}>
                       <LinkNext className="text-success cursor-pointer" onClick={() => onUpdate(chart.id, false)}>
-                        <Hide />
+                        <IoEyeOff />
                         {chart.name}
                       </LinkNext>
                     </Tooltip>
@@ -141,7 +137,7 @@ function ChartExport(props) {
       <Row align="center">
         <Button
           onClick={() => onExport(selectedIds)}
-          endContent={<Download />}
+          endContent={<IoDownload />}
           isLoading={loading}
           color="primary"
           fullWidth

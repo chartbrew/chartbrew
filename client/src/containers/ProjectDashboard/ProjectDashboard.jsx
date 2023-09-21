@@ -385,11 +385,11 @@ function ProjectDashboard(props) {
                       variant="ghost"
                       size="sm"
                     >
-                    <IoFilterCircleOutline size={24} />
+                      <IoFilterCircleOutline size={24} />
                     </Button>
                   </Media>
                   <Spacer x={1} />
-                  <div style={mobile ? {} : { borderLeft: "solid 1px #d4d4d5", paddingLeft: 10 }}>
+                  <div style={mobile ? {} : { borderLeft: "solid 1px #d4d4d5", paddingLeft: 10 }} className="hidden sm:block">
                     {filters
                       && filters[match.params.projectId]
                       && filters[match.params.projectId].map((filter) => (
@@ -487,7 +487,6 @@ function ProjectDashboard(props) {
                           onClick={() => _onRefreshData()}
                           isLoading={refreshLoading}
                           size="sm"
-                          auto
                         >
                           Refresh all charts
                         </Button>
@@ -599,7 +598,7 @@ function ProjectDashboard(props) {
         onEditFilterGroup={_onEditFilterGroup}
       />
 
-      <Modal isOpen={viewExport} closeButton onClose={() => setViewExport(false)} size="2xl">
+      <Modal isOpen={viewExport} closeButton onClose={() => setViewExport(false)} size="2xl" scrollBehavior="outside">
         <ModalContent>
           <ModalHeader>
             <Text size="h3">Export to Excel (.xlsx)</Text>

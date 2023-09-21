@@ -8,12 +8,11 @@ import {
   ModalBody, CircularProgress, NavbarBrand, NavbarContent, NavbarItem,
   DropdownTrigger, DropdownMenu, DropdownItem, CardBody, ModalFooter, ModalHeader, ModalContent,
 } from "@nextui-org/react";
+import { FaDiscord } from "react-icons/fa";
 import {
-  Category, Discovery, Document, Edit, Heart, Logout, Send, Setting, User
-} from "react-iconly";
-import { FaDiscord, FaGithub } from "react-icons/fa";
-import { BsSun, BsMoonFill } from "react-icons/bs";
-import { IoContrastSharp } from "react-icons/io5";
+  IoBook, IoChatboxEllipses, IoCompass, IoContrastSharp, IoHeartCircleOutline,
+  IoLogOut, IoLogoGithub, IoMoon, IoPerson, IoPlay, IoSettings, IoSunny,
+} from "react-icons/io5";
 import { createMedia } from "@artsy/fresnel";
 import useDarkMode from "@fisch0920/use-dark-mode";
 import { useLocalStorage } from "react-use";
@@ -176,41 +175,34 @@ function NavbarContainer(props) {
             <img src={isSystemDark ? cbLogoInverted : cbLogo} alt="Chartbrew Logo" width={30}  />
           </Link>
           <Spacer x={4} />
-          <Link to="/user">
-            <LinkNext href="/user" className={"text-default-foreground"}>
-              {!match.params.teamId && (
-                <Media greaterThan="mobile">
-                  <Row align="center">
-                    <Category size="small" />
-                    <Spacer x={0.2} />
-                    <Text>{"Home"}</Text>
-                  </Row>
-                </Media>
-              )}
-              {match.params.teamId && (
-                <Media greaterThan="mobile">
-                  <Row align="center">
-                    <Category size="small" />
-                    <Spacer x={0.2} />
-                    <Text>{team.name}</Text>
-                  </Row>
-                </Media>
-              )}
-            </LinkNext>
-          </Link>
-          {match.params.projectId && (
-            <Link to={`/${match.params.teamId}/${match.params.projectId}/dashboard`}>
-              <Media greaterThan="mobile">
-                <Row align="center">
-                  <Spacer x={0.2} />
-                  <Text b>{"/"}</Text>
-                  <Spacer x={0.2} />
-                  <Text>{projectProp.name}</Text>
-                  <Spacer x={0.2} />
-                </Row>
-              </Media>
+          <Row align="center" className={"gap-1"}>
+            <Link to="/user" className="text-default-foreground">
+                {!match.params.teamId && (
+                  <Media greaterThan="mobile">
+                    <Row align="center" className={"gap-1"}>
+                      <Text>{"Home"}</Text>
+                    </Row>
+                  </Media>
+                )}
+                {match.params.teamId && (
+                  <Media greaterThan="mobile">
+                    <Row align="center" className={"gap-1"}>
+                      <Text>{team.name}</Text>
+                    </Row>
+                  </Media>
+                )}
             </Link>
-          )}
+            {match.params.projectId && (
+              <Link to={`/${match.params.teamId}/${match.params.projectId}/dashboard`}>
+                <Media greaterThan="mobile">
+                  <Row align={"center"} className={"gap-1"}>
+                    <Text>{"/"}</Text>
+                    <Text>{projectProp.name}</Text>
+                  </Row>
+                </Media>
+              </Link>
+            )}
+          </Row>
         </NavbarBrand>
         <NavbarContent justify="end">
           <NavbarItem>
@@ -233,7 +225,7 @@ function NavbarContainer(props) {
                   variant="light"
                   disableRipple
                   className="p-0 bg-transparent data-[hover=true]:bg-transparent"
-                  startContent={<Heart set="curved" size={20} />}
+                  startContent={<IoHeartCircleOutline size={24} />}
                   radius="sm"
                 >
                   Help
@@ -241,22 +233,22 @@ function NavbarContainer(props) {
               </DropdownTrigger>
             </NavbarItem>
             <DropdownMenu variant="faded" onAction={(key) => _onDropdownAction(key)}>
-              <DropdownItem startContent={<FaDiscord size={24} />} key="discord">
+              <DropdownItem startContent={<FaDiscord />} key="discord">
                 <Text>{"Join our Discord"}</Text>
               </DropdownItem>
-              <DropdownItem startContent={<Discovery />} key="tutorials">
+              <DropdownItem startContent={<IoCompass />} key="tutorials">
                 <Text>{"Tutorials"}</Text>
               </DropdownItem>
-              <DropdownItem startContent={<Document />} key="documentation">
+              <DropdownItem startContent={<IoBook />} key="documentation">
                 <Text>{"Documentation"}</Text>
               </DropdownItem>
-              <DropdownItem startContent={<FaGithub size={24} />} key="github">
+              <DropdownItem startContent={<IoLogoGithub />} key="github">
                 <Text>{"GitHub"}</Text>
               </DropdownItem>
-              <DropdownItem showDivider startContent={<Edit />} key="feedback">
+              <DropdownItem showDivider startContent={<IoChatboxEllipses />} key="feedback">
                 <Text>{"Feedback"}</Text>
               </DropdownItem>
-              <DropdownItem startContent={<Send />} key="project-starter">
+              <DropdownItem startContent={<IoPlay />} key="project-starter">
                 <Text>{"Project starter"}</Text>
               </DropdownItem>
             </DropdownMenu>
@@ -271,19 +263,19 @@ function NavbarContainer(props) {
                   style={{ minWidth: "fit-content" }}
                   isIconOnly
                 >
-                  <User />
+                  <IoPerson />
                 </Button>
               </DropdownTrigger>
             </NavbarItem>
             <DropdownMenu variant="faded">
-              <DropdownItem startContent={<User />} key="profile">
+              <DropdownItem startContent={<IoPerson />} key="profile">
                 <Text>
                   Profile
                 </Text>
               </DropdownItem>
 
               {_canAccess("admin", teamOwned) && (
-                <DropdownItem startContent={<Setting />} key="account">
+                <DropdownItem startContent={<IoSettings />} key="account">
                   <Text>
                     Account settings
                   </Text>
@@ -292,8 +284,8 @@ function NavbarContainer(props) {
 
               <DropdownItem
                 startContent={isSystemDark
-                  ? <BsSun style={{ marginLeft: 3 }} size={20} />
-                  : <BsMoonFill style={{ marginLeft: 3 }} size={20} />}
+                  ? <IoSunny style={{ marginLeft: 3 }} size={20} />
+                  : <IoMoon style={{ marginLeft: 3 }} size={20} />}
                 showDivider
                 key="theme"
                 onClick={() => setShowAppearance(true)}
@@ -304,7 +296,7 @@ function NavbarContainer(props) {
                 </Text>
               </DropdownItem>
 
-              <DropdownItem startContent={<Logout />} onClick={logout}>
+              <DropdownItem startContent={<IoLogOut />} onClick={logout}>
                 Sign out
               </DropdownItem>
             </DropdownMenu>
@@ -334,23 +326,22 @@ function NavbarContainer(props) {
             <Text size="h4">Chartbrew UI Appearance</Text>
           </ModalHeader>
           <ModalBody>
-            <Container className={"py-20"}>
+            <div className="w-full">
               <Row>
                 <Text b>Choose the theme</Text>
               </Row>
               <Spacer y={4} />
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-2">
                 <Card
                   isHoverable
                   isPressable
                   borderWeight={!isSystemDark && !isOsTheme ? "extrabold" : "normal"}
                   onClick={() => _setTheme("light")}
-                  className={`mx-5 bg-background ${!isSystemDark && !isOsTheme ? "border-secondary-500" : ""}`}
+                  className={`bg-background ${!isSystemDark && !isOsTheme ? "border-secondary-500" : ""} min-w-[100px]`}
                   variant={"bordered"}
                 >
                   <CardBody>
-                    <BsSun size={24} color="black" />
-                    <Spacer x={0.2} />
+                    <IoSunny size={24} color="black" />
                     <Text h5 className={"text-black"}>Light</Text>
                   </CardBody>
                 </Card>
@@ -358,14 +349,13 @@ function NavbarContainer(props) {
                 <Card
                   isPressable
                   isHoverable
-                  className={`mx-5 bg-foreground ${!isSystemDark && !isOsTheme ? "border-secondary-500" : ""}`}
+                  className={`bg-foreground ${!isSystemDark && !isOsTheme ? "border-secondary-500" : ""} min-w-[100px]`}
                   borderWeight={isSystemDark && !isOsTheme ? "extrabold" : "normal"}
                   onClick={() => _setTheme("dark")}
                   variant={"bordered"}
                 >
                   <CardBody>
-                    <BsMoonFill size={24} color="white" />
-                    <Spacer x={0.2} />
+                    <IoMoon size={24} color="white" />
                     <Text h5 className="text-white">Dark</Text>
                   </CardBody>
                 </Card>
@@ -376,23 +366,20 @@ function NavbarContainer(props) {
                   variant={"bordered"}
                   onClick={_setOSTheme}
                   borderWeight={isOsTheme ? "extrabold" : "normal"}
-                  className={`mx-5 ${isSystemDark ? "bg-foreground" : "bg-background"} ${!isSystemDark && !isOsTheme ? "border-secondary-500" : ""}`}
+                  className={`${isSystemDark ? "bg-foreground" : "bg-background"} ${!isSystemDark && !isOsTheme ? "border-secondary-500" : ""} min-w-[100px]`}
                 >
                   <CardBody>
                     <IoContrastSharp size={24} color={isSystemDark ? "white" : "black"} />
-                    <Spacer x={0.2} />
                     <Text h5 className={isSystemDark ? "text-white" : "text-black"}>System</Text>
                   </CardBody>
                 </Card>
               </div>
-            </Container>
+            </div>
           </ModalBody>
           <ModalFooter>
             <Button
-              flat
-              color="warning"
+              variant="bordered"
               onClick={() => setShowAppearance(false)}
-              auto
             >
               Close
             </Button>

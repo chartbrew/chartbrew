@@ -606,7 +606,7 @@ const styles = {
     bottom: 0,
     height: "60px",
     position: "sticky",
-    zIndex: 9999,
+    zIndex: 10,
     backgroundColor: dark,
   },
 };
