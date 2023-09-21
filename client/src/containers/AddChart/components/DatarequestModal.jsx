@@ -329,7 +329,7 @@ function DatarequestModal(props) {
               <Tooltip content="Add a new data source" css={{ zIndex: 99999 }} placement="right-start">
                 <Link onClick={() => setCreateMode(true)} className="cursor-pointer">
                   <Avatar
-                    icon={<Plus primaryColor={theme.colors.text.value} />}
+                    icon={<Plus className="text-foreground" />}
                     isBordered
                     radius="sm"
                     size="lg"

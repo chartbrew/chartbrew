@@ -6,10 +6,6 @@ import {
   Link as LinkNext, Spacer, Tooltip, Input, Button,
   Switch, Modal, Divider, Chip, CircularProgress, ModalHeader, ModalBody, ModalFooter,
 } from "@nextui-org/react";
-import {
-  ChevronLeftCircle,
-  ChevronRight, ChevronRightCircle, CloseSquare, Discovery, Edit, Plus, Swap, TickSquare,
-} from "react-iconly";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import _ from "lodash";
@@ -47,10 +43,10 @@ import {
   completeTutorial as completeTutorialAction,
   resetTutorial as resetTutorialAction,
 } from "../../actions/tutorial";
-import Container from "../../components/Container";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import useThemeDetector from "../../modules/useThemeDetector";
+import { IoAdd, IoArrowForward, IoCheckmark, IoChevronBack, IoChevronForward, IoClose, IoPencil, IoSchoolOutline, IoSwapHorizontalOutline } from "react-icons/io5";
 
 /*
   Container used for setting up a new chart
@@ -516,7 +512,7 @@ function AddChart(props) {
   }
 
   return (
-    <div style={styles.container(height)}>
+    <div style={styles.container(height)} className="md:pl-4 md:pr-4">
       <ToastContainer
         position="bottom-right"
         autoClose={1500}
@@ -530,126 +526,123 @@ function AddChart(props) {
         transition={Flip}
         theme={isDark ? "dark" : "light"}
       />
-      <div className="grid grid-cols-12">
-        <div className="col-span-7 sm:col-span-12 md:col-span-6">
-          <Container className={"sm:pl-0 sm:pr-0"}>
-            <Row align="center" wrap="wrap" justify="space-between">
-              <Row className="flex-[0.6] chart-name-tut">
-                {!editingTitle
-                  && (
-                    <Tooltip content="Edit the chart name">
-                      <LinkNext onPress={() => setEditingTitle(true)} className="flex items-center" color="primary">
-                        <Edit />
-                        <Spacer x={0.5} />
-                        <Text b>
-                          {newChart.name}
-                        </Text>
-                      </LinkNext>
-                    </Tooltip>
-                  )}
-
-                {editingTitle && (
-                  <form onSubmit={(e) => {
-                    e.preventDefault();
-                    _onSubmitNewName();
-                  }}>
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      <Input
-                        placeholder="Enter a title"
-                        value={chartName}
-                        onChange={(e) => _onNameChange(e.target.value)}
-                        variant="bordered"
-                      />
+      <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-12 md:col-span-6">
+          <Row align="center" wrap="wrap" justify="space-between">
+            <Row className="chart-name-tut">
+              {!editingTitle
+                && (
+                  <Tooltip content="Edit the chart name">
+                    <LinkNext onPress={() => setEditingTitle(true)} className="flex items-center" color="primary">
+                      <IoPencil />
                       <Spacer x={0.5} />
-                      <Button
-                        color="secondary"
-                        type="submit"
-                        onClick={_onSubmitNewName}
-                        auto
-                      >
-                        Save
-                      </Button>
-                    </div>
-                  </form>
+                      <Text b>
+                        {newChart.name}
+                      </Text>
+                    </LinkNext>
+                  </Tooltip>
                 )}
-              </Row>
-              <Row className="flex-[0.4] chart-actions-tut" align="center" justify="flex-end">
-                <div style={{ display: "flex" }}>
-                  <Switch
-                    isSelected={newChart.draft}
-                    onChange={() => _onChangeChart({ draft: !newChart.draft })}
-                    size="sm"
-                  />
-                  <Spacer x={0.5} />
-                  <Text>Draft</Text>
-                </div>
-                <Spacer x={2} />
-                <Button
-                  color={saveRequired ? "primary" : "success"}
-                  onClick={() => _onChangeChart({})}
-                  isLoading={loading}
-                  size="sm"
-                  auto
-                >
-                  {saveRequired && "Save chart"}
-                  {!saveRequired && "Chart saved"}
-                </Button>
-              </Row>
-            </Row>
-            <Spacer y={2} />
-            <Row className="chart-type-tut">
-              <ChartPreview
-                chart={newChart}
-                onChange={_onChangeChart}
-                onRefreshData={_onRefreshData}
-                onRefreshPreview={_onRefreshPreview}
-                onAddFilter={_onAddFilter}
-                onClearFilter={_onClearFilter}
-                conditions={conditions}
-                datasets={datasets}
-                invalidateCache={invalidateCache}
-                changeCache={() => setInvalidateCache(!invalidateCache)}
-              />
-            </Row>
-            <Spacer y={2} />
-            <Row>
-              {match.params.chartId && newChart.type && datasets.length > 0 && (
-                <ChartSettings
-                  type={newChart.type}
-                  pointRadius={newChart.pointRadius}
-                  startDate={newChart.startDate}
-                  endDate={newChart.endDate}
-                  displayLegend={newChart.displayLegend}
-                  includeZeros={newChart.includeZeros}
-                  currentEndDate={newChart.currentEndDate}
-                  fixedStartDate={newChart.fixedStartDate}
-                  timeInterval={newChart.timeInterval}
-                  onChange={_onChangeGlobalSettings}
-                  onComplete={(skipParsing = false) => _onRefreshPreview(skipParsing)}
-                  maxValue={newChart.maxValue}
-                  minValue={newChart.minValue}
-                  xLabelTicks={newChart.xLabelTicks}
-                  stacked={newChart.stacked}
-                  horizontal={newChart.horizontal}
-                  dateVarsFormat={newChart.dateVarsFormat}
-                  dataLabels={newChart.dataLabels}
-                />
+
+              {editingTitle && (
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  _onSubmitNewName();
+                }}>
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <Input
+                      placeholder="Enter a title"
+                      value={chartName}
+                      onChange={(e) => _onNameChange(e.target.value)}
+                      variant="bordered"
+                      size="sm"
+                    />
+                    <Spacer x={0.5} />
+                    <Button
+                      color="secondary"
+                      type="submit"
+                      onClick={_onSubmitNewName}
+                      size="sm"
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </form>
               )}
             </Row>
-          </Container>
+            <Row className="chart-actions-tut" align="center" justify="flex-end">
+              <div style={{ display: "flex" }}>
+                <Switch
+                  isSelected={newChart.draft}
+                  onChange={() => _onChangeChart({ draft: !newChart.draft })}
+                  size="sm"
+                />
+                <Spacer x={0.5} />
+                <Text>Draft</Text>
+              </div>
+              <Spacer x={4} />
+              <Button
+                color={saveRequired ? "primary" : "success"}
+                onClick={() => _onChangeChart({})}
+                isLoading={loading}
+                size="sm"
+                variant={saveRequired ? "solid" : "flat"}
+              >
+                {saveRequired && "Save chart"}
+                {!saveRequired && "Chart saved"}
+              </Button>
+            </Row>
+          </Row>
+          <Spacer y={2} />
+          <Row className="chart-type-tut">
+            <ChartPreview
+              chart={newChart}
+              onChange={_onChangeChart}
+              onRefreshData={_onRefreshData}
+              onRefreshPreview={_onRefreshPreview}
+              onAddFilter={_onAddFilter}
+              onClearFilter={_onClearFilter}
+              conditions={conditions}
+              datasets={datasets}
+              invalidateCache={invalidateCache}
+              changeCache={() => setInvalidateCache(!invalidateCache)}
+            />
+          </Row>
+          <Spacer y={4} />
+          <Row>
+            {match.params.chartId && newChart.type && datasets.length > 0 && (
+              <ChartSettings
+                type={newChart.type}
+                pointRadius={newChart.pointRadius}
+                startDate={newChart.startDate}
+                endDate={newChart.endDate}
+                displayLegend={newChart.displayLegend}
+                includeZeros={newChart.includeZeros}
+                currentEndDate={newChart.currentEndDate}
+                fixedStartDate={newChart.fixedStartDate}
+                timeInterval={newChart.timeInterval}
+                onChange={_onChangeGlobalSettings}
+                onComplete={(skipParsing = false) => _onRefreshPreview(skipParsing)}
+                maxValue={newChart.maxValue}
+                minValue={newChart.minValue}
+                xLabelTicks={newChart.xLabelTicks}
+                stacked={newChart.stacked}
+                horizontal={newChart.horizontal}
+                dateVarsFormat={newChart.dateVarsFormat}
+                dataLabels={newChart.dataLabels}
+              />
+            )}
+          </Row>
         </div>
 
-        <div className="col-span-5 sm:col-span-12 md:col-span-6 pr-10 add-dataset-tut">
-          <Container
-            className={"bg-content2 rounded-md"}
-          >
+        <div className="col-span-12 md:col-span-6 add-dataset-tut">
+          <div className={"bg-content1 rounded-lg mx-auto p-4 w-full"}>
             <Row justify="space-between">
               <Text b>
                 Datasets
               </Text>
               <Tooltip content="Start the chart builder tutorial" placement="leftStart">
                 <LinkNext className="text-default-600 flex items-center" onPress={_onResetTutorial}>
-                  {!resetingTutorial ? <Discovery /> : <CircularProgress  />}
+                  {!resetingTutorial ? <IoSchoolOutline /> : <CircularProgress  />}
                   <Spacer x={0.5} />
                   <Text>Tutorial</Text>
                 </LinkNext>
@@ -687,7 +680,7 @@ function AddChart(props) {
                     >
                       {index > 0 && (
                         <LinkNext onPress={() => _changeDatasetOrder(dataset.id, "up")}>
-                          <ChevronLeftCircle size={16} />
+                          <IoChevronBack size={16} />
                         </LinkNext>
                       )}
                       <Spacer x={0.5} />
@@ -695,7 +688,7 @@ function AddChart(props) {
                       <Spacer x={0.5} />
                       {index < datasetsOrder.length - 1 && (
                         <LinkNext onPress={() => _changeDatasetOrder(dataset.id, "down")}>
-                          <ChevronRightCircle size={16} />
+                          <IoChevronForward size={16} />
                         </LinkNext>
                       )}
                     </Chip>
@@ -710,12 +703,11 @@ function AddChart(props) {
                   <div>
                     <Button
                       onClick={() => _onSaveNewDataset()}
-                      startContent={<Plus />}
-                      auto
+                      startContent={<IoAdd />}
                       color="primary"
                       variant="light"
                     >
-                      {"Saving dataset"}
+                      {"Add new dataset"}
                     </Button>
                   </div>
                   <div style={{ display: "flex", "flexDirection": "row", justifyContent: "flex-end" }}>
@@ -724,7 +716,7 @@ function AddChart(props) {
                         if (!arrangeMode) setArrangeMode(true);
                         else _onSaveArrangement();
                       }}
-                      startContent={arrangeMode ? <TickSquare /> : <Swap set="light" />}
+                      startContent={arrangeMode ? <IoCheckmark /> : <IoSwapHorizontalOutline set="light" />}
                       auto
                       color={arrangeMode ? "success" : "primary"}
                       variant="light"
@@ -743,7 +735,7 @@ function AddChart(props) {
                             color="warning"
                             auto
                           >
-                            <CloseSquare />
+                            <IoClose />
                           </Button>
                         </Tooltip>
                       </>
@@ -757,7 +749,7 @@ function AddChart(props) {
                   size="lg"
                   onClick={() => _onSaveNewDataset()}
                   isLoading={savingDataset}
-                  endContent={<Plus />}
+                  endContent={<IoAdd />}
                   auto
                 >
                   {"Add the first dataset"}
@@ -788,7 +780,7 @@ function AddChart(props) {
                 </Text>
               )}
             </Row>
-          </Container>
+          </div>
         </div>
       </div>
 
@@ -824,7 +816,7 @@ function AddChart(props) {
               setStartTutorial(false);
               _changeTour("addchart");
             }}
-            endContent={<ChevronRight />}
+            endContent={<IoArrowForward />}
             auto
           >
             Get started
@@ -840,7 +832,6 @@ const styles = {
     flex: 1,
     paddingTop: 20,
     paddingBottom: 20,
-    // backgroundColor: "white",
     minHeight: height,
   }),
   mainContent: {

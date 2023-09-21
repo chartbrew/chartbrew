@@ -8,7 +8,6 @@ import cookie from "react-cookies";
 
 import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
-import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 import { IoAdd, IoCheckmarkDone, IoChevronForward, IoClose, IoLink } from "react-icons/io5";

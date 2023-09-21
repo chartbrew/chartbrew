@@ -1,16 +1,12 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Chip, Button, Checkbox, Dropdown, Input, Link, Modal, Spacer,
-  Switch, ModalHeader, ModalBody, ModalFooter, Select,
+  Chip, Button, Checkbox, Input, Link, Modal, Spacer,
+  Switch, ModalHeader, ModalBody, ModalFooter, Select, SelectItem, ModalContent,
 } from "@nextui-org/react";
-import {
-  Delete, Message, Notification, Plus, VolumeOff
-} from "react-iconly";
 import { connect } from "react-redux";
 import { FaSlack } from "react-icons/fa";
 import { TbWebhook } from "react-icons/tb";
-import { HiRefresh } from "react-icons/hi";
 
 import { getTeamMembers as getTeamMembersAction } from "../../../actions/team";
 import {
@@ -26,6 +22,7 @@ import autoUpdatePicture from "../../../assets/chartbrew-auto-update.jpg";
 import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
+import { IoAdd, IoMailOutline, IoNotifications, IoNotificationsOff, IoReload, IoTrashBin } from "react-icons/io5";
 
 const ruleTypes = [{
   label: "When reaching a milestone",
@@ -272,7 +269,7 @@ function DatasetAlerts(props) {
             <Button
               color="primary"
               auto
-              endContent={<Notification />}
+              endContent={<IoNotifications />}
               size="sm"
               onClick={_onOpen}
             >
@@ -288,7 +285,7 @@ function DatasetAlerts(props) {
                 size="sm"
                 className="mb-5"
                 onClick={() => _onEdit(alert)}
-                endContent={alert.active ? <Notification size="small" /> : <VolumeOff size="small" />}
+                endContent={alert.active ? <IoNotifications /> : <IoNotificationsOff />}
               >
                 {alert.type === "milestone" && "Milestone"}
                 {alert.type === "threshold_above" && "Above threshold"}
@@ -308,7 +305,7 @@ function DatasetAlerts(props) {
               <Button
                 color="primary"
                 auto
-                startContent={<Plus />}
+                startContent={<IoAdd />}
                 size="sm"
                 onClick={_onOpen}
                 variant="light"
@@ -319,306 +316,306 @@ function DatasetAlerts(props) {
           </>
         )}
       </Container>
-      <Modal isOpen={open} onClose={() => setOpen(false)} className="w-[800px]">
-        <ModalHeader>
-          <Text size="h4">
-            {newAlert.id ? "Edit alert" : "Set up a new alert"}
-          </Text>
-        </ModalHeader>
-        <ModalBody>
-          <Container>
-            <Row align="center">
-              <Select
-                variant="bordered"
-                renderValue={(
-                  <Text>
-                    {ruleTypes.find((r) => r.value === newAlert.type)?.label || "Select an alert type"}
-                  </Text>
-                )}
-                selectedKeys={[newAlert.type]}
-                onSelectionChange={(key) => setNewAlert({ ...newAlert, type: key })}
-                selectionMode="single"
-              >
-                {ruleTypes.map((rule) => (
-                  <Dropdown.Item key={rule.value}>
-                    {rule.label}
-                  </Dropdown.Item>
-                ))}
-              </Select>
-            </Row>
-            <Spacer y={1} />
+      <Modal isOpen={open} onClose={() => setOpen(false)} size="2xl">
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h4">
+              {newAlert.id ? "Edit alert" : "Set up a new alert"}
+            </Text>
+          </ModalHeader>
+          <ModalBody>
+            <div>
+              <Row align="center">
+                <Select
+                  variant="bordered"
+                  placeholder="Select an alert type"
+                  label="Alert type"
+                  renderValue={(
+                    <Text>
+                      {ruleTypes.find((r) => r.value === newAlert.type)?.label}
+                    </Text>
+                  )}
+                  selectedKeys={[newAlert.type]}
+                  onSelectionChange={(keys) => setNewAlert({ ...newAlert, type: keys.currentKey })}
+                  selectionMode="single"
+                >
+                  {ruleTypes.map((rule) => (
+                    <SelectItem key={rule.value}>
+                      {rule.label}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </Row>
+              <Spacer y={1} />
 
-            {(newAlert.type === "milestone" || newAlert.type === "threshold_above" || newAlert.type === "threshold_below")
-              && (
+              {(newAlert.type === "milestone" || newAlert.type === "threshold_above" || newAlert.type === "threshold_below")
+                && (
+                  <Row>
+                    <Input
+                      placeholder={newAlert.type === "milestone" ? "Enter a milestone" : "Enter a threshold"}
+                      label={newAlert.type === "milestone" ? "Milestone" : "Threshold"}
+                      type="number"
+                      fullWidth
+                      variant="bordered"
+                      value={newAlert.rules.value}
+                      onChange={(e) => {
+                        setNewAlert({
+                          ...newAlert,
+                          rules: { ...newAlert.rules, value: e.target.value }
+                        });
+                      }}
+                    />
+                  </Row>
+                )}
+
+              {(newAlert.type === "threshold_between" || newAlert.type === "threshold_outside") && (
                 <Row>
                   <Input
-                    placeholder={newAlert.type === "milestone" ? "Enter a milestone" : "Enter a threshold"}
-                    label={newAlert.type === "milestone" ? "Milestone" : "Threshold"}
+                    placeholder="Enter a threshold"
+                    label="Lower threshold"
                     type="number"
                     fullWidth
                     variant="bordered"
-                    value={newAlert.rules.value}
+                    value={newAlert.rules.lower}
                     onChange={(e) => {
                       setNewAlert({
                         ...newAlert,
-                        rules: { ...newAlert.rules, value: e.target.value }
+                        rules: { ...newAlert.rules, lower: e.target.value }
+                      });
+                    }}
+                  />
+                  <Spacer x={1} />
+                  <Input
+                    placeholder="Enter a threshold"
+                    label="Upper threshold"
+                    type="number"
+                    fullWidth
+                    variant="bordered"
+                    value={newAlert.rules.upper}
+                    onChange={(e) => {
+                      setNewAlert({
+                        ...newAlert,
+                        rules: { ...newAlert.rules, upper: e.target.value }
                       });
                     }}
                   />
                 </Row>
               )}
 
-            {(newAlert.type === "threshold_between" || newAlert.type === "threshold_outside") && (
-              <Row>
-                <Input
-                  placeholder="Enter a threshold"
-                  label="Lower threshold"
-                  type="number"
-                  fullWidth
-                  variant="bordered"
-                  value={newAlert.rules.lower}
-                  onChange={(e) => {
-                    setNewAlert({
-                      ...newAlert,
-                      rules: { ...newAlert.rules, lower: e.target.value }
-                    });
-                  }}
-                />
-                <Spacer x={1} />
-                <Input
-                  placeholder="Enter a threshold"
-                  label="Upper threshold"
-                  type="number"
-                  fullWidth
-                  variant="bordered"
-                  value={newAlert.rules.upper}
-                  onChange={(e) => {
-                    setNewAlert({
-                      ...newAlert,
-                      rules: { ...newAlert.rules, upper: e.target.value }
-                    });
-                  }}
-                />
-              </Row>
-            )}
-
-            {newAlert.type === "anomaly" && (
-              <Row>
-                <Text i>
-                  {"The anomaly detection is done automatically. Best to use this if you want to be notified when a time series is behaving differently than usual."}
-                </Text>
-              </Row>
-            )}
-
-            <Spacer y={2} />
-            {newAlert.type && (
-              <>
+              {newAlert.type === "anomaly" && (
                 <Row>
-                  <Text b>Where should we send the alerts?</Text>
+                  <Text i>
+                    {"The anomaly detection is done automatically. Best to use this if you want to be notified when a time series is behaving differently than usual."}
+                  </Text>
                 </Row>
-                <Spacer y={1} />
-                <Row wrap="wrap" align="center">
-                  <Button
-                    auto
-                    startContent={<Message size="small" />}
-                    color="secondary"
-                    size="sm"
-                    variant={!newAlert.mediums.email?.enabled ? "bordered": "filled"}
-                    onClick={() => _onChangeMediums("email")}
-                  >
-                    Email
-                  </Button>
-                  <Spacer x={1} />
-                  {integrations && integrations.map((integration) => (
-                    <>
-                      <Button
-                        auto
-                        startContent={
-                          integration.type === "webhook" ? <TbWebhook />
-                            : integration.type === "slack" ? <FaSlack />
-                              : null
-                        }
-                        color="secondary"
-                        size="sm"
-                        variant={
-                          selectedIntegrations.length === 0
-                          || !selectedIntegrations.find(
-                            (i) => i.integration_id === integration.id && i.enabled
-                          ) ? "bordered" : "filled"
-                        }
-                        onClick={() => _onSelectIntegration(integration)}
-                      >
-                        {integration.name}
-                      </Button>
-                      <Spacer x={0.6} />
-                    </>
-                  ))}
-                </Row>
-                <Spacer y={1} />
-                <Row>
-                  <Button
-                    auto
-                    startContent={<Plus size="small" />}
-                    color="primary"
-                    variant="light"
-                    size="sm"
-                    onClick={_onCreateNewIntegration}
-                  >
-                    Create integrations
-                  </Button>
-                  <Button
-                    auto
-                    startContent={<HiRefresh size={18} />}
-                    color="primary"
-                    variant="light"
-                    size="sm"
-                    onClick={_onRefreshIntegrationList}
-                  >
-                    Refresh list
-                  </Button>
-                </Row>
-                {newAlert.mediums.email?.enabled && (
+              )}
+
+              <Spacer y={4} />
+              {newAlert.type && (
+                <>
+                  <Row>
+                    <Text b>Where should we send the alerts?</Text>
+                  </Row>
+                  <Spacer y={1} />
+                  <Row wrap="wrap" align="center" className={"gap-1"}>
+                    <Button
+                      auto
+                      startContent={<IoMailOutline />}
+                      color="secondary"
+                      size="sm"
+                      variant={!newAlert.mediums.email?.enabled ? "bordered": "solid"}
+                      onClick={() => _onChangeMediums("email")}
+                    >
+                      Email
+                    </Button>
+                    <Spacer x={1} />
+                    {integrations && integrations.map((integration) => (
+                      <>
+                        <Button
+                          auto
+                          startContent={
+                            integration.type === "webhook" ? <TbWebhook />
+                              : integration.type === "slack" ? <FaSlack />
+                                : null
+                          }
+                          color="secondary"
+                          size="sm"
+                          variant={
+                            selectedIntegrations.length === 0
+                            || !selectedIntegrations.find(
+                              (i) => i.integration_id === integration.id && i.enabled
+                            ) ? "bordered" : "solid"
+                          }
+                          onClick={() => _onSelectIntegration(integration)}
+                        >
+                          {integration.name}
+                        </Button>
+                      </>
+                    ))}
+                    <Button
+                      startContent={<IoAdd size={18} />}
+                      color="primary"
+                      variant="light"
+                      size="sm"
+                      onClick={_onCreateNewIntegration}
+                    >
+                      Create integrations
+                    </Button>
+                    <Button
+                      startContent={<IoReload size={18} />}
+                      color="primary"
+                      variant="light"
+                      size="sm"
+                      onClick={_onRefreshIntegrationList}
+                    >
+                      Refresh list
+                    </Button>
+                  </Row>
+                  {newAlert.mediums.email?.enabled && (
+                  <>
+                    <Spacer y={4} />
+                    <Row>
+                      <Text b>Email alerts - Who should receive them?</Text>
+                    </Row>
+                    <Spacer y={1} />
+                    <Row wrap="wrap" className={"gap-2"}>
+                      {teamMembers.map((member) => (
+                        <Link key={member.email} onClick={() => _onChangeRecipient(member.email)}>
+                          <Chip
+                            color="secondary"
+                            radius="sm"
+                            size="sm"
+                            variant={newAlert.recipients.includes(member.email) ? "solid" : "faded"}
+                            className="cursor-pointer"
+                          >
+                            {member.email}
+                          </Chip>
+                        </Link>
+                      ))}
+                    </Row>
+                  </>
+                  )}
+                </>
+              )}
+
+              {newAlert.type && (
+                <>
+                  <Spacer y={8} />
+                  <Row>
+                    <Text b>Add a timeout between alerts of the same type</Text>
+                  </Row>
+                  <Row>
+                    <Text size="sm">By default, data is checked after each automatic chart update</Text>
+                  </Row>
+                  <Spacer y={1} />
+                  <Row>
+                    <Input
+                      label="Enter a timeout"
+                      type="number"
+                      fullWidth
+                      variant="bordered"
+                      value={displayTimeout}
+                      onChange={(e) => setDisplayTimeout(e.target.value)}
+                    />
+                    <Spacer x={1} />
+                    <Select
+                      variant="bordered"
+                      label="Time unit"
+                      renderValue={(
+                        <Text>{timeoutUnit}</Text>
+                      )}
+                      selectedKeys={[timeoutUnit]}
+                      onSelectionChange={(keys) => setTimeoutUnit(keys.currentKey)}
+                      selectionMode="single"
+                    >
+                      {timePeriods.map((period) => (
+                        <SelectItem key={period.value}>
+                          {period.label}
+                        </SelectItem>
+                      ))}
+                    </Select>
+                  </Row>
+                </>
+              )}
+
+              {newAlert.type && newAlert.type !== "milestone" && (
                 <>
                   <Spacer y={2} />
                   <Row>
-                    <Text b>Email alerts - Who should receive them?</Text>
-                  </Row>
-                  <Spacer y={1} />
-                  <Row wrap="wrap">
-                    {teamMembers.map((member) => (
-                      <Link key={member.email} onClick={() => _onChangeRecipient(member.email)}>
-                        <Chip
-                          color="primary"
-                          radius="sm"
-                          variant={newAlert.recipients.includes(member.email) ? "default" : "bordered"}
-                          className="mb-5"
-                        >
-                          {member.email}
-                        </Chip>
-                        <Spacer x={0.5} />
-                      </Link>
-                    ))}
+                    <Checkbox
+                      isSelected={newAlert.oneTime}
+                      onChange={(checked) => setNewAlert({ ...newAlert, oneTime: checked })}
+                    >
+                      Disable this alert after sending once
+                    </Checkbox>
                   </Row>
                 </>
-                )}
-              </>
-            )}
+              )}
 
-            {newAlert.type && (
-              <>
-                <Spacer y={2} />
-                <Row>
-                  <Text b>Add a timeout between alerts of the same type</Text>
-                </Row>
-                <Row>
-                  <Text small>By default, data is checked after each automatic chart update</Text>
-                </Row>
-                <Spacer y={1} />
-                <Row>
-                  <Input
-                    placeholder="Enter a timeout"
-                    type="number"
-                    fullWidth
-                    variant="bordered"
-                    value={displayTimeout}
-                    onChange={(e) => setDisplayTimeout(e.target.value)}
-                  />
-                  <Spacer x={1} />
-                  <Select
-                    variant="bordered"
-                    renderValue={(
-                      <Text>{timeoutUnit}</Text>
-                    )}
-                    selectedKeys={[timeoutUnit]}
-                    onSelectionChange={(key) => setTimeoutUnit(key)}
-                    selectionMode="single"
-                  >
-                    {timePeriods.map((period) => (
-                      <Dropdown.Item key={period.value}>
-                        {period.label}
-                      </Dropdown.Item>
-                    ))}
-                  </Select>
-                </Row>
-              </>
-            )}
+              {chart && !chart.autoUpdate && (
+                <>
+                  <Spacer y={4} />
+                  <Row>
+                    <Container className={"bg-primary-50 p-5 rounded-md"}>
+                      <Row>
+                        <Text size="sm">
+                          {"In order for the alert to trigger, you must enable automatic chart updates from the dashboard."}
+                          <Spacer y={0.5} />
+                          <Link onClick={_toggleAutoUpdate}>
+                            {showAutoUpdate ? "Hide picture" : "Show how to do it"}
+                          </Link>
+                        </Text>
+                      </Row>
+                    </Container>
+                  </Row>
+                </>
+              )}
 
-            {newAlert.type && newAlert.type !== "milestone" && (
-              <>
-                <Spacer y={2} />
-                <Row>
-                  <Checkbox
-                    isSelected={newAlert.oneTime}
-                    onChange={(checked) => setNewAlert({ ...newAlert, oneTime: checked })}
-                    size="sm"
-                  >
-                    Disable this alert after sending once
-                  </Checkbox>
-                </Row>
-              </>
+              {showAutoUpdate && (
+                <>
+                  <Spacer y={2} />
+                  <Row justify="center">
+                    <img width="400" src={autoUpdatePicture} alt="Auto update tutorial" />
+                  </Row>
+                </>
+              )}
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Switch
+              isSelected={newAlert.active}
+              onChange={(e) => setNewAlert({ ...newAlert, active: e.target.checked })}
+              size="sm"
+            >
+              <Text>{newAlert.active ? "Alert enabled" : "Alert disabled"}</Text>
+            </Switch>
+            <Spacer x={1} />
+            {newAlert.id && (
+              <Button
+                auto
+                color="danger"
+                endContent={<IoTrashBin />}
+                variant="light"
+                onClick={() => _onDelete()}
+                isLoading={deleteLoading}
+              >
+                Delete alert
+              </Button>
             )}
-
-            {chart && !chart.autoUpdate && (
-              <>
-                <Spacer y={2} />
-                <Row>
-                  <Container className={"bg-secondary-100 p-10 rounded-md"}>
-                    <Row>
-                      <Text>
-                        {"In order for the alert to trigger, you must enable automatic chart updates from the dashboard."}
-                        <Link onClick={_toggleAutoUpdate}>
-                          {showAutoUpdate ? "Hide picture" : "Show how to do it"}
-                        </Link>
-                      </Text>
-                    </Row>
-                  </Container>
-                </Row>
-              </>
-            )}
-
-            {showAutoUpdate && (
-              <>
-                <Spacer y={2} />
-                <Row justify="center">
-                  <img width="400" src={autoUpdatePicture} alt="Auto update tutorial" />
-                </Row>
-              </>
-            )}
-          </Container>
-        </ModalBody>
-        <ModalFooter>
-          <Switch
-            isSelected={newAlert.active}
-            onChange={(e) => setNewAlert({ ...newAlert, active: e.target.checked })}
-            size="sm"
-            className="p-0"
-          />
-          <Text>{newAlert.active ? "Alert enabled" : "Alert disabled"}</Text>
-          {newAlert.id && (
+            <Button auto onClick={() => setOpen(false)} color="warning" variant="flat">
+              Close
+            </Button>
             <Button
               auto
-              color="danger"
-              endContent={<Delete />}
-              variant="light"
-              onClick={() => _onDelete()}
-              isLoading={deleteLoading}
+              onClick={() => _onSaveAlert()}
+              color="primary"
+              disabled={newAlert.mediums.length === 0 || !newAlert.type}
+              isLoading={loading}
             >
-              Delete alert
+              {newAlert.id ? "Update alert" : "Create alert"}
             </Button>
-          )}
-          <Button auto onClick={() => setOpen(false)} color="warning" variant="flat">
-            Close
-          </Button>
-          <Button
-            auto
-            onClick={() => _onSaveAlert()}
-            color="primary"
-            disabled={newAlert.mediums.length === 0 || !newAlert.type}
-            isLoading={loading}
-          >
-            {newAlert.id ? "Update alert" : "Create alert"}
-          </Button>
-        </ModalFooter>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
     </div>
   );

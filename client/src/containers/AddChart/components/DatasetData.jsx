@@ -14,7 +14,7 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import update from "immutability-helper";
 import {
   Button, Accordion, Dropdown, Input, Link, semanticColors,
-  Popover, Spacer, Tooltip, Divider, Chip, Badge, Switch, Modal, Checkbox, DropdownMenu, DropdownTrigger, DropdownItem, PopoverTrigger, PopoverContent, AccordionItem, ModalHeader, ModalBody, ModalFooter,
+  Popover, Spacer, Tooltip, Divider, Chip, Badge, Switch, Modal, Checkbox, DropdownMenu, DropdownTrigger, DropdownItem, PopoverTrigger, PopoverContent, AccordionItem, ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
 import { TbDragDrop, TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import {
@@ -629,14 +629,16 @@ function DatasetData(props) {
               <>
                 <Spacer x={0.3} />
                 <Tooltip content="The selected field is not available in the data. Please select another.">
-                  <Danger primaryColor={semanticColors[theme].danger.DEFAULT} />
+                  <div>
+                    <Danger primaryColor={semanticColors[theme].danger.DEFAULT} />
+                  </div>
                 </Tooltip>
               </>
             )}
           </div>
           <div style={styles.rowDisplay}>
             <Dropdown>
-              <Dropdown.Trigger type="text">
+              <DropdownTrigger type="text">
                 <Input
                   type="text"
                   value={
@@ -649,23 +651,23 @@ function DatasetData(props) {
                   ref={xFieldRef}
                   contentRight={document.activeElement === xFieldRef.current ? "↵" : null}
                 />
-              </Dropdown.Trigger>
-              <Dropdown.Menu
+              </DropdownTrigger>
+              <DropdownMenu
                 onAction={_selectXField}
                 selectedKeys={[dataset.xAxis]}
                 selectionMode="single"
                 css={{ minWidth: "max-content" }}
               >
                 {_filterOptions("x").map((option) => (
-                  <Dropdown.Item
+                  <DropdownItem
                     key={option.value}
                     icon={<Badge size="xs" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}
                     description={option.isObject ? "Key-Value visualization" : null}
                   >
                     <Text>{option.text}</Text>
-                  </Dropdown.Item>
+                  </DropdownItem>
                 ))}
-              </Dropdown.Menu>
+              </DropdownMenu>
             </Dropdown>
             {chartType === "table" && (
               <>
@@ -673,7 +675,9 @@ function DatasetData(props) {
                 <Tooltip
                   content="Select a collection (array) of objects to display in a table format. 'Root' means the first level of the collection."
                 >
-                  <InfoCircle />
+                  <div>
+                    <InfoCircle />
+                  </div>
                 </Tooltip>
               </>
             )}
@@ -687,7 +691,9 @@ function DatasetData(props) {
               <>
                 <Spacer x={0.3} />
                 <Tooltip content="The selected field is not available in the data. Please select another.">
-                  <Danger primaryColor={theme.colors.error.value} />
+                  <div>
+                    <Danger className="text-warning" />
+                  </div>
                 </Tooltip>
               </>
             )}
@@ -750,7 +756,7 @@ function DatasetData(props) {
                   <>
                     <Spacer x={0.6} />
                     <Tooltip content="The selected field is not available in the data. Please select another.">
-                      <Danger primaryColor={semanticColors[theme].danger.DEFAULT} />
+                      <div><Danger className="text-danger" /></div>
                     </Tooltip>
                   </>
                 )}
@@ -989,7 +995,7 @@ function DatasetData(props) {
               <Text>{"Goal "}</Text>
               <Spacer x={0.5} />
               <Tooltip content="A goal can be displayed as a progress bar in your KPI charts. Enter a number without any other characters. (e.g. 1000 instead of 1k)">
-                <InfoCircle size="small" />
+                <div><InfoCircle size="small" /></div>
               </Tooltip>
             </Row>
             <Row align="center">
@@ -1419,12 +1425,12 @@ function DatasetData(props) {
         )}
       </div>
 
-      <Modal isOpen={conditionModal} className="w-[500px]" onClose={() => setConditionModal(false)}>
-        <ModalHeader>
-          <Text size="h4">Condition settings</Text>
-        </ModalHeader>
-        <ModalBody>
-          <Container>
+      <Modal isOpen={conditionModal} size="lg" onClose={() => setConditionModal(false)}>
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h4">Condition settings</Text>
+          </ModalHeader>
+          <ModalBody>
             <Row>
               <Input
                 label="The name of the filter as it appears to viewers"
@@ -1441,10 +1447,9 @@ function DatasetData(props) {
                 variant="bordered"
               />
             </Row>
-            <Spacer y={1} />
             <Row>
               <Checkbox
-                label="Hide existing values from the filter dropdown"
+                title="Hide existing values from the filter dropdown"
                 isSelected={selectedCondition.hideValues}
                 onChange={() => {
                   setSelectedCondition({
@@ -1453,27 +1458,27 @@ function DatasetData(props) {
                   });
                 }}
                 size="sm"
-              />
+              >
+                Hide existing values from the filter dropdown
+              </Checkbox>
             </Row>
-          </Container>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            auto
-            onClick={() => setConditionModal(false)}
-            color="warning"
-            variant="flat"
-          >
-            Close
-          </Button>
-          <Button
-            auto
-            onClick={_onConfirmConditionSettings}
-            color="success"
-          >
-            Save settings
-          </Button>
-        </ModalFooter>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              onClick={() => setConditionModal(false)}
+              color="warning"
+              variant="flat"
+            >
+              Close
+            </Button>
+            <Button
+              onClick={_onConfirmConditionSettings}
+              color="primary"
+            >
+              Save settings
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
 
       <TableDataFormattingModal
