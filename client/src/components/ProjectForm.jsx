@@ -1,16 +1,15 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Input, Button, Spacer, Modal, ModalHeader, ModalBody, ButtonGroup, ModalContent
+  Input, Button, Spacer, Modal, ModalHeader, ModalBody, ModalContent, Tabs, Tab
 } from "@nextui-org/react";
-import { ArrowRight } from "react-iconly";
 
 import { createProject } from "../actions/project";
 import CustomTemplates from "../containers/Connections/CustomTemplates/CustomTemplates";
-import Container from "./Container";
 import Row from "./Row";
 import Text from "./Text";
+import { IoArrowForward } from "react-icons/io5";
 
 /*
   Contains the project creation functionality
@@ -25,6 +24,10 @@ function ProjectForm(props) {
   const [error, setError] = useState("");
   const [activeMenu, setActiveMenu] = useState("empty");
   const [createdProject, setCreatedProject] = useState(null);
+  const modalSize = useMemo(() => {
+    if (activeMenu === "template") return "5xl";
+    return "md";
+  }, [activeMenu]);
 
   const _onCreateProject = (noRedirect) => {
     setLoading(true);
@@ -55,7 +58,7 @@ function ProjectForm(props) {
       isOpen={open}
       onClose={onClose}
       closeButton
-      width={activeMenu === "template" ? "800px" : "400px"}
+      size={modalSize}
     >
       <ModalContent>
         <ModalHeader>
@@ -66,8 +69,17 @@ function ProjectForm(props) {
             e.preventDefault();
             _onCreateProject();
           }}>
-            <Container>
+            <div>
               <Spacer y={2} />
+              {!hideType && (
+                <Row align="center" justify="center">
+                  <Tabs selectedKey={activeMenu} onSelectionChange={(key) => setActiveMenu(key)} fullWidth>
+                    <Tab key="empty" id="empty" title="Empty project" />
+                    <Tab key="template" id="template" title="From template" />
+                  </Tabs>
+                </Row>
+              )}
+              <Spacer y={4} />
               <Row align="center">
                 <Input
                   onChange={(e) => setNewProject({
@@ -75,7 +87,7 @@ function ProjectForm(props) {
                     name: e.target.value,
                     team_id: team.active.id,
                   })}
-                  labelPlaceholder="Enter a name for your project"
+                  placeholder="Enter a name for your project"
                   fullWidth
                   size="lg"
                   variant="bordered"
@@ -90,36 +102,17 @@ function ProjectForm(props) {
                   </Text>
                 </Row>
               )}
-              <Spacer y={1} />
-              {!hideType && (
-                <Row align="center" justify="center">
-                  <ButtonGroup size="sm" disabled={!newProject.name}>
-                    <Button
-                      ghost={activeMenu !== "empty"}
-                      onClick={() => setActiveMenu("empty")}
-                      auto
-                    >
-                      Empty project
-                    </Button>
-                    <Button
-                      ghost={activeMenu !== "template"}
-                      onClick={() => setActiveMenu("template")}
-                    >
-                      From template
-                    </Button>
-                  </ButtonGroup>
-                </Row>
-              )}
-              <Spacer y={1} />
+              <Spacer y={4} />
               {activeMenu === "empty" && (
                 <>
-                  <Spacer y={1} />
+                  <Spacer y={4} />
                   <Row align="center" justify="center">
                     <Button
-                      disabled={!newProject.name || loading}
+                      isDisabled={!newProject.name}
                       onClick={() => _onCreateProject()}
-                      endContent={<ArrowRight />}
-                      auto
+                      endContent={<IoArrowForward />}
+                      color="primary"
+                      size="lg"
                       isLoading={loading}
                     >
                       {"Create"}
@@ -127,7 +120,7 @@ function ProjectForm(props) {
                   </Row>
                 </>
               )}
-            </Container>
+            </div>
           </form>
 
           {activeMenu === "template" && (

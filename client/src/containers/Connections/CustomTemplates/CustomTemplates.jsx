@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Avatar, Button, Card, Spacer, CircularProgress,
+  Avatar, Button, Card, Spacer, CircularProgress, CardHeader, CardBody, AvatarGroup, CardFooter,
 } from "@nextui-org/react";
 import moment from "moment";
 import { Chart } from "react-iconly";
@@ -54,7 +54,7 @@ function CustomTemplates(props) {
         <Text>{"You can create custom templates from any project with data source connections and charts."}</Text>
         {projectId && connections.length > 0 && (
           <Button
-            primary
+            color="primary"
             content="Create a new template from this project"
             onClick={() => setCreateTemplate(true)}
             size="small"
@@ -91,13 +91,15 @@ function CustomTemplates(props) {
   return (
     <div className="grid grid-cols-12 gap-2">
       {templates && templates.map((template) => (
-        <div className="col-span-12 sm:col-span-6 md:col-span-4" key={template.id}>
-          <Card onClick={() => setSelectedTemplate(template)} isHoverable isPressable variant="bordered">
-            <Card.Header>{template.name}</Card.Header>
-            <Card.Body>
+        <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6 xl:col-span-4" key={template.id}>
+          <Card onClick={() => setSelectedTemplate(template)} isHoverable isPressable className="min-w-[300px]">
+            <CardHeader>
+              <Text b>{template.name}</Text>
+            </CardHeader>
+            <CardBody>
               {template.model.Connections && (
                 <Row css={{ pr: 8, pl: 8 }} justify="center">
-                  <Avatar.Group animated={template.model.Connections.length > 1}>
+                  <AvatarGroup animated={template.model.Connections.length > 1}>
                     {template.model.Connections.map((c) => (
                       <Avatar
                         key={c.id}
@@ -108,20 +110,20 @@ function CustomTemplates(props) {
                         title={`${c.type} connection`}
                       />
                     ))}
-                  </Avatar.Group>
+                  </AvatarGroup>
                 </Row>
               )}
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               <Row align="center" justify="center">
                 <Chart />
-                <Spacer x={0.2} />
+                <Spacer x={0.5} />
                 <Text>{`${template.model.Charts.length} charts`}</Text>
               </Row>
-              <Spacer y={0.5} />
-            </Card.Body>
-            <Card.Footer>
-              <Text small>{`Updated ${_getUpdatedTime(template.updatedAt)}`}</Text>
-            </Card.Footer>
+              <Spacer y={1} />
+            </CardBody>
+            <CardFooter>
+              <Text size="sm">{`Updated ${_getUpdatedTime(template.updatedAt)}`}</Text>
+            </CardFooter>
           </Card>
         </div>
       ))}

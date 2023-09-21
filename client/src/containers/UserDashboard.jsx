@@ -6,9 +6,8 @@ import { useWindowSize } from "react-use";
 import {
   Button, Input, Spacer, Table, Tooltip, Link as LinkNext, Chip, Modal, CircularProgress, TableHeader, TableColumn, TableCell, TableBody, TableRow, ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
-import {
-  Chart, Delete, Edit, People, Search, Setting, Swap, User
-} from "react-iconly";
+import { IoAdd, IoCreateOutline, IoPeople, IoPersonCircle, IoSearchOutline, IoSettings, IoStatsChart, IoTrashBin } from "react-icons/io5";
+import { BsPlugin } from "react-icons/bs";
 
 import {
   getTeams as getTeamsAction,
@@ -30,7 +29,6 @@ import { secondary } from "../config/colors";
 import Container from "../components/Container";
 import Row from "../components/Row";
 import Text from "../components/Text";
-import { HiPlus } from "react-icons/hi";
 
 /*
   The user dashboard with all the teams and projects
@@ -217,50 +215,53 @@ function UserDashboard(props) {
         {teams && teams.map((key) => {
           return (
             <>
-              <Container
-                key={key.id}
-                size="md"
-                className={"flex flex-row justify-center align-middle"}
-              >
-                <Row justify="flex-start" align="center">
-                  {key.TeamRoles.length > 1 && <People />}
-                  {key.TeamRoles.length < 2 && <User />}
-                  <Spacer x={1} />
-                  <Text
-                    size={"xl"}
-                    b
-                    className={"inline"}
-                    title={`${key.TeamRoles.length} member${key.TeamRoles.length > 1 ? "s" : ""}`}
-                  >
-                    {key.name}
-                  </Text>
-                  <Spacer x={2} />
-                  {key.TeamRoles[0] && (
-                    <Chip color="secondary" size="sm">
-                      {_getTeamRole(key.TeamRoles)}
-                    </Chip>
-                  )}
+              <Container className={"mt-4"}>
+                <Row
+                  key={key.id}
+                  align={"center"}
+                  justify={"space-between"}
+                >
+                  <Row justify="flex-start" align="center">
+                    {key.TeamRoles.length > 1 && <IoPeople size={28} />}
+                    {key.TeamRoles.length < 2 && <IoPersonCircle size={28} />}
+                    <Spacer x={1} />
+                    <Text
+                      size={"xl"}
+                      b
+                      className={"inline"}
+                      title={`${key.TeamRoles.length} member${key.TeamRoles.length > 1 ? "s" : ""}`}
+                    >
+                      {key.name}
+                    </Text>
+                    <Spacer x={2} />
+                    {key.TeamRoles[0] && (
+                      <Chip color="secondary" size="sm">
+                        {_getTeamRole(key.TeamRoles)}
+                      </Chip>
+                    )}
+                  </Row>
+                  {_canAccess("admin", key.TeamRoles)
+                    && (
+                      <Row justify="flex-end" align="center">
+                        <Tooltip content="Team settings">
+                          <div>
+                            <Link to={`/manage/${key.id}/settings`}>
+                              <Button
+                                style={width >= 768 ? styles.settingsBtn : {}}
+                                className={"min-w-fit"}
+                                // size="sm"
+                                isIconOnly
+                              >
+                                <IoSettings />
+                              </Button>
+                            </Link>
+                          </div>
+                        </Tooltip>
+                      </Row>
+                    )}
                 </Row>
-                {_canAccess("admin", key.TeamRoles)
-                  && (
-                    <Row justify="flex-end" align="center">
-                      <Tooltip content="Team settings">
-                        <div>
-                          <Link to={`/manage/${key.id}/settings`}>
-                            <Button
-                              style={width >= 768 ? styles.settingsBtn : {}}
-                              className={"min-w-fit"}
-                              size="sm"
-                              isIconOnly
-                            >
-                              <Setting />
-                            </Button>
-                          </Link>
-                        </div>
-                      </Tooltip>
-                    </Row>
-                  )}
               </Container>
+              <Spacer y={4} />
               <Container>
                 <Spacer y={2} />
                 <Row className={"gap-2"} justify="flex-start" align="center">
@@ -269,7 +270,7 @@ function UserDashboard(props) {
                       <Button
                         color="primary"
                         onClick={() => _onNewProject(key)}
-                        endContent={<HiPlus />}
+                        endContent={<IoAdd />}
                       >
                         Create new project
                       </Button>
@@ -279,7 +280,7 @@ function UserDashboard(props) {
                     type="text"
                     placeholder="Search projects"
                     variant="bordered"
-                    endContent={<Search set="light" />}
+                    endContent={<IoSearchOutline />}
                     onChange={(e) => setSearch({ ...search, [key.id]: e.target.value })}
                     className="max-w-[300px]"
                   />
@@ -292,18 +293,16 @@ function UserDashboard(props) {
                   >
                     <TableHeader>
                       <TableColumn key="name">Project name</TableColumn>
-                      <TableColumn key="connections" align="center">
-                        <Row align="center" justify="center">
-                          <Swap size="small" />
-                          <Spacer x={0.2} />
-                          Connections
+                      <TableColumn key="connections">
+                        <Row align="end" justify="center" className={"gap-1"}>
+                          <BsPlugin />
+                          <Text>Connections</Text>
                         </Row>
                       </TableColumn>
-                      <TableColumn key="charts" align="center">
-                        <Row align="center" justify="center">
-                          <Chart size="small" />
-                          <Spacer x={0.2} />
-                          Charts
+                      <TableColumn key="charts">
+                        <Row align="end" justify="center" className={"gap-1"}>
+                          <IoStatsChart />
+                          <Text>Charts</Text>
                         </Row>
                       </TableColumn>
                       <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
@@ -336,7 +335,7 @@ function UserDashboard(props) {
                                 <Row justify="flex-end" align="center">
                                   <Tooltip content="Rename the project">
                                     <Button
-                                      startContent={<Edit set="light" />}
+                                      startContent={<IoCreateOutline />}
                                       variant="light"
                                       size="sm"
                                       className={"min-w-fit"}
@@ -349,7 +348,7 @@ function UserDashboard(props) {
                                   >
                                     <Button
                                       color="danger"
-                                      startContent={<Delete set="light" />}
+                                      startContent={<IoTrashBin />}
                                       variant="light"
                                       size="sm"
                                       className={"min-w-fit"}
@@ -447,7 +446,7 @@ function UserDashboard(props) {
                     <Button
                       auto
                       color="danger"
-                      endContent={<Delete />}
+                      endContent={<IoTrashBin />}
                       onClick={() => _onDeleteProjectSubmit()}
                       isLoading={modifyingProject}
                     >

@@ -8,6 +8,7 @@ import thunk from "redux-thunk";
 import logger from "redux-logger";
 import { NextUIProvider } from "@nextui-org/react";
 import { IconlyProvider } from "react-iconly";
+import { IconContext } from "react-icons";
 
 import Main from "./containers/Main";
 import reducer from "./reducers";
@@ -49,9 +50,11 @@ export default function App() {
     <Provider store={store}>
       <Router history={history}>
         <NextUIProvider>
-          <IconlyProvider set="bulk">
-            <Main />
-          </IconlyProvider>
+          <IconContext.Provider value={{ className: "react-icons", size: 20 }}>
+            <IconlyProvider set="bulk">
+              <Main />
+            </IconlyProvider>
+          </IconContext.Provider>
         </NextUIProvider>
       </Router>
     </Provider>
