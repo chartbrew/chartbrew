@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Spacer, Link, Card, Tabs, Tab, CardBody, Image, CardFooter,
+  Button, Input, Spacer, Link, Card, Tabs, Tab, CardBody, Image, CardFooter, Divider,
 } from "@nextui-org/react";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
@@ -14,14 +14,11 @@ import GaTemplate from "../../Connections/GoogleAnalytics/GaTemplate";
 import CustomTemplates from "../../Connections/CustomTemplates/CustomTemplates";
 import PlausibleTemplate from "../../Connections/Plausible/PlausibleTemplate";
 import canAccess from "../../../config/canAccess";
-import plausibleDash from "../../Connections/Plausible/plausible-template.jpeg";
-import simpleanalyticsDash from "../../Connections/SimpleAnalytics/simpleanalytics-template.jpeg";
-import chartmogulDash from "../../Connections/ChartMogul/chartmogul-template.jpeg";
-import mailgunDash from "../../Connections/Mailgun/mailgun-template.jpeg";
-import gaDash from "../../Connections/GoogleAnalytics/ga-template.jpeg";
 import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
+import { IoArrowBack, IoArrowForward } from "react-icons/io5";
+import availableTemplates from "../../../modules/availableTemplates";
 
 function ChartDescription(props) {
   const {
@@ -69,15 +66,15 @@ function ChartDescription(props) {
   };
 
   return (
-    <Container className={"bg-content2 rounded-md p-10"}>
-      <Row align="center" wrap="wrap" className={"flex gap-1 ml-0"}>
+    <Container className={"bg-content1 rounded-md p-5 mt-10"}>
+      <Row align="center" wrap="wrap">
         <Tabs selectedKey={selectedMenu} onSelectionChange={(key) => setSelectedMenu(key)}>
-          <Tab key="emptyChart" value="emptyChart" label="Create from scratch" />
-          <Tab key="communityTemplates" value="communityTemplates" label="Community templates" />
-          <Tab key="customTemplates" value="customTemplates" label="Custom templates" />
+          <Tab key="emptyChart" title="Create from scratch" />
+          <Tab key="communityTemplates" title="Community templates" />
+          <Tab key="customTemplates" title="Custom templates" />
         </Tabs>
       </Row>
-      <Spacer y={2} />
+      <Spacer y={4} />
       {!formType && (
         <>
           {selectedMenu === "emptyChart" && (
@@ -142,101 +139,46 @@ function ChartDescription(props) {
                 </>
               )}
 
-              <Spacer y={2} />
+              <Spacer y={4} />
               <Row align="center">
                 <Button
-                  disabled={!name}
+                  isDisabled={!name}
                   isLoading={loading}
                   type="submit"
                   onClick={_onCreatePressed}
                   form="create-chart"
-                  auto
+                  color="primary"
                   size="lg"
+                  endContent={<IoArrowForward />}
                 >
                   Start editing
                 </Button>
-                <Spacer x={1} />
-                <Link
-                  onClick={() => history.goBack()}
-                >
-                  <Text b className={"text-secondary"}>Go back</Text>
-                </Link>
               </Row>
             </>
           )}
           {selectedMenu === "communityTemplates" && (
             <Row align="center">
               <div className="grid grid-cols-12 gap-2">
-                <div className="col-span-4 sm:col-span-12 md:col-span-6">
-                  <Card variant="flat" isPressable isHoverable className="project-segment" onClick={() => setFormType("saTemplate")}>
-                    <CardBody className="p-10">
-                      <Image className="object-cover" width="300" height="300" src={simpleanalyticsDash} />
-                    </CardBody>
-                    <CardFooter>
-                      <Row wrap="wrap" justify="center" align="center">
-                        <Text size="h4">
-                          Simple Analytics
-                        </Text>
-                      </Row>
-                    </CardFooter>
-                  </Card>
-                </div>
-                <div className="col-span-4 sm:col-span-12 md:col-span-6">
-                  <Card variant="flat" isPressable isHoverable className="project-segment" onClick={() => setFormType("cmTemplate")}>
-                    <CardBody className="p-0">
-                      <Image className="object-cover" width="300" height="300" src={chartmogulDash} />
-                    </CardBody>
-                    <CardFooter>
-                      <Row wrap="wrap" justify="center" align="center">
-                        <Text size="h4">
-                          ChartMogul
-                        </Text>
-                      </Row>
-                    </CardFooter>
-                  </Card>
-                </div>
-                <div className="col-span-4 sm:col-span-12 md:col-span-6">
-                  <Card variant="flat" isPressable isHoverable className="project-segment" onClick={() => setFormType("mailgunTemplate")}>
-                    <CardBody className="p-0">
-                      <Image className="object-cover" width="300" height="300" src={mailgunDash} />
-                    </CardBody>
-                    <CardFooter>
-                      <Row wrap="wrap" justify="center" align="center">
-                        <Text size="h4">
-                          Mailgun
-                        </Text>
-                      </Row>
-                    </CardFooter>
-                  </Card>
-                </div>
-                <div className="col-span-4 sm:col-span-12 md:col-span-6">
-                  <Card variant="flat" isPressable isHoverable className="project-segment" onClick={() => setFormType("googleAnalyticsTemplate")}>
-                    <CardBody className="p-0">
-                      <Image className="object-cover" width="300" height="300" src={gaDash} />
-                    </CardBody>
-                    <CardFooter>
-                      <Row wrap="wrap" justify="center" align="center">
-                        <Text size="h4">
-                          Google Analytics
-                        </Text>
-                      </Row>
-                    </CardFooter>
-                  </Card>
-                </div>
-                <div className="col-span-4 sm:col-span-12 md:col-span-6">
-                  <Card variant="flat" isPressable isHoverable className="project-segment" onClick={() => setFormType("plausibleTemplate")}>
-                    <CardBody className="p-0">
-                      <Image className="object-cover" width="300" height="300" src={plausibleDash} />
-                    </CardBody>
-                    <CardFooter>
-                      <Row wrap="wrap" justify="center" align="center">
-                        <Text size="h4">
-                          Plausible Analytics
-                        </Text>
-                      </Row>
-                    </CardFooter>
-                  </Card>
-                </div>
+                {availableTemplates.map((t) => (
+                  <div key={t.type} className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-3">
+                    <Card
+                      isPressable
+                      isHoverable
+                      onClick={() => setFormType(t.type)}
+                    >
+                      <CardBody className="p-0">
+                        <Image className="object-cover" width="300" height="300" src={t.image} />
+                      </CardBody>
+                      <CardFooter>
+                        <Row wrap="wrap" justify="center" align="center">
+                          <Text size="h4">
+                            {t.name}
+                          </Text>
+                        </Row>
+                      </CardFooter>
+                    </Card>
+                  </div>
+                ))}
               </div>
             </Row>
           )}
@@ -254,6 +196,25 @@ function ChartDescription(props) {
               />
             </Row>
           )}
+        </>
+      )}
+
+      {formType && (
+        <>
+          <Row align={"start"} justify={"start"}>
+            <Button
+              variant="flat"
+              onClick={() => setFormType("")}
+              startContent={<IoArrowBack />}
+              size="small"
+            >
+              Back
+            </Button>
+          </Row>
+
+          <Spacer y={2} />
+          <Divider />
+          <Spacer y={4} />
         </>
       )}
 

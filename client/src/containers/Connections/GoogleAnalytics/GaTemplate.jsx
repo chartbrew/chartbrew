@@ -4,10 +4,6 @@ import { connect } from "react-redux";
 import {
   Button, Checkbox, Divider, Input, Select, SelectItem, Spacer,
 } from "@nextui-org/react";
-import {
-  CloseSquare, Plus, TickSquare
-} from "react-iconly";
-import { FaGoogle } from "react-icons/fa";
 import _ from "lodash";
 import cookie from "react-cookies";
 
@@ -17,9 +13,9 @@ import {
 } from "../../../actions/connection";
 import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
-import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
+import { IoAdd, IoArrowForward, IoCheckmarkDone, IoClose, IoLogoGoogle } from "react-icons/io5";
 
 /*
   The Form used to configure the SimpleAnalytics template
@@ -298,221 +294,217 @@ function GaTemplate(props) {
 
   return (
     <div style={styles.container}>
-      <Container
-        className={"bg-content2 rounded-md"}
-        size="md"
-        justify="flex-start"
-      >
-        <Row align="center">
-          <Text size="h3">Configure the template</Text>
-        </Row>
-
-        {availableConnections && availableConnections.length > 0 && (
-          <>
-            <Row align="center">
-              <Select
-                isDisabled={formVisible}
-                label="Select an existing connection"
-                placeholder="Click to select a connection"
-                value={_getListName(availableConnections, selectedConnection, true)}
-                selectedKeys={[selectedConnection]}
-                onSelectionChange={(key) => _onSelectConnection(key)}
-                selectionMode="single"
-                variant="bordered"
+      <Row align="center">
+        <Text size="h3">Configure the template</Text>
+      </Row>
+      <Spacer y={2} />
+      {availableConnections && availableConnections.length > 0 && (
+        <>
+          <Row align="center">
+            <Select
+              isDisabled={formVisible}
+              label="Select an existing connection"
+              placeholder="Click to select a connection"
+              value={_getListName(availableConnections, selectedConnection, true)}
+              selectedKeys={[selectedConnection]}
+              onSelectionChange={(keys) => _onSelectConnection(keys.currentKey)}
+              selectionMode="single"
+              variant="bordered"
+            >
+              {availableConnections.map((connection) => (
+                <SelectItem key={connection.key}>
+                  {connection.text}
+                </SelectItem>
+              ))}
+            </Select>
+          </Row>
+          <Spacer y={1} />
+          <Row align="center">
+            {!formVisible && (
+              <Button
+                variant="faded"
+                startContent={<IoAdd />}
+                onClick={() => setFormVisible(true)}
+                color="primary"
+                size="sm"
               >
-                {availableConnections.map((connection) => (
-                  <SelectItem key={connection.key}>
-                    {connection.text}
-                  </SelectItem>
-                ))}
-              </Select>
-            </Row>
-            <Spacer y={1} />
-            <Row align="center">
-              {!formVisible && (
-                <Button
-                  variant="ghost"
-                  startContent={<Plus />}
-                  onClick={() => setFormVisible(true)}
-                  auto
-                >
-                  Or create a new connection
-                </Button>
-              )}
-              {formVisible && (
-                <Button
-                  variant="ghost"
-                  auto
-                  onClick={() => setFormVisible(false)}
-                >
-                  Use an existing connection instead
-                </Button>
-              )}
-            </Row>
-            <Spacer y={2} />
-            <Row>
-              <div className="grid grid-cols-12 gap-1">
-                {selectedConnection && !formVisible && (
-                  <>
-                    <div className="col-span-12 lg:col-span-6 xl:col-span-6">
-                      <Select
-                        variant="bordered"
-                        label="Account"
-                        placeholder="Select an account"
-                        value={_getListName(accountOptions, configuration.accountId)}
-                        selectedKeys={[configuration.accountId]}
-                        onSelectionChange={(key) => _onAccountSelected(key)}
-                        selectionMode="single"
-                      >
-                        {accountOptions.map((option) => (
-                          <SelectItem key={option.key}>
-                            {option.text}
-                          </SelectItem>
-                        ))}
-                      </Select>
-                    </div>
-                    <div className="col-span-12 lg:col-span-6 xl:col-span-6">
-                      <Select
-                        isDisabled={!configuration.accountId}
-                        variant="bordered"
-                        label="Property"
-                        placeholder="Select a property"
-                        value={_getListName(propertyOptions, configuration.propertyId)}
-                        selectedKeys={[configuration.propertyId]}
-                        onSelectionChange={(key) => _onPropertySelected(key)}
-                        selectionMode="single"
-                      >
-                        {propertyOptions.map((option) => (
-                          <SelectItem key={option.key}>
-                            {option.text}
-                          </SelectItem>
-                        ))}
-                      </Select>
-                    </div>
-                  </>
-                )}
-              </div>
-            </Row>
-          </>
-        )}
-
-        {formVisible && (
-          <>
-            {availableConnections && availableConnections.length > 0 && (
-              <Row>
-                <Divider />
-              </Row>
+                Or create a new connection
+              </Button>
             )}
-            <Spacer y={2} />
-            <Row align="center">
-              <Input
-                placeholder="Google analytics"
-                label="Enter a name for your connection"
-                value={connection.name || ""}
-                onChange={(e) => {
-                  setConnection({ ...connection, name: e.target.value });
-                }}
-                variant="bordered"
-                fullWidth
-                color={errors.name ? "danger" : "primary"}
-                description={errors.name}
-              />
-            </Row>
-            <Spacer y={2} />
-            <Row align="center">
+            {formVisible && (
               <Button
-                color={"secondary"}
-                endContent={<FaGoogle size={20} />}
-                onClick={_onGoogleAuth}
-                auto
+                variant="faded"
+                color="primary"
+                onClick={() => setFormVisible(false)}
               >
-                {"Authenticate with Google"}
+                Use an existing connection instead
               </Button>
-            </Row>
-            {errors.auth && (<Row><p>{errors.auth}</p></Row>)}
-          </>
-        )}
+            )}
+          </Row>
+          <Spacer y={4} />
 
-        {configuration && (
-          <>
-            <Spacer y={2} />
+          <div className="grid grid-cols-12 gap-2">
+            {selectedConnection && !formVisible && (
+              <>
+                <div className="col-span-12 md:col-span-6">
+                  <Select
+                    variant="bordered"
+                    label="Account"
+                    placeholder="Select an account"
+                    value={_getListName(accountOptions, configuration.accountId)}
+                    selectedKeys={[configuration.accountId]}
+                    onSelectionChange={(keys) => _onAccountSelected(keys.currentKey)}
+                    selectionMode="single"
+                  >
+                    {accountOptions.map((option) => (
+                      <SelectItem key={option.key}>
+                        {option.text}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                </div>
+                <div className="col-span-12 md:col-span-6">
+                  <Select
+                    isDisabled={!configuration.accountId}
+                    variant="bordered"
+                    label="Property"
+                    placeholder="Select a property"
+                    value={_getListName(propertyOptions, configuration.propertyId)}
+                    selectedKeys={[configuration.propertyId]}
+                    onSelectionChange={(keys) => _onPropertySelected(keys.currentKey)}
+                    selectionMode="single"
+                  >
+                    {propertyOptions.map((option) => (
+                      <SelectItem key={option.key}>
+                        {option.text}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      )}
+
+      {formVisible && (
+        <>
+          {availableConnections && availableConnections.length > 0 && (
             <Row>
-              <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
+              <Divider />
             </Row>
-            <Spacer y={2} />
-            <Row align="center">
-              <div className="grid grid-cols-12">
-                {configuration.Charts && configuration.Charts.map((chart) => (
-                  <div className="col-span-12 md:col-span-6 lg:col-span-4 xl:col-span-3" key={chart.tid}>
-                    <Checkbox
-                      isSelected={
-                        _.indexOf(selectedCharts, chart.tid) > -1
-                      }
-                      onChange={() => _onChangeSelectedCharts(chart.tid)}
-                      size="sm"
-                    >
-                      {chart.name}
-                    </Checkbox>
-                  </div>
-                ))}
-              </div>
-            </Row>
+          )}
+          <Spacer y={2} />
+          <Row align="center">
+            <Input
+              placeholder="Google analytics"
+              label="Enter a name for your connection"
+              value={connection.name || ""}
+              onChange={(e) => {
+                setConnection({ ...connection, name: e.target.value });
+              }}
+              variant="bordered"
+              fullWidth
+              color={errors.name ? "danger" : "default"}
+              description={errors.name}
+            />
+          </Row>
+          <Spacer y={2} />
+          <Row align="center">
+            <Button
+              variant={"faded"}
+              endContent={<IoLogoGoogle />}
+              onClick={_onGoogleAuth}
+              color="secondary"
+            >
+              {"Authenticate with Google"}
+            </Button>
+          </Row>
+          {errors.auth && (<Row><p>{errors.auth}</p></Row>)}
+        </>
+      )}
 
-            <Spacer y={2} />
-            <Row>
-              <Button
-                variant="bordered"
-                startContent={<TickSquare />}
-                auto
-                onClick={_onSelectAll}
-                size="sm"
-              >
-                Select all
-              </Button>
-              <Spacer x={1} />
-              <Button
-                variant="bordered"
-                startContent={<CloseSquare />}
-                auto
-                onClick={_onDeselectAll}
-                size="sm"
-              >
-                Deselect all
-              </Button>
-            </Row>
-          </>
-        )}
-
-        {addError && (
+      {configuration && (
+        <>
+          <Spacer y={4} />
           <Row>
-            <Container className={"bg-danger-100 rounded-md p-10"}>
+            <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
+          </Row>
+          <Spacer y={2} />
+          <Row align="center">
+            <div className="grid grid-cols-12 gap-2">
+              {configuration.Charts && configuration.Charts.map((chart) => (
+                <div className="col-span-12 md:col-span-6 lg:col-span-4 xl:col-span-3 flex items-center" key={chart.tid}>
+                  <Checkbox
+                    isSelected={
+                      _.indexOf(selectedCharts, chart.tid) > -1
+                    }
+                    onChange={() => _onChangeSelectedCharts(chart.tid)}
+                    size="sm"
+                  >
+                    {chart.name}
+                  </Checkbox>
+                </div>
+              ))}
+            </div>
+          </Row>
+
+          <Spacer y={4} />
+          <Row>
+            <Button
+              variant="ghost"
+              startContent={<IoCheckmarkDone />}
+              onClick={_onSelectAll}
+              size="sm"
+            >
+              Select all
+            </Button>
+            <Spacer x={1} />
+            <Button
+              variant="ghost"
+              startContent={<IoClose />}
+              onClick={_onDeselectAll}
+              size="sm"
+            >
+              Deselect all
+            </Button>
+          </Row>
+        </>
+      )}
+
+      {addError && (
+        <>
+          <Spacer y={4} />
+          <Row>
+            <div className={"bg-danger-50 rounded-md p-5"}>
               <Row>
                 <Text h5>{"Server error while trying to save your connection"}</Text>
               </Row>
               <Row>
                 <Text>Please try again</Text>
               </Row>
-            </Container>
+            </div>
           </Row>
-        )}
+        </>
+      )}
 
-        <Spacer y={4} />
-        <Row>
-          <Button
-            disabled={
-              (!formVisible && !selectedConnection)
-              || !configuration.accountId
-              || !configuration.propertyId
-              || (!selectedCharts || selectedCharts.length < 1)
-            }
-            onClick={_onGenerateDashboard}
-            auto
-            isLoading={loading}
-          >
-            {"Create the charts"}
-          </Button>
-        </Row>
-      </Container>
+      <Spacer y={8} />
+      <Row>
+        <Button
+          isDisabled={
+            (!formVisible && !selectedConnection)
+            || !configuration.accountId
+            || !configuration.propertyId
+            || (!selectedCharts || selectedCharts.length < 1)
+          }
+          onClick={_onGenerateDashboard}
+          color="primary"
+          isLoading={loading}
+          endContent={<IoArrowForward />}
+        >
+          {"Create the charts"}
+        </Button>
+      </Row>
     </div>
   );
 }

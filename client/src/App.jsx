@@ -50,7 +50,7 @@ export default function App() {
     <Provider store={store}>
       <Router history={history}>
         <NextUIProvider>
-          <IconContext.Provider value={{ className: "react-icons", size: 20 }}>
+          <IconContext.Provider value={{ className: "react-icons", size: 20, style: { opacity: 0.8 } }}>
             <IconlyProvider set="bulk">
               <Main />
             </IconlyProvider>

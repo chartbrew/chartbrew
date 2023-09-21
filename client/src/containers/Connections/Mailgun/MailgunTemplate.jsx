@@ -3,16 +3,12 @@ import PropTypes from "prop-types";
 import {
   Button, Checkbox, Divider, Input, Link, Select, SelectItem, Spacer,
 } from "@nextui-org/react";
-import {
-  ChevronDown, CloseSquare, Plus, TickSquare
-} from "react-iconly";
-import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import _ from "lodash";
 import cookie from "react-cookies";
+import { IoAdd, IoArrowForward, IoCheckmarkDone, IoClose, IoLink } from "react-icons/io5";
 
 import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
-import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 
@@ -191,221 +187,220 @@ function MailgunTemplate(props) {
 
   return (
     <div style={styles.container}>
-      <Container
-        className={"bg-content2 rounded-md"}
-        size="md"
-        justify="flex-start"
-      >
-        <Row align="center">
-          <Text size="h3">Configure the template</Text>
-        </Row>
+      <Row align="center">
+        <Text size="h3">Configure the template</Text>
+      </Row>
 
-        {availableConnections && availableConnections.length > 0 && (
-          <>
-            <Row>
-              <div className="grid grid-cols-12 gap-1">
-                <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6">
-                  <Select
-                    isDisabled={formVisible}
-                    label="Select an existing connection"
-                    placeholder="Click to select a connection"
-                    value={_getConnectionName()}
-                    onSelectionChange={(key) => setSelectedConnection(key)}
-                    variant="bordered"
-                    selectionMode="single"
-                    selectedKeys={[selectedConnection]}
-                  >
-                    {availableConnections.map((connection) => (
-                      <SelectItem key={connection.key}>
-                        {connection.text}
-                      </SelectItem>
-                    ))}
-                  </Select>
-                </div>
-                <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6">
-                  <Input
-                    label="Enter your Mailgun domain"
-                    placeholder="mg.domain.com"
-                    value={(!formVisible && connection.domain) || ""}
-                    onChange={(e) => {
-                      setConnection({ ...connection, domain: e.target.value });
-                    }}
-                    color={errors.domain ? "danger" : "default"}
-                    description={errors.domain}
-                    variant="bordered"
-                    fullWidth
-                    disabled={formVisible}
-                  />
-                </div>
-              </div>
-            </Row>
-            <Spacer y={2} />
-            <Row align="center">
-              {!formVisible && (
-                <Button
-                  variant="ghost"
-                  startContent={<Plus />}
-                  onClick={() => setFormVisible(true)}
-                  auto
-                >
-                  Or create a new connection
-                </Button>
-              )}
-              {formVisible && (
-                <Button
-                  variant="ghost"
-                  auto
-                  onClick={() => setFormVisible(false)}
-                >
-                  Use an existing connection instead
-                </Button>
-              )}
-            </Row>
-          </>
-        )}
-        <Spacer y={2} />
-        {formVisible && (
-          <>
-            {availableConnections && availableConnections.length > 0 && (
-              <Row>
-                <Divider />
-              </Row>
-            )}
-            <Spacer y={2} />
-            <Row align="center">
-              <Select
-                variant="bordered"
-                label="Select your Mailgun domain location"
-                placeholder="Domain location"
-                value={_getCountryName() || ""}
-                selectedKeys={[connection.domainLocation]}
-                onSelectionChange={(key) => setConnection({ ...connection, domainLocation: key })}
-                selectionMode="single"
-                endContent={<ChevronDown />}
-              >
-                {countryOptions.map((location) => (
-                  <SelectItem key={location.key}>
-                    {location.text}
-                  </SelectItem>
-                ))}
-              </Select>
-            </Row>
-            <Spacer y={2} />
-            <Row align="center">
-              <Input
-                label="Enter your Mailgun domain"
-                placeholder="mg.example.com"
-                value={connection.domain || ""}
-                onChange={(e) => {
-                  setConnection({ ...connection, domain: e.target.value });
-                }}
-                color={errors.domain ? "danger" : "default"}
-                description={errors.domain}
-                variant="bordered"
-                fullWidth
-              />
-            </Row>
-            <Spacer y={2} />
-            <Row align="center">
-              <Input
-                label="Enter your Mailgun Private API Key"
-                placeholder="**********2bPvT"
-                value={connection.apiKey || ""}
-                onChange={(e) => {
-                  setConnection({ ...connection, apiKey: e.target.value });
-                }}
-                color={errors.apiKey ? "danger" : "default"}
-                description={errors.apiKey}
-                variant="bordered"
-                fullWidth
-              />
-            </Row>
-            <Spacer y={1} />
-            <Row align="center">
-              <Link
-                href="https://app.mailgun.com/app/account/security/api_keys"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="flex items-center text-secondary"
-              >
-                <Text className={"text-secondary"}>
-                  {"Get your Private API Key from here"}
-                </Text>
-                <Spacer x={1} />
-                <FaExternalLinkSquareAlt size={16} />
-              </Link>
-            </Row>
-          </>
-        )}
-
-        {configuration && (
-          <>
-            <Spacer y={2} />
-            <Row>
-              <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
-            </Row>
-            <Spacer y={2} />
-            <Row align="center">
-              <div className="grid grid-cols-12">
-                {configuration.Charts && configuration.Charts.map((chart) => (
-                  <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6" key={chart.tid}>
-                    <Checkbox
-                      isSelected={
-                        _.indexOf(selectedCharts, chart.tid) > -1
-                      }
-                      onChange={() => _onChangeSelectedCharts(chart.tid)}
-                      size="sm"
-                    >
-                      {chart.name}
-                    </Checkbox>
-                  </div>
-                ))}
-              </div>
-            </Row>
-
-            <Spacer y={2} />
-            <Row>
-              <Button
-                variant="bordered"
-                startContent={<TickSquare />}
-                auto
-                onClick={_onSelectAll}
-                size="sm"
-              >
-                Select all
-              </Button>
-              <Spacer x={1} />
-              <Button
-                variant="bordered"
-                startContent={<CloseSquare />}
-                auto
-                onClick={_onDeselectAll}
-                size="sm"
-              >
-                Deselect all
-              </Button>
-            </Row>
-          </>
-        )}
-
-        {addError && (
+      {availableConnections && availableConnections.length > 0 && (
+        <>
           <Row>
-            <Container className={"bg-danger-100 p-10 rounded-md"}>
+            <div className="grid grid-cols-12 gap-1">
+              <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6">
+                <Select
+                  isDisabled={formVisible}
+                  label="Select an existing connection"
+                  placeholder="Click to select a connection"
+                  value={_getConnectionName()}
+                  onSelectionChange={(key) => setSelectedConnection(key)}
+                  variant="bordered"
+                  selectionMode="single"
+                  selectedKeys={[selectedConnection]}
+                >
+                  {availableConnections.map((connection) => (
+                    <SelectItem key={connection.key}>
+                      {connection.text}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </div>
+              <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6">
+                <Input
+                  label="Enter your Mailgun domain"
+                  placeholder="mg.domain.com"
+                  value={(!formVisible && connection.domain) || ""}
+                  onChange={(e) => {
+                    setConnection({ ...connection, domain: e.target.value });
+                  }}
+                  color={errors.domain ? "danger" : "default"}
+                  description={errors.domain}
+                  variant="bordered"
+                  fullWidth
+                  disabled={formVisible}
+                />
+              </div>
+            </div>
+          </Row>
+          <Spacer y={2} />
+          <Row align="center">
+            {!formVisible && (
+              <Button
+                variant="ghost"
+                startContent={<IoAdd />}
+                onClick={() => setFormVisible(true)}
+                auto
+              >
+                Or create a new connection
+              </Button>
+            )}
+            {formVisible && (
+              <Button
+                variant="ghost"
+                auto
+                onClick={() => setFormVisible(false)}
+              >
+                Use an existing connection instead
+              </Button>
+            )}
+          </Row>
+        </>
+      )}
+      <Spacer y={2} />
+      {formVisible && (
+        <>
+          {availableConnections && availableConnections.length > 0 && (
+            <Row>
+              <Divider />
+            </Row>
+          )}
+          <Spacer y={2} />
+          <Row align="center">
+            <Select
+              variant="bordered"
+              label="Select your Mailgun domain location"
+              placeholder="Domain location"
+              value={_getCountryName() || ""}
+              selectedKeys={[connection.domainLocation]}
+              onSelectionChange={(keys) => setConnection({ ...connection, domainLocation: keys.currentKey })}
+              selectionMode="single"
+              className="max-w-[400px]"
+            >
+              {countryOptions.map((location) => (
+                <SelectItem key={location.key}>
+                  {location.text}
+                </SelectItem>
+              ))}
+            </Select>
+          </Row>
+          <Spacer y={2} />
+          <Row align="center">
+            <Input
+              label="Enter your Mailgun domain"
+              placeholder="mg.example.com"
+              value={connection.domain || ""}
+              onChange={(e) => {
+                setConnection({ ...connection, domain: e.target.value });
+              }}
+              color={errors.domain ? "danger" : "default"}
+              description={errors.domain}
+              variant="bordered"
+              className="max-w-[400px]"
+            />
+          </Row>
+          <Spacer y={2} />
+          <Row align="center">
+            <Input
+              label="Enter your Mailgun Private API Key"
+              placeholder="**********2bPvT"
+              value={connection.apiKey || ""}
+              onChange={(e) => {
+                setConnection({ ...connection, apiKey: e.target.value });
+              }}
+              color={errors.apiKey ? "danger" : "default"}
+              description={errors.apiKey}
+              variant="bordered"
+              className="max-w-[400px]"
+            />
+          </Row>
+          <Spacer y={2} />
+          <Row align="center">
+            <Link
+              href="https://app.mailgun.com/app/account/security/api_keys"
+              target="_blank"
+              rel="noreferrer noopener"
+              className="flex items-center text-secondary"
+            >
+              <Text size="sm" className={"text-secondary"}>
+                {"Get your Private API Key from here"}
+              </Text>
+              <Spacer x={1} />
+              <IoLink />
+            </Link>
+          </Row>
+        </>
+      )}
+
+      {configuration && (
+        <>
+          <Spacer y={4} />
+          <Row>
+            <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
+          </Row>
+          <Spacer y={2} />
+          <Row align="center">
+            <div className="grid grid-cols-12 gap-2">
+              {configuration.Charts && configuration.Charts.map((chart) => (
+                <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6 flex items-start" key={chart.tid}>
+                  <Checkbox
+                    isSelected={
+                      _.indexOf(selectedCharts, chart.tid) > -1
+                    }
+                    onChange={() => _onChangeSelectedCharts(chart.tid)}
+                    size="sm"
+                  >
+                    {chart.name}
+                  </Checkbox>
+                </div>
+              ))}
+            </div>
+          </Row>
+
+          <Spacer y={4} />
+          <Row>
+            <Button
+              variant="ghost"
+              startContent={<IoCheckmarkDone />}
+              auto
+              onClick={_onSelectAll}
+              size="sm"
+            >
+              Select all
+            </Button>
+            <Spacer x={1} />
+            <Button
+              variant="ghost"
+              startContent={<IoClose />}
+              onClick={_onDeselectAll}
+              size="sm"
+            >
+              Deselect all
+            </Button>
+          </Row>
+        </>
+      )}
+
+      {addError && (
+        <>
+          <Spacer y={4} />
+          <Row>
+            <div className={"bg-danger-50 p-5 rounded-md"}>
               <Row>
-                <Text h5>{"Server error while trying to save your connection"}</Text>
+                <Text b>{"Server error while trying to save your connection"}</Text>
               </Row>
               <Row>
                 <Text>Please try again</Text>
               </Row>
-            </Container>
+            </div>
           </Row>
-        )}
+        </>
+      )}
 
-        {testError && (
+      {testError && (
+        <>
+          <Spacer y={4} />
           <Row>
-            <Container className={"bg-danger-100 p-10 rounded-md"}>
+            <div className={"bg-danger-50 p-5 rounded-md"}>
               <Row>
-                <Text h5>{"Cannot make the connection"}</Text>
+                <Text b>{"Cannot make the connection"}</Text>
               </Row>
               <Row>
                 <Text>{"Please make sure you copied the right token and API key from your Mailgun dashboard."}</Text>
@@ -414,31 +409,32 @@ function MailgunTemplate(props) {
                 <Link href="https://app.mailgun.com/app/account/security/api_keys" target="_blank" rel="noreferrer">
                   <Text>{"Click here to go to the dashboard"}</Text>
                   <Spacer x={1} />
-                  <FaExternalLinkSquareAlt size={12} />
+                  <IoLink />
                 </Link>
               </Row>
-            </Container>
+            </div>
           </Row>
-        )}
+        </>
+      )}
 
-        <Spacer y={4} />
-        <Row>
-          <Button
-            disabled={
-              (!formVisible && (!selectedConnection || (selectedConnection && !connection.domain)))
-              || (formVisible
-                && (!connection.domainLocation || !connection.domain || !connection.apiKey)
-              )
-              || (!selectedCharts || selectedCharts.length < 1)
-            }
-            isLoading={loading}
-            onClick={_onGenerateDashboard}
-            auto
-          >
-            {"Create the charts"}
-          </Button>
-        </Row>
-      </Container>
+      <Spacer y={8} />
+      <Row>
+        <Button
+          isDisabled={
+            (!formVisible && (!selectedConnection || (selectedConnection && !connection.domain)))
+            || (formVisible
+              && (!connection.domainLocation || !connection.domain || !connection.apiKey)
+            )
+            || (!selectedCharts || selectedCharts.length < 1)
+          }
+          isLoading={loading}
+          onClick={_onGenerateDashboard}
+          color="primary"
+          endContent={<IoArrowForward />}
+        >
+          {"Create the charts"}
+        </Button>
+      </Row>
     </div>
   );
 }

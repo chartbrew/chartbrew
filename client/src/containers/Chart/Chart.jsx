@@ -7,17 +7,19 @@ import {
   Card, Spacer, Tooltip, Dropdown, Button, Modal, Input,
   Link as LinkNext, Textarea, Switch, Popover, Chip, CardHeader, CircularProgress, PopoverTrigger, PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, ModalHeader, ModalBody, ModalFooter, CardBody, ModalContent, Select, SelectItem, Listbox, ListboxItem,
 } from "@nextui-org/react";
-import {
-  ArrowDown, ArrowUp, ChevronDown, ChevronDownCircle, ChevronUp, CloseSquare,
-  Delete, EditSquare, Filter2, Graph, Lock, MoreSquare, Paper, PaperDownload,
-  Plus, Send, TickSquare, TimeCircle, Unlock,
-} from "react-iconly";
+
 import moment from "moment";
 import _ from "lodash";
 import { enGB } from "date-fns/locale";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
-import { HiRefresh, HiExternalLink, HiChevronDown } from "react-icons/hi";
+import {
+  IoAdd, IoArrowDown, IoArrowUp, IoCheckmark, IoChevronDown, IoChevronDownCircleOutline,
+  IoChevronUp, IoClipboardOutline, IoClose, IoCloseCircle, IoEasel, IoEaselOutline,
+  IoEllipsisHorizontalCircle, IoFilterCircleOutline, IoLink, IoLockClosed, IoLockOpen,
+  IoLockOpenOutline, IoReload, IoSettings, IoShare, IoTime, IoTimeOutline, IoTrashBin,
+} from "react-icons/io5";
+import { RiFileExcelLine } from "react-icons/ri";
 
 import {
   removeChart as removeChartAction,
@@ -478,7 +480,7 @@ function Chart(props) {
                         size="sm"
                         endContent={(
                           <LinkNext onClick={() => _onClearFilter(c)} className="text-default-500 flex items-center">
-                            <CloseSquare size="small" />
+                            <IoCloseCircle size={14} />
                           </LinkNext>
                         )}
                       >
@@ -509,21 +511,21 @@ function Chart(props) {
                     {chart.autoUpdate > 0 && (
                       <Tooltip content={`Updates every ${_getUpdateFreqText(chart.autoUpdate)}`}>
                         <div>
-                          <TimeCircle size="small" set="light" />
+                          <IoTimeOutline size={14} />
                         </div>
                       </Tooltip>
                     )}
                     {chart.public && !isPublic && !print && (
                       <Tooltip content="This chart is public">
                         <div>
-                          <Unlock size="small" set="light" />
+                          <IoLockOpenOutline size={14} />
                         </div>
                       </Tooltip>
                     )}
                     {chart.onReport && !isPublic && !print && (
                       <Tooltip content="This chart is on a report">
                         <div>
-                          <Graph size="small" set="light" />
+                          <IoEaselOutline size={14} />
                         </div>
                       </Tooltip>
                     )}
@@ -531,12 +533,12 @@ function Chart(props) {
                 )}
               </div>
             </div>
-            <div className="col-span-2 sm:col-span-4 flex items-start justify-end">
+            <div className="col-span-6 sm:col-span-4 flex items-start justify-end">
               {_checkIfFilters() && (
                 <Popover placement="bottom-right">
                   <PopoverTrigger>
-                    <LinkNext className="text-gray-400">
-                      <Filter2 set="light" />
+                    <LinkNext className="text-gray-500">
+                      <IoFilterCircleOutline size={24} />
                     </LinkNext>
                   </PopoverTrigger>
                   <PopoverContent>
@@ -555,61 +557,61 @@ function Chart(props) {
                 <Dropdown>
                   <DropdownTrigger>
                     <LinkNext color="foreground">
-                      <MoreSquare set="light" />
+                      <IoEllipsisHorizontalCircle size={24} />
                     </LinkNext>
                   </DropdownTrigger>
                   <DropdownMenu>
                     <DropdownItem
-                      startContent={(chartLoading || chart.loading) ? <CircularProgress classNames={{ svg: "w-5 h-5" }} size="sm" /> : <HiRefresh size={22} />}
+                      startContent={(chartLoading || chart.loading) ? <CircularProgress classNames={{ svg: "w-5 h-5" }} size="sm" /> : <IoReload />}
                       onClick={_onGetChartData}
                     >
                       Refresh chart
                     </DropdownItem>
                     {_canAccess("editor") && (
-                      <DropdownItem startContent={<TimeCircle />} onClick={_openUpdateModal}>
+                      <DropdownItem startContent={<IoTime />} onClick={_openUpdateModal}>
                         Auto-update
                       </DropdownItem>
                     )}
                     {_canAccess("editor") && (
                       <DropdownItem
-                        startContent={<EditSquare />}
+                        startContent={<IoSettings />}
                         onClick={() => history.push(`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`)}
                       >
                         Edit chart
                       </DropdownItem>
                     )}
                     <DropdownItem
-                      startContent={exportLoading ? <CircularProgress size="sm" /> : <PaperDownload />}
+                      startContent={exportLoading ? <CircularProgress size="sm" /> : <RiFileExcelLine />}
                       onClick={_onExport}
                     >
                       Export to Excel
                     </DropdownItem>
                     {!chart.draft && _canAccess("editor") && (
-                      <DropdownItem startContent={<Graph />} onClick={_onChangeReport}>
+                      <DropdownItem startContent={<IoEasel />} onClick={_onChangeReport}>
                         {chart.onReport ? "Remove from report" : "Add to report"}
                       </DropdownItem>
                     )}
                     {!chart.draft && _canAccess("editor") && (
                       <DropdownItem
                         showDivider
-                        startContent={chart.public ? <Unlock /> : <Lock />}
+                        startContent={chart.public ? <IoLockOpen /> : <IoLockClosed />}
                         onClick={_onPublicConfirmation}
                       >
                         {chart.public ? "Make private" : "Make public"}
                       </DropdownItem>
                     )}
                     {!chart.draft && (
-                      <DropdownItem startContent={<Send />} onClick={_onEmbed}>
+                      <DropdownItem startContent={<IoShare />} onClick={_onEmbed}>
                         {"Embed & Share"}
                       </DropdownItem>
                     )}
                     {!chart.draft && chart.shareable && (
-                      <DropdownItem startContent={<HiExternalLink size={24} />} onClick={_onOpenEmbed}>
+                      <DropdownItem startContent={<IoLink />} onClick={_onOpenEmbed}>
                         {"Open in a new tab"}
                       </DropdownItem>
                     )}
                     {_canAccess("editor") && (
-                      <DropdownItem startContent={<ChevronDownCircle />} closeOnSelect={false}>
+                      <DropdownItem startContent={<IoChevronDownCircleOutline />} closeOnSelect={false}>
                         <Popover>
                           <PopoverTrigger>
                             <Text>Chart size</Text>
@@ -642,13 +644,13 @@ function Chart(props) {
                       </DropdownItem>
                     )}
                     {_canAccess("editor") && (
-                      <DropdownItem showDivider startContent={<ChevronDownCircle />}>
+                      <DropdownItem showDivider startContent={<IoChevronDownCircleOutline />}>
                         <Dropdown>
                           <DropdownTrigger>
                             <Text>Change order</Text>
                           </DropdownTrigger>
                           <DropdownMenu>
-                            <DropdownItem startContent={<ArrowUp />}>
+                            <DropdownItem startContent={<IoArrowUp />}>
                               {_getChartIndex() === 0 && (
                                 <Text className={"text-gray-300"}>
                                   Move to top
@@ -660,7 +662,7 @@ function Chart(props) {
                                 </Text>
                               )}
                             </DropdownItem>
-                            <DropdownItem startContent={<ChevronUp />}>
+                            <DropdownItem startContent={<IoChevronUp />}>
                               {_getChartIndex() === 0 && (
                                 <Text className={"text-gray-300"}>
                                   Move up
@@ -672,7 +674,7 @@ function Chart(props) {
                                 </Text>
                               )}
                             </DropdownItem>
-                            <DropdownItem startContent={<ChevronDown />}>
+                            <DropdownItem startContent={<IoChevronDown />}>
                               {_getChartIndex() === charts.length - 1 && (
                                 <Text css={{ color: "$accents4" }}>
                                   Move down
@@ -684,7 +686,7 @@ function Chart(props) {
                                 </Text>
                               )}
                             </DropdownItem>
-                            <DropdownItem startContent={<ArrowDown />}>
+                            <DropdownItem startContent={<IoArrowDown />}>
                               {_getChartIndex() === charts.length - 1 && (
                                 <Text className={"text-gray-300"}>
                                   Move to bottom
@@ -701,7 +703,7 @@ function Chart(props) {
                       </DropdownItem>
                     )}
                     {_canAccess("editor") && (
-                      <DropdownItem startContent={<Delete />} color="danger" onClick={_onDeleteChartConfirmation}>
+                      <DropdownItem startContent={<IoTrashBin />} color="danger" onClick={_onDeleteChartConfirmation}>
                         Delete chart
                       </DropdownItem>
                     )}
@@ -713,11 +715,11 @@ function Chart(props) {
                 <Dropdown>
                   <DropdownTrigger>
                     <LinkNext className="text-default">
-                      <MoreSquare set="light" />
+                      <IoEllipsisHorizontalCircle />
                     </LinkNext>
                   </DropdownTrigger>
                   <DropdownMenu>
-                    <DropdownItem startContent={exportLoading ? <CircularProgress size="sm" /> : <PaperDownload />}>
+                    <DropdownItem startContent={exportLoading ? <CircularProgress size="sm" /> : <RiFileExcelLine />}>
                       <Text onClick={() => _onPublicExport(chart)}>Export to Excel</Text>
                     </DropdownItem>
                   </DropdownMenu>
@@ -828,7 +830,7 @@ function Chart(props) {
             </Button>
             <Button
               color="danger"
-              endContent={<Delete />}
+              endContent={<IoTrashBin />}
               onClick={_onDeleteChart}
               isLoading={chartLoading}
             >
@@ -861,7 +863,7 @@ function Chart(props) {
             <Button
               isLoading={publicLoading}
               color="primary"
-              endContent={<Unlock />}
+              endContent={<IoLockOpen />}
               onClick={_onPublic}
             >
               Make the chart public
@@ -946,7 +948,7 @@ function Chart(props) {
                       color="default"
                       endContent={(
                         <div>
-                          <HiChevronDown />
+                          <IoChevronDown />
                         </div>
                       )}
                     >
@@ -990,7 +992,7 @@ function Chart(props) {
               Cancel
             </Button>
             <Button
-              endContent={<CloseSquare />}
+              endContent={<IoClose />}
               auto
               variant="flat"
               color="danger"
@@ -1004,7 +1006,7 @@ function Chart(props) {
               Stop auto-updating
             </Button>
             <Button
-              endContent={<TickSquare />}
+              endContent={<IoCheckmark />}
               color="primary"
               isLoading={autoUpdateLoading}
               onClick={() => _onChangeAutoUpdate()}
@@ -1074,7 +1076,7 @@ function Chart(props) {
                     <Spacer y={2} />
                     <Row align="center">
                       <Button
-                        endContent={<Plus />}
+                        endContent={<IoAdd />}
                         auto
                         onClick={_onCreateSharingString}
                       >
@@ -1111,7 +1113,7 @@ function Chart(props) {
                   <Row>
                     <Button
                       color={iframeCopied ? "success" : "primary"}
-                      endContent={iframeCopied ? <TickSquare /> : <Paper />}
+                      endContent={iframeCopied ? <IoClose /> : <IoClipboardOutline />}
                       onClick={_onCopyIframe}
                       variant="ghost"
                       auto
@@ -1133,7 +1135,7 @@ function Chart(props) {
                   <Row>
                     <Button
                       color={urlCopied ? "success" : "primary"}
-                      endContent={iframeCopied ? <TickSquare /> : <Paper />}
+                      endContent={iframeCopied ? <IoClose /> : <IoClipboardOutline />}
                       variant="ghost"
                       onClick={_onCopyUrl}
                       auto

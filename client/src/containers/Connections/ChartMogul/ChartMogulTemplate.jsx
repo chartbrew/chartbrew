@@ -3,18 +3,14 @@ import PropTypes from "prop-types";
 import {
   Button, Checkbox, Divider, Input, Link, Select, SelectItem, Spacer,
 } from "@nextui-org/react";
-import {
-  ArrowUp, CloseSquare, Plus, TickSquare
-} from "react-iconly";
-import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import cookie from "react-cookies";
 import _ from "lodash";
 
 import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
-import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
+import { IoAdd, IoArrowUp, IoCheckmarkDone, IoClose, IoLink } from "react-icons/io5";
 
 /*
   The Form used to configure the ChartMogul template
@@ -161,168 +157,170 @@ function ChartMogulTemplate(props) {
 
   return (
     <div style={styles.container}>
-      <Container
-        className={"bg-content2 rounded-md"}
-        size="md"
-        justify="flex-start"
-      >
-        <Row align="center">
-          <Text size="h3">Configure the template</Text>
-        </Row>
+      <Row align="center">
+        <Text size="h3">Configure the template</Text>
+      </Row>
 
-        {availableConnections && availableConnections.length > 0 && (
-          <>
-            <Row>
-              <Select
-                isDisabled={formVisible}
-                label="Select an existing connection"
-                placeholder="Click to select a connection"
-                value={_getConnectionName()}
-                selectedKeys={[selectedConnection]}
-                onSelectionChange={(key) => setSelectedConnection(key)}
-                selectionMode="single"
-              >
-                {availableConnections.map((connection) => (
-                  <SelectItem key={connection.key}>
-                    {connection.text}
-                  </SelectItem>
-                ))}
-              </Select>
-            </Row>
-            <Spacer y={2} />
-            <Row align="center">
-              {!formVisible && (
-                <Button
-                  variant="ghost"
-                  startContent={<Plus />}
-                  onClick={() => setFormVisible(true)}
-                  auto
-                >
-                  Or create a new connection
-                </Button>
-              )}
-              {formVisible && (
-                <Button
-                  startContent={<ArrowUp />}
-                  variant="ghost"
-                  auto
-                  onClick={() => setFormVisible(false)}
-                >
-                  Use an existing connection
-                </Button>
-              )}
-            </Row>
-          </>
-        )}
-        <Spacer y={4} />
-        {formVisible && (
-          <>
-            {availableConnections && availableConnections.length > 0 && (
-              <Row>
-                <Divider />
-              </Row>
-            )}
-            <Spacer y={4} />
-            <Row align="center">
-              <Input
-                label="Enter your ChartMogul API key"
-                placeholder="de2bf2bc6de5266d11ea6b918b674780"
-                value={connection.key || ""}
-                onChange={(e) => {
-                  setConnection({ ...connection, key: e.target.value, token: e.target.value });
-                }}
-                color={errors.key ? "danger" : "primary"}
-                description={errors.key}
-                variant="bordered"
-                fullWidth
-              />
-            </Row>
-            <Spacer y={2} />
-            <Row align="center">
-              <Link
-                href="https://chartbrew.com/blog/how-to-create-chartmogul-charts-in-chartbrew/#connecting-to-the-chartmogul-data-source"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="flex items-center text-secondary"
-              >
-                <Text className={"text-secondary"}>
-                  {"Click here to learn how to find your ChartMogul API key"}
-                </Text>
-                <Spacer x={1} />
-                <FaExternalLinkSquareAlt size={16} />
-              </Link>
-            </Row>
-          </>
-        )}
-
-        {configuration && (
-          <>
-            <Spacer y={4} />
-            <Row>
-              <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
-            </Row>
-            <Spacer y={2} />
-            <Row align="center">
-              <div className="grid grid-cols-12">
-                {configuration.Charts && configuration.Charts.map((chart) => (
-                  <div key={chart.tid} className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-3">
-                    <Checkbox
-                      isSelected={
-                        _.indexOf(selectedCharts, chart.tid) > -1
-                      }
-                      onChange={() => _onChangeSelectedCharts(chart.tid)}
-                      size="sm"
-                    >
-                      {chart.name}
-                    </Checkbox>
-                  </div>
-                ))}
-              </div>
-            </Row>
-
-            <Spacer y={4} />
-            <Row>
-              <Button
-                variant="bordered"
-                startContent={<TickSquare />}
-                auto
-                onClick={_onSelectAll}
-                size="sm"
-              >
-                Select all
-              </Button>
-              <Spacer x={1} />
-              <Button
-                variant="bordered"
-                startContent={<CloseSquare />}
-                auto
-                onClick={_onDeselectAll}
-                size="sm"
-              >
-                Deselect all
-              </Button>
-            </Row>
-          </>
-        )}
-
-        {addError && (
+      {availableConnections && availableConnections.length > 0 && (
+        <>
           <Row>
-            <Container className={"bg-danger-100 p-10 rounded-md"}>
+            <Select
+              isDisabled={formVisible}
+              label="Select an existing connection"
+              placeholder="Click to select a connection"
+              value={_getConnectionName()}
+              selectedKeys={[selectedConnection]}
+              onSelectionChange={(keys) => setSelectedConnection(keys.currentKey)}
+              selectionMode="single"
+              variant="bordered"
+              className="max-w-[400px]"
+            >
+              {availableConnections.map((connection) => (
+                <SelectItem key={connection.key}>
+                  {connection.text}
+                </SelectItem>
+              ))}
+            </Select>
+          </Row>
+          <Spacer y={2} />
+          <Row align="center">
+            {!formVisible && (
+              <Button
+                variant="faded"
+                startContent={<IoAdd />}
+                onClick={() => setFormVisible(true)}
+                color="primary"
+              >
+                Or create a new connection
+              </Button>
+            )}
+            {formVisible && (
+              <Button
+                endContent={<IoArrowUp />}
+                variant="faded"
+                color="primary"
+                onClick={() => setFormVisible(false)}
+              >
+                Use an existing connection
+              </Button>
+            )}
+          </Row>
+        </>
+      )}
+      <Spacer y={4} />
+      {formVisible && (
+        <>
+          {availableConnections && availableConnections.length > 0 && (
+            <Row>
+              <Divider />
+            </Row>
+          )}
+          <Spacer y={4} />
+          <Row align="center">
+            <Input
+              label="Enter your ChartMogul API key"
+              placeholder="de2bf2bc6de5266d11ea6b918b674780"
+              value={connection.key || ""}
+              onChange={(e) => {
+                setConnection({ ...connection, key: e.target.value, token: e.target.value });
+              }}
+              color={errors.key ? "danger" : "primary"}
+              description={errors.key}
+              variant="bordered"
+              fullWidth
+            />
+          </Row>
+          <Spacer y={2} />
+          <Row align="center">
+            <Link
+              href="https://chartbrew.com/blog/how-to-create-chartmogul-charts-in-chartbrew/#connecting-to-the-chartmogul-data-source"
+              target="_blank"
+              rel="noreferrer noopener"
+              className="flex items-center text-secondary"
+            >
+              <Text className={"text-secondary"}>
+                {"Click here to learn how to find your ChartMogul API key"}
+              </Text>
+              <Spacer x={1} />
+              <IoLink size={16} />
+            </Link>
+          </Row>
+        </>
+      )}
+
+      {configuration && (
+        <>
+          <Spacer y={4} />
+          <Row>
+            <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
+          </Row>
+          <Spacer y={2} />
+          <Row>
+            <div className="grid grid-cols-12 gap-2">
+              {configuration.Charts && configuration.Charts.map((chart) => (
+                <div key={chart.tid} className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-3 flex justify-start">
+                  <Checkbox
+                    isSelected={
+                      _.indexOf(selectedCharts, chart.tid) > -1
+                    }
+                    onChange={() => _onChangeSelectedCharts(chart.tid)}
+                    size="sm"
+                  >
+                    {chart.name}
+                  </Checkbox>
+                </div>
+              ))}
+            </div>
+          </Row>
+
+          <Spacer y={4} />
+          <Row>
+            <Button
+              variant="bordered"
+              startContent={<IoCheckmarkDone />}
+              auto
+              onClick={_onSelectAll}
+              size="sm"
+            >
+              Select all
+            </Button>
+            <Spacer x={1} />
+            <Button
+              variant="bordered"
+              startContent={<IoClose />}
+              auto
+              onClick={_onDeselectAll}
+              size="sm"
+            >
+              Deselect all
+            </Button>
+          </Row>
+        </>
+      )}
+
+      {addError && (
+        <>
+          <Spacer y={4} />
+          <Row>
+            <div className={"bg-danger-50 p-5 rounded-md"}>
               <Row>
-                <Text h5>{"Server error while trying to save your connection"}</Text>
+                <Text b>{"Server error while trying to save your connection"}</Text>
               </Row>
               <Row>
                 <Text>Please try again</Text>
               </Row>
-            </Container>
+            </div>
           </Row>
-        )}
+        </>
+      )}
 
-        {testError && (
+      {testError && (
+        <>
+          <Spacer y={4} />
           <Row>
-            <Container className={"bg-danger-100 p-10 rounded-md"}>
+            <div className={"bg-danger-50 p-5 rounded-md"}>
               <Row>
-                <Text h5>{"Cannot make the connection"}</Text>
+                <Text b>{"Cannot make the connection"}</Text>
               </Row>
               <Row>
                 <Text>{"Please make sure you copied the right token and API key from your ChartMogul dashboard."}</Text>
@@ -331,27 +329,27 @@ function ChartMogulTemplate(props) {
                 <Link href="https://app.chartmogul.com/#/admin/api" target="_blank" rel="noreferrer">
                   <Text>{"Click here to go to the dashboard"}</Text>
                   <Spacer x={1} />
-                  <FaExternalLinkSquareAlt size={12} />
+                  <IoLink />
                 </Link>
               </Row>
-            </Container>
+            </div>
           </Row>
-        )}
+        </>
+      )}
 
-        <Spacer y={4} />
-        <Row>
-          <Button
-            disabled={
-              (!connection.key && formVisible) || selectedCharts.length === 0
-            }
-            onClick={_onGenerateDashboard}
-            auto
-            isLoading={loading}
-          >
-            {"Create the charts"}
-          </Button>
-        </Row>
-      </Container>
+      <Spacer y={4} />
+      <Row>
+        <Button
+          isDisabled={
+            (!connection.key && formVisible) || selectedCharts.length === 0
+          }
+          onClick={_onGenerateDashboard}
+          color="primary"
+          isLoading={loading}
+        >
+          {"Create the charts"}
+        </Button>
+      </Row>
     </div>
   );
 }
