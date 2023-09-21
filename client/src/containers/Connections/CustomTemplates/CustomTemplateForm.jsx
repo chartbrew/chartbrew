@@ -2,21 +2,20 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
 import {
-  Avatar, Button, Card, Checkbox, Divider,
-  Modal, Spacer, Switch, Tooltip,
+  Button, Card, CardBody, CardFooter, CardHeader, Checkbox, Divider,
+  Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Tooltip,
 } from "@nextui-org/react";
-
 import {
-  ArrowRight, CloseSquare, Delete, InfoSquare, Swap, TickSquare,
-} from "react-iconly";
-import { IoCaretForward } from "react-icons/io5";
+  IoArrowBack, IoArrowForward, IoCheckmarkDone, IoClose, IoTrashBin, IoWarningOutline,
+} from "react-icons/io5";
 
 import connectionImages from "../../../config/connectionImages";
 import { generateDashboard } from "../../../actions/project";
-import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
+import { BsPlugin } from "react-icons/bs";
+import { secondary } from "../../../config/colors";
 
 function CustomTemplateForm(props) {
   const {
@@ -205,21 +204,22 @@ function CustomTemplateForm(props) {
   };
 
   return (
-    <Container>
-      <Row align="center">
-        <Avatar icon={<IoCaretForward />} onClick={onBack} squared />
-        <Spacer x={0.5} />
+    <div>
+      <Row align="center" className={"gap-2"}>
+        <Button variant="faded" startContent={<IoArrowBack />} onClick={onBack} size="sm">
+          Back
+        </Button>
         <Text size="h4">
           {template.name}
         </Text>
       </Row>
-      <Spacer y={1} />
+      <Spacer y={2} />
       <Divider />
-      <Spacer y={1} />
+      <Spacer y={2} />
       <Row>
         <Text b>Connections</Text>
       </Row>
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <div className="grid grid-cols-12 gap-2">
         {template.model.Connections && template.model.Connections.map((c) => {
           const existingConnections = _getExistingConnections(c);
@@ -227,17 +227,21 @@ function CustomTemplateForm(props) {
           return (
             <div className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-3" key={c.id}>
               <Card variant="bordered">
-                <Card.Header>
-                  <Switch
-                    checked={selectedConnections[c.id] && selectedConnections[c.id].active}
-                    style={{ position: "absolute", top: 15, right: 10 }}
-                    onChange={() => _onToggleConnection(c.id)}
-                    size="xs"
-                  />
-                  <img src={connectionImages(isDark)[c.type]} alt={"Connection logo"} width="34px" height="34px" />
-                  <Text>{c.name}</Text>
-                </Card.Header>
-                <Card.Body>
+                <CardHeader>
+                  <Row wrap={"wrap"} justify={"space-between"} align={"center"} className={"gap-4"}>
+                    <Row align={"center"}>
+                      <img src={connectionImages(isDark)[c.type]} alt={"Connection logo"} width="34px" height="34px" />
+                      <Text size="sm">{c.name}</Text>
+                    </Row>
+                    <Checkbox
+                      isSelected={selectedConnections[c.id] && selectedConnections[c.id].active}
+                      onChange={() => _onToggleConnection(c.id)}
+                      size="sm"
+                    />
+                  </Row>
+                </CardHeader>
+                <Divider />
+                <CardBody>
                   <Checkbox
                     isSelected={
                       (selectedConnections[c.id]
@@ -251,15 +255,18 @@ function CustomTemplateForm(props) {
                   >
                     New connection
                   </Checkbox>
-                </Card.Body>
+                </CardBody>
                 {existingConnections && existingConnections.length > 0 && (
-                  <Card.Footer>
-                    <Row align="center">
-                      <Swap size="small" />
-                      <Spacer x={0.2} />
-                      <Text small>Existing connection found</Text>
-                    </Row>
-                  </Card.Footer>
+                  <>
+                    <Divider />
+                    <CardFooter>
+                      <Row align="center">
+                        <BsPlugin />
+                        <Spacer x={0.5} />
+                        <Text small>Existing connection found</Text>
+                      </Row>
+                    </CardFooter>
+                  </>
                 )}
               </Card>
             </div>
@@ -269,56 +276,57 @@ function CustomTemplateForm(props) {
 
       {template && template.model && (
         <>
-          <Spacer y={1} />
+          <Spacer y={4} />
           <Row>
             <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
           </Row>
-          <Spacer y={0.5} />
-          <div className="grid grid-cols-12 gap-1">
+          <Spacer y={1} />
+          <div className="grid grid-cols-12 gap-2">
             {template.model.Charts && template.model.Charts.map((chart) => (
-              <div className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-3" key={chart.tid}>
-                <Checkbox
-                  isSelected={
-                    _.indexOf(selectedCharts, chart.tid) > -1
-                  }
-                  onChange={() => _onChangeSelectedCharts(chart.tid)}
-                  size="sm"
-                >
-                  {chart.name}
-                </Checkbox>
-                {_getDependency(chart) && (
-                  <>
-                    {" "}
-                    <Tooltip
-                      content={`This chart depends on ${_getDependency(chart)} to display properly.`}
-                      css={{ zIndex: 99999 }}
-                    >
-                      <InfoSquare size="small" />
-                    </Tooltip>
-                  </>
-                )}
+              <div className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-4 xl:col-span-3" key={chart.tid}>
+                <Row align={"center"} className={"gap-1"}>
+                  <Checkbox
+                    isSelected={
+                      _.indexOf(selectedCharts, chart.tid) > -1
+                    }
+                    onChange={() => _onChangeSelectedCharts(chart.tid)}
+                    size="sm"
+                  >
+                    {chart.name}
+                  </Checkbox>
+                  {_getDependency(chart) && (
+                    <>
+                      {" "}
+                      <Tooltip
+                        content={`This chart depends on ${_getDependency(chart)} to display properly.`}
+                      >
+                        <div>
+                          <IoWarningOutline color={secondary} />
+                        </div>
+                      </Tooltip>
+                    </>
+                  )}
+                </Row>
               </div>
             ))}
           </div>
 
-          <Spacer y={1} />
+          <Spacer y={4} />
           <Row>
             <Button
-              iconRight={<TickSquare />}
-              bordered
+              endContent={<IoCheckmarkDone />}
+              variant="ghost"
               onClick={_onSelectAll}
               size="sm"
-              auto
             >
               Select all
             </Button>
             <Spacer x={0.5} />
             <Button
-              iconRight={<CloseSquare />}
-              bordered
+              endContent={<IoClose />}
+              variant="ghost"
               onClick={_onDeselectAll}
               size="sm"
-              auto
             >
               Deselect all
             </Button>
@@ -326,26 +334,24 @@ function CustomTemplateForm(props) {
         </>
       )}
 
-      <Spacer y={1} />
+      <Spacer y={4} />
       <Row justify="flex-end">
         {isAdmin && (
           <Button
             color="danger"
-            flat
-            iconRight={<Delete />}
+            variant="flat"
+            endContent={<IoTrashBin />}
             onClick={() => setDeleteConfimation(true)}
-            auto
           >
             Delete template
           </Button>
         )}
         <Spacer x={0.5} />
         <Button
-          primary
+          color="primary"
           onClick={_generateTemplate}
-          disabled={!selectedCharts.length}
-          iconRight={<ArrowRight />}
-          auto
+          isDisabled={!selectedCharts.length}
+          endContent={<IoArrowForward />}
           isLoading={isCreating}
         >
           Generate from template
@@ -354,41 +360,41 @@ function CustomTemplateForm(props) {
 
       {isAdmin && (
         <Modal
-          open={deleteConfirmation}
+          isOpen={deleteConfirmation}
           closeButton
           onClose={() => setDeleteConfimation(false)}
         >
-          <Modal.Header>
-            <Text size="h4">Are you sure you want to delete this template?</Text>
-          </Modal.Header>
-          <Modal.Body>
-            {"After you delete this template you will not be able to create charts from it. Deleting the template will not affect any dashboards."}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button
-              flat
-              color="warning"
-              onClick={() => setDeleteConfimation(false)}
-              auto
-            >
-              Close
-            </Button>
-            <Button
-              color="danger"
-              iconRight={<Delete />}
-              onClick={() => {
-                setDeleteLoading(true);
-                onDelete(template.id);
-              }}
-              auto
-              isLoading={deleteLoading}
-            >
-              Delete template
-            </Button>
-          </Modal.Footer>
+          <ModalContent>
+            <ModalHeader>
+              <Text size="h4">Are you sure you want to delete this template?</Text>
+            </ModalHeader>
+            <ModalBody>
+              {"After you delete this template you will not be able to create charts from it. Deleting the template will not affect any dashboards."}
+            </ModalBody>
+            <ModalFooter>
+              <Button
+                variant="flat"
+                color="warning"
+                onClick={() => setDeleteConfimation(false)}
+              >
+                Close
+              </Button>
+              <Button
+                color="danger"
+                endContent={<IoTrashBin />}
+                onClick={() => {
+                  setDeleteLoading(true);
+                  onDelete(template.id);
+                }}
+                isLoading={deleteLoading}
+              >
+                Delete template
+              </Button>
+            </ModalFooter>
+          </ModalContent>
         </Modal>
       )}
-    </Container>
+    </div>
   );
 }
 

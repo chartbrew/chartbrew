@@ -59,6 +59,7 @@ function ProjectForm(props) {
       onClose={onClose}
       closeButton
       size={modalSize}
+      scrollBehavior="inside"
     >
       <ModalContent>
         <ModalHeader>
@@ -87,12 +88,14 @@ function ProjectForm(props) {
                     name: e.target.value,
                     team_id: team.active.id,
                   })}
+                  label="Project name"
                   placeholder="Enter a name for your project"
                   fullWidth
                   size="lg"
                   variant="bordered"
                   autoFocus
                   value={newProject.name}
+                  color="primary"
                 />
               </Row>
               {error && (
@@ -114,6 +117,7 @@ function ProjectForm(props) {
                       color="primary"
                       size="lg"
                       isLoading={loading}
+                      fullWidth
                     >
                       {"Create"}
                     </Button>
