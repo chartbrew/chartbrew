@@ -6,13 +6,10 @@ import _ from "lodash";
 import { Flip, toast, ToastContainer } from "react-toastify";
 import {
   Button, Link, Modal, Spacer, Avatar, Badge, Tooltip, Card, semanticColors,
-  CircularProgress, ModalHeader, ModalBody, ModalFooter, CardBody, CardFooter,
+  CircularProgress, ModalHeader, ModalBody, ModalFooter, CardBody, CardFooter, ModalContent, Spinner,
 } from "@nextui-org/react";
-import {
-  Danger, Plus,
-} from "react-iconly";
-import { TbArrowsJoin } from "react-icons/tb";
 import moment from "moment";
+import { IoAdd, IoLink, IoWarning } from "react-icons/io5";
 
 import ApiBuilder from "./ApiBuilder";
 import SqlBuilder from "./SqlBuilder";
@@ -254,192 +251,186 @@ function DatarequestModal(props) {
       scrollBehavior="inside"
       shouldBlockScroll={false}
     >
-      <ModalHeader className="flex justify-start">
-        <Text size="h4">{"Configure your dataset"}</Text>
-        {initialising && (
-          <>
-            <Spacer x={1} />
-            <CircularProgress size="xl" />
-          </>
-        )}
-      </ModalHeader>
-      <ModalBody>
-        <div className="grid grid-cols-12">
-          <div className="col-span-1 sm:col-span-12 flex flex-col sm:flex-row border-r-1 border-solid border-default-400 sm:border-none">
-            {selectedRequest && (
-              <>
-                <Row>
-                  <Tooltip content="Join data requests" css={{ zIndex: 99999 }} placement="right-start">
-                    <Link onPress={() => _onSelectSettings()} className="cursor-pointer">
-                      <Avatar
-                        icon={(
-                          <TbArrowsJoin
-                            size={28}
-                            strokeWidth={2}
-                            color={
-                              selectedRequest.isSettings
-                                ? semanticColors[theme].default[100] : semanticColors[theme].default[500]
-                            }
-                          />
-                        )}
-                        radius="sm"
-                        size="lg"
-                        className="cursor-pointer"
-                        color={selectedRequest.isSettings ? "primary" : "default"}
-                      />
-                    </Link>
-                  </Tooltip>
-                </Row>
-                <Spacer y={2} />
-              </>
-            )}
-            {dataRequests.map((dr, index) => (
-              <Fragment key={dr.id}>
-                <Row align="center">
-                  <Badge
-                    size="sm"
-                    variant={stateDataRequests.find((o) => o.id === dr.id)?.loading ? "points" : "bordered"}
-                    color={
-                      responses.find((r) => r.id === dr.id)?.error
-                        ? "danger"
-                        : responses.find((r) => r.id === dr.id) ? "success" : "default"
-                    }
-                    content={`${index + 1}`}
-                  >
-                    <Avatar
-                      isBordered
-                      radius="sm"
-                      src={
-                        dr.Connection
-                          ? connectionImages(theme === "dark")[dr.Connection.subType || dr.Connection.type]
-                          : null
-                      }
-                      icon={!dr.Connection ? <Danger /> : null}
-                      size="lg"
-                      color={dr.id === selectedRequest?.id ? "primary" : "default"}
-                      onClick={() => _onSelectDataRequest(dr)}
-                    />
-                  </Badge>
-                </Row>
-                <Spacer y={0.6} />
-              </Fragment>
-            ))}
-            <Spacer y={1.5} />
-            <Row>
-              <Tooltip content="Add a new data source" css={{ zIndex: 99999 }} placement="right-start">
-                <Link onClick={() => setCreateMode(true)} className="cursor-pointer">
-                  <Avatar
-                    icon={<Plus className="text-foreground" />}
-                    isBordered
-                    radius="sm"
-                    size="lg"
-                    className="cursor-pointer"
-                  />
-                </Link>
-              </Tooltip>
-            </Row>
-          </div>
-          {!createMode && selectedRequest?.isSettings && (
-            <div className="col-span-11 sm:col-span-12">
-              <DatarequestSettings
-                dataset={dataset}
-                dataRequests={dataRequests}
-                onChange={_onUpdateDataset}
-              />
-            </div>
+      <ModalContent>
+        <ModalHeader className="flex justify-start">
+          <Text size="h4">{"Configure your dataset"}</Text>
+          {initialising && (
+            <>
+              <Spacer x={1} />
+              <CircularProgress size="xl" />
+            </>
           )}
-          {!createMode && selectedRequest && selectedRequest.Connection && (
-            <div className="col-span-12 sm:col-span-12">
-              {dataRequests.map((dr) => (
+        </ModalHeader>
+        <ModalBody>
+          <div className="grid grid-cols-12">
+            <div className="col-span-12 md:col-span-1 flex flex-row md:flex-col border-none md:border-r-1 md:border-solid md:border-content3 gap-2">
+              {selectedRequest && (
+                <>
+                  <Row>
+                    <Tooltip content="Join data requests" css={{ zIndex: 99999 }} placement="right-start">
+                      <Link onPress={() => _onSelectSettings()} className="cursor-pointer">
+                        <Avatar
+                          isBordered
+                          icon={(
+                            <IoLink
+                              color={
+                                selectedRequest.isSettings
+                                  ? semanticColors[theme].default[100] : semanticColors[theme].default[500]
+                              }
+                            />
+                          )}
+                          radius="sm"
+                          className="cursor-pointer"
+                          color={selectedRequest.isSettings ? "primary" : "default"}
+                        />
+                      </Link>
+                    </Tooltip>
+                  </Row>
+                  <Spacer y={2} />
+                </>
+              )}
+              {dataRequests.map((dr, index) => (
                 <Fragment key={dr.id}>
-                  {selectedRequest.Connection.type === "api" && selectedRequest.id === dr.id && (
-                    <ApiBuilder
-                      dataRequest={dr}
-                      connection={dr.Connection}
-                      onChangeRequest={_updateDataRequest}
-                      onSave={_onSaveRequest}
-                      chart={chart}
-                      onDelete={() => _onDeleteRequest(dr.id)}
-                    />
-                  )}
-                  {(selectedRequest.Connection.type === "mysql" || selectedRequest.Connection.type === "postgres") && selectedRequest.id === dr.id && (
-                    <SqlBuilder
-                      dataRequest={dr}
-                      connection={dr.Connection}
-                      onChangeRequest={_updateDataRequest}
-                      onSave={_onSaveRequest}
-                      onDelete={() => _onDeleteRequest(dr.id)}
-                    />
-                  )}
-                  {selectedRequest.Connection.type === "mongodb" && selectedRequest.id === dr.id && (
-                    <MongoQueryBuilder
-                      dataRequest={dr}
-                      connection={dr.Connection}
-                      onChangeRequest={_updateDataRequest}
-                      onSave={_onSaveRequest}
-                      onDelete={() => _onDeleteRequest(dr.id)}
-                    />
-                  )}
-                  {selectedRequest.Connection.type === "realtimedb" && selectedRequest.id === dr.id && (
-                    <RealtimeDbBuilder
-                      dataRequest={dr}
-                      connection={dr.Connection}
-                      onChangeRequest={_updateDataRequest}
-                      onSave={_onSaveRequest}
-                      onDelete={() => _onDeleteRequest(dr.id)}
-                    />
-                  )}
-                  {selectedRequest.Connection.type === "firestore" && selectedRequest.id === dr.id && (
-                    <FirestoreBuilder
-                      dataRequest={dr}
-                      connection={dr.Connection}
-                      onChangeRequest={_updateDataRequest}
-                      onSave={_onSaveRequest}
-                      onDelete={() => _onDeleteRequest(dr.id)}
-                    />
-                  )}
-                  {selectedRequest.Connection.type === "googleAnalytics" && selectedRequest.id === dr.id && (
-                    <GaBuilder
-                      dataRequest={dr}
-                      connection={dr.Connection}
-                      onChangeRequest={_updateDataRequest}
-                      onSave={_onSaveRequest}
-                      onDelete={() => _onDeleteRequest(dr.id)}
-                    />
-                  )}
-                  {selectedRequest.Connection.type === "customerio" && selectedRequest.id === dr.id && (
-                    <CustomerioBuilder
-                      dataRequest={dr}
-                      connection={dr.Connection}
-                      onChangeRequest={_updateDataRequest}
-                      onSave={_onSaveRequest}
-                      onDelete={() => _onDeleteRequest(dr.id)}
-                    />
-                  )}
+                  <Row align="center">
+                    <Badge
+                      variant={"faded"}
+                      color={
+                        responses.find((r) => r.id === dr.id)?.error
+                          ? "danger"
+                          : responses.find((r) => r.id === dr.id) ? "success" : "primary"
+                      }
+                      content={stateDataRequests.find((o) => o.id === dr.id)?.loading ? (<Spinner size="sm" />) : `${index + 1}`}
+                      shape="rectangle"
+                    >
+                      <Avatar
+                        isBordered
+                        radius="sm"
+                        src={
+                          dr.Connection
+                            ? connectionImages(theme === "dark")[dr.Connection.subType || dr.Connection.type]
+                            : null
+                        }
+                        icon={!dr.Connection ? <IoWarning /> : null}
+                        color={dr.id === selectedRequest?.id ? "primary" : "default"}
+                        onClick={() => _onSelectDataRequest(dr)}
+                      />
+                    </Badge>
+                  </Row>
+                  <Spacer y={0.6} />
                 </Fragment>
               ))}
+              <Spacer y={1.5} />
+              <Row>
+                <Tooltip content="Add a new data source" css={{ zIndex: 99999 }} placement="right-start">
+                  <Link onClick={() => setCreateMode(true)} className="cursor-pointer">
+                    <Avatar
+                      icon={<IoAdd />}
+                      isBordered
+                      className="cursor-pointer"
+                      color="secondary"
+                    />
+                  </Link>
+                </Tooltip>
+              </Row>
             </div>
-          )}
-          {createMode && (
-            <div className="col-span-11 sm:col-span-12">
-              <Spacer y={1} />
-              <Container>
+            {!createMode && selectedRequest?.isSettings && (
+              <div className="col-span-12 md:col-span-11">
+                <DatarequestSettings
+                  dataset={dataset}
+                  dataRequests={dataRequests}
+                  onChange={_onUpdateDataset}
+                />
+              </div>
+            )}
+            {!createMode && selectedRequest && selectedRequest.Connection && (
+              <div className="col-span-12 md:col-span-11">
+                {dataRequests.map((dr) => (
+                  <Fragment key={dr.id}>
+                    {selectedRequest.Connection.type === "api" && selectedRequest.id === dr.id && (
+                      <ApiBuilder
+                        dataRequest={dr}
+                        connection={dr.Connection}
+                        onChangeRequest={_updateDataRequest}
+                        onSave={_onSaveRequest}
+                        chart={chart}
+                        onDelete={() => _onDeleteRequest(dr.id)}
+                      />
+                    )}
+                    {(selectedRequest.Connection.type === "mysql" || selectedRequest.Connection.type === "postgres") && selectedRequest.id === dr.id && (
+                      <SqlBuilder
+                        dataRequest={dr}
+                        connection={dr.Connection}
+                        onChangeRequest={_updateDataRequest}
+                        onSave={_onSaveRequest}
+                        onDelete={() => _onDeleteRequest(dr.id)}
+                      />
+                    )}
+                    {selectedRequest.Connection.type === "mongodb" && selectedRequest.id === dr.id && (
+                      <MongoQueryBuilder
+                        dataRequest={dr}
+                        connection={dr.Connection}
+                        onChangeRequest={_updateDataRequest}
+                        onSave={_onSaveRequest}
+                        onDelete={() => _onDeleteRequest(dr.id)}
+                      />
+                    )}
+                    {selectedRequest.Connection.type === "realtimedb" && selectedRequest.id === dr.id && (
+                      <RealtimeDbBuilder
+                        dataRequest={dr}
+                        connection={dr.Connection}
+                        onChangeRequest={_updateDataRequest}
+                        onSave={_onSaveRequest}
+                        onDelete={() => _onDeleteRequest(dr.id)}
+                      />
+                    )}
+                    {selectedRequest.Connection.type === "firestore" && selectedRequest.id === dr.id && (
+                      <FirestoreBuilder
+                        dataRequest={dr}
+                        connection={dr.Connection}
+                        onChangeRequest={_updateDataRequest}
+                        onSave={_onSaveRequest}
+                        onDelete={() => _onDeleteRequest(dr.id)}
+                      />
+                    )}
+                    {selectedRequest.Connection.type === "googleAnalytics" && selectedRequest.id === dr.id && (
+                      <GaBuilder
+                        dataRequest={dr}
+                        connection={dr.Connection}
+                        onChangeRequest={_updateDataRequest}
+                        onSave={_onSaveRequest}
+                        onDelete={() => _onDeleteRequest(dr.id)}
+                      />
+                    )}
+                    {selectedRequest.Connection.type === "customerio" && selectedRequest.id === dr.id && (
+                      <CustomerioBuilder
+                        dataRequest={dr}
+                        connection={dr.Connection}
+                        onChangeRequest={_updateDataRequest}
+                        onSave={_onSaveRequest}
+                        onDelete={() => _onDeleteRequest(dr.id)}
+                      />
+                    )}
+                  </Fragment>
+                ))}
+              </div>
+            )}
+            {createMode && (
+              <div className="col-span-12 md:col-span-11 container mx-auto">
+                <Spacer y={1} />
                 <Text size="h4">Select a connection</Text>
-              </Container>
-              <Spacer y={1} />
-              <div className="grid grid-cols-12 gap-2">
-                {connections.map((c) => {
-                  return (
-                    <div className="col-span-4 sm:col-span-12 md:col-span-6" key={c.id}>
-                      <Card
-                        variant="bordered"
-                        isPressable
-                        isHoverable
-                        className="project-segment"
-                        onClick={() => _onCreateNewRequest(c)}
-                      >
-                        <CardBody className="p-unit-4 pl-unit-8">
-                          <Container justify="flex-start" fluid>
+                <Spacer y={2} />
+                <div className="grid grid-cols-12 gap-4">
+                  {connections.map((c) => {
+                    return (
+                      <div className="col-span-12 sm:col-span-6 md:sm:col-span-4" key={c.id}>
+                        <Card
+                          variant="bordered"
+                          isPressable
+                          isHoverable
+                          onClick={() => _onCreateNewRequest(c)}
+                          fullWidth
+                        >
+                          <CardBody className="p-unit-4 pl-unit-8">
                             <Row align="center" justify="space-between">
                               <Text size="h4">{c.name}</Text>
                               <Spacer x={0.5} />
@@ -450,66 +441,66 @@ function DatarequestModal(props) {
                               />
                             </Row>
                             <Row>
-                              <Text className={"text-default-700"}>
+                              <Text className={"text-default-400"} size="sm">
                                 {`Created on ${moment(c.createdAt).format("LLL")}`}
                               </Text>
                             </Row>
-                          </Container>
-                        </CardBody>
-                        <CardFooter>
-                          <Container>
-                            <Row justify="center">
-                              <Button
-                                variant="flat"
-                                onClick={() => _onCreateNewRequest(c)}
-                                size="sm"
-                                fullWidth
-                              >
-                                Select
-                              </Button>
-                            </Row>
-                          </Container>
-                        </CardFooter>
-                      </Card>
-                    </div>
-                  );
-                })}
+                          </CardBody>
+                          <CardFooter>
+                            <Container>
+                              <Row justify="center">
+                                <Button
+                                  variant="flat"
+                                  onClick={() => _onCreateNewRequest(c)}
+                                  size="sm"
+                                  fullWidth
+                                >
+                                  Select
+                                </Button>
+                              </Row>
+                            </Container>
+                          </CardFooter>
+                        </Card>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        <ToastContainer
-          position="top-right"
-          autoClose={1500}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnVisibilityChange
-          draggable
-          pauseOnHover
-          transition={Flip}
-          theme={theme}
-        />
-      </ModalBody>
-      <ModalFooter className="bg-content1">
-        <Button
-          auto
-          onClick={() => onClose()}
-          color="warning"
-          variant="flat"
-        >
-          Close
-        </Button>
-        <Button
-          onPress={() => _onBuildChart()}
-          auto
-          isLoading={loading}
-        >
-          {"Build the chart"}
-        </Button>
-      </ModalFooter>
+          <ToastContainer
+            position="top-right"
+            autoClose={1500}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnVisibilityChange
+            draggable
+            pauseOnHover
+            transition={Flip}
+            theme={theme}
+          />
+        </ModalBody>
+        <ModalFooter className="bg-content1">
+          <Button
+            auto
+            onClick={() => onClose()}
+            color="warning"
+            variant="flat"
+          >
+            Close
+          </Button>
+          <Button
+            onPress={() => _onBuildChart()}
+            color="primary"
+            isLoading={loading}
+          >
+            {"Build the chart"}
+          </Button>
+        </ModalFooter>
+      </ModalContent>
     </Modal>
   );
 }
