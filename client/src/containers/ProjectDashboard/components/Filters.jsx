@@ -470,7 +470,7 @@ function Filters(props) {
                   endContent={<Plus />}
                   disabled={!filter.value}
                   onClick={_onAddFilter}
-                  auto
+                  color="primary"
                 >
                   Apply filter
                 </Button>
@@ -482,7 +482,7 @@ function Filters(props) {
           <Button auto onClick={onClose} color="warning" variant="flat">
             Close
           </Button>
-          <Button auto onClick={_onApplyFilter}>
+          <Button color="primary" onClick={_onApplyFilter}>
             Apply filter
           </Button>
         </ModalFooter>

@@ -571,7 +571,7 @@ function ProjectDashboard(props) {
               if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />);
               return (
                 <div
-                  className={`min-h-[400px] overflow-y-hidden col-span-12 md:col-span-${chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4} lg:col-span-${chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4} xl:col-span-${chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3}`}
+                  className={`min-h-[400px] overflow-y-hidden col-span-12 md:col-span-${chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4} lg:col-span-${chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3}`}
                   key={chart.id}
                 >
                   <Chart

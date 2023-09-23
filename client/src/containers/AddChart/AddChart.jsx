@@ -10,6 +10,10 @@ import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import _ from "lodash";
 import { useWindowSize } from "react-use";
+import {
+  IoAdd, IoArrowForward, IoCheckmark, IoChevronBackCircle, IoChevronForwardCircle,
+  IoClose, IoPencil, IoSchoolOutline, IoSwapHorizontalOutline,
+} from "react-icons/io5";
 
 import ChartPreview from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
@@ -46,7 +50,6 @@ import {
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import useThemeDetector from "../../modules/useThemeDetector";
-import { IoAdd, IoArrowForward, IoCheckmark, IoChevronBack, IoChevronForward, IoClose, IoPencil, IoSchoolOutline, IoSwapHorizontalOutline } from "react-icons/io5";
 
 /*
   Container used for setting up a new chart
@@ -650,7 +653,7 @@ function AddChart(props) {
             </Row>
             <Spacer y={1} />
             <Divider />
-            <Spacer y={1} />
+            <Spacer y={4} />
             <Row wrap="wrap">
               {!arrangeMode && datasets && datasets.map((dataset) => {
                 return (
@@ -676,21 +679,18 @@ function AddChart(props) {
                       radius="sm"
                       variant={"bordered"}
                       color="primary"
-                      size="sm"
-                    >
-                      {index > 0 && (
+                      startContent={index > 0 ? (
                         <LinkNext onPress={() => _changeDatasetOrder(dataset.id, "up")}>
-                          <IoChevronBack size={16} />
+                          <IoChevronBackCircle size={16} />
                         </LinkNext>
-                      )}
-                      <Spacer x={0.5} />
-                      {dataset.legend}
-                      <Spacer x={0.5} />
-                      {index < datasetsOrder.length - 1 && (
+                      ) : null}
+                      endContent={index < datasetsOrder.length - 1 ? (
                         <LinkNext onPress={() => _changeDatasetOrder(dataset.id, "down")}>
-                          <IoChevronForward size={16} />
+                          <IoChevronForwardCircle size={16} />
                         </LinkNext>
-                      )}
+                      ) : null}
+                    >
+                      {dataset.legend}
                     </Chip>
                   </>
                 );
@@ -758,7 +758,7 @@ function AddChart(props) {
             </Row>
 
             <Spacer y={2} />
-            <Row align="center">
+            <div>
               {activeDataset.id && datasets.map((dataset) => {
                 return (
                   <div style={activeDataset.id !== dataset.id ? { display: "none" } : {}} key={dataset.id}>
@@ -779,7 +779,7 @@ function AddChart(props) {
                   {"Select or create a dataset above"}
                 </Text>
               )}
-            </Row>
+            </div>
           </div>
         </div>
       </div>

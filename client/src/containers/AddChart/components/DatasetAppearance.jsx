@@ -7,6 +7,7 @@ import { SketchPicker } from "react-color";
 
 import { primary, chartColors } from "../../../config/colors";
 import Text from "../../../components/Text";
+import Row from "../../../components/Row";
 
 function DatasetAppearance(props) {
   const {
@@ -15,28 +16,30 @@ function DatasetAppearance(props) {
 
   return (
     <div className="grid grid-cols-12 gap-2">
-      <div className="col-span-6 sm:col-span-12">
+      <div className="col-span-12 md:col-span-6">
         <Text>Dataset Color</Text>
-        <Popover>
-          <PopoverTrigger>
-            <Chip
-              css={styles.datasetColorBtn(dataset.datasetColor)}
-              size="lg"
-              radius="sm"
-            >
-              Click to select
-            </Chip>
-          </PopoverTrigger>
-          <PopoverContent>
-            <ColorPicker type="dataset" onUpdate={onUpdate} dataset={dataset} />
-          </PopoverContent>
-        </Popover>
+        <div>
+          <Popover>
+            <PopoverTrigger>
+              <Chip
+                style={styles.datasetColorBtn(dataset.datasetColor)}
+                size="lg"
+                radius="sm"
+              >
+                Click to select
+              </Chip>
+            </PopoverTrigger>
+            <PopoverContent>
+              <ColorPicker type="dataset" onUpdate={onUpdate} dataset={dataset} />
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
-      <div className="col-span-6 sm:col-span-12">
+      <div className="col-span-12 md:col-span-6">
         <Text>Fill Color</Text>
         {chart.type !== "line" && (
-          <>
+          <div>
             <Checkbox
               isSelected={dataset.multiFill || false}
               onChange={(checked) => {
@@ -44,13 +47,15 @@ function DatasetAppearance(props) {
               }}
               label="Multiple colors"
               size="sm"
-            />
+            >
+              Multiple colors
+            </Checkbox>
             <Spacer y={1} />
-          </>
+          </div>
         )}
         <div>
           {(!dataset.multiFill || chart.type === "line") && (
-            <div style={styles.row}>
+            <Row align="center">
               <Popover
                 style={{ padding: 0, margin: 0 }}
                 className="p-0 m-0"
@@ -77,7 +82,7 @@ function DatasetAppearance(props) {
                 }}
                 className="ml-10 align-middle"
               />
-            </div>
+            </Row>
           )}
           <Spacer y={0.5} />
           {dataset.multiFill && chart.type !== "line" && (

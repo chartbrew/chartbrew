@@ -13,31 +13,32 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import update from "immutability-helper";
 import {
-  Button, Accordion, Dropdown, Input, Link, semanticColors,
-  Popover, Spacer, Tooltip, Divider, Chip, Badge, Switch, Modal, Checkbox, DropdownMenu, DropdownTrigger, DropdownItem, PopoverTrigger, PopoverContent, AccordionItem, ModalHeader, ModalBody, ModalFooter, ModalContent,
+  Button, Accordion, Dropdown, Input, Link, Popover, Spacer, Tooltip, Divider,
+  Chip, Switch, Modal, Checkbox, DropdownMenu, DropdownTrigger, DropdownItem,
+  PopoverTrigger, PopoverContent, AccordionItem, ModalHeader, ModalBody, ModalFooter,
+  ModalContent, Select, Listbox, ListboxItem, SelectItem,
 } from "@nextui-org/react";
 import { TbDragDrop, TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import {
-  ChevronRight, CloseSquare, Filter, Hide,
-  InfoCircle, Plus, Setting, Show, TickSquare, Calendar as CalendarIcon, ChevronDownCircle, Danger,
-} from "react-iconly";
-import { FaMagic, FaRedo } from "react-icons/fa";
-import { IoCaretUp, IoCaretDown } from "react-icons/io5";
+  IoWarning, IoInformationCircleOutline, IoCloseCircle,
+  IoCheckmark, IoColorWand, IoSettings, IoEyeOutline, IoChevronDownCircle, IoAdd,
+  IoEyeOffOutline, IoFilter, IoCalendarOutline, IoEye, IoEyeOff, IoArrowRedo,
+  IoChevronForward, IoSearchOutline, IoChevronDown,
+} from "react-icons/io5";
+import { RiSortAsc, RiSortDesc } from "react-icons/ri";
 
 import { runRequest as runRequestAction } from "../../../actions/dataset";
 import fieldFinder from "../../../modules/fieldFinder";
 import {
-  blackTransparent, negative, neutral, positive, primary, secondary
+  blackTransparent, secondary
 } from "../../../config/colors";
 import autoFieldSelector from "../../../modules/autoFieldSelector";
 import { operations, operators } from "../../../modules/filterOperations";
 import DraggableLabel from "./DraggableLabel";
 import TableDataFormattingModal from "./TableDataFormattingModal";
 import DatasetAlerts from "./DatasetAlerts";
-import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
-import useThemeDetector from "../../../modules/useThemeDetector";
 
 function formatColumnsForOrdering(columns) {
   if (!columns) {
@@ -77,8 +78,6 @@ function DatasetData(props) {
   const yFieldRef = useRef(null);
   const xFieldRef = useRef(null);
   const dateFieldRef = useRef(null);
-
-  const theme = useThemeDetector() ? "dark" : "light";
 
   // Update the content when there is some data to work with
   useEffect(() => {
@@ -602,73 +601,77 @@ function DatasetData(props) {
 
   if ((!fieldOptions || !dataset.fieldsSchema)) {
     return (
-      <Container>
-        <Row>
-          <Text size="h4">
-            {"Click on the \"Get data\" button above to get started."}
-          </Text>
-        </Row>
-      </Container>
+      <Row>
+        <Text size="h4">
+          {"Click on the \"Get data\" button above to get started."}
+        </Text>
+      </Row>
     );
   }
 
   return (
     <>
-      <div className="grid grid-cols-12 gap-1">
-        <div className="col-span-6 sm:col-span-12 datasetdata-axes-tut">
+      <div className="grid grid-cols-12 gap-2">
+        <div className="col-span-12 md:col-span-6 datasetdata-axes-tut">
           <div style={styles.rowDisplay}>
-            <Text b>
-              {chartType === "pie"
-                || chartType === "radar"
-                || chartType === "polar"
-                || chartType === "doughnut"
-                ? "Segment "
-                : chartType === "table" ? "Collection " : "X-Axis "}
+            <Text>
+              {chartType === "table" ? "Collection " : "Dimension"}
             </Text>
             {chartType !== "table" && dataset.xAxis && !_filterOptions("x").find((o) => o.value === dataset.xAxis) && (
               <>
                 <Spacer x={0.3} />
                 <Tooltip content="The selected field is not available in the data. Please select another.">
                   <div>
-                    <Danger primaryColor={semanticColors[theme].danger.DEFAULT} />
+                    <IoWarning className="text-warning" />
                   </div>
                 </Tooltip>
               </>
             )}
           </div>
           <div style={styles.rowDisplay}>
-            <Dropdown>
-              <DropdownTrigger type="text">
+            <Popover>
+              <PopoverTrigger>
                 <Input
-                  type="text"
-                  value={
-                    xFieldFilter
-                    || dataset.xAxis?.substring(dataset.xAxis.lastIndexOf(".") + 1)
-                  }
-                  onChange={(e) => setXFieldFilter(e.target.value)}
+                  value={dataset.xAxis?.substring(dataset.xAxis.lastIndexOf(".") + 1)}
                   fullWidth
                   placeholder="Double-click to search"
                   ref={xFieldRef}
-                  contentRight={document.activeElement === xFieldRef.current ? "↵" : null}
+                  endContent={<IoChevronDown />}
+                  variant="bordered"
                 />
-              </DropdownTrigger>
-              <DropdownMenu
-                onAction={_selectXField}
-                selectedKeys={[dataset.xAxis]}
-                selectionMode="single"
-                css={{ minWidth: "max-content" }}
-              >
-                {_filterOptions("x").map((option) => (
-                  <DropdownItem
-                    key={option.value}
-                    icon={<Badge size="xs" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}
-                    description={option.isObject ? "Key-Value visualization" : null}
+              </PopoverTrigger>
+              <PopoverContent>
+                <div>
+                  <Input
+                    placeholder="Search"
+                    endContent={<IoSearchOutline />}
+                    variant="bordered"
+                    fullWidth
+                    onChange={(e) => setXFieldFilter(e.target.value)}
+                    value={xFieldFilter}
+                    autoFocus
+                  />
+                  <Spacer y={1} />
+                  <Listbox
+                    onSelectionChange={(keys) => _selectXField(keys.currentKey)}
+                    selectedKeys={[dataset.xAxis]}
+                    selectionMode="single"
                   >
-                    <Text>{option.text}</Text>
-                  </DropdownItem>
-                ))}
-              </DropdownMenu>
-            </Dropdown>
+                    {_filterOptions("x").map((option) => (
+                      <ListboxItem
+                        key={option.value}
+                        startContent={(
+                          <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                        )}
+                        description={option.isObject ? "Key-Value visualization" : null}
+                      >
+                        {option.text}
+                      </ListboxItem>
+                    ))}
+                  </Listbox>
+                </div>
+              </PopoverContent>
+            </Popover>
             {chartType === "table" && (
               <>
                 <Spacer x={0.2} />
@@ -676,66 +679,77 @@ function DatasetData(props) {
                   content="Select a collection (array) of objects to display in a table format. 'Root' means the first level of the collection."
                 >
                   <div>
-                    <InfoCircle />
+                    <IoInformationCircleOutline />
                   </div>
                 </Tooltip>
               </>
             )}
           </div>
         </div>
-        <div className="col-span-6 sm:col-span-12 datasetdata-date-tut" direction="column">
+        <div className="col-span-12 md:col-span-6 datasetdata-date-tut" direction="column">
           <div style={styles.rowDisplay}>
-            <Text size={14} b>{"Date filtering field"}</Text>
+            <Text>{"Date filtering field"}</Text>
             {dataset.dateField
               && !_getDateFieldOptions().find((o) => o.value === dataset.dateField) && (
               <>
                 <Spacer x={0.3} />
                 <Tooltip content="The selected field is not available in the data. Please select another.">
                   <div>
-                    <Danger className="text-warning" />
+                    <IoWarning className="text-warning" />
                   </div>
                 </Tooltip>
               </>
             )}
           </div>
           <div style={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
-            <Dropdown>
-              <DropdownTrigger type="text">
+            <Popover>
+              <PopoverTrigger>
                 <Input
-                  type="text"
-                  value={
-                    dateFieldFilter
-                    || dataset.dateField?.substring(dataset.dateField.lastIndexOf(".") + 1)
-                  }
+                  value={dataset.dateField?.substring(dataset.dateField.lastIndexOf(".") + 1)}
                   fullWidth
-                  placeholder="Double-click to search"
-                  onChange={(e) => setDateFieldFilter(e.target.value)}
+                  placeholder="Select a date field"
                   ref={dateFieldRef}
-                  endContent={document.activeElement === dateFieldRef.current ? "↵" : null}
+                  endContent={<IoChevronDown />}
+                  variant="bordered"
                 />
-              </DropdownTrigger>
-              <DropdownMenu
-                variant="bordered"
-                onAction={_selectDateField}
-                selectedKeys={[dataset.dateField]}
-                selectionMode="single"
-              >
-                {_getDateFieldOptions().map((option) => (
-                  <DropdownItem
-                    key={option.value}
-                    startContent={<Badge size="xs" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}
-                    description={option.isObject ? "Key-Value visualization" : null}
+              </PopoverTrigger>
+              <PopoverContent>
+                <div>
+                  <Input
+                    placeholder="Search"
+                    endContent={<IoSearchOutline />}
+                    variant="bordered"
+                    fullWidth
+                    onChange={(e) => setDateFieldFilter(e.target.value)}
+                    value={dateFieldFilter}
+                    autoFocus
+                  />
+                  <Listbox
+                    variant="bordered"
+                    onSelectionChange={(keys) => _selectDateField(keys.currentKey)}
+                    selectedKeys={[dataset.dateField]}
+                    selectionMode="single"
                   >
-                    <Text>{option.text}</Text>
-                  </DropdownItem>
-                ))}
-              </DropdownMenu>
-            </Dropdown>
+                    {_getDateFieldOptions().map((option) => (
+                      <ListboxItem
+                        key={option.value}
+                        startContent={(
+                          <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                        )}
+                        description={option.isObject ? "Key-Value visualization" : null}
+                      >
+                        {option.text}
+                      </ListboxItem>
+                    ))}
+                  </Listbox>
+                </div>
+              </PopoverContent>
+            </Popover>
             <Spacer x={0.5} />
             {dataset.dateField && (
               <Tooltip content="Clear field">
                 <Link onClick={() => onUpdate({ dateField: "" })} className="text-danger">
-                  <CloseSquare />
+                  <IoCloseCircle />
                 </Link>
               </Tooltip>
             )}
@@ -743,96 +757,98 @@ function DatasetData(props) {
         </div>
         {chartType !== "table" && (
           <>
-            <div className="col-span-6 sm:col-span-12">
+            <div className="col-span-12 md:col-span-6">
               <div style={styles.rowDisplay}>
-                <Text b>
-                  {chartType === "pie"
-                    || chartType === "radar"
-                    || chartType === "polar"
-                    || chartType === "doughnut"
-                    ? "Data " : "Y-Axis "}
+                <Text>
+                  Metric
                 </Text>
                 {dataset.yAxis && !_getYFieldOptions().find((o) => o.value === dataset.yAxis) && (
                   <>
                     <Spacer x={0.6} />
                     <Tooltip content="The selected field is not available in the data. Please select another.">
-                      <div><Danger className="text-danger" /></div>
+                      <div><IoWarning className="text-danger" /></div>
                     </Tooltip>
                   </>
                 )}
               </div>
               <div>
-                <Dropdown
-                  isDisabled={fieldOptions.find((o) => o.key === dataset.xAxis)?.isObject}
-                >
-                  <DropdownTrigger type={fieldOptions.find((o) => o.key === dataset.xAxis)?.isObject ? null : "text"}>
+                <Popover>
+                  <PopoverTrigger disabled={fieldOptions.find((o) => o.key === dataset.xAxis)?.isObject}>
                     <Input
-                      type="text"
                       disabled={fieldOptions.find((o) => o.key === dataset.xAxis)?.isObject}
-                      value={
-                        yFieldFilter
-                        || dataset.yAxis?.substring(dataset.yAxis.lastIndexOf(".") + 1)
-                      }
+                      value={dataset.yAxis?.substring(dataset.yAxis.lastIndexOf(".") + 1)}
                       fullWidth
                       placeholder="Double-click to search"
-                      onChange={(e) => setYFieldFilter(e.target.value)}
                       ref={yFieldRef}
-                      endContent={document.activeElement === yFieldRef.current ? "↵" : null}
+                      endContent={<IoChevronDown />}
+                      variant="bordered"
                     />
-                  </DropdownTrigger>
-                  <DropdownMenu
-                    variant="bordered"
-                    onAction={_selectYField}
-                    selectedKeys={[dataset.yAxis]}
-                    selectionMode="single"
-                  >
-                    {_getYFieldOptions().map((option) => (
-                      <DropdownItem
-                        key={option.value}
-                        startContent={<Badge size="sm" css={{ minWidth: 70 }} color={option.label.color}>{option.label.content}</Badge>}
-                        description={option.isObject ? "Key-Value visualization" : null}
+                  </PopoverTrigger>
+                  <PopoverContent>
+                    <div>
+                      <Input
+                        placeholder="Search"
+                        endContent={<IoSearchOutline />}
+                        variant="bordered"
+                        fullWidth
+                        onChange={(e) => setYFieldFilter(e.target.value)}
+                        value={yFieldFilter}
+                        autoFocus
+                      />
+                      <Listbox
+                        variant="bordered"
+                        onSelectionChange={(keys) => _selectYField(keys.currentKey)}
+                        selectedKeys={[dataset.yAxis]}
+                        selectionMode="single"
                       >
-                        <Text>{option.text}</Text>
-                      </DropdownItem>
-                    ))}
-                  </DropdownMenu>
-                </Dropdown>
-                <Spacer x={0.5} />
-                <Dropdown>
-                  <DropdownTrigger>
-                    <Input
-                      value={
-                        (dataset.yAxisOperation
-                          && operations.find((i) => i.value === dataset.yAxisOperation).text
-                        )
-                        || "Operation"
-                      }
-                      fullWidth
-                    />
-                  </DropdownTrigger>
-                  <DropdownMenu
-                    onAction={_selectYOp}
-                    selectedKeys={[dataset.yAxisOperation]}
-                    selectionMode="single"
-                    variant="bordered"
-                  >
-                    {operations.map((option) => (
-                      <DropdownItem key={option.value}>
-                        {option.text}
-                      </DropdownItem>
-                    ))}
-                  </DropdownMenu>
-                </Dropdown>
+                        {_getYFieldOptions().map((option) => (
+                          <ListboxItem
+                            key={option.value}
+                            startContent={(
+                              <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                            )}
+                            description={option.isObject ? "Key-Value visualization" : null}
+                          >
+                            {option.text}
+                          </ListboxItem>
+                        ))}
+                      </Listbox>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <Spacer y={2} />
+                <Select
+                  placeholder="Operation"
+                  size="sm"
+                  onSelectionChange={(keys) => _selectYOp(keys.currentKey)}
+                  selectedKeys={[dataset.yAxisOperation]}
+                  selectionMode="single"
+                  variant="bordered"
+                  renderValue={(
+                    <Text>
+                      {(dataset.yAxisOperation
+                        && operations.find((i) => i.value === dataset.yAxisOperation).text
+                      )
+                      || "Operation"}
+                    </Text>
+                  )}
+                >
+                  {operations.map((option) => (
+                    <SelectItem key={option.value}>
+                      {option.text}
+                    </SelectItem>
+                  ))}
+                </Select>
               </div>
             </div>
-            <div className="col-span-6 sm:col-span-12">
+            <div className="col-span-12 md:col-span-6">
               <div>
                 <Text>Sort records</Text>
               </div>
               <div style={styles.rowDisplay}>
                 <Tooltip content="Sort the dataset in ascending order">
                   <Button
-                    color={dataset.sort === "asc" ? "secondary" : "primary"}
+                    color={dataset.sort === "asc" ? "secondary" : "default"}
                     variant={dataset.sort !== "asc" ? "bordered" : "filled"}
                     onClick={() => {
                       if (dataset.sort === "asc") {
@@ -843,13 +859,13 @@ function DatasetData(props) {
                     }}
                     isIconOnly
                   >
-                    <IoCaretUp />
+                    <RiSortAsc />
                   </Button>
                 </Tooltip>
                 <Spacer x={0.5} />
                 <Tooltip content="Sort the dataset in descending order">
                   <Button
-                    color={dataset.sort === "desc" ? "secondary" : "primary"}
+                    color={dataset.sort === "desc" ? "secondary" : "default"}
                     variant={dataset.sort !== "desc" ? "bordered" : "filled"}
                     onClick={() => {
                       if (dataset.sort === "desc") {
@@ -860,7 +876,7 @@ function DatasetData(props) {
                     }}
                     isIconOnly
                   >
-                    <IoCaretDown />
+                    <RiSortDesc />
                   </Button>
                 </Tooltip>
                 {dataset.sort && (
@@ -868,7 +884,7 @@ function DatasetData(props) {
                     <Spacer x={0.5} />
                     <Tooltip content="Clear sorting">
                       <Link className="text-danger" onClick={() => onUpdate({ sort: "" })}>
-                        <CloseSquare />
+                        <IoCloseCircle className="text-danger" />
                       </Link>
                     </Tooltip>
                   </>
@@ -902,7 +918,7 @@ function DatasetData(props) {
                     <Spacer x={0.5} />
                     <Tooltip content="Save">
                       <Link className="text-success" onClick={() => onUpdate({ maxRecords: datasetMaxRecords })}>
-                        <TickSquare />
+                        <IoCheckmark className="text-success" />
                       </Link>
                     </Tooltip>
                     <Spacer x={0.5} />
@@ -914,19 +930,19 @@ function DatasetData(props) {
                           setDatasetMaxRecords(null);
                         }}
                       >
-                        <CloseSquare />
+                        <IoCloseCircle className="text-danger" />
                       </Link>
                     </Tooltip>
                   </div>
                 </>
               )}
             </div>
-            <div className="col-span-12 mt-10">
+            <div className="col-span-12 mt-4">
               {!formula && (
-                <Link onClick={_onAddFormula} className="flex items-center text-default">
+                <Link onClick={_onAddFormula} className="flex items-center cursor-pointer">
                   <TbMathFunctionY size={24} />
                   <Spacer x={0.5} />
-                  <Text b>Add Y-Axis formula</Text>
+                  <Text>Apply formula on metric</Text>
                 </Link>
               )}
             </div>
@@ -937,12 +953,11 @@ function DatasetData(props) {
             <div>
               <Popover>
                 <PopoverTrigger>
-                  <div style={styles.rowDisplay}>
+                  <div className="flex flex-row gap-2 items-center">
                     <Text>
-                      {"Formula "}
+                      {"Metric formula"}
                     </Text>
-                    <Spacer x={0.5} />
-                    <InfoCircle size="small" />
+                    <IoInformationCircleOutline />
                   </div>
                 </PopoverTrigger>
                 <PopoverContent>
@@ -950,38 +965,35 @@ function DatasetData(props) {
                 </PopoverContent>
               </Popover>
             </div>
-            <div style={styles.rowDisplay}>
+            <div className="flex flex-row gap-2 items-center">
               <Input
                 placeholder="Enter your formula here: {val}"
                 value={formula}
                 onChange={(e) => setFormula(e.target.value)}
                 variant="bordered"
               />
-              <Spacer x={1} />
               <Tooltip
                 content={formula === dataset.formula ? "The formula is already applied" : "Apply the formula"}
               >
                 <Link onClick={formula === dataset.formula ? () => { } : _onApplyFormula}>
-                  <TickSquare primaryColor={formula === dataset.formula ? neutral : positive} />
+                  <IoCheckmark className={`${formula === dataset.formula ? "text-default-foreground" : "text-success"}`} />
                 </Link>
               </Tooltip>
-              <Spacer x={0.5} />
               <Tooltip content="Remove formula">
                 <Link onClick={_onRemoveFormula}>
-                  <CloseSquare primaryColor={negative} />
+                  <IoCloseCircle className="text-danger" />
                 </Link>
               </Tooltip>
-              <Spacer x={1} />
               <Tooltip content="Click for an example">
                 <Link onClick={_onExampleFormula}>
-                  <FaMagic size={18} color={primary} />
+                  <IoColorWand className="text-primary" />
                 </Link>
               </Tooltip>
             </div>
           </div>
         )}
         {!goal && chartType !== "table" && (
-          <div className="col-span-12 mt-10">
+          <div className="col-span-12 mt-4">
             <Link onClick={_onAddGoal} className="flex items-center text-default">
               <TbProgressCheck size={24} />
               <Spacer x={0.5} />
@@ -990,33 +1002,31 @@ function DatasetData(props) {
           </div>
         )}
         {goal && chartType !== "table" && (
-          <div className="col-span-12 mt-10">
+          <div className="col-span-12 mt-4">
             <Row align="center">
               <Text>{"Goal "}</Text>
               <Spacer x={0.5} />
               <Tooltip content="A goal can be displayed as a progress bar in your KPI charts. Enter a number without any other characters. (e.g. 1000 instead of 1k)">
-                <div><InfoCircle size="small" /></div>
+                <div><IoInformationCircleOutline /></div>
               </Tooltip>
             </Row>
-            <Row align="center">
+            <Row align="center" className={"gap-2"}>
               <Input
                 placeholder="Enter your goal here"
                 value={goal}
                 onChange={(e) => setGoal(e.target.value)}
                 variant="bordered"
               />
-              <Spacer x={1} />
               <Tooltip
                 content={goal === dataset.goal ? "The goal is already applied" : "Save goal"}
               >
                 <Link onClick={goal === dataset.goal ? () => { } : _onApplyGoal}>
-                  <TickSquare primaryColor={goal === dataset.goal ? neutral : positive} />
+                  <IoCheckmark className={goal === dataset.goal ? "text-foreground" : "text-success"} />
                 </Link>
               </Tooltip>
-              <Spacer x={0.5} />
               <Tooltip content="Remove goal">
                 <Link onClick={_onRemoveGoal}>
-                  <CloseSquare primaryColor={negative} />
+                  <IoCloseCircle className="text-danger" />
                 </Link>
               </Tooltip>
             </Row>
@@ -1024,10 +1034,10 @@ function DatasetData(props) {
         )}
         {chartType === "table" && (
           <>
-            <div className="col-span-12 pt-20 pb-20">
+            <div className="col-span-12 mt-4">
               <Accordion fullWidth variant="bordered">
-                <AccordionItem subtitle="Table columns options" className="text-default" indicator={<Setting />}>
-                  <Container className={"p-0 m-0"}>
+                <AccordionItem subtitle="Table columns options" className="text-default" indicator={<IoSettings />}>
+                  <div>
                     {!isDragState && (
                       <Row wrap="wrap">
                         {tableFields.map((field) => {
@@ -1043,7 +1053,7 @@ function DatasetData(props) {
                                 onClick={() => _onExcludeField(field.accessor)}
                                 title="Hide field"
                               >
-                                <Show primaryColor="white" />
+                                <IoEyeOutline />
                               </Link>
                               <Spacer x={0.5} />
                               {`${field.accessor.replace("?", ".")}`}
@@ -1054,16 +1064,16 @@ function DatasetData(props) {
                                     className="flex items-center"
                                     title="Sum values on this field"
                                   >
-                                    <ChevronDownCircle primaryColor="white" />
+                                    <IoChevronDownCircle />
                                   </Link>
                                 </DropdownTrigger>
                                 <DropdownMenu variant="bordered">
-                                  <DropdownItem startContent={<Setting />}>
+                                  <DropdownItem startContent={<IoSettings />}>
                                     <Link className="w-full" onClick={() => _onSelectFieldForFormatting(field.accessor)}>
                                       <Text>Data formatting</Text>
                                     </Link>
                                   </DropdownItem>
-                                  <DropdownItem startContent={<Plus />}>
+                                  <DropdownItem startContent={<IoAdd />}>
                                     <Link className="w-full" onClick={() => _onSumField(field.accessor)}>
                                       {dataset.configuration
                                         && dataset.configuration.sum === field.accessor
@@ -1126,7 +1136,7 @@ function DatasetData(props) {
                             color="warning"
                           >
                             <Link className="flex items-center" onClick={() => _onShowField(field)}>
-                              <Hide primaryColor="white" />
+                              <IoEyeOffOutline />
                             </Link>
                             <Spacer x={0.3} />
                             {field.replace("?", ".")}
@@ -1157,12 +1167,12 @@ function DatasetData(props) {
                             title="Cancel ordering"
                             size="sm"
                           >
-                            <CloseSquare />
+                            <IoCloseCircle />
                           </Button>
                         </>
                       )}
                     </Row>
-                  </Container>
+                  </div>
                 </AccordionItem>
               </Accordion>
             </div>
@@ -1172,9 +1182,9 @@ function DatasetData(props) {
         {chartType !== "table" && (
           <>
             <div className="col-span-12">
-              <Spacer y={1} />
+              <Spacer y={2} />
               <Divider />
-              <Spacer y={1} />
+              <Spacer y={2} />
             </div>
 
             <div className="col-span-12">
@@ -1196,15 +1206,20 @@ function DatasetData(props) {
         )}
 
         <div className="col-span-12">
-          <Spacer y={1} />
+          <Spacer y={2} />
           <Divider />
-          <Spacer y={1} />
+          <Spacer y={2} />
         </div>
         {conditions && conditions.length === 0 && (
           <div className="col-span-12 datasetdata-filters-tut">
+            <Row>
+              <Text b>{"Filters"}</Text>
+            </Row>
+            <Spacer y={1} />
+
             <Button
               variant="bordered"
-              startContent={<Filter />}
+              startContent={<IoFilter />}
               onClick={_onAddCondition}
               auto
               size={"sm"}
@@ -1215,47 +1230,42 @@ function DatasetData(props) {
         )}
         {conditions.map((condition, index) => {
           return (
-            <div key={condition.id} className="col-span-12 pb-5 pt-5 datasetdata-filters-tut">
-              <Container className={"pl-0 pr-0"}>
-                {index === 0 && (
-                  <>
-                    <Row>
-                      <Text b>{"Filters"}</Text>
-                    </Row>
-                    <Spacer y={1} />
-                  </>
-                )}
-                <Row warp="wrap" className={"ml-0 mr-0 flex gap-2"} align="center">
+            <div key={condition.id} className="col-span-12 datasetdata-filters-tut">
+              <div>
+                <Row warp="wrap" className={"flex gap-2"} align="center">
                   {index === 0 && (<Text>{"where "}</Text>)}
                   {index > 0 && (<Text>{"and "}</Text>)}
                   <Spacer x={1} />
-                  <Dropdown>
-                    <DropdownTrigger>
+                  <Popover>
+                    <PopoverTrigger>
                       <Input
-                        value={(condition.field && condition.field.substring(condition.field.lastIndexOf(".") + 1)) || "field"}
+                        value={condition.field && condition.field.substring(condition.field.lastIndexOf(".") + 1) || "field"}
                         size="sm"
+                        endContent={<IoChevronDown />}
                       />
-                    </DropdownTrigger>
-                    <DropdownMenu
-                      variant="bordered"
-                      onAction={(key) => _updateCondition(condition.id, key, "field")}
-                      selectedKeys={[condition.field]}
-                      selectionMode="single"
-                    >
-                      {fieldOptions.filter((f) => !f.isObject).map((field) => (
-                        <DropdownItem key={field.value}>
-                          <Container className={"p-0 m-0"}>
-                            <Row>
-                              <Chip size="sm" className="min-w-[70px]" color={field.label.color}>{field.label.content}</Chip>
-                              <Spacer x={0.5} />
-                              <Text>{field.text}</Text>
-                            </Row>
-                          </Container>
-                        </DropdownItem>
-                      ))}
-                    </DropdownMenu>
-                  </Dropdown>
-                  <Spacer x={0.5} />
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <div>
+                        <Listbox
+                          onSelectionChange={(keys) => _updateCondition(condition.id, keys.currentKey, "field")}
+                          selectedKeys={[condition.field]}
+                          selectionMode="single"
+                        >
+                          {fieldOptions.filter((f) => !f.isObject).map((field) => (
+                            <ListboxItem
+                              key={field.value}
+                              startContent={(
+                                <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={field.label.color}>{field.label.content}</Chip>
+                              )}
+                              textValue={field.text}
+                            >
+                              {field.text}
+                            </ListboxItem>
+                          ))}
+                        </Listbox>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                   <Dropdown>
                     <DropdownTrigger>
                       <Input
@@ -1267,10 +1277,10 @@ function DatasetData(props) {
                           || "="
                         }
                         size="sm"
+                        className="max-w-[100px]"
                       />
                     </DropdownTrigger>
                     <DropdownMenu
-                      variant="bordered"
                       onAction={(key) => _updateCondition(condition.id, key, "operator")}
                       selectedKeys={[condition.operator]}
                       selectionMode="single"
@@ -1282,8 +1292,7 @@ function DatasetData(props) {
                       ))}
                     </DropdownMenu>
                   </Dropdown>
-                  <Spacer x={0.5} />
-                  <div>
+                  <div className="min-w-[150px]">
                     {(!condition.field
                       || (_.find(fieldOptions, { value: condition.field })
                       && _.find(fieldOptions, { value: condition.field }).type !== "date")) && (
@@ -1300,7 +1309,8 @@ function DatasetData(props) {
                       <Popover>
                         <PopoverTrigger>
                           <Input
-                            endContent={<CalendarIcon />}
+                            endContent={<IoCalendarOutline />}
+                            placeholder="Enter a value"
                             value={(condition.value && format(new Date(condition.value), "Pp", { locale: enGB })) || "Enter a value"}
                             disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                             size="sm"
@@ -1317,10 +1327,9 @@ function DatasetData(props) {
                       </Popover>
                     )}
                   </div>
-                  <Spacer x={0.5} />
                   <Tooltip content="Remove condition">
                     <Link color="danger" onClick={() => _onRemoveCondition(condition.id)}>
-                      <CloseSquare />
+                      <IoCloseCircle className="text-danger" />
                     </Link>
                   </Tooltip>
 
@@ -1335,7 +1344,7 @@ function DatasetData(props) {
                             && _.find(fieldOptions, { value: condition.field }).type
                         )}
                       >
-                        <Show />
+                        <IoEye className="text-secondary" />
                       </Link>
                     </Tooltip>
                   )}
@@ -1351,7 +1360,7 @@ function DatasetData(props) {
                             && _.find(fieldOptions, { value: condition.field }).type
                         )}
                       >
-                        <Hide />
+                        <IoEyeOff className="text-secondary" />
                       </Link>
                     </Tooltip>
                   )}
@@ -1362,7 +1371,7 @@ function DatasetData(props) {
                         color="success"
                         onClick={() => _onApplyCondition(condition.id, condition.exposed)}
                       >
-                        <TickSquare />
+                        <IoCheckmark className="text-success" />
                       </Link>
                     </Tooltip>
                   )}
@@ -1372,22 +1381,22 @@ function DatasetData(props) {
                         color="warning"
                         onClick={() => _onRevertCondition(condition.id)}
                       >
-                        <FaRedo size={18} />
+                        <IoArrowRedo />
                       </Link>
                     </Tooltip>
                   )}
                   {condition.saved && (
                     <Tooltip content="Condition settings">
                       <Link
-                        className="text-defaul-800"
+                        className="text-default-800"
                         onClick={() => _onEditConditionSettings(condition)}
                       >
-                        <Setting />
+                        <IoSettings />
                       </Link>
                     </Tooltip>
                   )}
                 </Row>
-              </Container>
+              </div>
             </div>
           );
         })}
@@ -1397,8 +1406,8 @@ function DatasetData(props) {
               variant="light"
               color="primary"
               onClick={_onAddCondition}
-              startContent={<Plus />}
-              auto 
+              startContent={<IoAdd />}
+              size="sm"
             >
               Add a new condition
             </Button>
@@ -1415,7 +1424,7 @@ function DatasetData(props) {
                     {condition.field.replace("root[].", "")}
                     <Spacer x={0.5} />
                     <Link onClick={() => _onHideCondition(condition.id)} color="danger">
-                      <CloseSquare size="small" color="white" />
+                      <IoCloseCircle />
                     </Link>
                   </Chip>
                 );
@@ -1513,7 +1522,7 @@ DatasetData.propTypes = {
 
 function FormulaTips() {
   return (
-    <Container className={"p-10"}>
+    <div className={"p-4"}>
       <Row>
         <Text b>{"Formulas allow you to manipulate the final results on the Y-Axis"}</Text>
       </Row>
@@ -1525,7 +1534,7 @@ function FormulaTips() {
       </Row>
       <Spacer y={1} />
       <Row align="center">
-        <ChevronRight />
+        <IoChevronForward />
         <Spacer x={0.5} />
         <Text>
           {"{val} => 12345"}
@@ -1533,7 +1542,7 @@ function FormulaTips() {
       </Row>
       <Spacer y={1} />
       <Row align="center">
-        <ChevronRight />
+        <IoChevronForward />
         <Spacer x={0.5} />
         <Text>
           {"{val / 100} => 123.45"}
@@ -1541,7 +1550,7 @@ function FormulaTips() {
       </Row>
       <Spacer y={1} />
       <Row align="center">
-        <ChevronRight />
+        <IoChevronForward />
         <Spacer x={0.5} />
         <Text>
           {"$ {val / 100} => $ 123.45"}
@@ -1549,13 +1558,13 @@ function FormulaTips() {
       </Row>
       <Spacer y={1} />
       <Row align="center">
-        <ChevronRight />
+        <IoChevronForward />
         <Spacer x={0.5} />
         <Text>
           {"{val / 100} USD => 123.45 USD"}
         </Text>
       </Row>
-    </Container>
+    </div>
   );
 }
 

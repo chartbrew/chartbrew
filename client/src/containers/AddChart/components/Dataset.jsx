@@ -8,7 +8,7 @@ import {
   Tooltip, Button, Spacer, Input, Modal, Divider, Tabs, Tab,
   ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
-import { ArrowDownSquare, Edit } from "react-iconly";
+import { IoCloudDownload, IoCreateOutline } from "react-icons/io5";
 
 import { chartColors, primary } from "../../../config/colors";
 import DatarequestModal from "./DatarequestModal";
@@ -197,25 +197,28 @@ function Dataset(props) {
 
   return (
     <div style={styles.container}>
-      <div className="grid grid-cols-12 gap-1">
+      <div className="grid grid-cols-12 gap-2">
         <div className="col-span-12">
-          <Divider className={"ml-10 mr-10"} />
+          <Spacer y={2} />
+          <Divider />
+          <Spacer y={2} />
         </div>
-        <div className="col-span-12 flex items-center content-center">
+        <div className="col-span-12 flex items-center">
           <Text b size={"lg"}>{newDataset.legend}</Text>
+          <Spacer x={1} />
           <Button
             variant="light"
             isIconOnly
             onClick={() => setEditDatasetName(!editDatasetName)}
-            auto
             color={"primary"}
             disableRipple
+            size="sm"
           >
-            <Edit />
+            <IoCreateOutline />
           </Button>
         </div>
         {editDatasetName && (
-          <div className="col-span-6 sm:col-span-12">
+          <div className="col-span-12 md:col-span-6">
             <Input
               placeholder="Enter a name for the dataset"
               value={datasetName || ""}
@@ -226,45 +229,46 @@ function Dataset(props) {
           </div>
         )}
         {editDatasetName && (
-          <div className="col-span-6 sm:col-span-12">
+          <div className="col-span-12 md:col-span-6">
             <Button
               onClick={_onChangeLegend}
-              auto
-              disabled={!datasetName}
+              isDisabled={!datasetName}
               isLoading={savingDatasetName}
               color="success"
+              variant="flat"
             >
               {"Save"}
             </Button>
           </div>
         )}
-        <div className="col-span-12 sm:col-span-6 dataset-manage-tut">
+        <div className="col-span-12 md:col-span-6 dataset-manage-tut">
           <Button
-            endContent={<ArrowDownSquare />}
+            endContent={<IoCloudDownload />}
             onClick={_openConfigModal}
-            auto
+            color="primary"
             fullWidth
           >
             Get data
           </Button>
         </div>
-        <div className="col-span-6 sm:col-span-12 flex items-center">
+        <div className="col-span-12 md:col-span-6 flex items-center">
           <Tooltip content="Remove dataset">
             <Button
               variant="flat"
               color="danger"
               onClick={() => setDeleteModal(true)}
-              auto
             >
               {"Remove"}
             </Button>
           </Tooltip>
         </div>
         <div className="col-span-12">
-          <Divider className="m-20" />
+          <Spacer y={4} />
+          <Divider />
+          <Spacer y={4} />
         </div>
         <div className="col-span-12">
-          <Tabs selectedKey={menuItem} onSelectionChange={(key) => setMenuItem(key)}>
+          <Tabs selectedKey={menuItem} onSelectionChange={(key) => setMenuItem(key)} fullWidth>
             <Tab key="data" title="Data" />
             <Tab key="appearance" title="Chart colors" />
           </Tabs>

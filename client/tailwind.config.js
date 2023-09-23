@@ -9,7 +9,7 @@ export default {
   ],
   theme: {
     fontFamily: {
-      sans: ["Inter", "sans-serif"],
+      sans: ["Inter", "-apple-system", "sans-serif"],
     },
     screens: {
       "sm": "640px",
@@ -26,16 +26,6 @@ export default {
 
       "2xl": "1536px",
       // => @media (min-width: 1536px) { ... }
-    },
-    container: {
-      padding: {
-        DEFAULT: "1rem",
-        sm: "2rem",
-        md: "3rem",
-        lg: "4rem",
-        xl: "5rem",
-        "2xl": "6rem",
-      },
     },
     extend: {},
   },
