@@ -5,8 +5,9 @@ import { withRouter } from "react-router";
 import _ from "lodash";
 import { Flip, toast, ToastContainer } from "react-toastify";
 import {
-  Button, Link, Modal, Spacer, Avatar, Badge, Tooltip, Card, semanticColors,
-  CircularProgress, ModalHeader, ModalBody, ModalFooter, CardBody, CardFooter, ModalContent, Spinner,
+  Button, Link, Modal, Spacer, Avatar, Badge, Tooltip, Card,
+  CircularProgress, ModalHeader, ModalBody, ModalFooter, CardBody,
+  CardFooter, ModalContent, Spinner,
 } from "@nextui-org/react";
 import moment from "moment";
 import { IoAdd, IoLink, IoWarning } from "react-icons/io5";
@@ -272,12 +273,7 @@ function DatarequestModal(props) {
                         <Avatar
                           isBordered
                           icon={(
-                            <IoLink
-                              color={
-                                selectedRequest.isSettings
-                                  ? semanticColors[theme].default[100] : semanticColors[theme].default[500]
-                              }
-                            />
+                            <IoLink />
                           )}
                           radius="sm"
                           className="cursor-pointer"
