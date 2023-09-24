@@ -750,7 +750,7 @@ function AddChart(props) {
                   onClick={() => _onSaveNewDataset()}
                   isLoading={savingDataset}
                   endContent={<IoAdd />}
-                  auto
+                  color="primary"
                 >
                   {"Add the first dataset"}
                 </Button>
