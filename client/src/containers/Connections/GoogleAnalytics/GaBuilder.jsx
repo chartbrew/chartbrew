@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Button, Popover, Divider, Input, Tooltip, Spacer, Chip, Checkbox,
-  Select, SelectItem,
+  Select, SelectItem, PopoverTrigger, PopoverContent, Code,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -12,9 +12,6 @@ import { toast } from "react-toastify";
 import { Calendar } from "react-date-range";
 import { format, sub } from "date-fns";
 import { enGB } from "date-fns/locale";
-import {
-  InfoCircle, Play, Calendar as CalendarIcon, Delete,
-} from "react-iconly";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -30,10 +27,10 @@ import {
 } from "../../../actions/connection";
 import { getMetadata } from "./apiBoilerplate";
 import { secondary } from "../../../config/colors";
-import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
+import { IoCalendar, IoInformationCircle, IoInformationCircleOutline, IoPlay, IoTrashBin } from "react-icons/io5";
 
 const validDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)/g;
 const validEndDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)/g;
@@ -72,9 +69,13 @@ function GaBuilder(props) {
   const [saveLoading, setSaveLoading] = useState(false);
 
   const isDark = useThemeDetector();
+  const initRef = React.useRef(null);
 
   useEffect(() => {
-    _initRequest();
+    if (!initRef.current) {
+      initRef.current = true;
+      _initRequest();
+    }
   }, [dataRequest]);
 
   useEffect(() => {
@@ -299,23 +300,28 @@ function GaBuilder(props) {
   };
 
   const _onPropertySelected = (value) => {
+    if (value !== configuration.propertyId) {
+      setConfiguration({ ...configuration, propertyId: value });
+      _populateMetadata(connection, value);
+    }
+
     setConfiguration({ ...configuration, propertyId: value });
-    _populateMetadata(connection, value);
   };
 
   const _renderCalendar = (type) => (
     <div>
       <Popover>
-        <Popover.Trigger>
+        <PopoverTrigger>
           <Button
-            icon={<CalendarIcon set="bold" />}
-            css={{ minWidth: "fit-content" }}
-            bordered
+            isIconOnly
+            variant="light"
             color="secondary"
-            disabled={!configuration.propertyId}
-          />
-        </Popover.Trigger>
-        <Popover.Content>
+            isDisabled={!configuration.propertyId}
+          >
+            <IoCalendar />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent>
           <Calendar
             date={_getDateForCalendar(configuration[type])}
             onChange={(date) => {
@@ -324,7 +330,7 @@ function GaBuilder(props) {
             locale={enGB}
             color={secondary}
           />
-        </Popover.Content>
+        </PopoverContent>
       </Popover>
     </div>
   );
@@ -365,353 +371,302 @@ function GaBuilder(props) {
 
   return (
     <div style={styles.container}>
-      <div className="grid grid-cols-12">
-        <div className="col-span-7 sm:col-span-12">
-          <Container>
-            <div className="grid grid-cols-12 gap-1">
-              <div className="col-span-12 flex justify-between">
-                <Text b size={"lg"}>{connection.name}</Text>
-                <div>
-                  <Row>
+      <div className="grid grid-cols-12 gap-4 pl-1 pr-1 md:pl-4 md:pr-4">
+        <div className="col-span-12 sm:col-span-7">
+          <div className="grid grid-cols-12 gap-4">
+            <div className="col-span-12 flex justify-between">
+              <Text b size={"lg"}>{connection.name}</Text>
+              <div>
+                <Row>
+                  <Button
+                    color="primary"
+                    size="sm"
+                    onClick={() => _onSavePressed()}
+                    isLoading={saveLoading || requestLoading}
+                    variant="flat"
+                  >
+                    {"Save"}
+                  </Button>
+                  <Spacer x={1} />
+                  <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
                     <Button
-                      color="primary"
-                      auto
+                      color="danger"
+                      isIconOnly
                       size="sm"
-                      onClick={() => _onSavePressed()}
-                      isLoading={saveLoading || requestLoading}
-                      variant="flat"
+                      variant="bordered"
+                      onClick={() => onDelete()}
                     >
-                      {"Save"}
+                      <IoTrashBin />
                     </Button>
-                    <Spacer x={0.6} />
-                    <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
-                      <Button
-                        color="danger"
-                        isIconOnly
-                        auto
-                        size="sm"
-                        variant="bordered"
-                        onClick={() => onDelete()}
-                      >
-                        <Delete />
-                      </Button>
-                    </Tooltip>
+                  </Tooltip>
+                </Row>
+              </div>
+            </div>
+            <div className="col-span-12">
+              <Divider />
+            </div>
+            <div className="col-span-12 sm:col-span-6 gabuilder-collections-tut">
+              <Select
+                variant="bordered"
+                selectedKeys={[configuration.accountId]}
+                placeholder="Select an account"
+                label="Account"
+                isLoading={collectionsLoading}
+                onSelectionChange={(keys) => _onAccountSelected(keys.currentKey)}
+                selectionMode="single"
+              >
+                {accountOptions.map((account) => (
+                  <SelectItem key={account.value} textValue={account.text}>
+                    {account.text}
+                  </SelectItem>
+                ))}
+              </Select>
+            </div>
+            <div className="col-span-12 sm:col-span-6">
+              <Select
+                isDisabled={!configuration.accountId}
+                variant="bordered"
+                isLoading={collectionsLoading}
+                selectedKeys={[configuration.propertyId]}
+                placeholder="Select a property"
+                label="Property"
+                onSelectionChange={(keys) => _onPropertySelected(keys.currentKey)}
+                selectionMode="single"
+              >
+                {propertyOptions.map((property) => (
+                  <SelectItem key={property.value} textValue={property.text}>
+                    {property.text}
+                  </SelectItem>
+                ))}
+              </Select>
+            </div>
+            <div className="col-span-12 gabuilder-query-tut">
+              <div style={styles.row}>
+                <Text>
+                  {"Choose a metric "}
+                </Text>
+                <Spacer x={1} />
+                <Tooltip
+                  content="You can add multiple metrics by creating another dataset for this chart. Click on 'Build chart', then 'Add new dataset' on the right."
+                  className="max-w-[500px]"
+                  placement="right-start"
+                >
+                  <div><IoInformationCircleOutline /></div>
+                </Tooltip>
+              </div>
+              <Select
+                isDisabled={!configuration.propertyId}
+                variant="bordered"
+                isLoading={collectionsLoading}
+                selectedKeys={[configuration.metrics]}
+                placeholder="Select a metric"
+                errorMessage={formErrors.metrics}
+                color={formErrors.metrics ? "danger" : "default"}
+                onSelectionChange={(keys) => setConfiguration({ ...configuration, metrics: keys.currentKey })}
+                selectionMode="single"
+              >
+                {metricsOptions.map((item) => {
+                  return (
+                    <SelectItem
+                      key={item.key}
+                      endContent={item.category}
+                      description={item.description}
+                      textValue={item.text}
+                    >
+                      <div>
+                        <Text b>{item.text}</Text>
+                        <Text small className={"text-default-400"}>
+                          {" - "}
+                          {item.key}
+                        </Text>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </Select>
+            </div>
+            <div className="col-span-12">
+              <Text>Choose a dimension</Text>
+              <Select
+                isDisabled={!configuration.propertyId}
+                variant="bordered"
+                selectedKeys={[configuration.dimensions]}
+                onSelectionChange={(keys) => setConfiguration({ ...configuration, dimensions: keys.currentKey })}
+                selectionMode="single"
+                placeholder="Select a dimension"
+                errorMessage={formErrors.dimensions}
+                color={formErrors.dimensions ? "danger" : "default"}
+              >
+                {dimensionsOptions.map((item) => {
+                  return (
+                    <SelectItem
+                      key={item.key}
+                      endContent={item.category}
+                      description={item.description}
+                      textValue={item.text}
+                    >
+                      <Text>{item.text}</Text>
+                    </SelectItem>
+                  );
+                })}
+              </Select>
+            </div>
+            <div className="col-span-12">
+              <Text>Start date</Text>
+              <Input
+                endContent={_renderCalendar("startDate")}
+                placeholder="YYYY-MM-DD"
+                value={configuration.startDate}
+                disabled={!configuration.propertyId}
+                onChange={(e) => {
+                  setConfiguration({ ...configuration, startDate: e.target.value });
+                }}
+                variant="bordered"
+                fullWidth
+              />
+              <Spacer y={1} />
+              <div className="flex flex-row gap-1 items-center">
+                <Chip
+                  onClick={() => setConfiguration({ ...configuration, startDate: "today" })}
+                >
+                  today
+                </Chip>
+                <Chip
+                  onClick={() => setConfiguration({ ...configuration, startDate: "yesterday" })}
+                >
+                  yesterday
+                </Chip>
+                <Chip
+                  onClick={() => setConfiguration({ ...configuration, startDate: "30daysAgo" })}
+                >
+                  30daysAgo
+                </Chip>
+                <Chip
+                  onClick={() => setDateHelp(!dateHelp)}
+                  variant="flat"
+                  color={dateHelp ? "secondary" : "default"}
+                  size="sm"
+                  startContent={<IoInformationCircle />}
+                >
+                  info
+                </Chip>
+              </div>
+            </div>
+            <div className="col-span-12">
+              <Text>End date</Text>
+              <Input
+                endContent={_renderCalendar("endDate")}
+                placeholder="YYYY-MM-DD"
+                value={configuration.endDate}
+                disabled={!configuration.propertyId}
+                onChange={(e) => {
+                  setConfiguration({ ...configuration, endDate: e.target.value });
+                }}
+                variant="bordered"
+                fullWidth
+              />
+              <Spacer y={1} />
+              <div className="flex flex-row gap-1 items-center">
+                <Chip
+                  onClick={() => setConfiguration({ ...configuration, endDate: "today" })}
+                >
+                  today
+                </Chip>
+                <Chip
+                  onClick={() => setConfiguration({ ...configuration, endDate: "yesterday" })}
+                >
+                  yesterday
+                </Chip>
+                <Chip
+                  onClick={() => setConfiguration({ ...configuration, endDate: "30daysAgo" })}
+                >
+                  30daysAgo
+                </Chip>
+                <Chip
+                  onClick={() => setDateHelp(!dateHelp)}
+                  variant="flat"
+                  color={dateHelp ? "secondary" : "default"}
+                  size="sm"
+                  startContent={<IoInformationCircle />}
+                >
+                  info
+                </Chip>
+              </div>
+            </div>
+            {dateHelp && (
+              <div className="col-span-12">
+                <div
+                  className={"bg-content2 rounded-md p-4 pl-5 pr-5"}
+                >
+                  <Row className={"gap-1"}>
+                    <Text>{"You can use relative dates such as "}</Text>
+                    <Code color="primary">today</Code>
+                    <Text>{", "}</Text>
+                    <Code color="primary">yesterday</Code>
+                    <Text>{", and "}</Text>
+                    <Code color="primary">NdaysAgo</Code>
+                  </Row>
+                  <Row>
+                    <Text>{"Alternatively, you can type in any date in YYYY-MM-DD format or use the calendar picker next to each field."}</Text>
                   </Row>
                 </div>
               </div>
-              <div className="col-span-12">
-                <Divider />
-              </div>
-              <div className="col-span-6 sm:col-span-12 gabuilder-collections-tut">
-                <Select
-                  variant="bordered"
-                  selectedKeys={[configuration.accountId]}
-                  placeholder="Select an account"
-                  label="Account"
-                  isLoading={collectionsLoading}
-                  value={
-                    (accountOptions
-                      && configuration.accountId
-                      && accountOptions.find((a) => a.value === configuration.accountId)?.text)
-                    || "Select an account"
-                  }
-                  onSelectionChange={(key) => _onAccountSelected(key)}
-                  selectionMode="single"
-                >
-                  {accountOptions.map((account) => (
-                    <SelectItem key={account.value}>
-                      {account.text}
-                    </SelectItem>
-                  ))}
-                </Select>
-              </div>
-              <div className="col-span-6 sm:col-span-12">
-                <Select
-                  isDisabled={!configuration.accountId}
-                  variant="bordered"
-                  isLoading={collectionsLoading}
-                  selectedKeys={[configuration.propertyId]}
-                  placeholder="Select a property"
-                  label="Property"
-                  value={
-                    (propertyOptions
-                      && configuration.propertyId
-                      && propertyOptions.find((p) => p.value === configuration.propertyId)?.text)
-                    || "Select a property"
-                  }
-                  onSelectionChange={(key) => _onPropertySelected(key)}
-                  selectionMode="single"
-                >
-                  {propertyOptions.map((property) => (
-                    <SelectItem key={property.value}>
-                      {property.text}
-                    </SelectItem>
-                  ))}
-                </Select>
-              </div>
-              <div className="col-span-12 gabuilder-query-tut">
-                <div style={styles.row}>
-                  <Text>
-                    {"Choose a metric "}
-                  </Text>
-                  <Spacer x={0.5} />
-                  <Tooltip
-                    content="You can add multiple metrics by creating another dataset for this chart. Click on 'Build chart', then 'Add new dataset' on the right."
-                    css={{ zIndex: 10000, maxWidth: 500 }}
-                    className="max-w-[500px]"
-                    placement="right-start"
-                  >
-                    <InfoCircle size="small" />
-                  </Tooltip>
-                </div>
-                <Select
-                  isDisabled={!configuration.propertyId}
-                  variant="bordered"
-                  isLoading={collectionsLoading}
-                  selectedKeys={[configuration.metrics]}
-                  placeholder="Select a metric"
-                  errorMessage={formErrors.metrics}
-                  color={formErrors.metrics ? "danger" : "default"}
-                  value={
-                    (metricsOptions
-                      && configuration.metrics
-                      && metricsOptions.find((m) => m.value === configuration.metrics)?.text)
-                    || "Select a metric"
-                  }
-                  onSelectionChange={(key) => setConfiguration({ ...configuration, metrics: key })}
-                  selectionMode="single"
-                >
-                  {metricsOptions.map((item) => {
-                    return (
-                      <SelectItem
-                        key={item.key}
-                        endContent={item.category}
-                        description={item.description}
-                      >
-                        <Text>
-                          {item.text}
-                          <Text small className={"text-default-400"}>
-                            {" - "}
-                            {item.key}
-                          </Text>
-                        </Text>
-                      </SelectItem>
-                    );
-                  })}
-                </Select>
-              </div>
-              <div className="col-span-12">
-                <Text>Choose a dimension</Text>
-                <Select
-                  isDisabled={!configuration.propertyId}
-                  variant="bordered"
-                  selectedKeys={[configuration.dimensions]}
-                  onSelectionChange={(key) => setConfiguration({ ...configuration, dimensions: key })}
-                  selectionMode="single"
-                  placeholder="Select a dimension"
-                  errorMessage={formErrors.dimensions}
-                  color={formErrors.dimensions ? "danger" : "default"}
-                  value={
-                    (dimensionsOptions
-                      && configuration.dimensions
-                      && dimensionsOptions
-                        .find((d) => d.value === configuration.dimensions)?.text)
-                    || "Select a dimension"
-                  }
-                >
-                  {dimensionsOptions.map((item) => {
-                    return (
-                      <SelectItem
-                        key={item.key}
-                        endContent={item.category}
-                        description={item.description}
-                      >
-                        <Text>{item.text}</Text>
-                      </SelectItem>
-                    );
-                  })}
-                </Select>
-              </div>
-              <div className="col-span-12">
-                <Text>Start date</Text>
-                <Input
-                  endContent={_renderCalendar("startDate")}
-                  placeholder="YYYY-MM-DD"
-                  value={configuration.startDate}
-                  disabled={!configuration.propertyId}
-                  onChange={(e) => {
-                    setConfiguration({ ...configuration, startDate: e.target.value });
-                  }}
-                  variant="bordered"
-                  fullWidth
-                />
-                <Spacer y={0.5} />
-                <div style={styles.row}>
-                  <Chip
-                    is="a"
-                    onClick={() => setConfiguration({ ...configuration, startDate: "today" })}
-                  >
-                    today
-                  </Chip>
-                  <Spacer x={0.5} />
-                  <Chip
-                    is="a"
-                    onClick={() => setConfiguration({ ...configuration, startDate: "yesterday" })}
-                  >
-                    yesterday
-                  </Chip>
-                  <Spacer x={0.5} />
-                  <Chip
-                    is="a"
-                    onClick={() => setConfiguration({ ...configuration, startDate: "30daysAgo" })}
-                    variant="default"
-                  >
-                    30daysAgo
-                  </Chip>
-                  <Spacer x={0.5} />
-                  <Chip
-                    is="a"
-                    onClick={() => setDateHelp(!dateHelp)}
-                    variant="flat"
-                    color={dateHelp ? "secondary" : "default"}
-                    size="sm"
-                  >
-                    <InfoCircle size="small" />
-                    <Spacer x={0.3} />
-                    <span>info</span>
-                  </Chip>
-                </div>
-              </div>
-              <div className="col-span-12">
-                <Text>End date</Text>
-                <Input
-                  endContent={_renderCalendar("endDate")}
-                  placeholder="YYYY-MM-DD"
-                  value={configuration.endDate}
-                  disabled={!configuration.propertyId}
-                  onChange={(e) => {
-                    setConfiguration({ ...configuration, endDate: e.target.value });
-                  }}
-                  variant="bordered"
-                  fullWidth
-                />
-                <Spacer y={0.5} />
-                <div style={styles.row}>
-                  <Chip
-                    is="a"
-                    onClick={() => setConfiguration({ ...configuration, endDate: "today" })}
-                  >
-                    today
-                  </Chip>
-                  <Spacer x={0.5} />
-                  <Chip
-                    is="a"
-                    onClick={() => setConfiguration({ ...configuration, endDate: "yesterday" })}
-                  >
-                    yesterday
-                  </Chip>
-                  <Spacer x={0.5} />
-                  <Chip
-                    is="a"
-                    onClick={() => setConfiguration({ ...configuration, endDate: "30daysAgo" })}
-                  >
-                    30daysAgo
-                  </Chip>
-                  <Spacer x={0.5} />
-                  <Chip
-                    is="a"
-                    onClick={() => setDateHelp(!dateHelp)}
-                    variant="flat"
-                    color={dateHelp ? "secondary" : "default"}
-                    size="sm"
-                  >
-                    <InfoCircle size="small" />
-                    <Spacer x={0.3} />
-                    <span>info</span>
-                  </Chip>
-                </div>
-              </div>
-              {dateHelp && (
-                <div className="col-span-12">
-                  <Container
-                    className={"bg-content2 rounded-md p-10 pl-15 pr-15"}
-                  >
-                    <Row>
-                      <Text>{"You can use relative dates such as "}</Text>
-                      <Spacer x={0.3} />
-                      <code>today</code>
-                      <Spacer x={0.3} />
-                      <Text>{", "}</Text>
-                      <Spacer x={0.3} />
-                      <code>yesterday</code>
-                      <Spacer x={0.3} />
-                      <Text>{", and "}</Text>
-                      <Spacer x={0.3} />
-                      <code>NdaysAgo</code>
-                    </Row>
-                    <Row>
-                      <Text>{"Alternatively, you can type in any date in YYYY-MM-DD format or use the calendar picker next to each field."}</Text>
-                    </Row>
-                  </Container>
-                </div>
-              )}
-            </div>
-          </Container>
+            )}
+          </div>
         </div>
-        <div className="col-span-5 sm:col-span-12">
-          <Container>
-            <Row className="gabuilder-request-tut">
-              <Button
-                endContent={<Play />}
-                isLoading={requestLoading}
-                onClick={() => _onTest()}
-                className="w-full"
-                variant="shadow"
-              >
-                Get analytics data
-              </Button>
-            </Row>
-            <Spacer y={1} />
-            <Row align="center">
-              <Checkbox
-                label="Use cache"
-                isSelected={!invalidateCache}
-                onChange={() => setInvalidateCache(!invalidateCache)}
-                size="sm"
+        <div className="col-span-12 sm:col-span-5">
+          <Row className="gabuilder-request-tut">
+            <Button
+              endContent={<IoPlay />}
+              isLoading={requestLoading}
+              onClick={() => _onTest()}
+              className="w-full"
+              color="primary"
+            >
+              Get analytics data
+            </Button>
+          </Row>
+          <Spacer y={2} />
+          <Row align="center">
+            <Checkbox
+              isSelected={!invalidateCache}
+              onChange={() => setInvalidateCache(!invalidateCache)}
+              size="sm"
+            >
+              {"Use cache"}
+            </Checkbox>
+            <Spacer x={1} />
+            <Tooltip
+              content="Chartbrew will cache the data to make the edit process faster. The cache will be cleared when you change any of the settings."
+              className="max-w-[500px]"
+            >
+              <div><IoInformationCircleOutline /></div>
+            </Tooltip>
+          </Row>
+          <Spacer y={2} />
+          <Row className="gabuilder-result-tut">
+            <div className="w-full">
+              <AceEditor
+                mode="json"
+                theme={isDark ? "one_dark" : "tomorrow"}
+                height="450px"
+                width="none"
+                value={result || ""}
+                name="resultEditor"
+                readOnly
+                editorProps={{ $blockScrolling: false }}
+                className="rounded-md border-1 border-solid border-content3"
               />
-              <Spacer x={0.5} />
-              <Tooltip
-                content="Chartbrew will cache the data to make the edit process faster. The cache will be cleared when you change any of the settings."
-                className="max-w-[500px]"
-              >
-                <InfoCircle size="small" />
-              </Tooltip>
-            </Row>
-            <Spacer y={1} />
-            <Row className="gabuilder-result-tut">
-              <div className="w-full">
-                <AceEditor
-                  mode="json"
-                  theme={isDark ? "one_dark" : "tomorrow"}
-                  style={{ borderRadius: 10 }}
-                  height="450px"
-                  width="none"
-                  value={result || ""}
-                  name="resultEditor"
-                  readOnly
-                  editorProps={{ $blockScrolling: false }}
-                />
-              </div>
-            </Row>
-            <Spacer y={1} />
-            <Row align="center">
-              <InfoCircle size="small" />
-              <Spacer x={0.5} />
-              <Text small>
-                {"This is a preview and it might not show all data in order to keep things fast in the UI."}
-              </Text>
-            </Row>
-          </Container>
+            </div>
+          </Row>
+          <Spacer y={2} />
+          <Row align="center">
+            <IoInformationCircleOutline />
+            <Spacer x={1} />
+            <Text size="sm">
+              {"This is a preview and it might not show all data in order to keep things fast in the UI."}
+            </Text>
+          </Row>
         </div>
       </div>
     </div>
