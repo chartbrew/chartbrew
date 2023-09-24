@@ -16,7 +16,7 @@ import {
   Button, Accordion, Dropdown, Input, Link, Popover, Spacer, Tooltip, Divider,
   Chip, Switch, Modal, Checkbox, DropdownMenu, DropdownTrigger, DropdownItem,
   PopoverTrigger, PopoverContent, AccordionItem, ModalHeader, ModalBody, ModalFooter,
-  ModalContent, Select, Listbox, ListboxItem, SelectItem,
+  ModalContent, Select, Listbox, ListboxItem, SelectItem, ScrollShadow,
 } from "@nextui-org/react";
 import { TbDragDrop, TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import {
@@ -641,7 +641,7 @@ function DatasetData(props) {
                 />
               </PopoverTrigger>
               <PopoverContent>
-                <div>
+                <div className="pt-4">
                   <Input
                     placeholder="Search"
                     endContent={<IoSearchOutline />}
@@ -652,23 +652,25 @@ function DatasetData(props) {
                     autoFocus
                   />
                   <Spacer y={1} />
-                  <Listbox
-                    onSelectionChange={(keys) => _selectXField(keys.currentKey)}
-                    selectedKeys={[dataset.xAxis]}
-                    selectionMode="single"
-                  >
-                    {_filterOptions("x").map((option) => (
-                      <ListboxItem
-                        key={option.value}
-                        startContent={(
-                          <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
-                        )}
-                        description={option.isObject ? "Key-Value visualization" : null}
-                      >
-                        {option.text}
-                      </ListboxItem>
-                    ))}
-                  </Listbox>
+                  <ScrollShadow className="max-h-[400px]">
+                    <Listbox
+                      onSelectionChange={(keys) => _selectXField(keys.currentKey)}
+                      selectedKeys={[dataset.xAxis]}
+                      selectionMode="single"
+                    >
+                      {_filterOptions("x").map((option) => (
+                        <ListboxItem
+                          key={option.value}
+                          startContent={(
+                            <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                          )}
+                          description={option.isObject ? "Key-Value visualization" : null}
+                        >
+                          {option.text}
+                        </ListboxItem>
+                      ))}
+                    </Listbox>
+                  </ScrollShadow>
                 </div>
               </PopoverContent>
             </Popover>
@@ -714,7 +716,7 @@ function DatasetData(props) {
                 />
               </PopoverTrigger>
               <PopoverContent>
-                <div>
+                <div className="pt-4">
                   <Input
                     placeholder="Search"
                     endContent={<IoSearchOutline />}
@@ -724,24 +726,26 @@ function DatasetData(props) {
                     value={dateFieldFilter}
                     autoFocus
                   />
-                  <Listbox
-                    variant="bordered"
-                    onSelectionChange={(keys) => _selectDateField(keys.currentKey)}
-                    selectedKeys={[dataset.dateField]}
-                    selectionMode="single"
-                  >
-                    {_getDateFieldOptions().map((option) => (
-                      <ListboxItem
-                        key={option.value}
-                        startContent={(
-                          <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
-                        )}
-                        description={option.isObject ? "Key-Value visualization" : null}
-                      >
-                        {option.text}
-                      </ListboxItem>
-                    ))}
-                  </Listbox>
+                  <ScrollShadow className="max-h-[400px]">
+                    <Listbox
+                      variant="bordered"
+                      onSelectionChange={(keys) => _selectDateField(keys.currentKey)}
+                      selectedKeys={[dataset.dateField]}
+                      selectionMode="single"
+                    >
+                      {_getDateFieldOptions().map((option) => (
+                        <ListboxItem
+                          key={option.value}
+                          startContent={(
+                            <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                          )}
+                          description={option.isObject ? "Key-Value visualization" : null}
+                        >
+                          {option.text}
+                        </ListboxItem>
+                      ))}
+                    </Listbox>
+                  </ScrollShadow>
                 </div>
               </PopoverContent>
             </Popover>
@@ -778,14 +782,13 @@ function DatasetData(props) {
                       disabled={fieldOptions.find((o) => o.key === dataset.xAxis)?.isObject}
                       value={dataset.yAxis?.substring(dataset.yAxis.lastIndexOf(".") + 1)}
                       fullWidth
-                      placeholder="Double-click to search"
                       ref={yFieldRef}
                       endContent={<IoChevronDown />}
                       variant="bordered"
                     />
                   </PopoverTrigger>
-                  <PopoverContent>
-                    <div>
+                  <PopoverContent className="">
+                    <div className="pt-4">
                       <Input
                         placeholder="Search"
                         endContent={<IoSearchOutline />}
@@ -795,24 +798,26 @@ function DatasetData(props) {
                         value={yFieldFilter}
                         autoFocus
                       />
-                      <Listbox
-                        variant="bordered"
-                        onSelectionChange={(keys) => _selectYField(keys.currentKey)}
-                        selectedKeys={[dataset.yAxis]}
-                        selectionMode="single"
-                      >
-                        {_getYFieldOptions().map((option) => (
-                          <ListboxItem
-                            key={option.value}
-                            startContent={(
-                              <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
-                            )}
-                            description={option.isObject ? "Key-Value visualization" : null}
-                          >
-                            {option.text}
-                          </ListboxItem>
-                        ))}
-                      </Listbox>
+                      <ScrollShadow className="max-h-[400px]">
+                        <Listbox
+                          variant="bordered"
+                          onSelectionChange={(keys) => _selectYField(keys.currentKey)}
+                          selectedKeys={[dataset.yAxis]}
+                          selectionMode="single"
+                        >
+                          {_getYFieldOptions().map((option) => (
+                            <ListboxItem
+                              key={option.value}
+                              startContent={(
+                                <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+                              )}
+                              description={option.isObject ? "Key-Value visualization" : null}
+                            >
+                              {option.text}
+                            </ListboxItem>
+                          ))}
+                        </Listbox>
+                      </ScrollShadow>
                     </div>
                   </PopoverContent>
                 </Popover>

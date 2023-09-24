@@ -4,14 +4,13 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
   Button, Spacer, Modal, Input, Tooltip, Checkbox, Divider,
-  ModalHeader, ModalBody, ModalFooter,
+  ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
 import {
-  Delete,
-  Edit, InfoCircle, Play, Plus, TickSquare
-} from "react-iconly";
+  IoAdd, IoCheckmark, IoCreateOutline, IoInformationCircleOutline, IoPlay, IoTrashBin,
+} from "react-icons/io5";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/mode-pgsql";
@@ -22,7 +21,6 @@ import { createSavedQuery, updateSavedQuery } from "../../../actions/savedQuery"
 import { runDataRequest as runDataRequestAction } from "../../../actions/dataRequest";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import SavedQueries from "../../../components/SavedQueries";
-import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
@@ -151,212 +149,210 @@ function SqlBuilder(props) {
   };
 
   return (
-    <div style={styles.container}>
-      <div className="grid grid-cols-12">
-        <div className="col-span-6 sm:col-span-12">
-          <Container>
-            <Row justify="space-between" align="center">
-              <Text b size={"lg"}>{connection.name}</Text>
-              <div>
-                <Row>
+    <div style={styles.container} className="pl-1 pr-1 sm:pl-4 sm:pr-4">
+      <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-12 md:col-span-6">
+          <Row justify="space-between" align="center">
+            <Text b size={"lg"}>{connection.name}</Text>
+            <div>
+              <Row>
+                <Button
+                  color="primary"
+                  auto
+                  size="sm"
+                  onClick={() => _onSavePressed()}
+                  isLoading={saveLoading || requestLoading}
+                  variant="flat"
+                >
+                  {"Save"}
+                </Button>
+                <Spacer x={1} />
+                <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
                   <Button
-                    color="primary"
+                    color="danger"
+                    isIconOnly
                     auto
                     size="sm"
-                    onClick={() => _onSavePressed()}
-                    isLoading={saveLoading || requestLoading}
-                    variant="flat"
-                  >
-                    {"Save"}
-                  </Button>
-                  <Spacer x={0.6} />
-                  <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
-                    <Button
-                      color="danger"
-                      isIconOnly
-                      auto
-                      size="sm"
-                      variant="bordered"
-                      onClick={() => onDelete()}
-                    >
-                      <Delete />
-                    </Button>
-                  </Tooltip>
-                </Row>
-              </div>
-            </Row>
-            <Spacer y={1} />
-            <Row>
-              <Divider />
-            </Row>
-            <Spacer y={1} />
-            <Row align="center">
-              <Text b>
-                {connection.type === "mysql" && "Enter your MySQL query here"}
-                {connection.type === "postgres" && "Enter your PostgreSQL query here"}
-              </Text>
-            </Row>
-            <Spacer y={1} />
-            <Row>
-              <div className="w-full">
-                <AceEditor
-                  mode="pgsql"
-                  theme={isDark ? "one_dark" : "tomorrow"}
-                  style={{ borderRadius: 10 }}
-                  height="300px"
-                  width="none"
-                  value={sqlRequest.query || ""}
-                  onChange={(value) => {
-                    _onChangeQuery(value);
-                  }}
-                  name="queryEditor"
-                  editorProps={{ $blockScrolling: true }}
-                  className="sqlbuilder-query-tut"
-                />
-              </div>
-            </Row>
-            <Spacer y={1} />
-            <Row align="center" className="sqlbuilder-buttons-tut">
-              <Button
-                color={requestSuccess ? "success" : requestError ? "danger" : "primary"}
-                endContent={<Play />}
-                onClick={() => _onTest()}
-                isLoading={requestLoading}
-                auto
-                variant="shadow"
-              >
-                {!requestSuccess && !requestError && "Run query"}
-                {(requestSuccess || requestError) && "Run again"}
-              </Button>
-
-              <Spacer x={0.5} />
-              <Button
-                color="secondary"
-                endContent={<Plus />}
-                isLoading={savingQuery}
-                onClick={_onSaveQueryConfirmation}
-                auto
-              >
-                {!savedQuery && "Save query"}
-                {savedQuery && "Save as new"}
-              </Button>
-
-              {savedQuery && (
-                <>
-                  <Spacer x={0.5} />
-                  <Button
                     variant="bordered"
-                    startContent={<Edit />}
-                    onClick={_onUpdateSavedQuery}
-                    isLoading={updatingSavedQuery}
-                    auto
+                    onClick={() => onDelete()}
                   >
-                    {"Update the query"}
+                    <IoTrashBin />
                   </Button>
-                </>
-              )}
-            </Row>
-            <Spacer y={1} />
-            <Row align="center">
-              <Checkbox
-                label="Use cache"
-                isSelected={!invalidateCache}
-                onChange={() => setInvalidateCache(!invalidateCache)}
-                size="sm"
-              />
-              <Spacer x={0.5} />
-              <Tooltip
-                content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change any call settings."}
-                className="max-w-[400px]"
-              >
-                <InfoCircle size="small" />
-              </Tooltip>
-            </Row>
-
-            <Spacer y={2} />
-            <Row>
-              <Text b>Saved queries</Text>
-            </Row>
-            <Spacer y={1} />
-            <Row className="sqlbuilder-saved-tut">
-              <SavedQueries
-                selectedQuery={savedQuery}
-                onSelectQuery={(savedQuery) => {
-                  setSavedQuery(savedQuery.id);
-                  _onChangeQuery(savedQuery.query);
-                }}
-                type={connection.type}
-                style={styles.savedQueriesContainer}
-              />
-            </Row>
-          </Container>
-        </div>
-        <div className="col-span-6 sm:col-span-12">
-          <Container>
-            <Row>
-              <Text b>
-                {"Query result"}
-              </Text>
-            </Row>
-            <Spacer y={1} />
-            <Row>
-              <div className="w-full">
-                <AceEditor
-                  mode="json"
-                  theme={isDark ? "one_dark" : "tomorrow"}
-                  style={{ borderRadius: 10 }}
-                  height="450px"
-                  width="none"
-                  value={result || ""}
-                  name="resultEditor"
-                  readOnly
-                  editorProps={{ $blockScrolling: false }}
-                  className="sqlbuilder-result-tut"
-                />
-              </div>
-            </Row>
-            <Spacer y={1} />
-            {result && (
-              <Row>
-                <Text small>This is a sample response and might not show all the data.</Text>
+                </Tooltip>
               </Row>
+            </div>
+          </Row>
+          <Spacer y={2} />
+          <Row>
+            <Divider />
+          </Row>
+          <Spacer y={4} />
+          <Row align="center">
+            <Text>
+              {connection.type === "mysql" && "Enter your MySQL query here"}
+              {connection.type === "postgres" && "Enter your PostgreSQL query here"}
+            </Text>
+          </Row>
+          <Spacer y={1} />
+          <Row>
+            <div className="w-full">
+              <AceEditor
+                mode="pgsql"
+                theme={isDark ? "one_dark" : "tomorrow"}
+                style={{ borderRadius: 10 }}
+                height="300px"
+                width="none"
+                value={sqlRequest.query || ""}
+                onChange={(value) => {
+                  _onChangeQuery(value);
+                }}
+                name="queryEditor"
+                editorProps={{ $blockScrolling: true }}
+                className="sqlbuilder-query-tut"
+              />
+            </div>
+          </Row>
+          <Spacer y={2} />
+          <Row align="center" className="sqlbuilder-buttons-tut gap-1">
+            <Button
+              color={requestSuccess ? "success" : requestError ? "danger" : "primary"}
+              endContent={<IoPlay />}
+              onClick={() => _onTest()}
+              isLoading={requestLoading}
+              fullWidth
+            >
+              {!requestSuccess && !requestError && "Run query"}
+              {(requestSuccess || requestError) && "Run again"}
+            </Button>
+
+            <Button
+              endContent={<IoAdd />}
+              isLoading={savingQuery}
+              onClick={_onSaveQueryConfirmation}
+              fullWidth
+              variant="ghost"
+            >
+              {!savedQuery && "Save query"}
+              {savedQuery && "Save as new"}
+            </Button>
+
+            {savedQuery && (
+              <>
+                <Button
+                  variant="ghost"
+                  startContent={<IoCreateOutline />}
+                  onClick={_onUpdateSavedQuery}
+                  isLoading={updatingSavedQuery}
+                  fullWidth
+                >
+                  {"Update the query"}
+                </Button>
+              </>
             )}
-          </Container>
+          </Row>
+          <Spacer y={2} />
+          <Row align="center">
+            <Checkbox
+              isSelected={!invalidateCache}
+              onChange={() => setInvalidateCache(!invalidateCache)}
+              size="sm"
+            >
+              {"Use cached data"}
+            </Checkbox>
+            <Spacer x={0.5} />
+            <Tooltip
+              content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change any call settings."}
+              className="max-w-[400px]"
+            >
+              <IoInformationCircleOutline />
+            </Tooltip>
+          </Row>
+
+          <Spacer y={4} />
+          <Divider />
+          <Spacer y={4} />
+          <Row>
+            <Text b>Saved queries</Text>
+          </Row>
+          <Spacer y={1} />
+          <Row className="sqlbuilder-saved-tut">
+            <SavedQueries
+              selectedQuery={savedQuery}
+              onSelectQuery={(savedQuery) => {
+                setSavedQuery(savedQuery.id);
+                _onChangeQuery(savedQuery.query);
+              }}
+              type={connection.type}
+              style={styles.savedQueriesContainer}
+            />
+          </Row>
+        </div>
+        <div className="col-span-12 md:col-span-6">
+          <Row>
+            <Text b>
+              {"Query result"}
+            </Text>
+          </Row>
+          <Spacer y={1} />
+          <Row>
+            <div className="w-full">
+              <AceEditor
+                mode="json"
+                theme={isDark ? "one_dark" : "tomorrow"}
+                style={{ borderRadius: 10 }}
+                height="450px"
+                width="none"
+                value={result || ""}
+                name="resultEditor"
+                readOnly
+                editorProps={{ $blockScrolling: false }}
+                className="sqlbuilder-result-tut"
+              />
+            </div>
+          </Row>
+          <Spacer y={1} />
+          {result && (
+            <Row>
+              <Text size="sm">This is a sample response and might not show all the data.</Text>
+            </Row>
+          )}
         </div>
       </div>
 
       {/* Save query modal */}
       <Modal isOpen={saveQueryModal} size="small" onClose={() => setSaveQueryModal(false)}>
-        <ModalHeader>
-          <Text size="h3">{"Save your query and use it later in this project"}</Text>
-        </ModalHeader>
-        <ModalBody>
-          <Input
-            label="Write a short description for your query"
-            placeholder="Type a summary here"
-            fullWidth
-            onChange={(e) => setSavedQuerySummary(e.target.value)}
-            size="lg"
-          />
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            variant="flat"
-            color="warning"
-            onClick={() => setSaveQueryModal(false)}
-            auto
-          >
-            Close
-          </Button>
-          <Button
-            disabled={!savedQuerySummary}
-            endContent={<TickSquare />}
-            onClick={_onSaveQuery}
-            auto
-          >
-            Save the query
-          </Button>
-        </ModalFooter>
+        <ModalContent>
+          <ModalHeader>
+            <Text b>{"Save your query and use it later in this project"}</Text>
+          </ModalHeader>
+          <ModalBody>
+            <Input
+              label="Write a short description for your query"
+              placeholder="Type a summary here"
+              fullWidth
+              onChange={(e) => setSavedQuerySummary(e.target.value)}
+              size="lg"
+              variant="bordered"
+            />
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="flat"
+              color="warning"
+              onClick={() => setSaveQueryModal(false)}
+            >
+              Close
+            </Button>
+            <Button
+              disabled={!savedQuerySummary}
+              endContent={<IoCheckmark />}
+              onClick={_onSaveQuery}
+              color="primary"
+            >
+              Save the query
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
     </div>
   );
