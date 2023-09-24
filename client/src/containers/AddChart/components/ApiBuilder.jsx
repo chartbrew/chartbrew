@@ -9,9 +9,7 @@ import {
 import AceEditor from "react-ace";
 import uuid from "uuid/v4";
 import { toast } from "react-toastify";
-import {
-  CloseSquare, Delete, InfoCircle, Play, Plus
-} from "react-iconly";
+import { IoAdd, IoAddCircle, IoCloseCircle, IoInformationCircleOutline, IoPlay, IoTrashBin } from "react-icons/io5";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/mode-javascript";
@@ -267,331 +265,333 @@ function ApiBuilder(props) {
   };
 
   return (
-    <div style={{ flex: 1 }}>
-      <div className="grid grid-cols-12">
-        <div className="col-span-8 sm:col-span-12 md:col-span-7 sm:mb-[50px]">
-          <Container>
-            <Row justify="space-between" align="center">
-              <Text b size={"lg"}>{connection.name}</Text>
-              <div>
-                <Row>
-                  <Button
-                    color="primary"
-                    auto
-                    size="sm"
-                    onClick={() => _onSavePressed()}
-                    isLoading={saveLoading || requestLoading}
-                    variant="flat"
-                  >
-                    {"Save"}
-                  </Button>
-                  <Spacer x={0.6} />
-                  <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
-                    <Button
-                      color="danger"
-                      isIconOnly
-                      auto
-                      size="sm"
-                      variant="bordered"
-                      onClick={() => onDelete()}
-                    >
-                      <Delete />
-                    </Button>
-                  </Tooltip>
-                </Row>
-              </div>
-            </Row>
-            <Spacer y={1} />
+    <div className="container mx-auto">
+      <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-12 md:col-span-7">
+          <Row justify="space-between" align="center">
+            <Text b size={"lg"}>{connection.name}</Text>
             <Row>
-              <Divider />
-            </Row>
-            <Spacer y={1} />
-            <Row align="center" className="apibuilder-route-tut">
-              <Input
-                startContent={(
-                  <div className="pointer-events-none flex items-center">
-                    <span className="text-default-400 text-small">
-                      {`${connection.host}`}
-                    </span>
-                  </div>
-                )}
-                placeholder="/route?key=value"
-                autoFocus
-                value={apiRequest.route || ""}
-                onChange={(e) => _onChangeRoute(e.target.value)}
-                fullWidth
-                variant="bordered"
-                disableAnimation
-                css={{
-                  "& .nextui-input-label--left": { minWidth: "max-content" }
-                }}
-              />
-            </Row>
-            <Spacer y={1} />
-            <Row align="center">
-              <Text>{"Available variables: "}</Text>
-              <Spacer x={0.5} />
-              <Tooltip
-                content={chart.startDate || "Set this value in chart date settings first"}
+              <Button
+                color="primary"
+                auto
+                size="sm"
+                onClick={() => _onSavePressed()}
+                isLoading={saveLoading || requestLoading}
+                variant="flat"
               >
-                <Link onClick={() => chart.startDate && _onChangeRoute(`${apiRequest.route}{{start_date}}`)}>
-                  <Chip color="primary">
-                    {"{{start_date}}"}
-                  </Chip>
-                </Link>
-              </Tooltip>
-              <Spacer x={0.5} />
-              <Tooltip
-                content={chart.endDate || "Set this value in chart date settings first"}
-              >
-                <Link onClick={() => chart.endDate && _onChangeRoute(`${apiRequest.route}{{end_date}}`)}>
-                  <Chip color="primary">
-                    {"{{end_date}}"}
-                  </Chip>
-                </Link>
+                {"Save"}
+              </Button>
+              <Spacer x={1} />
+              <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
+                <Button
+                  color="danger"
+                  isIconOnly
+                  auto
+                  size="sm"
+                  variant="bordered"
+                  onClick={() => onDelete()}
+                >
+                  <IoTrashBin />
+                </Button>
               </Tooltip>
             </Row>
-            <Spacer y={2} />
-            <Row className="apibuilder-menu-tut">
-              <Tabs
-                selectedKey={activeMenu}
-                onSelectionChange={(key) => setActiveMenu(key)}
-              >
-                <Tab key="headers" title="Headers" />
-                <Tab key="body" title="Body" />
-                <Tab key="pagination" title="Pagination" />
-              </Tabs>
-              <div style={{ position: "absolute", right: 15 }}>
-                {requestSuccess && (
+          </Row>
+          <Spacer y={2} />
+          <Row>
+            <Divider />
+          </Row>
+          <Spacer y={4} />
+          <Row align="center" className="apibuilder-route-tut">
+            <Input
+              startContent={(
+                <div className="pointer-events-none flex items-center">
+                  <span className="text-default-400 text-small">
+                    {`${connection.host}`}
+                  </span>
+                </div>
+              )}
+              placeholder="/route?key=value"
+              autoFocus
+              value={apiRequest.route || ""}
+              onChange={(e) => _onChangeRoute(e.target.value)}
+              fullWidth
+              variant="bordered"
+              disableAnimation
+              css={{
+                "& .nextui-input-label--left": { minWidth: "max-content" }
+              }}
+            />
+          </Row>
+          <Spacer y={2} />
+          <Row align="center">
+            <Text size="sm">{"Available variables: "}</Text>
+            <Spacer x={1} />
+            <Tooltip
+              content={chart.startDate || "Set this value in chart date settings first"}
+            >
+              <Link>
+                <Chip
+                  color="primary"
+                  variant="faded"
+                  endContent={(
+                    <a onClick={() => chart.startDate && _onChangeRoute(`${apiRequest.route}{{ start_date }}`)} className="cursor-pointer">
+                      <IoAddCircle />
+                    </a>
+                  )}
+                >
+                  {"{{start_date}}"}
+                </Chip>
+              </Link>
+            </Tooltip>
+            <Spacer x={0.5} />
+            <Tooltip
+              content={chart.endDate || "Set this value in chart date settings first"}
+            >
+              <Link onClick={() => chart.endDate && _onChangeRoute(`${apiRequest.route}{{end_date}}`)}>
+                <Chip
+                  color="primary"
+                  variant="faded"
+                  endContent={(
+                    <a onClick={() => chart.endDate && _onChangeRoute(`${apiRequest.route}{{ end_date }}`)} className="cursor-pointer">
+                      <IoAddCircle />
+                    </a>
+                  )}
+                >
+                  {"{{end_date}}"}
+                </Chip>
+              </Link>
+            </Tooltip>
+          </Row>
+          <Spacer y={4} />
+          <Row className="apibuilder-menu-tut justify-between">
+            <Tabs
+              selectedKey={activeMenu}
+              onSelectionChange={(key) => setActiveMenu(key)}
+              disabledKeys={apiRequest.method === "GET" || apiRequest.method === "OPTIONS" ? ["body"] : []}
+            >
+              <Tab key="headers" title="Headers" />
+              <Tab key="body" title="Body" />
+              <Tab key="pagination" title="Pagination" />
+            </Tabs>
+            {requestSuccess && (
+              <>
+                <Chip color="success" size="sm">
+                  {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
+                </Chip>
+              </>
+            )}
+            {requestError && (
+              <Chip color="danger" size="sm">
+                {`${requestError.statusCode} ${requestError.statusText}`}
+              </Chip>
+            )}
+          </Row>
+
+          <Spacer y={2} />
+          <Row>
+            <Divider />
+          </Row>
+          <Spacer y={2} />
+
+          {activeMenu === "headers" && (
+            <div className="apibuilder-headers-tut">
+              {fullConnection.options && fullConnection.options.length > 0 && (
                 <>
-                  <Chip color="success">
-                    {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
-                  </Chip>
-                </>
-                )}
-                {requestError && (
-                  <Chip color="danger">
-                    {`${requestError.statusCode} ${requestError.statusText}`}
-                  </Chip>
-                )}
-              </div>
-            </Row>
-
-            <Spacer y={1} />
-            <Row>
-              <Divider />
-            </Row>
-            <Spacer y={1} />
-
-            {activeMenu === "headers" && (
-              <Row className="apibuilder-headers-tut">
-                <Container className={"pl-0 pr-0"}>
-                  {fullConnection.options && fullConnection.options.length > 0 && (
+                  <Row>
+                    <Checkbox
+                      label="Include connection headers"
+                      isSelected={!!apiRequest.useGlobalHeaders}
+                      onChange={_onToggleGlobal}
+                      size="sm"
+                    />
+                  </Row>
+                  <Spacer y={1} />
+                  {apiRequest.useGlobalHeaders && (
                     <>
-                      <Row>
-                        <Checkbox
-                          label="Include connection headers"
-                          isSelected={!!apiRequest.useGlobalHeaders}
-                          onChange={_onToggleGlobal}
-                          size="sm"
-                        />
-                      </Row>
+                      <Container className={"pl-0 pr-0"}>
+                        {fullConnection.options.map((header) => {
+                          return (
+                            <Row key={header}>
+                              <Input
+                                value={Object.keys(header)[0]}
+                                variant="bordered"
+                                fullWidth
+                                disableAnimation
+                              />
+                              <Spacer x={1} />
+                              <Input
+                                value={header[Object.keys(header)[0]]}
+                                variant="bordered"
+                                fullWidth
+                                disableAnimation
+                              />
+                            </Row>
+                          );
+                        })}
+                      </Container>
+                      <Spacer y={2} />
+                      <Divider />
                       <Spacer y={1} />
-                      {apiRequest.useGlobalHeaders && (
-                        <>
-                          <Container className={"pl-0 pr-0"}>
-                            {fullConnection.options.map((header) => {
-                              return (
-                                <Row key={header}>
-                                  <Input
-                                    value={Object.keys(header)[0]}
-                                    variant="bordered"
-                                    fullWidth
-                                    disableAnimation
-                                  />
-                                  <Spacer x={1} />
-                                  <Input
-                                    value={header[Object.keys(header)[0]]}
-                                    variant="bordered"
-                                    fullWidth
-                                    disableAnimation
-                                  />
-                                </Row>
-                              );
-                            })}
-                          </Container>
-                          <Spacer y={2} />
-                          <Divider />
-                          <Spacer y={1} />
-                        </>
-                      )}
                     </>
                   )}
-                  <Container className={"pl-0 pr-0 gap-1"}>
-                    {apiRequest.formattedHeaders && apiRequest.formattedHeaders.map((header) => {
-                      return (
-                        <div key={header.id}>
-                          <Row>
-                            <Input
-                              placeholder="Header"
-                              value={header.key}
-                              onChange={(e) => {
-                                _onChangeHeader(header.id, e.target.value);
-                              }}
-                              variant="bordered"
-                            />
-                            <Spacer x={1} />
-                            <Input
-                              placeholder="Value"
-                              value={header.value}
-                              onChange={(e) => {
-                                _onChangeHeaderValue(header.id, e.target.value);
-                              }}
-                              variant="bordered"
-                            />
-                            <Spacer x={1} />
-                            <Button
-                              isIconOnly
-                              onClick={() => _removeHeader(header.id)}
-                              color="danger"
-                              variant="light"
-                            >
-                              <CloseSquare />
-                            </Button>
-                          </Row>
-                          <Spacer y={1} />
-                        </div>
-                      );
-                    })}
-                  </Container>
+                </>
+              )}
+              <Container className={"pl-0 pr-0 gap-1"}>
+                {apiRequest.formattedHeaders && apiRequest.formattedHeaders.map((header) => {
+                  return (
+                    <div key={header.id}>
+                      <Row>
+                        <Input
+                          placeholder="Header"
+                          value={header.key}
+                          onChange={(e) => {
+                            _onChangeHeader(header.id, e.target.value);
+                          }}
+                          variant="bordered"
+                        />
+                        <Spacer x={1} />
+                        <Input
+                          placeholder="Value"
+                          value={header.value}
+                          onChange={(e) => {
+                            _onChangeHeaderValue(header.id, e.target.value);
+                          }}
+                          variant="bordered"
+                        />
+                        <Spacer x={1} />
+                        <Button
+                          isIconOnly
+                          onClick={() => _removeHeader(header.id)}
+                          color="danger"
+                          variant="light"
+                        >
+                          <IoCloseCircle />
+                        </Button>
+                      </Row>
+                      <Spacer y={1} />
+                    </div>
+                  );
+                })}
+              </Container>
 
-                  <Spacer y={2} />
-                  <Button
-                    endContent={<Plus />}
-                    size="sm"
-                    onClick={_addHeader}
-                    variant="bordered"
-                    auto
-                  >
-                    Add header
-                  </Button>
-                </Container>
-              </Row>
-            )}
-            {activeMenu === "body" && (
-              <Row>
-                <div style={{ width: "100%" }}>
-                  <AceEditor
-                    mode="json"
-                    theme={isDark ? "one_dark" : "tomorrow"}
-                    style={{ borderRadius: 10 }}
-                    height="400px"
-                    width="none"
-                    value={apiRequest.body || ""}
-                    onChange={(value) => {
-                      _onChangeBody(value);
-                    }}
-                    name="queryEditor"
-                    editorProps={{ $blockScrolling: true }}
-                  />
-                </div>
-              </Row>
-            )}
-            {activeMenu === "pagination" && (
-              <Row>
-                <ApiPagination
-                  items={apiRequest.items}
-                  itemsLimit={apiRequest.itemsLimit}
-                  offset={apiRequest.offset}
-                  paginationField={apiRequest.paginationField}
-                  pagination={apiRequest.pagination}
-                  onPaginationChanged={_onPaginationChanged}
-                  apiRoute={apiRequest.route || ""}
-                  template={apiRequest.template}
-                  result={result && JSON.parse(result)}
-                />
-              </Row>
-            )}
-          </Container>
-        </div>
-        <div className="col-span-4 sm:col-span-12 md:col-span-5">
-          <Container>
-            <Row>
-              <div className="apibuilder-type-tut">
-                <Select
-                  variant="bordered"
-                  disableAnimation
-                  onSelectionChange={(key) => _changeMethod(key)}
-                  selectedKeys={[apiRequest.method]}
-                  selectionMode="single"
-                >
-                  {methods.map((method) => (
-                    <SelectItem key={method.value}>
-                      {method.text}
-                    </SelectItem>
-                  ))}
-                </Select>
-              </div>
-              <Spacer x={2} />
-              <div className="apibuilder-request-tut" style={{ width: "100%" }}>
-                <Button
-                  endContent={<Play />}
-                  isLoading={requestLoading}
-                  onClick={() => _onTest()}
-                  auto
-                  className={"w-full"}
-                >
-                  {"Send the request"}
-                </Button>
-              </div>
-            </Row>
-            <Spacer y={1} />
-            <Row align="center">
-              <Checkbox
-                label="Use cache"
-                isSelected={!invalidateCache}
-                onChange={() => setInvalidateCache(!invalidateCache)}
+              <Spacer y={2} />
+              <Button
+                endContent={<IoAdd />}
                 size="sm"
-              />
-              <Spacer x={0.5} />
-              <Tooltip
-                content={(
-                  <>
-                    <p>{"Chartbrew will use cached data for extra editing speed ⚡️⚡️⚡️"}</p>
-                    <p>{"The cache gets automatically invalidated when you change the configuration of the request."}</p>
-                  </>
-                )}
-                placement="bottom"
+                onClick={_addHeader}
+                variant="bordered"
               >
-                <InfoCircle size="small" />
-              </Tooltip>
-            </Row>
-            <Spacer y={1} />
+                Add header
+              </Button>
+            </div>
+          )}
+          {activeMenu === "body" && (
             <Row>
-              <div className="w-full">
+              <div className="w-full h-full">
                 <AceEditor
                   mode="json"
                   theme={isDark ? "one_dark" : "tomorrow"}
                   style={{ borderRadius: 10 }}
-                  height="450px"
                   width="none"
-                  value={result || ""}
-                  name="resultEditor"
-                  readOnly
-                  editorProps={{ $blockScrolling: false }}
-                  className="apibuilder-result-tut"
+                  value={apiRequest.body || ""}
+                  onChange={(value) => {
+                    _onChangeBody(value);
+                  }}
+                  name="queryEditor"
+                  editorProps={{ $blockScrolling: true }}
                 />
               </div>
             </Row>
-            <Spacer y={1} />
-            <Row align="center">
-              <InfoCircle size="small" />
-              <Spacer x={0.5} />
-              <Text small>
-                {"This is a preview and it might not show all data in order to keep things fast in the UI."}
-              </Text>
+          )}
+          {activeMenu === "pagination" && (
+            <Row className={"pt-4"}>
+              <ApiPagination
+                items={apiRequest.items}
+                itemsLimit={apiRequest.itemsLimit}
+                offset={apiRequest.offset}
+                paginationField={apiRequest.paginationField}
+                pagination={apiRequest.pagination}
+                onPaginationChanged={_onPaginationChanged}
+                apiRoute={apiRequest.route || ""}
+                template={apiRequest.template}
+                result={result && JSON.parse(result)}
+              />
             </Row>
-          </Container>
+          )}
+        </div>
+        <div className="col-span-12 md:col-span-5">
+          <Row align={"center"} className="gap-4 apibuilder-type-tut">
+            <Select
+              variant="bordered"
+              disableAnimation
+              onSelectionChange={(keys) => _changeMethod(keys.currentKey)}
+              selectedKeys={[apiRequest.method]}
+              selectionMode="single"
+              labelPlacement="ouside"
+            >
+              {methods.map((method) => (
+                <SelectItem key={method.value}>
+                  {method.text}
+                </SelectItem>
+              ))}
+            </Select>
+            <Button
+              endContent={<IoPlay />}
+              isLoading={requestLoading}
+              onClick={() => _onTest()}
+              fullWidth
+              color="primary"
+            >
+              {"Send the request"}
+            </Button>
+          </Row>
+          <Spacer y={1} />
+          <Row align="center">
+            <Checkbox
+              isSelected={!invalidateCache}
+              onChange={() => setInvalidateCache(!invalidateCache)}
+              size="sm"
+            >
+              Use cache
+            </Checkbox>
+            <Spacer x={0.5} />
+            <Tooltip
+              content={(
+                <>
+                  <p>{"Chartbrew will use cached data for extra editing speed ⚡️⚡️⚡️"}</p>
+                  <p>{"The cache gets automatically invalidated when you change the configuration of the request."}</p>
+                </>
+              )}
+              placement="bottom"
+            >
+              <IoInformationCircleOutline />
+            </Tooltip>
+          </Row>
+          <Spacer y={2} />
+          <Row>
+            <div className="w-full">
+              <AceEditor
+                mode="json"
+                theme={isDark ? "one_dark" : "tomorrow"}
+                style={{ borderRadius: 10 }}
+                height="450px"
+                width="none"
+                value={result || ""}
+                name="resultEditor"
+                readOnly
+                editorProps={{ $blockScrolling: false }}
+                className="apibuilder-result-tut"
+              />
+            </div>
+          </Row>
+          <Spacer y={2} />
+          <Row align="center">
+            <IoInformationCircleOutline />
+            <Spacer x={0.5} />
+            <Text small>
+              {"This is a preview and it might not show all data in order to keep things fast in the UI."}
+            </Text>
+          </Row>
         </div>
       </div>
     </div>
