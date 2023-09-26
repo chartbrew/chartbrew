@@ -89,9 +89,9 @@ function CustomTemplates(props) {
   }
 
   return (
-    <div className="grid grid-cols-12 gap-2">
+    <div className="grid grid-cols-12 gap-4">
       {templates && templates.map((template) => (
-        <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6 xl:col-span-4" key={template.id}>
+        <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-4 xl:col-span-3" key={template.id}>
           <Card onClick={() => setSelectedTemplate(template)} isHoverable isPressable className="min-w-[300px]">
             <CardHeader>
               <Text b>{template.name}</Text>

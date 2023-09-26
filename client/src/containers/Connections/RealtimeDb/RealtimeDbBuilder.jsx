@@ -446,9 +446,9 @@ function RealtimeDbBuilder(props) {
             <Spacer x={1} />
             <Tooltip
               content="Use cache to avoid hitting the Firebase API every time you request data. The cache will be cleared when you change any of the settings."
-              className="min-w-[600px]"
+              className="max-w-[600px]"
             >
-              <IoInformationCircleOutline />
+              <div><IoInformationCircleOutline /></div>
             </Tooltip>
           </Row>
           <Spacer y={2} />

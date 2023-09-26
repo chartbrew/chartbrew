@@ -7,9 +7,6 @@ import {
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
-import {
-  Chat, Delete, InfoCircle, People, Play
-} from "react-iconly";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -25,6 +22,7 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
+import { IoChatboxEllipses, IoInformationCircleOutline, IoPeople, IoPlay, IoTrashBin } from "react-icons/io5";
 
 /*
   The Customer.io data request builder
@@ -176,9 +174,9 @@ function CustomerioBuilder(props) {
   };
 
   return (
-    <div style={styles.container}>
-      <div className="grid grid-cols-12">
-        <div className="col-span-7 sm:col-span-12">
+    <div style={styles.container} className="pl-1 pr-1 md:pl-4 md:pr-4">
+      <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-12 sm:col-span-7">
           <Container>
             <Row justify="space-between" align="center">
               <Text b size={"lg"}>{connection.name}</Text>
@@ -194,7 +192,7 @@ function CustomerioBuilder(props) {
                   >
                     {"Save"}
                   </Button>
-                  <Spacer x={0.6} />
+                  <Spacer x={1} />
                   <Tooltip content="Delete this data request" placement="bottom" css={{ zIndex: 99999 }}>
                     <Button
                       color="danger"
@@ -204,17 +202,17 @@ function CustomerioBuilder(props) {
                       variant="bordered"
                       onClick={() => onDelete()}
                     >
-                      <Delete />
+                      <IoTrashBin />
                     </Button>
                   </Tooltip>
                 </Row>
               </div>
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row>
               <Divider />
             </Row>
-            <Spacer y={1} />
+            <Spacer y={4} />
             <Row align="center" wrap="wrap">
               <Tabs
                 selectedKey={entity}
@@ -230,7 +228,7 @@ function CustomerioBuilder(props) {
                   key="customers"
                   title={(
                     <div className="flex items-center space-x-2">
-                      <People />
+                      <IoPeople />
                       <span>Customers</span>
                     </div>
                   )}
@@ -239,7 +237,7 @@ function CustomerioBuilder(props) {
                   key="campaigns"
                   title={(
                     <div className="flex items-center space-x-2">
-                      <Chat />
+                      <IoChatboxEllipses />
                       <span>Campaigns</span>
                     </div>
                   )}
@@ -248,9 +246,9 @@ function CustomerioBuilder(props) {
             </Row>
 
             {!entity && (
-              <Row><Text i>Select which type of data you want to get started with</Text></Row>
+              <Row><Text className={"italic"}>Select which type of data you want to get started with</Text></Row>
             )}
-            <Spacer y={1} />
+            <Spacer y={2} />
 
             {entity === "customers" && (
               <Row>
@@ -289,37 +287,38 @@ function CustomerioBuilder(props) {
             )}
           </Container>
         </div>
-        <div className="col-span-5 sm:col-span-12">
+        <div className="col-span-12 sm:col-span-5">
           <Container>
             <Row className="Customerio-request-tut">
               <Button
-                endContent={<Play />}
+                endContent={<IoPlay />}
                 isLoading={requestLoading}
                 onClick={_onTest}
                 className="w-full"
-                shadow
+                color="primary"
               >
                 Make the request
               </Button>
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row align="center">
               <Checkbox
-                label="Use cache"
                 isSelected={!invalidateCache}
                 onChange={() => setInvalidateCache(!invalidateCache)}
                 size="sm"
-              />
-              <Spacer x={0.5} />
+              >
+                {"Use cache"}
+              </Checkbox>
+              <Spacer x={1} />
               <Tooltip
                 content="If checked, Chartbrew will use cached data instead of making requests to your data source. The cache gets automatically invalidated when you change the collections and/or filters."
                 placement="left-start"
                 className="max-w-[500px]"
               >
-                <InfoCircle size="small" />
+                <div><IoInformationCircleOutline /></div>
               </Tooltip>
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Row>
               <div style={{ width: "100%" }}>
                 <AceEditor
@@ -338,9 +337,9 @@ function CustomerioBuilder(props) {
             </Row>
             <Spacer y={1} />
             <Row align="center">
-              <InfoCircle size="small" />
-              <Spacer x={0.5} />
-              <Text small>
+              <IoInformationCircleOutline />
+              <Spacer x={1} />
+              <Text size="sm">
                 {"To keep the interface fast, not all the data might show up here."}
               </Text>
             </Row>

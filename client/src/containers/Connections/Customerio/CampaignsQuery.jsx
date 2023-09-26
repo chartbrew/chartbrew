@@ -9,13 +9,12 @@ import {
 } from "date-fns";
 import { DateRangePicker } from "react-date-range";
 import { enGB } from "date-fns/locale";
+import { IoCalendar, IoInformationCircleOutline } from "react-icons/io5";
 
-import { InfoCircle, Calendar } from "react-iconly";
 import { runHelperMethod } from "../../../actions/connection";
 import { primary, secondary } from "../../../config/colors";
 import MessageTypeLabels from "./MessageTypeLabels";
 import { defaultStaticRanges, defaultInputRanges } from "../../../config/dateRanges";
-import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 
@@ -315,18 +314,12 @@ function CampaignsQuery(props) {
   }
 
   return (
-    <Container className={"pl-0 pr-0"}>
+    <div className={"w-full"}>
       <Row>
         <Select
           variant="bordered"
           label="Choose one of your campaigns"
-          renderValue={(
-            <Text>
-              {(config.campaignId && campaigns.find((c) => c.value === config.campaignId)?.text)
-              || "Choose a campaign"}
-            </Text>
-          )}
-          onSelectionChange={(value) => _onSelectCampaign(value)}
+          onSelectionChange={(keys) => _onSelectCampaign(keys.currentKey)}
           selectedKeys={[config.campaignId]}
           selectionMode="single"
           isLoading={loading}
@@ -339,6 +332,7 @@ function CampaignsQuery(props) {
                   {campaign.label.content}
                 </Chip>
               )}
+              textValue={campaign.text}
             >
               {campaign.text}
             </SelectItem>
@@ -363,9 +357,9 @@ function CampaignsQuery(props) {
         </Row>
       )}
 
-      <Spacer y={1} />
+      <Spacer y={2} />
       <Divider />
-      <Spacer y={1} />
+      <Spacer y={4} />
 
       {config.campaignId && config.requestRoute.indexOf("actions") === 0 && (
         <Row>
@@ -373,19 +367,12 @@ function CampaignsQuery(props) {
             variant="bordered"
             label="Select an action to view the metrics"
             isLoading={actionsLoading}
-            renderValue={(
-              <Text>
-                {(config.actionId
-                  && availableActions.find((a) => a.value === config.actionId)?.text)
-                || "Select an action"}
-              </Text>
-            )}
-            onSelectionChange={(value) => _onSelectAction(value)}
+            onSelectionChange={(keys) => _onSelectAction(keys.currentKey)}
             selectedKeys={[config.actionId]}
             selectionMode="single"
           >
             {availableActions.map((action) => (
-              <SelectItem key={action.key} value={action.value}>
+              <SelectItem key={action.key} textValue={action.text}>
                 {action.text}
               </SelectItem>
             ))}
@@ -398,11 +385,11 @@ function CampaignsQuery(props) {
           || config.requestRoute === "journey_metrics")
         && (
         <>
-          <Spacer y={1} />
+          <Spacer y={2} />
           <Row>
             <Text>What would you like this dataset to show?</Text>
           </Row>
-          <Spacer y={0.5} />
+          <Spacer y={1} />
           <Row wrap="wrap">
             <MessageTypeLabels
               selected={config.series}
@@ -411,18 +398,18 @@ function CampaignsQuery(props) {
               showPrimary={config.requestRoute !== "journey_metrics"}
             />
           </Row>
-          <Spacer y={1} />
+          <Spacer y={2} />
           {(config.requestRoute.indexOf("/metrics") > -1 || config.requestRoute.indexOf("metrics") === 0) && (
             <>
               <Row>
                 <Text>Or show the campaign link metrics</Text>
               </Row>
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               <Row>
                 <Chip
                   onClick={_onShowCampaingLinkMetrics}
                   color="primary"
-                  variant={config.requestRoute.indexOf("metrics/links") > -1 ? "default" : "bordered"}
+                  variant={config.requestRoute.indexOf("metrics/links") > -1 ? "solid" : "bordered"}
                   className="cursor-pointer"
                 >
                   {`Show ${config.requestRoute.indexOf("actions") > -1 ? "action" : "campaign"} link metrics`}
@@ -439,46 +426,34 @@ function CampaignsQuery(props) {
         )
         && (
         <>
-          <Spacer y={1} />
+          <Spacer y={2} />
           <Row>
-            <div className="grid grid-cols-12 gap-1">
-              <div className={`col-span-${(config.series || config.actionId) ? 4 : 6} sm:col-span-12 md:col-span-${(config.series || config.actionId) ? 4 : 6}`}>
+            <div className="grid grid-cols-12 gap-2">
+              <div className={`col-span-12 md:col-span-${(config.series || config.actionId) ? 4 : 6}`}>
                 <Select
                   variant="bordered"
                   label="Choose the period"
-                  renderValue={(
-                    <Text>
-                      {(config.period && periodOptions.find((p) => p.value === config.period)?.text)
-                      || "Choose a period"}
-                    </Text>
-                  )}
-                  onSelectionChange={(value) => _onChangePeriod(value)}
+                  onSelectionChange={(keys) => _onChangePeriod(keys.currentKey)}
                   selectedKeys={[config.period]}
                   selectionMode="single"
                 >
                   {periodOptions.map((period) => (
-                    <SelectItem key={period.key}>
+                    <SelectItem key={period.key} textValue={period.text}>
                       {period.text}
                     </SelectItem>
                   ))}
                 </Select>
               </div>
-              <div className={`col-span-${(config.series || config.actionId) ? 4 : 6} sm:col-span-12 md:col-span-${(config.series || config.actionId) ? 4 : 6}`}>
+              <div className={`col-span-12 md:col-span-${(config.series || config.actionId) ? 4 : 6}`}>
                 <Select
                   variant="bordered"
                   label="Max number of steps"
-                  renderValue={(
-                    <Text>
-                      {(config.steps && stepsOptions.find((p) => p.value === config.steps)?.text)
-                      || "Choose a number"}
-                    </Text>
-                  )}
-                  onSelectionChange={(value) => _onChangeSteps(value)}
+                  onSelectionChange={(keys) => _onChangeSteps(keys.currentKey)}
                   selectedKeys={[config.steps]}
                   selectionMode="single"
                 >
                   {stepsOptions.map((steps) => (
-                    <SelectItem key={steps.key}>
+                    <SelectItem key={steps.key} textValue={steps.text}>
                       {steps.text}
                     </SelectItem>
                   ))}
@@ -486,7 +461,7 @@ function CampaignsQuery(props) {
               </div>
 
               {(config.series || config.actionId) && (
-                <div className="col-span-4 sm:col-span-12 flex justify-center">
+                <div className="col-span-12 md:col-span-4 flex justify-center">
                   <Text>Leave empty for *all* types</Text>
                   <Select
                     variant="bordered"
@@ -500,19 +475,19 @@ function CampaignsQuery(props) {
                         ))}
                       </div>
                     )}
-                    onSelectionChange={(key) => {
+                    onSelectionChange={(keys) => {
                       // add to the list if not already in it
-                      if (!config.type || !config.type.includes(key)) {
-                        _onChangeMessageTypes(!config.type ? [key] : [...config.type, key]);
+                      if (!config.type || !config.type.includes(keys.currentKey)) {
+                        _onChangeMessageTypes(!config.type ? [keys.currentKey] : [...config.type, keys.currentKey]);
                       } else {
-                        setConfig({ ...config, type: config.type.filter((t) => t !== key) });
+                        setConfig({ ...config, type: config.type.filter((t) => t !== keys.currentKey) });
                       }
                     }}
                     selectedKeys={config.type || []}
                     selectionMode="multiple"
                   >
                     {messageOptions.map((message) => (
-                      <SelectItem key={message.key}>
+                      <SelectItem key={message.key} textValue={message.text}>
                         {message.text}
                       </SelectItem>
                     ))}
@@ -525,32 +500,30 @@ function CampaignsQuery(props) {
             <>
               <Spacer y={2} />
               <Row>
-                <div className="grid grid-cols-12 gap-1">
-                  <div className="col-span-6 sm:col-span-12">
+                <div className="grid grid-cols-12 gap-2">
+                  <div className="col-span-12 md:col-span-6">
                     <Text>Visualization type</Text>
                     <div style={styles.row}>
                       <Button
                         onClick={() => setConfig({ ...config, linksMode: "total" })}
                         size="sm"
                         variant={config.linksMode !== "total" ? "bordered" : "solid"}
-                        auto
                         color="secondary"
                       >
                         Total clicks
                       </Button>
-                      <Spacer x={0.5} />
+                      <Spacer x={1} />
                       <Button
                         onClick={() => _onSelectClickTimeseries()}
                         variant={config.linksMode !== "links" ? "bordered" : "solid"}
                         size="sm"
-                        auto
                         color="secondary"
                       >
                         Click timeseries
                       </Button>
                     </div>
                   </div>
-                  <div className="col-span-6 sm:col-span-12 flex justify-center">
+                  <div className="col-span-12 md:col-span-6 flex justify-center">
                     <Text>Unique clicks per customer</Text>
                     <Switch
                       isSelected={config.unique}
@@ -564,40 +537,36 @@ function CampaignsQuery(props) {
                 <>
                   <Spacer y={2} />
                   <Row align="center">
-                    <div className="grid grid-cols-12 gap-1">
-                      <div className="col-span-9 sm:col-span-12">
+                    <div className="grid grid-cols-12 gap-2">
+                      <div className="col-span-12 md:col-span-9">
                         <Select
                           variant="bordered"
                           label="Select a link"
                           isLoading={linksLoading}
-                          renderValue={(
-                            <Text>{(config.selectedLink || "Select a link")}</Text>
-                          )}
-                          onSelectionChange={(value) => setConfig({ ...config, selectedLink: value })}
+                          onSelectionChange={(keys) => setConfig({ ...config, selectedLink: keys.currentKey })}
                           selectedKeys={[config.selectedLink]}
                           selectionMode="single"
                         >
                           {availableLinks.map((link) => (
-                            <SelectItem key={link.key}>
+                            <SelectItem key={link.key} textValue={link.text}>
                               {link.text}
                             </SelectItem>
                           ))}
                         </Select>
                       </div>
-                      <div className="col-span-3 sm:col-span-12 flex items-end">
+                      <div className="col-span-12 md:col-span-3 flex items-end">
                         <Button
                           onClick={() => _onSelectClickTimeseries()}
-                          auto
                           color="secondary"
                         >
                           Refresh links
                         </Button>
-                        <Spacer x={0.5} />
+                        <Spacer x={1} />
                         <Tooltip
                           content="You can select only one link, but if you wish to compare multiple links on the same chart, you can create a new dataset with another link."
                           className="max-w-[500px]"
                         >
-                          <InfoCircle />
+                          <div><IoInformationCircleOutline /></div>
                         </Tooltip>
                       </div>
                     </div>
@@ -611,14 +580,14 @@ function CampaignsQuery(props) {
 
       {config.campaignId && config.requestRoute === "journey_metrics" && config.series && (
         <>
-          <Spacer y={1} />
+          <Spacer y={2} />
           <Row>
             <Popover>
               <PopoverTrigger>
                 <Input
                   label="Select the start and end date of the journey"
                   placeholder="Click to select a date"
-                  startContent={<Calendar />}
+                  startContent={<IoCalendar />}
                   variant="bordered"
                   fullWidth
                   value={`${format(journeyStart, "dd MMMM yyyy")} - ${format(journeyEnd, "dd MMMM yyyy")}`}
@@ -640,23 +609,18 @@ function CampaignsQuery(props) {
             <Select
               variant="bordered"
               label="Select the period"
-              renderValue={(
-                <Text>
-                  {(config.period && periodOptions.find((p) => p.value === config.period)?.text)}
-                </Text>
-              )}
-              onSelectionChange={(value) => _onChangePeriod(value)}
+              onSelectionChange={(keys) => _onChangePeriod(keys.currentKey)}
               selectedKeys={[config.period]}
               selectionMode="single"
             >
               {periodOptions.map((period) => (
-                <SelectItem key={period.value}>
+                <SelectItem key={period.value} textValue={period.text}>
                   {period.text}
                 </SelectItem>
               ))}
             </Select>
           </Row>
-          <Spacer y={1} />
+          <Spacer y={2} />
           <Row>
             <Text>Type of messages. Leave empty for *all* types</Text>
             <Select
@@ -671,19 +635,19 @@ function CampaignsQuery(props) {
                   ))}
                 </div>
               )}
-              onSelectionChange={(key) => {
+              onSelectionChange={(keys) => {
                 // add to the list if not already in it
-                if (!config.type || !config.type.includes(key)) {
-                  _onChangeMessageTypes(!config.type ? [key] : [...config.type, key]);
+                if (!config.type || !config.type.includes(keys.currentKey)) {
+                  _onChangeMessageTypes(!config.type ? [keys.currentKey] : [...config.type, keys.currentKey]);
                 } else {
-                  setConfig({ ...config, type: config.type.filter((t) => t !== key) });
+                  setConfig({ ...config, type: config.type.filter((t) => t !== keys.currentKey) });
                 }
               }}
               selectedKeys={config.type || []}
               selectionMode="multiple"
             >
               {messageOptions.map((message) => (
-                <SelectItem key={message.key}>
+                <SelectItem key={message.key} textValue={message.text}>
                   {message.text}
                 </SelectItem>
               ))}
@@ -698,7 +662,7 @@ function CampaignsQuery(props) {
         || (config.actionId && config.period && config.steps && (config.series || config.requestRoute.indexOf("metrics/links") > -1))
       ) && (
         <>
-          <Spacer y={2} />
+          <Spacer y={4} />
           <Text>
             Looking good! You can now press the
             <strong style={{ color: primary }}>{" \"Make the request\" "}</strong>
@@ -706,7 +670,7 @@ function CampaignsQuery(props) {
           </Text>
         </>
       )}
-    </Container>
+    </div>
   );
 }
 

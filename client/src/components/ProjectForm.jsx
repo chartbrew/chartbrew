@@ -25,7 +25,7 @@ function ProjectForm(props) {
   const [activeMenu, setActiveMenu] = useState("empty");
   const [createdProject, setCreatedProject] = useState(null);
   const modalSize = useMemo(() => {
-    if (activeMenu === "template") return "5xl";
+    if (activeMenu === "template") return "full";
     return "md";
   }, [activeMenu]);
 
