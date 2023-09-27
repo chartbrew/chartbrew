@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Dropdown, Input, Modal, ModalBody, ModalFooter, ModalHeader, Select, SelectItem, Spacer,
+  Button, Checkbox, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader,
+  Select, SelectItem, Spacer,
 } from "@nextui-org/react";
 
-import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 
@@ -138,29 +138,27 @@ function TableDataFormattingModal(props) {
   };
 
   return (
-    <Modal isOpen={open} className="w-[500px]">
-      <ModalHeader>
-        <Text size="h4">
-          {"Change data format"}
-        </Text>
-      </ModalHeader>
-      <ModalBody>
-        <Container>
+    <Modal isOpen={open} size="xl">
+      <ModalContent>
+        <ModalHeader>
+          <Text size="h4">
+            {"Change data format"}
+          </Text>
+        </ModalHeader>
+        <ModalBody>
           <Row>
             <Text b>Data type</Text>
           </Row>
           <Row>
             <Select
+              label="Data type"
               variant="bordered"
-              renderValue={(
-                <Text>{dataTypes.find((d) => d.value === dataType)?.text}</Text>
-              )}
               selectedKeys={[dataType]}
-              onSelectionChange={(key) => setDataType(key)}
+              onSelectionChange={(keys) => setDataType(keys.currentKey)}
               selectionMode="single"
             >
               {dataTypes.map((d) => (
-                <SelectItem key={d.value}>
+                <SelectItem key={d.value} textValue={d.text}>
                   {d.text}
                 </SelectItem>
               ))}
@@ -174,20 +172,18 @@ function TableDataFormattingModal(props) {
             </Row>
           )}
           {dataType === "date" && (
-            <Row>
+            <Row align={"center"}>
               <Select
+                label="Date format"
                 variant="bordered"
-                renderValue={(
-                  <Text>{dateFormats.find((d) => d.value === formatValue)?.text}</Text>
-                )}
                 selectedKeys={[formatValue]}
-                onSelectionChange={(key) => setFormatValue(key)}
+                onSelectionChange={(keys) => setFormatValue(keys.currentKey)}
                 selectionMode="single"
               >
                 {dateFormats.map((d) => (
-                  <Dropdown.Item key={d.value}>
+                  <SelectItem key={d.value} textValue={d.text}>
                     {d.text}
-                  </Dropdown.Item>
+                  </SelectItem>
                 ))}
               </Select>
 
@@ -235,16 +231,16 @@ function TableDataFormattingModal(props) {
                       size="sm"
                     />
                   </Row>
-                  <Spacer y={1} />
                 </>
               )}
               <Row>
                 <Checkbox
-                  label="Add thousands separator"
                   isSelected={thousandsSeparator}
-                  onChange={(checked) => setThousandsSeparator(checked)}
+                  onValueChange={(checked) => setThousandsSeparator(checked)}
                   size="sm"
-                />
+                >
+                  Use thousands separator
+                </Checkbox>
               </Row>
               <Spacer y={1} />
               <Row>
@@ -252,12 +248,14 @@ function TableDataFormattingModal(props) {
               </Row>
               <Row align="center">
                 <Checkbox
-                  label="Allow decimals"
                   isSelected={allowDecimals}
-                  onChange={(checked) => setAllowDecimals(checked)}
+                  onValueChange={(checked) => setAllowDecimals(checked)}
                   size="sm"
-                />
-                <Spacer x={1} />
+                >
+                  Allow decimals
+                </Checkbox>
+              </Row>
+              <Row>
                 <Input
                   type="number"
                   min={0}
@@ -265,32 +263,30 @@ function TableDataFormattingModal(props) {
                   value={decimals}
                   onChange={(e) => setDecimals(e.target.value)}
                   variant="bordered"
-                  disabled={!allowDecimals}
+                  isDisabled={!allowDecimals}
                   size="sm"
                 />
               </Row>
             </>
           )}
-        </Container>
-      </ModalBody>
-      <ModalFooter>
-        <Button
-          auto
-          color="warning"
-          variant="flat"
-          onClick={onClose}
-        >
-          Close
-        </Button>
-        <Button
-          auto
-          onClick={_onSave}
-          disabled={(dataType === "date" && !formatValue)}
-          isLoading={loading}
-        >
-          Save
-        </Button>
-      </ModalFooter>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="bordered"
+            onClick={onClose}
+          >
+            Close
+          </Button>
+          <Button
+            onClick={_onSave}
+            isDisabled={(dataType === "date" && !formatValue)}
+            isLoading={loading}
+            color="primary"
+          >
+            Save
+          </Button>
+        </ModalFooter>
+      </ModalContent>
     </Modal>
   );
 }

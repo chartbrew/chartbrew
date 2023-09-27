@@ -1051,49 +1051,52 @@ function DatasetData(props) {
                             <Chip
                               key={field.accessor}
                               color={dataset?.configuration?.sum === field.accessor ? "secondary" : "default"}
+                              variant={dataset?.configuration?.sum === field.accessor ? "faded" : "solid"}
                               className="mr-3 min-w-[70px] mb-3"
+                              startContent={(
+                                <Link
+                                  className="flex items-center"
+                                  onClick={() => _onExcludeField(field.accessor)}
+                                  title="Hide field"
+                                >
+                                  <IoEyeOutline />
+                                </Link>
+                              )}
+                              endContent={(
+                                <Dropdown>
+                                  <DropdownTrigger>
+                                    <Link
+                                      className="flex items-center"
+                                      title="Sum values on this field"
+                                    >
+                                      <IoChevronDownCircle />
+                                    </Link>
+                                  </DropdownTrigger>
+                                  <DropdownMenu variant="bordered">
+                                    <DropdownItem startContent={<IoSettings />}>
+                                      <Link className="w-full" onClick={() => _onSelectFieldForFormatting(field.accessor)}>
+                                        <Text>Data formatting</Text>
+                                      </Link>
+                                    </DropdownItem>
+                                    <DropdownItem startContent={<IoAdd />}>
+                                      <Link className="w-full" onClick={() => _onSumField(field.accessor)}>
+                                        {dataset.configuration
+                                          && dataset.configuration.sum === field.accessor
+                                          && (
+                                            <Text>Disable sum calculation</Text>
+                                          )}
+                                        {(!dataset.configuration
+                                          || dataset.configuration.sum !== field.accessor)
+                                          && (
+                                            <Text>Enable sum calculation</Text>
+                                          )}
+                                      </Link>
+                                    </DropdownItem>
+                                  </DropdownMenu>
+                                </Dropdown>
+                              )}
                             >
-                              <Link
-                                className="flex items-center"
-                                onClick={() => _onExcludeField(field.accessor)}
-                                title="Hide field"
-                              >
-                                <IoEyeOutline />
-                              </Link>
-                              <Spacer x={0.5} />
                               {`${field.accessor.replace("?", ".")}`}
-                              <Spacer x={0.5} />
-                              <Dropdown>
-                                <DropdownTrigger>
-                                  <Link
-                                    className="flex items-center"
-                                    title="Sum values on this field"
-                                  >
-                                    <IoChevronDownCircle />
-                                  </Link>
-                                </DropdownTrigger>
-                                <DropdownMenu variant="bordered">
-                                  <DropdownItem startContent={<IoSettings />}>
-                                    <Link className="w-full" onClick={() => _onSelectFieldForFormatting(field.accessor)}>
-                                      <Text>Data formatting</Text>
-                                    </Link>
-                                  </DropdownItem>
-                                  <DropdownItem startContent={<IoAdd />}>
-                                    <Link className="w-full" onClick={() => _onSumField(field.accessor)}>
-                                      {dataset.configuration
-                                        && dataset.configuration.sum === field.accessor
-                                        && (
-                                          <Text>Disable sum calculation</Text>
-                                        )}
-                                      {(!dataset.configuration
-                                        || dataset.configuration.sum !== field.accessor)
-                                        && (
-                                          <Text>Enable sum calculation</Text>
-                                        )}
-                                    </Link>
-                                  </DropdownItem>
-                                </DropdownMenu>
-                              </Dropdown>
                             </Chip>
                           );
                         })}
@@ -1139,11 +1142,13 @@ function DatasetData(props) {
                             key={field}
                             onClick={() => _onShowField(field)}
                             color="warning"
+                            variant="faded"
+                            startContent={(
+                              <Link className="flex items-center text-warning" onClick={() => _onShowField(field)}>
+                                <IoEyeOffOutline />
+                              </Link>
+                            )}
                           >
-                            <Link className="flex items-center" onClick={() => _onShowField(field)}>
-                              <IoEyeOffOutline />
-                            </Link>
-                            <Spacer x={0.3} />
                             {field.replace("?", ".")}
                           </Chip>
                         ))}
@@ -1425,12 +1430,18 @@ function DatasetData(props) {
             <div>
               {conditions.filter((c) => c.exposed).map((condition) => {
                 return (
-                  <Chip key={condition.id} color={"primary"} size="sm">
+                  <Chip
+                    key={condition.id}
+                    color={"primary"}
+                    variant="faded"
+                    size="sm"
+                    endContent={(
+                      <Link onClick={() => _onHideCondition(condition.id)} color="danger">
+                        <IoCloseCircle />
+                      </Link>
+                    )}
+                  >
                     {condition.field.replace("root[].", "")}
-                    <Spacer x={0.5} />
-                    <Link onClick={() => _onHideCondition(condition.id)} color="danger">
-                      <IoCloseCircle />
-                    </Link>
                   </Chip>
                 );
               })}
