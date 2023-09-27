@@ -186,6 +186,7 @@ function TeamMembers(props) {
         <Row>
           <Text size="h4">{"Team members"}</Text>
         </Row>
+        <Spacer y={2} />
 
         <Table shadow="none" isStriped>
           <TableHeader>
@@ -260,31 +261,34 @@ function TeamMembers(props) {
                                   {user.id !== member.id
                                     && (_canAccess("owner") || (_canAccess("admin") && memberRole.role !== "owner"))
                                     && (
-                                      <DropdownItem key="admin" className={"h-fit pb-5"}>
+                                      <DropdownItem
+                                        key="admin"
+                                        textValue="Admin"
+                                        description={"Full access, but can't delete the team"}
+                                      >
                                         <Text>Admin</Text>
-                                        <Text small className={"text-default-600 break-words"}>
-                                          {"Full access, but can't delete the team"}
-                                        </Text>
                                       </DropdownItem>
                                     )}
                                   {user.id !== member.id
                                     && (_canAccess("owner") || (_canAccess("admin") && memberRole.role !== "owner"))
                                     && (
-                                      <DropdownItem key="editor" className={"h-max pb-5"}>
+                                      <DropdownItem
+                                        key="editor"
+                                        textValue="Editor"
+                                        description={"Can create, edit, and remove charts and connections in assigned projects"}
+                                      >
                                         <Text>Editor</Text>
-                                        <Text small className={"text-default-600 break-words"}>
-                                          {"Can create, edit, and remove charts and connections in assigned projects"}
-                                        </Text>
                                       </DropdownItem>
                                     )}
                                   {user.id !== member.id
                                     && (_canAccess("owner") || (_canAccess("admin") && memberRole.role !== "owner"))
                                     && (
-                                      <DropdownItem key="member" className={"h-fit pb-5"}>
+                                      <DropdownItem
+                                        key="member"
+                                        textValue="Member"
+                                        description={"Can view charts in assigned projects"}
+                                      >
                                         <Text>Member</Text>
-                                        <Text small className={"text-default-600 break-words"}>
-                                          {"Can view charts in assigned projects"}
-                                        </Text>
                                       </DropdownItem>
                                     )}
                                 </DropdownMenu>

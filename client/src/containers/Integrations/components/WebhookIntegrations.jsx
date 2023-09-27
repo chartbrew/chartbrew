@@ -2,14 +2,11 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Checkbox, Divider, Input, Link, Modal, ModalBody, ModalFooter,
+  Button, Checkbox, Divider, Input, Link, Modal, ModalBody, ModalContent, ModalFooter,
   ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
 } from "@nextui-org/react";
-import {
-  Delete, Edit, InfoCircle, Plus
-} from "react-iconly";
 import { TbWebhook } from "react-icons/tb";
-import { FaSlack } from "react-icons/fa";
+import { IoAdd, IoCreate, IoInformationCircleOutline, IoLogoSlack, IoTrashBin } from "react-icons/io5";
 import { formatRelative } from "date-fns";
 
 import {
@@ -127,7 +124,7 @@ function WebhookIntegrations(props) {
         <Row align="center" justify="space-between">
           <div className="flex items-center">
             <Text><TbWebhook size={24} /></Text>
-            <Spacer x={0.6} />
+            <Spacer x={1} />
             <Text size="h4">Webhooks</Text>
           </div>
           <Spacer x={2} />
@@ -136,23 +133,23 @@ function WebhookIntegrations(props) {
             onClick={() => {
               setCreateOpen(true);
             }}
-            startContent={<Plus />}
+            startContent={<IoAdd />}
             variant="light"
             color={"primary"}
           >
             Add a new webhook
           </Button>
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={2} />
         <Row>
           <Divider />
         </Row>
-        <Spacer y={1} />
+        <Spacer y={2} />
         <Row>
           <Text>
             <Link href="https://docs.chartbrew.com/integrations/webhooks" target="_blank" rel="noopener">
-              <InfoCircle />
-              <Spacer x={0.6} />
+              <IoInformationCircleOutline />
+              <Spacer x={1} />
               {"Click to see what Chartbrew sends over the webhook"}
             </Link>
           </Text>
@@ -161,13 +158,13 @@ function WebhookIntegrations(props) {
         <Row>
           <Text>
             <Link onClick={() => setSlackModalOpen(true)}>
-              <FaSlack size={24} />
-              <Spacer x={0.6} />
+              <IoLogoSlack />
+              <Spacer x={1} />
               {"Want to send events to Slack? Check out how to do it here"}
             </Link>
           </Text>
         </Row>
-        <Spacer y={1} />
+        <Spacer y={2} />
         {integrations.length > 0 && (
           <Row>
             <Table shadow={"none"}>
@@ -184,8 +181,8 @@ function WebhookIntegrations(props) {
                     <TableCell key="name">
                       {i.name}
                     </TableCell>
-                    <TableCell key="url" className="max-w-[300px]">
-                      <Text className={"overflow-hidden text-ellipsis whitespace-nowrap"}>
+                    <TableCell key="url" className="max-w-[300px] truncate">
+                      <Text className={"truncate"}>
                         {i.config?.url || "No URL"}
                       </Text>
                     </TableCell>
@@ -193,26 +190,24 @@ function WebhookIntegrations(props) {
                       {formatRelative(new Date(i.createdAt), new Date())}
                     </TableCell>
                     <TableCell key="actions">
-                      <Container>
-                        <Row>
-                          <Button
-                            isIconOnly
-                            variant="light"
-                            color="secondary"
-                            onClick={() => _onEditOpen(i)}
-                          >
-                            <Edit />
-                          </Button>
-                          <Button
-                            isIconOnly
-                            variant="light"
-                            color="danger"
-                            onClick={() => setIntegrationToDelete(i.id)}
-                          >
-                            <Delete />
-                          </Button>
-                        </Row>
-                      </Container>
+                      <Row>
+                        <Button
+                          isIconOnly
+                          variant="light"
+                          color="primary"
+                          onClick={() => _onEditOpen(i)}
+                        >
+                          <IoCreate />
+                        </Button>
+                        <Button
+                          isIconOnly
+                          variant="light"
+                          color="danger"
+                          onClick={() => setIntegrationToDelete(i.id)}
+                        >
+                          <IoTrashBin />
+                        </Button>
+                      </Row>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -222,15 +217,15 @@ function WebhookIntegrations(props) {
         )}
       </Container>
 
-      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} className="w-[500px]">
-        <ModalHeader>
-          <Text size="h4">
-            {!newIntegration.id && "Create a new webhook integration"}
-            {newIntegration.id && "Update the webhook"}
-          </Text>
-        </ModalHeader>
-        <ModalBody>
-          <Container>
+      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} size="2xl">
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h4">
+              {!newIntegration.id && "Create a new webhook integration"}
+              {newIntegration.id && "Update the webhook"}
+            </Text>
+          </ModalHeader>
+          <ModalBody>
             <Row>
               <Input
                 label="A name to recognize this integration"
@@ -245,7 +240,7 @@ function WebhookIntegrations(props) {
                 description={`${newIntegration.name?.length || 0}/20 characters`}
               />
             </Row>
-            <Spacer y={4} />
+            <Spacer y={1} />
             <Row>
               <Input
                 label="The URL where Chartbrew sends a POST request to"
@@ -257,22 +252,22 @@ function WebhookIntegrations(props) {
                 required
               />
             </Row>
-            <Spacer y={1} />
-            <Row>
+            <Row align={"center"}>
               <Checkbox
                 checked={newIntegration.slackMode}
-                onChange={(isSelected) => {
+                onValueChange={(isSelected) => {
                   setNewIntegration({ ...newIntegration, slackMode: isSelected });
                 }}
                 size="sm"
                 isSelected={newIntegration.slackMode}
-                label="Slack webhook"
-              />
+              >
+                {"This is a Slack webhook"}
+              </Checkbox>
               <Spacer x={1} />
               <Text size="small">
                 <Link onClick={() => setSlackModalOpen(true)}>
-                  <InfoCircle />
-                  <Spacer x={0.5} />
+                  <IoInformationCircleOutline />
+                  <Spacer x={1} />
                   {"What is this?"}
                 </Link>
               </Text>
@@ -282,79 +277,81 @@ function WebhookIntegrations(props) {
                 <Text color="danger">There was an error creating the integration. Please try again.</Text>
               </Row>
             )}
-          </Container>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            auto
-            onClick={() => setCreateOpen(false)}
-            color="warning"
-            variant="flat"
-          >
-            Close
-          </Button>
-          <Button
-            auto
-            onClick={!newIntegration.id ? _onCreate : _onEdit}
-            color="primary"
-            isLoading={createLoading}
-          >
-            {!newIntegration.id && "Create"}
-            {newIntegration.id && "Update"}
-          </Button>
-        </ModalFooter>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              auto
+              onClick={() => setCreateOpen(false)}
+              color="warning"
+              variant="flat"
+            >
+              Close
+            </Button>
+            <Button
+              auto
+              onClick={!newIntegration.id ? _onCreate : _onEdit}
+              color="primary"
+              isLoading={createLoading}
+            >
+              {!newIntegration.id && "Create"}
+              {newIntegration.id && "Update"}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
 
-      <Modal isOpen={!!integrationToDelete} onClose={() => setIntegrationToDelete(false)} className="w-[500px]">
-        <ModalHeader>
-          <Text size="h4">Are you sure you want to delete this integration?</Text>
-        </ModalHeader>
-        <ModalBody>
-          <Container>
-            <Row>
-              <Text>
-                All alerts that are configured to use this integration will be disabled.
-              </Text>
-            </Row>
-            {deleteError && (
-              <>
-                <Spacer y={2} />
-                <Row>
-                  <Text color="danger">There was an error deleting the integration. Please try again.</Text>
-                </Row>
-              </>
-            )}
-          </Container>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            auto
-            onClick={() => setIntegrationToDelete(false)}
-            color="warning"
-            variant="flat"
-          >
-            Close
-          </Button>
-          <Button
-            auto
-            onClick={_onDelete}
-            color="danger"
-            isLoading={deleteLoading}
-          >
-            Delete
-          </Button>
-        </ModalFooter>
+      <Modal isOpen={!!integrationToDelete} onClose={() => setIntegrationToDelete(false)} size="3xl">
+      <ModalContent>
+          <ModalHeader>
+            <Text size="h4">Are you sure you want to delete this integration?</Text>
+          </ModalHeader>
+          <ModalBody>
+            <Container>
+              <Row>
+                <Text>
+                  All alerts that are configured to use this integration will be disabled.
+                </Text>
+              </Row>
+              {deleteError && (
+                <>
+                  <Spacer y={2} />
+                  <Row>
+                    <Text color="danger">There was an error deleting the integration. Please try again.</Text>
+                  </Row>
+                </>
+              )}
+            </Container>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              auto
+              onClick={() => setIntegrationToDelete(false)}
+              color="warning"
+              variant="flat"
+            >
+              Close
+            </Button>
+            <Button
+              auto
+              onClick={_onDelete}
+              color="danger"
+              isLoading={deleteLoading}
+            >
+              Delete
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
 
-      <Modal isOpen={slackModalOpen} className="w-[800px]" onClose={() => setSlackModalOpen(false)}>
-        <ModalHeader>
-          <Text size="h3">How to set up Slack alerts</Text>
-        </ModalHeader>
-        <ModalBody className={"p-0 m-0"}>
-          <Container className={"p-0 m-0"}>
-            <Row style={{
-              position: "relative", paddingBottom: "56.25%", height: 0,
-            }}>
+      <Modal isOpen={slackModalOpen} size="full" onClose={() => setSlackModalOpen(false)}>
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h4">How to set up Slack alerts</Text>
+          </ModalHeader>
+          <ModalBody>
+            <div
+              className="relative pb-[56.25%] min-h-full"
+            >
               <iframe
                 title="Chartbrew Slack alerts"
                 src="https://www.loom.com/embed/84e390c2e9b844748cb30812dc0591e1"
@@ -366,19 +363,18 @@ function WebhookIntegrations(props) {
                   position: "absolute", top: 0, left: 0, width: "100%", height: "100%", borderRadius: 20,
                 }}
               />
-            </Row>
-          </Container>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            auto
-            onClick={() => setSlackModalOpen(false)}
-            color="warning"
-            variant="flat"
-          >
-            Close
-          </Button>
-        </ModalFooter>
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              auto
+              onClick={() => setSlackModalOpen(false)}
+              variant="bordered"
+            >
+              Close
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
     </div>
   );

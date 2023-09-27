@@ -3,11 +3,8 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import { PropTypes } from "prop-types";
 import {
-  Button, CircularProgress, Divider, Input, Modal, ModalBody, ModalFooter, ModalHeader, Select, SelectItem, Spacer,
+  Button, CircularProgress, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Spacer,
 } from "@nextui-org/react";
-import {
-  CloseSquare, Delete, TimeCircle
-} from "react-iconly";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 
@@ -16,10 +13,10 @@ import { updateProject, changeActiveProject, removeProject } from "../actions/pr
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import timezones from "../modules/timezones";
 import Callout from "../components/Callout";
-import Container from "../components/Container";
 import Row from "../components/Row";
 import Text from "../components/Text";
 import useThemeDetector from "../modules/useThemeDetector";
+import { IoClose, IoTimeOutline, IoTrashBin } from "react-icons/io5";
 
 /*
   Project settings page
@@ -115,10 +112,7 @@ function ProjectSettings(props) {
   };
 
   return (
-    <Container
-      style={style}
-      size="md"
-    >
+    <div style={style} className="container mx-auto my-4 p-4 bg-content1 rounded-md">
       <Row>
         <Text size="h3">Project settings</Text>
       </Row>
@@ -135,19 +129,19 @@ function ProjectSettings(props) {
         <form onSubmit={(e) => {
           e.preventDefault();
           _onSaveName();
-        }}>
+        }} className="w-full">
           <Input
             label="Project name"
             placeholder="Type a project name"
             value={projectName ? projectName
               : project.name ? project.name : ""}
             onChange={(e) => setProjectName(e.target.value)}
-            css={{ minWidth: 300 }}
-            bordered
-            helperColor="error"
-            helperText={nameError ? "Project name is required" : ""}
+            variant="bordered"
+            color={nameError ? "success" : "default"}
+            description={nameError ? "Project name is required" : ""}
+            className="max-w-md"
           />
-          <Spacer y={0.5} />
+          <Spacer y={2} />
           <Button
             type="submit"
             color={success ? "success" : error ? "error" : "primary"}
@@ -161,53 +155,52 @@ function ProjectSettings(props) {
         </form>
       </Row>
 
-      <Spacer y={1} />
+      <Spacer y={4} />
       <Divider />
-      <Spacer y={1} />
+      <Spacer y={4} />
 
-      <Row align="flex-end">
+      <Row align="center" wrap={"wrap"}>
         <Select
           label="Project timezone"
           placeholder="Select a timezone"
           variant="bordered"
-          onAction={(key) => {
+          onSelectionChange={(keys) => {
             setTimezoneSearch("");
-            setProjectTimezone(key);
+            setProjectTimezone(keys.currentKey);
           }}
-          selectedKeys={[projectTimezone]}
+          selectedKeys={[projectTimezone || project.timezone]}
           selectionMode="single"
-          className={"min-w-max"}
+          className="max-w-md"
         >
           {timezones
             .filter((timezone) => (
               timezone.toLowerCase().indexOf(timezoneSearch.toLocaleLowerCase()) > -1
             )).map((timezone) => (
-              <SelectItem key={timezone} value={timezone}>
+              <SelectItem key={timezone} textValue={timezone}>
                 {timezone}
               </SelectItem>
             ))}
         </Select>
-        <Spacer x={0.3} />
+        <Spacer x={1} />
         <Button
           color="primary"
           variant="bordered"
           disabled={!_canAccess("admin")}
           onClick={() => _onGetMachineTimezone()}
-          auto
-          startContent={<TimeCircle />}
+          startContent={<IoTimeOutline />}
         >
           <Text hideIn={"xs"}>
             Get current timezone
           </Text>
         </Button>
       </Row>
-      <Spacer y={0.5} />
+      <Spacer y={2} />
       <Row>
         <Button
-          disabled={!_canAccess("admin") || loading}
+          isDisabled={!_canAccess("admin")}
           onClick={() => _onSaveTimezone()}
-          auto
           isLoading={loadingTimezone}
+          color="primary"
         >
           Save
         </Button>
@@ -217,34 +210,24 @@ function ProjectSettings(props) {
             color="warning"
             variant="flat"
             disabled={!_canAccess("admin")}
-            endContent={<CloseSquare />}
+            endContent={<IoClose />}
             onClick={() => _onSaveTimezone(true)}
-            auto
           >
             Clear
           </Button>
         )}
       </Row>
-      <Spacer y={1} />
-      <Row wrap="wrap" style={{ maxWidth: 500 }}>
-        <Callout
-          color="secondary"
-          title="Experimental feature"
-          text="You will need to refresh the charts to see the changes. This feature is still in beta and we appreciate your feedback if you notice something is not working as expected."
-        />
-      </Row>
 
-      <Spacer y={1} />
+      <Spacer y={4} />
       <Divider />
-      <Spacer y={1} />
+      <Spacer y={4} />
 
       <Row>
         <Button
           color="danger"
           disabled={!_canAccess("admin")}
-          endContent={<Delete />}
+          endContent={<IoTrashBin />}
           onClick={_onRemoveConfirmation}
-          auto
           variant="bordered"
         >
           Remove project
@@ -264,34 +247,33 @@ function ProjectSettings(props) {
         </>
       )}
 
-      <Modal open={removeModal} blur onClose={() => setRemoveModal(false)}>
-        <ModalHeader>
-          <Text size="h3">Are you sure you want to remove this project?</Text>
-        </ModalHeader>
-        <ModalBody>
-          <Text>
-            {"This action will be PERMANENT. All the charts, connections and saved queries associated with this project will be deleted as well."}
-          </Text>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            variant="flat"
-            color="warning"
-            onClick={() => setRemoveModal(false)}
-            auto
-          >
-            Go back
-          </Button>
-          <Button
-            color="danger"
-            disabled={removeLoading}
-            endContent={<Delete />}
-            onClick={_onRemove}
-            auto
-          >
-            Remove completely
-          </Button>
-        </ModalFooter>
+      <Modal isOpen={removeModal} backdrop="blur" onClose={() => setRemoveModal(false)}>
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h3">Are you sure you want to remove this project?</Text>
+          </ModalHeader>
+          <ModalBody>
+            <Text>
+              {"This action will be PERMANENT. All the charts, connections and saved queries associated with this project will be deleted as well."}
+            </Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onClick={() => setRemoveModal(false)}
+            >
+              Go back
+            </Button>
+            <Button
+              color="danger"
+              disabled={removeLoading}
+              endContent={<IoTrashBin />}
+              onClick={_onRemove}
+            >
+              Remove completely
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
 
       <ToastContainer
@@ -307,7 +289,7 @@ function ProjectSettings(props) {
         transition={Flip}
         theme={isDark ? "dark" : "light"}
       />
-    </Container>
+    </div>
   );
 }
 

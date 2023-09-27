@@ -11,7 +11,6 @@ import WebhookIntegrations from "./components/WebhookIntegrations";
 import {
   getTeamIntegrations as getTeamIntegrationsAction,
 } from "../../actions/integration";
-import Container from "../../components/Container";
 import Text from "../../components/Text";
 import Row from "../../components/Row";
 
@@ -24,7 +23,7 @@ function Integrations(props) {
 
   return (
     <div>
-      <Container className={"bg-content2 rounded-md"} size="md">
+      <div className={"container mx-auto bg-content1 rounded-md p-4 md:p-8"}>
         <Row>
           <Text size="h3">Integrations</Text>
         </Row>
@@ -34,7 +33,7 @@ function Integrations(props) {
             {"Create new integrations that you can use across your team's projects. Currently, the integrations are mainly used for chart alerts and notifications."}
           </Text>
         </Row>
-        <Spacer y={2} />
+        <Spacer y={4} />
 
         <Row>
           <WebhookIntegrations
@@ -43,7 +42,7 @@ function Integrations(props) {
           />
         </Row>
         <Spacer y={4} />
-      </Container>
+      </div>
     </div>
   );
 }
