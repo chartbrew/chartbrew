@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Badge,
-  Button, Container, Divider, Input, Modal, Row, Spacer, Switch, Text, Textarea, Tooltip
+  Button, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Switch, Textarea, Tooltip,
 } from "@nextui-org/react";
-import { InfoCircle, TickSquare } from "react-iconly";
-import { FaClipboard } from "react-icons/fa";
+import { IoCheckbox, IoClipboard, IoInformationCircleOutline } from "react-icons/io5";
 
 import { SITE_HOST } from "../../../config/settings";
-import { secondary } from "../../../config/colors";
+import Text from "../../../components/Text";
+import Row from "../../../components/Row";
 
 function SharingSettings(props) {
   const {
@@ -47,67 +46,62 @@ function SharingSettings(props) {
   };
 
   return (
-    <Modal open={open} onClose={onClose} width={600}>
-      <Modal.Header>
-        <Text size="h3">Sharing settings</Text>
-      </Modal.Header>
-      <Modal.Body>
-        <Container>
+    <Modal isOpen={open} onClose={onClose} size="3xl">
+      <ModalContent>
+        <ModalHeader>
+          <Text size="h3">Sharing settings</Text>
+        </ModalHeader>
+        <ModalBody>
           <Row>
             <Text>Your dashboard URL</Text>
           </Row>
-          <Spacer y={0.5} />
           <Row>
             <Input
               id="share-url-text"
               placeholder="Enter your custom dashboard URL"
-              contentLeft={(
-                <Badge variant={"flat"} isSquared>{`${SITE_HOST}/b/`}</Badge>
-              )}
-              contentLeftStyling={false}
+              startContent={`${SITE_HOST}/b/`}
               value={newBrewName}
               onChange={(e) => _onChangeBrewName(e.target.value)}
-              helperColor="error"
-              helperText={error}
-              bordered
+              color={error ? "error" : "default"}
+              description={error}
+              variant="bordered"
               fullWidth
             />
           </Row>
-          <Spacer y={0.5} />
           <Row>
             <Button
               color="secondary"
               onClick={() => onSaveBrewName(newBrewName)}
-              disabled={brewLoading || !newBrewName}
+              isDisabled={!newBrewName}
+              isLoading={brewLoading}
               size="sm"
-              auto
             >
               Save URL and reload
             </Button>
-            <Spacer x={0.2} />
+            <Spacer x={1} />
             <Tooltip
               content="Copy the URL to the clipboard"
-              css={{ zIndex: 10000 }}
             >
               <Button
-                icon={urlCopied ? <TickSquare /> : <FaClipboard />}
+                isIconOnly
                 color={urlCopied ? "success" : "secondary"}
                 onClick={_onCopyUrl}
                 size="sm"
-                bordered
-                css={{ minWidth: "fit-content" }}
-              />
+                variant="bordered"
+              >
+                {urlCopied ? <IoCheckbox /> : <IoClipboard />}
+              </Button>
             </Tooltip>
           </Row>
           <Spacer y={1} />
           <Row align="center">
             <Switch
-              checked={project.public}
+              isSelected={project.public}
               onChange={onTogglePublic}
-            />
-            <Spacer x={0.2} />
-            <Text>Make dashboard public</Text>
-            <Spacer x={0.2} />
+            >
+              Make the dashboard public
+            </Switch>
+            <Spacer x={1} />
             <Tooltip
               content={(
                 <>
@@ -115,53 +109,47 @@ function SharingSettings(props) {
                   <p>{"A private report can only be seen by members of your team"}</p>
                 </>
               )}
-              css={{ zIndex: 10000 }}
             >
-              <InfoCircle />
+              <div><IoInformationCircleOutline /></div>
             </Tooltip>
           </Row>
-          <Spacer y={0.5} />
           <Row align="center">
             <Switch
-              checked={project.passwordProtected}
+              isSelected={project.passwordProtected}
               onChange={onTogglePassword}
-              disabled={!project.public}
-            />
-            <Spacer x={0.2} />
-            <Text>Require password to view</Text>
-            <Spacer x={0.2} />
+              isDisabled={!project.public}
+            >
+              Require password to view
+            </Switch>
+            <Spacer x={1} />
             <Tooltip
               content="Public reports will require the viewers outside of your team to enter a password before viewing"
-              css={{ zIndex: 10000 }}
             >
-              <InfoCircle />
+              <div><IoInformationCircleOutline /></div>
             </Tooltip>
           </Row>
-          <Spacer y={0.5} />
           <Row>
             <Input
               label="Report password"
               placeholder="Enter a password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              disabled={!project.public || !project.passwordProtected}
-              bordered
+              isDisabled={!project.public || !project.passwordProtected}
+              variant="bordered"
               fullWidth
             />
           </Row>
-          <Spacer y={0.5} />
           <Row>
             <Button
               color="secondary"
               onClick={() => onSavePassword(newPassword)}
-              disabled={
+              isDisabled={
                 !project.public
                 || !project.passwordProtected
                 || !newPassword
                 || project.password === newPassword
               }
               size="sm"
-              auto
             >
               Save password
             </Button>
@@ -177,25 +165,27 @@ function SharingSettings(props) {
               id="iframe-text"
               value={_getEmbedString()}
               fullWidth
+              variant="bordered"
+              readOnly
             />
           </Row>
           {!project.public && (
             <>
-              <Spacer y={0.5} />
               <Row align="center">
-                <InfoCircle primaryColor={secondary} />
-                <Text small i>{" The embedding only works when the report is public"}</Text>
+                <IoInformationCircleOutline className="text-secondary" />
+                <Text size="sm" className={"italic"}>
+                  {" The embedding only works when the report is public"}
+                </Text>
               </Row>
             </>
           )}
-          <Spacer y={0.5} />
           <Row>
             <Button
-              icon={embedCopied ? <TickSquare /> : <FaClipboard />}
+              startContent={embedCopied ? <IoCheckbox /> : <IoClipboard />}
               color={embedCopied ? "success" : "secondary"}
+              variant={embedCopied ? "flat" : "bordered"}
               onClick={_onCopyEmbed}
               size="sm"
-              auto
             >
               {embedCopied ? "Copied" : "Copy to clipboard"}
             </Button>
@@ -206,28 +196,25 @@ function SharingSettings(props) {
           <Spacer y={1} />
 
           <Row>
-            <Text size={16}>Show or hide the Chartbrew branding from charts and reports</Text>
+            <Text>Show or hide the Chartbrew branding from charts and reports</Text>
           </Row>
-          <Spacer y={0.2} />
           <Row align="center">
             <Switch
-              checked={project.Team && project.Team.showBranding}
+              isSelected={project.Team && project.Team.showBranding}
               onChange={onToggleBranding}
-            />
-            <Spacer x={0.2} />
-            <Text>Charbrew branding</Text>
+            >
+              Chartbrew branding
+            </Switch>
           </Row>
-        </Container>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button
-          flat
-          color="warning"
-          onClick={onClose}
-        >
-          Close
-        </Button>
-      </Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            onClick={onClose}
+          >
+            Close
+          </Button>
+        </ModalFooter>
+      </ModalContent>
     </Modal>
   );
 }

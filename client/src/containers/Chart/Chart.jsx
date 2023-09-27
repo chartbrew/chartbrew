@@ -451,7 +451,7 @@ function Chart(props) {
           className={`h-full bg-content1 border-solid border-1 border-content3 ${!print ? "min-h-[350px]" : "min-h-[350px] shadow-none border-solid border-1 border-content4"}`}
         >
           <CardHeader className="pb-0 grid grid-cols-12 items-start">
-            <div className="col-span-10 sm:col-span-8 flex items-start justify-start">
+            <div className="col-span-6 sm:col-span-8 flex items-start justify-start">
               <div>
                 <Row justify="flex-start" align="center">
                   {chart.draft && (
@@ -714,13 +714,17 @@ function Chart(props) {
               {showExport && (
                 <Dropdown>
                   <DropdownTrigger>
-                    <LinkNext className="text-default">
-                      <IoEllipsisHorizontalCircle />
+                    <LinkNext color="foreground">
+                      <IoEllipsisHorizontalCircle size={24} />
                     </LinkNext>
                   </DropdownTrigger>
                   <DropdownMenu>
-                    <DropdownItem startContent={exportLoading ? <CircularProgress size="sm" /> : <RiFileExcelLine />}>
-                      <Text onClick={() => _onPublicExport(chart)}>Export to Excel</Text>
+                    <DropdownItem
+                      startContent={exportLoading ? <CircularProgress size="sm" /> : <RiFileExcelLine />}
+                      onClick={() => _onPublicExport(chart)}
+                      textValue="Export to Excel"
+                    >
+                      <Text>Export to Excel</Text>
                     </DropdownItem>
                   </DropdownMenu>
                 </Dropdown>

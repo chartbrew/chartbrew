@@ -2,26 +2,26 @@ import React, { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import { Link as LinkDom } from "react-router-dom";
 import {
-  Button, Container, Grid, Input, Loading, Row, Spacer, Text,
-  Navbar, Tooltip, Popover, Divider, Modal, Badge, Link, useTheme, Image,
+  Button, Input, Spacer, Navbar, Tooltip, Popover, Divider, Modal, Badge,
+  Link, Image, CircularProgress, NavbarContent, PopoverTrigger, PopoverContent, ModalContent, ModalHeader, ModalBody, ModalFooter, Chip, NavbarItem,
 } from "@nextui-org/react";
-import {
-  ChevronLeftCircle, CloseSquare, Edit, EditSquare, Image2, People, Show, TickSquare
-} from "react-iconly";
 import { connect } from "react-redux";
 import { TwitterPicker } from "react-color";
 import { createMedia } from "@artsy/fresnel";
 import { Helmet } from "react-helmet";
 import { clone } from "lodash";
 import { useDropzone } from "react-dropzone";
-import { useWindowSize } from "react-use";
+import {
+  IoCheckmark, IoChevronBack, IoChevronBackCircle, IoCloseCircle, IoColorPalette, IoCreate,
+  IoEye, IoPencil, IoReload, IoShare,
+} from "react-icons/io5";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
+
 import AceEditor from "react-ace";
 import "ace-builds/src-min-noconflict/mode-css";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
-import { HiRefresh } from "react-icons/hi";
 
 import {
   getPublicDashboard as getPublicDashboardAction,
@@ -38,6 +38,10 @@ import { API_HOST, SITE_HOST } from "../../config/settings";
 import canAccess from "../../config/canAccess";
 import SharingSettings from "./components/SharingSettings";
 import instructionDashboard from "../../assets/instruction-dashboard-report.png";
+import Text from "../../components/Text";
+import Row from "../../components/Row";
+import Container from "../../components/Container";
+import useThemeDetector from "../../modules/useThemeDetector";
 
 const breakpoints = {
   mobile: 0,
@@ -78,7 +82,7 @@ function PublicDashboard(props) {
   const [reportPassword, setReportPassword] = useState("");
   const [refreshLoading, setRefreshLoading] = useState(false);
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   const onDrop = useCallback((acceptedFiles) => {
     setNewChanges({ ...newChanges, logo: acceptedFiles });
@@ -96,8 +100,6 @@ function PublicDashboard(props) {
     accept: "image/*",
     onDrop,
   });
-
-  const { width } = useWindowSize();
 
   useEffect(() => {
     setLoading(true);
@@ -295,12 +297,12 @@ function PublicDashboard(props) {
           `}
           </style>
         </Helmet>
-        <Container style={styles.container}>
+        <div style={styles.container} className="items-center">
           <Spacer y={4} />
           <Row align="center" justify="center">
-            <Loading type="points-opacity" color="currentColor" size="xl" aria-label="Loading" />
+            <CircularProgress size="lg" aria-label="Loading" />
           </Row>
-        </Container>
+        </div>
       </>
     );
   }
@@ -377,24 +379,25 @@ function PublicDashboard(props) {
   if (noCharts && user.id) {
     return (
       <div>
-        <Container justify="center" css={{ mt: 100 }}>
+        <Container justify="center" className={"mt-20"}>
           <Row justify="center">
-            <Text size="h3">
+            <Text size="h1">
               {"This report does not contain any charts"}
             </Text>
           </Row>
-          <Spacer y={0.3} />
+          <Spacer y={1} />
           <Row justify="center">
             <Text b>
               {"Head back to your dashboard and add charts to the report from the individual chart settings menu."}
             </Text>
           </Row>
-          <Spacer y={1} />
+          <Spacer y={4} />
           <Row justify="center">
             <Button
               onClick={() => window.history.back()}
-              auto
+              color="primary"
               size="lg"
+              startContent={<IoChevronBack />}
             >
               Go back
             </Button>
@@ -434,138 +437,140 @@ function PublicDashboard(props) {
         )}
         <style type="text/css">
           {`
-            body {
-              background-color: ${newChanges.backgroundColor};
+            html, body {
+              background-color: ${newChanges.backgroundColor} !important;
             }
           `}
         </style>
       </Helmet>
       {editorVisible && !preview && (
-        <Navbar shouldHideOnScroll isBordered variant="sticky" isCompact maxWidth={"xl"}>
-          <Navbar.Content>
+        <Navbar shouldHideOnScroll isBordered maxWidth={"full"}>
+          <NavbarContent>
             <Tooltip content="Back to your dashboard" placement="rightStart">
-              <Navbar.Link>
+              <NavbarItem>
                 <LinkDom to={`/${project.team_id}/${project.id}/dashboard`}>
                   <Button
-                    icon={<ChevronLeftCircle />}
-                    bordered
-                    css={{ minWidth: "fit-content" }}
-                  />
+                    isIconOnly
+                    variant="bordered"
+                  >
+                    <IoChevronBackCircle />
+                  </Button>
                 </LinkDom>
-              </Navbar.Link>
+              </NavbarItem>
             </Tooltip>
             {!isSaved && (
-              <Navbar.Item>
+              <NavbarItem>
                 <Button
                   color="secondary"
                   size="sm"
-                  icon={<TickSquare />}
-                  disabled={saveLoading}
+                  endContent={<IoCheckmark />}
+                  isLoading={saveLoading}
                   onClick={_onSaveChanges}
-                  auto
                 >
                   Save
                 </Button>
-              </Navbar.Item>
+              </NavbarItem>
             )}
-          </Navbar.Content>
-          <Navbar.Content>
+          </NavbarContent>
+          <NavbarContent className="gap-8 sm:gap-8" justify="end">
             {_canAccess("editor") && (
-              <Tooltip content="Preview as a visitor" placement="bottom">
-                <Navbar.Link onClick={() => setPreview(true)}>
-                  <Show />
-                  <Text hideIn={"xs"} css={{ pl: 3 }}>Preview</Text>
-                </Navbar.Link>
-              </Tooltip>
+              <NavbarItem>
+                <Link className="text-foreground flex gap-1 items-center cursor-pointer" onClick={() => setPreview(true)}>
+                  <IoEye />
+                  <Text className={"hidden sm:block"}>Preview</Text>
+                </Link>
+              </NavbarItem>
             )}
             {_canAccess("editor") && (
               <Popover>
-                <Popover.Trigger>
-                  <Navbar.Link>
-                    <Image2 />
-                    <Text hideIn="xs" css={{ pl: 3 }}>Appearance</Text>
-                  </Navbar.Link>
-                </Popover.Trigger>
-                <Popover.Content>
-                  <Container css={{ pt: 20, pb: 20 }}>
+                <NavbarItem>
+                  <PopoverTrigger>
+                    <Link className="text-foreground flex gap-1 items-center">
+                      <IoColorPalette />
+                      <Text className={"hidden sm:block"}>Style</Text>
+                    </Link>
+                  </PopoverTrigger>
+                </NavbarItem>
+                <PopoverContent>
+                  <div className="p-4">
                     <Row>
                       <Text b>Change background</Text>
                     </Row>
-                    <Spacer y={0.3} />
+                    <Spacer y={1} />
                     <Row>
                       <div>
                         <TwitterPicker
                           color={newChanges.backgroundColor}
                           onChangeComplete={(color) => {
-                            const rgba = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
-                            setNewChanges({ ...newChanges, backgroundColor: rgba });
+                            setNewChanges({ ...newChanges, backgroundColor: color.hex.toUpperCase() });
                           }}
                           colors={defaultColors}
                         />
                       </div>
                     </Row>
 
-                    <Spacer y={0.5} />
+                    <Spacer y={2} />
                     <Divider />
-                    <Spacer y={0.5} />
+                    <Spacer y={2} />
 
                     <Row>
                       <Text b>Change text color</Text>
                     </Row>
-                    <Spacer y={0.3} />
+                    <Spacer y={1} />
                     <Row>
                       <TwitterPicker
                         color={newChanges.titleColor}
                         onChangeComplete={(color) => {
-                          const rgba = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
-                          setNewChanges({ ...newChanges, titleColor: rgba });
+                          setNewChanges({ ...newChanges, titleColor: color.hex.toUpperCase() });
                         }}
                         colors={defaultColors}
                       />
                     </Row>
-                  </Container>
-                </Popover.Content>
+                  </div>
+                </PopoverContent>
               </Popover>
             )}
             {_canAccess("editor") && (
-              <Tooltip content="Edit the dashboard information and style" placement="bottom">
-                <Navbar.Link onClick={() => setEditingTitle(true)}>
-                  <Edit />
-                  <Text hideIn={"xs"} css={{ pl: 3 }}>Report settings</Text>
-                </Navbar.Link>
-              </Tooltip>
+              <NavbarItem>
+                <Link className="text-foreground flex gap-1 items-center" onClick={() => setEditingTitle(true)}>
+                    <IoCreate />
+                    <Text className={"hidden sm:block"}>Report settings</Text>
+                  </Link>
+              </NavbarItem>
             )}
             {_canAccess("admin") && (
-              <Tooltip content="Sharing settings" placement="bottom">
-                <Navbar.Link onClick={() => setShowSettings(true)}>
-                  <People />
-                  <Text hideIn={"xs"} css={{ pl: 3 }}>Sharing</Text>
-                </Navbar.Link>
-              </Tooltip>
+              <NavbarItem>
+                <Link className="text-foreground flex gap-1 items-center" onClick={() => setShowSettings(true)}>
+                  <IoShare />
+                  <Text className={"hidden sm:block"}>Sharing</Text>
+                </Link>
+              </NavbarItem>
             )}
-          </Navbar.Content>
+          </NavbarContent>
         </Navbar>
       )}
 
       {preview && (
         <Button
           onClick={() => setPreview(false)}
-          icon={<CloseSquare />}
+          isIconOnly
           style={styles.previewBtn}
-          css={{ minWidth: "fit-content" }}
-        />
+          color="primary"
+          variant="faded"
+        >
+          <IoCloseCircle />
+        </Button>
       )}
 
       <Media greaterThan="mobile">
         {project?.Team?.allowReportRefresh && (
           <Button
             onClick={() => _onRefreshCharts()}
-            iconRight={refreshLoading ? <Loading type="spinner" /> : <HiRefresh />}
-            disabled={refreshLoading}
+            endContent={<IoReload />}
+            isLoading={refreshLoading}
             style={styles.refreshBtn(editorVisible)}
-            css={{ minWidth: "fit-content" }}
-            auto
             size="sm"
+            color="primary"
           >
             Refresh charts
           </Button>
@@ -573,34 +578,38 @@ function PublicDashboard(props) {
       </Media>
 
       {charts && charts.length > 0 && _isOnReport() && (
-        <div className="main-container" style={styles.mainContainer(width < breakpoints.tablet)}>
+        <div className="main-container relative p-2 pt-10 pb-10 md:pt-10 md:pb-10 md:pl-4 md:pr-4">
           {loading && (
             <Container style={styles.container}>
               <Spacer y={4} />
               <Row align="center" justify="center">
-                <Loading type="points-opacity" color="currentColor" size="xl" aria-label="Loading" />
+                <CircularProgress size="lg" aria-label="Loading" />
               </Row>
             </Container>
           )}
           <Media greaterThan="mobile">
-            <Spacer y={2} />
+            <Spacer y={8} />
           </Media>
-          <Container className="title-container" css={{ pl: 0, pr: 0 }} fluid>
+          <div className="title-container">
             {editorVisible && !preview && (
               <>
-                <Spacer y={0.5} />
+                <Spacer y={2} />
                 <Row justify="flex-start">
                   <Media greaterThan="mobile">
                     <div className="dashboard-logo-container">
                       <img
-                        className="dashboard-logo"
+                        className="dashboard-logo max-w-[200px] max-h-[100px]"
                         src={logoPreview || newChanges.logo || logo}
-                        height="70"
                         alt={`${project.name} Logo`}
                         style={styles.logoContainer}
                       />
-                      <Badge color="primary" css={{ cursor: "pointer", mt: -10, ml: -10 }} {...getRootProps()}>
-                        <EditSquare size="small" />
+                      <Badge
+                        color="primary"
+                        className={"cursor-pointer mt-[-40px] ml-[-10px]"}
+                        content={<IoPencil className="p-1" size={24} />}
+                        variant="faded"
+                        {...getRootProps()}
+                      >
                         <input {...getInputProps()} />
                       </Badge>
                     </div>
@@ -610,13 +619,13 @@ function PublicDashboard(props) {
                   <Media at="mobile">
                     <div style={{ textAlign: "center" }}>
                       <img
-                        className="dashboard-logo"
+                        className="dashboard-logo max-w-[200px] max-h-[100px]"
                         src={logoPreview || newChanges.logo || logo}
-                        height="70"
                         alt={`${project.name} Logo`}
                         style={styles.logoContainerMobile}
                       />
                     </div>
+                    <Spacer y={8} />
                   </Media>
                 </Row>
               </>
@@ -625,7 +634,7 @@ function PublicDashboard(props) {
             {(!editorVisible || preview) && (
               <Row justify="center">
                 <Media at="mobile">
-                  <Spacer y={2} />
+                  <Spacer y={4} />
                 </Media>
               </Row>
             )}
@@ -641,7 +650,7 @@ function PublicDashboard(props) {
                       style={{ ...styles.logoContainer, zIndex: 10 }}
                     >
                       <img
-                        className="dashboard-logo"
+                        className="dashboard-logo max-w-[200px] max-h-[100px]"
                         src={project.logo ? `${API_HOST}/${project.logo}` : logo}
                         height="70"
                         alt={`${project.name} Logo`}
@@ -658,7 +667,7 @@ function PublicDashboard(props) {
                         rel="noreferrer"
                       >
                         <img
-                          className="dashboard-logo"
+                          className="dashboard-logo max-w-[200px] max-h-[100px]"
                           src={project.logo ? `${API_HOST}/${project.logo}` : logo}
                           height="70"
                           alt={`${project.name} Logo`}
@@ -666,6 +675,7 @@ function PublicDashboard(props) {
                         />
                       </a>
                     </div>
+                    <Spacer y={8} />
                   </Media>
                 </Row>
               </>
@@ -674,9 +684,7 @@ function PublicDashboard(props) {
             <Row justify="center" align="center">
               <Text
                 b
-                size="2.4em"
-                style={styles.dashboardTitle(newChanges.titleColor || project.titleColor)}
-                className="dashboard-title"
+                className={`dashboard-title text-[2.4em] text-[${newChanges.titleColor || project.titleColor || "#000000"}]`}
               >
                 {newChanges.dashboardTitle || project.dashboardTitle || project.name}
               </Text>
@@ -685,9 +693,7 @@ function PublicDashboard(props) {
             {!editorVisible && project.description && (
               <Row justify="center" align="center">
                 <Text
-                  size="1.5em"
-                  style={styles.dashboardTitle(project.titleColor)}
-                  className="dashboard-sub-title"
+                  className={`dashboard-sub-title text-[1.5em] text-[${project.titleColor || "#000000"}}]`}
                 >
                   {project.description}
                 </Text>
@@ -696,9 +702,7 @@ function PublicDashboard(props) {
             {editorVisible && newChanges.description && (
               <Row justify="center" align="center">
                 <Text
-                  size="1.2em"
-                  style={styles.dashboardTitle(newChanges.titleColor)}
-                  className="dashboard-sub-title"
+                  className={`dashboard-sub-title text-[1.2em] text-[${newChanges.titleColor || "#000000"}}]`}
                 >
                   {newChanges.description}
                 </Text>
@@ -706,16 +710,15 @@ function PublicDashboard(props) {
             )}
             {project.Team?.allowReportRefresh && (
               <>
-                <Spacer y={0.5} />
+                <Spacer y={2} />
                 <Row justify="center">
                   <Media at="mobile">
                     <Button
                       onClick={() => _onRefreshCharts()}
-                      iconRight={refreshLoading ? <Loading type="spinner" /> : <HiRefresh />}
+                      endContent={<IoReload />}
                       disabled={refreshLoading}
-                      css={{ minWidth: "fit-content" }}
-                      auto
                       size="sm"
+                      color="primary"
                     >
                       Refresh charts
                     </Button>
@@ -723,22 +726,18 @@ function PublicDashboard(props) {
                 </Row>
               </>
             )}
-          </Container>
-          <Spacer y={2} />
+          </div>
+          <Spacer y={10} />
 
-          <Grid.Container gap={1.5} className="main-chart-grid">
+          <div className="main-chart-grid grid grid-cols-12 gap-4">
             {charts.map((chart) => {
               if (chart.draft) return (<span style={{ display: "none" }} key={chart.id} />);
               if (!chart.onReport) return (<span style={{ display: "none" }} key={chart.id} />);
 
               return (
-                <Grid
-                  xs={12}
-                  sm={chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4}
-                  md={chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3}
+                <div
+                  className={`min-h-[400px] overflow-y-hidden col-span-12 md:col-span-${chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4} lg:col-span-${chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3}`}
                   key={chart.id}
-                  className="chart-container"
-                  css={{ minHeight: 400, overflowY: "hidden" }}
                 >
                   <Chart
                     isPublic
@@ -748,38 +747,40 @@ function PublicDashboard(props) {
                     showExport={project.Team?.allowReportExport}
                     password={project.password || window.localStorage.getItem("reportPassword")}
                   />
-                </Grid>
+                </div>
               );
             })}
             {project.Team && project.Team.showBranding && (
-              <Grid xs={12} className="footer-content" justify="center" css={{ mt: 20 }}>
+              <div className="col-span-12 footer-content mt-10 flex justify-center">
                 <Link
-                  css={{ color: newChanges.titleColor, ai: "flex-start" }}
+                  className={`flex items-start !text-[${newChanges.titleColor || "black"}]`}
                   href={"https://chartbrew.com?ref=chartbrew_os_report"}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Text css={{ color: newChanges.titleColor }}>
+                  <Text className={`text-[${newChanges.titleColor}]`}>
                     Powered by
                   </Text>
-                  <Spacer x={0.2} />
-                  <Text css={{ color: newChanges.titleColor }}>
+                  <Spacer x={0.6} />
+                  <Text className={`text-[${newChanges.titleColor}]`}>
                     <strong>Chart</strong>
                   </Text>
-                  <Text css={{ color: newChanges.titleColor }}>
+                  <Text className={`text-[${newChanges.titleColor}]`}>
                     brew
                   </Text>
                 </Link>
-              </Grid>
+              </div>
             )}
-          </Grid.Container>
+          </div>
         </div>
       )}
 
-      <Modal open={editingTitle} onClose={() => setEditingTitle(false)} width={600}>
-        <Modal.Header><Text size="h4">Edit the title and description</Text></Modal.Header>
-        <Modal.Body>
-          <Container>
+      <Modal isOpen={editingTitle} onClose={() => setEditingTitle(false)} size="2xl">
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h4">Edit the title and description</Text>
+          </ModalHeader>
+          <ModalBody>
             <Row>
               <Input
                 label="Dashboard title"
@@ -788,11 +789,10 @@ function PublicDashboard(props) {
                 onChange={(e) => {
                   setNewChanges({ ...newChanges, dashboardTitle: e.target.value });
                 }}
-                bordered
+                variant="bordered"
                 fullWidth
               />
             </Row>
-            <Spacer y={0.5} />
             <Row>
               <Input
                 label="Dashboard description"
@@ -801,11 +801,10 @@ function PublicDashboard(props) {
                 onChange={(e) => {
                   setNewChanges({ ...newChanges, description: e.target.value });
                 }}
-                bordered
+                variant="bordered"
                 fullWidth
               />
             </Row>
-            <Spacer y={0.5} />
             <Row>
               <Input
                 label="Company website URL"
@@ -814,31 +813,28 @@ function PublicDashboard(props) {
                 onChange={(e) => {
                   setNewChanges({ ...newChanges, logoLink: e.target.value });
                 }}
-                bordered
+                variant="bordered"
                 fullWidth
               />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Divider />
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <Text b>Custom CSS</Text>
             </Row>
-            <Spacer y={0.5} />
             <Row>
-              <Text size={14}>Some of the main classes on the page:</Text>
+              <Text size={"sm"}>Some of the main classes on the page:</Text>
             </Row>
-            <Spacer y={0.2} />
-            <Row wrap="wrap">
-              <Badge>.main-container</Badge>
-              <Badge>.title-container</Badge>
-              <Badge>.dashboard-title</Badge>
-              <Badge>.dashboard-sub-title</Badge>
-              <Badge>.chart-grid</Badge>
-              <Badge>.chart-container</Badge>
-              <Badge>.chart-card</Badge>
+            <Row wrap="wrap" className={"gap-1"}>
+              <Chip>.main-container</Chip>
+              <Chip>.title-container</Chip>
+              <Chip>.dashboard-title</Chip>
+              <Chip>.dashboard-sub-title</Chip>
+              <Chip>.chart-grid</Chip>
+              <Chip>.chart-container</Chip>
+              <Chip>.chart-card</Chip>
             </Row>
-            <Spacer y={0.5} />
             <Row>
               <div style={{ width: "100%" }}>
                 <AceEditor
@@ -853,19 +849,20 @@ function PublicDashboard(props) {
                   }}
                   name="queryEditor"
                   editorProps={{ $blockScrolling: true }}
+                  className="rounded-md border-1 border-solid border-content3"
                 />
               </div>
             </Row>
-          </Container>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            primary
-            onClick={() => setEditingTitle(false)}
-          >
-            Preview changes
-          </Button>
-        </Modal.Footer>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              color="primary"
+              onClick={() => setEditingTitle(false)}
+            >
+              Preview changes
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
 
       <SharingSettings
