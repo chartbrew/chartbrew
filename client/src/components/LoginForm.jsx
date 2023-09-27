@@ -3,9 +3,8 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import {
-  Button, Input, Spacer, Link, Modal, ModalHeader, ModalBody, ModalFooter,
+  Button, Input, Spacer, Link, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
-import { ChevronRightCircle, Message } from "react-iconly";
 
 import {
   login as loginAction,
@@ -21,6 +20,7 @@ import { negative } from "../config/colors";
 import Container from "./Container";
 import Row from "./Row";
 import Text from "./Text";
+import { IoChevronForward, IoLockClosed, IoMail } from "react-icons/io5";
 
 /*
   Contains login functionality
@@ -135,12 +135,12 @@ function LoginForm(props) {
   };
 
   return (
-    <div style={styles.container}>
-      <form onSubmit={loginUser}>
-        <Container>
+    <div style={styles.container} className="container mx-auto w-full">
+      <form onSubmit={loginUser} className="sm:min-w-[500px]">
+        <div className="w-full">
           <Row>
             <Input
-              contentRight={<Message />}
+              endContent={<IoMail />}
               type="email"
               placeholder="Enter your email"
               onChange={(e) => {
@@ -150,9 +150,9 @@ function LoginForm(props) {
               value={email}
               size="lg"
               fullWidth
-              bordered
-              helperColor="error"
-              helperText={errors.email}
+              variant="bordered"
+              color={errors.email ? "danger" : "default"}
+              description={errors.email}
             />
           </Row>
           {errors.email && (
@@ -162,7 +162,7 @@ function LoginForm(props) {
               </Text>
             </Row>
           )}
-          <Spacer y={1} />
+          <Spacer y={2} />
           <Row>
             <Input
               type="password"
@@ -174,22 +174,21 @@ function LoginForm(props) {
               value={password}
               size="lg"
               fullWidth
-              bordered
-              helperColor="error"
-              helperText={errors.password && "Please enter your password"}
+              variant="bordered"
+              color={errors.password ? "danger" : "default"}
+              description={errors.password && "Please enter your password"}
+              endContent={<IoLockClosed />}
             />
           </Row>
-          <Spacer y={1} />
+          <Spacer y={4} />
           <Row justify="center" align="center">
             <Button
               onClick={loginUser}
-              iconRight={<ChevronRightCircle />}
+              endContent={<IoChevronForward />}
               size="lg"
-              primary
-              shadow
+              color="primary"
               isLoading={loading}
               type="submit"
-              auto
             >
               {"Login"}
             </Button>
@@ -203,46 +202,48 @@ function LoginForm(props) {
               Did you forget your password?
             </Link>
           </Row>
-        </Container>
+        </div>
       </form>
 
-      <Modal open={forgotModal} onClose={() => setForgotModal(false)} closeButton>
-        <ModalHeader>
-          <Text size="h3">Reset your password</Text>
-        </ModalHeader>
-        <ModalBody>
-          <Spacer y={1} />
-          <Input
-            labelPlaceholder="Enter your email here"
-            fullWidth
-            onChange={(e) => setResetEmail(e.target.value)}
-            contentRight={<Message />}
-          />
-          <Spacer y={1} />
-          {resetDone && (
-          <Row>
-            <Text color="green">{"We will send further instructions over email if the address is registered with Chartbrew."}</Text>
-          </Row>
-          )}
-          {resetError && (
-          <Row>
-            <Text color={negative}>{resetError}</Text>
-          </Row>
-          )}
-        </ModalBody>
-        <ModalFooter>
-          <Button onClick={() => setForgotModal(false)} flat auto color="warning">
-            Close
-          </Button>
-          <Button
-            disabled={resetDone}
-            onClick={_onSendResetRequest}
-            auto
-            isLoading={resetLoading}
-          >
-            {resetDone ? "Request received" : "Send password reset email"}
-          </Button>
-        </ModalFooter>
+      <Modal isOpen={forgotModal} onClose={() => setForgotModal(false)} closeButton>
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h3">Reset your password</Text>
+          </ModalHeader>
+          <ModalBody>
+            <Input
+              label="Enter your email here"
+              fullWidth
+              onChange={(e) => setResetEmail(e.target.value)}
+              contentRight={<IoMail />}
+              variant="bordered"
+            />
+            {resetDone && (
+            <Row>
+              <Text color="green">{"We will send further instructions over email if the address is registered with Chartbrew."}</Text>
+            </Row>
+            )}
+            {resetError && (
+            <Row>
+              <Text color={negative}>{resetError}</Text>
+            </Row>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button onClick={() => setForgotModal(false)} variant="bordered">
+              Close
+            </Button>
+            <Button
+              isDisabled={resetDone}
+              onClick={_onSendResetRequest}
+              isLoading={resetLoading}
+              color="primary"
+              variant={resetDone ? "flat" : "solid"}
+            >
+              {resetDone ? "Request received" : "Send password reset email"}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
       {ONE_ACCOUNT_ENABLED && (
         <>

@@ -999,10 +999,10 @@ function DatasetData(props) {
         )}
         {!goal && chartType !== "table" && (
           <div className="col-span-12 mt-4">
-            <Link onClick={_onAddGoal} className="flex items-center text-default">
+            <Link onClick={_onAddGoal} className="flex items-center cursor-pointer">
               <TbProgressCheck size={24} />
               <Spacer x={0.5} />
-              <Text b>Set a goal</Text>
+              <Text>Set a goal</Text>
             </Link>
           </div>
         )}
