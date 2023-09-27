@@ -268,17 +268,20 @@ function NavbarContainer(props) {
               </DropdownTrigger>
             </NavbarItem>
             <DropdownMenu variant="faded">
-              <DropdownItem startContent={<IoPerson />} key="profile">
-                <Text>
-                  Profile
-                </Text>
+              <DropdownItem startContent={<IoPerson />} key="profile" textValue="Profile">
+                <Link to="/edit">
+                  <div className="w-full text-foreground">
+                    Profile
+                  </div>
+                </Link>
               </DropdownItem>
-
               {_canAccess("admin", teamOwned) && (
                 <DropdownItem startContent={<IoSettings />} key="account">
-                  <Text>
-                    Account settings
-                  </Text>
+                  <Link to={`/manage/${team.id || teamOwned.id}/settings`}>
+                    <div className="w-full text-foreground">
+                      Account settings
+                    </div>
+                  </Link>
                 </DropdownItem>
               )}
 
@@ -290,10 +293,8 @@ function NavbarContainer(props) {
                 key="theme"
                 onClick={() => setShowAppearance(true)}
               >
-                <Text>
-                  {isSystemDark && "Light mode"}
-                  {!isSystemDark && "Dark mode"}
-                </Text>
+                {isSystemDark && "Light mode"}
+                {!isSystemDark && "Dark mode"}
               </DropdownItem>
 
               <DropdownItem startContent={<IoLogOut />} onClick={logout}>

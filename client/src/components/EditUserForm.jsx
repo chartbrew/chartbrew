@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Divider, Input, CircularProgress, Modal, Spacer, ModalHeader, ModalBody, ModalFooter,
+  Button, Divider, Input, CircularProgress, Modal, Spacer, ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
 import { Delete } from "react-iconly";
 import { ToastContainer, toast, Flip } from "react-toastify";
@@ -135,7 +135,7 @@ function EditUserForm(props) {
   }
 
   return (
-    <Container>
+    <div className="container mx-auto px-4 py-4 md:px-10 flex flex-col gap-1">
       <Row>
         <Text size="h3">Profile settings</Text>
       </Row>
@@ -148,7 +148,7 @@ function EditUserForm(props) {
           type="text"
           placeholder="Enter your name"
           onChange={(e) => setUser({ ...user, name: e.target.value })}
-          bordered
+          variant="bordered"
           fullWidth
         />
       </Row>
@@ -173,16 +173,16 @@ function EditUserForm(props) {
           disabled={!user.name}
           color={success ? "success" : "primary"}
           onClick={_onUpdateUser}
-          auto
+          variant={success ? "flat" : "solid"}
           isLoading={loading}
         >
           {success ? "Saved" : "Save" }
         </Button>
       </Row>
 
-      <Spacer y={1} />
+      <Spacer y={4} />
       <Divider />
-      <Spacer y={1} />
+      <Spacer y={4} />
 
       <Row>
         <Input
@@ -192,7 +192,7 @@ function EditUserForm(props) {
           onChange={(e) => setUserEmail(e.target.value)}
           type="text"
           placeholder="Enter your email"
-          bordered
+          variant="bordered"
           fullWidth
         />
       </Row>
@@ -206,7 +206,7 @@ function EditUserForm(props) {
           disabled={!userEmail || userEmail === userProp.email}
           color={successEmail ? "success" : "primary"}
           onClick={_onUpdateEmail}
-          auto
+          variant={successEmail ? "flat" : "solid"}
           isLoading={loading}
         >
           {successEmail ? "We sent you an email" : "Update email" }
@@ -229,12 +229,12 @@ function EditUserForm(props) {
         </Button>
       </Row>
 
-      <Modal blur open={openDeleteModal} width="500px" onClose={() => setOpenDeleteModal(false)}>
-        <ModalHeader>
-          <Text size="h3">Delete Account</Text>
-        </ModalHeader>
-        <ModalBody>
-          <Container>
+      <Modal backdrop="blur" isOpen={openDeleteModal} size="xl" onClose={() => setOpenDeleteModal(false)}>
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h3">Delete Account</Text>
+          </ModalHeader>
+          <ModalBody>
             <Row>
               <Text>{"This action will delete your account permanently, including your team and everything associated with it (projects, connections, and charts)."}</Text>
             </Row>
@@ -246,26 +246,24 @@ function EditUserForm(props) {
             <Row>
               <Text b>Are you sure you want to delete your user and team?</Text>
             </Row>
-          </Container>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            onClick={() => setOpenDeleteModal(false)}
-            color="warning"
-            flat
-            auto
-          >
-            {"Go back"}
-          </Button>
-          <Button
-            color="danger"
-            onClick={_onDeleteUser}
-            isLoading={loading}
-            auto
-          >
-            {"Delete forever"}
-          </Button>
-        </ModalFooter>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              onClick={() => setOpenDeleteModal(false)}
+              variant="bordered"
+            >
+              {"Go back"}
+            </Button>
+            <Button
+              color="danger"
+              onClick={_onDeleteUser}
+              isLoading={loading}
+              auto
+            >
+              {"Delete forever"}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
 
       <Modal open={!!updateEmailToken}>
@@ -317,7 +315,7 @@ function EditUserForm(props) {
         transition={Flip}
         theme={isDark ? "dark" : "light"}
       />
-    </Container>
+    </div>
   );
 }
 

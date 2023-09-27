@@ -69,7 +69,7 @@ function TeamSettings(props) {
         <Row>
           <Text size="h3">Team settings</Text>
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={4} />
         <Row>
           <Input
             label="Team name"
@@ -80,40 +80,33 @@ function TeamSettings(props) {
               setTeamState({ ...teamState, name: e.target.value });
             }}
             fullWidth
-            bordered
-            helperColor="error"
-            helperText={submitError ? "Error updating team" : ""}
-            action={{
-              color: success ? "green" : "violet",
-              labelPosition: "right",
-              icon: "checkmark",
-              content: success ? "Done" : "Save",
-              loading,
-              onClick: () => _onTeamUpdate(),
-            }}
+            variant="bordered"
+            color={submitError ? "error" : "default"}
+            description={submitError ? "Error updating team" : ""}
           />
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={1} />
         <Row>
           <Button
             color={success ? "success" : "primary"}
             isLoading={loading}
             onClick={_onTeamUpdate}
-            auto
+            variant={success ? "flat" : "solid"}
           >
             {success ? "Saved" : "Save"}
           </Button>
         </Row>
-        <Spacer y={1} />
+        <Spacer y={2} />
         <Divider />
-        <Spacer y={1} />
+        <Spacer y={2} />
         <Row>
           <Checkbox
-            label={team.showBranding ? "Chartbrew branding is shown on shared charts and reports" : "Chartbrew branding is disabled"}
             isSelected={team.showBranding}
             onChange={_onToggleBranding}
             size="sm"
-          />
+          >
+            Show Chartbrew branding
+          </Checkbox>
         </Row>
       </Container>
     </div>

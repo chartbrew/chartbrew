@@ -2,9 +2,8 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Route, Switch, withRouter } from "react-router";
-import { Link } from "react-router-dom";
 import {
-  Spacer, Button, CircularProgress,
+  CircularProgress, Listbox, ListboxSection, ListboxItem,
 } from "@nextui-org/react";
 
 import { getTeam, saveActiveTeam } from "../actions/team";
@@ -16,14 +15,14 @@ import canAccess from "../config/canAccess";
 import ApiKeys from "./ApiKeys/ApiKeys";
 import Container from "../components/Container";
 import Row from "../components/Row";
-import Text from "../components/Text";
+import { IoCodeSlash, IoPeople, IoSettings } from "react-icons/io5";
 
 /*
   Description
 */
 function ManageTeam(props) {
   const {
-    cleanErrors, getTeam, saveActiveTeam, match, user, team
+    cleanErrors, getTeam, saveActiveTeam, match, user, team, history,
   } = props;
   const [loading, setLoading] = useState(true);
 
@@ -45,26 +44,26 @@ function ManageTeam(props) {
       });
   };
 
-  const checkIfActive = (path) => {
-    switch (path) {
-      case "members":
-        if (window.location.pathname.indexOf("members") > -1) return true;
-        break;
-      case "settings":
-        if (window.location.pathname.indexOf("settings") > -1) return true;
-        break;
-      case "payment":
-        if (window.location.pathname.indexOf("payment") > -1) return true;
-        break;
-      case "api-keys":
-        if (window.location.pathname.indexOf("api-keys") > -1) return true;
-        break;
-      default:
-        return false;
-    }
-
+  const checkActive = () => {
+    if (window.location.pathname.indexOf("members") > -1) return "members";
+    if (window.location.pathname.indexOf("settings") > -1) return "settings";
+    if (window.location.pathname.indexOf("payment") > -1) return "payment";
+    if (window.location.pathname.indexOf("api-keys") > -1) return "api-keys";
+      
     return false;
   };
+
+  const _onMenuSelect = (key) => {
+    if (key === "members") {
+      history.push(`/manage/${match.params.teamId}/members`);
+    }
+    if (key === "settings") {
+      history.push(`/manage/${match.params.teamId}/settings`);
+    }
+    if (key === "api-keys") {
+      history.push(`/manage/${match.params.teamId}/api-keys`);
+    }
+  }
 
   const _canAccess = (role) => {
     return canAccess(role, user.id, team.TeamRoles);
@@ -83,74 +82,38 @@ function ManageTeam(props) {
   return (
     <div>
       <Navbar />
-      <div className="grid grid-cols-12 gap-1">
+      <div className="grid grid-cols-12 gap-4 container mx-auto">
         <div className="col-span-12 sm:col-span-3 md:col-span-2">
-          <Container style={{ paddingTop: 20 }}>
-            <Row>
-              <Text size="h4">
-                Manage the team
-              </Text>
-            </Row>
-            {_canAccess("owner") && (
-              <>
-                <Row>
-                  <Link to={`/manage/${match.params.teamId}/settings`}>
-                    <Button
-                      variant="light"
-                      auto
-                      color={checkIfActive("settings") ? "primary" : "default"}
-                      disabled={!checkIfActive("settings")}
-                      size="lg"
-                    >
-                      Settings
-                    </Button>
-                  </Link>
-                </Row>
-              </>
-            )}
-
-            <Row>
-              <Link to={`/manage/${match.params.teamId}/members`}>
-                <Button
-                  variant="light"
-                  auto
-                  color={checkIfActive("members") ? "primary" : "default"}
-                  disabled={!checkIfActive("members")}
-                  size="lg"
-                >
+          <div className="pt-4">
+            <Listbox
+              selectedKeys={[checkActive()]}
+              onSelectionChange={(keys) => _onMenuSelect(keys.currentKey) }
+              selectionMode="single"
+              itemClasses={{ title: "text-md" }}
+            >
+              <ListboxSection title="Manage the team">
+                {_canAccess("owner") && (
+                  <ListboxItem key="settings" startContent={<IoSettings />}>
+                    Settings
+                  </ListboxItem>
+                )}
+                <ListboxItem key="members" startContent={<IoPeople />}>
                   Members
-                </Button>
-              </Link>
-            </Row>
-            <Spacer y={1} />
-
-            {_canAccess("admin") && (
-              <>
-                <Row>
-                  <Text size="h4">
-                    Developers
-                  </Text>
-                </Row>
-                <Row>
-                  <Link to={`/manage/${match.params.teamId}/api-keys`}>
-                    <Button
-                      variant="light"
-                      color={checkIfActive("api-keys") ? "primary" : "default"}
-                      auto
-                      disabled={!checkIfActive("api-keys")}
-                      size="lg"
-                    >
-                      API Keys
-                    </Button>
-                  </Link>
-                </Row>
-              </>
-            )}
-          </Container>
+                </ListboxItem>
+              </ListboxSection>
+              {_canAccess("admin") && (
+                <ListboxSection title="Developers">
+                  <ListboxItem key="api-keys" startContent={<IoCodeSlash />}>
+                    API Keys
+                  </ListboxItem>
+                </ListboxSection>
+              )}
+            </Listbox>
+          </div>
         </div>
 
         <div className="col-span-12 sm:col-span-9 md:col-span-10">
-          <Container size="md">
+          <div className="container mx-auto py-4">
             <Switch>
               <Route path="/manage/:teamId/members" component={TeamMembers} />
               {_canAccess("owner") && (
@@ -166,7 +129,7 @@ function ManageTeam(props) {
                 />
               )}
             </Switch>
-          </Container>
+          </div>
         </div>
       </div>
     </div>
@@ -180,6 +143,7 @@ ManageTeam.propTypes = {
   match: PropTypes.object.isRequired,
   saveActiveTeam: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
+  history: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {

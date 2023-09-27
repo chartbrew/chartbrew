@@ -3,15 +3,13 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Chip, Button, Checkbox, Divider, Dropdown,
-  Modal, Spacer, Table, Tooltip, CircularProgress, TableHeader, TableColumn, TableBody, TableRow, TableCell, DropdownMenu, DropdownItem, DropdownTrigger, ModalHeader, ModalBody, ModalFooter,
+  Chip, Button, Checkbox, Divider, Dropdown, Modal, Spacer, Table, Tooltip, CircularProgress,
+  TableHeader, TableColumn, TableBody, TableRow, TableCell, DropdownMenu, DropdownItem,
+  DropdownTrigger, ModalHeader, ModalBody, ModalFooter, ModalContent, Code,
 } from "@nextui-org/react";
 import _ from "lodash";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
-import {
-  CloseSquare, InfoCircle, Password, People,
-} from "react-iconly";
 
 import {
   getTeam as getTeamAction,
@@ -26,6 +24,7 @@ import Container from "../../components/Container";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import useThemeDetector from "../../modules/useThemeDetector";
+import { IoClose, IoCloseCircle, IoInformationCircleOutline, IoKey, IoPeople } from "react-icons/io5";
 
 /*
   Contains Pending Invites and All team members with functionality to delete/change role
@@ -177,15 +176,15 @@ function TeamMembers(props) {
       {_canAccess("admin") && (
         <div>
           <InviteMembersForm />
-          <Spacer y={2} />
+          <Spacer y={4} />
           <Divider />
-          <Spacer y={2} />
+          <Spacer y={4} />
         </div>
       )}
 
       <Container>
         <Row>
-          <Text size="h3">{"Team members"}</Text>
+          <Text size="h4">{"Team members"}</Text>
         </Row>
 
         <Table shadow="none" isStriped>
@@ -208,26 +207,26 @@ function TeamMembers(props) {
 
               return (
                 <TableRow key={member.id}>
-                  <TableCell key="member">
-                    <Text>{member.name}</Text>
-                    <Text small className={"text-default-600"}>{member.email}</Text>
+                  <TableCell key="member" className="flex flex-col">
+                    <Text b>{member.name}</Text>
+                    <Text size="sm" className={"text-foreground-500"}>{member.email}</Text>
                   </TableCell>
                   <TableCell key="role">
-                    {memberRole.role === "owner" && <Chip color="primary" disableOutline>Owner</Chip>}
-                    {memberRole.role === "admin" && <Chip color="success" disableOutline>Admin</Chip>}
-                    {memberRole.role === "editor" && <Chip color="secondary" disableOutline>Editor</Chip>}
-                    {memberRole.role === "member" && <Chip color="default" disableOutline>Member</Chip>}
+                    {memberRole.role === "owner" && <Chip color="primary" variant="faded" size="sm">Owner</Chip>}
+                    {memberRole.role === "admin" && <Chip color="success" variant="faded" size="sm">Admin</Chip>}
+                    {memberRole.role === "editor" && <Chip color="secondary" variant="faded" size="sm">Editor</Chip>}
+                    {memberRole.role === "member" && <Chip color="default" variant="faded" size="sm">Member</Chip>}
                   </TableCell>
                   <TableCell key="projectAccess">
                     {!memberRole.projects || memberRole.projects.length === 0 ? "None" : memberRole.projects.length}
                   </TableCell>
                   <TableCell key="export">
-                    {memberRole.canExport && <Chip color="success" variant={"flat"}>Yes</Chip>}
-                    {!memberRole.canExport && <Chip color="danger" variant={"flat"}>No</Chip>}
+                    {memberRole.canExport && <Chip color="success" variant={"flat"} size="sm">Yes</Chip>}
+                    {!memberRole.canExport && <Chip color="danger" variant={"flat"} size="sm">No</Chip>}
                   </TableCell>
                   <TableCell key="actions">
                     <Container className={"pl-0 pr-0"}>
-                      <Row>
+                      <Row className={"gap-2"}>
                         {_canAccess("admin") && (
                           <>
                             <Tooltip content="Adjust project access">
@@ -238,10 +237,9 @@ function TeamMembers(props) {
                                 auto
                                 onClick={() => _openProjectAccess(member)}
                               >
-                                <Password />
+                                <IoKey />
                               </Button>
                             </Tooltip>
-                            <Spacer x={0.5} />
                           </>
                         )}
                         {_canAccess("admin") && user.id !== member.id && (
@@ -250,7 +248,7 @@ function TeamMembers(props) {
                               <Dropdown>
                                 <DropdownTrigger>
                                   <Button variant="light" auto isIconOnly color="secondary">
-                                    <People />
+                                    <IoPeople />
                                   </Button>
                                 </DropdownTrigger>
                                 <DropdownMenu
@@ -292,7 +290,6 @@ function TeamMembers(props) {
                                 </DropdownMenu>
                               </Dropdown>
                             </Tooltip>
-                            <Spacer x={0.5} />
                           </>
                         )}
                         {user.id !== member.id
@@ -301,12 +298,11 @@ function TeamMembers(props) {
                             <Tooltip content="Remove user from the team">
                               <Button
                                 variant="light"
-                                auto
                                 onClick={() => _onDeleteConfirmation(member.id)}
                                 isIconOnly
                                 color="danger"
                               >
-                                <CloseSquare />
+                                <IoCloseCircle />
                               </Button>
                             </Tooltip>
                           )}
@@ -322,109 +318,105 @@ function TeamMembers(props) {
 
       {/* Remove user modal */}
       <Modal isOpen={!!deleteMember} backdrop="blur" onClose={() => setDeleteMember(false)}>
-        <ModalHeader>
-          <Text size="h4">Are you sure you want to remove the user from the team?</Text>
-        </ModalHeader>
-        <ModalBody>
-          <p>{"This action will remove the user from the team and restrict them from accessing the dashboards."}</p>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            variant="flat"
-            color="warning"
-            auto
-            onClick={() => setDeleteMember(false)}
-          >
-            Cancel
-          </Button>
-          <Button
-            auto
-            color="danger"
-            isLoading={loading}
-            onClick={() => _onDeleteTeamMember(deleteMember)}
-            endContent={<CloseSquare />}
-          >
-            Remove
-          </Button>
-        </ModalFooter>
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h4">Are you sure you want to remove the user from the team?</Text>
+          </ModalHeader>
+          <ModalBody>
+            <p>{"This action will remove the user from the team and restrict them from accessing the dashboards."}</p>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onClick={() => setDeleteMember(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="danger"
+              isLoading={loading}
+              onClick={() => _onDeleteTeamMember(deleteMember)}
+              endContent={<IoClose />}
+            >
+              Remove
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
 
       {/* Project access modal */}
-      <Modal isOpen={projectModal} onClose={() => setProjectModal(false)} className="w-[700px]">
-        <ModalHeader>
-          <Text size="h4">Assign project access</Text>
-        </ModalHeader>
-        <ModalBody>
-          {changedMember && projectAccess[changedMember.id] && (
-            <Container>
-              <Row>
-                <Text>{"Tick the projects you want to give the user access to. The unticked projects cannot be accessed by this user."}</Text>
-              </Row>
-              <Spacer y={1} />
-              <Row wrap="wrap">
-                <Text>{"You are currently giving"}</Text>
-                <Spacer x={0.5} />
-                <Chip color="primary">{`${projectAccess[changedMember.id].role}`}</Chip>
-                <Spacer x={0.5} />
-                <Text>{`access to ${changedMember.name}`}</Text>
-                <Spacer x={0.5} />
-                <Text>{"for the following projects:"}</Text>
-              </Row>
-              <Spacer y={0.5} />
+      <Modal isOpen={projectModal} onClose={() => setProjectModal(false)} size="4xl">
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h4">Assign project access</Text>
+          </ModalHeader>
+          <ModalBody>
+            {changedMember && projectAccess[changedMember.id] && (
+              <>
+                <Row>
+                  <Text>{"Tick the projects you want to give the user access to. The unticked projects cannot be accessed by this user."}</Text>
+                </Row>
+                <Row wrap="wrap" align={"center"}>
+                  <Text>{"You are currently giving"}</Text>
+                  <Spacer x={1} />
+                  <Code>{`${projectAccess[changedMember.id].role}`}</Code>
+                  <Spacer x={1} />
+                  <Text>{`access to ${changedMember.name}`}</Text>
+                  <Spacer x={1} />
+                  <Text>{"for the following projects:"}</Text>
+                </Row>
+                <Spacer y={0.5} />
 
-              <div className="grid grid-cols-12 gap-1">
-                {projects && projects.map((project) => (
-                  <div className="col-span-6 sm:col-span-12" key={project.id}>
-                    <Checkbox
-                      label={project.name}
-                      isSelected={
-                        _.indexOf(projectAccess[changedMember.id].projects, project.id) > -1
-                      }
-                      onChange={() => _onChangeProjectAccess(project.id)}
-                      size="sm"
-                    />
-                  </div>
-                ))}
-              </div>
+                <div className="grid grid-cols-12 gap-1">
+                  {projects && projects.map((project) => (
+                    <div className="col-span-12 sm:col-span-6 md:col-span-4" key={project.id}>
+                      <Checkbox
+                        isSelected={
+                          _.indexOf(projectAccess[changedMember.id].projects, project.id) > -1
+                        }
+                        onChange={() => _onChangeProjectAccess(project.id)}
+                      >
+                        {project.name}
+                      </Checkbox>
+                    </div>
+                  ))}
+                </div>
 
-              <Spacer y={1} />
-              <Divider />
-              <Spacer y={1} />
+                <Spacer y={1} />
+                <Divider />
+                <Spacer y={1} />
 
-              <Row align="center">
-                <Text size={"lg"} b>
-                  {"Data export permissions "}
-                </Text>
-                <Spacer x={0.5} />
-                <Tooltip
-                  content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
-                  css={{ zIndex: 99999 }}
-                >
-                  <InfoCircle />
-                </Tooltip>
-              </Row>
-              <Spacer y={1} />
-              <Row>
-                <Checkbox
-                  label="Allow data export"
-                  isSelected={changedRole.canExport}
-                  onChange={_onChangeExport}
-                  size="sm"
-                />
-              </Row>
-            </Container>
-          )}
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            auto
-            variant="flat"
-            color="warning"
-            onClick={() => setProjectModal(false)}
-          >
-            Done
-          </Button>
-        </ModalFooter>
+                <Row align="center">
+                  <Text size={"lg"} b>
+                    {"Data export permissions "}
+                  </Text>
+                  <Spacer x={0.5} />
+                  <Tooltip
+                    content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
+                  >
+                    <div><IoInformationCircleOutline /></div>
+                  </Tooltip>
+                </Row>
+                <Row>
+                  <Checkbox
+                    isSelected={changedRole.canExport}
+                    onChange={_onChangeExport}
+                  >
+                    Allow data export
+                  </Checkbox>
+                </Row>
+              </>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onClick={() => setProjectModal(false)}
+            >
+              Done
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
 
       <ToastContainer

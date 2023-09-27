@@ -55,10 +55,10 @@ function FeedbackForm(props) {
           label="Your name"
           placeholder="Can be anonymous"
           fullWidth
-          bordered
+          variant="bordered"
         />
       </Row>
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <Row>
         <Textarea
           onChange={(e) => setFeedback(e.target.value)}
@@ -66,7 +66,7 @@ function FeedbackForm(props) {
           label="Your Comments"
           placeholder="Tell us about your exprience with our product"
           fullWidth
-          bordered
+          variant="bordered"
         />
       </Row>
       {(success || submitError) && <Spacer y={0.5} />}
@@ -76,12 +76,12 @@ function FeedbackForm(props) {
         {submitError
             && <Text color="danger">{"Something went wront, please try again or email us directly on support@chartbrew.com"}</Text>}
       </Row>
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <Row>
         <Button
           disabled={!feedback}
           onClick={() => _onSendFeedback()}
-          auto
+          color="primary"
           isLoading={loading}
         >
           Send feedback

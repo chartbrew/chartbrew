@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Container, Input, Loading, Modal, Row, Spacer, Table, Text,
+  Button, CircularProgress, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
 } from "@nextui-org/react";
 import { formatRelative } from "date-fns";
-import { Delete, Plus, TickSquare } from "react-iconly";
-import { FaClipboard } from "react-icons/fa";
 
 import { getApiKeys, createApiKey, deleteApiKey } from "../../actions/team";
+import Row from "../../components/Row";
+import Text from "../../components/Text";
+import { IoAdd, IoCheckmark, IoClipboard, IoTrashBin } from "react-icons/io5";
 
 function ApiKeys(props) {
   const { teamId } = props;
@@ -76,120 +77,116 @@ function ApiKeys(props) {
   };
 
   return (
-    <Container>
+    <div>
       <Row>
-        <Text size="h3">Team settings</Text>
+        <Text size="h4">Developer settings</Text>
       </Row>
-      <Spacer y={0.5} />
+      <Spacer y={4} />
       {loading && (
         <Row justify="center">
-          <Loading type="spinner">Loading keys...</Loading>
+          <CircularProgress>Loading keys...</CircularProgress>
         </Row>
       )}
       <Row>
         <Button
           onClick={_onCreateRequested}
-          icon={<Plus />}
-          auto
+          endContent={<IoAdd />}
+          color="primary"
         >
           Create a new API Key
         </Button>
       </Row>
-      <Spacer y={0.5} />
+      <Spacer y={2} />
 
-      <Table bordered shadow={false}>
-        <Table.Header>
-          <Table.Column key="token">API Tokens list</Table.Column>
-          <Table.Column key="created" hideHeader align="flex-end">Date created</Table.Column>
-          <Table.Column key="actions" hideHeader align="flex-end">Actions</Table.Column>
-        </Table.Header>
+      <Table shadow={"none"}>
+        <TableHeader>
+          <TableColumn key="token">API Tokens list</TableColumn>
+          <TableColumn key="created" hideHeader align="flex-end">Date created</TableColumn>
+          <TableColumn key="actions" hideHeader align="flex-end">Actions</TableColumn>
+        </TableHeader>
 
-        <Table.Body>
+        <TableBody>
           {apiKeys.length === 0 && (
-            <Table.Row>
-              <Table.Cell key="token">
+            <TableRow>
+              <TableCell key="token">
                 <i>{"You don't have any API Keys yet"}</i>
-              </Table.Cell>
-              <Table.Cell key="created" />
-              <Table.Cell key="actions" />
-            </Table.Row>
+              </TableCell>
+              <TableCell key="created" />
+              <TableCell key="actions" />
+            </TableRow>
           )}
           {apiKeys.map((key) => (
-            <Table.Row key={key.id}>
-              <Table.Cell key="token">
+            <TableRow key={key.id}>
+              <TableCell key="token">
                 {key.name}
-              </Table.Cell>
-              <Table.Cell key="created">
+              </TableCell>
+              <TableCell key="created">
                 {formatRelative(new Date(key.createdAt), new Date())}
-              </Table.Cell>
-              <Table.Cell key="actions">
+              </TableCell>
+              <TableCell key="actions">
                 <Button
-                  icon={<Delete />}
-                  light
+                  isIconOnly
+                  variant="light"
                   color="danger"
                   onClick={() => _onRemoveConfirmation(key)}
-                  css={{ minWidth: "fit-content" }}
-                />
-              </Table.Cell>
-            </Table.Row>
+                >
+                  <IoTrashBin />
+                </Button>
+              </TableCell>
+            </TableRow>
           ))}
-        </Table.Body>
+        </TableBody>
       </Table>
 
-      <Modal open={!!createdKey.id} onClose={() => setCreatedKey({})} width="500px">
-        <Modal.Header>
-          <Text size="h4">Your new API Key</Text>
-        </Modal.Header>
-        <Modal.Body>
-          <Container>
+      <Modal isOpen={!!createdKey.id} onClose={() => setCreatedKey({})} size="xl">
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h4">Your new API Key</Text>
+          </ModalHeader>
+          <ModalBody>
             <Row>
               <Text color="success">{"Congrats! your new API key has been created."}</Text>
             </Row>
-            <Spacer y={0.5} />
             <Row>
               <Text>{"This is the only time we show you the code, so please copy it before closing this window."}</Text>
             </Row>
-            <Spacer y={2} />
+            <Spacer y={1} />
             <Row>
               <Input
                 label="Your new API Key"
                 value={createdKey.token}
-                bordered
+                variant="bordered"
                 fullWidth
               />
             </Row>
-            <Spacer y={0.5} />
             <Row>
               <Button
-                bordered
-                icon={tokenCopied ? <TickSquare /> : <FaClipboard />}
+                startContent={tokenCopied ? <IoCheckmark /> : <IoClipboard />}
                 color={tokenCopied ? "success" : "primary"}
+                variant={tokenCopied ? "flat" : "solid"}
                 onClick={_onCopyToken}
-                auto
               >
                 {tokenCopied ? "Copied!" : "Copy to clipboard"}
               </Button>
             </Row>
-          </Container>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            color="warning"
-            flat
-            onClick={() => setCreatedKey({})}
-            auto
-          >
-            Close
-          </Button>
-        </Modal.Footer>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onClick={() => setCreatedKey({})}
+            >
+              Close
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
 
-      <Modal open={createMode} onClose={() => setCreateMode(false)} width="500px">
-        <Modal.Header>
-          <Text size="h4">Create a new API Key</Text>
-        </Modal.Header>
-        <Modal.Body>
-          <Container>
+      <Modal isOpen={createMode} onClose={() => setCreateMode(false)} size="xl">
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h4">Create a new API Key</Text>
+          </ModalHeader>
+          <ModalBody>
             <Row>
               <Text>{"The API key will give the same access to your team as your current account. Please make sure you do not misplace the key."}</Text>
             </Row>
@@ -200,58 +197,56 @@ function ApiKeys(props) {
                 value={newKey}
                 onChange={(e) => setNewKey(e.target.value)}
                 placeholder="Enter a name here"
-                bordered
+                variant="bordered"
                 fullWidth
               />
             </Row>
-          </Container>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            color="warning"
-            auto
-            flat
-            onClick={() => setCreateMode(false)}
-          >
-            Close
-          </Button>
-          <Button
-            onClick={_onCreateKey}
-            disabled={!newKey || createLoading}
-            auto
-          >
-            Create the key
-          </Button>
-        </Modal.Footer>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onClick={() => setCreateMode(false)}
+            >
+              Close
+            </Button>
+            <Button
+              onClick={_onCreateKey}
+              isDisabled={!newKey}
+              isLoading={createLoading}
+              color="primary"
+            >
+              Create the key
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
 
-      <Modal blur open={!!confirmDelete} onClose={() => setConfirmDelete(false)}>
-        <Modal.Header>
-          <Text size="h4">Are you sure you want to delete the key?</Text>
-        </Modal.Header>
-        <Modal.Body>
-          <Text>{"This key will lose access to Chartbrew. This action cannot be undone."}</Text>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            color="warning"
-            auto
-            flat
-            onClick={() => setConfirmDelete(false)}
-          >
-            Go back
-          </Button>
-          <Button
-            color="danger"
-            onClick={_onRemoveKey}
-            disabled={createLoading}
-            auto
-          >
-            Remove key permanently
-          </Button>
-        </Modal.Footer>
+      <Modal backdrop="blur" isOpen={!!confirmDelete} onClose={() => setConfirmDelete(false)}>
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h4">Are you sure you want to delete the key?</Text>
+          </ModalHeader>
+          <ModalBody>
+            <Text>{"This key will lose access to Chartbrew. This action cannot be undone."}</Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onClick={() => setConfirmDelete(false)}
+            >
+              Go back
+            </Button>
+            <Button
+              color="danger"
+              onClick={_onRemoveKey}
+              isLoading={createLoading}
+            >
+              Remove key permanently
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
-    </Container>
+    </div>
   );
 }
 

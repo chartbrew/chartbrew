@@ -6,13 +6,12 @@ import {
   Button, Tooltip, Spacer, Checkbox, Input, Accordion, Radio, AccordionItem, RadioGroup, Chip,
 } from "@nextui-org/react";
 import _ from "lodash";
-import { CloseSquare, InfoCircle, TickSquare } from "react-iconly";
-import { FaClipboard } from "react-icons/fa";
 
 import { generateInviteUrl as generateInviteUrlAction } from "../actions/team";
 import Container from "./Container";
 import Row from "./Row";
 import Text from "./Text";
+import { IoCheckmark, IoClipboard, IoClose, IoInformationCircleOutline } from "react-icons/io5";
 
 /*
   Contains the team members invitation functionality
@@ -92,11 +91,11 @@ function InviteMembersForm(props) {
     <div style={style}>
       <Container>
         <Row>
-          <Text size="h3">Invite team members</Text>
+          <Text size="h4">Invite team members</Text>
         </Row>
         {!selectedProjects && (
           <>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Row>
               <Accordion
                 variant="bordered"
@@ -106,25 +105,21 @@ function InviteMembersForm(props) {
                   subtitle={projectAccess.length > 0 ? `${projectAccess.length} project${projectAccess.length > 1 ? "s" : ""} selected` : "No projects selected yet"}
                 >
                   <div className="grid grid-cols-12 gap-1">
-                    <div className="col-span-12 mb-10">
+                    <div className="col-span-12 mb-4 flex flex-row">
                       <Button
                         size="sm"
-                        bordered
-                        icon={<TickSquare />}
+                        variant="ghost"
+                        startContent={<IoCheckmark />}
                         onClick={_onSelectAllProjects}
-                        auto
-                        color="primary"
                       >
                         Select all
                       </Button>
-                      <Spacer x={0.2} />
+                      <Spacer x={1} />
                       <Button
                         size="sm"
-                        bordered
-                        auto
-                        icon={<CloseSquare />}
+                        variant="ghost"
+                        startContent={<IoClose />}
                         onClick={_onDeselectAllProjects}
-                        color="secondary"
                       >
                         Deselect all
                       </Button>
@@ -132,13 +127,14 @@ function InviteMembersForm(props) {
                     {projects && projects.map((project) => (
                       <div className="col-span-12 sm:col-span-4" key={project.id}>
                         <Checkbox
-                          label={project.name}
                           isSelected={
                             _.indexOf(projectAccess, project.id) > -1
                           }
                           onChange={() => _onChangeProjectAccess(project.id)}
                           size="sm"
-                        />
+                        >
+                          {project.name}
+                        </Checkbox>
                       </div>
                     ))}
                   </div>
@@ -147,44 +143,44 @@ function InviteMembersForm(props) {
             </Row>
           </>
         )}
-        <Spacer y={1} />
+        <Spacer y={4} />
         <Row align="center">
-          <Text size={20} b>
+          <Text b>
             {"Data export permissions "}
           </Text>
           <Spacer x={0.2} />
           <Tooltip
             content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
-            style={{ maxWidth: 400 }}
           >
-            <InfoCircle />
+            <div><IoInformationCircleOutline /></div>
           </Tooltip>
-        </Row>
-        <Spacer y={0.5} />
-        <Row>
-          <Checkbox
-            label="Allow data export"
-            isSelected={exportAllowed}
-            onChange={(isSelected) => setExportAllowed(isSelected)}
-            size="sm"
-          />
         </Row>
         <Spacer y={1} />
+        <Row>
+          <Checkbox
+            isSelected={exportAllowed}
+            onValueChange={(isSelected) => setExportAllowed(isSelected)}
+            size="sm"
+          >
+            Allow data export
+          </Checkbox>
+        </Row>
+
+        <Spacer y={4} />
         <Row align="center">
-          <Text size={20} b>
+          <Text b>
             {"Team role"}
           </Text>
-          <Spacer x={0.2} />
+          <Spacer x={1} />
           <Tooltip
             content="The team role is applied over all the projects selected above"
-            style={{ maxWidth: 400 }}
           >
-            <InfoCircle />
+            <div><IoInformationCircleOutline /></div>
           </Tooltip>
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={1} />
         <Row>
-          <RadioGroup defaultValue="member" size="sm" value={role} onChange={(option) => setRole(option)}>
+          <RadioGroup defaultValue="member" size="sm" value={role} onValueChange={(option) => setRole(option)}>
             <Radio
               value="member"
               description={"Can view charts in assigned projects"}
@@ -206,17 +202,18 @@ function InviteMembersForm(props) {
           </RadioGroup>
         </Row>
 
-        <Spacer y={1} />
+        <Spacer y={4} />
         <Row>
           <Button
             isLoading={loading}
             onClick={onGenerateUrl}
-            auto
+            color="primary"
+            size="sm"
           >
             {loading ? "Generating..." : "Generate invite link"}
           </Button>
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={4} />
 
         {inviteUrl && (
           <>
@@ -226,31 +223,31 @@ function InviteMembersForm(props) {
                 id="url-text"
                 value={inviteUrl}
                 fullWidth
-                bordered
+                readOnly
+                variant="bordered"
               />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={2} />
             <Row wrap="wrap" align="center">
               <Button
-                iconRight={urlCopied ? <TickSquare /> : <FaClipboard />}
+                endContent={urlCopied ? <IoCheckmark /> : <IoClipboard />}
                 color={urlCopied ? "success" : "primary"}
                 onClick={_onCopyUrl}
-                bordered
+                variant={urlCopied ? "flat" : "solid"}
                 size="sm"
-                auto
               >
                 {urlCopied ? "Copied" : "Copy to clipboard"}
               </Button>
-              <Spacer x={1} />
-              <Chip color="warning" disableOutline variant={"flat"}>
+              <Spacer x={4} />
+              <Chip color="warning" variant={"flat"} size="sm">
                 {`${role} role`}
               </Chip>
-              <Spacer x={0.3} />
-              <Chip color="primary" disableOutline variant={"flat"}>
+              <Spacer x={1} />
+              <Chip color="primary" variant={"flat"} size="sm">
                 {`Access to ${projectAccess.length} project${projectAccess.length !== 1 ? "s" : ""}`}
               </Chip>
-              <Spacer x={0.3} />
-              <Chip color="success" disableOutline variant={"flat"}>
+              <Spacer x={1} />
+              <Chip color="success" variant={"flat"} size="sm">
                 {exportAllowed ? "Data export allowed" : "Data export not allowed"}
               </Chip>
             </Row>
