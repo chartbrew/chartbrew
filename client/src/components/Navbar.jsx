@@ -13,7 +13,7 @@ import useDarkMode from "@fisch0920/use-dark-mode";
 import { useLocalStorage } from "react-use";
 import {
   LuBook, LuCheck, LuCompass, LuContrast, LuGithub, LuHeartHandshake, LuLogOut,
-  LuMoon, LuPlay, LuSettings, LuSmile, LuSun, LuUser, LuWallpaper,
+  LuMoon, LuSettings, LuSmile, LuSun, LuUser, LuWallpaper,
 } from "react-icons/lu";
 import { TbBrandDiscord } from "react-icons/tb";
 
@@ -135,10 +135,6 @@ function NavbarContainer(props) {
         setFeedbackModal(true);
         break;
       }
-      case "project-starter": {
-        history.push("/start");
-        break;
-      }
       case "profile": {
         history.push("/edit");
         break;
@@ -245,11 +241,8 @@ function NavbarContainer(props) {
               <DropdownItem startContent={<LuGithub />} key="github">
                 <Text>{"GitHub"}</Text>
               </DropdownItem>
-              <DropdownItem showDivider startContent={<LuSmile />} key="feedback">
+              <DropdownItem startContent={<LuSmile />} key="feedback">
                 <Text>{"Feedback"}</Text>
-              </DropdownItem>
-              <DropdownItem startContent={<LuPlay />} key="project-starter">
-                <Text>{"Project starter"}</Text>
               </DropdownItem>
             </DropdownMenu>
           </Dropdown>

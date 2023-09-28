@@ -29,7 +29,6 @@ const PublicDashboard = lazy(() => import("./PublicDashboard/PublicDashboard"));
 const PasswordReset = lazy(() => import("./PasswordReset"));
 const EmbeddedChart = lazy(() => import("./EmbeddedChart"));
 const GoogleAuth = lazy(() => import("./GoogleAuth"));
-const Start = lazy(() => import("./Start/Start"));
 const ProjectRedirect = lazy(() => import("./ProjectRedirect"));
 
 const AppMedia = createMedia({
@@ -201,11 +200,6 @@ function Main(props) {
                 exact
                 path="/chart/:chartId/embedded"
                 component={EmbeddedChart}
-              />
-              <Route
-                exact
-                path="/start"
-                component={Start}
               />
             </Switch>
           </Suspense>

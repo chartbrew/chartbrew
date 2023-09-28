@@ -64,23 +64,6 @@ function UserDashboard(props) {
     }
   }, [user]);
 
-  useEffect(() => {
-    if (teams.length > 0) {
-      let shouldOpenNewProject = true;
-      teams.forEach((team) => {
-        if (team && team.Projects && team.Projects.length > 0) {
-          shouldOpenNewProject = false;
-        }
-
-        return team;
-      });
-
-      if (shouldOpenNewProject) {
-        history.push("/start");
-      }
-    }
-  }, [teams]);
-
   const _checkParameters = () => {
     const params = new URLSearchParams(window.location.search);
 
