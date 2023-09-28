@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import {
-  Container, Card, Loading, Text, Spacer, Row, Link, Input, Button, Grid, useTheme, Divider,
+  Container, Card, Loading, Text, Spacer, Row, Link, Input, Button, Grid, Divider,
 } from "@nextui-org/react";
 import { motion } from "framer-motion";
 import { ToastContainer, toast, Flip } from "react-toastify";
@@ -22,6 +22,7 @@ import mailgunDash from "../Connections/Mailgun/mailgun-template.jpeg";
 import connectionImages from "../../config/connectionImages";
 import Navbar from "../../components/Navbar";
 import InviteMembersForm from "../../components/InviteMembersForm";
+import useThemeDetector from "../../modules/useThemeDetector";
 
 function Start(props) {
   const {
@@ -36,7 +37,7 @@ function Start(props) {
   const [initiated, setInitiated] = useState(false);
   const [newProject, setNewProject] = useState(null);
 
-  const { isDark } = useTheme();
+  const isDark = useThemeDetector();
 
   const _getOwnedTeam = () => {
     let team;
