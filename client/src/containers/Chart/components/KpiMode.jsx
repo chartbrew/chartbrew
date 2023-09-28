@@ -1,9 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {
-  Progress, Spacer, Tooltip,
+  Chip, Progress, Tooltip,
 } from "@nextui-org/react";
-import { LuChevronDownCircle, LuChevronUpCircle } from "react-icons/lu";
 
 import determineType from "../../../modules/determineType";
 import Container from "../../../components/Container";
@@ -43,24 +42,20 @@ function KpiMode(props) {
     return (
       <div>
         <Tooltip content={`compared to last ${chart.timeInterval}`}>
-          <div className="w-full">
-            {status === "neutral" && (
-              <Text className={"text-gray-500"}>{`${comparison}%`}</Text>
-            )}
-            {status === "negative" && (
-              <Row align="center">
-                <LuChevronDownCircle size={18} className="text-danger" />
-                <Spacer x={1} />
-                <Text className={"text-danger-400"}>{` ${comparison}%`}</Text>
-              </Row>
-            )}
-            {status === "positive" && (
-              <Row align="center">
-                <LuChevronUpCircle size={18} className="text-success" />
-                <Spacer x={1} />
-                <Text className={"text-success-400"}>{` ${comparison}%`}</Text>
-              </Row>
-            )}
+          <div className="w-full py-1">
+            <Chip
+              size="sm"
+              variant="flat"
+              color={status === "neutral" ? "default" : status === "positive" ? "success" : "danger"}
+            >
+              <Text
+                size="sm"
+                className={status === "neutral" ? "text-gray-500" : status === "positive" ? "text-success" : "text-danger"}
+              >
+                {status === "positive" ? "+" : ""}
+                {`${comparison}%`}
+              </Text>
+            </Chip>
           </div>
         </Tooltip>
       </div>

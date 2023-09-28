@@ -1,9 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {
+  Chip,
   Spacer, Tooltip,
 } from "@nextui-org/react";
-import { LuChevronDownCircle, LuChevronUpCircle } from "react-icons/lu";
 
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
@@ -39,22 +39,20 @@ function KpiChartSegment(props) {
                 <Spacer x={1} />
                 {chart.showGrowth && (
                   <Tooltip content={`compared to last ${chart.timeInterval}`}>
-                    {c.status === "neutral" && (
-                      <Text size="sm">{`${c.comparison}%`}</Text>
-                    )}
-                    {c.status === "negative" && (
-                      <Row align="center">
-                        <LuChevronDownCircle size={18} className="text-danger" />
-                        <Spacer x={0.5} />
-                        <Text b size={"0.8em"} className={"text-danger-400"}>{` ${c.comparison}%`}</Text>
-                      </Row>
-                    )}
-                    {c.status === "positive" && (
-                      <Row align="center">
-                        <LuChevronUpCircle size={18} className="text-success" />
-                        <Text b size={"sm"} className={"text-success-400"}>{` ${c.comparison}%`}</Text>
-                      </Row>
-                    )}
+                    <div>
+                      <Chip
+                        size="sm"
+                        variant="flat"
+                        color={c.status === "neutral" ? "default" : c.status === "positive" ? "success" : "danger"}
+                      >
+                        <Text
+                          className={`${c.status === "neutral" ? "text-gray-500" : c.status === "positive" ? "text-success" : "text-danger"} text-[12px]`}
+                        >
+                          {c.status === "positive" ? "+" : ""}
+                          {`${c.comparison}%`}
+                        </Text>
+                      </Chip>
+                    </div>
                   </Tooltip>
                 )}
               </Row>
