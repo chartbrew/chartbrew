@@ -4,9 +4,9 @@ import { connect } from "react-redux";
 import {
   Button, Divider, Input, CircularProgress, Modal, Spacer, ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
-import { IoTrashBin } from "react-icons/io5";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
+import { LuTrash } from "react-icons/lu";
 
 import {
   updateUser as updateUserAction,
@@ -219,7 +219,7 @@ function EditUserForm(props) {
 
       <Row>
         <Button
-          iconRight={<IoTrashBin />}
+          iconRight={<LuTrash />}
           color="danger"
           onClick={() => setOpenDeleteModal(true)}
           bordered

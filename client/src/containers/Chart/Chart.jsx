@@ -7,19 +7,18 @@ import {
   Card, Spacer, Tooltip, Dropdown, Button, Modal, Input,
   Link as LinkNext, Textarea, Switch, Popover, Chip, CardHeader, CircularProgress, PopoverTrigger, PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, ModalHeader, ModalBody, ModalFooter, CardBody, ModalContent, Select, SelectItem, Listbox, ListboxItem,
 } from "@nextui-org/react";
+import {
+  LuArrowDown, LuArrowUp, LuCalendarClock, LuCheck, LuChevronDown, LuChevronDownCircle,
+  LuChevronUp, LuClipboard, LuClipboardCheck, LuFileDown, LuFilter, LuLink, LuLock,
+  LuMoreHorizontal, LuMoreVertical, LuPlus, LuRefreshCw, LuSettings, LuShare, LuTrash, LuTv2,
+  LuUnlock, LuX, LuXCircle
+} from "react-icons/lu";
 
 import moment from "moment";
 import _ from "lodash";
 import { enGB } from "date-fns/locale";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
-import {
-  IoAdd, IoArrowDown, IoArrowUp, IoCheckmark, IoChevronDown, IoChevronDownCircleOutline,
-  IoChevronUp, IoClipboardOutline, IoClose, IoCloseCircle, IoEasel, IoEaselOutline,
-  IoEllipsisHorizontalCircle, IoFilterCircleOutline, IoLink, IoLockClosed, IoLockOpen,
-  IoLockOpenOutline, IoReload, IoSettings, IoShare, IoTime, IoTimeOutline, IoTrashBin,
-} from "react-icons/io5";
-import { RiFileExcelLine } from "react-icons/ri";
 
 import {
   removeChart as removeChartAction,
@@ -479,7 +478,7 @@ function Chart(props) {
                         size="sm"
                         endContent={(
                           <LinkNext onClick={() => _onClearFilter(c)} className="text-default-500 flex items-center">
-                            <IoCloseCircle size={14} />
+                            <LuXCircle size={14} />
                           </LinkNext>
                         )}
                       >
@@ -510,21 +509,21 @@ function Chart(props) {
                     {chart.autoUpdate > 0 && (
                       <Tooltip content={`Updates every ${_getUpdateFreqText(chart.autoUpdate)}`}>
                         <div>
-                          <IoTimeOutline size={14} />
+                          <LuCalendarClock size={14} />
                         </div>
                       </Tooltip>
                     )}
                     {chart.public && !isPublic && !print && (
                       <Tooltip content="This chart is public">
                         <div>
-                          <IoLockOpenOutline size={14} />
+                          <LuUnlock size={14} />
                         </div>
                       </Tooltip>
                     )}
                     {chart.onReport && !isPublic && !print && (
                       <Tooltip content="This chart is on a report">
                         <div>
-                          <IoEaselOutline size={14} />
+                          <LuTv2 size={14} />
                         </div>
                       </Tooltip>
                     )}
@@ -537,7 +536,7 @@ function Chart(props) {
                 <Popover placement="bottom-right">
                   <PopoverTrigger>
                     <LinkNext className="text-gray-500">
-                      <IoFilterCircleOutline size={24} />
+                      <LuFilter />
                     </LinkNext>
                   </PopoverTrigger>
                   <PopoverContent>
@@ -553,62 +552,62 @@ function Chart(props) {
               {projectId && !print && (
                 <Dropdown>
                   <DropdownTrigger>
-                    <LinkNext color="foreground">
-                      <IoEllipsisHorizontalCircle size={24} />
+                    <LinkNext className="text-gray-500 cursor-pointer">
+                      <LuMoreVertical />
                     </LinkNext>
                   </DropdownTrigger>
                   <DropdownMenu>
                     <DropdownItem
-                      startContent={(chartLoading || chart.loading) ? <CircularProgress classNames={{ svg: "w-5 h-5" }} size="sm" /> : <IoReload />}
+                      startContent={(chartLoading || chart.loading) ? <CircularProgress classNames={{ svg: "w-5 h-5" }} size="sm" /> : <LuRefreshCw />}
                       onClick={_onGetChartData}
                     >
                       Refresh chart
                     </DropdownItem>
                     {_canAccess("editor") && (
-                      <DropdownItem startContent={<IoTime />} onClick={_openUpdateModal}>
+                      <DropdownItem startContent={<LuCalendarClock />} onClick={_openUpdateModal}>
                         Auto-update
                       </DropdownItem>
                     )}
                     {_canAccess("editor") && (
                       <DropdownItem
-                        startContent={<IoSettings />}
+                        startContent={<LuSettings />}
                         onClick={() => history.push(`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`)}
                       >
                         Edit chart
                       </DropdownItem>
                     )}
                     <DropdownItem
-                      startContent={exportLoading ? <CircularProgress size="sm" /> : <RiFileExcelLine />}
+                      startContent={exportLoading ? <CircularProgress size="sm" /> : <LuFileDown />}
                       onClick={_onExport}
                     >
                       Export to Excel
                     </DropdownItem>
                     {!chart.draft && _canAccess("editor") && (
-                      <DropdownItem startContent={<IoEasel />} onClick={_onChangeReport}>
+                      <DropdownItem startContent={<LuTv2 />} onClick={_onChangeReport}>
                         {chart.onReport ? "Remove from report" : "Add to report"}
                       </DropdownItem>
                     )}
                     {!chart.draft && _canAccess("editor") && (
                       <DropdownItem
                         showDivider
-                        startContent={chart.public ? <IoLockOpen /> : <IoLockClosed />}
+                        startContent={chart.public ? <LuUnlock /> : <LuLock />}
                         onClick={_onPublicConfirmation}
                       >
                         {chart.public ? "Make private" : "Make public"}
                       </DropdownItem>
                     )}
                     {!chart.draft && (
-                      <DropdownItem startContent={<IoShare />} onClick={_onEmbed}>
+                      <DropdownItem startContent={<LuShare />} onClick={_onEmbed}>
                         {"Embed & Share"}
                       </DropdownItem>
                     )}
                     {!chart.draft && chart.shareable && (
-                      <DropdownItem startContent={<IoLink />} onClick={_onOpenEmbed}>
+                      <DropdownItem startContent={<LuLink />} onClick={_onOpenEmbed}>
                         {"Open in a new tab"}
                       </DropdownItem>
                     )}
                     {_canAccess("editor") && (
-                      <DropdownItem startContent={<IoChevronDownCircleOutline />} closeOnSelect={false}>
+                      <DropdownItem startContent={<LuChevronDownCircle />} closeOnSelect={false}>
                         <Popover>
                           <PopoverTrigger>
                             <Text>Chart size</Text>
@@ -641,13 +640,13 @@ function Chart(props) {
                       </DropdownItem>
                     )}
                     {_canAccess("editor") && (
-                      <DropdownItem showDivider startContent={<IoChevronDownCircleOutline />}>
+                      <DropdownItem showDivider startContent={<LuChevronDownCircle />}>
                         <Dropdown>
                           <DropdownTrigger>
                             <Text>Change order</Text>
                           </DropdownTrigger>
                           <DropdownMenu>
-                            <DropdownItem startContent={<IoArrowUp />}>
+                            <DropdownItem startContent={<LuArrowUp />}>
                               {_getChartIndex() === 0 && (
                                 <Text className={"text-gray-300"}>
                                   Move to top
@@ -659,7 +658,7 @@ function Chart(props) {
                                 </Text>
                               )}
                             </DropdownItem>
-                            <DropdownItem startContent={<IoChevronUp />}>
+                            <DropdownItem startContent={<LuChevronUp />}>
                               {_getChartIndex() === 0 && (
                                 <Text className={"text-gray-300"}>
                                   Move up
@@ -671,7 +670,7 @@ function Chart(props) {
                                 </Text>
                               )}
                             </DropdownItem>
-                            <DropdownItem startContent={<IoChevronDown />}>
+                            <DropdownItem startContent={<LuChevronDown />}>
                               {_getChartIndex() === charts.length - 1 && (
                                 <Text css={{ color: "$accents4" }}>
                                   Move down
@@ -683,7 +682,7 @@ function Chart(props) {
                                 </Text>
                               )}
                             </DropdownItem>
-                            <DropdownItem startContent={<IoArrowDown />}>
+                            <DropdownItem startContent={<LuArrowDown />}>
                               {_getChartIndex() === charts.length - 1 && (
                                 <Text className={"text-gray-300"}>
                                   Move to bottom
@@ -700,7 +699,7 @@ function Chart(props) {
                       </DropdownItem>
                     )}
                     {_canAccess("editor") && (
-                      <DropdownItem startContent={<IoTrashBin />} color="danger" onClick={_onDeleteChartConfirmation}>
+                      <DropdownItem startContent={<LuTrash />} color="danger" onClick={_onDeleteChartConfirmation}>
                         Delete chart
                       </DropdownItem>
                     )}
@@ -712,12 +711,12 @@ function Chart(props) {
                 <Dropdown>
                   <DropdownTrigger>
                     <LinkNext color="foreground">
-                      <IoEllipsisHorizontalCircle size={24} />
+                      <LuMoreHorizontal size={24} />
                     </LinkNext>
                   </DropdownTrigger>
                   <DropdownMenu>
                     <DropdownItem
-                      startContent={exportLoading ? <CircularProgress size="sm" /> : <RiFileExcelLine />}
+                      startContent={exportLoading ? <CircularProgress size="sm" /> : <LuFileDown />}
                       onClick={() => _onPublicExport(chart)}
                       textValue="Export to Excel"
                     >
@@ -831,7 +830,7 @@ function Chart(props) {
             </Button>
             <Button
               color="danger"
-              endContent={<IoTrashBin />}
+              endContent={<LuTrash />}
               onClick={_onDeleteChart}
               isLoading={chartLoading}
             >
@@ -864,7 +863,7 @@ function Chart(props) {
             <Button
               isLoading={publicLoading}
               color="primary"
-              endContent={<IoLockOpen />}
+              endContent={<LuUnlock />}
               onClick={_onPublic}
             >
               Make the chart public
@@ -949,7 +948,7 @@ function Chart(props) {
                       color="default"
                       endContent={(
                         <div>
-                          <IoChevronDown />
+                          <LuChevronDown />
                         </div>
                       )}
                     >
@@ -986,15 +985,13 @@ function Chart(props) {
             <Button
               variant="flat"
               color={"warning"}
-              auto
               onClick={() => setUpdateModal(false)}
               size="sm"
             >
               Cancel
             </Button>
             <Button
-              endContent={<IoClose />}
-              auto
+              endContent={<LuX />}
               variant="flat"
               color="danger"
               isLoading={autoUpdateLoading}
@@ -1007,7 +1004,7 @@ function Chart(props) {
               Stop auto-updating
             </Button>
             <Button
-              endContent={<IoCheckmark />}
+              endContent={<LuCheck />}
               color="primary"
               isLoading={autoUpdateLoading}
               onClick={() => _onChangeAutoUpdate()}
@@ -1027,71 +1024,69 @@ function Chart(props) {
               <Text size="h4">{"Embed your chart on other websites"}</Text>
             </ModalHeader>
             <ModalBody>
-              <div>
-                <Row align="center">
-                  <Switch
-                    label={chart.shareable ? "Disable sharing" : "Enable sharing"}
-                    onChange={_onToggleShareable}
-                    isSelected={chart.shareable}
-                    disabled={!_canAccess("editor")}
-                  />
-                  <Spacer x={0.5} />
-                  <Text>
-                    {chart.shareable ? "Disable sharing" : "Enable sharing"}
+              <Row align="center">
+                <Switch
+                  label={chart.shareable ? "Disable sharing" : "Enable sharing"}
+                  onChange={_onToggleShareable}
+                  isSelected={chart.shareable}
+                  disabled={!_canAccess("editor")}
+                />
+                <Spacer x={0.5} />
+                <Text>
+                  {chart.shareable ? "Disable sharing" : "Enable sharing"}
+                </Text>
+                <Spacer x={0.5} />
+                {shareLoading && (<CircularProgress size="sm" />)}
+              </Row>
+              <Spacer y={2} />
+              {chart.public && !chart.shareable && (
+                <Row>
+                  <Text color="primary">
+                    {"The chart is public. A public chart can be shared even if the sharing toggle is disabled. This gives you more flexibility if you want to hide the chart from the public dashboard but you still want to individually share it."}
                   </Text>
-                  <Spacer x={0.5} />
-                  {shareLoading && (<CircularProgress size="sm" />)}
                 </Row>
-                <Spacer y={2} />
-                {chart.public && !chart.shareable && (
-                  <Row>
-                    <Text color="primary">
-                      {"The chart is public. A public chart can be shared even if the sharing toggle is disabled. This gives you more flexibility if you want to hide the chart from the public dashboard but you still want to individually share it."}
+              )}
+              {!chart.public && !chart.shareable && (
+                <>
+                  <Spacer y={2} />
+                  <Row align="center">
+                    <Text>
+                      {"The chart is private. A private chart can only be seen by members of the team. If you enable sharing, others outside of your team can see the chart and you can also embed it on other websites."}
                     </Text>
                   </Row>
-                )}
-                {!chart.public && !chart.shareable && (
-                  <>
-                    <Spacer y={2} />
-                    <Row align="center">
-                      <Text>
-                        {"The chart is private. A private chart can only be seen by members of the team. If you enable sharing, others outside of your team can see the chart and you can also embed it on other websites."}
-                      </Text>
-                    </Row>
-                  </>
-                )}
-                {!_canAccess("editor") && !chart.public && !chart.shareable && (
-                  <>
-                    <Spacer y={2} />
-                    <Row>
-                      <Text color="danger">
-                        {"You do not have the permission to enable sharing on this chart. Only editors and admins can enable this."}
-                      </Text>
-                    </Row>
-                  </>
-                )}
-                {(chart.public || chart.shareable)
-                && (!chart.Chartshares || chart.Chartshares.length === 0)
-                && (
-                  <>
-                    <Spacer y={2} />
-                    <Row align="center">
-                      <Button
-                        endContent={<IoAdd />}
-                        auto
-                        onClick={_onCreateSharingString}
-                      >
-                        Create a sharing code
-                      </Button>
-                    </Row>
-                  </>
-                )}
-                <Spacer y={2} />
-                {shareLoading && (
-                  <Row><CircularProgress /></Row>
-                )}
+                </>
+              )}
+              {!_canAccess("editor") && !chart.public && !chart.shareable && (
+                <>
+                  <Spacer y={2} />
+                  <Row>
+                    <Text color="danger">
+                      {"You do not have the permission to enable sharing on this chart. Only editors and admins can enable this."}
+                    </Text>
+                  </Row>
+                </>
+              )}
+              {(chart.public || chart.shareable)
+              && (!chart.Chartshares || chart.Chartshares.length === 0)
+              && (
+                <>
+                  <Spacer y={2} />
+                  <Row align="center">
+                    <Button
+                      endContent={<LuPlus />}
+                      onClick={_onCreateSharingString}
+                      color="primary"
+                    >
+                      Create a sharing code
+                    </Button>
+                  </Row>
+                </>
+              )}
+              {shareLoading && (
+                <Row><CircularProgress /></Row>
+              )}
 
-                {(chart.shareable || chart.public)
+              {(chart.shareable || chart.public)
               && !chartLoading
               && (chart.Chartshares && chart.Chartshares.length > 0)
               && (
@@ -1101,7 +1096,6 @@ function Chart(props) {
                       {"Copy the following code on the website you wish to add your chart in."}
                     </Text>
                   </Row>
-                  <Spacer y={1} />
                   <Row>
                     <Textarea
                       id="iframe-text"
@@ -1110,36 +1104,31 @@ function Chart(props) {
                       readOnly
                     />
                   </Row>
-                  <Spacer y={1} />
                   <Row>
                     <Button
                       color={iframeCopied ? "success" : "primary"}
-                      endContent={iframeCopied ? <IoClose /> : <IoClipboardOutline />}
+                      endContent={iframeCopied ? <LuClipboardCheck /> : <LuClipboard />}
                       onClick={_onCopyIframe}
-                      variant="ghost"
-                      auto
+                      variant={iframeCopied ? "flat" : "solid"}
                     >
                       {!iframeCopied && "Copy the code"}
                       {iframeCopied && "Copied to your clipboard"}
                     </Button>
                   </Row>
 
-                  <Spacer y={2} />
+                  <Spacer y={1} />
                   <Row>
                     <Text>{"Or get just the URL"}</Text>
                   </Row>
-                  <Spacer y={1} />
                   <Row>
                     <Input value={_getEmbedUrl()} id="url-text" fullWidth readOnly />
                   </Row>
-                  <Spacer y={1} />
                   <Row>
                     <Button
                       color={urlCopied ? "success" : "primary"}
-                      endContent={iframeCopied ? <IoClose /> : <IoClipboardOutline />}
-                      variant="ghost"
+                      endContent={iframeCopied ? <LuClipboardCheck /> : <LuClipboard />}
+                      variant={urlCopied ? "flat" : "solid"}
                       onClick={_onCopyUrl}
-                      auto
                     >
                       {!urlCopied && "Copy URL"}
                       {urlCopied && "Copied to your clipboard"}
@@ -1147,7 +1136,6 @@ function Chart(props) {
                   </Row>
                 </>
               )}
-              </div>
             </ModalBody>
             <ModalFooter>
               <Button

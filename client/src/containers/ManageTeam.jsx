@@ -5,6 +5,7 @@ import { Route, Switch, withRouter } from "react-router";
 import {
   CircularProgress, Listbox, ListboxSection, ListboxItem,
 } from "@nextui-org/react";
+import { LuCode2, LuSettings, LuUsers2 } from "react-icons/lu";
 
 import { getTeam, saveActiveTeam } from "../actions/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
@@ -15,7 +16,6 @@ import canAccess from "../config/canAccess";
 import ApiKeys from "./ApiKeys/ApiKeys";
 import Container from "../components/Container";
 import Row from "../components/Row";
-import { IoCodeSlash, IoPeople, IoSettings } from "react-icons/io5";
 
 /*
   Description
@@ -93,17 +93,17 @@ function ManageTeam(props) {
             >
               <ListboxSection title="Manage the team">
                 {_canAccess("owner") && (
-                  <ListboxItem key="settings" startContent={<IoSettings />}>
+                  <ListboxItem key="settings" startContent={<LuSettings />}>
                     Settings
                   </ListboxItem>
                 )}
-                <ListboxItem key="members" startContent={<IoPeople />}>
+                <ListboxItem key="members" startContent={<LuUsers2 />}>
                   Members
                 </ListboxItem>
               </ListboxSection>
               {_canAccess("admin") && (
                 <ListboxSection title="Developers">
-                  <ListboxItem key="api-keys" startContent={<IoCodeSlash />}>
+                  <ListboxItem key="api-keys" startContent={<LuCode2 />}>
                     API Keys
                   </ListboxItem>
                 </ListboxSection>

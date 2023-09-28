@@ -10,9 +10,7 @@ import {
 import { TiChartPie } from "react-icons/ti";
 import { FaChartLine } from "react-icons/fa";
 import { BsTable } from "react-icons/bs";
-import {
-  IoInformationCircleOutline, IoReload
-} from "react-icons/io5";
+import { LuInfo, LuRefreshCw } from "react-icons/lu";
 
 import LineChart from "../../Chart/components/LineChart";
 import BarChart from "../../Chart/components/BarChart";
@@ -125,7 +123,7 @@ function ChartPreview(props) {
                 onClick={_onRefreshData}
                 isLoading={chartLoading}
                 size="sm"
-                endContent={<IoReload size={18} />}
+                endContent={<LuRefreshCw size={18} />}
                 variant="bordered"
               >
                 {"Refresh chart"}
@@ -142,7 +140,7 @@ function ChartPreview(props) {
               <Tooltip
                 content="Chartbrew will use cached data for extra editing speed ⚡️"
               >
-                <div><IoInformationCircleOutline /></div>
+                <div><LuInfo /></div>
               </Tooltip>
             </Row>
             <Spacer y={2} />

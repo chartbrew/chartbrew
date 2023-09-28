@@ -10,7 +10,7 @@ import {
   CardFooter, ModalContent, Spinner,
 } from "@nextui-org/react";
 import moment from "moment";
-import { IoAdd, IoLink, IoWarning } from "react-icons/io5";
+import { LuLink2, LuMonitorX, LuPlus } from "react-icons/lu";
 
 import ApiBuilder from "./ApiBuilder";
 import SqlBuilder from "./SqlBuilder";
@@ -273,7 +273,7 @@ function DatarequestModal(props) {
                         <Avatar
                           isBordered
                           icon={(
-                            <IoLink />
+                            <LuLink2 />
                           )}
                           radius="sm"
                           className="cursor-pointer"
@@ -306,7 +306,7 @@ function DatarequestModal(props) {
                             ? connectionImages(theme === "dark")[dr.Connection.subType || dr.Connection.type]
                             : null
                         }
-                        icon={!dr.Connection ? <IoWarning /> : null}
+                        icon={!dr.Connection ? <LuMonitorX /> : null}
                         color={dr.id === selectedRequest?.id ? "primary" : "default"}
                         onClick={() => _onSelectDataRequest(dr)}
                       />
@@ -320,7 +320,7 @@ function DatarequestModal(props) {
                 <Tooltip content="Add a new data source" css={{ zIndex: 99999 }} placement="right-start">
                   <Link onClick={() => setCreateMode(true)} className="cursor-pointer">
                     <Avatar
-                      icon={<IoAdd />}
+                      icon={<LuPlus />}
                       isBordered
                       className="cursor-pointer"
                       color="secondary"

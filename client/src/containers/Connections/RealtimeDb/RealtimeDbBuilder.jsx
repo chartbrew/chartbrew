@@ -7,7 +7,7 @@ import {
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
-import { IoClose, IoInformationCircleOutline, IoPlay, IoTrashBin } from "react-icons/io5";
+import { LuInfo, LuPlay, LuTrash, LuX } from "react-icons/lu";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -172,7 +172,7 @@ function RealtimeDbBuilder(props) {
                     variant="bordered"
                     onClick={() => onDelete()}
                   >
-                    <IoTrashBin />
+                    <LuTrash />
                   </Button>
                 </Tooltip>
               </Row>
@@ -289,7 +289,7 @@ function RealtimeDbBuilder(props) {
                 <Button
                   color="danger"
                   variant="light"
-                  startContent={<IoClose />}
+                  startContent={<LuX />}
                   onClick={() => (
                     setFirebaseRequest({
                       ...firebaseRequest,
@@ -384,7 +384,7 @@ function RealtimeDbBuilder(props) {
                 || firebaseRequest.configuration.limitToFirst)
               && (
                 <Button
-                  startContent={<IoClose />}
+                  startContent={<LuX />}
                   onClick={() => (
                     setFirebaseRequest({
                       ...firebaseRequest,
@@ -426,7 +426,7 @@ function RealtimeDbBuilder(props) {
           <Row className="RealtimeDb-request-tut">
             <Button
               color="primary"
-              endContent={<IoPlay />}
+              endContent={<LuPlay />}
               isLoading={requestLoading}
               onClick={() => _onTest()}
               fullWidth
@@ -448,7 +448,7 @@ function RealtimeDbBuilder(props) {
               content="Use cache to avoid hitting the Firebase API every time you request data. The cache will be cleared when you change any of the settings."
               className="max-w-[600px]"
             >
-              <div><IoInformationCircleOutline /></div>
+              <div><LuInfo /></div>
             </Tooltip>
           </Row>
           <Spacer y={2} />
@@ -469,7 +469,7 @@ function RealtimeDbBuilder(props) {
           </Row>
           <Spacer y={2} />
           <Row align="center">
-            <IoInformationCircleOutline />
+            <LuInfo />
             <Spacer x={1} />
             <Text size="sm">
               {"This is a preview and it might not show all data in order to keep things fast in the UI."}

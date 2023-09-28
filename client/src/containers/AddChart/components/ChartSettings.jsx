@@ -6,9 +6,7 @@ import {
 import moment from "moment";
 import { DateRangePicker } from "react-date-range";
 import { enGB } from "date-fns/locale";
-import {
-  IoCalendarOutline, IoCheckmark, IoCloseCircle, IoInformationCircleOutline, IoSettings
-} from "react-icons/io5";
+import { LuCalendarDays, LuCheck, LuInfo, LuSettings, LuXCircle } from "react-icons/lu";
 
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
@@ -234,7 +232,7 @@ function ChartSettings(props) {
         <div className="col-span-12 lg:col-span-6">
           <Row className={"pl-0 ml-0 gap-2"} align="center">
             <Button
-              endContent={<IoCalendarOutline />}
+              endContent={<LuCalendarDays />}
               onClick={() => _onViewRange(true)}
               variant="ghost"
             >
@@ -249,7 +247,7 @@ function ChartSettings(props) {
                   onClick={() => _onRemoveDateFiltering()}
                   size="sm"
                 >
-                  <IoCloseCircle />
+                  <LuXCircle />
                 </Button>
               </Tooltip>
             )}
@@ -261,7 +259,7 @@ function ChartSettings(props) {
                   onClick={() => setDateFormattingModal(true)}
                   size="sm"
                 >
-                  <IoSettings />
+                  <LuSettings />
                 </Button>
               </Tooltip>
             )}
@@ -327,7 +325,7 @@ function ChartSettings(props) {
                 )}
               >
                 <div>
-                  <IoInformationCircleOutline />
+                  <LuInfo />
                 </div>
               </Tooltip>
             </Row>
@@ -626,7 +624,7 @@ function ChartSettings(props) {
               Cancel
             </Button>
             <Button
-              endContent={<IoCheckmark />}
+              endContent={<LuCheck />}
               onClick={_onComplete}
               color="primary"
             >
@@ -727,7 +725,7 @@ function ChartSettings(props) {
               Cancel
             </Button>
             <Button
-              endContent={<IoCheckmark />}
+              endContent={<LuCheck />}
               onClick={_onChangeDateFormat}
               color="primary"
             >

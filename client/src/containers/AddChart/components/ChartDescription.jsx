@@ -6,6 +6,7 @@ import {
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import { Link as RouterLink } from "react-router-dom";
+import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
 
 import SimpleAnalyticsTemplate from "../../Connections/SimpleAnalytics/SimpleAnalyticsTemplate";
 import ChartMogulTemplate from "../../Connections/ChartMogul/ChartMogulTemplate";
@@ -17,7 +18,6 @@ import canAccess from "../../../config/canAccess";
 import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
-import { IoArrowBack, IoArrowForward } from "react-icons/io5";
 import availableTemplates from "../../../modules/availableTemplates";
 
 function ChartDescription(props) {
@@ -149,7 +149,7 @@ function ChartDescription(props) {
                   form="create-chart"
                   color="primary"
                   size="lg"
-                  endContent={<IoArrowForward />}
+                  endContent={<LuArrowRight />}
                 >
                   Start editing
                 </Button>
@@ -205,7 +205,7 @@ function ChartDescription(props) {
             <Button
               variant="flat"
               onClick={() => setFormType("")}
-              startContent={<IoArrowBack />}
+              startContent={<LuArrowLeft />}
               size="small"
             >
               Back

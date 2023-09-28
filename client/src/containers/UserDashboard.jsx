@@ -6,8 +6,9 @@ import { useWindowSize } from "react-use";
 import {
   Button, Input, Spacer, Table, Tooltip, Link as LinkNext, Chip, Modal, CircularProgress, TableHeader, TableColumn, TableCell, TableBody, TableRow, ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
-import { IoAdd, IoCreateOutline, IoPeople, IoPersonCircle, IoSearchOutline, IoSettings, IoStatsChart, IoTrashBin } from "react-icons/io5";
-import { BsPlugin } from "react-icons/bs";
+import {
+  LuBarChart, LuPencilLine, LuPlug, LuPlus, LuSearch, LuSettings, LuTrash, LuUser, LuUsers2,
+} from "react-icons/lu";
 
 import {
   getTeams as getTeamsAction,
@@ -222,8 +223,8 @@ function UserDashboard(props) {
                   justify={"space-between"}
                 >
                   <Row justify="flex-start" align="center">
-                    {key.TeamRoles.length > 1 && <IoPeople size={28} />}
-                    {key.TeamRoles.length < 2 && <IoPersonCircle size={28} />}
+                    {key.TeamRoles.length > 1 && <LuUsers2 size={28} />}
+                    {key.TeamRoles.length < 2 && <LuUser size={28} />}
                     <Spacer x={1} />
                     <Text
                       size={"xl"}
@@ -252,7 +253,7 @@ function UserDashboard(props) {
                                 // size="sm"
                                 isIconOnly
                               >
-                                <IoSettings />
+                                <LuSettings />
                               </Button>
                             </Link>
                           </div>
@@ -270,7 +271,7 @@ function UserDashboard(props) {
                       <Button
                         color="primary"
                         onClick={() => _onNewProject(key)}
-                        endContent={<IoAdd />}
+                        endContent={<LuPlus />}
                       >
                         Create new project
                       </Button>
@@ -280,7 +281,7 @@ function UserDashboard(props) {
                     type="text"
                     placeholder="Search projects"
                     variant="bordered"
-                    endContent={<IoSearchOutline />}
+                    endContent={<LuSearch />}
                     onChange={(e) => setSearch({ ...search, [key.id]: e.target.value })}
                     className="max-w-[300px]"
                   />
@@ -295,13 +296,13 @@ function UserDashboard(props) {
                       <TableColumn key="name">Project name</TableColumn>
                       <TableColumn key="connections">
                         <Row align="end" justify="center" className={"gap-1"}>
-                          <BsPlugin />
+                          <LuPlug />
                           <Text>Connections</Text>
                         </Row>
                       </TableColumn>
                       <TableColumn key="charts">
                         <Row align="end" justify="center" className={"gap-1"}>
-                          <IoStatsChart />
+                          <LuBarChart />
                           <Text>Charts</Text>
                         </Row>
                       </TableColumn>
@@ -335,7 +336,7 @@ function UserDashboard(props) {
                                 <Row justify="flex-end" align="center">
                                   <Tooltip content="Rename the project">
                                     <Button
-                                      startContent={<IoCreateOutline />}
+                                      startContent={<LuPencilLine />}
                                       variant="light"
                                       size="sm"
                                       className={"min-w-fit"}
@@ -348,7 +349,7 @@ function UserDashboard(props) {
                                   >
                                     <Button
                                       color="danger"
-                                      startContent={<IoTrashBin />}
+                                      startContent={<LuTrash />}
                                       variant="light"
                                       size="sm"
                                       className={"min-w-fit"}
@@ -446,7 +447,7 @@ function UserDashboard(props) {
                     <Button
                       auto
                       color="danger"
-                      endContent={<IoTrashBin />}
+                      endContent={<LuTrash />}
                       onClick={() => _onDeleteProjectSubmit()}
                       isLoading={modifyingProject}
                     >

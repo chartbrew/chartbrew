@@ -5,8 +5,7 @@ import {
 } from "@nextui-org/react";
 import _ from "lodash";
 import cookie from "react-cookies";
-import { IoAdd, IoArrowForward, IoCheckmarkDone, IoClose, IoLink } from "react-icons/io5";
-
+import { LuArrowRight, LuCheckCheck, LuExternalLink, LuPlus, LuX } from "react-icons/lu";
 import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
@@ -235,7 +234,7 @@ function MailgunTemplate(props) {
             {!formVisible && (
               <Button
                 variant="ghost"
-                startContent={<IoAdd />}
+                startContent={<LuPlus />}
                 onClick={() => setFormVisible(true)}
                 auto
               >
@@ -323,7 +322,7 @@ function MailgunTemplate(props) {
                 {"Get your Private API Key from here"}
               </Text>
               <Spacer x={1} />
-              <IoLink />
+              <LuExternalLink />
             </Link>
           </Row>
         </>
@@ -358,7 +357,7 @@ function MailgunTemplate(props) {
           <Row>
             <Button
               variant="ghost"
-              startContent={<IoCheckmarkDone />}
+              startContent={<LuCheckCheck />}
               auto
               onClick={_onSelectAll}
               size="sm"
@@ -368,7 +367,7 @@ function MailgunTemplate(props) {
             <Spacer x={1} />
             <Button
               variant="ghost"
-              startContent={<IoClose />}
+              startContent={<LuX />}
               onClick={_onDeselectAll}
               size="sm"
             >
@@ -409,7 +408,7 @@ function MailgunTemplate(props) {
                 <Link href="https://app.mailgun.com/app/account/security/api_keys" target="_blank" rel="noreferrer">
                   <Text>{"Click here to go to the dashboard"}</Text>
                   <Spacer x={1} />
-                  <IoLink />
+                  <LuExternalLink />
                 </Link>
               </Row>
             </div>
@@ -430,7 +429,7 @@ function MailgunTemplate(props) {
           isLoading={loading}
           onClick={_onGenerateDashboard}
           color="primary"
-          endContent={<IoArrowForward />}
+          endContent={<LuArrowRight />}
         >
           {"Create the charts"}
         </Button>

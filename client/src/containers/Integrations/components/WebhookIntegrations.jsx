@@ -6,7 +6,6 @@ import {
   ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
 } from "@nextui-org/react";
 import { TbWebhook } from "react-icons/tb";
-import { IoAdd, IoCreate, IoInformationCircleOutline, IoLogoSlack, IoTrashBin } from "react-icons/io5";
 import { formatRelative } from "date-fns";
 
 import {
@@ -18,6 +17,7 @@ import {
 import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
+import { LuInfo, LuPencilLine, LuPlus, LuSlack, LuTrash } from "react-icons/lu";
 
 function WebhookIntegrations(props) {
   const {
@@ -133,7 +133,7 @@ function WebhookIntegrations(props) {
             onClick={() => {
               setCreateOpen(true);
             }}
-            startContent={<IoAdd />}
+            startContent={<LuPlus />}
             variant="light"
             color={"primary"}
           >
@@ -148,7 +148,7 @@ function WebhookIntegrations(props) {
         <Row>
           <Text>
             <Link href="https://docs.chartbrew.com/integrations/webhooks" target="_blank" rel="noopener">
-              <IoInformationCircleOutline />
+              <LuInfo />
               <Spacer x={1} />
               {"Click to see what Chartbrew sends over the webhook"}
             </Link>
@@ -158,7 +158,7 @@ function WebhookIntegrations(props) {
         <Row>
           <Text>
             <Link onClick={() => setSlackModalOpen(true)}>
-              <IoLogoSlack />
+              <LuSlack />
               <Spacer x={1} />
               {"Want to send events to Slack? Check out how to do it here"}
             </Link>
@@ -197,7 +197,7 @@ function WebhookIntegrations(props) {
                           color="primary"
                           onClick={() => _onEditOpen(i)}
                         >
-                          <IoCreate />
+                          <LuPencilLine />
                         </Button>
                         <Button
                           isIconOnly
@@ -205,7 +205,7 @@ function WebhookIntegrations(props) {
                           color="danger"
                           onClick={() => setIntegrationToDelete(i.id)}
                         >
-                          <IoTrashBin />
+                          <LuTrash />
                         </Button>
                       </Row>
                     </TableCell>
@@ -266,7 +266,7 @@ function WebhookIntegrations(props) {
               <Spacer x={1} />
               <Text size="small">
                 <Link onClick={() => setSlackModalOpen(true)}>
-                  <IoInformationCircleOutline />
+                  <LuInfo />
                   <Spacer x={1} />
                   {"What is this?"}
                 </Link>

@@ -9,7 +9,7 @@ import {
 import AceEditor from "react-ace";
 import { nanoid } from "nanoid";
 import _ from "lodash";
-import { IoAdd, IoClose, IoInformationCircleOutline, IoPlay } from "react-icons/io5";
+import { LuInfo, LuPlay, LuPlus, LuX } from "react-icons/lu";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -422,7 +422,7 @@ function DatarequestSettings(props) {
               size="sm"
               variant="light"
               color="primary"
-              startContent={<IoAdd />}
+              startContent={<LuPlus />}
               onClick={() => _onAddJoin()}
             >
               Join with another source
@@ -433,7 +433,7 @@ function DatarequestSettings(props) {
                 size="sm"
                 variant="light"
                 color="danger"
-                startContent={<IoClose />}
+                startContent={<LuX />}
                 onClick={() => _onRemoveLastJoin()}
               >
                 Remove last join
@@ -479,7 +479,7 @@ function DatarequestSettings(props) {
                 fullWidth
                 color="primary"
                 onClick={() => _onRunDataset()}
-                endContent={<IoPlay />}
+                endContent={<LuPlay />}
                 isLoading={isCompiling}
               >
                 Compile dataset data
@@ -499,7 +499,7 @@ function DatarequestSettings(props) {
                 placement="leftStart"
                 className="max-w-[500px]"
               >
-                <div><IoInformationCircleOutline /></div>
+                <div><LuInfo /></div>
               </Tooltip>
             </Row>
             <Row>
@@ -519,8 +519,8 @@ function DatarequestSettings(props) {
               </div>
             </Row>
             <Row align="center">
-              <IoInformationCircleOutline />
-              <Spacer x={0.5} />
+              <LuInfo />
+              <Spacer x={1} />
               <Text size="sm">
                 {"To keep the interface fast, not all the data might show up here."}
               </Text>

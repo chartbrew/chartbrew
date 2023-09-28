@@ -8,12 +8,8 @@ import {
   Link as LinkNext, Tooltip, Spacer, Button, Avatar, Modal, ModalHeader, ModalBody,ModalFooter,
   ModalContent, Popover, PopoverTrigger, PopoverContent, Listbox, ListboxItem, Input, Divider,
 } from "@nextui-org/react";
-// import {
-//   IoAdd, IoAddCircle, IoBarChart, IoCaretBackCircleOutline, IoCaretForwardCircleOutline, IoChevronUpCircle,
-//   IoEasel, IoEyeOffOutline, IoEyeOutline, IoGridOutline, IoPeople, IoSettings,
-// } from "react-icons/io5";
 import {
-  LuBarChartBig, LuChevronsUp, LuCoffee, LuEye, LuLayoutGrid, LuPanelLeftClose,
+  LuBarChartBig, LuChevronsUp, LuEye, LuLayoutGrid, LuMenu, LuPanelLeftClose,
   LuPanelLeftOpen, LuPlug, LuPlusCircle, LuPresentation, LuPuzzle, LuSettings,
   LuTv2, LuUser, LuUsers2,
 } from "react-icons/lu";
@@ -148,7 +144,7 @@ function ProjectNavigation(props) {
                 {menuSize === "small" && (
                   // <Tooltip content="Switch project" placement="right">
                   <div>
-                    <Text className={"text-default-800"}><LuLayoutGrid size={28} /></Text>
+                    <Text className={"text-default-800"}><LuMenu size={28} /></Text>
                   </div>
                   // </Tooltip>
                 )}
@@ -219,7 +215,7 @@ function ProjectNavigation(props) {
                     variant="light"
                     color={_checkIfActive("dashboard") ? "primary" : "default"}
                   >
-                    <LuCoffee size={28} />
+                    <LuLayoutGrid size={28} />
                   </Button>
                 </div>
               </Tooltip>
@@ -228,7 +224,7 @@ function ProjectNavigation(props) {
               <Button
                 variant="light"
                 color={_checkIfActive("dashboard") ? "primary" : "default"}
-                startContent={<LuCoffee size={24} />}
+                startContent={<LuLayoutGrid size={24} />}
                 className="pointer-events-none"
               >
                 Dashboard

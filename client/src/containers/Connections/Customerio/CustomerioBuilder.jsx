@@ -7,6 +7,7 @@ import {
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
+import { LuInfo, LuMessageCircle, LuPlay, LuTrash, LuUsers2 } from "react-icons/lu";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -22,7 +23,6 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
-import { IoChatboxEllipses, IoInformationCircleOutline, IoPeople, IoPlay, IoTrashBin } from "react-icons/io5";
 
 /*
   The Customer.io data request builder
@@ -202,7 +202,7 @@ function CustomerioBuilder(props) {
                       variant="bordered"
                       onClick={() => onDelete()}
                     >
-                      <IoTrashBin />
+                      <LuTrash />
                     </Button>
                   </Tooltip>
                 </Row>
@@ -228,7 +228,7 @@ function CustomerioBuilder(props) {
                   key="customers"
                   title={(
                     <div className="flex items-center space-x-2">
-                      <IoPeople />
+                      <LuUsers2 />
                       <span>Customers</span>
                     </div>
                   )}
@@ -237,7 +237,7 @@ function CustomerioBuilder(props) {
                   key="campaigns"
                   title={(
                     <div className="flex items-center space-x-2">
-                      <IoChatboxEllipses />
+                      <LuMessageCircle />
                       <span>Campaigns</span>
                     </div>
                   )}
@@ -291,7 +291,7 @@ function CustomerioBuilder(props) {
           <Container>
             <Row className="Customerio-request-tut">
               <Button
-                endContent={<IoPlay />}
+                endContent={<LuPlay />}
                 isLoading={requestLoading}
                 onClick={_onTest}
                 className="w-full"
@@ -315,7 +315,7 @@ function CustomerioBuilder(props) {
                 placement="left-start"
                 className="max-w-[500px]"
               >
-                <div><IoInformationCircleOutline /></div>
+                <div><LuInfo /></div>
               </Tooltip>
             </Row>
             <Spacer y={2} />
@@ -337,7 +337,7 @@ function CustomerioBuilder(props) {
             </Row>
             <Spacer y={1} />
             <Row align="center">
-              <IoInformationCircleOutline />
+              <LuInfo />
               <Spacer x={1} />
               <Text size="sm">
                 {"To keep the interface fast, not all the data might show up here."}

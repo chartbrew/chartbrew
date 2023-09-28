@@ -5,13 +5,12 @@ import {
 } from "@nextui-org/react";
 import _ from "lodash";
 import cookie from "react-cookies";
-import { FaExternalLinkSquareAlt } from "react-icons/fa";
+import { LuArrowRight, LuCheckCheck, LuChevronRight, LuExternalLink, LuPlus, LuX } from "react-icons/lu";
 
 import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import { IoAdd, IoArrowForward, IoCheckmark, IoChevronForward, IoClose, IoLink } from "react-icons/io5";
 
 /*
   The Form used to configure the SimpleAnalytics template
@@ -203,7 +202,7 @@ function SimpleAnalyticsTemplate(props) {
             {!formVisible && (
               <Button
                 variant="faded"
-                endContent={<IoAdd />}
+                endContent={<LuPlus />}
                 onClick={() => setFormVisible(true)}
                 color="primary"
               >
@@ -263,7 +262,7 @@ function SimpleAnalyticsTemplate(props) {
             <Link href="https://simpleanalytics.com/account#api" target="_blank" rel="noreferrer">
               <Text className={"text-secondary"}>{"Get your API key here "}</Text>
               <Spacer x={1} />
-              <IoLink />
+              <LuExternalLink />
             </Link>
           </Row>
         </>
@@ -298,7 +297,7 @@ function SimpleAnalyticsTemplate(props) {
           <Row>
             <Button
               variant="bordered"
-              startContent={<IoCheckmark />}
+              startContent={<LuCheckCheck />}
               onClick={_onSelectAll}
               size="sm"
             >
@@ -307,7 +306,7 @@ function SimpleAnalyticsTemplate(props) {
             <Spacer x={1} />
             <Button
               variant="bordered"
-              startContent={<IoClose />}
+              startContent={<LuX />}
               onClick={_onDeselectAll}
               size="sm"
             >
@@ -342,7 +341,7 @@ function SimpleAnalyticsTemplate(props) {
                 <Text>{"In order to be able to get the stats from Simple Analytics, please do one of the following:"}</Text>
               </Row>
               <Row align="center">
-                <IoChevronForward />
+                <LuChevronRight />
                 <Spacer x={1} />
                 <Link
                   target="_blank"
@@ -352,10 +351,10 @@ function SimpleAnalyticsTemplate(props) {
                   <Text>Click here to get your API key and enter it in the field above.</Text>
                 </Link>
                 <Spacer x={1} />
-                <FaExternalLinkSquareAlt size={12} />
+                <LuExternalLink size={12} />
               </Row>
               <Row align="center">
-                <IoChevronForward />
+                <LuChevronRight />
                 <Spacer x={1} />
                 <Link
                   href={`https://simpleanalytics.com/${connection.website}/settings#visibility`}
@@ -365,7 +364,7 @@ function SimpleAnalyticsTemplate(props) {
                   <Text>{"Alternatively, go to this page and make your website analytics public."}</Text>
                 </Link>
                 <Spacer x={1} />
-                <IoLink size={12} />
+                <LuExternalLink size={12} />
               </Row>
             </div>
           </Row>
@@ -387,7 +386,7 @@ function SimpleAnalyticsTemplate(props) {
                 <Link href={`https://simpleanalytics.com/${connection.website}`} target="_blank" rel="noreferrer">
                   <Text>{"Click here to see if your website is registered with Simple Analytics"}</Text>
                   <Spacer x={1} />
-                  <IoLink />
+                  <LuExternalLink />
                 </Link>
               </Row>
             </div>
@@ -406,7 +405,7 @@ function SimpleAnalyticsTemplate(props) {
           isLoading={loading}
           onClick={_onGenerateDashboard}
           color="primary"
-          endContent={<IoArrowForward />}
+          endContent={<LuArrowRight />}
         >
           {"Create the charts"}
         </Button>

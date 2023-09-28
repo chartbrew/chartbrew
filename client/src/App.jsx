@@ -49,7 +49,7 @@ export default function App() {
     <Provider store={store}>
       <Router history={history}>
         <NextUIProvider>
-          <IconContext.Provider value={{ className: "react-icons", size: 22, style: { opacity: 0.8 } }}>
+          <IconContext.Provider value={{ className: "react-icons", size: 20, style: { opacity: 0.8 } }}>
             <Main />
           </IconContext.Provider>
         </NextUIProvider>

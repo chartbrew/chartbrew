@@ -9,7 +9,6 @@ import {
 import AceEditor from "react-ace";
 import uuid from "uuid/v4";
 import { toast } from "react-toastify";
-import { IoAdd, IoAddCircle, IoCloseCircle, IoInformationCircleOutline, IoPlay, IoTrashBin } from "react-icons/io5";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/mode-javascript";
@@ -28,6 +27,7 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
+import { LuInfo, LuPlay, LuPlus, LuPlusCircle, LuTrash, LuXCircle } from "react-icons/lu";
 
 const methods = [{
   key: 1,
@@ -291,7 +291,7 @@ function ApiBuilder(props) {
                   variant="bordered"
                   onClick={() => onDelete()}
                 >
-                  <IoTrashBin />
+                  <LuTrash />
                 </Button>
               </Tooltip>
             </Row>
@@ -335,7 +335,7 @@ function ApiBuilder(props) {
                   variant="faded"
                   endContent={(
                     <a onClick={() => chart.startDate && _onChangeRoute(`${apiRequest.route}{{ start_date }}`)} className="cursor-pointer">
-                      <IoAddCircle />
+                      <LuPlusCircle />
                     </a>
                   )}
                 >
@@ -353,7 +353,7 @@ function ApiBuilder(props) {
                   variant="faded"
                   endContent={(
                     <a onClick={() => chart.endDate && _onChangeRoute(`${apiRequest.route}{{ end_date }}`)} className="cursor-pointer">
-                      <IoAddCircle />
+                      <LuPlusCircle />
                     </a>
                   )}
                 >
@@ -465,7 +465,7 @@ function ApiBuilder(props) {
                           color="danger"
                           variant="light"
                         >
-                          <IoCloseCircle />
+                          <LuXCircle />
                         </Button>
                       </Row>
                       <Spacer y={1} />
@@ -476,7 +476,7 @@ function ApiBuilder(props) {
 
               <Spacer y={2} />
               <Button
-                endContent={<IoAdd />}
+                endContent={<LuPlus />}
                 size="sm"
                 onClick={_addHeader}
                 variant="bordered"
@@ -536,7 +536,7 @@ function ApiBuilder(props) {
               ))}
             </Select>
             <Button
-              endContent={<IoPlay />}
+              endContent={<LuPlay />}
               isLoading={requestLoading}
               onClick={() => _onTest()}
               fullWidth
@@ -564,7 +564,7 @@ function ApiBuilder(props) {
               )}
               placement="bottom"
             >
-              <IoInformationCircleOutline />
+              <div><LuInfo /></div>
             </Tooltip>
           </Row>
           <Spacer y={2} />
@@ -586,7 +586,7 @@ function ApiBuilder(props) {
           </Row>
           <Spacer y={2} />
           <Row align="center">
-            <IoInformationCircleOutline />
+            <LuInfo />
             <Spacer x={0.5} />
             <Text small>
               {"This is a preview and it might not show all data in order to keep things fast in the UI."}

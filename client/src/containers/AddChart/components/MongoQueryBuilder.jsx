@@ -8,9 +8,7 @@ import {
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
-import {
-  IoAdd, IoCheckmark, IoChevronForward, IoCreate, IoInformationCircleOutline, IoPlay, IoTrashBin,
-} from "react-icons/io5";
+import { LuCheck, LuChevronRight, LuInfo, LuPencilLine, LuPlay, LuPlus, LuTrash } from "react-icons/lu";
 
 import "ace-builds/src-min-noconflict/mode-javascript";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -180,7 +178,7 @@ function MongoQueryBuilder(props) {
                     variant="bordered"
                     onClick={() => onDelete()}
                   >
-                    <IoTrashBin />
+                    <LuTrash />
                   </Button>
                 </Tooltip>
               </Row>
@@ -207,7 +205,7 @@ function MongoQueryBuilder(props) {
               )}
               placement="bottom"
             >
-              <div><IoInformationCircleOutline /></div>
+              <div><LuInfo /></div>
             </Tooltip>
           </Row>
           <Spacer y={1} />
@@ -232,7 +230,7 @@ function MongoQueryBuilder(props) {
           <Row align="center" className="mongobuilder-buttons-tut">
             <Button
               color={testSuccess ? "success" : testError ? "danger" : "primary"}
-              endContent={<IoPlay />}
+              endContent={<LuPlay />}
               onClick={() => _onTest()}
               isLoading={testingQuery}
             >
@@ -242,7 +240,7 @@ function MongoQueryBuilder(props) {
             <Spacer x={0.5} />
             <Button
               variant="bordered"
-              endContent={<IoAdd />}
+              endContent={<LuPlus />}
               isLoading={savingQuery}
               onClick={_onSaveQueryConfirmation}
             >
@@ -254,7 +252,7 @@ function MongoQueryBuilder(props) {
                 <Spacer x={0.5} />
                 <Button
                   variant="bordered"
-                  startContent={<IoCreate />}
+                  startContent={<LuPencilLine />}
                   onClick={_onUpdateSavedQuery}
                   isLoading={updatingSavedQuery}
                 >
@@ -277,7 +275,7 @@ function MongoQueryBuilder(props) {
               content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change the query."}
               className="max-w-[400px]"
             >
-              <IoInformationCircleOutline />
+              <div><LuInfo /></div>
             </Tooltip>
           </Row>
           <Spacer y={4} />
@@ -337,7 +335,7 @@ function MongoQueryBuilder(props) {
               <PopoverTrigger>
                 <Link className="text-secondary flex items-center">
                   <div className="flex flex-row items-center">
-                    <IoInformationCircleOutline />
+                    <LuInfo />
                     <Spacer x={0.5} />
                     <Text>Are your queries slow? Read here</Text>
                   </div>
@@ -356,7 +354,7 @@ function MongoQueryBuilder(props) {
                       rel="noopener noreferrer"
                       className="flex items-center"
                     >
-                      <div><IoChevronForward /></div>
+                      <div><LuChevronRight /></div>
                       <Spacer x={0.5} />
                       <Text color="primary">
                         {"Use a relevant condition for your query. For example, don't fetch all the documents if you know you are going to use just the recent ones."}
@@ -372,7 +370,7 @@ function MongoQueryBuilder(props) {
                       rel="noopener noreferrer"
                       className="flex items-center"
                     >
-                      <div><IoChevronForward /></div>
+                      <div><LuChevronRight /></div>
                       <Spacer x={0.2} />
                       <Text color="primary">
                         {"Remove unwanted fields from the query payload if you know for sure that they won't help to generate the chart you have in mind."}
@@ -388,7 +386,7 @@ function MongoQueryBuilder(props) {
                       rel="noopener noreferrer"
                       className="flex items-center"
                     >
-                      <div><IoChevronForward /></div>
+                      <div><LuChevronRight /></div>
                       <Spacer x={1} />
                       <Text color="primary">
                         {"If you store files encoded in base64, make sure you exclude them using the method above"}
@@ -427,7 +425,7 @@ function MongoQueryBuilder(props) {
             </Button>
             <Button
               disabled={!savedQuerySummary}
-              endContent={<IoCheckmark />}
+              endContent={<LuCheck />}
               onClick={_onSaveQuery}
               color="primary"
             >

@@ -20,12 +20,10 @@ import {
 } from "@nextui-org/react";
 import { TbDragDrop, TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import {
-  IoWarning, IoInformationCircleOutline, IoCloseCircle,
-  IoCheckmark, IoColorWand, IoSettings, IoEyeOutline, IoChevronDownCircle, IoAdd,
-  IoEyeOffOutline, IoFilter, IoCalendarOutline, IoEye, IoEyeOff, IoArrowRedo,
-  IoChevronForward, IoSearchOutline, IoChevronDown,
-} from "react-icons/io5";
-import { RiSortAsc, RiSortDesc } from "react-icons/ri";
+  LuAlertTriangle, LuArrowDown01, LuArrowDown10, LuCalendarDays, LuCheckCircle,
+  LuChevronDown, LuChevronDownCircle, LuChevronRight, LuEye, LuEyeOff, LuFilter,
+  LuInfo, LuPlus, LuRedo, LuSearch, LuSettings, LuWand2, LuXCircle,
+} from "react-icons/lu";
 
 import { runRequest as runRequestAction } from "../../../actions/dataset";
 import fieldFinder from "../../../modules/fieldFinder";
@@ -622,7 +620,7 @@ function DatasetData(props) {
                 <Spacer x={0.3} />
                 <Tooltip content="The selected field is not available in the data. Please select another.">
                   <div>
-                    <IoWarning className="text-warning" />
+                    <LuAlertTriangle className="text-warning" />
                   </div>
                 </Tooltip>
               </>
@@ -636,7 +634,7 @@ function DatasetData(props) {
                   fullWidth
                   placeholder="Double-click to search"
                   ref={xFieldRef}
-                  endContent={<IoChevronDown />}
+                  endContent={<LuChevronDown />}
                   variant="bordered"
                 />
               </PopoverTrigger>
@@ -644,7 +642,7 @@ function DatasetData(props) {
                 <div className="pt-4">
                   <Input
                     placeholder="Search"
-                    endContent={<IoSearchOutline />}
+                    endContent={<LuSearch />}
                     variant="bordered"
                     fullWidth
                     onChange={(e) => setXFieldFilter(e.target.value)}
@@ -681,7 +679,7 @@ function DatasetData(props) {
                   content="Select a collection (array) of objects to display in a table format. 'Root' means the first level of the collection."
                 >
                   <div>
-                    <IoInformationCircleOutline />
+                    <LuInfo />
                   </div>
                 </Tooltip>
               </>
@@ -697,7 +695,7 @@ function DatasetData(props) {
                 <Spacer x={0.3} />
                 <Tooltip content="The selected field is not available in the data. Please select another.">
                   <div>
-                    <IoWarning className="text-warning" />
+                    <LuAlertTriangle className="text-warning" />
                   </div>
                 </Tooltip>
               </>
@@ -711,7 +709,7 @@ function DatasetData(props) {
                   fullWidth
                   placeholder="Select a date field"
                   ref={dateFieldRef}
-                  endContent={<IoChevronDown />}
+                  endContent={<LuChevronDown />}
                   variant="bordered"
                 />
               </PopoverTrigger>
@@ -719,7 +717,7 @@ function DatasetData(props) {
                 <div className="pt-4">
                   <Input
                     placeholder="Search"
-                    endContent={<IoSearchOutline />}
+                    endContent={<LuSearch />}
                     variant="bordered"
                     fullWidth
                     onChange={(e) => setDateFieldFilter(e.target.value)}
@@ -753,7 +751,7 @@ function DatasetData(props) {
             {dataset.dateField && (
               <Tooltip content="Clear field">
                 <Link onClick={() => onUpdate({ dateField: "" })} className="text-danger">
-                  <IoCloseCircle />
+                  <LuXCircle />
                 </Link>
               </Tooltip>
             )}
@@ -770,7 +768,7 @@ function DatasetData(props) {
                   <>
                     <Spacer x={0.6} />
                     <Tooltip content="The selected field is not available in the data. Please select another.">
-                      <div><IoWarning className="text-danger" /></div>
+                      <div><LuAlertTriangle className="text-danger" /></div>
                     </Tooltip>
                   </>
                 )}
@@ -783,7 +781,7 @@ function DatasetData(props) {
                       value={dataset.yAxis?.substring(dataset.yAxis.lastIndexOf(".") + 1)}
                       fullWidth
                       ref={yFieldRef}
-                      endContent={<IoChevronDown />}
+                      endContent={<LuChevronDown />}
                       variant="bordered"
                     />
                   </PopoverTrigger>
@@ -791,7 +789,7 @@ function DatasetData(props) {
                     <div className="pt-4">
                       <Input
                         placeholder="Search"
-                        endContent={<IoSearchOutline />}
+                        endContent={<LuSearch />}
                         variant="bordered"
                         fullWidth
                         onChange={(e) => setYFieldFilter(e.target.value)}
@@ -854,7 +852,7 @@ function DatasetData(props) {
                 <Tooltip content="Sort the dataset in ascending order">
                   <Button
                     color={dataset.sort === "asc" ? "secondary" : "default"}
-                    variant={dataset.sort !== "asc" ? "bordered" : "filled"}
+                    variant={dataset.sort !== "asc" ? "bordered" : "solid"}
                     onClick={() => {
                       if (dataset.sort === "asc") {
                         onUpdate({ sort: "" });
@@ -864,14 +862,14 @@ function DatasetData(props) {
                     }}
                     isIconOnly
                   >
-                    <RiSortAsc />
+                    <LuArrowDown01 />
                   </Button>
                 </Tooltip>
                 <Spacer x={0.5} />
                 <Tooltip content="Sort the dataset in descending order">
                   <Button
                     color={dataset.sort === "desc" ? "secondary" : "default"}
-                    variant={dataset.sort !== "desc" ? "bordered" : "filled"}
+                    variant={dataset.sort !== "desc" ? "bordered" : "solid"}
                     onClick={() => {
                       if (dataset.sort === "desc") {
                         onUpdate({ sort: "" });
@@ -881,7 +879,7 @@ function DatasetData(props) {
                     }}
                     isIconOnly
                   >
-                    <RiSortDesc />
+                    <LuArrowDown10 />
                   </Button>
                 </Tooltip>
                 {dataset.sort && (
@@ -889,7 +887,7 @@ function DatasetData(props) {
                     <Spacer x={0.5} />
                     <Tooltip content="Clear sorting">
                       <Link className="text-danger" onClick={() => onUpdate({ sort: "" })}>
-                        <IoCloseCircle className="text-danger" />
+                        <LuXCircle className="text-danger" />
                       </Link>
                     </Tooltip>
                   </>
@@ -923,7 +921,7 @@ function DatasetData(props) {
                     <Spacer x={0.5} />
                     <Tooltip content="Save">
                       <Link className="text-success" onClick={() => onUpdate({ maxRecords: datasetMaxRecords })}>
-                        <IoCheckmark className="text-success" />
+                        <LuCheckCircle className="text-success" />
                       </Link>
                     </Tooltip>
                     <Spacer x={0.5} />
@@ -935,7 +933,7 @@ function DatasetData(props) {
                           setDatasetMaxRecords(null);
                         }}
                       >
-                        <IoCloseCircle className="text-danger" />
+                        <LuXCircle className="text-danger" />
                       </Link>
                     </Tooltip>
                   </div>
@@ -962,7 +960,7 @@ function DatasetData(props) {
                     <Text>
                       {"Metric formula"}
                     </Text>
-                    <IoInformationCircleOutline />
+                    <LuInfo />
                   </div>
                 </PopoverTrigger>
                 <PopoverContent>
@@ -981,17 +979,17 @@ function DatasetData(props) {
                 content={formula === dataset.formula ? "The formula is already applied" : "Apply the formula"}
               >
                 <Link onClick={formula === dataset.formula ? () => { } : _onApplyFormula}>
-                  <IoCheckmark className={`${formula === dataset.formula ? "text-default-foreground" : "text-success"}`} />
+                  <LuCheckCircle className={`${formula === dataset.formula ? "text-default-foreground" : "text-success"}`} />
                 </Link>
               </Tooltip>
               <Tooltip content="Remove formula">
                 <Link onClick={_onRemoveFormula}>
-                  <IoCloseCircle className="text-danger" />
+                  <LuXCircle className="text-danger" />
                 </Link>
               </Tooltip>
               <Tooltip content="Click for an example">
                 <Link onClick={_onExampleFormula}>
-                  <IoColorWand className="text-primary" />
+                  <LuWand2 className="text-primary" />
                 </Link>
               </Tooltip>
             </div>
@@ -1012,7 +1010,7 @@ function DatasetData(props) {
               <Text>{"Goal "}</Text>
               <Spacer x={0.5} />
               <Tooltip content="A goal can be displayed as a progress bar in your KPI charts. Enter a number without any other characters. (e.g. 1000 instead of 1k)">
-                <div><IoInformationCircleOutline /></div>
+                <div><LuInfo /></div>
               </Tooltip>
             </Row>
             <Row align="center" className={"gap-2"}>
@@ -1026,12 +1024,12 @@ function DatasetData(props) {
                 content={goal === dataset.goal ? "The goal is already applied" : "Save goal"}
               >
                 <Link onClick={goal === dataset.goal ? () => { } : _onApplyGoal}>
-                  <IoCheckmark className={goal === dataset.goal ? "text-foreground" : "text-success"} />
+                  <LuCheckCircle className={goal === dataset.goal ? "text-foreground" : "text-success"} />
                 </Link>
               </Tooltip>
               <Tooltip content="Remove goal">
                 <Link onClick={_onRemoveGoal}>
-                  <IoCloseCircle className="text-danger" />
+                  <LuXCircle className="text-danger" />
                 </Link>
               </Tooltip>
             </Row>
@@ -1041,7 +1039,7 @@ function DatasetData(props) {
           <>
             <div className="col-span-12 mt-4">
               <Accordion fullWidth variant="bordered">
-                <AccordionItem subtitle="Table columns options" className="text-default" indicator={<IoSettings />}>
+                <AccordionItem subtitle="Table columns options" className="text-default" indicator={<LuSettings />}>
                   <div>
                     {!isDragState && (
                       <Row wrap="wrap">
@@ -1059,7 +1057,7 @@ function DatasetData(props) {
                                   onClick={() => _onExcludeField(field.accessor)}
                                   title="Hide field"
                                 >
-                                  <IoEyeOutline />
+                                  <LuEye />
                                 </Link>
                               )}
                               endContent={(
@@ -1069,16 +1067,16 @@ function DatasetData(props) {
                                       className="flex items-center"
                                       title="Sum values on this field"
                                     >
-                                      <IoChevronDownCircle />
+                                      <LuChevronDownCircle />
                                     </Link>
                                   </DropdownTrigger>
                                   <DropdownMenu variant="bordered">
-                                    <DropdownItem startContent={<IoSettings />}>
+                                    <DropdownItem startContent={<LuSettings />}>
                                       <Link className="w-full" onClick={() => _onSelectFieldForFormatting(field.accessor)}>
                                         <Text>Data formatting</Text>
                                       </Link>
                                     </DropdownItem>
-                                    <DropdownItem startContent={<IoAdd />}>
+                                    <DropdownItem startContent={<LuPlus />}>
                                       <Link className="w-full" onClick={() => _onSumField(field.accessor)}>
                                         {dataset.configuration
                                           && dataset.configuration.sum === field.accessor
@@ -1145,7 +1143,7 @@ function DatasetData(props) {
                             variant="faded"
                             startContent={(
                               <Link className="flex items-center text-warning" onClick={() => _onShowField(field)}>
-                                <IoEyeOffOutline />
+                                <LuEyeOff />
                               </Link>
                             )}
                           >
@@ -1177,7 +1175,7 @@ function DatasetData(props) {
                             title="Cancel ordering"
                             size="sm"
                           >
-                            <IoCloseCircle />
+                            <LuXCircle />
                           </Button>
                         </>
                       )}
@@ -1229,7 +1227,7 @@ function DatasetData(props) {
 
             <Button
               variant="bordered"
-              startContent={<IoFilter />}
+              startContent={<LuFilter />}
               onClick={_onAddCondition}
               auto
               size={"sm"}
@@ -1251,7 +1249,7 @@ function DatasetData(props) {
                       <Input
                         value={condition.field && condition.field.substring(condition.field.lastIndexOf(".") + 1) || "field"}
                         size="sm"
-                        endContent={<IoChevronDown />}
+                        endContent={<LuChevronDown />}
                       />
                     </PopoverTrigger>
                     <PopoverContent>
@@ -1319,7 +1317,7 @@ function DatasetData(props) {
                       <Popover>
                         <PopoverTrigger>
                           <Input
-                            endContent={<IoCalendarOutline />}
+                            endContent={<LuCalendarDays />}
                             placeholder="Enter a value"
                             value={(condition.value && format(new Date(condition.value), "Pp", { locale: enGB })) || "Enter a value"}
                             disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
@@ -1339,7 +1337,7 @@ function DatasetData(props) {
                   </div>
                   <Tooltip content="Remove condition">
                     <Link color="danger" onClick={() => _onRemoveCondition(condition.id)}>
-                      <IoCloseCircle className="text-danger" />
+                      <LuXCircle className="text-danger" />
                     </Link>
                   </Tooltip>
 
@@ -1354,7 +1352,7 @@ function DatasetData(props) {
                             && _.find(fieldOptions, { value: condition.field }).type
                         )}
                       >
-                        <IoEye className="text-secondary" />
+                        <LuEye className="text-secondary" />
                       </Link>
                     </Tooltip>
                   )}
@@ -1370,7 +1368,7 @@ function DatasetData(props) {
                             && _.find(fieldOptions, { value: condition.field }).type
                         )}
                       >
-                        <IoEyeOff className="text-secondary" />
+                        <LuEyeOff className="text-secondary" />
                       </Link>
                     </Tooltip>
                   )}
@@ -1381,7 +1379,7 @@ function DatasetData(props) {
                         color="success"
                         onClick={() => _onApplyCondition(condition.id, condition.exposed)}
                       >
-                        <IoCheckmark className="text-success" />
+                        <LuCheckCircle className="text-success" />
                       </Link>
                     </Tooltip>
                   )}
@@ -1391,7 +1389,7 @@ function DatasetData(props) {
                         color="warning"
                         onClick={() => _onRevertCondition(condition.id)}
                       >
-                        <IoArrowRedo />
+                        <LuRedo />
                       </Link>
                     </Tooltip>
                   )}
@@ -1401,7 +1399,7 @@ function DatasetData(props) {
                         className="text-default-800"
                         onClick={() => _onEditConditionSettings(condition)}
                       >
-                        <IoSettings />
+                        <LuSettings />
                       </Link>
                     </Tooltip>
                   )}
@@ -1416,7 +1414,7 @@ function DatasetData(props) {
               variant="light"
               color="primary"
               onClick={_onAddCondition}
-              startContent={<IoAdd />}
+              startContent={<LuPlus />}
               size="sm"
             >
               Add a new condition
@@ -1437,7 +1435,7 @@ function DatasetData(props) {
                     size="sm"
                     endContent={(
                       <Link onClick={() => _onHideCondition(condition.id)} color="danger">
-                        <IoCloseCircle />
+                        <LuXCircle />
                       </Link>
                     )}
                   >
@@ -1550,7 +1548,7 @@ function FormulaTips() {
       </Row>
       <Spacer y={1} />
       <Row align="center">
-        <IoChevronForward />
+        <LuChevronRight />
         <Spacer x={0.5} />
         <Text>
           {"{val} => 12345"}
@@ -1558,7 +1556,7 @@ function FormulaTips() {
       </Row>
       <Spacer y={1} />
       <Row align="center">
-        <IoChevronForward />
+        <LuChevronRight />
         <Spacer x={0.5} />
         <Text>
           {"{val / 100} => 123.45"}
@@ -1566,7 +1564,7 @@ function FormulaTips() {
       </Row>
       <Spacer y={1} />
       <Row align="center">
-        <IoChevronForward />
+        <LuChevronRight />
         <Spacer x={0.5} />
         <Text>
           {"$ {val / 100} => $ 123.45"}
@@ -1574,7 +1572,7 @@ function FormulaTips() {
       </Row>
       <Spacer y={1} />
       <Row align="center">
-        <IoChevronForward />
+        <LuChevronRight />
         <Spacer x={0.5} />
         <Text>
           {"{val / 100} USD => 123.45 USD"}

@@ -7,6 +7,7 @@ import {
 } from "@nextui-org/react";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
+import { LuClock4, LuTrash, LuX } from "react-icons/lu";
 
 import canAccess from "../config/canAccess";
 import { updateProject, changeActiveProject, removeProject } from "../actions/project";
@@ -16,7 +17,6 @@ import Callout from "../components/Callout";
 import Row from "../components/Row";
 import Text from "../components/Text";
 import useThemeDetector from "../modules/useThemeDetector";
-import { IoClose, IoTimeOutline, IoTrashBin } from "react-icons/io5";
 
 /*
   Project settings page
@@ -187,7 +187,7 @@ function ProjectSettings(props) {
           variant="bordered"
           disabled={!_canAccess("admin")}
           onClick={() => _onGetMachineTimezone()}
-          startContent={<IoTimeOutline />}
+          startContent={<LuClock4 />}
         >
           <Text hideIn={"xs"}>
             Get current timezone
@@ -210,7 +210,7 @@ function ProjectSettings(props) {
             color="warning"
             variant="flat"
             disabled={!_canAccess("admin")}
-            endContent={<IoClose />}
+            endContent={<LuX />}
             onClick={() => _onSaveTimezone(true)}
           >
             Clear
@@ -226,7 +226,7 @@ function ProjectSettings(props) {
         <Button
           color="danger"
           disabled={!_canAccess("admin")}
-          endContent={<IoTrashBin />}
+          endContent={<LuTrash />}
           onClick={_onRemoveConfirmation}
           variant="bordered"
         >
@@ -267,7 +267,7 @@ function ProjectSettings(props) {
             <Button
               color="danger"
               disabled={removeLoading}
-              endContent={<IoTrashBin />}
+              endContent={<LuTrash />}
               onClick={_onRemove}
             >
               Remove completely

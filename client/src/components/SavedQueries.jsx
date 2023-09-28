@@ -4,12 +4,12 @@ import { connect } from "react-redux";
 import {
   Button, Input, CircularProgress, Modal, Spacer, Tooltip, ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
+import { LuCheck, LuPencilLine, LuX } from "react-icons/lu";
 
 import { getSavedQueries, updateSavedQuery, deleteSavedQuery } from "../actions/savedQuery";
 import { secondaryTransparent } from "../config/colors";
 import Row from "./Row";
 import Text from "./Text";
-import { IoCheckbox, IoCloseCircle, IoCreate } from "react-icons/io5";
 
 /*
   Contains the project creation functionality
@@ -120,7 +120,7 @@ function SavedQueries(props) {
                       size="sm"
                       variant="faded"
                     >
-                      <IoCheckbox />
+                      <LuCheck />
                     </Button>
                   </Tooltip>
                   <Tooltip content="Edit the summary">
@@ -132,7 +132,7 @@ function SavedQueries(props) {
                       isLoading={editLoading}
                       variant="faded"
                     >
-                      <IoCreate />
+                      <LuPencilLine />
                     </Button>
                   </Tooltip>
                   <Tooltip content="Remove the saved query">
@@ -142,7 +142,7 @@ function SavedQueries(props) {
                       size="sm"
                       variant="faded"
                     >
-                      <IoCloseCircle />
+                      <LuX />
                     </Button>
                   </Tooltip>
                 </div>

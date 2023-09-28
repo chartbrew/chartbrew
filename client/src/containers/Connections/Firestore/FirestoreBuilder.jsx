@@ -13,6 +13,7 @@ import uuid from "uuid/v4";
 import { Calendar } from "react-date-range";
 import { format, formatISO } from "date-fns";
 import { enGB } from "date-fns/locale";
+import { LuAlertTriangle, LuCalendarDays, LuInfo, LuPlay, LuPlus, LuPlusCircle, LuRefreshCw, LuTrash, LuUndo, LuX, LuXCircle } from "react-icons/lu";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -33,7 +34,6 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
-import { IoAdd, IoAddCircle, IoArrowUndoCircle, IoCalendarOutline, IoClose, IoCloseCircle, IoInformationCircleOutline, IoPlay, IoReload, IoTrashBin, IoWarningOutline } from "react-icons/io5";
 
 export const operators = [{
   key: "=",
@@ -494,7 +494,7 @@ function FirestoreBuilder(props) {
                     variant="bordered"
                     onClick={() => onDelete()}
                   >
-                    <IoTrashBin />
+                    <LuTrash />
                   </Button>
                 </Tooltip>
               </Row>
@@ -528,7 +528,7 @@ function FirestoreBuilder(props) {
           <Row>
             <Button
               size="sm"
-              startContent={<IoReload />}
+              startContent={<LuRefreshCw />}
               onClick={() => _onFetchCollections()}
               isLoading={collectionsLoading}
               variant="light"
@@ -569,7 +569,7 @@ function FirestoreBuilder(props) {
             <Tooltip
               content="These filters are applied on the main collection only."
             >
-              <div><IoInformationCircleOutline /></div>
+              <div><LuInfo /></div>
             </Tooltip>
           </Row>
           <Spacer y={1} />
@@ -664,7 +664,7 @@ function FirestoreBuilder(props) {
               <Button
                 color="danger"
                 onClick={() => _onSelectSubCollection("")}
-                startContent={<IoClose />}
+                startContent={<LuX />}
                 disabled={!dataRequest.configuration.selectedSubCollection}
                 variant="light"
                 size="sm"
@@ -687,7 +687,7 @@ function FirestoreBuilder(props) {
                   <Tooltip
                     content="These filters are applied on the sub-collection only."
                   >
-                    <div><IoInformationCircleOutline /></div>
+                    <div><LuInfo /></div>
                   </Tooltip>
                 </Row>
                 <Spacer y={1} />
@@ -743,7 +743,7 @@ function FirestoreBuilder(props) {
           <Container>
             <Row className="firestorebuilder-request-tut">
               <Button
-                endContent={<IoPlay />}
+                endContent={<LuPlay />}
                 isLoading={requestLoading}
                 onClick={() => _onTest()}
                 className={"w-full"}
@@ -766,7 +766,7 @@ function FirestoreBuilder(props) {
                 content="Use cache to avoid hitting the Firestore API every time you request data. The cache will be cleared when you change any of the settings."
                 className="max-w-[500px]"
               >
-                <IoInformationCircleOutline />
+                <div><LuInfo /></div>
               </Tooltip>
             </Row>
             <Spacer y={2} />
@@ -833,7 +833,7 @@ function Conditions(props) {
                 <Tooltip
                   content="This condition might not work on the current collection."
                 >
-                  <div><IoWarningOutline className="text-secondary" /></div>
+                  <div><LuAlertTriangle className="text-secondary" /></div>
                 </Tooltip>
               )}
               <Select
@@ -895,7 +895,7 @@ function Conditions(props) {
                     <PopoverTrigger>
                       <Input
                         placeholder="Enter a value"
-                        endContent={<IoCalendarOutline />}
+                        endContent={<LuCalendarDays />}
                         value={(condition.value && format(new Date(condition.value), "Pp", { locale: enGB })) || "Click to select a date"}
                         disabled={(condition.operator === "isNotNull" || condition.operator === "isNull")}
                         variant="bordered"
@@ -934,7 +934,7 @@ function Conditions(props) {
                             form="condition-values"
                             size="sm"
                           >
-                            <IoAddCircle />
+                            <LuPlusCircle />
                           </Button>
                         )}
                       />
@@ -944,7 +944,7 @@ function Conditions(props) {
                       {condition.values && condition.values.map((v) => (
                         <Chip
                           key={v}
-                          endContent={<IoClose />}
+                          endContent={<LuXCircle />}
                           size="sm"
                           onClick={() => _onRemoveConditionValue(condition, v)}
                           variant="faded"
@@ -969,7 +969,7 @@ function Conditions(props) {
                       size="sm"
                       variant="faded"
                     >
-                      <IoAddCircle />
+                      <LuPlusCircle />
                     </Button>
                   </Tooltip>
                 </>
@@ -988,7 +988,7 @@ function Conditions(props) {
                         size="sm"
                         variant="faded"
                       >
-                        <IoArrowUndoCircle />
+                        <LuUndo />
                       </Button>
                     </Tooltip>
                   </>
@@ -1002,7 +1002,7 @@ function Conditions(props) {
                   size="sm"
                   variant="faded"
                 >
-                  <IoCloseCircle />
+                  <LuXCircle />
                 </Button>
               </Tooltip>
             </Row>
@@ -1012,7 +1012,7 @@ function Conditions(props) {
       })}
       <Row>
         <Button
-          startContent={<IoAdd />}
+          startContent={<LuPlus />}
           onClick={onAddCondition}
           size="sm"
           variant="light"

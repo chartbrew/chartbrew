@@ -8,14 +8,14 @@ import {
   ModalBody, CircularProgress, NavbarBrand, NavbarContent, NavbarItem,
   DropdownTrigger, DropdownMenu, DropdownItem, CardBody, ModalFooter, ModalHeader, ModalContent,
 } from "@nextui-org/react";
-import { FaDiscord } from "react-icons/fa";
-import {
-  IoBook, IoChatboxEllipses, IoCompass, IoContrastSharp, IoHeartCircleOutline,
-  IoLogOut, IoLogoGithub, IoMoon, IoPerson, IoPlay, IoSettings, IoSunny,
-} from "react-icons/io5";
 import { createMedia } from "@artsy/fresnel";
 import useDarkMode from "@fisch0920/use-dark-mode";
 import { useLocalStorage } from "react-use";
+import {
+  LuBook, LuCompass, LuContrast, LuGithub, LuHeartHandshake, LuLogOut,
+  LuMoon, LuPlay, LuSettings, LuSmile, LuSun, LuUser,
+} from "react-icons/lu";
+import { TbBrandDiscord } from "react-icons/tb";
 
 import { getTeam } from "../actions/team";
 import { logout } from "../actions/user";
@@ -225,7 +225,7 @@ function NavbarContainer(props) {
                   variant="light"
                   disableRipple
                   className="p-0 bg-transparent data-[hover=true]:bg-transparent"
-                  startContent={<IoHeartCircleOutline size={24} />}
+                  startContent={<LuHeartHandshake size={24} />}
                   radius="sm"
                 >
                   Help
@@ -233,22 +233,22 @@ function NavbarContainer(props) {
               </DropdownTrigger>
             </NavbarItem>
             <DropdownMenu variant="faded" onAction={(key) => _onDropdownAction(key)}>
-              <DropdownItem startContent={<FaDiscord />} key="discord">
+              <DropdownItem startContent={<TbBrandDiscord />} key="discord">
                 <Text>{"Join our Discord"}</Text>
               </DropdownItem>
-              <DropdownItem startContent={<IoCompass />} key="tutorials">
+              <DropdownItem startContent={<LuCompass />} key="tutorials">
                 <Text>{"Tutorials"}</Text>
               </DropdownItem>
-              <DropdownItem startContent={<IoBook />} key="documentation">
+              <DropdownItem startContent={<LuBook />} key="documentation">
                 <Text>{"Documentation"}</Text>
               </DropdownItem>
-              <DropdownItem startContent={<IoLogoGithub />} key="github">
+              <DropdownItem startContent={<LuGithub />} key="github">
                 <Text>{"GitHub"}</Text>
               </DropdownItem>
-              <DropdownItem showDivider startContent={<IoChatboxEllipses />} key="feedback">
+              <DropdownItem showDivider startContent={<LuSmile />} key="feedback">
                 <Text>{"Feedback"}</Text>
               </DropdownItem>
-              <DropdownItem startContent={<IoPlay />} key="project-starter">
+              <DropdownItem startContent={<LuPlay />} key="project-starter">
                 <Text>{"Project starter"}</Text>
               </DropdownItem>
             </DropdownMenu>
@@ -263,12 +263,12 @@ function NavbarContainer(props) {
                   style={{ minWidth: "fit-content" }}
                   isIconOnly
                 >
-                  <IoPerson />
+                  <LuUser />
                 </Button>
               </DropdownTrigger>
             </NavbarItem>
             <DropdownMenu variant="faded">
-              <DropdownItem startContent={<IoPerson />} key="profile" textValue="Profile">
+              <DropdownItem startContent={<LuUser />} key="profile" textValue="Profile">
                 <Link to="/edit">
                   <div className="w-full text-foreground">
                     Profile
@@ -276,7 +276,7 @@ function NavbarContainer(props) {
                 </Link>
               </DropdownItem>
               {_canAccess("admin", teamOwned) && (
-                <DropdownItem startContent={<IoSettings />} key="account">
+                <DropdownItem startContent={<LuSettings />} key="account">
                   <Link to={`/manage/${team.id || teamOwned.id}/settings`}>
                     <div className="w-full text-foreground">
                       Account settings
@@ -287,8 +287,8 @@ function NavbarContainer(props) {
 
               <DropdownItem
                 startContent={isSystemDark
-                  ? <IoSunny style={{ marginLeft: 3 }} size={20} />
-                  : <IoMoon style={{ marginLeft: 3 }} size={20} />}
+                  ? <LuSun style={{ marginLeft: 3 }} size={20} />
+                  : <LuMoon style={{ marginLeft: 3 }} size={20} />}
                 showDivider
                 key="theme"
                 onClick={() => setShowAppearance(true)}
@@ -297,7 +297,7 @@ function NavbarContainer(props) {
                 {!isSystemDark && "Dark mode"}
               </DropdownItem>
 
-              <DropdownItem startContent={<IoLogOut />} onClick={logout}>
+              <DropdownItem startContent={<LuLogOut />} onClick={logout}>
                 Sign out
               </DropdownItem>
             </DropdownMenu>
@@ -342,7 +342,7 @@ function NavbarContainer(props) {
                   variant={"bordered"}
                 >
                   <CardBody>
-                    <IoSunny size={24} color="black" />
+                    <LuSun size={24} color="black" />
                     <Text h5 className={"text-black"}>Light</Text>
                   </CardBody>
                 </Card>
@@ -356,7 +356,7 @@ function NavbarContainer(props) {
                   variant={"bordered"}
                 >
                   <CardBody>
-                    <IoMoon size={24} color="white" />
+                    <LuMoon size={24} color="white" />
                     <Text h5 className="text-white">Dark</Text>
                   </CardBody>
                 </Card>
@@ -370,7 +370,7 @@ function NavbarContainer(props) {
                   className={`${isSystemDark ? "bg-foreground" : "bg-background"} ${!isSystemDark && !isOsTheme ? "border-secondary-500" : ""} min-w-[100px]`}
                 >
                   <CardBody>
-                    <IoContrastSharp size={24} color={isSystemDark ? "white" : "black"} />
+                    <LuContrast size={24} color={isSystemDark ? "white" : "black"} />
                     <Text h5 className={isSystemDark ? "text-white" : "text-black"}>System</Text>
                   </CardBody>
                 </Card>

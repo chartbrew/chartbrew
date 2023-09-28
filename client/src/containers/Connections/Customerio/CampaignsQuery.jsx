@@ -9,7 +9,6 @@ import {
 } from "date-fns";
 import { DateRangePicker } from "react-date-range";
 import { enGB } from "date-fns/locale";
-import { IoCalendar, IoInformationCircleOutline } from "react-icons/io5";
 
 import { runHelperMethod } from "../../../actions/connection";
 import { primary, secondary } from "../../../config/colors";
@@ -17,6 +16,7 @@ import MessageTypeLabels from "./MessageTypeLabels";
 import { defaultStaticRanges, defaultInputRanges } from "../../../config/dateRanges";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
+import { LuCalendarDays, LuInfo } from "react-icons/lu";
 
 const periodOptions = [
   { key: "hours", value: "hours", text: "Hourly" },
@@ -566,7 +566,7 @@ function CampaignsQuery(props) {
                           content="You can select only one link, but if you wish to compare multiple links on the same chart, you can create a new dataset with another link."
                           className="max-w-[500px]"
                         >
-                          <div><IoInformationCircleOutline /></div>
+                          <div><LuInfo /></div>
                         </Tooltip>
                       </div>
                     </div>
@@ -587,7 +587,7 @@ function CampaignsQuery(props) {
                 <Input
                   label="Select the start and end date of the journey"
                   placeholder="Click to select a date"
-                  startContent={<IoCalendar />}
+                  startContent={<LuCalendarDays />}
                   variant="bordered"
                   fullWidth
                   value={`${format(journeyStart, "dd MMMM yyyy")} - ${format(journeyEnd, "dd MMMM yyyy")}`}

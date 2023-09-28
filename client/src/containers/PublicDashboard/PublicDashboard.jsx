@@ -11,12 +11,12 @@ import { createMedia } from "@artsy/fresnel";
 import { Helmet } from "react-helmet";
 import { clone } from "lodash";
 import { useDropzone } from "react-dropzone";
-import {
-  IoCheckmark, IoChevronBack, IoChevronBackCircle, IoCloseCircle, IoColorPalette, IoCreate,
-  IoEye, IoPencil, IoReload, IoShare,
-} from "react-icons/io5";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
+import {
+  LuCheck, LuChevronLeft, LuClipboardEdit, LuEye, LuPalette, LuPencilLine,
+  LuRefreshCw, LuShare, LuXCircle,
+} from "react-icons/lu";
 
 import AceEditor from "react-ace";
 import "ace-builds/src-min-noconflict/mode-css";
@@ -397,7 +397,7 @@ function PublicDashboard(props) {
               onClick={() => window.history.back()}
               color="primary"
               size="lg"
-              startContent={<IoChevronBack />}
+              startContent={<LuChevronLeft />}
             >
               Go back
             </Button>
@@ -453,7 +453,7 @@ function PublicDashboard(props) {
                     isIconOnly
                     variant="bordered"
                   >
-                    <IoChevronBackCircle />
+                    <LuChevronLeft />
                   </Button>
                 </LinkDom>
               </NavbarItem>
@@ -463,7 +463,7 @@ function PublicDashboard(props) {
                 <Button
                   color="secondary"
                   size="sm"
-                  endContent={<IoCheckmark />}
+                  endContent={<LuCheck />}
                   isLoading={saveLoading}
                   onClick={_onSaveChanges}
                 >
@@ -476,7 +476,7 @@ function PublicDashboard(props) {
             {_canAccess("editor") && (
               <NavbarItem>
                 <Link className="text-foreground flex gap-1 items-center cursor-pointer" onClick={() => setPreview(true)}>
-                  <IoEye />
+                  <LuEye />
                   <Text className={"hidden sm:block"}>Preview</Text>
                 </Link>
               </NavbarItem>
@@ -486,7 +486,7 @@ function PublicDashboard(props) {
                 <NavbarItem>
                   <PopoverTrigger>
                     <Link className="text-foreground flex gap-1 items-center">
-                      <IoColorPalette />
+                      <LuPalette />
                       <Text className={"hidden sm:block"}>Style</Text>
                     </Link>
                   </PopoverTrigger>
@@ -533,7 +533,7 @@ function PublicDashboard(props) {
             {_canAccess("editor") && (
               <NavbarItem>
                 <Link className="text-foreground flex gap-1 items-center" onClick={() => setEditingTitle(true)}>
-                    <IoCreate />
+                    <LuClipboardEdit />
                     <Text className={"hidden sm:block"}>Report settings</Text>
                   </Link>
               </NavbarItem>
@@ -541,7 +541,7 @@ function PublicDashboard(props) {
             {_canAccess("admin") && (
               <NavbarItem>
                 <Link className="text-foreground flex gap-1 items-center" onClick={() => setShowSettings(true)}>
-                  <IoShare />
+                  <LuShare />
                   <Text className={"hidden sm:block"}>Sharing</Text>
                 </Link>
               </NavbarItem>
@@ -558,7 +558,7 @@ function PublicDashboard(props) {
           color="primary"
           variant="faded"
         >
-          <IoCloseCircle />
+          <LuXCircle />
         </Button>
       )}
 
@@ -566,7 +566,7 @@ function PublicDashboard(props) {
         {project?.Team?.allowReportRefresh && (
           <Button
             onClick={() => _onRefreshCharts()}
-            endContent={<IoReload />}
+            endContent={<LuRefreshCw />}
             isLoading={refreshLoading}
             style={styles.refreshBtn(editorVisible)}
             size="sm"
@@ -606,7 +606,7 @@ function PublicDashboard(props) {
                       <Badge
                         color="primary"
                         className={"cursor-pointer mt-[-40px] ml-[-10px]"}
-                        content={<IoPencil className="p-1" size={24} />}
+                        content={<LuPencilLine className="p-1" size={24} />}
                         variant="faded"
                         {...getRootProps()}
                       >
@@ -715,7 +715,7 @@ function PublicDashboard(props) {
                   <Media at="mobile">
                     <Button
                       onClick={() => _onRefreshCharts()}
-                      endContent={<IoReload />}
+                      endContent={<LuRefreshCw />}
                       disabled={refreshLoading}
                       size="sm"
                       color="primary"

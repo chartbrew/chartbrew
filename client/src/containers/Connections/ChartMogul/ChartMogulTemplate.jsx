@@ -5,12 +5,12 @@ import {
 } from "@nextui-org/react";
 import cookie from "react-cookies";
 import _ from "lodash";
+import { LuArrowUp, LuCheckCheck, LuLink, LuPlus, LuX } from "react-icons/lu";
 
 import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
-import { IoAdd, IoArrowUp, IoCheckmarkDone, IoClose, IoLink } from "react-icons/io5";
 
 /*
   The Form used to configure the ChartMogul template
@@ -187,7 +187,7 @@ function ChartMogulTemplate(props) {
             {!formVisible && (
               <Button
                 variant="faded"
-                startContent={<IoAdd />}
+                startContent={<LuPlus />}
                 onClick={() => setFormVisible(true)}
                 color="primary"
               >
@@ -196,7 +196,7 @@ function ChartMogulTemplate(props) {
             )}
             {formVisible && (
               <Button
-                endContent={<IoArrowUp />}
+                endContent={<LuArrowUp />}
                 variant="faded"
                 color="primary"
                 onClick={() => setFormVisible(false)}
@@ -242,7 +242,7 @@ function ChartMogulTemplate(props) {
                 {"Click here to learn how to find your ChartMogul API key"}
               </Text>
               <Spacer x={1} />
-              <IoLink size={16} />
+              <LuLink size={16} />
             </Link>
           </Row>
         </>
@@ -277,7 +277,7 @@ function ChartMogulTemplate(props) {
           <Row>
             <Button
               variant="bordered"
-              startContent={<IoCheckmarkDone />}
+              startContent={<LuCheckCheck />}
               auto
               onClick={_onSelectAll}
               size="sm"
@@ -287,7 +287,7 @@ function ChartMogulTemplate(props) {
             <Spacer x={1} />
             <Button
               variant="bordered"
-              startContent={<IoClose />}
+              startContent={<LuX />}
               auto
               onClick={_onDeselectAll}
               size="sm"
@@ -329,7 +329,7 @@ function ChartMogulTemplate(props) {
                 <Link href="https://app.chartmogul.com/#/admin/api" target="_blank" rel="noreferrer">
                   <Text>{"Click here to go to the dashboard"}</Text>
                   <Spacer x={1} />
-                  <IoLink />
+                  <LuLink />
                 </Link>
               </Row>
             </div>

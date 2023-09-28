@@ -5,8 +5,9 @@ import {
   Switch, ModalHeader, ModalBody, ModalFooter, Select, SelectItem, ModalContent,
 } from "@nextui-org/react";
 import { connect } from "react-redux";
-import { FaSlack } from "react-icons/fa";
-import { TbWebhook } from "react-icons/tb";
+import {
+  LuBellOff, LuBellPlus, LuBellRing, LuMail, LuPlus, LuRefreshCw, LuSlack, LuTrash, LuWebhook
+} from "react-icons/lu";
 
 import { getTeamMembers as getTeamMembersAction } from "../../../actions/team";
 import {
@@ -22,7 +23,6 @@ import autoUpdatePicture from "../../../assets/chartbrew-auto-update.jpg";
 import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
-import { IoAdd, IoMailOutline, IoNotifications, IoNotificationsOff, IoReload, IoTrashBin } from "react-icons/io5";
 
 const ruleTypes = [{
   label: "When reaching a milestone",
@@ -268,8 +268,7 @@ function DatasetAlerts(props) {
           {datasetAlerts.length === 0 && (
             <Button
               color="primary"
-              auto
-              endContent={<IoNotifications />}
+              endContent={<LuBellPlus />}
               size="sm"
               onClick={_onOpen}
             >
@@ -285,7 +284,7 @@ function DatasetAlerts(props) {
                 size="sm"
                 className="mb-5"
                 onClick={() => _onEdit(alert)}
-                endContent={alert.active ? <IoNotifications /> : <IoNotificationsOff />}
+                endContent={alert.active ? <LuBellRing /> : <LuBellOff />}
               >
                 {alert.type === "milestone" && "Milestone"}
                 {alert.type === "threshold_above" && "Above threshold"}
@@ -305,7 +304,7 @@ function DatasetAlerts(props) {
               <Button
                 color="primary"
                 auto
-                startContent={<IoAdd />}
+                startContent={<LuPlus />}
                 size="sm"
                 onClick={_onOpen}
                 variant="light"
@@ -420,7 +419,7 @@ function DatasetAlerts(props) {
                   <Row wrap="wrap" align="center" className={"gap-1"}>
                     <Button
                       auto
-                      startContent={<IoMailOutline />}
+                      startContent={<LuMail />}
                       color="secondary"
                       size="sm"
                       variant={!newAlert.mediums.email?.enabled ? "bordered": "solid"}
@@ -434,8 +433,8 @@ function DatasetAlerts(props) {
                         <Button
                           auto
                           startContent={
-                            integration.type === "webhook" ? <TbWebhook />
-                              : integration.type === "slack" ? <FaSlack />
+                            integration.type === "webhook" ? <LuWebhook />
+                              : integration.type === "slack" ? <LuSlack />
                                 : null
                           }
                           color="secondary"
@@ -453,7 +452,7 @@ function DatasetAlerts(props) {
                       </>
                     ))}
                     <Button
-                      startContent={<IoAdd size={18} />}
+                      startContent={<LuPlus size={18} />}
                       color="primary"
                       variant="light"
                       size="sm"
@@ -462,7 +461,7 @@ function DatasetAlerts(props) {
                       Create integrations
                     </Button>
                     <Button
-                      startContent={<IoReload size={18} />}
+                      startContent={<LuRefreshCw size={18} />}
                       color="primary"
                       variant="light"
                       size="sm"
@@ -594,7 +593,7 @@ function DatasetAlerts(props) {
               <Button
                 auto
                 color="danger"
-                endContent={<IoTrashBin />}
+                endContent={<LuTrash />}
                 variant="light"
                 onClick={() => _onDelete()}
                 isLoading={deleteLoading}

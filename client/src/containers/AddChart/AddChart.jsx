@@ -11,9 +11,9 @@ import "react-toastify/dist/ReactToastify.min.css";
 import _ from "lodash";
 import { useWindowSize } from "react-use";
 import {
-  IoAdd, IoArrowForward, IoCheckmark, IoChevronBackCircle, IoChevronForwardCircle,
-  IoClose, IoPencil, IoSchoolOutline, IoSwapHorizontalOutline,
-} from "react-icons/io5";
+  LuArrowLeftRight, LuArrowRight, LuCheck, LuChevronLeftCircle, LuChevronRightCircle,
+  LuGraduationCap, LuPencilLine, LuPlus, LuXCircle,
+} from "react-icons/lu";
 
 import ChartPreview from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
@@ -537,7 +537,7 @@ function AddChart(props) {
                 && (
                   <Tooltip content="Edit the chart name">
                     <LinkNext onPress={() => setEditingTitle(true)} className="flex items-center" color="primary">
-                      <IoPencil />
+                      <LuPencilLine />
                       <Spacer x={0.5} />
                       <Text b>
                         {newChart.name}
@@ -645,7 +645,7 @@ function AddChart(props) {
               </Text>
               <Tooltip content="Start the chart builder tutorial" placement="leftStart">
                 <LinkNext className="text-default-600 flex items-center" onPress={_onResetTutorial}>
-                  {!resetingTutorial ? <IoSchoolOutline /> : <CircularProgress  />}
+                  {!resetingTutorial ? <LuGraduationCap /> : <CircularProgress  />}
                   <Spacer x={0.5} />
                   <Text>Tutorial</Text>
                 </LinkNext>
@@ -681,12 +681,12 @@ function AddChart(props) {
                       color="primary"
                       startContent={index > 0 ? (
                         <LinkNext onPress={() => _changeDatasetOrder(dataset.id, "up")}>
-                          <IoChevronBackCircle size={16} />
+                          <LuChevronLeftCircle size={16} />
                         </LinkNext>
                       ) : null}
                       endContent={index < datasetsOrder.length - 1 ? (
                         <LinkNext onPress={() => _changeDatasetOrder(dataset.id, "down")}>
-                          <IoChevronForwardCircle size={16} />
+                          <LuChevronRightCircle size={16} />
                         </LinkNext>
                       ) : null}
                     >
@@ -703,7 +703,7 @@ function AddChart(props) {
                   <div>
                     <Button
                       onClick={() => _onSaveNewDataset()}
-                      startContent={<IoAdd />}
+                      startContent={<LuPlus />}
                       color="primary"
                       variant="light"
                     >
@@ -716,7 +716,7 @@ function AddChart(props) {
                         if (!arrangeMode) setArrangeMode(true);
                         else _onSaveArrangement();
                       }}
-                      startContent={arrangeMode ? <IoCheckmark /> : <IoSwapHorizontalOutline set="light" />}
+                      startContent={arrangeMode ? <LuCheck /> : <LuArrowLeftRight />}
                       auto
                       color={arrangeMode ? "success" : "primary"}
                       variant="light"
@@ -735,7 +735,7 @@ function AddChart(props) {
                             color="warning"
                             auto
                           >
-                            <IoClose />
+                            <LuXCircle />
                           </Button>
                         </Tooltip>
                       </>
@@ -749,7 +749,7 @@ function AddChart(props) {
                   size="lg"
                   onClick={() => _onSaveNewDataset()}
                   isLoading={savingDataset}
-                  endContent={<IoAdd />}
+                  endContent={<LuPlus />}
                   color="primary"
                 >
                   {"Add the first dataset"}
@@ -816,8 +816,7 @@ function AddChart(props) {
               setStartTutorial(false);
               _changeTour("addchart");
             }}
-            endContent={<IoArrowForward />}
-            auto
+            endContent={<LuArrowRight />}
           >
             Get started
           </Button>

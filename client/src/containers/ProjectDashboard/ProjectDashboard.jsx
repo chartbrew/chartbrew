@@ -12,8 +12,9 @@ import { createMedia } from "@artsy/fresnel";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import moment from "moment";
-import { IoAddCircle, IoCloseCircle, IoCopyOutline, IoFilterCircleOutline, IoPlay, IoPrintOutline, IoReload } from "react-icons/io5";
-import { RiFileExcel2Line } from "react-icons/ri";
+import {
+  LuCopyPlus, LuFileDown, LuFilter, LuPlay, LuPlusCircle, LuPrinter, LuRefreshCw, LuXCircle,
+} from "react-icons/lu";
 
 import Chart from "../Chart/Chart";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
@@ -34,7 +35,6 @@ import useThemeDetector from "../../modules/useThemeDetector";
 import Row from "../../components/Row";
 import Container from "../../components/Container";
 import Text from "../../components/Text";
-import { LuCopyPlus, LuFileDown, LuFilter, LuPrinter, LuRefreshCw } from "react-icons/lu";
 
 const breakpoints = {
   mobile: 0,
@@ -402,7 +402,7 @@ function ProjectDashboard(props) {
                               radius="sm"
                               endContent={(
                                 <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default-500">
-                                  <IoCloseCircle />
+                                  <LuXCircle />
                                 </LinkNext>
                               )}
                             >
@@ -416,7 +416,7 @@ function ProjectDashboard(props) {
                               radius="sm"
                               endContent={(
                                 <LinkNext onClick={() => _onRemoveFilter(filter.id)} className="text-default">
-                                  <IoCloseCircle />
+                                  <LuXCircle />
                                 </LinkNext>
                               )}
                             >
@@ -537,7 +537,7 @@ function ProjectDashboard(props) {
                     state: { onboarding: true },
                   }}
                 >
-                  <Button variant="shadow" endContent={<IoPlay size={24} />} size="lg" auto>
+                  <Button variant="shadow" endContent={<LuPlay size={24} />} size="lg" auto>
                     Get started
                   </Button>
                 </Link>
@@ -555,7 +555,7 @@ function ProjectDashboard(props) {
                 >
                   <CardBody>
                     <Row justify="center" align="center">
-                      <IoAddCircle size={28} />
+                      <LuPlusCircle size={28} />
                     </Row>
                     <Row justify="center" align="center">
                       <Text size="h3">Add your first chart</Text>

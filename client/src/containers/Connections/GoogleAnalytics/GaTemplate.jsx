@@ -6,6 +6,8 @@ import {
 } from "@nextui-org/react";
 import _ from "lodash";
 import cookie from "react-cookies";
+import { LuArrowRight, LuCheckCheck, LuPlus, LuX } from "react-icons/lu";
+import { FcGoogle } from "react-icons/fc";
 
 import {
   testRequest as testRequestAction,
@@ -15,7 +17,6 @@ import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
-import { IoAdd, IoArrowForward, IoCheckmarkDone, IoClose, IoLogoGoogle } from "react-icons/io5";
 
 /*
   The Form used to configure the SimpleAnalytics template
@@ -323,7 +324,7 @@ function GaTemplate(props) {
             {!formVisible && (
               <Button
                 variant="faded"
-                startContent={<IoAdd />}
+                startContent={<LuPlus />}
                 onClick={() => setFormVisible(true)}
                 color="primary"
                 size="sm"
@@ -413,7 +414,7 @@ function GaTemplate(props) {
           <Row align="center">
             <Button
               variant={"faded"}
-              endContent={<IoLogoGoogle />}
+              endContent={<FcGoogle />}
               onClick={_onGoogleAuth}
               color="secondary"
             >
@@ -453,7 +454,7 @@ function GaTemplate(props) {
           <Row>
             <Button
               variant="ghost"
-              startContent={<IoCheckmarkDone />}
+              startContent={<LuCheckCheck />}
               onClick={_onSelectAll}
               size="sm"
             >
@@ -462,7 +463,7 @@ function GaTemplate(props) {
             <Spacer x={1} />
             <Button
               variant="ghost"
-              startContent={<IoClose />}
+              startContent={<LuX />}
               onClick={_onDeselectAll}
               size="sm"
             >
@@ -500,7 +501,7 @@ function GaTemplate(props) {
           onClick={_onGenerateDashboard}
           color="primary"
           isLoading={loading}
-          endContent={<IoArrowForward />}
+          endContent={<LuArrowRight />}
         >
           {"Create the charts"}
         </Button>

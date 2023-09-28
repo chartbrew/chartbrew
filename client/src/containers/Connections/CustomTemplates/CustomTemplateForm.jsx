@@ -5,9 +5,7 @@ import {
   Button, Card, CardBody, CardFooter, CardHeader, Checkbox, Divider,
   Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Tooltip,
 } from "@nextui-org/react";
-import {
-  IoArrowBack, IoArrowForward, IoCheckmarkDone, IoClose, IoTrashBin, IoWarningOutline,
-} from "react-icons/io5";
+import { LuAlertTriangle, LuArrowLeft, LuArrowRight, LuCheckCheck, LuTrash, LuX } from "react-icons/lu";
 
 import connectionImages from "../../../config/connectionImages";
 import { generateDashboard } from "../../../actions/project";
@@ -206,7 +204,7 @@ function CustomTemplateForm(props) {
   return (
     <div>
       <Row align="center" className={"gap-2"}>
-        <Button variant="faded" startContent={<IoArrowBack />} onClick={onBack} size="sm">
+        <Button variant="faded" startContent={<LuArrowLeft />} onClick={onBack} size="sm">
           Back
         </Button>
         <Text size="h4">
@@ -301,7 +299,7 @@ function CustomTemplateForm(props) {
                         content={`This chart depends on ${_getDependency(chart)} to display properly.`}
                       >
                         <div>
-                          <IoWarningOutline color={secondary} />
+                          <LuAlertTriangle color={secondary} />
                         </div>
                       </Tooltip>
                     </>
@@ -314,7 +312,7 @@ function CustomTemplateForm(props) {
           <Spacer y={4} />
           <Row>
             <Button
-              endContent={<IoCheckmarkDone />}
+              endContent={<LuCheckCheck />}
               variant="ghost"
               onClick={_onSelectAll}
               size="sm"
@@ -323,7 +321,7 @@ function CustomTemplateForm(props) {
             </Button>
             <Spacer x={0.5} />
             <Button
-              endContent={<IoClose />}
+              endContent={<LuX />}
               variant="ghost"
               onClick={_onDeselectAll}
               size="sm"
@@ -340,7 +338,7 @@ function CustomTemplateForm(props) {
           <Button
             color="danger"
             variant="flat"
-            endContent={<IoTrashBin />}
+            endContent={<LuTrash />}
             onClick={() => setDeleteConfimation(true)}
           >
             Delete template
@@ -351,7 +349,7 @@ function CustomTemplateForm(props) {
           color="primary"
           onClick={_generateTemplate}
           isDisabled={!selectedCharts.length}
-          endContent={<IoArrowForward />}
+          endContent={<LuArrowRight />}
           isLoading={isCreating}
         >
           Generate from template
@@ -381,7 +379,7 @@ function CustomTemplateForm(props) {
               </Button>
               <Button
                 color="danger"
-                endContent={<IoTrashBin />}
+                endContent={<LuTrash />}
                 onClick={() => {
                   setDeleteLoading(true);
                   onDelete(template.id);

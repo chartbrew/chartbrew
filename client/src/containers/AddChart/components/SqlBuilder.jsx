@@ -8,9 +8,7 @@ import {
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
-import {
-  IoAdd, IoCheckmark, IoCreateOutline, IoInformationCircleOutline, IoPlay, IoTrashBin,
-} from "react-icons/io5";
+import { LuCheck, LuInfo, LuPencilLine, LuPlay, LuPlus, LuTrash } from "react-icons/lu";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/mode-pgsql";
@@ -176,7 +174,7 @@ function SqlBuilder(props) {
                     variant="bordered"
                     onClick={() => onDelete()}
                   >
-                    <IoTrashBin />
+                    <LuTrash />
                   </Button>
                 </Tooltip>
               </Row>
@@ -216,7 +214,7 @@ function SqlBuilder(props) {
           <Row align="center" className="sqlbuilder-buttons-tut gap-1">
             <Button
               color={requestSuccess ? "success" : requestError ? "danger" : "primary"}
-              endContent={<IoPlay />}
+              endContent={<LuPlay />}
               onClick={() => _onTest()}
               isLoading={requestLoading}
               fullWidth
@@ -226,7 +224,7 @@ function SqlBuilder(props) {
             </Button>
 
             <Button
-              endContent={<IoAdd />}
+              endContent={<LuPlus />}
               isLoading={savingQuery}
               onClick={_onSaveQueryConfirmation}
               fullWidth
@@ -240,7 +238,7 @@ function SqlBuilder(props) {
               <>
                 <Button
                   variant="ghost"
-                  startContent={<IoCreateOutline />}
+                  startContent={<LuPencilLine />}
                   onClick={_onUpdateSavedQuery}
                   isLoading={updatingSavedQuery}
                   fullWidth
@@ -264,7 +262,7 @@ function SqlBuilder(props) {
               content={"Chartbrew will use cached data for extra editing speed ⚡️. The cache gets automatically invalidated when you change any call settings."}
               className="max-w-[400px]"
             >
-              <IoInformationCircleOutline />
+              <div><LuInfo /></div>
             </Tooltip>
           </Row>
 
@@ -345,7 +343,7 @@ function SqlBuilder(props) {
             </Button>
             <Button
               disabled={!savedQuerySummary}
-              endContent={<IoCheckmark />}
+              endContent={<LuCheck />}
               onClick={_onSaveQuery}
               color="primary"
             >

@@ -8,7 +8,7 @@ import {
   Tooltip, Button, Spacer, Input, Modal, Divider, Tabs, Tab,
   ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
-import { IoCloudDownload, IoCreateOutline } from "react-icons/io5";
+import { LuDownloadCloud, LuPencilLine } from "react-icons/lu";
 
 import { chartColors, primary } from "../../../config/colors";
 import DatarequestModal from "./DatarequestModal";
@@ -214,7 +214,7 @@ function Dataset(props) {
             disableRipple
             size="sm"
           >
-            <IoCreateOutline />
+            <LuPencilLine />
           </Button>
         </div>
         {editDatasetName && (
@@ -243,7 +243,7 @@ function Dataset(props) {
         )}
         <div className="col-span-12 md:col-span-6 dataset-manage-tut">
           <Button
-            endContent={<IoCloudDownload />}
+            endContent={<LuDownloadCloud />}
             onClick={_openConfigModal}
             color="primary"
             fullWidth

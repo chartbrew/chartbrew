@@ -4,11 +4,11 @@ import {
   Button, CircularProgress, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow,
 } from "@nextui-org/react";
 import { formatRelative } from "date-fns";
+import { LuClipboard, LuClipboardCheck, LuPlus, LuTrash } from "react-icons/lu";
 
 import { getApiKeys, createApiKey, deleteApiKey } from "../../actions/team";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
-import { IoAdd, IoCheckmark, IoClipboard, IoTrashBin } from "react-icons/io5";
 
 function ApiKeys(props) {
   const { teamId } = props;
@@ -90,7 +90,7 @@ function ApiKeys(props) {
       <Row>
         <Button
           onClick={_onCreateRequested}
-          endContent={<IoAdd />}
+          endContent={<LuPlus />}
           color="primary"
         >
           Create a new API Key
@@ -130,7 +130,7 @@ function ApiKeys(props) {
                   color="danger"
                   onClick={() => _onRemoveConfirmation(key)}
                 >
-                  <IoTrashBin />
+                  <LuTrash />
                 </Button>
               </TableCell>
             </TableRow>
@@ -161,7 +161,7 @@ function ApiKeys(props) {
             </Row>
             <Row>
               <Button
-                startContent={tokenCopied ? <IoCheckmark /> : <IoClipboard />}
+                startContent={tokenCopied ? <LuClipboardCheck /> : <LuClipboard />}
                 color={tokenCopied ? "success" : "primary"}
                 variant={tokenCopied ? "flat" : "solid"}
                 onClick={_onCopyToken}

@@ -5,6 +5,7 @@ import {
   CircularProgress, Select, SelectItem,
 } from "@nextui-org/react";
 import { isEqual } from "lodash";
+import { LuCheckCircle, LuCloud, LuFolder, LuUser, LuWrench, LuXCircle } from "react-icons/lu";
 
 import { runHelperMethod } from "../../../actions/connection";
 import { primary, secondary } from "../../../config/colors";
@@ -12,7 +13,6 @@ import determineType from "../../../modules/determineType";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import { IoBuild, IoCheckmarkCircle, IoCloseCircle, IoCloud, IoFolder, IoPerson } from "react-icons/io5";
 
 const customerOperations = [
   { text: "All conditions match", key: "and", value: "and" },
@@ -53,7 +53,7 @@ function CustomerQuery(props) {
             text: segment.name,
             value: segment.id,
             key: segment.id,
-            icon: segment.type === "dynamic" ? <IoCloud /> : <IoBuild />,
+            icon: segment.type === "dynamic" ? <LuCloud /> : <LuWrench />,
           };
         });
 
@@ -256,9 +256,9 @@ function CustomerQuery(props) {
               {condition.segment && (
                 <Chip
                   variant={"bordered"}
-                  startContent={<IoFolder />}
+                  startContent={<LuFolder />}
                   endContent={(
-                    <IoCloseCircle onClick={() => _onRemoveCondition("segment", condition.segment.id)} />
+                    <LuXCircle onClick={() => _onRemoveCondition("segment", condition.segment.id)} />
                   )}
                 >
                   <span style={{ color: primary }}>
@@ -269,9 +269,9 @@ function CustomerQuery(props) {
               {condition.not && condition.not.segment && (
                 <Chip
                   variant={"bordered"}
-                  startContent={<IoFolder />}
+                  startContent={<LuFolder />}
                   endContent={(
-                    <IoCloseCircle onClick={() => _onRemoveCondition("segment", condition.not.segment.id)} />
+                    <LuXCircle onClick={() => _onRemoveCondition("segment", condition.not.segment.id)} />
                   )}
                 >
                   <span style={{ color: primary }}>
@@ -282,9 +282,9 @@ function CustomerQuery(props) {
               {condition.or && (
                 <Chip
                   variant={"bordered"}
-                  startContent={<IoFolder />}
+                  startContent={<LuFolder />}
                   endContent={(
-                    <IoCloseCircle onClick={() => _onRemoveCondition("segment", condition.or)} />
+                    <LuXCircle onClick={() => _onRemoveCondition("segment", condition.or)} />
                   )}
                 >
                   <span style={{ marginRight: 3 }}>{"in"}</span>
@@ -306,9 +306,9 @@ function CustomerQuery(props) {
               {condition.not && condition.not.or && (
                 <Chip
                   variant={"bordered"}
-                  startContent={<IoFolder />}
+                  startContent={<LuFolder />}
                   endContent={(
-                    <IoCloseCircle onClick={() => _onRemoveCondition("segment", condition.not)} />
+                    <LuXCircle onClick={() => _onRemoveCondition("segment", condition.not)} />
                   )}
                 >
                   <span style={{ marginRight: 3 }}>{"not in"}</span>
@@ -330,9 +330,9 @@ function CustomerQuery(props) {
               {condition.attribute && (
                 <Chip
                   variant={"bordered"}
-                  startContent={<IoPerson />}
+                  startContent={<LuUser />}
                   endContent={(
-                    <IoCloseCircle onClick={() => _onRemoveCondition("attribute", condition.attribute.field)} />
+                    <LuXCircle onClick={() => _onRemoveCondition("attribute", condition.attribute.field)} />
                   )}
                 >
                   <span style={{ color: primary, marginRight: 3 }}>
@@ -358,9 +358,9 @@ function CustomerQuery(props) {
               {condition.not && condition.not.attribute && (
                 <Chip
                   radius="sm"
-                  startContent={<IoPerson />}
+                  startContent={<LuUser />}
                   endContent={(
-                    <IoCloseCircle onClick={() => _onRemoveCondition("attribute", condition.not)} />
+                    <LuXCircle onClick={() => _onRemoveCondition("attribute", condition.not)} />
                   )}
                 >
                   <span style={{ color: primary, marginRight: 3 }}>
@@ -394,7 +394,7 @@ function CustomerQuery(props) {
         <Row align="center">
           <Button
             size="sm"
-            startContent={<IoFolder />}
+            startContent={<LuFolder />}
             onClick={() => _onConfigureSegment()}
             variant="bordered"
             color="primary"
@@ -404,7 +404,7 @@ function CustomerQuery(props) {
           <Spacer x={0.5} />
           <Button
             size="sm"
-            startContent={<IoPerson />}
+            startContent={<LuUser />}
             onClick={() => _onConfigureAttribute()}
             variant="bordered"
             color="primary"
@@ -475,7 +475,7 @@ function CustomerQuery(props) {
             size="sm"
             color="success"
           >
-            <IoCheckmarkCircle />
+            <LuCheckCircle />
           </Button>
           <Spacer x={1} />
           <Button
@@ -485,7 +485,7 @@ function CustomerQuery(props) {
             onClick={() => setSegmentConfig(null)}
             size="sm"
           >
-            <IoCloseCircle />
+            <LuXCircle />
           </Button>
         </Row>
       )}
@@ -543,7 +543,7 @@ function CustomerQuery(props) {
             variant="flat"
             color="success"
           >
-            <IoCheckmarkCircle />
+            <LuCheckCircle />
           </Button>
           <Spacer x={1} />
           <Button
@@ -553,7 +553,7 @@ function CustomerQuery(props) {
             color="danger"
             variant="flat" 
           >
-            <IoCloseCircle />
+            <LuXCircle />
           </Button>
         </Row>
       )}

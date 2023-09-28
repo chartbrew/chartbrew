@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {
   Button, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Switch, Textarea, Tooltip,
 } from "@nextui-org/react";
-import { IoCheckbox, IoClipboard, IoInformationCircleOutline } from "react-icons/io5";
+import { LuClipboard, LuClipboardCheck, LuInfo } from "react-icons/lu";
 
 import { SITE_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
@@ -89,7 +89,7 @@ function SharingSettings(props) {
                 size="sm"
                 variant="bordered"
               >
-                {urlCopied ? <IoCheckbox /> : <IoClipboard />}
+                {urlCopied ? <LuClipboardCheck /> : <LuClipboard />}
               </Button>
             </Tooltip>
           </Row>
@@ -110,7 +110,7 @@ function SharingSettings(props) {
                 </>
               )}
             >
-              <div><IoInformationCircleOutline /></div>
+              <div><LuInfo /></div>
             </Tooltip>
           </Row>
           <Row align="center">
@@ -125,7 +125,7 @@ function SharingSettings(props) {
             <Tooltip
               content="Public reports will require the viewers outside of your team to enter a password before viewing"
             >
-              <div><IoInformationCircleOutline /></div>
+              <div><LuInfo /></div>
             </Tooltip>
           </Row>
           <Row>
@@ -172,7 +172,7 @@ function SharingSettings(props) {
           {!project.public && (
             <>
               <Row align="center">
-                <IoInformationCircleOutline className="text-secondary" />
+                <LuInfo className="text-secondary" />
                 <Text size="sm" className={"italic"}>
                   {" The embedding only works when the report is public"}
                 </Text>
@@ -181,7 +181,7 @@ function SharingSettings(props) {
           )}
           <Row>
             <Button
-              startContent={embedCopied ? <IoCheckbox /> : <IoClipboard />}
+              startContent={embedCopied ? <LuClipboardCheck /> : <LuClipboard />}
               color={embedCopied ? "success" : "secondary"}
               variant={embedCopied ? "flat" : "bordered"}
               onClick={_onCopyEmbed}

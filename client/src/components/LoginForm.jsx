@@ -5,6 +5,7 @@ import { withRouter } from "react-router-dom";
 import {
   Button, Input, Spacer, Link, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
+import { LuChevronRight, LuLock, LuMail } from "react-icons/lu";
 
 import {
   login as loginAction,
@@ -13,14 +14,11 @@ import {
 } from "../actions/user";
 import { addTeamMember as addTeamMemberAction } from "../actions/team";
 import { required, email as validateEmail } from "../config/validations";
-
 import { ONE_ACCOUNT_ENABLED } from "../config/settings";
 import { negative } from "../config/colors";
-
 import Container from "./Container";
 import Row from "./Row";
 import Text from "./Text";
-import { IoChevronForward, IoLockClosed, IoMail } from "react-icons/io5";
 
 /*
   Contains login functionality
@@ -140,7 +138,7 @@ function LoginForm(props) {
         <div className="w-full">
           <Row>
             <Input
-              endContent={<IoMail />}
+              endContent={<LuMail />}
               type="email"
               placeholder="Enter your email"
               onChange={(e) => {
@@ -177,14 +175,14 @@ function LoginForm(props) {
               variant="bordered"
               color={errors.password ? "danger" : "default"}
               description={errors.password && "Please enter your password"}
-              endContent={<IoLockClosed />}
+              endContent={<LuLock />}
             />
           </Row>
           <Spacer y={4} />
           <Row justify="center" align="center">
             <Button
               onClick={loginUser}
-              endContent={<IoChevronForward />}
+              endContent={<LuChevronRight />}
               size="lg"
               color="primary"
               isLoading={loading}
@@ -215,7 +213,7 @@ function LoginForm(props) {
               label="Enter your email here"
               fullWidth
               onChange={(e) => setResetEmail(e.target.value)}
-              contentRight={<IoMail />}
+              contentRight={<LuMail />}
               variant="bordered"
             />
             {resetDone && (

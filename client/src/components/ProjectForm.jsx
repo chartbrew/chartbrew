@@ -4,12 +4,12 @@ import { connect } from "react-redux";
 import {
   Input, Button, Spacer, Modal, ModalHeader, ModalBody, ModalContent, Tabs, Tab
 } from "@nextui-org/react";
+import { LuArrowRight } from "react-icons/lu";
 
 import { createProject } from "../actions/project";
 import CustomTemplates from "../containers/Connections/CustomTemplates/CustomTemplates";
 import Row from "./Row";
 import Text from "./Text";
-import { IoArrowForward } from "react-icons/io5";
 
 /*
   Contains the project creation functionality
@@ -113,7 +113,7 @@ function ProjectForm(props) {
                     <Button
                       isDisabled={!newProject.name}
                       onClick={() => _onCreateProject()}
-                      endContent={<IoArrowForward />}
+                      endContent={<LuArrowRight />}
                       color="primary"
                       size="lg"
                       isLoading={loading}

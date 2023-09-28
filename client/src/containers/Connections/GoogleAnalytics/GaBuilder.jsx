@@ -30,7 +30,7 @@ import { secondary } from "../../../config/colors";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
-import { IoCalendar, IoInformationCircle, IoInformationCircleOutline, IoPlay, IoTrashBin } from "react-icons/io5";
+import { LuCalendarDays, LuInfo, LuPlay, LuTrash } from "react-icons/lu";
 
 const validDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)/g;
 const validEndDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)/g;
@@ -318,7 +318,7 @@ function GaBuilder(props) {
             color="secondary"
             isDisabled={!configuration.propertyId}
           >
-            <IoCalendar />
+            <LuCalendarDays />
           </Button>
         </PopoverTrigger>
         <PopoverContent>
@@ -396,7 +396,7 @@ function GaBuilder(props) {
                       variant="bordered"
                       onClick={() => onDelete()}
                     >
-                      <IoTrashBin />
+                      <LuTrash />
                     </Button>
                   </Tooltip>
                 </Row>
@@ -451,7 +451,7 @@ function GaBuilder(props) {
                   className="max-w-[500px]"
                   placement="right-start"
                 >
-                  <div><IoInformationCircleOutline /></div>
+                  <div><LuInfo /></div>
                 </Tooltip>
               </div>
               <Select
@@ -546,7 +546,7 @@ function GaBuilder(props) {
                   variant="flat"
                   color={dateHelp ? "secondary" : "default"}
                   size="sm"
-                  startContent={<IoInformationCircle />}
+                  startContent={<LuInfo />}
                 >
                   info
                 </Chip>
@@ -587,7 +587,7 @@ function GaBuilder(props) {
                   variant="flat"
                   color={dateHelp ? "secondary" : "default"}
                   size="sm"
-                  startContent={<IoInformationCircle />}
+                  startContent={<LuInfo />}
                 >
                   info
                 </Chip>
@@ -617,7 +617,7 @@ function GaBuilder(props) {
         <div className="col-span-12 sm:col-span-5">
           <Row className="gabuilder-request-tut">
             <Button
-              endContent={<IoPlay />}
+              endContent={<LuPlay />}
               isLoading={requestLoading}
               onClick={() => _onTest()}
               className="w-full"
@@ -640,7 +640,7 @@ function GaBuilder(props) {
               content="Chartbrew will cache the data to make the edit process faster. The cache will be cleared when you change any of the settings."
               className="max-w-[500px]"
             >
-              <div><IoInformationCircleOutline /></div>
+              <div><LuInfo /></div>
             </Tooltip>
           </Row>
           <Spacer y={2} />
@@ -661,7 +661,7 @@ function GaBuilder(props) {
           </Row>
           <Spacer y={2} />
           <Row align="center">
-            <IoInformationCircleOutline />
+            <LuInfo />
             <Spacer x={1} />
             <Text size="sm">
               {"This is a preview and it might not show all data in order to keep things fast in the UI."}

@@ -6,12 +6,12 @@ import {
   Button, Tooltip, Spacer, Checkbox, Input, Accordion, Radio, AccordionItem, RadioGroup, Chip,
 } from "@nextui-org/react";
 import _ from "lodash";
+import { LuCheckCheck, LuClipboard, LuClipboardCheck, LuInfo, LuX } from "react-icons/lu";
 
 import { generateInviteUrl as generateInviteUrlAction } from "../actions/team";
 import Container from "./Container";
 import Row from "./Row";
 import Text from "./Text";
-import { IoCheckmark, IoClipboard, IoClose, IoInformationCircleOutline } from "react-icons/io5";
 
 /*
   Contains the team members invitation functionality
@@ -109,7 +109,7 @@ function InviteMembersForm(props) {
                       <Button
                         size="sm"
                         variant="ghost"
-                        startContent={<IoCheckmark />}
+                        startContent={<LuCheckCheck />}
                         onClick={_onSelectAllProjects}
                       >
                         Select all
@@ -118,7 +118,7 @@ function InviteMembersForm(props) {
                       <Button
                         size="sm"
                         variant="ghost"
-                        startContent={<IoClose />}
+                        startContent={<LuX />}
                         onClick={_onDeselectAllProjects}
                       >
                         Deselect all
@@ -152,7 +152,7 @@ function InviteMembersForm(props) {
           <Tooltip
             content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
           >
-            <div><IoInformationCircleOutline /></div>
+            <div><LuInfo /></div>
           </Tooltip>
         </Row>
         <Spacer y={1} />
@@ -175,7 +175,7 @@ function InviteMembersForm(props) {
           <Tooltip
             content="The team role is applied over all the projects selected above"
           >
-            <div><IoInformationCircleOutline /></div>
+            <div><LuInfo /></div>
           </Tooltip>
         </Row>
         <Spacer y={1} />
@@ -230,7 +230,7 @@ function InviteMembersForm(props) {
             <Spacer y={2} />
             <Row wrap="wrap" align="center">
               <Button
-                endContent={urlCopied ? <IoCheckmark /> : <IoClipboard />}
+                endContent={urlCopied ? <LuClipboardCheck /> : <LuClipboard />}
                 color={urlCopied ? "success" : "primary"}
                 onClick={_onCopyUrl}
                 variant={urlCopied ? "flat" : "solid"}

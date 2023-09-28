@@ -24,7 +24,7 @@ import Container from "../../components/Container";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import useThemeDetector from "../../modules/useThemeDetector";
-import { IoClose, IoCloseCircle, IoInformationCircleOutline, IoKey, IoPeople } from "react-icons/io5";
+import { LuBookKey, LuInfo, LuUsers2, LuX, LuXCircle } from "react-icons/lu";
 
 /*
   Contains Pending Invites and All team members with functionality to delete/change role
@@ -238,7 +238,7 @@ function TeamMembers(props) {
                                 auto
                                 onClick={() => _openProjectAccess(member)}
                               >
-                                <IoKey />
+                                <LuBookKey />
                               </Button>
                             </Tooltip>
                           </>
@@ -249,7 +249,7 @@ function TeamMembers(props) {
                               <Dropdown>
                                 <DropdownTrigger>
                                   <Button variant="light" auto isIconOnly color="secondary">
-                                    <IoPeople />
+                                    <LuUsers2 />
                                   </Button>
                                 </DropdownTrigger>
                                 <DropdownMenu
@@ -306,7 +306,7 @@ function TeamMembers(props) {
                                 isIconOnly
                                 color="danger"
                               >
-                                <IoCloseCircle />
+                                <LuXCircle />
                               </Button>
                             </Tooltip>
                           )}
@@ -340,7 +340,7 @@ function TeamMembers(props) {
               color="danger"
               isLoading={loading}
               onClick={() => _onDeleteTeamMember(deleteMember)}
-              endContent={<IoClose />}
+              endContent={<LuX />}
             >
               Remove
             </Button>
@@ -398,7 +398,7 @@ function TeamMembers(props) {
                   <Tooltip
                     content="The data export can contain sensitive information from your queries that is not necessarily visible on your charts. Only allow the data export when you intend for the users to view this data."
                   >
-                    <div><IoInformationCircleOutline /></div>
+                    <div><LuInfo /></div>
                   </Tooltip>
                 </Row>
                 <Row>

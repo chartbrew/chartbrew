@@ -3,10 +3,10 @@ import PropTypes from "prop-types";
 import {
   Divider, Input, Spacer, Switch, Tooltip, Chip, SelectItem, Select,
 } from "@nextui-org/react";
+import { LuInfo } from "react-icons/lu";
 
 import fieldFinder from "../../../modules/fieldFinder";
 import Text from "../../../components/Text";
-import { IoInformationCircleOutline } from "react-icons/io5";
 
 const templates = [{
   key: "custom",
@@ -126,7 +126,7 @@ function ApiPagination(props) {
                 {"Items per page"}
               </Text>
               <Spacer x={0.5} />
-              <IoInformationCircleOutline />
+              <LuInfo />
             </div>
           </Tooltip>
           <Input
@@ -148,7 +148,7 @@ function ApiPagination(props) {
             <div style={styles.rowDisplay}>
               <Text>{"Offset"}</Text>
               <Spacer x={0.5} />
-              <IoInformationCircleOutline />
+              <LuInfo />
             </div>
           </Tooltip>
           <Input
@@ -232,7 +232,7 @@ function ApiPagination(props) {
             <div style={styles.rowDisplay}>
               <Text>{"Cursor query parameter"}</Text>
               <Spacer x={0.5} />
-              <IoInformationCircleOutline />
+              <LuInfo />
             </div>
           </Tooltip>
           <Input
@@ -255,7 +255,7 @@ function ApiPagination(props) {
             <div style={styles.rowDisplay}>
               <Text>{"Next cursor field name"}</Text>
               <Spacer x={0.5} />
-              <IoInformationCircleOutline />
+              <LuInfo />
             </div>
           </Tooltip>
           <Input
@@ -277,7 +277,7 @@ function ApiPagination(props) {
           <div style={styles.rowDisplay}>
             <Text>{"Maximum number of items (0 = unlimited)"}</Text>
             <Spacer x={0.5} />
-            <IoInformationCircleOutline />
+            <LuInfo />
           </div>
         </Tooltip>
         <Input

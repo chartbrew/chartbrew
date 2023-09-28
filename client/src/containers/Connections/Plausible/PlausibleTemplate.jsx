@@ -5,12 +5,12 @@ import {
 } from "@nextui-org/react";
 import _ from "lodash";
 import cookie from "react-cookies";
+import { LuCheckCheck, LuChevronRight, LuExternalLink, LuPlus, LuX } from "react-icons/lu";
 
 import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
-import { IoAdd, IoCheckmarkDone, IoChevronForward, IoClose, IoLink } from "react-icons/io5";
 
 /*
   The Form used to configure the Plausible template
@@ -210,7 +210,7 @@ function PlausibleTemplate(props) {
             {!formVisible && (
               <Button
                 variant="faded"
-                startContent={<IoAdd />}
+                startContent={<LuPlus />}
                 onClick={() => setFormVisible(true)}
                 color="primary"
               >
@@ -275,7 +275,7 @@ function PlausibleTemplate(props) {
             >
               <Text size="sm" className={"text-secondary"}>{"Get your API key here "}</Text>
               <Spacer x={1} />
-              <IoLink />
+              <LuExternalLink />
             </Link>
           </Row>
         </>
@@ -310,7 +310,7 @@ function PlausibleTemplate(props) {
           <Row>
             <Button
               variant="ghost"
-              startContent={<IoCheckmarkDone />}
+              startContent={<LuCheckCheck />}
               auto
               onClick={_onSelectAll}
               size="sm"
@@ -320,7 +320,7 @@ function PlausibleTemplate(props) {
             <Spacer x={1} />
             <Button
               variant="ghost"
-              startContent={<IoClose />}
+              startContent={<LuX />}
               auto
               onClick={_onDeselectAll}
               size="sm"
@@ -359,7 +359,7 @@ function PlausibleTemplate(props) {
                 <Text>{"Make sure your site ID is spelt correctly and you used the correct API Key"}</Text>
               </Row>
               <Row align="center">
-                <IoChevronForward />
+                <LuChevronRight />
                 <Spacer x={1} />
                 <Link
                   target="_blank"
@@ -369,10 +369,10 @@ function PlausibleTemplate(props) {
                   <Text>You can log in and check if your site ID exists here</Text>
                 </Link>
                 <Spacer x={1} />
-                <IoLink />
+                <LuExternalLink />
               </Row>
               <Row align="center">
-                <IoChevronForward />
+                <LuChevronRight />
                 <Spacer x={1} />
                 <Link
                   href="https://plausible.io/settings#api-keys"
@@ -382,7 +382,7 @@ function PlausibleTemplate(props) {
                   <Text>{"Then check if your API Key is correct or generate a new one here"}</Text>
                 </Link>
                 <Spacer x={1} />
-                <IoLink />
+                <LuExternalLink />
               </Row>
             </div>
           </Row>
