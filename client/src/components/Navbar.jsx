@@ -12,8 +12,8 @@ import { createMedia } from "@artsy/fresnel";
 import useDarkMode from "@fisch0920/use-dark-mode";
 import { useLocalStorage } from "react-use";
 import {
-  LuBook, LuCompass, LuContrast, LuGithub, LuHeartHandshake, LuLogOut,
-  LuMoon, LuPlay, LuSettings, LuSmile, LuSun, LuUser,
+  LuBook, LuCheck, LuCompass, LuContrast, LuGithub, LuHeartHandshake, LuLogOut,
+  LuMoon, LuPlay, LuSettings, LuSmile, LuSun, LuUser, LuWallpaper,
 } from "react-icons/lu";
 import { TbBrandDiscord } from "react-icons/tb";
 
@@ -48,7 +48,7 @@ function NavbarContainer(props) {
   const [feedbackModal, setFeedbackModal] = useState();
   const [teamOwned, setTeamOwned] = useState({});
   const [showAppearance, setShowAppearance] = useState(false);
-  const [isOsTheme, setIsOsTheme] = useLocalStorage("osTheme", false);
+  const [isOsTheme, setIsOsTheme] = useLocalStorage("osTheme", "false");
 
   const {
     team, teams, user, logout, projectProp, match, history,
@@ -286,15 +286,14 @@ function NavbarContainer(props) {
               )}
 
               <DropdownItem
-                startContent={isSystemDark
-                  ? <LuSun style={{ marginLeft: 3 }} size={20} />
-                  : <LuMoon style={{ marginLeft: 3 }} size={20} />}
+                startContent={<LuWallpaper />}
                 showDivider
                 key="theme"
                 onClick={() => setShowAppearance(true)}
               >
-                {isSystemDark && "Light mode"}
-                {!isSystemDark && "Dark mode"}
+                <div className="w-full text-foreground">
+                  UI Theme
+                </div>
               </DropdownItem>
 
               <DropdownItem startContent={<LuLogOut />} onClick={logout}>
@@ -327,54 +326,63 @@ function NavbarContainer(props) {
             <Text size="h4">Chartbrew UI Appearance</Text>
           </ModalHeader>
           <ModalBody>
-            <div className="w-full">
-              <Row>
-                <Text b>Choose the theme</Text>
-              </Row>
-              <Spacer y={4} />
-              <div className="flex justify-between gap-2">
-                <Card
-                  isHoverable
-                  isPressable
-                  borderWeight={!isSystemDark && !isOsTheme ? "extrabold" : "normal"}
-                  onClick={() => _setTheme("light")}
-                  className={`bg-background ${!isSystemDark && !isOsTheme ? "border-secondary-500" : ""} min-w-[100px]`}
-                  variant={"bordered"}
-                >
-                  <CardBody>
-                    <LuSun size={24} color="black" />
-                    <Text h5 className={"text-black"}>Light</Text>
-                  </CardBody>
-                </Card>
+            <div className="flex justify-between gap-2">
+              <Card
+                isHoverable
+                isPressable
+                borderWeight={!isSystemDark && !isOsTheme ? "extrabold" : "normal"}
+                onClick={() => _setTheme("light")}
+                className={`bg-white ${!isSystemDark && !isOsTheme ? "border-secondary-500" : ""} min-w-[100px]`}
+                variant={"bordered"}
+              >
+                <CardBody>
+                  <LuSun size={24} color="black" />
+                  <Row align={"center"} className={"gap-2"}>
+                    <Text className={"text-[black]"}>Light</Text>
+                    {!isSystemDark && !isOsTheme && (
+                      <LuCheck className={"text-[black]"} />
+                    )}
+                  </Row>
+                </CardBody>
+              </Card>
 
-                <Card
-                  isPressable
-                  isHoverable
-                  className={`bg-foreground ${!isSystemDark && !isOsTheme ? "border-secondary-500" : ""} min-w-[100px]`}
-                  borderWeight={isSystemDark && !isOsTheme ? "extrabold" : "normal"}
-                  onClick={() => _setTheme("dark")}
-                  variant={"bordered"}
-                >
-                  <CardBody>
-                    <LuMoon size={24} color="white" />
-                    <Text h5 className="text-white">Dark</Text>
-                  </CardBody>
-                </Card>
+              <Card
+                isPressable
+                isHoverable
+                className={`bg-black ${!isSystemDark && !isOsTheme ? "border-secondary-500" : ""} min-w-[100px]`}
+                borderWeight={isSystemDark && !isOsTheme ? "extrabold" : "normal"}
+                onClick={() => _setTheme("dark")}
+                variant={"bordered"}
+              >
+                <CardBody>
+                  <LuMoon size={24} color="white" />
+                  <Row align={"center"} className={"gap-2"}>
+                    <Text className="text-[white]">Dark</Text>
+                    {isSystemDark && !isOsTheme && (
+                      <LuCheck className="text-[white]" />
+                    )}
+                  </Row>
+                </CardBody>
+              </Card>
 
-                <Card
-                  isHoverable
-                  isPressable
-                  variant={"bordered"}
-                  onClick={_setOSTheme}
-                  borderWeight={isOsTheme ? "extrabold" : "normal"}
-                  className={`${isSystemDark ? "bg-foreground" : "bg-background"} ${!isSystemDark && !isOsTheme ? "border-secondary-500" : ""} min-w-[100px]`}
-                >
-                  <CardBody>
-                    <LuContrast size={24} color={isSystemDark ? "white" : "black"} />
+              <Card
+                isHoverable
+                isPressable
+                variant={"bordered"}
+                onClick={_setOSTheme}
+                borderWeight={isOsTheme ? "extrabold" : "normal"}
+                className={`bg-content3 ${!isSystemDark && !isOsTheme ? "border-secondary-500" : ""} min-w-[100px]`}
+              >
+                <CardBody>
+                  <LuContrast size={24} color={isSystemDark ? "white" : "black"} />
+                  <Row align={"center"} className={"gap-2"}>
                     <Text h5 className={isSystemDark ? "text-white" : "text-black"}>System</Text>
-                  </CardBody>
-                </Card>
-              </div>
+                    {isOsTheme && (
+                      <LuCheck />
+                    )}
+                  </Row>
+                </CardBody>
+              </Card>
             </div>
           </ModalBody>
           <ModalFooter>
