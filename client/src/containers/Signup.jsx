@@ -13,8 +13,8 @@ import {
   CardHeader,
   CardBody,
 } from "@nextui-org/react";
+import { LuArrowRight, LuLock, LuMail, LuUser } from "react-icons/lu";
 
-import { ArrowRight, Message, User } from "react-iconly";
 import {
   createUser as createUserAction,
   createInvitedUser as createInvitedUserAction,
@@ -162,8 +162,8 @@ function Signup(props) {
               <Spacer y={0.5} />
               <Row>
                 <Input
-                  bordered
-                  contentRight={<User />}
+                  variant="bordered"
+                  contentRight={<LuUser />}
                   type="text"
                   placeholder="Enter your name"
                   onChange={(e) => {
@@ -189,8 +189,8 @@ function Signup(props) {
               <Spacer y={0.5} />
               <Row>
                 <Input
-                  bordered
-                  contentRight={<Message />}
+                  variant="bordered"
+                  endContent={<LuMail />}
                   type="email"
                   placeholder="Enter your email"
                   onChange={(e) => {
@@ -203,18 +203,17 @@ function Signup(props) {
                 />
               </Row>
               {errors.email && (
-              <Row>
-                <Text color={negative}>
-                  {"Please enter a valid email"}
-                </Text>
-              </Row>
+                <Row>
+                  <Text className={"text-danger"}>
+                    {"Please enter a valid email"}
+                  </Text>
+                </Row>
               )}
               <Spacer y={1} />
               <Row>
                 <Input
-                  bordered
-                  icon="lock"
-                  iconPosition="left"
+                  variant="bordered"
+                  endContent={<LuLock />}
                   type="password"
                   placeholder="Enter a secure password"
                   onChange={(e) => {
@@ -240,7 +239,7 @@ function Signup(props) {
                   isLoading={loading}
                   type="submit"
                   size="lg"
-                  iconRight={<ArrowRight />}
+                  endContent={<LuArrowRight />}
                   auto
                   color="primary"
                 >

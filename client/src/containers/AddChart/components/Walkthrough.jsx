@@ -4,8 +4,7 @@ import Tour from "reactour";
 import {
   Button, Spacer,
 } from "@nextui-org/react";
-import { FaPlug } from "react-icons/fa";
-import { Edit, Setting, TickSquare } from "react-iconly";
+import { LuCheck, LuPencilLine, LuPlug, LuSettings } from "react-icons/lu";
 
 import { secondary } from "../../../config/colors";
 import showTutorial from "../../../config/tutorials";
@@ -112,7 +111,7 @@ const steps = {
           <Row>
             <Text className={"text-black"}>
               {"You can always create new connections by clicking the "}
-              <FaPlug />
+              <LuPlug />
               {" option in the left sidebar."}
             </Text>
           </Row>
@@ -135,10 +134,9 @@ const steps = {
           <Spacer y={0.5} />
           <Row>
             <Button
-              iconRight={<FaPlug />}
-              color="success"
+              endContent={<LuPlug />}
+              color="primary"
               onClick={close}
-              auto
             >
               Time to connect
             </Button>
@@ -211,10 +209,9 @@ const steps = {
           <Spacer y={0.5} />
           <Row>
             <Button
-              startContent={<Setting />}
-              color="success"
+              endContent={<LuSettings />}
+              color="primary"
               onClick={close}
-              auto
             >
               Start configuring
             </Button>
@@ -282,10 +279,9 @@ const steps = {
           <Spacer y={0.5} />
           <Row>
             <Button
-              endContent={<Edit />}
-              color="success"
+              endContent={<LuPencilLine />}
+              color="primary"
               onClick={close}
-              auto
             >
               Write a query
             </Button>
@@ -346,10 +342,9 @@ const steps = {
           <Spacer y={1} />
           <Row>
             <Button
-              endContent={<Edit />}
-              color="success"
+              endContent={<LuPencilLine />}
+              color="primary"
               onClick={close}
-              auto
             >
               Write a query
             </Button>
@@ -515,10 +510,9 @@ const steps = {
           <Spacer y={0.5} />
           <Row>
             <Button
-              endContent={<TickSquare />}
-              color="success"
+              endContent={<LuCheck />}
+              color="primary"
               onClick={close}
-              auto
             >
               All done
             </Button>
@@ -581,10 +575,9 @@ const steps = {
           </Row>
           <Row>
             <Button
-              endContent={<TickSquare />}
-              color="success"
+              endContent={<LuCheck />}
+              color="primary"
               onClick={close}
-              auto
             >
               Start connecting
             </Button>

@@ -388,7 +388,7 @@ function ChartPreview(props) {
               size="sm"
               className="min-w-[150px]"
             >
-              <Text>Show growth</Text>
+              Show growth
             </Checkbox>
           </Row>
           <Spacer y={2} />

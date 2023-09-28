@@ -3,12 +3,11 @@ import PropTypes from "prop-types";
 import {
   Spacer,Link, Input,Checkbox, Tooltip, Button, Chip, Tabs, Tab, CircularProgress,
 } from "@nextui-org/react";
-import {
-  ChevronRight, CloseSquare, InfoCircle, Plus
-} from "react-iconly";
+
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import uuid from "uuid/v4";
 import AceEditor from "react-ace";
+import { LuChevronRight, LuInfo, LuPlus, LuXCircle } from "react-icons/lu";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -371,7 +370,7 @@ function MongoConnectionForm(props) {
                   content="Tick this if your connection URI contains 'mongodb+srv://'"
                   placement="left"
                 >
-                  <InfoCircle />
+                  <div><LuInfo /></div>
                 </Tooltip>
               </div>
 
@@ -406,7 +405,7 @@ function MongoConnectionForm(props) {
                         variant="flat"
                         color="danger"
                       >
-                        <CloseSquare />
+                        <LuXCircle />
                       </Button>
                     </div>
                     <div className="md:col-span-4" />
@@ -416,7 +415,7 @@ function MongoConnectionForm(props) {
               <div className="col-span-12">
                 <Button
                   size="sm"
-                  endContent={<Plus />}
+                  endContent={<LuPlus />}
                   onClick={_addOption}
                   variant="ghost"
                   auto
@@ -446,7 +445,7 @@ function MongoConnectionForm(props) {
         </Row>
         <Spacer y={8} />
         <Row align="center">
-          <ChevronRight set="light" />
+          <LuChevronRight />
           <Spacer x={1} />
           <Link
             target="_blank"
@@ -459,7 +458,7 @@ function MongoConnectionForm(props) {
           <FaExternalLinkSquareAlt size={12} />
         </Row>
         <Row align="center">
-          <ChevronRight set="light" />
+          <LuChevronRight />
           <Spacer x={1} />
           <Link
             href="https://docs.mongodb.com/guides/cloud/connectionstring/"
@@ -472,7 +471,7 @@ function MongoConnectionForm(props) {
           <FaExternalLinkSquareAlt size={12} />
         </Row>
         <Row align="center">
-          <ChevronRight set="light" />
+          <LuChevronRight />
           <Spacer x={1} />
           <Link onClick={() => setShowIp(!showIp)}>
             <Text>Front-end and back-end on different servers?</Text>

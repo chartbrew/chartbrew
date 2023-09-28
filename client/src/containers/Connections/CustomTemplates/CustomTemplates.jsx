@@ -5,7 +5,7 @@ import {
   Avatar, Button, Card, Spacer, CircularProgress, CardHeader, CardBody, AvatarGroup, CardFooter,
 } from "@nextui-org/react";
 import moment from "moment";
-import { Chart } from "react-iconly";
+import { LuBarChart3 } from "react-icons/lu";
 
 import CreateTemplateForm from "../../../components/CreateTemplateForm";
 import connectionImages from "../../../config/connectionImages";
@@ -115,7 +115,7 @@ function CustomTemplates(props) {
               )}
               <Spacer y={1} />
               <Row align="center" justify="center">
-                <Chart />
+                <LuBarChart3 />
                 <Spacer x={0.5} />
                 <Text>{`${template.model.Charts.length} charts`}</Text>
               </Row>

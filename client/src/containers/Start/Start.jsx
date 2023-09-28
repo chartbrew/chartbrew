@@ -7,9 +7,7 @@ import {
 import { motion } from "framer-motion";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
-import {
-  ArrowRight, Category, MoreSquare, Setting, TickSquare
-} from "react-iconly";
+import { LuArrowRight, LuCheckCircle, LuGrid, LuMoreHorizontal, LuSettings } from "react-icons/lu";
 
 import { createProject as createProjectAction } from "../../actions/project";
 import {
@@ -237,7 +235,7 @@ function Start(props) {
                   {newProject?.id && (
                     <>
                       <Spacer x={0.3} />
-                      <TickSquare color="green" />
+                      <LuCheckCircle className="text-success" />
                     </>
                   )}
                   <Spacer x={1} />
@@ -312,7 +310,7 @@ function Start(props) {
                   <Button
                     color="gradient"
                     onClick={_onSubmitProjectName}
-                    iconRight={<ArrowRight set={"light"} />}
+                    iconRight={<LuArrowRight />}
                     size="lg"
                     disabled={projectName.length < 1}
                     auto
@@ -345,7 +343,7 @@ function Start(props) {
                       setOnboardingStep("mode");
                     }}
                     auto
-                    iconRight={<ArrowRight set={"light"} />}
+                    iconRight={<LuArrowRight set={"light"} />}
                   >
                     Choose your starting mode
                   </Button>
@@ -371,7 +369,7 @@ function Start(props) {
                     >
                       <Card.Body>
                         <Row>
-                          <Category size={"xlarge"} />
+                          <LuGrid size={28} />
                         </Row>
                         <Row>
                             <Text size="h3">
@@ -400,7 +398,7 @@ function Start(props) {
                     >
                       <Card.Body>
                         <Row>
-                          <Setting size={"xlarge"} />
+                          <LuSettings size={28} />
                         </Row>
                         <Row>
                             <Text size="h3">
@@ -426,7 +424,7 @@ function Start(props) {
                     >
                       <Card.Body>
                         <Row>
-                          <MoreSquare size={"xlarge"} />
+                          <LuMoreHorizontal size={28} />
                         </Row>
                         <Row>
                             <Text size="h3">

@@ -3,12 +3,11 @@ import PropTypes from "prop-types";
 import {
   Button, Input, Link, Spacer, Chip, Accordion, AccordionItem, Select, SelectItem, CircularProgress,
 } from "@nextui-org/react";
-import { InfoCircle } from "react-iconly";
-import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import AceEditor from "react-ace";
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
+import { LuExternalLink, LuInfo } from "react-icons/lu";
 
 import HelpBanner from "../../../components/HelpBanner";
 import connectionImages from "../../../config/connectionImages";
@@ -176,7 +175,7 @@ function CustomerioConnectionForm(props) {
                 >
                   <Text className="text-primary">{"1. Create a Customer.io App API Key "}</Text>
                   <Spacer x={1} />
-                  <FaExternalLinkSquareAlt size={14} />
+                  <LuExternalLink size={14} />
                 </Link>
               </Row>
               <Spacer y={2} />
@@ -214,7 +213,7 @@ function CustomerioConnectionForm(props) {
             title="Locate the region"
             className={"text-primary"}
           >
-            <InfoCircle />
+            <LuInfo />
           </Link>
         </Row>
 

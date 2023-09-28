@@ -34,6 +34,7 @@ import useThemeDetector from "../../modules/useThemeDetector";
 import Row from "../../components/Row";
 import Container from "../../components/Container";
 import Text from "../../components/Text";
+import { LuCopyPlus, LuFileDown, LuFilter, LuPrinter, LuRefreshCw } from "react-icons/lu";
 
 const breakpoints = {
   mobile: 0,
@@ -368,7 +369,7 @@ function ProjectDashboard(props) {
                   <Media greaterThan="mobile">
                     <Button
                       variant="ghost"
-                      startContent={<IoFilterCircleOutline size={20} />}
+                      startContent={<LuFilter />}
                       isLoading={filterLoading}
                       onClick={_onShowFilters}
                       size="sm"
@@ -385,7 +386,7 @@ function ProjectDashboard(props) {
                       variant="ghost"
                       size="sm"
                     >
-                      <IoFilterCircleOutline size={24} />
+                      <LuFilter size={24} />
                     </Button>
                   </Media>
                   <Spacer x={1} />
@@ -439,7 +440,7 @@ function ProjectDashboard(props) {
                           auto
                           size="sm"
                         >
-                          <IoCopyOutline size={22} />
+                          <LuCopyPlus size={22} />
                         </Button>
                       </Tooltip>
                     </>
@@ -455,7 +456,7 @@ function ProjectDashboard(props) {
                           auto
                           size="sm"
                         >
-                          <RiFileExcel2Line size={22} />
+                          <LuFileDown size={22} />
                         </Button>
                       </Tooltip>
                     </>
@@ -471,7 +472,7 @@ function ProjectDashboard(props) {
                           auto
                           size="sm"
                         >
-                          <IoPrintOutline size={22} />
+                          <LuPrinter size={22} />
                         </Button>
                       </Tooltip>
                     </>
@@ -483,7 +484,7 @@ function ProjectDashboard(props) {
                       <Tooltip content="Refresh data" placement="bottom-start">
                         <Button
                           variant="ghost"
-                          startContent={refreshLoading ? null : <IoReload size={22} />}
+                          endContent={refreshLoading ? null : <LuRefreshCw />}
                           onClick={() => _onRefreshData()}
                           isLoading={refreshLoading}
                           size="sm"
@@ -497,11 +498,13 @@ function ProjectDashboard(props) {
                         <Tooltip content="Refresh all charts" placement="bottom-end">
                           <Button
                             variant="ghost"
-                            startContent={<IoReload size={24} />}
+                            isIconOnly
                             onClick={() => _onRefreshData()}
                             isLoading={refreshLoading}
                             size="sm"
-                          />
+                          >
+                            <LuRefreshCw size={24} />
+                          </Button>
                         </Tooltip>
                       </>
                     </Media>

@@ -9,8 +9,7 @@ import {
 } from "@nextui-org/react";
 import { Helmet } from "react-helmet";
 import uuid from "uuid/v4";
-import { FaPrint, FaRedo } from "react-icons/fa";
-import { ChevronLeftCircle, TickSquare } from "react-iconly";
+import { LuCheck, LuChevronLeftCircle, LuPrinter, LuRedo } from "react-icons/lu";
 
 import {
   runQueryWithFilters as runQueryWithFiltersAction,
@@ -120,11 +119,11 @@ function PrintView(props) {
               variant="bordered"
               onClick={_togglePrint}
             >
-              <ChevronLeftCircle />
+              <LuChevronLeftCircle />
             </Button>
             <Spacer x={0.5} />
             <Button
-              startContent={<FaRedo />}
+              startContent={<LuRedo />}
               variant="bordered"
               onClick={_changeOrientation}
               auto
@@ -133,7 +132,7 @@ function PrintView(props) {
             </Button>
             <Spacer x={0.5} />
             <Button
-              startContent={<FaPrint />}
+              startContent={<LuPrinter />}
               onClick={_onStartPrint}
               auto
             >
@@ -164,9 +163,8 @@ function PrintView(props) {
                 <Spacer x={0.2} />
                 <Button
                   color="secondary"
-                  startContent={<TickSquare />}
+                  startContent={<LuCheck />}
                   onClick={() => setEditingTitle(false)}
-                  auto
                 >
                   Save
                 </Button>

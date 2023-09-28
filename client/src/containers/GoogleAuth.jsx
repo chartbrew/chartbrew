@@ -6,7 +6,7 @@ import {
   Spacer, Button, CircularProgress,
 } from "@nextui-org/react";
 import cookie from "react-cookies";
-import { ChevronRightCircle } from "react-iconly";
+import { LuArrowRight } from "react-icons/lu";
 
 import { API_HOST } from "../config/settings";
 import Container from "../components/Container";
@@ -93,8 +93,7 @@ function GoogleAuth(props) {
             <Link to="/user">
               <Button
                 color="success"
-                endContent={<ChevronRightCircle />}
-                auto
+                endContent={<LuArrowRight />}
               >
                 Go to connections
               </Button>
@@ -120,7 +119,7 @@ function GoogleAuth(props) {
             <Link to="/user">
               <Button
                 color="secondary"
-                endContent={<ChevronRightCircle />}
+                endContent={<LuArrowRight />}
                 auto
               >
                 Back to the dashboard

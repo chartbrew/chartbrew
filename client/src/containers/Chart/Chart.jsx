@@ -43,7 +43,6 @@ import TableContainer from "./components/TableView/TableContainer";
 import ChartFilters from "./components/ChartFilters";
 import useInterval from "../../modules/useInterval";
 import Row from "../../components/Row";
-import Container from "../../components/Container";
 import Text from "../../components/Text";
 
 const getFiltersFromStorage = (projectId) => {
@@ -542,14 +541,12 @@ function Chart(props) {
                     </LinkNext>
                   </PopoverTrigger>
                   <PopoverContent>
-                    <Container className={"pt-10 pb-10"}>
-                      <ChartFilters
-                        chart={chart}
-                        onAddFilter={_onAddFilter}
-                        onClearFilter={_onClearFilter}
-                        conditions={conditions}
-                      />
-                    </Container>
+                    <ChartFilters
+                      chart={chart}
+                      onAddFilter={_onAddFilter}
+                      onClearFilter={_onClearFilter}
+                      conditions={conditions}
+                    />
                   </PopoverContent>
                 </Popover>
               )}

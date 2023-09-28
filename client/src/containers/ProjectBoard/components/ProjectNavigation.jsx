@@ -8,12 +8,15 @@ import {
   Link as LinkNext, Tooltip, Spacer, Button, Avatar, Modal, ModalHeader, ModalBody,ModalFooter,
   ModalContent, Popover, PopoverTrigger, PopoverContent, Listbox, ListboxItem, Input, Divider,
 } from "@nextui-org/react";
-import { MdExtension } from "react-icons/md";
-import { BsPlugin } from "react-icons/bs";
+// import {
+//   IoAdd, IoAddCircle, IoBarChart, IoCaretBackCircleOutline, IoCaretForwardCircleOutline, IoChevronUpCircle,
+//   IoEasel, IoEyeOffOutline, IoEyeOutline, IoGridOutline, IoPeople, IoSettings,
+// } from "react-icons/io5";
 import {
-  IoAdd, IoAddCircle, IoBarChart, IoCaretBackCircleOutline, IoCaretForwardCircleOutline, IoChevronUpCircle,
-  IoEasel, IoEyeOffOutline, IoEyeOutline, IoGridOutline, IoPeople, IoSettings,
-} from "react-icons/io5";
+  LuBarChartBig, LuChevronsUp, LuCoffee, LuEye, LuLayoutGrid, LuPanelLeftClose,
+  LuPanelLeftOpen, LuPlug, LuPlusCircle, LuPresentation, LuPuzzle, LuSettings,
+  LuTv2, LuUser, LuUsers2,
+} from "react-icons/lu";
 
 import {
   dark, lightGray, primary, secondary
@@ -97,26 +100,26 @@ function ProjectNavigation(props) {
             <Row justify="space-between" align="center">
               <Link to={`/${teamId}/${projectId}/dashboard`}>
                 <LinkNext className="pointer-events-none">
-                  <IoBarChart color={_checkIfActive("dashboard") ? secondary : "white"} size={24} />
+                  <LuBarChartBig color={_checkIfActive("dashboard") ? secondary : "white"} size={24} />
                 </LinkNext>
               </Link>
               {canAccess("editor") && (
                 <Link to={`/${teamId}/${projectId}/connections`}>
                   <LinkNext className="pointer-events-none">
-                    <BsPlugin size={24} color={_checkIfActive("connections") ? secondary : "white"} />
+                    <LuPlug size={24} color={_checkIfActive("connections") ? secondary : "white"} />
                   </LinkNext>
                 </Link>
               )}
               <Link to={`/b/${project.brewName}`}>
                 <LinkNext className="pointer-events-none">
-                  <IoEasel color={_checkIfActive("public") ? secondary : "white"} size={24} />
+                  <LuPresentation color={_checkIfActive("public") ? secondary : "white"} size={24} />
                 </LinkNext>
               </Link>
               {canAccess("editor")
                 && (
                   <Link to={`/${teamId}/${projectId}/members`}>
                     <LinkNext className="pointer-events-none">
-                      <IoPeople color={_checkIfActive("members") ? secondary : "white"} size={24} />
+                      <LuUser color={_checkIfActive("members") ? secondary : "white"} size={24} />
                     </LinkNext>
                   </Link>
                 )}
@@ -124,7 +127,7 @@ function ProjectNavigation(props) {
                 && (
                   <Link to={`/${teamId}/${projectId}/projectSettings`}>
                     <LinkNext className="pointer-events-none">
-                      <IoSettings color={_checkIfActive("projectSettings") ? secondary : "white"} size={24} />
+                      <LuSettings color={_checkIfActive("projectSettings") ? secondary : "white"} size={24} />
                     </LinkNext>
                   </Link>
                 )}
@@ -145,7 +148,7 @@ function ProjectNavigation(props) {
                 {menuSize === "small" && (
                   // <Tooltip content="Switch project" placement="right">
                   <div>
-                    <Text className={"text-default-800"}><IoGridOutline size={28} /></Text>
+                    <Text className={"text-default-800"}><LuLayoutGrid size={28} /></Text>
                   </div>
                   // </Tooltip>
                 )}
@@ -184,7 +187,7 @@ function ProjectNavigation(props) {
                   <div>
                     <Link to={`/${teamId}/${projectId}/chart`}>
                       <Text color="primary">
-                        <Avatar icon={<IoAddCircle size={28} />} radius="sm" />
+                        <Avatar icon={<LuPlusCircle size={28} />} radius="sm" />
                       </Text>
                     </Link>
                   </div>
@@ -193,7 +196,7 @@ function ProjectNavigation(props) {
               {menuSize === "large" && (
                 <Link to={`/${teamId}/${projectId}/chart`} className={"w-full pl-4 pr-4"}>
                   <Button
-                    endContent={<IoAdd size={24} />}
+                    endContent={<LuPlusCircle size={24} />}
                     fullWidth
                     color="primary"
                     className="pointer-events-none"
@@ -216,7 +219,7 @@ function ProjectNavigation(props) {
                     variant="light"
                     color={_checkIfActive("dashboard") ? "primary" : "default"}
                   >
-                    <IoBarChart size={28} />
+                    <LuCoffee size={28} />
                   </Button>
                 </div>
               </Tooltip>
@@ -225,7 +228,7 @@ function ProjectNavigation(props) {
               <Button
                 variant="light"
                 color={_checkIfActive("dashboard") ? "primary" : "default"}
-                startContent={<IoBarChart size={24} />}
+                startContent={<LuCoffee size={24} />}
                 className="pointer-events-none"
               >
                 Dashboard
@@ -246,7 +249,7 @@ function ProjectNavigation(props) {
                         variant="light"
                         color={_checkIfActive("connections") ? "primary" : "default"}
                       >
-                        <BsPlugin size="28" />
+                        <LuPlug size="28" />
                       </Button>
                     </div>
                   </Tooltip>
@@ -255,7 +258,7 @@ function ProjectNavigation(props) {
                   <Button
                     variant="light"
                     color={_checkIfActive("connections") ? "primary" : "default"}
-                    startContent={<BsPlugin size="24" />}
+                    startContent={<LuPlug size="24" />}
                     className="pointer-events-none"
                   >
                     Connections
@@ -278,7 +281,7 @@ function ProjectNavigation(props) {
                       variant="light"
                       color={_checkIfActive("public") ? "primary" : "default"}
                     >
-                      <IoEasel size={28} />
+                      <LuTv2 size={28} />
                     </Button>
                   </div>
                 </Tooltip>
@@ -287,7 +290,7 @@ function ProjectNavigation(props) {
                 <Button
                   variant="light"
                   color={_checkIfActive("public") ? "primary" : "default"}
-                  startContent={<IoEasel size={24} />}
+                  startContent={<LuTv2 size={24} />}
                   className="pointer-events-none"
                 >
                   Dashboard report
@@ -310,7 +313,7 @@ function ProjectNavigation(props) {
                         variant="light"
                         color={_checkIfActive("projectSettings") ? "primary" : "default"}
                       >
-                        <IoSettings size={28} />
+                        <LuSettings size={28} />
                       </Button>
                     </div>
                   </Tooltip>
@@ -319,7 +322,7 @@ function ProjectNavigation(props) {
                   <Button
                     variant="light"
                     color={_checkIfActive("projectSettings") ? "primary" : "default"}
-                    startContent={<IoSettings size={24} />}
+                    startContent={<LuSettings size={24} />}
                     className="pointer-events-none"
                   >
                     Project settings
@@ -344,7 +347,7 @@ function ProjectNavigation(props) {
                         variant="light"
                         color={_checkIfActive("members") ? "primary" : "default"}
                       >
-                        <IoPeople size={28} />
+                        <LuUsers2 size={28} />
                       </Button>
                     </div>
                   </Tooltip>
@@ -353,7 +356,7 @@ function ProjectNavigation(props) {
                   <Button
                     variant="light"
                     color={_checkIfActive("members") ? "primary" : "default"}
-                    startContent={<IoPeople size={24} />}
+                    startContent={<LuUsers2 size={24} />}
                     className="pointer-events-none"
                   >
                     Team members
@@ -372,7 +375,7 @@ function ProjectNavigation(props) {
                         variant="light"
                         color={_checkIfActive("integrations") ? "primary" : "default"}
                       >
-                        <MdExtension size={28} />
+                        <LuPuzzle size={28} />
                       </Button>
                     </div>
                   </Tooltip>
@@ -381,7 +384,7 @@ function ProjectNavigation(props) {
                   <Button
                     variant="light"
                     color={_checkIfActive("integrations") ? "primary" : "default"}
-                    startContent={<MdExtension size={24} />}
+                    startContent={<LuPuzzle size={24} />}
                     className="pointer-events-none"
                   >
                     Integrations
@@ -406,7 +409,7 @@ function ProjectNavigation(props) {
                     color="default"
                     onClick={() => onChangeDrafts(!showDrafts)}
                   >
-                    {showDrafts ? (<IoEyeOutline size={28} />) : (<IoEyeOffOutline size={28} />)}
+                    {showDrafts ? (<LuEye size={28} />) : (<LuEye size={28} />)}
                   </Button>
                 </div>
               )}
@@ -416,7 +419,7 @@ function ProjectNavigation(props) {
                     variant="light"
                     color="default"
                     onClick={() => onChangeDrafts(!showDrafts)}
-                    startContent={showDrafts ? (<IoEyeOutline size={24} />) : (<IoEyeOffOutline size={24} />)}
+                    startContent={showDrafts ? (<LuEye size={24} />) : (<LuEye size={24} />)}
                   >
                     {showDrafts ? "Show drafts" : "Hide drafts"}
                   </Button>
@@ -425,8 +428,8 @@ function ProjectNavigation(props) {
             </Tooltip>
           )}
         </Row>
-        {menuSize === "small" && <Spacer y={1} />}
-        {menuSize === "large" && <Spacer y={3} />}
+        {menuSize === "small" && <Spacer y={4} />}
+        {menuSize === "large" && <Spacer y={4} />}
         {menuSize === "large" && (
           <Row justify="flex-end" align="center" className={"mr-5"}>
             <Tooltip content="Click to collapse menu" placement="right">
@@ -436,7 +439,7 @@ function ProjectNavigation(props) {
                 color="default"
                 onClick={() => onSetMenuSize(70)}
               >
-                <IoCaretBackCircleOutline size={28} />
+                <LuPanelLeftClose size={28} />
               </Button>
             </Tooltip>
           </Row>
@@ -450,7 +453,7 @@ function ProjectNavigation(props) {
                 color="default"
                 onClick={() => onSetMenuSize(sideMaxSize)}
               >
-                <IoCaretForwardCircleOutline size={28} />
+                <LuPanelLeftOpen size={28} />
               </Button>
             </Tooltip>
           </Row>
@@ -467,7 +470,7 @@ function ProjectNavigation(props) {
             >
               <Text b className={"text-default-800 text-[10px]"} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
                 {update && update.tag_name && (
-                  <IoChevronUpCircle color={secondary} />
+                  <LuChevronsUp color={secondary} />
                 )}
                 Chartbrew
                 { ` ${APP_VERSION || "v3.0.0"}`}
@@ -485,7 +488,7 @@ function ProjectNavigation(props) {
             >
               <Text b className={"text-default-800 text-[10px]"} style={menuSize !== "small" ? styles.cbVersion : styles.cbVersionCollapsed}>
                 {update && update.tag_name && (
-                  <IoChevronUpCircle color={secondary} />
+                  <LuChevronsUp color={secondary} />
                 )}
                 {APP_VERSION || "v3.0.0"}
               </Text>

@@ -10,7 +10,7 @@ import {
   Dropdown, Spacer, Link as LinkNext, Input, Popover,
   Tooltip, Button, Modal, Chip, Divider, ModalHeader, ModalBody, ModalFooter, Tabs, Tab, PopoverTrigger, PopoverContent, DropdownTrigger, DropdownMenu, DropdownItem, ModalContent, Select, SelectItem,
 } from "@nextui-org/react";
-import { Calendar as CalendarIcon, InfoCircle, Plus } from "react-iconly";
+import { LuCalendarDays, LuInfo, LuPlus } from "react-icons/lu";
 
 import { operators } from "../../../modules/filterOperations";
 import { primary, secondary } from "../../../config/colors";
@@ -424,7 +424,7 @@ function Filters(props) {
                       <PopoverTrigger>
                         <Input
                           placeholder="Click to open calendar"
-                          startContent={<CalendarIcon />}
+                          startContent={<LuCalendarDays />}
                           value={(filter.value && format(new Date(filter.value), "Pp", { locale: enGB })) || ""}
                         />
                       </PopoverTrigger>
@@ -441,7 +441,7 @@ function Filters(props) {
                 <Spacer x={0.5} />
                 <Tooltip content={"If you can't see your fields, please go in each chart and re-run the queries. Chartbrew will then index the fields and then they will appear here."} css={{ zIndex: 99999 }}>
                   <LinkNext className="text-primary-400">
-                    <InfoCircle />
+                    <LuInfo />
                   </LinkNext>
                 </Tooltip>
               </Row>
@@ -467,7 +467,7 @@ function Filters(props) {
               <Spacer y={2} />
               <Row>
                 <Button
-                  endContent={<Plus />}
+                  endContent={<LuPlus />}
                   disabled={!filter.value}
                   onClick={_onAddFilter}
                   color="primary"

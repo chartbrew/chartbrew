@@ -7,7 +7,6 @@ import {
 import moment from "moment";
 import { format } from "date-fns";
 import { enGB } from "date-fns/locale";
-import { CloseSquare, Filter2 } from "react-iconly";
 import { Helmet } from "react-helmet";
 
 import {
@@ -28,6 +27,7 @@ import Container from "../components/Container";
 import Row from "../components/Row";
 import Text from "../components/Text";
 import Callout from "../components/Callout";
+import { LuFilter, LuXCircle } from "react-icons/lu";
 
 const pageHeight = window.innerHeight;
 
@@ -191,13 +191,20 @@ function EmbeddedChart(props) {
             <Spacer x={0.5} />
             {chart.Datasets && conditions.map((c) => {
               return (
-                <Chip color="primary" variant={"flat"} key={c.id} size="sm" className={"py-0 px-5"}>
+                <Chip
+                  color="primary"
+                  variant={"flat"}
+                  key={c.id}
+                  size="sm"
+                  className={"py-0 px-5"}
+                  endContent={(
+                    <Link onClick={() => _onClearFilter(c)} css={{ color: "$text" }}>
+                      <LuXCircle />
+                    </Link>
+                  )}
+                >
                   {c.type !== "date" && `${c.value}`}
                   {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
-                  <Spacer x={0.2} />
-                  <Link onClick={() => _onClearFilter(c)} css={{ color: "$text" }}>
-                    <CloseSquare size="small" />
-                  </Link>
                 </Chip>
               );
             })}
@@ -210,7 +217,7 @@ function EmbeddedChart(props) {
                   <Popover>
                     <Popover.Trigger>
                       <Link css={{ color: "$accents6" }}>
-                        <Filter2 set="light" />
+                        <LuFilter />
                       </Link>
                     </Popover.Trigger>
                     <Popover.Content>

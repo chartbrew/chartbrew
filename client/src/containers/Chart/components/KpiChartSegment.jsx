@@ -3,9 +3,8 @@ import PropTypes from "prop-types";
 import {
   Spacer, Tooltip,
 } from "@nextui-org/react";
+import { LuChevronDownCircle, LuChevronUpCircle } from "react-icons/lu";
 
-import { ChevronDownCircle, ChevronUpCircle } from "react-iconly";
-import { negative, positive } from "../../../config/colors";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 
@@ -45,15 +44,15 @@ function KpiChartSegment(props) {
                     )}
                     {c.status === "negative" && (
                       <Row align="center">
-                        <ChevronDownCircle size="small" primaryColor={negative} />
+                        <LuChevronDownCircle size={18} className="text-danger" />
                         <Spacer x={0.5} />
-                        <Text b size={"0.8em"} css={{ color: "$errorLightContrast" }}>{` ${c.comparison}%`}</Text>
+                        <Text b size={"0.8em"} className={"text-danger-400"}>{` ${c.comparison}%`}</Text>
                       </Row>
                     )}
                     {c.status === "positive" && (
                       <Row align="center">
-                        <ChevronUpCircle size="small" primaryColor={positive} />
-                        <Text b size={"sm"} className={"text-success-300"}>{` ${c.comparison}%`}</Text>
+                        <LuChevronUpCircle size={18} className="text-success" />
+                        <Text b size={"sm"} className={"text-success-400"}>{` ${c.comparison}%`}</Text>
                       </Row>
                     )}
                   </Tooltip>

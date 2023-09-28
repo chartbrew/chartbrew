@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {
   Button, Spacer,
 } from "@nextui-org/react";
-import { ChevronDownCircle, ChevronUpCircle } from "react-iconly";
+import { LuChevronDownCircle, LuChevronUpCircle } from "react-icons/lu";
 
 import TableComponent from "./TableComponent";
 import Row from "../../../../components/Row";
@@ -68,7 +68,7 @@ function TableContainer(props) {
         })}
         {!embedded && (
           <Button
-            startContent={expanded ? <ChevronUpCircle /> : <ChevronDownCircle />}
+            startContent={expanded ? <LuChevronUpCircle /> : <LuChevronDownCircle />}
             onClick={() => _onExpand()}
             color="default"
             size={chartSize === 1 ? "xs" : "sm"}

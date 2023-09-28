@@ -7,7 +7,6 @@ import { createStore, applyMiddleware, compose } from "redux";
 import thunk from "redux-thunk";
 import logger from "redux-logger";
 import { NextUIProvider } from "@nextui-org/react";
-import { IconlyProvider } from "react-iconly";
 import { IconContext } from "react-icons";
 
 import Main from "./containers/Main";
@@ -50,10 +49,8 @@ export default function App() {
     <Provider store={store}>
       <Router history={history}>
         <NextUIProvider>
-          <IconContext.Provider value={{ className: "react-icons", size: 20, style: { opacity: 0.8 } }}>
-            <IconlyProvider set="bulk">
-              <Main />
-            </IconlyProvider>
+          <IconContext.Provider value={{ className: "react-icons", size: 22, style: { opacity: 0.8 } }}>
+            <Main />
           </IconContext.Provider>
         </NextUIProvider>
       </Router>

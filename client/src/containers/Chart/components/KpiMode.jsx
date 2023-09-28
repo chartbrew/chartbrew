@@ -3,10 +3,9 @@ import PropTypes from "prop-types";
 import {
   Progress, Spacer, Tooltip,
 } from "@nextui-org/react";
-import { ChevronDownCircle, ChevronUpCircle } from "react-iconly";
+import { LuChevronDownCircle, LuChevronUpCircle } from "react-icons/lu";
 
 import determineType from "../../../modules/determineType";
-import { negative, positive } from "../../../config/colors";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
@@ -44,25 +43,25 @@ function KpiMode(props) {
     return (
       <div>
         <Tooltip content={`compared to last ${chart.timeInterval}`}>
-          <Container className={"w-full"}>
+          <div className="w-full">
             {status === "neutral" && (
               <Text className={"text-gray-500"}>{`${comparison}%`}</Text>
             )}
             {status === "negative" && (
               <Row align="center">
-                <ChevronDownCircle size="small" primaryColor={negative} />
+                <LuChevronDownCircle size={18} className="text-danger" />
                 <Spacer x={1} />
-                <Text className={"text-danger-300"}>{` ${comparison}%`}</Text>
+                <Text className={"text-danger-400"}>{` ${comparison}%`}</Text>
               </Row>
             )}
             {status === "positive" && (
               <Row align="center">
-                <ChevronUpCircle size="small" primaryColor={positive} />
+                <LuChevronUpCircle size={18} className="text-success" />
                 <Spacer x={1} />
-                <Text className={"text-success-300"}>{` ${comparison}%`}</Text>
+                <Text className={"text-success-400"}>{` ${comparison}%`}</Text>
               </Row>
             )}
-          </Container>
+          </div>
         </Tooltip>
       </div>
     );
