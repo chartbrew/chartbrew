@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { useWindowSize } from "react-use";
 import {
-  Button, Input, Spacer, Table, Tooltip, Link as LinkNext, Chip, Modal, CircularProgress, TableHeader, TableColumn, TableCell, TableBody, TableRow, ModalHeader, ModalBody, ModalFooter, ModalContent,
+  Button, Input, Spacer, Table, Tooltip, Link as LinkNext, Chip, Modal,
+  CircularProgress, TableHeader, TableColumn, TableCell, TableBody, TableRow,
+  ModalHeader, ModalBody, ModalFooter, ModalContent, DropdownTrigger, Dropdown,
+  DropdownMenu, DropdownItem,
 } from "@nextui-org/react";
 import {
-  LuBarChart, LuPencilLine, LuPlug, LuPlus, LuSearch, LuSettings, LuTrash, LuUser, LuUsers2,
+  LuBarChart, LuChevronDown, LuPencilLine, LuPlug, LuPlus, LuSearch, LuSettings,
+  LuTrash, LuUsers2,
 } from "react-icons/lu";
 
 import {
@@ -38,6 +42,7 @@ function UserDashboard(props) {
   const {
     relog, cleanErrors, user, getTeams, saveActiveTeam,
     teams, teamLoading, getTemplates, history, updateProject, removeProject,
+    team,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -49,7 +54,8 @@ function UserDashboard(props) {
   const [projectToDelete, setProjectToDelete] = useState(null);
   const [modifyingProject, setModifyingProject] = useState(false);
 
-  const { width, height } = useWindowSize();
+  const initRef = useRef(null);
+  const { height } = useWindowSize();
 
   useEffect(() => {
     cleanErrors();
@@ -63,6 +69,14 @@ function UserDashboard(props) {
       _checkParameters();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (teams && teams.length > 0 && !initRef.current) {
+      initRef.current = true;
+      const owningTeam = teams.find((t) => t.TeamRoles.find((tr) => tr.role === "owner" && tr.user_id === user.data.id));
+      saveActiveTeam(owningTeam);
+    }
+  }, [teams]);
 
   const _checkParameters = () => {
     const params = new URLSearchParams(window.location.search);
@@ -196,44 +210,59 @@ function UserDashboard(props) {
         <Spacer y={4} />
         {newProjectModal()}
 
-        {teams && teams.map((key) => {
-          return (
-            <>
-              <Container className={"mt-4"}>
-                <Row
-                  key={key.id}
-                  align={"center"}
-                  justify={"space-between"}
-                >
-                  <Row justify="flex-start" align="center">
-                    {key.TeamRoles.length > 1 && <LuUsers2 size={28} />}
-                    {key.TeamRoles.length < 2 && <LuUser size={28} />}
-                    <Spacer x={1} />
-                    <Text
-                      size={"xl"}
-                      b
-                      className={"inline"}
-                      title={`${key.TeamRoles.length} member${key.TeamRoles.length > 1 ? "s" : ""}`}
+        {team && (
+          <>
+            <Container className={"mt-4"}>
+              <Row
+                align={"center"}
+                justify={"space-between"}
+              >
+                <Row justify="flex-start" align="center">
+                  <Dropdown>
+                    <DropdownTrigger>
+                      <Button
+                        startContent={<LuUsers2 size={28} />}
+                        variant="ghost"
+                        endContent={<LuChevronDown />}
+                        size="lg"
+                      >
+                        {team.name}
+                      </Button>
+                    </DropdownTrigger>
+                    <DropdownMenu
+                      selectedKeys={[`${team.id}`]}
+                      onSelectionChange={(keys) => {
+                        const selectedTeam = teams.find((t) => `${t.id}` === keys.currentKey);
+                        if (selectedTeam) {
+                          saveActiveTeam(selectedTeam);
+                        }
+                      }}
+                      selectionMode="single"
                     >
-                      {key.name}
-                    </Text>
-                    <Spacer x={2} />
-                    {key.TeamRoles[0] && (
-                      <Chip color="secondary" size="sm">
-                        {_getTeamRole(key.TeamRoles)}
-                      </Chip>
-                    )}
-                  </Row>
-                  {_canAccess("admin", key.TeamRoles)
+                      {teams.map((t) => (
+                        <DropdownItem
+                          key={t.id}
+                          textValue={t.name}
+                          endContent={(
+                            <Chip size="sm" variant="flat" color="primary">
+                              {_getTeamRole(t.TeamRoles)}
+                            </Chip>
+                          )}
+                        >
+                          {t.name}
+                        </DropdownItem>
+                      ))}
+                    </DropdownMenu>
+                  </Dropdown>
+                  {_canAccess("admin", team.TeamRoles)
                     && (
-                      <Row justify="flex-end" align="center">
+                      <>
+                        <Spacer x={1} />
                         <Tooltip content="Team settings">
                           <div>
-                            <Link to={`/manage/${key.id}/settings`}>
+                            <Link to={`/manage/${team.id}/settings`}>
                               <Button
-                                style={width >= 768 ? styles.settingsBtn : {}}
-                                className={"min-w-fit"}
-                                // size="sm"
+                                variant="light"
                                 isIconOnly
                               >
                                 <LuSettings />
@@ -241,207 +270,207 @@ function UserDashboard(props) {
                             </Link>
                           </div>
                         </Tooltip>
-                      </Row>
+                      </>
                     )}
                 </Row>
-              </Container>
-              <Spacer y={4} />
-              <Container>
-                <Spacer y={2} />
-                <Row className={"gap-2"} justify="flex-start" align="center">
-                  {_canAccess("admin", key.TeamRoles) && (
-                    <>
-                      <Button
-                        color="primary"
-                        onClick={() => _onNewProject(key)}
-                        endContent={<LuPlus />}
-                      >
-                        Create new project
-                      </Button>
-                    </>
-                  )}
-                  <Input
-                    type="text"
-                    placeholder="Search projects"
-                    variant="bordered"
-                    endContent={<LuSearch />}
-                    onChange={(e) => setSearch({ ...search, [key.id]: e.target.value })}
-                    className="max-w-[300px]"
-                  />
-                </Row>
-                <Spacer y={2} />
-                {key.Projects && (
-                  <Table
-                    aria-label="Projects list"
-                    className="h-auto min-w-full bg-content2"
-                  >
-                    <TableHeader>
-                      <TableColumn key="name">Project name</TableColumn>
-                      <TableColumn key="connections">
-                        <Row align="end" justify="center" className={"gap-1"}>
-                          <LuPlug />
-                          <Text>Connections</Text>
-                        </Row>
-                      </TableColumn>
-                      <TableColumn key="charts">
-                        <Row align="end" justify="center" className={"gap-1"}>
-                          <LuBarChart />
-                          <Text>Charts</Text>
-                        </Row>
-                      </TableColumn>
-                      <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
-                    </TableHeader>
-                    {_getFilteredProjects(key).length > 0 && (
-                      <TableBody items={_getFilteredProjects(key)}>
-                        {(project) => (
-                          <TableRow key={project.id}>
-                            <TableCell key="name">
-                              <LinkNext onClick={() => directToProject(key, project.id)}>
-                                <Text b className={"text-default-foreground"}>{project.name}</Text>
-                              </LinkNext>
-                            </TableCell>
-                            <TableCell key="connections">
-                              <Row justify="center" align="center">
-                                <Text b>
-                                  {project.Connections && project.Connections.length}
-                                </Text>
-                              </Row>
-                            </TableCell>
-                            <TableCell key="charts">
-                              <Row justify="center" align="center">
-                                <Text b>
-                                  {project.Charts.length}
-                                </Text>
-                              </Row>
-                            </TableCell>
-                            <TableCell key="actions">
-                              {_canAccess("admin", key.TeamRoles) && (
-                                <Row justify="flex-end" align="center">
-                                  <Tooltip content="Rename the project">
-                                    <Button
-                                      startContent={<LuPencilLine />}
-                                      variant="light"
-                                      size="sm"
-                                      className={"min-w-fit"}
-                                      onClick={() => _onEditProject(project)}
-                                    />
-                                  </Tooltip>
-                                  <Tooltip
-                                    content="Delete project"
-                                    color="danger"
-                                  >
-                                    <Button
-                                      color="danger"
-                                      startContent={<LuTrash />}
-                                      variant="light"
-                                      size="sm"
-                                      className={"min-w-fit"}
-                                      onClick={() => _onDeleteProject(project)}
-                                    />
-                                  </Tooltip>
-                                  <Spacer x={0.5} />
-                                </Row>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    )}
-                    {_getFilteredProjects(key).length === 0 && (
-                      <TableBody>
-                        <TableRow>
-                          <TableCell key="name">
-                            <Text i>No projects found</Text>
-                          </TableCell>
-                          <TableCell key="connections" align="center" />
-                          <TableCell key="charts" align="center" />
-                          <TableCell key="actions" align="center" />
-                        </TableRow>
-                      </TableBody>
-                    )}
-                  </Table>
-                )}
-                {key.Projects && key.Projects.length === 0 && !_canAccess("admin", key.TeamRoles)
-                  && (
-                    <Container>
-                    <Text size="h3">
-                        {"No project over here"}
-                      </Text>
-                    </Container>
-                  )}
-              </Container>
-              <Spacer y={4} />
-
-              <Modal isOpen={!!projectToEdit} onClose={() => setProjectToEdit(null)}>
-                <ModalContent>
-                  <ModalHeader>
-                    <Text size="h3">Rename your project</Text>
-                  </ModalHeader>
-                  <ModalBody>
-                    <Input
-                      label="Project name"
-                      placeholder="Enter the project name"
-                      value={projectToEdit?.name || ""}
-                      onChange={(e) => setProjectToEdit({ ...projectToEdit, name: e.target.value })}
-                      variant="bordered"
-                      fullWidth
-                    />
-                  </ModalBody>
-                  <ModalFooter>
-                    <Button
-                      variant="flat"
-                      color="warning"
-                      onClick={() => setProjectToEdit(null)}
-                      auto
-                    >
-                      Cancel
-                    </Button>
+              </Row>
+            </Container>
+            <Spacer y={4} />
+            <Container>
+              <Spacer y={2} />
+              <Row className={"gap-2"} justify="flex-start" align="center">
+                {_canAccess("admin", team.TeamRoles) && (
+                  <>
                     <Button
                       color="primary"
-                      onClick={() => _onEditProjectSubmit()}
-                      disabled={!projectToEdit?.name || modifyingProject}
-                      isLoading={modifyingProject}
+                      onClick={() => _onNewProject(team)}
+                      endContent={<LuPlus />}
                     >
-                      Save
+                      Create new project
                     </Button>
-                  </ModalFooter>
-                </ModalContent>
-              </Modal>
-
-              <Modal isOpen={!!projectToDelete} onClose={() => setProjectToDelete(null)}>
-                <ModalContent>
-                  <ModalHeader>
-                    <Text size="h4">Are you sure you want to delete the project?</Text>
-                  </ModalHeader>
-                  <ModalBody>
-                    <Text>
-                      {"Deleting a project will delete all the charts and connections associated with it. This action cannot be undone."}
+                  </>
+                )}
+                <Input
+                  type="text"
+                  placeholder="Search projects"
+                  variant="bordered"
+                  endContent={<LuSearch />}
+                  onChange={(e) => setSearch({ ...search, [team.id]: e.target.value })}
+                  className="max-w-[300px]"
+                />
+              </Row>
+              <Spacer y={2} />
+              {team.Projects && (
+                <Table
+                  aria-label="Projects list"
+                  className="h-auto min-w-full bg-content2"
+                >
+                  <TableHeader>
+                    <TableColumn key="name">Project name</TableColumn>
+                    <TableColumn key="connections">
+                      <Row align="end" justify="center" className={"gap-1"}>
+                        <LuPlug />
+                        <Text>Connections</Text>
+                      </Row>
+                    </TableColumn>
+                    <TableColumn key="charts">
+                      <Row align="end" justify="center" className={"gap-1"}>
+                        <LuBarChart />
+                        <Text>Charts</Text>
+                      </Row>
+                    </TableColumn>
+                    <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
+                  </TableHeader>
+                  {_getFilteredProjects(team).length > 0 && (
+                    <TableBody items={_getFilteredProjects(team)}>
+                      {(project) => (
+                        <TableRow key={project.id}>
+                          <TableCell key="name">
+                            <LinkNext onClick={() => directToProject(team, project.id)}>
+                              <Text b className={"text-default-foreground"}>{project.name}</Text>
+                            </LinkNext>
+                          </TableCell>
+                          <TableCell key="connections">
+                            <Row justify="center" align="center">
+                              <Text b>
+                                {project.Connections && project.Connections.length}
+                              </Text>
+                            </Row>
+                          </TableCell>
+                          <TableCell key="charts">
+                            <Row justify="center" align="center">
+                              <Text b>
+                                {project.Charts.length}
+                              </Text>
+                            </Row>
+                          </TableCell>
+                          <TableCell key="actions">
+                            {_canAccess("admin", team.TeamRoles) && (
+                              <Row justify="flex-end" align="center">
+                                <Tooltip content="Rename the project">
+                                  <Button
+                                    startContent={<LuPencilLine />}
+                                    variant="light"
+                                    size="sm"
+                                    className={"min-w-fit"}
+                                    onClick={() => _onEditProject(project)}
+                                  />
+                                </Tooltip>
+                                <Tooltip
+                                  content="Delete project"
+                                  color="danger"
+                                >
+                                  <Button
+                                    color="danger"
+                                    startContent={<LuTrash />}
+                                    variant="light"
+                                    size="sm"
+                                    className={"min-w-fit"}
+                                    onClick={() => _onDeleteProject(project)}
+                                  />
+                                </Tooltip>
+                                <Spacer x={0.5} />
+                              </Row>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  )}
+                  {_getFilteredProjects(team).length === 0 && (
+                    <TableBody>
+                      <TableRow>
+                        <TableCell key="name">
+                          <Text i>No projects found</Text>
+                        </TableCell>
+                        <TableCell key="connections" align="center" />
+                        <TableCell key="charts" align="center" />
+                        <TableCell key="actions" align="center" />
+                      </TableRow>
+                    </TableBody>
+                  )}
+                </Table>
+              )}
+              {team.Projects && team.Projects.length === 0 && !_canAccess("admin", team.TeamRoles)
+                && (
+                  <Container>
+                  <Text size="h3">
+                      {"No project over here"}
                     </Text>
-                  </ModalBody>
-                  <ModalFooter>
-                    <Button
-                      variant="flat"
-                      color="warning"
-                      onClick={() => setProjectToDelete(null)}
-                      auto
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      auto
-                      color="danger"
-                      endContent={<LuTrash />}
-                      onClick={() => _onDeleteProjectSubmit()}
-                      isLoading={modifyingProject}
-                    >
-                      Delete
-                    </Button>
-                  </ModalFooter>
-                </ModalContent>
-              </Modal>
-            </>
-          );
-        })}
+                  </Container>
+                )}
+            </Container>
+            <Spacer y={4} />
+
+            <Modal isOpen={!!projectToEdit} onClose={() => setProjectToEdit(null)}>
+              <ModalContent>
+                <ModalHeader>
+                  <Text size="h3">Rename your project</Text>
+                </ModalHeader>
+                <ModalBody>
+                  <Input
+                    label="Project name"
+                    placeholder="Enter the project name"
+                    value={projectToEdit?.name || ""}
+                    onChange={(e) => setProjectToEdit({ ...projectToEdit, name: e.target.value })}
+                    variant="bordered"
+                    fullWidth
+                  />
+                </ModalBody>
+                <ModalFooter>
+                  <Button
+                    variant="flat"
+                    color="warning"
+                    onClick={() => setProjectToEdit(null)}
+                    auto
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    color="primary"
+                    onClick={() => _onEditProjectSubmit()}
+                    disabled={!projectToEdit?.name || modifyingProject}
+                    isLoading={modifyingProject}
+                  >
+                    Save
+                  </Button>
+                </ModalFooter>
+              </ModalContent>
+            </Modal>
+
+            <Modal isOpen={!!projectToDelete} onClose={() => setProjectToDelete(null)}>
+              <ModalContent>
+                <ModalHeader>
+                  <Text size="h4">Are you sure you want to delete the project?</Text>
+                </ModalHeader>
+                <ModalBody>
+                  <Text>
+                    {"Deleting a project will delete all the charts and connections associated with it. This action cannot be undone."}
+                  </Text>
+                </ModalBody>
+                <ModalFooter>
+                  <Button
+                    variant="flat"
+                    color="warning"
+                    onClick={() => setProjectToDelete(null)}
+                    auto
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    auto
+                    color="danger"
+                    endContent={<LuTrash />}
+                    onClick={() => _onDeleteProjectSubmit()}
+                    isLoading={modifyingProject}
+                  >
+                    Delete
+                  </Button>
+                </ModalFooter>
+              </ModalContent>
+            </Modal>
+          </>
+        )}
 
         {(loading || teamLoading || (teams && teams.length === 0)) && (
           <>
@@ -531,12 +560,14 @@ UserDashboard.propTypes = {
   history: PropTypes.object.isRequired,
   updateProject: PropTypes.func.isRequired,
   removeProject: PropTypes.func.isRequired,
+  team: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
     user: state.user,
     teams: state.team.data,
+    team: state.team.active,
     teamLoading: state.team.loading,
   };
 };

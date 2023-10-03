@@ -150,7 +150,7 @@ function NavbarContainer(props) {
     }
   }
 
-  if (!team.id && !teams) {
+  if (!team?.id && !teams) {
     return (
       <Modal open blur>
         <ModalBody>
@@ -273,7 +273,7 @@ function NavbarContainer(props) {
               </DropdownItem>
               {_canAccess("admin", teamOwned) && (
                 <DropdownItem startContent={<LuSettings />} key="account" textValue="Account settings">
-                  <Link to={`/manage/${team.id || teamOwned.id}/settings`}>
+                  <Link to={`/manage/${team?.id || teamOwned.id}/settings`}>
                     <div className="w-full text-foreground">
                       Account settings
                     </div>
