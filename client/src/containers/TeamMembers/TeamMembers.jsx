@@ -25,6 +25,7 @@ import Row from "../../components/Row";
 import Text from "../../components/Text";
 import useThemeDetector from "../../modules/useThemeDetector";
 import { LuBookKey, LuInfo, LuUsers2, LuX, LuXCircle } from "react-icons/lu";
+import Segment from "../../components/Segment";
 
 /*
   Contains Pending Invites and All team members with functionality to delete/change role
@@ -172,17 +173,16 @@ function TeamMembers(props) {
   }
 
   return (
-    <div style={style}>
+    <div style={style} className="container mx-auto">
       {_canAccess("admin") && (
-        <div>
+        <Segment className={"bg-background"}>
           <InviteMembersForm />
-          <Spacer y={4} />
-          <Divider />
-          <Spacer y={4} />
-        </div>
+        </Segment>
       )}
 
-      <Container>
+      <Spacer y={4} />
+
+      <Segment className={"bg-background"}>
         <Row>
           <Text size="h4">{"Team members"}</Text>
         </Row>
@@ -318,7 +318,7 @@ function TeamMembers(props) {
             })}
           </TableBody>
         </Table>
-      </Container>
+      </Segment>
 
       {/* Remove user modal */}
       <Modal isOpen={!!deleteMember} backdrop="blur" onClose={() => setDeleteMember(false)}>

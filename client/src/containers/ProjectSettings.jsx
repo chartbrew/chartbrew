@@ -17,6 +17,7 @@ import Callout from "../components/Callout";
 import Row from "../components/Row";
 import Text from "../components/Text";
 import useThemeDetector from "../modules/useThemeDetector";
+import Segment from "../components/Segment";
 
 /*
   Project settings page
@@ -112,7 +113,7 @@ function ProjectSettings(props) {
   };
 
   return (
-    <div style={style} className="container mx-auto my-4 p-4 bg-content1 rounded-md">
+    <Segment style={style} className="container mx-auto mt-4 bg-background">
       <Row>
         <Text size="h3">Project settings</Text>
       </Row>
@@ -289,7 +290,7 @@ function ProjectSettings(props) {
         transition={Flip}
         theme={isDark ? "dark" : "light"}
       />
-    </div>
+    </Segment>
   );
 }
 

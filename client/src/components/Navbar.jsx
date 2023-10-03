@@ -6,13 +6,13 @@ import { Link } from "react-router-dom";
 import {
   Modal, Link as LinkNext, Spacer, Dropdown, Button, Navbar, Card,
   ModalBody, CircularProgress, NavbarBrand, NavbarContent, NavbarItem,
-  DropdownTrigger, DropdownMenu, DropdownItem, CardBody, ModalFooter, ModalHeader, ModalContent,
+  DropdownTrigger, DropdownMenu, DropdownItem, CardBody, ModalFooter, ModalHeader, ModalContent, Avatar,
 } from "@nextui-org/react";
 import { createMedia } from "@artsy/fresnel";
 import useDarkMode from "@fisch0920/use-dark-mode";
 import { useLocalStorage } from "react-use";
 import {
-  LuBook, LuCheck, LuCompass, LuContrast, LuGithub, LuHeartHandshake, LuLogOut,
+  LuBook, LuCheck, LuChevronDown, LuCompass, LuContrast, LuGithub, LuHeartHandshake, LuLogOut,
   LuMoon, LuSettings, LuSmile, LuSun, LuUser, LuWallpaper,
 } from "react-icons/lu";
 import { TbBrandDiscord } from "react-icons/tb";
@@ -221,7 +221,7 @@ function NavbarContainer(props) {
                   variant="light"
                   disableRipple
                   className="p-0 bg-transparent data-[hover=true]:bg-transparent"
-                  startContent={<LuHeartHandshake size={24} />}
+                  startContent={<LuHeartHandshake />}
                   radius="sm"
                 >
                   Help
@@ -250,14 +250,17 @@ function NavbarContainer(props) {
           <Dropdown>
             <NavbarItem>
               <DropdownTrigger>
-                <Button
-                  variant="light"
-                  disableRipple
-                  style={{ minWidth: "fit-content" }}
-                  isIconOnly
-                >
-                  <LuUser />
-                </Button>
+                <div>
+                  <Row className={"gap-1"} align={"center"}>
+                    <Avatar
+                      name={user.name}
+                      size="sm"
+                      isBordered
+                      showFallback={<LuUser />}
+                    />
+                    <LuChevronDown />
+                  </Row>
+                </div>
               </DropdownTrigger>
             </NavbarItem>
             <DropdownMenu variant="faded">
@@ -269,7 +272,7 @@ function NavbarContainer(props) {
                 </Link>
               </DropdownItem>
               {_canAccess("admin", teamOwned) && (
-                <DropdownItem startContent={<LuSettings />} key="account">
+                <DropdownItem startContent={<LuSettings />} key="account" textValue="Account settings">
                   <Link to={`/manage/${team.id || teamOwned.id}/settings`}>
                     <div className="w-full text-foreground">
                       Account settings
@@ -283,6 +286,7 @@ function NavbarContainer(props) {
                 showDivider
                 key="theme"
                 onClick={() => setShowAppearance(true)}
+                textValue="UI Theme"
               >
                 <div className="w-full text-foreground">
                   UI Theme

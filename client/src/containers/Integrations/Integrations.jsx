@@ -13,6 +13,7 @@ import {
 } from "../../actions/integration";
 import Text from "../../components/Text";
 import Row from "../../components/Row";
+import Segment from "../../components/Segment";
 
 function Integrations(props) {
   const { integrations, getTeamIntegrations, match } = props;
@@ -23,7 +24,7 @@ function Integrations(props) {
 
   return (
     <div>
-      <div className={"container mx-auto bg-content1 rounded-md p-4 md:p-8"}>
+      <Segment className="bg-background">
         <Row>
           <Text size="h3">Integrations</Text>
         </Row>
@@ -42,7 +43,7 @@ function Integrations(props) {
           />
         </Row>
         <Spacer y={4} />
-      </div>
+      </Segment>
     </div>
   );
 }

@@ -14,7 +14,10 @@ import "allotment/dist/style.css";
 
 import { getProject, changeActiveProject } from "../../actions/project";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
-import { getTeam } from "../../actions/team";
+import {
+  getTeam as getTeamAction,
+  getTeamMembers as getTeamMembersAction,
+} from "../../actions/team";
 import { getProjectCharts as getProjectChartsAction } from "../../actions/chart";
 import { getProjectConnections } from "../../actions/connection";
 import Connections from "../Connections/Connections";
@@ -52,6 +55,7 @@ function ProjectBoard(props) {
   const {
     cleanErrors, history, getProjectCharts, getProjectConnections, match,
     getProject, changeActiveProject, getTeam, project, user, team, projects,
+    getTeamMembers,
   } = props;
 
   const [loading, setLoading] = useState(true);
@@ -97,6 +101,7 @@ function ProjectBoard(props) {
 
     getTeam(teamId)
       .then(() => {
+        getTeamMembers(teamId);
         return getProject(projectId);
       })
       .then(() => {
@@ -281,11 +286,7 @@ function MainContent(props) {
         <Route
           path="/:teamId/:projectId/members"
           render={() => (
-            <Container
-              className={"p-10"}
-            >
-              <TeamMembers style={styles.teamSettings} />
-            </Container>
+            <TeamMembers style={styles.teamSettings} />
           )}
         />
         {_canAccess("editor") && (
@@ -375,6 +376,7 @@ ProjectBoard.propTypes = {
   getProjectCharts: PropTypes.func.isRequired,
   getProjectConnections: PropTypes.func.isRequired,
   getTeam: PropTypes.func.isRequired,
+  getTeamMembers: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
   history: PropTypes.object.isRequired,
 };
@@ -394,7 +396,8 @@ const mapDispatchToProps = (dispatch) => {
     changeActiveProject: id => dispatch(changeActiveProject(id)),
     getProjectCharts: (projectId) => dispatch(getProjectChartsAction(projectId)),
     getProjectConnections: (projectId) => dispatch(getProjectConnections(projectId)),
-    getTeam: (teamId) => dispatch(getTeam(teamId)),
+    getTeam: (teamId) => dispatch(getTeamAction(teamId)),
+    getTeamMembers: (teamId) => dispatch(getTeamMembersAction(teamId)),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };

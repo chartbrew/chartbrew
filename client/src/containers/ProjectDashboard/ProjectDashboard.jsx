@@ -3,7 +3,9 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 import {
-  Button, Spacer, Link as LinkNext, Tooltip, Card, Modal, Chip, CardBody, ModalHeader, ModalBody, ModalContent,
+  Button, Spacer, Link as LinkNext, Tooltip, Card, Modal, Chip, CardBody,
+  ModalHeader, ModalBody, ModalContent, AvatarGroup, Avatar, Popover, PopoverTrigger,
+  PopoverContent, Listbox, ListboxItem, Divider,
 } from "@nextui-org/react";
 import { Link } from "react-router-dom";
 import { useWindowSize } from "react-use";
@@ -13,7 +15,7 @@ import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import moment from "moment";
 import {
-  LuCopyPlus, LuFileDown, LuFilter, LuPlay, LuPlusCircle, LuPrinter, LuRefreshCw, LuXCircle,
+  LuCopyPlus, LuFileDown, LuFilter, LuPlay, LuPlusCircle, LuPrinter, LuRefreshCw, LuUser, LuUsers2, LuXCircle,
 } from "react-icons/lu";
 
 import Chart from "../Chart/Chart";
@@ -71,6 +73,7 @@ function ProjectDashboard(props) {
   const {
     cleanErrors, connections, charts, match, showDrafts, runQueryWithFilters,
     getProjectCharts, runQuery, changeOrder, user, team, onPrint, mobile, updateChart,
+    teamMembers,
   } = props;
 
   const [filters, setFilters] = useState(getFiltersFromStorage());
@@ -366,6 +369,65 @@ function ProjectDashboard(props) {
             >
               <Row justify="space-between" align="center" className={"w-full"}>
                 <Row justify="flex-start" align="center">
+                  {teamMembers && (
+                    <>
+                      <div className="hidden sm:flex sm:flex-row border-r-1 border-solid border-content3">
+                        <Popover>
+                          <PopoverTrigger>
+                            <AvatarGroup max={3} isBordered size="sm" className="cursor-pointer">
+                              {teamMembers.map((member) => (
+                                <Avatar
+                                  key={member.id}
+                                  name={member.name}
+                                  showFallback={<LuUser />}
+                                />
+                              ))}
+                            </AvatarGroup>
+                          </PopoverTrigger>
+                          <PopoverContent className="pt-4">
+                            {_canAccess("admin") && (
+                              <div className="w-full">
+                                <Button
+                                  endContent={<LuUsers2 />}
+                                  color="primary"
+                                  size="sm"
+                                  as={Link}
+                                  to={`/${match.params.teamId}/team/members`}
+                                  fullWidth
+                                >
+                                  Edit access
+                                </Button>
+                                <Spacer y={2} />
+                                <Divider />
+                                <Spacer y={2} />
+                              </div>
+                            )}
+                            <Text>
+                              {"Users with project access"}
+                            </Text>
+                            <Listbox>
+                              {teamMembers.map((member) => (
+                                <ListboxItem
+                                  key={member.id}
+                                  textValue={member.name}
+                                  description={member.email}
+                                  endContent={(
+                                    <Chip size="sm">
+                                      {member.TeamRoles?.find((r) => r.team_id === parseInt(match.params.teamId, 10))?.role}
+                                    </Chip>
+                                  )}
+                                >
+                                  {member.name}
+                                </ListboxItem>
+                              ))}
+                            </Listbox>
+                          </PopoverContent>
+                        </Popover>
+                        <Spacer x={2} />
+                      </div>
+                      <Spacer x={2} />
+                    </>
+                  )}
                   <Media greaterThan="mobile">
                     <Button
                       variant="ghost"
@@ -390,7 +452,7 @@ function ProjectDashboard(props) {
                     </Button>
                   </Media>
                   <Spacer x={1} />
-                  <div style={mobile ? {} : { borderLeft: "solid 1px #d4d4d5", paddingLeft: 10 }} className="hidden sm:block">
+                  <div style={mobile ? {} : { paddingLeft: 10 }} className="hidden sm:block">
                     {filters
                       && filters[match.params.projectId]
                       && filters[match.params.projectId].map((filter) => (
@@ -484,12 +546,12 @@ function ProjectDashboard(props) {
                       <Tooltip content="Refresh data" placement="bottom-start">
                         <Button
                           variant="ghost"
-                          endContent={refreshLoading ? null : <LuRefreshCw />}
                           onClick={() => _onRefreshData()}
                           isLoading={refreshLoading}
                           size="sm"
+                          endContent={<LuRefreshCw />}
                         >
-                          Refresh all charts
+                          Refresh charts
                         </Button>
                       </Tooltip>
                     </Media>
@@ -706,6 +768,7 @@ ProjectDashboard.propTypes = {
   showDrafts: PropTypes.bool,
   mobile: PropTypes.bool,
   updateChart: PropTypes.func.isRequired,
+  teamMembers: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -714,6 +777,7 @@ const mapStateToProps = (state) => {
     charts: state.chart.data,
     user: state.user.data,
     team: state.team.active,
+    teamMembers: state.team.teamMembers,
   };
 };
 

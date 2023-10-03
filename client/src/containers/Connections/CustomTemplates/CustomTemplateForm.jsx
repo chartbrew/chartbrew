@@ -5,14 +5,15 @@ import {
   Button, Card, CardBody, CardFooter, CardHeader, Checkbox, Divider,
   Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Tooltip,
 } from "@nextui-org/react";
-import { LuAlertTriangle, LuArrowLeft, LuArrowRight, LuCheckCheck, LuTrash, LuX } from "react-icons/lu";
+import {
+  LuAlertTriangle, LuArrowLeft, LuArrowRight, LuCheckCheck, LuTrash, LuX, LuPlug,
+} from "react-icons/lu";
 
 import connectionImages from "../../../config/connectionImages";
 import { generateDashboard } from "../../../actions/project";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
-import { BsPlugin } from "react-icons/bs";
 import { secondary } from "../../../config/colors";
 
 function CustomTemplateForm(props) {
@@ -202,7 +203,7 @@ function CustomTemplateForm(props) {
   };
 
   return (
-    <div>
+    <div className="p-2 md:p-4 w-full">
       <Row align="center" className={"gap-2"}>
         <Button variant="faded" startContent={<LuArrowLeft />} onClick={onBack} size="sm">
           Back
@@ -259,9 +260,9 @@ function CustomTemplateForm(props) {
                     <Divider />
                     <CardFooter>
                       <Row align="center">
-                        <BsPlugin />
+                        <LuPlug />
                         <Spacer x={0.5} />
-                        <Text small>Existing connection found</Text>
+                        <Text size="sm">Existing connection found</Text>
                       </Row>
                     </CardFooter>
                   </>
