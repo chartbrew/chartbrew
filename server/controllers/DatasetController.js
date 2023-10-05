@@ -93,7 +93,12 @@ class DatasetController {
   }
 
   findById(id) {
-    return db.Dataset.findByPk(id)
+    return db.Dataset.findOne({
+      where: { id },
+      include: [
+        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
+      ],
+    })
       .then((dataset) => {
         if (!dataset) {
           return new Promise((resolve, reject) => reject(new Error(404)));
@@ -108,6 +113,9 @@ class DatasetController {
   findByChart(chartId) {
     return db.Dataset.findAll({
       where: { chart_id: chartId },
+      include: [
+        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
+      ],
       order: [["order", "ASC"]],
     })
       .then((datasets) => {

@@ -7,10 +7,10 @@ import {
   Button, Input, Spacer, Table, Tooltip, Link as LinkNext, Chip, Modal,
   CircularProgress, TableHeader, TableColumn, TableCell, TableBody, TableRow,
   ModalHeader, ModalBody, ModalFooter, ModalContent, DropdownTrigger, Dropdown,
-  DropdownMenu, DropdownItem, Avatar, AvatarGroup,
+  DropdownMenu, DropdownItem, Avatar, AvatarGroup, Accordion, AccordionItem,
 } from "@nextui-org/react";
 import {
-  LuBarChart, LuChevronDown, LuPencilLine, LuPlug, LuPlus, LuSearch, LuSettings,
+  LuBarChart, LuChevronDown, LuDatabase, LuPencilLine, LuPlug, LuPlus, LuSearch, LuSettings,
   LuTrash, LuUsers2,
 } from "react-icons/lu";
 
@@ -35,6 +35,8 @@ import { secondary } from "../config/colors";
 import Container from "../components/Container";
 import Row from "../components/Row";
 import Text from "../components/Text";
+import connectionImages from "../config/connectionImages";
+import useThemeDetector from "../modules/useThemeDetector";
 
 /*
   The user dashboard with all the teams and projects
@@ -43,7 +45,7 @@ function UserDashboard(props) {
   const {
     relog, cleanErrors, user, getTeams, saveActiveTeam,
     teams, teamLoading, getTemplates, history, updateProject, removeProject,
-    team, getTeamMembers, teamMembers,
+    team, getTeamMembers, teamMembers, connections, datasets,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -57,6 +59,7 @@ function UserDashboard(props) {
 
   const initRef = useRef(null);
   const { height } = useWindowSize();
+  const isDark = useThemeDetector();
 
   useEffect(() => {
     cleanErrors();
@@ -307,6 +310,160 @@ function UserDashboard(props) {
               </Row>
             </Container>
             <Spacer y={4} />
+
+            <Accordion variant="bordered" className="bg-content1">
+              <AccordionItem
+                startContent={<LuPlug />}
+                title="Connections"
+                key="connections"
+                className="max-h-[600px] overflow-y-auto"
+              >
+                <Row className={"gap-2"}>
+                  <Button
+                    color="primary"
+                    endContent={<LuPlus />}
+                  >
+                    Add a connection
+                  </Button>
+                  <Input
+                    type="text"
+                    placeholder="Search connections"
+                    variant="bordered"
+                    endContent={<LuSearch />}
+                    className="max-w-[300px]"
+                  />
+                </Row>
+                <Spacer y={2} />
+                <Table shadow="none" hideHeader className="border-2 border-solid border-content3 rounded-xl">
+                  <TableHeader>
+                    <TableColumn key="name">Connection name</TableColumn>
+                    <TableColumn key="type">Type</TableColumn>
+                    <TableColumn key="actions" align="center">Actions</TableColumn>
+                  </TableHeader>
+                  <TableBody>
+                    {connections.map((connection) => (
+                      <TableRow key={connection.id}>
+                        <TableCell key="name">
+                          <Row align={"center"} className={"gap-2"}>
+                            <Avatar
+                              src={connectionImages(isDark)[connection.type]}
+                              size="sm"
+                              isBordered
+                            />
+                            <Text b>{connection.name}</Text>
+                          </Row>
+                        </TableCell>
+                        <TableCell key="type">
+                          <Text>{connection.type}</Text>
+                        </TableCell>
+                        <TableCell key="actions">
+                          <Row justify="flex-end" align="center">
+                            <Tooltip content="Edit connection">
+                              <Button
+                                startContent={<LuPencilLine />}
+                                variant="light"
+                                size="sm"
+                                className={"min-w-fit"}
+                              />
+                            </Tooltip>
+                            <Tooltip
+                              content="Delete connection"
+                              color="danger"
+                            >
+                              <Button
+                                color="danger"
+                                startContent={<LuTrash />}
+                                variant="light"
+                                size="sm"
+                                className={"min-w-fit"}
+                              />
+                            </Tooltip>
+                          </Row>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <Spacer y={2} />
+              </AccordionItem>
+              <AccordionItem startContent={<LuDatabase />} title="Datasets" key="datasets">
+                <Row className={"gap-2"}>
+                  <Button
+                    color="primary"
+                    endContent={<LuPlus />}
+                  >
+                    Add a dataset
+                  </Button>
+                  <Input
+                    type="text"
+                    placeholder="Search datasets"
+                    variant="bordered"
+                    endContent={<LuSearch />}
+                    className="max-w-[300px]"
+                  />
+                </Row>
+                <Spacer y={2} />
+                <Table shadow="none" className="border-2 border-solid border-content3 rounded-xl">
+                  <TableHeader>
+                    <TableColumn key="name">Dataset name</TableColumn>
+                    <TableColumn key="connections">Connections</TableColumn>
+                    <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
+                  </TableHeader>
+                  <TableBody>
+                    {datasets.map((dataset) => (
+                      <TableRow key={dataset.id}>
+                        <TableCell key="name">
+                          <Text b>{dataset.legend}</Text>
+                        </TableCell>
+                        <TableCell key="connections">
+                          <Row>
+                            <AvatarGroup max={3} isBordered size="sm">
+                              {dataset?.DataRequests?.map((dr) => (
+                                <Avatar
+                                  src={connectionImages(isDark)[dr?.Connection.subType]}
+                                  showFallback={<LuPlug />}
+                                  size="sm"
+                                  isBordered
+                                  key={dr.id}
+                                />
+                              ))}
+                            </AvatarGroup>
+                          </Row>
+                        </TableCell>
+                        <TableCell key="actions">
+                          <Row justify="flex-end" align="center">
+                            <Tooltip content="Edit dataset">
+                              <Button
+                                isIconOnly
+                                variant="light"
+                                size="sm"
+                              >
+                                <LuPencilLine />
+                              </Button>
+                            </Tooltip>
+                            <Tooltip
+                              content="Delete dataset"
+                              color="danger"
+                            >
+                              <Button
+                                color="danger"
+                                isIconOnly
+                                variant="light"
+                                size="sm"
+                              >
+                                <LuTrash />
+                              </Button>
+                            </Tooltip>
+                          </Row>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </AccordionItem>
+            </Accordion>
+
+            <Spacer y={8} />
             <Container>
               <Spacer y={2} />
               <Row className={"gap-2"} justify="flex-start" align="center">
@@ -334,7 +491,10 @@ function UserDashboard(props) {
               {team.Projects && teamMembers?.length > 0 && (
                 <Table
                   aria-label="Projects list"
-                  className="h-auto min-w-full"
+                  className="h-auto min-w-full border-2 border-solid border-content3 rounded-xl"
+                  radius="md"
+                  shadow="none"
+                  isStriped
                 >
                   <TableHeader>
                     <TableColumn key="name">Project name</TableColumn>
@@ -363,11 +523,11 @@ function UserDashboard(props) {
                       {_getFilteredProjects(team).map((project) => (
                         <TableRow key={project.id}>
                           <TableCell key="name">
-                            <LinkNext onClick={() => directToProject(team, project.id)}>
-                              <Text b className={"text-default-foreground"}>{project.name}</Text>
+                            <LinkNext onClick={() => directToProject(team, project.id)} className="cursor-pointer flex flex-col items-start">
+                              <Text b className={"text-foreground"}>{project.name}</Text>
                             </LinkNext>
                           </TableCell>
-                          <TableCell key="members">
+                          <TableCell key="members" className="hidden sm:block">
                             <Row justify="center" align="center">
                               {_getProjectMembers(project)?.length > 0 && (
                                 <AvatarGroup max={3} isBordered size="sm">
@@ -617,6 +777,8 @@ UserDashboard.propTypes = {
   team: PropTypes.object.isRequired,
   getTeamMembers: PropTypes.func.isRequired,
   teamMembers: PropTypes.array.isRequired,
+  connections: PropTypes.array.isRequired,
+  datasets: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -626,6 +788,8 @@ const mapStateToProps = (state) => {
     team: state.team.active,
     teamLoading: state.team.loading,
     teamMembers: state.team.teamMembers,
+    connections: state.connection.data,
+    datasets: state.dataset.data,
   };
 };
 
