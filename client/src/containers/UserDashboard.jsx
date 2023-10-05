@@ -7,7 +7,7 @@ import {
   Button, Input, Spacer, Table, Tooltip, Link as LinkNext, Chip, Modal,
   CircularProgress, TableHeader, TableColumn, TableCell, TableBody, TableRow,
   ModalHeader, ModalBody, ModalFooter, ModalContent, DropdownTrigger, Dropdown,
-  DropdownMenu, DropdownItem,
+  DropdownMenu, DropdownItem, Avatar, AvatarGroup,
 } from "@nextui-org/react";
 import {
   LuBarChart, LuChevronDown, LuPencilLine, LuPlug, LuPlus, LuSearch, LuSettings,
@@ -17,6 +17,7 @@ import {
 import {
   getTeams as getTeamsAction,
   saveActiveTeam as saveActiveTeamAction,
+  getTeamMembers as getTeamMembersAction,
 } from "../actions/team";
 import { relog as relogAction } from "../actions/user";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
@@ -42,7 +43,7 @@ function UserDashboard(props) {
   const {
     relog, cleanErrors, user, getTeams, saveActiveTeam,
     teams, teamLoading, getTemplates, history, updateProject, removeProject,
-    team,
+    team, getTeamMembers, teamMembers,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -75,8 +76,15 @@ function UserDashboard(props) {
       initRef.current = true;
       const owningTeam = teams.find((t) => t.TeamRoles.find((tr) => tr.role === "owner" && tr.user_id === user.data.id));
       saveActiveTeam(owningTeam);
+      getTeamMembers(owningTeam.id);
     }
   }, [teams]);
+
+  useEffect(() => {
+    if (team?.id) {
+      getTeamMembers(team.id);
+    }
+  }, [team]);
 
   const _checkParameters = () => {
     const params = new URLSearchParams(window.location.search);
@@ -134,9 +142,20 @@ function UserDashboard(props) {
 
   const _getFilteredProjects = (team) => {
     if (!search[team.id]) return team.Projects;
-    return team.Projects.filter((p) => {
+    const filteredProjects = team.Projects.filter((p) => {
       return p.name.toLowerCase().indexOf(search[team.id].toLowerCase()) > -1;
     });
+
+    // now add the team members to each project
+    const formattedProjects = filteredProjects.map((p) => {
+      const projectMembers = _getProjectMembers(p, teamMembers);
+      return {
+        ...p,
+        members: projectMembers,
+      };
+    });
+
+    return formattedProjects;
   };
 
   const _onEditProject = (project) => {
@@ -181,6 +200,21 @@ function UserDashboard(props) {
     }
   };
 
+  const _getProjectMembers = (project) => {
+    if (!teamMembers) return [];
+    const projectMembers = teamMembers.filter((tm) => {
+      return tm.TeamRoles.find((tr) => tr?.projects?.length > 0 && tr.projects.includes(project.id));
+    });
+
+    return projectMembers;
+  };
+
+  const _onChangeTeam = (teamId) => {
+    const team = teams.find((t) => `${t.id}` === `${teamId}`);
+    saveActiveTeam(team);
+    getTeamMembers(team.id);
+  };
+
   const newProjectModal = () => {
     return (
       <ProjectForm
@@ -206,9 +240,9 @@ function UserDashboard(props) {
   return (
     <div className="bg-content2" style={styles.container(height)}>
       <Navbar hideTeam transparent />
-      <Container size="md">
+      {newProjectModal()}
+      <div className="container mx-auto">
         <Spacer y={4} />
-        {newProjectModal()}
 
         {team && (
           <>
@@ -232,10 +266,7 @@ function UserDashboard(props) {
                     <DropdownMenu
                       selectedKeys={[`${team.id}`]}
                       onSelectionChange={(keys) => {
-                        const selectedTeam = teams.find((t) => `${t.id}` === keys.currentKey);
-                        if (selectedTeam) {
-                          saveActiveTeam(selectedTeam);
-                        }
+                        _onChangeTeam(keys.currentKey);
                       }}
                       selectionMode="single"
                     >
@@ -300,13 +331,19 @@ function UserDashboard(props) {
                 />
               </Row>
               <Spacer y={2} />
-              {team.Projects && (
+              {team.Projects && teamMembers?.length > 0 && (
                 <Table
                   aria-label="Projects list"
-                  className="h-auto min-w-full bg-content2"
+                  className="h-auto min-w-full"
                 >
                   <TableHeader>
                     <TableColumn key="name">Project name</TableColumn>
+                    <TableColumn key="members">
+                      <Row align="end" justify="center" className={"gap-1"}>
+                        <LuUsers2 />
+                        <Text>Members</Text>
+                      </Row>
+                    </TableColumn>
                     <TableColumn key="connections">
                       <Row align="end" justify="center" className={"gap-1"}>
                         <LuPlug />
@@ -322,13 +359,30 @@ function UserDashboard(props) {
                     <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
                   </TableHeader>
                   {_getFilteredProjects(team).length > 0 && (
-                    <TableBody items={_getFilteredProjects(team)}>
-                      {(project) => (
+                    <TableBody>
+                      {_getFilteredProjects(team).map((project) => (
                         <TableRow key={project.id}>
                           <TableCell key="name">
                             <LinkNext onClick={() => directToProject(team, project.id)}>
                               <Text b className={"text-default-foreground"}>{project.name}</Text>
                             </LinkNext>
+                          </TableCell>
+                          <TableCell key="members">
+                            <Row justify="center" align="center">
+                              {_getProjectMembers(project)?.length > 0 && (
+                                <AvatarGroup max={3} isBordered size="sm">
+                                  {_getProjectMembers(project)?.map((pr) => (
+                                    <Avatar
+                                      key={pr.id}
+                                      name={pr.name}
+                                    />
+                                  ))}
+                                </AvatarGroup>
+                              )}
+                              {_getProjectMembers(project)?.length === 0 && (
+                                <Text i>-</Text>
+                              )}
+                            </Row>
                           </TableCell>
                           <TableCell key="connections">
                             <Row justify="center" align="center">
@@ -374,7 +428,7 @@ function UserDashboard(props) {
                             )}
                           </TableCell>
                         </TableRow>
-                      )}
+                      ))}
                     </TableBody>
                   )}
                   {_getFilteredProjects(team).length === 0 && (
@@ -483,7 +537,7 @@ function UserDashboard(props) {
             </Row>
           </>
         )}
-      </Container>
+      </div>
     </div>
   );
 }
@@ -561,6 +615,8 @@ UserDashboard.propTypes = {
   updateProject: PropTypes.func.isRequired,
   removeProject: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,
+  getTeamMembers: PropTypes.func.isRequired,
+  teamMembers: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -569,6 +625,7 @@ const mapStateToProps = (state) => {
     teams: state.team.data,
     team: state.team.active,
     teamLoading: state.team.loading,
+    teamMembers: state.team.teamMembers,
   };
 };
 
@@ -581,6 +638,7 @@ const mapDispatchToProps = (dispatch) => {
     getTemplates: (teamId) => dispatch(getTemplatesAction(teamId)),
     updateProject: (projectId, data) => dispatch(updateProjectAction(projectId, data)),
     removeProject: (projectId) => dispatch(removeProjectAction(projectId)),
+    getTeamMembers: (teamId) => dispatch(getTeamMembersAction(teamId)),
   };
 };
 
