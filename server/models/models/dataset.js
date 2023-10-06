@@ -14,6 +14,32 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true,
     },
+    team_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      reference: {
+        model: "Team",
+        key: "id",
+        onDelete: "cascade",
+      },
+    },
+    project_ids: {
+      type: DataTypes.TEXT,
+      set(val) {
+        try {
+          return this.setDataValue("project_ids", JSON.stringify(val));
+        } catch (e) {
+          return this.setDataValue("project_ids", val);
+        }
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("project_ids"));
+        } catch (e) {
+          return this.getDataValue("project_ids");
+        }
+      },
+    },
     chart_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -231,8 +257,6 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Dataset.associate = (models) => {
-    models.Dataset.belongsTo(models.Chart, { foreignKey: "chart_id" });
-    models.Dataset.belongsTo(models.Connection, { foreignKey: "connection_id" });
     models.Dataset.hasMany(models.DataRequest, { foreignKey: "dataset_id" });
     models.Dataset.hasMany(models.Alert, { foreignKey: "dataset_id" });
     models.Dataset.hasOne(models.DataRequest, { foreignKey: "id", as: "mainSource" });

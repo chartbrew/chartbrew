@@ -153,6 +153,7 @@ module.exports = (sequelize, DataTypes) => {
   Chart.associate = (models) => {
     models.Chart.hasMany(models.Dataset, { foreignKey: "chart_id" });
     models.Chart.hasMany(models.Chartshare, { foreignKey: "chart_id" });
+    models.Chart.belongsTo(models.Project, { foreignKey: "project_id" });
   };
 
   return Chart;
