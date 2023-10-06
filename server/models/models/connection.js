@@ -15,13 +15,39 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true,
     },
-    project_id: {
+    team_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      reference: {
+        model: "Team",
+        key: "id",
+        onDelete: "cascade",
+      },
+    },
+    project_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
       reference: {
         model: "Project",
         key: "id",
         onDelete: "cascade",
+      },
+    },
+    project_ids: {
+      type: DataTypes.TEXT,
+      set(val) {
+        try {
+          return this.setDataValue("project_ids", JSON.stringify(val));
+        } catch (e) {
+          return this.setDataValue("project_ids", val);
+        }
+      },
+      get() {
+        try {
+          return JSON.parse(this.getDataValue("project_ids"));
+        } catch (e) {
+          return this.getDataValue("project_ids");
+        }
       },
     },
     oauth_id: {
