@@ -325,7 +325,6 @@ function NavbarContainer(props) {
           <ModalBody>
             <div className="flex justify-between gap-2">
               <Card
-                isHoverable
                 isPressable
                 borderWeight={!isSystemDark && !isOsTheme ? "extrabold" : "normal"}
                 onClick={() => _setTheme("light")}
@@ -335,9 +334,9 @@ function NavbarContainer(props) {
                 <CardBody>
                   <LuSun size={24} color="black" />
                   <Row align={"center"} className={"gap-2"}>
-                    <Text className={"text-[black]"}>Light</Text>
+                    <Text className={"text-[#000000]"}>Light</Text>
                     {!isSystemDark && !isOsTheme && (
-                      <LuCheck className={"text-[black]"} />
+                      <LuCheck className={"text-[#000000]"} />
                     )}
                   </Row>
                 </CardBody>
@@ -345,7 +344,6 @@ function NavbarContainer(props) {
 
               <Card
                 isPressable
-                isHoverable
                 className={`bg-black ${!isSystemDark && !isOsTheme ? "border-secondary-500" : ""} min-w-[100px]`}
                 borderWeight={isSystemDark && !isOsTheme ? "extrabold" : "normal"}
                 onClick={() => _setTheme("dark")}
@@ -354,7 +352,7 @@ function NavbarContainer(props) {
                 <CardBody>
                   <LuMoon size={24} color="white" />
                   <Row align={"center"} className={"gap-2"}>
-                    <Text className="text-[white]">Dark</Text>
+                    <Text className="text-[#FFFFFF]">Dark</Text>
                     {isSystemDark && !isOsTheme && (
                       <LuCheck className="text-[white]" />
                     )}
@@ -363,7 +361,6 @@ function NavbarContainer(props) {
               </Card>
 
               <Card
-                isHoverable
                 isPressable
                 variant={"bordered"}
                 onClick={_setOSTheme}
