@@ -1,6 +1,567 @@
 const AccessControl = require("accesscontrol");
 
 const grantList = [
+  // V3 Access Control List
+
+  //
+  // --------------------
+  //    TEAM OWNER
+  // --------------------
+  //
+  // resource: team
+  {
+    role: "teamOwner", resource: "team", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "team", action: "read:own", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "team", action: "update:own", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "team", action: "delete:own", attributes: "*",
+  },
+  // resource: project ---> Team Perspective
+  {
+    role: "teamOwner", resource: "project", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "project", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "project", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "project", action: "delete:any", attributes: "*",
+  },
+  // resource: connection ---> Team Perspective
+  {
+    role: "teamOwner", resource: "connection", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "connection", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "connection", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "connection", action: "delete:any", attributes: "*",
+  },
+  // resource: teamRole ---> Team Perspective
+  {
+    role: "teamOwner", resource: "teamRole", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "teamRole", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "teamRole", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "teamRole", action: "delete:any", attributes: "*",
+  },
+  // resource: teamInvite ---> Team Perspective
+  {
+    role: "teamOwner", resource: "teamInvite", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "teamInvite", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "teamInvite", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "teamInvite", action: "delete:any", attributes: "*",
+  },
+  // resource: projectRole  ---> Team Perspective
+  {
+    role: "teamOwner", resource: "projectRole", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "projectRole", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "projectRole", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "projectRole", action: "delete:any", attributes: "*",
+  },
+  // resource: chart
+  {
+    role: "teamOwner", resource: "chart", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "chart", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "chart", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "chart", action: "delete:any", attributes: "*",
+  },
+  // resource: savedQuery ---> Team Perspective
+  {
+    role: "teamOwner", resource: "savedQuery", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "savedQuery", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "savedQuery", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "savedQuery", action: "delete:any", attributes: "*",
+  },
+  // resource: dataset ---> Team Perspective
+  {
+    role: "teamOwner", resource: "dataset", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "dataset", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "dataset", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "dataset", action: "delete:any", attributes: "*",
+  },
+  // resource: request ---> Team Perspective
+  {
+    role: "teamOwner", resource: "dataRequest", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "dataRequest", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "dataRequest", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "dataRequest", action: "delete:any", attributes: "*",
+  },
+  // resource: apiKey ---> Team Perspective
+  {
+    role: "teamOwner", resource: "apiKey", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "apiKey", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "apiKey", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "apiKey", action: "delete:any", attributes: "*",
+  },
+  // resource: integration ---> Team Perspective
+  {
+    role: "teamOwner", resource: "integration", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "integration", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "integration", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamOwner", resource: "integration", action: "delete:any", attributes: "*",
+  },
+  //
+  // --------------------
+  //    TEAM ADMIN
+  // --------------------
+  //
+  {
+    role: "teamAdmin", resource: "team", action: "read:any", attributes: "*",
+  },
+  // resource: project ---> Team Perspective
+  {
+    role: "teamAdmin", resource: "project", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "project", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "project", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "project", action: "delete:any", attributes: "*",
+  },
+  // resource: connection ---> Team Perspective
+  {
+    role: "teamAdmin", resource: "connection", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "connection", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "connection", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "connection", action: "delete:any", attributes: "*",
+  },
+  // resource: teamRole ---> Team Perspective
+  {
+    role: "teamAdmin", resource: "teamRole", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "teamRole", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "teamRole", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "teamRole", action: "delete:any", attributes: "*",
+  },
+  // resource: teamInvite ---> Team Perspective
+  {
+    role: "teamAdmin", resource: "teamInvite", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "teamInvite", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "teamInvite", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "teamInvite", action: "delete:any", attributes: "*",
+  },
+  // resource: projectRole  ---> Team Perspective
+  {
+    role: "teamAdmin", resource: "projectRole", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "projectRole", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "projectRole", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "projectRole", action: "delete:any", attributes: "*",
+  },
+  // resource: chart
+  {
+    role: "teamAdmin", resource: "chart", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "chart", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "chart", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "chart", action: "delete:any", attributes: "*",
+  },
+  // resource: savedQuery ---> Team Perspective
+  {
+    role: "teamAdmin", resource: "savedQuery", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "savedQuery", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "savedQuery", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "savedQuery", action: "delete:any", attributes: "*",
+  },
+  // resource: dataset ---> Team Perspective
+  {
+    role: "teamAdmin", resource: "dataset", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "dataset", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "dataset", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "dataset", action: "delete:any", attributes: "*",
+  },
+  // resource: request ---> Team Perspective
+  {
+    role: "teamAdmin", resource: "dataRequest", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "dataRequest", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "dataRequest", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "dataRequest", action: "delete:any", attributes: "*",
+  },
+  // resource: apiKey ---> Team Perspective
+  {
+    role: "teamAdmin", resource: "apiKey", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "apiKey", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "apiKey", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "apiKey", action: "delete:any", attributes: "*",
+  },
+  // resource: integration ---> Team Perspective
+  {
+    role: "teamAdmin", resource: "integration", action: "create:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "integration", action: "read:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "integration", action: "update:any", attributes: "*",
+  },
+  {
+    role: "teamAdmin", resource: "integration", action: "delete:any", attributes: "*",
+  },
+
+  //
+  // --------------------
+  //    PROJECT ADMIN
+  // --------------------
+  //
+  {
+    role: "projectAdmin", resource: "team", action: "read:any", attributes: ["id", "name"],
+  },
+  // resource: project ---> Team Perspective
+  {
+    role: "projectAdmin", resource: "project", action: "read:any", attributes: "*",
+  },
+  // resource: connection ---> Team Perspective
+  //
+  // resource: teamRole ---> Team Perspective
+  {
+    role: "projectAdmin", resource: "teamRole", action: "read:own", attributes: "*",
+  },
+  // resource: teamInvite ---> Team Perspective
+  {
+    role: "projectAdmin", resource: "teamInvite", action: "create:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "teamInvite", action: "read:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "teamInvite", action: "update:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "teamInvite", action: "delete:any", attributes: "*",
+  },
+  // resource: projectRole  ---> Team Perspective
+  {
+    role: "projectAdmin", resource: "projectRole", action: "create:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "projectRole", action: "read:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "projectRole", action: "update:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "projectRole", action: "delete:any", attributes: "*",
+  },
+  // resource: chart
+  {
+    role: "projectAdmin", resource: "chart", action: "create:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "chart", action: "read:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "chart", action: "update:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "chart", action: "delete:any", attributes: "*",
+  },
+  // resource: savedQuery ---> Team Perspective
+  {
+    role: "projectAdmin", resource: "savedQuery", action: "create:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "savedQuery", action: "read:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "savedQuery", action: "update:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "savedQuery", action: "delete:any", attributes: "*",
+  },
+  // resource: dataset ---> Team Perspective
+  {
+    role: "projectAdmin", resource: "dataset", action: "create:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "dataset", action: "read:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "dataset", action: "update:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "dataset", action: "delete:any", attributes: "*",
+  },
+  // resource: request ---> Team Perspective
+  {
+    role: "projectAdmin", resource: "dataRequest", action: "create:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "dataRequest", action: "read:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "dataRequest", action: "update:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "dataRequest", action: "delete:any", attributes: "*",
+  },
+  // resource: apiKey ---> Team Perspective
+  {
+    role: "projectAdmin", resource: "apiKey", action: "create:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "apiKey", action: "read:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "apiKey", action: "update:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "apiKey", action: "delete:any", attributes: "*",
+  },
+  // resource: integration ---> Team Perspective
+  {
+    role: "projectAdmin", resource: "integration", action: "create:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "integration", action: "read:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "integration", action: "update:any", attributes: "*",
+  },
+  {
+    role: "projectAdmin", resource: "integration", action: "delete:any", attributes: "*",
+  },
+  //
+  // --------------------
+  //    PROJECT ADMIN
+  // --------------------
+  //
+  {
+    role: "projectViewer", resource: "team", action: "read:any", attributes: ["id", "name"],
+  },
+  // resource: project ---> Team Perspective
+  {
+    role: "projectViewer", resource: "project", action: "read:any", attributes: "*",
+  },
+  // resource: connection ---> Team Perspective
+  //
+  // resource: teamRole ---> Team Perspective
+  {
+    role: "projectViewer", resource: "teamRole", action: "read:own", attributes: "*",
+  },
+  // resource: teamInvite ---> Team Perspective
+  {
+    role: "projectViewer", resource: "teamInvite", action: "create:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "teamInvite", action: "read:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "teamInvite", action: "update:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "teamInvite", action: "delete:any", attributes: "*",
+  },
+  // resource: projectRole  ---> Team Perspective
+  {
+    role: "projectViewer", resource: "projectRole", action: "create:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "projectRole", action: "read:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "projectRole", action: "update:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "projectRole", action: "delete:any", attributes: "*",
+  },
+  // resource: chart
+  {
+    role: "projectViewer", resource: "chart", action: "create:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "chart", action: "read:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "chart", action: "update:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "chart", action: "delete:any", attributes: "*",
+  },
+  // resource: savedQuery ---> Team Perspective
+  {
+    role: "projectViewer", resource: "savedQuery", action: "create:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "savedQuery", action: "read:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "savedQuery", action: "update:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "savedQuery", action: "delete:any", attributes: "*",
+  },
+  // resource: dataset ---> Team Perspective
+  {
+    role: "projectViewer", resource: "dataset", action: "create:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "dataset", action: "read:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "dataset", action: "update:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "dataset", action: "delete:any", attributes: "*",
+  },
+  // resource: request ---> Team Perspective
+  {
+    role: "projectViewer", resource: "dataRequest", action: "create:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "dataRequest", action: "read:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "dataRequest", action: "update:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "dataRequest", action: "delete:any", attributes: "*",
+  },
+  // resource: apiKey ---> Team Perspective
+  {
+    role: "projectViewer", resource: "apiKey", action: "create:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "apiKey", action: "read:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "apiKey", action: "update:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "apiKey", action: "delete:any", attributes: "*",
+  },
+  // resource: integration ---> Team Perspective
+  {
+    role: "projectViewer", resource: "integration", action: "create:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "integration", action: "read:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "integration", action: "update:any", attributes: "*",
+  },
+  {
+    role: "projectViewer", resource: "integration", action: "delete:any", attributes: "*",
+  },
+  // ----- END OF V3 ACCESS CONTROL LIST -----
+
   //
   // --------------------
   //    OWNER
