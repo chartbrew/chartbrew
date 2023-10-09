@@ -335,31 +335,9 @@ const grantList = [
     role: "projectAdmin", resource: "teamRole", action: "read:own", attributes: "*",
   },
   // resource: teamInvite ---> Team Perspective
-  {
-    role: "projectAdmin", resource: "teamInvite", action: "create:any", attributes: "*",
-  },
-  {
-    role: "projectAdmin", resource: "teamInvite", action: "read:any", attributes: "*",
-  },
-  {
-    role: "projectAdmin", resource: "teamInvite", action: "update:any", attributes: "*",
-  },
-  {
-    role: "projectAdmin", resource: "teamInvite", action: "delete:any", attributes: "*",
-  },
+  //
   // resource: projectRole  ---> Team Perspective
-  {
-    role: "projectAdmin", resource: "projectRole", action: "create:any", attributes: "*",
-  },
-  {
-    role: "projectAdmin", resource: "projectRole", action: "read:any", attributes: "*",
-  },
-  {
-    role: "projectAdmin", resource: "projectRole", action: "update:any", attributes: "*",
-  },
-  {
-    role: "projectAdmin", resource: "projectRole", action: "delete:any", attributes: "*",
-  },
+  //
   // resource: chart
   {
     role: "projectAdmin", resource: "chart", action: "create:any", attributes: "*",
@@ -388,55 +366,44 @@ const grantList = [
   },
   // resource: dataset ---> Team Perspective
   {
-    role: "projectAdmin", resource: "dataset", action: "create:any", attributes: "*",
+    role: "projectAdmin", resource: "dataset", action: "create:own", attributes: "*",
   },
   {
-    role: "projectAdmin", resource: "dataset", action: "read:any", attributes: "*",
+    role: "projectAdmin", resource: "dataset", action: "read:own", attributes: "*",
   },
   {
-    role: "projectAdmin", resource: "dataset", action: "update:any", attributes: "*",
+    role: "projectAdmin", resource: "dataset", action: "update:own", attributes: "*",
   },
   {
-    role: "projectAdmin", resource: "dataset", action: "delete:any", attributes: "*",
+    role: "projectAdmin", resource: "dataset", action: "delete:own", attributes: "*",
   },
   // resource: request ---> Team Perspective
   {
-    role: "projectAdmin", resource: "dataRequest", action: "create:any", attributes: "*",
+    role: "projectAdmin", resource: "dataRequest", action: "create:own", attributes: "*",
   },
   {
-    role: "projectAdmin", resource: "dataRequest", action: "read:any", attributes: "*",
+    role: "projectAdmin", resource: "dataRequest", action: "read:own", attributes: "*",
   },
   {
-    role: "projectAdmin", resource: "dataRequest", action: "update:any", attributes: "*",
+    role: "projectAdmin", resource: "dataRequest", action: "update:own", attributes: "*",
   },
   {
-    role: "projectAdmin", resource: "dataRequest", action: "delete:any", attributes: "*",
+    role: "projectAdmin", resource: "dataRequest", action: "delete:own", attributes: "*",
   },
   // resource: apiKey ---> Team Perspective
-  {
-    role: "projectAdmin", resource: "apiKey", action: "create:any", attributes: "*",
-  },
-  {
-    role: "projectAdmin", resource: "apiKey", action: "read:any", attributes: "*",
-  },
-  {
-    role: "projectAdmin", resource: "apiKey", action: "update:any", attributes: "*",
-  },
-  {
-    role: "projectAdmin", resource: "apiKey", action: "delete:any", attributes: "*",
-  },
+  //
   // resource: integration ---> Team Perspective
   {
-    role: "projectAdmin", resource: "integration", action: "create:any", attributes: "*",
+    role: "projectAdmin", resource: "integration", action: "create:own", attributes: "*",
   },
   {
-    role: "projectAdmin", resource: "integration", action: "read:any", attributes: "*",
+    role: "projectAdmin", resource: "integration", action: "read:own", attributes: "*",
   },
   {
-    role: "projectAdmin", resource: "integration", action: "update:any", attributes: "*",
+    role: "projectAdmin", resource: "integration", action: "update:own", attributes: "*",
   },
   {
-    role: "projectAdmin", resource: "integration", action: "delete:any", attributes: "*",
+    role: "projectAdmin", resource: "integration", action: "delete:own", attributes: "*",
   },
   //
   // --------------------
