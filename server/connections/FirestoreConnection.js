@@ -216,7 +216,7 @@ class FirestoreConnection {
         .limit(parseInt(configuration.limit, 10));
     } else if (!configuration?.limit && configuration?.orderBy) {
       docsRef = await this.db.collection(dataRequest.query)
-        .orderBy(configuration.orderBy);
+        .orderBy(configuration.orderBy, configuration.orderByDirection || "desc");
     } else if (configuration?.limit && configuration?.orderBy) {
       docsRef = await this.db.collection(dataRequest.query)
         .orderBy(configuration.orderBy, configuration.orderByDirection || "desc")
