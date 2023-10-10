@@ -322,11 +322,11 @@ const grantList = [
   // --------------------
   //
   {
-    role: "projectAdmin", resource: "team", action: "read:any", attributes: ["id", "name"],
+    role: "projectAdmin", resource: "team", action: "read:own", attributes: ["id", "name"],
   },
   // resource: project ---> Team Perspective
   {
-    role: "projectAdmin", resource: "project", action: "read:any", attributes: "*",
+    role: "projectAdmin", resource: "project", action: "read:own", attributes: "*",
   },
   // resource: connection ---> Team Perspective
   //
@@ -340,16 +340,16 @@ const grantList = [
   //
   // resource: chart
   {
-    role: "projectAdmin", resource: "chart", action: "create:any", attributes: "*",
+    role: "projectAdmin", resource: "chart", action: "create:own", attributes: "*",
   },
   {
-    role: "projectAdmin", resource: "chart", action: "read:any", attributes: "*",
+    role: "projectAdmin", resource: "chart", action: "read:own", attributes: "*",
   },
   {
-    role: "projectAdmin", resource: "chart", action: "update:any", attributes: "*",
+    role: "projectAdmin", resource: "chart", action: "update:own", attributes: "*",
   },
   {
-    role: "projectAdmin", resource: "chart", action: "delete:any", attributes: "*",
+    role: "projectAdmin", resource: "chart", action: "delete:own", attributes: "*",
   },
   // resource: savedQuery ---> Team Perspective
   {
@@ -407,15 +407,15 @@ const grantList = [
   },
   //
   // --------------------
-  //    PROJECT ADMIN
+  //    PROJECT VIEWER
   // --------------------
   //
   {
-    role: "projectViewer", resource: "team", action: "read:any", attributes: ["id", "name"],
+    role: "projectViewer", resource: "team", action: "read:own", attributes: ["id", "name"],
   },
   // resource: project ---> Team Perspective
   {
-    role: "projectViewer", resource: "project", action: "read:any", attributes: "*",
+    role: "projectViewer", resource: "project", action: "read:own", attributes: "*",
   },
   // resource: connection ---> Team Perspective
   //
@@ -425,108 +425,31 @@ const grantList = [
   },
   // resource: teamInvite ---> Team Perspective
   {
-    role: "projectViewer", resource: "teamInvite", action: "create:any", attributes: "*",
+    role: "projectViewer", resource: "teamInvite", action: "read:own", attributes: "*",
   },
   {
-    role: "projectViewer", resource: "teamInvite", action: "read:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "teamInvite", action: "update:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "teamInvite", action: "delete:any", attributes: "*",
+    role: "projectViewer", resource: "teamInvite", action: "update:own", attributes: "*",
   },
   // resource: projectRole  ---> Team Perspective
   {
-    role: "projectViewer", resource: "projectRole", action: "create:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "projectRole", action: "read:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "projectRole", action: "update:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "projectRole", action: "delete:any", attributes: "*",
+    role: "projectViewer", resource: "projectRole", action: "read:own", attributes: "*",
   },
   // resource: chart
   {
-    role: "projectViewer", resource: "chart", action: "create:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "chart", action: "read:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "chart", action: "update:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "chart", action: "delete:any", attributes: "*",
+    role: "projectViewer", resource: "chart", action: "read:own", attributes: "*",
   },
   // resource: savedQuery ---> Team Perspective
-  {
-    role: "projectViewer", resource: "savedQuery", action: "create:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "savedQuery", action: "read:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "savedQuery", action: "update:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "savedQuery", action: "delete:any", attributes: "*",
-  },
+  //
   // resource: dataset ---> Team Perspective
   {
-    role: "projectViewer", resource: "dataset", action: "create:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "dataset", action: "read:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "dataset", action: "update:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "dataset", action: "delete:any", attributes: "*",
+    role: "projectViewer", resource: "dataset", action: "read:own", attributes: "*",
   },
   // resource: request ---> Team Perspective
-  {
-    role: "projectViewer", resource: "dataRequest", action: "create:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "dataRequest", action: "read:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "dataRequest", action: "update:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "dataRequest", action: "delete:any", attributes: "*",
-  },
+  //
   // resource: apiKey ---> Team Perspective
-  {
-    role: "projectViewer", resource: "apiKey", action: "create:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "apiKey", action: "read:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "apiKey", action: "update:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "apiKey", action: "delete:any", attributes: "*",
-  },
+  //
   // resource: integration ---> Team Perspective
-  {
-    role: "projectViewer", resource: "integration", action: "create:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "integration", action: "read:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "integration", action: "update:any", attributes: "*",
-  },
-  {
-    role: "projectViewer", resource: "integration", action: "delete:any", attributes: "*",
-  },
+  //
   // ----- END OF V3 ACCESS CONTROL LIST -----
 
   //
