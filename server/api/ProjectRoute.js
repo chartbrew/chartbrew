@@ -24,7 +24,7 @@ module.exports = (app) => {
         })
         .then((teamRole) => {
           // the owner has access to all the projects
-          if (teamRole.role === "owner") return teamRole;
+          if (teamRole.role === "teamOwner" || teamRole.role === "teamAdmin") return teamRole;
 
           // otherwise, check if the team role contains access to the right project
           if (!teamRole.projects) return Promise.reject(401);

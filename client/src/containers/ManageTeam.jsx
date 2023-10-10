@@ -92,7 +92,7 @@ function ManageTeam(props) {
               itemClasses={{ title: "text-md" }}
             >
               <ListboxSection title="Manage the team">
-                {_canAccess("owner") && (
+                {_canAccess("teamOwner") && (
                   <ListboxItem key="settings" startContent={<LuSettings />}>
                     Settings
                   </ListboxItem>
@@ -101,7 +101,7 @@ function ManageTeam(props) {
                   Members
                 </ListboxItem>
               </ListboxSection>
-              {_canAccess("admin") && (
+              {_canAccess("teamAdmin") && (
                 <ListboxSection title="Developers">
                   <ListboxItem key="api-keys" startContent={<LuCode2 />}>
                     API Keys
@@ -116,13 +116,13 @@ function ManageTeam(props) {
           <div className="container mx-auto py-4">
             <Switch>
               <Route path="/manage/:teamId/members" component={TeamMembers} />
-              {_canAccess("owner") && (
+              {_canAccess("teamOwner") && (
                 <Route
                   path="/manage/:teamId/settings"
                   component={TeamSettings}
                 />
               )}
-              {_canAccess("admin") && team.id && (
+              {_canAccess("teamAdmin") && team.id && (
                 <Route
                   path="/manage/:teamId/api-keys"
                   render={() => (<ApiKeys teamId={team.id} />)}

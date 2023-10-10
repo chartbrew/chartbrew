@@ -174,7 +174,7 @@ function TeamMembers(props) {
 
   return (
     <div style={style} className="container mx-auto">
-      {_canAccess("admin") && (
+      {_canAccess("teamAdmin") && (
         <Segment className={"bg-background"}>
           <InviteMembersForm />
         </Segment>
@@ -213,10 +213,10 @@ function TeamMembers(props) {
                     <Text size="sm" className={"text-foreground-500"}>{member.email}</Text>
                   </TableCell>
                   <TableCell key="role">
-                    {memberRole.role === "owner" && <Chip color="primary" variant="faded" size="sm">Owner</Chip>}
-                    {memberRole.role === "admin" && <Chip color="success" variant="faded" size="sm">Admin</Chip>}
-                    {memberRole.role === "editor" && <Chip color="secondary" variant="faded" size="sm">Editor</Chip>}
-                    {memberRole.role === "member" && <Chip color="default" variant="faded" size="sm">Member</Chip>}
+                    {memberRole.role === "teamOwner" && <Chip color="primary" variant="faded" size="sm">Team Owner</Chip>}
+                    {memberRole.role === "teamAdmin" && <Chip color="success" variant="faded" size="sm">Team Admin</Chip>}
+                    {memberRole.role === "projectAdmin" && <Chip color="secondary" variant="faded" size="sm">Project admin</Chip>}
+                    {memberRole.role === "projectViewer" && <Chip color="default" variant="faded" size="sm">Project viewer</Chip>}
                   </TableCell>
                   <TableCell key="projectAccess">
                     {!memberRole.projects || memberRole.projects.length === 0 ? "None" : memberRole.projects.length}
@@ -228,7 +228,7 @@ function TeamMembers(props) {
                   <TableCell key="actions">
                     <Container className={"pl-0 pr-0"}>
                       <Row className={"gap-2"}>
-                        {_canAccess("admin") && (
+                        {_canAccess("teamAdmin") && (
                           <>
                             <Tooltip content="Adjust project access">
                               <Button
@@ -243,7 +243,7 @@ function TeamMembers(props) {
                             </Tooltip>
                           </>
                         )}
-                        {_canAccess("admin") && user.id !== member.id && (
+                        {_canAccess("teamAdmin") && user.id !== member.id && (
                           <>
                             <Tooltip content="Change member role">
                               <Dropdown>
@@ -259,36 +259,36 @@ function TeamMembers(props) {
                                   selectionMode="single"
                                 >
                                   {user.id !== member.id
-                                    && (_canAccess("owner") || (_canAccess("admin") && memberRole.role !== "owner"))
+                                    && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
                                     && (
                                       <DropdownItem
-                                        key="admin"
-                                        textValue="Admin"
+                                        key="teamAdmin"
+                                        textValue="Team Admin"
                                         description={"Full access, but can't delete the team"}
                                       >
-                                        <Text>Admin</Text>
+                                        <Text>Team Admin</Text>
                                       </DropdownItem>
                                     )}
                                   {user.id !== member.id
-                                    && (_canAccess("owner") || (_canAccess("admin") && memberRole.role !== "owner"))
+                                    && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
                                     && (
                                       <DropdownItem
-                                        key="editor"
-                                        textValue="Editor"
+                                        key="projectAdmin"
+                                        textValue="Project Admin"
                                         description={"Can create, edit, and remove charts and connections in assigned projects"}
                                       >
-                                        <Text>Editor</Text>
+                                        <Text>Project Admin</Text>
                                       </DropdownItem>
                                     )}
                                   {user.id !== member.id
-                                    && (_canAccess("owner") || (_canAccess("admin") && memberRole.role !== "owner"))
+                                    && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
                                     && (
                                       <DropdownItem
-                                        key="member"
-                                        textValue="Member"
+                                        key="projectViewer"
+                                        textValue="Project Viewer"
                                         description={"Can view charts in assigned projects"}
                                       >
-                                        <Text>Member</Text>
+                                        <Text>Project Viewer</Text>
                                       </DropdownItem>
                                     )}
                                 </DropdownMenu>
@@ -297,7 +297,7 @@ function TeamMembers(props) {
                           </>
                         )}
                         {user.id !== member.id
-                          && (_canAccess("owner") || (_canAccess("admin") && memberRole !== "owner"))
+                          && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole !== "teamOwner"))
                           && (
                             <Tooltip content="Remove user from the team">
                               <Button

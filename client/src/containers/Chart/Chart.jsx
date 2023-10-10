@@ -459,12 +459,12 @@ function Chart(props) {
                     </>
                   )}
                   <>
-                    {_canAccess("editor") && (
+                    {_canAccess("projectAdmin") && (
                       <Link to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}>
                         <Text b size="lg" className={"text-default"}>{chart.name}</Text>
                       </Link>
                     )}
-                    {!_canAccess("editor") && (
+                    {!_canAccess("projectAdmin") && (
                       <Text b size="lg">{chart.name}</Text>
                     )}
                   </>
@@ -563,12 +563,12 @@ function Chart(props) {
                     >
                       Refresh chart
                     </DropdownItem>
-                    {_canAccess("editor") && (
+                    {_canAccess("projectAdmin") && (
                       <DropdownItem startContent={<LuCalendarClock />} onClick={_openUpdateModal}>
                         Auto-update
                       </DropdownItem>
                     )}
-                    {_canAccess("editor") && (
+                    {_canAccess("projectAdmin") && (
                       <DropdownItem
                         startContent={<LuSettings />}
                         onClick={() => history.push(`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`)}
@@ -582,12 +582,12 @@ function Chart(props) {
                     >
                       Export to Excel
                     </DropdownItem>
-                    {!chart.draft && _canAccess("editor") && (
+                    {!chart.draft && _canAccess("projectAdmin") && (
                       <DropdownItem startContent={<LuTv2 />} onClick={_onChangeReport}>
                         {chart.onReport ? "Remove from report" : "Add to report"}
                       </DropdownItem>
                     )}
-                    {!chart.draft && _canAccess("editor") && (
+                    {!chart.draft && _canAccess("projectAdmin") && (
                       <DropdownItem
                         showDivider
                         startContent={chart.public ? <LuUnlock /> : <LuLock />}
@@ -606,7 +606,7 @@ function Chart(props) {
                         {"Open in a new tab"}
                       </DropdownItem>
                     )}
-                    {_canAccess("editor") && (
+                    {_canAccess("projectAdmin") && (
                       <DropdownItem startContent={<LuChevronDownCircle />} closeOnSelect={false}>
                         <Popover>
                           <PopoverTrigger>
@@ -639,7 +639,7 @@ function Chart(props) {
                         </Popover>
                       </DropdownItem>
                     )}
-                    {_canAccess("editor") && (
+                    {_canAccess("projectAdmin") && (
                       <DropdownItem showDivider startContent={<LuChevronDownCircle />}>
                         <Dropdown>
                           <DropdownTrigger>
@@ -698,7 +698,7 @@ function Chart(props) {
                         </Dropdown>
                       </DropdownItem>
                     )}
-                    {_canAccess("editor") && (
+                    {_canAccess("projectAdmin") && (
                       <DropdownItem startContent={<LuTrash />} color="danger" onClick={_onDeleteChartConfirmation}>
                         Delete chart
                       </DropdownItem>
@@ -1029,7 +1029,7 @@ function Chart(props) {
                   label={chart.shareable ? "Disable sharing" : "Enable sharing"}
                   onChange={_onToggleShareable}
                   isSelected={chart.shareable}
-                  disabled={!_canAccess("editor")}
+                  disabled={!_canAccess("projectAdmin")}
                 />
                 <Spacer x={0.5} />
                 <Text>
@@ -1056,7 +1056,7 @@ function Chart(props) {
                   </Row>
                 </>
               )}
-              {!_canAccess("editor") && !chart.public && !chart.shareable && (
+              {!_canAccess("projectAdmin") && !chart.public && !chart.shareable && (
                 <>
                   <Spacer y={2} />
                   <Row>

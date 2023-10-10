@@ -18,7 +18,7 @@ module.exports.up = async () => {
     if (tr.role === "owner") {
       updatePromises.push(
         db.TeamRole.update(
-          { role: "teamAdmin" },
+          { role: "teamOwner" },
           { where: { id: tr.id } },
         ),
       );

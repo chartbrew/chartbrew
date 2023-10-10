@@ -78,7 +78,7 @@ class ProjectController {
     return db.Project.create(data)
       .then((project) => {
         newProject = project;
-        return this.updateProjectRole(project.id, userId, "owner");
+        return this.updateProjectRole(project.id, userId, "teamOwner");
       })
       .then(() => {
         const brewName = `${newProject.name.replace(/[\W_]+/g, "_")}_${newProject.id}`;

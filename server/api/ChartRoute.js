@@ -57,7 +57,7 @@ module.exports = (app) => {
       })
       .then((teamRole) => {
         // the owner has access to all the projects
-        if (teamRole.role === "owner") return teamRole;
+        if (teamRole.role === "teamOwner" || teamRole.role === "teamAdmin") return teamRole;
 
         // otherwise, check if the team role contains access to the right project
         if (!teamRole.projects) return Promise.reject(401);
@@ -115,7 +115,7 @@ module.exports = (app) => {
       })
       .then((charts) => {
         let filteredCharts = charts;
-        if (gRole === "member") {
+        if (gRole === "projectViewer") {
           filteredCharts = charts.filter((c) => !c.draft);
         }
         return res.status(200).send(filteredCharts);
@@ -601,7 +601,7 @@ module.exports = (app) => {
     return checkAccess(req)
       .then((teamRole) => {
         const permission = accessControl.can(teamRole.role).readAny("chart");
-        if (!permission.granted || (!teamRole.canExport && teamRole.role !== "owner")) {
+        if (!permission.granted || (!teamRole.canExport && (teamRole.role !== "teamOwner" || teamRole.role !== "teamAdmin"))) {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }
 

@@ -279,17 +279,17 @@ function MainContent(props) {
             <ProjectDashboard showDrafts={showDrafts} onPrint={onPrint} mobile={mobile} />
           )}
         />
-        {_canAccess("editor") && <Route path="/:teamId/:projectId/connections" component={Connections} />}
-        {_canAccess("editor") && <Route path="/:teamId/:projectId/chart/:chartId/edit" component={AddChart} />}
-        {_canAccess("editor") && <Route path="/:teamId/:projectId/chart" component={AddChart} />}
-        {_canAccess("admin") && <Route path="/:teamId/:projectId/projectSettings" render={() => (<ProjectSettings style={styles.teamSettings} />)} />}
+        {_canAccess("projectAdmin") && <Route path="/:teamId/:projectId/connections" component={Connections} />}
+        {_canAccess("projectAdmin") && <Route path="/:teamId/:projectId/chart/:chartId/edit" component={AddChart} />}
+        {_canAccess("projectAdmin") && <Route path="/:teamId/:projectId/chart" component={AddChart} />}
+        {_canAccess("projectAdmin") && <Route path="/:teamId/:projectId/projectSettings" render={() => (<ProjectSettings style={styles.teamSettings} />)} />}
         <Route
           path="/:teamId/:projectId/members"
           render={() => (
             <TeamMembers style={styles.teamSettings} />
           )}
         />
-        {_canAccess("editor") && (
+        {_canAccess("projectAdmin") && (
           <Route
             path="/:teamId/:projectId/integrations"
             render={() => (
@@ -301,7 +301,7 @@ function MainContent(props) {
             )}
           />
         )}
-        {_canAccess("owner")
+        {_canAccess("teamOwner")
           && (
             <Route
               path="/:teamId/:projectId/settings"

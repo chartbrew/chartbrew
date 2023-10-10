@@ -64,7 +64,7 @@ module.exports = (app) => {
     return teamController.createTeam(req.body)
       .then((team) => {
         newTeam = team;
-        return teamController.addTeamRole(newTeam.id, req.body.user_id, "owner");
+        return teamController.addTeamRole(newTeam.id, req.body.user_id, "teamOwner");
       })
       .then(() => {
         return teamController.findById(newTeam.id);
@@ -165,7 +165,7 @@ module.exports = (app) => {
 
     let newRole = {};
     return jwt.verify(req.body.token, app.settings.secret, (err, decoded) => {
-      return teamController.addTeamRole(decoded.team_id, req.user.id, decoded.role || "member", decoded.projects, decoded.canExport)
+      return teamController.addTeamRole(decoded.team_id, req.user.id, decoded.role || "projectViewer", decoded.projects, decoded.canExport)
         .then((role) => {
           newRole = role;
           return teamController.findById(newRole.team_id);

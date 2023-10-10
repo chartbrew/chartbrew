@@ -345,7 +345,7 @@ function Connections(props) {
                   projectId={match.params.projectId}
                   connections={connections}
                   onComplete={_onCompleteTemplate}
-                  isAdmin={_canAccess("admin")}
+                  isAdmin={_canAccess("teamAdmin")}
                 />
               )}
             </Row>
@@ -557,7 +557,7 @@ function Connections(props) {
                         </div>
                       </Row>
                     </CardBody>
-                    {_canAccess("editor") && (
+                    {_canAccess("projectAdmin") && (
                       <CardFooter className="gap-2">
                         <Button
                           variant="flat"

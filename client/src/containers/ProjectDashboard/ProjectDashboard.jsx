@@ -343,7 +343,7 @@ function ProjectDashboard(props) {
     team.TeamRoles.map((teamRole) => {
       if (teamRole.team_id === parseInt(match.params.teamId, 10)
         && teamRole.user_id === user.id
-        && (teamRole.canExport || teamRole.role === "owner")
+        && (teamRole.canExport || teamRole.role === "teamOwner")
       ) {
         canExport = true;
       }
@@ -385,7 +385,7 @@ function ProjectDashboard(props) {
                             </AvatarGroup>
                           </PopoverTrigger>
                           <PopoverContent className="pt-4">
-                            {_canAccess("admin") && (
+                            {_canAccess("teamAdmin") && (
                               <div className="w-full">
                                 <Button
                                   endContent={<LuUsers2 />}
@@ -492,7 +492,7 @@ function ProjectDashboard(props) {
                   </div>
                 </Row>
                 <Row justify="flex-end" align="center">
-                  {_canAccess("admin") && (
+                  {_canAccess("teamAdmin") && (
                     <>
                       <Tooltip content="Create a template from this dashboard" placement="bottom">
                         <Button
@@ -607,7 +607,7 @@ function ProjectDashboard(props) {
             </Container>
           )}
 
-        {_canAccess("editor") && charts.length < 1 && connections.length > 0 && (
+        {_canAccess("projectAdmin") && charts.length < 1 && connections.length > 0 && (
           <Container justify="center" style={styles.addCard}>
             <Row justify="center" align="center">
               <Link to={`/${match.params.teamId}/${match.params.projectId}/chart`}>
@@ -675,7 +675,7 @@ function ProjectDashboard(props) {
               loading={exportLoading}
               error={exportError}
               onUpdate={(chartId, disabled) => _onUpdateExport(chartId, disabled)}
-              showDisabled={_canAccess("admin")}
+              showDisabled={_canAccess("projectAdmin")}
             />
           </ModalBody>
         </ModalContent>

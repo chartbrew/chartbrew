@@ -192,7 +192,7 @@ function ChartDescription(props) {
                 projectId={match.params.projectId}
                 connections={connections}
                 onComplete={_onCompleteTemplate}
-                isAdmin={canAccess("admin", user.id, team.TeamRoles)}
+                isAdmin={canAccess("teamAdmin", user.id, team.TeamRoles)}
               />
             </Row>
           )}

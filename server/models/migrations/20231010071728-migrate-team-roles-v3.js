@@ -16,7 +16,7 @@ module.exports = {
 
   async down(queryInterface) {
     await queryInterface.sequelize.query(
-      "UPDATE \"TeamRole\" SET \"role\" = \"role_backup\""
+      "UPDATE `TeamRole` SET `role` = `role_backup`"
     );
 
     await queryInterface.removeColumn("TeamRole", "role_backup");

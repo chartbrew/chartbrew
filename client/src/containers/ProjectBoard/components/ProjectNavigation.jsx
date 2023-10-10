@@ -99,7 +99,7 @@ function ProjectNavigation(props) {
                   <LuBarChartBig color={_checkIfActive("dashboard") ? secondary : "white"} size={24} />
                 </LinkNext>
               </Link>
-              {canAccess("editor") && (
+              {canAccess("projectAdmin") && (
                 <Link to={`/${teamId}/${projectId}/connections`}>
                   <LinkNext className="pointer-events-none">
                     <LuPlug size={24} color={_checkIfActive("connections") ? secondary : "white"} />
@@ -111,7 +111,7 @@ function ProjectNavigation(props) {
                   <LuPresentation color={_checkIfActive("public") ? secondary : "white"} size={24} />
                 </LinkNext>
               </Link>
-              {canAccess("editor")
+              {canAccess("projectAdmin")
                 && (
                   <Link to={`/${teamId}/${projectId}/members`}>
                     <LinkNext className="pointer-events-none">
@@ -119,7 +119,7 @@ function ProjectNavigation(props) {
                     </LinkNext>
                   </Link>
                 )}
-              {canAccess("admin")
+              {canAccess("projectAdmin")
                 && (
                   <Link to={`/${teamId}/${projectId}/projectSettings`}>
                     <LinkNext className="pointer-events-none">
@@ -175,7 +175,7 @@ function ProjectNavigation(props) {
           </Popover>
         </Row>
         <Spacer y={8} />
-        {canAccess("editor")
+        {canAccess("projectAdmin")
           && (
             <Row justify="center" align="center">
               {menuSize === "small" && (
@@ -232,7 +232,7 @@ function ProjectNavigation(props) {
             )}
           </Link>
         </Row>
-        {canAccess("editor") && (
+        {canAccess("projectAdmin") && (
           <>
             <Spacer y={1} />
             <Row justify={menuSize === "large" ? "flex-start" : "center"}>
@@ -296,7 +296,7 @@ function ProjectNavigation(props) {
           </Link>
         </Row>
 
-        {canAccess("admin") && (
+        {canAccess("projectAdmin") && (
           <>
             <Spacer y={1} />
             <Row justify={menuSize === "large" ? "flex-start" : "center"}>
@@ -331,7 +331,7 @@ function ProjectNavigation(props) {
         <Spacer y={4} />
         <Divider />
         <Spacer y={4} />
-        {canAccess("editor") && (
+        {canAccess("projectAdmin") && (
           <>
             <Row justify={menuSize === "large" ? "flex-start" : "center"}>
               <Link to={`/${teamId}/${projectId}/members`}>
@@ -392,7 +392,7 @@ function ProjectNavigation(props) {
         )}
         <Spacer y={3} />
         <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
-          {_checkIfActive("dashboard") && canAccess("editor") && (
+          {_checkIfActive("dashboard") && canAccess("projectAdmin") && (
             <Tooltip
               content={showDrafts ? "Click to hide drafts" : "Click to show drafts"}
               placement="right"

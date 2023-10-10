@@ -160,7 +160,7 @@ module.exports = (app) => {
         const deletePromises = [];
         // delete the team if user is owner
         user.TeamRoles.forEach((teamRole) => {
-          if (teamRole.role === "owner") {
+          if (teamRole.role === "teamOwner") {
             deletePromises.push(teamController.deleteTeam(teamRole.team_id));
           }
         });

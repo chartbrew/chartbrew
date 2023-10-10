@@ -473,7 +473,7 @@ function PublicDashboard(props) {
             )}
           </NavbarContent>
           <NavbarContent className="gap-8 sm:gap-8" justify="end">
-            {_canAccess("editor") && (
+            {_canAccess("projectAdmin") && (
               <NavbarItem>
                 <Link className="text-foreground flex gap-1 items-center cursor-pointer" onClick={() => setPreview(true)}>
                   <LuEye />
@@ -481,7 +481,7 @@ function PublicDashboard(props) {
                 </Link>
               </NavbarItem>
             )}
-            {_canAccess("editor") && (
+            {_canAccess("projectAdmin") && (
               <Popover>
                 <NavbarItem>
                   <PopoverTrigger>
@@ -530,7 +530,7 @@ function PublicDashboard(props) {
                 </PopoverContent>
               </Popover>
             )}
-            {_canAccess("editor") && (
+            {_canAccess("projectAdmin") && (
               <NavbarItem>
                 <Link className="text-foreground flex gap-1 items-center" onClick={() => setEditingTitle(true)}>
                     <LuClipboardEdit />
@@ -538,7 +538,7 @@ function PublicDashboard(props) {
                   </Link>
               </NavbarItem>
             )}
-            {_canAccess("admin") && (
+            {_canAccess("projectAdmin") && (
               <NavbarItem>
                 <Link className="text-foreground flex gap-1 items-center" onClick={() => setShowSettings(true)}>
                   <LuShare />

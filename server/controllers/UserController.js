@@ -47,7 +47,7 @@ class UserController {
         const teamRole = {
           team_id: data.id,
           user_id: gNewUser.id,
-          role: "owner",
+          role: "teamOwner",
           canExport: true,
         };
         return db.TeamRole.create(teamRole);
@@ -70,7 +70,7 @@ class UserController {
         const promises = [];
         if (teamRoles.length > 0) {
           teamRoles.forEach((tr) => {
-            if (tr.role === "owner") {
+            if (tr.role === "teamOwner") {
               gTeam = tr.team_id;
               promises.push(db.Team.destroy({ where: { "id": tr.team_id } }));
             }

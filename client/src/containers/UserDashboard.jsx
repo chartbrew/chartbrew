@@ -77,7 +77,8 @@ function UserDashboard(props) {
   useEffect(() => {
     if (teams && teams.length > 0 && !initRef.current) {
       initRef.current = true;
-      const owningTeam = teams.find((t) => t.TeamRoles.find((tr) => tr.role === "owner" && tr.user_id === user.data.id));
+      const owningTeam = teams.find((t) => t.TeamRoles.find((tr) => tr.role === "teamOwner" && tr.user_id === user.data.id));
+      if (!owningTeam) return;
       saveActiveTeam(owningTeam);
       getTeamMembers(owningTeam.id);
     }
@@ -288,7 +289,7 @@ function UserDashboard(props) {
                       ))}
                     </DropdownMenu>
                   </Dropdown>
-                  {_canAccess("admin", team.TeamRoles)
+                  {_canAccess("teamAdmin", team.TeamRoles)
                     && (
                       <>
                         <Spacer x={1} />
@@ -467,7 +468,7 @@ function UserDashboard(props) {
             <Container>
               <Spacer y={2} />
               <Row className={"gap-2"} justify="flex-start" align="center">
-                {_canAccess("admin", team.TeamRoles) && (
+                {_canAccess("teamAdmin", team.TeamRoles) && (
                   <>
                     <Button
                       color="primary"
@@ -559,7 +560,7 @@ function UserDashboard(props) {
                             </Row>
                           </TableCell>
                           <TableCell key="actions">
-                            {_canAccess("admin", team.TeamRoles) && (
+                            {_canAccess("projectAdmin", team.TeamRoles) && (
                               <Row justify="flex-end" align="center">
                                 <Tooltip content="Rename the project">
                                   <Button
@@ -605,7 +606,7 @@ function UserDashboard(props) {
                   )}
                 </Table>
               )}
-              {team.Projects && team.Projects.length === 0 && !_canAccess("admin", team.TeamRoles)
+              {team.Projects && team.Projects.length === 0 && !_canAccess("projectAdmin", team.TeamRoles)
                 && (
                   <Container>
                   <Text size="h3">

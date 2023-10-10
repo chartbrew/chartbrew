@@ -94,7 +94,7 @@ class TeamController {
   }
 
   addProjectAccessToOwner(teamId, projectId) {
-    return db.TeamRole.findOne({ where: { team_id: teamId, role: "owner" } })
+    return db.TeamRole.findOne({ where: { team_id: teamId, role: "teamOwner" } })
       .then((teamRole) => {
         return this.addProjectAccess(teamId, teamRole.user_id, projectId);
       })

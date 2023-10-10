@@ -73,7 +73,7 @@ function NavbarContainer(props) {
     if (teams.length > 0) {
       teams.map((t) => {
         t.TeamRoles.map((tr) => {
-          if (tr.user_id === user.id && tr.role === "owner") {
+          if (tr.user_id === user.id && tr.role === "teamOwner") {
             setTeamOwned(t);
           }
           return tr;
@@ -271,7 +271,7 @@ function NavbarContainer(props) {
                   </div>
                 </Link>
               </DropdownItem>
-              {_canAccess("admin", teamOwned) && (
+              {_canAccess("teamAdmin", teamOwned) && (
                 <DropdownItem startContent={<LuSettings />} key="account" textValue="Account settings">
                   <Link to={`/manage/${team?.id || teamOwned.id}/settings`}>
                     <div className="w-full text-foreground">
