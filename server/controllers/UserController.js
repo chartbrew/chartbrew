@@ -1,6 +1,7 @@
 const simplecrypt = require("simplecrypt");
 const uuid = require("uuid/v4");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
 const db = require("../models/models");
 const mail = require("../modules/mail");
@@ -16,13 +17,16 @@ class UserController {
   createUser(user) {
     let gNewUser;
     return db.User.findOne({ where: { email: user.email } })
-      .then((foundUser) => {
+      .then(async (foundUser) => {
         if (foundUser) return new Promise((resolve, reject) => reject(new Error(409)));
+
+        const bcryptHash = await bcrypt.hash(user.password, 10);
+
         return db.User.create({
           name: user.name,
           oneaccountId: user.oneaccountId,
           email: user.email,
-          password: user.password,
+          password: bcryptHash,
           icon: user.icon,
           active: true,
         });
@@ -104,18 +108,35 @@ class UserController {
       });
   }
 
-  login(email, password) {
-    return db.User.findOne({ where: { "email": sc.encrypt(email) } })
-      .then((foundUser) => {
-        if (!foundUser) return new Promise((resolve, reject) => reject(new Error(404)));
-        if (!(foundUser.password === sc.encrypt(password))) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
+  async login(email, password) {
+    try {
+      const foundUser = await db.User.findOne({ where: { "email": sc.encrypt(email) } });
+
+      if (!foundUser) {
+        throw new Error(404);
+      }
+
+      let isAuthenticated = false;
+
+      if (foundUser.password.startsWith("$2a$") || foundUser.password.startsWith("$2b$") || foundUser.password.startsWith("$2y$")) {
+        isAuthenticated = await bcrypt.compare(password, foundUser.password);
+      } else {
+        isAuthenticated = (foundUser.password === sc.encrypt(password));
+
+        if (isAuthenticated) {
+          const bcryptHash = await bcrypt.hash(password, 10);
+          await db.User.update({ password: bcryptHash }, { where: { "email": sc.encrypt(email) } });
         }
-        return foundUser;
-      })
-      .catch((error) => {
-        return new Promise((resolve, reject) => reject(new Error(error.message)));
-      });
+      }
+
+      if (!isAuthenticated) {
+        throw new Error(401);
+      }
+
+      return foundUser;
+    } catch (error) {
+      throw new Error(error.message);
+    }
   }
 
   findAll() {
@@ -240,7 +261,7 @@ class UserController {
       });
   }
 
-  changePassword({ token, hash, password }) {
+  async changePassword({ token, hash, password }) {
     // decrypt the hash to get the user information
     let user;
     try {
@@ -249,17 +270,19 @@ class UserController {
       return new Promise((resolve, reject) => reject(e));
     }
 
-    const userUpdate = {
-      passwordResetToken: uuid(),
-      password,
-    };
-
     // check if the existing token is valid first
     return this.findById(user.id)
-      .then((existingUser) => {
+      .then(async (existingUser) => {
         if (existingUser.passwordResetToken !== token) {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }
+
+        const bcryptHash = await bcrypt.hash(password, 10);
+
+        const userUpdate = {
+          passwordResetToken: uuid(),
+          password: bcryptHash,
+        };
 
         return this.update(user.id, userUpdate);
       })

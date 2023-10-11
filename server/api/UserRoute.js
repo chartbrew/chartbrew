@@ -225,7 +225,7 @@ module.exports = (app) => {
   /*
   ** Route to login users
   */
-  app.post("/user/login", (req, res) => {
+  app.post("/user/login", apiLimiter(10), (req, res) => {
     if (!req.body.email || !req.body.password) return res.status(400).send("fields are missing");
     let user = {};
     return userController.login(req.body.email, req.body.password)
@@ -329,7 +329,7 @@ module.exports = (app) => {
   /*
   ** Route to request a password reset email
   */
-  app.post("/user/password/reset", (req, res) => {
+  app.post("/user/password/reset", apiLimiter(10), (req, res) => {
     userController.requestPasswordReset(req.body.email);
     return res.status(200).send({ "success": true });
   });
@@ -338,7 +338,7 @@ module.exports = (app) => {
   /*
   ** Route to change the password with a password reset link info
   */
-  app.put("/user/password/change", (req, res) => {
+  app.put("/user/password/change", apiLimiter(10), (req, res) => {
     return userController.changePassword(req.body)
       .then((result) => {
         return res.status(200).send(result);

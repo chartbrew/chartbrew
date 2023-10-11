@@ -51,9 +51,6 @@ module.exports = (sequelize, DataTypes) => {
     password: {
       type: DataTypes.STRING,
       allowNull: false,
-      set(val) {
-        return this.setDataValue("password", sc.encrypt(val));
-      },
     },
     icon: {
       type: DataTypes.STRING,
