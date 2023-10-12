@@ -128,6 +128,16 @@ function Filters(props) {
       });
     }
 
+    if (type === "last_month") {
+      setDateRange({
+        startDate: moment().subtract(1, "month").startOf("month").startOf("day")
+          .toISOString(),
+        endDate: moment().subtract(1, "month").endOf("month").endOf("day")
+          .toISOString(),
+        key: "selection",
+      });
+    }
+
     if (type === "last_7_days") {
       setDateRange({
         startDate: moment().subtract(7, "days").startOf("day").toISOString(),
@@ -268,6 +278,12 @@ function Filters(props) {
                 <LinkNext onPress={() => _onSelectRange("this_month")} css={{ mb: 5 }}>
                   <Badge color="primary" size="sm" variant={"bordered"}>
                     This month
+                  </Badge>
+                </LinkNext>
+                <Spacer x={0.2} />
+                <LinkNext onPress={() => _onSelectRange("last_month")} css={{ mb: 5 }}>
+                  <Badge color="primary" size="sm" variant={"bordered"}>
+                    Last month
                   </Badge>
                 </LinkNext>
                 <Spacer x={0.2} />
