@@ -136,7 +136,7 @@ function NavbarContainer(props) {
         break;
       }
       case "profile": {
-        navigate("/edit");
+        navigate("/user/profile");
         break;
       }
       case "account": {
@@ -265,7 +265,7 @@ function NavbarContainer(props) {
             </NavbarItem>
             <DropdownMenu variant="faded">
               <DropdownItem startContent={<LuUser />} key="profile" textValue="Profile">
-                <Link to="/edit">
+                <Link to="/user/profile">
                   <div className="w-full text-foreground">
                     Profile
                   </div>

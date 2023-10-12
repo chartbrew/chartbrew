@@ -10,13 +10,14 @@ import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import Container from "../components/Container";
 import Row from "../components/Row";
 import Text from "../components/Text";
+import { useParams } from "react-router";
 
 /*
   Contains team update functionality
 */
 function TeamSettings(props) {
   const {
-    team, getTeam, match, cleanErrors, style, updateTeam,
+    team, getTeam, cleanErrors, style, updateTeam,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -24,9 +25,11 @@ function TeamSettings(props) {
   const [success, setSuccess] = useState(false);
   const [submitError, setSubmitError] = useState(false);
 
+  const params = useParams();
+
   useEffect(() => {
     cleanErrors();
-    getTeam(match.params.teamId)
+    getTeam(params.teamId)
       .then((teamData) => {
         setTeamState({ name: teamData.name });
       });
@@ -119,7 +122,6 @@ TeamSettings.defaultProps = {
 TeamSettings.propTypes = {
   getTeam: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,
-  match: PropTypes.object.isRequired,
   updateTeam: PropTypes.func.isRequired,
   style: PropTypes.object,
   cleanErrors: PropTypes.func.isRequired,

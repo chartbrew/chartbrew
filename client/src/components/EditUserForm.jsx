@@ -19,6 +19,7 @@ import Row from "./Row";
 import Text from "./Text";
 import Callout from "./Callout";
 import useThemeDetector from "../modules/useThemeDetector";
+import { useNavigate } from "react-router";
 
 /*
   Component for editting/deleting user account
@@ -35,10 +36,11 @@ function EditUserForm(props) {
   const [deleteUserError, setDeleteUserError] = useState(false);
 
   const {
-    userProp, updateUser, deleteUser, history, requestEmailUpdate, updateEmail,
+    userProp, updateUser, deleteUser, requestEmailUpdate, updateEmail,
   } = props;
 
   const isDark = useThemeDetector();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const params = new URLSearchParams(document.location.search);
@@ -101,7 +103,7 @@ function EditUserForm(props) {
         setLoading(false);
         toast.success("Your email has been updated.");
         setUpdateEmailToken("");
-        history.push("/edit");
+        navigate("/user/profile");
         setTimeout(() => {
           window.location.reload();
         }, 1500);
@@ -117,7 +119,7 @@ function EditUserForm(props) {
     setLoading(true);
     deleteUser(userProp.id)
       .then(() => {
-        history.push("/feedback");
+        navigate("/feedback");
       })
       .catch(() => {
         setLoading(false);
@@ -323,7 +325,6 @@ EditUserForm.propTypes = {
   userProp: PropTypes.object.isRequired,
   updateUser: PropTypes.func.isRequired,
   deleteUser: PropTypes.func.isRequired,
-  history: PropTypes.object.isRequired,
   requestEmailUpdate: PropTypes.func.isRequired,
   updateEmail: PropTypes.func.isRequired,
 };

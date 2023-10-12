@@ -12,10 +12,6 @@ import useThemeDetector from "./modules/useThemeDetector";
 
 const store = configureStore({
   reducer,
-  // middleware: (getDefaultMiddleware) =>
-  //   getDefaultMiddleware({
-  //     serializableCheck: false,
-  //   }),
 });
 
 const router = createBrowserRouter([
@@ -25,7 +21,24 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/user",
+        children: [{
+          path: "/user/profile",
+        }]
       },
+      {
+        path: "/manage/:teamId",
+        children: [
+          {
+            path: "/manage/:teamId/members",
+          },
+          {
+            path: "/manage/:teamId/settings",
+          },
+          {
+            path: "/manage/:teamId/api-keys",
+          },
+        ],
+      }
     ],
   },
 ]);

@@ -25,13 +25,14 @@ import Text from "../../components/Text";
 import useThemeDetector from "../../modules/useThemeDetector";
 import { LuBookKey, LuInfo, LuUsers2, LuX, LuXCircle } from "react-icons/lu";
 import Segment from "../../components/Segment";
+import { useParams } from "react-router";
 
 /*
   Contains Pending Invites and All team members with functionality to delete/change role
 */
 function TeamMembers(props) {
   const {
-    cleanErrors, getTeam, getTeamMembers, match, updateTeamRole, team,
+    cleanErrors, getTeam, getTeamMembers, updateTeamRole, team,
     user, style, teamMembers, deleteTeamMember, projects,
   } = props;
 
@@ -43,6 +44,7 @@ function TeamMembers(props) {
   const [changedRole, setChangedRole] = useState({});
 
   const isDark = useThemeDetector();
+  const params = useParams();
 
   useEffect(() => {
     cleanErrors();
@@ -62,7 +64,7 @@ function TeamMembers(props) {
   }, [projects, team]);
 
   const _getTeam = () => {
-    getTeam(match.params.teamId)
+    getTeam(params.teamId)
       .then((team) => {
         getTeamMembers(team.id);
       })
@@ -448,7 +450,6 @@ TeamMembers.propTypes = {
   team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
   teamMembers: PropTypes.array.isRequired,
-  match: PropTypes.object.isRequired,
   style: PropTypes.object,
   getTeamMembers: PropTypes.func.isRequired,
   updateTeamRole: PropTypes.func.isRequired,

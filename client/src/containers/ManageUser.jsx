@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
-import { Route, Routes } from "react-router";
 
 import EditUserForm from "../components/EditUserForm";
 import Navbar from "../components/Navbar";
@@ -22,9 +21,7 @@ function ManageUser(props) {
       <Navbar hideTeam />
       <div className="grid grid-cols-12 justify-center">
         <div className="col-span-12 sm:col-span-10 md:col-span-8">
-          <Routes>
-            <Route path="/edit" component={EditUserForm} />
-          </Routes>
+          <EditUserForm />
         </div>
       </div>
     </div>

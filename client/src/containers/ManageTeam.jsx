@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Route, Routes } from "react-router";
+import { Outlet, useNavigate, useParams } from "react-router";
 import {
   CircularProgress, Listbox, ListboxSection, ListboxItem,
 } from "@nextui-org/react";
@@ -9,11 +9,8 @@ import { LuCode2, LuSettings, LuUsers2 } from "react-icons/lu";
 
 import { getTeam, saveActiveTeam } from "../actions/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
-import TeamMembers from "./TeamMembers/TeamMembers";
-import TeamSettings from "./TeamSettings";
 import Navbar from "../components/Navbar";
 import canAccess from "../config/canAccess";
-import ApiKeys from "./ApiKeys/ApiKeys";
 import Container from "../components/Container";
 import Row from "../components/Row";
 
@@ -22,9 +19,12 @@ import Row from "../components/Row";
 */
 function ManageTeam(props) {
   const {
-    cleanErrors, getTeam, saveActiveTeam, match, user, team, history,
+    cleanErrors, getTeam, saveActiveTeam, user, team,
   } = props;
   const [loading, setLoading] = useState(true);
+
+  const params = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     cleanErrors();
@@ -32,7 +32,7 @@ function ManageTeam(props) {
   }, []);
 
   const _getTeam = () => {
-    getTeam(match.params.teamId)
+    getTeam(params.teamId)
       .then((team) => {
         saveActiveTeam(team);
       })
@@ -55,13 +55,13 @@ function ManageTeam(props) {
 
   const _onMenuSelect = (key) => {
     if (key === "members") {
-      history.push(`/manage/${match.params.teamId}/members`);
+      navigate(`/manage/${params.teamId}/members`);
     }
     if (key === "settings") {
-      history.push(`/manage/${match.params.teamId}/settings`);
+      navigate(`/manage/${params.teamId}/settings`);
     }
     if (key === "api-keys") {
-      history.push(`/manage/${match.params.teamId}/api-keys`);
+      navigate(`/manage/${params.teamId}/api-keys`);
     }
   }
 
@@ -114,21 +114,7 @@ function ManageTeam(props) {
 
         <div className="col-span-12 sm:col-span-9 md:col-span-10">
           <div className="container mx-auto py-4">
-            <Routes>
-              <Route path="/manage/:teamId/members" component={TeamMembers} />
-              {_canAccess("teamOwner") && (
-                <Route
-                  path="/manage/:teamId/settings"
-                  component={TeamSettings}
-                />
-              )}
-              {_canAccess("teamAdmin") && team.id && (
-                <Route
-                  path="/manage/:teamId/api-keys"
-                  render={() => (<ApiKeys teamId={team.id} />)}
-                />
-              )}
-            </Routes>
+            <Outlet />
           </div>
         </div>
       </div>
@@ -140,10 +126,8 @@ ManageTeam.propTypes = {
   getTeam: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
-  match: PropTypes.object.isRequired,
   saveActiveTeam: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
-  history: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {

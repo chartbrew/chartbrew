@@ -18,6 +18,9 @@ import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import useThemeDetector from "../modules/useThemeDetector";
 import Container from "../components/Container";
 import { IconContext } from "react-icons";
+import TeamMembers from "./TeamMembers/TeamMembers";
+import TeamSettings from "./TeamSettings";
+import ApiKeys from "./ApiKeys/ApiKeys";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
@@ -47,7 +50,7 @@ const { MediaContextProvider } = AppMedia;
 */
 function Main(props) {
   const {
-    relog, getTeams, cleanErrors,
+    relog, getTeams, cleanErrors, team,
   } = props;
 
   const isDark = useThemeDetector();
@@ -112,98 +115,96 @@ function Main(props) {
             <Suspense fallback={<SuspenseLoader />}>
               <Routes>
                 <Route exact path="/" element={<UserDashboard />} />
-                <Route exact path="/b/:brewName" component={PublicDashboard} />
+                <Route exact path="/b/:brewName" element={<PublicDashboard />} />
                 <Route
                   exact
                   path="/feedback"
-                  render={() => (
+                  element={(
                     <Container justify="center" className={"pt-96 pb-48"} size="sm">
                       <FeedbackForm />
                     </Container>
                   )}
                 />
-                <Route exact path="/manage/:teamId" component={ManageTeam} />
-                <Route exact path="/signup" component={Signup} />
-                <Route exact path="/google-auth" component={GoogleAuth} />
-                <Route exact path="/login" component={Login} />
+                <Route exact path="/signup" element={<Signup />} />
+                <Route exact path="/google-auth" element={<GoogleAuth />} />
+                <Route exact path="/login" element={<Login />} />
                 <Route exact path="/user" element={<UserDashboard />} />
-                <Route exact path="/profile" component={ManageUser} />
-                <Route exact path="/edit" component={ManageUser} />
-                <Route exact path="/passwordReset" component={PasswordReset} />
+                <Route exact path="/user/profile" element={<ManageUser />} />
+                <Route exact path="/edit" element={<ManageUser />} />
+                <Route exact path="/passwordReset" element={<PasswordReset />} />
+                <Route path="/manage/:teamId" element={<ManageTeam />}>
+                  <Route
+                    path="/manage/:teamId/members"
+                    element={<TeamMembers />}
+                  />
+                  <Route
+                    path="/manage/:teamId/settings"
+                    element={<TeamSettings />}
+                  />
+                  <Route
+                    path="/manage/:teamId/api-keys"
+                    element={<ApiKeys teamId={team?.id} />}
+                  />
+                </Route>
                 <Route
                   exact
                   path="/project/:projectId"
-                  component={ProjectRedirect}
-                />
-                <Route
-                  exact
-                  path="/manage/:teamId/members"
-                  component={ManageTeam}
-                />
-                <Route
-                  exact
-                  path="/manage/:teamId/settings"
-                  component={ManageTeam}
-                />
-                <Route
-                  exact
-                  path="/manage/:teamId/api-keys"
-                  component={ManageTeam}
+                  element={<ProjectRedirect />}
                 />
 
                 {/* Add all the routes for the project board here */}
-                <Route exact path="/:teamId/:projectId" component={ProjectBoard} />
+                <Route exact path="/:teamId/:projectId" element={<ProjectBoard />} />
                 <Route
                   exact
                   path="/:teamId/:projectId/connections"
-                  component={ProjectBoard}
+                  element={<ProjectBoard />}
                 />
                 <Route
                   exact
                   path="/:teamId/:projectId/dashboard"
-                  component={ProjectBoard}
+                  element={<ProjectBoard />}
                 />
                 <Route
                   exact
                   path="/:teamId/:projectId/chart"
-                  component={ProjectBoard}
+                  element={<ProjectBoard />}
                 />
                 <Route
                   exact
                   path="/:teamId/:projectId/chart/:chartId/edit"
-                  component={ProjectBoard}
+                  element={<ProjectBoard />}
                 />
-                <Route exact path="/invite" component={UserInvite} />
+                <Route exact path="/invite" element={<UserInvite />} />
                 <Route
                   exact
                   path="/:teamId/:projectId/projectSettings"
-                  component={ProjectBoard}
+                  element={<ProjectBoard />}
                 />
                 <Route
                   exact
                   path="/:teamId/:projectId/members"
-                  component={ProjectBoard}
+                  element={<ProjectBoard />}
                 />
                 <Route
                   exact
                   path="/:teamId/:projectId/settings"
-                  component={ProjectBoard}
+                  element={<ProjectBoard />}
                 />
                 <Route
                   exact
                   path="/:teamId/:projectId/public"
-                  component={ProjectBoard}
+                  element={<ProjectBoard />}
                 />
                 <Route
                   exact
                   path="/:teamId/:projectId/integrations"
-                  component={ProjectBoard}
+                  element={<ProjectBoard />}
                 />
 
                 <Route
                   exact
                   path="/chart/:chartId/embedded"
-                  component={EmbeddedChart}
+                  element={<EmbeddedChart />}
                 />
               </Routes>
             </Suspense>
@@ -224,11 +225,13 @@ Main.propTypes = {
   relog: PropTypes.func.isRequired,
   getTeams: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
+  team: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
     user: state.user,
+    team: state.team.active,
   };
 };
 
