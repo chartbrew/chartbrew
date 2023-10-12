@@ -28,6 +28,9 @@ import {
   updateProject as updateProjectAction,
   removeProject as removeProjectAction,
 } from "../actions/project";
+import {
+  getTeamConnections as getTeamConnectionsAction,
+} from "../actions/connection";
 import ProjectForm from "../components/ProjectForm";
 import Navbar from "../components/Navbar";
 import canAccess from "../config/canAccess";
@@ -45,7 +48,7 @@ function UserDashboard(props) {
   const {
     relog, cleanErrors, user, getTeams, saveActiveTeam,
     teams, teamLoading, getTemplates, history, updateProject, removeProject,
-    team, getTeamMembers, teamMembers, connections, datasets,
+    team, getTeamMembers, teamMembers, connections, datasets, getTeamConnections,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -87,6 +90,7 @@ function UserDashboard(props) {
   useEffect(() => {
     if (team?.id) {
       getTeamMembers(team.id);
+      getTeamConnections(team.id);
     }
   }, [team]);
 
@@ -780,6 +784,7 @@ UserDashboard.propTypes = {
   teamMembers: PropTypes.array.isRequired,
   connections: PropTypes.array.isRequired,
   datasets: PropTypes.array.isRequired,
+  getTeamConnections: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -789,7 +794,7 @@ const mapStateToProps = (state) => {
     team: state.team.active,
     teamLoading: state.team.loading,
     teamMembers: state.team.teamMembers,
-    connections: state.connection.data,
+    connections: state.connection.data[state.team.active?.id] || [],
     datasets: state.dataset.data,
   };
 };
@@ -804,6 +809,7 @@ const mapDispatchToProps = (dispatch) => {
     updateProject: (projectId, data) => dispatch(updateProjectAction(projectId, data)),
     removeProject: (projectId) => dispatch(removeProjectAction(projectId)),
     getTeamMembers: (teamId) => dispatch(getTeamMembersAction(teamId)),
+    getTeamConnections: (teamId) => dispatch(getTeamConnectionsAction(teamId)),
   };
 };
 

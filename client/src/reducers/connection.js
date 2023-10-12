@@ -14,7 +14,13 @@ export default function connection(state = {
     case FETCHING_CONNECTION:
       return { ...state, loading: true };
     case FETCH_ALL_CONNECTIONS:
-      return { ...state, loading: false, data: action.connections };
+      return {
+        ...state,
+        loading: false,
+        data: {
+          ...state.data,
+          [action.team_id]: action.connections
+        }};
     case FETCH_CONNECTION_SUCCESS:
       // look for existing connection in the data array and replace it if it exists
       let indexFound = -1;

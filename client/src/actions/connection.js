@@ -9,13 +9,47 @@ export const FETCH_CONNECTION_SUCCESS = "FETCH_CONNECTION_SUCCESS";
 export const FETCH_ALL_CONNECTIONS = "FETCH_ALL_CONNECTIONS";
 export const FETCH_CONNECTION_FAIL = "FETCH_CONNECTION_FAIL";
 
-export function getProjectConnections(projectId) {
+export function getTeamConnections(teamId) {
+  return (dispatch) => {
+    if (!cookie.load("brewToken")) {
+      return new Promise((resolve, reject) => reject(new Error("No Token")));
+    }
+
+    const token = cookie.load("brewToken");
+    const url = `${API_HOST}/teams/${teamId}/connections`;
+    const method = "GET";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    dispatch({ type: FETCHING_CONNECTION });
+    return fetch(url, { method, headers })
+      .then((response) => {
+        if (!response.ok) {
+          dispatch(addError(response.status));
+          return new Promise((resolve, reject) => reject(response.statusText));
+        }
+
+        return response.json();
+      })
+      .then((connections) => {
+        dispatch({ type: FETCH_ALL_CONNECTIONS, connections, team_id: teamId });
+        return new Promise(resolve => resolve(connections));
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+}
+
+export function getProjectConnections(teamId, projectId) {
   return (dispatch) => {
     if (!cookie.load("brewToken")) {
       return new Promise((resolve, reject) => reject(new Error("No Token")));
     }
     const token = cookie.load("brewToken");
-    const url = `${API_HOST}/project/${projectId}/connection`;
+    const url = `${API_HOST}/teams/${teamId}/connections?project_id=${projectId}`;
     const method = "GET";
     const headers = new Headers({
       "Accept": "application/json",

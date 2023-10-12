@@ -19,6 +19,7 @@ const updateChartsCron = require("./modules/updateChartsCron");
 const cleanChartCache = require("./modules/CleanChartCache");
 const cleanAuthCache = require("./modules/CleanAuthCache");
 const AuthCacheController = require("./controllers/AuthCacheController");
+const parseQueryParams = require("./middlewares/parseQueryParams");
 
 const authCache = new AuthCacheController();
 
@@ -58,6 +59,9 @@ app.get("/", (req, res) => {
 });
 
 app.use("/uploads", express.static("uploads"));
+
+// load middlewares
+app.use(parseQueryParams);
 
 // Load the routes
 _.each(routes, (controller, route) => {

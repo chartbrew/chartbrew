@@ -32,6 +32,35 @@ module.exports = (app) => {
       });
   };
 
+  const checkPermissions = async (req, res, next) => {
+    const { team_id } = req.params;
+
+    // Fetch the TeamRole for the user
+    const teamRole = await teamController.getTeamRole(team_id, req.user.id);
+
+    if (!teamRole) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const { role, projects } = teamRole;
+
+    // Handle permissions for teamOwner and teamAdmin
+    if (["teamOwner", "teamAdmin"].includes(role)) {
+      return next();
+    }
+
+    if (role === "projectAdmin" || role === "projectViewer") {
+      const connections = await connectionController.findByProjects(projects);
+      if (!connections || connections.length === 0) {
+        return res.status(404).json({ message: "No connections found" });
+      }
+
+      return next();
+    }
+
+    return res.status(403).json({ message: "Access denied" });
+  };
+
   /*
   ** [MASTER] Route to get all the connections
   */
@@ -49,6 +78,32 @@ module.exports = (app) => {
       });
   });
   // -----------------------------------------
+
+  // V3 ROUTES
+
+  /*
+  ** Route to get team connections
+  */
+  app.get("/teams/:team_id/connections", verifyToken, checkPermissions, async (req, res) => {
+    const { team_id } = req.params;
+    const { project_id } = req.query;
+
+    try {
+      let connections;
+      if (project_id) {
+        connections = await connectionController.findByProject(req.query.project_id);
+      } else {
+        connections = await connectionController.findByTeam(team_id);
+      }
+
+      return res.status(200).send(connections);
+    } catch (err) {
+      return res.status(400).json({ message: err.message });
+    }
+  });
+  // -----------------------------------------
+
+  // V2 ROUTES
 
   /*
   ** Route to create a connection

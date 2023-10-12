@@ -116,9 +116,37 @@ class ConnectionController {
       });
   }
 
+  findByTeam(teamId) {
+    return db.Connection.findAll({
+      where: { team_id: teamId },
+      attributes: { exclude: ["password"] },
+      include: [{ model: db.OAuth, attributes: { exclude: ["refreshToken"] } }],
+    })
+      .then((connections) => {
+        return connections;
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
   findByProject(projectId) {
     return db.Connection.findAll({
       where: { project_id: projectId },
+      attributes: { exclude: ["password"] },
+      include: [{ model: db.OAuth, attributes: { exclude: ["refreshToken"] } }],
+    })
+      .then((connections) => {
+        return connections;
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
+  findByProjects(projects) {
+    return db.Connection.findAll({
+      where: { project_ids: { [Sequelize.Op.overlap]: projects } },
       attributes: { exclude: ["password"] },
       include: [{ model: db.OAuth, attributes: { exclude: ["refreshToken"] } }],
     })
