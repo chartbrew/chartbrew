@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Route, Switch, withRouter } from "react-router";
+import { Route, Routes } from "react-router";
 import { Allotment } from "allotment";
 import { createMedia } from "@artsy/fresnel";
 import { useWindowSize } from "react-use";
@@ -173,7 +173,7 @@ function ProjectBoard(props) {
   return (
     <div className="bg-content2">
       {isPrinting && (
-        <Switch>
+        <Routes>
           <Route
             path="/:teamId/:projectId/dashboard"
             render={() => (
@@ -181,7 +181,7 @@ function ProjectBoard(props) {
                 <PrintView onPrint={_onPrint} isPrinting={isPrinting} />
               </div>
             )} />
-        </Switch>
+        </Routes>
       )}
 
       {!isPrinting && (
@@ -271,7 +271,7 @@ function MainContent(props) {
 
   return (
     <div style={{ width: "100%" }}>
-      <Switch>
+      <Routes>
         <Route
           exact
           path="/:teamId/:projectId/dashboard"
@@ -312,7 +312,7 @@ function MainContent(props) {
               )}
             />
           )}
-      </Switch>
+      </Routes>
     </div>
   );
 }
@@ -402,4 +402,4 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ProjectBoard));
+export default connect(mapStateToProps, mapDispatchToProps)(ProjectBoard);

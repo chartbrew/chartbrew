@@ -3,7 +3,6 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { withRouter } from "react-router";
 import { Calendar } from "react-date-range";
 import uuid from "uuid/v4";
 import _ from "lodash";
@@ -1624,4 +1623,4 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(DatasetData));
+export default connect(mapStateToProps, mapDispatchToProps)(DatasetData);

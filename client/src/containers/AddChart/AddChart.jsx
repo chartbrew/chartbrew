@@ -1,7 +1,6 @@
 import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { withRouter } from "react-router";
 import {
   Link as LinkNext, Spacer, Tooltip, Input, Button,
   Switch, Modal, Divider, Chip, CircularProgress, ModalHeader, ModalBody, ModalFooter,
@@ -931,4 +930,4 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(AddChart));
+export default connect(mapStateToProps, mapDispatchToProps)(AddChart);

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Route, Switch, withRouter } from "react-router";
+import { Route, Routes } from "react-router";
 import {
   CircularProgress, Listbox, ListboxSection, ListboxItem,
 } from "@nextui-org/react";
@@ -114,7 +114,7 @@ function ManageTeam(props) {
 
         <div className="col-span-12 sm:col-span-9 md:col-span-10">
           <div className="container mx-auto py-4">
-            <Switch>
+            <Routes>
               <Route path="/manage/:teamId/members" component={TeamMembers} />
               {_canAccess("teamOwner") && (
                 <Route
@@ -128,7 +128,7 @@ function ManageTeam(props) {
                   render={() => (<ApiKeys teamId={team.id} />)}
                 />
               )}
-            </Switch>
+            </Routes>
           </div>
         </div>
       </div>
@@ -161,6 +161,4 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-export default withRouter(
-  connect(mapStateToProps, mapDispatchToProps)(ManageTeam)
-);
+export default connect(mapStateToProps, mapDispatchToProps)(ManageTeam);

@@ -1,5 +1,3 @@
-import { combineReducers } from "redux";
-
 // individual reducers imports
 import user from "./user";
 import project from "./project";
@@ -15,7 +13,7 @@ import template from "./template";
 import alert from "./alert";
 import integration from "./integration";
 
-const AppReducer = (routerReducer) => combineReducers({
+const AppReducer = {
   user,
   project,
   team,
@@ -29,7 +27,6 @@ const AppReducer = (routerReducer) => combineReducers({
   template,
   alert,
   integration,
-  router: routerReducer,
-});
+};
 
 export default AppReducer;

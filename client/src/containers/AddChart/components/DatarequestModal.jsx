@@ -1,7 +1,6 @@
 import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { withRouter } from "react-router";
 import _ from "lodash";
 import { Flip, toast, ToastContainer } from "react-toastify";
 import {
@@ -559,4 +558,4 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(DatarequestModal));
+export default connect(mapStateToProps, mapDispatchToProps)(DatarequestModal);

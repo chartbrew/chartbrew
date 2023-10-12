@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { withRouter } from "react-router";
 import {
   Button, Checkbox, Divider, Input, Link, Spacer, Tooltip, Chip,
   Tabs, Tab, Select, SelectItem,
@@ -634,4 +633,4 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ApiBuilder));
+export default connect(mapStateToProps, mapDispatchToProps)(ApiBuilder);

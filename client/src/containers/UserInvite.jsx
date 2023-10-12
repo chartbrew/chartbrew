@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
 import { PropTypes } from "prop-types";
-import { withRouter } from "react-router";
 import {
   Button, Spacer,
 } from "@nextui-org/react";
@@ -102,4 +101,4 @@ const mapDispatchToProps = () => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(UserInvite));
+export default connect(mapStateToProps, mapDispatchToProps)(UserInvite);

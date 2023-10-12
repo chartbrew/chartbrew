@@ -1,7 +1,6 @@
 import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { withRouter } from "react-router";
 import {
   Button, Spacer, Link as LinkNext, Tooltip, Card, Modal, Chip, CardBody,
   ModalHeader, ModalBody, ModalContent, AvatarGroup, Avatar, Popover, PopoverTrigger,
@@ -800,4 +799,4 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ProjectDashboard));
+export default connect(mapStateToProps, mapDispatchToProps)(ProjectDashboard);

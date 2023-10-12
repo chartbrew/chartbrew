@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { connect } from "react-redux";
-import { withRouter } from "react-router";
 import { PropTypes } from "prop-types";
 import {
   Button, CircularProgress, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Spacer,
@@ -327,4 +326,4 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ProjectSettings));
+export default connect(mapStateToProps, mapDispatchToProps)(ProjectSettings);

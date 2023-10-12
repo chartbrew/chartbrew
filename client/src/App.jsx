@@ -1,36 +1,34 @@
 import React, { useEffect } from "react";
 import { Provider } from "react-redux";
-import { Router } from "react-router";
-import { createBrowserHistory } from "history";
-import { createReduxHistoryContext } from "redux-first-history";
-import { createStore, applyMiddleware, compose } from "redux";
-import thunk from "redux-thunk";
-import logger from "redux-logger";
+import {
+  createBrowserRouter, RouterProvider,
+} from "react-router-dom";
+import { configureStore } from "@reduxjs/toolkit";
 import { NextUIProvider } from "@nextui-org/react";
-import { IconContext } from "react-icons";
 
 import Main from "./containers/Main";
 import reducer from "./reducers";
 import useThemeDetector from "./modules/useThemeDetector";
 
-const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
-  history: createBrowserHistory(),
-  //other options if needed 
+const store = configureStore({
+  reducer,
+  // middleware: (getDefaultMiddleware) =>
+  //   getDefaultMiddleware({
+  //     serializableCheck: false,
+  //   }),
 });
 
-let middlewares = [thunk, routerMiddleware];
-
-if (import.meta.env.DEV) {
-  middlewares = [...middlewares, logger];
-}
-
-const store = createStore(
-  reducer(routerReducer),
-  undefined,
-  compose(applyMiddleware(...middlewares)),
-);
-
-const history = createReduxHistory(store);
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Main />,
+    children: [
+      {
+        path: "/user",
+      },
+    ],
+  },
+]);
 
 export default function App() {
   const isDark = useThemeDetector();
@@ -47,13 +45,9 @@ export default function App() {
 
   return (
     <Provider store={store}>
-      <Router history={history}>
-        <NextUIProvider>
-          <IconContext.Provider value={{ className: "react-icons", size: 20, style: { opacity: 0.8 } }}>
-            <Main />
-          </IconContext.Provider>
-        </NextUIProvider>
-      </Router>
+      <NextUIProvider>
+        <RouterProvider router={router} />
+      </NextUIProvider>
     </Provider>
   );
 }

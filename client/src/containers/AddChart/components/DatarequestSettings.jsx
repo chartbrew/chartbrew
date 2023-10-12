@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { withRouter } from "react-router";
 import {
   Avatar, Chip, Button, Checkbox, Divider, Input, Spacer, Tooltip,
   Select, SelectItem,
@@ -567,4 +566,4 @@ const mapDispatchToProps = (dispatch) => ({
   changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
 });
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(DatarequestSettings));
+export default connect(mapStateToProps, mapDispatchToProps)(DatarequestSettings);

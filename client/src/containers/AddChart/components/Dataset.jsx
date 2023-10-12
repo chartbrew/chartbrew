@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { withRouter } from "react-router";
 import _ from "lodash";
 import moment from "moment";
 import {
@@ -392,4 +391,4 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Dataset));
+export default connect(mapStateToProps, mapDispatchToProps)(Dataset);

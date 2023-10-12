@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { withRouter } from "react-router";
 import {
   Button, Spacer, Modal, Input, Tooltip, Checkbox, Divider,
   ModalHeader, ModalBody, ModalFooter, ModalContent,
@@ -399,4 +398,4 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(SqlBuilder));
+export default connect(mapStateToProps, mapDispatchToProps)(SqlBuilder);

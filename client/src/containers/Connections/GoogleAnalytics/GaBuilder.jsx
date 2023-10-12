@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { withRouter } from "react-router";
 import {
   Button, Popover, Divider, Input, Tooltip, Spacer, Chip, Checkbox,
   Select, SelectItem, PopoverTrigger, PopoverContent, Code,
@@ -722,4 +721,4 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(GaBuilder));
+export default connect(mapStateToProps, mapDispatchToProps)(GaBuilder);

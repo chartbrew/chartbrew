@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
 import { PropTypes } from "prop-types";
-import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import {
   Button, Input, Spacer,
@@ -174,4 +173,4 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(PasswordReset));
+export default connect(mapStateToProps, mapDispatchToProps)(PasswordReset);

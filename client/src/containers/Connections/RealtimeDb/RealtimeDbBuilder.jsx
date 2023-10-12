@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { withRouter } from "react-router";
 import {
   Button, Input, Spacer, Divider, Chip, Checkbox, Tooltip,
 } from "@nextui-org/react";
@@ -521,4 +520,4 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(RealtimeDbBuilder));
+export default connect(mapStateToProps, mapDispatchToProps)(RealtimeDbBuilder);

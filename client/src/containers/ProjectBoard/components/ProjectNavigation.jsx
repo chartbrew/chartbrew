@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { useWindowSize } from "react-use";
-import { withRouter } from "react-router";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import {
@@ -610,4 +609,4 @@ const styles = {
   },
 };
 
-export default withRouter(ProjectNavigation);
+export default ProjectNavigation;

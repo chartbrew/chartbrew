@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { withRouter } from "react-router";
 import {
   Card, Spacer, Tooltip, Dropdown, Button, Modal, Input,
   Link as LinkNext, Textarea, Switch, Popover, Chip, CardHeader, CircularProgress, PopoverTrigger, PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, ModalHeader, ModalBody, ModalFooter, CardBody, ModalContent, Select, SelectItem, Listbox, ListboxItem,
@@ -1246,4 +1245,4 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Chart));
+export default connect(mapStateToProps, mapDispatchToProps)(Chart);

@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import {
   Spacer, CircularProgress
 } from "@nextui-org/react";
-import { withRouter } from "react-router-dom";
 import { connect } from "react-redux";
 
 import { getProject as getProjectAction } from "../actions/project";
@@ -51,4 +50,4 @@ const mapDispatchToProps = (dispatch) => ({
   getProject: (id, active) => dispatch(getProjectAction(id, active)),
 });
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ProjectRedirect));
+export default connect(mapStateToProps, mapDispatchToProps)(ProjectRedirect);

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { withRouter } from "react-router";
 import {
   Button,Spacer, Divider, Chip, Switch, Tooltip, Link, Checkbox, Input, Popover,
   CircularProgress, Select, SelectItem, PopoverTrigger, PopoverContent,
@@ -1088,4 +1087,4 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(FirestoreBuilder));
+export default connect(mapStateToProps, mapDispatchToProps)(FirestoreBuilder);

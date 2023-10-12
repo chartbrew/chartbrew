@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { withRouter } from "react-router";
 import {
   Input, Checkbox, Spacer, Button, Divider, CircularProgress,
 } from "@nextui-org/react";
@@ -140,4 +139,4 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(TeamSettings));
+export default connect(mapStateToProps, mapDispatchToProps)(TeamSettings);

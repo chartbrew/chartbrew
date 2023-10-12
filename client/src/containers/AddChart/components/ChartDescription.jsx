@@ -4,7 +4,6 @@ import {
   Button, Input, Spacer, Link, Card, Tabs, Tab, CardBody, Image, CardFooter, Divider,
 } from "@nextui-org/react";
 import { connect } from "react-redux";
-import { withRouter } from "react-router";
 import { Link as RouterLink } from "react-router-dom";
 import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
 
@@ -297,4 +296,4 @@ const mapStateToProps = (state) => ({
   user: state.user.data,
 });
 
-export default withRouter(connect(mapStateToProps)(ChartDescription));
+export default connect(mapStateToProps)(ChartDescription);

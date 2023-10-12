@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { withRouter } from "react-router";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Modal, Link as LinkNext, Spacer, Dropdown, Button, Navbar, Card,
   ModalBody, CircularProgress, NavbarBrand, NavbarContent, NavbarItem,
@@ -51,14 +50,15 @@ function NavbarContainer(props) {
   const [isOsTheme, setIsOsTheme] = useLocalStorage("osTheme", "false");
 
   const {
-    team, teams, user, logout, projectProp, match, history,
+    team, teams, user, logout, projectProp,
   } = props;
 
   const darkMode = useDarkMode(false);
   const isSystemDark = useThemeDetector();
+  const params = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // _onTeamChange(match.params.teamId, match.params.projectId);
     setTimeout(() => {
       try {
         Headway.init(HW_config);
@@ -136,11 +136,11 @@ function NavbarContainer(props) {
         break;
       }
       case "profile": {
-        history.push("/edit");
+        navigate("/edit");
         break;
       }
       case "account": {
-        history.push(`/manage/${team.id || teamOwned.id}/settings`);
+        navigate(`/manage/${team.id || teamOwned.id}/settings`);
         break;
       }
       case "theme": {
@@ -173,14 +173,14 @@ function NavbarContainer(props) {
           <Spacer x={4} />
           <Row align="center" className={"gap-1"}>
             <Link to="/user" className="text-default-foreground">
-                {!match.params.teamId && (
+                {!params.teamId && (
                   <Media greaterThan="mobile">
                     <Row align="center" className={"gap-1"}>
                       <Text>{"Home"}</Text>
                     </Row>
                   </Media>
                 )}
-                {match.params.teamId && (
+                {params.teamId && (
                   <Media greaterThan="mobile">
                     <Row align="center" className={"gap-1"}>
                       <Text>{team.name}</Text>
@@ -188,8 +188,8 @@ function NavbarContainer(props) {
                   </Media>
                 )}
             </Link>
-            {match.params.projectId && (
-              <Link to={`/${match.params.teamId}/${match.params.projectId}/dashboard`}>
+            {params.projectId && (
+              <Link to={`/${params.teamId}/${params.projectId}/dashboard`}>
                 <Media greaterThan="mobile">
                   <Row align={"center"} className={"gap-1"}>
                     <Text>{"/"}</Text>
@@ -399,8 +399,6 @@ NavbarContainer.propTypes = {
   teams: PropTypes.array.isRequired,
   logout: PropTypes.func.isRequired,
   projectProp: PropTypes.object.isRequired,
-  match: PropTypes.object.isRequired,
-  history: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -422,4 +420,4 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(NavbarContainer));
+export default connect(mapStateToProps, mapDispatchToProps)(NavbarContainer);
