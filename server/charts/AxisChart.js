@@ -435,6 +435,24 @@ class AxisChart {
             const newX = [];
             const newY = [];
 
+            // add the dates that are missing from the start of the chart
+            if (startDate) {
+              const firstDate = this.moment(tempXData[0], this.dateFormat);
+              const difference = firstDate.diff(startDate, this.chart.timeInterval);
+              if (difference > 1) {
+                let dateModifier = 1;
+                if (difference >= 100) {
+                  dateModifier = parseInt(difference / 20, 10);
+                }
+                firstDate.subtract(dateModifier, this.chart.timeInterval);
+                while (firstDate.isAfter(startDate)) {
+                  newX.push(firstDate.format(this.dateFormat));
+                  newY.push(0);
+                  firstDate.subtract(dateModifier, this.chart.timeInterval);
+                }
+              }
+            }
+
             for (let i = 0; i < tempXData.length; i++) {
               newX.push(tempXData[i]);
               newY.push(this.axisData.y[yLength][i]);

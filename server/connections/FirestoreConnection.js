@@ -1,4 +1,6 @@
 const firebase = require("firebase-admin");
+const moment = require("moment");
+
 const determineType = require("../modules/determineType");
 
 function populateReferences(docs, subData = []) {
@@ -122,7 +124,23 @@ class FirestoreConnection {
         if (condition.value === "true") condition.value = true;
         if (condition.value === "false") condition.value = false;
 
-        const field = condition.field.replace("root[].", "");
+        let field = condition.field.replace("root[].", "");
+        // handle cases when dealing with firestore timestamps
+        if (field.indexOf("._seconds") > -1) {
+          field = field.replace("._seconds", "");
+          condition.value = moment(condition.value).toDate();
+        }
+        if (field.indexOf("._nanoseconds") > -1) {
+          field = field.replace("._nanoseconds", "");
+          condition.value = moment(condition.value).toDate();
+        }
+
+        // now check if values should be converted to numbers
+        if (/^\d+$/.test(condition.value)) {
+          condition.value = parseInt(condition.value, 10);
+        } else if (/^\d+\.\d+$/.test(condition.value)) {
+          condition.value = parseFloat(condition.value);
+        }
 
         docsRef = this.filter(docsRef, field, condition);
       });
@@ -198,7 +216,7 @@ class FirestoreConnection {
         .limit(parseInt(configuration.limit, 10));
     } else if (!configuration?.limit && configuration?.orderBy) {
       docsRef = await this.db.collection(dataRequest.query)
-        .orderBy(configuration.orderBy);
+        .orderBy(configuration.orderBy, configuration.orderByDirection || "desc");
     } else if (configuration?.limit && configuration?.orderBy) {
       docsRef = await this.db.collection(dataRequest.query)
         .orderBy(configuration.orderBy, configuration.orderByDirection || "desc")
@@ -214,7 +232,23 @@ class FirestoreConnection {
         if (condition.value === "true") condition.value = true;
         if (condition.value === "false") condition.value = false;
 
-        const field = condition.field.replace("root[].", "");
+        let field = condition.field.replace("root[].", "");
+        // handle cases when dealing with firestore timestamps
+        if (field.indexOf("._seconds") > -1) {
+          field = field.replace("._seconds", "");
+          condition.value = moment(condition.value).toDate();
+        }
+        if (field.indexOf("._nanoseconds") > -1) {
+          field = field.replace("._nanoseconds", "");
+          condition.value = moment(condition.value).toDate();
+        }
+
+        // now check if values should be converted to numbers
+        if (/^\d+$/.test(condition.value)) {
+          condition.value = parseInt(condition.value, 10);
+        } else if (/^\d+\.\d+$/.test(condition.value)) {
+          condition.value = parseFloat(condition.value);
+        }
 
         docsRef = this.filter(docsRef, field, condition);
       });

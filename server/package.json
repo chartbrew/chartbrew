@@ -21,6 +21,7 @@
     "@google-analytics/data": "^3.3.0",
     "accesscontrol": "^2.2.1",
     "base-64": "^0.1.0",
+    "bcrypt": "^5.1.1",
     "body-parser": "^1.19.0",
     "compare-versions": "^4.1.3",
     "connect-busboy": "^1.0.0",

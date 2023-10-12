@@ -130,6 +130,16 @@ function Filters(props) {
       });
     }
 
+    if (type === "last_month") {
+      setDateRange({
+        startDate: moment().subtract(1, "month").startOf("month").startOf("day")
+          .toISOString(),
+        endDate: moment().subtract(1, "month").endOf("month").endOf("day")
+          .toISOString(),
+        key: "selection",
+      });
+    }
+
     if (type === "last_7_days") {
       setDateRange({
         startDate: moment().subtract(7, "days").startOf("day").toISOString(),
@@ -243,6 +253,12 @@ function Filters(props) {
               </Row>
               <Row wrap="wrap" className={"gap-1"}>
                 <LinkNext onPress={() => _onSelectRange("this_month")}>
+                  <Chip color="primary" size="sm" variant={"bordered"}>
+                    This month
+                  </Chip>
+                </LinkNext>
+
+                <LinkNext onPress={() => _onSelectRange("last_month")}>
                   <Chip color="primary" size="sm" variant={"bordered"}>
                     This month
                   </Chip>
