@@ -29,6 +29,8 @@ fs.mkdir("uploads", () => {});
 const app = express();
 app.settings = settings;
 
+app.set("trust proxy", 1);
+
 app.use(busboy());
 if (process.env.NODE_ENV !== "production") {
   app.set("trust proxy", true);
