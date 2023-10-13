@@ -14,6 +14,7 @@ import {
   Filler,
 } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import { cloneDeep } from "lodash";
 
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import useThemeDetector from "../../../modules/useThemeDetector";
@@ -97,7 +98,7 @@ function DoughnutChart(props) {
   const _getChartOptions = () => {
     // add any dynamic changes to the chartJS options here
     if (chart.chartData?.options) {
-      const newOptions = { ...chart.chartData.options };
+      const newOptions = cloneDeep(chart.chartData.options);
       if (newOptions.plugins?.legend?.labels) {
         newOptions.plugins.legend.labels.color = semanticColors[theme].foreground.DEFAULT;
       }

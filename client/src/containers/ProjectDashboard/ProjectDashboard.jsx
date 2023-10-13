@@ -6,7 +6,7 @@ import {
   ModalHeader, ModalBody, ModalContent, AvatarGroup, Avatar, Popover, PopoverTrigger,
   PopoverContent, Listbox, ListboxItem, Divider,
 } from "@nextui-org/react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useWindowSize } from "react-use";
 import _ from "lodash";
 import { createMedia } from "@artsy/fresnel";
@@ -70,7 +70,7 @@ const getFilterGroupsFromStorage = () => {
 */
 function ProjectDashboard(props) {
   const {
-    cleanErrors, connections, charts, match, showDrafts, runQueryWithFilters,
+    cleanErrors, connections, charts, showDrafts, runQueryWithFilters,
     getProjectCharts, runQuery, changeOrder, user, team, onPrint, mobile, updateChart,
     teamMembers,
   } = props;
@@ -87,6 +87,7 @@ function ProjectDashboard(props) {
 
   const { height, width } = useWindowSize();
   const isDark = useThemeDetector();
+  const params = useParams();
 
   useEffect(() => {
     cleanErrors();
@@ -99,7 +100,7 @@ function ProjectDashboard(props) {
   }, [filters]);
 
   const _onEditFilterGroup = (chartId) => {
-    const { projectId } = match.params;
+    const { projectId } = params;
     const newFilterGroups = _.clone(filterGroups) || {};
     if (!newFilterGroups[projectId]) newFilterGroups[projectId] = [];
 
@@ -114,7 +115,7 @@ function ProjectDashboard(props) {
   };
 
   const _onAddFilter = (filter) => {
-    const { projectId } = match.params;
+    const { projectId } = params;
 
     const newFilters = _.clone(filters) || {};
     if (!newFilters[projectId]) newFilters[projectId] = [];
@@ -132,7 +133,7 @@ function ProjectDashboard(props) {
   };
 
   const _onRemoveFilter = (filterId) => {
-    const { projectId } = match.params;
+    const { projectId } = params;
     if (filters && filters[projectId].length === 1) {
       const newFilters = _.cloneDeep(filters);
       delete newFilters[projectId];
@@ -179,7 +180,7 @@ function ProjectDashboard(props) {
   };
 
   const _onFilterCharts = (currentFilters = filters) => {
-    const { projectId } = match.params;
+    const { projectId } = params;
 
     if (!currentFilters || !currentFilters[projectId]) {
       getProjectCharts(projectId);
@@ -229,7 +230,7 @@ function ProjectDashboard(props) {
   };
 
   const _onRefreshData = () => {
-    const { projectId } = match.params;
+    const { projectId } = params;
 
     const queries = [];
     setRefreshLoading(true);
@@ -266,7 +267,7 @@ function ProjectDashboard(props) {
       chart.Datasets.map((dataset) => {
         if (dataset.fieldsSchema) {
           Object.keys(dataset.fieldsSchema).forEach((key) => {
-            if (_.find(filters[match.params.projectId], (o) => o.field === key)) {
+            if (_.find(filters[params.projectId], (o) => o.field === key)) {
               found = true;
             }
           });
@@ -306,7 +307,7 @@ function ProjectDashboard(props) {
         break;
     }
     changeOrder(
-      match.params.projectId,
+      params.projectId,
       chartId,
       otherId
     );
@@ -323,8 +324,8 @@ function ProjectDashboard(props) {
   const _onExport = (ids) => {
     setExportLoading(true);
     setExportError(false);
-    const appliedFilters = (filters && filters[match.params.projectId]) || null;
-    return exportChart(match.params.projectId, ids, appliedFilters)
+    const appliedFilters = (filters && filters[params.projectId]) || null;
+    return exportChart(params.projectId, ids, appliedFilters)
       .then(() => {
         setExportLoading(false);
         setViewExport(false);
@@ -340,7 +341,7 @@ function ProjectDashboard(props) {
 
     let canExport = false;
     team.TeamRoles.map((teamRole) => {
-      if (teamRole.team_id === parseInt(match.params.teamId, 10)
+      if (teamRole.team_id === parseInt(params.teamId, 10)
         && teamRole.user_id === user.id
         && (teamRole.canExport || teamRole.role === "teamOwner")
       ) {
@@ -353,7 +354,7 @@ function ProjectDashboard(props) {
   };
 
   const _onUpdateExport = (chartId, disabled) => {
-    updateChart(match.params.projectId, chartId, { disabledExport: disabled }, true);
+    updateChart(params.projectId, chartId, { disabledExport: disabled }, true);
   };
 
   return (
@@ -391,7 +392,7 @@ function ProjectDashboard(props) {
                                   color="primary"
                                   size="sm"
                                   as={Link}
-                                  to={`/${match.params.teamId}/team/members`}
+                                  to={`/${params.teamId}/team/members`}
                                   fullWidth
                                 >
                                   Edit access
@@ -412,7 +413,7 @@ function ProjectDashboard(props) {
                                   description={member.email}
                                   endContent={(
                                     <Chip size="sm">
-                                      {member.TeamRoles?.find((r) => r.team_id === parseInt(match.params.teamId, 10))?.role}
+                                      {member.TeamRoles?.find((r) => r.team_id === parseInt(params.teamId, 10))?.role}
                                     </Chip>
                                   )}
                                 >
@@ -453,8 +454,8 @@ function ProjectDashboard(props) {
                   <Spacer x={1} />
                   <div style={mobile ? {} : { paddingLeft: 10 }} className="hidden sm:block">
                     {filters
-                      && filters[match.params.projectId]
-                      && filters[match.params.projectId].map((filter) => (
+                      && filters[params.projectId]
+                      && filters[params.projectId].map((filter) => (
                         <Fragment key={filter.id}>
                           {filter.type === "date" && (
                             <Chip
@@ -594,7 +595,7 @@ function ProjectDashboard(props) {
               <Row justify="center" align="center">
                 <Link
                   to={{
-                    pathname: `/${match.params.teamId}/${match.params.projectId}/connections`,
+                    pathname: `/${params.teamId}/${params.projectId}/connections`,
                     state: { onboarding: true },
                   }}
                 >
@@ -609,7 +610,7 @@ function ProjectDashboard(props) {
         {_canAccess("projectAdmin") && charts.length < 1 && connections.length > 0 && (
           <Container justify="center" style={styles.addCard}>
             <Row justify="center" align="center">
-              <Link to={`/${match.params.teamId}/${match.params.projectId}/chart`}>
+              <Link to={`/${params.teamId}/${params.projectId}/chart`}>
                 <Card
                   isHoverable
                   isPressable
@@ -654,11 +655,11 @@ function ProjectDashboard(props) {
       
       <Filters
         charts={charts}
-        projectId={match.params.projectId}
+        projectId={params.projectId}
         onAddFilter={_onAddFilter}
         open={showFilters}
         onClose={() => setShowFilters(false)}
-        filterGroups={filterGroups?.[match?.params?.projectId] || []}
+        filterGroups={filterGroups?.[params?.projectId] || []}
         onEditFilterGroup={_onEditFilterGroup}
       />
 
@@ -681,8 +682,8 @@ function ProjectDashboard(props) {
       </Modal>
 
       <CreateTemplateForm
-        teamId={match.params.teamId}
-        projectId={match.params.projectId}
+        teamId={params.teamId}
+        projectId={params.projectId}
         onClose={(isComplete) => {
           if (isComplete) toast.success("✨ The template was saved successfully");
           setTemplateVisible(false);
@@ -757,7 +758,6 @@ ProjectDashboard.propTypes = {
   charts: PropTypes.array.isRequired,
   user: PropTypes.object.isRequired,
   team: PropTypes.object.isRequired,
-  match: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
   runQueryWithFilters: PropTypes.func.isRequired,
   runQuery: PropTypes.func.isRequired,

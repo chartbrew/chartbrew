@@ -11,6 +11,8 @@ import { toast } from "react-toastify";
 import { Calendar } from "react-date-range";
 import { format, sub } from "date-fns";
 import { enGB } from "date-fns/locale";
+import { LuCalendarDays, LuInfo, LuPlay, LuTrash } from "react-icons/lu";
+import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -29,7 +31,6 @@ import { secondary } from "../../../config/colors";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
-import { LuCalendarDays, LuInfo, LuPlay, LuTrash } from "react-icons/lu";
 
 const validDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)/g;
 const validEndDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)/g;
@@ -39,7 +40,7 @@ const validEndDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)
 */
 function GaBuilder(props) {
   const {
-    dataRequest, match, runDataRequest,
+    dataRequest, runDataRequest,
     connection, onSave, requests, testRequest, // eslint-disable-line
     getConnection, onDelete, responses,
   } = props;
@@ -69,6 +70,7 @@ function GaBuilder(props) {
 
   const isDark = useThemeDetector();
   const initRef = React.useRef(null);
+  const params = useParams();
 
   useEffect(() => {
     if (!initRef.current) {
@@ -79,7 +81,7 @@ function GaBuilder(props) {
 
   useEffect(() => {
     if (connection?.id && !fullConnection?.id) {
-      getConnection(match.params.projectId, connection.id)
+      getConnection(params.projectId, connection.id)
         .then((data) => {
           setFullConnection(data);
           _onFetchAccountData(data);
@@ -199,7 +201,7 @@ function GaBuilder(props) {
   };
 
   const _populateMetadata = (conn = fullConnection, propertyId) => {
-    getMetadata(match.params.projectId, conn.id, propertyId)
+    getMetadata(params.projectId, conn.id, propertyId)
       .then((metadata) => {
         const metrics = [];
         const dimensions = [];
@@ -237,7 +239,7 @@ function GaBuilder(props) {
 
   const _onRunRequest = () => {
     const useCache = !invalidateCache;
-    runDataRequest(match.params.projectId, match.params.chartId, dataRequest.id, useCache)
+    runDataRequest(params.projectId, params.chartId, dataRequest.id, useCache)
       .then(() => {
         setRequestLoading(false);
       })
@@ -250,7 +252,7 @@ function GaBuilder(props) {
 
   const _onFetchAccountData = (conn = fullConnection) => {
     setCollectionsLoading(true);
-    return testRequest(match.params.projectId, conn)
+    return testRequest(params.projectId, conn)
       .then((data) => {
         return data.json();
       })
@@ -692,7 +694,6 @@ GaBuilder.defaultProps = {
 
 GaBuilder.propTypes = {
   connection: PropTypes.object.isRequired,
-  match: PropTypes.object.isRequired,
   runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   requests: PropTypes.array.isRequired,

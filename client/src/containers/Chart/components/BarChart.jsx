@@ -14,6 +14,7 @@ import {
   Filler,
 } from "chart.js";
 import { semanticColors } from "@nextui-org/react";
+import { cloneDeep } from "lodash";
 
 import KpiChartSegment from "./KpiChartSegment";
 import ChartErrorBoundary from "./ChartErrorBoundary";
@@ -53,7 +54,7 @@ function BarChart(props) {
   const _getChartOptions = () => {
     // add any dynamic changes to the chartJS options here
     if (chart.chartData?.options) {
-      const newOptions = { ...chart.chartData.options };
+      const newOptions = cloneDeep(chart.chartData.options);
       if (newOptions.scales?.y?.grid) {
         newOptions.scales.y.grid.color = semanticColors[theme].content3.DEFAULT
       }
@@ -102,13 +103,15 @@ function BarChart(props) {
   const _getChartData = () => {
     if (!chart?.chartData?.data?.datasets) return chart.chartData.data;
 
-    chart.chartData.data?.datasets?.forEach((dataset, index) => {
+    const newChartData = cloneDeep(chart.chartData.data);
+
+    newChartData?.datasets?.forEach((dataset, index) => {
       if (dataset?.datalabels && index === chart.chartData.data.datasets.length - 1) {
-        chart.chartData.data.datasets[index].datalabels.color = semanticColors[theme].default[800];
+        newChartData.datasets[index].datalabels.color = semanticColors[theme].default[800];
       }
     });
 
-    return chart.chartData.data;
+    return newChartData;
   };
 
   return (

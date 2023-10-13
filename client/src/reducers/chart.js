@@ -1,3 +1,5 @@
+import { cloneDeep } from "lodash";
+
 import {
   FETCH_CHART,
   FETCH_CHART_FAIL,
@@ -14,7 +16,7 @@ export default function chart(state = {
   switch (action.type) {
     case FETCH_CHART:
       if (action.chartId) {
-        const newData = [...state.data];
+        const newData = cloneDeep(state.data);
         let indexFound = false;
         for (let i = 0; i < state.data.length; i++) {
           if (state.data[i].id === parseInt(action.chartId, 10)) {
@@ -66,7 +68,7 @@ export default function chart(state = {
       return { ...state, loading: false, data: updateData };
     case FETCH_CHART_FAIL:
       if (action.chartId) {
-        const newData = [...state.data];
+        const newData = cloneDeep(state.data);
         let indexFound = false;
         for (let i = 0; i < state.data.length; i++) {
           if (state.data[i].id === parseInt(action.chartId, 10)) {

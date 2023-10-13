@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Card, Spacer, Tooltip, Dropdown, Button, Modal, Input,
   Link as LinkNext, Textarea, Switch, Popover, Chip, CardHeader, CircularProgress, PopoverTrigger, PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, ModalHeader, ModalBody, ModalFooter, CardBody, ModalContent, Select, SelectItem, Listbox, ListboxItem,
@@ -57,10 +57,13 @@ const getFiltersFromStorage = (projectId) => {
 */
 function Chart(props) {
   const {
-    updateChart, match, runQuery, removeChart, runQueryWithFilters,
+    updateChart, runQuery, removeChart, runQueryWithFilters,
     team, user, chart, isPublic, charts, onChangeOrder, print, height,
-    createShareString, getChart, showExport, password, history,
+    createShareString, getChart, showExport, password,
   } = props;
+
+  const params = useParams();
+  const navigate = useNavigate();
 
   const [chartLoading, setChartLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -74,7 +77,7 @@ function Chart(props) {
   const [iframeCopied, setIframeCopied] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
   const [dashboardFilters, setDashboardFilters] = useState(
-    getFiltersFromStorage(match.params.projectId)
+    getFiltersFromStorage(params.projectId)
   );
   const [conditions, setConditions] = useState([]);
   const [shareLoading, setShareLoading] = useState(false);
@@ -110,7 +113,7 @@ function Chart(props) {
   const _onChangeSize = (size) => {
     setChartLoading(true);
     updateChart(
-      match.params.projectId,
+      params.projectId,
       chart.id,
       { chartSize: size },
       true
@@ -126,7 +129,7 @@ function Chart(props) {
   };
 
   const _onGetChartData = () => {
-    const { projectId } = match.params;
+    const { projectId } = params;
 
     setChartLoading(true);
     runQuery(projectId, chart.id)
@@ -156,7 +159,7 @@ function Chart(props) {
 
   const _onDeleteChart = () => {
     setChartLoading(true);
-    removeChart(match.params.projectId, chart.id)
+    removeChart(params.projectId, chart.id)
       .then(() => {
         setChartLoading(false);
         setDeleteModal(false);
@@ -183,7 +186,7 @@ function Chart(props) {
     setPublicLoading(true);
 
     updateChart(
-      match.params.projectId,
+      params.projectId,
       chart.id,
       { public: !chart.public },
       true,
@@ -203,7 +206,7 @@ function Chart(props) {
     setChartLoading(true);
 
     updateChart(
-      match.params.projectId,
+      params.projectId,
       chart.id,
       { onReport: !chart.onReport },
     )
@@ -269,7 +272,7 @@ function Chart(props) {
 
     setAutoUpdateLoading(true);
     updateChart(
-      match.params.projectId,
+      params.projectId,
       chart.id,
       { autoUpdate: frequency },
       true,
@@ -289,11 +292,11 @@ function Chart(props) {
     // first, check if the chart has a share string
     if (!chart.Chartshares || chart.Chartshares.length === 0) {
       setShareLoading(true);
-      await createShareString(match.params.projectId, chart.id);
+      await createShareString(params.projectId, chart.id);
     }
 
     await updateChart(
-      match.params.projectId,
+      params.projectId,
       chart.id,
       { shareable: !chart.shareable },
       true,
@@ -358,7 +361,7 @@ function Chart(props) {
 
   const _onExport = () => {
     setExportLoading(true);
-    return exportChart(match.params.projectId, [chart.id], dashboardFilters)
+    return exportChart(params.projectId, [chart.id], dashboardFilters)
       .then(() => {
         setExportLoading(false);
       })
@@ -425,11 +428,11 @@ function Chart(props) {
 
   const _onCreateSharingString = async () => {
     setShareLoading(true);
-    await createShareString(match.params.projectId, chart.id);
+    await createShareString(params.projectId, chart.id);
     setShareLoading(false);
   };
 
-  const { projectId } = match.params;
+  const { projectId } = params;
 
   return (
     <motion.div
@@ -459,7 +462,7 @@ function Chart(props) {
                   )}
                   <>
                     {_canAccess("projectAdmin") && (
-                      <Link to={`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`}>
+                      <Link to={`/${params.teamId}/${params.projectId}/chart/${chart.id}/edit`}>
                         <Text b size="lg" className={"text-default"}>{chart.name}</Text>
                       </Link>
                     )}
@@ -570,7 +573,7 @@ function Chart(props) {
                     {_canAccess("projectAdmin") && (
                       <DropdownItem
                         startContent={<LuSettings />}
-                        onClick={() => history.push(`/${match.params.teamId}/${match.params.projectId}/chart/${chart.id}/edit`)}
+                        onClick={() => navigate(`/${params.teamId}/${params.projectId}/chart/${chart.id}/edit`)}
                       >
                         Edit chart
                       </DropdownItem>

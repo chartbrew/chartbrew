@@ -14,6 +14,7 @@ import {
   Filler,
 } from "chart.js";
 import { semanticColors } from "@nextui-org/react";
+import { cloneDeep } from "lodash";
 
 import KpiChartSegment from "./KpiChartSegment";
 import ChartErrorBoundary from "./ChartErrorBoundary";
@@ -73,7 +74,7 @@ function LineChart(props) {
   const _getChartOptions = () => {
     // add any dynamic changes to the chartJS options here
     if (chart.chartData?.options) {
-      const newOptions = { ...chart.chartData.options };
+      const newOptions = cloneDeep(chart.chartData.options);
       if (newOptions.scales?.y?.grid) {
         newOptions.scales.y.grid.color = semanticColors[theme].content3.DEFAULT;
       }

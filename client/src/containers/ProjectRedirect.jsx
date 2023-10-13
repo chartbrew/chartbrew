@@ -4,6 +4,7 @@ import {
   Spacer, CircularProgress
 } from "@nextui-org/react";
 import { connect } from "react-redux";
+import { useParams } from "react-router";
 
 import { getProject as getProjectAction } from "../actions/project";
 import Container from "../components/Container";
@@ -11,10 +12,12 @@ import Row from "../components/Row";
 import Text from "../components/Text";
 
 function ProjectRedirect(props) {
-  const { match, getProject, history } = props;
+  const { getProject, history } = props;
+
+  const params = useParams();
 
   useEffect(() => {
-    getProject(match.params.projectId, true)
+    getProject(params.projectId, true)
       .then((project) => {
         history.push(`/${project.team_id}/${project.id}/dashboard`);
       })

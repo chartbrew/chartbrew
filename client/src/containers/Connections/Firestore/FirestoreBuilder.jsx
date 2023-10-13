@@ -13,6 +13,7 @@ import { Calendar } from "react-date-range";
 import { format, formatISO } from "date-fns";
 import { enGB } from "date-fns/locale";
 import { LuAlertTriangle, LuCalendarDays, LuInfo, LuPlay, LuPlus, LuPlusCircle, LuRefreshCw, LuTrash, LuUndo, LuX, LuXCircle } from "react-icons/lu";
+import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -108,9 +109,10 @@ function FirestoreBuilder(props) {
   const [orderByDirection, setOrderByDirection] = useState("desc");
 
   const isDark = useThemeDetector();
+  const params = useParams();
 
   const {
-    dataRequest, match, onChangeRequest, runDataRequest,
+    dataRequest, onChangeRequest, runDataRequest,
     connection, onSave, changeTutorial, testRequest,
     onDelete, getConnection, responses,
   } = props;
@@ -130,7 +132,7 @@ function FirestoreBuilder(props) {
   useEffect(() => {
     onChangeRequest(firestoreRequest);
     if (connection?.id && !fullConnection?.id) {
-      getConnection(match.params.projectId, connection.id)
+      getConnection(params.projectId, connection.id)
         .then((data) => {
           setFullConnection(data);
           _onFetchCollections(data);
@@ -291,7 +293,7 @@ function FirestoreBuilder(props) {
   const _onRunRequest = () => {
     setIndexUrl("");
     const useCache = !invalidateCache;
-    runDataRequest(match.params.projectId, match.params.chartId, dataRequest.id, useCache)
+    runDataRequest(params.projectId, params.chartId, dataRequest.id, useCache)
       .then((dr) => {
         if (dr?.dataRequest) {
           setFirestoreRequest(dr.dataRequest);
@@ -311,7 +313,7 @@ function FirestoreBuilder(props) {
 
   const _onFetchCollections = (conn = fullConnection) => {
     setCollectionsLoading(true);
-    return testRequest(match.params.projectId, conn)
+    return testRequest(params.projectId, conn)
       .then((data) => {
         return data.json();
       })
@@ -1055,7 +1057,6 @@ FirestoreBuilder.defaultProps = {
 
 FirestoreBuilder.propTypes = {
   connection: PropTypes.object.isRequired,
-  match: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
   runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,

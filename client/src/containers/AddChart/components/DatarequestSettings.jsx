@@ -9,6 +9,7 @@ import AceEditor from "react-ace";
 import { nanoid } from "nanoid";
 import _ from "lodash";
 import { LuInfo, LuPlay, LuPlus, LuX } from "react-icons/lu";
+import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -30,7 +31,7 @@ import useThemeDetector from "../../../modules/useThemeDetector";
 function DatarequestSettings(props) {
   const {
     dataRequests, responses, runRequest, dataset, onChange, drResponses,
-    runDataRequest, match, changeTutorial,
+    runDataRequest, changeTutorial,
   } = props;
 
   const [result, setResult] = useState("");
@@ -41,6 +42,7 @@ function DatarequestSettings(props) {
   const [isCompiling, setIsCompiling] = useState(false);
 
   const isDark = useThemeDetector();
+  const params = useParams();
 
   useEffect(() => {
     setTimeout(() => {
@@ -50,7 +52,7 @@ function DatarequestSettings(props) {
 
   useEffect(() => {
     if (dataset?.joinSettings?.joins) {
-      setJoins(dataset.joinSettings.joins);
+      setJoins([...dataset.joinSettings.joins]);
     }
   }, [dataset]);
 
@@ -71,13 +73,13 @@ function DatarequestSettings(props) {
           // check to see if there is a response for the data request
           const response = drResponses.find((o) => o.id === data.dr_id);
           if (!response || !response.data) {
-            runDataRequest(match.params.projectId, match.params.chartId, data.dr_id, true)
+            runDataRequest(params.projectId, params.chartId, data.dr_id, true)
               .catch(() => {});
           }
 
           const responseJoin = drResponses.find((o) => o.id === data.join_id);
           if (!responseJoin || !responseJoin.data) {
-            runDataRequest(match.params.projectId, match.params.chartId, data.join_id, true)
+            runDataRequest(params.projectId, params.chartId, data.join_id, true)
               .catch(() => {});
           }
         }
@@ -207,7 +209,7 @@ function DatarequestSettings(props) {
     setIsCompiling(true);
     _onSaveJoins()
       .then(() => {
-        return runRequest(match.params.projectId, match.params.chartId, dataset.id, useCache);
+        return runRequest(params.projectId, params.chartId, dataset.id, useCache);
       })
       .then(() => {
         setIsCompiling(false);
@@ -547,7 +549,6 @@ DatarequestSettings.propTypes = {
   onChange: PropTypes.func.isRequired,
   drResponses: PropTypes.array.isRequired,
   runDataRequest: PropTypes.func.isRequired,
-  match: PropTypes.object.isRequired,
   changeTutorial: PropTypes.func.isRequired,
 };
 

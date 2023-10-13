@@ -13,6 +13,7 @@ import {
   Legend,
   Filler,
 } from "chart.js";
+import { cloneDeep } from "lodash";
 
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import useThemeDetector from "../../../modules/useThemeDetector";
@@ -44,7 +45,7 @@ function PolarChart(props) {
   const _getChartOptions = () => {
     // add any dynamic changes to the chartJS options here
     if (chart.chartData?.options) {
-      const newOptions = { ...chart.chartData.options };
+      const newOptions = cloneDeep(chart.chartData.options);
 
       if (newOptions.scales) {
         newOptions.scales = {

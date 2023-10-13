@@ -28,6 +28,7 @@ import Row from "../components/Row";
 import Text from "../components/Text";
 import Callout from "../components/Callout";
 import { LuFilter, LuXCircle } from "react-icons/lu";
+import { useParams } from "react-router";
 
 const pageHeight = window.innerHeight;
 
@@ -35,7 +36,7 @@ const pageHeight = window.innerHeight;
   This container is used for embedding charts in other websites
 */
 function EmbeddedChart(props) {
-  const { getEmbeddedChart, match, runQueryWithFilters } = props;
+  const { getEmbeddedChart, runQueryWithFilters } = props;
 
   const [loading, setLoading] = useState(false);
   const [chart, setChart] = useState({});
@@ -43,9 +44,11 @@ function EmbeddedChart(props) {
   const [conditions, setConditions] = useState([]);
   const [dataLoading, setDataLoading] = useState(false);
 
+  const params = useParams();
+
   useInterval(() => {
     setDataLoading(true);
-    getEmbeddedChart(match.params.chartId)
+    getEmbeddedChart(params.chartId)
       .then((chart) => {
         setChart(chart);
         setDataLoading(false);
@@ -61,7 +64,7 @@ function EmbeddedChart(props) {
 
     setLoading(true);
     setTimeout(() => {
-      getEmbeddedChart(match.params.chartId)
+      getEmbeddedChart(params.chartId)
         .then((chart) => {
           setChart(chart);
           setLoading(false);
@@ -375,7 +378,6 @@ const styles = {
 
 EmbeddedChart.propTypes = {
   getEmbeddedChart: PropTypes.func.isRequired,
-  match: PropTypes.object.isRequired,
   runQueryWithFilters: PropTypes.func.isRequired,
 };
 

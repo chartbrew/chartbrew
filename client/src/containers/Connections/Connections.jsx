@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import moment from "moment";
-
 import {
   Button, Modal, Spacer, Tabs, Tab, CardBody, Image, CardFooter, Card,
   ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
+import { useParams, useNavigate } from "react-router-dom";
 
 import MongoConnectionForm from "./components/MongoConnectionForm";
 import ApiConnectionForm from "./components/ApiConnectionForm";
@@ -54,7 +54,7 @@ import { HiArrowLeft, HiPlus, HiTrash } from "react-icons/hi";
 */
 function Connections(props) {
   const {
-    cleanErrors, addConnection, saveConnection, match, history, connections, testRequest,
+    cleanErrors, addConnection, saveConnection, connections, testRequest,
     removeConnection, getProjectConnections, user, team, getProjectCharts, getTemplates,
     templates, getConnection,
   } = props;
@@ -71,9 +71,12 @@ function Connections(props) {
   const [selectedMenu, setSelectedMenu] = useState("connections");
   const [templateConnection, setTemplateConnection] = useState(-1);
 
+  const params = useParams();
+  const navigate = useNavigate();
+
   useEffect(() => {
     cleanErrors();
-    getTemplates(match.params.teamId);
+    getTemplates(params.teamId);
   }, []);
 
   useEffect(() => {
@@ -110,10 +113,10 @@ function Connections(props) {
     }
 
     if (!connection.id) {
-      return addConnection(match.params.projectId, connection)
+      return addConnection(params.projectId, connection)
         .then((newConnection) => {
           if (redirect) {
-            history.push(`/${match.params.teamId}/${match.params.projectId}/chart`);
+            navigate(`/${params.teamId}/${params.projectId}/chart`);
           }
 
           if (!switchToEdit) {
@@ -131,7 +134,7 @@ function Connections(props) {
           return false;
         });
     } else {
-      return saveConnection(match.params.projectId, connection)
+      return saveConnection(params.projectId, connection)
         .then(() => {
           setFormType(null);
           setEditConnection(null);
@@ -146,7 +149,7 @@ function Connections(props) {
 
   const _onTestRequest = (data) => {
     const newTestResult = {};
-    return testRequest(match.params.projectId, data)
+    return testRequest(params.projectId, data)
       .then(async (response) => {
         newTestResult.status = response.status;
         newTestResult.body = await response.text();
@@ -173,9 +176,9 @@ function Connections(props) {
     setRemoveLoading(selectedConnection.id);
     setRemoveError(false);
 
-    removeConnection(match.params.projectId, selectedConnection.id)
+    removeConnection(params.projectId, selectedConnection.id)
       .then(() => {
-        return getProjectConnections(match.params.projectId);
+        return getProjectConnections(params.projectId);
       })
       .then(() => {
         setRemoveLoading(false);
@@ -193,7 +196,7 @@ function Connections(props) {
     setEditConnection(null);
     setFormType("");
 
-    return getConnection(match.params.projectId, connection.id)
+    return getConnection(params.projectId, connection.id)
       .then((connectionData) => {
         setEditConnection(connectionData);
         setFormType(connection.type);
@@ -211,9 +214,9 @@ function Connections(props) {
   };
 
   const _onCompleteTemplate = () => {
-    getProjectCharts(match.params.projectId)
+    getProjectCharts(params.projectId)
       .then(() => {
-        history.push(`/${match.params.teamId}/${match.params.projectId}/dashboard`);
+        navigate(`/${params.teamId}/${params.projectId}/dashboard`);
         window.location.reload();
       });
   };
@@ -263,14 +266,16 @@ function Connections(props) {
         <Spacer y={8} />
 
         {(connections.length < 1 || newConnectionModal) && !formType && (
-          <Container className={"p-unit-sm rounded-lg bg-content1 border-1 border-content3 pt-8 pb-8 mb-8"} size="lg">
+          <Container className={"p-unit-md rounded-lg bg-content1 border-1 border-content3 pt-8 pb-8 mb-8"} size="lg">
             {connections.length < 1 && (
-              <Row align="center">
-                <Text size="h1">
-                  {"Create a connection or start with a template"}
-                </Text>
-                <Spacer y={2} />
-              </Row>
+              <>
+                <Row align="center">
+                  <Text size="h1">
+                    {"Create a connection or start with a template"}
+                  </Text>
+                </Row>
+                <Spacer y={4} />
+              </>
             )}
 
             <Row align="center">
@@ -341,8 +346,8 @@ function Connections(props) {
                 <CustomTemplates
                   templates={templates.data}
                   loading={templates.loading}
-                  teamId={match.params.teamId}
-                  projectId={match.params.projectId}
+                  teamId={params.teamId}
+                  projectId={params.projectId}
                   connections={connections}
                   onComplete={_onCompleteTemplate}
                   isAdmin={_canAccess("teamAdmin")}
@@ -365,7 +370,7 @@ function Connections(props) {
         <div id="connection-form-area">
           {formType === "api" && (
             <ApiConnectionForm
-              projectId={match.params.projectId}
+              projectId={params.projectId}
               onTest={_onTestRequest}
               onComplete={_onAddNewConnection}
               editConnection={editConnection}
@@ -375,7 +380,7 @@ function Connections(props) {
           )}
           {formType === "mongodb" && (
             <MongoConnectionForm
-              projectId={match.params.projectId}
+              projectId={params.projectId}
               onTest={_onTestRequest}
               onComplete={_onAddNewConnection}
               editConnection={editConnection}
@@ -385,7 +390,7 @@ function Connections(props) {
           )}
           {formType === "postgres" && (
             <PostgresConnectionForm
-              projectId={match.params.projectId}
+              projectId={params.projectId}
               onTest={_onTestRequest}
               onComplete={_onAddNewConnection}
               editConnection={editConnection}
@@ -395,7 +400,7 @@ function Connections(props) {
           )}
           {formType === "mysql" && (
             <MysqlConnectionForm
-              projectId={match.params.projectId}
+              projectId={params.projectId}
               onTest={_onTestRequest}
               onComplete={_onAddNewConnection}
               editConnection={editConnection}
@@ -405,7 +410,7 @@ function Connections(props) {
           )}
           {formType === "realtimedb" && (
             <RealtimeDbConnectionForm
-              projectId={match.params.projectId}
+              projectId={params.projectId}
               onTest={_onTestRequest}
               onComplete={_onAddNewConnection}
               editConnection={editConnection}
@@ -415,7 +420,7 @@ function Connections(props) {
           )}
           {formType === "firestore" && (
             <FirestoreConnectionForm
-              projectId={match.params.projectId}
+              projectId={params.projectId}
               onTest={_onTestRequest}
               onComplete={_onAddNewConnection}
               editConnection={editConnection}
@@ -425,7 +430,7 @@ function Connections(props) {
           )}
           {formType === "googleAnalytics" && (
             <GaConnectionForm
-              projectId={match.params.projectId}
+              projectId={params.projectId}
               onTest={_onTestRequest}
               onComplete={_onAddNewConnection}
               editConnection={editConnection}
@@ -435,7 +440,7 @@ function Connections(props) {
           )}
           {formType === "strapi" && (
             <StrapiConnectionForm
-              projectId={match.params.projectId}
+              projectId={params.projectId}
               onTest={_onTestRequest}
               onComplete={_onAddNewConnection}
               editConnection={editConnection}
@@ -445,7 +450,7 @@ function Connections(props) {
           )}
           {formType === "customerio" && (
             <CustomerioConnectionForm
-              projectId={match.params.projectId}
+              projectId={params.projectId}
               onTest={_onTestRequest}
               onComplete={_onAddNewConnection}
               editConnection={editConnection}
@@ -455,7 +460,7 @@ function Connections(props) {
           )}
           {formType === "timescaledb" && (
             <TimescaleConnectionForm
-              projectId={match.params.projectId}
+              projectId={params.projectId}
               onTest={_onTestRequest}
               onComplete={_onAddNewConnection}
               editConnection={editConnection}
@@ -467,8 +472,8 @@ function Connections(props) {
           {/* ADD TEMPLATES BELOW */}
           {formType === "saTemplate" && (
             <SimpleAnalyticsTemplate
-              teamId={match.params.teamId}
-              projectId={match.params.projectId}
+              teamId={params.teamId}
+              projectId={params.projectId}
               onComplete={_onCompleteTemplate}
               addError={addError}
               connections={connections}
@@ -476,8 +481,8 @@ function Connections(props) {
           )}
           {formType === "cmTemplate" && (
             <ChartMogulTemplate
-              teamId={match.params.teamId}
-              projectId={match.params.projectId}
+              teamId={params.teamId}
+              projectId={params.projectId}
               onComplete={_onCompleteTemplate}
               addError={addError}
               connections={connections}
@@ -485,8 +490,8 @@ function Connections(props) {
           )}
           {formType === "mailgunTemplate" && (
             <MailgunTemplate
-              teamId={match.params.teamId}
-              projectId={match.params.projectId}
+              teamId={params.teamId}
+              projectId={params.projectId}
               onComplete={_onCompleteTemplate}
               addError={addError}
               connections={connections}
@@ -494,8 +499,8 @@ function Connections(props) {
           )}
           {formType === "googleAnalyticsTemplate" && (
             <GaTemplate
-              teamId={match.params.teamId}
-              projectId={match.params.projectId}
+              teamId={params.teamId}
+              projectId={params.projectId}
               onComplete={_onCompleteTemplate}
               addError={addError}
               connections={connections}
@@ -504,8 +509,8 @@ function Connections(props) {
           )}
           {formType === "plausibleTemplate" && (
             <PlausibleTemplate
-              teamId={match.params.teamId}
-              projectId={match.params.projectId}
+              teamId={params.teamId}
+              projectId={params.projectId}
               onComplete={_onCompleteTemplate}
               addError={addError}
               connections={connections}
@@ -642,7 +647,6 @@ Connections.propTypes = {
   removeConnection: PropTypes.func.isRequired,
   getProjectConnections: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
-  history: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
   saveConnection: PropTypes.func.isRequired,
   addConnection: PropTypes.func.isRequired,

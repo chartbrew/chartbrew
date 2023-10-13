@@ -21,6 +21,12 @@ import { IconContext } from "react-icons";
 import TeamMembers from "./TeamMembers/TeamMembers";
 import TeamSettings from "./TeamSettings";
 import ApiKeys from "./ApiKeys/ApiKeys";
+import ProjectDashboard from "./ProjectDashboard/ProjectDashboard";
+import Connections from "./Connections/Connections";
+import AddChart from "./AddChart/AddChart";
+import ProjectSettings from "./ProjectSettings";
+import Integrations from "./Integrations/Integrations";
+import canAccess from "../config/canAccess";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
@@ -50,7 +56,7 @@ const { MediaContextProvider } = AppMedia;
 */
 function Main(props) {
   const {
-    relog, getTeams, cleanErrors, team,
+    relog, getTeams, cleanErrors, team, user,
   } = props;
 
   const isDark = useThemeDetector();
@@ -70,6 +76,10 @@ function Main(props) {
         });
     }
   }, []);
+
+  const _canAccess = (role) => {
+    return canAccess(role, user.id, team.TeamRoles);
+  };
 
   return (
     <IconContext.Provider value={{ className: "react-icons", size: 20, style: { opacity: 0.8 } }}>
@@ -132,17 +142,17 @@ function Main(props) {
                 <Route exact path="/user/profile" element={<ManageUser />} />
                 <Route exact path="/edit" element={<ManageUser />} />
                 <Route exact path="/passwordReset" element={<PasswordReset />} />
-                <Route path="/manage/:teamId" element={<ManageTeam />}>
+                <Route path="manage/:teamId" element={<ManageTeam />}>
                   <Route
-                    path="/manage/:teamId/members"
+                    path="members"
                     element={<TeamMembers />}
                   />
                   <Route
-                    path="/manage/:teamId/settings"
+                    path="settings"
                     element={<TeamSettings />}
                   />
                   <Route
-                    path="/manage/:teamId/api-keys"
+                    path="api-keys"
                     element={<ApiKeys teamId={team?.id} />}
                   />
                 </Route>
@@ -153,59 +163,55 @@ function Main(props) {
                 />
 
                 {/* Add all the routes for the project board here */}
-                <Route exact path="/:teamId/:projectId" element={<ProjectBoard />} />
-                <Route
-                  exact
-                  path="/:teamId/:projectId/connections"
-                  element={<ProjectBoard />}
-                />
-                <Route
-                  exact
-                  path="/:teamId/:projectId/dashboard"
-                  element={<ProjectBoard />}
-                />
-                <Route
-                  exact
-                  path="/:teamId/:projectId/chart"
-                  element={<ProjectBoard />}
-                />
-                <Route
-                  exact
-                  path="/:teamId/:projectId/chart/:chartId/edit"
-                  element={<ProjectBoard />}
-                />
-                <Route exact path="/invite" element={<UserInvite />} />
-                <Route
-                  exact
-                  path="/:teamId/:projectId/projectSettings"
-                  element={<ProjectBoard />}
-                />
-                <Route
-                  exact
-                  path="/:teamId/:projectId/members"
-                  element={<ProjectBoard />}
-                />
-                <Route
-                  exact
-                  path="/:teamId/:projectId/settings"
-                  element={<ProjectBoard />}
-                />
-                <Route
-                  exact
-                  path="/:teamId/:projectId/public"
-                  element={<ProjectBoard />}
-                />
-                <Route
-                  exact
-                  path="/:teamId/:projectId/integrations"
-                  element={<ProjectBoard />}
-                />
+                <Route path="/:teamId/:projectId" element={<ProjectBoard />}>
+                  <Route
+                    exact
+                    path="dashboard"
+                    element={<ProjectDashboard showDrafts={window.localStorage.getItem("_cb_drafts")} />}
+                  />
+                  <Route
+                    exact
+                    path="connections"
+                    element={<Connections />}
+                  />
+                  <Route
+                    exact
+                    path="chart"
+                    element={<AddChart />}
+                  />
+                  <Route
+                    exact
+                    path="chart/:chartId/edit"
+                    element={<AddChart />}
+                  />
+                  <Route
+                    exact
+                    path="projectSettings"
+                    element={<ProjectSettings />}
+                  />
+                  <Route
+                    exact
+                    path="members"
+                    element={<TeamMembers />}
+                  />
+                  <Route
+                    exact
+                    path="settings"
+                    element={<TeamSettings />}
+                  />
+                  <Route
+                    exact
+                    path="integrations"
+                    element={<Integrations />}
+                  />
+                </Route>
 
                 <Route
                   exact
                   path="/chart/:chartId/embedded"
                   element={<EmbeddedChart />}
                 />
+                <Route exact path="/invite" element={<UserInvite />} />
               </Routes>
             </Suspense>
           </div>
@@ -226,11 +232,12 @@ Main.propTypes = {
   getTeams: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,
+  user: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
-    user: state.user,
+    user: state.user.data,
     team: state.team.active,
   };
 };

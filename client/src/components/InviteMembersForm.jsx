@@ -11,6 +11,7 @@ import { generateInviteUrl as generateInviteUrlAction } from "../actions/team";
 import Container from "./Container";
 import Row from "./Row";
 import Text from "./Text";
+import { useParams } from "react-router";
 
 /*
   Contains the team members invitation functionality
@@ -24,8 +25,10 @@ function InviteMembersForm(props) {
   const [urlCopied, setUrlCopied] = useState(false);
 
   const {
-    style, match, projects, team, generateInviteUrl, selectedProjects,
+    style, projects, team, generateInviteUrl, selectedProjects,
   } = props;
+
+  const params = useParams();
 
   useEffect(() => {
     if (selectedProjects?.length > 0) {
@@ -41,7 +44,7 @@ function InviteMembersForm(props) {
 
   const onGenerateUrl = () => {
     const teamId = team.id
-      ? team.id : match.params.teamId;
+      ? team.id : params.teamId;
 
     setLoading(true);
 

@@ -8,6 +8,7 @@ import {
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
 import { LuCheck, LuInfo, LuPencilLine, LuPlay, LuPlus, LuTrash } from "react-icons/lu";
+import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/mode-pgsql";
@@ -27,7 +28,7 @@ import useThemeDetector from "../../../modules/useThemeDetector";
 */
 function SqlBuilder(props) {
   const {
-    createSavedQuery, match, updateSavedQuery, changeTutorial,
+    createSavedQuery, updateSavedQuery, changeTutorial,
     dataRequest, onChangeRequest, onSave, runDataRequest, connection,
     onDelete, responses,
   } = props;
@@ -48,6 +49,7 @@ function SqlBuilder(props) {
   const [saveLoading, setSaveLoading] = useState(false);
 
   const isDark = useThemeDetector();
+  const params = useParams();
 
   useEffect(() => {
     if (dataRequest) {
@@ -77,7 +79,7 @@ function SqlBuilder(props) {
 
   const _onSaveQuery = () => {
     setSavingQuery(true);
-    createSavedQuery(match.params.projectId, {
+    createSavedQuery(params.projectId, {
       query: sqlRequest.query,
       summary: savedQuerySummary,
       type: connection.type,
@@ -97,7 +99,7 @@ function SqlBuilder(props) {
   const _onUpdateSavedQuery = () => {
     setUpdatingSavedQuery(true);
     updateSavedQuery(
-      match.params.projectId,
+      params.projectId,
       savedQuery,
       { query: sqlRequest.query }
     )
@@ -122,7 +124,7 @@ function SqlBuilder(props) {
 
     onSave(dr).then(() => {
       const getCache = !invalidateCache;
-      runDataRequest(match.params.projectId, match.params.chartId, dr.id, getCache)
+      runDataRequest(params.projectId, params.chartId, dr.id, getCache)
         .then((result) => {
           setRequestLoading(false);
           setRequestSuccess(result.status);
@@ -372,7 +374,6 @@ SqlBuilder.propTypes = {
   runDataRequest: PropTypes.func.isRequired,
   createSavedQuery: PropTypes.func.isRequired,
   updateSavedQuery: PropTypes.func.isRequired,
-  match: PropTypes.object.isRequired,
   connection: PropTypes.object.isRequired,
   changeTutorial: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,

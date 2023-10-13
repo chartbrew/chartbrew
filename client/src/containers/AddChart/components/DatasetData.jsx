@@ -36,6 +36,7 @@ import TableDataFormattingModal from "./TableDataFormattingModal";
 import DatasetAlerts from "./DatasetAlerts";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
+import { useParams } from "react-router";
 
 function formatColumnsForOrdering(columns) {
   if (!columns) {
@@ -49,7 +50,7 @@ function formatColumnsForOrdering(columns) {
 
 function DatasetData(props) {
   const {
-    dataset, onUpdate, match, chartType, chartData,
+    dataset, onUpdate, chartType, chartData,
     dataLoading, datasetResponses,
   } = props;
 
@@ -75,6 +76,7 @@ function DatasetData(props) {
   const yFieldRef = useRef(null);
   const xFieldRef = useRef(null);
   const dateFieldRef = useRef(null);
+  const params = useParams();
 
   // Update the content when there is some data to work with
   useEffect(() => {
@@ -1204,9 +1206,9 @@ function DatasetData(props) {
                     || chartType === "doughnut"
                     || chartType === "table"
                   ? "patterns" : "axis"}
-                chartId={match.params.chartId}
+                chartId={params.chartId}
                 datasetId={dataset.id}
-                projectId={match.params.projectId}
+                projectId={params.projectId}
               />
             </div>
           </>

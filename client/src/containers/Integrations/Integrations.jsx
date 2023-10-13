@@ -13,17 +13,21 @@ import {
 import Text from "../../components/Text";
 import Row from "../../components/Row";
 import Segment from "../../components/Segment";
+import { useParams } from "react-router";
 
 function Integrations(props) {
-  const { integrations, getTeamIntegrations, match } = props;
+  const { integrations, getTeamIntegrations } = props;
+
+  const params = useParams();
 
   useEffect(() => {
-    getTeamIntegrations(match.params.teamId);
+    getTeamIntegrations(params.teamId);
   }, []);
 
   return (
     <div>
-      <Segment className="bg-background">
+      <Spacer y={4} />
+      <Segment className="container mx-auto bg-background">
         <Row>
           <Text size="h3">Integrations</Text>
         </Row>
@@ -38,7 +42,7 @@ function Integrations(props) {
         <Row>
           <WebhookIntegrations
             integrations={integrations ? integrations.filter((i) => i.type === "webhook") : []}
-            teamId={match.params.teamId}
+            teamId={params.teamId}
           />
         </Row>
         <Spacer y={4} />

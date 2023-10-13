@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Chip, Button, Checkbox, Input, Link, Modal, Spacer,
@@ -276,7 +276,7 @@ function DatasetAlerts(props) {
             </Button>
           )}
           {datasetAlerts.length > 0 && datasetAlerts.map((alert) => (
-            <>
+            <Fragment key={alert.id}>
               <Button
                 color={alert.active ? "primary" : "secondary"}
                 auto
@@ -294,7 +294,7 @@ function DatasetAlerts(props) {
                 {alert.type === "anomaly" && "Anomaly detection"}
               </Button>
               <Spacer x={0.5} />
-            </>
+            </Fragment>
           ))}
         </Row>
         {datasetAlerts.length > 0 && (

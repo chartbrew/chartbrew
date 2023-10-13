@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Route, Routes, useParams } from "react-router";
+import { Outlet, Route, Routes, useNavigate, useParams } from "react-router";
 import { Allotment } from "allotment";
 import { createMedia } from "@artsy/fresnel";
 import { useWindowSize } from "react-use";
@@ -53,7 +53,7 @@ const sideMinSize = 70;
 */
 function ProjectBoard(props) {
   const {
-    cleanErrors, history, getProjectCharts, getProjectConnections,
+    cleanErrors, getProjectCharts, getProjectConnections,
     getProject, changeActiveProject, getTeam, project, user, team, projects,
     getTeamMembers,
   } = props;
@@ -66,10 +66,11 @@ function ProjectBoard(props) {
 
   const { height } = useWindowSize();
   const params = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const params = new URLSearchParams(document.location.search);
-    if (params.has("new")) history.push("connections");
+    if (params.has("new")) navigate("connections");
 
     cleanErrors();
     _init();
@@ -272,48 +273,7 @@ function MainContent(props) {
 
   return (
     <div style={{ width: "100%" }}>
-      <Routes>
-        <Route
-          exact
-          path="/:teamId/:projectId/dashboard"
-          element={(
-            <ProjectDashboard showDrafts={showDrafts} onPrint={onPrint} mobile={mobile} />
-          )}
-        />
-        {_canAccess("projectAdmin") && <Route path="/:teamId/:projectId/connections" element={<Connections />} />}
-        {_canAccess("projectAdmin") && <Route path="/:teamId/:projectId/chart/:chartId/edit" element={<AddChart />} />}
-        {_canAccess("projectAdmin") && <Route path="/:teamId/:projectId/chart" element={<AddChart />} />}
-        {_canAccess("projectAdmin") && <Route path="/:teamId/:projectId/projectSettings" element={<ProjectSettings style={styles.teamSettings} />} />}
-        <Route
-          path="/:teamId/:projectId/members"
-          element={(
-            <TeamMembers style={styles.teamSettings} />
-          )}
-        />
-        {_canAccess("projectAdmin") && (
-          <Route
-            path="/:teamId/:projectId/integrations"
-            element={(
-              <Container
-                className={"p-10"}
-              >
-                <Integrations />
-              </Container>
-            )}
-          />
-        )}
-        {_canAccess("teamOwner")
-          && (
-            <Route
-              path="/:teamId/:projectId/settings"
-              element={(
-                <div>
-                  <TeamSettings style={styles.teamSettings} />
-                </div>
-              )}
-            />
-          )}
-      </Routes>
+      <Outlet />
     </div>
   );
 }
@@ -378,7 +338,6 @@ ProjectBoard.propTypes = {
   getTeam: PropTypes.func.isRequired,
   getTeamMembers: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
-  history: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {

@@ -1,3 +1,4 @@
+import { cloneDeep } from "lodash";
 import {
   FETCHING_DATA_REQUEST,
   FETCH_DATA_REQUEST_FAIL,
@@ -17,7 +18,7 @@ export default function dataRequest(state = {
     case FETCHING_DATA_REQUEST:
       if (action.id) {
         // mark data request as loading
-        const newData = [...state.data];
+        const newData = cloneDeep(state.data);
         const indexFound = newData.findIndex(dr => dr.id === action.id);
         if (indexFound > -1) {
           newData[indexFound].loading = true;
@@ -94,7 +95,7 @@ export default function dataRequest(state = {
     case FETCH_DATA_REQUEST_FAIL: {
       if (action.id) {
         // mark data request as not loading
-        const newData = [...state.data];
+        const newData = cloneDeep(state.data);
         const dataIndex = newData.findIndex(dr => dr.id === action.id);
         if (dataIndex > -1) {
           newData[dataIndex].loading = false;

@@ -36,10 +36,11 @@ import {
   updateDataset as updateDatasetAction,
   runRequest as runRequestAction,
 } from "../../../actions/dataset";
+import { useParams } from "react-router";
 
 function DatarequestModal(props) {
   const {
-    open, onClose, dataset, match, getDataRequestByDataset,
+    open, onClose, dataset, getDataRequestByDataset,
     createDataRequest, updateDataRequest, requests, changeTutorial, chart,
     connections, deleteDataRequest, updateDataset, responses, stateDataRequests,
     datasetResponses, runRequest,
@@ -53,6 +54,7 @@ function DatarequestModal(props) {
   const [loading, setLoading] = useState(false);
 
   const theme = useThemeDetector() ? "dark" : "light";
+  const params = useParams();
 
   useEffect(() => {
     if (!open) {
@@ -61,7 +63,7 @@ function DatarequestModal(props) {
     }
 
     setInitialising(true);
-    getDataRequestByDataset(match.params.projectId, match.params.chartId, dataset.id)
+    getDataRequestByDataset(params.projectId, params.chartId, dataset.id)
       .then((drs) => {
         setInitialising(false);
         setDataRequests(drs);
@@ -71,8 +73,8 @@ function DatarequestModal(props) {
 
         if (drs.length > 0 && !dataset.main_dr_id) {
           updateDataset(
-            match.params.projectId,
-            match.params.chartId,
+            params.projectId,
+            params.chartId,
             dataset.id,
             { main_dr_id: drs[0].id }
           );
@@ -113,7 +115,7 @@ function DatarequestModal(props) {
     // run the request of the dataset response is not available
     const datasetResponse = datasetResponses.find((d) => d.dataset_id === dataset.id);
     if (!datasetResponse) {
-      runRequest(match.params.projectId, match.params.chartId, dataset.id, true)
+      runRequest(params.projectId, params.chartId, dataset.id, true)
         .catch(() => {});
     }
 
@@ -149,8 +151,8 @@ function DatarequestModal(props) {
 
   const _onSaveRequest = (dr = selectedRequest) => {
     return updateDataRequest(
-      match.params.projectId,
-      match.params.chartId,
+      params.projectId,
+      params.chartId,
       dr.id,
       dr,
     )
@@ -172,15 +174,15 @@ function DatarequestModal(props) {
   };
 
   const _onCreateNewRequest = (connection) => {
-    return createDataRequest(match.params.projectId, match.params.chartId, {
+    return createDataRequest(params.projectId, params.chartId, {
       dataset_id: dataset.id,
       connection_id: connection.id,
     })
       .then((newDr) => {
         if (dataRequests.length < 1) {
           updateDataset(
-            match.params.projectId,
-            match.params.chartId,
+            params.projectId,
+            params.chartId,
             dataset.id,
             { main_dr_id: newDr.id },
           );
@@ -208,7 +210,7 @@ function DatarequestModal(props) {
 
   const _onDeleteRequest = (drId) => {
     if (selectedRequest) {
-      deleteDataRequest(match.params.projectId, match.params.chartId, drId)
+      deleteDataRequest(params.projectId, params.chartId, drId)
         .then(() => {
           // update the dataRequests array
           const newDrArray = _.cloneDeep(dataRequests);
@@ -223,7 +225,7 @@ function DatarequestModal(props) {
   };
 
   const _onUpdateDataset = (data) => {
-    return updateDataset(match.params.projectId, match.params.chartId, dataset.id, data)
+    return updateDataset(params.projectId, params.chartId, dataset.id, data)
       .then((newDataset) => {
         return newDataset;
       })
@@ -509,7 +511,6 @@ DatarequestModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   dataset: PropTypes.object.isRequired,
   getDataRequestByDataset: PropTypes.func.isRequired,
-  match: PropTypes.object.isRequired,
   createDataRequest: PropTypes.func.isRequired,
   updateDataRequest: PropTypes.func.isRequired,
   requests: PropTypes.array.isRequired,

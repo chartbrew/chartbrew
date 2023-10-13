@@ -4,7 +4,7 @@ import {
   Button, Input, Spacer, Link, Card, Tabs, Tab, CardBody, Image, CardFooter, Divider,
 } from "@nextui-org/react";
 import { connect } from "react-redux";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate, useParams } from "react-router-dom";
 import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
 
 import SimpleAnalyticsTemplate from "../../Connections/SimpleAnalytics/SimpleAnalyticsTemplate";
@@ -21,14 +21,17 @@ import availableTemplates from "../../../modules/availableTemplates";
 
 function ChartDescription(props) {
   const {
-    name, onChange, history, onCreate, teamId, projectId, connections, templates,
-    match, user, team, noConnections,
+    name, onChange, onCreate, teamId, projectId, connections, templates,
+    user, team, noConnections,
   } = props;
 
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formType, setFormType] = useState("");
   const [selectedMenu, setSelectedMenu] = useState("emptyChart");
+
+  const navigate = useNavigate();
+  const params = useParams();
 
   useEffect(() => {
     if (!name) _populateName();
@@ -50,7 +53,7 @@ function ChartDescription(props) {
   };
 
   const _onCompleteTemplate = () => {
-    history.push(`/${teamId}/${projectId}/dashboard`);
+    navigate(`/${teamId}/${projectId}/dashboard`);
     setTimeout(() => {
       window.location.reload();
     }, 500);
@@ -124,11 +127,11 @@ function ChartDescription(props) {
                 <>
                   <Spacer y={2} />
                   <Row>
-                    <Container className={"bg-blue-100 p-10 rounded-md"}>
+                    <Container className={"bg-blue-100 p-4 rounded-md"}>
                       <Row>
                         <Text h5>
                           {"You haven't connected to any data source yet. Create charts from a template instead or "}
-                          <RouterLink to={`/${match.params.teamId}/${match.params.projectId}/connections`}>
+                          <RouterLink to={`/${params.teamId}/${params.projectId}/connections`}>
                             {"create a data source first"}
                           </RouterLink>
                         </Text>
@@ -187,8 +190,8 @@ function ChartDescription(props) {
               <CustomTemplates
                 templates={templates.data}
                 loading={templates.loading}
-                teamId={match.params.teamId}
-                projectId={match.params.projectId}
+                teamId={params.teamId}
+                projectId={params.projectId}
                 connections={connections}
                 onComplete={_onCompleteTemplate}
                 isAdmin={canAccess("teamAdmin", user.id, team.TeamRoles)}
@@ -279,12 +282,10 @@ ChartDescription.defaultProps = {
 ChartDescription.propTypes = {
   name: PropTypes.string,
   onChange: PropTypes.func.isRequired,
-  history: PropTypes.object.isRequired,
   onCreate: PropTypes.func.isRequired,
   teamId: PropTypes.string.isRequired,
   projectId: PropTypes.string.isRequired,
   connections: PropTypes.array.isRequired,
-  match: PropTypes.object.isRequired,
   team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
   templates: PropTypes.object.isRequired,

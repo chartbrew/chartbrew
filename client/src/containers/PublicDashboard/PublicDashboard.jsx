@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
-import { Link as LinkDom } from "react-router-dom";
+import { Link as LinkDom, useParams } from "react-router-dom";
 import {
   Button, Input, Spacer, Navbar, Tooltip, Popover, Divider, Modal, Badge,
   Link, Image, CircularProgress, NavbarContent, PopoverTrigger, PopoverContent, ModalContent, ModalHeader, ModalBody, ModalFooter, Chip, NavbarItem,
@@ -58,7 +58,7 @@ const defaultColors = [
 
 function PublicDashboard(props) {
   const {
-    getPublicDashboard, match, getProject, updateProject, updateProjectLogo, charts,
+    getPublicDashboard, getProject, updateProject, updateProjectLogo, charts,
     updateTeam, user, teams, runQueryOnPublic,
   } = props;
 
@@ -83,6 +83,7 @@ function PublicDashboard(props) {
   const [refreshLoading, setRefreshLoading] = useState(false);
 
   const isDark = useThemeDetector();
+  const params = useParams();
 
   const onDrop = useCallback((acceptedFiles) => {
     setNewChanges({ ...newChanges, logo: acceptedFiles });
@@ -138,7 +139,7 @@ function PublicDashboard(props) {
     if (password) window.localStorage.setItem("reportPassword", password);
 
     setLoading(true);
-    getPublicDashboard(match.params.brewName, password)
+    getPublicDashboard(params.brewName, password)
       .then((data) => {
         setProject(data);
         setLoading(false);
@@ -946,7 +947,6 @@ PublicDashboard.propTypes = {
   updateProject: PropTypes.func.isRequired,
   updateProjectLogo: PropTypes.func.isRequired,
   updateTeam: PropTypes.func.isRequired,
-  match: PropTypes.object.isRequired,
   charts: PropTypes.array.isRequired,
   user: PropTypes.object.isRequired,
   teams: PropTypes.array.isRequired,

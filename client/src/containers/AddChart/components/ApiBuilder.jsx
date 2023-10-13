@@ -8,6 +8,8 @@ import {
 import AceEditor from "react-ace";
 import uuid from "uuid/v4";
 import { toast } from "react-toastify";
+import { useParams } from "react-router";
+import { LuInfo, LuPlay, LuPlus, LuPlusCircle, LuTrash, LuXCircle } from "react-icons/lu";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/mode-javascript";
@@ -26,7 +28,6 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
-import { LuInfo, LuPlay, LuPlus, LuPlusCircle, LuTrash, LuXCircle } from "react-icons/lu";
 
 const methods = [{
   key: 1,
@@ -74,9 +75,10 @@ function ApiBuilder(props) {
   const [saveLoading, setSaveLoading] = useState(false);
 
   const isDark = useThemeDetector();
+  const params = useParams();
 
   const {
-    dataRequest, match, onChangeRequest, runDataRequest,
+    dataRequest, onChangeRequest, runDataRequest,
     connection, onSave, changeTutorial, chart,
     getConnection, onDelete, responses,
   } = props;
@@ -85,7 +87,7 @@ function ApiBuilder(props) {
   useEffect(() => {
     if (dataRequest) {
       // format the headers into key: value -> value: value format
-      const formattedApiRequest = dataRequest;
+      const formattedApiRequest = { ...dataRequest };
       const formattedHeaders = [];
 
       if (dataRequest.headers) {
@@ -118,7 +120,7 @@ function ApiBuilder(props) {
       }
     }
 
-    getConnection(match.params.projectId, connection.id)
+    getConnection(params.projectId, connection.id)
       .then((data) => {
         setFullConnection(data);
       })
@@ -240,7 +242,7 @@ function ApiBuilder(props) {
 
     onSave(dr).then(() => {
       const getCache = !invalidateCache;
-      runDataRequest(match.params.projectId, match.params.chartId, dr.id, getCache)
+      runDataRequest(params.projectId, params.chartId, dr.id, getCache)
         .then((result) => {
           setRequestLoading(false);
           setRequestSuccess(result.status);
@@ -398,13 +400,14 @@ function ApiBuilder(props) {
                 <>
                   <Row>
                     <Checkbox
-                      label="Include connection headers"
                       isSelected={!!apiRequest.useGlobalHeaders}
                       onChange={_onToggleGlobal}
                       size="sm"
-                    />
+                    >
+                      Include connection headers
+                    </Checkbox>
                   </Row>
-                  <Spacer y={1} />
+                  <Spacer y={2} />
                   {apiRequest.useGlobalHeaders && (
                     <>
                       <Container className={"pl-0 pr-0"}>
@@ -586,8 +589,8 @@ function ApiBuilder(props) {
           <Spacer y={2} />
           <Row align="center">
             <LuInfo />
-            <Spacer x={0.5} />
-            <Text small>
+            <Spacer x={1} />
+            <Text size="sm">
               {"This is a preview and it might not show all data in order to keep things fast in the UI."}
             </Text>
           </Row>
@@ -603,7 +606,6 @@ ApiBuilder.defaultProps = {
 
 ApiBuilder.propTypes = {
   connection: PropTypes.object.isRequired,
-  match: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
   runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,

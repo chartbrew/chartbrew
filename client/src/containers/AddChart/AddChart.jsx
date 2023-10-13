@@ -49,6 +49,7 @@ import {
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import useThemeDetector from "../../modules/useThemeDetector";
+import { useNavigate, useParams } from "react-router";
 
 /*
   Container used for setting up a new chart
@@ -79,21 +80,23 @@ function AddChart(props) {
   const { height } = useWindowSize();
 
   const {
-    match, createChart, history, charts, saveNewDataset, getChartDatasets, tutorial,
+    createChart, charts, saveNewDataset, getChartDatasets, tutorial,
     datasets, updateDataset, deleteDataset, updateChart, runQuery, user, changeTutorial,
     completeTutorial, clearDatasets, resetTutorial, connections, templates, getTemplates,
     runQueryWithFilters, getChartAlerts, clearAlerts,
   } = props;
 
   const isDark = useThemeDetector();
+  const params = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     clearDatasets();
     clearAlerts();
 
-    if (match.params.chartId) {
+    if (params.chartId) {
       charts.map((chart) => {
-        if (chart.id === parseInt(match.params.chartId, 10)) {
+        if (chart.id === parseInt(params.chartId, 10)) {
           setNewChart(chart);
         }
         return chart;
@@ -101,8 +104,8 @@ function AddChart(props) {
       setTitleScreen(false);
 
       // also fetch the chart's datasets and alerts
-      getChartDatasets(match.params.projectId, match.params.chartId);
-      getChartAlerts(match.params.projectId, match.params.chartId);
+      getChartDatasets(params.projectId, params.chartId);
+      getChartAlerts(params.projectId, params.chartId);
     }
 
     if (user && (!user.tutorials || Object.keys(user.tutorials).length === 0)) {
@@ -111,12 +114,12 @@ function AddChart(props) {
       }, 1000);
     }
 
-    getTemplates(match.params.teamId);
+    getTemplates(params.teamId);
   }, []);
 
   useEffect(() => {
     charts.map((chart) => {
-      if (chart.id === parseInt(match.params.chartId, 10)) {
+      if (chart.id === parseInt(params.chartId, 10)) {
         if (!_.isEqual(chart, newChart)) {
           setNewChart(chart);
           setChartName(chart.name);
@@ -129,7 +132,7 @@ function AddChart(props) {
   useEffect(() => {
     let found = false;
     charts.map((chart) => {
-      if (chart.id === parseInt(match.params.chartId, 10)) {
+      if (chart.id === parseInt(params.chartId, 10)) {
         if (!_.isEqual(chart, newChart)) {
           setSaveRequired(true);
           found = true;
@@ -166,11 +169,11 @@ function AddChart(props) {
 
   const _onCreateClicked = () => {
     const tempChart = { ...newChart, name: chartName };
-    return createChart(match.params.projectId, tempChart)
+    return createChart(params.projectId, tempChart)
       .then((createdChart) => {
         setNewChart(createdChart);
         setTitleScreen(false);
-        history.push(`chart/${createdChart.id}/edit`);
+        navigate(`chart/${createdChart.id}/edit`);
         return true;
       })
       .catch(() => {
@@ -182,8 +185,8 @@ function AddChart(props) {
     if (savingDataset || addingDataset) return;
     setSavingDataset(true);
     let savedDataset;
-    saveNewDataset(match.params.projectId, match.params.chartId, {
-      chart_id: match.params.chartId,
+    saveNewDataset(params.projectId, params.chartId, {
+      chart_id: params.chartId,
       legend: `Dataset #${datasets.length + 1}`,
       datasetColor: chartColors[Math.floor(Math.random() * chartColors.length)],
       fillColor: ["rgba(0,0,0,0)"],
@@ -193,7 +196,7 @@ function AddChart(props) {
         setAddingDataset(false);
         _onDatasetChanged(dataset);
         savedDataset = dataset;
-        return getChartDatasets(match.params.projectId, match.params.chartId);
+        return getChartDatasets(params.projectId, params.chartId);
       })
       .then(() => {
         _onDatasetChanged(savedDataset);
@@ -206,8 +209,8 @@ function AddChart(props) {
   const _onUpdateDataset = (newDataset, skipParsing) => {
     setUpdatingDataset(true);
     return updateDataset(
-      match.params.projectId,
-      match.params.chartId,
+      params.projectId,
+      params.chartId,
       activeDataset.id,
       newDataset
     )
@@ -236,7 +239,7 @@ function AddChart(props) {
   };
 
   const _onDeleteDataset = () => {
-    return deleteDataset(match.params.projectId, match.params.chartId, activeDataset.id)
+    return deleteDataset(params.projectId, params.chartId, activeDataset.id)
       .then(() => {
         setActiveDataset({});
       })
@@ -291,7 +294,7 @@ function AddChart(props) {
     let shouldSkipParsing = skipParsing;
     setNewChart({ ...newChart, ...data });
     setLoading(true);
-    return updateChart(match.params.projectId, match.params.chartId, data)
+    return updateChart(params.projectId, params.chartId, data)
       .then((newData) => {
         if (!toastOpen) {
           toast.success("Updated the chart 📈", {
@@ -324,7 +327,7 @@ function AddChart(props) {
   };
 
   const _onRefreshData = (skipParsing, skipConfCheck = false) => {
-    if (!match.params.chartId) return;
+    if (!params.chartId) return;
 
     const getCache = !invalidateCache;
 
@@ -346,10 +349,10 @@ function AddChart(props) {
       }
     }
 
-    runQuery(match.params.projectId, match.params.chartId, false, false, getCache)
+    runQuery(params.projectId, params.chartId, false, false, getCache)
       .then(() => {
         if (conditions.length > 0) {
-          return runQueryWithFilters(match.params.projectId, newChart.id, conditions);
+          return runQueryWithFilters(params.projectId, newChart.id, conditions);
         }
 
         return true;
@@ -366,11 +369,11 @@ function AddChart(props) {
   };
 
   const _onRefreshPreview = (skipParsing = true) => {
-    if (!match.params.chartId) return;
-    runQuery(match.params.projectId, match.params.chartId, true, skipParsing, true)
+    if (!params.chartId) return;
+    runQuery(params.projectId, params.chartId, true, skipParsing, true)
       .then(() => {
         if (conditions.length > 0) {
-          return runQueryWithFilters(match.params.projectId, newChart.id, conditions);
+          return runQueryWithFilters(params.projectId, newChart.id, conditions);
         }
 
         return true;
@@ -437,7 +440,7 @@ function AddChart(props) {
     if (!found) newConditions.push(condition);
     setConditions(newConditions);
 
-    runQueryWithFilters(match.params.projectId, newChart.id, [condition]);
+    runQueryWithFilters(params.projectId, newChart.id, [condition]);
   };
 
   const _onClearFilter = (condition) => {
@@ -446,7 +449,7 @@ function AddChart(props) {
     if (clearIndex > -1) newConditions.splice(clearIndex, 1);
 
     setConditions(newConditions);
-    runQueryWithFilters(match.params.projectId, newChart.id, [condition]);
+    runQueryWithFilters(params.projectId, newChart.id, [condition]);
   };
 
   const _onSaveArrangement = () => {
@@ -456,8 +459,8 @@ function AddChart(props) {
     datasetsOrder.forEach((d, index) => {
       promiseData.push(
         updateDataset(
-          match.params.projectId,
-          match.params.chartId,
+          params.projectId,
+          params.chartId,
           d.id,
           { order: index },
         ),
@@ -469,7 +472,7 @@ function AddChart(props) {
         setArrangementLoading(false);
         setArrangeMode(false);
         _onRefreshData(true);
-        getChartDatasets(match.params.projectId, match.params.chartId);
+        getChartDatasets(params.projectId, params.chartId);
       })
       .catch(() => {
         toast.error("Oups! Can't save the arrangement. Please try again.");
@@ -501,9 +504,8 @@ function AddChart(props) {
           name={chartName}
           onChange={_onNameChange}
           onCreate={_onCreateClicked}
-          history={history}
-          teamId={match.params.teamId}
-          projectId={match.params.projectId}
+          teamId={params.teamId}
+          projectId={params.projectId}
           connections={connections}
           templates={templates}
           noConnections={connections.length === 0}
@@ -611,7 +613,7 @@ function AddChart(props) {
           </Row>
           <Spacer y={4} />
           <Row>
-            {match.params.chartId && newChart.type && datasets.length > 0 && (
+            {params.chartId && newChart.type && datasets.length > 0 && (
               <ChartSettings
                 type={newChart.type}
                 pointRadius={newChart.pointRadius}
@@ -860,8 +862,6 @@ const styles = {
 
 AddChart.propTypes = {
   createChart: PropTypes.func.isRequired,
-  match: PropTypes.object.isRequired,
-  history: PropTypes.object.isRequired,
   charts: PropTypes.array.isRequired,
   getChartDatasets: PropTypes.func.isRequired,
   saveNewDataset: PropTypes.func.isRequired,

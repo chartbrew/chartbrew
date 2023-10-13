@@ -8,6 +8,7 @@ import {
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
 import { LuCheck, LuChevronRight, LuInfo, LuPencilLine, LuPlay, LuPlus, LuTrash } from "react-icons/lu";
+import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-javascript";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -27,7 +28,7 @@ import useThemeDetector from "../../../modules/useThemeDetector";
 */
 function MongoQueryBuilder(props) {
   const {
-    createSavedQuery, match, updateSavedQuery, onChangeRequest,
+    createSavedQuery, updateSavedQuery, onChangeRequest,
     runDataRequest, onSave, dataRequest,
     changeTutorial, connection, onDelete, responses,
   } = props;
@@ -48,6 +49,7 @@ function MongoQueryBuilder(props) {
   const [saveLoading, setSaveLoading] = useState(false);
 
   const isDark = useThemeDetector();
+  const params = useParams();
 
   useEffect(() => {
     if (dataRequest) {
@@ -79,7 +81,7 @@ function MongoQueryBuilder(props) {
 
   const _onSaveQuery = () => {
     setSavingQuery(true);
-    createSavedQuery(match.params.projectId, {
+    createSavedQuery(params.projectId, {
       query: mongoRequest.query,
       summary: savedQuerySummary,
       type: "mongodb",
@@ -101,7 +103,7 @@ function MongoQueryBuilder(props) {
     setUpdatingSavedQuery(true);
 
     updateSavedQuery(
-      match.params.projectId,
+      params.projectId,
       savedQuery,
       { query: mongoRequest.query }
     )
@@ -126,7 +128,7 @@ function MongoQueryBuilder(props) {
 
     onSave(dr).then(() => {
       const useCache = !invalidateCache;
-      runDataRequest(match.params.projectId, match.params.chartId, dataRequest.id, useCache)
+      runDataRequest(params.projectId, params.chartId, dataRequest.id, useCache)
         .then((result) => {
           setTestingQuery(false);
           setTestSuccess(result.status);

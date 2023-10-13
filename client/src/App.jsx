@@ -20,22 +20,51 @@ const router = createBrowserRouter([
     element: <Main />,
     children: [
       {
-        path: "/user",
+        path: "user",
         children: [{
-          path: "/user/profile",
+          path: "profile",
         }]
       },
       {
-        path: "/manage/:teamId",
+        path: "manage/:teamId",
         children: [
           {
-            path: "/manage/:teamId/members",
+            path: "members",
           },
           {
-            path: "/manage/:teamId/settings",
+            path: "settings",
           },
           {
-            path: "/manage/:teamId/api-keys",
+            path: "api-keys",
+          },
+        ],
+      },
+      {
+        path: ":teamId/:projectId",
+        children: [
+          {
+            path: "connections",
+          },
+          {
+            path: "dashboard",
+          },
+          {
+            path: "chart",
+          },
+          {
+            path: "chart/:chartId/edit",
+          },
+          {
+            path: "projectSettings",
+          },
+          {
+            path: "members",
+          },
+          {
+            path: "settings",
+          },
+          {
+            path: "integrations",
           },
         ],
       }

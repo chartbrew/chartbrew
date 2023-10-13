@@ -7,6 +7,7 @@ import {
 import AceEditor from "react-ace";
 import { toast } from "react-toastify";
 import { LuInfo, LuPlay, LuTrash, LuX } from "react-icons/lu";
+import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -39,9 +40,10 @@ function RealtimeDbBuilder(props) {
   const [saveLoading, setSaveLoading] = useState(false);
 
   const isDark = useThemeDetector();
+  const params = useParams();
 
   const {
-    dataRequest, match, onChangeRequest, runDataRequest,
+    dataRequest, onChangeRequest, runDataRequest,
     connection, onSave, changeTutorial, // eslint-disable-line
     getConnection, onDelete, responses,
   } = props;
@@ -64,7 +66,7 @@ function RealtimeDbBuilder(props) {
   useEffect(() => {
     const newApiRequest = firebaseRequest;
 
-    getConnection(match.params.projectId, connection.id)
+    getConnection(params.projectId, connection.id)
       .then((data) => {
         setFullConnection(data);
         if (data && data.firebaseServiceAccount) {
@@ -100,7 +102,7 @@ function RealtimeDbBuilder(props) {
 
     onSave(firebaseRequest).then(() => {
       const useCache = !invalidateCache;
-      runDataRequest(match.params.projectId, match.params.chartId, dataRequest.id, useCache)
+      runDataRequest(params.projectId, params.chartId, dataRequest.id, useCache)
         .then(() => {
           setRequestLoading(false);
         })
@@ -491,7 +493,6 @@ RealtimeDbBuilder.defaultProps = {
 
 RealtimeDbBuilder.propTypes = {
   connection: PropTypes.object.isRequired,
-  match: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
   runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
