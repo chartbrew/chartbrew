@@ -22,8 +22,7 @@ import { logout } from "../actions/user";
 import { getProject, changeActiveProject } from "../actions/project";
 import { getProjectCharts } from "../actions/chart";
 import FeedbackForm from "./FeedbackForm";
-import cbLogo from "../assets/logo_blue.png";
-import cbLogoInverted from "../assets/logo_inverted.png";
+import nmstxLogo from "../assets/namastex_logo.png";
 import canAccess from "../config/canAccess";
 import { DOCUMENTATION_HOST, SITE_HOST } from "../config/settings";
 import { dark, darkBlue } from "../config/colors";
@@ -129,7 +128,7 @@ function NavbarContainer(props) {
     <Navbar variant="sticky" disableShadow isBordered isCompact maxWidth="fluid" css={{ zIndex: 999 }}>
       <Navbar.Brand>
         <Link to="/user">
-          <Image src={isDark ? cbLogoInverted : cbLogo} alt="Chartbrew Logo" style={styles.logo} />
+          <Image src={isDark ? nmstxLogo : nmstxLogo} alt="Namastex Logo" style={styles.logo} />
         </Link>
         <Spacer x={1} />
         <Link to="/user">
@@ -427,7 +426,7 @@ const styles = {
     backgroundColor: dark,
   },
   logo: {
-    width: 30,
+    width: 100,
   },
   logoContainer: {
     paddingTop: 1,

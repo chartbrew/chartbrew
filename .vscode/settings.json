@@ -3,5 +3,9 @@
         "server",
         "client",
         "client/src/config"
-    ]
+    ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": false
+  },
+  "editor.formatOnSave": false
 }
