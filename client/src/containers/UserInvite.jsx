@@ -5,6 +5,7 @@ import {
   Button, Spacer,
 } from "@nextui-org/react";
 import cookie from "react-cookies";
+import { useNavigate } from "react-router";
 
 import Container from "../components/Container";
 import Text from "../components/Text";
@@ -14,11 +15,11 @@ import Row from "../components/Row";
   Component for inviting user to the team
 */
 function UserInvite(props) {
-  const {
-    user, history
-  } = props;
+  const { user } = props;
 
   const [fetched, setFetched] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user.id && !fetched) {
@@ -33,9 +34,9 @@ function UserInvite(props) {
 
     if (cookie.load("brewToken")) cookie.remove("brewToken");
     if (route === "login") {
-      history.push(`/login?inviteToken=${token}`);
+      navigate(`/login?inviteToken=${token}`);
     } else {
-      history.push(`/signup?inviteToken=${token}`);
+      navigate(`/signup?inviteToken=${token}`);
     }
   };
 
@@ -86,7 +87,6 @@ const styles = {
 
 UserInvite.propTypes = {
   user: PropTypes.object.isRequired,
-  history: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {

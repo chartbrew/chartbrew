@@ -4,7 +4,7 @@ import {
   Spacer, CircularProgress
 } from "@nextui-org/react";
 import { connect } from "react-redux";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 
 import { getProject as getProjectAction } from "../actions/project";
 import Container from "../components/Container";
@@ -12,17 +12,18 @@ import Row from "../components/Row";
 import Text from "../components/Text";
 
 function ProjectRedirect(props) {
-  const { getProject, history } = props;
+  const { getProject } = props;
 
   const params = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     getProject(params.projectId, true)
       .then((project) => {
-        history.push(`/${project.team_id}/${project.id}/dashboard`);
+        navigate(`/${project.team_id}/${project.id}/dashboard`);
       })
       .catch(() => {
-        history.push("/user");
+        navigate("/user");
       });
   }, []);
 
@@ -42,7 +43,6 @@ function ProjectRedirect(props) {
 
 ProjectRedirect.propTypes = {
   match: PropTypes.object.isRequired,
-  history: PropTypes.object.isRequired,
   getProject: PropTypes.func.isRequired,
 };
 

@@ -5,6 +5,7 @@ import {
   Button, Input, Spacer, Link, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
 import { LuChevronRight, LuLock, LuMail } from "react-icons/lu";
+import { useNavigate } from "react-router";
 
 import {
   login as loginAction,
@@ -24,7 +25,7 @@ import Text from "./Text";
 */
 function LoginForm(props) {
   const {
-    requestPasswordReset, oneaccountAuth, history, login, addTeamMember,
+    requestPasswordReset, oneaccountAuth, login, addTeamMember,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -37,6 +38,8 @@ function LoginForm(props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     document.addEventListener("oneaccount-authenticated", authenticateOneaccount);
@@ -69,7 +72,7 @@ function LoginForm(props) {
     oneaccountAuth(data)
       .then(() => {
         setOaloading(false);
-        history.push("/user");
+        navigate("/user");
       });
   };
 
@@ -123,7 +126,7 @@ function LoginForm(props) {
       })
       .then((user) => {
         setLoading(false);
-        history.push("/user");
+        navigate("/user");
         return user;
       })
       .catch(() => {
@@ -303,7 +306,6 @@ LoginForm.propTypes = {
   oneaccountAuth: PropTypes.func.isRequired,
   login: PropTypes.func.isRequired,
   addTeamMember: PropTypes.func.isRequired,
-  history: PropTypes.object.isRequired,
   requestPasswordReset: PropTypes.func.isRequired,
 };
 

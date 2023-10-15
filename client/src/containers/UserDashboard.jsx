@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useWindowSize } from "react-use";
 import {
   Button, Input, Spacer, Table, Tooltip, Link as LinkNext, Chip, Modal,
@@ -47,7 +47,7 @@ import useThemeDetector from "../modules/useThemeDetector";
 function UserDashboard(props) {
   const {
     relog, cleanErrors, user, getTeams, saveActiveTeam,
-    teams, teamLoading, getTemplates, history, updateProject, removeProject,
+    teams, teamLoading, getTemplates, updateProject, removeProject,
     team, getTeamMembers, teamMembers, connections, datasets, getTeamConnections,
   } = props;
 
@@ -63,6 +63,7 @@ function UserDashboard(props) {
   const initRef = useRef(null);
   const { height } = useWindowSize();
   const isDark = useThemeDetector();
+  const navigate = useNavigate();
 
   useEffect(() => {
     cleanErrors();
@@ -100,7 +101,7 @@ function UserDashboard(props) {
     if (params.get("__cb_goto")) {
       const gotoPage = params.get("__cb_goto");
       window.localStorage.removeItem("__cb_goto");
-      history.push(gotoPage);
+      navigate(gotoPage);
     }
   };
 
@@ -254,7 +255,7 @@ function UserDashboard(props) {
 
         {team && (
           <>
-            <Container className={"mt-4"}>
+            <div className={"mt-4"}>
               <Row
                 align={"center"}
                 justify={"space-between"}
@@ -313,8 +314,8 @@ function UserDashboard(props) {
                     )}
                 </Row>
               </Row>
-            </Container>
-            <Spacer y={4} />
+            </div>
+            <Spacer y={6} />
 
             <Accordion variant="bordered" className="bg-content1">
               <AccordionItem
@@ -468,7 +469,7 @@ function UserDashboard(props) {
               </AccordionItem>
             </Accordion>
 
-            <Spacer y={8} />
+            <Spacer y={4} />
             <Container>
               <Spacer y={2} />
               <Row className={"gap-2"} justify="flex-start" align="center">
@@ -776,7 +777,6 @@ UserDashboard.propTypes = {
   cleanErrors: PropTypes.func.isRequired,
   teamLoading: PropTypes.bool.isRequired,
   getTemplates: PropTypes.func.isRequired,
-  history: PropTypes.object.isRequired,
   updateProject: PropTypes.func.isRequired,
   removeProject: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,

@@ -7,6 +7,7 @@ import {
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import { LuClock4, LuTrash, LuX } from "react-icons/lu";
+import { useNavigate } from "react-router";
 
 import canAccess from "../config/canAccess";
 import { updateProject, changeActiveProject, removeProject } from "../actions/project";
@@ -24,7 +25,7 @@ import Segment from "../components/Segment";
 function ProjectSettings(props) {
   const {
     user, team, project, cleanErrors, changeActiveProject, updateProject, removeProject,
-    history, style,
+    style,
   } = props;
 
   const [success, setSuccess] = useState(false);
@@ -40,6 +41,7 @@ function ProjectSettings(props) {
   const [loadingTimezone, setLoadingTimezone] = useState(false);
 
   const isDark = useThemeDetector();
+  const navigate = useNavigate();
 
   useEffect(() => {
     cleanErrors();
@@ -77,7 +79,7 @@ function ProjectSettings(props) {
     setRemoveError(false);
     removeProject(project.id)
       .then(() => {
-        history.push("/user");
+        navigate("/user");
       })
       .catch(() => {
         setRemoveLoading(false);
@@ -301,7 +303,6 @@ ProjectSettings.propTypes = {
   style: PropTypes.object,
   user: PropTypes.object.isRequired,
   team: PropTypes.object.isRequired,
-  history: PropTypes.object.isRequired,
   project: PropTypes.object.isRequired,
   updateProject: PropTypes.func.isRequired,
   changeActiveProject: PropTypes.func.isRequired,

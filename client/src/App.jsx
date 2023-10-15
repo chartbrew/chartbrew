@@ -26,6 +26,30 @@ const router = createBrowserRouter([
         }]
       },
       {
+        path: "chart/:chartId/embedded",
+      },
+      {
+        path: "invite",
+      },
+      {
+        path: "b/:brewName",
+      },
+      {
+        path: "login",
+      },
+      {
+        path: "signup",
+      },
+      {
+        path: "google-auth",
+      },
+      {
+        path: "passwordReset"
+      },
+      {
+        path: "feedback",
+      },
+      {
         path: "manage/:teamId",
         children: [
           {
@@ -67,7 +91,7 @@ const router = createBrowserRouter([
             path: "integrations",
           },
         ],
-      }
+      },
     ],
   },
 ]);

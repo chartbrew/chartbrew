@@ -26,7 +26,6 @@ import Connections from "./Connections/Connections";
 import AddChart from "./AddChart/AddChart";
 import ProjectSettings from "./ProjectSettings";
 import Integrations from "./Integrations/Integrations";
-import canAccess from "../config/canAccess";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
@@ -56,7 +55,7 @@ const { MediaContextProvider } = AppMedia;
 */
 function Main(props) {
   const {
-    relog, getTeams, cleanErrors, team, user,
+    relog, getTeams, cleanErrors, team,
   } = props;
 
   const isDark = useThemeDetector();
@@ -76,10 +75,6 @@ function Main(props) {
         });
     }
   }, []);
-
-  const _canAccess = (role) => {
-    return canAccess(role, user.id, team.TeamRoles);
-  };
 
   return (
     <IconContext.Provider value={{ className: "react-icons", size: 20, style: { opacity: 0.8 } }}>
@@ -232,12 +227,10 @@ Main.propTypes = {
   getTeams: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,
-  user: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
-    user: state.user.data,
     team: state.team.active,
   };
 };

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
-import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Spacer, Button, CircularProgress,
 } from "@nextui-org/react";
@@ -16,12 +15,12 @@ import Text from "../components/Text";
 /*
   Component for processing the authentication code from Google
 */
-function GoogleAuth(props) {
-  const { history } = props;
-
+function GoogleAuth() {
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     _processAuth();
@@ -62,7 +61,7 @@ function GoogleAuth(props) {
         let finalUrl = `/${result.team_id}/${result.connection.project_id}/connections?edit=${result.connection.id}`;
         if (ids[2]) finalUrl += `&type=${ids[2]}`;
 
-        history.push(finalUrl);
+        navigate(finalUrl);
       })
       .catch(() => {
         setError(true);
@@ -131,9 +130,5 @@ function GoogleAuth(props) {
     </Container>
   );
 }
-
-GoogleAuth.propTypes = {
-  history: PropTypes.object.isRequired,
-};
 
 export default connect()(GoogleAuth);

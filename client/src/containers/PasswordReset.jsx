@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
 import { PropTypes } from "prop-types";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Button, Input, Spacer,
 } from "@nextui-org/react";
@@ -26,7 +26,8 @@ function PasswordReset(props) {
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
 
-  const { cleanErrors, changePasswordWithToken, history } = props;
+  const { cleanErrors, changePasswordWithToken } = props;
+  const navigate = useNavigate();
 
   const isDark = useThemeDetector();
 
@@ -60,7 +61,7 @@ function PasswordReset(props) {
         setPassword("");
         setPasswordConfirm("");
         setTimeout(() => {
-          history.push("/login");
+          navigate("/login");
         }, 3000);
       })
       .catch(() => {
@@ -157,7 +158,6 @@ const styles = {
 
 PasswordReset.propTypes = {
   changePasswordWithToken: PropTypes.func.isRequired,
-  history: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
 };
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useWindowSize } from "react-use";
 import {
   Button,
@@ -42,7 +42,7 @@ const testimonialAvatar = "https://cdn2.chartbrew.com/skyguy.webp";
 */
 function Signup(props) {
   const {
-    createUser, history, createInvitedUser, addTeamMember, oneaccountAuth,
+    createUser, createInvitedUser, addTeamMember, oneaccountAuth,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -55,6 +55,7 @@ function Signup(props) {
   const [sideHovered, setSideHovered] = useState(false);
 
   const { height } = useWindowSize();
+  const navigate = useNavigate();
 
   useEffect(() => {
     document.addEventListener("oneaccount-authenticated", authenticateOneaccount);
@@ -89,7 +90,7 @@ function Signup(props) {
       createUser({ name, email, password })
         .then(() => {
           setLoading(false);
-          history.push("/user");
+          navigate("/user");
         })
         .catch((err) => {
           setLoading(false);
@@ -107,7 +108,7 @@ function Signup(props) {
             setLoading(false);
             setAddedToTeam(true);
             setTimeout(() => {
-              history.push("/user");
+              navigate("/user");
             }, 3000);
           });
       })
@@ -125,7 +126,7 @@ function Signup(props) {
     } else {
       oneaccountAuth(data)
         .then(() => {
-          history.push("/user");
+          navigate("/user");
         });
     }
   };
