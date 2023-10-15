@@ -20,14 +20,7 @@ import {
 } from "../../actions/team";
 import { getProjectCharts as getProjectChartsAction } from "../../actions/chart";
 import { getProjectConnections } from "../../actions/connection";
-import Connections from "../Connections/Connections";
-import ProjectDashboard from "../ProjectDashboard/ProjectDashboard";
-import AddChart from "../AddChart/AddChart";
 import Navbar from "../../components/Navbar";
-import TeamMembers from "../TeamMembers/TeamMembers";
-import TeamSettings from "../TeamSettings";
-import ProjectSettings from "../ProjectSettings";
-import Integrations from "../Integrations/Integrations";
 import canAccess from "../../config/canAccess";
 import PrintView from "../PrintView/PrintView";
 import ProjectNavigation from "./components/ProjectNavigation";
@@ -266,11 +259,7 @@ function ProjectBoard(props) {
   );
 }
 
-function MainContent(props) {
-  const {
-    showDrafts, onPrint, _canAccess, mobile
-  } = props;
-
+function MainContent() {
   return (
     <div style={{ width: "100%" }}>
       <Outlet />
