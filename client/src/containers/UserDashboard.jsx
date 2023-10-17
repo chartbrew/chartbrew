@@ -80,7 +80,6 @@ function UserDashboard(props) {
     if (teams && teams.length > 0 && !initRef.current) {
       initRef.current = true;
       const owningTeam = teams.find((t) => t.TeamRoles.find((tr) => tr.role === "teamOwner" && tr.user_id === user.data.id));
-      console.log(owningTeam);
       if (!owningTeam) return;
       dispatch(saveActiveTeam(owningTeam));
       dispatch(getTeamMembers({ team_id: owningTeam.id }));
