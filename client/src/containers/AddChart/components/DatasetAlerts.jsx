@@ -4,12 +4,12 @@ import {
   Chip, Button, Checkbox, Input, Link, Modal, Spacer,
   Switch, ModalHeader, ModalBody, ModalFooter, Select, SelectItem, ModalContent,
 } from "@nextui-org/react";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import {
   LuBellOff, LuBellPlus, LuBellRing, LuMail, LuPlus, LuRefreshCw, LuSlack, LuTrash, LuWebhook
 } from "react-icons/lu";
 
-import { getTeamMembers as getTeamMembersAction } from "../../../actions/team";
+import { getTeamMembers, selectTeam, selectTeamMembers } from "../../../slices/team";
 import {
   getChartAlerts as getChartAlertsAction,
   createAlert as createAlertAction,
@@ -57,7 +57,7 @@ const timePeriods = [{
 
 function DatasetAlerts(props) {
   const {
-    getTeamMembers, teamMembers, team, user, chartId, datasetId, projectId,
+    user, chartId, datasetId, projectId,
     createAlert, alerts, updateAlert, deleteAlert, charts,
     getTeamIntegrations, integrations, getChartAlerts,
   } = props;
@@ -87,8 +87,12 @@ function DatasetAlerts(props) {
   const [showAutoUpdate, setShowAutoUpdate] = useState(false);
   const [selectedIntegrations, setSelectedIntegrations] = useState([]);
 
+  const dispatch = useDispatch();
+  const team = useSelector(selectTeam);
+  const teamMembers = useSelector(selectTeamMembers);
+
   useEffect(() => {
-    getTeamMembers(team.id);
+    dispatch(getTeamMembers({ team_id: team.id }));
     getTeamIntegrations(team.id);
   }, []);
 
@@ -621,9 +625,6 @@ function DatasetAlerts(props) {
 }
 
 DatasetAlerts.propTypes = {
-  getTeamMembers: PropTypes.func.isRequired,
-  teamMembers: PropTypes.array.isRequired,
-  team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
   chartId: PropTypes.string.isRequired,
   datasetId: PropTypes.string.isRequired,
@@ -639,8 +640,6 @@ DatasetAlerts.propTypes = {
 };
 
 const mapStateToProps = (state) => ({
-  teamMembers: state.team.teamMembers,
-  team: state.team.active,
   user: state.user.data,
   alerts: state.alert.data,
   charts: state.chart.data,
@@ -648,7 +647,6 @@ const mapStateToProps = (state) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  getTeamMembers: (teamId) => dispatch(getTeamMembersAction(teamId)),
   createAlert: (projectId, chartId, alert) => (
     dispatch(createAlertAction(projectId, chartId, alert))
   ),

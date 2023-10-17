@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import { Outlet, useNavigate, useParams } from "react-router";
 import {
   CircularProgress, Listbox, ListboxSection, ListboxItem,
 } from "@nextui-org/react";
 import { LuCode2, LuSettings, LuUsers2 } from "react-icons/lu";
 
-import { getTeam, saveActiveTeam } from "../actions/team";
+import { getTeam, saveActiveTeam } from "../slices/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import Navbar from "../components/Navbar";
 import canAccess from "../config/canAccess";
@@ -19,12 +19,13 @@ import Row from "../components/Row";
 */
 function ManageTeam(props) {
   const {
-    cleanErrors, getTeam, saveActiveTeam, user, team,
+    cleanErrors, user, team,
   } = props;
   const [loading, setLoading] = useState(true);
 
   const params = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     cleanErrors();
@@ -32,11 +33,9 @@ function ManageTeam(props) {
   }, []);
 
   const _getTeam = () => {
-    getTeam(params.teamId)
+    dispatch(getTeam(params.teamId))
       .then((team) => {
-        saveActiveTeam(team);
-      })
-      .then(() => {
+        dispatch(saveActiveTeam(team));
         setLoading(false);
       })
       .catch(() => {
@@ -126,7 +125,6 @@ ManageTeam.propTypes = {
   getTeam: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
-  saveActiveTeam: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
 };
 
@@ -140,7 +138,6 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
   return {
     getTeam: (id) => dispatch(getTeam(id)),
-    saveActiveTeam: (team) => dispatch(saveActiveTeam(team)),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { useWindowSize } from "react-use";
 import {
@@ -20,7 +20,7 @@ import {
   createInvitedUser as createInvitedUserAction,
   oneaccountAuth as oneaccountAuthAction,
 } from "../actions/user";
-import { addTeamMember as addTeamMemberAction } from "../actions/team";
+import { addTeamMember } from "../slices/team";
 import {
   required,
   email as emailValidation,
@@ -42,7 +42,7 @@ const testimonialAvatar = "https://cdn2.chartbrew.com/skyguy.webp";
 */
 function Signup(props) {
   const {
-    createUser, createInvitedUser, addTeamMember, oneaccountAuth,
+    createUser, createInvitedUser, oneaccountAuth,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -56,6 +56,7 @@ function Signup(props) {
 
   const { height } = useWindowSize();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     document.addEventListener("oneaccount-authenticated", authenticateOneaccount);
@@ -103,7 +104,7 @@ function Signup(props) {
   const _createInvitedUser = (values, inviteToken) => {
     createInvitedUser(values)
       .then((user) => {
-        addTeamMember(user.id, inviteToken)
+        dispatch(addTeamMember({ userId: user.id, inviteToken }))
           .then(() => {
             setLoading(false);
             setAddedToTeam(true);
@@ -412,7 +413,6 @@ const styles = {
 Signup.propTypes = {
   createUser: PropTypes.func.isRequired,
   oneaccountAuth: PropTypes.func.isRequired,
-  addTeamMember: PropTypes.func.isRequired,
   createInvitedUser: PropTypes.func.isRequired,
   history: PropTypes.object.isRequired,
 };
@@ -429,7 +429,6 @@ const mapDispatchToProps = (dispatch) => {
   return {
     createUser: (user) => dispatch(createUserAction(user)),
     oneaccountAuth: (user) => dispatch(oneaccountAuthAction(user)),
-    addTeamMember: (userId, token) => dispatch(addTeamMemberAction(userId, token)),
     createInvitedUser: (user) => dispatch(createInvitedUserAction(user)),
   };
 };

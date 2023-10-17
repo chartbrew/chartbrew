@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Chip, Button, Checkbox, Divider, Dropdown, Modal, Spacer, Table, Tooltip, CircularProgress,
   TableHeader, TableColumn, TableBody, TableRow, TableCell, DropdownMenu, DropdownItem,
@@ -8,14 +8,14 @@ import {
 } from "@nextui-org/react";
 import _ from "lodash";
 import { ToastContainer, toast, Flip } from "react-toastify";
+import { useParams } from "react-router";
+import { LuBookKey, LuInfo, LuUsers2, LuX, LuXCircle } from "react-icons/lu";
+
 import "react-toastify/dist/ReactToastify.min.css";
 
 import {
-  getTeam as getTeamAction,
-  getTeamMembers as getTeamMembersAction,
-  updateTeamRole as updateTeamRoleAction,
-  deleteTeamMember as deleteTeamMemberAction,
-} from "../../actions/team";
+  getTeam, getTeamMembers, updateTeamRole, deleteTeamMember, selectTeam, selectTeamMembers,
+} from "../../slices/team";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import InviteMembersForm from "../../components/InviteMembersForm";
 import canAccess from "../../config/canAccess";
@@ -23,17 +23,14 @@ import Container from "../../components/Container";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import useThemeDetector from "../../modules/useThemeDetector";
-import { LuBookKey, LuInfo, LuUsers2, LuX, LuXCircle } from "react-icons/lu";
 import Segment from "../../components/Segment";
-import { useParams } from "react-router";
 
 /*
   Contains Pending Invites and All team members with functionality to delete/change role
 */
 function TeamMembers(props) {
   const {
-    cleanErrors, getTeam, getTeamMembers, updateTeamRole, team,
-    user, style, teamMembers, deleteTeamMember, projects,
+    cleanErrors, user, style, projects,
   } = props;
 
   const [loading, setLoading] = useState(true);
@@ -43,8 +40,12 @@ function TeamMembers(props) {
   const [projectAccess, setProjectAccess] = useState({});
   const [changedRole, setChangedRole] = useState({});
 
+  const team = useSelector(selectTeam);
+  const teamMembers = useSelector(selectTeamMembers);
+
   const isDark = useThemeDetector();
   const params = useParams();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     cleanErrors();
@@ -64,9 +65,9 @@ function TeamMembers(props) {
   }, [projects, team]);
 
   const _getTeam = () => {
-    getTeam(params.teamId)
+    dispatch(getTeam(params.teamId))
       .then((team) => {
-        getTeamMembers(team.id);
+        dispatch(getTeamMembers({ team_id: team.id }));
       })
       .then(() => {
         setLoading(false);
@@ -79,7 +80,7 @@ function TeamMembers(props) {
   const _onChangeRole = (newRole, member) => {
     setLoading(true);
     setChangedMember(member);
-    updateTeamRole({ role: newRole }, member.id, team.id)
+    dispatch(updateTeamRole({ data: { role: newRole }, memberId: member.id, team_id: team.id }))
       .then(() => {
         setLoading(false);
       }).catch(() => {
@@ -114,9 +115,11 @@ function TeamMembers(props) {
       newAccess.splice(isFound, 1);
     }
 
-    updateTeamRole({
-      projects: newAccess,
-    }, changedMember.id, team.id)
+    dispatch(updateTeamRole({
+      data: { projects: newAccess },
+      memberId: changedMember.id,
+      team_id: team.id
+    }))
       .then(() => {
         toast.success("Updated the user access 👨‍🎓");
       })
@@ -126,9 +129,11 @@ function TeamMembers(props) {
   };
 
   const _onChangeExport = () => {
-    updateTeamRole({
-      canExport: !changedRole.canExport,
-    }, changedMember.id, team.id)
+    dispatch(updateTeamRole({
+      data: { canExport: !changedRole.canExport },
+      memberId: changedMember.id,
+      team_id: team.id,
+    }))
       .then(() => {
         const newChangedRole = _.clone(changedRole);
         newChangedRole.canExport = !changedRole.canExport;
@@ -148,9 +153,9 @@ function TeamMembers(props) {
   const _onDeleteTeamMember = (memberId) => {
     // deleting from teamRole
     setLoading(true);
-    deleteTeamMember(memberId, team.id)
+    dispatch(deleteTeamMember({ memberId: memberId, team_id: team.id }))
       .then(() => {
-        getTeamMembers(team.id);
+        dispatch(getTeamMembers({ team_id: team.id }));
         setLoading(false);
         setDeleteMember(false);
       })
@@ -446,22 +451,14 @@ TeamMembers.defaultProps = {
 };
 
 TeamMembers.propTypes = {
-  getTeam: PropTypes.func.isRequired,
-  team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
-  teamMembers: PropTypes.array.isRequired,
   style: PropTypes.object,
-  getTeamMembers: PropTypes.func.isRequired,
-  updateTeamRole: PropTypes.func.isRequired,
-  deleteTeamMember: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
   projects: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
-    team: state.team.active,
-    teamMembers: state.team.teamMembers,
     user: state.user.data,
     projects: state.project.data,
   };
@@ -469,14 +466,6 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    getTeam: id => dispatch(getTeamAction(id)),
-    getTeamMembers: teamId => dispatch(getTeamMembersAction(teamId)),
-    updateTeamRole: (role, memberId, teamId) => (
-      dispatch(updateTeamRoleAction(role, memberId, teamId))
-    ),
-    deleteTeamMember: (memberId, teamId) => (
-      dispatch(deleteTeamMemberAction(memberId, teamId))
-    ),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };

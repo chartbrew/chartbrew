@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import { Outlet, Route, Routes, useNavigate, useParams } from "react-router";
 import { Allotment } from "allotment";
 import { createMedia } from "@artsy/fresnel";
@@ -15,9 +15,8 @@ import "allotment/dist/style.css";
 import { getProject, changeActiveProject } from "../../actions/project";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import {
-  getTeam as getTeamAction,
-  getTeamMembers as getTeamMembersAction,
-} from "../../actions/team";
+  getTeam, getTeamMembers, selectTeam,
+} from "../../slices/team";
 import { getProjectCharts as getProjectChartsAction } from "../../actions/chart";
 import { getProjectConnections } from "../../actions/connection";
 import Navbar from "../../components/Navbar";
@@ -47,8 +46,7 @@ const sideMinSize = 70;
 function ProjectBoard(props) {
   const {
     cleanErrors, getProjectCharts, getProjectConnections,
-    getProject, changeActiveProject, getTeam, project, user, team, projects,
-    getTeamMembers,
+    getProject, changeActiveProject, project, user, projects,
   } = props;
 
   const [loading, setLoading] = useState(true);
@@ -57,9 +55,12 @@ function ProjectBoard(props) {
   const [isPrinting, setIsPrinting] = useState(false);
   const [update, setUpdate] = useState({});
 
+  const team = useSelector(selectTeam);
+
   const { height } = useWindowSize();
   const params = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const params = new URLSearchParams(document.location.search);
@@ -94,9 +95,9 @@ function ProjectBoard(props) {
     const { teamId } = params;
     if (id) projectId = id;
 
-    getTeam(teamId)
+    dispatch(getTeam(teamId))
       .then(() => {
-        getTeamMembers(teamId);
+        dispatch(getTeamMembers({ team_id: teamId }));
         return getProject(projectId);
       })
       .then(() => {
@@ -316,7 +317,6 @@ const styles = {
 };
 
 ProjectBoard.propTypes = {
-  team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
   getProject: PropTypes.func.isRequired,
   changeActiveProject: PropTypes.func.isRequired,
@@ -324,14 +324,11 @@ ProjectBoard.propTypes = {
   projects: PropTypes.array.isRequired,
   getProjectCharts: PropTypes.func.isRequired,
   getProjectConnections: PropTypes.func.isRequired,
-  getTeam: PropTypes.func.isRequired,
-  getTeamMembers: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
-    team: state.team.active,
     user: state.user.data,
     project: state.project.active,
     projects: state.project.data,
@@ -344,8 +341,6 @@ const mapDispatchToProps = (dispatch) => {
     changeActiveProject: id => dispatch(changeActiveProject(id)),
     getProjectCharts: (projectId) => dispatch(getProjectChartsAction(projectId)),
     getProjectConnections: (projectId) => dispatch(getProjectConnections(projectId)),
-    getTeam: (teamId) => dispatch(getTeamAction(teamId)),
-    getTeamMembers: (teamId) => dispatch(getTeamMembersAction(teamId)),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };

@@ -1,7 +1,6 @@
 import {
   ADD_TEAM,
   SAVE_ACTIVE_TEAM,
-  SAVE_TEAM_LIST,
   CREATING_TEAM_SUCCESS,
   CREATING_TEAM_FAILED,
   SAVE_TEAM_MEMBERS,
@@ -22,8 +21,6 @@ export default function team(state = {
       return { ...state, data: [...state.data, action.addTeam] };
     case SAVE_ACTIVE_TEAM:
       return { ...state, active: action.activeTeam };
-    case SAVE_TEAM_LIST:
-      return { ...state, loading: false, data: action.teamList };
     case CREATING_TEAM_SUCCESS:
       return { ...state, loading: false, newTeam: action.team };
     case CREATING_TEAM_FAILED:

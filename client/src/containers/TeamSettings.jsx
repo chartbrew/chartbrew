@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import {
   Input, Checkbox, Spacer, Button, Divider, CircularProgress,
 } from "@nextui-org/react";
 
-import { getTeam, updateTeam } from "../actions/team";
+import { getTeam, updateTeam } from "../slices/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import Container from "../components/Container";
 import Row from "../components/Row";
@@ -17,7 +17,7 @@ import { useParams } from "react-router";
 */
 function TeamSettings(props) {
   const {
-    team, getTeam, cleanErrors, style, updateTeam,
+    team, cleanErrors, style,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -26,10 +26,11 @@ function TeamSettings(props) {
   const [submitError, setSubmitError] = useState(false);
 
   const params = useParams();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     cleanErrors();
-    getTeam(params.teamId)
+    dispatch(getTeam(params.teamId))
       .then((teamData) => {
         setTeamState({ name: teamData.name });
       });
@@ -40,7 +41,7 @@ function TeamSettings(props) {
     setLoading(true);
     setSuccess(false);
 
-    updateTeam(team.id, teamState)
+    dispatch(updateTeam({ team_id: team.id, data: teamState }))
       .then(() => {
         setSuccess(true);
         setLoading(false);
@@ -120,9 +121,7 @@ TeamSettings.defaultProps = {
 };
 
 TeamSettings.propTypes = {
-  getTeam: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,
-  updateTeam: PropTypes.func.isRequired,
   style: PropTypes.object,
   cleanErrors: PropTypes.func.isRequired,
 };
@@ -135,8 +134,6 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    getTeam: id => dispatch(getTeam(id)),
-    updateTeam: (teamId, data) => dispatch(updateTeam(teamId, data)),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };

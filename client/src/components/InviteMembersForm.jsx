@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Button, Tooltip, Spacer, Checkbox, Input, Accordion, Radio, AccordionItem, RadioGroup, Chip,
 } from "@nextui-org/react";
 import _ from "lodash";
 import { LuCheckCheck, LuClipboard, LuClipboardCheck, LuInfo, LuX } from "react-icons/lu";
+import { useParams } from "react-router";
 
-import { generateInviteUrl as generateInviteUrlAction } from "../actions/team";
+import { generateInviteUrl } from "../slices/team";
 import Container from "./Container";
 import Row from "./Row";
 import Text from "./Text";
-import { useParams } from "react-router";
+import { selectTeam } from "../slices/team";
 
 /*
   Contains the team members invitation functionality
@@ -25,10 +26,12 @@ function InviteMembersForm(props) {
   const [urlCopied, setUrlCopied] = useState(false);
 
   const {
-    style, projects, team, generateInviteUrl, selectedProjects,
+    style, projects, selectedProjects,
   } = props;
 
+  const team = useSelector(selectTeam);
   const params = useParams();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (selectedProjects?.length > 0) {
@@ -48,17 +51,18 @@ function InviteMembersForm(props) {
 
     setLoading(true);
 
-    generateInviteUrl(
-      teamId,
-      projectAccess,
-      exportAllowed,
+    dispatch(generateInviteUrl({
+      team_id: teamId,
+      projects: projectAccess,
+      canExport: exportAllowed,
       role,
-    ).then((url) => {
-      setInviteUrl(url);
-      setLoading(false);
-    }).catch(() => {
-      setLoading(false);
-    });
+    }))
+      .then((url) => {
+        setInviteUrl(url);
+        setLoading(false);
+      }).catch(() => {
+        setLoading(false);
+      });
   };
 
   const _onChangeProjectAccess = (projectId) => {
@@ -267,8 +271,6 @@ InviteMembersForm.defaultProps = {
 };
 
 InviteMembersForm.propTypes = {
-  generateInviteUrl: PropTypes.func.isRequired,
-  team: PropTypes.object.isRequired,
   match: PropTypes.object.isRequired,
   projects: PropTypes.array.isRequired,
   selectedProjects: PropTypes.array,
@@ -277,17 +279,13 @@ InviteMembersForm.propTypes = {
 
 const mapStateToProps = (state) => {
   return {
-    team: state.team.active,
     user: state.user,
     projects: state.project.data,
   };
 };
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = () => {
   return {
-    generateInviteUrl: (teamId, projects, canExport, role) => (
-      dispatch(generateInviteUrlAction(teamId, projects, canExport, role))
-    ),
   };
 };
 

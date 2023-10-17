@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { useWindowSize } from "react-use";
 import {
@@ -14,11 +14,6 @@ import {
   LuTrash, LuUsers2,
 } from "react-icons/lu";
 
-import {
-  getTeams as getTeamsAction,
-  saveActiveTeam as saveActiveTeamAction,
-  getTeamMembers as getTeamMembersAction,
-} from "../actions/team";
 import { relog as relogAction } from "../actions/user";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import {
@@ -40,21 +35,25 @@ import Row from "../components/Row";
 import Text from "../components/Text";
 import connectionImages from "../config/connectionImages";
 import useThemeDetector from "../modules/useThemeDetector";
+import {
+  selectTeam, selectTeams, getTeams, saveActiveTeam, getTeamMembers, selectTeamMembers,
+} from "../slices/team";
 
 /*
   The user dashboard with all the teams and projects
 */
 function UserDashboard(props) {
   const {
-    relog, cleanErrors, user, getTeams, saveActiveTeam,
-    teams, teamLoading, getTemplates, updateProject, removeProject,
-    team, getTeamMembers, teamMembers, connections, datasets, getTeamConnections,
+    relog, cleanErrors, user,
+    teamLoading, getTemplates, updateProject, removeProject,
+    connections, datasets, getTeamConnections,
   } = props;
 
-  const [loading, setLoading] = useState(false);
+  const team = useSelector(selectTeam);
+  const teams = useSelector(selectTeams);
+  const teamMembers = useSelector(selectTeamMembers);
+
   const [addProject, setAddProject] = useState(false);
-  const [fetched, setFetched] = useState(false);
-  const [retried, setRetried] = useState(false);
   const [search, setSearch] = useState({});
   const [projectToEdit, setProjectToEdit] = useState(null);
   const [projectToDelete, setProjectToDelete] = useState(null);
@@ -64,16 +63,15 @@ function UserDashboard(props) {
   const { height } = useWindowSize();
   const isDark = useThemeDetector();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     cleanErrors();
     relog();
-    _getTeams();
   }, []);
 
   useEffect(() => {
-    if (!fetched && user.data.id && !user.loading) {
-      _getTeams();
+    if (user.data.id && !user.loading) {
       _checkParameters();
     }
   }, [user]);
@@ -82,15 +80,16 @@ function UserDashboard(props) {
     if (teams && teams.length > 0 && !initRef.current) {
       initRef.current = true;
       const owningTeam = teams.find((t) => t.TeamRoles.find((tr) => tr.role === "teamOwner" && tr.user_id === user.data.id));
+      console.log(owningTeam);
       if (!owningTeam) return;
-      saveActiveTeam(owningTeam);
-      getTeamMembers(owningTeam.id);
+      dispatch(saveActiveTeam(owningTeam));
+      dispatch(getTeamMembers({ team_id: owningTeam.id }));
     }
   }, [teams]);
 
   useEffect(() => {
     if (team?.id) {
-      getTeamMembers(team.id);
+      dispatch(getTeamMembers({ team_id: team.id }));
       getTeamConnections(team.id);
     }
   }, [team]);
@@ -105,30 +104,14 @@ function UserDashboard(props) {
     }
   };
 
-  const _getTeams = () => {
-    setFetched(true);
-    setLoading(true);
-    return getTeams(user.data.id)
-      .then(() => {
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!retried) {
-          _getTeams();
-        }
-        setLoading(false);
-        setRetried(true);
-      });
-  };
-
   const _onNewProject = (team) => {
     setAddProject(true);
-    saveActiveTeam(team);
+    dispatch(saveActiveTeam(team));
     getTemplates(team.id);
   };
 
   const _onProjectCreated = (project, isNew = true) => {
-    getTeams(user.data.id);
+    dispatch(getTeams(user.data.id));
     setAddProject(false);
 
     let url = `/${project.team_id}/${project.id}/dashboard`;
@@ -136,8 +119,8 @@ function UserDashboard(props) {
     window.location.href = url;
   };
 
-  const directToProject = (team, projectId) => {
-    saveActiveTeam(team);
+  const directToProject = (projectId) => {
+    dispatch(saveActiveTeam(team));
     window.location.href = `/${team.id}/${projectId}/dashboard`;
   };
 
@@ -149,7 +132,7 @@ function UserDashboard(props) {
     return teamRoles.filter((o) => o.user_id === user.data.id)[0].role;
   };
 
-  const _getFilteredProjects = (team) => {
+  const _getFilteredProjects = () => {
     if (!search[team.id]) return team.Projects;
     const filteredProjects = team.Projects.filter((p) => {
       return p.name.toLowerCase().indexOf(search[team.id].toLowerCase()) > -1;
@@ -176,7 +159,7 @@ function UserDashboard(props) {
       setModifyingProject(true);
       updateProject(projectToEdit.id, { name: projectToEdit.name })
         .then(() => {
-          return _getTeams();
+          return dispatch(getTeams(user.data.id))
         })
         .then(() => {
           setModifyingProject(false);
@@ -197,7 +180,7 @@ function UserDashboard(props) {
       setModifyingProject(true);
       removeProject(projectToDelete.id)
         .then(() => {
-          return _getTeams();
+          return dispatch(getTeams(user.data.id))
         })
         .then(() => {
           setProjectToDelete(null);
@@ -220,8 +203,8 @@ function UserDashboard(props) {
 
   const _onChangeTeam = (teamId) => {
     const team = teams.find((t) => `${t.id}` === `${teamId}`);
-    saveActiveTeam(team);
-    getTeamMembers(team.id);
+    dispatch(saveActiveTeam(team));
+    dispatch(getTeamMembers({ team_id: team.id }));
   };
 
   const newProjectModal = () => {
@@ -253,7 +236,7 @@ function UserDashboard(props) {
       <div className="container mx-auto">
         <Spacer y={4} />
 
-        {team && (
+        {team?.id && (
           <>
             <div className={"mt-4"}>
               <Row
@@ -524,12 +507,12 @@ function UserDashboard(props) {
                     </TableColumn>
                     <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
                   </TableHeader>
-                  {_getFilteredProjects(team).length > 0 && (
+                  {_getFilteredProjects().length > 0 && (
                     <TableBody>
-                      {_getFilteredProjects(team).map((project) => (
+                      {_getFilteredProjects().map((project) => (
                         <TableRow key={project.id}>
                           <TableCell key="name">
-                            <LinkNext onClick={() => directToProject(team, project.id)} className="cursor-pointer flex flex-col items-start">
+                            <LinkNext onClick={() => directToProject(project.id)} className="cursor-pointer flex flex-col items-start">
                               <Text b className={"text-foreground"}>{project.name}</Text>
                             </LinkNext>
                           </TableCell>
@@ -692,7 +675,7 @@ function UserDashboard(props) {
           </>
         )}
 
-        {(loading || teamLoading || (teams && teams.length === 0)) && (
+        {(teamLoading || (teams && teams.length === 0)) && (
           <>
             <Row align="center" justify="center">
               <CircularProgress aria-label="Loading" size="xl" />
@@ -770,17 +753,12 @@ const styles = {
 
 UserDashboard.propTypes = {
   user: PropTypes.object.isRequired,
-  teams: PropTypes.array.isRequired,
-  getTeams: PropTypes.func.isRequired,
-  saveActiveTeam: PropTypes.func.isRequired,
   relog: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
   teamLoading: PropTypes.bool.isRequired,
   getTemplates: PropTypes.func.isRequired,
   updateProject: PropTypes.func.isRequired,
   removeProject: PropTypes.func.isRequired,
-  team: PropTypes.object.isRequired,
-  getTeamMembers: PropTypes.func.isRequired,
   teamMembers: PropTypes.array.isRequired,
   connections: PropTypes.array.isRequired,
   datasets: PropTypes.array.isRequired,
@@ -791,7 +769,6 @@ const mapStateToProps = (state) => {
   return {
     user: state.user,
     teams: state.team.data,
-    team: state.team.active,
     teamLoading: state.team.loading,
     teamMembers: state.team.teamMembers,
     connections: state.connection.data[state.team.active?.id] || [],
@@ -801,14 +778,11 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    getTeams: (userId) => dispatch(getTeamsAction(userId)),
-    saveActiveTeam: (team) => dispatch(saveActiveTeamAction(team)),
     relog: () => dispatch(relogAction()),
     cleanErrors: () => dispatch(cleanErrorsAction()),
     getTemplates: (teamId) => dispatch(getTemplatesAction(teamId)),
     updateProject: (projectId, data) => dispatch(updateProjectAction(projectId, data)),
     removeProject: (projectId) => dispatch(removeProjectAction(projectId)),
-    getTeamMembers: (teamId) => dispatch(getTeamMembersAction(teamId)),
     getTeamConnections: (teamId) => dispatch(getTeamConnectionsAction(teamId)),
   };
 };

@@ -5,8 +5,9 @@ import {
 } from "@nextui-org/react";
 import { formatRelative } from "date-fns";
 import { LuClipboard, LuClipboardCheck, LuPlus, LuTrash } from "react-icons/lu";
+import { useDispatch } from "react-redux";
 
-import { getApiKeys, createApiKey, deleteApiKey } from "../../actions/team";
+import { getApiKeys, createApiKey, deleteApiKey } from "../../slices/team";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 
@@ -22,13 +23,15 @@ function ApiKeys(props) {
   const [createLoading, setCreateLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  const dispatch = useDispatch();
+
   useEffect(() => {
     _fetchApiKeys();
   }, []);
 
   const _fetchApiKeys = () => {
     setLoading(true);
-    getApiKeys(teamId)
+    dispatch(getApiKeys({ team_id: teamId }))
       .then((keys) => {
         setApiKeys(keys);
         setLoading(false);
@@ -42,7 +45,7 @@ function ApiKeys(props) {
 
   const _onCreateKey = () => {
     setCreateLoading(true);
-    createApiKey(teamId, newKey)
+    dispatch(createApiKey({ team_id: teamId, keyName: newKey }))
       .then((createdKey) => {
         setCreateLoading(false);
         setCreateMode(false);
@@ -62,7 +65,7 @@ function ApiKeys(props) {
 
   const _onRemoveKey = () => {
     setCreateLoading(true);
-    deleteApiKey(teamId, confirmDelete)
+    dispatch(deleteApiKey({ team_id: teamId, keyId: confirmDelete }))
       .then(() => {
         setConfirmDelete(false);
         setCreateLoading(false);

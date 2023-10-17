@@ -1,6 +1,6 @@
 import React, { useEffect, lazy, Suspense } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 import { semanticColors } from "@nextui-org/theme";
 import { createMedia } from "@artsy/fresnel";
@@ -13,7 +13,7 @@ import {
   relog as relogAction,
   areThereAnyUsers,
 } from "../actions/user";
-import { getTeams } from "../actions/team";
+import { getTeams, selectTeam } from "../slices/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import useThemeDetector from "../modules/useThemeDetector";
 import Container from "../components/Container";
@@ -54,19 +54,20 @@ const { MediaContextProvider } = AppMedia;
   The main component where the entire app routing resides
 */
 function Main(props) {
-  const {
-    relog, getTeams, cleanErrors, team,
-  } = props;
+  const { relog, cleanErrors } = props;
+
+  const team = useSelector(selectTeam);
 
   const isDark = useThemeDetector();
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     cleanErrors();
     if (!location.pathname.match(/\/chart\/\d+\/embedded/g)) {
       relog().then((data) => {
-        getTeams(data.id);
+        dispatch(getTeams(data.id));
       });
 
       areThereAnyUsers()
@@ -224,21 +225,17 @@ const styles = {
 
 Main.propTypes = {
   relog: PropTypes.func.isRequired,
-  getTeams: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
-  team: PropTypes.object.isRequired,
 };
 
-const mapStateToProps = (state) => {
+const mapStateToProps = () => {
   return {
-    team: state.team.active,
   };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
     relog: () => dispatch(relogAction()),
-    getTeams: (id) => dispatch(getTeams(id)),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };

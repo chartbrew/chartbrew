@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import {
   Button, Input, Spacer, Link, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
@@ -12,7 +12,7 @@ import {
   requestPasswordReset as requestPasswordResetAction,
   oneaccountAuth as oneaccountAuthAction,
 } from "../actions/user";
-import { addTeamMember as addTeamMemberAction } from "../actions/team";
+import { addTeamMember } from "../slices/team";
 import { required, email as validateEmail } from "../config/validations";
 import { ONE_ACCOUNT_ENABLED } from "../config/settings";
 import { negative } from "../config/colors";
@@ -25,7 +25,7 @@ import Text from "./Text";
 */
 function LoginForm(props) {
   const {
-    requestPasswordReset, oneaccountAuth, login, addTeamMember,
+    requestPasswordReset, oneaccountAuth, login,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -40,6 +40,7 @@ function LoginForm(props) {
   const [errors, setErrors] = useState({});
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     document.addEventListener("oneaccount-authenticated", authenticateOneaccount);
@@ -112,7 +113,7 @@ function LoginForm(props) {
     login({ email, password })
       .then((user) => {
         if (params.has("inviteToken")) {
-          return addTeamMember(user.id, params.get("inviteToken"));
+          return dispatch(addTeamMember({ userId: user.id, inviteToken: params.get("inviteToken") }));
         }
         setLoading(false);
         return "done";
@@ -305,7 +306,6 @@ const styles = {
 LoginForm.propTypes = {
   oneaccountAuth: PropTypes.func.isRequired,
   login: PropTypes.func.isRequired,
-  addTeamMember: PropTypes.func.isRequired,
   requestPasswordReset: PropTypes.func.isRequired,
 };
 
@@ -319,7 +319,6 @@ const mapDispatchToProps = (dispatch) => {
   return {
     oneaccountAuth: (user) => dispatch(oneaccountAuthAction(user)),
     login: (data) => dispatch(loginAction(data)),
-    addTeamMember: (userId, token) => dispatch(addTeamMemberAction(userId, token)),
     requestPasswordReset: (email) => dispatch(requestPasswordResetAction(email)),
   };
 };

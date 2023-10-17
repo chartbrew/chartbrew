@@ -5,7 +5,7 @@ import {
   Button, Input, Spacer, Navbar, Tooltip, Popover, Divider, Modal, Badge,
   Link, Image, CircularProgress, NavbarContent, PopoverTrigger, PopoverContent, ModalContent, ModalHeader, ModalBody, ModalFooter, Chip, NavbarItem,
 } from "@nextui-org/react";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import { TwitterPicker } from "react-color";
 import { createMedia } from "@artsy/fresnel";
 import { Helmet } from "react-helmet";
@@ -29,7 +29,7 @@ import {
   updateProject as updateProjectAction,
   updateProjectLogo as updateProjectLogoAction,
 } from "../../actions/project";
-import { updateTeam as updateTeamAction } from "../../actions/team";
+import { selectTeams, updateTeam } from "../../slices/team";
 import { runQueryOnPublic as runQueryOnPublicAction } from "../../actions/chart";
 import { blue, primary, secondary } from "../../config/colors";
 import Chart from "../Chart/Chart";
@@ -59,7 +59,7 @@ const defaultColors = [
 function PublicDashboard(props) {
   const {
     getPublicDashboard, getProject, updateProject, updateProjectLogo, charts,
-    updateTeam, user, teams, runQueryOnPublic,
+    user, runQueryOnPublic,
   } = props;
 
   const [project, setProject] = useState({});
@@ -82,8 +82,11 @@ function PublicDashboard(props) {
   const [reportPassword, setReportPassword] = useState("");
   const [refreshLoading, setRefreshLoading] = useState(false);
 
+  const teams = useSelector(selectTeams);
+
   const isDark = useThemeDetector();
   const params = useParams();
+  const dispatch = useDispatch();
 
   const onDrop = useCallback((acceptedFiles) => {
     setNewChanges({ ...newChanges, logo: acceptedFiles });
@@ -250,7 +253,7 @@ function PublicDashboard(props) {
   };
 
   const _onToggleBranding = () => {
-    updateTeam(project.team_id, { showBranding: !project.Team.showBranding })
+    dispatch(updateTeam({ team_id: project.team_id, data: { showBranding: !project.Team.showBranding } }))
       .then(() => {
         _fetchProject();
         toast.success("The branding settings are saved!");
@@ -946,17 +949,14 @@ PublicDashboard.propTypes = {
   getProject: PropTypes.func.isRequired,
   updateProject: PropTypes.func.isRequired,
   updateProjectLogo: PropTypes.func.isRequired,
-  updateTeam: PropTypes.func.isRequired,
   charts: PropTypes.array.isRequired,
   user: PropTypes.object.isRequired,
-  teams: PropTypes.array.isRequired,
   runQueryOnPublic: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => ({
   charts: state.chart.data,
   user: state.user.data,
-  teams: state.team.data,
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -966,7 +966,6 @@ const mapDispatchToProps = (dispatch) => ({
   getProject: (projectId) => dispatch(getProjectAction(projectId)),
   updateProject: (projectId, data) => dispatch(updateProjectAction(projectId, data)),
   updateProjectLogo: (projectId, logo) => dispatch(updateProjectLogoAction(projectId, logo)),
-  updateTeam: (teamId, data) => dispatch(updateTeamAction(teamId, data)),
   runQueryOnPublic: (projectId, chartId) => dispatch(runQueryOnPublicAction(projectId, chartId)),
 });
 

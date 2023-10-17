@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Modal, Link as LinkNext, Spacer, Dropdown, Button, Navbar, Card,
@@ -16,7 +16,6 @@ import {
 } from "react-icons/lu";
 import { TbBrandDiscord } from "react-icons/tb";
 
-import { getTeam } from "../actions/team";
 import { logout } from "../actions/user";
 import { getProject, changeActiveProject } from "../actions/project";
 import { getProjectCharts } from "../actions/chart";
@@ -29,6 +28,7 @@ import useThemeDetector from "../modules/useThemeDetector";
 import Container from "./Container";
 import Row from "./Row";
 import Text from "./Text";
+import { selectTeam, selectTeams } from "../slices/team";
 
 const AppMedia = createMedia({
   breakpoints: {
@@ -50,8 +50,11 @@ function NavbarContainer(props) {
   const [isOsTheme, setIsOsTheme] = useLocalStorage("osTheme", "false");
 
   const {
-    team, teams, user, logout, projectProp,
+    user, logout, projectProp,
   } = props;
+
+  const team = useSelector(selectTeam);
+  const teams = useSelector(selectTeams);
 
   const darkMode = useDarkMode(false);
   const isSystemDark = useThemeDetector();
@@ -395,8 +398,6 @@ function NavbarContainer(props) {
 
 NavbarContainer.propTypes = {
   user: PropTypes.object.isRequired,
-  team: PropTypes.object.isRequired,
-  teams: PropTypes.array.isRequired,
   logout: PropTypes.func.isRequired,
   projectProp: PropTypes.object.isRequired,
 };
@@ -404,15 +405,12 @@ NavbarContainer.propTypes = {
 const mapStateToProps = (state) => {
   return {
     user: state.user.data,
-    team: state.team.active,
-    teams: state.team.data,
     projectProp: state.project.active,
   };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    getTeam: id => dispatch(getTeam(id)),
     getProject: id => dispatch(getProject(id)),
     changeActiveProject: id => dispatch(changeActiveProject(id)),
     logout: () => dispatch(logout()),
