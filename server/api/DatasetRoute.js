@@ -10,7 +10,7 @@ module.exports = (app) => {
   const projectController = new ProjectController();
   const teamController = new TeamController();
   const chartController = new ChartController();
-  const root = "/project/:project_id/chart/:chart_id/dataset";
+  const root = "/team/:team_id/datasets";
 
   const checkAccess = (req) => {
     let gChart;
@@ -47,6 +47,48 @@ module.exports = (app) => {
         return teamController.getTeamRole(gProject.team_id, req.user.id);
       });
   };
+
+  const checkPermissions = async (req, res, next) => {
+    const { team_id } = req.params;
+
+    // Fetch the TeamRole for the user
+    const teamRole = await teamController.getTeamRole(team_id, req.user.id);
+
+    if (!teamRole) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const { role, projects } = teamRole;
+
+    // Handle permissions for teamOwner and teamAdmin
+    if (["teamOwner", "teamAdmin"].includes(role)) {
+      return next();
+    }
+
+    if (role === "projectAdmin" || role === "projectViewer") {
+      const connections = await datasetController.findByProjects(projects);
+      if (!connections || connections.length === 0) {
+        return res.status(404).json({ message: "No connections found" });
+      }
+
+      return next();
+    }
+
+    return res.status(403).json({ message: "Access denied" });
+  };
+
+  /*
+  ** Route to get all datasets
+  */
+  app.get(root, verifyToken, checkPermissions, (req, res) => {
+    return datasetController.findByTeam(req.params.team_id)
+      .then((datasets) => {
+        return res.status(200).send(datasets);
+      })
+      .catch((err) => {
+        return res.status(400).send(err);
+      });
+  });
 
   /*
   ** Route to get a dataset by ID

@@ -6,7 +6,7 @@ import chart from "./chart";
 import connection from "./connection";
 import savedQuery from "./savedQuery";
 import error from "./error";
-import dataset from "./dataset";
+import dataset from "../slices/dataset";
 import dataRequest from "./dataRequest";
 import tutorial from "./tutorial";
 import template from "./template";

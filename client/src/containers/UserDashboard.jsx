@@ -38,6 +38,9 @@ import useThemeDetector from "../modules/useThemeDetector";
 import {
   selectTeam, selectTeams, getTeams, saveActiveTeam, getTeamMembers, selectTeamMembers,
 } from "../slices/team";
+import {
+  getDatasets, selectDatasets,
+} from "../slices/dataset";
 
 /*
   The user dashboard with all the teams and projects
@@ -46,12 +49,13 @@ function UserDashboard(props) {
   const {
     relog, cleanErrors, user,
     teamLoading, getTemplates, updateProject, removeProject,
-    connections, datasets, getTeamConnections,
+    connections, getTeamConnections,
   } = props;
 
   const team = useSelector(selectTeam);
   const teams = useSelector(selectTeams);
   const teamMembers = useSelector(selectTeamMembers);
+  const datasets = useSelector(selectDatasets);
 
   const [addProject, setAddProject] = useState(false);
   const [search, setSearch] = useState({});
@@ -83,6 +87,7 @@ function UserDashboard(props) {
       if (!owningTeam) return;
       dispatch(saveActiveTeam(owningTeam));
       dispatch(getTeamMembers({ team_id: owningTeam.id }));
+      dispatch(getDatasets({ team_id: owningTeam.id }));
     }
   }, [teams]);
 
@@ -760,7 +765,6 @@ UserDashboard.propTypes = {
   removeProject: PropTypes.func.isRequired,
   teamMembers: PropTypes.array.isRequired,
   connections: PropTypes.array.isRequired,
-  datasets: PropTypes.array.isRequired,
   getTeamConnections: PropTypes.func.isRequired,
 };
 
@@ -771,7 +775,6 @@ const mapStateToProps = (state) => {
     teamLoading: state.team.loading,
     teamMembers: state.team.teamMembers,
     connections: state.connection.data[state.team.active?.id] || [],
-    datasets: state.dataset.data,
   };
 };
 

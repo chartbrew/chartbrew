@@ -92,6 +92,22 @@ class DatasetController {
     this.dataRequestController = new DataRequestController();
   }
 
+  findByTeam(teamId) {
+    return db.Dataset.findAll({
+      where: { team_id: teamId },
+      include: [
+        { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
+      ],
+      order: [["order", "ASC"]],
+    })
+      .then((datasets) => {
+        return datasets;
+      })
+      .catch((error) => {
+        return new Promise((resolve, reject) => reject(error));
+      });
+  }
+
   findById(id) {
     return db.Dataset.findOne({
       where: { id },
