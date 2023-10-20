@@ -10,7 +10,7 @@ import {
   Button,
   DropdownItem,
 } from "@nextui-org/react";
-import { LuChevronDownCircle, LuChevronUpCircle } from "react-icons/lu";
+import { LuChevronDown, LuChevronDownCircle, LuChevronUpCircle } from "react-icons/lu";
 
 import Row from "../../../../components/Row";
 import Text from "../../../../components/Text";
@@ -77,7 +77,7 @@ function TableComponent(props) {
                   <Spacer x={0.5} />
                   <Dropdown>
                     <DropdownTrigger>
-                      <Button variant="bordered" size="sm">
+                      <Button variant="bordered" size="sm" endContent={<LuChevronDown size={18} />}>
                         {paginationOptions.find((option) => option.value === pageSize).text}
                       </Button>
                     </DropdownTrigger>

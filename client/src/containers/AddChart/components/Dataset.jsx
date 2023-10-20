@@ -82,8 +82,8 @@ function Dataset(props) {
     if (chart.chartData && chart.chartData.data && chart.chartData.data.datasets) {
       // find the dataset in the chart data
       let foundIndex;
-      for (let i = 0; i < chart.Datasets.length; i++) {
-        const d = chart.Datasets[i];
+      for (let i = 0; i < chart.ChartDatasetConfigs.length; i++) {
+        const d = chart.ChartDatasetConfigs[i];
         if (d.id === dataset.id) {
           foundIndex = i;
           break;

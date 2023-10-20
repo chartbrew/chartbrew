@@ -55,9 +55,9 @@ function ChartFilters(props) {
 
   const _checkIfFilters = () => {
     let filterCount = 0;
-    chart.Datasets.forEach((d) => {
-      if (d.conditions) {
-        filterCount += d.conditions.filter((c) => c.exposed).length;
+    chart.ChartDatasetConfigs.forEach((cdc) => {
+      if (cdc.Dataset?.conditions) {
+        filterCount += cdc.Dataset.conditions.filter((c) => c.exposed).length;
       }
     });
 
@@ -79,9 +79,9 @@ function ChartFilters(props) {
           <p>No filters available</p>
         </Row>
       )}
-      {chart && chart.Datasets.filter((d) => d.conditions && d.conditions.length).map((dataset) => {
-        return dataset.conditions.filter((c) => c.exposed).map((condition) => {
-          const filterOptions = _getDropdownOptions(dataset, condition);
+      {chart && chart.ChartDatasetConfigs.filter((d) => d.conditions && d.conditions.length).map((cdc) => {
+        return cdc.Dataset?.conditions.filter((c) => c.exposed).map((condition) => {
+          const filterOptions = _getDropdownOptions(cdc.Dataset, condition);
           return (
             <Fragment key={condition.id}>
               <div className="flex flex-col">

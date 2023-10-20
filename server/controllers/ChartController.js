@@ -86,7 +86,10 @@ class ChartController {
     return db.Chart.findAll({
       where: { project_id: projectId },
       order: [["dashboardOrder", "ASC"], [db.ChartDatasetConfig, "order", "ASC"]],
-      include: [{ model: db.ChartDatasetConfig }, { model: db.Chartshare }],
+      include: [
+        { model: db.ChartDatasetConfig, include: [{ model: db.Dataset }] },
+        { model: db.Chartshare }
+      ],
     })
       .then((charts) => {
         return charts;
@@ -99,7 +102,10 @@ class ChartController {
   findById(id, customQuery) {
     const query = {
       where: { id },
-      include: [{ model: db.ChartDatasetConfig }, { model: db.Chartshare }],
+      include: [
+        { model: db.ChartDatasetConfig, include: [{ model: db.Dataset }] },
+        { model: db.Chartshare }
+      ],
       order: [[db.ChartDatasetConfig, "order", "ASC"]],
     };
 
@@ -680,7 +686,7 @@ class ChartController {
   exportChartData(userId, chartIds, filters) {
     return db.Chart.findAll({
       where: { id: chartIds },
-      include: [{ model: db.ChartDatasetConfig }],
+      include: [{ model: db.ChartDatasetConfig, include: [{ model: db.Dataset }] }],
       order: [[db.ChartDatasetConfig, "order", "ASC"]],
     })
       .then((charts) => {

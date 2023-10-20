@@ -103,5 +103,10 @@ module.exports = (sequelize, DataTypes) => {
     freezeTableName: true,
   });
 
+  ChartDatasetConfig.associate = (models) => {
+    models.ChartDatasetConfig.belongsTo(models.Dataset, { foreignKey: "dataset_id" });
+    models.ChartDatasetConfig.belongsTo(models.Chart, { foreignKey: "chart_id" });
+  };
+
   return ChartDatasetConfig;
 };

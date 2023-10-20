@@ -115,7 +115,7 @@ function ChartPreview(props) {
 
   return (
     <div className={"bg-content1 rounded-lg mx-auto p-4 w-full"}>
-      {chart && chart.chartData && chart.Datasets && (
+      {chart && chart.chartData && chart.ChartDatasetConfigs && (
         <>
           <div className={"min-h-[350px] w-full"}>
             <Row justify="flex-start" align="center">
@@ -358,7 +358,7 @@ function ChartPreview(props) {
         )}
       </div>
 
-      {chart && chart.type && chart.Datasets && chart.Datasets.length > 0 && (
+      {chart && chart.type && chart.ChartDatasetConfigs && chart.ChartDatasetConfigs.length > 0 && (
         <div style={styles.topBuffer}>
           <Row align="center" justify="space-between" className={"gap-4"}>
             <Select

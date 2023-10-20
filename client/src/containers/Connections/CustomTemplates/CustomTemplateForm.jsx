@@ -158,14 +158,14 @@ function CustomTemplateForm(props) {
   const _getDependency = (chart) => {
     if (Object.keys(selectedConnections).length < 1) return "";
 
-    const datasets = chart.Datasets;
+    const cdConfigs = chart.ChartDatasetConfigs;
     let dependency = "";
 
-    for (let i = 0; i < datasets.length; i++) {
-      if (selectedConnections[datasets[i].Connection]
-        && !selectedConnections[datasets[i].Connection].active
+    for (let i = 0; i < cdConfigs.length; i++) {
+      if (selectedConnections[cdConfigs[i].Dataset.Connection]
+        && !selectedConnections[cdConfigs[i].Dataset.Connection].active
       ) {
-        dependency = selectedConnections[datasets[i].Connection].name;
+        dependency = selectedConnections[cdConfigs[i].Dataset.Connection].name;
         break;
       }
     }

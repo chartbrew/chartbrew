@@ -129,9 +129,9 @@ function EmbeddedChart(props) {
 
   const _checkIfFilters = () => {
     let filterCount = 0;
-    chart.Datasets.forEach((d) => {
-      if (d.conditions) {
-        filterCount += d.conditions.filter((c) => c.exposed).length;
+    chart.ChartDatasetConfigs.forEach((cdc) => {
+      if (cdc.Dataset?.conditions) {
+        filterCount += cdc.Dataset.conditions.filter((c) => c.exposed).length;
       }
     });
 
@@ -192,7 +192,7 @@ function EmbeddedChart(props) {
           <div style={{ display: "flex", alignItems: "center" }}>
             <Text b size="1.1em" css={{ color: "$text", lineHeight: "$xs" }}>{chart.name}</Text>
             <Spacer x={0.5} />
-            {chart.Datasets && conditions.map((c) => {
+            {chart.ChartDatasetConfigs && conditions.map((c) => {
               return (
                 <Chip
                   color="primary"
@@ -296,7 +296,7 @@ function EmbeddedChart(props) {
             height={pageHeight - 100}
             tabularData={chart.chartData}
             embedded
-            datasets={chart.Datasets}
+            datasets={chart.ChartDatasetConfigs}
           />
         </div>
         )}

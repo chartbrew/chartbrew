@@ -306,16 +306,15 @@ function Chart(props) {
 
   const _chartHasFilter = () => {
     let found = false;
-    if (chart.Datasets) {
-      chart.Datasets.map((dataset) => {
-        if (dataset.fieldsSchema) {
-          Object.keys(dataset.fieldsSchema).forEach((key) => {
+    if (chart.ChartDatasetConfigs) {
+      chart.ChartDatasetConfigs.forEach((cdConfig) => {
+        if (cdConfig.Dataset?.fieldsSchema) {
+          Object.keys(cdConfig.Dataset.fieldsSchema).forEach((key) => {
             if (_.find(dashboardFilters, (o) => o.field === key)) {
               found = true;
             }
           });
         }
-        return dataset;
       });
     }
 
@@ -324,9 +323,9 @@ function Chart(props) {
 
   const _checkIfFilters = () => {
     let filterCount = 0;
-    chart.Datasets.forEach((d) => {
-      if (d.conditions) {
-        filterCount += d.conditions.filter((c) => c.exposed).length;
+    chart.ChartDatasetConfigs.forEach((d) => {
+      if (d.Dataset?.conditions) {
+        filterCount += d.Dataset.conditions.filter((c) => c.exposed).length;
       }
     });
 
@@ -471,7 +470,7 @@ function Chart(props) {
                     )}
                   </>
                   <Spacer x={0.5} />
-                  {chart.Datasets && conditions.map((c) => {
+                  {chart.ChartDatasetConfigs && conditions.map((c) => {
                     return (
                       <Chip
                         color="primary"
@@ -792,7 +791,7 @@ function Chart(props) {
                       height={height - 32}
                       tabularData={chart.chartData}
                       chartSize={chart.chartSize}
-                      datasets={chart.Datasets}
+                      datasets={chart.ChartDatasetConfigs}
                     />
                   )}
                 {chart.type === "avg"

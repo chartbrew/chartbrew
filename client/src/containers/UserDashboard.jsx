@@ -379,7 +379,12 @@ function UserDashboard(props) {
                 </Table>
                 <Spacer y={2} />
               </AccordionItem>
-              <AccordionItem startContent={<LuDatabase />} title="Datasets" key="datasets">
+              <AccordionItem
+                startContent={<LuDatabase />}
+                title="Datasets"
+                key="datasets"
+                className="max-h-[600px] overflow-y-auto"
+              >
                 <Row className={"gap-2"}>
                   <Button
                     color="primary"

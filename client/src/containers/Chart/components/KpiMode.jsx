@@ -64,7 +64,7 @@ function KpiMode(props) {
 
   const _renderGoal = (goals, index) => {
     const goal = goals.find((g) => g.goalIndex === index);
-    const color = chart.Datasets[index] && chart.Datasets[index].datasetColor;
+    const color = chart.ChartDatasetConfigs[index] && chart.ChartDatasetConfigs[index].datasetColor;
     if (!goal) return (<span />);
     const {
       max, value, formattedMax,
@@ -108,7 +108,7 @@ function KpiMode(props) {
               </Text>
             </Row>
 
-            {chart.Datasets[index] && (
+            {chart.ChartDatasetConfigs[index] && (
               <Row justify="center" align="center">
                 <Text className={`mt-${chart.showGrowth ? "[-5px]" : 0} text-center text-default-600`}>
                   {chart.showGrowth && chart.chartData.growth && (
@@ -116,8 +116,8 @@ function KpiMode(props) {
                   )}
                   <span
                     style={
-                        chart.Datasets
-                        && styles.datasetLabelColor(chart.Datasets[index].datasetColor)
+                      chart.ChartDatasetConfigs
+                        && styles.datasetLabelColor(chart.ChartDatasetConfigs[index].datasetColor)
                       }
                     >
                     {dataset.label}

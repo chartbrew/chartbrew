@@ -42,11 +42,11 @@ function Filters(props) {
     if (charts) {
       const tempFieldOptions = [];
       charts.map((chart) => {
-        if (chart.Datasets) {
-          chart.Datasets.map((dataset) => {
-            if (dataset.fieldsSchema) {
-              Object.keys(dataset.fieldsSchema).forEach((key) => {
-                const type = dataset.fieldsSchema[key];
+        if (chart.ChartDatasetConfigs) {
+          chart.ChartDatasetConfigs.forEach((cdc) => {
+            if (cdc.Dataset?.fieldsSchema) {
+              Object.keys(cdc.Dataset?.fieldsSchema).forEach((key) => {
+                const type = cdc.Dataset?.fieldsSchema[key];
                 if (_.findIndex(tempFieldOptions, { key }) !== -1) return;
                 tempFieldOptions.push({
                   key,
@@ -65,7 +65,6 @@ function Filters(props) {
                 });
               });
             }
-            return dataset;
           });
         }
         return chart;
@@ -91,14 +90,13 @@ function Filters(props) {
     const chartsFound = [];
     charts.map((chart) => {
       let found = false;
-      if (chart.Datasets) {
-        chart.Datasets.map((dataset) => {
-          if (dataset.fieldsSchema) {
-            Object.keys(dataset.fieldsSchema).forEach((key) => {
+      if (chart.ChartDatasetConfigs) {
+        chart.ChartDatasetConfigs.forEach((cdc) => {
+          if (cdc.Dataset?.fieldsSchema) {
+            Object.keys(cdc.Dataset.fieldsSchema).forEach((key) => {
               if (key === field) found = true;
             });
           }
-          return dataset;
         });
       }
 
@@ -512,7 +510,7 @@ Filters.propTypes = {
   projectId: PropTypes.number.isRequired,
   onAddFilter: PropTypes.func.isRequired,
   open: PropTypes.bool,
-  onClose: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
   filterGroups: PropTypes.array.isRequired,
   onEditFilterGroup: PropTypes.func.isRequired,
 };

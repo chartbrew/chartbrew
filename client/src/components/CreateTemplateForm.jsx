@@ -100,7 +100,7 @@ CreateTemplateForm.defaultProps = {
   visible: false,
 };
 
-const mapStateToProps = () => {};
+const mapStateToProps = () => ({});
 const mapDispatchToProps = (dispatch) => {
   return {
     createTemplate: (teamId, projectId, name) => (

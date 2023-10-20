@@ -263,16 +263,15 @@ function ProjectDashboard(props) {
 
   const _chartHasFilter = (chart) => {
     let found = false;
-    if (chart.Datasets) {
-      chart.Datasets.map((dataset) => {
-        if (dataset.fieldsSchema) {
-          Object.keys(dataset.fieldsSchema).forEach((key) => {
+    if (chart.ChartDatasetConfigs) {
+      chart.ChartDatasetConfigs.forEach((cdc) => {
+        if (cdc.Dataset?.fieldsSchema) {
+          Object.keys(cdc.Dataset.fieldsSchema).forEach((key) => {
             if (_.find(filters[params.projectId], (o) => o.field === key)) {
               found = true;
             }
           });
         }
-        return dataset;
       });
     }
 
