@@ -42,7 +42,7 @@ function updateCharts() {
       autoUpdate: { [Op.gt]: 0 }
     },
     attributes: ["id", "project_id", "name", "lastAutoUpdate", "autoUpdate", "chartData"],
-    include: [{ model: db.Dataset }],
+    include: [{ model: db.ChartDatasetConfig }],
   };
 
   return db.Chart.findAll(conditions)

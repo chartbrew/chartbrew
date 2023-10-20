@@ -3,7 +3,7 @@ const addDatasetSettingsToChartDataset = require("../scripts/addDatasetSettingsT
 
 module.exports = {
   async up(queryInterface) {
-    await queryInterface.createTable("ChartDataset", {
+    await queryInterface.createTable("ChartDatasetConfig", {
       id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -83,6 +83,6 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable("ChartDataset");
+    await queryInterface.dropTable("ChartDatasetConfig");
   }
 };

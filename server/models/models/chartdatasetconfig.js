@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-  const ChartDataset = sequelize.define("ChartDataset", {
+  const ChartDatasetConfig = sequelize.define("ChartDatasetConfig", {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
@@ -103,5 +103,5 @@ module.exports = (sequelize, DataTypes) => {
     freezeTableName: true,
   });
 
-  return ChartDataset;
+  return ChartDatasetConfig;
 };

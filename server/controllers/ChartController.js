@@ -30,12 +30,12 @@ class ChartController {
     return db.Chart.create(data)
       .then((chart) => {
         chartId = chart.id;
-        if (data.Datasets || data.dataRequests) {
+        if (data.ChartDatasetConfigs || data.dataRequests) {
           const createPromises = [];
 
           // add the datasets creation
-          if (data.Datasets) {
-            for (const dataset of data.Datasets) {
+          if (data.ChartDatasetConfigs) {
+            for (const dataset of data.ChartDatasetConfigs) {
               if (!dataset.deleted) {
                 dataset.chart_id = chartId;
                 createPromises.push(this.datasetController.create(dataset));
@@ -85,8 +85,8 @@ class ChartController {
   findByProject(projectId) {
     return db.Chart.findAll({
       where: { project_id: projectId },
-      order: [["dashboardOrder", "ASC"], [db.Dataset, "order", "ASC"]],
-      include: [{ model: db.Dataset }, { model: db.Chartshare }],
+      order: [["dashboardOrder", "ASC"], [db.ChartDatasetConfig, "order", "ASC"]],
+      include: [{ model: db.ChartDatasetConfig }, { model: db.Chartshare }],
     })
       .then((charts) => {
         return charts;
@@ -99,8 +99,8 @@ class ChartController {
   findById(id, customQuery) {
     const query = {
       where: { id },
-      include: [{ model: db.Dataset }, { model: db.Chartshare }],
-      order: [[db.Dataset, "order", "ASC"]],
+      include: [{ model: db.ChartDatasetConfig }, { model: db.Chartshare }],
+      order: [[db.ChartDatasetConfig, "order", "ASC"]],
     };
 
     return db.Chart.findOne(customQuery || query)
@@ -121,10 +121,10 @@ class ChartController {
         .then(() => {
           const updatePromises = [];
 
-          if (data.Datasets || data.dataRequests) {
-            if (data.Datasets) {
+          if (data.ChartDatasets || data.dataRequests) {
+            if (data.ChartDatasets) {
               updatePromises
-                .push(this.updateDatasets(id, data.Datasets));
+                .push(this.updateDatasets(id, data.ChartDatasets));
             }
             if (data.dataRequests) {
               data.dataRequests.forEach((dataRequest) => {
@@ -155,10 +155,10 @@ class ChartController {
         }
 
         const updatePromises = [];
-        if (data.Datasets || data.dataRequests) {
-          if (data.Datasets) {
+        if (data.ChartDatasetConfigs || data.dataRequests) {
+          if (data.ChartDatasetConfigs) {
             const datasetsToUpdate = [];
-            for (const dataset of data.Datasets) {
+            for (const dataset of data.ChartDatasetConfigs) {
               if (!dataset.deleted && !dataset.id) {
                 dataset.chart_id = id;
                 updatePromises.push(this.datasetController.create(dataset));
@@ -169,7 +169,7 @@ class ChartController {
 
             if (datasetsToUpdate.length > 0) {
               updatePromises
-                .push(this.updateDatasets(id, data.Datasets));
+                .push(this.updateDatasets(id, data.ChartDatasetConfigs));
             }
           }
           if (data.dataRequests) {
@@ -321,7 +321,7 @@ class ChartController {
     return this.findById(id)
       .then(async (chart) => {
         gChart = chart;
-        if (!chart || !chart.Datasets || chart.Datasets.length === 0) {
+        if (!chart || !chart.ChartDatasetConfigs || chart.ChartDatasetConfigs.length === 0) {
           return new Promise((resolve, reject) => reject("The chart doesn't have any datasets"));
         }
 
@@ -342,7 +342,7 @@ class ChartController {
         }
 
         const requestPromises = [];
-        gChart.Datasets.map((dataset) => {
+        gChart.ChartDatasetConfigs.map((dataset) => {
           if (noSource && gCache && gCache.data) {
             requestPromises.push(
               this.datasetController.runRequest(dataset.id, gChart.id, true, getCache)
@@ -416,7 +416,7 @@ class ChartController {
         if (chartData.conditionsOptions) {
           chartData.conditionsOptions.forEach((opt) => {
             if (opt.dataset_id) {
-              const dataset = gChart.Datasets.find((d) => d.id === opt.dataset_id);
+              const dataset = gChart.ChartDatasetConfigs.find((d) => d.id === opt.dataset_id);
               if (dataset && dataset.conditions) {
                 const newConditions = dataset.conditions.map((c) => {
                   const optCondition = opt.conditions.find((o) => o.field === c.field);
@@ -680,8 +680,8 @@ class ChartController {
   exportChartData(userId, chartIds, filters) {
     return db.Chart.findAll({
       where: { id: chartIds },
-      include: [{ model: db.Dataset }],
-      order: [[db.Dataset, "order", "ASC"]],
+      include: [{ model: db.ChartDatasetConfig }],
+      order: [[db.ChartDatasetConfig, "order", "ASC"]],
     })
       .then((charts) => {
         const dataPromises = [];
@@ -713,7 +713,7 @@ class ChartController {
 
                 return {
                   name: sheetName,
-                  datasets: chart.Datasets,
+                  datasets: chart.ChartDatasetConfigs,
                   data,
                 };
               })

@@ -99,7 +99,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Alert.associate = (models) => {
-    models.Alert.belongsTo(models.Dataset, { foreignKey: "dataset_id" });
+    models.Alert.belongsTo(models.ChartDatasetConfig, { foreignKey: "dataset_id" });
     models.Alert.belongsTo(models.Chart, { foreignKey: "chart_id" });
     models.Alert.hasMany(models.AlertEvent, { foreignKey: "alert_id", as: "events" });
     models.Alert.hasMany(models.AlertIntegration, { foreignKey: "alert_id" });

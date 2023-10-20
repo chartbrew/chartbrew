@@ -8,9 +8,9 @@ module.exports.up = async (queryInterface) => {
     JOIN Chart AS c ON c.id = d.chart_id
   `);
 
-  const chartDatasests = [];
+  const cdConfigs = [];
   datasets.forEach((dataset) => {
-    chartDatasests.push({
+    cdConfigs.push({
       id: uuid(),
       chart_id: dataset.c_id,
       dataset_id: dataset.id,
@@ -30,7 +30,7 @@ module.exports.up = async (queryInterface) => {
     });
   });
 
-  await db.ChartDataset.bulkCreate(chartDatasests);
+  await db.ChartDatasetConfig.bulkCreate(cdConfigs);
 };
 
 module.exports.down = async () => {
