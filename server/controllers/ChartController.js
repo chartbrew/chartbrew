@@ -348,19 +348,18 @@ class ChartController {
         }
 
         const requestPromises = [];
-        gChart.ChartDatasetConfigs.map((dataset) => {
+        gChart.ChartDatasetConfigs.forEach((cdc) => {
           if (noSource && gCache && gCache.data) {
             requestPromises.push(
-              this.datasetController.runRequest(dataset.id, gChart.id, true, getCache)
+              this.datasetController.runRequest(cdc.Dataset.id, gChart.id, true, getCache)
             );
           } else {
             requestPromises.push(
               this.datasetController.runRequest(
-                dataset.id, gChart.id, false, getCache, filters, project.timezone
+                cdc.Dataset.id, gChart.id, false, getCache, filters, project.timezone
               )
             );
           }
-          return dataset;
         });
 
         return Promise.all(requestPromises);

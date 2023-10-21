@@ -14,7 +14,6 @@ class NewLineChart {
     const formattedDatasets = [];
     for (let i = 0; i < this.datasets.length; i++) {
       const dataset = this.datasets[i];
-
       const formattedDataset = {
         label: dataset.options.legend,
         data: this.axisData.y[i]?.length === 0 ? [0] : this.axisData.y[i],

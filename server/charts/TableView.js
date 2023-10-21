@@ -47,7 +47,7 @@ class TableView {
   getTableData(data, chartData, timezone = "") {
     const rawData = data.configuration;
     const tabularData = {};
-    const datasetConfigs = chartData.chart?.Datasets;
+    const datasetConfigs = chartData.chart?.ChartDatasetConfigs;
 
     Object.keys(rawData).forEach((key, datasetIndex) => {
       const tab = { columns: [], data: [] };
@@ -57,7 +57,6 @@ class TableView {
       dataset.forEach((item) => {
         Object.keys(item).forEach((k) => {
           if (_.indexOf(excludedFields, k) !== -1) return;
-
           if (determineType(item[k]) === "object") {
             // handle nested objects (only one level)
             const nested = item[k];
@@ -85,13 +84,14 @@ class TableView {
 
         const dataItem = {};
         Object.keys(item).forEach((k) => {
-          let columnConfig = datasetConfigs[datasetIndex]?.configuration?.columnsFormatting?.[k];
+          let columnConfig = datasetConfigs[datasetIndex]?.Dataset
+            ?.configuration?.columnsFormatting?.[k];
 
           if (_.indexOf(excludedFields, k) !== -1) return;
 
           if (determineType(item[k]) === "object") {
             Object.keys(item[k]).forEach((n) => {
-              columnConfig = datasetConfigs[datasetIndex]
+              columnConfig = datasetConfigs[datasetIndex]?.Dataset
                 ?.configuration?.columnsFormatting?.[`${k}?${n}`];
 
               const nestedType = determineType(item[k][n]);

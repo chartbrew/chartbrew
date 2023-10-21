@@ -382,9 +382,9 @@ module.exports = (app) => {
           return res.status(401).send({ error: "Not authorized" });
         }
         if (`${error}` === "413" && error.message === "413") {
-          return res.status(413).send(error);
+          return res.status(413).send(`${error}`);
         }
-        return res.status(400).send((error && error.message) || error);
+        return res.status(400).send(`${(error && error.message) || error}`);
       });
   });
   // --------------------------------------------------------
