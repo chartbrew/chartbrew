@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Link as LinkNext, Spacer, Tooltip, Input, Button,
   Switch, Modal, Divider, Chip, CircularProgress, ModalHeader, ModalBody, ModalFooter,
@@ -20,11 +20,8 @@ import Dataset from "./components/Dataset";
 import ChartDescription from "./components/ChartDescription";
 import Walkthrough from "./components/Walkthrough";
 import {
-  createChart as createChartAction,
-  updateChart as updateChartAction,
-  runQuery as runQueryAction,
-  runQueryWithFilters as runQueryWithFiltersAction,
-} from "../../actions/chart";
+  createChart, updateChart, runQuery, runQueryWithFilters, selectCharts,
+} from "../../slices/chart";
 import {
   getChartDatasets as getChartDatasetsAction,
   saveNewDataset as saveNewDatasetAction,
@@ -80,15 +77,18 @@ function AddChart(props) {
   const { height } = useWindowSize();
 
   const {
-    createChart, charts, saveNewDataset, getChartDatasets, tutorial,
-    datasets, updateDataset, deleteDataset, updateChart, runQuery, user, changeTutorial,
+    saveNewDataset, getChartDatasets, tutorial,
+    datasets, updateDataset, deleteDataset, user, changeTutorial,
     completeTutorial, clearDatasets, resetTutorial, connections, templates, getTemplates,
-    runQueryWithFilters, getChartAlerts, clearAlerts,
+    getChartAlerts, clearAlerts,
   } = props;
+
+  const charts = useSelector(selectCharts);
 
   const isDark = useThemeDetector();
   const params = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     clearDatasets();
@@ -169,7 +169,7 @@ function AddChart(props) {
 
   const _onCreateClicked = () => {
     const tempChart = { ...newChart, name: chartName };
-    return createChart(params.projectId, tempChart)
+    return dispatch(createChart({ project_id: params.projectId, data: tempChart }))
       .then((createdChart) => {
         setNewChart(createdChart);
         setTitleScreen(false);
@@ -294,7 +294,7 @@ function AddChart(props) {
     let shouldSkipParsing = skipParsing;
     setNewChart({ ...newChart, ...data });
     setLoading(true);
-    return updateChart(params.projectId, params.chartId, data)
+    return dispatch(updateChart({ project_id: params.projectId, chart_id: params.chartId, data }))
       .then((newData) => {
         if (!toastOpen) {
           toast.success("Updated the chart 📈", {
@@ -349,10 +349,20 @@ function AddChart(props) {
       }
     }
 
-    runQuery(params.projectId, params.chartId, false, false, getCache)
+    dispatch(runQuery({
+      project_id: params.projectId,
+      chart_id: params.chartId,
+      noSource: false,
+      skipParsing: false,
+      getCache
+    }))
       .then(() => {
         if (conditions.length > 0) {
-          return runQueryWithFilters(params.projectId, newChart.id, conditions);
+          return dispatch(runQueryWithFilters({
+            project_id: params.projectId,
+            chart_id: newChart.id,
+            filters: conditions,
+          }));
         }
 
         return true;
@@ -370,10 +380,20 @@ function AddChart(props) {
 
   const _onRefreshPreview = (skipParsing = true) => {
     if (!params.chartId) return;
-    runQuery(params.projectId, params.chartId, true, skipParsing, true)
+    dispatch(runQuery({
+      project_id: params.projectId,
+      chart_id: params.chartId,
+      noSource: true,
+      skipParsing,
+      getCache: true
+    }))
       .then(() => {
         if (conditions.length > 0) {
-          return runQueryWithFilters(params.projectId, newChart.id, conditions);
+          return dispatch(runQueryWithFilters({
+            project_id: params.projectId,
+            chart_id: newChart.id,
+            filters: conditions
+          }));
         }
 
         return true;
@@ -440,7 +460,11 @@ function AddChart(props) {
     if (!found) newConditions.push(condition);
     setConditions(newConditions);
 
-    runQueryWithFilters(params.projectId, newChart.id, [condition]);
+    dispatch(runQueryWithFilters({
+      project_id: params.projectId,
+      chart_id: newChart.id,
+      filters: [condition]
+    }));
   };
 
   const _onClearFilter = (condition) => {
@@ -449,7 +473,11 @@ function AddChart(props) {
     if (clearIndex > -1) newConditions.splice(clearIndex, 1);
 
     setConditions(newConditions);
-    runQueryWithFilters(params.projectId, newChart.id, [condition]);
+    dispatch(runQueryWithFilters({
+      project_id: params.projectId,
+      chart_id: newChart.id,
+      filters: [condition],
+    }));
   };
 
   const _onSaveArrangement = () => {
@@ -861,15 +889,11 @@ const styles = {
 };
 
 AddChart.propTypes = {
-  createChart: PropTypes.func.isRequired,
-  charts: PropTypes.array.isRequired,
   getChartDatasets: PropTypes.func.isRequired,
   saveNewDataset: PropTypes.func.isRequired,
   updateDataset: PropTypes.func.isRequired,
   deleteDataset: PropTypes.func.isRequired,
   datasets: PropTypes.array.isRequired,
-  updateChart: PropTypes.func.isRequired,
-  runQuery: PropTypes.func.isRequired,
   user: PropTypes.object.isRequired,
   tutorial: PropTypes.string.isRequired,
   changeTutorial: PropTypes.func.isRequired,
@@ -879,14 +903,12 @@ AddChart.propTypes = {
   connections: PropTypes.array.isRequired,
   getTemplates: PropTypes.func.isRequired,
   templates: PropTypes.object.isRequired,
-  runQueryWithFilters: PropTypes.func.isRequired,
   getChartAlerts: PropTypes.func.isRequired,
   clearAlerts: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
-    charts: state.chart.data,
     datasets: state.dataset.data,
     user: state.user.data,
     tutorial: state.tutorial,
@@ -897,7 +919,6 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    createChart: (projectId, data) => dispatch(createChartAction(projectId, data)),
     getChartDatasets: (projectId, chartId) => {
       return dispatch(getChartDatasetsAction(projectId, chartId));
     },
@@ -910,21 +931,12 @@ const mapDispatchToProps = (dispatch) => {
     deleteDataset: (projectId, chartId, datasetId) => {
       return dispatch(deleteDatasetAction(projectId, chartId, datasetId));
     },
-    updateChart: (projectId, chartId, data) => {
-      return dispatch(updateChartAction(projectId, chartId, data));
-    },
-    runQuery: (projectId, chartId, noSource, skipParsing, getCache) => {
-      return dispatch(runQueryAction(projectId, chartId, noSource, skipParsing, getCache));
-    },
     updateUser: (id, data) => dispatch(updateUserAction(id, data)),
     changeTutorial: (tut) => dispatch(changeTutorialAction(tut)),
     completeTutorial: (tut) => dispatch(completeTutorialAction(tut)),
     resetTutorial: (tut) => dispatch(resetTutorialAction(tut)),
     clearDatasets: () => dispatch(clearDatasetsAction()),
     getTemplates: (teamId) => dispatch(getTemplatesAction(teamId)),
-    runQueryWithFilters: (projectId, chartId, filters) => (
-      dispatch(runQueryWithFiltersAction(projectId, chartId, filters))
-    ),
     getChartAlerts: (projectId, chartId) => dispatch(getChartAlertsAction(projectId, chartId)),
     clearAlerts: () => dispatch(clearAlertsAction()),
   };

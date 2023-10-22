@@ -2,7 +2,7 @@ import React, {
   useEffect, useState,
 } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useSelector } from "react-redux";
 import {
   Button, Input, Spacer, Tooltip,
 } from "@nextui-org/react";
@@ -10,17 +10,15 @@ import { Helmet } from "react-helmet";
 import uuid from "uuid/v4";
 import { LuCheck, LuChevronLeftCircle, LuPrinter, LuRedo } from "react-icons/lu";
 
-import {
-  runQueryWithFilters as runQueryWithFiltersAction,
-} from "../../actions/chart";
 import Chart from "../Chart/Chart";
 import Container from "../../components/Container";
 import Text from "../../components/Text";
 import Row from "../../components/Row";
+import { selectCharts } from "../../slices/chart";
 
 function PrintView(props) {
   const {
-    charts, onPrint, isPrinting, project,
+    onPrint, isPrinting, project,
   } = props;
 
   const [orientation, setOrientation] = useState("portrait");
@@ -29,6 +27,8 @@ function PrintView(props) {
   const [printCharts, setPrintCharts] = useState([]);
   const [editingTitle, setEditingTitle] = useState(false);
   const [printTitle, setPrintTitle] = useState("");
+
+  const charts = useSelector(selectCharts);
 
   useEffect(() => {
     if (charts && charts.length > 0) {
@@ -201,7 +201,6 @@ function PrintView(props) {
 }
 
 PrintView.propTypes = {
-  charts: PropTypes.array.isRequired,
   onPrint: PropTypes.func.isRequired,
   isPrinting: PropTypes.bool.isRequired,
   project: PropTypes.object.isRequired,
@@ -242,16 +241,12 @@ const styles = {
 
 const mapStateToProps = (state) => {
   return {
-    charts: state.chart.data,
     project: state.project.active,
   };
 };
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = () => {
   return {
-    runQueryWithFilters: (projectId, chartId, filters) => (
-      dispatch(runQueryWithFiltersAction(projectId, chartId, filters))
-    ),
   };
 };
 

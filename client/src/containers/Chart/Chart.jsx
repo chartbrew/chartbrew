@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Card, Spacer, Tooltip, Dropdown, Button, Modal, Input,
@@ -20,15 +20,9 @@ import { format } from "date-fns";
 import { motion } from "framer-motion";
 
 import {
-  removeChart as removeChartAction,
-  runQuery as runQueryAction,
-  updateChart as updateChartAction,
-  runQueryWithFilters as runQueryWithFiltersAction,
-  exportChart,
-  exportChartPublic,
-  createShareString as createShareStringAction,
-  getChart as getChartAction,
-} from "../../actions/chart";
+  removeChart, runQuery, runQueryWithFilters, getChart, exportChart,
+  exportChartPublic, createShareString, updateChart, selectCharts,
+} from "../../slices/chart";
 import canAccess from "../../config/canAccess";
 import { SITE_HOST } from "../../config/settings";
 import LineChart from "./components/LineChart";
@@ -57,13 +51,14 @@ const getFiltersFromStorage = (projectId) => {
 */
 function Chart(props) {
   const {
-    updateChart, runQuery, removeChart, runQueryWithFilters,
-    team, user, chart, isPublic, charts, onChangeOrder, print, height,
-    createShareString, getChart, showExport, password,
+    team, user, chart, isPublic, onChangeOrder, print, height,
+    showExport, password,
   } = props;
 
   const params = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const charts = useSelector(selectCharts);
 
   const [chartLoading, setChartLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -88,7 +83,12 @@ function Chart(props) {
   const [exportLoading, setExportLoading] = useState(false);
 
   useInterval(() => {
-    getChart(chart.project_id, chart.id, isPublic ? window.localStorage.getItem("reportPassword") : null, true);
+    dispatch(getChart({
+      project_id: chart.project_id,
+      chart_id: chart.id,
+      password: isPublic ? window.localStorage.getItem("reportPassword") : null,
+      fromInterval: true
+    }));
   }, chart.autoUpdate ? chart.autoUpdate * 1000 : null);
 
   useEffect(() => {
@@ -112,12 +112,12 @@ function Chart(props) {
 
   const _onChangeSize = (size) => {
     setChartLoading(true);
-    updateChart(
-      params.projectId,
-      chart.id,
-      { chartSize: size },
-      true
-    )
+    dispatch(updateChart({
+      project_id: params.projectId,
+      chart_id: chart.id,
+      data: { chartSize: size },
+      justUpdates: true,
+    }))
       .then(() => {
         setRedraw(true);
         setChartLoading(false);
@@ -132,14 +132,18 @@ function Chart(props) {
     const { projectId } = params;
 
     setChartLoading(true);
-    runQuery(projectId, chart.id)
+    dispatch(runQuery({ project_id: projectId, chart_id: chart.id }))
       .then(() => {
         setChartLoading(false);
 
         setDashboardFilters(getFiltersFromStorage(projectId));
         setTimeout(() => {
           if (dashboardFilters && _chartHasFilter()) {
-            runQueryWithFilters(chart.project_id, chart.id, dashboardFilters);
+            dispatch(runQueryWithFilters({
+              project_id: chart.project_id,
+              chart_id: chart.id,
+              filters: dashboardFilters,
+            }));
           }
         }, 100);
       })
@@ -159,7 +163,7 @@ function Chart(props) {
 
   const _onDeleteChart = () => {
     setChartLoading(true);
-    removeChart(params.projectId, chart.id)
+    dispatch(removeChart({ project_id: params.projectId, chart_id: chart.id }))
       .then(() => {
         setChartLoading(false);
         setDeleteModal(false);
@@ -185,12 +189,12 @@ function Chart(props) {
     setPublicModal(false);
     setPublicLoading(true);
 
-    updateChart(
-      params.projectId,
-      chart.id,
-      { public: !chart.public },
-      true,
-    )
+    dispatch(updateChart({
+      project_id: params.projectId,
+      chart_id: chart.id,
+      data: { public: !chart.public },
+      justUpdates: true,
+    }))
       .then(() => {
         setChartLoading(false);
         setPublicLoading(false);
@@ -205,11 +209,11 @@ function Chart(props) {
   const _onChangeReport = () => {
     setChartLoading(true);
 
-    updateChart(
-      params.projectId,
-      chart.id,
-      { onReport: !chart.onReport },
-    )
+    dispatch(updateChart({
+      project_id: params.projectId,
+      chart_id: chart.id,
+      data: { onReport: !chart.onReport },
+    }))
       .then(() => {
         setChartLoading(false);
       })
@@ -271,12 +275,12 @@ function Chart(props) {
     }
 
     setAutoUpdateLoading(true);
-    updateChart(
-      params.projectId,
-      chart.id,
-      { autoUpdate: frequency },
-      true,
-    )
+    dispatch(updateChart({
+      project_id: params.projectId,
+      chart_id: chart.id,
+      data: { autoUpdate: frequency },
+      justUpdates: true,
+    }))
       .then(() => {
         setAutoUpdateLoading(false);
         setUpdateModal(false);
@@ -292,15 +296,15 @@ function Chart(props) {
     // first, check if the chart has a share string
     if (!chart.Chartshares || chart.Chartshares.length === 0) {
       setShareLoading(true);
-      await createShareString(params.projectId, chart.id);
+      await dispatch(createShareString({ project_id: params.projectId, chart_id: chart.id }));
     }
 
-    await updateChart(
-      params.projectId,
-      chart.id,
-      { shareable: !chart.shareable },
-      true,
-    );
+    await dispatch(updateChart({
+      project_id: params.projectId,
+      chart_id: chart.id,
+      data: { shareable: !chart.shareable },
+      justUpdates: true,
+    }));
     setShareLoading(false);
   };
 
@@ -360,7 +364,11 @@ function Chart(props) {
 
   const _onExport = () => {
     setExportLoading(true);
-    return exportChart(params.projectId, [chart.id], dashboardFilters)
+    return dispatch(exportChart({
+      project_id: params.projectId,
+      chartIds: [chart.id],
+      filters: dashboardFilters,
+    }))
       .then(() => {
         setExportLoading(false);
       })
@@ -371,7 +379,7 @@ function Chart(props) {
 
   const _onPublicExport = (chart) => {
     setExportLoading(true);
-    return exportChartPublic(chart, password)
+    return dispatch(exportChartPublic({ chart, password }))
       .then(() => {
         setExportLoading(false);
       })
@@ -401,7 +409,11 @@ function Chart(props) {
     if (!found) newConditions.push(condition);
     setConditions(newConditions);
 
-    runQueryWithFilters(chart.project_id, chart.id, newConditions);
+    dispatch(runQueryWithFilters({
+      project_id: chart.project_id,
+      chart_id: chart.id,
+      filters: newConditions
+    }));
   };
 
   const _onClearFilter = (condition) => {
@@ -410,7 +422,11 @@ function Chart(props) {
     if (clearIndex > -1) newConditions.splice(clearIndex, 1);
 
     setConditions(newConditions);
-    runQueryWithFilters(chart.project_id, chart.id, newConditions);
+    dispatch(runQueryWithFilters({
+      project_id: chart.project_id,
+      chart_id: chart.id,
+      filters: newConditions
+    }));
   };
 
   const _getEmbedUrl = () => {
@@ -427,7 +443,7 @@ function Chart(props) {
 
   const _onCreateSharingString = async () => {
     setShareLoading(true);
-    await createShareString(params.projectId, chart.id);
+    await dispatch(createShareString({ project_id: params.projectId, chart_id: chart.id }));
     setShareLoading(false);
   };
 
@@ -1201,20 +1217,13 @@ Chart.defaultProps = {
 
 Chart.propTypes = {
   chart: PropTypes.object.isRequired,
-  charts: PropTypes.array.isRequired,
   match: PropTypes.object.isRequired,
-  removeChart: PropTypes.func.isRequired,
-  runQuery: PropTypes.func.isRequired,
-  runQueryWithFilters: PropTypes.func.isRequired,
-  updateChart: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
   isPublic: PropTypes.bool,
   onChangeOrder: PropTypes.func,
   print: PropTypes.string,
   height: PropTypes.number,
-  createShareString: PropTypes.func.isRequired,
-  getChart: PropTypes.func.isRequired,
   showExport: PropTypes.bool,
   password: PropTypes.string,
   history: PropTypes.object.isRequired,
@@ -1228,22 +1237,8 @@ const mapStateToProps = (state) => {
   };
 };
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = () => {
   return {
-    removeChart: (projectId, chartId) => dispatch(removeChartAction(projectId, chartId)),
-    runQuery: (projectId, chartId) => dispatch(runQueryAction(projectId, chartId)),
-    updateChart: (projectId, chartId, data, justUpdates) => (
-      dispatch(updateChartAction(projectId, chartId, data, justUpdates))
-    ),
-    runQueryWithFilters: (projectId, chartId, filters) => (
-      dispatch(runQueryWithFiltersAction(projectId, chartId, filters))
-    ),
-    createShareString: (projectId, chartId) => (
-      dispatch(createShareStringAction(projectId, chartId))
-    ),
-    getChart: (projectId, chartId, password, fromInterval) => (
-      dispatch(getChartAction(projectId, chartId, password, fromInterval))
-    ),
   };
 };
 

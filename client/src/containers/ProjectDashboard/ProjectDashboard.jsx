@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Button, Spacer, Link as LinkNext, Tooltip, Card, Modal, Chip, CardBody,
   ModalHeader, ModalBody, ModalContent, AvatarGroup, Avatar, Popover, PopoverTrigger,
@@ -22,13 +22,8 @@ import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import Filters from "./components/Filters";
 import { operators } from "../../modules/filterOperations";
 import {
-  getProjectCharts as getProjectChartsAction,
-  runQueryWithFilters as runQueryWithFiltersAction,
-  runQuery as runQueryAction,
-  changeOrder as changeOrderAction,
-  exportChart,
-  updateChart as updateChartAction,
-} from "../../actions/chart";
+  getProjectCharts, runQueryWithFilters, runQuery, changeOrder, exportChart, updateChart, selectCharts,
+} from "../../slices/chart";
 import canAccess from "../../config/canAccess";
 import ChartExport from "./components/ChartExport";
 import CreateTemplateForm from "../../components/CreateTemplateForm";
@@ -70,9 +65,7 @@ const getFilterGroupsFromStorage = () => {
 */
 function ProjectDashboard(props) {
   const {
-    cleanErrors, connections, charts, showDrafts, runQueryWithFilters,
-    getProjectCharts, runQuery, changeOrder, user, team, onPrint, mobile, updateChart,
-    teamMembers,
+    cleanErrors, connections, showDrafts, user, team, onPrint, mobile, teamMembers,
   } = props;
 
   const [filters, setFilters] = useState(getFiltersFromStorage());
@@ -85,9 +78,12 @@ function ProjectDashboard(props) {
   const [exportError, setExportError] = useState(false);
   const [templateVisible, setTemplateVisible] = useState(false);
 
+  const charts = useSelector(selectCharts);
+
   const { height, width } = useWindowSize();
   const isDark = useThemeDetector();
   const params = useParams();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     cleanErrors();
@@ -163,14 +159,14 @@ function ProjectDashboard(props) {
   const _throttleRefreshes = (refreshes, index) => {
     if (index >= refreshes.length) return Promise.resolve("done");
 
-    return runQuery(
-      refreshes[index].projectId,
-      refreshes[index].chartId,
-      false,
-      false,
-      false,
-      refreshes[index].dateFilter
-    )
+    return dispatch(runQuery({
+      project_id: refreshes[index].projectId,
+      chart_id: refreshes[index].chartId,
+      noSource: false,
+      skipParsing: false,
+      getCache: false,
+      filters: refreshes[index].dateFilter,
+    }))
       .then(() => {
         return _throttleRefreshes(refreshes, index + 1);
       })
@@ -183,7 +179,7 @@ function ProjectDashboard(props) {
     const { projectId } = params;
 
     if (!currentFilters || !currentFilters[projectId]) {
-      getProjectCharts(projectId);
+      dispatch(getProjectCharts({ project_id: projectId }));
       setFilterLoading(false);
       return Promise.resolve("done");
     }
@@ -196,7 +192,11 @@ function ProjectDashboard(props) {
         // first, discard the charts on which the filters don't apply
         if (_chartHasFilter(charts[i])) {
           refreshPromises.push(
-            runQueryWithFilters(projectId, charts[i].id, currentFilters[projectId])
+            dispatch(runQueryWithFilters({
+              project_id: projectId,
+              chart_id: charts[i].id,
+              filters: currentFilters[projectId]
+            }))
           );
         }
 
@@ -305,11 +305,11 @@ function ProjectDashboard(props) {
       default:
         break;
     }
-    changeOrder(
-      params.projectId,
-      chartId,
-      otherId
-    );
+    dispatch(changeOrder({
+      project_id: params.projectId,
+      chart_id: chartId,
+      otherId,
+    }));
   };
 
   const _canAccess = (role) => {
@@ -324,7 +324,11 @@ function ProjectDashboard(props) {
     setExportLoading(true);
     setExportError(false);
     const appliedFilters = (filters && filters[params.projectId]) || null;
-    return exportChart(params.projectId, ids, appliedFilters)
+    return dispatch(exportChart({
+      project_id: params.projectId,
+      chartIds: ids,
+      filters: appliedFilters
+    }))
       .then(() => {
         setExportLoading(false);
         setViewExport(false);
@@ -353,7 +357,12 @@ function ProjectDashboard(props) {
   };
 
   const _onUpdateExport = (chartId, disabled) => {
-    updateChart(params.projectId, chartId, { disabledExport: disabled }, true);
+    dispatch(updateChart({
+      project_id: params.projectId,
+      chart_id: chartId,
+      data: { disabledExport: disabled },
+      justUpdates: true
+    }));
   };
 
   return (
@@ -754,25 +763,18 @@ ProjectDashboard.defaultProps = {
 
 ProjectDashboard.propTypes = {
   connections: PropTypes.array.isRequired,
-  charts: PropTypes.array.isRequired,
   user: PropTypes.object.isRequired,
   team: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
-  runQueryWithFilters: PropTypes.func.isRequired,
-  runQuery: PropTypes.func.isRequired,
-  getProjectCharts: PropTypes.func.isRequired,
   onPrint: PropTypes.func.isRequired,
-  changeOrder: PropTypes.func.isRequired,
   showDrafts: PropTypes.bool,
   mobile: PropTypes.bool,
-  updateChart: PropTypes.func.isRequired,
   teamMembers: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
     connections: state.connection.data,
-    charts: state.chart.data,
     user: state.user.data,
     team: state.team.active,
     teamMembers: state.team.teamMembers,
@@ -782,19 +784,6 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
   return {
     cleanErrors: () => dispatch(cleanErrorsAction()),
-    runQueryWithFilters: (projectId, chartId, filters) => (
-      dispatch(runQueryWithFiltersAction(projectId, chartId, filters))
-    ),
-    runQuery: (projectId, chartId, source, skipParsing, cache, dateFilter) => (
-      dispatch(runQueryAction(projectId, chartId, source, skipParsing, cache, dateFilter))
-    ),
-    getProjectCharts: (projectId) => dispatch(getProjectChartsAction(projectId)),
-    changeOrder: (projectId, chartId, otherId) => (
-      dispatch(changeOrderAction(projectId, chartId, otherId))
-    ),
-    updateChart: (projectId, chartId, data, justUpdates) => (
-      dispatch(updateChartAction(projectId, chartId, data, justUpdates))
-    ),
   };
 };
 

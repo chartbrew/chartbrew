@@ -30,7 +30,7 @@ import {
   updateProjectLogo as updateProjectLogoAction,
 } from "../../actions/project";
 import { selectTeams, updateTeam } from "../../slices/team";
-import { runQueryOnPublic as runQueryOnPublicAction } from "../../actions/chart";
+import { runQueryOnPublic, selectCharts } from "../../slices/chart";
 import { blue, primary, secondary } from "../../config/colors";
 import Chart from "../Chart/Chart";
 import logo from "../../assets/logo_inverted.png";
@@ -58,8 +58,8 @@ const defaultColors = [
 
 function PublicDashboard(props) {
   const {
-    getPublicDashboard, getProject, updateProject, updateProjectLogo, charts,
-    user, runQueryOnPublic,
+    getPublicDashboard, getProject, updateProject, updateProjectLogo,
+    user,
   } = props;
 
   const [project, setProject] = useState({});
@@ -83,6 +83,7 @@ function PublicDashboard(props) {
   const [refreshLoading, setRefreshLoading] = useState(false);
 
   const teams = useSelector(selectTeams);
+  const charts = useSelector(selectCharts);
 
   const isDark = useThemeDetector();
   const params = useParams();
@@ -266,7 +267,7 @@ function PublicDashboard(props) {
     const refreshPromises = [];
     for (let i = 0; i < charts.length; i++) {
       refreshPromises.push(
-        runQueryOnPublic(project.id, charts[i].id)
+        dispatch(runQueryOnPublic({ project_id: project.id, chart_id: charts[i].id }))
       );
     }
 
@@ -949,9 +950,7 @@ PublicDashboard.propTypes = {
   getProject: PropTypes.func.isRequired,
   updateProject: PropTypes.func.isRequired,
   updateProjectLogo: PropTypes.func.isRequired,
-  charts: PropTypes.array.isRequired,
   user: PropTypes.object.isRequired,
-  runQueryOnPublic: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => ({
@@ -966,7 +965,6 @@ const mapDispatchToProps = (dispatch) => ({
   getProject: (projectId) => dispatch(getProjectAction(projectId)),
   updateProject: (projectId, data) => dispatch(updateProjectAction(projectId, data)),
   updateProjectLogo: (projectId, logo) => dispatch(updateProjectLogoAction(projectId, logo)),
-  runQueryOnPublic: (projectId, chartId) => dispatch(runQueryOnPublicAction(projectId, chartId)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(PublicDashboard);

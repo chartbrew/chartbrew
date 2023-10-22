@@ -17,7 +17,7 @@ import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import {
   getTeam, getTeamMembers, selectTeam,
 } from "../../slices/team";
-import { getProjectCharts as getProjectChartsAction } from "../../actions/chart";
+import { getProjectCharts } from "../../slices/chart";
 import { getProjectConnections } from "../../actions/connection";
 import Navbar from "../../components/Navbar";
 import canAccess from "../../config/canAccess";
@@ -45,7 +45,7 @@ const sideMinSize = 70;
 */
 function ProjectBoard(props) {
   const {
-    cleanErrors, getProjectCharts, getProjectConnections,
+    cleanErrors, getProjectConnections,
     getProject, changeActiveProject, project, user, projects,
   } = props;
 
@@ -86,7 +86,7 @@ function ProjectBoard(props) {
 
   const _init = (id) => {
     _getProject(id);
-    getProjectCharts(id || params.projectId);
+    dispatch(getProjectCharts({ project_id: id || params.projectId }));
     getProjectConnections(id || params.projectId);
   };
 
@@ -322,7 +322,6 @@ ProjectBoard.propTypes = {
   changeActiveProject: PropTypes.func.isRequired,
   project: PropTypes.object.isRequired,
   projects: PropTypes.array.isRequired,
-  getProjectCharts: PropTypes.func.isRequired,
   getProjectConnections: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
 };
@@ -339,7 +338,6 @@ const mapDispatchToProps = (dispatch) => {
   return {
     getProject: id => dispatch(getProject(id)),
     changeActiveProject: id => dispatch(changeActiveProject(id)),
-    getProjectCharts: (projectId) => dispatch(getProjectChartsAction(projectId)),
     getProjectConnections: (projectId) => dispatch(getProjectConnections(projectId)),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };

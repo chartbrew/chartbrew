@@ -18,7 +18,6 @@ import { TbBrandDiscord } from "react-icons/tb";
 
 import { logout } from "../actions/user";
 import { getProject, changeActiveProject } from "../actions/project";
-import { getProjectCharts } from "../actions/chart";
 import FeedbackForm from "./FeedbackForm";
 import cbLogo from "../assets/logo_blue.png";
 import cbLogoInverted from "../assets/logo_inverted.png";
@@ -414,7 +413,6 @@ const mapDispatchToProps = (dispatch) => {
     getProject: id => dispatch(getProject(id)),
     changeActiveProject: id => dispatch(changeActiveProject(id)),
     logout: () => dispatch(logout()),
-    getProjectCharts: (projectId) => dispatch(getProjectCharts(projectId)),
   };
 };
 

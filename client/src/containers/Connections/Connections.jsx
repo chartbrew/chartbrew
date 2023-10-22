@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import moment from "moment";
 import {
   Button, Modal, Spacer, Tabs, Tab, CardBody, Image, CardFooter, Card,
@@ -35,7 +35,7 @@ import {
   getTemplates as getTemplatesAction
 } from "../../actions/template";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
-import { getProjectCharts as getProjectChartsAction } from "../../actions/chart";
+import { getProjectCharts } from "../../slices/chart";
 import canAccess from "../../config/canAccess";
 import { primary } from "../../config/colors";
 import connectionImages from "../../config/connectionImages";
@@ -55,7 +55,7 @@ import { HiArrowLeft, HiPlus, HiTrash } from "react-icons/hi";
 function Connections(props) {
   const {
     cleanErrors, addConnection, saveConnection, connections, testRequest,
-    removeConnection, getProjectConnections, user, team, getProjectCharts, getTemplates,
+    removeConnection, getProjectConnections, user, team, getTemplates,
     templates, getConnection,
   } = props;
 
@@ -73,6 +73,7 @@ function Connections(props) {
 
   const params = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     cleanErrors();
@@ -214,7 +215,7 @@ function Connections(props) {
   };
 
   const _onCompleteTemplate = () => {
-    getProjectCharts(params.projectId)
+    dispatch(getProjectCharts({ project_id: params.projectId }))
       .then(() => {
         navigate(`/${params.teamId}/${params.projectId}/dashboard`);
         window.location.reload();
@@ -651,7 +652,6 @@ Connections.propTypes = {
   saveConnection: PropTypes.func.isRequired,
   addConnection: PropTypes.func.isRequired,
   testRequest: PropTypes.func.isRequired,
-  getProjectCharts: PropTypes.func.isRequired,
   getTemplates: PropTypes.func.isRequired,
   templates: PropTypes.object.isRequired,
   getConnection: PropTypes.func.isRequired,
@@ -676,7 +676,6 @@ const mapDispatchToProps = (dispatch) => {
       return dispatch(saveConnectionAction(projectId, connection));
     },
     cleanErrors: () => dispatch(cleanErrorsAction()),
-    getProjectCharts: (projectId) => dispatch(getProjectChartsAction(projectId)),
     getTemplates: (teamId) => dispatch(getTemplatesAction(teamId)),
     getConnection: (projectId, connectionId) => {
       return dispatch(getConnectionAction(projectId, connectionId));

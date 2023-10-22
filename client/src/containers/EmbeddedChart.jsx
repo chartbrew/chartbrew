@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
 import {
   Popover, Link, Spacer, CircularProgress, Chip,
 } from "@nextui-org/react";
@@ -10,9 +9,8 @@ import { enGB } from "date-fns/locale";
 import { Helmet } from "react-helmet";
 
 import {
-  getEmbeddedChart as getEmbeddedChartAction,
-  runQueryWithFilters as runQueryWithFiltersAction,
-} from "../actions/chart";
+  getEmbeddedChart, runQueryWithFilters,
+} from "../slices/chart";
 import LineChart from "./Chart/components/LineChart";
 import BarChart from "./Chart/components/BarChart";
 import TableContainer from "./Chart/components/TableView/TableContainer";
@@ -29,15 +27,14 @@ import Text from "../components/Text";
 import Callout from "../components/Callout";
 import { LuFilter, LuXCircle } from "react-icons/lu";
 import { useParams } from "react-router";
+import { useDispatch } from "react-redux";
 
 const pageHeight = window.innerHeight;
 
 /*
   This container is used for embedding charts in other websites
 */
-function EmbeddedChart(props) {
-  const { getEmbeddedChart, runQueryWithFilters } = props;
-
+function EmbeddedChart() {
   const [loading, setLoading] = useState(false);
   const [chart, setChart] = useState({});
   const [error, setError] = useState(false);
@@ -45,10 +42,11 @@ function EmbeddedChart(props) {
   const [dataLoading, setDataLoading] = useState(false);
 
   const params = useParams();
+  const dispatch = useDispatch();
 
   useInterval(() => {
     setDataLoading(true);
-    getEmbeddedChart(params.chartId)
+    dispatch(getEmbeddedChart({ chart_id: params.chartId }))
       .then((chart) => {
         setChart(chart);
         setDataLoading(false);
@@ -64,7 +62,7 @@ function EmbeddedChart(props) {
 
     setLoading(true);
     setTimeout(() => {
-      getEmbeddedChart(params.chartId)
+      dispatch(getEmbeddedChart({ chart_id: params.chartId }))
         .then((chart) => {
           setChart(chart);
           setLoading(false);
@@ -99,7 +97,7 @@ function EmbeddedChart(props) {
     setConditions(newConditions);
 
     setDataLoading(true);
-    runQueryWithFilters(chart.project_id, chart.id, newConditions)
+    dispatch(runQueryWithFilters({ project_id: chart.project_id, chart_id: chart.id, filters: newConditions }))
       .then((data) => {
         setDataLoading(false);
         setChart(data);
@@ -121,7 +119,7 @@ function EmbeddedChart(props) {
     if (clearIndex > -1) newConditions.splice(clearIndex, 1);
 
     setConditions(newConditions);
-    runQueryWithFilters(chart.project_id, chart.id, newConditions)
+    dispatch(runQueryWithFilters({ project_id: chart.project_id, chart_id: chart.id, filters: newConditions }))
       .then((data) => {
         setChart(data);
       });
@@ -381,18 +379,4 @@ EmbeddedChart.propTypes = {
   runQueryWithFilters: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = () => {
-  return {
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    getEmbeddedChart: (id) => dispatch(getEmbeddedChartAction(id)),
-    runQueryWithFilters: (projectId, chartId, filters) => (
-      dispatch(runQueryWithFiltersAction(projectId, chartId, filters))
-    ),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(EmbeddedChart);
+export default EmbeddedChart;
