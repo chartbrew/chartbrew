@@ -66,9 +66,6 @@ function TeamMembers(props) {
 
   const _getTeam = () => {
     dispatch(getTeam(params.teamId))
-      .then((team) => {
-        dispatch(getTeamMembers({ team_id: team.id }));
-      })
       .then(() => {
         setLoading(false);
       })
@@ -203,7 +200,7 @@ function TeamMembers(props) {
             <TableColumn key="actions">Actions</TableColumn>
           </TableHeader>
           <TableBody>
-            {teamMembers && teamMembers.map((member) => {
+            {teamMembers?.length > 0 && teamMembers.map((member) => {
               let memberRole = {};
               for (let i = 0; i < member.TeamRoles.length; i++) {
                 if (member.TeamRoles[i].team_id === team.id) {
