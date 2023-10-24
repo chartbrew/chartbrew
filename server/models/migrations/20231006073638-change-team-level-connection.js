@@ -1,5 +1,5 @@
 const Sequelize = require("sequelize");
-const populateConnectionTeamId = require("../scripts/populateDatasetTeamId");
+const populateConnectionTeamId = require("../scripts/populateConnectionTeamId");
 
 module.exports = {
   async up(queryInterface) {
