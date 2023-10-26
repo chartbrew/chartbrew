@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Checkbox, CircularProgress, Divider, Select, SelectItem, Spacer, Tooltip,
+  Button, Checkbox, CircularProgress, Divider, Select, SelectItem, Skeleton, Spacer, Tooltip,
 } from "@nextui-org/react";
 import {
   TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbMathAvg,
@@ -348,9 +348,13 @@ function ChartPreview(props) {
             )}
             {!chartLoading && (
               <>
-                <Row justify="center">
-                  <Text size="h3">{"Create a dataset to get started"}</Text>
-                </Row>
+                <div className={"container mx-auto"}>
+                  <Text className={"text-foreground-500 text-[20px]"}>{"Select a dataset to get started"}</Text>
+                  <Spacer y={1} />
+                  <Skeleton className="rounded-lg">
+                    <div className="h-5 rounded-lg bg-default-300"></div>
+                  </Skeleton>
+                </div>
                 <Spacer y={0.5} />
               </>
             )}

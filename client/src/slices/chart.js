@@ -680,5 +680,11 @@ export const chartSlice = createSlice({
 });
 
 export const selectCharts = (state) => state.chart.data;
+export const selectChart = (state, id) => state.chart.data.find((chart) => chart.id === id); 
+export const selectCdc = (state, chartId, cdcId) => {
+  const chart = state.chart.data.find((c) => c.id === chartId);
+  if (!chart) return {};
+  return chart.ChartDatasetConfigs.find((cdc) => cdc.id === cdcId);
+}
 
 export default chartSlice.reducer;

@@ -47,6 +47,7 @@ import Row from "../../components/Row";
 import Text from "../../components/Text";
 import useThemeDetector from "../../modules/useThemeDetector";
 import { useNavigate, useParams } from "react-router";
+import ChartDatasets from "./components/ChartDatasets";
 
 /*
   Container used for setting up a new chart
@@ -559,7 +560,7 @@ function AddChart(props) {
         theme={isDark ? "dark" : "light"}
       />
       <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-12 md:col-span-6">
+        <div className="col-span-12 md:col-span-7">
           <Row align="center" wrap="wrap" justify="space-between">
             <Row className="chart-name-tut">
               {!editingTitle
@@ -641,7 +642,7 @@ function AddChart(props) {
           </Row>
           <Spacer y={4} />
           <Row>
-            {params.chartId && newChart.type && datasets.length > 0 && (
+            {params.chartId && newChart.type && newChart.ChartDatasetConfigs?.length > 0 && (
               <ChartSettings
                 type={newChart.type}
                 pointRadius={newChart.pointRadius}
@@ -666,8 +667,11 @@ function AddChart(props) {
           </Row>
         </div>
 
-        <div className="col-span-12 md:col-span-6 add-dataset-tut">
+        <div className="col-span-12 md:col-span-5 add-dataset-tut">
           <div className={"bg-content1 rounded-lg mx-auto p-4 w-full"}>
+            <ChartDatasets chartId={newChart.id} />
+          </div>
+          {/* <div className={"bg-content1 rounded-lg mx-auto p-4 w-full"}>
             <Row justify="space-between">
               <Text b>
                 Datasets
@@ -809,7 +813,7 @@ function AddChart(props) {
                 </Text>
               )}
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 

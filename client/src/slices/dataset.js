@@ -273,5 +273,5 @@ export const datasetSlice = createSlice({
   },
 });
 
-export const selectDatasets = (state) => state.dataset.data.filter((d) => d.team_id === state.team.active?.id);
+export const selectDatasets = (state) => state.dataset.data;
 export default datasetSlice.reducer;
