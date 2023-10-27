@@ -35,7 +35,8 @@ function findFields(coll, currentKey, first, fields, onlyObjects) {
       }
 
       const fieldType = determineType(coll[field]);
-      if (!newFields.find((f) => f.field === newKey)) {
+      const existingField = newFields.find((f) => f.field === newKey);
+      if (!existingField || !existingField.type) {
         newFields.push({
           field: newKey,
           value: coll[field],
@@ -134,6 +135,10 @@ export default function init(collection, checkObjects, onlyObjects) {
       m.forEach((f) => {
         if (_.findIndex(fields, { field: f.field }) === -1) {
           fields.push(f);
+        } else if (_.findIndex(fields, { field: f.field, type: undefined }) > -1) {
+          // if the field is found, but its type is undefined, then set it
+          const index = _.findIndex(fields, { field: f.field, type: undefined });
+          fields[index].type = f.type;
         }
       });
     });
