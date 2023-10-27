@@ -813,6 +813,69 @@ module.exports = (app) => {
   });
   // --------------------------------------------------------
 
+  /*
+  ** Route to create ChartDatasetConfig
+  */
+  app.post("/project/:project_id/chart/:id/chart-dataset-config", verifyToken, async (req, res) => {
+    try {
+      const teamRole = await checkAccess(req);
+      const permission = accessControl.can(teamRole.role).updateAny("chart");
+
+      if (!permission.granted) {
+        return res.status(401).send({ error: "Not authorized" });
+      }
+
+      const cdc = await chartController.createChartDatasetConfig(req.params.id, req.body);
+
+      return res.status(200).send(cdc);
+    } catch (error) {
+      return res.status(400).send({ error: (error && error.message) || error });
+    }
+  });
+  // --------------------------------------------------------
+
+  /*
+  ** Route to update ChartDatasetConfigs
+  */
+  app.put("/project/:project_id/chart/:id/chart-dataset-config/:cdcId", verifyToken, async (req, res) => {
+    try {
+      const teamRole = await checkAccess(req);
+      const permission = accessControl.can(teamRole.role).updateAny("chart");
+
+      if (!permission.granted) {
+        return res.status(401).send({ error: "Not authorized" });
+      }
+
+      const cdc = await chartController.updateChartDatasetConfig(req.params.cdcId, req.body);
+
+      return res.status(200).send(cdc);
+    } catch (error) {
+      return res.status(400).send({ error: (error && error.message) || error });
+    }
+  });
+  // --------------------------------------------------------
+
+  /*
+  ** Route to delete ChartDatasetConfigs
+  */
+  app.delete("/project/:project_id/chart/:id/chart-dataset-config/:cdcId", verifyToken, async (req, res) => {
+    try {
+      const teamRole = await checkAccess(req);
+      const permission = accessControl.can(teamRole.role).updateAny("chart");
+
+      if (!permission.granted) {
+        return res.status(401).send({ error: "Not authorized" });
+      }
+
+      await chartController.deleteChartDatasetConfig(req.params.cdcId);
+
+      return res.status(200).send({ removed: true });
+    } catch (error) {
+      return res.status(400).send({ error: (error && error.message) || error });
+    }
+  });
+  // --------------------------------------------------------
+
   return (req, res, next) => {
     next();
   };

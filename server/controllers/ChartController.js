@@ -771,6 +771,33 @@ class ChartController {
         return Promise.reject(err);
       });
   }
+
+  createChartDatasetConfig(data) {
+    return db.ChartDatasetConfig.create(data)
+      .then((chartDatasetConfig) => {
+        return chartDatasetConfig;
+      })
+      .catch((err) => {
+        return Promise.reject(err);
+      });
+  }
+
+  updateChartDatasetConfig(id, data) {
+    return db.ChartDatasetConfig.update(data, { where: { id } })
+      .then(() => {
+        return db.ChartDatasetConfig.findByPk(id);
+      })
+      .catch((err) => {
+        return Promise.reject(err);
+      });
+  }
+
+  deleteChartDatasetConfig(id) {
+    return db.ChartDatasetConfig.destroy({ where: { id } })
+      .catch((err) => {
+        return Promise.reject(err);
+      });
+  }
 }
 
 module.exports = ChartController;

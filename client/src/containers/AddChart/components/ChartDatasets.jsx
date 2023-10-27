@@ -1,7 +1,7 @@
 import React, { Fragment, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
-import { LuExternalLink, LuPlus, LuSearch } from "react-icons/lu";
+import { LuExternalLink, LuMinus, LuPlus, LuSearch } from "react-icons/lu";
 import { Link, useParams } from "react-router-dom";
 import moment from "moment";
 
@@ -57,7 +57,18 @@ function ChartDatasets(props) {
 
   return (
     <div>
-      <Text size="h4">Datasets</Text>
+      <Row align={"center"} className={"justify-between"}>
+        <Text size="h4">Datasets</Text>
+        <Button
+          isIconOnly
+          variant="faded"
+          size="sm"
+          onClick={() => setAddMode(!addMode)}
+        >
+          {!addMode && (<LuPlus />)}
+          {addMode && (<LuMinus />)}
+        </Button>
+      </Row>
       <Spacer y={4} />
       <Divider />
       <Spacer y={4} />
@@ -166,34 +177,17 @@ function ChartDatasets(props) {
       
       {chart?.ChartDatasetConfigs.length > 0 && (
         <div>
-          <Row align={"center"}>
-            <Tabs
-              selectedKey={`${activeCdc}`}
-              onSelectionChange={(key) => setActiveCdc(key)}
-              fullWidth
-            >
-              {chart?.ChartDatasetConfigs.map((cdc) => (
-                <Tab title={cdc.legend} key={cdc.id} />
-              ))}
-            </Tabs>
-            <Spacer x={2} />
-            <Button
-              isIconOnly
-              variant="faded"
-              size="sm"
-              onClick={() => setAddMode(!addMode)}
-            >
-              <LuPlus />
-            </Button>
-          </Row>
-          <Spacer y={4} />
-          <Divider />
-          <Spacer y={4} />
-
-          {activeCdc !== null && (
-            <ChartDatasetConfig chartId={chartId} datasetId={activeCdc} />
-          )}
-          <Spacer y={2} />
+          <Tabs
+            selectedKey={`${activeCdc}`}
+            onSelectionChange={(key) => setActiveCdc(key)}
+            fullWidth
+          >
+            {chart?.ChartDatasetConfigs.map((cdc) => (
+              <Tab title={cdc.legend} key={cdc.id}>
+                <ChartDatasetConfig chartId={chartId} datasetId={cdc.id} />
+              </Tab>
+            ))}
+          </Tabs>
         </div>
       )}
     </div>

@@ -1,22 +1,18 @@
-import React, { useState, useEffect, Fragment } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Link as LinkNext, Spacer, Tooltip, Input, Button,
-  Switch, Modal, Divider, Chip, CircularProgress, ModalHeader, ModalBody, ModalFooter,
+  Switch, Modal, ModalHeader, ModalBody, ModalFooter,
 } from "@nextui-org/react";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import _ from "lodash";
 import { useWindowSize } from "react-use";
-import {
-  LuArrowLeftRight, LuArrowRight, LuCheck, LuChevronLeftCircle, LuChevronRightCircle,
-  LuGraduationCap, LuPencilLine, LuPlus, LuXCircle,
-} from "react-icons/lu";
+import { LuArrowRight, LuPencilLine } from "react-icons/lu";
 
 import ChartPreview from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
-import Dataset from "./components/Dataset";
 import ChartDescription from "./components/ChartDescription";
 import Walkthrough from "./components/Walkthrough";
 import {
@@ -37,7 +33,6 @@ import { updateUser as updateUserAction } from "../../actions/user";
 import {
   getTemplates as getTemplatesAction
 } from "../../actions/template";
-import { chartColors } from "../../config/colors";
 import {
   changeTutorial as changeTutorialAction,
   completeTutorial as completeTutorialAction,
@@ -53,34 +48,26 @@ import ChartDatasets from "./components/ChartDatasets";
   Container used for setting up a new chart
 */
 function AddChart(props) {
-  const [activeDataset, setActiveDataset] = useState({});
   const [titleScreen, setTitleScreen] = useState(true);
   const [newChart, setNewChart] = useState({
     type: "line",
     subType: "lcTimeseries",
   });
   const [editingTitle, setEditingTitle] = useState(false);
-  const [addingDataset, setAddingDataset] = useState(false);
-  const [savingDataset, setSavingDataset] = useState(false);
   const [chartName, setChartName] = useState("");
   const [toastOpen, setToastOpen] = useState(false);
   const [saveRequired, setSaveRequired] = useState(true);
   const [loading, setLoading] = useState(false);
   const [startTutorial, setStartTutorial] = useState(false);
-  const [resetingTutorial, setResetingTutorial] = useState(false);
   const [conditions, setConditions] = useState([]);
-  const [updatingDataset, setUpdatingDataset] = useState(false);
-  const [arrangeMode, setArrangeMode] = useState(false);
-  const [datasetsOrder, setDatasetsOrder] = useState([]);
-  const [arrangementLoading, setArrangementLoading] = useState(false);
   const [invalidateCache, setInvalidateCache] = useState(false);
 
   const { height } = useWindowSize();
 
   const {
-    saveNewDataset, getChartDatasets, tutorial,
-    datasets, updateDataset, deleteDataset, user, changeTutorial,
-    completeTutorial, clearDatasets, resetTutorial, connections, templates, getTemplates,
+    getChartDatasets, tutorial,
+    datasets, user, changeTutorial,
+    completeTutorial, clearDatasets, connections, templates, getTemplates,
     getChartAlerts, clearAlerts,
   } = props;
 
@@ -144,21 +131,6 @@ function AddChart(props) {
     if (!found) setSaveRequired(false);
   }, [newChart]);
 
-  useEffect(() => {
-    if (datasets.length > 0) {
-      const dOrder = [];
-      datasets.forEach((d) => dOrder.push(d));
-      setDatasetsOrder(dOrder);
-    }
-  }, [datasets]);
-
-  const _onDatasetChanged = (dataset) => {
-    setActiveDataset(dataset);
-    setTimeout(() => {
-      _changeTour("dataset");
-    }, 1000);
-  };
-
   const _onNameChange = (value) => {
     setChartName(value);
   };
@@ -179,75 +151,6 @@ function AddChart(props) {
       })
       .catch(() => {
         return false;
-      });
-  };
-
-  const _onSaveNewDataset = () => {
-    if (savingDataset || addingDataset) return;
-    setSavingDataset(true);
-    let savedDataset;
-    saveNewDataset(params.projectId, params.chartId, {
-      chart_id: params.chartId,
-      legend: `Dataset #${datasets.length + 1}`,
-      datasetColor: chartColors[Math.floor(Math.random() * chartColors.length)],
-      fillColor: ["rgba(0,0,0,0)"],
-    })
-      .then((dataset) => {
-        setSavingDataset(false);
-        setAddingDataset(false);
-        _onDatasetChanged(dataset);
-        savedDataset = dataset;
-        return getChartDatasets(params.projectId, params.chartId);
-      })
-      .then(() => {
-        _onDatasetChanged(savedDataset);
-      })
-      .catch(() => {
-        setSavingDataset(false);
-      });
-  };
-
-  const _onUpdateDataset = (newDataset, skipParsing) => {
-    setUpdatingDataset(true);
-    return updateDataset(
-      params.projectId,
-      params.chartId,
-      activeDataset.id,
-      newDataset
-    )
-      .then(async (dataset) => {
-        // determine wether to do a full refresh or not
-        if (activeDataset.xAxis !== dataset.xAxis
-          || activeDataset.yAxis !== dataset.yAxis
-          || activeDataset.yAxisOperation !== dataset.yAxisOperation
-          || activeDataset.dateField !== dataset.dateField
-          || activeDataset.groups !== dataset.groups
-        ) {
-          _onRefreshData(false, true);
-        } else {
-          _onRefreshPreview(skipParsing);
-        }
-
-        setActiveDataset(dataset);
-        setUpdatingDataset(false);
-      })
-      .catch(() => {
-        setUpdatingDataset(false);
-        toast.error("Cannot update the dataset 😫 Please try again", {
-          autoClose: 2500,
-        });
-      });
-  };
-
-  const _onDeleteDataset = () => {
-    return deleteDataset(params.projectId, params.chartId, activeDataset.id)
-      .then(() => {
-        setActiveDataset({});
-      })
-      .catch(() => {
-        toast.error("Cannot delete the dataset 😫 Please try again", {
-          autoClose: 2500,
-        });
       });
   };
 
@@ -327,28 +230,10 @@ function AddChart(props) {
       });
   };
 
-  const _onRefreshData = (skipParsing, skipConfCheck = false) => {
+  const _onRefreshData = () => {
     if (!params.chartId) return;
 
     const getCache = !invalidateCache;
-
-    if (!skipConfCheck) {
-      // check if all datasets are configured properly
-      const datasetsNotConfigured = datasets.filter((dataset) => {
-        if (!dataset.xAxis || !dataset.yAxis) return true;
-
-        return false;
-      });
-
-      if (datasetsNotConfigured.length > 0) {
-        datasetsNotConfigured.forEach((dataset) => {
-          toast.error(`Dataset "${dataset.legend}" is not configured properly. Please check the settings.`, {
-            autoClose: 3000,
-          });
-        });
-        return;
-      }
-    }
 
     dispatch(runQuery({
       project_id: params.projectId,
@@ -429,25 +314,6 @@ function AddChart(props) {
       .then(() => completeTutorial("drsettings"));
   };
 
-  const _onResetTutorial = () => {
-    setResetingTutorial(true);
-    return resetTutorial([
-      "addchart",
-      "dataset",
-      "apibuilder",
-      "mongobuilder",
-      "sqlbuilder",
-      "requestmodal",
-      "datasetdata",
-      "drsettings"
-    ])
-      .then(() => {
-        changeTutorial("addchart");
-        setResetingTutorial(false);
-      })
-      .catch(() => setResetingTutorial(false));
-  };
-
   const _onAddFilter = (condition) => {
     let found = false;
     const newConditions = conditions.map((c) => {
@@ -479,51 +345,6 @@ function AddChart(props) {
       chart_id: newChart.id,
       filters: [condition],
     }));
-  };
-
-  const _onSaveArrangement = () => {
-    const promiseData = [];
-    setArrangementLoading(true);
-
-    datasetsOrder.forEach((d, index) => {
-      promiseData.push(
-        updateDataset(
-          params.projectId,
-          params.chartId,
-          d.id,
-          { order: index },
-        ),
-      );
-    });
-
-    Promise.all(promiseData)
-      .then(() => {
-        setArrangementLoading(false);
-        setArrangeMode(false);
-        _onRefreshData(true);
-        getChartDatasets(params.projectId, params.chartId);
-      })
-      .catch(() => {
-        toast.error("Oups! Can't save the arrangement. Please try again.");
-        setArrangeMode(false);
-        setArrangementLoading(false);
-      });
-  };
-
-  const _changeDatasetOrder = (dId, direction) => {
-    const newDatasetsOrder = [...datasetsOrder];
-    const index = _.findIndex(datasetsOrder, { id: dId });
-    if (direction === "up") {
-      if (index === 0) return;
-      newDatasetsOrder[index] = datasetsOrder[index - 1];
-      newDatasetsOrder[index - 1] = datasetsOrder[index];
-    } else {
-      if (index === datasetsOrder.length - 1) return;
-      newDatasetsOrder[index] = datasetsOrder[index + 1];
-      newDatasetsOrder[index + 1] = datasetsOrder[index];
-    }
-
-    setDatasetsOrder(newDatasetsOrder);
   };
 
   if (titleScreen) {
@@ -671,149 +492,6 @@ function AddChart(props) {
           <div className={"bg-content1 rounded-lg mx-auto p-4 w-full"}>
             <ChartDatasets chartId={newChart.id} />
           </div>
-          {/* <div className={"bg-content1 rounded-lg mx-auto p-4 w-full"}>
-            <Row justify="space-between">
-              <Text b>
-                Datasets
-              </Text>
-              <Tooltip content="Start the chart builder tutorial" placement="leftStart">
-                <LinkNext className="text-default-600 flex items-center" onPress={_onResetTutorial}>
-                  {!resetingTutorial ? <LuGraduationCap /> : <CircularProgress  />}
-                  <Spacer x={0.5} />
-                  <Text>Tutorial</Text>
-                </LinkNext>
-              </Tooltip>
-            </Row>
-            <Spacer y={1} />
-            <Divider />
-            <Spacer y={4} />
-            <Row wrap="wrap">
-              {!arrangeMode && datasets && datasets.map((dataset) => {
-                return (
-                  <Fragment key={dataset.id}>
-                    <Button
-                      style={styles.datasetButtons}
-                      onClick={() => _onDatasetChanged(dataset)}
-                      variant={dataset.id !== activeDataset.id ? "ghost" : "solid"}
-                      size="sm"
-                      auto
-                    >
-                      {dataset.legend}
-                    </Button>
-                  </Fragment>
-                );
-              })}
-              {arrangeMode && datasets && datasetsOrder.map((dataset, index) => {
-                return (
-                  <>
-                    <Chip
-                      style={styles.datasetButtons}
-                      key={dataset.id}
-                      radius="sm"
-                      variant={"bordered"}
-                      color="primary"
-                      startContent={index > 0 ? (
-                        <LinkNext onPress={() => _changeDatasetOrder(dataset.id, "up")}>
-                          <LuChevronLeftCircle size={16} />
-                        </LinkNext>
-                      ) : null}
-                      endContent={index < datasetsOrder.length - 1 ? (
-                        <LinkNext onPress={() => _changeDatasetOrder(dataset.id, "down")}>
-                          <LuChevronRightCircle size={16} />
-                        </LinkNext>
-                      ) : null}
-                    >
-                      {dataset.legend}
-                    </Chip>
-                  </>
-                );
-              })}
-            </Row>
-
-            <Row align="center" justify="space-between">
-              {!addingDataset && datasets.length > 0 && (
-                <>
-                  <div>
-                    <Button
-                      onClick={() => _onSaveNewDataset()}
-                      startContent={<LuPlus />}
-                      color="primary"
-                      variant="light"
-                    >
-                      {"Add new dataset"}
-                    </Button>
-                  </div>
-                  <div style={{ display: "flex", "flexDirection": "row", justifyContent: "flex-end" }}>
-                    <Button
-                      onClick={() => {
-                        if (!arrangeMode) setArrangeMode(true);
-                        else _onSaveArrangement();
-                      }}
-                      startContent={arrangeMode ? <LuCheck /> : <LuArrowLeftRight />}
-                      auto
-                      color={arrangeMode ? "success" : "primary"}
-                      variant="light"
-                      isLoading={arrangementLoading}
-                    >
-                      {!arrangeMode && "Arrange datasets"}
-                      {arrangeMode && "Save"}
-                    </Button>
-                    {arrangeMode && (
-                      <>
-                        <Tooltip content="Cancel arrangement" placement="left-start">
-                          <Button
-                            onClick={() => setArrangeMode(false)}
-                            isIconOnly
-                            variant="light"
-                            color="warning"
-                            auto
-                          >
-                            <LuXCircle />
-                          </Button>
-                        </Tooltip>
-                      </>
-                    )}
-                  </div>
-                </>
-              )}
-
-              {!addingDataset && datasets.length === 0 && (
-                <Button
-                  size="lg"
-                  onClick={() => _onSaveNewDataset()}
-                  isLoading={savingDataset}
-                  endContent={<LuPlus />}
-                  color="primary"
-                >
-                  {"Add the first dataset"}
-                </Button>
-              )}
-            </Row>
-
-            <Spacer y={2} />
-            <div>
-              {activeDataset.id && datasets.map((dataset) => {
-                return (
-                  <div style={activeDataset.id !== dataset.id ? { display: "none" } : {}} key={dataset.id}>
-                    <Dataset
-                      dataset={dataset}
-                      onUpdate={(data, skipParsing = false) => _onUpdateDataset(data, skipParsing)}
-                      onDelete={_onDeleteDataset}
-                      chart={newChart}
-                      onRefresh={_onRefreshData}
-                      onRefreshPreview={_onRefreshPreview}
-                      loading={updatingDataset}
-                    />
-                  </div>
-                );
-              })}
-              {!activeDataset.id && (
-                <Text className={"text-default-600"} h3>
-                  {"Select or create a dataset above"}
-                </Text>
-              )}
-            </div>
-          </div> */}
         </div>
       </div>
 

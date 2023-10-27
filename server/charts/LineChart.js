@@ -12,27 +12,27 @@ class NewLineChart {
     let maxLabelLength = 0;
     let selectedDatasetLabels = 0;
     const formattedDatasets = [];
-    for (let i = 0; i < this.datasets.length; i++) {
-      const dataset = this.datasets[i];
+    for (let i = 0; i < this.chart.ChartDatasetConfigs.length; i++) {
+      const datasetConfig = this.chart.ChartDatasetConfigs[i];
       const formattedDataset = {
-        label: dataset.options.legend,
+        label: datasetConfig.legend,
         data: this.axisData.y[i]?.length === 0 ? [0] : this.axisData.y[i],
       };
 
-      if (dataset.options.datasetColor) {
-        formattedDataset.borderColor = dataset.options.datasetColor;
+      if (datasetConfig.datasetColor) {
+        formattedDataset.borderColor = datasetConfig.datasetColor;
       }
-      if (dataset.options.fillColor) {
-        formattedDataset.backgroundColor = dataset.options.fillColor;
+      if (datasetConfig.fillColor) {
+        formattedDataset.backgroundColor = datasetConfig.fillColor;
       }
-      formattedDataset.fill = dataset.options.fill;
+      formattedDataset.fill = datasetConfig.fill;
 
-      if (dataset.options.fillColor !== null
-        && typeof dataset.options.fillColor === "object"
-        && dataset.options.fillColor instanceof Array
+      if (datasetConfig.fillColor !== null
+        && typeof datasetConfig.fillColor === "object"
+        && datasetConfig.fillColor instanceof Array
       ) {
         formattedDataset.datalabels = {
-          color: dataset.options.fillColor.map((color) => getContrastYIQ(color)),
+          color: datasetConfig.fillColor.map((color) => getContrastYIQ(color)),
           display: "auto",
         };
         if (this.chart.type === "bar") {
@@ -41,7 +41,7 @@ class NewLineChart {
         }
       } else {
         formattedDataset.datalabels = {
-          color: getContrastYIQ(dataset.options.fillColor),
+          color: getContrastYIQ(datasetConfig.fillColor),
           display: "auto",
         };
 

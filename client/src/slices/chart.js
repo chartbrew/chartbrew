@@ -396,6 +396,76 @@ export const createShareString = createAsyncThunk(
   }
 );
 
+export const createCdc = createAsyncThunk(
+  "chart/createCdc",
+  async ({ project_id, chart_id, data }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/chart/${chart_id}/chart-dataset-config`;
+    const method = "POST";
+    const body = JSON.stringify(data);
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers, body });
+    const responseJson = await response.json();
+
+    if (response.status >= 400) {
+      throw new Error(responseJson.message);
+    }
+
+    return responseJson;
+  }
+);
+
+export const updateCdc = createAsyncThunk(
+  "chart/updateCdc",
+  async ({ project_id, chart_id, cdc_id, data }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/chart/${chart_id}/chart-dataset-config/${cdc_id}`;
+    const method = "PUT";
+    const body = JSON.stringify(data);
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers, body });
+    const responseJson = await response.json();
+
+    if (response.status >= 400) {
+      throw new Error(responseJson.message);
+    }
+
+    return responseJson;
+  }
+);
+
+export const removeCdc = createAsyncThunk(
+  "chart/removeCdc",
+  async ({ project_id, chart_id, cdc_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/project/${project_id}/chart/${chart_id}/chart-dataset-config/${cdc_id}`;
+    const method = "DELETE";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers });
+    const responseJson = await response.json();
+
+    if (response.status >= 400) {
+      throw new Error(responseJson.message);
+    }
+
+    return responseJson;
+  }
+);
+
 export const chartSlice = createSlice({
   name: "chart",
   initialState,
@@ -675,6 +745,80 @@ export const chartSlice = createSlice({
           }
           return chart;
         });
+      })
+
+      // createCdc
+      .addCase(createCdc.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(createCdc.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((chart) => {
+          if (action.meta.arg.chart_id === chart.id) {
+            return {
+              ...chart,
+              ChartDatasetConfigs: [
+                ...chart.ChartDatasetConfigs,
+                action.payload,
+              ],
+            };
+          }
+          return chart;
+        });
+      })
+      .addCase(createCdc.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+
+      // updateCdc
+      .addCase(updateCdc.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateCdc.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((chart) => {
+          if (action.meta.arg.chart_id === chart.id) {
+            return {
+              ...chart,
+              ChartDatasetConfigs: chart.ChartDatasetConfigs.map((cdc) => {
+                if (cdc.id === action.payload.id) {
+                  return {
+                    ...cdc,
+                    ...action.payload,
+                  };
+                }
+                return cdc;
+              }),
+            };
+          }
+          return chart;
+        });
+      })
+      .addCase(updateCdc.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+
+      // removeCdc
+      .addCase(removeCdc.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(removeCdc.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((chart) => {
+          if (action.meta.arg.chart_id === chart.id) {
+            return {
+              ...chart,
+              ChartDatasetConfigs: chart.ChartDatasetConfigs.filter((cdc) => cdc.id !== action.payload.id),
+            };
+          }
+          return chart;
+        });
+      })
+      .addCase(removeCdc.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
       })
   },
 });
