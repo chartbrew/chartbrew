@@ -136,9 +136,9 @@ class FirestoreConnection {
         }
 
         // now check if values should be converted to numbers
-        if (/^\d+$/.test(condition.value)) {
+        if (/^-?\d+$/.test(condition.value)) {
           condition.value = parseInt(condition.value, 10);
-        } else if (/^\d+\.\d+$/.test(condition.value)) {
+        } else if (/^-?\d+(\.\d+)?$/.test(condition.value)) {
           condition.value = parseFloat(condition.value);
         }
 

@@ -109,6 +109,15 @@ function compareNumbers(data, field, condition) {
       return null;
     }
 
+    if (typeof value === "number") return value;
+
+    // now check if values should be converted to numbers
+    if (/^\d+$/.test(value)) {
+      value = parseInt(value, 10);
+    } else if (/^\d+\.\d+$/.test(value)) {
+      value = parseFloat(value);
+    }
+
     return value;
   };
 
