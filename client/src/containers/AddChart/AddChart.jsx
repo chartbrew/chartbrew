@@ -25,10 +25,7 @@ import {
   deleteDataset as deleteDatasetAction,
   clearDatasets as clearDatasetsAction,
 } from "../../actions/dataset";
-import {
-  getChartAlerts as getChartAlertsAction,
-  clearAlerts as clearAlertsAction,
-} from "../../actions/alert";
+import { getChartAlerts, clearAlerts } from "../../slices/alert";
 import { updateUser as updateUserAction } from "../../actions/user";
 import {
   getTemplates as getTemplatesAction
@@ -68,7 +65,6 @@ function AddChart(props) {
     getChartDatasets, tutorial,
     datasets, user, changeTutorial,
     completeTutorial, clearDatasets, connections, templates, getTemplates,
-    getChartAlerts, clearAlerts,
   } = props;
 
   const charts = useSelector(selectCharts);
@@ -80,7 +76,7 @@ function AddChart(props) {
 
   useEffect(() => {
     clearDatasets();
-    clearAlerts();
+    dispatch(clearAlerts());
 
     if (params.chartId) {
       charts.map((chart) => {
@@ -93,7 +89,10 @@ function AddChart(props) {
 
       // also fetch the chart's datasets and alerts
       getChartDatasets(params.projectId, params.chartId);
-      getChartAlerts(params.projectId, params.chartId);
+      dispatch(getChartAlerts({
+        project_id: params.projectId,
+        chart_id: params.chartId
+      }));
     }
 
     if (user && (!user.tutorials || Object.keys(user.tutorials).length === 0)) {
@@ -585,8 +584,6 @@ AddChart.propTypes = {
   connections: PropTypes.array.isRequired,
   getTemplates: PropTypes.func.isRequired,
   templates: PropTypes.object.isRequired,
-  getChartAlerts: PropTypes.func.isRequired,
-  clearAlerts: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -619,8 +616,6 @@ const mapDispatchToProps = (dispatch) => {
     resetTutorial: (tut) => dispatch(resetTutorialAction(tut)),
     clearDatasets: () => dispatch(clearDatasetsAction()),
     getTemplates: (teamId) => dispatch(getTemplatesAction(teamId)),
-    getChartAlerts: (projectId, chartId) => dispatch(getChartAlertsAction(projectId, chartId)),
-    clearAlerts: () => dispatch(clearAlertsAction()),
   };
 };
 

@@ -10,7 +10,7 @@ import dataset from "../slices/dataset";
 import dataRequest from "./dataRequest";
 import tutorial from "./tutorial";
 import template from "./template";
-import alert from "./alert";
+import alert from "../slices/alert";
 import integration from "./integration";
 
 const AppReducer = {

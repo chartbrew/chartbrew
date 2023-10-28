@@ -14,15 +14,6 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "cascade",
       },
     },
-    dataset_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      reference: {
-        model: "Dataset",
-        key: "id",
-        onDelete: "cascade",
-      },
-    },
     cdc_id: {
       type: DataTypes.UUID,
       allowNull: false,

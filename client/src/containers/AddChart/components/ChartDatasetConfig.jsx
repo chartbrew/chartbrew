@@ -311,7 +311,7 @@ function ChartDatasetConfig(props) {
           </Link>
         )}
         {formula && (
-          <div className="col-span-12">
+          <Row align={"center"} justify={"space-between"}>
             <div>
               <Popover>
                 <PopoverTrigger>
@@ -327,36 +327,38 @@ function ChartDatasetConfig(props) {
                 </PopoverContent>
               </Popover>
             </div>
-            <Spacer y={1} />
-            <div className="flex flex-row gap-3 items-center w-full">
-              <Input
-                placeholder="Enter your formula here: {val}"
-                value={formula}
-                onChange={(e) => setFormula(e.target.value)}
-                variant="bordered"
-                fullWidth
-              />
-              {formula !== cdc.formula && (
-                <Tooltip
-                  content={"Apply the formula"}
-                >
-                  <Link onClick={_onApplyFormula}>
-                    <LuCheckCircle className={"text-success"} />
+            {/* <Spacer y={1} /> */}
+            <div>
+              <div className="flex flex-row gap-3 items-center w-full">
+                <Input
+                  placeholder="Enter your formula here: {val}"
+                  value={formula}
+                  onChange={(e) => setFormula(e.target.value)}
+                  variant="bordered"
+                  fullWidth
+                />
+                {formula !== cdc.formula && (
+                  <Tooltip
+                    content={"Apply the formula"}
+                  >
+                    <Link onClick={_onApplyFormula}>
+                      <LuCheckCircle className={"text-success"} />
+                    </Link>
+                  </Tooltip>
+                )}
+                <Tooltip content="Remove formula">
+                  <Link onClick={_onRemoveFormula}>
+                    <LuXCircle className="text-danger" />
                   </Link>
                 </Tooltip>
-              )}
-              <Tooltip content="Remove formula">
-                <Link onClick={_onRemoveFormula}>
-                  <LuXCircle className="text-danger" />
-                </Link>
-              </Tooltip>
-              <Tooltip content="Click for an example">
-                <Link onClick={_onExampleFormula}>
-                  <LuWand2 className="text-primary" />
-                </Link>
-              </Tooltip>
+                <Tooltip content="Click for an example">
+                  <Link onClick={_onExampleFormula}>
+                    <LuWand2 className="text-primary" />
+                  </Link>
+                </Tooltip>
+              </div>
             </div>
-          </div>
+          </Row>
         )}
       </Row>
 
@@ -427,7 +429,7 @@ function ChartDatasetConfig(props) {
               || chart.type === "table"
               ? "patterns" : "axis"}
             chartId={params.chartId}
-            datasetId={cdc.id}
+            cdcId={cdc.id}
             projectId={params.projectId}
           />
         </Row>

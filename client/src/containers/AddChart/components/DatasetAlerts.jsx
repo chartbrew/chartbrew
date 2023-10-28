@@ -11,11 +11,8 @@ import {
 
 import { getTeamMembers, selectTeam, selectTeamMembers } from "../../../slices/team";
 import {
-  getChartAlerts as getChartAlertsAction,
-  createAlert as createAlertAction,
-  updateAlert as updateAlertAction,
-  deleteAlert as deleteAlertAction,
-} from "../../../actions/alert";
+  getChartAlerts, createAlert, updateAlert, deleteAlert, selectAlerts,
+} from "../../../slices/alert";
 import {
   getTeamIntegrations as getTeamIntegrationsAction,
 } from "../../../actions/integration";
@@ -23,6 +20,7 @@ import autoUpdatePicture from "../../../assets/chartbrew-auto-update.jpg";
 import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
+import { selectCharts } from "../../../slices/chart";
 
 const ruleTypes = [{
   label: "When reaching a milestone",
@@ -57,9 +55,7 @@ const timePeriods = [{
 
 function DatasetAlerts(props) {
   const {
-    user, chartId, datasetId, projectId,
-    createAlert, alerts, updateAlert, deleteAlert, charts,
-    getTeamIntegrations, integrations, getChartAlerts,
+    user, chartId, cdcId, projectId, getTeamIntegrations, integrations,
   } = props;
 
   const initAlert = {
@@ -71,7 +67,7 @@ function DatasetAlerts(props) {
       }
     },
     chart_id: chartId,
-    dataset_id: datasetId,
+    cdc_id: cdcId,
     active: true,
     timeout: 600,
   };
@@ -79,7 +75,6 @@ function DatasetAlerts(props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [datasetAlerts, setDatasetAlerts] = useState([]);
   const [newAlert, setNewAlert] = useState(initAlert);
   const [displayTimeout, setDisplayTimeout] = useState(10);
   const [timeoutUnit, setTimeoutUnit] = useState("minutes");
@@ -90,18 +85,13 @@ function DatasetAlerts(props) {
   const dispatch = useDispatch();
   const team = useSelector(selectTeam);
   const teamMembers = useSelector(selectTeamMembers);
+  const charts = useSelector(selectCharts);
+  const alerts = useSelector(selectAlerts).filter((a) => a.cdc_id === cdcId);
 
   useEffect(() => {
     dispatch(getTeamMembers({ team_id: team.id }));
     getTeamIntegrations(team.id);
   }, []);
-
-  useEffect(() => {
-    if (alerts) {
-      const filteredAlerts = alerts.filter((a) => a.dataset_id === datasetId);
-      setDatasetAlerts(filteredAlerts);
-    }
-  }, [alerts]);
 
   useEffect(() => {
     if (charts && chartId) {
@@ -154,7 +144,11 @@ function DatasetAlerts(props) {
     }
 
     if (newAlert.id) {
-      updateAlert(projectId, chartId, alertToSave)
+      dispatch(updateAlert({
+        project_id: projectId,
+        chart_id: chartId,
+        data: alertToSave
+      }))
         .then(() => {
           setOpen(false);
           setLoading(false);
@@ -166,7 +160,11 @@ function DatasetAlerts(props) {
       return;
     }
 
-    createAlert(projectId, chartId, alertToSave)
+    dispatch(createAlert({
+      project_id: projectId,
+      chart_id: chartId,
+      data: alertToSave
+    }))
       .then(() => {
         setOpen(false);
         setLoading(false);
@@ -203,7 +201,11 @@ function DatasetAlerts(props) {
   const _onDelete = () => {
     if (!newAlert.id) return;
     setDeleteLoading(true);
-    deleteAlert(projectId, chartId, newAlert.id)
+    dispatch(deleteAlert({
+      project_id: projectId,
+      chart_id: chartId,
+      alert_id: newAlert.id
+    }))
       .then(() => {
         setOpen(false);
         setDeleteLoading(false);
@@ -262,24 +264,24 @@ function DatasetAlerts(props) {
   const _refreshForm = () => {
     setNewAlert(initAlert);
     setSelectedIntegrations([]);
-    getChartAlerts(projectId, chartId);
+    dispatch(getChartAlerts({
+      project_id: projectId,
+      chart_id: chartId
+    }));
   };
 
   return (
     <div className="dataset-alerts-tut">
       <Container className={"pl-0 pr-0"}>
         <Row wrap="wrap">
-          {datasetAlerts.length === 0 && (
-            <Button
-              color="primary"
-              endContent={<LuBellPlus />}
-              size="sm"
-              onClick={_onOpen}
-            >
-              Set up alerts
-            </Button>
+          {alerts.length === 0 && (
+            <Link onClick={_onOpen} className="flex items-center cursor-pointer">
+              <LuBellPlus size={24} />
+              <Spacer x={0.5} />
+              <Text>Set up alerts</Text>
+            </Link>
           )}
-          {datasetAlerts.length > 0 && datasetAlerts.map((alert) => (
+          {alerts.length > 0 && alerts.map((alert) => (
             <Fragment key={alert.id}>
               <Button
                 color={alert.active ? "primary" : "secondary"}
@@ -301,9 +303,8 @@ function DatasetAlerts(props) {
             </Fragment>
           ))}
         </Row>
-        {datasetAlerts.length > 0 && (
+        {alerts.length > 0 && (
           <>
-            <Spacer y={1} />
             <Row>
               <Button
                 color="primary"
@@ -605,7 +606,7 @@ function DatasetAlerts(props) {
                 Delete alert
               </Button>
             )}
-            <Button auto onClick={() => setOpen(false)} color="warning" variant="flat">
+            <Button onClick={() => setOpen(false)} variant="bordered">
               Close
             </Button>
             <Button
@@ -627,37 +628,19 @@ function DatasetAlerts(props) {
 DatasetAlerts.propTypes = {
   user: PropTypes.object.isRequired,
   chartId: PropTypes.string.isRequired,
-  datasetId: PropTypes.string.isRequired,
-  createAlert: PropTypes.func.isRequired,
+  cdcId: PropTypes.string.isRequired,
   projectId: PropTypes.string.isRequired,
-  alerts: PropTypes.array.isRequired,
-  updateAlert: PropTypes.func.isRequired,
-  deleteAlert: PropTypes.func.isRequired,
-  charts: PropTypes.array.isRequired,
   getTeamIntegrations: PropTypes.func.isRequired,
   integrations: PropTypes.array.isRequired,
-  getChartAlerts: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => ({
   user: state.user.data,
-  alerts: state.alert.data,
-  charts: state.chart.data,
   integrations: state.integration.data,
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  createAlert: (projectId, chartId, alert) => (
-    dispatch(createAlertAction(projectId, chartId, alert))
-  ),
-  updateAlert: (projectId, chartId, alert) => (
-    dispatch(updateAlertAction(projectId, chartId, alert))
-  ),
-  deleteAlert: (projectId, chartId, alertId) => (
-    dispatch(deleteAlertAction(projectId, chartId, alertId))
-  ),
   getTeamIntegrations: (teamId) => dispatch(getTeamIntegrationsAction(teamId)),
-  getChartAlerts: (projectId, chartId) => dispatch(getChartAlertsAction(projectId, chartId)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(DatasetAlerts);

@@ -14,9 +14,21 @@ module.exports = {
     });
 
     migrateAlertsToCdc.up(queryInterface);
+
+    await queryInterface.removeColumn("Alert", "dataset_id");
   },
 
   async down(queryInterface) {
     await queryInterface.removeColumn("Alert", "cdc_id");
+
+    await queryInterface.addColumn("Alert", "dataset_id", {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      reference: {
+        model: "Dataset",
+        key: "id",
+        onDelete: "cascade",
+      },
+    });
   }
 };

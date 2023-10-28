@@ -151,12 +151,12 @@ async function checkChartForAlerts(chart) {
     return isPast(timeout);
   });
 
-  const { chartData, Datasets } = chart;
+  const { chartData, ChartDatasetConfigs } = chart;
   const dateFormat = chart.getDataValue("dateFormat");
 
-  Datasets.forEach((dataset, index) => {
+  ChartDatasetConfigs.forEach((cdc, index) => {
     const chartDataset = chartData.data.datasets[index];
-    const datasetAlerts = alerts.filter((alert) => alert.dataset_id === dataset.id);
+    const datasetAlerts = alerts.filter((alert) => alert.cdc_id === cdc.id);
 
     if (datasetAlerts.length > 0) {
       datasetAlerts.forEach(async (alert) => {

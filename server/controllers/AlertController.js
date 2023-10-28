@@ -102,10 +102,10 @@ function getByChartId(chartId) {
   });
 }
 
-function getByDatasetId(datasetId) {
+function getByCdcId(cdcId) {
   return db.Alert.findAll({
     where: {
-      dataset_id: datasetId,
+      cdc_id: cdcId,
     },
   });
 }
@@ -150,6 +150,6 @@ module.exports = {
   update,
   remove,
   getByChartId,
-  getByDatasetId,
+  getByCdcId,
   addIntegration,
 };
