@@ -68,13 +68,13 @@ function ChartDatasetConfig(props) {
     }
   }, [chart, cdc]);
 
-  const _onRunQuery = () => {
+  const _onRunQuery = (skipParsing = true) => {
     dispatch(runQuery({
       project_id: params.projectId,
       chart_id: chartId,
       cdc_id: cdc.id,
       noSource: true,
-      skipParsing: true,
+      skipParsing,
       getCache: true
     }));
   };
@@ -85,31 +85,16 @@ function ChartDatasetConfig(props) {
 
   const _onExampleFormula = () => {
     setFormula("${val / 100}");
-    dispatch(updateCdc({
-      project_id: params.projectId,
-      chart_id: chartId,
-      cdc_id: cdc.id,
-      data: { formula: "${val / 100}" },
-    }));
+    _onUpdateCdc({ formula: "${val / 100}" });
   };
 
   const _onRemoveFormula = () => {
     setFormula("");
-    dispatch(updateCdc({
-      project_id: params.projectId,
-      chart_id: chartId,
-      cdc_id: cdc.id,
-      data: { formula: "" },
-    }));
+    _onUpdateCdc({ formula: "" });
   };
 
   const _onApplyFormula = () => {
-    dispatch(updateCdc({
-      project_id: params.projectId,
-      chart_id: chartId,
-      cdc_id: cdc.id,
-      data: { formula },
-    }));
+    _onUpdateCdc({ formula });
   };
 
   const _onSaveLegend = () => {
@@ -122,6 +107,14 @@ function ChartDatasetConfig(props) {
   };
 
   const _onUpdateCdc = (data) => {
+    let skipParsing = true;
+
+    Object.keys(data).forEach((key) => {
+      if (key === "formula" || key === "sort" || key === "maxRecords" || key === "goal") {
+        skipParsing = false;
+      }
+    });
+
     dispatch(updateCdc({
       project_id: params.projectId,
       chart_id: chartId,
@@ -129,7 +122,7 @@ function ChartDatasetConfig(props) {
       data,
     }))
       .then(() => {
-        _onRunQuery();
+        _onRunQuery(skipParsing);
       });
   };
 

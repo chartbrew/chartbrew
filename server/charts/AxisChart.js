@@ -582,9 +582,9 @@ class AxisChart {
     }
 
     if (!skipDataProcessing) {
-      for (let i = 0; i < this.datasets.length; i++) {
-        if (this.datasets[i].options && this.datasets[i].options.formula) {
-          const { formula } = this.datasets[i].options;
+      for (let i = 0; i < this.chart.ChartDatasetConfigs.length; i++) {
+        if (this.chart.ChartDatasetConfigs[i]?.formula) {
+          const { formula } = this.chart.ChartDatasetConfigs[i];
           this.axisData.y[i] = this.axisData.y[i].map((val) => {
             const before = formula.substring(0, formula.indexOf("{"));
             const after = formula.substring(formula.indexOf("}") + 1);
@@ -638,8 +638,8 @@ class AxisChart {
     // apply sorting if available
     let shouldSort = false;
     let sortIndex;
-    this.datasets.forEach((d, index) => {
-      if (d.options.sort) {
+    this.chart.ChartDatasetConfigs.forEach((cdc, index) => {
+      if (cdc.sort) {
         sortIndex = index;
         shouldSort = true;
       }
@@ -649,9 +649,9 @@ class AxisChart {
       for (let i = 0; i < newDatasets[sortIndex].data.length - 1; i++) {
         for (let j = i + 1; j < newDatasets[sortIndex].data.length; j++) {
           let sortCondition;
-          if (this.datasets[sortIndex].options.sort === "asc") {
+          if (this.chart.ChartDatasetConfigs[sortIndex].sort === "asc") {
             sortCondition = newDatasets[sortIndex].data[i] > newDatasets[sortIndex].data[j];
-          } else if (this.datasets[sortIndex].options.sort === "desc") {
+          } else if (this.chart.ChartDatasetConfigs[sortIndex].sort === "desc") {
             sortCondition = newDatasets[sortIndex].data[i] < newDatasets[sortIndex].data[j];
           }
 
@@ -681,10 +681,10 @@ class AxisChart {
     }
 
     // apply max records if available
-    this.datasets.forEach((d, index) => {
-      if (d.options.maxRecords) {
-        newDatasets[index].data = newDatasets[index].data.slice(0, d.options.maxRecords);
-        newLabels = newLabels.slice(0, d.options.maxRecords);
+    this.chart.ChartDatasetConfigs.forEach((d, index) => {
+      if (d.maxRecords) {
+        newDatasets[index].data = newDatasets[index].data.slice(0, d.maxRecords);
+        newLabels = newLabels.slice(0, d.maxRecords);
       }
     });
 
@@ -694,7 +694,8 @@ class AxisChart {
     configuration.growth = [];
     configuration.goals = [];
     configuration.data.datasets.forEach((d, index) => {
-      const { formula, goal } = this.datasets[index].options;
+      const { formula, goal } = this.chart.ChartDatasetConfigs[index] || {};
+
       const before = formula ? formula.substring(0, formula.indexOf("{")) : "";
       const after = formula ? formula.substring(formula.indexOf("}") + 1) : "";
 
