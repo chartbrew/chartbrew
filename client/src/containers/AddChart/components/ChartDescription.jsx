@@ -4,7 +4,7 @@ import {
   Button, Input, Spacer, Link, Card, Tabs, Tab, CardBody, Image, CardFooter, Divider,
 } from "@nextui-org/react";
 import { connect } from "react-redux";
-import { Link as RouterLink, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
 
 import SimpleAnalyticsTemplate from "../../Connections/SimpleAnalytics/SimpleAnalyticsTemplate";
@@ -22,7 +22,7 @@ import availableTemplates from "../../../modules/availableTemplates";
 function ChartDescription(props) {
   const {
     name, onChange, onCreate, teamId, projectId, connections, templates,
-    user, team, noConnections,
+    user, team,
   } = props;
 
   const [error, setError] = useState(false);
@@ -122,24 +122,6 @@ function ChartDescription(props) {
                   <Text className={"text-primary"}>{"Can't think of something?"}</Text>
                 </Link>
               </Row>
-
-              {noConnections && (
-                <>
-                  <Spacer y={2} />
-                  <Row>
-                    <Container className={"bg-blue-100 p-4 rounded-md"}>
-                      <Row>
-                        <Text h5>
-                          {"You haven't connected to any data source yet. Create charts from a template instead or "}
-                          <RouterLink to={`/${params.teamId}/${params.projectId}/connections`}>
-                            {"create a data source first"}
-                          </RouterLink>
-                        </Text>
-                      </Row>
-                    </Container>
-                  </Row>
-                </>
-              )}
 
               <Spacer y={4} />
               <Row align="center">
@@ -276,7 +258,6 @@ function ChartDescription(props) {
 
 ChartDescription.defaultProps = {
   name: "",
-  noConnections: false,
 };
 
 ChartDescription.propTypes = {
@@ -289,7 +270,6 @@ ChartDescription.propTypes = {
   team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
   templates: PropTypes.object.isRequired,
-  noConnections: PropTypes.bool,
 };
 
 const mapStateToProps = (state) => ({

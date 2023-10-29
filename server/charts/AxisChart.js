@@ -756,7 +756,7 @@ class AxisChart {
             goalIndex: index,
           });
         }
-      } else if (d.data.length > 1) {
+      } else if (d.data?.length > 1) {
         let currentValue;
         try {
           const currArr = `${d.data[d.data.length - 1]}`.match(/[\d.]+/g);

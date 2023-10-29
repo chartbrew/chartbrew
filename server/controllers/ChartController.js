@@ -772,8 +772,18 @@ class ChartController {
       });
   }
 
-  createChartDatasetConfig(data) {
-    return db.ChartDatasetConfig.create(data)
+  async createChartDatasetConfig(chartId, data) {
+    if (!data.dataset_id) {
+      return Promise.reject("Dataset ID is required");
+    }
+
+    const dataset = await db.Dataset.findByPk(data.dataset_id);
+
+    return db.ChartDatasetConfig.create({
+      ...data,
+      legend: dataset.legend,
+      chart_id: chartId,
+    })
       .then((chartDatasetConfig) => {
         return chartDatasetConfig;
       })

@@ -27,6 +27,10 @@ class NewBarChart {
       if (datasetConfig.fillColor) {
         formattedDataset.backgroundColor = datasetConfig.fillColor;
       }
+      if (!datasetConfig.fill) {
+        formattedDataset.backgroundColor = "transparent";
+      }
+
       formattedDataset.fill = datasetConfig.fill;
 
       if (datasetConfig.fillColor !== null

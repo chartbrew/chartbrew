@@ -1,15 +1,21 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
-import { Button, Checkbox, Chip, Divider, Input, Link, Popover, PopoverContent, PopoverTrigger, ScrollShadow, Spacer, Tooltip, commonColors } from "@nextui-org/react";
+import {
+  Button, Checkbox, Chip, Divider, Input, Link, Popover, PopoverContent,
+  PopoverTrigger, ScrollShadow, Spacer, Tooltip, commonColors,
+} from "@nextui-org/react";
 import { TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import { TwitterPicker, SketchPicker } from "react-color";
 import { useParams } from "react-router";
-import { LuArrowDown01, LuArrowDown10, LuCheck, LuCheckCircle, LuChevronRight, LuInfo, LuWand2, LuXCircle } from "react-icons/lu";
+import {
+  LuArrowDown01, LuArrowDown10, LuCheck, LuCheckCircle, LuChevronRight, LuInfo,
+  LuWand2, LuXCircle,
+} from "react-icons/lu";
 
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
-import { runQuery, selectCdc, updateCdc } from "../../../slices/chart";
+import { removeCdc, runQuery, selectCdc, updateCdc } from "../../../slices/chart";
 import DatasetAlerts from "./DatasetAlerts";
 import { chartColors, primary } from "../../../config/colors";
 
@@ -133,9 +139,7 @@ function ChartDatasetConfig(props) {
   });
 
   const _onChangeDatasetColor = (color) => {
-    const rgba = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
-
-    _onUpdateCdc({ datasetColor: rgba });
+    _onUpdateCdc({ datasetColor: color.hex });
   };
 
   const _onChangeFillColor = (color, fillIndex) => {
@@ -174,6 +178,23 @@ function ChartDatasetConfig(props) {
     }
   };
 
+  const _onRemoveCdc = () => {
+    dispatch(removeCdc({
+      project_id: params.projectId,
+      chart_id: chartId,
+      cdc_id: cdc.id,
+    }))
+      .then(() => {
+        dispatch(runQuery({
+          project_id: params.projectId,
+          chart_id: chartId,
+          noSource: false,
+          skipParsing: false,
+          getCache: true,
+        }));
+      });
+  };
+
   return (
     <div>
       <Row align="center">
@@ -189,7 +210,7 @@ function ChartDatasetConfig(props) {
             <Spacer x={2} />
             <Button
               isIconOnly
-              color="success"
+              color="primary"
               isLoading={false}
               size="sm"
               onClick={_onSaveLegend}
@@ -302,7 +323,7 @@ function ChartDatasetConfig(props) {
       <Divider />
       <Spacer y={4} />
 
-      <Row>
+      <div>
         {!formula && (
           <Link onClick={_onAddFormula} className="flex items-center cursor-pointer">
             <TbMathFunctionY size={24} />
@@ -312,11 +333,11 @@ function ChartDatasetConfig(props) {
         )}
         {formula && (
           <Row align={"center"} justify={"space-between"}>
-            <div>
+            <div className="flex flex-col">
               <Popover>
                 <PopoverTrigger>
                   <div className="flex flex-row gap-1 items-center">
-                    <Text size="sm">
+                    <Text>
                       {"Metric formula"}
                     </Text>
                     <LuInfo size={18} />
@@ -327,8 +348,7 @@ function ChartDatasetConfig(props) {
                 </PopoverContent>
               </Popover>
             </div>
-            {/* <Spacer y={1} /> */}
-            <div>
+            <div className="flex flex-col">
               <div className="flex flex-row gap-3 items-center w-full">
                 <Input
                   placeholder="Enter your formula here: {val}"
@@ -360,13 +380,13 @@ function ChartDatasetConfig(props) {
             </div>
           </Row>
         )}
-      </Row>
+      </div>
 
       <Spacer y={4} />
       <Divider />
       <Spacer y={4} />
 
-      <Row>
+      <div>
         {!goal && chart.type !== "table" && (
           <div>
             <Link onClick={() => setGoal(1000)} className="flex items-center cursor-pointer">
@@ -377,15 +397,14 @@ function ChartDatasetConfig(props) {
           </div>
         )}
         {goal && chart.type !== "table" && (
-          <div>
+          <Row align={"center"} justify={"space-between"}>
             <Row align="center">
-              <Text size="sm">{"Goal"}</Text>
+              <Text>{"Goal"}</Text>
               <Spacer x={1} />
               <Tooltip content="A goal can be displayed as a progress bar in your KPI charts. Enter a number without any other characters. (e.g. 1000 instead of 1k)">
                 <div><LuInfo size={18} /></div>
               </Tooltip>
             </Row>
-            <Spacer y={1} />
             <Row align="center" className={"gap-2"}>
               <Input
                 placeholder="Enter your goal here"
@@ -411,9 +430,9 @@ function ChartDatasetConfig(props) {
                 </Link>
               </Tooltip>
             </Row>
-          </div>
+          </Row>
         )}
-      </Row>
+      </div>
 
       <Spacer y={4} />
       <Divider />
@@ -459,7 +478,7 @@ function ChartDatasetConfig(props) {
               <TwitterPicker
                 triangle={"hide"}
                 color={cdc.datasetColor}
-                colors={chartColors}
+                colors={Object.values(chartColors).map((c) => c.hex)}
                 onChangeComplete={_onChangeDatasetColor}
               />
             </PopoverContent>
@@ -491,7 +510,7 @@ function ChartDatasetConfig(props) {
               <PopoverContent className="border-none bg-transparent shadow-none">
                 <SketchPicker
                   color={Array.isArray(cdc.fillColor) ? cdc.fillColor[0] : cdc.fillColor}
-                  presetColors={chartColors}
+                  presetColors={Object.values(chartColors).map((c) => c.hex)}
                   onChangeComplete={(color) => _onChangeFillColor(color)}
                 />
               </PopoverContent>
@@ -532,7 +551,7 @@ function ChartDatasetConfig(props) {
                       <TwitterPicker
                         triangle={"hide"}
                         color={cdc.fillColor[index] || "white"}
-                        colors={chartColors}
+                        colors={Object.values(chartColors).map((c) => c.hex)}
                         onChangeComplete={(color) => _onChangeFillColor(color, index)}
                       />
                     </PopoverContent>
@@ -544,6 +563,21 @@ function ChartDatasetConfig(props) {
           <Spacer y={2} />
         </>
       )}
+
+      <Spacer y={4} />
+      <Divider />
+      <Spacer y={4} />
+
+      <Row>
+        <Button
+          variant="faded"
+          color="danger"
+          size="sm"
+          onClick={_onRemoveCdc}
+        >
+          {`Remove ${cdc.legend}`}
+        </Button>
+      </Row>
     </div>
   );
 }

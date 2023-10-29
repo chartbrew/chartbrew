@@ -580,7 +580,7 @@ export const chartSlice = createSlice({
       })
       .addCase(removeChart.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = state.data.filter((chart) => chart.id !== action.payload.id);
+        state.data = state.data.filter((chart) => chart.id !== action.meta.arg.chart_id);
       })
       .addCase(removeChart.rejected, (state, action) => {
         state.loading = false;
@@ -810,7 +810,7 @@ export const chartSlice = createSlice({
           if (action.meta.arg.chart_id === chart.id) {
             return {
               ...chart,
-              ChartDatasetConfigs: chart.ChartDatasetConfigs.filter((cdc) => cdc.id !== action.payload.id),
+              ChartDatasetConfigs: chart.ChartDatasetConfigs.filter((cdc) => cdc.id !== action.meta.arg.cdc_id),
             };
           }
           return chart;

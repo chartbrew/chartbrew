@@ -142,10 +142,10 @@ function AddChart(props) {
   const _onCreateClicked = () => {
     const tempChart = { ...newChart, name: chartName };
     return dispatch(createChart({ project_id: params.projectId, data: tempChart }))
-      .then((createdChart) => {
-        setNewChart(createdChart);
+      .then((res) => {
+        setNewChart(res.payload);
         setTitleScreen(false);
-        navigate(`chart/${createdChart.id}/edit`);
+        navigate(`${res.payload.id}/edit`);
         return true;
       })
       .catch(() => {

@@ -5,7 +5,7 @@ import { LuExternalLink, LuMinus, LuPlus, LuSearch } from "react-icons/lu";
 import { Link, useParams } from "react-router-dom";
 import moment from "moment";
 
-import { selectChart } from "../../../slices/chart";
+import { createCdc, runQuery, selectChart } from "../../../slices/chart";
 import { Avatar, AvatarGroup, Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Input, ScrollShadow, Spacer, Tab, Tabs } from "@nextui-org/react";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
@@ -13,6 +13,7 @@ import connectionImages from "../../../config/connectionImages";
 import { getDatasets, selectDatasets } from "../../../slices/dataset";
 import useThemeDetector from "../../../modules/useThemeDetector";
 import ChartDatasetConfig from "./ChartDatasetConfig";
+import { chartColors } from "../../../config/colors";
 
 function ChartDatasets(props) {
   const { projects, chartId } = props;
@@ -53,6 +54,35 @@ function ChartDatasets(props) {
     });
 
     return tags;
+  };
+
+  const _onCreateCdc = (datasetId) => {
+    // find out the perfect color for the new cdc
+    const existingColors = chart.ChartDatasetConfigs.map((cdc) => cdc.datasetColor.toLowerCase());
+    const newColor = Object.values(chartColors).find((color) => !existingColors.includes(color.hex.toLowerCase()) && !existingColors.includes(color.rgb));
+
+    dispatch(createCdc({
+      project_id: chart.project_id,
+      chart_id: chart.id,
+      data: {
+        dataset_id: datasetId,
+        datasetColor: newColor.hex,
+        fill: false,
+        order: chart.ChartDatasetConfigs[chart.ChartDatasetConfigs.length - 1]?.order + 1 || 0,
+      },
+    }))
+      .then((res) => {
+        setActiveCdc(res.payload.id);
+        dispatch(runQuery({
+          project_id: chart.project_id,
+          chart_id: chart.id,
+          noSource: false,
+          skiParsing: false,
+          getCache: true,
+        }));
+      });
+    
+    setAddMode(false);
   };
 
   return (
@@ -110,7 +140,12 @@ function ChartDatasets(props) {
           <ScrollShadow className="max-h-[500px] w-full">
             {datasets.length > 0 && _filteredDatasets().map((dataset) => (
               <Fragment key={dataset.id}>
-                <Card isPressable isHoverable className="w-full shadow-none border-2 border-solid border-content3">
+                <Card
+                  isPressable
+                  isHoverable
+                  className="w-full shadow-none border-2 border-solid border-content3"
+                  onClick={() => _onCreateCdc(dataset.id)}
+                >
                   <CardHeader>
                     <div className={"flex flex-row justify-between gap-4 w-full"}>
                       <div className="flex flex-row gap-4 items-center justify-between w-full">
@@ -183,7 +218,7 @@ function ChartDatasets(props) {
             fullWidth
           >
             {chart?.ChartDatasetConfigs.map((cdc) => (
-              <Tab title={cdc.legend} key={cdc.id}>
+              <Tab title={`${cdc.legend}`} key={cdc.id}>
                 <ChartDatasetConfig chartId={chartId} datasetId={cdc.id} />
               </Tab>
             ))}
