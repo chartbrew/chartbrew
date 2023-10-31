@@ -41,7 +41,7 @@ const chartModes = [{
 
 function ChartPreview(props) {
   const {
-    chart, onChange, onRefreshData, onRefreshPreview, chartLoading, datasets,
+    chart, onChange, onRefreshData, onRefreshPreview, chartLoading,
     invalidateCache, changeCache,
   } = props;
 
@@ -205,7 +205,7 @@ function ChartPreview(props) {
                 <div>
                   <TableContainer
                     tabularData={chart.chartData}
-                    datasets={datasets}
+                    datasets={chart.ChartDatasetConfigs}
                     height={400}
                     editMode
                   />
@@ -438,7 +438,6 @@ ChartPreview.propTypes = {
   onChange: PropTypes.func.isRequired,
   onRefreshData: PropTypes.func.isRequired,
   onRefreshPreview: PropTypes.func.isRequired,
-  datasets: PropTypes.array.isRequired,
   invalidateCache: PropTypes.bool.isRequired,
   changeCache: PropTypes.func.isRequired,
 };
