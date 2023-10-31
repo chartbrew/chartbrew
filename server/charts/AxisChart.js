@@ -44,23 +44,35 @@ const areDatesTheSame = (first, second, interval) => {
     firstDate = `${firstDate.replace(" ", "T")}Z`;
   }
 
+  let secondDate = second;
+  if (`${second}` === `${parseInt(second, 10)}`) {
+    secondDate = parseInt(second, 10);
+    if (`${secondDate}`.length === 10) {
+      secondDate *= 1000;
+    }
+  }
+  // regex to detect this format 2022-07-16 11:38:30 - to avoid Date() modifying the date to UTC
+  if (`${secondDate}`.match(/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/)) {
+    secondDate = `${secondDate.replace(" ", "T")}Z`;
+  }
+
   switch (interval) {
     case "second":
-      return isSameSecond(new Date(firstDate), new Date(second));
+      return isSameSecond(new Date(firstDate), new Date(secondDate));
     case "minute":
-      return isSameMinute(new Date(firstDate), new Date(second));
+      return isSameMinute(new Date(firstDate), new Date(secondDate));
     case "hour":
-      return isSameHour(new Date(firstDate), new Date(second));
+      return isSameHour(new Date(firstDate), new Date(secondDate));
     case "day":
-      return isSameDay(new Date(firstDate), new Date(second));
+      return isSameDay(new Date(firstDate), new Date(secondDate));
     case "week":
-      return isSameWeek(new Date(firstDate), new Date(second));
+      return isSameWeek(new Date(firstDate), new Date(secondDate));
     case "month":
-      return isSameMonth(new Date(firstDate), new Date(second));
+      return isSameMonth(new Date(firstDate), new Date(secondDate));
     case "year":
-      return isSameYear(new Date(firstDate), new Date(second));
+      return isSameYear(new Date(firstDate), new Date(secondDate));
     default:
-      return false;
+      return isSameDay(new Date(firstDate), new Date(secondDate));
   }
 };
 
@@ -88,10 +100,10 @@ class AxisChart {
 
     if (
       !skipDataProcessing
-        || !this.chart.chartData
-        || !this.chart.chartData.data
-        || !this.chart.chartData.data.labels
-        || !this.chart.chartData.data.datasets
+      || !this.chart.chartData
+      || !this.chart.chartData.data
+      || !this.chart.chartData.data.labels
+      || !this.chart.chartData.data.datasets
     ) {
       // check if the global date filter should be on or off
       // the filter should work only if all the datasets have a dateField
@@ -244,11 +256,22 @@ class AxisChart {
             return item;
           });
 
+          // now the yAxis
+          if (yAxis.indexOf("root[]") > -1) {
+            yAxis = yAxis.replace("root[].", "");
+            // and data stays the same
+            yData = filteredData;
+          } else {
+            const arrayFinder = yAxis.substring(0, yAxis.indexOf("]") - 1).replace("root.", "");
+            yAxis = yAxis.substring(yAxis.indexOf("]") + 2);
+            yData = _.get(filteredData, arrayFinder);
+          }
+
           gXType = xType;
           // X AXIS data processing
           switch (xType) {
             case "date":
-              xAxisData = this.processDate(unprocessedX, canDateFilter);
+              xAxisData = this.processDate(unprocessedX, yData);
               break;
             case "number":
               xAxisData = this.processNumber(unprocessedX);
@@ -270,40 +293,7 @@ class AxisChart {
               break;
           }
 
-          // now the yAxis
-          if (yAxis.indexOf("root[]") > -1) {
-            yAxis = yAxis.replace("root[].", "");
-            // and data stays the same
-            yData = filteredData;
-          } else {
-            const arrayFinder = yAxis.substring(0, yAxis.indexOf("]") - 1).replace("root.", "");
-            yAxis = yAxis.substring(yAxis.indexOf("]") + 2);
-            yData = _.get(filteredData, arrayFinder);
-          }
-
-          // make sure the y results are ordered according to the x results for date types
-          if (gXType === "date") {
-            const orderHelper = [];
-            const yDataTemp = _.cloneDeep(yData);
-            xAxisData.filtered.forEach((xItem) => {
-              // go through each y item in the yData array to make sure they are ordered correctly
-              for (let y = 0; y < yDataTemp.length; y++) {
-                const valToCompare = _.get(yDataTemp[y], xAxis);
-                if (valToCompare
-                  && ((
-                    (valToCompare.toString().length === 10 || valToCompare.toString().length === 13)
-                    && areDatesTheSame(parseInt(valToCompare, 10), xItem, this.chart.interval))
-                  || areDatesTheSame(valToCompare, xItem, this.chart.timeInterval))
-                ) {
-                  orderHelper.push(yDataTemp[y]);
-                  yDataTemp.splice(y, 1);
-                  break;
-                }
-              }
-            });
-
-            yData = orderHelper;
-          }
+          if (xAxisData.yData) yData = xAxisData.yData;
 
           if (!(yData instanceof Array)) throw new Error("The Y field is not part of an Array");
 
@@ -319,9 +309,11 @@ class AxisChart {
               if (xType === "date") {
                 indexCheck = _.findIndex(
                   xAxisData.filtered,
-                  (dateValue) => (
-                    areDatesTheSame(dateValue, yData[index][xAxisFieldName], this.chart.interval)
-                  )
+                  (dateValue) => {
+                    return areDatesTheSame(
+                      dateValue, yData[index][xAxisFieldName], this.chart.timeInterval
+                    );
+                  }
                 );
               }
 
@@ -791,37 +783,43 @@ class AxisChart {
     };
   }
 
-  processDate(data) {
+  processDate(data, yData) {
     const finalData = {
       filtered: [],
       formatted: [],
     };
 
     let axisData = [];
-    data.map((item) => {
+    let pairedData = [];
+    data.forEach((item, index) => {
+      let xItem;
       if (
         item
         && parseInt(item, 10).toString() === item.toString()
         && item.toString().length === 10
       ) {
         if (this.timezone) {
-          axisData.push(this.moment(item, "X"));
+          xItem = this.moment(item, "X");
         } else {
-          axisData.push(momentObj.utc(item, "X"));
+          xItem = momentObj.utc(item, "X");
         }
       } else if (item) {
         if (this.timezone) {
-          axisData.push(this.moment(item));
+          xItem = this.moment(item);
         } else {
-          axisData.push(momentObj.utc(item));
+          xItem = momentObj.utc(item);
         }
       }
-      return item;
+
+      pairedData.push({ xItem, yItem: yData[index] });
     });
 
-    axisData = axisData.sort((a, b) => a && b && a.diff(b));
+    pairedData = pairedData.sort((a, b) => a.xItem && b.xItem && a.xItem.diff(b.xItem));
+    axisData = pairedData.map((item) => item.xItem);
 
-    finalData.filtered = _.clone(axisData);
+    finalData.yData = pairedData.map((item) => item.yItem);
+
+    finalData.filtered = _.cloneDeep(axisData);
     finalData.filtered = finalData.filtered.map((item) => item.format());
 
     const startDate = axisData[0];
