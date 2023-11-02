@@ -18,6 +18,8 @@ import Row from "../../../components/Row";
 import { removeCdc, runQuery, selectCdc, updateCdc } from "../../../slices/chart";
 import DatasetAlerts from "./DatasetAlerts";
 import { chartColors, primary } from "../../../config/colors";
+import { flatMap } from "lodash";
+import TableConfiguration from "../../../components/TableConfiguration";
 
 function ChartDatasetConfig(props) {
   const { chartId, datasetId } = props;
@@ -27,6 +29,7 @@ function ChartDatasetConfig(props) {
   const [maxRecords, setMaxRecords] = useState("");
   const [goal, setGoal] = useState("");
   const [dataItems, setDataItems] = useState({});
+  const [tableFields, setTableFields] = useState([]);
 
   const cdc = useSelector((state) => selectCdc(state, chartId, datasetId));
   const chart = useSelector((state) => state.chart.data.find((c) => c.id === chartId));
@@ -73,6 +76,19 @@ function ChartDatasetConfig(props) {
       }
     }
   }, [chart, cdc]);
+
+  useEffect(() => {
+    // extract the table fields if table view is selected
+    if (chart.type === "table" && chart.chartData && chart.chartData[cdc.legend]) {
+      const datasetData = chart.chartData[cdc.legend];
+      const flatColumns = flatMap(datasetData.columns, (f) => {
+        if (f.columns) return [f, ...f.columns];
+        return f;
+      });
+
+      setTableFields(flatColumns);
+    }
+  }, [chart.chartData]);
 
   const _onRunQuery = (skipParsing = true) => {
     dispatch(runQuery({
@@ -195,6 +211,10 @@ function ChartDatasetConfig(props) {
       });
   };
 
+  const _onUpdateTableConfig = (data) => {
+    _onUpdateCdc(data);
+  };
+
   return (
     <div>
       <Row align="center">
@@ -229,229 +249,246 @@ function ChartDatasetConfig(props) {
         <Text b>{"Dataset settings"}</Text>
       </Row>
       <Spacer y={1} />
-      <Row align="center" justify={"space-between"}>
-        <Text>Sort records</Text>
-        <Row align="center">
-          <Tooltip content="Sort the dataset in ascending order">
-            <Button
-              color={cdc.sort === "asc" ? "secondary" : "default"}
-              variant={cdc.sort !== "asc" ? "bordered" : "solid"}
-              onClick={() => {
-                if (cdc.sort === "asc") {
-                  _onUpdateCdc({ sort: "" });
-                } else {
-                  _onUpdateCdc({ sort: "asc" });
-                }
-              }}
-              isIconOnly
-            >
-              <LuArrowDown01 />
-            </Button>
-          </Tooltip>
-          <Spacer x={0.5} />
-          <Tooltip content="Sort the dataset in descending order">
-            <Button
-              color={cdc.sort === "desc" ? "secondary" : "default"}
-              variant={cdc.sort !== "desc" ? "bordered" : "solid"}
-              onClick={() => {
-                if (cdc.sort === "desc") {
-                  _onUpdateCdc({ sort: "" });
-                } else {
-                  _onUpdateCdc({ sort: "desc" });
-                }
-              }}
-              isIconOnly
-            >
-              <LuArrowDown10 />
-            </Button>
-          </Tooltip>
-          {cdc.sort && (
-            <>
-              <Spacer x={0.5} />
-              <Tooltip content="Clear sorting">
-                <Link className="text-danger" onClick={() => _onUpdateCdc({ sort: "" })}>
-                  <LuXCircle className="text-danger" />
-                </Link>
-              </Tooltip>
-            </>
-          )}
-        </Row>
-      </Row>
-      <Spacer y={2} />
-
-      <Row align={"center"} justify={"space-between"}>
-        <Text>Max records</Text>
-        <Row align="center">
-          <Input
-            placeholder="Max records"
-            value={maxRecords}
-            onChange={(e) => setMaxRecords(e.target.value)}
-            variant="bordered"
-            type="number"
-            min={1}
-          />
-          {maxRecords && (
-            <>
-              <Spacer x={1} />
-                {maxRecords !== cdc.maxRecords && (
-                  <>
-                    <Tooltip content="Save">
-                      <Link className="text-success" onClick={() => _onUpdateCdc({ maxRecords: maxRecords })}>
-                        <LuCheckCircle className="text-success" />
-                      </Link>
-                    </Tooltip>
-                    <Spacer x={1} />
-                  </>
-                )}
-                <Tooltip content="Clear limit">
-                  <Link
-                    className="text-danger"
-                    onClick={() => {
-                      _onUpdateCdc({ maxRecords: null });
-                      setMaxRecords("");
-                    }}
-                  >
-                    <LuXCircle className="text-danger" />
-                  </Link>
-                </Tooltip>
-            </>
-          )}
-        </Row>
-      </Row>
-
-      <Spacer y={4} />
-      <Divider />
-      <Spacer y={4} />
-
-      <div>
-        {!formula && (
-          <Link onClick={_onAddFormula} className="flex items-center cursor-pointer">
-            <TbMathFunctionY size={24} />
-            <Spacer x={0.5} />
-            <Text>Apply formula on metrics</Text>
-          </Link>
-        )}
-        {formula && (
-          <Row align={"center"} justify={"space-between"}>
-            <div className="flex flex-col">
-              <Popover>
-                <PopoverTrigger>
-                  <div className="flex flex-row gap-1 items-center">
-                    <Text>
-                      {"Metric formula"}
-                    </Text>
-                    <LuInfo size={18} />
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent>
-                  <FormulaTips />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="flex flex-col">
-              <div className="flex flex-row gap-3 items-center w-full">
-                <Input
-                  placeholder="Enter your formula here: {val}"
-                  value={formula}
-                  onChange={(e) => setFormula(e.target.value)}
-                  variant="bordered"
-                  fullWidth
-                />
-                {formula !== cdc.formula && (
-                  <Tooltip
-                    content={"Apply the formula"}
-                  >
-                    <Link onClick={_onApplyFormula}>
-                      <LuCheckCircle className={"text-success"} />
-                    </Link>
-                  </Tooltip>
-                )}
-                <Tooltip content="Remove formula">
-                  <Link onClick={_onRemoveFormula}>
-                    <LuXCircle className="text-danger" />
-                  </Link>
-                </Tooltip>
-                <Tooltip content="Click for an example">
-                  <Link onClick={_onExampleFormula}>
-                    <LuWand2 className="text-primary" />
-                  </Link>
-                </Tooltip>
-              </div>
-            </div>
-          </Row>
-        )}
-      </div>
-
-      <Spacer y={4} />
-      <Divider />
-      <Spacer y={4} />
-
-      <div>
-        {!goal && chart.type !== "table" && (
-          <div>
-            <Link onClick={() => setGoal(1000)} className="flex items-center cursor-pointer">
-              <TbProgressCheck size={24} />
-              <Spacer x={0.5} />
-              <Text>Set a goal</Text>
-            </Link>
-          </div>
-        )}
-        {goal && chart.type !== "table" && (
-          <Row align={"center"} justify={"space-between"}>
-            <Row align="center">
-              <Text>{"Goal"}</Text>
-              <Spacer x={1} />
-              <Tooltip content="A goal can be displayed as a progress bar in your KPI charts. Enter a number without any other characters. (e.g. 1000 instead of 1k)">
-                <div><LuInfo size={18} /></div>
-              </Tooltip>
-            </Row>
-            <Row align="center" className={"gap-2"}>
-              <Input
-                placeholder="Enter your goal here"
-                value={goal}
-                onChange={(e) => setGoal(e.target.value)}
-                variant="bordered"
-              />
-              {goal !== cdc.goal && (
-                <Tooltip
-                  content={"Save goal"}
-                >
-                  <Link onClick={() => _onUpdateCdc({ goal })}>
-                    <LuCheckCircle className={"text-success"} />
-                  </Link>
-                </Tooltip>
-              )}
-              <Tooltip content="Remove goal">
-                <Link onClick={() => {
-                  _onUpdateCdc({ goal: null });
-                  setGoal("");
-                }}>
-                  <LuXCircle className="text-danger" />
-                </Link>
-              </Tooltip>
-            </Row>
-          </Row>
-        )}
-      </div>
-
-      <Spacer y={4} />
-      <Divider />
-      <Spacer y={4} />
 
       {chart.type !== "table" && (
-        <Row>
-          <DatasetAlerts
-            chartType={chart.type === "pie"
-              || chart.type === "radar"
-              || chart.type === "polar"
-              || chart.type === "doughnut"
-              || chart.type === "table"
-              ? "patterns" : "axis"}
-            chartId={params.chartId}
-            cdcId={cdc.id}
-            projectId={params.projectId}
-          />
-        </Row>
+        <>
+          <Row align="center" justify={"space-between"}>
+            <Text>Sort records</Text>
+            <Row align="center">
+              <Tooltip content="Sort the dataset in ascending order">
+                <Button
+                  color={cdc.sort === "asc" ? "secondary" : "default"}
+                  variant={cdc.sort !== "asc" ? "bordered" : "solid"}
+                  onClick={() => {
+                    if (cdc.sort === "asc") {
+                      _onUpdateCdc({ sort: "" });
+                    } else {
+                      _onUpdateCdc({ sort: "asc" });
+                    }
+                  }}
+                  isIconOnly
+                >
+                  <LuArrowDown01 />
+                </Button>
+              </Tooltip>
+              <Spacer x={0.5} />
+              <Tooltip content="Sort the dataset in descending order">
+                <Button
+                  color={cdc.sort === "desc" ? "secondary" : "default"}
+                  variant={cdc.sort !== "desc" ? "bordered" : "solid"}
+                  onClick={() => {
+                    if (cdc.sort === "desc") {
+                      _onUpdateCdc({ sort: "" });
+                    } else {
+                      _onUpdateCdc({ sort: "desc" });
+                    }
+                  }}
+                  isIconOnly
+                >
+                  <LuArrowDown10 />
+                </Button>
+              </Tooltip>
+              {cdc.sort && (
+                <>
+                  <Spacer x={0.5} />
+                  <Tooltip content="Clear sorting">
+                    <Link className="text-danger" onClick={() => _onUpdateCdc({ sort: "" })}>
+                      <LuXCircle className="text-danger" />
+                    </Link>
+                  </Tooltip>
+                </>
+              )}
+            </Row>
+          </Row>
+          <Spacer y={2} />
+
+          <Row align={"center"} justify={"space-between"}>
+            <Text>Max records</Text>
+            <Row align="center">
+              <Input
+                placeholder="Max records"
+                value={maxRecords}
+                onChange={(e) => setMaxRecords(e.target.value)}
+                variant="bordered"
+                type="number"
+                min={1}
+              />
+              {maxRecords && (
+                <>
+                  <Spacer x={1} />
+                    {maxRecords !== cdc.maxRecords && (
+                      <>
+                        <Tooltip content="Save">
+                          <Link className="text-success" onClick={() => _onUpdateCdc({ maxRecords: maxRecords })}>
+                            <LuCheckCircle className="text-success" />
+                          </Link>
+                        </Tooltip>
+                        <Spacer x={1} />
+                      </>
+                    )}
+                    <Tooltip content="Clear limit">
+                      <Link
+                        className="text-danger"
+                        onClick={() => {
+                          _onUpdateCdc({ maxRecords: null });
+                          setMaxRecords("");
+                        }}
+                      >
+                        <LuXCircle className="text-danger" />
+                      </Link>
+                    </Tooltip>
+                </>
+              )}
+            </Row>
+          </Row>
+
+          <Spacer y={4} />
+          <Divider />
+          <Spacer y={4} />
+        </>
+      )}
+
+      {chart.type === "table" && (
+        <TableConfiguration
+          dataset={cdc}
+          chartData={chart.chartData}
+          tableFields={tableFields}
+          onUpdate={(data) => _onUpdateTableConfig(data)}
+          loading={false}
+        />
+      )}
+
+      {chart.type !== "table" && (
+        <>
+          <div>
+            {!formula && (
+              <Link onClick={_onAddFormula} className="flex items-center cursor-pointer">
+                <TbMathFunctionY size={24} />
+                <Spacer x={0.5} />
+                <Text>Apply formula on metrics</Text>
+              </Link>
+            )}
+            {formula && (
+              <Row align={"center"} justify={"space-between"}>
+                <div className="flex flex-col">
+                  <Popover>
+                    <PopoverTrigger>
+                      <div className="flex flex-row gap-1 items-center">
+                        <Text>
+                          {"Metric formula"}
+                        </Text>
+                        <LuInfo size={18} />
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <FormulaTips />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex flex-row gap-3 items-center w-full">
+                    <Input
+                      placeholder="Enter your formula here: {val}"
+                      value={formula}
+                      onChange={(e) => setFormula(e.target.value)}
+                      variant="bordered"
+                      fullWidth
+                    />
+                    {formula !== cdc.formula && (
+                      <Tooltip
+                        content={"Apply the formula"}
+                      >
+                        <Link onClick={_onApplyFormula}>
+                          <LuCheckCircle className={"text-success"} />
+                        </Link>
+                      </Tooltip>
+                    )}
+                    <Tooltip content="Remove formula">
+                      <Link onClick={_onRemoveFormula}>
+                        <LuXCircle className="text-danger" />
+                      </Link>
+                    </Tooltip>
+                    <Tooltip content="Click for an example">
+                      <Link onClick={_onExampleFormula}>
+                        <LuWand2 className="text-primary" />
+                      </Link>
+                    </Tooltip>
+                  </div>
+                </div>
+              </Row>
+            )}
+          </div>
+
+          <Spacer y={4} />
+          <Divider />
+          <Spacer y={4} />
+
+          <div>
+            {!goal && chart.type !== "table" && (
+              <div>
+                <Link onClick={() => setGoal(1000)} className="flex items-center cursor-pointer">
+                  <TbProgressCheck size={24} />
+                  <Spacer x={0.5} />
+                  <Text>Set a goal</Text>
+                </Link>
+              </div>
+            )}
+            {goal && chart.type !== "table" && (
+              <Row align={"center"} justify={"space-between"}>
+                <Row align="center">
+                  <Text>{"Goal"}</Text>
+                  <Spacer x={1} />
+                  <Tooltip content="A goal can be displayed as a progress bar in your KPI charts. Enter a number without any other characters. (e.g. 1000 instead of 1k)">
+                    <div><LuInfo size={18} /></div>
+                  </Tooltip>
+                </Row>
+                <Row align="center" className={"gap-2"}>
+                  <Input
+                    placeholder="Enter your goal here"
+                    value={goal}
+                    onChange={(e) => setGoal(e.target.value)}
+                    variant="bordered"
+                  />
+                  {goal !== cdc.goal && (
+                    <Tooltip
+                      content={"Save goal"}
+                    >
+                      <Link onClick={() => _onUpdateCdc({ goal })}>
+                        <LuCheckCircle className={"text-success"} />
+                      </Link>
+                    </Tooltip>
+                  )}
+                  <Tooltip content="Remove goal">
+                    <Link onClick={() => {
+                      _onUpdateCdc({ goal: null });
+                      setGoal("");
+                    }}>
+                      <LuXCircle className="text-danger" />
+                    </Link>
+                  </Tooltip>
+                </Row>
+              </Row>
+            )}
+          </div>
+
+          <Spacer y={4} />
+          <Divider />
+          <Spacer y={4} />
+
+          <Row>
+            <DatasetAlerts
+              chartType={chart.type === "pie"
+                || chart.type === "radar"
+                || chart.type === "polar"
+                || chart.type === "doughnut"
+                || chart.type === "table"
+                ? "patterns" : "axis"}
+              chartId={params.chartId}
+              cdcId={cdc.id}
+              projectId={params.projectId}
+            />
+          </Row>
+        </>
       )}
 
       <Spacer y={4} />

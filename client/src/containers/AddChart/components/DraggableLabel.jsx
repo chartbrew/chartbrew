@@ -1,8 +1,8 @@
 import React, { useLayoutEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useDrag, useDrop } from "react-dnd";
-import { Spacer, Badge } from "@nextui-org/react";
-import { MdOutlineDragIndicator } from "react-icons/md";
+import { Chip } from "@nextui-org/react";
+import { LuGripVertical } from "react-icons/lu";
 
 function DraggableLabel({ field, index, onMove }) {
   const ref = useRef(null);
@@ -76,13 +76,13 @@ function DraggableLabel({ field, index, onMove }) {
 
   return (
     <div ref={ref} style={{ display: "inline-block" }} data-handler-id={handlerId}>
-      <Badge
+      <Chip
         color="secondary"
+        radius="sm"
+        startContent={<LuGripVertical />}
       >
-        <MdOutlineDragIndicator size={20} />
-        <Spacer x={0.2} />
         {`${field.Header.replace("?", ".")}  `}
-      </Badge>
+      </Chip>
     </div>
   );
 }

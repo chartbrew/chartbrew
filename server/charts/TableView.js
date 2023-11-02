@@ -52,7 +52,13 @@ class TableView {
     Object.keys(rawData).forEach((key, datasetIndex) => {
       const tab = { columns: [], data: [] };
       const dataset = rawData[key];
-      const excludedFields = chartData.datasets[datasetIndex].options.excludedFields || [];
+      let excludedFields = chartData.datasets[datasetIndex].options.excludedFields || [];
+
+      if (datasetConfigs[datasetIndex]?.excludedFields?.length > 0) {
+        excludedFields = excludedFields.concat(
+          datasetConfigs[datasetIndex].excludedFields,
+        );
+      }
 
       dataset.forEach((item) => {
         Object.keys(item).forEach((k) => {
@@ -116,7 +122,11 @@ class TableView {
         tab.data.push(dataItem);
       });
 
-      const { columnsOrder } = chartData.datasets[datasetIndex].options;
+      let { columnsOrder } = chartData.datasets[datasetIndex].options;
+
+      if (datasetConfigs[datasetIndex]?.columnsOrder?.length > 0) {
+        columnsOrder = datasetConfigs[datasetIndex].columnsOrder;
+      }
 
       if (columnsOrder && columnsOrder.length > 0) {
         const orderedColumns = [];
