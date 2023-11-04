@@ -148,6 +148,125 @@ export const runRequest = createAsyncThunk(
   }
 );
 
+export const getDataRequestsByDataset = createAsyncThunk(
+  "dataset/getDataRequestsByDataset",
+  async ({ team_id, dataset_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/team/${team_id}/datasets/${dataset_id}/dataRequests`;
+    const method = "GET";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers });
+    const responseJson = await response.json();
+
+    return responseJson;
+  }
+);
+
+export const createDataRequest = createAsyncThunk(
+  "dataset/createDataRequest",
+  async ({ team_id, dataset_id, data }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/team/${team_id}/datasets/${dataset_id}/dataRequests`;
+    const method = "POST";
+    const body = JSON.stringify(data);
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, body, headers });
+    const responseJson = await response.json();
+
+    return responseJson;
+  }
+);
+
+export const updateDataRequest = createAsyncThunk(
+  "dataset/updateDataRequest",
+  async ({ team_id, dataset_id, dataRequest_id, data }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/team/${team_id}/datasets/${dataset_id}/dataRequests/${dataRequest_id}`;
+    const method = "PUT";
+    const body = JSON.stringify(data);
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, body, headers });
+    const responseJson = await response.json();
+
+    return responseJson;
+  }
+);
+
+export const deleteDataRequest = createAsyncThunk(
+  "dataset/deleteDataRequest",
+  async ({ team_id, dataset_id, dataRequest_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/team/${team_id}/datasets/${dataset_id}/dataRequests/${dataRequest_id}`;
+    const method = "DELETE";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers });
+    const responseJson = await response.json();
+
+    return responseJson;
+  }
+);
+
+export const runDataRequest = createAsyncThunk(
+  "dataset/runDataRequest",
+  async ({ team_id, dataset_id, dataRequest_id, getCache }) => {
+    const token = getAuthToken();
+    let url = `${API_HOST}/team/${team_id}/datasets/${dataset_id}/dataRequests/${dataRequest_id}/request`;
+    const method = "GET";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    if (getCache) {
+      url += "?getCache=true";
+    }
+
+    let status = {
+      statusCode: 500,
+      statusText: "Internal Server Error",
+    };
+
+    let data;
+    try {
+      const response = await fetch(url, { method, headers });
+      status = {
+        statusCode: response.status,
+        statusText: response.statusText,
+      };
+
+      if (!response.ok) {
+        data = await response.text();
+      } else {
+        data = await response.json();
+      }
+    } catch (error) {
+      data = error;
+    }
+
+    return {
+      response: data,
+      status,
+    };
+  }
+);
 
 export const datasetSlice = createSlice({
   name: "dataset",
@@ -270,8 +389,176 @@ export const datasetSlice = createSlice({
         state.loading = false;
         state.error = true;
       })
+
+      // getDataRequestsByDataset
+      .addCase(getDataRequestsByDataset.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getDataRequestsByDataset.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((dataset) => {
+          if (dataset.id === action.meta.arg.dataset_id) {
+            return {
+              ...dataset,
+              DataRequests: action.payload,
+            };
+          }
+          return dataset;
+        });
+      })
+      .addCase(getDataRequestsByDataset.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
+      })
+
+      // createDataRequest
+      .addCase(createDataRequest.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(createDataRequest.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((dataset) => {
+          if (dataset.id === action.meta.arg.dataset_id) {
+            return {
+              ...dataset,
+              dataRequests: [
+                ...dataset.DataRequests,
+                action.payload,
+              ],
+            };
+          }
+          return dataset;
+        });
+      })
+      .addCase(createDataRequest.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
+      })
+
+      // updateDataRequest
+      .addCase(updateDataRequest.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateDataRequest.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((dataset) => {
+          if (dataset.id === action.meta.arg.dataset_id) {
+            return {
+              ...dataset,
+              DataRequests: dataset.DataRequests.map((dataRequest) => {
+                if (dataRequest.id === action.meta.arg.dataRequest_id) {
+                  return action.payload;
+                }
+                return dataRequest;
+              }),
+            };
+          }
+          return dataset;
+        });
+      })
+      .addCase(updateDataRequest.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
+      })
+
+      // deleteDataRequest
+      .addCase(deleteDataRequest.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(deleteDataRequest.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((dataset) => {
+          if (dataset.id === action.meta.arg.dataset_id) {
+            return {
+              ...dataset,
+              DataRequests: dataset.DataRequests.filter(
+                (dataRequest) => dataRequest.id !== action.meta.arg.dataRequest_id
+              ),
+            };
+          }
+          return dataset;
+        });
+      })
+      .addCase(deleteDataRequest.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
+      })
+
+      // runDataRequest
+      .addCase(runDataRequest.pending, (state, action) => {
+        state.loading = true;
+        state.data = state.data.map((dataset) => {
+          if (dataset.id === action.meta.arg.dataset_id) {
+            return {
+              ...dataset,
+              DataRequests: dataset.DataRequests.map((dataRequest) => {
+                if (dataRequest.id === action.meta.arg.dataRequest_id) {
+                  return {
+                    ...dataRequest,
+                    loading: true,
+                    error: false,
+                  };
+                }
+                return dataRequest;
+              }),
+            };
+          }
+          return dataset;
+        });
+      })
+      .addCase(runDataRequest.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((dataset) => {
+          if (dataset.id === action.meta.arg.dataset_id) {
+            return {
+              ...dataset,
+              DataRequests: dataset.DataRequests.map((dataRequest) => {
+                if (dataRequest.id === action.meta.arg.dataRequest_id) {
+                  return {
+                    ...dataRequest,
+                    loading: false,
+                    response: action.payload.response,
+                    error: false,
+                  };
+                }
+                return dataRequest;
+              }),
+            };
+          }
+          return dataset;
+        });
+      })
+      .addCase(runDataRequest.rejected, (state, action) => {
+        state.loading = false;
+        state.data = state.data.map((dataset) => {
+          if (dataset.id === action.meta.arg.dataset_id) {
+            return {
+              ...dataset,
+              DataRequests: dataset.DataRequests.map((dataRequest) => {
+                if (dataRequest.id === action.meta.arg.dataRequest_id) {
+                  return {
+                    ...dataRequest,
+                    loading: false,
+                    error: action.payload.status,
+                  };
+                }
+                return dataRequest;
+              }),
+            };
+          }
+          return dataset;
+        });
+      })
   },
 });
 
 export const selectDatasets = (state) => state.dataset.data;
+export const selectDataRequests = (state, datasetId) => {
+  const dataset = state.dataset.data.find((dataset) => dataset.id === datasetId);
+  if (dataset) {
+    return dataset.DataRequests;
+  }
+  return [];
+}
+
 export default datasetSlice.reducer;

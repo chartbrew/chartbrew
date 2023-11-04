@@ -58,6 +58,11 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "cascade",
       },
     },
+    draft: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
     query: {
       type: DataTypes.TEXT,
     },

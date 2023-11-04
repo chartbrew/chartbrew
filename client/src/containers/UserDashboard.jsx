@@ -435,6 +435,8 @@ function UserDashboard(props) {
                                 isIconOnly
                                 variant="light"
                                 size="sm"
+                                as={Link}
+                                to={`/${team.id}/dataset/${dataset.id}`}
                               >
                                 <LuPencilLine />
                               </Button>

@@ -9,37 +9,6 @@ export const FETCH_CHART_DATA_REQUESTS = "FETCH_CHART_DATA_REQUESTS";
 export const FETCH_DATASET_REQUESTS = "FETCH_DATASET_REQUESTS";
 export const DATA_REQUEST_DELETED = "DATA_REQUEST_DELETED";
 
-export function getDataRequestByChart(projectId, chartId) {
-  return (dispatch) => {
-    const token = cookie.load("brewToken");
-    const url = `${API_HOST}/project/${projectId}/chart/${chartId}/dataRequest`;
-    const method = "GET";
-    const headers = new Headers({
-      "Accept": "application/json",
-      "authorization": `Bearer ${token}`,
-    });
-
-    dispatch({ type: FETCHING_DATA_REQUEST });
-    return fetch(url, { method, headers })
-      .then((response) => {
-        if (!response.ok) {
-          dispatch(addError(response.status, "Data request failed"));
-          return new Promise((resolve, reject) => reject(response.status));
-        }
-
-        return response.json();
-      })
-      .then((dataRequests) => {
-        dispatch({ type: FETCH_CHART_DATA_REQUESTS, dataRequests });
-        return new Promise(resolve => resolve(dataRequests));
-      })
-      .catch((error) => {
-        dispatch({ type: FETCH_DATA_REQUEST_FAIL });
-        return new Promise((resolve, reject) => reject(error));
-      });
-  };
-}
-
 export function getDataRequestByDataset(projectId, chartId, datasetId) {
   return (dispatch) => {
     const token = cookie.load("brewToken");

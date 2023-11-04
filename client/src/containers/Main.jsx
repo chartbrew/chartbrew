@@ -26,6 +26,7 @@ import Connections from "./Connections/Connections";
 import AddChart from "./AddChart/AddChart";
 import ProjectSettings from "./ProjectSettings";
 import Integrations from "./Integrations/Integrations";
+import Dataset from "./Dataset/Dataset";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
@@ -208,6 +209,12 @@ function Main(props) {
                   element={<EmbeddedChart />}
                 />
                 <Route exact path="/invite" element={<UserInvite />} />
+
+                <Route
+                  exact
+                  path="/:teamId/dataset/:datasetId"
+                  element={<Dataset />}
+                />
               </Routes>
             </Suspense>
           </div>

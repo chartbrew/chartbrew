@@ -11,7 +11,7 @@ import { createMedia } from "@artsy/fresnel";
 import useDarkMode from "@fisch0920/use-dark-mode";
 import { useLocalStorage } from "react-use";
 import {
-  LuBook, LuCheck, LuChevronDown, LuCompass, LuContrast, LuGithub, LuHeartHandshake, LuLogOut,
+  LuBook, LuChevronDown, LuCompass, LuContrast, LuGithub, LuHeartHandshake, LuLogOut,
   LuMoon, LuSettings, LuSmile, LuSun, LuUser, LuWallpaper,
 } from "react-icons/lu";
 import { TbBrandDiscord } from "react-icons/tb";
@@ -325,28 +325,25 @@ function NavbarContainer(props) {
             <Text size="h4">Chartbrew UI Appearance</Text>
           </ModalHeader>
           <ModalBody>
-            <div className="flex justify-between gap-2">
+            <div className="flex flex-row justify-between gap-2">
               <Card
                 isPressable
                 borderWeight={!isSystemDark && !isOsTheme ? "extrabold" : "normal"}
                 onClick={() => _setTheme("light")}
-                className={`bg-white ${!isSystemDark && !isOsTheme ? "border-secondary-500" : ""} min-w-[100px]`}
+                className={`bg-white ${!isSystemDark && !isOsTheme ? "border-secondary" : "border-content3"} border-2 border-solid min-w-[100px]`}
                 variant={"bordered"}
               >
                 <CardBody>
                   <LuSun size={24} color="black" />
                   <Row align={"center"} className={"gap-2"}>
-                    <Text className={"text-[#000000]"}>Light</Text>
-                    {!isSystemDark && !isOsTheme && (
-                      <LuCheck className={"text-[#000000]"} />
-                    )}
+                    <Text className={"!text-black"}>Light</Text>
                   </Row>
                 </CardBody>
               </Card>
 
               <Card
                 isPressable
-                className={`bg-black ${!isSystemDark && !isOsTheme ? "border-secondary-500" : ""} min-w-[100px]`}
+                className={`bg-black ${isSystemDark && !isOsTheme ? "border-secondary" : "border-content3"} border-2 border-solid min-w-[100px]`}
                 borderWeight={isSystemDark && !isOsTheme ? "extrabold" : "normal"}
                 onClick={() => _setTheme("dark")}
                 variant={"bordered"}
@@ -354,10 +351,7 @@ function NavbarContainer(props) {
                 <CardBody>
                   <LuMoon size={24} color="white" />
                   <Row align={"center"} className={"gap-2"}>
-                    <Text className="text-[#FFFFFF]">Dark</Text>
-                    {isSystemDark && !isOsTheme && (
-                      <LuCheck className="text-[white]" />
-                    )}
+                    <Text className="!text-[#FFFFFF]">Dark</Text>
                   </Row>
                 </CardBody>
               </Card>
@@ -367,15 +361,12 @@ function NavbarContainer(props) {
                 variant={"bordered"}
                 onClick={_setOSTheme}
                 borderWeight={isOsTheme ? "extrabold" : "normal"}
-                className={`bg-content3 ${!isSystemDark && !isOsTheme ? "border-secondary-500" : ""} min-w-[100px]`}
+                className={`bg-content3 ${isOsTheme ? "border-secondary" : "border-content3"} border-2 border-solid min-w-[100px]`}
               >
                 <CardBody>
                   <LuContrast size={24} color={isSystemDark ? "white" : "black"} />
                   <Row align={"center"} className={"gap-2"}>
                     <Text h5 className={isSystemDark ? "text-white" : "text-black"}>System</Text>
-                    {isOsTheme && (
-                      <LuCheck />
-                    )}
                   </Row>
                 </CardBody>
               </Card>
