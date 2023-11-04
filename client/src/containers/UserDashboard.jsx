@@ -7,10 +7,10 @@ import {
   Button, Input, Spacer, Table, Tooltip, Link as LinkNext, Chip, Modal,
   CircularProgress, TableHeader, TableColumn, TableCell, TableBody, TableRow,
   ModalHeader, ModalBody, ModalFooter, ModalContent, DropdownTrigger, Dropdown,
-  DropdownMenu, DropdownItem, Avatar, AvatarGroup, Accordion, AccordionItem,
+  DropdownMenu, DropdownItem, Avatar, AvatarGroup, Listbox, ListboxItem,
 } from "@nextui-org/react";
 import {
-  LuBarChart, LuChevronDown, LuDatabase, LuPencilLine, LuPlug, LuPlus, LuSearch, LuSettings,
+  LuBarChart, LuChevronDown, LuDatabase, LuLayoutGrid, LuPencilLine, LuPlug, LuPlus, LuSearch, LuSettings,
   LuTrash, LuUsers2,
 } from "react-icons/lu";
 
@@ -41,6 +41,7 @@ import {
 import {
   getDatasets, selectDatasets,
 } from "../slices/dataset";
+import Segment from "../components/Segment";
 
 /*
   The user dashboard with all the teams and projects
@@ -62,6 +63,7 @@ function UserDashboard(props) {
   const [projectToEdit, setProjectToEdit] = useState(null);
   const [projectToDelete, setProjectToDelete] = useState(null);
   const [modifyingProject, setModifyingProject] = useState(false);
+  const [activeMenu, setActiveMenu] = useState("projects");
 
   const initRef = useRef(null);
   const { height } = useWindowSize();
@@ -241,20 +243,21 @@ function UserDashboard(props) {
         <Spacer y={4} />
 
         {team?.id && (
-          <>
-            <div className={"mt-4"}>
+          <div className="grid grid-cols-12 gap-4 mt-4">
+            <div className="col-span-12 sm:col-span-5 md:col-span-4 lg:col-span-3">
               <Row
                 align={"center"}
                 justify={"space-between"}
               >
-                <Row justify="flex-start" align="center">
+                <Row justify="flex-start" align="center" className={"w-full"}>
                   <Dropdown>
                     <DropdownTrigger>
                       <Button
                         startContent={<LuUsers2 size={28} />}
-                        variant="ghost"
+                        variant="bordered"
+                        className="bg-background"
                         endContent={<LuChevronDown />}
-                        size="lg"
+                        fullWidth
                       >
                         {team.name}
                       </Button>
@@ -281,410 +284,437 @@ function UserDashboard(props) {
                       ))}
                     </DropdownMenu>
                   </Dropdown>
-                  {_canAccess("teamAdmin", team.TeamRoles)
-                    && (
+                </Row>
+              </Row>
+
+              <Spacer y={4} />
+              <Segment className={"p-1 sm:p-1 bg-content1"}>
+                <Listbox
+                  aria-label="Actions"
+                  onAction={(key) => setActiveMenu(key)}
+                  variant="faded"
+                >
+                  <ListboxItem
+                    key="projects"
+                    startContent={<LuLayoutGrid size={24} />}
+                    textValue="Projects"
+                    color={activeMenu === "projects" ? "primary" : "default"}
+                    className={activeMenu === "projects" ? "bg-content2 text-primary" : ""}
+                  >
+                    <span className="text-lg">Projects</span>
+                  </ListboxItem>
+                  <ListboxItem
+                    key="connections"
+                    startContent={<LuPlug size={24} />}
+                    textValue="Connections"
+                    color={activeMenu === "connections" ? "primary" : "default"}
+                    className={activeMenu === "connections" ? "bg-content2 text-primary" : ""}
+                  >
+                    <span className="text-lg">Connections</span>
+                  </ListboxItem>
+                  <ListboxItem
+                    key="datasets"
+                    showDivider
+                    startContent={<LuDatabase size={24} />}
+                    textValue="Datasets"
+                    color={activeMenu === "datasets" ? "primary" : "default"}
+                    className={activeMenu === "datasets" ? "bg-content2 text-primary" : ""}
+                  >
+                    <span className="text-lg">Datasets</span>
+                  </ListboxItem>
+                  {_canAccess("teamAdmin", team.TeamRoles) && (
+                    <ListboxItem
+                      as={Link}
+                      to={`/manage/${team.id}/settings`}
+                      key="teamSettings"
+                      startContent={<LuSettings size={24} />}
+                      textValue="Team settings"
+                      color={activeMenu === "teamSettings" ? "primary" : "default"}
+                      className={activeMenu === "teamSettings" ? "bg-content2 text-primary" : "text-foreground"}
+                    >
+                      <span className="text-lg">Team settings</span>
+                    </ListboxItem>
+                  )}
+                </Listbox>
+              </Segment>
+            </div>
+
+            <div className="col-span-12 sm:col-span-7 md:col-span-8 lg:col-span-9">
+              {activeMenu === "projects" && (
+                <>
+                  <Row className={"gap-2"} justify="flex-start" align="center">
+                    {_canAccess("teamAdmin", team.TeamRoles) && (
                       <>
-                        <Spacer x={1} />
-                        <Tooltip content="Team settings">
-                          <div>
-                            <Link to={`/manage/${team.id}/settings`}>
-                              <Button
-                                variant="light"
-                                isIconOnly
-                              >
-                                <LuSettings />
-                              </Button>
-                            </Link>
-                          </div>
-                        </Tooltip>
+                        <Button
+                          color="primary"
+                          onClick={() => _onNewProject(team)}
+                          endContent={<LuPlus />}
+                        >
+                          Create new project
+                        </Button>
                       </>
                     )}
-                </Row>
-              </Row>
-            </div>
-            <Spacer y={6} />
+                    <Input
+                      type="text"
+                      placeholder="Search projects"
+                      variant="bordered"
+                      endContent={<LuSearch />}
+                      onChange={(e) => setSearch({ ...search, [team.id]: e.target.value })}
+                      className="max-w-[300px]"
+                    />
+                  </Row>
+                  <Spacer y={4} />
+                  {team.Projects && teamMembers?.length > 0 && (
+                    <Table
+                      aria-label="Projects list"
+                      className="h-auto min-w-full border-2 border-solid border-content3 rounded-xl"
+                      radius="md"
+                      shadow="none"
+                      isStriped
+                    >
+                      <TableHeader>
+                        <TableColumn key="name">Project name</TableColumn>
+                        <TableColumn key="members">
+                          <Row align="end" justify="center" className={"gap-1"}>
+                            <LuUsers2 />
+                            <Text>Members</Text>
+                          </Row>
+                        </TableColumn>
+                        <TableColumn key="connections">
+                          <Row align="end" justify="center" className={"gap-1"}>
+                            <LuPlug />
+                            <Text>Connections</Text>
+                          </Row>
+                        </TableColumn>
+                        <TableColumn key="charts">
+                          <Row align="end" justify="center" className={"gap-1"}>
+                            <LuBarChart />
+                            <Text>Charts</Text>
+                          </Row>
+                        </TableColumn>
+                        <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
+                      </TableHeader>
+                      {_getFilteredProjects().length > 0 && (
+                        <TableBody>
+                          {_getFilteredProjects().map((project) => (
+                            <TableRow key={project.id}>
+                              <TableCell key="name">
+                                <LinkNext onClick={() => directToProject(project.id)} className="cursor-pointer flex flex-col items-start">
+                                  <Text b className={"text-foreground"}>{project.name}</Text>
+                                </LinkNext>
+                              </TableCell>
+                              <TableCell key="members" className="hidden sm:block">
+                                <Row justify="center" align="center">
+                                  {_getProjectMembers(project)?.length > 0 && (
+                                    <AvatarGroup max={3} isBordered size="sm">
+                                      {_getProjectMembers(project)?.map((pr) => (
+                                        <Avatar
+                                          key={pr.id}
+                                          name={pr.name}
+                                        />
+                                      ))}
+                                    </AvatarGroup>
+                                  )}
+                                  {_getProjectMembers(project)?.length === 0 && (
+                                    <Text i>-</Text>
+                                  )}
+                                </Row>
+                              </TableCell>
+                              <TableCell key="connections">
+                                <Row justify="center" align="center">
+                                  <Text b>
+                                    {project.Connections && project.Connections.length}
+                                  </Text>
+                                </Row>
+                              </TableCell>
+                              <TableCell key="charts">
+                                <Row justify="center" align="center">
+                                  <Text b>
+                                    {project.Charts.length}
+                                  </Text>
+                                </Row>
+                              </TableCell>
+                              <TableCell key="actions">
+                                {_canAccess("projectAdmin", team.TeamRoles) && (
+                                  <Row justify="flex-end" align="center">
+                                    <Tooltip content="Rename the project">
+                                      <Button
+                                        startContent={<LuPencilLine />}
+                                        variant="light"
+                                        size="sm"
+                                        className={"min-w-fit"}
+                                        onClick={() => _onEditProject(project)}
+                                      />
+                                    </Tooltip>
+                                    <Tooltip
+                                      content="Delete project"
+                                      color="danger"
+                                    >
+                                      <Button
+                                        color="danger"
+                                        startContent={<LuTrash />}
+                                        variant="light"
+                                        size="sm"
+                                        className={"min-w-fit"}
+                                        onClick={() => _onDeleteProject(project)}
+                                      />
+                                    </Tooltip>
+                                    <Spacer x={0.5} />
+                                  </Row>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      )}
+                      {_getFilteredProjects(team).length === 0 && (
+                        <TableBody>
+                          <TableRow>
+                            <TableCell key="name">
+                              <Text i>No projects found</Text>
+                            </TableCell>
+                            <TableCell key="connections" align="center" />
+                            <TableCell key="charts" align="center" />
+                            <TableCell key="actions" align="center" />
+                          </TableRow>
+                        </TableBody>
+                      )}
+                    </Table>
+                  )}
+                  {team.Projects && team.Projects.length === 0 && !_canAccess("projectAdmin", team.TeamRoles) && (
+                    <Container>
+                    <Text size="h3">
+                        {"No project over here"}
+                      </Text>
+                    </Container>
+                  )}
+                </>
+              )}
 
-            <Accordion variant="bordered" className="bg-content1">
-              <AccordionItem
-                startContent={<LuPlug />}
-                title="Connections"
-                key="connections"
-                className="max-h-[600px] overflow-y-auto"
-              >
-                <Row className={"gap-2"}>
-                  <Button
-                    color="primary"
-                    endContent={<LuPlus />}
-                  >
-                    Add a connection
-                  </Button>
-                  <Input
-                    type="text"
-                    placeholder="Search connections"
-                    variant="bordered"
-                    endContent={<LuSearch />}
-                    className="max-w-[300px]"
-                  />
-                </Row>
-                <Spacer y={2} />
-                <Table shadow="none" hideHeader className="border-2 border-solid border-content3 rounded-xl">
-                  <TableHeader>
-                    <TableColumn key="name">Connection name</TableColumn>
-                    <TableColumn key="type">Type</TableColumn>
-                    <TableColumn key="actions" align="center">Actions</TableColumn>
-                  </TableHeader>
-                  <TableBody>
-                    {connections.map((connection) => (
-                      <TableRow key={connection.id}>
-                        <TableCell key="name">
-                          <Row align={"center"} className={"gap-2"}>
-                            <Avatar
-                              src={connectionImages(isDark)[connection.type]}
-                              size="sm"
-                              isBordered
-                            />
-                            <Text b>{connection.name}</Text>
-                          </Row>
-                        </TableCell>
-                        <TableCell key="type">
-                          <Text>{connection.type}</Text>
-                        </TableCell>
-                        <TableCell key="actions">
-                          <Row justify="flex-end" align="center">
-                            <Tooltip content="Edit connection">
-                              <Button
-                                startContent={<LuPencilLine />}
-                                variant="light"
-                                size="sm"
-                                className={"min-w-fit"}
-                              />
-                            </Tooltip>
-                            <Tooltip
-                              content="Delete connection"
-                              color="danger"
-                            >
-                              <Button
-                                color="danger"
-                                startContent={<LuTrash />}
-                                variant="light"
-                                size="sm"
-                                className={"min-w-fit"}
-                              />
-                            </Tooltip>
-                          </Row>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                <Spacer y={2} />
-              </AccordionItem>
-              <AccordionItem
-                startContent={<LuDatabase />}
-                title="Datasets"
-                key="datasets"
-                className="max-h-[600px] overflow-y-auto"
-              >
-                <Row className={"gap-2"}>
-                  <Button
-                    color="primary"
-                    endContent={<LuPlus />}
-                  >
-                    Add a dataset
-                  </Button>
-                  <Input
-                    type="text"
-                    placeholder="Search datasets"
-                    variant="bordered"
-                    endContent={<LuSearch />}
-                    className="max-w-[300px]"
-                  />
-                </Row>
-                <Spacer y={2} />
-                <Table shadow="none" className="border-2 border-solid border-content3 rounded-xl">
-                  <TableHeader>
-                    <TableColumn key="name">Dataset name</TableColumn>
-                    <TableColumn key="connections">Connections</TableColumn>
-                    <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
-                  </TableHeader>
-                  <TableBody>
-                    {datasets.map((dataset) => (
-                      <TableRow key={dataset.id}>
-                        <TableCell key="name">
-                          <Text b>{dataset.legend}</Text>
-                        </TableCell>
-                        <TableCell key="connections">
-                          <Row>
-                            <AvatarGroup max={3} isBordered size="sm">
-                              {dataset?.DataRequests?.map((dr) => (
-                                <Avatar
-                                  src={connectionImages(isDark)[dr?.Connection.subType]}
-                                  showFallback={<LuPlug />}
-                                  size="sm"
-                                  isBordered
-                                  key={dr.id}
-                                />
-                              ))}
-                            </AvatarGroup>
-                          </Row>
-                        </TableCell>
-                        <TableCell key="actions">
-                          <Row justify="flex-end" align="center">
-                            <Tooltip content="Edit dataset">
-                              <Button
-                                isIconOnly
-                                variant="light"
-                                size="sm"
-                                as={Link}
-                                to={`/${team.id}/dataset/${dataset.id}`}
-                              >
-                                <LuPencilLine />
-                              </Button>
-                            </Tooltip>
-                            <Tooltip
-                              content="Delete dataset"
-                              color="danger"
-                            >
-                              <Button
-                                color="danger"
-                                isIconOnly
-                                variant="light"
-                                size="sm"
-                              >
-                                <LuTrash />
-                              </Button>
-                            </Tooltip>
-                          </Row>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </AccordionItem>
-            </Accordion>
-
-            <Spacer y={4} />
-            <Container>
-              <Spacer y={2} />
-              <Row className={"gap-2"} justify="flex-start" align="center">
-                {_canAccess("teamAdmin", team.TeamRoles) && (
-                  <>
+              {activeMenu === "connections" && (
+                <div className="max-h-full overflow-y-auto">
+                  <Row className={"gap-2"}>
                     <Button
                       color="primary"
-                      onClick={() => _onNewProject(team)}
                       endContent={<LuPlus />}
                     >
-                      Create new project
+                      Add a connection
                     </Button>
-                  </>
-                )}
-                <Input
-                  type="text"
-                  placeholder="Search projects"
-                  variant="bordered"
-                  endContent={<LuSearch />}
-                  onChange={(e) => setSearch({ ...search, [team.id]: e.target.value })}
-                  className="max-w-[300px]"
-                />
-              </Row>
-              <Spacer y={2} />
-              {team.Projects && teamMembers?.length > 0 && (
-                <Table
-                  aria-label="Projects list"
-                  className="h-auto min-w-full border-2 border-solid border-content3 rounded-xl"
-                  radius="md"
-                  shadow="none"
-                  isStriped
-                >
-                  <TableHeader>
-                    <TableColumn key="name">Project name</TableColumn>
-                    <TableColumn key="members">
-                      <Row align="end" justify="center" className={"gap-1"}>
-                        <LuUsers2 />
-                        <Text>Members</Text>
-                      </Row>
-                    </TableColumn>
-                    <TableColumn key="connections">
-                      <Row align="end" justify="center" className={"gap-1"}>
-                        <LuPlug />
-                        <Text>Connections</Text>
-                      </Row>
-                    </TableColumn>
-                    <TableColumn key="charts">
-                      <Row align="end" justify="center" className={"gap-1"}>
-                        <LuBarChart />
-                        <Text>Charts</Text>
-                      </Row>
-                    </TableColumn>
-                    <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
-                  </TableHeader>
-                  {_getFilteredProjects().length > 0 && (
+                    <Input
+                      type="text"
+                      placeholder="Search connections"
+                      variant="bordered"
+                      endContent={<LuSearch />}
+                      className="max-w-[300px]"
+                    />
+                  </Row>
+                  <Spacer y={2} />
+                  <Table shadow="none" className="border-2 border-solid border-content3 rounded-xl">
+                    <TableHeader>
+                      <TableColumn key="name">Connection name</TableColumn>
+                      <TableColumn key="type">Type</TableColumn>
+                      <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
+                    </TableHeader>
                     <TableBody>
-                      {_getFilteredProjects().map((project) => (
-                        <TableRow key={project.id}>
+                      {connections.map((connection) => (
+                        <TableRow key={connection.id}>
                           <TableCell key="name">
-                            <LinkNext onClick={() => directToProject(project.id)} className="cursor-pointer flex flex-col items-start">
-                              <Text b className={"text-foreground"}>{project.name}</Text>
-                            </LinkNext>
-                          </TableCell>
-                          <TableCell key="members" className="hidden sm:block">
-                            <Row justify="center" align="center">
-                              {_getProjectMembers(project)?.length > 0 && (
-                                <AvatarGroup max={3} isBordered size="sm">
-                                  {_getProjectMembers(project)?.map((pr) => (
-                                    <Avatar
-                                      key={pr.id}
-                                      name={pr.name}
-                                    />
-                                  ))}
-                                </AvatarGroup>
-                              )}
-                              {_getProjectMembers(project)?.length === 0 && (
-                                <Text i>-</Text>
-                              )}
+                            <Row align={"center"} className={"gap-2"}>
+                              <Avatar
+                                src={connectionImages(isDark)[connection.type]}
+                                size="sm"
+                                isBordered
+                              />
+                              <Text b>{connection.name}</Text>
                             </Row>
                           </TableCell>
-                          <TableCell key="connections">
-                            <Row justify="center" align="center">
-                              <Text b>
-                                {project.Connections && project.Connections.length}
-                              </Text>
-                            </Row>
-                          </TableCell>
-                          <TableCell key="charts">
-                            <Row justify="center" align="center">
-                              <Text b>
-                                {project.Charts.length}
-                              </Text>
-                            </Row>
+                          <TableCell key="type">
+                            <Text>{connection.type}</Text>
                           </TableCell>
                           <TableCell key="actions">
-                            {_canAccess("projectAdmin", team.TeamRoles) && (
-                              <Row justify="flex-end" align="center">
-                                <Tooltip content="Rename the project">
-                                  <Button
-                                    startContent={<LuPencilLine />}
-                                    variant="light"
-                                    size="sm"
-                                    className={"min-w-fit"}
-                                    onClick={() => _onEditProject(project)}
-                                  />
-                                </Tooltip>
-                                <Tooltip
-                                  content="Delete project"
+                            <Row justify="flex-end" align="center">
+                              <Tooltip content="Edit connection">
+                                <Button
+                                  startContent={<LuPencilLine />}
+                                  variant="light"
+                                  size="sm"
+                                  className={"min-w-fit"}
+                                />
+                              </Tooltip>
+                              <Tooltip
+                                content="Delete connection"
+                                color="danger"
+                              >
+                                <Button
                                   color="danger"
-                                >
-                                  <Button
-                                    color="danger"
-                                    startContent={<LuTrash />}
-                                    variant="light"
-                                    size="sm"
-                                    className={"min-w-fit"}
-                                    onClick={() => _onDeleteProject(project)}
-                                  />
-                                </Tooltip>
-                                <Spacer x={0.5} />
-                              </Row>
-                            )}
+                                  startContent={<LuTrash />}
+                                  variant="light"
+                                  size="sm"
+                                  className={"min-w-fit"}
+                                />
+                              </Tooltip>
+                            </Row>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
-                  )}
-                  {_getFilteredProjects(team).length === 0 && (
-                    <TableBody>
-                      <TableRow>
-                        <TableCell key="name">
-                          <Text i>No projects found</Text>
-                        </TableCell>
-                        <TableCell key="connections" align="center" />
-                        <TableCell key="charts" align="center" />
-                        <TableCell key="actions" align="center" />
-                      </TableRow>
-                    </TableBody>
-                  )}
-                </Table>
+                  </Table>
+                  <Spacer y={2} />
+                </div>
               )}
-              {team.Projects && team.Projects.length === 0 && !_canAccess("projectAdmin", team.TeamRoles)
-                && (
-                  <Container>
-                  <Text size="h3">
-                      {"No project over here"}
-                    </Text>
-                  </Container>
-                )}
-            </Container>
-            <Spacer y={4} />
 
-            <Modal isOpen={!!projectToEdit} onClose={() => setProjectToEdit(null)}>
-              <ModalContent>
-                <ModalHeader>
-                  <Text size="h3">Rename your project</Text>
-                </ModalHeader>
-                <ModalBody>
-                  <Input
-                    label="Project name"
-                    placeholder="Enter the project name"
-                    value={projectToEdit?.name || ""}
-                    onChange={(e) => setProjectToEdit({ ...projectToEdit, name: e.target.value })}
-                    variant="bordered"
-                    fullWidth
-                  />
-                </ModalBody>
-                <ModalFooter>
-                  <Button
-                    variant="flat"
-                    color="warning"
-                    onClick={() => setProjectToEdit(null)}
-                    auto
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    color="primary"
-                    onClick={() => _onEditProjectSubmit()}
-                    disabled={!projectToEdit?.name || modifyingProject}
-                    isLoading={modifyingProject}
-                  >
-                    Save
-                  </Button>
-                </ModalFooter>
-              </ModalContent>
-            </Modal>
-
-            <Modal isOpen={!!projectToDelete} onClose={() => setProjectToDelete(null)}>
-              <ModalContent>
-                <ModalHeader>
-                  <Text size="h4">Are you sure you want to delete the project?</Text>
-                </ModalHeader>
-                <ModalBody>
-                  <Text>
-                    {"Deleting a project will delete all the charts and connections associated with it. This action cannot be undone."}
-                  </Text>
-                </ModalBody>
-                <ModalFooter>
-                  <Button
-                    variant="flat"
-                    color="warning"
-                    onClick={() => setProjectToDelete(null)}
-                    auto
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    auto
-                    color="danger"
-                    endContent={<LuTrash />}
-                    onClick={() => _onDeleteProjectSubmit()}
-                    isLoading={modifyingProject}
-                  >
-                    Delete
-                  </Button>
-                </ModalFooter>
-              </ModalContent>
-            </Modal>
-          </>
+              {activeMenu === "datasets" && (
+                <div className="max-h-full overflow-y-auto">
+                  <Row className={"gap-2"}>
+                    <Button
+                      color="primary"
+                      endContent={<LuPlus />}
+                    >
+                      Add a dataset
+                    </Button>
+                    <Input
+                      type="text"
+                      placeholder="Search datasets"
+                      variant="bordered"
+                      endContent={<LuSearch />}
+                      className="max-w-[300px]"
+                    />
+                  </Row>
+                  <Spacer y={2} />
+                  <Table shadow="none" className="border-2 border-solid border-content3 rounded-xl">
+                    <TableHeader>
+                      <TableColumn key="name">Dataset name</TableColumn>
+                      <TableColumn key="connections">Connections</TableColumn>
+                      <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
+                    </TableHeader>
+                    <TableBody>
+                      {datasets.map((dataset) => (
+                        <TableRow key={dataset.id}>
+                          <TableCell key="name">
+                            <Text b>{dataset.legend}</Text>
+                          </TableCell>
+                          <TableCell key="connections">
+                            <Row>
+                              <AvatarGroup max={3} isBordered size="sm">
+                                {dataset?.DataRequests?.map((dr) => (
+                                  <Avatar
+                                    src={connectionImages(isDark)[dr?.Connection.subType]}
+                                    showFallback={<LuPlug />}
+                                    size="sm"
+                                    isBordered
+                                    key={dr.id}
+                                  />
+                                ))}
+                              </AvatarGroup>
+                            </Row>
+                          </TableCell>
+                          <TableCell key="actions">
+                            <Row justify="flex-end" align="center">
+                              <Tooltip content="Edit dataset">
+                                <Button
+                                  isIconOnly
+                                  variant="light"
+                                  size="sm"
+                                  as={Link}
+                                  to={`/${team.id}/dataset/${dataset.id}`}
+                                >
+                                  <LuPencilLine />
+                                </Button>
+                              </Tooltip>
+                              <Tooltip
+                                content="Delete dataset"
+                                color="danger"
+                              >
+                                <Button
+                                  color="danger"
+                                  isIconOnly
+                                  variant="light"
+                                  size="sm"
+                                >
+                                  <LuTrash />
+                                </Button>
+                              </Tooltip>
+                            </Row>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+          </div>
         )}
+
+        <Spacer y={4} />
+
+        <Modal isOpen={!!projectToEdit} onClose={() => setProjectToEdit(null)}>
+          <ModalContent>
+            <ModalHeader>
+              <Text size="h3">Rename your project</Text>
+            </ModalHeader>
+            <ModalBody>
+              <Input
+                label="Project name"
+                placeholder="Enter the project name"
+                value={projectToEdit?.name || ""}
+                onChange={(e) => setProjectToEdit({ ...projectToEdit, name: e.target.value })}
+                variant="bordered"
+                fullWidth
+              />
+            </ModalBody>
+            <ModalFooter>
+              <Button
+                variant="flat"
+                color="warning"
+                onClick={() => setProjectToEdit(null)}
+                auto
+              >
+                Cancel
+              </Button>
+              <Button
+                color="primary"
+                onClick={() => _onEditProjectSubmit()}
+                disabled={!projectToEdit?.name || modifyingProject}
+                isLoading={modifyingProject}
+              >
+                Save
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+
+        <Modal isOpen={!!projectToDelete} onClose={() => setProjectToDelete(null)}>
+          <ModalContent>
+            <ModalHeader>
+              <Text size="h4">Are you sure you want to delete the project?</Text>
+            </ModalHeader>
+            <ModalBody>
+              <Text>
+                {"Deleting a project will delete all the charts and connections associated with it. This action cannot be undone."}
+              </Text>
+            </ModalBody>
+            <ModalFooter>
+              <Button
+                variant="flat"
+                color="warning"
+                onClick={() => setProjectToDelete(null)}
+                auto
+              >
+                Cancel
+              </Button>
+              <Button
+                auto
+                color="danger"
+                endContent={<LuTrash />}
+                onClick={() => _onDeleteProjectSubmit()}
+                isLoading={modifyingProject}
+              >
+                Delete
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
 
         {(teamLoading || (teams && teams.length === 0)) && (
           <>
