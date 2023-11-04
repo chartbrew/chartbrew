@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Button, Spacer, Modal, Input, Tooltip, Checkbox, Divider,
   ModalHeader, ModalBody, ModalFooter, ModalContent,
@@ -16,7 +16,7 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { createSavedQuery, updateSavedQuery } from "../../../actions/savedQuery";
-import { runDataRequest as runDataRequestAction } from "../../../actions/dataRequest";
+import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import SavedQueries from "../../../components/SavedQueries";
 import Row from "../../../components/Row";
@@ -29,8 +29,8 @@ import useThemeDetector from "../../../modules/useThemeDetector";
 function SqlBuilder(props) {
   const {
     createSavedQuery, updateSavedQuery, changeTutorial,
-    dataRequest, onChangeRequest, onSave, runDataRequest, connection,
-    onDelete, responses,
+    dataRequest, onChangeRequest, onSave, connection,
+    onDelete,
   } = props;
 
   const [sqlRequest, setSqlRequest] = useState({
@@ -50,6 +50,8 @@ function SqlBuilder(props) {
 
   const isDark = useThemeDetector();
   const params = useParams();
+  const dispatch = useDispatch();
+  const stateDrs = useSelector((state) => selectDataRequests(state, sqlRequest.id));
 
   useEffect(() => {
     if (dataRequest) {
@@ -65,13 +67,13 @@ function SqlBuilder(props) {
   }, [sqlRequest]);
 
   useEffect(() => {
-    if (responses && responses.length > 0) {
-      const selectedResponse = responses.find((o) => o.id === dataRequest.id);
-      if (selectedResponse?.data) {
-        setResult(JSON.stringify(selectedResponse.data, null, 2));
+    if (stateDrs && stateDrs.length > 0) {
+      const selectedResponse = stateDrs.find((o) => o.id === sqlRequest.id);
+      if (selectedResponse?.response) {
+        setResult(JSON.stringify(selectedResponse.response, null, 2));
       }
     }
-  }, [responses]);
+  }, [stateDrs]);
 
   const _onSaveQueryConfirmation = () => {
     setSaveQueryModal(true);
@@ -124,8 +126,17 @@ function SqlBuilder(props) {
 
     onSave(dr).then(() => {
       const getCache = !invalidateCache;
-      runDataRequest(params.projectId, params.chartId, dr.id, getCache)
-        .then((result) => {
+      dispatch(runDataRequest({
+        team_id: params.teamId,
+        dataset_id: dr.dataset_id,
+        dataRequest_id: dr.id,
+        getCache
+      }))
+        .then((data) => {
+          const result = data.payload;
+          if (result?.response?.dataRequest?.responseData?.data) {
+            setResult(JSON.stringify(result.response.dataRequest.responseData.data, null, 2));
+          }
           setRequestLoading(false);
           setRequestSuccess(result.status);
         })
@@ -371,7 +382,6 @@ SqlBuilder.propTypes = {
   dataRequest: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
-  runDataRequest: PropTypes.func.isRequired,
   createSavedQuery: PropTypes.func.isRequired,
   updateSavedQuery: PropTypes.func.isRequired,
   connection: PropTypes.object.isRequired,
@@ -392,9 +402,6 @@ const mapDispatchToProps = (dispatch) => {
     updateSavedQuery: (projectId, savedQueryId, data) => (
       dispatch(updateSavedQuery(projectId, savedQueryId, data))
     ),
-    runDataRequest: (projectId, chartId, drId, getCache) => {
-      return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
-    },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };
 };

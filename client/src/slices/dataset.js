@@ -229,7 +229,7 @@ export const runDataRequest = createAsyncThunk(
   async ({ team_id, dataset_id, dataRequest_id, getCache }) => {
     const token = getAuthToken();
     let url = `${API_HOST}/team/${team_id}/datasets/${dataset_id}/dataRequests/${dataRequest_id}/request`;
-    const method = "GET";
+    const method = "POST";
     const headers = new Headers({
       "Accept": "application/json",
       "authorization": `Bearer ${token}`,
@@ -517,7 +517,7 @@ export const datasetSlice = createSlice({
                   return {
                     ...dataRequest,
                     loading: false,
-                    response: action.payload.response,
+                    response: action.payload.response?.dataRequest?.responseData?.data,
                     error: false,
                   };
                 }

@@ -139,7 +139,8 @@ function Dataset(props) {
       dataRequest_id: dr.id,
       data: dr,
     }))
-      .then((savedDr) => {
+      .then((data) => {
+        const savedDr = data.payload;
         setSelectedRequest(savedDr);
 
         // if it's the first data request, update the main_dr_id
