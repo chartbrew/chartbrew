@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Avatar, Chip, Button, Checkbox, Divider, Input, Spacer, Tooltip,
   Select, SelectItem,
@@ -16,22 +16,18 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import {
-  runRequest as runRequestAction,
-} from "../../../actions/dataset";
-import {
-  runDataRequest as runDataRequestAction,
-} from "../../../actions/dataRequest";
-import connectionImages from "../../../config/connectionImages";
-import fieldFinder from "../../../modules/fieldFinder";
-import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
-import Row from "../../../components/Row";
-import Text from "../../../components/Text";
-import useThemeDetector from "../../../modules/useThemeDetector";
+  runRequest, runDataRequest, selectResponses, selectDataRequests,
+} from "../../slices/dataset";
+import connectionImages from "../../config/connectionImages";
+import fieldFinder from "../../modules/fieldFinder";
+import { changeTutorial as changeTutorialAction } from "../../actions/tutorial";
+import Row from "../../components/Row";
+import Text from "../../components/Text";
+import useThemeDetector from "../../modules/useThemeDetector";
 
 function DatarequestSettings(props) {
   const {
-    dataRequests, responses, runRequest, dataset, onChange, drResponses,
-    runDataRequest, changeTutorial,
+    onChange, changeTutorial,
   } = props;
 
   const [result, setResult] = useState("");
@@ -43,6 +39,13 @@ function DatarequestSettings(props) {
 
   const isDark = useThemeDetector();
   const params = useParams();
+  const dispatch = useDispatch();
+  const initRef = useRef(null);
+
+  const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
+  const dataRequests = useSelector((state) => selectDataRequests(state, parseInt(params.datasetId, 10))) || [];
+  const drResponses = dataRequests.map((dr) => dr.response) || [];
+  const responses = useSelector(selectResponses);
 
   useEffect(() => {
     setTimeout(() => {
@@ -51,7 +54,8 @@ function DatarequestSettings(props) {
   }, []);
 
   useEffect(() => {
-    if (dataset?.joinSettings?.joins) {
+    if (dataset?.joinSettings?.joins && !initRef.current) {
+      initRef.current = true;
       setJoins([...dataset.joinSettings.joins]);
     }
   }, [dataset]);
@@ -71,15 +75,25 @@ function DatarequestSettings(props) {
       joins.forEach((data) => {
         if (data.dr_id || data.join_id) {
           // check to see if there is a response for the data request
-          const response = drResponses.find((o) => o.id === data.dr_id);
+          const response = drResponses.find((o) => o?.id === data.dr_id);
           if (!response || !response.data) {
-            runDataRequest(params.projectId, params.chartId, data.dr_id, true)
+            dispatch(runDataRequest({
+              team_id: params.teamId,
+              dataset_id: dataset.id,
+              dataRequest_id: data.dr_id,
+              getCache: true
+            }))
               .catch(() => {});
           }
 
-          const responseJoin = drResponses.find((o) => o.id === data.join_id);
+          const responseJoin = drResponses.find((o) => o?.id === data.join_id);
           if (!responseJoin || !responseJoin.data) {
-            runDataRequest(params.projectId, params.chartId, data.join_id, true)
+            dispatch(runDataRequest({
+              team_id: params.teamId,
+              dataset_id: dataset.id,
+              dataRequest_id: data.join_id,
+              getCache: true,
+            }))
               .catch(() => {});
           }
         }
@@ -174,9 +188,9 @@ function DatarequestSettings(props) {
     const join = joins.find((o) => o.key === key);
     let fields = [];
 
-    if (join) {
+    if (join && drResponses && drResponses.length > 0) {
       const drId = join[type];
-      const response = drResponses.find((o) => o.id === drId);
+      const response = drResponses.find((o) => o?.id === drId);
       if (response?.data) {
         fields = fieldFinder(response?.data);
       }
@@ -209,7 +223,11 @@ function DatarequestSettings(props) {
     setIsCompiling(true);
     _onSaveJoins()
       .then(() => {
-        return runRequest(params.projectId, params.chartId, dataset.id, useCache);
+        return dispatch(runRequest({
+          team_id: params.teamId,
+          dataset_id: dataset.id,
+          useCache
+        }));
       })
       .then(() => {
         setIsCompiling(false);
@@ -230,11 +248,11 @@ function DatarequestSettings(props) {
               label="Main source"
               renderValue={() => (
                 <div className="flex flex-row items-center gap-2">
-                  <Text>{dataRequests.find((dr) => dr.id === dataset.main_dr_id)?.Connection?.name || "Select main source"}</Text>
+                  <Text>{dataRequests.find((dr) => dr.id === dataset?.main_dr_id)?.Connection?.name || "Select main source"}</Text>
                 </div>
               )}
-              startContent={dataset.main_dr_id ? _renderIcon(dataset.main_dr_id, "sm") : null}
-              selectedKeys={[`${dataset.main_dr_id}`]}
+              startContent={dataset?.main_dr_id ? _renderIcon(dataset.main_dr_id, "sm") : null}
+              selectedKeys={[`${dataset?.main_dr_id}`]}
               onSelectionChange={(keys) => _onChangeMainSource(keys.currentKey)}
               selectionMode="single"
             >
@@ -542,28 +560,15 @@ const styles = {
 };
 
 DatarequestSettings.propTypes = {
-  dataRequests: PropTypes.arrayOf(PropTypes.object).isRequired,
-  responses: PropTypes.arrayOf(PropTypes.object).isRequired,
-  runRequest: PropTypes.func.isRequired,
-  dataset: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
   drResponses: PropTypes.array.isRequired,
-  runDataRequest: PropTypes.func.isRequired,
   changeTutorial: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = (state) => ({
-  responses: state.dataset.responses,
-  drResponses: state.dataRequest.responses,
+const mapStateToProps = () => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  runRequest: (projectId, chartId, datasetId, getCache) => {
-    return dispatch(runRequestAction(projectId, chartId, datasetId, getCache));
-  },
-  runDataRequest: (projectId, chartId, drId, getCache) => {
-    return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
-  },
   changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
 });
 

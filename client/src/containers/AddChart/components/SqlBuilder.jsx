@@ -160,7 +160,7 @@ function SqlBuilder(props) {
 
   return (
     <div style={styles.container} className="pl-1 pr-1 sm:pl-4 sm:pr-4">
-      <div className="grid grid-cols-12 gap-4">
+      <div className="grid grid-cols-12 gap-8">
         <div className="col-span-12 md:col-span-6">
           <Row justify="space-between" align="center">
             <Text b size={"lg"}>{connection.name}</Text>

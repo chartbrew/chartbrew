@@ -366,19 +366,19 @@ export const datasetSlice = createSlice({
         state.loading = true;
       })
       .addCase(runRequest.fulfilled, (state, action) => {
-        const datasetId = parseInt(action.payload.id, 10);
+        const datasetId = parseInt(action.meta.arg.dataset_id, 10);
         const indexReq = state.responses.findIndex(
           (response) => response.dataset_id === datasetId
         );
 
         if (indexReq > -1) {
           state.responses[indexReq] = {
-            data: action.payload.response,
+            data: action.payload.data,
             dataset_id: datasetId,
           };
         } else {
           state.responses.push({
-            data: action.payload.response,
+            data: action.payload.data,
             dataset_id: datasetId,
           });
         }
@@ -553,6 +553,7 @@ export const datasetSlice = createSlice({
 });
 
 export const selectDatasets = (state) => state.dataset.data;
+export const selectResponses = (state) => state.dataset.responses;
 export const selectDataRequests = (state, datasetId) => {
   const dataset = state.dataset.data.find((dataset) => dataset.id === datasetId);
   if (dataset) {

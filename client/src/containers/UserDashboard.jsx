@@ -288,7 +288,7 @@ function UserDashboard(props) {
               </Row>
 
               <Spacer y={4} />
-              <Segment className={"p-1 sm:p-1 bg-content1"}>
+              <Segment className={"p-1 sm:p-1 md:p-1 bg-content1"}>
                 <Listbox
                   aria-label="Actions"
                   onAction={(key) => setActiveMenu(key)}

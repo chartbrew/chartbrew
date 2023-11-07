@@ -5,10 +5,10 @@ import _ from "lodash";
 import { Flip, toast, ToastContainer } from "react-toastify";
 import {
   Button, Link, Spacer, Avatar, Badge, Tooltip, Card, CircularProgress, CardBody,
-  CardFooter, Spinner,
+  CardFooter, Spinner, Divider, Input,
 } from "@nextui-org/react";
 import moment from "moment";
-import { LuLink2, LuMonitorX, LuPlus } from "react-icons/lu";
+import { LuArrowRight, LuCheck, LuDatabase, LuMonitorX, LuPencil, LuPlus } from "react-icons/lu";
 import { useParams } from "react-router";
 
 import ApiBuilder from "../AddChart/components/ApiBuilder";
@@ -18,7 +18,7 @@ import RealtimeDbBuilder from "../Connections/RealtimeDb/RealtimeDbBuilder";
 import FirestoreBuilder from "../Connections/Firestore/FirestoreBuilder";
 import GaBuilder from "../Connections/GoogleAnalytics/GaBuilder";
 import CustomerioBuilder from "../Connections/Customerio/CustomerioBuilder";
-import DatarequestSettings from "../AddChart/components/DatarequestSettings";
+import DatarequestSettings from "./DatarequestSettings";
 import Container from "../../components/Container";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
@@ -27,6 +27,7 @@ import useThemeDetector from "../../modules/useThemeDetector";
 import { changeTutorial as changeTutorialAction } from "../../actions/tutorial";
 import connectionImages from "../../config/connectionImages";
 import {
+  getDataset,
   updateDataset,
 } from "../../slices/dataset";
 import {
@@ -36,14 +37,16 @@ import Navbar from "../../components/Navbar";
 
 function Dataset(props) {
   const {
-    requests, changeTutorial, chart, connections,
+    requests, changeTutorial, connections,
   } = props;
 
   const [initialising, setInitialising] = useState(false);
   const [dataRequests, setDataRequests] = useState([]);
-  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [selectedRequest, setSelectedRequest] = useState({ isSettings: true });
   const [error, setError] = useState(null);
   const [createMode, setCreateMode] = useState(false);
+  const [legend, setLegend] = useState("");
+  const [editLegend, setEditLegend] = useState(false);
 
   const theme = useThemeDetector() ? "dark" : "light";
   const params = useParams();
@@ -54,6 +57,16 @@ function Dataset(props) {
   const stateDataRequests = useSelector((state) => selectDataRequests(state, parseInt(params.datasetId, 10))) || [];
 
   useEffect(() => {
+    async function fetchData() {
+      dispatch(getDataset({
+        team_id: params.teamId,
+        dataset_id: params.datasetId,
+      }));
+    }
+    fetchData();
+  }, []);
+
+  useEffect(() => {
     if (!dataset) {
       setDataRequests([]);
       return;
@@ -62,6 +75,7 @@ function Dataset(props) {
     if (!initRef.current) {
       initRef.current = true;
       setInitialising(true);
+      setLegend(dataset.legend);
       dispatch(getDataRequestsByDataset({
         team_id: params.teamId,
         dataset_id: dataset.id
@@ -150,6 +164,7 @@ function Dataset(props) {
             dataset_id: dataset.id,
             data: { main_dr_id: savedDr.id }
           }));
+          toast.success("Dataset updated");
         }
 
         // update the dataRequests array and replace the item
@@ -177,6 +192,7 @@ function Dataset(props) {
             datset_id: dataset.id,
             data: { main_dr_id: newDr.id },
           }));
+          toast.success("Dataset updated");
         }
 
         setSelectedRequest(newDr);
@@ -226,6 +242,7 @@ function Dataset(props) {
       data
     }))
       .then((newDataset) => {
+        toast.success("Dataset updated");
         return newDataset;
       })
       .catch((e) => {
@@ -245,28 +262,81 @@ function Dataset(props) {
   return (
     <div>
       <Navbar hideTeam transparent />
+      {initialising && (
+        <>
+          <Spacer x={1} />
+          <CircularProgress size="xl" />
+        </>
+      )}
       <div className="p-2 md:p-4 md:pl-8 md:pr-8">
-        <Row>
-          <Text size="h4">{"Configure your dataset"}</Text>
-          {initialising && (
-            <>
-              <Spacer x={1} />
-              <CircularProgress size="xl" />
-            </>
-          )}
+        <Row justify={"space-between"}>
+          <div className="flex flex-row gap-2 items-center">
+            {!editLegend && (
+              <>
+                <Text size="h4">{dataset?.legend}</Text>
+                <Link onClick={() => setEditLegend(true)}>
+                  <LuPencil />
+                </Link>
+              </>
+            )}
+
+            {editLegend && (
+              <>
+                <Input
+                  value={legend}
+                  onChange={(e) => setLegend(e.target.value)}
+                  placeholder="How is this dataset called?"
+                  variant="bordered"
+                />
+                <Button
+                  variant="faded"
+                  isIconOnly
+                  color="primary"
+                  onClick={() => {
+                    _onUpdateDataset({ legend });
+                    setEditLegend(false);
+                  }}
+                  disabled={legend === dataset?.legend}
+                  size="sm"
+                >
+                  <LuCheck />
+                </Button>
+              </>
+            )}
+          </div>
+
+          <div className="flex flex-row gap-2">
+            <Button
+              variant="flat"
+              color="primary"
+              onClick={() => _onSaveRequest()}
+              disabled={!selectedRequest}
+            >
+              Save
+            </Button>
+            <Button
+              color="primary"
+              onClick={() => setCreateMode(true)}
+              endContent={<LuArrowRight />}
+            >
+              Configure dataset
+            </Button>
+          </div>
         </Row>
+        <Spacer y={2} />
+        <Divider />
         <Spacer y={4} />
         <div className="grid grid-cols-12">
           <div className="col-span-12 md:col-span-1 flex flex-row md:flex-col border-none md:border-r-1 md:border-solid md:border-content3 gap-2">
             {selectedRequest && (
               <>
                 <Row>
-                  <Tooltip content="Join data requests" css={{ zIndex: 99999 }} placement="right-start">
+                  <Tooltip content="Query dataset" css={{ zIndex: 99999 }} placement="right-start">
                     <Link onPress={() => _onSelectSettings()} className="cursor-pointer">
                       <Avatar
                         isBordered
                         icon={(
-                          <LuLink2 />
+                          <LuDatabase />
                         )}
                         radius="sm"
                         className="cursor-pointer"
@@ -341,7 +411,7 @@ function Dataset(props) {
                       connection={dr.Connection}
                       onChangeRequest={_updateDataRequest}
                       onSave={_onSaveRequest}
-                      chart={chart}
+                      // chart={chart}
                       onDelete={() => _onDeleteRequest(dr.id)}
                     />
                   )}
@@ -460,7 +530,7 @@ function Dataset(props) {
       </div>
 
       <ToastContainer
-        position="top-right"
+        position="top-center"
         autoClose={1500}
         hideProgressBar={false}
         newestOnTop={false}
@@ -480,7 +550,6 @@ Dataset.propTypes = {
   dataset: PropTypes.object.isRequired,
   requests: PropTypes.array.isRequired,
   changeTutorial: PropTypes.func.isRequired,
-  chart: PropTypes.object.isRequired,
   connections: PropTypes.array.isRequired,
   datasetResponses: PropTypes.array.isRequired,
 };
