@@ -31,22 +31,10 @@ function formatCompactNumber(number) {
   }
 }
 
-const areDatesTheSame = (first, second, interval) => {
-  let firstDate = first;
-  if (`${first}` === `${parseInt(first, 10)}`) {
-    firstDate = parseInt(first, 10);
-    if (`${firstDate}`.length === 10) {
-      firstDate *= 1000;
-    }
-  }
-  // regex to detect this format 2022-07-16 11:38:30 - to avoid Date() modifying the date to UTC
-  if (`${firstDate}`.match(/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/)) {
-    firstDate = `${firstDate.replace(" ", "T")}Z`;
-  }
-
-  let secondDate = second;
-  if (`${second}` === `${parseInt(second, 10)}`) {
-    secondDate = parseInt(second, 10);
+const parseDate = (input) => {
+  let secondDate = input;
+  if (`${input}` === `${parseInt(input, 10)}`) {
+    secondDate = parseInt(input, 10);
     if (`${secondDate}`.length === 10) {
       secondDate *= 1000;
     }
@@ -56,23 +44,27 @@ const areDatesTheSame = (first, second, interval) => {
     secondDate = `${secondDate.replace(" ", "T")}Z`;
   }
 
+  return new Date(secondDate);
+};
+
+const areDatesTheSame = (first, second, interval) => {
   switch (interval) {
     case "second":
-      return isSameSecond(new Date(firstDate), new Date(secondDate));
+      return isSameSecond(first, second);
     case "minute":
-      return isSameMinute(new Date(firstDate), new Date(secondDate));
+      return isSameMinute(first, second);
     case "hour":
-      return isSameHour(new Date(firstDate), new Date(secondDate));
+      return isSameHour(first, second);
     case "day":
-      return isSameDay(new Date(firstDate), new Date(secondDate));
+      return isSameDay(first, second);
     case "week":
-      return isSameWeek(new Date(firstDate), new Date(secondDate));
+      return isSameWeek(first, second);
     case "month":
-      return isSameMonth(new Date(firstDate), new Date(secondDate));
+      return isSameMonth(first, second);
     case "year":
-      return isSameYear(new Date(firstDate), new Date(secondDate));
+      return isSameYear(first, second);
     default:
-      return isSameDay(new Date(firstDate), new Date(secondDate));
+      return isSameDay(first, second);
   }
 };
 
@@ -307,11 +299,12 @@ class AxisChart {
               // the index check is used only in case we're looking for dates
               let indexCheck;
               if (xType === "date") {
+                const yDataDate = parseDate(yData[index][xAxisFieldName]);
                 indexCheck = _.findIndex(
-                  xAxisData.filtered,
+                  xAxisData.timestamps,
                   (dateValue) => {
                     return areDatesTheSame(
-                      dateValue, yData[index][xAxisFieldName], this.chart.timeInterval
+                      dateValue, yDataDate, this.chart.timeInterval,
                     );
                   }
                 );
@@ -820,6 +813,7 @@ class AxisChart {
     finalData.yData = pairedData.map((item) => item.yItem);
 
     finalData.filtered = _.cloneDeep(axisData);
+    finalData.timestamps = finalData.filtered.map((item) => item.valueOf());
     finalData.filtered = finalData.filtered.map((item) => item.format());
 
     const startDate = axisData[0];
