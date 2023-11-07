@@ -32,10 +32,6 @@
 
 📚 [**Read the full docs here**](https://docs.chartbrew.com)
 
-🔧 [**Issues ready to be tackled**](https://github.com/orgs/chartbrew/projects/1)
-
-🚙 [**Public roadmap over here**](https://trello.com/b/IQ7eiDqZ/chartbrew-roadmap)
-
 💡 [**Have any ideas or discussion topics?**](https://github.com/chartbrew/chartbrew/discussions)
 
 💬 [**Join our Discord**](https://discord.gg/KwGEbFk)
