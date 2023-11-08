@@ -691,8 +691,8 @@ class AxisChart {
         let previousValue;
 
         try {
-          numericCurrValue = `${d.data[d.data.length - 1]}`.replace(",", "").match(/[\d.]+/g);
-          numericPrevValue = `${d.data[d.data.length - 2]}`.replace(",", "").match(/[\d.]+/g);
+          numericCurrValue = `${d.data[d.data.length - 1]}`.replace(",", "").match(/-?[\d.]+/g);
+          numericPrevValue = `${d.data[d.data.length - 2]}`.replace(",", "").match(/-?[\d.]+/g);
           currentValue = parseFloat(numericCurrValue.filter((n) => n !== "." && n !== ",")[0]);
           previousValue = parseFloat(numericPrevValue.filter((n) => n !== "." && n !== ",")[0]);
         } catch (e) { /** */ }
