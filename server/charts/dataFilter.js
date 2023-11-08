@@ -113,38 +113,73 @@ function compareNumbers(data, field, condition) {
 
     // now check if values should be converted to numbers
     if (/^\d+$/.test(value)) {
-      value = parseInt(value, 10);
+      return parseInt(value, 10);
     } else if (/^\d+\.\d+$/.test(value)) {
-      value = parseFloat(value);
+      return parseFloat(value);
     }
 
-    return value;
+    return {
+      value,
+      isString: true,
+    };
   };
 
   switch (condition.operator) {
     case "is":
-      newData = _.filter(newData, (o) => getValue(o) === parseFloat(condition.value));
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        if (val?.isString) return `${val.value}` === `${condition.value}`;
+        return getValue(o) === parseFloat(condition.value);
+      });
       break;
     case "isNot":
-      newData = _.filter(newData, (o) => getValue(o) !== parseFloat(condition.value));
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        if (val?.isString) return `${val.value}` !== `${condition.value}`;
+        return getValue(o) !== parseFloat(condition.value);
+      });
       break;
     case "contains":
-      newData = _.filter(newData, (o) => getValue(o) === parseFloat(condition.value));
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        if (val?.isString) return getValue(o)?.indexOf(condition.value) > -1;
+        return getValue(o) === parseFloat(condition.value);
+      });
       break;
     case "notContains":
-      newData = _.filter(newData, (o) => getValue(o) !== parseFloat(condition.value));
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        if (val?.isString) return getValue(o)?.indexOf(condition.value) === -1;
+        return getValue(o) !== parseFloat(condition.value);
+      });
       break;
     case "greaterThan":
-      newData = _.filter(newData, (o) => getValue(o) > parseFloat(condition.value));
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        if (val?.isString) return getValue(o) > condition.value;
+        return getValue(o) > parseFloat(condition.value);
+      });
       break;
     case "greaterOrEqual":
-      newData = _.filter(newData, (o) => getValue(o) >= parseFloat(condition.value));
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        if (val?.isString) return getValue(o) >= condition.value;
+        return getValue(o) >= parseFloat(condition.value);
+      });
       break;
     case "lessThan":
-      newData = _.filter(newData, (o) => getValue(o) < parseFloat(condition.value));
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        if (val?.isString) return getValue(o) < condition.value;
+        return getValue(o) < parseFloat(condition.value);
+      });
       break;
     case "lessOrEqual":
-      newData = _.filter(newData, (o) => getValue(o) <= parseFloat(condition.value));
+      newData = _.filter(newData, (o) => {
+        const val = getValue(o);
+        if (val?.isString) return getValue(o) <= condition.value;
+        return getValue(o) <= parseFloat(condition.value);
+      });
       break;
     case "isNotNull":
       newData = _.filter(newData, (o) => getValue(o) !== null);
@@ -162,7 +197,7 @@ function compareStrings(data, field, condition) {
   let newData = data;
 
   if (!condition.value
-      && (condition.operator !== "isNull" && condition.operator !== "isNotNull")) {
+    && (condition.operator !== "isNull" && condition.operator !== "isNotNull")) {
     return data;
   }
 
