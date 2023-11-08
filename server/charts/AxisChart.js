@@ -743,7 +743,7 @@ class AxisChart {
       } else if (d.data.length > 1) {
         let currentValue;
         try {
-          const currArr = `${d.data[d.data.length - 1]}`.match(/[\d.]+/g);
+          const currArr = `${d.data[d.data.length - 1]}`.match(/-?[\d.]+/g);
           currentValue = parseFloat(currArr.filter((n) => n !== ".")[0]);
         } catch (e) {
           //
