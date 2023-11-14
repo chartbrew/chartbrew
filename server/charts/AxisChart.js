@@ -1,8 +1,5 @@
 const _ = require("lodash");
 const momentObj = require("moment");
-const {
-  isSameDay, isSameHour, isSameWeek, isSameMonth, isSameYear, isSameMinute, isSameSecond,
-} = require("date-fns");
 const FormulaParser = require("hot-formula-parser").Parser;
 
 const BarChart = require("./BarChart");
@@ -30,43 +27,6 @@ function formatCompactNumber(number) {
     return 0;
   }
 }
-
-const parseDate = (input) => {
-  let secondDate = input;
-  if (`${input}` === `${parseInt(input, 10)}`) {
-    secondDate = parseInt(input, 10);
-    if (`${secondDate}`.length === 10) {
-      secondDate *= 1000;
-    }
-  }
-  // regex to detect this format 2022-07-16 11:38:30 - to avoid Date() modifying the date to UTC
-  if (`${secondDate}`.match(/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/)) {
-    secondDate = `${secondDate.replace(" ", "T")}Z`;
-  }
-
-  return new Date(secondDate);
-};
-
-const areDatesTheSame = (first, second, interval) => {
-  switch (interval) {
-    case "second":
-      return isSameSecond(first, second);
-    case "minute":
-      return isSameMinute(first, second);
-    case "hour":
-      return isSameHour(first, second);
-    case "day":
-      return isSameDay(first, second);
-    case "week":
-      return isSameWeek(first, second);
-    case "month":
-      return isSameMonth(first, second);
-    case "year":
-      return isSameYear(first, second);
-    default:
-      return isSameDay(first, second);
-  }
-};
 
 class AxisChart {
   constructor(data, timezone = "") {
@@ -285,6 +245,8 @@ class AxisChart {
               break;
           }
 
+          // .yData is set in case of dates only
+          // done because the ordering of data happens in processDate to save processing time
           if (xAxisData.yData) yData = xAxisData.yData;
 
           if (!(yData instanceof Array)) throw new Error("The Y field is not part of an Array");
@@ -296,23 +258,9 @@ class AxisChart {
               // only add the yValue if it corresponds to one of the x values found above
               const selectorValue = xAxis.indexOf(".") > -1 ? _.get(yData[index], xAxis) : yData[index][xAxisFieldName];
 
-              // the index check is used only in case we're looking for dates
-              let indexCheck;
-              if (xType === "date") {
-                const yDataDate = parseDate(yData[index][xAxisFieldName]);
-                indexCheck = _.findIndex(
-                  xAxisData.timestamps,
-                  (dateValue) => {
-                    return areDatesTheSame(
-                      dateValue, yDataDate, this.chart.timeInterval,
-                    );
-                  }
-                );
-              }
-
               if (_.indexOf(xAxisData.filtered, selectorValue) > -1) {
                 yAxisData.push({ x: xAxisData.filtered[index], y: yValue });
-              } else if (xType === "date" && (indexCheck !== -1 || indexCheck !== false)) {
+              } else if (xType === "date") {
                 yAxisData.push({ x: xAxisData.formatted[index], y: yValue });
               }
             } else {
@@ -323,7 +271,6 @@ class AxisChart {
                 newItem = [];
               } else if (yAxis && yAxis.split("[]").length > 1) {
                 const nestedArray = _.get(item, yAxis.split("[]")[0]);
-                // console.log("nestedArray", nestedArray);
                 const arrayField = _.get(nestedArray[0], yAxis.split("[]")[1].slice(1));
                 yType = determineType(arrayField);
               }
@@ -641,7 +588,6 @@ class AxisChart {
           }
 
           if (sortCondition) {
-            // console.log("newDatasets[sortIndex].data[i]", newDatasets[sortIndex].data[i]);
             // first, sort the dataset with the sorting option enabled
             const saved = newDatasets[sortIndex].data[i];
             newDatasets[sortIndex].data[i] = newDatasets[sortIndex].data[j];
@@ -1032,7 +978,6 @@ class AxisChart {
         }
       } else {
         finalItem = finalItem[yData[key].length - 1];
-        // console.log("yData[key]", yData[key]);
         if (op === "sum" && yType === "number") finalItem = _.reduce(yData[key], (sum, n) => sum + (n instanceof Object ? 0 : n), 0);
         if (op === "avg" && yType === "number") {
           if (averageByTotal) {
