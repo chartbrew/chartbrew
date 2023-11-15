@@ -165,7 +165,7 @@ function ChartDatasetConfig(props) {
       _onUpdateCdc({ fillColor: [rgba] });
     } else {
       const newFillColor = [...cdc.fillColor];
-      if (Array.isArray(newFillColor) && newFillColor[fillIndex]) {
+      if (Array.isArray(newFillColor)) {
         newFillColor[fillIndex] = rgba;
       }
       _onUpdateCdc({ fillColor: newFillColor });

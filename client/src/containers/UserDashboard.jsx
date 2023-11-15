@@ -361,6 +361,7 @@ function UserDashboard(props) {
                       endContent={<LuSearch />}
                       onChange={(e) => setSearch({ ...search, [team.id]: e.target.value })}
                       className="max-w-[300px]"
+                      labelPlacement="outside"
                     />
                   </Row>
                   <Spacer y={4} />
