@@ -6,8 +6,10 @@ import {
 } from "@nextui-org/react";
 import { isEqual } from "lodash";
 import { LuCheckCircle, LuCloud, LuFolder, LuUser, LuWrench, LuXCircle } from "react-icons/lu";
+import { useDispatch } from "react-redux";
+import { useParams } from "react-router";
 
-import { runHelperMethod } from "../../../actions/connection";
+import { runHelperMethod } from "../../../slices/connection";
 import { primary, secondary } from "../../../config/colors";
 import determineType from "../../../modules/determineType";
 import Container from "../../../components/Container";
@@ -33,7 +35,7 @@ const attributeOperations = [
 
 function CustomerQuery(props) {
   const {
-    conditions, onUpdateConditions, limit, onUpdateLimit, projectId, connectionId,
+    conditions, onUpdateConditions, limit, onUpdateLimit, connectionId,
     populateAttributes, onChangeAttributes,
   } = props;
 
@@ -43,11 +45,19 @@ function CustomerQuery(props) {
   const [loading, setLoading] = useState(false);
   const [mainOperation, setMainOperation] = useState("and");
 
+  const dispatch = useDispatch();
+  const params = useParams();
+
   useEffect(() => {
     // get segments
     setLoading(true);
-    runHelperMethod(projectId, connectionId, "getAllSegments")
-      .then((segmentData) => {
+    dispatch(runHelperMethod({
+      team_id: params.teamId,
+      connection_id: connectionId,
+      methodName: "getAllSegments"
+    }))
+      .then((data) => {
+        const segmentData = data.payload.segments;
         const segmentOptions = segmentData.map((segment) => {
           return {
             text: segment.name,
@@ -591,7 +601,6 @@ CustomerQuery.propTypes = {
   conditions: PropTypes.object.isRequired,
   limit: PropTypes.string.isRequired,
   onUpdateLimit: PropTypes.func.isRequired,
-  projectId: PropTypes.number.isRequired,
   connectionId: PropTypes.number.isRequired,
   populateAttributes: PropTypes.bool.isRequired,
   onChangeAttributes: PropTypes.func.isRequired,

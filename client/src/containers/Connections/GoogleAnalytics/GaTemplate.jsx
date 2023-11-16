@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
 import {
   Button, Checkbox, Divider, Input, Select, SelectItem, Spacer,
 } from "@nextui-org/react";
@@ -10,21 +9,20 @@ import { LuArrowRight, LuCheckCheck, LuPlus, LuX } from "react-icons/lu";
 import { FcGoogle } from "react-icons/fc";
 
 import {
-  testRequest as testRequestAction,
-  addConnection as addConnectionAction,
-} from "../../../actions/connection";
+  testRequest, addConnection,
+} from "../../../slices/connection";
 import { generateDashboard } from "../../../actions/project";
 import { API_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
+import { useDispatch } from "react-redux";
 
 /*
   The Form used to configure the SimpleAnalytics template
 */
 function GaTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete, connections,
-    testRequest, selection, addConnection,
+    teamId, projectId, addError, onComplete, connections, selection,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -41,6 +39,8 @@ function GaTemplate(props) {
   const [accountOptions, setAccountOptions] = useState([]);
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [accountsData, setAccountsData] = useState(null);
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
     _getTemplateConfig();
@@ -172,12 +172,9 @@ function GaTemplate(props) {
 
     // get the accounts
     const connectionObj = connections.filter((c) => c.id === parseInt(value, 10))[0];
-    return testRequest(projectId, connectionObj)
+    return dispatch(testRequest({ team_id: teamId, connection: connectionObj }))
       .then((data) => {
-        return data.json();
-      })
-      .then((data) => {
-        setAccountsData(data);
+        setAccountsData(data.payload);
       })
       .catch(() => {
         //
@@ -258,7 +255,8 @@ function GaTemplate(props) {
   };
 
   const _onGoogleAuth = async () => {
-    const newConnection = await addConnection(projectId, connection);
+    const data = await dispatch(addConnection({ team_id: teamId, connection }));
+    const newConnection = data.payload;
 
     const url = `${API_HOST}/project/${projectId}/connection/${newConnection.id}/google/auth?type=googleAnalyticsTemplate`;
     const method = "GET";
@@ -537,16 +535,6 @@ GaTemplate.propTypes = {
   connections: PropTypes.array.isRequired,
   addError: PropTypes.bool,
   selection: PropTypes.number,
-  testRequest: PropTypes.func.isRequired,
-  addConnection: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = () => ({});
-const mapDispatchToProps = (dispatch) => ({
-  testRequest: (projectId, connectionId) => {
-    return dispatch(testRequestAction(projectId, connectionId));
-  },
-  addConnection: (projectId, data) => dispatch(addConnectionAction(projectId, data)),
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(GaTemplate);
+export default GaTemplate;

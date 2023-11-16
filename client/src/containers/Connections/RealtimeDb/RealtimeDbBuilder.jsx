@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import {
   Button, Input, Spacer, Divider, Chip, Checkbox, Tooltip,
 } from "@nextui-org/react";
@@ -17,7 +17,7 @@ import {
   runDataRequest as runDataRequestAction,
 } from "../../../actions/dataRequest";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
-import { getConnection as getConnectionAction } from "../../../actions/connection";
+import { getConnection } from "../../../slices/connection";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
@@ -41,11 +41,12 @@ function RealtimeDbBuilder(props) {
 
   const isDark = useThemeDetector();
   const params = useParams();
+  const dispatch = useDispatch();
 
   const {
     dataRequest, onChangeRequest, runDataRequest,
     connection, onSave, changeTutorial, // eslint-disable-line
-    getConnection, onDelete, responses,
+    onDelete, responses,
   } = props;
 
   // on init effect
@@ -66,12 +67,12 @@ function RealtimeDbBuilder(props) {
   useEffect(() => {
     const newApiRequest = firebaseRequest;
 
-    getConnection(params.projectId, connection.id)
+    dispatch(getConnection({ team_id: params.teamId, connection_id: connection.id }))
       .then((data) => {
-        setFullConnection(data);
-        if (data && data.firebaseServiceAccount) {
+        setFullConnection(data.payload);
+        if (data?.payload && data.payload?.firebaseServiceAccount) {
           try {
-            setProjectId(JSON.parse(data.firebaseServiceAccount).project_id);
+            setProjectId(JSON.parse(data.payload.firebaseServiceAccount).project_id);
           } catch (error) {
             //
           }
@@ -498,7 +499,6 @@ RealtimeDbBuilder.propTypes = {
   onSave: PropTypes.func.isRequired,
   dataRequest: PropTypes.object,
   changeTutorial: PropTypes.func.isRequired,
-  getConnection: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   responses: PropTypes.array.isRequired,
 };
@@ -515,9 +515,6 @@ const mapDispatchToProps = (dispatch) => {
       return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
-    getConnection: (projectId, connectionId) => (
-      dispatch(getConnectionAction(projectId, connectionId))
-    ),
   };
 };
 

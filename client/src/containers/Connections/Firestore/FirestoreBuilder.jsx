@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import {
   Button,Spacer, Divider, Chip, Switch, Tooltip, Link, Checkbox, Input, Popover,
   CircularProgress, Select, SelectItem, PopoverTrigger, PopoverContent,
@@ -23,9 +23,8 @@ import {
   runDataRequest as runDataRequestAction,
 } from "../../../actions/dataRequest";
 import {
-  getConnection as getConnectionAction,
-  testRequest as testRequestAction,
-} from "../../../actions/connection";
+  getConnection, testRequest,
+} from "../../../slices/connection";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import fieldFinder from "../../../modules/fieldFinder";
 import { secondary } from "../../../config/colors";
@@ -110,11 +109,11 @@ function FirestoreBuilder(props) {
 
   const isDark = useThemeDetector();
   const params = useParams();
+  const dispatch = useDispatch();
 
   const {
     dataRequest, onChangeRequest, runDataRequest,
-    connection, onSave, changeTutorial, testRequest,
-    onDelete, getConnection, responses,
+    connection, onSave, changeTutorial, onDelete, responses,
   } = props;
 
   // on init effect
@@ -132,10 +131,10 @@ function FirestoreBuilder(props) {
   useEffect(() => {
     onChangeRequest(firestoreRequest);
     if (connection?.id && !fullConnection?.id) {
-      getConnection(params.projectId, connection.id)
+      dispatch(getConnection({ team_id: params.teamId, connection_id: connection.id }))
         .then((data) => {
-          setFullConnection(data);
-          _onFetchCollections(data);
+          setFullConnection(data.payload);
+          _onFetchCollections(data.payload);
         })
         .catch(() => {});
     }
@@ -313,13 +312,10 @@ function FirestoreBuilder(props) {
 
   const _onFetchCollections = (conn = fullConnection) => {
     setCollectionsLoading(true);
-    return testRequest(params.projectId, conn)
-      .then((data) => {
-        return data.json();
-      })
+    return dispatch(testRequest({ team_id: params.teamId, connection: conn }))
       .then((data) => {
         setCollectionsLoading(false);
-        setCollectionData(data);
+        setCollectionData(data.payload);
       })
       .catch(() => {
         setCollectionsLoading(false);
@@ -1062,9 +1058,7 @@ FirestoreBuilder.propTypes = {
   onSave: PropTypes.func.isRequired,
   dataRequest: PropTypes.object,
   changeTutorial: PropTypes.func.isRequired,
-  testRequest: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
-  getConnection: PropTypes.func.isRequired,
   responses: PropTypes.array.isRequired,
 };
 
@@ -1081,10 +1075,6 @@ const mapDispatchToProps = (dispatch) => {
       return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
-    testRequest: (projectId, data) => dispatch(testRequestAction(projectId, data)),
-    getConnection: (projectId, connectionId) => dispatch(
-      getConnectionAction(projectId, connectionId)
-    ),
   };
 };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import moment from "moment";
 import {
   Button, Modal, Spacer, Tabs, Tab, CardBody, Image, CardFooter, Card,
@@ -24,13 +24,9 @@ import CustomTemplates from "./CustomTemplates/CustomTemplates";
 import PlausibleTemplate from "./Plausible/PlausibleTemplate";
 
 import {
-  testRequest as testRequestAction,
-  removeConnection as removeConnectionAction,
-  getProjectConnections as getProjectConnectionsAction,
-  addConnection as addConnectionAction,
-  saveConnection as saveConnectionAction,
-  getConnection as getConnectionAction,
-} from "../../actions/connection";
+  testRequest, removeConnection, addConnection, getTeamConnections,
+  saveConnection, getConnection, selectConnections,
+} from "../../slices/connection";
 import {
   getTemplates as getTemplatesAction
 } from "../../actions/template";
@@ -54,9 +50,7 @@ import { HiArrowLeft, HiPlus, HiTrash } from "react-icons/hi";
 */
 function Connections(props) {
   const {
-    cleanErrors, addConnection, saveConnection, connections, testRequest,
-    removeConnection, getProjectConnections, user, team, getTemplates,
-    templates, getConnection,
+    cleanErrors, user, team, getTemplates, templates,
   } = props;
 
   const [newConnectionModal, setNewConnectionModal] = useState(false);
@@ -70,6 +64,8 @@ function Connections(props) {
   const [removeError, setRemoveError] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState("connections");
   const [templateConnection, setTemplateConnection] = useState(-1);
+
+  const connections = useSelector(selectConnections);
 
   const params = useParams();
   const navigate = useNavigate();
@@ -114,8 +110,9 @@ function Connections(props) {
     }
 
     if (!connection.id) {
-      return addConnection(params.projectId, connection)
-        .then((newConnection) => {
+      return dispatch(addConnection({ team_id: params.teamId, connection }))
+        .then((data) => {
+          const newConnection = data.payload;
           if (redirect) {
             navigate(`/${params.teamId}/${params.projectId}/chart`);
           }
@@ -135,7 +132,7 @@ function Connections(props) {
           return false;
         });
     } else {
-      return saveConnection(params.projectId, connection)
+      return dispatch(saveConnection({ team_id: params.teamId, connection }))
         .then(() => {
           setFormType(null);
           setEditConnection(null);
@@ -150,10 +147,10 @@ function Connections(props) {
 
   const _onTestRequest = (data) => {
     const newTestResult = {};
-    return testRequest(params.projectId, data)
+    return dispatch(testRequest({ team_id: params.teamId, connection: data }))
       .then(async (response) => {
-        newTestResult.status = response.status;
-        newTestResult.body = await response.text();
+        newTestResult.status = response.payload.status;
+        newTestResult.body = await response.payload.text();
 
         try {
           newTestResult.body = JSON.parse(newTestResult.body);
@@ -177,9 +174,9 @@ function Connections(props) {
     setRemoveLoading(selectedConnection.id);
     setRemoveError(false);
 
-    removeConnection(params.projectId, selectedConnection.id)
+    dispatch(removeConnection({ team_id: params.team_id, connection_id: selectedConnection.id }))
       .then(() => {
-        return getProjectConnections(params.projectId);
+        return dispatch(getTeamConnections({ team_id: params.teamId }));
       })
       .then(() => {
         setRemoveLoading(false);
@@ -197,11 +194,11 @@ function Connections(props) {
     setEditConnection(null);
     setFormType("");
 
-    return getConnection(params.projectId, connection.id)
+    return dispatch(getConnection({ team_id: params.teamId, connection_id: connection.id }))
       .then((connectionData) => {
-        setEditConnection(connectionData);
+        setEditConnection(connectionData.payload);
         setFormType(connection.type);
-        return connectionData;
+        return connectionData.payload;
       })
       .catch((err) => {
         return err;
@@ -642,24 +639,16 @@ const styles = {
 };
 
 Connections.propTypes = {
-  connections: PropTypes.array.isRequired,
   team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
-  removeConnection: PropTypes.func.isRequired,
-  getProjectConnections: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
-  saveConnection: PropTypes.func.isRequired,
-  addConnection: PropTypes.func.isRequired,
-  testRequest: PropTypes.func.isRequired,
   getTemplates: PropTypes.func.isRequired,
   templates: PropTypes.object.isRequired,
-  getConnection: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
-    connections: state.connection.data,
     team: state.team.active,
     user: state.user.data,
     templates: state.template,
@@ -668,18 +657,8 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    testRequest: (projectId, data) => dispatch(testRequestAction(projectId, data)),
-    removeConnection: (projectId, id) => dispatch(removeConnectionAction(projectId, id)),
-    getProjectConnections: (projectId) => dispatch(getProjectConnectionsAction(projectId)),
-    addConnection: (projectId, connection) => dispatch(addConnectionAction(projectId, connection)),
-    saveConnection: (projectId, connection) => {
-      return dispatch(saveConnectionAction(projectId, connection));
-    },
     cleanErrors: () => dispatch(cleanErrorsAction()),
     getTemplates: (teamId) => dispatch(getTemplatesAction(teamId)),
-    getConnection: (projectId, connectionId) => {
-      return dispatch(getConnectionAction(projectId, connectionId));
-    },
   };
 };
 

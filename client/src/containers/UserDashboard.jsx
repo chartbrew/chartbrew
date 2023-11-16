@@ -24,8 +24,8 @@ import {
   removeProject as removeProjectAction,
 } from "../actions/project";
 import {
-  getTeamConnections as getTeamConnectionsAction,
-} from "../actions/connection";
+  getTeamConnections, selectConnections,
+} from "../slices/connection";
 import ProjectForm from "../components/ProjectForm";
 import Navbar from "../components/Navbar";
 import canAccess from "../config/canAccess";
@@ -50,13 +50,13 @@ function UserDashboard(props) {
   const {
     relog, cleanErrors, user,
     teamLoading, getTemplates, updateProject, removeProject,
-    connections, getTeamConnections,
   } = props;
 
   const team = useSelector(selectTeam);
   const teams = useSelector(selectTeams);
   const teamMembers = useSelector(selectTeamMembers);
   const datasets = useSelector(selectDatasets);
+  const connections = useSelector(selectConnections);
 
   const [addProject, setAddProject] = useState(false);
   const [search, setSearch] = useState({});
@@ -96,7 +96,7 @@ function UserDashboard(props) {
   useEffect(() => {
     if (team?.id) {
       dispatch(getTeamMembers({ team_id: team.id }));
-      getTeamConnections(team.id);
+      dispatch(getTeamConnections({ team_id: team.id }));
     }
   }, [team]);
 
@@ -802,8 +802,6 @@ UserDashboard.propTypes = {
   updateProject: PropTypes.func.isRequired,
   removeProject: PropTypes.func.isRequired,
   teamMembers: PropTypes.array.isRequired,
-  connections: PropTypes.array.isRequired,
-  getTeamConnections: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -812,7 +810,6 @@ const mapStateToProps = (state) => {
     teams: state.team.data,
     teamLoading: state.team.loading,
     teamMembers: state.team.teamMembers,
-    connections: state.connection.data[state.team.active?.id] || [],
   };
 };
 
@@ -823,7 +820,6 @@ const mapDispatchToProps = (dispatch) => {
     getTemplates: (teamId) => dispatch(getTemplatesAction(teamId)),
     updateProject: (projectId, data) => dispatch(updateProjectAction(projectId, data)),
     removeProject: (projectId) => dispatch(removeProjectAction(projectId)),
-    getTeamConnections: (teamId) => dispatch(getTeamConnectionsAction(teamId)),
   };
 };
 

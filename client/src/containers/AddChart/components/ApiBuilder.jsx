@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import {
   Button, Checkbox, Divider, Input, Link, Spacer, Tooltip, Chip,
   Tabs, Tab, Select, SelectItem,
@@ -22,8 +22,8 @@ import {
 } from "../../../actions/dataRequest";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import {
-  getConnection as getConnectionAction,
-} from "../../../actions/connection";
+  getConnection,
+} from "../../../slices/connection";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
@@ -76,11 +76,12 @@ function ApiBuilder(props) {
 
   const isDark = useThemeDetector();
   const params = useParams();
+  const dispatch = useDispatch();
 
   const {
     dataRequest, onChangeRequest, runDataRequest,
     connection, onSave, changeTutorial, chart,
-    getConnection, onDelete, responses,
+    onDelete, responses,
   } = props;
 
   // on init effect
@@ -120,9 +121,9 @@ function ApiBuilder(props) {
       }
     }
 
-    getConnection(params.projectId, connection.id)
+    dispatch(getConnection({ team_id: params.team_id, connection_id: connection.id }))
       .then((data) => {
-        setFullConnection(data);
+        setFullConnection(data.payload);
       })
       .catch(() => {});
 
@@ -612,7 +613,6 @@ ApiBuilder.propTypes = {
   dataRequest: PropTypes.object,
   changeTutorial: PropTypes.func.isRequired,
   chart: PropTypes.object.isRequired,
-  getConnection: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   responses: PropTypes.array.isRequired,
 };
@@ -629,9 +629,6 @@ const mapDispatchToProps = (dispatch) => {
       return dispatch(runDataRequestAction(projectId, chartId, datasetId, getCache));
     },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
-    getConnection: (projectId, connectionId) => {
-      return dispatch(getConnectionAction(projectId, connectionId));
-    },
   };
 };
 

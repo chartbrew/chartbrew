@@ -10,13 +10,15 @@ import {
 import { DateRangePicker } from "react-date-range";
 import { enGB } from "date-fns/locale";
 
-import { runHelperMethod } from "../../../actions/connection";
+import { runHelperMethod } from "../../../slices/connection";
 import { primary, secondary } from "../../../config/colors";
 import MessageTypeLabels from "./MessageTypeLabels";
 import { defaultStaticRanges, defaultInputRanges } from "../../../config/dateRanges";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import { LuCalendarDays, LuInfo } from "react-icons/lu";
+import { useDispatch } from "react-redux";
+import { useParams } from "react-router";
 
 const periodOptions = [
   { key: "hours", value: "hours", text: "Hourly" },
@@ -45,7 +47,7 @@ const configDefaults = {
 
 function CampaignsQuery(props) {
   const {
-    projectId, connectionId, onUpdate, request,
+    connectionId, onUpdate, request,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -59,11 +61,19 @@ function CampaignsQuery(props) {
   const [journeyStart, setJourneyStart] = useState(startOfDay(subDays(new Date(), 30)));
   const [journeyEnd, setJourneyEnd] = useState(endOfDay(new Date()));
 
+  const dispatch = useDispatch();
+  const params = useParams();
+
   useEffect(() => {
     // get segments
     setLoading(true);
-    runHelperMethod(projectId, connectionId, "getAllCampaigns")
-      .then((campaignData) => {
+    dispatch(runHelperMethod({
+      team_id: params.teamId,
+      connection_id: connectionId,
+      methodName: "getAllCampaigns"
+    }))
+      .then((data) => {
+        const campaignData = data.payload;
         const campaignOptions = campaignData.map((campaign) => {
           return {
             text: campaign.name,
@@ -143,8 +153,14 @@ function CampaignsQuery(props) {
 
   const _fetchActions = (fetchConfig = config) => {
     setActionsLoading(true);
-    runHelperMethod(projectId, connectionId, "getCampaignActions", { campaignId: fetchConfig.campaignId })
-      .then((actions) => {
+    dispatch(runHelperMethod({
+      team_id: params.teamId,
+      connection_id: connectionId,
+      methodName: "getCampaignActions",
+      params: { campaignId: fetchConfig.campaignId }
+    }))
+      .then((data) => {
+        const actions = data.payload;
         setActionsLoading(false);
         setAvailableActions(actions.map((a) => ({
           key: a.id,
@@ -269,11 +285,17 @@ function CampaignsQuery(props) {
 
     setConfig({ ...newConfig, linksMode: "links" });
     setLinksLoading(true);
-    runHelperMethod(projectId, connectionId, "getCampaignLinks", {
-      campaignId: newConfig.campaignId,
-      actionId: newConfig.requestRoute.indexOf("actions") > -1 ? newConfig.actionId : null,
-    })
-      .then((links) => {
+    dispatch(runHelperMethod({
+      team_id: params.teamId,
+      connection_id: connectionId,
+      methodName: "getCampaignLinks",
+      params: {
+        campaignId: newConfig.campaignId,
+        actionId: newConfig.requestRoute.indexOf("actions") > -1 ? newConfig.actionId : null,
+      },
+    }))
+      .then((data) => {
+        const links = data.payload;
         if (links) {
           const newAvailableLinks = links.map((link) => {
             return {
@@ -683,7 +705,6 @@ const styles = {
 };
 
 CampaignsQuery.propTypes = {
-  projectId: PropTypes.number.isRequired,
   connectionId: PropTypes.number.isRequired,
   onUpdate: PropTypes.func.isRequired,
   request: PropTypes.object.isRequired,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import {
   Button, Popover, Divider, Input, Tooltip, Spacer, Chip, Checkbox,
   Select, SelectItem, PopoverTrigger, PopoverContent, Code,
@@ -23,9 +23,8 @@ import {
   runDataRequest as runDataRequestAction,
 } from "../../../actions/dataRequest";
 import {
-  testRequest as testRequestAction,
-  getConnection as getConnectionAction,
-} from "../../../actions/connection";
+  testRequest, getConnection,
+} from "../../../slices/connection";
 import { getMetadata } from "./apiBoilerplate";
 import { secondary } from "../../../config/colors";
 import Row from "../../../components/Row";
@@ -41,8 +40,8 @@ const validEndDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)
 function GaBuilder(props) {
   const {
     dataRequest, runDataRequest,
-    connection, onSave, requests, testRequest, // eslint-disable-line
-    getConnection, onDelete, responses,
+    connection, onSave, requests, // eslint-disable-line
+    onDelete, responses,
   } = props;
 
   const [gaRequest, setGaRequest] = useState({});
@@ -71,6 +70,7 @@ function GaBuilder(props) {
   const isDark = useThemeDetector();
   const initRef = React.useRef(null);
   const params = useParams();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (!initRef.current) {
@@ -81,10 +81,10 @@ function GaBuilder(props) {
 
   useEffect(() => {
     if (connection?.id && !fullConnection?.id) {
-      getConnection(params.projectId, connection.id)
+      dispatch(getConnection({ team_id: params.teamId, connection_id: connection.id }))
         .then((data) => {
-          setFullConnection(data);
-          _onFetchAccountData(data);
+          setFullConnection(data.payload);
+          _onFetchAccountData(data.payload);
         })
         .catch(() => {});
     }
@@ -252,13 +252,10 @@ function GaBuilder(props) {
 
   const _onFetchAccountData = (conn = fullConnection) => {
     setCollectionsLoading(true);
-    return testRequest(params.projectId, conn)
-      .then((data) => {
-        return data.json();
-      })
+    return dispatch(testRequest({ team_id: params.teamId, connection: conn }))
       .then((data) => {
         setCollectionsLoading(false);
-        setAnalyticsData(data);
+        setAnalyticsData(data.payload);
         _initRequest();
       })
       .catch(() => {
@@ -698,8 +695,6 @@ GaBuilder.propTypes = {
   onSave: PropTypes.func.isRequired,
   requests: PropTypes.array.isRequired,
   dataRequest: PropTypes.object,
-  testRequest: PropTypes.func.isRequired,
-  getConnection: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   responses: PropTypes.array.isRequired,
 };
@@ -715,10 +710,6 @@ const mapDispatchToProps = (dispatch) => {
     runDataRequest: (projectId, chartId, drId, getCache) => {
       return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
     },
-    testRequest: (projectId, data) => dispatch(testRequestAction(projectId, data)),
-    getConnection: (projectId, connectionId) => (
-      dispatch(getConnectionAction(projectId, connectionId))
-    ),
   };
 };
 

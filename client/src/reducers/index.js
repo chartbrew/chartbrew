@@ -3,7 +3,7 @@ import user from "./user";
 import project from "./project";
 import team from "../slices/team";
 import chart from "../slices/chart";
-import connection from "./connection";
+import connection from "../slices/connection";
 import savedQuery from "./savedQuery";
 import error from "./error";
 import dataset from "../slices/dataset";

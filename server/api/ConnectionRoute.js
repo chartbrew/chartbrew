@@ -32,33 +32,41 @@ module.exports = (app) => {
       });
   };
 
-  const checkPermissions = async (req, res, next) => {
-    const { team_id } = req.params;
+  const checkPermissions = (actionType = "readOwn") => {
+    return async (req, res, next) => {
+      const { team_id } = req.params;
 
-    // Fetch the TeamRole for the user
-    const teamRole = await teamController.getTeamRole(team_id, req.user.id);
+      // Fetch the TeamRole for the user
+      const teamRole = await teamController.getTeamRole(team_id, req.user.id);
 
-    if (!teamRole) {
-      return res.status(403).json({ message: "Access denied" });
-    }
-
-    const { role, projects } = teamRole;
-
-    // Handle permissions for teamOwner and teamAdmin
-    if (["teamOwner", "teamAdmin"].includes(role)) {
-      return next();
-    }
-
-    if (role === "projectAdmin" || role === "projectViewer") {
-      const connections = await connectionController.findByProjects(projects);
-      if (!connections || connections.length === 0) {
-        return res.status(404).json({ message: "No connections found" });
+      if (!teamRole) {
+        return res.status(403).json({ message: "Access denied" });
       }
 
-      return next();
-    }
+      const permission = accessControl.can(teamRole.role)[actionType]("connection");
+      if (!permission.granted) {
+        return res.status(403).json({ message: "Access denied" });
+      }
 
-    return res.status(403).json({ message: "Access denied" });
+      const { role, projects } = teamRole;
+
+      // Handle permissions for teamOwner and teamAdmin
+      if (["teamOwner", "teamAdmin"].includes(role)) {
+        req.user.isEditor = true;
+        return next();
+      }
+
+      if (role === "projectAdmin" || role === "projectViewer") {
+        const connections = await connectionController.findByProjects(projects);
+        if (!connections || connections.length === 0) {
+          return res.status(404).json({ message: "No connections found" });
+        }
+
+        return next();
+      }
+
+      return res.status(403).json({ message: "Access denied" });
+    };
   };
 
   /*
@@ -84,7 +92,7 @@ module.exports = (app) => {
   /*
   ** Route to get team connections
   */
-  app.get("/teams/:team_id/connections", verifyToken, checkPermissions, async (req, res) => {
+  app.get("/team/:team_id/connections", verifyToken, checkPermissions("readOwn"), async (req, res) => {
     const { team_id } = req.params;
     const { project_id } = req.query;
 
@@ -108,18 +116,8 @@ module.exports = (app) => {
   /*
   ** Route to create a connection
   */
-  app.post("/project/:project_id/connection", verifyToken, (req, res) => {
-    checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).createAny("connection");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        // set the project id for the connection
-        req.body.project_id = req.params.project_id;
-        return connectionController.create(req.body);
-      })
+  app.post("/team/:team_id/connections", verifyToken, checkPermissions("createOwn"), (req, res) => {
+    return connectionController.create(req.body)
       .then((connection) => {
         return res.status(200).send(connection);
       })
@@ -135,22 +133,11 @@ module.exports = (app) => {
   /*
   ** Route to get a connection by ID
   */
-  app.get("/project/:project_id/connection/:connection_id", verifyToken, (req, res) => {
-    let isEditor = false;
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).readAny("connection");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        const editorPermission = accessControl.can(teamRole.role).updateAny("connection");
-        if (editorPermission.granted) isEditor = true;
-
-        return connectionController.findById(req.params.connection_id);
-      })
+  app.get("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("readOwn"), (req, res) => {
+    return connectionController.findById(req.params.connection_id)
       .then((connection) => {
         const newConnection = connection;
-        if (!isEditor) {
+        if (!req.user.isEditor) {
           newConnection.password = "";
         }
         return res.status(200).send(newConnection);
@@ -194,15 +181,8 @@ module.exports = (app) => {
   /*
   ** Route to update a connection
   */
-  app.put("/project/:project_id/connection/:connection_id", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("connection");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        return connectionController.update(req.params.connection_id, req.body);
-      })
+  app.put("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return connectionController.update(req.params.connection_id, req.body)
       .then((connection) => {
         return res.status(200).send(connection);
       })
@@ -218,15 +198,8 @@ module.exports = (app) => {
   /*
   ** Route to remove a connection from a project
   */
-  app.delete("/project/:project_id/connection/:connection_id", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).deleteAny("connection");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        return connectionController.removeConnection(req.params.connection_id);
-      })
+  app.delete("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("deleteOwn"), (req, res) => {
+    return connectionController.removeConnection(req.params.connection_id)
       .then((success) => {
         if (success) {
           return res.status(200).send({ removed: success });
@@ -246,15 +219,8 @@ module.exports = (app) => {
   /*
   ** Route to test a connection
   */
-  app.get("/project/:project_id/connection/:connection_id/test", verifyToken, (req, res) => {
-    checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("connection");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        return connectionController.testConnection(req.params.connection_id);
-      })
+  app.get("/team/:team_id/connections/:connection_id/test", verifyToken, checkPermissions("readOwn"), (req, res) => {
+    return connectionController.testConnection(req.params.connection_id)
       .then((response) => {
         return res.status(200).send(response);
       })
@@ -270,19 +236,11 @@ module.exports = (app) => {
   /*
   ** Route to test a potential api request
   */
-  app.post("/project/:project_id/connection/:connection_id/apiTest", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).createAny("dataRequest");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
+  app.post("/team/:team_id/connections/:connection_id/apiTest", verifyToken, checkPermissions("readOwn"), (req, res) => {
+    const requestData = req.body;
+    requestData.connection_id = req.params.connection_id;
 
-        const requestData = req.body;
-        requestData.connection_id = req.params.connection_id;
-
-        return connectionController.testApiRequest(requestData);
-      })
+    return connectionController.testApiRequest(requestData)
       .then((dataRequest) => {
         if (!dataRequest) return res.status(500).send("Api Request Error");
         return res.status(200).send(dataRequest);
@@ -296,7 +254,7 @@ module.exports = (app) => {
   /*
   ** Route to test any connection
   */
-  app.post("/project/:project_id/connection/:type/test", verifyToken, (req, res) => {
+  app.post("/project/:project_id/connection/:type/test", verifyToken, checkPermissions("readOwn"), (req, res) => {
     return connectionController.testRequest(req.body)
       .then((response) => {
         if (req.params.type === "api") {

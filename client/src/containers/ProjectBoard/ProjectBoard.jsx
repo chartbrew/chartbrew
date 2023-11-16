@@ -18,7 +18,7 @@ import {
   getTeam, getTeamMembers, selectTeam,
 } from "../../slices/team";
 import { getProjectCharts } from "../../slices/chart";
-import { getProjectConnections } from "../../actions/connection";
+import { getTeamConnections } from "../../slices/connection";
 import Navbar from "../../components/Navbar";
 import canAccess from "../../config/canAccess";
 import PrintView from "../PrintView/PrintView";
@@ -45,8 +45,7 @@ const sideMinSize = 70;
 */
 function ProjectBoard(props) {
   const {
-    cleanErrors, getProjectConnections,
-    getProject, changeActiveProject, project, user, projects,
+    cleanErrors, getProject, changeActiveProject, project, user, projects,
   } = props;
 
   const [loading, setLoading] = useState(true);
@@ -87,7 +86,7 @@ function ProjectBoard(props) {
   const _init = (id) => {
     _getProject(id);
     dispatch(getProjectCharts({ project_id: id || params.projectId }));
-    getProjectConnections(id || params.projectId);
+    dispatch(getTeamConnections({ team_id: params.teamId }));
   };
 
   const _getProject = (id) => {
@@ -322,7 +321,6 @@ ProjectBoard.propTypes = {
   changeActiveProject: PropTypes.func.isRequired,
   project: PropTypes.object.isRequired,
   projects: PropTypes.array.isRequired,
-  getProjectConnections: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
 };
 
@@ -338,7 +336,6 @@ const mapDispatchToProps = (dispatch) => {
   return {
     getProject: id => dispatch(getProject(id)),
     changeActiveProject: id => dispatch(changeActiveProject(id)),
-    getProjectConnections: (projectId) => dispatch(getProjectConnections(projectId)),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };
