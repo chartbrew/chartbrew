@@ -254,7 +254,7 @@ module.exports = (app) => {
   /*
   ** Route to test any connection
   */
-  app.post("/project/:project_id/connection/:type/test", verifyToken, checkPermissions("readOwn"), (req, res) => {
+  app.post("/team/:team_id/connections/:type/test", verifyToken, checkPermissions("readOwn"), (req, res) => {
     return connectionController.testRequest(req.body)
       .then((response) => {
         if (req.params.type === "api") {

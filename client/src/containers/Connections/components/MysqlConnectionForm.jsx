@@ -21,7 +21,7 @@ import { RiArrowRightSLine } from "react-icons/ri";
 */
 function MysqlConnectionForm(props) {
   const {
-    editConnection, projectId, onComplete, addError, onTest, testResult,
+    editConnection, onComplete, addError, onTest, testResult,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -76,8 +76,6 @@ function MysqlConnectionForm(props) {
       newConnection.connectionString = "";
     }
 
-    // add the project ID
-    newConnection.project_id = projectId;
     setConnection(newConnection);
     setTimeout(() => {
       if (test === true) {

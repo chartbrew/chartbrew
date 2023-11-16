@@ -496,7 +496,7 @@ function DatarequestSettings(props) {
             <Row>
               <Button
                 fullWidth
-                color="primary"
+                color="secondary"
                 onClick={() => _onRunDataset()}
                 endContent={<LuPlay />}
                 isLoading={isCompiling}
@@ -522,12 +522,11 @@ function DatarequestSettings(props) {
               </Tooltip>
             </Row>
             <Row>
-              <div className="w-full">
+              <div className="w-full min-h-[450px]">
                 <AceEditor
                   mode="json"
                   theme={isDark ? "one_dark" : "tomorrow"}
-                  style={{ borderRadius: 10 }}
-                  height="450px"
+                  style={{ borderRadius: 10, minHeight: 450 }}
                   width="none"
                   value={result || ""}
                   name="resultEditor"
