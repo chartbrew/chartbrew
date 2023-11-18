@@ -139,9 +139,9 @@ function UserDashboard(props) {
   };
 
   const _getFilteredProjects = () => {
-    if (!search[team.id]) return team.Projects;
+    if (!search[team.id]) return team.Projects.filter((p) => !p.ghost);
     const filteredProjects = team.Projects.filter((p) => {
-      return p.name.toLowerCase().indexOf(search[team.id].toLowerCase()) > -1;
+      return p.name.toLowerCase().indexOf(search[team.id].toLowerCase()) > -1 && !p.ghost;
     });
 
     // now add the team members to each project
@@ -507,6 +507,7 @@ function UserDashboard(props) {
                       variant="bordered"
                       endContent={<LuSearch />}
                       className="max-w-[300px]"
+                      labelPlacement="outside"
                     />
                   </Row>
                   <Spacer y={2} />
@@ -579,6 +580,7 @@ function UserDashboard(props) {
                       variant="bordered"
                       endContent={<LuSearch />}
                       className="max-w-[300px]"
+                      labelPlacement="outside"
                     />
                   </Row>
                   <Spacer y={2} />

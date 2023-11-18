@@ -61,6 +61,10 @@ module.exports = (sequelize, DataTypes) => {
     timezone: {
       type: DataTypes.STRING,
     },
+    ghost: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   }, {
     freezeTableName: true,
   });
