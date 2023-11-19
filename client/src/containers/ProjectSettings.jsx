@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import { PropTypes } from "prop-types";
 import {
   Button, CircularProgress, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Spacer,
@@ -10,7 +10,7 @@ import { LuClock4, LuTrash, LuX } from "react-icons/lu";
 import { useNavigate } from "react-router";
 
 import canAccess from "../config/canAccess";
-import { updateProject, changeActiveProject, removeProject } from "../actions/project";
+import { updateProject, changeActiveProject, removeProject, selectProject } from "../slices/project";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import timezones from "../modules/timezones";
 import Callout from "../components/Callout";
@@ -18,14 +18,14 @@ import Row from "../components/Row";
 import Text from "../components/Text";
 import useThemeDetector from "../modules/useThemeDetector";
 import Segment from "../components/Segment";
+import { selectTeam } from "../slices/team";
 
 /*
   Project settings page
 */
 function ProjectSettings(props) {
   const {
-    user, team, project, cleanErrors, changeActiveProject, updateProject, removeProject,
-    style,
+    user, cleanErrors, style,
   } = props;
 
   const [success, setSuccess] = useState(false);
@@ -40,8 +40,12 @@ function ProjectSettings(props) {
   const [timezoneSearch, setTimezoneSearch] = useState("");
   const [loadingTimezone, setLoadingTimezone] = useState(false);
 
+  const team = useSelector(selectTeam);
+  const project = useSelector(selectProject);
+
   const isDark = useThemeDetector();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     cleanErrors();
@@ -57,11 +61,11 @@ function ProjectSettings(props) {
     setSuccess(false);
     setError(false);
 
-    updateProject(project.id, { name: projectName })
+    dispatch(updateProject({ project_id: project.id, data: { name: projectName } }))
       .then(() => {
         setLoading(false);
         setSuccess(true);
-        changeActiveProject(project.id);
+        dispatch(changeActiveProject(project.id));
         toast.success("Project name updated!");
       })
       .catch(() => {
@@ -77,7 +81,7 @@ function ProjectSettings(props) {
   const _onRemove = () => {
     setRemoveLoading(true);
     setRemoveError(false);
-    removeProject(project.id)
+    dispatch(removeProject({ project_id: project.id }))
       .then(() => {
         navigate("/user");
       })
@@ -89,12 +93,12 @@ function ProjectSettings(props) {
 
   const _onSaveTimezone = (clear) => {
     setLoadingTimezone(true);
-    updateProject(project.id, { timezone: clear ? "" : projectTimezone })
+    dispatch(updateProject({ project_id: project.id, data: { timezone: clear ? "" : projectTimezone } }))
       .then(() => {
         setProjectTimezone("");
         setTimezoneSearch("");
         setLoadingTimezone(false);
-        changeActiveProject(project.id);
+        dispatch(changeActiveProject(project.id));
         toast.success("The timezone was updated successfully!");
       })
       .catch(() => {
@@ -302,27 +306,17 @@ ProjectSettings.defaultProps = {
 ProjectSettings.propTypes = {
   style: PropTypes.object,
   user: PropTypes.object.isRequired,
-  team: PropTypes.object.isRequired,
-  project: PropTypes.object.isRequired,
-  updateProject: PropTypes.func.isRequired,
-  changeActiveProject: PropTypes.func.isRequired,
-  removeProject: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
     user: state.user.data,
-    team: state.team.active,
-    project: state.project.active,
   };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    updateProject: (projectId, data) => dispatch(updateProject(projectId, data)),
-    changeActiveProject: (projectId) => dispatch(changeActiveProject(projectId)),
-    removeProject: (projectId) => dispatch(removeProject(projectId)),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };

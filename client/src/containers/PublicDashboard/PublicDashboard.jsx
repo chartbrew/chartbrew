@@ -24,11 +24,8 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import {
-  getPublicDashboard as getPublicDashboardAction,
-  getProject as getProjectAction,
-  updateProject as updateProjectAction,
-  updateProjectLogo as updateProjectLogoAction,
-} from "../../actions/project";
+  getPublicDashboard, getProject, updateProject, updateProjectLogo,
+} from "../../slices/project";
 import { selectTeams, updateTeam } from "../../slices/team";
 import { runQueryOnPublic, selectCharts } from "../../slices/chart";
 import { blue, primary, secondary } from "../../config/colors";
@@ -57,10 +54,7 @@ const defaultColors = [
 ];
 
 function PublicDashboard(props) {
-  const {
-    getPublicDashboard, getProject, updateProject, updateProjectLogo,
-    user,
-  } = props;
+  const { user } = props;
 
   const [project, setProject] = useState({});
   const [loading, setLoading] = useState(true);
@@ -143,15 +137,15 @@ function PublicDashboard(props) {
     if (password) window.localStorage.setItem("reportPassword", password);
 
     setLoading(true);
-    getPublicDashboard(params.brewName, password)
+    dispatch(getPublicDashboard({ brewName: params.brewName, password }))
       .then((data) => {
-        setProject(data);
+        setProject(data.payload);
         setLoading(false);
         setNotAuthorized(false);
         setPasswordRequired(false);
 
         // now get the project (mainly to check if the user can edit)
-        getProject(data.id)
+        dispatch(getProject({ project_id: data.payload?.id }))
           .then((authenticatedProject) => {
             if (authenticatedProject.password) {
               setProject({ ...data, password: authenticatedProject.password });
@@ -193,11 +187,11 @@ function PublicDashboard(props) {
 
     setSaveLoading(true);
     const processedName = encodeURI(newBrewName);
-    updateProject(project.id, { brewName: processedName })
+    dispatch(updateProject({ project_id: project.id, data: { brewName: processedName } }))
       .then((project) => {
         setSaveLoading(false);
         setIsSaved(true);
-        window.location.href = `${SITE_HOST}/b/${project.brewName}`;
+        window.location.href = `${SITE_HOST}/b/${project.payload.brewName}`;
       })
       .catch(() => {
         setSaveLoading(false);
@@ -210,10 +204,10 @@ function PublicDashboard(props) {
     const updateData = clone(newChanges);
     if (updateData.logo) delete updateData.logo;
 
-    updateProject(project.id, updateData)
+    dispatch(updateProject({ project_id: project.id, data: updateData }))
       .then(async () => {
         if (typeof newChanges.logo === "object" && newChanges.logo !== null) {
-          await updateProjectLogo(project.id, newChanges.logo);
+          await dispatch(updateProjectLogo({ project_id: project.id, logo: newChanges.logo }));
         }
 
         setSaveLoading(false);
@@ -227,7 +221,7 @@ function PublicDashboard(props) {
   };
 
   const _onTogglePublic = () => {
-    updateProject(project.id, { public: !project.public })
+    dispatch(updateProject({ project_id: project.id, data: { public: !project.public } }))
       .then(() => {
         _fetchProject();
         toast.success("The report has been updated!");
@@ -236,7 +230,7 @@ function PublicDashboard(props) {
   };
 
   const _onTogglePassword = () => {
-    updateProject(project.id, { passwordProtected: !project.passwordProtected })
+    dispatch(updateProject({ project_id: project.id, data: { passwordProtected: !project.passwordProtected } }))
       .then(() => {
         _fetchProject();
         toast.success("The report has been updated!");
@@ -245,7 +239,7 @@ function PublicDashboard(props) {
   };
 
   const _onSavePassword = (value) => {
-    updateProject(project.id, { password: value })
+    dispatch(updateProject({ project_id: project.id, data: { password: value } }))
       .then(() => {
         _fetchProject();
         toast.success("The report has been updated!");
@@ -946,25 +940,13 @@ const styles = {
 };
 
 PublicDashboard.propTypes = {
-  getPublicDashboard: PropTypes.func.isRequired,
-  getProject: PropTypes.func.isRequired,
-  updateProject: PropTypes.func.isRequired,
-  updateProjectLogo: PropTypes.func.isRequired,
   user: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => ({
-  charts: state.chart.data,
   user: state.user.data,
 });
 
-const mapDispatchToProps = (dispatch) => ({
-  getPublicDashboard: (brewName, password) => (
-    dispatch(getPublicDashboardAction(brewName, password))
-  ),
-  getProject: (projectId) => dispatch(getProjectAction(projectId)),
-  updateProject: (projectId, data) => dispatch(updateProjectAction(projectId, data)),
-  updateProjectLogo: (projectId, logo) => dispatch(updateProjectLogoAction(projectId, logo)),
-});
+const mapDispatchToProps = () => ({});
 
 export default connect(mapStateToProps, mapDispatchToProps)(PublicDashboard);

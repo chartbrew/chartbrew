@@ -20,9 +20,8 @@ import {
   getTemplates as getTemplatesAction
 } from "../actions/template";
 import {
-  updateProject as updateProjectAction,
-  removeProject as removeProjectAction,
-} from "../actions/project";
+  updateProject, removeProject,
+} from "../slices/project";
 import {
   getTeamConnections, selectConnections,
 } from "../slices/connection";
@@ -48,8 +47,7 @@ import Segment from "../components/Segment";
 */
 function UserDashboard(props) {
   const {
-    relog, cleanErrors, user,
-    teamLoading, getTemplates, updateProject, removeProject,
+    relog, cleanErrors, user, teamLoading, getTemplates,
   } = props;
 
   const team = useSelector(selectTeam);
@@ -163,7 +161,7 @@ function UserDashboard(props) {
   const _onEditProjectSubmit = () => {
     if (projectToEdit && projectToEdit.id) {
       setModifyingProject(true);
-      updateProject(projectToEdit.id, { name: projectToEdit.name })
+      dispatch(updateProject({ project_id: projectToEdit.id, data: { name: projectToEdit.name } }))
         .then(() => {
           return dispatch(getTeams(user.data.id))
         })
@@ -184,7 +182,7 @@ function UserDashboard(props) {
   const _onDeleteProjectSubmit = () => {
     if (projectToDelete && projectToDelete.id) {
       setModifyingProject(true);
-      removeProject(projectToDelete.id)
+      dispatch(removeProject({ project_id: projectToDelete.id }))
         .then(() => {
           return dispatch(getTeams(user.data.id))
         })
@@ -801,15 +799,12 @@ UserDashboard.propTypes = {
   cleanErrors: PropTypes.func.isRequired,
   teamLoading: PropTypes.bool.isRequired,
   getTemplates: PropTypes.func.isRequired,
-  updateProject: PropTypes.func.isRequired,
-  removeProject: PropTypes.func.isRequired,
   teamMembers: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
     user: state.user,
-    teams: state.team.data,
     teamLoading: state.team.loading,
     teamMembers: state.team.teamMembers,
   };
@@ -820,8 +815,6 @@ const mapDispatchToProps = (dispatch) => {
     relog: () => dispatch(relogAction()),
     cleanErrors: () => dispatch(cleanErrorsAction()),
     getTemplates: (teamId) => dispatch(getTemplatesAction(teamId)),
-    updateProject: (projectId, data) => dispatch(updateProjectAction(projectId, data)),
-    removeProject: (projectId) => dispatch(removeProjectAction(projectId)),
   };
 };
 

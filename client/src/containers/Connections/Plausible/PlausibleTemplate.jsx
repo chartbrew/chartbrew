@@ -7,17 +7,19 @@ import _ from "lodash";
 import cookie from "react-cookies";
 import { LuCheckCheck, LuChevronRight, LuExternalLink, LuPlus, LuX } from "react-icons/lu";
 
-import { generateDashboard } from "../../../actions/project";
+import { generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
+import { useDispatch, useSelector } from "react-redux";
+import { selectConnections } from "../../../slices/connection";
 
 /*
   The Form used to configure the Plausible template
 */
 function PlausibleTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete, connections,
+    teamId, projectId, addError, onComplete,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -29,6 +31,10 @@ function PlausibleTemplate(props) {
   const [availableConnections, setAvailableConnections] = useState([]);
   const [selectedConnection, setSelectedConnection] = useState(null);
   const [formVisible, setFormVisible] = useState(true);
+
+  const connections = useSelector(selectConnections);
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
     _getTemplateConfig();
@@ -65,7 +71,7 @@ function PlausibleTemplate(props) {
     setLoading(true);
     setGenerationError(false);
 
-    generateDashboard(projectId, data, "plausible")
+    dispatch(generateDashboard({ project_id: projectId, data, template: "plausible" }))
       .then(() => {
         setTimeout(() => {
           onComplete();

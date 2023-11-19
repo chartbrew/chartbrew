@@ -1,24 +1,22 @@
 import React, { useEffect } from "react";
-import PropTypes from "prop-types";
 import {
   Spacer, CircularProgress
 } from "@nextui-org/react";
-import { connect } from "react-redux";
 import { useNavigate, useParams } from "react-router";
+import { useDispatch } from "react-redux";
 
-import { getProject as getProjectAction } from "../actions/project";
+import { getProject } from "../slices/project";
 import Container from "../components/Container";
 import Row from "../components/Row";
 import Text from "../components/Text";
 
-function ProjectRedirect(props) {
-  const { getProject } = props;
-
+function ProjectRedirect() {
   const params = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    getProject(params.projectId, true)
+    dispatch(getProject({ project_id: params.projectId, active: true }))
       .then((project) => {
         navigate(`/${project.team_id}/${project.id}/dashboard`);
       })
@@ -41,16 +39,4 @@ function ProjectRedirect(props) {
   );
 }
 
-ProjectRedirect.propTypes = {
-  match: PropTypes.object.isRequired,
-  getProject: PropTypes.func.isRequired,
-};
-
-const mapStateToProps = () => ({
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  getProject: (id, active) => dispatch(getProjectAction(id, active)),
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(ProjectRedirect);
+export default ProjectRedirect;

@@ -10,15 +10,17 @@ import {
 } from "react-icons/lu";
 
 import connectionImages from "../../../config/connectionImages";
-import { generateDashboard } from "../../../actions/project";
+import { generateDashboard } from "../../../slices/project";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
 import { secondary } from "../../../config/colors";
+import { useDispatch, useSelector } from "react-redux";
+import { selectConnections } from "../../../slices/connection";
 
 function CustomTemplateForm(props) {
   const {
-    template, connections, onBack, projectId, onComplete, isAdmin, onDelete,
+    template, onBack, projectId, onComplete, isAdmin, onDelete,
     onCreateProject,
   } = props;
 
@@ -29,7 +31,10 @@ function CustomTemplateForm(props) {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [formStatus, setFormStatus] = useState("");
 
+  const connections = useSelector(selectConnections);
+
   const isDark = useThemeDetector();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (template && template.model.Connections) {
@@ -192,7 +197,7 @@ function CustomTemplateForm(props) {
       connections: selectedConnections,
     };
 
-    generateDashboard(projectId, data, "custom")
+    dispatch(generateDashboard({ project_id: projectId, data, template: "custom" }))
       .then(() => {
         setTimeout(() => {
           setIsCreating(false);
@@ -399,7 +404,6 @@ function CustomTemplateForm(props) {
 
 CustomTemplateForm.propTypes = {
   template: PropTypes.object.isRequired,
-  connections: PropTypes.array.isRequired,
   onBack: PropTypes.func.isRequired,
   projectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onComplete: PropTypes.func.isRequired,

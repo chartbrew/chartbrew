@@ -7,10 +7,11 @@ import cookie from "react-cookies";
 import _ from "lodash";
 import { LuArrowUp, LuCheckCheck, LuLink, LuPlus, LuX } from "react-icons/lu";
 
-import { generateDashboard } from "../../../actions/project";
+import { generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
+import { useDispatch } from "react-redux";
 
 /*
   The Form used to configure the ChartMogul template
@@ -29,6 +30,8 @@ function ChartMogulTemplate(props) {
   const [availableConnections, setAvailableConnections] = useState([]);
   const [selectedConnection, setSelectedConnection] = useState(null);
   const [formVisible, setFormVisible] = useState(true);
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
     _getTemplateConfig();
@@ -59,7 +62,7 @@ function ChartMogulTemplate(props) {
     setLoading(true);
     setTestError(false);
 
-    generateDashboard(projectId, data, "chartmogul")
+    dispatch(generateDashboard({ project_id: projectId, data, template: "chartmogul" }))
       .then(() => {
         setTimeout(() => {
           onComplete();

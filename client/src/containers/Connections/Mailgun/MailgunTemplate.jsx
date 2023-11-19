@@ -6,10 +6,12 @@ import {
 import _ from "lodash";
 import cookie from "react-cookies";
 import { LuArrowRight, LuCheckCheck, LuExternalLink, LuPlus, LuX } from "react-icons/lu";
-import { generateDashboard } from "../../../actions/project";
+import { generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
+import { selectConnections } from "../../../slices/connection";
+import { useDispatch, useSelector } from "react-redux";
 
 const countryOptions = [{
   key: "eu", value: "eu", text: "🇪🇺 Europe", flag: "eu"
@@ -22,7 +24,7 @@ const countryOptions = [{
 */
 function MailgunTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete, connections,
+    teamId, projectId, addError, onComplete,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -34,6 +36,10 @@ function MailgunTemplate(props) {
   const [availableConnections, setAvailableConnections] = useState([]);
   const [selectedConnection, setSelectedConnection] = useState(null);
   const [formVisible, setFormVisible] = useState(true);
+
+  const connections = useSelector(selectConnections);
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
     _getTemplateConfig();
@@ -78,7 +84,7 @@ function MailgunTemplate(props) {
     setLoading(true);
     setTestError(false);
 
-    generateDashboard(projectId, data, "mailgun")
+    dispatch(generateDashboard({ project_id: projectId, data, template: "mailgun" }))
       .then(() => {
         setTimeout(() => {
           onComplete();
@@ -461,7 +467,6 @@ MailgunTemplate.propTypes = {
   teamId: PropTypes.string.isRequired,
   projectId: PropTypes.string.isRequired,
   onComplete: PropTypes.func.isRequired,
-  connections: PropTypes.array.isRequired,
   addError: PropTypes.bool,
 };
 

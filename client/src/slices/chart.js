@@ -470,6 +470,9 @@ export const chartSlice = createSlice({
   name: "chart",
   initialState,
   reducers: {
+    setCharts: (state, action) => {
+      state.data = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -823,6 +826,7 @@ export const chartSlice = createSlice({
   },
 });
 
+export const { setCharts } = chartSlice.actions;
 export const selectCharts = (state) => state.chart.data;
 export const selectChart = (state, id) => state.chart.data.find((chart) => chart.id === id); 
 export const selectCdc = (state, chartId, cdcId) => {

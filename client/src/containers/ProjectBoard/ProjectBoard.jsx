@@ -12,7 +12,7 @@ import {
 
 import "allotment/dist/style.css";
 
-import { getProject, changeActiveProject } from "../../actions/project";
+import { getProject, changeActiveProject, selectProjects, selectProject } from "../../slices/project";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import {
   getTeam, getTeamMembers, selectTeam,
@@ -45,7 +45,7 @@ const sideMinSize = 70;
 */
 function ProjectBoard(props) {
   const {
-    cleanErrors, getProject, changeActiveProject, project, user, projects,
+    cleanErrors, user,
   } = props;
 
   const [loading, setLoading] = useState(true);
@@ -55,6 +55,8 @@ function ProjectBoard(props) {
   const [update, setUpdate] = useState({});
 
   const team = useSelector(selectTeam);
+  const projects = useSelector(selectProjects);
+  const project = useSelector(selectProject);
 
   const { height } = useWindowSize();
   const params = useParams();
@@ -97,10 +99,10 @@ function ProjectBoard(props) {
     dispatch(getTeam(teamId))
       .then(() => {
         dispatch(getTeamMembers({ team_id: teamId }));
-        return getProject(projectId);
+        return dispatch(getProject({ project_id: projectId }));
       })
       .then(() => {
-        return changeActiveProject(projectId);
+        return dispatch(changeActiveProject(projectId));
       })
       .then(() => {
         setLoading(false);
@@ -317,25 +319,17 @@ const styles = {
 
 ProjectBoard.propTypes = {
   user: PropTypes.object.isRequired,
-  getProject: PropTypes.func.isRequired,
-  changeActiveProject: PropTypes.func.isRequired,
-  project: PropTypes.object.isRequired,
-  projects: PropTypes.array.isRequired,
   cleanErrors: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
     user: state.user.data,
-    project: state.project.active,
-    projects: state.project.data,
   };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    getProject: id => dispatch(getProject(id)),
-    changeActiveProject: id => dispatch(changeActiveProject(id)),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };

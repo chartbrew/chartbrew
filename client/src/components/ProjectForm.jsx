@@ -1,22 +1,23 @@
 import React, { useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Input, Button, Spacer, Modal, ModalHeader, ModalBody, ModalContent, Tabs, Tab
 } from "@nextui-org/react";
 import { LuArrowRight } from "react-icons/lu";
 
-import { createProject } from "../actions/project";
+import { createProject } from "../slices/project";
 import CustomTemplates from "../containers/Connections/CustomTemplates/CustomTemplates";
 import Row from "./Row";
 import Text from "./Text";
+import { selectTeam } from "../slices/team";
 
 /*
   Contains the project creation functionality
 */
 function ProjectForm(props) {
   const {
-    createProject, onComplete, team, templates, hideType, onClose, open,
+    onComplete, templates, hideType, onClose, open,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -29,17 +30,21 @@ function ProjectForm(props) {
     return "md";
   }, [activeMenu]);
 
+  const team = useSelector(selectTeam);
+
+  const dispatch = useDispatch();
+
   const _onCreateProject = (noRedirect) => {
     setLoading(true);
-    return createProject(newProject)
+    return dispatch(createProject({ data: newProject }))
       .then((project) => {
         setLoading(false);
         setNewProject({});
-        setCreatedProject(project);
+        setCreatedProject(project.payload);
 
-        if (noRedirect) return project;
+        if (noRedirect) return project.payload;
 
-        return onComplete(project);
+        return onComplete(project.payload);
       })
       .catch((error) => {
         setLoading(false);
@@ -153,9 +158,7 @@ ProjectForm.defaultProps = {
 };
 
 ProjectForm.propTypes = {
-  createProject: PropTypes.func.isRequired,
   onComplete: PropTypes.func,
-  team: PropTypes.object.isRequired,
   templates: PropTypes.object.isRequired,
   hideType: PropTypes.bool,
   onClose: PropTypes.func.isRequired,
@@ -164,14 +167,12 @@ ProjectForm.propTypes = {
 
 const mapStateToProps = (state) => {
   return {
-    team: state.team,
     templates: state.template
   };
 };
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = () => {
   return {
-    createProject: data => dispatch(createProject(data)),
   };
 };
 

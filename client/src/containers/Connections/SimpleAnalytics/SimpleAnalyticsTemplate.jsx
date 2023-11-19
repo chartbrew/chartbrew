@@ -7,17 +7,19 @@ import _ from "lodash";
 import cookie from "react-cookies";
 import { LuArrowRight, LuCheckCheck, LuChevronRight, LuExternalLink, LuPlus, LuX } from "react-icons/lu";
 
-import { generateDashboard } from "../../../actions/project";
+import { generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
+import { useDispatch, useSelector } from "react-redux";
+import { selectConnections } from "../../../slices/connection";
 
 /*
   The Form used to configure the SimpleAnalytics template
 */
 function SimpleAnalyticsTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete, connections,
+    teamId, projectId, addError, onComplete,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -30,6 +32,10 @@ function SimpleAnalyticsTemplate(props) {
   const [availableConnections, setAvailableConnections] = useState([]);
   const [selectedConnection, setSelectedConnection] = useState(null);
   const [formVisible, setFormVisible] = useState(true);
+
+  const connections = useSelector(selectConnections);
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
     _getTemplateConfig();
@@ -60,7 +66,7 @@ function SimpleAnalyticsTemplate(props) {
     setNotPublic(false);
     setNotFound(false);
 
-    generateDashboard(projectId, data, "simpleanalytics")
+    dispatch(generateDashboard({ project_id: projectId, data, template: "simpleanalytics" }))
       .then(() => {
         setTimeout(() => {
           onComplete();
@@ -433,7 +439,6 @@ SimpleAnalyticsTemplate.propTypes = {
   teamId: PropTypes.string.isRequired,
   projectId: PropTypes.string.isRequired,
   onComplete: PropTypes.func.isRequired,
-  connections: PropTypes.array.isRequired,
   addError: PropTypes.bool,
 };
 

@@ -238,7 +238,6 @@ class TeamController {
     })
       .then((team) => {
         if (!team) return new Promise((resolve, reject) => reject(new Error(404)));
-        console.log("team", team);
 
         return team;
       }).catch((error) => {

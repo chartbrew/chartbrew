@@ -9,20 +9,20 @@ import { LuArrowRight, LuCheckCheck, LuPlus, LuX } from "react-icons/lu";
 import { FcGoogle } from "react-icons/fc";
 
 import {
-  testRequest, addConnection,
+  testRequest, addConnection, selectConnections,
 } from "../../../slices/connection";
-import { generateDashboard } from "../../../actions/project";
+import { generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 /*
   The Form used to configure the SimpleAnalytics template
 */
 function GaTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete, connections, selection,
+    teamId, projectId, addError, onComplete, selection,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -39,6 +39,8 @@ function GaTemplate(props) {
   const [accountOptions, setAccountOptions] = useState([]);
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [accountsData, setAccountsData] = useState(null);
+
+  const connections = useSelector(selectConnections);
 
   const dispatch = useDispatch();
 
@@ -137,7 +139,7 @@ function GaTemplate(props) {
 
     setLoading(true);
 
-    generateDashboard(projectId, data, "googleAnalytics")
+    dispatch(generateDashboard({ project_id: projectId, data, template: "googleAnalytics" }))
       .then(() => {
         setTimeout(() => {
           onComplete();
@@ -532,7 +534,6 @@ GaTemplate.propTypes = {
   teamId: PropTypes.string.isRequired,
   projectId: PropTypes.string.isRequired,
   onComplete: PropTypes.func.isRequired,
-  connections: PropTypes.array.isRequired,
   addError: PropTypes.bool,
   selection: PropTypes.number,
 };
