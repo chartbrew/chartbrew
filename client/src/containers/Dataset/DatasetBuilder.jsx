@@ -1,29 +1,57 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useParams } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import { TbMathFunctionY } from "react-icons/tb";
+import { LuCheckCircle, LuInfo, LuWand2, LuXCircle } from "react-icons/lu";
 
 import ChartPreview from "../AddChart/components/ChartPreview";
 import Row from "../../components/Row";
-import { Autocomplete, AutocompleteItem, Chip, Divider, Select, SelectItem, Spacer } from "@nextui-org/react";
+import { Autocomplete, AutocompleteItem, Chip, Divider, Input, Link, Popover, PopoverContent, PopoverTrigger, Select, SelectItem, Spacer, Tooltip } from "@nextui-org/react";
 import Text from "../../components/Text";
 import autoFieldSelector from "../../modules/autoFieldSelector";
 import fieldFinder from "../../modules/fieldFinder";
 import { updateDataset } from "../../slices/dataset";
 import { operations } from "../../modules/filterOperations";
 import { runQuery, updateChart } from "../../slices/chart";
+import FormulaTips from "../../components/FormulaTips";
+
 
 function DatasetBuilder(props) {
   const { chart, projectId } = props;
 
   const [fieldOptions, setFieldOptions] = useState([]);
+  const [formula, setFormula] = useState("");
 
   const params = useParams();
   const dispatch = useDispatch();
+  const initRef = useRef(null);
   
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
   const datasetResponse = useSelector((state) => state.dataset.responses.find((r) => r.dataset_id === dataset.id)?.data);
+
+  useEffect(() => {
+    if (dataset.formula) {
+      setFormula(dataset.formula);
+    }
+  }, [dataset]);
+
+  useEffect(() => {
+    if (chart && dataset && !datasetResponse && !initRef.current) {
+      initRef.current = true;
+      dispatch(runQuery({
+        project_id: projectId,
+        chart_id: chart.id,
+        noSource: false,
+        skipParsing: false,
+        getCache: true,
+      }))
+        .catch(() => {
+          toast.error("Could not refresh the dataset. Please check your query.");
+        });
+    }
+  }, [chart, dataset, datasetResponse]);
 
   useEffect(() => {
     if (datasetResponse) {
@@ -182,6 +210,7 @@ function DatasetBuilder(props) {
       data,
     }))
       .then(() => {
+        toast.success("Dataset updated successfully.");
         return dispatch(runQuery({
           project_id: projectId,
           chart_id: chart.id,
@@ -219,8 +248,26 @@ function DatasetBuilder(props) {
       });
   };
 
+  const _onAddFormula = () => {
+    setFormula("{val}");
+  };
+
+  const _onExampleFormula = () => {
+    setFormula("${val / 100}");
+    _onUpdateDataset({ formula: "${val / 100}" });
+  };
+
+  const _onRemoveFormula = () => {
+    setFormula("");
+    _onUpdateDataset({ formula: "" });
+  };
+
+  const _onApplyFormula = () => {
+    _onUpdateDataset({ formula });
+  };
+
   return (
-    <div className="grid grid-cols-12 gap-4">
+    <div className="grid grid-cols-12 divide-x-1 gap-4">
       <div className="col-span-12 md:col-span-4">
         <Row align="center" className={"justify-between"}>
           <div><Text>Dimension</Text></div>
@@ -300,10 +347,12 @@ function DatasetBuilder(props) {
         <Spacer y={4} />
         <Row align="center" className={"justify-between"}>
           <Autocomplete
-            label="Select date field used for filtering"
+            label="Select a date field used for filtering"
             labelPlacement="outside"
             variant="bordered"
-            placeholder="Select a dimension"
+            placeholder="Select a field"
+            selectedKey={dataset.dateField}
+            onSelectionChange={(key) => _onUpdateDataset({ dateField: key })}
           >
             {_getDateFieldOptions().map((option) => (
               <AutocompleteItem
@@ -317,6 +366,68 @@ function DatasetBuilder(props) {
             ))}
           </Autocomplete>
         </Row>
+
+        <Spacer y={4} />
+        <Divider />
+        <Spacer y={4} />
+
+        {!formula && (
+          <Link onClick={_onAddFormula} className="flex items-center cursor-pointer">
+            <TbMathFunctionY size={24} />
+            <Spacer x={0.5} />
+            <Text>Apply formula on metrics</Text>
+          </Link>
+        )}
+        {formula && (
+          <Row align={"center"} justify={"space-between"}>
+            <div className="flex flex-col">
+              <Popover>
+                <PopoverTrigger>
+                  <div className="flex flex-row gap-1 items-center">
+                    <Text>
+                      {"Metric formula"}
+                    </Text>
+                    <LuInfo size={18} />
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent>
+                  <FormulaTips />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="flex flex-col">
+              <div className="flex flex-row gap-3 items-center w-full">
+                <Input
+                  labelPlacement="outside"
+                  placeholder="Enter your formula here: {val}"
+                  value={formula}
+                  onChange={(e) => setFormula(e.target.value)}
+                  variant="bordered"
+                  fullWidth
+                />
+                {formula !== dataset.formula && (
+                  <Tooltip
+                    content={"Apply the formula"}
+                  >
+                    <Link onClick={_onApplyFormula}>
+                      <LuCheckCircle className={"text-success"} />
+                    </Link>
+                  </Tooltip>
+                )}
+                <Tooltip content="Remove formula">
+                  <Link onClick={_onRemoveFormula}>
+                    <LuXCircle className="text-danger" />
+                  </Link>
+                </Tooltip>
+                <Tooltip content="Click for an example">
+                  <Link onClick={_onExampleFormula}>
+                    <LuWand2 className="text-primary" />
+                  </Link>
+                </Tooltip>
+              </div>
+            </div>
+          </Row>
+        )}
       </div>
 
       <div className="col-span-12 md:col-span-8">

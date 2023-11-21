@@ -114,7 +114,7 @@ function ChartPreview(props) {
   };
 
   return (
-    <div className={"bg-content1 rounded-lg mx-auto p-4 w-full"}>
+    <div className={"bg-content1 rounded-lg mx-auto pr-4 pl-4 w-full"}>
       {chart && chart.chartData && chart.ChartDatasetConfigs && (
         <>
           <div className={"min-h-[350px] w-full"}>
@@ -124,7 +124,8 @@ function ChartPreview(props) {
                 isLoading={chartLoading}
                 size="sm"
                 endContent={<LuRefreshCw size={18} />}
-                variant="bordered"
+                variant="flat"
+                color="primary"
               >
                 {"Refresh chart"}
               </Button>
@@ -222,7 +223,7 @@ function ChartPreview(props) {
               )}
           </div>
           <Spacer y={2} />
-          <div className="border-solid border-1 border-content3 px-3 py-2 rounded-lg">
+          <div className="border-solid border-1 border-content3 px-3 py-2 rounded-2xl">
             <Row align="center" wrap="wrap" className={"gap-4 justify-around"}>
               <Row className={"gap-1"}>
                 <Tooltip
@@ -374,8 +375,7 @@ function ChartPreview(props) {
               renderValue={() => (
                 <Text>{chart.mode && chartModes.find((mode) => mode.value === chart.mode).text}</Text>
               )}
-              label="Chart mode"
-              size="sm"
+              labelPlacement="outside"
             >
               {chartModes.map((mode) => (
                 <SelectItem key={mode.value}>

@@ -18,7 +18,7 @@ import {
 
 import { changeTutorial as changeTutorialAction } from "../../actions/tutorial";
 import {
-  getDataset, updateDataset,
+  getDataset, runRequest, updateDataset,
 } from "../../slices/dataset";
 import Navbar from "../../components/Navbar";
 import { getTeamConnections } from "../../slices/connection";
@@ -43,6 +43,7 @@ function Dataset() {
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
   const ghostProject = useSelector((state) => state.project.data?.find((p) => p.ghost));
   const ghostChart = useSelector((state) => state.chart.data?.find((c) => c.id === chart?.id));
+  const datasetResponse = useSelector((state) => state.dataset.responses.find((r) => r.dataset_id === dataset.id)?.data);
 
   useEffect(() => {
     async function fetchData() {
@@ -95,8 +96,14 @@ function Dataset() {
   }, [ghostProject, dataset]);
 
   useEffect(() => {
-    console.log(chart);
-  }, [chart]);
+    if (datasetMenu === "configure" && !datasetResponse) {
+      dispatch(runRequest({
+        team_id: params.teamId,
+        dataset_id: dataset.id,
+        useCache: true,
+      }));
+    }
+  }, [datasetMenu]);
 
   useEffect(() => {
     let message = error;
@@ -238,7 +245,7 @@ function Dataset() {
       </div>
 
       <ToastContainer
-        position="top-center"
+        position="bottom-center"
         autoClose={1500}
         hideProgressBar={false}
         newestOnTop={false}

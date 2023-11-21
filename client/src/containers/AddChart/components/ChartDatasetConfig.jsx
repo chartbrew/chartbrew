@@ -9,7 +9,7 @@ import { TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import { TwitterPicker, SketchPicker } from "react-color";
 import { useParams } from "react-router";
 import {
-  LuArrowDown01, LuArrowDown10, LuCheck, LuCheckCircle, LuChevronRight, LuInfo,
+  LuArrowDown01, LuArrowDown10, LuCheck, LuCheckCircle, LuInfo,
   LuWand2, LuXCircle,
 } from "react-icons/lu";
 
@@ -20,6 +20,7 @@ import DatasetAlerts from "./DatasetAlerts";
 import { chartColors, primary } from "../../../config/colors";
 import { flatMap } from "lodash";
 import TableConfiguration from "../../../components/TableConfiguration";
+import FormulaTips from "../../../components/FormulaTips";
 
 function ChartDatasetConfig(props) {
   const { chartId, datasetId } = props;
@@ -623,53 +624,5 @@ ChartDatasetConfig.propTypes = {
   datasetId: PropTypes.number.isRequired,
   chartId: PropTypes.number.isRequired,
 };
-
-function FormulaTips() {
-  return (
-    <div className={"p-4"}>
-      <Row>
-        <Text b>{"Formulas allow you to manipulate the final results on the Y-Axis"}</Text>
-      </Row>
-      <Spacer y={1} />
-      <Row>
-        <Text>{"For"}</Text>
-        <Spacer x={0.5} />
-        <Text b>{"val = 12345"}</Text>
-      </Row>
-      <Spacer y={1} />
-      <Row align="center">
-        <LuChevronRight />
-        <Spacer x={0.5} />
-        <Text>
-          {"{val} => 12345"}
-        </Text>
-      </Row>
-      <Spacer y={1} />
-      <Row align="center">
-        <LuChevronRight />
-        <Spacer x={0.5} />
-        <Text>
-          {"{val / 100} => 123.45"}
-        </Text>
-      </Row>
-      <Spacer y={1} />
-      <Row align="center">
-        <LuChevronRight />
-        <Spacer x={0.5} />
-        <Text>
-          {"$ {val / 100} => $ 123.45"}
-        </Text>
-      </Row>
-      <Spacer y={1} />
-      <Row align="center">
-        <LuChevronRight />
-        <Spacer x={0.5} />
-        <Text>
-          {"{val / 100} USD => 123.45 USD"}
-        </Text>
-      </Row>
-    </div>
-  );
-}
 
 export default ChartDatasetConfig
