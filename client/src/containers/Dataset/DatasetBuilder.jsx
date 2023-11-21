@@ -16,6 +16,7 @@ import { updateDataset } from "../../slices/dataset";
 import { operations } from "../../modules/filterOperations";
 import { runQuery, updateChart } from "../../slices/chart";
 import FormulaTips from "../../components/FormulaTips";
+import DatasetFilters from "../../components/DatasetFilters";
 
 
 function DatasetBuilder(props) {
@@ -428,6 +429,16 @@ function DatasetBuilder(props) {
             </div>
           </Row>
         )}
+
+        <Spacer y={4} />
+        <Divider />
+        <Spacer y={4} />
+
+        <DatasetFilters
+          onUpdate={_onUpdateDataset}
+          fieldOptions={fieldOptions}
+          dataset={dataset}
+        />
       </div>
 
       <div className="col-span-12 md:col-span-8">
