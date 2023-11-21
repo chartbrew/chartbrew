@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { Outlet, Route, Routes, useNavigate, useParams } from "react-router";
@@ -56,34 +56,39 @@ function ProjectBoard(props) {
 
   const team = useSelector(selectTeam);
   const projects = useSelector(selectProjects);
-  const project = useSelector(selectProject);
+  const project = useSelector(selectProject) || {};
 
   const { height } = useWindowSize();
   const params = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const initRef = useRef(null);
 
   useEffect(() => {
-    const params = new URLSearchParams(document.location.search);
-    if (params.has("new")) navigate("connections");
+    if (params.projectId && !initRef.current) {
+      initRef.current = true;
 
-    cleanErrors();
-    _init();
-    if (window.localStorage.getItem("_cb_menu_size")) {
-      _setMenuSize(window.localStorage.getItem("_cb_menu_size"), true);
+      const urlParams = new URLSearchParams(document.location.search);
+      if (urlParams.has("new")) navigate("connections");
+
+      cleanErrors();
+      _init();
+      if (window.localStorage.getItem("_cb_menu_size")) {
+        _setMenuSize(window.localStorage.getItem("_cb_menu_size"), true);
+      }
+      if (window.localStorage.getItem("_cb_drafts")) {
+        _setDraftsVisible(window.localStorage.getItem("_cb_drafts") === "true");
+      }
+
+      checkForUpdates()
+        .then((release) => {
+          if (release && release.upToDate) return true;
+
+          setUpdate(release);
+          return release;
+        });
     }
-    if (window.localStorage.getItem("_cb_drafts")) {
-      _setDraftsVisible(window.localStorage.getItem("_cb_drafts") === "true");
-    }
-
-    checkForUpdates()
-      .then((release) => {
-        if (release && release.upToDate) return true;
-
-        setUpdate(release);
-        return release;
-      });
-  }, []);
+  }, [params]);
 
   const _init = (id) => {
     _getProject(id);
@@ -152,7 +157,7 @@ function ProjectBoard(props) {
     window.location.href = `/${params.teamId}/${id}/dashboard`;
   };
 
-  if (!project.id && loading) {
+  if (!project && loading) {
     return (
       <Container style={styles.container}>
         <Spacer y={10} />

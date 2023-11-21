@@ -33,9 +33,9 @@ export const getProjects = createAsyncThunk(
 
 export const getProject = createAsyncThunk(
   "project/getProject",
-  async ({ id }, thunkAPI) => {
+  async ({ project_id }, thunkAPI) => {
     const token = getAuthToken();
-    const url = `${API_HOST}/project/${id}`;
+    const url = `${API_HOST}/project/${project_id}`;
     const method = "GET";
     const headers = new Headers({
       "Accept": "application/json",
@@ -206,9 +206,13 @@ export const projectSlice = createSlice({
   initialState,
   reducers: {
     changeActiveProject: (state, action) => {
-      state.active = state.data.find((project) => {
-        return project.id === action.payload;
+      const foundProject = state.data.find((project) => {
+        return project.id === parseInt(action.payload, 10);
       });
+
+      if (foundProject) {
+        state.active = foundProject;
+      }
     },
   },
   extraReducers: (builder) => {

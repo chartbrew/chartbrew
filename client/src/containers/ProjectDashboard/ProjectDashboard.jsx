@@ -90,6 +90,10 @@ function ProjectDashboard(props) {
   }, []);
 
   useEffect(() => {
+    console.log(charts);
+  }, [charts]);
+
+  useEffect(() => {
     if (!filterLoading && filters) {
       _runFiltering();
     }
