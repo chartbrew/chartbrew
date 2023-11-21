@@ -76,6 +76,7 @@ function Dataset() {
         data: {
           name: dataset.legend,
           type: "line",
+          subType: "timeseries",
         },
       }))
         .then((data) => {

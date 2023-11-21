@@ -17,6 +17,7 @@ import { operations } from "../../modules/filterOperations";
 import { runQuery, updateChart } from "../../slices/chart";
 import FormulaTips from "../../components/FormulaTips";
 import DatasetFilters from "../../components/DatasetFilters";
+import ChartSettings from "../AddChart/components/ChartSettings";
 
 
 function DatasetBuilder(props) {
@@ -267,6 +268,65 @@ function DatasetBuilder(props) {
     _onUpdateDataset({ formula });
   };
 
+  const _onChangeGlobalSettings = ({
+    pointRadius, displayLegend, dateRange, includeZeros, timeInterval, currentEndDate,
+    fixedStartDate, maxValue, minValue, xLabelTicks, stacked, horizontal, dataLabels,
+    dateVarsFormat,
+  }) => {
+    const tempChart = {
+      pointRadius: typeof pointRadius !== "undefined" ? pointRadius : chart.pointRadius,
+      displayLegend: typeof displayLegend !== "undefined" ? displayLegend : chart.displayLegend,
+      startDate: dateRange?.startDate || dateRange?.startDate === null
+        ? dateRange.startDate : chart.startDate,
+      endDate: dateRange?.endDate || dateRange?.endDate === null
+        ? dateRange.endDate : chart.endDate,
+      timeInterval: timeInterval || chart.timeInterval,
+      includeZeros: typeof includeZeros !== "undefined" ? includeZeros : chart.includeZeros,
+      currentEndDate: typeof currentEndDate !== "undefined" ? currentEndDate : chart.currentEndDate,
+      fixedStartDate: typeof fixedStartDate !== "undefined" ? fixedStartDate : chart.fixedStartDate,
+      minValue: typeof minValue !== "undefined" ? minValue : chart.minValue,
+      maxValue: typeof maxValue !== "undefined" ? maxValue : chart.maxValue,
+      xLabelTicks: typeof xLabelTicks !== "undefined" ? xLabelTicks : chart.xLabelTicks,
+      stacked: typeof stacked !== "undefined" ? stacked : chart.stacked,
+      horizontal: typeof horizontal !== "undefined" ? horizontal : chart.horizontal,
+      dataLabels: typeof dataLabels !== "undefined" ? dataLabels : chart.dataLabels,
+      dateVarsFormat: dateVarsFormat !== "undefined" ? dateVarsFormat : chart.dateVarsFormat,
+    };
+
+    let skipParsing = false;
+    if (pointRadius
+      || displayLegend
+      || minValue
+      || maxValue
+      || xLabelTicks
+      || stacked
+      || horizontal
+    ) {
+      skipParsing = true;
+    }
+
+    _onChangeChart(tempChart, skipParsing);
+  };
+
+  const _onChangeChart = (data, skipParsing) => {
+    let shouldSkipParsing = skipParsing;
+    return dispatch(updateChart({ project_id: projectId, chart_id: chart.id, data }))
+      .then((newData) => {
+        if (skipParsing || data.datasetColor || data.fillColor || data.type) {
+          shouldSkipParsing = true;
+        }
+
+        // run the preview refresh only when it's needed
+        _onRefreshPreview(shouldSkipParsing);
+
+        return Promise.resolve(newData);
+      })
+      .catch((e) => {
+        toast.error("Oups! Can't save the chart. Please try again.");
+        return Promise.reject(e);
+      });
+  };
+
   return (
     <div className="grid grid-cols-12 divide-x-1 gap-4">
       <div className="col-span-12 md:col-span-4">
@@ -446,6 +506,29 @@ function DatasetBuilder(props) {
           chart={chart}
           onRefreshPreview={() => _onRefreshPreview()}
           onChange={(data) => _onUpdateChart(data)}
+        />
+        
+        <Spacer y={4} />
+
+        <ChartSettings
+          type={chart.type}
+          pointRadius={chart.pointRadius}
+          startDate={chart.startDate}
+          endDate={chart.endDate}
+          displayLegend={chart.displayLegend}
+          includeZeros={chart.includeZeros}
+          currentEndDate={chart.currentEndDate}
+          fixedStartDate={chart.fixedStartDate}
+          timeInterval={chart.timeInterval}
+          onChange={_onChangeGlobalSettings}
+          onComplete={(skipParsing = false) => _onRefreshPreview(skipParsing)}
+          maxValue={chart.maxValue}
+          minValue={chart.minValue}
+          xLabelTicks={chart.xLabelTicks}
+          stacked={chart.stacked}
+          horizontal={chart.horizontal}
+          dateVarsFormat={chart.dateVarsFormat}
+          dataLabels={chart.dataLabels}
         />
       </div>
     </div>
