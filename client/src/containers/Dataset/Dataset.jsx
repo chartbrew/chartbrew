@@ -11,6 +11,10 @@ import { useParams } from "react-router";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import useThemeDetector from "../../modules/useThemeDetector";
+import {
+  createCdc,
+  createChart,
+} from "../../slices/chart";
 
 import { changeTutorial as changeTutorialAction } from "../../actions/tutorial";
 import {
@@ -20,19 +24,25 @@ import Navbar from "../../components/Navbar";
 import { getTeamConnections } from "../../slices/connection";
 import DatasetQuery from "./DatasetQuery";
 import DatasetBuilder from "./DatasetBuilder";
+import { getProjects } from "../../slices/project";
+import { chartColors } from "../../config/colors";
 
 function Dataset() {
   const [error, setError] = useState(null);
   const [legend, setLegend] = useState("");
   const [editLegend, setEditLegend] = useState(false);
   const [datasetMenu, setDatasetMenu] = useState("query");
+  const [chart, setChart] = useState(null);
 
   const theme = useThemeDetector() ? "dark" : "light";
   const params = useParams();
   const dispatch = useDispatch();
   const initRef = useRef(null);
+  const chartInitRef = useRef(null);
 
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
+  const ghostProject = useSelector((state) => state.project.data?.find((p) => p.ghost));
+  const ghostChart = useSelector((state) => state.chart.data?.find((c) => c.id === chart?.id));
 
   useEffect(() => {
     async function fetchData() {
@@ -40,7 +50,8 @@ function Dataset() {
         team_id: params.teamId,
         dataset_id: params.datasetId,
       }));
-      dispatch(getTeamConnections({ team_id: params.teamId }))
+      dispatch(getTeamConnections({ team_id: params.teamId }));
+      dispatch(getProjects({ team_id: params.teamId }));
     }
     fetchData();
   }, []);
@@ -55,6 +66,37 @@ function Dataset() {
       setLegend(dataset.legend);
     }
   }, [dataset]);
+
+  useEffect(() => {
+    if (ghostProject?.id && !chart && dataset && !chartInitRef.current) {
+      chartInitRef.current = true;
+      dispatch(createChart({
+        project_id: ghostProject.id,
+        data: {
+          name: dataset.legend,
+          type: "line",
+        },
+      }))
+        .then((data) => {
+          setChart(data.payload);
+
+          dispatch(createCdc({
+            project_id: data.payload.project_id,
+            chart_id: data.payload.id,
+            data: {
+              dataset_id: dataset.id,
+              datasetColor: chartColors.blue.hex,
+              fill: false,
+              order: 0,
+            },
+          }))
+        });
+    }
+  }, [ghostProject, dataset]);
+
+  useEffect(() => {
+    console.log(chart);
+  }, [chart]);
 
   useEffect(() => {
     let message = error;
@@ -188,7 +230,10 @@ function Dataset() {
         )}
 
         {datasetMenu === "configure" && (
-          <DatasetBuilder />
+          <DatasetBuilder
+            chart={ghostChart}
+            projectId={ghostProject?.id}
+          />
         )}
       </div>
 

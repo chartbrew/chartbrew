@@ -481,7 +481,7 @@ class AxisChart {
           }
 
           // if it's an accumulation chart
-          if (this.chart.subType.indexOf("AddTimeseries") > -1) {
+          if (this.chart.subType?.indexOf("AddTimeseries") > -1) {
             const newY = [];
             this.axisData.y[yLength].map((item, index) => {
               let formattedItem = item;

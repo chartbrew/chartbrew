@@ -75,7 +75,7 @@ function ChartPreview(props) {
   };
 
   const _toggleAccumulation = () => {
-    if (chart.subType.indexOf("AddTimeseries") > -1) {
+    if (chart.subType?.indexOf("AddTimeseries") > -1) {
       return onChange({ subType: "timeseries" });
     }
 
@@ -238,11 +238,11 @@ function ChartPreview(props) {
                   </Button>
                 </Tooltip>
                 <Tooltip
-                  content={chart.subType.indexOf("AddTimeseries") > -1 ? "Turn accumulation off" : "Accumulate datasets"}
+                  content={chart.subType?.indexOf("AddTimeseries") > -1 ? "Turn accumulation off" : "Accumulate datasets"}
                 >
                   <Button
-                    variant={chart.subType.indexOf("AddTimeseries") === -1 ? "bordered" : "solid"}
-                    color={chart.subType.indexOf("AddTimeseries") > -1 ? "secondary" : "default"}
+                    variant={chart.subType?.indexOf("AddTimeseries") === -1 ? "bordered" : "solid"}
+                    color={chart.subType?.indexOf("AddTimeseries") > -1 ? "secondary" : "default"}
                     onClick={_toggleAccumulation}
                     disabled={chart.type !== "line" && chart.type !== "bar" && chart.type !== "avg"}
                     isIconOnly
