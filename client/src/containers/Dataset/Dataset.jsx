@@ -3,10 +3,10 @@ import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { Flip, toast, ToastContainer } from "react-toastify";
 import {
-  Button, Link, Spacer, Divider, Input, Tabs, Tab,
+  Button, Link, Spacer, Divider, Input, Tabs, Tab, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Chip,
 } from "@nextui-org/react";
-import { LuAreaChart, LuArrowRight, LuCheck, LuDatabase, LuPencil } from "react-icons/lu";
-import { useParams } from "react-router";
+import { LuAreaChart, LuArrowRight, LuCheck, LuDatabase, LuPencil, LuSearch } from "react-icons/lu";
+import { useNavigate, useParams } from "react-router";
 
 import Row from "../../components/Row";
 import Text from "../../components/Text";
@@ -14,6 +14,7 @@ import useThemeDetector from "../../modules/useThemeDetector";
 import {
   createCdc,
   createChart,
+  runQuery,
 } from "../../slices/chart";
 
 import { changeTutorial as changeTutorialAction } from "../../actions/tutorial";
@@ -24,7 +25,7 @@ import Navbar from "../../components/Navbar";
 import { getTeamConnections } from "../../slices/connection";
 import DatasetQuery from "./DatasetQuery";
 import DatasetBuilder from "./DatasetBuilder";
-import { getProjects } from "../../slices/project";
+import { getProjects, selectProjects } from "../../slices/project";
 import { chartColors } from "../../config/colors";
 
 function Dataset() {
@@ -33,10 +34,15 @@ function Dataset() {
   const [editLegend, setEditLegend] = useState(false);
   const [datasetMenu, setDatasetMenu] = useState("query");
   const [chart, setChart] = useState(null);
+  const [completeModal, setCompleteModal] = useState(false);
+  const [completeProjects, setCompleteProjects] = useState([]);
+  const [projectSearch, setProjectSearch] = useState("");
+  const [completeDatasetLoading, setCompleteDatasetLoading] = useState(false);
 
   const theme = useThemeDetector() ? "dark" : "light";
   const params = useParams();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const initRef = useRef(null);
   const chartInitRef = useRef(null);
 
@@ -44,6 +50,7 @@ function Dataset() {
   const ghostProject = useSelector((state) => state.project.data?.find((p) => p.ghost));
   const ghostChart = useSelector((state) => state.chart.data?.find((c) => c.id === chart?.id));
   const datasetResponse = useSelector((state) => state.dataset.responses.find((r) => r.dataset_id === dataset.id)?.data);
+  const projects = useSelector(selectProjects);
 
   useEffect(() => {
     async function fetchData() {
@@ -133,6 +140,78 @@ function Dataset() {
       });
   };
 
+  const _onSelectCompleteProject = (projectId) => {
+    setCompleteProjects((prev) => {
+      if (prev.includes(projectId)) {
+        return prev.filter((p) => p !== projectId);
+      }
+      return [...prev, projectId];
+    });
+  };
+
+  const _onCompleteDataset = () => {
+    setCompleteDatasetLoading(true);
+
+    if (completeProjects.length === 0) {
+      navigate("/user");
+      return;
+    }
+
+    let loadingCounter = 0;
+
+    completeProjects.forEach((projectId) => {
+      dispatch(createChart({
+        project_id: projectId,
+        data: { ...chart, draft: false, id: null },
+      }))
+        .then((actionData) => {
+          let cdcData = { ...dataset };
+          delete cdcData.id;
+
+          dispatch(createCdc({
+            project_id: projectId,
+            chart_id: actionData.payload.id,
+            data: {
+              ...cdcData,
+              dataset_id: dataset.id,
+              datasetColor: chartColors.blue.hex,
+            },
+          }))
+            .then((cdcData) => {
+              dispatch(runQuery({
+                project_id: projectId,
+                chart_id: cdcData.payload.chart_id,
+                noSource: false,
+                skipParsing: false,
+                getCache: true,
+              }));
+            });
+
+          loadingCounter += 1;
+          if (loadingCounter === completeProjects.length) {
+            setCompleteDatasetLoading(false);
+            if (completeProjects.length === 1) {
+              navigate(`/${params.teamId}/${completeProjects[0]}/dashboard`);
+            } else {
+              navigate("/user");
+            }
+          }
+        })
+        .catch(() => {
+          loadingCounter += 1;
+          if (loadingCounter === completeProjects.length) {
+            setCompleteDatasetLoading(false);
+            if (completeProjects.length === 1) {
+              toast.error("Could not create chart. Please try again");
+              setCompleteModal(false);
+            } else {
+              navigate("/user");
+            }
+          }
+        });
+    });
+  };
+
   return (
     <div>
       <Navbar hideTeam transparent />
@@ -220,7 +299,7 @@ function Dataset() {
             {datasetMenu === "configure" && (
               <Button
                 color="primary"
-                onClick={() => setDatasetMenu("configure")}
+                onClick={() => setCompleteModal(true)}
                 endContent={<LuCheck />}
                 isDisabled={dataset?.DataRequests.length === 0}
               >
@@ -244,6 +323,61 @@ function Dataset() {
           />
         )}
       </div>
+
+      <Modal
+        isOpen={completeModal}
+        onClose={() => setCompleteModal(false)}
+        size="2xl"
+      >
+        <ModalContent>
+          <ModalHeader>Complete your dataset</ModalHeader>
+          <ModalBody>
+            <div>Want to add this chart to a project?</div>
+            {projects.length > 5 && (
+              <Input
+                labelPlacement="outside"
+                placeholder="Search projects"
+                startContent={<LuSearch />}
+                variant="bordered"
+                className="max-w-[300px]"
+                onChange={(e) => setProjectSearch(e.target.value)}
+                onClear={() => setProjectSearch("")}
+                value={projectSearch}
+                isClearable
+              />
+            )}
+            <div className="flex flex-row flex-wrap gap-2">
+              {projects.filter((p) => p.name.toLowerCase().indexOf(projectSearch.toLowerCase()) > -1).map((p) => (
+                <Chip
+                  key={p.id}
+                  radius="sm"
+                  color={completeProjects.includes(p.id) ? "primary" : "default"}
+                  variant={completeProjects.includes(p.id) ? "solid" : "bordered"}
+                  onClick={() => _onSelectCompleteProject(p.id)}
+                  className="cursor-pointer hover:shadow-md hover:saturate-150 transition-shadow"
+                >
+                  {p.name}
+                </Chip>
+              ))}
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onClick={() => setCompleteModal(false)}
+            >
+              Close
+            </Button>
+            <Button
+              color="primary"
+              onClick={_onCompleteDataset}
+              isLoading={completeDatasetLoading}
+            >
+              {completeProjects.length > 0 ? "Save dataset & create chart" : "Save dataset"}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       <ToastContainer
         position="bottom-center"

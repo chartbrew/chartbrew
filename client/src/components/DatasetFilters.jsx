@@ -356,6 +356,7 @@ function DatasetFilters(props) {
               return (
                 <Chip
                   key={condition.id}
+                  radius="sm"
                   variant="faded"
                   endContent={(
                     <Link

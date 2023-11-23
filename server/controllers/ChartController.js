@@ -27,7 +27,7 @@ class ChartController {
 
   create(data, user) {
     let chartId;
-    return db.Chart.create(data)
+    return db.Chart.create({ ...data, chartDataUpdated: moment() })
       .then((chart) => {
         chartId = chart.id;
         if (data.ChartDatasetConfigs || data.dataRequests) {
