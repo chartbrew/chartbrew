@@ -244,6 +244,10 @@ export const projectSlice = createSlice({
         }
         return project;
       });
+
+      if (state.data.length === 0) {
+        state.data.push(action.payload);
+      }
     })
     builder.addCase(getProject.rejected, (state) => {
       state.loading = false;

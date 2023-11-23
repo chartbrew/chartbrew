@@ -307,6 +307,7 @@ function ChartDatasetConfig(props) {
             <Text>Max records</Text>
             <Row align="center">
               <Input
+                labelPlacement="outside"
                 placeholder="Max records"
                 value={maxRecords}
                 onChange={(e) => setMaxRecords(e.target.value)}
@@ -389,6 +390,7 @@ function ChartDatasetConfig(props) {
                 <div className="flex flex-col">
                   <div className="flex flex-row gap-3 items-center w-full">
                     <Input
+                      labelPlacement="outside"
                       placeholder="Enter your formula here: {val}"
                       value={formula}
                       onChange={(e) => setFormula(e.target.value)}

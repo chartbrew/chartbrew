@@ -53,6 +53,7 @@ function NavbarContainer(props) {
 
   const team = useSelector(selectTeam);
   const teams = useSelector(selectTeams);
+  const project = useSelector((state) => state.project.active);
 
   const darkMode = useDarkMode(false);
   const isSystemDark = useThemeDetector();
@@ -194,7 +195,7 @@ function NavbarContainer(props) {
                 <Media greaterThan="mobile">
                   <Row align={"center"} className={"gap-1"}>
                     <Text>{"/"}</Text>
-                    <Text>{projectProp.name}</Text>
+                    <Text>{projectProp.name || project.name}</Text>
                   </Row>
                 </Media>
               </Link>

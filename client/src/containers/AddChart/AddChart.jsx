@@ -446,7 +446,7 @@ function AddChart(props) {
             </Row>
           </Row>
           <Spacer y={2} />
-          <Row className="chart-type-tut">
+          <Row className="chart-type-tut bg-content1 pt-4 pb-2 rounded-lg">
             <ChartPreview
               chart={newChart}
               onChange={_onChangeChart}
