@@ -98,7 +98,7 @@ class DatasetController {
       include: [
         { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
       ],
-      order: [["order", "ASC"]],
+      order: [["order", "ASC"], ["createdAt", "DESC"]],
     })
       .then((datasets) => {
         return datasets;
@@ -318,9 +318,14 @@ class DatasetController {
 
   async findRelatedCharts(id) {
     try {
+      // get cdcs, but make sure to avoid getting them for ghost projects
       const cdcs = await db.ChartDatasetConfig.findAll({
-        where: { dataset_id: id },
-        include: [{ model: db.Chart, attributes: ["id", "name"] }],
+        where: { dataset_id: id, "$Chart.Project.ghost$": false },
+        include: [{
+          model: db.Chart,
+          attributes: ["id", "name"],
+          include: [{ model: db.Project, attributes: ["id", "ghost"] }],
+        }],
       });
 
       // return all unique charts

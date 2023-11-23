@@ -152,6 +152,14 @@ function Dataset() {
   const _onCompleteDataset = () => {
     setCompleteDatasetLoading(true);
 
+    dispatch(updateDataset({
+      team_id: params.teamId,
+      dataset_id: dataset.id,
+      data: {
+        draft: false,
+      },
+    }));
+
     if (completeProjects.length === 0) {
       navigate("/user");
       return;

@@ -7,10 +7,10 @@ import {
   Button, Input, Spacer, Table, Tooltip, Link as LinkNext, Chip, Modal,
   CircularProgress, TableHeader, TableColumn, TableCell, TableBody, TableRow,
   ModalHeader, ModalBody, ModalFooter, ModalContent, DropdownTrigger, Dropdown,
-  DropdownMenu, DropdownItem, Avatar, AvatarGroup, Listbox, ListboxItem,
+  DropdownMenu, DropdownItem, Avatar, AvatarGroup, Listbox, ListboxItem, Switch,
 } from "@nextui-org/react";
 import {
-  LuBarChart, LuChevronDown, LuDatabase, LuLayoutGrid, LuPencilLine, LuPlug, LuPlus, LuSearch, LuSettings,
+  LuBarChart, LuCalendarDays, LuChevronDown, LuDatabase, LuLayoutGrid, LuPencilLine, LuPlug, LuPlus, LuSearch, LuSettings,
   LuTrash, LuUsers2,
 } from "react-icons/lu";
 import { Flip, toast, ToastContainer } from "react-toastify";
@@ -69,6 +69,8 @@ function UserDashboard(props) {
   const [fetchingRelatedCharts, setFetchingRelatedCharts] = useState(false);
   const [deletingDataset, setDeletingDataset] = useState(false);
   const [creatingDataset, setCreatingDataset] = useState(false);
+  const [datasetSearch, setDatasetSearch] = useState("");
+  const [showDatasetDrafts, setShowDatasetDrafts] = useState(false);
 
   const initRef = useRef(null);
   const { height } = useWindowSize();
@@ -273,7 +275,17 @@ function UserDashboard(props) {
         setCreatingDataset(false);
         toast.error("Uh oh! Something went wrong. Please try again.");
       });
-  }
+  };
+
+  const _getFilteredDatasets = () => {
+    if (!datasetSearch) return datasets.filter((d) => !d.draft || showDatasetDrafts);
+
+    const filteredDatasets = datasets.filter((d) => {
+      return d.legend.toLowerCase().indexOf(datasetSearch.toLowerCase()) > -1 && (!d.draft || showDatasetDrafts);
+    });
+
+    return filteredDatasets;
+  };
 
   if (!user.data.id) {
     return (
@@ -619,7 +631,7 @@ function UserDashboard(props) {
 
               {activeMenu === "datasets" && (
                 <div className="max-h-full overflow-y-auto">
-                  <Row className={"gap-2"}>
+                  <Row className={"gap-2"} align="center">
                     <Button
                       color="primary"
                       endContent={<LuPlus />}
@@ -635,28 +647,49 @@ function UserDashboard(props) {
                       endContent={<LuSearch />}
                       className="max-w-[300px]"
                       labelPlacement="outside"
+                      onChange={(e) => setDatasetSearch(e.target.value)}
                     />
+                    <Switch
+                      isSelected={showDatasetDrafts}
+                      onChange={() => setShowDatasetDrafts(!showDatasetDrafts)}
+                      size="sm"
+                    >
+                      <span className="text-sm">Show drafts</span>
+                    </Switch>
                   </Row>
                   <Spacer y={2} />
                   <Table shadow="none" isStriped className="border-2 border-solid border-content3 rounded-xl">
                     <TableHeader>
                       <TableColumn key="name">Dataset name</TableColumn>
-                      <TableColumn key="connections" textValue="Connections">
-                        <div className="flex flex-row items-center gap-1">
+                      <TableColumn key="connections" textValue="Connections" align="center" justify="center">
+                        <div className="flex flex-row items-center justify-center gap-1">
                           <LuPlug />
                           <span>Connections</span>
+                        </div>
+                      </TableColumn>
+                      <TableColumn key="created" textValue="Created">
+                        <div className="flex flex-row items-center gap-1">
+                          <LuCalendarDays />
+                          <span>Created</span>
                         </div>
                       </TableColumn>
                       <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
                     </TableHeader>
                     <TableBody>
-                      {datasets.map((dataset) => (
+                      {_getFilteredDatasets().map((dataset) => (
                         <TableRow key={dataset.id}>
                           <TableCell key="name">
-                            <Text b>{dataset.legend}</Text>
+                            <div className="flex flex-row items-center gap-2">
+                              <Text b>{dataset.legend}</Text>
+                              {dataset.draft && (
+                                <Chip size="sm" variant="flat" color="secondary">
+                                  Draft
+                                </Chip>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell key="connections">
-                            <Row>
+                            <Row justify={"center"}>
                               <AvatarGroup max={3} isBordered size="sm">
                                 {dataset?.DataRequests?.map((dr) => (
                                   <Avatar
@@ -669,6 +702,9 @@ function UserDashboard(props) {
                                 ))}
                               </AvatarGroup>
                             </Row>
+                          </TableCell>
+                          <TableCell key="created">
+                            <Text>{new Date(dataset.createdAt).toLocaleDateString()}</Text>
                           </TableCell>
                           <TableCell key="actions">
                             <Row justify="flex-end" align="center">
