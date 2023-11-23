@@ -315,6 +315,27 @@ class DatasetController {
         return Promise.reject(err);
       });
   }
+
+  async findRelatedCharts(id) {
+    try {
+      const cdcs = await db.ChartDatasetConfig.findAll({
+        where: { dataset_id: id },
+        include: [{ model: db.Chart, attributes: ["id", "name"] }],
+      });
+
+      // return all unique charts
+      const charts = [];
+      cdcs.forEach((cdc) => {
+        if (!charts.find((c) => c.id === cdc.Chart.id)) {
+          charts.push(cdc.Chart);
+        }
+      });
+
+      return charts;
+    } catch (error) {
+      return new Promise((resolve, reject) => reject(error));
+    }
+  }
 }
 
 module.exports = DatasetController;

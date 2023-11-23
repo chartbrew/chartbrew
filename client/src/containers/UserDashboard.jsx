@@ -38,7 +38,8 @@ import {
   selectTeam, selectTeams, getTeams, saveActiveTeam, getTeamMembers, selectTeamMembers,
 } from "../slices/team";
 import {
-  getDatasets, selectDatasets,
+  deleteDataset,
+  getDatasets, getRelatedCharts, selectDatasets,
 } from "../slices/dataset";
 import Segment from "../components/Segment";
 
@@ -62,6 +63,10 @@ function UserDashboard(props) {
   const [projectToDelete, setProjectToDelete] = useState(null);
   const [modifyingProject, setModifyingProject] = useState(false);
   const [activeMenu, setActiveMenu] = useState("projects");
+  const [datasetToDelete, setDatasetToDelete] = useState(null);
+  const [relatedCharts, setRelatedCharts] = useState([]);
+  const [fetchingRelatedCharts, setFetchingRelatedCharts] = useState(false);
+  const [deletingDataset, setDeletingDataset] = useState(false);
 
   const initRef = useRef(null);
   const { height } = useWindowSize();
@@ -219,6 +224,33 @@ function UserDashboard(props) {
         onClose={() => setAddProject(false)}
       />
     );
+  };
+
+  const _onPressDeleteDataset = (dataset) => {
+    setFetchingRelatedCharts(true);
+    setDatasetToDelete(dataset);
+    setRelatedCharts([]);
+
+    dispatch(getRelatedCharts({ team_id: team.id, dataset_id: dataset.id }))
+      .then((charts) => {
+        setRelatedCharts(charts.payload);
+        setFetchingRelatedCharts(false);
+      })
+      .catch(() => {
+        setFetchingRelatedCharts(false);
+      });
+  };
+
+  const _onDeleteDataset = () => {
+    setDeletingDataset(true);
+    dispatch(deleteDataset({ team_id: team.id, dataset_id: datasetToDelete.id }))
+      .then(() => {
+        setDeletingDataset(false);
+        setDatasetToDelete(null);
+      })
+      .catch(() => {
+        setDeletingDataset(false);
+      });
   };
 
   if (!user.data.id) {
@@ -582,10 +614,15 @@ function UserDashboard(props) {
                     />
                   </Row>
                   <Spacer y={2} />
-                  <Table shadow="none" className="border-2 border-solid border-content3 rounded-xl">
+                  <Table shadow="none" isStriped className="border-2 border-solid border-content3 rounded-xl">
                     <TableHeader>
                       <TableColumn key="name">Dataset name</TableColumn>
-                      <TableColumn key="connections">Connections</TableColumn>
+                      <TableColumn key="connections" textValue="Connections">
+                        <div className="flex flex-row items-center gap-1">
+                          <LuPlug />
+                          <span>Connections</span>
+                        </div>
+                      </TableColumn>
                       <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
                     </TableHeader>
                     <TableBody>
@@ -631,6 +668,7 @@ function UserDashboard(props) {
                                   isIconOnly
                                   variant="light"
                                   size="sm"
+                                  onClick={() => _onPressDeleteDataset(dataset)}
                                 >
                                   <LuTrash />
                                 </Button>
@@ -710,6 +748,70 @@ function UserDashboard(props) {
                 endContent={<LuTrash />}
                 onClick={() => _onDeleteProjectSubmit()}
                 isLoading={modifyingProject}
+              >
+                Delete
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+
+        <Modal isOpen={datasetToDelete?.id} onClose={() => setDatasetToDelete(null)}>
+          <ModalContent>
+            <ModalHeader>
+              <Text size="h4">Are you sure you want to delete this dataset?</Text>
+            </ModalHeader>
+            <ModalBody>
+              <div>
+                <Text>
+                  {"Just a heads-up that all the charts that use this dataset will stop working. This action cannot be undone."}
+                </Text>
+              </div>
+              {fetchingRelatedCharts && (
+                <div className="flex flex-row items-center gap-1">
+                  <CircularProgress size="sm" />
+                  <Text className={"italic"}>Checking related charts...</Text>
+                </div>
+              )}
+              {!fetchingRelatedCharts && relatedCharts.length === 0 && (
+                <div className="flex flex-row items-center">
+                  <Text className={"italic"}>No related charts found</Text>
+                </div>
+              )}
+              {!fetchingRelatedCharts && relatedCharts.length > 0 && (
+                <div className="flex flex-row items-center">
+                  <Text>Related charts:</Text>
+                </div>
+              )}
+              <div className="flex flex-row flex-wrap items-center gap-1">
+                {relatedCharts.slice(0, 10).map((chart) => (
+                  <Chip
+                    key={chart.id}
+                    size="sm"
+                    variant="flat"
+                    color="primary"
+                  >
+                    {chart.name}
+                  </Chip>
+                ))}
+                {relatedCharts.length > 10 && (
+                  <span className="text-xs">{`+${relatedCharts.length - 10} more`}</span>
+                )}
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <Button
+                variant="bordered"
+                onClick={() => setDatasetToDelete(null)}
+                auto
+              >
+                Cancel
+              </Button>
+              <Button
+                auto
+                color="danger"
+                endContent={<LuTrash />}
+                onClick={() => _onDeleteDataset()}
+                isLoading={deletingDataset}
               >
                 Delete
               </Button>

@@ -184,6 +184,20 @@ module.exports = (app) => {
   });
   // ----------------------------------------------------
 
+  /*
+  ** Route to get the charts associated with the dataset
+  */
+  app.get(`${root}/:id/charts`, verifyToken, checkPermissions("readAny"), (req, res) => {
+    return datasetController.findRelatedCharts(req.params.id)
+      .then((charts) => {
+        return res.status(200).send(charts);
+      })
+      .catch((err) => {
+        return res.status(400).send(err);
+      });
+  });
+  // ----------------------------------------------------
+
   return (req, res, next) => {
     next();
   };

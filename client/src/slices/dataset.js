@@ -268,6 +268,24 @@ export const runDataRequest = createAsyncThunk(
   }
 );
 
+export const getRelatedCharts = createAsyncThunk(
+  "dataset/getRelatedCharts",
+  async ({ team_id, dataset_id }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/team/${team_id}/datasets/${dataset_id}/charts`;
+    const method = "GET";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "authorization": `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { method, headers });
+    const responseJson = await response.json();
+
+    return responseJson;
+  }
+);
+
 export const datasetSlice = createSlice({
   name: "dataset",
   initialState,
@@ -354,7 +372,7 @@ export const datasetSlice = createSlice({
       })
       .addCase(deleteDataset.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = state.data.filter((dataset) => dataset.id !== action.payload.id);
+        state.data = state.data.filter((dataset) => dataset.id !== action.meta.arg.dataset_id);
       })
       .addCase(deleteDataset.rejected, (state) => {
         state.loading = false;
