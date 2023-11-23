@@ -53,16 +53,16 @@ function DatasetQuery(props) {
       dataset_id: params.datasetId,
     }))
       .then((drs) => {
-        setDataRequests(drs.payload);
-        if (drs.length > 0) {
+        if (drs.payload.length > 0) {
+          setDataRequests(drs.payload);
           setSelectedRequest({ isSettings: true });
         }
 
-        if (drs.length > 0 && !dataset.main_dr_id) {
+        if (drs.payload.length > 0 && !dataset.main_dr_id) {
           dispatch(updateDataset({
             team_id: params.teamId,
             dataset_id: dataset.id,
-            data: { main_dr_id: drs[0].id },
+            data: { main_dr_id: drs[0].payload.id },
           }));
         }
       })
@@ -141,18 +141,18 @@ function DatasetQuery(props) {
         if (dataRequests.length < 1) {
           dispatch(updateDataset({
             team_id: params.teamId,
-            datset_id: dataset.id,
-            data: { main_dr_id: newDr.id },
+            dataset_id: dataset.id,
+            data: { main_dr_id: newDr.payload.id },
           }));
           toast.success("Dataset updated");
         }
 
-        setSelectedRequest(newDr);
+        setSelectedRequest(newDr.payload);
         setCreateMode(false);
 
         // update the dataRequests array
         const newDrArray = cloneDeep(dataRequests);
-        newDrArray.push(newDr);
+        newDrArray.push(newDr.payload);
         setDataRequests(newDrArray);
       })
       .catch((e) => {

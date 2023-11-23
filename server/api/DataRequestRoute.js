@@ -1,56 +1,14 @@
 const DataRequestController = require("../controllers/DataRequestController");
 const TeamController = require("../controllers/TeamController");
-const ProjectController = require("../controllers/ProjectController");
 const verifyToken = require("../modules/verifyToken");
-const accessControl = require("../modules/accessControl");
-const ChartController = require("../controllers/ChartController");
 const DatasetController = require("../controllers/DatasetController");
 
 module.exports = (app) => {
   const dataRequestController = new DataRequestController();
   const teamController = new TeamController();
-  const projectController = new ProjectController();
-  const chartController = new ChartController();
   const datasetController = new DatasetController();
 
   const root = "/team/:team_id/datasets/:dataset_id/dataRequests";
-
-  const checkAccess = (req) => {
-    let gProject;
-    let gChart;
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        gProject = project;
-
-        return chartController.findById(req.params.chart_id);
-      })
-      .then((chart) => {
-        if (chart.project_id !== gProject.id) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        gChart = chart;
-
-        if (req.params.id) {
-          return dataRequestController.findById(req.params.id);
-        }
-
-        return teamController.getTeamRole(gProject.team_id, req.user.id);
-      })
-      .then((data) => {
-        if (!req.params.id) return Promise.resolve(data);
-
-        return datasetController.findById(data.dataset_id);
-      })
-      .then((data) => {
-        if (!req.params.id) return Promise.resolve(data);
-
-        if (data.chart_id !== gChart.id) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return teamController.getTeamRole(gProject.team_id, req.user.id);
-      });
-  };
 
   const checkPermissions = async (req, res, next) => {
     const { team_id } = req.params;
@@ -84,16 +42,8 @@ module.exports = (app) => {
   /*
   ** Route to create a new Data request
   */
-  app.post(`${root}`, verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).createAny("dataRequest");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return dataRequestController.create(req.body);
-      })
+  app.post(`${root}`, verifyToken, checkPermissions, (req, res) => {
+    return dataRequestController.create(req.body)
       .then((dataRequest) => {
         return res.status(200).send(dataRequest);
       })

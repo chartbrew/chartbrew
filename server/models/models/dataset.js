@@ -42,11 +42,12 @@ module.exports = (sequelize, DataTypes) => {
     },
     chart_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
+      defaultValue: null,
       reference: {
         model: "Chart",
         key: "id",
-        onDelete: "cascade",
+        onDelete: "SET NULL",
       },
     },
     connection_id: {
