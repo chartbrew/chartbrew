@@ -2,9 +2,9 @@ import React, { useState, Fragment, useEffect } from "react"
 import PropTypes from "prop-types";
 import {
   Button, Link, Spacer, Avatar, Badge, Tooltip, Card, CardBody,
-  CardFooter, Spinner,
+  CardFooter, Spinner, Input,
 } from "@nextui-org/react";
-import { LuDatabase, LuMonitorX, LuPlus } from "react-icons/lu";
+import { LuDatabase, LuMonitorX, LuPlus, LuSearch } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router";
 import { cloneDeep, findIndex } from "lodash";
@@ -38,6 +38,7 @@ function DatasetQuery(props) {
   const [selectedRequest, setSelectedRequest] = useState({ isSettings: true });
   const [createMode, setCreateMode] = useState(false);
   const [dataRequests, setDataRequests] = useState([]);
+  const [connectionSearch, setConnectionSearch] = useState("");
 
   const theme = useThemeDetector() ? "dark" : "light";
   const dispatch = useDispatch();
@@ -53,24 +54,30 @@ function DatasetQuery(props) {
       dataset_id: params.datasetId,
     }))
       .then((drs) => {
-        if (drs.payload.length > 0) {
+        if (drs.payload?.[0]) {
           setDataRequests(drs.payload);
           setSelectedRequest({ isSettings: true });
         }
 
-        if (drs.payload.length > 0 && !dataset.main_dr_id) {
+        if (drs.payload?.[0] > 0 && !dataset.main_dr_id) {
           dispatch(updateDataset({
             team_id: params.teamId,
             dataset_id: dataset.id,
             data: { main_dr_id: drs[0].payload.id },
           }));
         }
+
+        if (!drs.payload?.[0]) {
+          setCreateMode(true);
+        }
       })
       .catch((err) => {
-        toast.error("Could not load data requests. Please try again or get in touch with us.");
         if (err && err.message === "404") {
+          setCreateMode(true);
           return true;
         }
+
+        toast.error("Could not load data requests. Please try again or get in touch with us.");
         return err;
       });
   }, []);
@@ -191,6 +198,14 @@ function DatasetQuery(props) {
       return;
     }
     setSelectedRequest({ isSettings: true });
+  };
+
+  const _filteredConnections = () => {
+    if (connectionSearch.length > 0) {
+      return connections.filter((c) => c.name.toLowerCase().includes(connectionSearch.toLowerCase()));
+    }
+
+    return connections;
   };
 
   return (
@@ -344,18 +359,29 @@ function DatasetQuery(props) {
       {createMode && (
         <div className="col-span-12 md:col-span-11 container mx-auto">
           <Spacer y={1} />
-          <Text size="h4">Select a connection</Text>
+          <Text size="h2">Select a connection</Text>
+          <Spacer y={2} />
+          <div>
+            <Input
+              startContent={<LuSearch />}
+              placeholder="Search connections"
+              onChange={(e) => setConnectionSearch(e.target.value)}
+              className="max-w-[300px]"
+              labelPlacement="outside"
+              variant="bordered"
+            />
+          </div>
           <Spacer y={2} />
           <div className="grid grid-cols-12 gap-4">
-            {connections.map((c) => {
+            {_filteredConnections().map((c) => {
               return (
                 <div className="col-span-12 sm:col-span-6 md:sm:col-span-4" key={c.id}>
                   <Card
-                    variant="bordered"
                     isPressable
                     isHoverable
                     onClick={() => _onCreateNewRequest(c)}
                     fullWidth
+                    shadow="sm"
                   >
                     <CardBody className="p-unit-4 pl-unit-8">
                       <Row align="center" justify="space-between">
