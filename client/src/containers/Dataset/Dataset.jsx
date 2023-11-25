@@ -157,6 +157,7 @@ function Dataset() {
       dataset_id: dataset.id,
       data: {
         draft: false,
+        legend,
       },
     }));
 
@@ -340,6 +341,16 @@ function Dataset() {
         <ModalContent>
           <ModalHeader>Complete your dataset</ModalHeader>
           <ModalBody>
+            <div>Enter a name for your dataset</div>
+            <Input
+              labelPlacement="outside"
+              value={legend}
+              onChange={(e) => setLegend(e.target.value)}
+              variant="bordered"
+              className="max-w-[300px]"
+            />
+            <Spacer y={1} />
+
             <div>Want to add this chart to a project?</div>
             {projects.length > 5 && (
               <Input
