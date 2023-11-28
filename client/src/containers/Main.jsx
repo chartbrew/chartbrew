@@ -28,6 +28,7 @@ import ProjectSettings from "./ProjectSettings";
 import Integrations from "./Integrations/Integrations";
 import Dataset from "./Dataset/Dataset";
 import { getProjects } from "../slices/project";
+import ConnectionWizard from "./Connections/ConnectionWizard";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
@@ -218,6 +219,11 @@ function Main(props) {
                   exact
                   path="/:teamId/dataset/:datasetId"
                   element={<Dataset />}
+                />
+                <Route
+                  exact
+                  path="/:teamId/connection/:connectionId"
+                  element={<ConnectionWizard />}
                 />
               </Routes>
             </Suspense>

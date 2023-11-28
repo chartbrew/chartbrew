@@ -97,7 +97,7 @@ function PostgresConnectionForm(props) {
   };
 
   return (
-    <div className="p-unit-lg bg-content1 shadow-md border-1 border-solid border-content3 rounded-lg">
+    <div className="p-unit-lg bg-content1 border-1 border-solid border-content3 rounded-lg">
       <div>
         <Row align="center">
           <Text size="lg">Add a new PostgreSQL connection</Text>

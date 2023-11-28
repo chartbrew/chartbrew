@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Fragment } from "react";
+import React, { useState, useEffect, Fragment, useRef } from "react";
 import PropTypes from "prop-types";
 
 import {
@@ -6,6 +6,9 @@ import {
 } from "@nextui-org/react";
 import uuid from "uuid/v4";
 import AceEditor from "react-ace";
+import { useParams } from "react-router";
+import { HiPlus, HiX } from "react-icons/hi";
+import { useDispatch } from "react-redux";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -17,7 +20,8 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
-import { HiPlus, HiX } from "react-icons/hi";
+import { testRequest } from "../../../slices/connection";
+
 
 const authTypes = [{
   key: "no_auth",
@@ -38,7 +42,7 @@ const authTypes = [{
 */
 function ApiConnectionForm(props) {
   const {
-    editConnection, projectId, onComplete, addError, onTest, testResult,
+    editConnection, onComplete, addError,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -48,9 +52,12 @@ function ApiConnectionForm(props) {
   });
   const [errors, setErrors] = useState({});
   const [menuType, setMenuType] = useState("authentication");
+  const [testResult, setTestResult] = useState(null);
 
   const isDark = useThemeDetector();
-  const initRef = React.useRef(null);
+  const initRef = useRef(null);
+  const dispatch = useDispatch();
+  const params = useParams();
 
   useEffect(() => {
     if (!initRef.current) {
@@ -85,6 +92,26 @@ function ApiConnectionForm(props) {
     }
   };
 
+  const _onTestRequest = (data) => {
+    const newTestResult = {};
+    return dispatch(testRequest({ team_id: params.teamId, connection: data }))
+      .then(async (response) => {
+        newTestResult.status = response.payload.status;
+        newTestResult.body = await response.payload.text();
+
+        try {
+          newTestResult.body = JSON.parse(newTestResult.body);
+          newTestResult.body = JSON.stringify(newTestResult, null, 2);
+        } catch (e) {
+          // the response is not in JSON format
+        }
+
+        setTestResult(newTestResult);
+        return Promise.resolve(newTestResult);
+      })
+      .catch(() => { });
+  };
+
   const _onCreateConnection = (test = false) => {
     setErrors({});
 
@@ -113,15 +140,14 @@ function ApiConnectionForm(props) {
     }
 
     // add the project ID
-    setConnection({ ...connection, project_id: projectId, options: newOptions });
+    setConnection({ ...connection, options: newOptions });
 
     setTimeout(() => {
       const newConnection = connection;
-      if (!connection.id) newConnection.project_id = projectId;
       newConnection.options = newOptions;
       if (test === true) {
         setTestLoading(true);
-        onTest(newConnection)
+        _onTestRequest(newConnection)
           .then(() => setTestLoading(false))
           .catch(() => setTestLoading(false));
       } else {
@@ -175,7 +201,7 @@ function ApiConnectionForm(props) {
   };
 
   return (
-    <div className="p-unit-lg bg-content1 shadow-md border-1 border-solid border-content3 rounded-lg">
+    <div className="p-unit-lg bg-content1 border-1 border-solid border-content3 rounded-lg">
       <div>
         <Row align="center">
           <Text size="lg" b>
@@ -317,6 +343,7 @@ function ApiConnectionForm(props) {
               <Row className={"gap-4"}>
                 <Input
                   placeholder="Header name"
+                  labelPlacement="outside"
                   value={option.key}
                   onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
                   fullWidth
@@ -325,6 +352,7 @@ function ApiConnectionForm(props) {
                   onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
                   value={option.value}
                   placeholder="Value"
+                  labelPlacement="outside"
                   fullWidth
                 />
                 <Button
@@ -366,6 +394,7 @@ function ApiConnectionForm(props) {
           </>
         )}
 
+        <Divider />
         <Spacer y={4} />
         <Row align="center">
           <Button
@@ -409,30 +438,36 @@ function ApiConnectionForm(props) {
       )}
 
       {testResult && !testLoading && (
-        <Container className={"bg-content2"} size="md">
-          <Row align="center">
-            <Text>
-              {"Test Result "}
+        <>
+          <Divider />
+          <Spacer y={4} />
+          <div>
+            <Row align="center">
+              <Text>
+                {"Test Result "}
+              </Text>
+              <Spacer x={1} />
               <Chip
+                size="sm"
                 color={testResult.status < 400 ? "success" : "danger"}
               >
                 {`Status code: ${testResult.status}`}
               </Chip>
-            </Text>
-          </Row>
-          <Spacer y={4} />
-          <AceEditor
-            mode="json"
-            theme={isDark ? "one_dark" : "tomorrow"}
-            style={{ borderRadius: 10 }}
-            height="150px"
-            width="none"
-            value={testResult.body || "Hello"}
-            readOnly
-            name="queryEditor"
-            editorProps={{ $blockScrolling: true }}
-          />
-        </Container>
+            </Row>
+            <Spacer y={4} />
+            <AceEditor
+              mode="json"
+              theme={isDark ? "one_dark" : "tomorrow"}
+              style={{ borderRadius: 10 }}
+              height="150px"
+              width="none"
+              value={testResult.body || "Hello"}
+              readOnly
+              name="queryEditor"
+              editorProps={{ $blockScrolling: true }}
+            />
+          </div>
+        </>
       )}
     </div>
   );
@@ -446,8 +481,6 @@ ApiConnectionForm.defaultProps = {
 
 ApiConnectionForm.propTypes = {
   onComplete: PropTypes.func.isRequired,
-  onTest: PropTypes.func.isRequired,
-  projectId: PropTypes.string.isRequired,
   editConnection: PropTypes.object,
   addError: PropTypes.bool,
   testResult: PropTypes.object,

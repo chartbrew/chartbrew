@@ -562,8 +562,10 @@ function UserDashboard(props) {
                     <Button
                       color="primary"
                       endContent={<LuPlus />}
+                      as={Link}
+                      to={`/${team.id}/connection/new`}
                     >
-                      Add a connection
+                      Create new connection
                     </Button>
                     <Input
                       type="text"
@@ -585,7 +587,7 @@ function UserDashboard(props) {
                       {connections.map((connection) => (
                         <TableRow key={connection.id}>
                           <TableCell key="name">
-                            <Row align={"center"} className={"gap-2"}>
+                            <Row align={"center"} className={"gap-4"}>
                               <Avatar
                                 src={connectionImages(isDark)[connection.type]}
                                 size="sm"
@@ -638,7 +640,7 @@ function UserDashboard(props) {
                       onClick={() => _onCreateDataset()}
                       isLoading={creatingDataset}
                     >
-                      Add a dataset
+                      Create new dataset
                     </Button>
                     <Input
                       type="text"

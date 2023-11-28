@@ -95,6 +95,9 @@ const router = createBrowserRouter([
       {
         path: ":teamId/dataset/:datasetId",
       },
+      {
+        path: ":teamId/connection/:connectionId",
+      },
     ],
   },
 ]);

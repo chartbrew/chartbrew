@@ -84,9 +84,8 @@ export const testRequest = createAsyncThunk(
       Authorization: `Bearer ${token}`,
     });
     const response = await fetch(url, { headers, method: "POST", body });
-    const data = await response.json();
 
-    return data;
+    return response;
   }
 );
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
-import moment from "moment";
 import {
   Button, Modal, Spacer, Tabs, Tab, CardBody, Image, CardFooter, Card,
   ModalHeader, ModalBody, ModalFooter, ModalContent,
@@ -33,7 +32,6 @@ import {
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import { getProjectCharts } from "../../slices/chart";
 import canAccess from "../../config/canAccess";
-import { primary } from "../../config/colors";
 import connectionImages from "../../config/connectionImages";
 import TimescaleConnectionForm from "./Timescale/TimescaleConnectionForm";
 import StrapiConnectionForm from "./Strapi/StrapiConnectionForm";
@@ -44,13 +42,14 @@ import useThemeDetector from "../../modules/useThemeDetector";
 import availableConnections from "../../modules/availableConnections";
 import availableTemplates from "../../modules/availableTemplates";
 import { HiArrowLeft, HiPlus, HiTrash } from "react-icons/hi";
+import { selectTeam } from "../../slices/team";
 
 /*
   The page that contains all the connections
 */
 function Connections(props) {
   const {
-    cleanErrors, user, team, getTemplates, templates,
+    cleanErrors, user, getTemplates, templates,
   } = props;
 
   const [newConnectionModal, setNewConnectionModal] = useState(false);
@@ -66,6 +65,7 @@ function Connections(props) {
   const [templateConnection, setTemplateConnection] = useState(-1);
 
   const connections = useSelector(selectConnections);
+  const team = useSelector(selectTeam);
 
   const params = useParams();
   const navigate = useNavigate();
@@ -163,11 +163,6 @@ function Connections(props) {
         return Promise.resolve(newTestResult);
       })
       .catch(() => {});
-  };
-
-  const _onRemoveConfirmation = (connection) => {
-    setSelectedConnection(connection);
-    setRemoveModal(true);
   };
 
   const _onRemoveConnection = () => {
@@ -518,75 +513,6 @@ function Connections(props) {
 
         {formType && <Spacer y={8} />}
 
-        {connections.length > 0 && (
-          <Row align="center">
-            <Text size="h2">
-              {"Your connections"}
-            </Text>
-          </Row>
-        )}
-        <Spacer y={2} />
-        <Row align="center">
-          <div className="grid grid-cols-12 gap-4 w-full">
-            {connections.map(connection => {
-              return (
-                <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-4" key={connection.id}>
-                  <Card
-                    variant="bordered"
-                    isPressable
-                    isHoverable
-                    style={
-                      editConnection && connection.id === editConnection.id
-                        ? styles.selectedConnection : {}
-                    }
-                    onClick={() => _onEditConnection(connection)}
-                    className="w-full"
-                  >
-                    <CardBody className="p-4">
-                      <Row align="center">
-                        <Image
-                          src={connectionImages(isDark)[connection.subType || connection.type]}
-                          height={50}
-                          width={50}
-                          radius="sm"
-                          alt="connection image"
-                        />
-                        <Spacer x={4} />
-                        <div className="flex flex-col">
-                          <Text size="h4">{connection.name}</Text>
-                          <Text className={"text-gray-500"}>
-                            {`Created on ${moment(connection.createdAt).format("LL")}`}
-                          </Text>
-                        </div>
-                      </Row>
-                    </CardBody>
-                    {_canAccess("projectAdmin") && (
-                      <CardFooter className="gap-2">
-                        <Button
-                          variant="flat"
-                          onClick={() => _onEditConnection(connection)}
-                          fullWidth
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          color="danger"
-                          variant="flat"
-                          onClick={() => _onRemoveConfirmation(connection)}
-                          isLoading={removeLoading === connection.id}
-                          fullWidth
-                        >
-                          {"Remove"}
-                        </Button>
-                      </CardFooter>
-                    )}
-                  </Card>
-                </div>
-              );
-            })}
-          </div>
-        </Row>
-
         <Spacer y={10} />
       </Container>
 
@@ -626,22 +552,8 @@ function Connections(props) {
   );
 }
 
-const styles = {
-  container: {
-    flex: 1,
-  },
-  selectedConnection: {
-    boxShadow: `${primary} 0 3px 3px 0, ${primary} 0 0 0 3px`,
-  },
-  smallerText: {
-    fontSize: 12,
-  },
-};
-
 Connections.propTypes = {
-  team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
-  match: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
   getTemplates: PropTypes.func.isRequired,
   templates: PropTypes.object.isRequired,
@@ -649,7 +561,6 @@ Connections.propTypes = {
 
 const mapStateToProps = (state) => {
   return {
-    team: state.team.active,
     user: state.user.data,
     templates: state.template,
   };
