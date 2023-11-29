@@ -19,7 +19,7 @@ import {
 
 import { changeTutorial as changeTutorialAction } from "../../actions/tutorial";
 import {
-  getDataset, runRequest, updateDataset,
+  getDataset, runRequest, saveNewDataset, updateDataset,
 } from "../../slices/dataset";
 import Navbar from "../../components/Navbar";
 import { getTeamConnections } from "../../slices/connection";
@@ -45,6 +45,7 @@ function Dataset() {
   const navigate = useNavigate();
   const initRef = useRef(null);
   const chartInitRef = useRef(null);
+  const createInitRef = useRef(null);
 
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
   const ghostProject = useSelector((state) => state.project.data?.find((p) => p.ghost));
@@ -74,6 +75,27 @@ function Dataset() {
       setLegend(dataset.legend);
     }
   }, [dataset]);
+
+  useEffect(() => {
+    if (params.datasetId === "new" && !createInitRef.current) {
+      createInitRef.current = true;
+      dispatch(saveNewDataset({
+        team_id: params.teamId,
+        data: {
+          legend: "New dataset",
+          team_id: params.teamId,
+          draft: true,
+        },
+      }))
+        .then((newDataset) => {
+          navigate(`/${params.teamId}/dataset/${newDataset.payload.id}`);
+          dispatch(getDataset({
+            team_id: params.teamId,
+            dataset_id: newDataset.payload.id,
+          }));
+        });
+    }
+  }, [params]);
 
   useEffect(() => {
     if (ghostProject?.id && !chart && dataset && !chartInitRef.current) {
@@ -290,6 +312,7 @@ function Dataset() {
                   </div>
                 )}
                 textValue="Configure"
+                isDisabled={dataset?.DataRequests.length === 0}
               />
             </Tabs>
           </div>

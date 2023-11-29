@@ -8,23 +8,29 @@ import { FcGraduationCap } from "react-icons/fc";
 import Row from "./Row";
 import Text from "./Text";
 
+const bannerData = {
+  api: {
+    title: "Learn how to visualize your API data with Chartbrew",
+    description: "Chartbrew can connect to your API data and create charts that tell you more about your data.",
+    url: "https://chartbrew.com/blog/how-to-visualize-simple-analytics-data-with-chartbrew/",
+    info: "5 min read",
+  },
+}
+
 function HelpBanner(props) {
-  const {
-    title, description, url, info, imageUrl
-  } = props;
+  const { type, imageUrl } = props;
 
   const _onOpenHelp = () => {
     // open the url in a new tab
-    window.open(url, "_blank");
+    window.open(bannerData[type].url, "_blank");
   };
 
   return (
     <Card
-      variant="bordered"
       isPressable
       isHoverable
       onClick={() => _onOpenHelp()}
-      className="max-w-[400px] border-1 border-content3"
+      className="max-w-[400px]"
       shadow="sm"
     >
       <CardHeader className="flex gap-3">
@@ -35,14 +41,21 @@ function HelpBanner(props) {
           radius="sm"
         />
         <div>
-          <Link className={"text-lg font-bold text-start"} href={url} target="_blank" rel="noopener">{title}</Link>
+          <Link
+            className={"font-bold text-start"}
+            href={bannerData[type].url}
+            target="_blank"
+            rel="noopener"
+          >
+            {bannerData[type].title}
+          </Link>
         </div>
       </CardHeader>
       <Divider />
       <CardBody>
         <div>
           <Text>
-            {description}
+            {bannerData[type].description}
           </Text>
         </div>
       </CardBody>
@@ -56,7 +69,7 @@ function HelpBanner(props) {
             color="default"
             target="_blank"
           >
-            {info}
+            {bannerData[type].info}
           </Text>
         </Row>
       </CardFooter>
@@ -65,11 +78,12 @@ function HelpBanner(props) {
 }
 
 HelpBanner.propTypes = {
-  title: PropTypes.string.isRequired,
-  description: PropTypes.string.isRequired,
-  url: PropTypes.string.isRequired,
+  type: PropTypes.string,
   imageUrl: PropTypes.string.isRequired,
-  info: PropTypes.string.isRequired,
+};
+
+HelpBanner.defaultProps = {
+  type: "api",
 };
 
 export default HelpBanner;

@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { LuClipboard, LuCompass, LuSearch } from "react-icons/lu";
-import { Button, Card, CardBody, CardFooter, CardHeader, Image, Input, Spacer } from "@nextui-org/react";
+import { LuAreaChart, LuCheckCircle, LuClipboard, LuCompass, LuLayoutDashboard, LuSearch } from "react-icons/lu";
+import { Button, Card, CardBody, CardFooter, CardHeader, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer } from "@nextui-org/react";
 import { useDispatch } from "react-redux";
-import { TbBrandDiscord } from "react-icons/tb";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 
 import Segment from "../../components/Segment";
 import availableConnections from "../../modules/availableConnections";
@@ -20,16 +19,20 @@ import GaConnectionForm from "./GoogleAnalytics/GaConnectionForm";
 import StrapiConnectionForm from "./Strapi/StrapiConnectionForm";
 import CustomerioConnectionForm from "./Customerio/CustomerioConnectionForm";
 import TimescaleConnectionForm from "./Timescale/TimescaleConnectionForm";
-import { saveConnection } from "../../slices/connection";
+import { addConnection, saveConnection } from "../../slices/connection";
+import HelpBanner from "../../components/HelpBanner";
 
 function ConnectionWizard() {
   const [connectionSearch, setConnectionSearch] = useState("");
   const [selectedType, setSelectedType] = useState("");
+  const [completionModal, setCompletionModal] = useState(false);
 
   const isDark = useThemeDetector();
   const bottomRef = useRef(null);
+  const asideRef = useRef(null);
   const dispatch = useDispatch();
   const params = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (selectedType) {
@@ -38,6 +41,14 @@ function ConnectionWizard() {
         block: "end",
         inline: "nearest",
       });
+
+      setTimeout(() => {
+        asideRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+          inline: "nearest",
+        });
+      }, 500);
     }
   }, [selectedType]);
 
@@ -49,15 +60,29 @@ function ConnectionWizard() {
   });
 
   const _onAddNewConnection = (data) => {
-    return dispatch(saveConnection({ team_id: params.teamId, connection: data }))
+    if (params.connectionId !== "new") {
+      return dispatch(saveConnection({ team_id: params.teamId, connection: data }))
+        .then(() => {
+          setSelectedType("");
+          return true;
+        })
+        .catch(() => {
+          return false;
+        });
+    }
+
+    return dispatch(addConnection({
+        team_id: params.teamId,
+        connection: { ...data, team_id: params.teamId }
+      }))
       .then(() => {
+        setCompletionModal(true);
         setSelectedType("");
-        return true;
       })
       .catch(() => {
         return false;
       });
-    };
+  };
 
   return (
     <div>
@@ -207,29 +232,6 @@ function ConnectionWizard() {
 
               <Card>
                 <CardHeader className="flex flex-col items-start">
-                  <p className="font-semibold">Need help with anything?</p>
-                </CardHeader>
-                <CardBody>
-                  <p className="text-sm text-gray-500">
-                    {"If you're having issues with the connection, need new integrations or anything else, we're here to help."}
-                  </p>
-                </CardBody>
-                <CardFooter>
-                  <Button
-                    size="sm"
-                    color="primary"
-                    fullWidth
-                    endContent={<TbBrandDiscord />}
-                  >
-                    Join our Discord
-                  </Button>
-                </CardFooter>
-              </Card>
-
-              <Spacer y={1} />
-
-              <Card>
-                <CardHeader className="flex flex-col items-start">
                   <p className="font-semibold">Check out our tutorials</p>
                 </CardHeader>
                 <CardBody>
@@ -248,10 +250,55 @@ function ConnectionWizard() {
                   </Button>
                 </CardFooter>
               </Card>
+
+              <Spacer y={1} />
+
+              {selectedType && (
+                <HelpBanner
+                  type={selectedType}
+                  imageUrl={connectionImages(isDark)[selectedType]}
+                />
+              )}
             </div>
+
+            <div ref={asideRef} />
           </div>
         </aside>
       </div>
+
+      <Modal
+        isOpen={completionModal}
+        onClose={() => setCompletionModal(false)}
+        size="lg"
+      >
+        <ModalContent>
+          <ModalHeader className="flex flex-row items-center gap-2">
+            <LuCheckCircle className="text-success" />
+            <span className="font-semibold">Your connection was saved!</span>
+          </ModalHeader>
+          <ModalBody>
+            What would you like to do next?
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              color="secondary"
+              fullWidth
+              onClick={() => navigate("/user")}
+              startContent={<LuLayoutDashboard />}
+            >
+              Return to dashboard
+            </Button>
+            <Button
+              color="primary"
+              fullWidth
+              onClick={() => navigate(`/${params.teamId}/dataset/new`)}
+              startContent={<LuAreaChart />}
+            >
+              Create dataset
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   )
 }

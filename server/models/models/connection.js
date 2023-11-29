@@ -24,15 +24,6 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "cascade",
       },
     },
-    project_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      reference: {
-        model: "Project",
-        key: "id",
-        onDelete: "cascade",
-      },
-    },
     project_ids: {
       type: DataTypes.TEXT,
       set(val) {

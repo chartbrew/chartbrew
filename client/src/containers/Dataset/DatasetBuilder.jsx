@@ -143,7 +143,7 @@ function DatasetBuilder(props) {
 
   const _filterOptions = (axis) => {
     let filteredOptions = fieldOptions;
-    if (axis === "x" && chart.type !== "table") {
+    if (axis === "x" && chart?.type !== "table") {
       filteredOptions = filteredOptions.filter((f) => {
         if (f.type === "array" || (f.value && f.value.split("[]").length > 2)) {
           return false;
@@ -153,7 +153,7 @@ function DatasetBuilder(props) {
       });
     }
 
-    if (chart.type !== "table") return filteredOptions;
+    if (chart?.type !== "table") return filteredOptions;
 
     filteredOptions = fieldOptions.filter((f) => f.type === "array");
 

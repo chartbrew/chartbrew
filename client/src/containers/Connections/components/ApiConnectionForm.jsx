@@ -14,8 +14,6 @@ import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import HelpBanner from "../../../components/HelpBanner";
-import connectionImages from "../../../config/connectionImages";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
@@ -210,16 +208,6 @@ function ApiConnectionForm(props) {
           </Text>
         </Row>
         <Spacer y={4} />
-        <Row>
-          <HelpBanner
-            title="Learn how to visualize your API data with Chartbrew"
-            description="Chartbrew can connect to your API data and create charts that tell you more about your data."
-            url={"https://chartbrew.com/blog/how-to-visualize-simple-analytics-data-with-chartbrew/"}
-            imageUrl={connectionImages(isDark).api}
-            info="5 min read"
-          />
-        </Row>
-        <Spacer y={8} />
         <Row className={"gap-4"}>
           <Input
             label="Enter a name for your connection"
@@ -228,7 +216,7 @@ function ApiConnectionForm(props) {
             onChange={(e) => {
               setConnection({ ...connection, name: e.target.value });
             }}
-            color={errors.name ? "error" : "default"}
+            color={errors.name ? "danger" : "default"}
             fullWidth
             variant="bordered"
             description={errors.name}
@@ -242,7 +230,7 @@ function ApiConnectionForm(props) {
               setConnection({ ...connection, host: e.target.value });
             }}
             fullWidth
-            color={errors.host ? "error" : "default"}
+            color={errors.host ? "danger" : "default"}
             variant="bordered"
             description={errors.host}
           />
@@ -409,7 +397,7 @@ function ApiConnectionForm(props) {
           {!editConnection && (
             <Button
               isLoading={loading}
-              onClick={_onCreateConnection}
+              onClick={() => _onCreateConnection()}
               color="primary"
             >
               {"Save connection"}

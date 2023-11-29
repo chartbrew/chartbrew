@@ -271,9 +271,9 @@ class TeamController {
               model: db.Project,
               include: [
                 { model: db.Chart, attributes: ["id"] },
-                { model: db.Connection, attributes: ["id"] },
               ],
             },
+            { model: db.Connection, attributes: ["id"] },
           ],
         });
       })

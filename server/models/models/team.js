@@ -32,6 +32,7 @@ module.exports = (sequelize, DataTypes) => {
     models.Team.hasMany(models.TeamInvitation, { foreignKey: "team_id" });
     models.Team.hasMany(models.Template, { foreignKey: "team_id" });
     models.Team.hasMany(models.Apikey, { foreignKey: "team_id" });
+    models.Team.hasMany(models.Connection, { foreignKey: "team_id" });
   };
 
   return Team;

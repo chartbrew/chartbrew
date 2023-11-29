@@ -13,7 +13,7 @@ import {
   LuBarChart, LuCalendarDays, LuChevronDown, LuDatabase, LuLayoutGrid, LuPencilLine, LuPlug, LuPlus, LuSearch, LuSettings,
   LuTrash, LuUsers2,
 } from "react-icons/lu";
-import { Flip, toast, ToastContainer } from "react-toastify";
+import { Flip, ToastContainer } from "react-toastify";
 
 import { relog as relogAction } from "../actions/user";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
@@ -40,7 +40,7 @@ import {
 } from "../slices/team";
 import {
   deleteDataset,
-  getDatasets, getRelatedCharts, saveNewDataset, selectDatasets,
+  getDatasets, getRelatedCharts, selectDatasets,
 } from "../slices/dataset";
 import Segment from "../components/Segment";
 
@@ -68,7 +68,6 @@ function UserDashboard(props) {
   const [relatedCharts, setRelatedCharts] = useState([]);
   const [fetchingRelatedCharts, setFetchingRelatedCharts] = useState(false);
   const [deletingDataset, setDeletingDataset] = useState(false);
-  const [creatingDataset, setCreatingDataset] = useState(false);
   const [datasetSearch, setDatasetSearch] = useState("");
   const [showDatasetDrafts, setShowDatasetDrafts] = useState(false);
 
@@ -258,23 +257,7 @@ function UserDashboard(props) {
   };
 
   const _onCreateDataset = () => {
-    dispatch(saveNewDataset({
-      team_id: team.id,
-      data: {
-        legend: "New dataset",
-        team_id: team.id,
-        draft: true,
-      },
-    }))
-      .then((createdDataset) => {
-        if (!createdDataset.payload?.id) throw new Error("Dataset not created");
-
-        navigate(`/${team.id}/dataset/${createdDataset.payload.id}`);
-      })
-      .catch(() => {
-        setCreatingDataset(false);
-        toast.error("Uh oh! Something went wrong. Please try again.");
-      });
+    navigate(`/${team.id}/dataset/new`);
   };
 
   const _getFilteredDatasets = () => {
@@ -638,7 +621,6 @@ function UserDashboard(props) {
                       color="primary"
                       endContent={<LuPlus />}
                       onClick={() => _onCreateDataset()}
-                      isLoading={creatingDataset}
                     >
                       Create new dataset
                     </Button>

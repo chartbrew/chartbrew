@@ -25,7 +25,6 @@ class ProjectController {
       where: { id },
       order: [[db.Chart, "dashboardOrder", "ASC"], [db.Chart, db.ChartDatasetConfig, "order", "ASC"]],
       include: [
-        { model: db.Connection, attributes: ["id", "project_id", "name", "type", "subType"] },
         { model: db.Chart, include: [{ model: db.ChartDatasetConfig }] }
       ],
     })
