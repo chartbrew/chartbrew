@@ -121,6 +121,7 @@ class ConnectionController {
       where: { team_id: teamId },
       attributes: { exclude: ["password"] },
       include: [{ model: db.OAuth, attributes: { exclude: ["refreshToken"] } }],
+      order: [["createdAt", "DESC"]],
     })
       .then((connections) => {
         return connections;
@@ -149,6 +150,7 @@ class ConnectionController {
       where: { project_ids: { [Sequelize.Op.overlap]: projects } },
       attributes: { exclude: ["password"] },
       include: [{ model: db.OAuth, attributes: { exclude: ["refreshToken"] } }],
+      order: [["createdAt", "DESC"]],
     })
       .then((connections) => {
         return connections;

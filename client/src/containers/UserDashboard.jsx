@@ -545,8 +545,7 @@ function UserDashboard(props) {
                     <Button
                       color="primary"
                       endContent={<LuPlus />}
-                      as={Link}
-                      to={`/${team.id}/connection/new`}
+                      onClick={() => navigate(`/${team.id}/connection/new`)}
                     >
                       Create new connection
                     </Button>
@@ -560,7 +559,7 @@ function UserDashboard(props) {
                     />
                   </Row>
                   <Spacer y={2} />
-                  <Table shadow="none" className="border-2 border-solid border-content3 rounded-xl">
+                  <Table shadow="none" isStriped className="border-2 border-solid border-content3 rounded-xl">
                     <TableHeader>
                       <TableColumn key="name">Connection name</TableColumn>
                       <TableColumn key="type">Type</TableColumn>

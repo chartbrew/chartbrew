@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {
   Card, CardBody, CardFooter, CardHeader, Divider, Image, Link, Spacer,
 } from "@nextui-org/react";
-import { FcGraduationCap } from "react-icons/fc";
+import { LuGraduationCap } from "react-icons/lu";
 
 import Row from "./Row";
 import Text from "./Text";
@@ -116,7 +116,7 @@ function HelpBanner(props) {
       <Divider />
       <CardFooter>
         <Row align="center">
-          <FcGraduationCap size={24} />
+          <LuGraduationCap size={24} />
           <Spacer x={1} />
           <Text
             css={{ py: 5 }}
