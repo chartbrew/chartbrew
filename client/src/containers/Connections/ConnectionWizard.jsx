@@ -78,6 +78,7 @@ function ConnectionWizard() {
       .then(() => {
         setCompletionModal(true);
         setSelectedType("");
+        return true;
       })
       .catch(() => {
         return false;
@@ -155,38 +156,47 @@ function ConnectionWizard() {
           )}
           {selectedType === "mongodb" && (
             <MongoConnectionForm
+              onComplete={_onAddNewConnection}
             />
           )}
           {selectedType === "postgres" && (
             <PostgresConnectionForm
+              onComplete={_onAddNewConnection}
             />
           )}
           {selectedType === "mysql" && (
             <MysqlConnectionForm
+              onComplete={_onAddNewConnection}
             />
           )}
           {selectedType === "firestore" && (
             <FirestoreConnectionForm
+              onComplete={_onAddNewConnection}
             />
           )}
           {selectedType === "realtimedb" && (
             <RealtimeDbConnectionForm
+              onComplete={_onAddNewConnection}
             />
           )}
           {selectedType === "googleAnalytics" && (
             <GaConnectionForm
+              onComplete={_onAddNewConnection}
             />
           )}
           {selectedType === "strapi" && (
             <StrapiConnectionForm
+              onComplete={_onAddNewConnection}
             />
           )}
           {selectedType === "customerio" && (
             <CustomerioConnectionForm
+              onComplete={_onAddNewConnection}
             />
           )}
           {selectedType === "timescaledb" && (
             <TimescaleConnectionForm
+              onComplete={_onAddNewConnection}
             />
           )}
 

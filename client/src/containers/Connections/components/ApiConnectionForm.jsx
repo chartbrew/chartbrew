@@ -137,23 +137,20 @@ function ApiConnectionForm(props) {
     }
 
     // add the project ID
-    setConnection({ ...connection, options: newOptions });
+    const newConnection = { ...connection, options: newOptions };
+    setConnection(newConnection);
 
-    setTimeout(() => {
-      const newConnection = connection;
-      newConnection.options = newOptions;
-      if (test === true) {
-        setTestLoading(true);
-        _onTestRequest(newConnection)
-          .then(() => setTestLoading(false))
-          .catch(() => setTestLoading(false));
-      } else {
-        setLoading(true);
-        onComplete(newConnection)
-          .then(() => setLoading(false))
-          .catch(() => setLoading(false));
-      }
-    }, 100);
+    if (test === true) {
+      setTestLoading(true);
+      _onTestRequest(newConnection)
+        .then(() => setTestLoading(false))
+        .catch(() => setTestLoading(false));
+    } else {
+      setLoading(true);
+      onComplete(newConnection)
+        .then(() => setLoading(false))
+        .catch(() => setLoading(false));
+    }
   };
 
   const _addOption = () => {

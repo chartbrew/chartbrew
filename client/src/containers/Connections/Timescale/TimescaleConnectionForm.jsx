@@ -102,19 +102,17 @@ function TimescaleConnectionForm(props) {
 
     setConnection(newConnection);
 
-    setTimeout(() => {
-      if (test === true) {
-        setTestLoading(true);
-        _onTestRequest(newConnection)
-          .then(() => setTestLoading(false))
-          .catch(() => setTestLoading(false));
-      } else {
-        setLoading(true);
-        onComplete(newConnection)
-          .then(() => setLoading(false))
-          .catch(() => setLoading(false));
-      }
-    }, 100);
+    if (test === true) {
+      setTestLoading(true);
+      _onTestRequest(newConnection)
+        .then(() => setTestLoading(false))
+        .catch(() => setTestLoading(false));
+    } else {
+      setLoading(true);
+      onComplete(newConnection)
+        .then(() => setLoading(false))
+        .catch(() => setLoading(false));
+    }
   };
 
   return (
@@ -321,7 +319,7 @@ function TimescaleConnectionForm(props) {
           <Spacer x={1} />
           <Button
             isLoading={loading}
-            onClick={_onCreateConnection}
+            onClick={() => _onCreateConnection()}
             color="primary"
           >
             {"Save connection"}
