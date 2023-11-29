@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Spacer, Chip, Tabs, Tab, CircularProgress,
+  Button, Input, Link, Spacer, Chip, Tabs, Tab, Divider,
 } from "@nextui-org/react";
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
 import AceEditor from "react-ace";
@@ -15,13 +15,16 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import useThemeDetector from "../../../modules/useThemeDetector";
 import { RiArrowRightSLine } from "react-icons/ri";
+import { useDispatch } from "react-redux";
+import { useParams } from "react-router";
+import { testRequest } from "../../../slices/connection";
 
 /*
   The Form for creating a new Mysql connection
 */
 function MysqlConnectionForm(props) {
   const {
-    editConnection, onComplete, addError, onTest, testResult,
+    editConnection, onComplete, addError,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -29,8 +32,11 @@ function MysqlConnectionForm(props) {
   const [connection, setConnection] = useState({ type: "mysql", subType: "mysql" });
   const [errors, setErrors] = useState({});
   const [formStyle, setFormStyle] = useState("string");
+  const [testResult, setTestResult] = useState(null);
 
   const isDark = useThemeDetector();
+  const dispatch = useDispatch();
+  const params = useParams();
 
   useEffect(() => {
     _init();
@@ -46,6 +52,26 @@ function MysqlConnectionForm(props) {
 
       setConnection(newConnection);
     }
+  };
+
+  const _onTestRequest = (data) => {
+    const newTestResult = {};
+    return dispatch(testRequest({ team_id: params.teamId, connection: data }))
+      .then(async (response) => {
+        newTestResult.status = response.payload.status;
+        newTestResult.body = await response.payload.text();
+
+        try {
+          newTestResult.body = JSON.parse(newTestResult.body);
+          newTestResult.body = JSON.stringify(newTestResult, null, 2);
+        } catch (e) {
+          // the response is not in JSON format
+        }
+
+        setTestResult(newTestResult);
+        return Promise.resolve(newTestResult);
+      })
+      .catch(() => { });
   };
 
   const _onCreateConnection = (test = false) => {
@@ -80,7 +106,7 @@ function MysqlConnectionForm(props) {
     setTimeout(() => {
       if (test === true) {
         setTestLoading(true);
-        onTest(newConnection)
+        _onTestRequest(newConnection)
           .then(() => setTestLoading(false))
           .catch(() => setTestLoading(false));
       } else {
@@ -95,9 +121,10 @@ function MysqlConnectionForm(props) {
   return (
     <div className="p-unit-lg bg-content1 border-1 border-solid border-content3 rounded-lg">
       <div>
-        <Row align="center">
-          <Text size="lg">Add a new MySQL connection</Text>
-        </Row>
+        <p className="font-semibold">
+          {!editConnection && "Add a new MySQL connection"}
+          {editConnection && `Edit ${editConnection.name}`}
+        </p>
         <Spacer y={4} />
         <Row align="center" style={styles.formStyle}>
           <Tabs
@@ -312,43 +339,36 @@ function MysqlConnectionForm(props) {
         </Row>
       </div>
 
-      {testLoading && (
-        <Container className={"bg-content2 rounded-md"} size="md">
-          <Row align="center">
-            <CircularProgress aria-label="loading" />
-          </Row>
-          <Spacer y={4} />
-        </Container>
-      )}
-
       {testResult && !testLoading && (
-        <Container
-          className={"bg-content2 rounded-md mt-20"}
-          size="md"
-        >
-          <Row align="center">
-            <Text>
-              {"Test Result "}
-              <Chip
-                color={testResult.status < 400 ? "success" : "danger"}
-              >
-                {`Status code: ${testResult.status}`}
-              </Chip>
-            </Text>
-          </Row>
+        <>
           <Spacer y={4} />
-          <AceEditor
-            mode="json"
-            theme={isDark ? "one_dark" : "tomorrow"}
-            style={{ borderRadius: 10 }}
-            height="150px"
-            width="none"
-            value={testResult.body || "Hello"}
-            readOnly
-            name="queryEditor"
-            editorProps={{ $blockScrolling: true }}
-          />
-        </Container>
+          <Divider />
+          <Spacer y={4} />
+          <div>
+            <Row align="center">
+              <Text>
+                {"Test Result "}
+                <Chip
+                  color={testResult.status < 400 ? "success" : "danger"}
+                >
+                  {`Status code: ${testResult.status}`}
+                </Chip>
+              </Text>
+            </Row>
+            <Spacer y={4} />
+            <AceEditor
+              mode="json"
+              theme={isDark ? "one_dark" : "tomorrow"}
+              style={{ borderRadius: 10 }}
+              height="150px"
+              width="none"
+              value={testResult.body || "Hello"}
+              readOnly
+              name="queryEditor"
+              editorProps={{ $blockScrolling: true }}
+            />
+          </div>
+        </>
       )}
     </div>
   );
@@ -374,19 +394,14 @@ const styles = {
 
 MysqlConnectionForm.defaultProps = {
   onComplete: () => {},
-  onTest: () => {},
   editConnection: null,
   addError: false,
-  testResult: null,
 };
 
 MysqlConnectionForm.propTypes = {
   onComplete: PropTypes.func,
-  onTest: PropTypes.func,
-  projectId: PropTypes.string.isRequired,
   editConnection: PropTypes.object,
   addError: PropTypes.bool,
-  testResult: PropTypes.object,
 };
 
 export default MysqlConnectionForm;

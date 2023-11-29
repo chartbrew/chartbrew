@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Spacer, Chip, Tabs, Tab
+  Button, Input, Link, Spacer, Chip, Tabs, Tab, Divider
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { RiArrowRightSLine, RiExternalLinkFill } from "react-icons/ri";
@@ -10,19 +10,20 @@ import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import HelpBanner from "../../../components/HelpBanner";
-import connectionImages from "../../../config/connectionImages";
 import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 import useThemeDetector from "../../../modules/useThemeDetector";
+import { useDispatch } from "react-redux";
+import { useParams } from "react-router";
+import { testRequest } from "../../../slices/connection";
 
 /*
   A form for creating a new Timescale connection
 */
 function TimescaleConnectionForm(props) {
   const {
-    editConnection, projectId, onComplete, addError, onTest, testResult,
+    editConnection, onComplete, addError,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -30,12 +31,35 @@ function TimescaleConnectionForm(props) {
   const [connection, setConnection] = useState({ type: "postgres", subType: "timescaledb" });
   const [errors, setErrors] = useState({});
   const [formStyle, setFormStyle] = useState("string");
+  const [testResult, setTestResult] = useState(null);
 
   const isDark = useThemeDetector();
+  const dispatch = useDispatch();
+  const params = useParams();
 
   useEffect(() => {
     _init();
   }, []);
+
+  const _onTestRequest = (data) => {
+    const newTestResult = {};
+    return dispatch(testRequest({ team_id: params.teamId, connection: data }))
+      .then(async (response) => {
+        newTestResult.status = response.payload.status;
+        newTestResult.body = await response.payload.text();
+
+        try {
+          newTestResult.body = JSON.parse(newTestResult.body);
+          newTestResult.body = JSON.stringify(newTestResult, null, 2);
+        } catch (e) {
+          // the response is not in JSON format
+        }
+
+        setTestResult(newTestResult);
+        return Promise.resolve(newTestResult);
+      })
+      .catch(() => { });
+  };
 
   const _init = () => {
     if (editConnection) {
@@ -76,14 +100,12 @@ function TimescaleConnectionForm(props) {
       newConnection.connectionString = "";
     }
 
-    // add the project ID
-    newConnection.project_id = projectId;
     setConnection(newConnection);
 
     setTimeout(() => {
       if (test === true) {
         setTestLoading(true);
-        onTest(newConnection)
+        _onTestRequest(newConnection)
           .then(() => setTestLoading(false))
           .catch(() => setTestLoading(false));
       } else {
@@ -96,22 +118,13 @@ function TimescaleConnectionForm(props) {
   };
 
   return (
-    <div className="p-unit-lg bg-content1 shadow-md border-1 border-solid border-content3 rounded-lg">
+    <div className="p-unit-lg bg-content1 border-1 border-solid border-content3 rounded-lg">
       <div>
-        <Row align="center">
-          <Text size="lg">Add a new Timescale connection</Text>
-        </Row>
+        <p className="font-semibold">
+          {!editConnection && "Add a new TimescaleDB connection"}
+          {editConnection && `Edit ${editConnection.name}`}
+        </p>
         <Spacer y={4} />
-        <Row>
-          <HelpBanner
-            title="How to connect and visualize TimescaleDB data with Chartbrew"
-            description="Chartbrew can connect to your TimescaleDB database and create charts that tell you more about your data."
-            url={"https://chartbrew.com/blog/connect-and-visualize-timescaledb-data-with-chartbrew/"}
-            imageUrl={connectionImages(isDark).timescaledb}
-            info="6 min read"
-          />
-        </Row>
-        <Spacer y={8} />
         <Row align="center" style={styles.formStyle}>
           <Tabs
             aria-label="Connection options"
@@ -316,30 +329,22 @@ function TimescaleConnectionForm(props) {
         </Row>
       </div>
 
-      {testLoading && (
-        <>
-          <Spacer y={2} />
-          <Container className={"bg-danger-100 rounded-md p-20"}>
-            <Row align="center">
-              <Text b>Test underway...</Text>
-            </Row>
-            <Spacer y={4} />
-          </Container>
-        </>
-      )}
-
       {testResult && !testLoading && (
         <div>
-          <Spacer y={8} />
+          <Spacer y={4} />
+          <Divider />
+          <Spacer y={4} />
           <Row align="center">
             <Text>
               {"Test Result "}
-              <Chip
-                color={testResult.status < 400 ? "success" : "danger"}
-              >
-                {`Status code: ${testResult.status}`}
-              </Chip>
             </Text>
+            <Spacer x={2} />
+            <Chip
+              color={testResult.status < 400 ? "success" : "danger"}
+              size="sm"
+            >
+              {`Status code: ${testResult.status}`}
+            </Chip>
           </Row>
           <Spacer y={2} />
           <AceEditor
@@ -380,19 +385,14 @@ const styles = {
 
 TimescaleConnectionForm.defaultProps = {
   onComplete: () => {},
-  onTest: () => {},
   editConnection: null,
   addError: false,
-  testResult: null,
 };
 
 TimescaleConnectionForm.propTypes = {
   onComplete: PropTypes.func,
-  onTest: PropTypes.func,
-  projectId: PropTypes.string.isRequired,
   editConnection: PropTypes.object,
   addError: PropTypes.bool,
-  testResult: PropTypes.object,
 };
 
 export default TimescaleConnectionForm;

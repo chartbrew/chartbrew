@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Spacer,Link, Input,Checkbox, Tooltip, Button, Chip, Tabs, Tab, CircularProgress,
+  Spacer,Link, Input,Checkbox, Tooltip, Button, Chip, Tabs, Tab, Divider,
 } from "@nextui-org/react";
 
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
@@ -13,19 +13,20 @@ import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import HelpBanner from "../../../components/HelpBanner";
-import connectionImages from "../../../config/connectionImages";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
+import { useDispatch } from "react-redux";
+import { testRequest } from "../../../slices/connection";
+import { useParams } from "react-router";
 
 /*
   The MongoDB connection form
 */
 function MongoConnectionForm(props) {
   const {
-    editConnection, projectId, onComplete, addError, testResult, onTest,
+    editConnection, onComplete, addError,
   } = props;
 
   const [showIp, setShowIp] = useState(false);
@@ -36,8 +37,11 @@ function MongoConnectionForm(props) {
   });
   const [errors, setErrors] = useState({});
   const [formStyle, setFormStyle] = useState("string");
+  const [testResult, setTestResult] = useState(null);
 
   const isDark = useThemeDetector();
+  const dispatch = useDispatch();
+  const params = useParams();
 
   useEffect(() => {
     _init();
@@ -76,6 +80,26 @@ function MongoConnectionForm(props) {
         setFormStyle("form");
       }
     }
+  };
+
+  const _onTestRequest = (data) => {
+    const newTestResult = {};
+    return dispatch(testRequest({ team_id: params.teamId, connection: data }))
+      .then(async (response) => {
+        newTestResult.status = response.payload.status;
+        newTestResult.body = await response.payload.text();
+
+        try {
+          newTestResult.body = JSON.parse(newTestResult.body);
+          newTestResult.body = JSON.stringify(newTestResult, null, 2);
+        } catch (e) {
+          // the response is not in JSON format
+        }
+
+        setTestResult(newTestResult);
+        return Promise.resolve(newTestResult);
+      })
+      .catch(() => { });
   };
 
   const _onCreateConnection = (test = false) => {
@@ -137,13 +161,12 @@ function MongoConnectionForm(props) {
     }
 
     newConnection.options = newOptions;
-    newConnection.project_id = projectId;
 
     setConnection(newConnection);
     setTimeout(() => {
       if (test === true) {
         setTestLoading(true);
-        onTest(newConnection)
+        _onTestRequest(newConnection)
           .then(() => setTestLoading(false))
           .catch(() => setTestLoading(false));
       } else {
@@ -202,19 +225,10 @@ function MongoConnectionForm(props) {
   return (
     <div className="p-unit-lg bg-content1 border-1 border-solid border-content3 rounded-lg">
       <div>
-        <Row align="center">
-          <Text size="lg">Connect to a MongoDB database</Text>
-        </Row>
-        <Spacer y={4} />
-        <Row>
-          <HelpBanner
-            title="How to visualize your MongoDB data with Chartbrew"
-            description="Chartbrew can connect to your MongoDB database and create charts that tell you more about your data."
-            url={"https://chartbrew.com/blog/how-to-visualize-your-mongodb-data-with-chartbrew/"}
-            imageUrl={connectionImages(isDark).mongodb}
-            info="7 min read"
-          />
-        </Row>
+        <p className="font-semibold">
+          {!editConnection && "Connect to a MongoDB database"}
+          {editConnection && `Edit ${editConnection.name}`}
+        </p>
         <Spacer y={4} />
         <Row align="center" style={styles.formStyle}>
           <Tabs selectedKey={formStyle} onSelectionChange={(key) => setFormStyle(key)}>
@@ -523,43 +537,35 @@ function MongoConnectionForm(props) {
         </Row>
       </div>
 
-      {testLoading && (
+      {testResult && !testLoading && (
         <>
-          <Spacer y={1} />
-          <Container className={"bg-content2"} size="md">
+          <Divider />
+          <Spacer y={4} />
+          <div>
             <Row align="center">
-              <CircularProgress aria-label="Loading" />
+              <Text>
+                {"Test Result "}
+                <Chip
+                  color={testResult.status < 400 ? "success" : "danger"}
+                >
+                  {`Status code: ${testResult.status}`}
+                </Chip>
+              </Text>
             </Row>
             <Spacer y={4} />
-          </Container>
+            <AceEditor
+              mode="json"
+              theme={isDark ? "one_dark" : "tomorrow"}
+              style={{ borderRadius: 10 }}
+              height="150px"
+              width="none"
+              value={testResult.body || "Hello"}
+              readOnly
+              name="queryEditor"
+              editorProps={{ $blockScrolling: true }}
+            />
+          </div>
         </>
-      )}
-
-      {testResult && !testLoading && (
-        <Container className={"bg-content2"} size="md">
-          <Row align="center">
-            <Text>
-              {"Test Result "}
-              <Chip
-                color={testResult.status < 400 ? "success" : "danger"}
-              >
-                {`Status code: ${testResult.status}`}
-              </Chip>
-            </Text>
-          </Row>
-          <Spacer y={4} />
-          <AceEditor
-            mode="json"
-            theme={isDark ? "one_dark" : "tomorrow"}
-            style={{ borderRadius: 10 }}
-            height="150px"
-            width="none"
-            value={testResult.body || "Hello"}
-            readOnly
-            name="queryEditor"
-            editorProps={{ $blockScrolling: true }}
-          />
-        </Container>
       )}
     </div>
   );
@@ -586,19 +592,14 @@ const styles = {
 
 MongoConnectionForm.defaultProps = {
   onComplete: () => {},
-  onTest: () => {},
   editConnection: null,
   addError: false,
-  testResult: null,
 };
 
 MongoConnectionForm.propTypes = {
   onComplete: PropTypes.func,
-  onTest: PropTypes.func,
-  projectId: PropTypes.string.isRequired,
   editConnection: PropTypes.object,
   addError: PropTypes.bool,
-  testResult: PropTypes.object,
 };
 
 export default MongoConnectionForm;

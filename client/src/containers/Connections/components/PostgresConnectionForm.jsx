@@ -1,29 +1,30 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Spacer, Chip, Tabs, Tab, CircularProgress,
+  Button, Input, Link, Spacer, Chip, Tabs, Tab, Divider,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { RiArrowRightSLine } from "react-icons/ri";
+import { useDispatch } from "react-redux";
+import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import { FaExternalLinkSquareAlt } from "react-icons/fa";
-import HelpBanner from "../../../components/HelpBanner";
-import connectionImages from "../../../config/connectionImages";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
+import { LuExternalLink } from "react-icons/lu";
+import { testRequest } from "../../../slices/connection";
 
 /*
   A form for creating a new Postgres connection
 */
 function PostgresConnectionForm(props) {
   const {
-    editConnection, projectId, onComplete, addError, onTest, testResult,
+    editConnection, onComplete, addError,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -31,8 +32,11 @@ function PostgresConnectionForm(props) {
   const [connection, setConnection] = useState({ type: "postgres", subType: "postgres" });
   const [errors, setErrors] = useState({});
   const [formStyle, setFormStyle] = useState("string");
+  const [testResult, setTestResult] = useState(null);
 
   const isDark = useThemeDetector();
+  const dispatch = useDispatch();
+  const params = useParams();
 
   useEffect(() => {
     _init();
@@ -48,6 +52,26 @@ function PostgresConnectionForm(props) {
 
       setConnection(newConnection);
     }
+  };
+
+  const _onTestRequest = (data) => {
+    const newTestResult = {};
+    return dispatch(testRequest({ team_id: params.teamId, connection: data }))
+      .then(async (response) => {
+        newTestResult.status = response.payload.status;
+        newTestResult.body = await response.payload.text();
+
+        try {
+          newTestResult.body = JSON.parse(newTestResult.body);
+          newTestResult.body = JSON.stringify(newTestResult, null, 2);
+        } catch (e) {
+          // the response is not in JSON format
+        }
+
+        setTestResult(newTestResult);
+        return Promise.resolve(newTestResult);
+      })
+      .catch(() => { });
   };
 
   const _onCreateConnection = (test = false) => {
@@ -78,13 +102,12 @@ function PostgresConnectionForm(props) {
     }
 
     // add the project ID
-    newConnection.project_id = projectId;
     setConnection(newConnection);
 
     setTimeout(() => {
       if (test === true) {
         setTestLoading(true);
-        onTest(newConnection)
+        _onTestRequest(newConnection)
           .then(() => setTestLoading(false))
           .catch(() => setTestLoading(false));
       } else {
@@ -99,20 +122,11 @@ function PostgresConnectionForm(props) {
   return (
     <div className="p-unit-lg bg-content1 border-1 border-solid border-content3 rounded-lg">
       <div>
-        <Row align="center">
-          <Text size="lg">Add a new PostgreSQL connection</Text>
-        </Row>
+        <p className="font-semibold">
+          {!editConnection && "Add a new PostgreSQL connection"}
+          {editConnection && `Edit ${editConnection.name}`}
+        </p>
         <Spacer y={4} />
-        <Row>
-          <HelpBanner
-            title="How to visualize your PostgreSQL data with Chartbrew"
-            description="Chartbrew can connect to your PostgreSQL database and create charts that tell you more about your data."
-            url={"https://chartbrew.com/blog/how-to-visualize-your-supabase-data-with-chartbrew/#connect-to-supabase-using-the-database-connection-url"}
-            imageUrl={connectionImages(isDark).postgres}
-            info="5 min read"
-          />
-        </Row>
-        <Spacer y={8} />
         <Row align="center">
           <Tabs
             aria-label="Connection options"
@@ -276,7 +290,7 @@ function PostgresConnectionForm(props) {
             <Text>{"For security reasons, connect to your PostgreSQL database with read-only credentials"}</Text>
           </Link>
           <Spacer x={1} />
-          <FaExternalLinkSquareAlt size={12} />
+          <LuExternalLink size={12} />
         </Row>
         <Row align="center">
           <RiArrowRightSLine />
@@ -289,7 +303,7 @@ function PostgresConnectionForm(props) {
             <Text>{"Find out how to allow remote connections to your PostgreSQL database"}</Text>
           </Link>
           <Spacer x={1} />
-          <FaExternalLinkSquareAlt size={12} />
+          <LuExternalLink size={12} />
         </Row>
 
         {addError && (
@@ -326,43 +340,36 @@ function PostgresConnectionForm(props) {
         </Row>
       </div>
 
-      {testLoading && (
-        <Container className={"bg-content2 p-20 rounded-md"} size="md">
-          <Row align="center">
-            <CircularProgress aria-label="Loading" />
-          </Row>
-          <Spacer y={4} />
-        </Container>
-      )}
-
       {testResult && !testLoading && (
-        <Container
-          className={"bg-content2 p-20 rounded-md mt-20"}
-          size="md"
-        >
-          <Row align="center">
-            <Text>
-              {"Test Result "}
-              <Chip
-                type={testResult.status < 400 ? "success" : "danger"}
-              >
-                {`Status code: ${testResult.status}`}
-              </Chip>
-            </Text>
-          </Row>
+        <>
           <Spacer y={4} />
-          <AceEditor
-            mode="json"
-            theme={isDark ? "one_dark" : "tomorrow"}
-            style={{ borderRadius: 10 }}
-            height="150px"
-            width="none"
-            value={testResult.body || "Hello"}
-            readOnly
-            name="queryEditor"
-            editorProps={{ $blockScrolling: true }}
-          />
-        </Container>
+          <Divider />
+          <Spacer y={4} />
+          <div>
+            <Row align="center">
+              <Text>
+                {"Test Result "}
+                <Chip
+                  type={testResult.status < 400 ? "success" : "danger"}
+                >
+                  {`Status code: ${testResult.status}`}
+                </Chip>
+              </Text>
+            </Row>
+            <Spacer y={4} />
+            <AceEditor
+              mode="json"
+              theme={isDark ? "one_dark" : "tomorrow"}
+              style={{ borderRadius: 10 }}
+              height="150px"
+              width="none"
+              value={testResult.body || "Hello"}
+              readOnly
+              name="queryEditor"
+              editorProps={{ $blockScrolling: true }}
+            />
+          </div>
+        </>
       )}
     </div>
   );
@@ -370,19 +377,14 @@ function PostgresConnectionForm(props) {
 
 PostgresConnectionForm.defaultProps = {
   onComplete: () => {},
-  onTest: () => {},
   editConnection: null,
   addError: false,
-  testResult: null,
 };
 
 PostgresConnectionForm.propTypes = {
   onComplete: PropTypes.func,
-  onTest: PropTypes.func,
-  projectId: PropTypes.string.isRequired,
   editConnection: PropTypes.object,
   addError: PropTypes.bool,
-  testResult: PropTypes.object,
 };
 
 export default PostgresConnectionForm;

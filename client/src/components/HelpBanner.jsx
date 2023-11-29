@@ -15,6 +15,60 @@ const bannerData = {
     url: "https://chartbrew.com/blog/how-to-visualize-simple-analytics-data-with-chartbrew/",
     info: "5 min read",
   },
+  mongodb: {
+    title: "How to visualize your MongoDB data with Chartbrew",
+    description: "Chartbrew can connect to your MongoDB database and create charts that tell you more about your data.",
+    url: "https://chartbrew.com/blog/how-to-visualize-your-mongodb-data-with-chartbrew/",
+    info: "7 min read",
+  },
+  postgres: {
+    title: "How to visualize your PostgreSQL data with Chartbrew",
+    description: "Chartbrew can connect to your PostgreSQL database and create charts that tell you more about your data.",
+    url: "https://chartbrew.com/blog/how-to-visualize-your-supabase-data-with-chartbrew/#connect-to-supabase-using-the-database-connection-url",
+    info: "5 min read",
+  },
+  mysql: {
+    title: "How to visualize your MySQL data with Chartbrew",
+    description: "Chartbrew can connect to your MySQL database and create charts that tell you more about your data.",
+    url: "https://chartbrew.com/blog/how-to-visualize-your-mysql-data-with-chartbrew/",
+    info: "5 min read",
+  },
+  firestore: {
+    title: "How to visualize your Firestore data with Chartbrew",
+    description: "Connect, query, and visualize your Firestore data with Chartbrew. A step-by-step tutorial on how you can start creating your insightful dashboard.",
+    url: "https://chartbrew.com/blog/how-to-visualize-your-firestore-data-with-chartbrew/",
+    info: "5 min read",
+  },
+  realtimedb: {
+    title: "How to visualize your Realtime Database data with Chartbrew",
+    description: "Connect to Firebase Realtime Database to create reports and visualize your data. This tutorial will show you how to connect and create your first chart.",
+    url: "https://chartbrew.com/blog/visualize-your-firebase-realtime-database-with-chartbrew/",
+    info: "5 min read",
+  },
+  googleAnalytics: {
+    title: "How to visualize your Google Analytics data with Chartbrew",
+    description: "Learn how you can power up your Chartbrew dashboards with the Google Analytics integration. Get to know your data with Chartbrew.",
+    url: "https://chartbrew.com/blog/integrate-google-analytics-ga4-with-your-chartbrew-dashboards/",
+    info: "5 min read",
+  },
+  strapi: {
+    title: "How to visualize your Strapi data with Chartbrew",
+    description: "Chartbrew can connect to your Strapi's API to fetch data that can be visualized in a dashboard. You can use the data from your API to create charts and tables that will be updated in real-time.",
+    url: "https://chartbrew.com/blog/create-your-strapi-visualization-dashboard-with-chartbrew/",
+    info: "5 min read",
+  },
+  customerio: {
+    title: "How to visualize your Customer.io data with Chartbrew",
+    description: "Chartbrew can now integrate with Customer.io to get data about customers and visualize it with beautiful charts and live reports.",
+    url: "https://chartbrew.com/blog/visualize-and-report-on-customerio-data-with-chartbrew/",
+    info: "7 min read",
+  },
+  timescaledb: {
+    title: "How to visualize your TimescaleDB data with Chartbrew",
+    description: "Chartbrew can connect to your TimescaleDB database and create charts that tell you more about your data.",
+    url: "https://chartbrew.com/blog/connect-and-visualize-timescaledb-data-with-chartbrew/",
+    info: "5 min read",
+  },
 }
 
 function HelpBanner(props) {

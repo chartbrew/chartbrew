@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Spacer, Chip, Accordion, AccordionItem, Select, SelectItem, CircularProgress,
+  Button, Input, Link, Spacer, Chip, Accordion, AccordionItem, Select, SelectItem, Divider,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import "ace-builds/src-min-noconflict/mode-json";
@@ -9,12 +9,13 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 import { LuExternalLink, LuInfo } from "react-icons/lu";
 
-import HelpBanner from "../../../components/HelpBanner";
-import connectionImages from "../../../config/connectionImages";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
+import { useDispatch } from "react-redux";
+import { useParams } from "react-router";
+import { testRequest } from "../../../slices/connection";
 
 /*
 ** Customer.io form uses
@@ -23,7 +24,7 @@ import useThemeDetector from "../../../modules/useThemeDetector";
 */
 function CustomerioConnectionForm(props) {
   const {
-    editConnection, onTest, projectId, onComplete, addError, testResult
+    editConnection, onComplete, addError,
   } = props;
 
   const [connection, setConnection] = useState({
@@ -32,8 +33,11 @@ function CustomerioConnectionForm(props) {
   const [errors, setErrors] = useState({});
   const [testLoading, setTestLoading] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [testResult, setTestResult] = useState(null);
 
   const isDark = useThemeDetector();
+  const dispatch = useDispatch();
+  const params = useParams();
 
   const regionOptions = [
     {
@@ -53,6 +57,26 @@ function CustomerioConnectionForm(props) {
       setConnection(editConnection);
     }
   }, [editConnection]);
+
+  const _onTestRequest = (data) => {
+    const newTestResult = {};
+    return dispatch(testRequest({ team_id: params.teamId, connection: data }))
+      .then(async (response) => {
+        newTestResult.status = response.payload.status;
+        newTestResult.body = await response.payload.text();
+
+        try {
+          newTestResult.body = JSON.parse(newTestResult.body);
+          newTestResult.body = JSON.stringify(newTestResult, null, 2);
+        } catch (e) {
+          // the response is not in JSON format
+        }
+
+        setTestResult(newTestResult);
+        return Promise.resolve(newTestResult);
+      })
+      .catch(() => { });
+  };
 
   const _init = () => {
     if (editConnection) {
@@ -84,15 +108,11 @@ function CustomerioConnectionForm(props) {
       return;
     }
 
-    // add the project ID
-    setConnection({ ...connection, project_id: projectId });
-
     setTimeout(() => {
       const newConnection = connection;
-      if (!connection.id) newConnection.project_id = projectId;
       if (test === true) {
         setTestLoading(true);
-        onTest(newConnection)
+        _onTestRequest(newConnection)
           .then(() => setTestLoading(false))
           .catch(() => setTestLoading(false));
       } else {
@@ -110,26 +130,13 @@ function CustomerioConnectionForm(props) {
   };
 
   return (
-    <div className="p-unit-lg bg-content1 shadow-md border-1 border-solid border-content3 rounded-lg">
+    <div className="p-unit-lg bg-content1 border-1 border-solid border-content3 rounded-lg">
       <div>
-        <Row align="center">
-          <Text size="lg">
-            {!editConnection && "Connect to Customer.io"}
-            {editConnection && `Edit ${editConnection.name}`}
-          </Text>
-        </Row>
-        <Spacer y={2} />
-        <Row>
-          <HelpBanner
-            title="How to visualize your Customer.io data with Chartbrew"
-            description="Chartbrew can now integrate with Customer.io to get data about customers and visualize it with beautiful charts and live reports."
-            url={"https://chartbrew.com/blog/visualize-and-report-on-customerio-data-with-chartbrew/"}
-            imageUrl={connectionImages(isDark).customerio}
-            info="7 min read"
-          />
-        </Row>
-
-        <Spacer y={8} />
+        <p className="font-semibold">
+          {!editConnection && "Connect to Customer.io"}
+          {editConnection && `Edit ${editConnection.name}`}
+        </p>
+        <Spacer y={4} />
         <Row align="center">
           <Input
             label="Name your connection"
@@ -253,43 +260,36 @@ function CustomerioConnectionForm(props) {
         </Row>
       </div>
 
-      {testLoading && (
-        <Container className="bg-content2 rounded-md p-20" size="md">
-          <Row align="center">
-            <CircularProgress aria-label="Loading" />
-          </Row>
-          <Spacer y={4} />
-        </Container>
-      )}
-
       {testResult && !testLoading && (
-        <Container
-          className={"bg-content2 rounded-md mt-20 p-20"}
-          size="md"
-        >
-          <Row align="center">
-            <Text>
-              {"Test Result "}
-              <Chip
-                color={testResult.status < 400 ? "success" : "danger"}
-              >
-                {`Status code: ${testResult.status}`}
-              </Chip>
-            </Text>
-          </Row>
+        <>
           <Spacer y={4} />
-          <AceEditor
-            mode="json"
-            theme={isDark ? "one_dark" : "tomorrow"}
-            style={{ borderRadius: 10 }}
-            height="150px"
-            width="none"
-            value={testResult.body || "Hello"}
-            readOnly
-            name="queryEditor"
-            editorProps={{ $blockScrolling: true }}
-          />
-        </Container>
+          <Divider />
+          <Spacer y={4} />
+          <div>
+            <Row align="center">
+              <Text>
+                {"Test Result "}
+                <Chip
+                  color={testResult.status < 400 ? "success" : "danger"}
+                >
+                  {`Status code: ${testResult.status}`}
+                </Chip>
+              </Text>
+            </Row>
+            <Spacer y={4} />
+            <AceEditor
+              mode="json"
+              theme={isDark ? "one_dark" : "tomorrow"}
+              style={{ borderRadius: 10 }}
+              height="150px"
+              width="none"
+              value={testResult.body || "Hello"}
+              readOnly
+              name="queryEditor"
+              editorProps={{ $blockScrolling: true }}
+            />
+          </div>
+        </>
       )}
     </div>
   );
@@ -298,16 +298,12 @@ function CustomerioConnectionForm(props) {
 CustomerioConnectionForm.defaultProps = {
   editConnection: null,
   addError: null,
-  testResult: null,
 };
 
 CustomerioConnectionForm.propTypes = {
   onComplete: PropTypes.func.isRequired,
-  onTest: PropTypes.func.isRequired,
-  projectId: PropTypes.string.isRequired,
   editConnection: PropTypes.object,
   addError: PropTypes.bool,
-  testResult: PropTypes.object,
 };
 
 export default CustomerioConnectionForm;

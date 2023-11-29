@@ -4,24 +4,24 @@ import {
   Button, Input, Spacer,
 } from "@nextui-org/react";
 import uuid from "uuid/v4";
-import { RiAddCircleFill, RiCloseCircleFill } from "react-icons/ri";
+import { LuPlusCircle, LuXCircle } from "react-icons/lu";
+import { useDispatch } from "react-redux";
+import { useParams } from "react-router";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import HelpBanner from "../../../components/HelpBanner";
-import connectionImages from "../../../config/connectionImages";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import useThemeDetector from "../../../modules/useThemeDetector";
+import { testRequest } from "../../../slices/connection";
 
 /*
   The Form used to create a Strapi API connection
 */
 function StrapiConnectionForm(props) {
   const {
-    editConnection, projectId, onComplete, addError, onTest,
+    editConnection, onComplete, addError,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -33,12 +33,34 @@ function StrapiConnectionForm(props) {
     authentication: { type: "bearer_token" },
   });
   const [errors, setErrors] = useState({});
+  const [testResult, setTestResult] = useState(null); // eslint-disable-line
 
-  const isDark = useThemeDetector();
+  const dispatch = useDispatch();
+  const params = useParams();
 
   useEffect(() => {
     _init();
   }, []);
+
+  const _onTestRequest = (data) => {
+    const newTestResult = {};
+    return dispatch(testRequest({ team_id: params.teamId, connection: data }))
+      .then(async (response) => {
+        newTestResult.status = response.payload.status;
+        newTestResult.body = await response.payload.text();
+
+        try {
+          newTestResult.body = JSON.parse(newTestResult.body);
+          newTestResult.body = JSON.stringify(newTestResult, null, 2);
+        } catch (e) {
+          // the response is not in JSON format
+        }
+
+        setTestResult(newTestResult);
+        return Promise.resolve(newTestResult);
+      })
+      .catch(() => { });
+  };
 
   const _init = () => {
     if (editConnection) {
@@ -92,15 +114,11 @@ function StrapiConnectionForm(props) {
       }
     }
 
-    // add the project ID
-    setConnection({ ...connection, project_id: projectId, options: newOptions });
-
     setTimeout(() => {
       const newConnection = connection;
-      if (!connection.id) newConnection.project_id = projectId;
       newConnection.options = newOptions;
       if (test === true) {
-        onTest(newConnection);
+        _onTestRequest(newConnection);
       } else {
         setLoading(true);
         onComplete(newConnection)
@@ -152,24 +170,12 @@ function StrapiConnectionForm(props) {
   };
 
   return (
-    <div className="p-unit-lg bg-content1 shadow-md border-1 border-solid border-content3 rounded-lg">
+    <div className="p-unit-lg bg-content1 border-1 border-solid border-content3 rounded-lg">
       <div>
-        <Row align="center">
-          <Text size="h3">
-            {!editConnection && "Connect to Strapi"}
-            {editConnection && `Edit ${editConnection.name}`}
-          </Text>
-        </Row>
-        <Spacer y={1} />
-        <Row>
-          <HelpBanner
-            title="How to visualize your Strapi data with Chartbrew"
-            description="Chartbrew can connect to your Strapi's API to fetch data that can be visualized in a dashboard. You can use the data from your API to create charts and tables that will be updated in real-time."
-            url={"https://chartbrew.com/blog/create-your-strapi-visualization-dashboard-with-chartbrew/"}
-            imageUrl={connectionImages(isDark).strapi}
-            info="5 min read"
-          />
-        </Row>
+        <p className="font-semibold">
+          {!editConnection && "Connect to Strapi"}
+          {editConnection && `Edit ${editConnection.name}`}
+        </p>
         <Spacer y={4} />
         <div style={styles.formStyle}>
           <Row>
@@ -256,6 +262,7 @@ function StrapiConnectionForm(props) {
                 <Row key={option.id} className={"gap-2"}>
                   <Input
                     placeholder="Header name"
+                    labelPlacement="outside"
                     value={option.key}
                     onChange={(e) => _onChangeOption(option.id, e.target.value, "key")}
                     fullWidth
@@ -265,6 +272,7 @@ function StrapiConnectionForm(props) {
                     onChange={(e) => _onChangeOption(option.id, e.target.value, "value")}
                     value={option.value}
                     placeholder="Value"
+                    labelPlacement="outside"
                     fullWidth
                     variant="bordered"
                   />
@@ -274,7 +282,7 @@ function StrapiConnectionForm(props) {
                     variant="flat"
                     color="warning"
                   >
-                    <RiCloseCircleFill size={24} />
+                    <LuXCircle />
                   </Button>
                 </Row>
               );
@@ -283,7 +291,7 @@ function StrapiConnectionForm(props) {
           {connection.optionsArray?.length > 0 && (<Spacer y={2} />)}
           <Button
             size="sm"
-            startContent={<RiAddCircleFill size={20} />}
+            startContent={<LuPlusCircle />}
             onClick={_addOption}
             variant="faded"
             color="primary"
@@ -352,8 +360,6 @@ StrapiConnectionForm.defaultProps = {
 
 StrapiConnectionForm.propTypes = {
   onComplete: PropTypes.func.isRequired,
-  onTest: PropTypes.func.isRequired,
-  projectId: PropTypes.string.isRequired,
   editConnection: PropTypes.object,
   addError: PropTypes.bool,
 };

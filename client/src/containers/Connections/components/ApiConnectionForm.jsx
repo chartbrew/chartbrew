@@ -2,7 +2,7 @@ import React, { useState, useEffect, Fragment, useRef } from "react";
 import PropTypes from "prop-types";
 
 import {
-  Button, Divider, Input, Spacer,Chip, Tabs, Tab, Select, SelectItem, CircularProgress,
+  Button, Divider, Input, Spacer,Chip, Tabs, Tab, Select, SelectItem,
 } from "@nextui-org/react";
 import uuid from "uuid/v4";
 import AceEditor from "react-ace";
@@ -14,7 +14,6 @@ import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
@@ -202,10 +201,10 @@ function ApiConnectionForm(props) {
     <div className="p-unit-lg bg-content1 border-1 border-solid border-content3 rounded-lg">
       <div>
         <Row align="center">
-          <Text size="lg" b>
+          <p className="font-semibold">
             {!editConnection && "Add a new API host"}
             {editConnection && `Edit ${editConnection.name}`}
-          </Text>
+          </p>
         </Row>
         <Spacer y={4} />
         <Row className={"gap-4"}>
@@ -414,19 +413,10 @@ function ApiConnectionForm(props) {
           )}
         </Row>
       </div>
-      <Spacer y={4} />
-
-      {testLoading && (
-        <Container size="md" className={"bg-content2"}>
-          <Row align="center">
-            <CircularProgress aria-label="Loading" />
-          </Row>
-          <Spacer y={4} />
-        </Container>
-      )}
 
       {testResult && !testLoading && (
         <>
+          <Spacer y={4} />
           <Divider />
           <Spacer y={4} />
           <div>
@@ -464,14 +454,12 @@ function ApiConnectionForm(props) {
 ApiConnectionForm.defaultProps = {
   editConnection: null,
   addError: null,
-  testResult: null,
 };
 
 ApiConnectionForm.propTypes = {
   onComplete: PropTypes.func.isRequired,
   editConnection: PropTypes.object,
   addError: PropTypes.bool,
-  testResult: PropTypes.object,
 };
 
 export default ApiConnectionForm;
