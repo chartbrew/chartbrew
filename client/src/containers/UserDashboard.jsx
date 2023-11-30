@@ -11,6 +11,7 @@ import {
 } from "@nextui-org/react";
 import {
   LuBarChart, LuCalendarDays, LuChevronDown, LuDatabase, LuLayoutGrid, LuPencilLine, LuPlug, LuPlus, LuSearch, LuSettings,
+  LuTag,
   LuTrash, LuUsers2,
 } from "react-icons/lu";
 import { Flip, ToastContainer } from "react-toastify";
@@ -21,7 +22,7 @@ import {
   getTemplates as getTemplatesAction
 } from "../actions/template";
 import {
-  updateProject, removeProject,
+  updateProject, removeProject, selectProjects,
 } from "../slices/project";
 import {
   getTeamConnections, removeConnection, selectConnections,
@@ -57,6 +58,7 @@ function UserDashboard(props) {
   const teamMembers = useSelector(selectTeamMembers);
   const datasets = useSelector(selectDatasets);
   const connections = useSelector(selectConnections);
+  const projects = useSelector(selectProjects);
 
   const [addProject, setAddProject] = useState(false);
   const [search, setSearch] = useState({});
@@ -288,6 +290,19 @@ function UserDashboard(props) {
       .catch(() => {
         setDeletingConnection(false);
       });
+  };
+
+  const _getConnectionTags = (projectIds) => {
+    const tags = [];
+    if (!projects) return tags;
+    projectIds.forEach((projectId) => {
+      const project = projects.find((p) => p.id === projectId);
+      if (project) {
+        tags.push(project.name);
+      }
+    });
+
+    return tags;
   };
 
   if (!user.data.id) {
@@ -561,7 +576,7 @@ function UserDashboard(props) {
 
               {activeMenu === "connections" && (
                 <div className="max-h-full overflow-y-auto">
-                  <Row className={"gap-2"}>
+                  <Row className={"gap-4"}>
                     <Button
                       color="primary"
                       endContent={<LuPlus />}
@@ -578,11 +593,16 @@ function UserDashboard(props) {
                       labelPlacement="outside"
                     />
                   </Row>
-                  <Spacer y={2} />
+                  <Spacer y={4} />
                   <Table shadow="none" isStriped className="border-2 border-solid border-content3 rounded-xl">
                     <TableHeader>
                       <TableColumn key="name">Connection name</TableColumn>
-                      <TableColumn key="type">Type</TableColumn>
+                      <TableColumn key="tags">
+                        <div className="flex flex-row items-center gap-1">
+                          <LuTag />
+                          <span>Tags</span>
+                        </div>
+                      </TableColumn>
                       <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
                     </TableHeader>
                     <TableBody>
@@ -595,11 +615,25 @@ function UserDashboard(props) {
                                 size="sm"
                                 isBordered
                               />
-                              <Text b>{connection.name}</Text>
+                              <Link to={`/${team.id}/connection/${connection.id}`} className="cursor-pointer">
+                                <Text b>{connection.name}</Text>
+                              </Link>
                             </Row>
                           </TableCell>
-                          <TableCell key="type">
-                            <Text>{connection.type}</Text>
+                          <TableCell key="tags">
+                            {_getConnectionTags(connection.project_ids).slice(0, 3).map((tag) => (
+                              <Chip
+                                key={tag}
+                                size="sm"
+                                variant="flat"
+                                color="primary"
+                              >
+                                {tag}
+                              </Chip>
+                            ))}
+                            {_getConnectionTags(connection.project_ids).length > 3 && (
+                              <span className="text-xs">{`+${_getConnectionTags(connection.project_ids).length - 3} more`}</span>
+                            )}
                           </TableCell>
                           <TableCell key="actions">
                             <Row justify="flex-end" align="center">
@@ -637,7 +671,7 @@ function UserDashboard(props) {
 
               {activeMenu === "datasets" && (
                 <div className="max-h-full overflow-y-auto">
-                  <Row className={"gap-2"} align="center">
+                  <Row className={"gap-4"} align="center">
                     <Button
                       color="primary"
                       endContent={<LuPlus />}
@@ -662,7 +696,7 @@ function UserDashboard(props) {
                       <span className="text-sm">Show drafts</span>
                     </Switch>
                   </Row>
-                  <Spacer y={2} />
+                  <Spacer y={4} />
                   <Table shadow="none" isStriped className="border-2 border-solid border-content3 rounded-xl">
                     <TableHeader>
                       <TableColumn key="name">Dataset name</TableColumn>
@@ -685,7 +719,9 @@ function UserDashboard(props) {
                         <TableRow key={dataset.id}>
                           <TableCell key="name">
                             <div className="flex flex-row items-center gap-2">
-                              <Text b>{dataset.legend}</Text>
+                              <Link to={`/${team.id}/dataset/${dataset.id}`} className="cursor-pointer">
+                                <Text b>{dataset.legend}</Text>
+                              </Link>
                               {dataset.draft && (
                                 <Chip size="sm" variant="flat" color="secondary">
                                   Draft
