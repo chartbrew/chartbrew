@@ -249,7 +249,7 @@ function ConnectionWizard() {
         </div>
         <aside className="hidden sm:block fixed top-0 right-0 z-40 w-96 h-screen" aria-label="Sidebar">
           <div className="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
-            <div className="flex flex-col gap-4 p-2">
+            <div className="flex flex-col gap-2 p-2">
               <Spacer y={10} />
 
               <Card>

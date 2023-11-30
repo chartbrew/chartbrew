@@ -97,7 +97,6 @@ function ApiPagination(props) {
           selectedKeys={[template]}
           selectionMode="single"
           label="Pagination type"
-          labelPlacement="inside"
           isDisabled={!pagination}
         >
           {templates.map((t) => (
@@ -132,6 +131,7 @@ function ApiPagination(props) {
           <Input
             isDisabled={!pagination}
             placeholder="Items per page"
+            labelPlacement="outside"
             value={items}
             onChange={(e) => onPaginationChanged("items", e.target.value)}
             variant="bordered"
@@ -154,6 +154,7 @@ function ApiPagination(props) {
           <Input
             isDisabled={!pagination}
             placeholder="Offset"
+            labelPlacement="outside"
             value={offset}
             onChange={(e) => onPaginationChanged("offset", e.target.value)}
             variant="bordered"
@@ -205,6 +206,7 @@ function ApiPagination(props) {
             <Text>Or enter the object path manually here</Text>
             <Input
               placeholder="pagination.next"
+              labelPlacement="outside"
               value={paginationField || ""}
               onChange={(e) => _onChangePaginationField(e.target.value)}
               variant="bordered"
@@ -261,6 +263,7 @@ function ApiPagination(props) {
           <Input
             isDisabled={!pagination}
             placeholder="Next cursor field name"
+            labelPlacement="outside"
             value={items}
             onChange={(e) => onPaginationChanged("items", e.target.value)}
             variant="bordered"
@@ -283,6 +286,7 @@ function ApiPagination(props) {
         <Input
           isDisabled={!pagination}
           placeholder="Limit"
+          labelPlacement="outside"
           type="number"
           value={itemsLimit}
           onChange={(e) => onPaginationChanged("itemsLimit", e.target.value)}

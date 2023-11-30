@@ -76,6 +76,7 @@ function UserDashboard(props) {
 
   const [connectionToDelete, setConnectionToDelete] = useState(null);
   const [deletingConnection, setDeletingConnection] = useState(false);
+  const [connectionSearch, setConnectionSearch] = useState("");
 
   const initRef = useRef(null);
   const { height } = useWindowSize();
@@ -294,7 +295,7 @@ function UserDashboard(props) {
 
   const _getConnectionTags = (projectIds) => {
     const tags = [];
-    if (!projects) return tags;
+    if (!projects || !projectIds) return tags;
     projectIds.forEach((projectId) => {
       const project = projects.find((p) => p.id === projectId);
       if (project) {
@@ -303,6 +304,16 @@ function UserDashboard(props) {
     });
 
     return tags;
+  };
+
+  const _getFilteredConnections = () => {
+    if (!connectionSearch) return connections;
+
+    const filteredConnections = connections.filter((c) => {
+      return c.name.toLowerCase().indexOf(connectionSearch.toLowerCase()) > -1;
+    });
+
+    return filteredConnections || [];
   };
 
   if (!user.data.id) {
@@ -591,6 +602,7 @@ function UserDashboard(props) {
                       endContent={<LuSearch />}
                       className="max-w-[300px]"
                       labelPlacement="outside"
+                      onChange={(e) => setConnectionSearch(e.target.value)}
                     />
                   </Row>
                   <Spacer y={4} />
@@ -606,7 +618,7 @@ function UserDashboard(props) {
                       <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
                     </TableHeader>
                     <TableBody>
-                      {connections.map((connection) => (
+                      {_getFilteredConnections()?.map((connection) => (
                         <TableRow key={connection.id}>
                           <TableCell key="name">
                             <Row align={"center"} className={"gap-4"}>

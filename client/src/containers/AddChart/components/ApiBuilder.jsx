@@ -446,6 +446,7 @@ function ApiBuilder(props) {
                       <Row>
                         <Input
                           placeholder="Header"
+                          labelPlacement="outside"
                           value={header.key}
                           onChange={(e) => {
                             _onChangeHeader(header.id, e.target.value);
@@ -455,6 +456,7 @@ function ApiBuilder(props) {
                         <Spacer x={1} />
                         <Input
                           placeholder="Value"
+                          labelPlacement="outside"
                           value={header.value}
                           onChange={(e) => {
                             _onChangeHeaderValue(header.id, e.target.value);
@@ -603,6 +605,7 @@ function ApiBuilder(props) {
 
 ApiBuilder.defaultProps = {
   dataRequest: null,
+  chart: {},
 };
 
 ApiBuilder.propTypes = {
@@ -612,7 +615,7 @@ ApiBuilder.propTypes = {
   onSave: PropTypes.func.isRequired,
   dataRequest: PropTypes.object,
   changeTutorial: PropTypes.func.isRequired,
-  chart: PropTypes.object.isRequired,
+  chart: PropTypes.object,
   onDelete: PropTypes.func.isRequired,
   responses: PropTypes.array.isRequired,
 };

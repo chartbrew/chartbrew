@@ -19,7 +19,7 @@ function ChartDatasets(props) {
   const { projects, chartId } = props;
 
   const chart = useSelector((state) => selectChart(state, chartId));
-  const datasets = useSelector(selectDatasets);
+  const datasets = useSelector(selectDatasets) || [];
 
   const [datasetSearch, setDatasetSearch] = useState("");
   const [tag, setTag] = useState("project");
@@ -38,15 +38,18 @@ function ChartDatasets(props) {
 
   const _filteredDatasets = () => {
     if (tag === "project") {
-      return datasets.filter((d) => d.legend.toLowerCase().includes(datasetSearch.toLowerCase()) && d.project_ids.includes(chart.project_id));
+      return datasets.filter((d) => (
+        d.legend.toLowerCase().includes(datasetSearch.toLowerCase())
+        && d.project_ids?.includes(chart.project_id)
+      ));
     }
-    return datasets.filter((d) => d.legend.toLowerCase().includes(datasetSearch.toLowerCase()));
+    return datasets.filter((d) => d.legend && d.legend?.toLowerCase().includes(datasetSearch.toLowerCase()));
   };
 
   const _getDatasetTags = (dataset) => {
     const tags = [];
     if (!projects) return tags;
-    dataset.project_ids.forEach((projectId) => {
+    dataset.project_ids?.forEach((projectId) => {
       const project = projects.find((p) => p.id === projectId);
       if (project) {
         tags.push(project.name);
@@ -103,7 +106,7 @@ function ChartDatasets(props) {
       <Divider />
       <Spacer y={4} />
 
-      {(chart.ChartDatasetConfigs?.length === 0 || addMode) && (
+      {(chart?.ChartDatasetConfigs?.length === 0 || addMode) && (
         <>
           <Input
             placeholder="Search datasets"
@@ -153,7 +156,7 @@ function ChartDatasets(props) {
                           <Text b>{dataset.legend}</Text>
                           <div className="flex-wrap">
                             {_getDatasetTags(dataset).map((tag) => (
-                              <Chip key={tag} radius="sm" size="sm" variant="faded">
+                              <Chip key={tag} size="sm" variant="flat" color="primary">
                                 {tag}
                               </Chip>
                             ))}

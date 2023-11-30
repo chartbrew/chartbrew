@@ -50,7 +50,7 @@ function Dataset() {
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
   const ghostProject = useSelector((state) => state.project.data?.find((p) => p.ghost));
   const ghostChart = useSelector((state) => state.chart.data?.find((c) => c.id === chart?.id));
-  const datasetResponse = useSelector((state) => state.dataset.responses.find((r) => r.dataset_id === dataset.id)?.data);
+  const datasetResponse = useSelector((state) => state.dataset.responses.find((r) => r.dataset_id === dataset?.id)?.data);
   const projects = useSelector(selectProjects);
 
   useEffect(() => {

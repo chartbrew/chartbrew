@@ -163,7 +163,7 @@ function CustomTemplateForm(props) {
   const _getDependency = (chart) => {
     if (Object.keys(selectedConnections).length < 1) return "";
 
-    const cdConfigs = chart.ChartDatasetConfigs;
+    const cdConfigs = chart.ChartDatasetConfigs || [];
     let dependency = "";
 
     for (let i = 0; i < cdConfigs.length; i++) {

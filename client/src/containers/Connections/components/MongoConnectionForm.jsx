@@ -539,18 +539,21 @@ function MongoConnectionForm(props) {
 
       {testResult && !testLoading && (
         <>
+          <Spacer y={4} />
           <Divider />
           <Spacer y={4} />
           <div>
             <Row align="center">
               <Text>
                 {"Test Result "}
-                <Chip
-                  color={testResult.status < 400 ? "success" : "danger"}
-                >
-                  {`Status code: ${testResult.status}`}
-                </Chip>
               </Text>
+              <Spacer x={2} />
+              <Chip
+                color={testResult.status < 400 ? "success" : "danger"}
+                size="sm"
+              >
+                {`Status code: ${testResult.status}`}
+              </Chip>
             </Row>
             <Spacer y={4} />
             <AceEditor
