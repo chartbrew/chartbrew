@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { LuAreaChart, LuCheckCircle, LuClipboard, LuCompass, LuLayoutDashboard, LuSearch } from "react-icons/lu";
+import { LuAreaChart, LuArrowLeftCircle, LuCheckCircle, LuClipboard, LuCompass, LuLayoutDashboard, LuSearch } from "react-icons/lu";
 import { Button, Card, CardBody, CardFooter, CardHeader, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer } from "@nextui-org/react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
 
 import Segment from "../../components/Segment";
@@ -19,20 +19,26 @@ import GaConnectionForm from "./GoogleAnalytics/GaConnectionForm";
 import StrapiConnectionForm from "./Strapi/StrapiConnectionForm";
 import CustomerioConnectionForm from "./Customerio/CustomerioConnectionForm";
 import TimescaleConnectionForm from "./Timescale/TimescaleConnectionForm";
-import { addConnection, saveConnection } from "../../slices/connection";
+import { addConnection, getConnection, saveConnection } from "../../slices/connection";
 import HelpBanner from "../../components/HelpBanner";
+import { Link } from "react-router-dom";
 
 function ConnectionWizard() {
   const [connectionSearch, setConnectionSearch] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [completionModal, setCompletionModal] = useState(false);
+  const [newConnection, setNewConnection] = useState(null);
 
   const isDark = useThemeDetector();
   const bottomRef = useRef(null);
   const asideRef = useRef(null);
+  const paramsInitRef = useRef(null);
+  const fetchConnectionRef = useRef(null);
   const dispatch = useDispatch();
   const params = useParams();
   const navigate = useNavigate();
+
+  const connectionToEdit = useSelector((state) => state.connection.data.find((c) => c.id === parseInt(params.connectionId, 10)));
 
   useEffect(() => {
     if (selectedType) {
@@ -51,6 +57,21 @@ function ConnectionWizard() {
       }, 500);
     }
   }, [selectedType]);
+
+  useEffect(() => {
+    if (params.connectionId && params.connectionId !== "new" && !paramsInitRef.current) {
+      paramsInitRef.current = true;
+      dispatch(getConnection({ team_id: params.teamId, connection_id: params.connectionId }));
+    }
+  }, [params]);
+
+  useEffect(() => {
+    if (connectionToEdit && !fetchConnectionRef.current) {
+      fetchConnectionRef.current = true;
+      setNewConnection({ ...connectionToEdit });
+      setSelectedType(connectionToEdit.type);
+    }
+  }, [connectionToEdit]);
 
   const _filteredConnections = availableConnections.filter((conn) => {
     if (connectionSearch) {
@@ -89,62 +110,76 @@ function ConnectionWizard() {
     <div>
       <Navbar hideTeam transparent />
       <div>
-        <div className="p-4 sm:mr-96">
+        <div className="p-4 sm:mr-96">          
           <Spacer y={2} />
-          <div className="flex flex-row items-center gap-2">
-            <span className="text-xl text-secondary font-semibold">Step 1:</span>
-            <span className="text-xl font-semibold">Select your datasource type</span>
-          </div>
-          <Spacer y={4} />
-          <Segment>
-            <div className="flex flex-row justify-between items-center flex-wrap gap-2">
-              <Input
-                endContent={<LuSearch />}
-                placeholder="Search..."
-                variant="bordered"
-                labelPlacement="outside"
-                className="max-w-[300px]"
-                onChange={(e) => setConnectionSearch(e.target.value)}
-              />
-            </div>
-            <Spacer y={4} />
-            <div className="grid grid-cols-12 gap-4">
-              {_filteredConnections.map((conn) => (
-                <div key={conn.name} className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-2">
-                  <Card
-                    shadow="none"
-                    isPressable
-                    className={`w-full ${selectedType === conn.type ? "border-3 border-primary" : "border-3 border-content3"}`}
-                    onClick={() => setSelectedType(conn.type)}
-                  >
-                    <CardBody className="overflow-visible p-0">
-                      <Image
-                        radius="lg"
-                        width="100%"
-                        alt={conn.name}
-                        className="w-full object-cover h-[140px]"
-                        src={connectionImages(isDark)[conn.type]}
-                      />
-                    </CardBody>
-                    <CardFooter className="justify-center">
-                      <span className="text-sm font-semibold">{conn.name}</span>
-                    </CardFooter>
-                  </Card>
+
+          {!newConnection && (
+            <>
+              <div className="flex flex-row items-center gap-2">
+                <span className="text-xl text-secondary font-semibold">Step 1:</span>
+                <span className="text-xl font-semibold">Select your datasource type</span>
+              </div>
+              <Spacer y={4} />
+              <Segment>
+                <div className="flex flex-row justify-between items-center flex-wrap gap-2">
+                  <Input
+                    endContent={<LuSearch />}
+                    placeholder="Search..."
+                    variant="bordered"
+                    labelPlacement="outside"
+                    className="max-w-[300px]"
+                    onChange={(e) => setConnectionSearch(e.target.value)}
+                  />
                 </div>
-              ))}
-              {_filteredConnections.length === 0 && (
-                <div className="col-span-12">
-                  <p className="text-center text-gray-500">No connections found</p>
+                <Spacer y={4} />
+                <div className="grid grid-cols-12 gap-4">
+                  {_filteredConnections.map((conn) => (
+                    <div key={conn.name} className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-2">
+                      <Card
+                        shadow="none"
+                        isPressable
+                        className={`w-full ${selectedType === conn.type ? "border-3 border-primary" : "border-3 border-content3"}`}
+                        onClick={() => setSelectedType(conn.type)}
+                      >
+                        <CardBody className="overflow-visible p-0">
+                          <Image
+                            radius="lg"
+                            width="100%"
+                            alt={conn.name}
+                            className="w-full object-cover h-[140px]"
+                            src={connectionImages(isDark)[conn.type]}
+                          />
+                        </CardBody>
+                        <CardFooter className="justify-center">
+                          <span className="text-sm font-semibold">{conn.name}</span>
+                        </CardFooter>
+                      </Card>
+                    </div>
+                  ))}
+                  {_filteredConnections.length === 0 && (
+                    <div className="col-span-12">
+                      <p className="text-center text-gray-500">No connections found</p>
+                    </div>
+                  )}
+                </div>
+              </Segment>
+
+              <Spacer y={8} />
+              {selectedType && (
+                <div className="flex flex-row items-center gap-2">
+                  <span className="text-xl text-secondary font-semibold">Step 2:</span>
+                  <span className="text-xl font-semibold">Connect to your data source</span>
                 </div>
               )}
-            </div>
-          </Segment>
+            </>
+          )}
 
-          <Spacer y={8} />
-          {selectedType && (
+          {newConnection && (
             <div className="flex flex-row items-center gap-2">
-              <span className="text-xl text-secondary font-semibold">Step 2:</span>
-              <span className="text-xl font-semibold">Connect to your data source</span>
+              <Link to="/user" className="text-xl text-secondary font-semibold">
+                <LuArrowLeftCircle size={24} />
+              </Link>
+              <span className="text-xl font-semibold">Edit your connection</span>
             </div>
           )}
           <Spacer y={4} />
@@ -152,51 +187,61 @@ function ConnectionWizard() {
           {selectedType === "api" && (
             <ApiConnectionForm
               onComplete={_onAddNewConnection}
+              editConnection={newConnection}
             />
           )}
           {selectedType === "mongodb" && (
             <MongoConnectionForm
               onComplete={_onAddNewConnection}
+              editConnection={newConnection}
             />
           )}
           {selectedType === "postgres" && (
             <PostgresConnectionForm
               onComplete={_onAddNewConnection}
+              editConnection={newConnection}
             />
           )}
           {selectedType === "mysql" && (
             <MysqlConnectionForm
               onComplete={_onAddNewConnection}
+              editConnection={newConnection}
             />
           )}
           {selectedType === "firestore" && (
             <FirestoreConnectionForm
               onComplete={_onAddNewConnection}
+              editConnection={newConnection}
             />
           )}
           {selectedType === "realtimedb" && (
             <RealtimeDbConnectionForm
               onComplete={_onAddNewConnection}
+              editConnection={newConnection}
             />
           )}
           {selectedType === "googleAnalytics" && (
             <GaConnectionForm
               onComplete={_onAddNewConnection}
+              editConnection={newConnection}
             />
           )}
           {selectedType === "strapi" && (
             <StrapiConnectionForm
               onComplete={_onAddNewConnection}
+              editConnection={newConnection}
             />
           )}
           {selectedType === "customerio" && (
             <CustomerioConnectionForm
               onComplete={_onAddNewConnection}
+              editConnection={newConnection}
             />
           )}
           {selectedType === "timescaledb" && (
             <TimescaleConnectionForm
               onComplete={_onAddNewConnection}
+              editConnection={newConnection}
             />
           )}
 

@@ -589,6 +589,7 @@ function UserDashboard(props) {
                                   variant="light"
                                   size="sm"
                                   className={"min-w-fit"}
+                                  onClick={() => navigate(`/${team.id}/connection/${connection.id}`)}
                                 />
                               </Tooltip>
                               <Tooltip

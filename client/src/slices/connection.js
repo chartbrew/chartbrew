@@ -152,6 +152,10 @@ export const connectionSlice = createSlice({
         }
         return connection;
       });
+
+      if (!state.data.find((connection) => connection.id === action.payload.id)) {
+        state.data.push(action.payload);
+      }
     })
     builder.addCase(getConnection.rejected, (state) => {
       state.loading = false;
