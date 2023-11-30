@@ -33,14 +33,14 @@ function Login(props) {
             <img size="tiny" src={cbLogoSmall} style={{ width: 70 }} alt="Chartbrew logo" />
           </Link>
         </Row>
-        <Spacer y={1} />
+        <Spacer y={8} />
         <Row justify="center" align="center">
           <Container size="sm">
             <Row justify="center" align="center">
               <Card style={styles.verticalPadding}>
                 <CardHeader className={"text-center items-center"}>
                   <Container justify="center">
-                    <Text size="h3" className={"mt-0"}>{"Welcome back to Chartbrew"}</Text>
+                    <Text size="h3" className={"mt-4"}>{"Welcome back to Chartbrew"}</Text>
                   </Container>
                 </CardHeader>
                 <CardBody>
@@ -62,7 +62,7 @@ function Login(props) {
             </Row>
           </Container>
         </Row>
-        <Spacer y={1} />
+        <Spacer y={8} />
         <Row justify="center" align="center">
           <div>
             <p style={styles.signupText}>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch } from "react-redux";
 import {
@@ -14,9 +14,7 @@ import {
 } from "../actions/user";
 import { addTeamMember } from "../slices/team";
 import { required, email as validateEmail } from "../config/validations";
-import { ONE_ACCOUNT_ENABLED } from "../config/settings";
 import { negative } from "../config/colors";
-import Container from "./Container";
 import Row from "./Row";
 import Text from "./Text";
 
@@ -25,11 +23,10 @@ import Text from "./Text";
 */
 function LoginForm(props) {
   const {
-    requestPasswordReset, oneaccountAuth, login,
+    requestPasswordReset, login,
   } = props;
 
   const [loading, setLoading] = useState(false);
-  const [oaloading, setOaloading] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetDone, setResetDone] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
@@ -41,13 +38,6 @@ function LoginForm(props) {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
-  useEffect(() => {
-    document.addEventListener("oneaccount-authenticated", authenticateOneaccount);
-    return () => {
-      document.removeEventListener("oneaccount-authenticated", authenticateOneaccount);
-    };
-  }, []);
 
   const _onSendResetRequest = () => {
     if (validateEmail(resetEmail)) {
@@ -65,35 +55,6 @@ function LoginForm(props) {
         setResetLoading(false);
         setResetDone(true);
       });
-  };
-
-  const authenticateOneaccount = (event) => {
-    const data = event.detail;
-    setOaloading(true);
-    oneaccountAuth(data)
-      .then(() => {
-        setOaloading(false);
-        navigate("/user");
-      });
-  };
-
-  const socialSignin = () => {
-    return (
-      <Container>
-        <Spacer y={2} />
-        <Row justify="center" align="center">
-          <Button
-            isLoading={oaloading}
-            className="oneaccount-button oneaccount-show"
-            style={styles.oneaccount}
-          >
-            {" "}
-            <OneaccountSVG style={styles.oneaccountIcon} />
-            Sign in with One account
-          </Button>
-        </Row>
-      </Container>
-    );
   };
 
   const loginUser = () => {
@@ -136,7 +97,7 @@ function LoginForm(props) {
   };
 
   return (
-    <div style={styles.container} className="container mx-auto w-full">
+    <div style={styles.container} className="container mx-auto w-full p-4">
       <form onSubmit={loginUser} className="sm:min-w-[500px]">
         <div className="w-full">
           <Row>
@@ -144,6 +105,7 @@ function LoginForm(props) {
               endContent={<LuMail />}
               type="email"
               placeholder="Enter your email"
+              labelPlacement="outside"
               onChange={(e) => {
                 setEmail(e.target.value);
                 setErrors({ ...errors, email: "" });
@@ -168,6 +130,7 @@ function LoginForm(props) {
             <Input
               type="password"
               placeholder="Enter your password"
+              labelPlacement="outside"
               onChange={(e) => {
                 setPassword(e.target.value);
                 setErrors({ ...errors, password: "" });
@@ -190,15 +153,17 @@ function LoginForm(props) {
               color="primary"
               isLoading={loading}
               type="submit"
+              fullWidth
             >
               {"Login"}
             </Button>
           </Row>
-          <Spacer y={0.5} />
+          <Spacer y={4} />
           <Row justify="center" align="center">
             <Link
               style={{ paddingTop: 10 }}
               onClick={() => setForgotModal(true)}
+              className="cursor-pointer"
             >
               Did you forget your password?
             </Link>
@@ -246,58 +211,11 @@ function LoginForm(props) {
           </ModalFooter>
         </ModalContent>
       </Modal>
-      {ONE_ACCOUNT_ENABLED && (
-        <>
-          {socialSignin()}
-        </>
-      )}
     </div>
   );
 }
 
-const OneaccountSVG = (props) => {
-  const { style } = props;
-  return (
-    <svg style={style} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
-      <g fill="none" fillRule="evenodd">
-        <mask id="a">
-          <rect width="100%" height="100%" fill="#fff" />
-          <path
-            fill="#000"
-            d="M148.65 225.12c-30.6-5.51-71.54-106.68-55.76-137.06 14.38-27.7 102.01-13.66 116.08 20.9 13.82 33.97-32.89 121.1-60.32 116.16zm-30.35-76.6c0 18.24 13.68 33.02 30.55 33.02s30.54-14.78 30.54-33.02c0-18.25-13.67-33.03-30.54-33.03-16.87 0-30.55 14.78-30.55 33.03z"
-          />
-        </mask>
-        <path
-          fill="#fff"
-          d="M153.27 298.95c60.25-10.84 140.8-209.72 109.75-269.44C234.72-24.95 62.25 2.66 34.57 70.6c-27.2 66.77 64.72 238.06 118.7 228.34z"
-          mask="url(#a)"
-        />
-      </g>
-    </svg>
-  );
-};
-
-OneaccountSVG.propTypes = {
-  style: PropTypes.object
-};
-
-OneaccountSVG.defaultProps = {
-  style: {}
-};
-
 const styles = {
-  oneaccount: {
-    backgroundColor: "#FA4900",
-    color: "white",
-  },
-  oneaccountIcon: {
-    height: 18,
-    verticalAlign: "sub",
-    marginRight: 10,
-  },
-  oneaccountText: {
-    verticalAlign: "middle",
-  },
   container: {
     flex: 1,
   },
