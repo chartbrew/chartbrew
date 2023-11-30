@@ -24,7 +24,7 @@ import {
   updateProject, removeProject,
 } from "../slices/project";
 import {
-  getTeamConnections, selectConnections,
+  getTeamConnections, removeConnection, selectConnections,
 } from "../slices/connection";
 import ProjectForm from "../components/ProjectForm";
 import Navbar from "../components/Navbar";
@@ -64,12 +64,16 @@ function UserDashboard(props) {
   const [projectToDelete, setProjectToDelete] = useState(null);
   const [modifyingProject, setModifyingProject] = useState(false);
   const [activeMenu, setActiveMenu] = useState("projects");
+  
   const [datasetToDelete, setDatasetToDelete] = useState(null);
   const [relatedCharts, setRelatedCharts] = useState([]);
   const [fetchingRelatedCharts, setFetchingRelatedCharts] = useState(false);
   const [deletingDataset, setDeletingDataset] = useState(false);
   const [datasetSearch, setDatasetSearch] = useState("");
   const [showDatasetDrafts, setShowDatasetDrafts] = useState(false);
+
+  const [connectionToDelete, setConnectionToDelete] = useState(null);
+  const [deletingConnection, setDeletingConnection] = useState(false);
 
   const initRef = useRef(null);
   const { height } = useWindowSize();
@@ -268,6 +272,22 @@ function UserDashboard(props) {
     });
 
     return filteredDatasets;
+  };
+
+  const _getRelatedDatasets = (connectionId) => {
+    return datasets.filter((d) => d.DataRequests.find((dr) => dr.connection_id === connectionId));
+  };
+
+  const _onDeleteConnection = () => {
+    setDeletingConnection(true);
+    dispatch(removeConnection({ team_id: team.id, connection_id: connectionToDelete.id }))
+      .then(() => {
+        setDeletingConnection(false);
+        setConnectionToDelete(null);
+      })
+      .catch(() => {
+        setDeletingConnection(false);
+      });
   };
 
   if (!user.data.id) {
@@ -602,6 +622,7 @@ function UserDashboard(props) {
                                   variant="light"
                                   size="sm"
                                   className={"min-w-fit"}
+                                  onClick={() => setConnectionToDelete(connection)}
                                 />
                               </Tooltip>
                             </Row>
@@ -856,6 +877,64 @@ function UserDashboard(props) {
                 endContent={<LuTrash />}
                 onClick={() => _onDeleteDataset()}
                 isLoading={deletingDataset}
+              >
+                Delete
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+
+        <Modal isOpen={connectionToDelete?.id} onClose={() => setConnectionToDelete(null)}>
+          <ModalContent>
+            <ModalHeader>
+              <Text size="h4">Are you sure you want to delete this connection?</Text>
+            </ModalHeader>
+            <ModalBody>
+              <div>
+                <Text>
+                  {"Just a heads-up that all the datasets and charts that use this connection will stop working. This action cannot be undone."}
+                </Text>
+              </div>
+              {_getRelatedDatasets(connectionToDelete?.id).length === 0 && (
+                <div className="flex flex-row items-center">
+                  <Text className={"italic"}>No related datasets found</Text>
+                </div>
+              )}
+              {_getRelatedDatasets(connectionToDelete?.id).length > 0 && (
+                <div className="flex flex-row items-center">
+                  <Text>Related datasets:</Text>
+                </div>
+              )}
+              <div className="flex flex-row flex-wrap items-center gap-1">
+                {_getRelatedDatasets(connectionToDelete?.id).slice(0, 10).map((dataset) => (
+                  <Chip
+                    key={dataset.id}
+                    size="sm"
+                    variant="flat"
+                    color="primary"
+                  >
+                    {dataset.legend}
+                  </Chip>
+                ))}
+                {_getRelatedDatasets(connectionToDelete?.id).length > 10 && (
+                  <span className="text-xs">{`+${_getRelatedDatasets(connectionToDelete?.id).length - 10} more`}</span>
+                )}
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <Button
+                variant="bordered"
+                onClick={() => setConnectionToDelete(null)}
+                auto
+              >
+                Cancel
+              </Button>
+              <Button
+                auto
+                color="danger"
+                endContent={<LuTrash />}
+                onClick={() => _onDeleteConnection()}
+                isLoading={deletingConnection}
               >
                 Delete
               </Button>

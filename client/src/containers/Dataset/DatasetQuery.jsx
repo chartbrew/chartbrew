@@ -284,11 +284,11 @@ function DatasetQuery(props) {
           />
         </div>
       )}
-      {!createMode && selectedRequest && selectedRequest.Connection && (
+      {!createMode && selectedRequest && (
         <div className="col-span-12 md:col-span-11">
           {dataRequests.map((dr) => (
             <Fragment key={dr.id}>
-              {selectedRequest.Connection.type === "api" && selectedRequest.id === dr.id && (
+              {selectedRequest.Connection?.type === "api" && selectedRequest.id === dr.id && (
                 <ApiBuilder
                   dataRequest={dr}
                   connection={dr.Connection}
@@ -298,7 +298,7 @@ function DatasetQuery(props) {
                   onDelete={() => _onDeleteRequest(dr.id)}
                 />
               )}
-              {(selectedRequest.Connection.type === "mysql" || selectedRequest.Connection.type === "postgres") && selectedRequest.id === dr.id && (
+              {(selectedRequest.Connection?.type === "mysql" || selectedRequest.Connection?.type === "postgres") && selectedRequest.id === dr.id && (
                 <SqlBuilder
                   dataRequest={dr}
                   connection={dr.Connection}
@@ -307,7 +307,7 @@ function DatasetQuery(props) {
                   onDelete={() => _onDeleteRequest(dr.id)}
                 />
               )}
-              {selectedRequest.Connection.type === "mongodb" && selectedRequest.id === dr.id && (
+              {selectedRequest.Connection?.type === "mongodb" && selectedRequest.id === dr.id && (
                 <MongoQueryBuilder
                   dataRequest={dr}
                   connection={dr.Connection}
@@ -316,7 +316,7 @@ function DatasetQuery(props) {
                   onDelete={() => _onDeleteRequest(dr.id)}
                 />
               )}
-              {selectedRequest.Connection.type === "realtimedb" && selectedRequest.id === dr.id && (
+              {selectedRequest.Connection?.type === "realtimedb" && selectedRequest.id === dr.id && (
                 <RealtimeDbBuilder
                   dataRequest={dr}
                   connection={dr.Connection}
@@ -325,7 +325,7 @@ function DatasetQuery(props) {
                   onDelete={() => _onDeleteRequest(dr.id)}
                 />
               )}
-              {selectedRequest.Connection.type === "firestore" && selectedRequest.id === dr.id && (
+              {selectedRequest.Connection?.type === "firestore" && selectedRequest.id === dr.id && (
                 <FirestoreBuilder
                   dataRequest={dr}
                   connection={dr.Connection}
@@ -334,7 +334,7 @@ function DatasetQuery(props) {
                   onDelete={() => _onDeleteRequest(dr.id)}
                 />
               )}
-              {selectedRequest.Connection.type === "googleAnalytics" && selectedRequest.id === dr.id && (
+              {selectedRequest.Connection?.type === "googleAnalytics" && selectedRequest.id === dr.id && (
                 <GaBuilder
                   dataRequest={dr}
                   connection={dr.Connection}
@@ -343,7 +343,7 @@ function DatasetQuery(props) {
                   onDelete={() => _onDeleteRequest(dr.id)}
                 />
               )}
-              {selectedRequest.Connection.type === "customerio" && selectedRequest.id === dr.id && (
+              {selectedRequest.Connection?.type === "customerio" && selectedRequest.id === dr.id && (
                 <CustomerioBuilder
                   dataRequest={dr}
                   connection={dr.Connection}
@@ -351,6 +351,21 @@ function DatasetQuery(props) {
                   onSave={_onSaveRequest}
                   onDelete={() => _onDeleteRequest(dr.id)}
                 />
+              )}
+
+              {!selectedRequest.Connection && selectedRequest.id === dr.id && (
+                <div className="p-4">
+                  <p className="font-semibold">This data request does not have a connection.</p>
+                  <p className="text-sm text-default-500">{"You can safely delete this and create a new data request by clicking the '+' button."}</p>
+                  <Spacer y={2} />
+                  <Button
+                    onClick={() => _onDeleteRequest(selectedRequest.id)}
+                    color="danger"
+                    size="sm"
+                  >
+                    Delete
+                  </Button>
+                </div>
               )}
             </Fragment>
           ))}
