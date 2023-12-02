@@ -31,7 +31,6 @@ import {
   negative, positive, secondary,
 } from "../config/colors";
 import signupBackground from "../assets/signup_background.webp";
-import Container from "../components/Container";
 import Row from "../components/Row";
 import Text from "../components/Text";
 
@@ -136,23 +135,22 @@ function Signup(props) {
     <div style={styles.container(height)}>
       <div style={styles.mainGrid(height)} className="grid grid-cols-12">
         <div className="col-span-12 md:col-span-6">
-          <Container size="xs">
+          <div className="p-4 sm:p-8 md:p-16 lg:p-20">
             <Row>
               &nbsp;
             </Row>
-            <Spacer size={1} />
             <Row justify="center">
               <Link to="/">
                 <img src={cbLogoSmall} width="70" alt="Chartbrew logo" />
               </Link>
             </Row>
-            <Spacer size={1} />
+            <Spacer y={8} />
             <Row>
               <Text size="h2">
                 {"Let's get you started with your new Chartbrew account"}
               </Text>
             </Row>
-            <Spacer y={1} />
+            <Spacer y={4} />
 
             <form onSubmit={(e) => {
               e.preventDefault();
@@ -168,6 +166,7 @@ function Signup(props) {
                   contentRight={<LuUser />}
                   type="text"
                   placeholder="Enter your name"
+                  labelPlacement="outside"
                   onChange={(e) => {
                     setName(e.target.value);
                     setErrors({ ...errors, name: "" });
@@ -177,7 +176,7 @@ function Signup(props) {
                   size="lg"
                 />
               </Row>
-              <Spacer y={1} />
+              <Spacer y={4} />
               {errors.name && (
               <Row>
                 <Text color={negative}>
@@ -188,13 +187,14 @@ function Signup(props) {
               <Row>
                 <Text>{"Enter your new sign in details"}</Text>
               </Row>
-              <Spacer y={0.5} />
+              <Spacer y={2} />
               <Row>
                 <Input
                   variant="bordered"
                   endContent={<LuMail />}
                   type="email"
                   placeholder="Enter your email"
+                  labelPlacement="outside"
                   onChange={(e) => {
                     setEmail(e.target.value);
                     setErrors({ ...errors, email: "" });
@@ -211,13 +211,14 @@ function Signup(props) {
                   </Text>
                 </Row>
               )}
-              <Spacer y={1} />
+              <Spacer y={2} />
               <Row>
                 <Input
                   variant="bordered"
                   endContent={<LuLock />}
                   type="password"
                   placeholder="Enter a secure password"
+                  labelPlacement="outside"
                   onChange={(e) => {
                     setPassword(e.target.value);
                     setErrors({ ...errors, password: "" });
@@ -234,7 +235,7 @@ function Signup(props) {
                 </Text>
               </Row>
               )}
-              <Spacer y={1} />
+              <Spacer y={4} />
               <Row>
                 <Button
                   onClick={submitUser}
@@ -262,7 +263,7 @@ function Signup(props) {
               )}
             </form>
 
-            <Spacer y={1} />
+            <Spacer y={2} />
             <Text size="sm">
               {"By signing up for a Chartbrew account, you agree to our "}
               <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/TermsAndConditions.md" rel="noopener noreferrer" target="_blank">Terms of Service</a>
@@ -279,7 +280,7 @@ function Signup(props) {
                 {" "}
               </Text>
             </div>
-          </Container>
+          </div>
         </div>
         <div className="col-span-12 md:col-span-6">
           <div
@@ -287,7 +288,7 @@ function Signup(props) {
             onMouseEnter={() => setSideHovered(true)}
             onMouseLeave={() => setSideHovered(false)}
           />
-          <Container sm style={styles.testimonialCard} className="sm:hidden">
+          <div style={styles.testimonialCard} className="hidden sm:block">
             <Card style={{ minWidth: 500, padding: 10 }}>
               <CardHeader>
                 <Avatar color="gradient" bordered squared size="lg" src={testimonialAvatar} alt="Fairchain testimonial" />
@@ -300,7 +301,7 @@ function Signup(props) {
                   <div className="col-span-12">
                     <Text className="text-gray-400 flex flex-row">
                       {"Full-stack Developer at "}
-                      <Spacer x={0.2} />
+                      <Spacer x={1} />
                       <LinkNext href="https://fairchain.art" rel="noopener noreferrer" target="_blank" color="secondary">
                         {"Fairchain"}
                       </LinkNext>
@@ -312,7 +313,7 @@ function Signup(props) {
                 <i>{"\"Chartbrew has helped us move away from having to constantly update clunky Google-based charts, but what most impresses me is the responsiveness and the helpfulness of the people behind Chartbrew. Highly recommend!\""}</i>
               </CardBody>
             </Card>
-          </Container>
+          </div>
         </div>
       </div>
     </div>
@@ -414,7 +415,6 @@ Signup.propTypes = {
   createUser: PropTypes.func.isRequired,
   oneaccountAuth: PropTypes.func.isRequired,
   createInvitedUser: PropTypes.func.isRequired,
-  history: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {

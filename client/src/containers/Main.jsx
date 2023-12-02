@@ -69,12 +69,13 @@ function Main(props) {
   useEffect(() => {
     cleanErrors();
     if (!location.pathname.match(/\/chart\/\d+\/embedded/g)) {
-      relog().then((data) => {
-        return dispatch(getTeams(data.id));
-      })
-      .then((data) => {
-        return dispatch(getProjects({ team_id: data.payload?.[0]?.id }));
-      });
+      relog()
+        .then((data) => {
+          return dispatch(getTeams(data.id));
+        })
+        .then((data) => {
+          return dispatch(getProjects({ team_id: data.payload?.[0]?.id }));
+        });
 
       areThereAnyUsers()
         .then((anyUsers) => {

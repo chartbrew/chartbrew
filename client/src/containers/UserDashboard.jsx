@@ -78,6 +78,7 @@ function UserDashboard(props) {
   const [deletingConnection, setDeletingConnection] = useState(false);
   const [connectionSearch, setConnectionSearch] = useState("");
 
+  const teamsRef = useRef(null);
   const initRef = useRef(null);
   const { height } = useWindowSize();
   const isDark = useThemeDetector();
@@ -86,7 +87,17 @@ function UserDashboard(props) {
 
   useEffect(() => {
     cleanErrors();
-    relog();
+
+    if (!initRef.current) {
+      initRef.current = true;
+      relog()
+        .then((data) => {
+          dispatch(getTeams(data.id));
+        })
+        .catch(() => {
+          navigate("/login");
+        });
+    }
   }, []);
 
   useEffect(() => {
@@ -96,8 +107,8 @@ function UserDashboard(props) {
   }, [user]);
 
   useEffect(() => {
-    if (teams && teams.length > 0 && !initRef.current) {
-      initRef.current = true;
+    if (teams && teams.length > 0 && !teamsRef.current) {
+      teamsRef.current = true;
       const owningTeam = teams.find((t) => t.TeamRoles.find((tr) => tr.role === "teamOwner" && tr.user_id === user.data.id));
       if (!owningTeam) return;
       dispatch(saveActiveTeam(owningTeam));
@@ -567,6 +578,7 @@ function UserDashboard(props) {
                             <TableCell key="name">
                               <Text i>No projects found</Text>
                             </TableCell>
+                            <TableCell key="members" align="center" />
                             <TableCell key="connections" align="center" />
                             <TableCell key="charts" align="center" />
                             <TableCell key="actions" align="center" />
