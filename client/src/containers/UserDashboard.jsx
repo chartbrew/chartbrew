@@ -114,6 +114,11 @@ function UserDashboard(props) {
       dispatch(saveActiveTeam(owningTeam));
       dispatch(getTeamMembers({ team_id: owningTeam.id }));
       dispatch(getDatasets({ team_id: owningTeam.id }));
+
+      const welcome = new URLSearchParams(window.location.search).get("welcome");
+      if (welcome) {
+        navigate(`/${owningTeam?.id}/connection/new`);
+      }
     }
   }, [teams]);
 
@@ -575,8 +580,15 @@ function UserDashboard(props) {
                       {_getFilteredProjects(team).length === 0 && (
                         <TableBody>
                           <TableRow>
-                            <TableCell key="name">
-                              <Text i>No projects found</Text>
+                            <TableCell key="name" className="p-0 pt-2">
+                              <Button
+                                variant="light"
+                                color="primary"
+                                onClick={() => _onNewProject(team)}
+                                startContent={<LuPlus />}
+                              >
+                                Create your first project
+                              </Button>
                             </TableCell>
                             <TableCell key="members" align="center" />
                             <TableCell key="connections" align="center" />
