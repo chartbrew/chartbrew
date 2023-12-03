@@ -348,7 +348,7 @@ function Dataset() {
           <DatasetQuery onUpdateDataset={_onUpdateDataset} />
         )}
 
-        {datasetMenu === "configure" && (
+        {datasetMenu === "configure" && ghostChart && (
           <DatasetBuilder
             chart={ghostChart}
             projectId={ghostProject?.id}
@@ -389,7 +389,7 @@ function Dataset() {
               />
             )}
             <div className="flex flex-row flex-wrap gap-2">
-              {projects.filter((p) => p.name.toLowerCase().indexOf(projectSearch.toLowerCase()) > -1).map((p) => (
+              {projects.filter((p) => p.name.toLowerCase().indexOf(projectSearch.toLowerCase()) > -1 && !p.ghost).map((p) => (
                 <Chip
                   key={p.id}
                   radius="sm"

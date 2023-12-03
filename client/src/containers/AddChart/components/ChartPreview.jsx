@@ -350,7 +350,7 @@ function ChartPreview(props) {
             {!chartLoading && (
               <>
                 <div className={"container mx-auto"}>
-                  <Text className={"text-foreground-500 text-[20px]"}>{"Select a dataset to get started"}</Text>
+                  <Text className={"text-foreground-500 text-[20px]"}>{"Configure the dataset to get started"}</Text>
                   <Spacer y={1} />
                   <Skeleton className="rounded-lg">
                     <div className="h-5 rounded-lg bg-default-300"></div>

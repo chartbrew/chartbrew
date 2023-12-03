@@ -294,7 +294,7 @@ function UserDashboard(props) {
   };
 
   const _getRelatedDatasets = (connectionId) => {
-    return datasets.filter((d) => d.DataRequests.find((dr) => dr.connection_id === connectionId));
+    return datasets.filter((d) => d.DataRequests?.find((dr) => dr.connection_id === connectionId));
   };
 
   const _onDeleteConnection = () => {

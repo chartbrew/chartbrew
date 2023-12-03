@@ -133,9 +133,9 @@ function Main(props) {
                   exact
                   path="/feedback"
                   element={(
-                    <Container justify="center" className={"pt-96 pb-48"} size="sm">
+                    <div className={"container mx-auto pt-unit-lg max-w-[600px]"}>
                       <FeedbackForm />
-                    </Container>
+                    </div>
                   )}
                 />
                 <Route exact path="/signup" element={<Signup />} />

@@ -2,6 +2,7 @@ const simplecrypt = require("simplecrypt");
 const uuid = require("uuid/v4");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const { nanoid } = require("nanoid");
 
 const db = require("../models/models");
 const mail = require("../modules/mail");
@@ -39,7 +40,7 @@ class UserController {
         }
 
         const newTeam = {
-          name: `${newUser.name}'s space`
+          name: `${newUser.name}'s team`
         };
         return db.Team.create(newTeam);
       })
@@ -47,6 +48,27 @@ class UserController {
         if (settings.teamRestricted === "1") {
           return data;
         }
+
+        // create a default first project
+        const newProject = {
+          name: "My first project",
+          team_id: data.id,
+          brewName: `my-first-project-${nanoid(8)}`,
+          dashboardTitle: "My first project",
+        };
+
+        // create a ghost project
+        const ghostProject = {
+          team_id: data.id,
+          name: "Ghost Project",
+          brewName: `ghost-project-${nanoid(8)}`,
+          dashboardTitle: "Ghost Project",
+          ghost: true,
+        };
+
+        // create async
+        db.Project.create(newProject);
+        db.Project.create(ghostProject);
 
         const teamRole = {
           team_id: data.id,
@@ -89,11 +111,20 @@ class UserController {
       })
       .then((projects) => {
         const promises = [];
+
+        // delete the charts
         projects.forEach((project) => {
           promises.push(db.Chart.destroy({ where: { "project_id": project.id } }));
-          promises.push(db.Connection.destroy({ where: { "project_id": project.id } }));
         });
+
+        // delete the projects
         promises.push(db.Project.destroy({ where: { "team_id": gTeam } }));
+
+        // delete the datasets
+        promises.push(db.Dataset.destroy({ where: { "team_id": gTeam } }));
+
+        // delete the connections
+        promises.push(db.Connection.destroy({ where: { "team_id": gTeam } }));
 
         return Promise.all(promises);
       })
@@ -225,6 +256,7 @@ class UserController {
           team_id: teamId
         }
       }],
+      attributes: { exclude: ["password", "passwordResetToken"] },
     }).then((users) => {
       return users;
     }).catch((error) => {
