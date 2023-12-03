@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Button, Checkbox, Divider, Input, Link, Spacer, Tooltip, Chip,
   Tabs, Tab, Select, SelectItem,
@@ -17,9 +17,7 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import ApiPagination from "./ApiPagination";
-import {
-  runDataRequest as runDataRequestAction,
-} from "../../../actions/dataRequest";
+import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import {
   getConnection,
@@ -77,16 +75,21 @@ function ApiBuilder(props) {
   const isDark = useThemeDetector();
   const params = useParams();
   const dispatch = useDispatch();
+  const initRef = useRef(null);
+
+  const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
 
   const {
-    dataRequest, onChangeRequest, runDataRequest,
+    dataRequest, onChangeRequest,
     connection, onSave, changeTutorial, chart,
-    onDelete, responses,
+    onDelete,
   } = props;
 
   // on init effect
   useEffect(() => {
-    if (dataRequest) {
+    if (dataRequest?.id && !initRef.current) {
+      initRef.current = true;
+
       // format the headers into key: value -> value: value format
       const formattedApiRequest = { ...dataRequest };
       const formattedHeaders = [];
@@ -109,7 +112,7 @@ function ApiBuilder(props) {
         changeTutorial("apibuilder");
       }, 1000);
     }
-  }, []);
+  }, [dataRequest]);
 
   useEffect(() => {
     const newApiRequest = apiRequest;
@@ -121,7 +124,7 @@ function ApiBuilder(props) {
       }
     }
 
-    dispatch(getConnection({ team_id: params.team_id, connection_id: connection.id }))
+    dispatch(getConnection({ team_id: params.teamId, connection_id: connection.id }))
       .then((data) => {
         setFullConnection(data.payload);
       })
@@ -131,13 +134,13 @@ function ApiBuilder(props) {
   }, [apiRequest, connection]);
 
   useEffect(() => {
-    if (responses && responses.length > 0) {
-      const selectedResponse = responses.find((o) => o.id === dataRequest.id);
-      if (selectedResponse?.data) {
-        setResult(JSON.stringify(selectedResponse.data, null, 2));
+    if (stateDrs && stateDrs.length > 0) {
+      const selectedResponse = stateDrs.find((o) => o.id === dataRequest.id);
+      if (selectedResponse?.response) {
+        setResult(JSON.stringify(selectedResponse.response, null, 2));
       }
     }
-  }, [responses]);
+  }, [stateDrs]);
 
   const _addHeader = () => {
     const { formattedHeaders } = apiRequest;
@@ -243,8 +246,17 @@ function ApiBuilder(props) {
 
     onSave(dr).then(() => {
       const getCache = !invalidateCache;
-      runDataRequest(params.projectId, params.chartId, dr.id, getCache)
-        .then((result) => {
+      dispatch(runDataRequest({
+        team_id: params.teamId,
+        dataset_id: params.datasetId,
+        dataRequest_id: dr.id,
+        getCache
+      }))
+        .then((data) => {
+          const result = data.payload;
+          if (result?.response?.dataRequest?.responseData?.data) {
+            setResult(JSON.stringify(result.response.dataRequest.responseData.data, null, 2));
+          }
           setRequestLoading(false);
           setRequestSuccess(result.status);
         })
@@ -617,20 +629,15 @@ ApiBuilder.propTypes = {
   changeTutorial: PropTypes.func.isRequired,
   chart: PropTypes.object,
   onDelete: PropTypes.func.isRequired,
-  responses: PropTypes.array.isRequired,
 };
 
-const mapStateToProps = (state) => {
+const mapStateToProps = () => {
   return {
-    responses: state.dataRequest.responses,
   };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    runDataRequest: (projectId, chartId, datasetId, getCache) => {
-      return dispatch(runDataRequestAction(projectId, chartId, datasetId, getCache));
-    },
     changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };
 };
