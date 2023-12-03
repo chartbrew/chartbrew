@@ -527,11 +527,11 @@ export const datasetSlice = createSlice({
       .addCase(runDataRequest.fulfilled, (state, action) => {
         state.loading = false;
         state.data = state.data.map((dataset) => {
-          if (dataset.id === action.meta.arg.dataset_id) {
+          if (dataset.id === parseInt(action.meta.arg.dataset_id, 10) && dataset.DataRequests) {
             return {
               ...dataset,
               DataRequests: dataset.DataRequests.map((dataRequest) => {
-                if (dataRequest.id === action.meta.arg.dataRequest_id) {
+                if (dataRequest.id === parseInt(action.meta.arg.dataRequest_id, 10)) {
                   return {
                     ...dataRequest,
                     loading: false,
@@ -573,7 +573,7 @@ export const datasetSlice = createSlice({
 export const selectDatasets = (state) => state.dataset.data;
 export const selectResponses = (state) => state.dataset.responses;
 export const selectDataRequests = (state, datasetId) => {
-  const dataset = state.dataset.data.find((dataset) => dataset.id === datasetId);
+  const dataset = state.dataset.data.find((dataset) => dataset.id === parseInt(datasetId, 10));
   if (dataset) {
     return dataset.DataRequests;
   }
