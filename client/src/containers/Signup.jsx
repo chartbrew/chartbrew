@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
@@ -41,7 +41,7 @@ const testimonialAvatar = "https://cdn2.chartbrew.com/skyguy.webp";
 */
 function Signup(props) {
   const {
-    createUser, createInvitedUser, oneaccountAuth,
+    createUser, createInvitedUser,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -56,14 +56,6 @@ function Signup(props) {
   const { height } = useWindowSize();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
-  useEffect(() => {
-    document.addEventListener("oneaccount-authenticated", authenticateOneaccount);
-
-    return () => {
-      document.removeEventListener("oneaccount-authenticated", authenticateOneaccount);
-    };
-  }, []);
 
   const submitUser = () => {
     const params = new URLSearchParams(document.location.search);
@@ -90,7 +82,7 @@ function Signup(props) {
       createUser({ name, email, password })
         .then(() => {
           setLoading(false);
-          navigate("/user");
+          navigate("/user?welcome=true");
         })
         .catch((err) => {
           setLoading(false);
@@ -115,20 +107,6 @@ function Signup(props) {
       .catch(() => {
         setLoading(false);
       });
-  };
-
-  const authenticateOneaccount = (event) => {
-    const data = event.detail;
-
-    const params = new URLSearchParams(document.location.search);
-    if (params.has("inviteToken")) {
-      _createInvitedUser(data, params.get("inviteToken"));
-    } else {
-      oneaccountAuth(data)
-        .then(() => {
-          navigate("/user");
-        });
-    }
   };
 
   return (

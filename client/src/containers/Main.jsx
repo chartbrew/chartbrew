@@ -145,7 +145,7 @@ function Main(props) {
                 <Route exact path="/user/profile" element={<ManageUser />} />
                 <Route exact path="/edit" element={<ManageUser />} />
                 <Route exact path="/passwordReset" element={<PasswordReset />} />
-                <Route path="manage/:teamId" element={<ManageTeam />}>
+                <Route path="/manage/:teamId" element={<ManageTeam />}>
                   <Route
                     path="members"
                     element={<TeamMembers />}

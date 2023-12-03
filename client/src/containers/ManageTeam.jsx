@@ -35,7 +35,7 @@ function ManageTeam(props) {
   const _getTeam = () => {
     dispatch(getTeam(params.teamId))
       .then((team) => {
-        dispatch(saveActiveTeam(team));
+        dispatch(saveActiveTeam(team.payload));
         setLoading(false);
       })
       .catch(() => {
