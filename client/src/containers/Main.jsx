@@ -16,7 +16,6 @@ import {
 import { getTeams, selectTeam } from "../slices/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import useThemeDetector from "../modules/useThemeDetector";
-import Container from "../components/Container";
 import { IconContext } from "react-icons";
 import TeamMembers from "./TeamMembers/TeamMembers";
 import TeamSettings from "./TeamSettings";

@@ -10,6 +10,7 @@ import { useDispatch } from "react-redux";
 import { getApiKeys, createApiKey, deleteApiKey } from "../../slices/team";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
+import { useParams } from "react-router";
 
 function ApiKeys(props) {
   const { teamId } = props;
@@ -24,6 +25,7 @@ function ApiKeys(props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const dispatch = useDispatch();
+  const params = useParams();
 
   useEffect(() => {
     _fetchApiKeys();
@@ -31,9 +33,9 @@ function ApiKeys(props) {
 
   const _fetchApiKeys = () => {
     setLoading(true);
-    dispatch(getApiKeys({ team_id: teamId }))
+    dispatch(getApiKeys({ team_id: params.teamId }))
       .then((keys) => {
-        setApiKeys(keys);
+        setApiKeys(keys.payload);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -53,7 +55,7 @@ function ApiKeys(props) {
         _fetchApiKeys();
 
         setTimeout(() => {
-          setCreatedKey(createdKey);
+          setCreatedKey(createdKey.payload);
         }, 500);
       })
       .catch(() => setCreateLoading(false));
