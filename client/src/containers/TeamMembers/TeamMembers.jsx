@@ -67,6 +67,7 @@ function TeamMembers(props) {
   const _getTeam = () => {
     dispatch(getTeam(params.teamId))
       .then(() => {
+        dispatch(getTeamMembers({ team_id: params.teamId }));
         setLoading(false);
       })
       .catch(() => {
@@ -178,14 +179,14 @@ function TeamMembers(props) {
   return (
     <div style={style} className="container mx-auto">
       {_canAccess("teamAdmin") && (
-        <Segment className={"bg-background"}>
+        <Segment className={"bg-content1"}>
           <InviteMembersForm />
         </Segment>
       )}
 
       <Spacer y={4} />
 
-      <Segment className={"bg-background"}>
+      <Segment className={"bg-content1"}>
         <Row>
           <Text size="h4">{"Team members"}</Text>
         </Row>
@@ -197,7 +198,7 @@ function TeamMembers(props) {
             <TableColumn key="role">Role</TableColumn>
             <TableColumn key="projectAccess">Projects</TableColumn>
             <TableColumn key="export">Can export</TableColumn>
-            <TableColumn key="actions">Actions</TableColumn>
+            <TableColumn key="actions" hideHeader>Actions</TableColumn>
           </TableHeader>
           <TableBody>
             {teamMembers?.length > 0 && teamMembers.map((member) => {
@@ -216,22 +217,23 @@ function TeamMembers(props) {
                     <Text size="sm" className={"text-foreground-500"}>{member.email}</Text>
                   </TableCell>
                   <TableCell key="role">
-                    {memberRole.role === "teamOwner" && <Chip color="primary" variant="faded" size="sm">Team Owner</Chip>}
-                    {memberRole.role === "teamAdmin" && <Chip color="success" variant="faded" size="sm">Team Admin</Chip>}
-                    {memberRole.role === "projectAdmin" && <Chip color="secondary" variant="faded" size="sm">Project admin</Chip>}
-                    {memberRole.role === "projectViewer" && <Chip color="default" variant="faded" size="sm">Project viewer</Chip>}
+                    {memberRole.role === "teamOwner" && <Chip color="primary" variant="flat" size="sm">Team Owner</Chip>}
+                    {memberRole.role === "teamAdmin" && <Chip color="success" variant="flat" size="sm">Team Admin</Chip>}
+                    {memberRole.role === "projectAdmin" && <Chip color="secondary" variant="flat" size="sm">Project admin</Chip>}
+                    {memberRole.role === "projectViewer" && <Chip color="default" variant="flat" size="sm">Project viewer</Chip>}
                   </TableCell>
                   <TableCell key="projectAccess">
-                    {!memberRole.projects || memberRole.projects.length === 0 ? "None" : memberRole.projects.length}
+                    {memberRole.role !== "teamOwner" && memberRole.role !== "teamAdmin" && (!memberRole.projects || memberRole.projects.length === 0) ? "None" : memberRole?.projects?.length}
+                    {memberRole.role === "teamOwner" || memberRole.role === "teamAdmin" ? "All" : ""}
                   </TableCell>
                   <TableCell key="export">
-                    {memberRole.canExport && <Chip color="success" variant={"flat"} size="sm">Yes</Chip>}
-                    {!memberRole.canExport && <Chip color="danger" variant={"flat"} size="sm">No</Chip>}
+                    {(memberRole.canExport || (memberRole.role.indexOf("team") > -1)) && <Chip color="success" variant={"flat"} size="sm">Yes</Chip>}
+                    {(!memberRole.canExport && memberRole.role.indexOf("team") === -1) && <Chip color="danger" variant={"flat"} size="sm">No</Chip>}
                   </TableCell>
                   <TableCell key="actions">
-                    <Container className={"pl-0 pr-0"}>
+                    <div>
                       <Row className={"gap-2"}>
-                        {_canAccess("teamAdmin") && (
+                        {_canAccess("teamAdmin") && memberRole.role !== "teamOwner" && memberRole !== "teamAdmin" && (
                           <>
                             <Tooltip content="Adjust project access">
                               <Button
@@ -314,7 +316,7 @@ function TeamMembers(props) {
                             </Tooltip>
                           )}
                       </Row>
-                    </Container>
+                    </div>
                   </TableCell>
                 </TableRow>
               );

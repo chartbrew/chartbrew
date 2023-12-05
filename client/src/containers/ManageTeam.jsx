@@ -89,6 +89,7 @@ function ManageTeam(props) {
               onSelectionChange={(keys) => _onMenuSelect(keys.currentKey) }
               selectionMode="single"
               itemClasses={{ title: "text-md" }}
+              variant="faded"
             >
               <ListboxSection title="Manage the team">
                 {_canAccess("teamOwner") && (

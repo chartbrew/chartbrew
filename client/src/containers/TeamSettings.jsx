@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch } from "react-redux";
 import {
-  Input, Checkbox, Spacer, Button, Divider, CircularProgress,
+  Input, Checkbox, Spacer, Button, CircularProgress,
 } from "@nextui-org/react";
 
 import { getTeam, updateTeam } from "../slices/team";
@@ -11,6 +11,7 @@ import Container from "../components/Container";
 import Row from "../components/Row";
 import Text from "../components/Text";
 import { useParams } from "react-router";
+import Segment from "../components/Segment";
 
 /*
   Contains team update functionality
@@ -68,12 +69,12 @@ function TeamSettings(props) {
 
   return (
     <div style={style}>
-      <Container>
+      <Segment className={"bg-content1"}>
         <Row>
-          <Text size="h3">Team settings</Text>
+          <Text size="h4">Team settings</Text>
         </Row>
         <Spacer y={4} />
-        <Row>
+        <Row align="center">
           <Input
             label="Team name"
             placeholder={team.name}
@@ -82,14 +83,13 @@ function TeamSettings(props) {
             onChange={(e) => {
               setTeamState({ ...teamState, name: e.target.value });
             }}
-            fullWidth
             variant="bordered"
             color={submitError ? "error" : "default"}
             description={submitError ? "Error updating team" : ""}
           />
-        </Row>
-        <Spacer y={1} />
-        <Row>
+
+          <Spacer x={2} />
+
           <Button
             color={success ? "success" : "primary"}
             isLoading={loading}
@@ -99,19 +99,17 @@ function TeamSettings(props) {
             {success ? "Saved" : "Save"}
           </Button>
         </Row>
-        <Spacer y={2} />
-        <Divider />
-        <Spacer y={2} />
+
+        <Spacer y={4} />
         <Row>
           <Checkbox
             isSelected={team.showBranding}
             onChange={_onToggleBranding}
-            size="sm"
           >
             Show Chartbrew branding
           </Checkbox>
         </Row>
-      </Container>
+      </Segment>
     </div>
   );
 }
