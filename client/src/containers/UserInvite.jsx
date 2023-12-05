@@ -7,7 +7,6 @@ import {
 import cookie from "react-cookies";
 import { useNavigate } from "react-router";
 
-import Container from "../components/Container";
 import Text from "../components/Text";
 import Row from "../components/Row";
 
@@ -42,38 +41,32 @@ function UserInvite(props) {
 
   return (
     <div style={styles.container}>
-      <div className="grid grid-cols-12 justify-center align-middle items-center">
-        <div className="col-span-12 md:col-span-6">
-          <Container textAlign="center" className={"mt-unit-3"}>
-            <Row justify="center" align="center" className={"text-center"}>
-              <Text size="h2">
-                Your Chartbrew team invitation
-              </Text>
-            </Row>
-            <Row justify="center" align="center">
-              <Text size="h4">Please select an option below</Text>
-            </Row>
-            <Spacer y={1} />
-            <Row justify="center" align="center" wrap="wrap">
-              <Button
-                color="secondary"
-                onClick={() => redirectUser("login")}
-                auto
-                className={"mb-10"}
-              >
-                Login with an existing account
-              </Button>
-              <Spacer x={0.5} />
-              <Button
-                onClick={() => redirectUser("signup")}
-                auto
-                className={"mb-10"}
-              >
-                Create a new account
-              </Button>
-            </Row>
-          </Container>
-        </div>
+      <div className="container mx-auto pt-20 justify-center items-center">
+        <Row justify="center" align="center" className={"text-center"}>
+          <Text size="h2">
+            {"You've been invite to join Chartbrew"}
+          </Text>
+        </Row>
+        <Row justify="center" align="center">
+          <Text className={"font-semibold text-default"}>Please select an option below</Text>
+        </Row>
+        <Spacer y={4} />
+        <Row justify="center" align="center" wrap="wrap">
+          <Button
+            color="secondary"
+            onClick={() => redirectUser("login")}
+            auto
+          >
+            Login with an existing account
+          </Button>
+          <Spacer x={2} />
+          <Button
+            onClick={() => redirectUser("signup")}
+            color="primary"
+          >
+            Create a new account
+          </Button>
+        </Row>
       </div>
     </div>
   );

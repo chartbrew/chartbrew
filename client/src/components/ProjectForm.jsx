@@ -91,7 +91,7 @@ function ProjectForm(props) {
                   onChange={(e) => setNewProject({
                     ...newProject,
                     name: e.target.value,
-                    team_id: team.active.id,
+                    team_id: team.id,
                   })}
                   label="Project name"
                   placeholder="Enter a name for your project"
