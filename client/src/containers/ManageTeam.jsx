@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect, useDispatch } from "react-redux";
 import { Outlet, useNavigate, useParams } from "react-router";
 import {
-  CircularProgress, Listbox, ListboxSection, ListboxItem,
+  CircularProgress, Listbox, ListboxSection, ListboxItem, Spacer,
 } from "@nextui-org/react";
 import { LuCode2, LuSettings, LuUsers2 } from "react-icons/lu";
 
@@ -82,28 +82,30 @@ function ManageTeam(props) {
     <div>
       <Navbar />
       <div className="grid grid-cols-12 gap-4 container mx-auto">
-        <div className="col-span-12 sm:col-span-3 md:col-span-2">
+        <div className="col-span-12 sm:col-span-4 md:col-span-2">
           <div className="pt-4">
+            <h2 className="text-xl font-bold">{team.name}</h2>
+            <Spacer y={4} />
             <Listbox
               selectedKeys={[checkActive()]}
               onSelectionChange={(keys) => _onMenuSelect(keys.currentKey) }
               selectionMode="single"
-              itemClasses={{ title: "text-md" }}
               variant="faded"
+              className="p-0"
             >
-              <ListboxSection title="Manage the team">
+              <ListboxSection title="Manage the team" className="p-0" classNames={{ heading: "p-0 text-sm" }}>
                 {_canAccess("teamOwner") && (
-                  <ListboxItem key="settings" startContent={<LuSettings />}>
+                  <ListboxItem key="settings" startContent={<LuSettings size={24} />} classNames={{ title: "text-lg" }}>
                     Settings
                   </ListboxItem>
                 )}
-                <ListboxItem key="members" startContent={<LuUsers2 />}>
+                <ListboxItem key="members" startContent={<LuUsers2 size={24} />} classNames={{ title: "text-lg" }}>
                   Members
                 </ListboxItem>
               </ListboxSection>
               {_canAccess("teamAdmin") && (
-                <ListboxSection title="Developers">
-                  <ListboxItem key="api-keys" startContent={<LuCode2 />}>
+                <ListboxSection title="Developers" classNames={{ heading: "p-0 text-sm" }}>
+                  <ListboxItem key="api-keys" startContent={<LuCode2 size={24} />} classNames={{ title: "text-lg" }}>
                     API Keys
                   </ListboxItem>
                 </ListboxSection>
@@ -112,7 +114,7 @@ function ManageTeam(props) {
           </div>
         </div>
 
-        <div className="col-span-12 sm:col-span-9 md:col-span-10">
+        <div className="col-span-12 sm:col-span-8 md:col-span-10">
           <div className="container mx-auto py-4">
             <Outlet />
           </div>

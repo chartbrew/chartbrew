@@ -10,7 +10,7 @@ const grantList = [
   //
   // resource: team
   {
-    role: "teamOwner", resource: "team", action: "create:any", attributes: "*",
+    role: "teamOwner", resource: "team", action: "create:own", attributes: "*",
   },
   {
     role: "teamOwner", resource: "team", action: "read:own", attributes: "*",
@@ -170,7 +170,7 @@ const grantList = [
   // --------------------
   //
   {
-    role: "teamAdmin", resource: "team", action: "read:any", attributes: "*",
+    role: "teamAdmin", resource: "team", action: "read:own", attributes: "*",
   },
   // resource: project ---> Team Perspective
   {

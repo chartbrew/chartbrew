@@ -14,6 +14,43 @@ module.exports = (app) => {
   const teamController = new TeamController();
   const userController = new UserController();
 
+  const checkPermissions = (actionType = "readOwn", entity = "team") => {
+    return async (req, res, next) => {
+      const { id } = req.params;
+
+      // Fetch the TeamRole for the user
+      const teamRole = await teamController.getTeamRole(id, req.user.id);
+
+      if (!teamRole) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const permission = accessControl.can(teamRole.role)[actionType](entity);
+      if (!permission.granted) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { role } = teamRole;
+
+      // Handle permissions for teamOwner and teamAdmin
+      if (["teamOwner", "teamAdmin"].includes(role)) {
+        req.user.isEditor = true;
+        return next();
+      }
+
+      if (role === "projectAdmin" || role === "projectViewer") {
+        // const connections = await connectionController.findByProjects(projects);
+        // if (!connections || connections.length === 0) {
+        //   return res.status(404).json({ message: "No connections found" });
+        // }
+
+        return next();
+      }
+
+      return res.status(403).json({ message: "Access denied" });
+    };
+  };
+
   /**
    * [MASTER] Route to get all the teams
    */
@@ -33,20 +70,11 @@ module.exports = (app) => {
   // --------------------------------------
 
   // route to get a team by its id
-  app.get("/team/:id", verifyToken, (req, res) => {
-    let gTeamRole;
-    return teamController.getTeamRole(req.params.id, req.user.id)
-      .then((teamRole) => {
-        gTeamRole = teamRole;
-        const permission = accessControl.can(teamRole.role).readOwn("team");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        return teamController.findById(req.params.id);
-      })
+  app.get("/team/:id", verifyToken, checkPermissions(), (req, res) => {
+    return teamController.findById(req.params.id)
       .then((team) => {
         const modTeam = team;
-        if (team.Projects) modTeam.setDataValue("Projects", filterProjects(team.Projects, gTeamRole));
+        if (team.Projects) modTeam.setDataValue("Projects", filterProjects(team.Projects, req.user));
         return res.status(200).send(modTeam);
       })
       .catch((error) => {
@@ -117,42 +145,25 @@ module.exports = (app) => {
   // --------------------------------------
 
   // a route to send a team invite
-  app.post("/team/:id/invite", verifyToken, (req, res) => {
-    if (!req.params.id || !req.body) return res.status(400).send("Missing params");
+  app.post("/team/:id/invite", verifyToken, checkPermissions("createAny", "teamInvite"), (req, res) => {
+    const payload = {
+      projects: req.body.projects,
+      canExport: req.body.canExport,
+      role: req.body.role,
+      team_id: req.params.id,
+      user_id: req.user.id,
+    };
 
-    return teamController.getTeamRole(req.params.id, req.user.id)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("teamInvite");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        const payload = {
-          projects: req.body.projects,
-          canExport: req.body.canExport,
-          role: req.body.role,
-          team_id: teamRole.team_id,
-          user_id: teamRole.user_id,
-        };
-
-        const token = jwt.sign(payload, app.settings.secret, {
-          expiresIn: 2592000 // a month
-        }, (err, token) => {
-          if (err) throw new Error(err);
-          return res.status(200).send({
-            url: `${app.settings.client}/invite?token=${token}`,
-          });
-        });
-
-        return token;
-      })
-      .catch((error) => {
-        if (error.message === "406") return res.status(406).send(error);
-        if (error.message === "401") return res.status(401).send({ error: "Not authorized" });
-        if (error.message === "409") return res.status(409).send({ error: "The user is already in this team" });
-
-        return res.status(400).send(error);
+    const token = jwt.sign(payload, app.settings.secret, {
+      expiresIn: 2592000 // a month
+    }, (err, token) => {
+      if (err) throw new Error(err);
+      return res.status(200).send({
+        url: `${app.settings.client}/invite?token=${token}`,
       });
+    });
+
+    return token;
   });
   // --------------------------------------
 
@@ -183,19 +194,11 @@ module.exports = (app) => {
   // --------------------------------------
 
   // route to get all team users
-  app.get("/team/:id/members", verifyToken, (req, res) => {
-    const teamId = req.params.id;
-    return teamController.getTeamRole(teamId, req.user.id)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).readAny("teamRole");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        return teamController.getTeamMembersId(teamId);
-      })
+  app.get("/team/:id/members", verifyToken, checkPermissions(), (req, res) => {
+    return teamController.getTeamMembersId(req.params.id)
       .then((userIds) => {
         if (userIds.length < 1) return res.status(200).send([]);
-        return userController.getUsersById(userIds, teamId);
+        return userController.getUsersById(userIds, req.params.id);
       })
       .then((teamMembers) => {
         return res.status(200).send(teamMembers);
@@ -207,102 +210,9 @@ module.exports = (app) => {
   });
   // --------------------------------------
 
-  // route to find an invited user by invite token
-  app.get("/team/invite/:token", (req, res) => {
-    if (!req.params.token) return res.status(400).send("invite token is missing");
-    return teamController.getTeamInvite(req.params.token)
-      .then((foundInvite) => {
-        return userController.emailExists(foundInvite.email);
-      })
-      .then((emailExists) => {
-        return res.status(200).send(emailExists);
-      })
-      .catch((error) => {
-        if (error === "404") return res.status(404).send("The invite is not found");
-        return res.status(400).send(error);
-      });
-  });
-  // --------------------------------------
-
-  // route to delete a team invite by token
-  app.post("/team/:id/declineInvite/user", verifyToken, (req, res) => {
-    let requestFinished = false;
-    return teamController.getTeamRole(req.params.id, req.user.id)
-      .then((teamRole) => {
-        if (!teamRole) {
-          return new Promise((resolve, reject) => reject(new Error("norole")));
-        }
-        const permission = accessControl.can(teamRole.role).deleteAny("teamInvite");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        return teamController.deleteTeamInvite(req.body.token);
-      })
-      .then(() => {
-        res.status(200).send({});
-        requestFinished = true;
-        return Promise.resolve({});
-      })
-      .catch((error) => {
-        if (error.message === "norole") {
-          return teamController.getInviteByEmail(req.params.id, req.user.email);
-        }
-
-        return Promise.reject(error);
-      })
-      .then((invite) => {
-        if (!invite) {
-          return Promise.reject({ error: "Not authorized" });
-        }
-
-        return teamController.deleteTeamInvite(req.body.token);
-      })
-      .then(() => {
-        if (!requestFinished) {
-          return res.status(200).send({});
-        }
-
-        return Promise.resolve({});
-      })
-      .catch((error) => {
-        if (error.message && error.message.indexOf("401") > -1) {
-          return res.status(401).send(error);
-        }
-        return res.status(400).send(error);
-      });
-  });
-  // --------------------------------------
-
-  // route to get pending invites for the team
-  app.get("/team/pendingInvites/:id", verifyToken, (req, res) => {
-    return teamController.getTeamRole(req.params.id, req.user.id)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).readAny("teamInvite");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        return teamController.getTeamInvitesById(req.params.id);
-      })
-      .then((invites) => {
-        return res.status(200).send([invites, []]);
-      })
-      .catch((error) => {
-        if (error.message === "401") return res.status(401).send({ error: "Not authorized" });
-        return res.status(400).send(error);
-      });
-  });
-  // --------------------------------------
-
   // route to update a team role
-  app.put("/team/:id/role", verifyToken, (req, res) => {
-    return teamController.getTeamRole(req.params.id, req.user.id)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("teamRole");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        return teamController.updateTeamRole(req.params.id, req.body.user_id, req.body);
-      })
+  app.put("/team/:id/role", verifyToken, checkPermissions("updateAny", "teamRole"), (req, res) => {
+    return teamController.updateTeamRole(req.params.id, req.body.user_id, req.body)
       .then((updated) => {
         return res.status(200).send(updated);
       })
@@ -314,15 +224,8 @@ module.exports = (app) => {
   // --------------------------------------
 
   // route to delete a team member
-  app.delete("/team/:id/member/:userId", verifyToken, (req, res) => {
-    return teamController.getTeamRole(req.params.id, req.user.id)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).deleteAny("teamRole");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        return teamController.getTeamRole(req.params.id, req.params.userId);
-      })
+  app.delete("/team/:id/member/:userId", verifyToken, checkPermissions("deleteAny", "teamRole"), (req, res) => {
+    return teamController.getTeamRole(req.params.id, req.params.userId)
       .then((teamRole) => {
         if (!teamRole) return res.status(404).send("Did not find a team member");
         return teamController.deleteTeamMember(teamRole.id);
@@ -341,18 +244,10 @@ module.exports = (app) => {
   // --------------------------------------
 
   // route to create a new API key to access the team content
-  app.post("/team/:id/apikey", verifyToken, (req, res) => {
+  app.post("/team/:id/apikey", verifyToken, checkPermissions("createAny", "apiKey"), (req, res) => {
     if (!req.body.name) return res.status(400).send("Missing required fields.");
 
-    return teamController.getTeamRole(req.params.id, req.user.id)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).createAny("apiKey");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return teamController.createApiKey(req.params.id, req.user, req.body);
-      })
+    return teamController.createApiKey(req.params.id, req.user, req.body)
       .then((apiKey) => {
         return res.status(200).send(apiKey);
       })
@@ -363,16 +258,8 @@ module.exports = (app) => {
   // --------------------------------------
 
   // route to get an API key
-  app.get("/team/:id/apikey", verifyToken, (req, res) => {
-    return teamController.getTeamRole(req.params.id, req.user.id)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).readAny("apiKey");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return teamController.getApiKeys(req.params.id);
-      })
+  app.get("/team/:id/apikey", verifyToken, checkPermissions("readAny", "apiKey"), (req, res) => {
+    return teamController.getApiKeys(req.params.id)
       .then((apiKey) => {
         return res.status(200).send(apiKey);
       })
@@ -383,16 +270,8 @@ module.exports = (app) => {
   // --------------------------------------
 
   // route to remove an API key
-  app.delete("/team/:id/apikey/:keyId", verifyToken, (req, res) => {
-    return teamController.getTeamRole(req.params.id, req.user.id)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).deleteAny("apiKey");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return teamController.deleteApiKey(req.params.keyId);
-      })
+  app.delete("/team/:id/apikey/:keyId", verifyToken, checkPermissions("deleteAny", "apiKey"), (req, res) => {
+    return teamController.deleteApiKey(req.params.keyId)
       .then(() => {
         return res.status(200).send({ deleted: true });
       })

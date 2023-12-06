@@ -18,6 +18,11 @@ export const getTeamConnections = createAsyncThunk(
       Authorization: `Bearer ${token}`,
     });
     const response = await fetch(url, { headers, method: "GET" });
+
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
     const data = await response.json();
     return data;
   }

@@ -22,7 +22,7 @@ import {
   getTemplates as getTemplatesAction
 } from "../actions/template";
 import {
-  updateProject, removeProject, selectProjects,
+  updateProject, removeProject, selectProjects, getProjects,
 } from "../slices/project";
 import {
   getTeamConnections, removeConnection, selectConnections,
@@ -50,7 +50,7 @@ import Segment from "../components/Segment";
 */
 function UserDashboard(props) {
   const {
-    relog, cleanErrors, user, teamLoading, getTemplates,
+    relog, cleanErrors, user, getTemplates,
   } = props;
 
   const team = useSelector(selectTeam);
@@ -126,6 +126,7 @@ function UserDashboard(props) {
     if (team?.id) {
       dispatch(getTeamMembers({ team_id: team.id }));
       dispatch(getTeamConnections({ team_id: team.id }));
+      dispatch(getProjects({ team_id: team.id }));
     }
   }, [team]);
 
@@ -168,9 +169,9 @@ function UserDashboard(props) {
   };
 
   const _getFilteredProjects = () => {
-    if (!search[team.id]) return team.Projects.filter((p) => !p.ghost);
-    const filteredProjects = team.Projects.filter((p) => {
-      return p.name.toLowerCase().indexOf(search[team.id].toLowerCase()) > -1 && !p.ghost;
+    if (!search[team.id]) return projects.filter((p) => !p.ghost && p.team_id === team.id);
+    const filteredProjects = projects.filter((p) => {
+      return p.name.toLowerCase().indexOf(search[team.id].toLowerCase()) > -1 && !p.ghost && p.team_id === team.id;
     });
 
     // now add the team members to each project
@@ -238,6 +239,9 @@ function UserDashboard(props) {
 
   const _onChangeTeam = (teamId) => {
     const team = teams.find((t) => `${t.id}` === `${teamId}`);
+    if (!team) return;
+
+    setActiveMenu("projects");
     dispatch(saveActiveTeam(team));
     dispatch(getTeamMembers({ team_id: team.id }));
   };
@@ -323,7 +327,7 @@ function UserDashboard(props) {
   };
 
   const _getFilteredConnections = () => {
-    if (!connectionSearch) return connections;
+    if (!connectionSearch) return connections || [];
 
     const filteredConnections = connections.filter((c) => {
       return c.name.toLowerCase().indexOf(connectionSearch.toLowerCase()) > -1;
@@ -412,25 +416,29 @@ function UserDashboard(props) {
                   >
                     <span className="text-lg">Projects</span>
                   </ListboxItem>
-                  <ListboxItem
-                    key="connections"
-                    startContent={<LuPlug size={24} />}
-                    textValue="Connections"
-                    color={activeMenu === "connections" ? "primary" : "default"}
-                    className={activeMenu === "connections" ? "bg-content2 text-primary" : ""}
-                  >
-                    <span className="text-lg">Connections</span>
-                  </ListboxItem>
-                  <ListboxItem
-                    key="datasets"
-                    showDivider
-                    startContent={<LuDatabase size={24} />}
-                    textValue="Datasets"
-                    color={activeMenu === "datasets" ? "primary" : "default"}
-                    className={activeMenu === "datasets" ? "bg-content2 text-primary" : ""}
-                  >
-                    <span className="text-lg">Datasets</span>
-                  </ListboxItem>
+                  {_canAccess("teamAdmin", team.TeamRoles) && (
+                    <ListboxItem
+                      key="connections"
+                      startContent={<LuPlug size={24} />}
+                      textValue="Connections"
+                      color={activeMenu === "connections" ? "primary" : "default"}
+                      className={activeMenu === "connections" ? "bg-content2 text-primary" : ""}
+                    >
+                      <span className="text-lg">Connections</span>
+                    </ListboxItem>
+                  )}
+                  {_canAccess("teamAdmin", team.TeamRoles) && (
+                    <ListboxItem
+                      key="datasets"
+                      showDivider
+                      startContent={<LuDatabase size={24} />}
+                      textValue="Datasets"
+                      color={activeMenu === "datasets" ? "primary" : "default"}
+                      className={activeMenu === "datasets" ? "bg-content2 text-primary" : ""}
+                    >
+                      <span className="text-lg">Datasets</span>
+                    </ListboxItem>
+                  )}
                   {_canAccess("teamAdmin", team.TeamRoles) && (
                     <ListboxItem
                       as={Link}
@@ -474,7 +482,7 @@ function UserDashboard(props) {
                     />
                   </Row>
                   <Spacer y={4} />
-                  {team.Projects && teamMembers?.length > 0 && (
+                  {projects && (
                     <Table
                       aria-label="Projects list"
                       className="h-auto min-w-full border-2 border-solid border-content3 rounded-xl"
@@ -540,12 +548,12 @@ function UserDashboard(props) {
                               <TableCell key="charts">
                                 <Row justify="center" align="center">
                                   <Text b>
-                                    {project.Charts.length}
+                                    {project?.Charts?.length || 0}
                                   </Text>
                                 </Row>
                               </TableCell>
                               <TableCell key="actions">
-                                {_canAccess("projectAdmin", team.TeamRoles) && (
+                                {_canAccess("teamAdmin", team.TeamRoles) && (
                                   <Row justify="flex-end" align="center">
                                     <Tooltip content="Rename the project">
                                       <Button
@@ -577,18 +585,23 @@ function UserDashboard(props) {
                           ))}
                         </TableBody>
                       )}
-                      {_getFilteredProjects(team).length === 0 && (
+                      {_getFilteredProjects().length === 0 && (
                         <TableBody>
                           <TableRow>
                             <TableCell key="name" className="p-0 pt-2">
-                              <Button
-                                variant="light"
-                                color="primary"
-                                onClick={() => _onNewProject(team)}
-                                startContent={<LuPlus />}
-                              >
-                                Create your first project
-                              </Button>
+                              {_canAccess("teamAdmin", team.TeamRoles) && (
+                                <Button
+                                  variant="light"
+                                  color="primary"
+                                  onClick={() => _onNewProject(team)}
+                                  startContent={<LuPlus />}
+                                >
+                                  Create your first project
+                                </Button>
+                              )}
+                              {!_canAccess("teamAdmin", team.TeamRoles) && (
+                                <span className="italic text-default-500">No projects here</span>
+                              )}
                             </TableCell>
                             <TableCell key="members" align="center" />
                             <TableCell key="connections" align="center" />
@@ -599,7 +612,7 @@ function UserDashboard(props) {
                       )}
                     </Table>
                   )}
-                  {team.Projects && team.Projects.length === 0 && !_canAccess("projectAdmin", team.TeamRoles) && (
+                  {projects && projects.length === 0 && !_canAccess("projectAdmin", team.TeamRoles) && (
                     <Container>
                     <Text size="h3">
                         {"No project over here"}
@@ -1014,7 +1027,7 @@ function UserDashboard(props) {
           </ModalContent>
         </Modal>
 
-        {(teamLoading || (teams && teams.length === 0)) && (
+        {(teams && teams.length === 0) && (
           <>
             <Row align="center" justify="center">
               <CircularProgress aria-label="Loading" size="xl" />
@@ -1108,16 +1121,12 @@ UserDashboard.propTypes = {
   user: PropTypes.object.isRequired,
   relog: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
-  teamLoading: PropTypes.bool.isRequired,
   getTemplates: PropTypes.func.isRequired,
-  teamMembers: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
     user: state.user,
-    teamLoading: state.team.loading,
-    teamMembers: state.team.teamMembers,
   };
 };
 

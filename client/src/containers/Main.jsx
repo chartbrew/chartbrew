@@ -26,7 +26,7 @@ import AddChart from "./AddChart/AddChart";
 import ProjectSettings from "./ProjectSettings";
 import Integrations from "./Integrations/Integrations";
 import Dataset from "./Dataset/Dataset";
-import { getProjects } from "../slices/project";
+// import { getProjects } from "../slices/project";
 import ConnectionWizard from "./Connections/ConnectionWizard";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
@@ -72,8 +72,8 @@ function Main(props) {
         .then((data) => {
           return dispatch(getTeams(data.id));
         })
-        .then((data) => {
-          return dispatch(getProjects({ team_id: data.payload?.[0]?.id }));
+        .then(() => {
+          // return dispatch(getProjects({ team_id: data.payload?.[0]?.id }));
         });
 
       areThereAnyUsers()
