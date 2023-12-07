@@ -13,6 +13,7 @@ import Navbar from "../components/Navbar";
 import canAccess from "../config/canAccess";
 import Container from "../components/Container";
 import Row from "../components/Row";
+import { getProjects } from "../slices/project";
 
 /*
   Description
@@ -36,6 +37,7 @@ function ManageTeam(props) {
     dispatch(getTeam(params.teamId))
       .then((team) => {
         dispatch(saveActiveTeam(team.payload));
+        dispatch(getProjects({ team_id: team.payload.id }));
         setLoading(false);
       })
       .catch(() => {

@@ -12,6 +12,7 @@ import { generateInviteUrl } from "../slices/team";
 import Row from "./Row";
 import Text from "./Text";
 import { selectTeam } from "../slices/team";
+import { selectProjects } from "../slices/project";
 
 /*
   Contains the team members invitation functionality
@@ -25,10 +26,11 @@ function InviteMembersForm(props) {
   const [urlCopied, setUrlCopied] = useState(false);
 
   const {
-    style, projects, selectedProjects,
+    style, selectedProjects,
   } = props;
 
   const team = useSelector(selectTeam);
+  const projects = useSelector(selectProjects);
   const params = useParams();
   const dispatch = useDispatch();
 
@@ -277,7 +279,6 @@ InviteMembersForm.defaultProps = {
 
 InviteMembersForm.propTypes = {
   match: PropTypes.object.isRequired,
-  projects: PropTypes.array.isRequired,
   selectedProjects: PropTypes.array,
   style: PropTypes.object,
 };
@@ -285,7 +286,6 @@ InviteMembersForm.propTypes = {
 const mapStateToProps = (state) => {
   return {
     user: state.user,
-    projects: state.project.data,
   };
 };
 
