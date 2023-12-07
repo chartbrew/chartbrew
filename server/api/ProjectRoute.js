@@ -14,32 +14,6 @@ module.exports = (app) => {
   const projectController = new ProjectController();
   const teamController = new TeamController();
 
-  const checkAccess = (req) => {
-    const teamId = req.params.team_id || req.body.team_id || req.query.team_id;
-
-    if (req.params.id) {
-      return projectController.findById(req.params.id)
-        .then((project) => {
-          return teamController.getTeamRole(project.team_id, req.user.id);
-        })
-        .then((teamRole) => {
-          // the owner has access to all the projects
-          if (teamRole.role === "teamOwner" || teamRole.role === "teamAdmin") return teamRole;
-
-          // otherwise, check if the team role contains access to the right project
-          if (!teamRole.projects) return Promise.reject(401);
-          const filteredProjects = teamRole.projects.filter((o) => `${o}` === `${req.params.id}`);
-          if (filteredProjects.length === 0) {
-            return Promise.reject(401);
-          }
-
-          return teamRole;
-        });
-    }
-
-    return teamController.getTeamRole(teamId, req.user.id);
-  };
-
   const checkPermissions = (actionType = "readOwn") => {
     return async (req, res, next) => {
       const projectId = req.params.id;
@@ -111,15 +85,7 @@ module.exports = (app) => {
   ** Route to create a project
   */
   app.post("/project", verifyToken, checkPermissions("createOwn"), (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).createAny("project");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return projectController.create(req.user.id, req.body);
-      })
+    return projectController.create(req.user.id, req.body)
       .then((project) => {
         return res.status(200).send(project);
       })
