@@ -32,9 +32,9 @@ module.exports = (app) => {
       }
 
       if (role === "projectAdmin" || role === "projectViewer") {
-        const connections = await datasetController.findByProjects(projects);
-        if (!connections || connections.length === 0) {
-          return res.status(404).json({ message: "No connections found" });
+        const datasets = await datasetController.findByProjects(team_id, projects);
+        if (!datasets || datasets.length === 0) {
+          return res.status(404).json({ message: "No datasets found" });
         }
 
         return next();
@@ -47,7 +47,7 @@ module.exports = (app) => {
   /*
   ** Route to get all datasets
   */
-  app.get(root, verifyToken, checkPermissions("readAny"), (req, res) => {
+  app.get(root, verifyToken, checkPermissions("readOwn"), (req, res) => {
     return datasetController.findByTeam(req.params.team_id)
       .then((datasets) => {
         return res.status(200).send(datasets);
@@ -60,7 +60,7 @@ module.exports = (app) => {
   /*
   ** Route to get a dataset by ID
   */
-  app.get(`${root}/:id`, verifyToken, checkPermissions("readAny"), (req, res) => {
+  app.get(`${root}/:id`, verifyToken, checkPermissions("readOwn"), (req, res) => {
     return datasetController.findById(req.params.id)
       .then((dataset) => {
         return res.status(200).send(dataset);

@@ -369,16 +369,7 @@ const grantList = [
   },
   // resource: dataset ---> Team Perspective
   {
-    role: "projectAdmin", resource: "dataset", action: "create:own", attributes: "*",
-  },
-  {
     role: "projectAdmin", resource: "dataset", action: "read:own", attributes: "*",
-  },
-  {
-    role: "projectAdmin", resource: "dataset", action: "update:own", attributes: "*",
-  },
-  {
-    role: "projectAdmin", resource: "dataset", action: "delete:own", attributes: "*",
   },
   // resource: request ---> Team Perspective
   {

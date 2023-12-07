@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Link as LinkNext, Spacer, Tooltip, Input, Button,
-  Switch, Modal, ModalHeader, ModalBody, ModalFooter,
+  Switch, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
@@ -95,11 +95,11 @@ function AddChart(props) {
       }));
     }
 
-    if (user && (!user.tutorials || Object.keys(user.tutorials).length === 0)) {
-      setTimeout(() => {
-        setStartTutorial(true);
-      }, 1000);
-    }
+    // if (user && (!user.tutorials || Object.keys(user.tutorials).length === 0)) {
+    //   setTimeout(() => {
+    //     setStartTutorial(true);
+    //   }, 1000);
+    // }
 
     getTemplates(params.teamId);
   }, []);
@@ -501,36 +501,38 @@ function AddChart(props) {
       />
 
       <Modal isOpen={startTutorial} onClose={() => setStartTutorial(false)}>
-        <ModalHeader>
-          <Text size="h3">
-            Welcome to the chart builder!
-          </Text>
-        </ModalHeader>
-        <ModalBody>
-          <Text b>{"This is the place where your charts will take shape."}</Text>
-          <Spacer y={1} />
-          <Text>
-            {"It is recommended that you read through the next steps to get familiar with the interface. "}
-            {"You can always restart the tutorial from the upper right corner at any later time."}
-          </Text>
-          <Spacer y={1} />
-          <Text>{"But without further ado, let's get started"}</Text>
-        </ModalBody>
-        <ModalFooter>
-          <Button onClick={_onCancelWalkthrough} variant="flat" color="warning">
-            Cancel walkthrough
-          </Button>
-          <Button
-            color="success"
-            onClick={() => {
-              setStartTutorial(false);
-              _changeTour("addchart");
-            }}
-            endContent={<LuArrowRight />}
-          >
-            Get started
-          </Button>
-        </ModalFooter>
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h3">
+              Welcome to the chart builder!
+            </Text>
+          </ModalHeader>
+          <ModalBody>
+            <Text b>{"This is the place where your charts will take shape."}</Text>
+            <Spacer y={1} />
+            <Text>
+              {"It is recommended that you read through the next steps to get familiar with the interface. "}
+              {"You can always restart the tutorial from the upper right corner at any later time."}
+            </Text>
+            <Spacer y={1} />
+            <Text>{"But without further ado, let's get started"}</Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button onClick={_onCancelWalkthrough} variant="flat" color="warning">
+              Cancel walkthrough
+            </Button>
+            <Button
+              color="success"
+              onClick={() => {
+                setStartTutorial(false);
+                _changeTour("addchart");
+              }}
+              endContent={<LuArrowRight />}
+            >
+              Get started
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
     </div>
   );

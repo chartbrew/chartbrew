@@ -142,6 +142,16 @@ class DatasetController {
       });
   }
 
+  async findByProjects(teamId, projects) {
+    const datasets = await db.Dataset.findAll({
+      where: { team_id: teamId },
+    });
+
+    return datasets.filter((dataset) => {
+      return projects.find((p) => dataset.project_ids.includes(p));
+    });
+  }
+
   create(data) {
     return db.Dataset.create(data)
       .then((dataset) => {
