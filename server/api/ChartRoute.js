@@ -32,42 +32,44 @@ module.exports = (app) => {
       });
   };
 
-  const checkAccess = (req) => {
-    let gProject;
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        gProject = project;
-        if (req.params.id) {
-          return chartController.findById(req.params.id);
+  const checkPermissions = (actionType = "readOwn", entity = "chart") => {
+    return async (req, res, next) => {
+      const projectId = req.params.project_id || req.body.project_id;
+
+      const project = await projectController.findById(projectId);
+      const teamRole = await teamController.getTeamRole(project.team_id, req.user.id);
+
+      req.user.teamRole = teamRole;
+
+      if (["teamOwner", "teamAdmin"].includes(teamRole.role)) {
+        const permission = accessControl.can(teamRole.role)[actionType](entity);
+        if (!permission.granted) {
+          return res.status(403).json({ message: "Access denied" });
         }
 
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
-      .then((data) => {
-        if (!req.params.id) {
-          return Promise.resolve(data);
+        return next();
+      }
+
+      if (teamRole?.projects?.length > 0) {
+        if (projectId) {
+          const filteredProjects = teamRole.projects.filter((o) => `${o}` === `${projectId}`);
+          if (filteredProjects.length === 0) {
+            return res.status(403).json({ message: "Access denied" });
+          }
         }
 
-        // check if the project_id matches in the database records
-        if (data && `${data.project_id}` !== `${gProject.id}`) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
+        const permission = accessControl.can(teamRole.role)[actionType](entity);
+        if (!permission.granted) {
+          return res.status(403).json({ message: "Access denied" });
         }
 
-        return teamController.getTeamRole(gProject.team_id, req.user.id);
-      })
-      .then((teamRole) => {
-        // the owner has access to all the projects
-        if (teamRole.role === "teamOwner" || teamRole.role === "teamAdmin") return teamRole;
+        req.user.projects = teamRole.projects;
 
-        // otherwise, check if the team role contains access to the right project
-        if (!teamRole.projects) return Promise.reject(401);
-        const filteredProjects = teamRole.projects.filter((o) => `${o}` === `${req.params.project_id}`);
-        if (filteredProjects.length === 0) {
-          return Promise.reject(401);
-        }
+        return next();
+      }
 
-        return teamRole;
-      });
+      return res.status(403).json({ message: "Access denied" });
+    };
   };
 
   /*
@@ -101,21 +103,11 @@ module.exports = (app) => {
   /*
   ** Route to get all the charts for a project
   */
-  app.get("/project/:project_id/chart", verifyToken, (req, res) => {
-    let gRole;
-    return checkAccess(req)
-      .then((teamRole) => {
-        gRole = teamRole.role;
-        const permission = accessControl.can(teamRole.role).readAny("chart");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return chartController.findByProject(req.params.project_id);
-      })
+  app.get("/project/:project_id/chart", verifyToken, checkPermissions("readAny"), (req, res) => {
+    return chartController.findByProject(req.params.project_id)
       .then((charts) => {
         let filteredCharts = charts;
-        if (gRole === "projectViewer") {
+        if (req.user?.teamRole?.role === "projectViewer") {
           filteredCharts = charts.filter((c) => !c.draft);
         }
         return res.status(200).send(filteredCharts);
@@ -129,18 +121,10 @@ module.exports = (app) => {
   /*
   ** Route to create a new chart
   */
-  app.post("/project/:project_id/chart", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("chart");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        // assign the project id to the new chart
-        req.body.project_id = req.params.project_id;
-        return chartController.create(req.body, req.user);
-      })
+  app.post("/project/:project_id/chart", verifyToken, checkPermissions("createOwn"), (req, res) => {
+    // assign the project id to the new chart
+    req.body.project_id = req.params.project_id;
+    return chartController.create(req.body, req.user)
       .then((chart) => {
         return res.status(200).send(chart);
       })
@@ -156,41 +140,8 @@ module.exports = (app) => {
   /*
   ** Route to update a chart
   */
-  app.put("/project/:project_id/chart/:id", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("chart");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        return chartController.update(req.params.id, req.body, req.user, req.query.justUpdates);
-      })
-      .then((chart) => {
-        return res.status(200).send(chart);
-      })
-      .catch((error) => {
-        if (error.message.indexOf("406") > -1) {
-          return res.status(406).send(error);
-        }
-        return res.status(400).send(error);
-      });
-  });
-  // --------------------------------------------------------
-
-  /*
-  ** Route to add a new connection to the chart
-  */
-  app.post("/project/:project_id/chart/:id/connection", verifyToken, (req, res) => {
-    if (!req.body.connection_id) return res.status(400).send({ error: "no connection_id" });
-
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("chart");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        return chartController.addConnection(req.params.id, req.body);
-      })
+  app.put("/project/:project_id/chart/:id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return chartController.update(req.params.id, req.body, req.user, req.query.justUpdates)
       .then((chart) => {
         return res.status(200).send(chart);
       })
@@ -206,15 +157,8 @@ module.exports = (app) => {
   /*
   ** Route to update the order of the chart
   */
-  app.put("/project/:project_id/chart/:id/order", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("chart");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        return chartController.changeDashboardOrder(req.params.id, req.body.otherId);
-      })
+  app.put("/project/:project_id/chart/:id/order", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return chartController.changeDashboardOrder(req.params.id, req.body.otherId)
       .then((updates) => {
         return res.status(200).send(updates);
       })
@@ -227,16 +171,8 @@ module.exports = (app) => {
   /*
   ** Route to remove a chart
   */
-  app.delete("/project/:project_id/chart/:id", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("chart");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return chartController.remove(req.params.id);
-      })
+  app.delete("/project/:project_id/chart/:id", verifyToken, checkPermissions("deleteOwn"), (req, res) => {
+    return chartController.remove(req.params.id)
       .then((response) => {
         return res.status(200).send({ removed: response });
       })
@@ -252,15 +188,8 @@ module.exports = (app) => {
   /*
   ** Route to test a query before saving
   */
-  app.post("/project/:project_id/chart/test", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("chart");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        return chartController.testQuery(req.body, req.params.project_id);
-      })
+  app.post("/project/:project_id/chart/test", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return chartController.testQuery(req.body, req.params.project_id)
       .then((data) => {
         return res.status(200).send(data);
       })
@@ -279,24 +208,16 @@ module.exports = (app) => {
   /*
   ** Route to test a query before saving
   */
-  app.post("/project/:project_id/chart/preview", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("chart");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        let chart = req.body;
-        if (chart.chart) chart = chart.chart; // eslint-disable-line
-        return chartController.previewChart(
-          chart,
-          req.params.project_id,
-          req.user,
-          req.query.no_source,
-          req.query.skip_parsing,
-        );
-      })
+  app.post("/project/:project_id/chart/preview", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    let chart = req.body;
+    if (chart.chart) chart = chart.chart; // eslint-disable-line
+    return chartController.previewChart(
+      chart,
+      req.params.project_id,
+      req.user,
+      req.query.no_source,
+      req.query.skip_parsing,
+    )
       .then((chart) => {
         return res.status(200).send(chart);
       })
@@ -315,64 +236,18 @@ module.exports = (app) => {
 
   /*
   ** Route to run the query for a chart
-  ** [Deprecated] Use the POST /project/:project_id/chart/:id/query route instead
   */
-  app.get("/project/:project_id/chart/:id", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).readAny("chart");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return chartController.updateChartData(
-          req.params.id,
-          req.user,
-          {
-            noSource: req.query.no_source === "true",
-            skipParsing: req.query.skip_parsing === "true",
-            getCache: req.query.getCache,
-          },
-        );
-      })
-      .then((chart) => {
-        return res.status(200).send(chart);
-      })
-      .catch((error) => {
-        console.error((error && error.message) || error); // eslint-disable-line
-        if (`${error}` === "401" || error.message === "401") {
-          return res.status(401).send({ error: "Not authorized" });
-        }
-        if (`${error}` === "413" && error.message === "413") {
-          return res.status(413).send(error);
-        }
-        return res.status(400).send((error && error.message) || error);
-      });
-  });
-  // --------------------------------------------------------
-
-  /*
-  ** Route to run the query for a chart
-  */
-  app.post("/project/:project_id/chart/:id/query", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).readAny("chart");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return chartController.updateChartData(
-          req.params.id,
-          req.user,
-          {
-            noSource: req.query.no_source === "true",
-            skipParsing: req.query.skip_parsing === "true",
-            getCache: req.query.getCache,
-            filters: req.body.filters,
-          },
-        );
-      })
+  app.post("/project/:project_id/chart/:id/query", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return chartController.updateChartData(
+      req.params.id,
+      req.user,
+      {
+        noSource: req.query.no_source === "true",
+        skipParsing: req.query.skip_parsing === "true",
+        getCache: req.query.getCache,
+        filters: req.body.filters,
+      },
+    )
       .then((chart) => {
         return res.status(200).send(chart);
       })
@@ -597,16 +472,12 @@ module.exports = (app) => {
   /*
   ** Route used to export data in spreadsheet format
   */
-  app.post("/project/:project_id/chart/export", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).readAny("chart");
-        if (!permission.granted || (!teamRole.canExport && (teamRole.role !== "teamOwner" || teamRole.role !== "teamAdmin"))) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
+  app.post("/project/:project_id/chart/export", verifyToken, checkPermissions("readAny"), (req, res) => {
+    if (!req.user?.teamRole?.canExport && req.user?.teamRole?.role !== "teamOwner" && req.user.role !== "teamAdmin") {
+      return new Promise((resolve, reject) => reject(new Error(401)));
+    }
 
-        return chartController.exportChartData(req.user.id, req.body.chartIds, req.body.filters);
-      })
+    return chartController.exportChartData(req.user.id, req.body.chartIds, req.body.filters)
       .then((data) => {
         return spreadsheetExport(data);
       })
@@ -648,16 +519,8 @@ module.exports = (app) => {
   /*
   ** Route to create a new share link
   */
-  app.post("/project/:project_id/chart/:id/share", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("chart");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return chartController.createShare(req.params.id);
-      })
+  app.post("/project/:project_id/chart/:id/share", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return chartController.createShare(req.params.id)
       .then(() => {
         return chartController.findById(req.params.id);
       })
@@ -679,16 +542,8 @@ module.exports = (app) => {
   /*
   ** Route to delete a share link
   */
-  app.delete("/project/:project_id/chart/:id/share/:share_id", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("chart");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return chartController.removeShare(req.params.share_id);
-      })
+  app.delete("/project/:project_id/chart/:id/share/:share_id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return chartController.removeShare(req.params.share_id)
       .catch((error) => {
         if (error === "401" || error.message === "401") {
           return res.status(401).send({ error: "Not authorized" });
@@ -704,16 +559,8 @@ module.exports = (app) => {
   /*
   ** Route to get chart alerts
   */
-  app.get("/project/:project_id/chart/:id/alert", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("chart");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return alertController.getByChartId(req.params.id);
-      })
+  app.get("/project/:project_id/chart/:id/alert", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return alertController.getByChartId(req.params.id)
       .then((alerts) => {
         return res.status(200).send(alerts);
       })
@@ -726,17 +573,9 @@ module.exports = (app) => {
   /*
   ** Route to create a new chart alert
   */
-  app.post("/project/:project_id/chart/:id/alert", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("chart");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        // check to see if the recipients are in the same team
-        return teamController.getTeamMembers(teamRole.team_id);
-      })
+  app.post("/project/:project_id/chart/:id/alert", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    // check to see if the recipients are in the same team
+    return teamController.getTeamMembers(req.user?.teamRole?.team_id)
       .then((teamMembers) => {
         const { recipients } = req.body;
         const teamMemberEmails = teamMembers.map((member) => member.email);
@@ -760,17 +599,9 @@ module.exports = (app) => {
   /*
   ** Route to update a chart alert
   */
-  app.put("/project/:project_id/chart/:id/alert/:alert_id", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("chart");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        // check to see if the recipients are in the same team
-        return teamController.getTeamMembers(teamRole.team_id);
-      })
+  app.put("/project/:project_id/chart/:id/alert/:alert_id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    // check to see if the recipients are in the same team
+    return teamController.getTeamMembers(req.user?.teamRole?.team_id)
       .then((teamMembers) => {
         const { recipients } = req.body;
         const teamMemberEmails = teamMembers.map((member) => member.email);
@@ -794,16 +625,8 @@ module.exports = (app) => {
   /*
   ** Route to delete a chart alert
   */
-  app.delete("/project/:project_id/chart/:id/alert/:alert_id", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("chart");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return alertController.remove(req.params.alert_id);
-      })
+  app.delete("/project/:project_id/chart/:id/alert/:alert_id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return alertController.remove(req.params.alert_id)
       .then(() => {
         return res.status(200).send({ message: "Alert deleted" });
       })
@@ -816,64 +639,52 @@ module.exports = (app) => {
   /*
   ** Route to create ChartDatasetConfig
   */
-  app.post("/project/:project_id/chart/:id/chart-dataset-config", verifyToken, async (req, res) => {
-    try {
-      const teamRole = await checkAccess(req);
-      const permission = accessControl.can(teamRole.role).updateAny("chart");
+  app.post("/project/:project_id/chart/:id/chart-dataset-config",
+    verifyToken,
+    checkPermissions("updateOwn"),
+    async (req, res) => {
+      try {
+        const cdc = await chartController.createChartDatasetConfig(req.params.id, req.body);
 
-      if (!permission.granted) {
-        return res.status(401).send({ error: "Not authorized" });
+        return res.status(200).send(cdc);
+      } catch (error) {
+        return res.status(400).send({ error: (error && error.message) || error });
       }
-
-      const cdc = await chartController.createChartDatasetConfig(req.params.id, req.body);
-
-      return res.status(200).send(cdc);
-    } catch (error) {
-      return res.status(400).send({ error: (error && error.message) || error });
-    }
-  });
+    });
   // --------------------------------------------------------
 
   /*
   ** Route to update ChartDatasetConfigs
   */
-  app.put("/project/:project_id/chart/:id/chart-dataset-config/:cdcId", verifyToken, async (req, res) => {
-    try {
-      const teamRole = await checkAccess(req);
-      const permission = accessControl.can(teamRole.role).updateAny("chart");
+  app.put("/project/:project_id/chart/:id/chart-dataset-config/:cdcId",
+    verifyToken,
+    checkPermissions("updateOwn"),
+    async (req, res) => {
+      try {
+        const cdc = await chartController.updateChartDatasetConfig(req.params.cdcId, req.body);
 
-      if (!permission.granted) {
-        return res.status(401).send({ error: "Not authorized" });
+        return res.status(200).send(cdc);
+      } catch (error) {
+        return res.status(400).send({ error: (error && error.message) || error });
       }
-
-      const cdc = await chartController.updateChartDatasetConfig(req.params.cdcId, req.body);
-
-      return res.status(200).send(cdc);
-    } catch (error) {
-      return res.status(400).send({ error: (error && error.message) || error });
-    }
-  });
+    });
   // --------------------------------------------------------
 
   /*
   ** Route to delete ChartDatasetConfigs
   */
-  app.delete("/project/:project_id/chart/:id/chart-dataset-config/:cdcId", verifyToken, async (req, res) => {
-    try {
-      const teamRole = await checkAccess(req);
-      const permission = accessControl.can(teamRole.role).updateAny("chart");
+  app.delete("/project/:project_id/chart/:id/chart-dataset-config/:cdcId",
+    verifyToken,
+    checkPermissions("updateOwn"),
+    async (req, res) => {
+      try {
+        await chartController.deleteChartDatasetConfig(req.params.cdcId);
 
-      if (!permission.granted) {
-        return res.status(401).send({ error: "Not authorized" });
+        return res.status(200).send({ removed: true });
+      } catch (error) {
+        return res.status(400).send({ error: (error && error.message) || error });
       }
-
-      await chartController.deleteChartDatasetConfig(req.params.cdcId);
-
-      return res.status(200).send({ removed: true });
-    } catch (error) {
-      return res.status(400).send({ error: (error && error.message) || error });
-    }
-  });
+    });
   // --------------------------------------------------------
 
   return (req, res, next) => {

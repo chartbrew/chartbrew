@@ -346,7 +346,7 @@ const grantList = [
     role: "projectAdmin", resource: "chart", action: "create:own", attributes: "*",
   },
   {
-    role: "projectAdmin", resource: "chart", action: "read:own", attributes: "*",
+    role: "projectAdmin", resource: "chart", action: "read:any", attributes: "*",
   },
   {
     role: "projectAdmin", resource: "chart", action: "update:own", attributes: "*",
@@ -439,7 +439,7 @@ const grantList = [
   },
   // resource: chart
   {
-    role: "projectViewer", resource: "chart", action: "read:own", attributes: "*",
+    role: "projectViewer", resource: "chart", action: "read:any", attributes: "*",
   },
   // resource: savedQuery ---> Team Perspective
   //
