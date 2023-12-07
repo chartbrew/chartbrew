@@ -62,7 +62,10 @@ function ProjectSettings(props) {
     setError(false);
 
     dispatch(updateProject({ project_id: project.id, data: { name: projectName } }))
-      .then(() => {
+      .then((data) => {
+        if (data.error) {
+          throw new Error(data.error);
+        }
         setLoading(false);
         setSuccess(true);
         dispatch(changeActiveProject(project.id));
@@ -71,6 +74,7 @@ function ProjectSettings(props) {
       .catch(() => {
         setLoading(false);
         setError(true);
+        toast.error("There was a problem updating the project name. Please try again.");
       });
   };
 
@@ -150,10 +154,9 @@ function ProjectSettings(props) {
           <Spacer y={2} />
           <Button
             type="submit"
-            color={success ? "success" : error ? "error" : "primary"}
-            disabled={!_canAccess("projectAdmin")}
+            color={success ? "success" : error ? "danger" : "primary"}
+            isDisabled={!_canAccess("projectAdmin")}
             onClick={_onSaveName}
-            auto
             isLoading={loading}
           >
             {"Save name"}
@@ -224,21 +227,25 @@ function ProjectSettings(props) {
         )}
       </Row>
 
-      <Spacer y={4} />
-      <Divider />
-      <Spacer y={4} />
+      {_canAccess("teamAdmin") && (
+        <>
+          <Spacer y={4} />
+          <Divider />
+          <Spacer y={4} />
 
-      <Row>
-        <Button
-          color="danger"
-          disabled={!_canAccess("teamAdmin")}
-          endContent={<LuTrash />}
-          onClick={_onRemoveConfirmation}
-          variant="bordered"
-        >
-          Remove project
-        </Button>
-      </Row>
+          <Row>
+            <Button
+              color="danger"
+              disabled={!_canAccess("teamAdmin")}
+              endContent={<LuTrash />}
+              onClick={_onRemoveConfirmation}
+              variant="bordered"
+            >
+              Remove project
+            </Button>
+          </Row>
+        </>
+      )}
 
       {removeError && (
         <>

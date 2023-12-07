@@ -328,6 +328,9 @@ const grantList = [
   {
     role: "projectAdmin", resource: "project", action: "read:own", attributes: "*",
   },
+  {
+    role: "projectAdmin", resource: "project", action: "update:own", attributes: "*",
+  },
   // resource: connection ---> Team Perspective
   //
   // resource: teamRole ---> Team Perspective

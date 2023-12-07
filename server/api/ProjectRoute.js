@@ -133,33 +133,10 @@ module.exports = (app) => {
   // -----------------------------------------
 
   /*
-  ** Route to get all the user's projects
-  ** TODO: should remove this route
-  */
-  app.get("/project/user", verifyToken, (req, res) => {
-    projectController.findByUserId(req.user.id)
-      .then((projects) => {
-        return res.status(200).send(projects);
-      })
-      .catch((error) => {
-        return res.status(400).send(error);
-      });
-  });
-  // -----------------------------------------
-
-  /*
   ** Route to get a project by ID
   */
-  app.get("/project/:id", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).readAny("project");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return projectController.findById(req.params.id);
-      })
+  app.get("/project/:id", verifyToken, checkPermissions("readOwn"), (req, res) => {
+    return projectController.findById(req.params.id)
       .then((project) => {
         return res.status(200).send(project);
       })
@@ -178,16 +155,8 @@ module.exports = (app) => {
   /*
   ** Route to update a project ID
   */
-  app.put("/project/:id", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("project");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return projectController.update(req.params.id, req.body);
-      })
+  app.put("/project/:id", verifyToken, checkPermissions("updateOwn"), (req, res) => {
+    return projectController.update(req.params.id, req.body)
       .then((project) => {
         return res.status(200).send(project);
       })
@@ -203,7 +172,7 @@ module.exports = (app) => {
   /*
   ** Route to update a project's Logo
   */
-  app.post("/project/:id/logo", verifyToken, (req, res) => {
+  app.post("/project/:id/logo", verifyToken, checkPermissions("udpateOwn"), (req, res) => {
     let logoPath;
 
     req.pipe(req.busboy);
@@ -216,15 +185,7 @@ module.exports = (app) => {
     });
 
     req.busboy.on("finish", () => {
-      return checkAccess(req)
-        .then((teamRole) => {
-          const permission = accessControl.can(teamRole.role).updateAny("project");
-          if (!permission.granted) {
-            return new Promise((resolve, reject) => reject(new Error(401)));
-          }
-
-          return projectController.update(req.params.id, { logo: logoPath });
-        })
+      return projectController.update(req.params.id, { logo: logoPath })
         .then((project) => {
           return res.status(200).send(project);
         })
@@ -238,16 +199,8 @@ module.exports = (app) => {
   /*
   ** Route to remove a project
   */
-  app.delete("/project/:id", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).deleteAny("project");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return projectController.remove(req.params.id, req.user.id);
-      })
+  app.delete("/project/:id", verifyToken, checkPermissions("deleteAny"), (req, res) => {
+    return projectController.remove(req.params.id, req.user.id)
       .then(() => {
         return res.status(200).send({ removed: true });
       })
@@ -326,19 +279,12 @@ module.exports = (app) => {
   /*
   ** Route to generate a dashboard template
   */
-  app.post("/project/:id/template/:template", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).createAny("connection");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        return projectController.generateTemplate(
-          req.params.id,
-          req.body,
-          req.params.template,
-        );
-      })
+  app.post("/project/:id/template/:template", verifyToken, checkPermissions("createAny"), (req, res) => {
+    return projectController.generateTemplate(
+      req.params.id,
+      req.body,
+      req.params.template,
+    )
       .then((result) => {
         // refresh the charts
         const charts = [];
