@@ -177,7 +177,7 @@ function TeamMembers(props) {
   }
 
   return (
-    <div style={style} className="container mx-auto">
+    <div style={style}>
       {_canAccess("teamAdmin") && (
         <Segment className={"bg-content1"}>
           <InviteMembersForm />

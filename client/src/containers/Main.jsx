@@ -194,7 +194,11 @@ function Main(props) {
                   <Route
                     exact
                     path="members"
-                    element={<TeamMembers />}
+                    element={
+                      <div className="container mx-auto pt-unit-lg">
+                        <TeamMembers />
+                      </div>
+                    }
                   />
                   <Route
                     exact

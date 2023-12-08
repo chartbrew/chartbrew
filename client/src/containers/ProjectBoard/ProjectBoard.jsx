@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
-import { Outlet, Route, Routes, useNavigate, useParams } from "react-router";
+import { Outlet, Route, Routes, useParams } from "react-router";
 import { Allotment } from "allotment";
 import { createMedia } from "@artsy/fresnel";
 import { useWindowSize } from "react-use";
@@ -18,7 +18,6 @@ import {
   getTeam, getTeamMembers, selectTeam,
 } from "../../slices/team";
 import { getProjectCharts } from "../../slices/chart";
-import { getTeamConnections } from "../../slices/connection";
 import Navbar from "../../components/Navbar";
 import canAccess from "../../config/canAccess";
 import PrintView from "../PrintView/PrintView";
@@ -60,16 +59,12 @@ function ProjectBoard(props) {
 
   const { height } = useWindowSize();
   const params = useParams();
-  const navigate = useNavigate();
   const dispatch = useDispatch();
   const initRef = useRef(null);
 
   useEffect(() => {
     if (params.projectId && !initRef.current) {
       initRef.current = true;
-
-      const urlParams = new URLSearchParams(document.location.search);
-      if (urlParams.has("new")) navigate("connections");
 
       cleanErrors();
       _init();
@@ -93,7 +88,6 @@ function ProjectBoard(props) {
   const _init = (id) => {
     _getProject(id);
     dispatch(getProjectCharts({ project_id: id || params.projectId }));
-    dispatch(getTeamConnections({ team_id: params.teamId }));
   };
 
   const _getProject = (id) => {
