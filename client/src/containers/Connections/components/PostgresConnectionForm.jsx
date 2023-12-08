@@ -164,7 +164,6 @@ function PostgresConnectionForm(props) {
             <Spacer y={2} />
             <Row align="center">
               <Input
-                type="password"
                 label="Enter your Postgres connection string"
                 placeholder="postgres://username:password@postgres.example.com:5432/dbname"
                 value={connection.connectionString || ""}

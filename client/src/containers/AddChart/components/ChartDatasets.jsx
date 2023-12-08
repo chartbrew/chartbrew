@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { LuExternalLink, LuMinus, LuPlus, LuSearch } from "react-icons/lu";
@@ -14,9 +14,11 @@ import { getDatasets, selectDatasets } from "../../../slices/dataset";
 import useThemeDetector from "../../../modules/useThemeDetector";
 import ChartDatasetConfig from "./ChartDatasetConfig";
 import { chartColors } from "../../../config/colors";
+import { selectTeam } from "../../../slices/team";
+import canAccess from "../../../config/canAccess";
 
 function ChartDatasets(props) {
-  const { projects, chartId } = props;
+  const { projects, chartId, user } = props;
 
   const chart = useSelector((state) => selectChart(state, chartId));
   const datasets = useSelector(selectDatasets) || [];
@@ -29,6 +31,9 @@ function ChartDatasets(props) {
   const dispatch = useDispatch();
   const params = useParams();
   const isDark = useThemeDetector();
+  const team = useSelector(selectTeam);
+
+  const initRef = useRef(null);
 
   useEffect(() => {
     if (!datasets || datasets.length === 0) {
@@ -36,14 +41,29 @@ function ChartDatasets(props) {
     }
   }, []);
 
+  useEffect(() => {
+    if (datasets?.length > 0 && !initRef.current) {
+      initRef.current = true;
+      const projectDatasets = datasets.filter((d) => (
+        !d.draft
+        && d.legend.toLowerCase().includes(datasetSearch.toLowerCase())
+        && d.project_ids?.includes(chart.project_id)
+      ));
+      if (projectDatasets.length === 0) {
+        setTag("team");
+      }
+    }
+  }, [datasets]);
+
   const _filteredDatasets = () => {
     if (tag === "project") {
       return datasets.filter((d) => (
-        d.legend.toLowerCase().includes(datasetSearch.toLowerCase())
+        !d.draft
+        && d.legend.toLowerCase().includes(datasetSearch.toLowerCase())
         && d.project_ids?.includes(chart.project_id)
       ));
     }
-    return datasets.filter((d) => d.legend && d.legend?.toLowerCase().includes(datasetSearch.toLowerCase()));
+    return datasets.filter((d) => !d.draft && d.legend && d.legend?.toLowerCase().includes(datasetSearch.toLowerCase()));
   };
 
   const _getDatasetTags = (dataset) => {
@@ -190,19 +210,21 @@ function ChartDatasets(props) {
                   <Divider />
                   <CardFooter className="justify-between">
                     <Text className={"text-[12px]"}>{`Created ${moment(dataset.createdAt).calendar()}`}</Text>
-                    <div className="z-50">
-                      <Button
-                        className="z-50"
-                        size="sm"
-                        variant="ghost"
-                        endContent={<LuExternalLink size={16} />}
-                        as={Link}
-                        to={`/chart/${chart.id}/dataset/${dataset.id}/edit`}
-                        target="_blank"
-                      >
-                        Edit
-                      </Button>
-                    </div>
+                    {canAccess("teamAdmin", user.id, team?.TeamRoles) && (
+                      <div className="z-50">
+                        <Button
+                          className="z-50"
+                          size="sm"
+                          variant="ghost"
+                          endContent={<LuExternalLink size={16} />}
+                          as={Link}
+                          to={`/${team.id}/dataset/${dataset.id}`}
+                          target="_blank"
+                        >
+                          Edit
+                        </Button>
+                      </div>
+                    )}
                   </CardFooter>
                 </Card>
                 <Spacer y={2} />
@@ -235,10 +257,12 @@ function ChartDatasets(props) {
 ChartDatasets.propTypes = {
   chartId: PropTypes.number.isRequired,
   projects: PropTypes.array.isRequired,
+  user: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => ({
   projects: state.project.data,
+  user: state.user.data,
 });
 
 const mapDispatchToProps = ({});

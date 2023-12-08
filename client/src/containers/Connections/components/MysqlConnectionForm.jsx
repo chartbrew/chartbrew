@@ -162,7 +162,6 @@ function MysqlConnectionForm(props) {
             <Spacer y={2} />
             <Row align="center">
               <Input
-                type="password"
                 label="Enter your MySQL connection string"
                 placeholder="mysql://username:password@mysql.example.com:3306/dbname"
                 value={connection.connectionString || ""}
@@ -348,12 +347,14 @@ function MysqlConnectionForm(props) {
             <Row align="center">
               <Text>
                 {"Test Result "}
-                <Chip
-                  color={testResult.status < 400 ? "success" : "danger"}
-                >
-                  {`Status code: ${testResult.status}`}
-                </Chip>
               </Text>
+              <Spacer x={2} />
+              <Chip
+                color={testResult.status < 400 ? "success" : "danger"}
+                size="sm"
+              >
+                {`Status code: ${testResult.status}`}
+              </Chip>
             </Row>
             <Spacer y={4} />
             <AceEditor
