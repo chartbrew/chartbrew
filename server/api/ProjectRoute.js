@@ -24,6 +24,7 @@ module.exports = (app) => {
 
       if (projectId) {
         project = await projectController.findById(projectId);
+        if (!project) return res.status(404).json({ message: "Project not found" });
       }
 
       if (teamId) {

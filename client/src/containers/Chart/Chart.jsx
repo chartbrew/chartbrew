@@ -1217,7 +1217,6 @@ Chart.defaultProps = {
 
 Chart.propTypes = {
   chart: PropTypes.object.isRequired,
-  match: PropTypes.object.isRequired,
   team: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
   isPublic: PropTypes.bool,
@@ -1226,7 +1225,6 @@ Chart.propTypes = {
   height: PropTypes.number,
   showExport: PropTypes.bool,
   password: PropTypes.string,
-  history: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {

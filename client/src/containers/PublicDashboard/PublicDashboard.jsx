@@ -106,7 +106,7 @@ function PublicDashboard(props) {
   }, []);
 
   useEffect(() => {
-    if (project.id) {
+    if (project?.id) {
       setNewChanges({
         backgroundColor: project.backgroundColor || blue,
         titleColor: project.titleColor || "white",
@@ -139,6 +139,7 @@ function PublicDashboard(props) {
     setLoading(true);
     dispatch(getPublicDashboard({ brewName: params.brewName, password }))
       .then((data) => {
+        if (!data.payload) throw new Error(404);
         setProject(data.payload);
         setLoading(false);
         setNotAuthorized(false);
@@ -161,12 +162,10 @@ function PublicDashboard(props) {
             toast.error("The password you entered is incorrect.");
           }
           setPasswordRequired(true);
-        }
-        if (err === 401) {
+        } else if (err === 401) {
           setNotAuthorized(true);
           window.location.pathname = "/login";
-        }
-        if (err === 404) {
+        } else {
           setNoCharts(true);
           toast.error("No charts found for this report.");
         }
@@ -280,7 +279,7 @@ function PublicDashboard(props) {
     return canAccess(role, user.id, team.TeamRoles);
   };
 
-  if (loading && !project.id && !noCharts) {
+  if (loading && !project?.id && !noCharts) {
     return (
       <>
         <Helmet>
@@ -310,7 +309,7 @@ function PublicDashboard(props) {
     return (
       <div>
         <Helmet>
-          {(newChanges.headerCode || project.headerCode) && (
+          {(newChanges?.headerCode || project?.headerCode) && (
             <style type="text/css">{newChanges.headerCode || project.headerCode}</style>
           )}
           <style type="text/css">
@@ -431,7 +430,7 @@ function PublicDashboard(props) {
   return (
     <div>
       <Helmet>
-        {(newChanges.headerCode || project.headerCode) && (
+        {(newChanges?.headerCode || project?.headerCode) && (
           <style type="text/css">{newChanges.headerCode || project.headerCode}</style>
         )}
         <style type="text/css">
@@ -864,18 +863,20 @@ function PublicDashboard(props) {
         </ModalContent>
       </Modal>
 
-      <SharingSettings
-        open={showSettings}
-        onClose={() => setShowSettings(false)}
-        project={project}
-        error={error}
-        onSaveBrewName={_onSaveBrewName}
-        brewLoading={saveLoading}
-        onToggleBranding={_onToggleBranding}
-        onTogglePublic={_onTogglePublic}
-        onTogglePassword={_onTogglePassword}
-        onSavePassword={_onSavePassword}
-      />
+      {project && (
+        <SharingSettings
+          open={showSettings}
+          onClose={() => setShowSettings(false)}
+          project={project}
+          error={error}
+          onSaveBrewName={_onSaveBrewName}
+          brewLoading={saveLoading}
+          onToggleBranding={_onToggleBranding}
+          onTogglePublic={_onTogglePublic}
+          onTogglePassword={_onTogglePassword}
+          onSavePassword={_onSavePassword}
+        />
+      )}
 
       <ToastContainer
         position="bottom-center"

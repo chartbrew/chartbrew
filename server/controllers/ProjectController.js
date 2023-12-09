@@ -29,9 +29,9 @@ class ProjectController {
       ],
     })
       .then((project) => {
-        if (!project) {
-          return new Promise((resolve, reject) => reject(new Error(404)));
-        }
+        // if (!project) {
+        //   throw new Error(404);
+        // }
         return project;
       })
       .catch((error) => {
