@@ -77,9 +77,8 @@ const dataLabelsPlugin = {
 
 function DoughnutChart(props) {
   const {
-    chart, redraw, redrawComplete, height
+    chart, redraw, redrawComplete,
   } = props;
-  const [maxHeight, setMaxHeight] = React.useState(height);
 
   useEffect(() => {
     if (redraw) {
@@ -88,10 +87,6 @@ function DoughnutChart(props) {
       }, 1000);
     }
   }, [redraw]);
-
-  useEffect(() => {
-    setMaxHeight(height - 10);
-  }, [chart, height]);
 
   const theme = useThemeDetector() ? "dark" : "light";
 
@@ -109,7 +104,7 @@ function DoughnutChart(props) {
   };
 
   return (
-    <div style={{ height: maxHeight }}>
+    <div className="h-full">
       {chart.chartData.data && chart.chartData.data.labels && (
         <ChartErrorBoundary>
           <Doughnut
@@ -121,7 +116,6 @@ function DoughnutChart(props) {
                 datalabels: dataLabelsPlugin,
               },
             }}
-            height={maxHeight}
             redraw={redraw}
             plugins={[ChartDataLabels]}
           />
@@ -134,14 +128,12 @@ function DoughnutChart(props) {
 DoughnutChart.defaultProps = {
   redraw: false,
   redrawComplete: () => { },
-  height: 300,
 };
 
 DoughnutChart.propTypes = {
   chart: PropTypes.object.isRequired,
   redraw: PropTypes.bool,
   redrawComplete: PropTypes.func,
-  height: PropTypes.number,
 };
 
 export default DoughnutChart;

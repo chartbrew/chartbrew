@@ -108,3 +108,71 @@ a:hover {
     box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
   }
 }
+
+/* Style for the placeholder */
+.react-grid-item.react-grid-placeholder {
+  background-color: rgba(100, 149, 237, 0.2); /* Lighter blue, semi-transparent */
+  border: 2px dashed #6495ED; /* Lighter blue border */
+  border-radius: 1rem;
+}
+
+/* Style for the item being dragged */
+.react-grid-item.react-draggable-dragging {
+  transition: all 0.2s ease;
+  box-shadow: 0px 10px 15px rgba(0, 0, 0, 0.3); /* Slightly darker shadow for depth */
+}
+
+/* Style for resize handles (optional) */
+.react-resizable-handle::after {
+  border-color: #6495ED; /* Lighter blue */
+}
+
+/* Styles for dark mode */
+@media (prefers-color-scheme: dark) {
+  .react-grid-item.react-grid-placeholder {
+    background-color: rgba(173, 216, 230, 0.6);
+    /* Brighter and more vivid blue for dark mode */
+    border: 2px dashed #ADD8E6;
+    border-radius: 1rem;
+  }
+
+  .react-grid-item.react-draggable-dragging {
+    box-shadow: 0px 10px 15px rgba(255, 255, 255, 0.3);
+    /* Lighter and more visible shadow for dark mode */
+  }
+
+  .react-resizable-handle::after {
+    border-color: #ADD8E6;
+  }
+}
+
+.react-resizable-handle {
+  background: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 20px;
+  /* Adjust based on your icon size */
+  height: 20px;
+  bottom: 0;
+  right: 0;
+}
+
+.react-grid-item>.react-resizable-handle::after {
+  background: none;
+  border: none;
+  /* ... other styles ... */
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+}

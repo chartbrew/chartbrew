@@ -5,7 +5,6 @@ import {
 } from "@nextui-org/react";
 
 import determineType from "../../../modules/determineType";
-import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 
@@ -92,49 +91,45 @@ function KpiMode(props) {
   };
 
   return (
-    <Container
-      className={"pl-0 pr-0 h-[300px] items-center align-middle justify-center"}
-    >
-      <Row wrap="wrap" justify="space-around" align="center" className={`h-full flex ${chart.chartSize === 1 ? "flex-col" : "flex-row"} gap-5 items-center justify-center`}>
-        {chart.chartData.data.datasets.map((dataset, index) => (
-          <div key={dataset.label} style={{ padding: 3 }}>
+    <div className={"flex h-full w-full gap-5 items-center justify-center align-middle"}>
+      {chart.chartData.data.datasets.map((dataset, index) => (
+        <div key={dataset.label} className="p-3">
+          <Row justify="center" align="center">
+            <Text
+              b
+              className={`${chart.chartSize === 1 ? "text-3xl" : "text-4xl"} text-default-800`}
+              key={dataset.label}
+            >
+              {dataset.data && _getKpi(dataset.data)}
+            </Text>
+          </Row>
+
+          {chart.ChartDatasetConfigs[index] && (
             <Row justify="center" align="center">
-              <Text
-                b
-                className={`${chart.chartSize === 1 ? "text-3xl" : "text-4xl"} text-default-800`}
-                key={dataset.label}
-              >
-                {dataset.data && _getKpi(dataset.data)}
+              <Text className={`mt-${chart.showGrowth ? "[-5px]" : 0} text-center text-default-600`}>
+                {chart.showGrowth && chart.chartData.growth && (
+                  _renderGrowth(chart.chartData.growth[index])
+                )}
+                <span
+                  style={
+                    chart.ChartDatasetConfigs
+                      && styles.datasetLabelColor(chart.ChartDatasetConfigs[index].datasetColor)
+                    }
+                  >
+                  {dataset.label}
+                </span>
               </Text>
             </Row>
+          )}
 
-            {chart.ChartDatasetConfigs[index] && (
-              <Row justify="center" align="center">
-                <Text className={`mt-${chart.showGrowth ? "[-5px]" : 0} text-center text-default-600`}>
-                  {chart.showGrowth && chart.chartData.growth && (
-                    _renderGrowth(chart.chartData.growth[index])
-                  )}
-                  <span
-                    style={
-                      chart.ChartDatasetConfigs
-                        && styles.datasetLabelColor(chart.ChartDatasetConfigs[index].datasetColor)
-                      }
-                    >
-                    {dataset.label}
-                  </span>
-                </Text>
-              </Row>
-            )}
-
-            {chart.chartData.goals && (
-              <Row justify="center" align="center">
-                {_renderGoal(chart.chartData.goals, index)}
-              </Row>
-            )}
-          </div>
-        ))}
-      </Row>
-    </Container>
+          {chart.chartData.goals && (
+            <Row justify="center" align="center">
+              {_renderGoal(chart.chartData.goals, index)}
+            </Row>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
 

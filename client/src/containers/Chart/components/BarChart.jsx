@@ -27,9 +27,8 @@ ChartJS.register(
 
 function BarChart(props) {
   const {
-    chart, redraw, redrawComplete, height, editMode,
+    chart, redraw, redrawComplete, editMode,
   } = props;
-  const [maxHeight, setMaxHeight] = React.useState(height);
 
   useEffect(() => {
     if (redraw) {
@@ -38,16 +37,6 @@ function BarChart(props) {
       }, 1000);
     }
   }, [redraw]);
-
-  useEffect(() => {
-    if (chart.mode === "kpichart" && chart.chartSize > 1) {
-      setMaxHeight(height - 70);
-    } else if (chart.mode === "kpichart" && chart.chartSize === 1) {
-      setMaxHeight(height - 40);
-    } else {
-      setMaxHeight(height - 10);
-    }
-  }, []);
 
   const theme = useThemeDetector() ? "dark" : "light";
 
@@ -125,29 +114,25 @@ function BarChart(props) {
         )}
 
       {chart.mode !== "kpi" && chart.chartData && chart.chartData.data && (
-        <div className={chart.mode === "kpi" ? "chart-kpi" : ""}>
+        <div className={`${chart.mode === "kpi" && "chart-kpi"} h-full`}>
           {chart.chartData.growth && chart.mode === "kpichart" && (
             <KpiChartSegment chart={chart} editMode={editMode} />
           )}
           {chart.chartData.data && chart.chartData.data.labels && (
-            <div style={{ height: maxHeight }}>
-              <ChartErrorBoundary>
-                <Bar
-                  data={_getChartData()}
-                  options={{
-                    ..._getChartOptions(),
-                    plugins: {
-                      ..._getChartOptions().plugins,
-                      datalabels: chart.dataLabels && _getDatalabelsOptions(),
-                    },
-                  }}
-                  height={maxHeight}
-                  redraw={redraw}
-                  responsive={false}
-                  plugins={chart.dataLabels ? [ChartDataLabels] : []}
-                />
-              </ChartErrorBoundary>
-            </div>
+            <ChartErrorBoundary>
+              <Bar
+                data={_getChartData()}
+                options={{
+                  ..._getChartOptions(),
+                  plugins: {
+                    ..._getChartOptions().plugins,
+                    datalabels: chart.dataLabels && _getDatalabelsOptions(),
+                  },
+                }}
+                redraw={redraw}
+                plugins={chart.dataLabels ? [ChartDataLabels] : []}
+              />
+            </ChartErrorBoundary>
           )}
         </div>
       )}
@@ -158,7 +143,6 @@ function BarChart(props) {
 BarChart.defaultProps = {
   redraw: false,
   redrawComplete: () => {},
-  height: 300,
   editMode: false,
 };
 
@@ -166,7 +150,6 @@ BarChart.propTypes = {
   chart: PropTypes.object.isRequired,
   redraw: PropTypes.bool,
   redrawComplete: PropTypes.func,
-  height: PropTypes.number,
   editMode: PropTypes.bool,
 };
 

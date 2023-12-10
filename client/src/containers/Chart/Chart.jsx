@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  Card, Spacer, Tooltip, Dropdown, Button, Modal, Input,
-  Link as LinkNext, Textarea, Switch, Popover, Chip, CardHeader, CircularProgress, PopoverTrigger, PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, ModalHeader, ModalBody, ModalFooter, CardBody, ModalContent, Select, SelectItem, Listbox, ListboxItem,
+  Card, Spacer, Tooltip, Dropdown, Button, Modal, Input, Link as LinkNext,
+  Textarea, Switch, Popover, Chip, CardHeader, CircularProgress, PopoverTrigger,
+  PopoverContent, DropdownMenu, DropdownTrigger, DropdownItem, ModalHeader,
+  ModalBody, ModalFooter, CardBody, ModalContent, Select, SelectItem,
 } from "@nextui-org/react";
 import {
-  LuArrowDown, LuArrowUp, LuCalendarClock, LuCheck, LuChevronDown, LuChevronDownCircle,
-  LuChevronUp, LuClipboard, LuClipboardCheck, LuFileDown, LuFilter, LuLink, LuLock,
-  LuMoreHorizontal, LuMoreVertical, LuPlus, LuRefreshCw, LuSettings, LuShare, LuTrash, LuTv2,
-  LuUnlock, LuX, LuXCircle
+  LuCalendarClock, LuCheck, LuChevronDown, LuClipboard, LuClipboardCheck, LuFileDown,
+  LuFilter, LuLayoutDashboard, LuLink, LuLock, LuMoreHorizontal, LuMoreVertical,
+  LuPlus, LuRefreshCw, LuSettings, LuShare, LuTrash, LuTv2, LuUnlock, LuX, LuXCircle
 } from "react-icons/lu";
 
 import moment from "moment";
@@ -21,7 +22,7 @@ import { motion } from "framer-motion";
 
 import {
   removeChart, runQuery, runQueryWithFilters, getChart, exportChart,
-  exportChartPublic, createShareString, updateChart, selectCharts,
+  exportChartPublic, createShareString, updateChart,
 } from "../../slices/chart";
 import canAccess from "../../config/canAccess";
 import { SITE_HOST } from "../../config/settings";
@@ -51,14 +52,13 @@ const getFiltersFromStorage = (projectId) => {
 */
 function Chart(props) {
   const {
-    team, user, chart, isPublic, onChangeOrder, print, height,
-    showExport, password,
+    team, user, chart, isPublic, print, height,
+    showExport, password, editingLayout, onEditLayout,
   } = props;
 
   const params = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const charts = useSelector(selectCharts);
 
   const [chartLoading, setChartLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -109,24 +109,6 @@ function Chart(props) {
       }
     }
   }, [customUpdateFreq, updateFreqType]);
-
-  const _onChangeSize = (size) => {
-    setChartLoading(true);
-    dispatch(updateChart({
-      project_id: params.projectId,
-      chart_id: chart.id,
-      data: { chartSize: size },
-      justUpdates: true,
-    }))
-      .then(() => {
-        setRedraw(true);
-        setChartLoading(false);
-      })
-      .catch(() => {
-        setChartLoading(false);
-        setError(true);
-      });
-  };
 
   const _onGetChartData = () => {
     const { projectId } = params;
@@ -358,10 +340,6 @@ function Chart(props) {
     setUrlCopied(true);
   };
 
-  const _getChartIndex = () => {
-    return _.findIndex(charts, (c) => c.id === chart.id);
-  };
-
   const _onExport = () => {
     setExportLoading(true);
     return dispatch(exportChart({
@@ -463,7 +441,7 @@ function Chart(props) {
       {chart && (
         <Card
           shadow="none"
-          className={`h-full bg-content1 border-solid border-1 border-content3 ${!print ? "min-h-[350px]" : "min-h-[350px] shadow-none border-solid border-1 border-content4"}`}
+          className={`h-full bg-content1 border-solid border-1 border-content3 ${print && "min-h-[350px] shadow-none border-solid border-1 border-content4"}`}
         >
           <CardHeader className="pb-0 grid grid-cols-12 items-start">
             <div className="col-span-6 sm:col-span-8 flex items-start justify-start">
@@ -476,12 +454,12 @@ function Chart(props) {
                     </>
                   )}
                   <>
-                    {_canAccess("projectAdmin") && (
+                    {_canAccess("projectAdmin") && !editingLayout && (
                       <Link to={`/${params.teamId}/${params.projectId}/chart/${chart.id}/edit`}>
                         <Text b size="lg" className={"text-default"}>{chart.name}</Text>
                       </Link>
                     )}
-                    {!_canAccess("projectAdmin") && (
+                    {(!_canAccess("projectAdmin") || editingLayout) && (
                       <Text b size="lg">{chart.name}</Text>
                     )}
                   </>
@@ -581,16 +559,27 @@ function Chart(props) {
                       Refresh chart
                     </DropdownItem>
                     {_canAccess("projectAdmin") && (
-                      <DropdownItem startContent={<LuCalendarClock />} onClick={_openUpdateModal}>
-                        Auto-update
-                      </DropdownItem>
-                    )}
-                    {_canAccess("projectAdmin") && (
                       <DropdownItem
                         startContent={<LuSettings />}
                         onClick={() => navigate(`/${params.teamId}/${params.projectId}/chart/${chart.id}/edit`)}
                       >
                         Edit chart
+                      </DropdownItem>
+                    )}
+                    {_canAccess("projectAdmin") && (
+                      <DropdownItem
+                        startContent={<LuLayoutDashboard className={editingLayout ? "text-primary" : ""} />}
+                        onClick={onEditLayout}
+                        showDivider
+                      >
+                        <span className={editingLayout ? "text-primary" : ""}>
+                          {editingLayout ? "Complete layout" : "Edit layout"}
+                        </span>
+                      </DropdownItem>
+                    )}
+                    {_canAccess("projectAdmin") && (
+                      <DropdownItem startContent={<LuCalendarClock />} onClick={_openUpdateModal}>
+                        Auto-update
                       </DropdownItem>
                     )}
                     <DropdownItem
@@ -606,7 +595,6 @@ function Chart(props) {
                     )}
                     {!chart.draft && _canAccess("projectAdmin") && (
                       <DropdownItem
-                        showDivider
                         startContent={chart.public ? <LuUnlock /> : <LuLock />}
                         onClick={_onPublicConfirmation}
                       >
@@ -614,105 +602,13 @@ function Chart(props) {
                       </DropdownItem>
                     )}
                     {!chart.draft && (
-                      <DropdownItem startContent={<LuShare />} onClick={_onEmbed}>
+                      <DropdownItem startContent={<LuShare />} onClick={_onEmbed} showDivider>
                         {"Embed & Share"}
                       </DropdownItem>
                     )}
                     {!chart.draft && chart.shareable && (
                       <DropdownItem startContent={<LuLink />} onClick={_onOpenEmbed}>
                         {"Open in a new tab"}
-                      </DropdownItem>
-                    )}
-                    {_canAccess("projectAdmin") && (
-                      <DropdownItem startContent={<LuChevronDownCircle />} closeOnSelect={false}>
-                        <Popover>
-                          <PopoverTrigger>
-                            <Text>Chart size</Text>
-                          </PopoverTrigger>
-                          <PopoverContent>
-                            <Listbox
-                              onSelectionChange={(keys) => {
-                                if (keys?.currentKey) {
-                                  _onChangeSize(keys.currentKey);
-                                }
-                              }}
-                              selectedKeys={[`${chart.chartSize}`]}
-                              selectionMode="single"
-                            >
-                                <ListboxItem key={1}>
-                                  <Text>Small</Text>
-                                </ListboxItem>
-                                <ListboxItem key={2}>
-                                  <Text>Medium</Text>
-                                </ListboxItem>
-                                <ListboxItem key={3}>
-                                  <Text>Large</Text>
-                                </ListboxItem>
-                                <ListboxItem key={4}>
-                                  <Text>Full width</Text>
-                                </ListboxItem>
-                              </Listbox>
-                          </PopoverContent>
-                        </Popover>
-                      </DropdownItem>
-                    )}
-                    {_canAccess("projectAdmin") && (
-                      <DropdownItem showDivider startContent={<LuChevronDownCircle />}>
-                        <Dropdown>
-                          <DropdownTrigger>
-                            <Text>Change order</Text>
-                          </DropdownTrigger>
-                          <DropdownMenu>
-                            <DropdownItem startContent={<LuArrowUp />}>
-                              {_getChartIndex() === 0 && (
-                                <Text className={"text-gray-300"}>
-                                  Move to top
-                                </Text>
-                              )}
-                              {_getChartIndex() !== 0 && (
-                                <Text onClick={() => onChangeOrder(chart.id, "top")}>
-                                  Move to top
-                                </Text>
-                              )}
-                            </DropdownItem>
-                            <DropdownItem startContent={<LuChevronUp />}>
-                              {_getChartIndex() === 0 && (
-                                <Text className={"text-gray-300"}>
-                                  Move up
-                                </Text>
-                              )}
-                              {_getChartIndex() !== 0 && (
-                                <Text onClick={() => onChangeOrder(chart.id, "up")}>
-                                  Move up
-                                </Text>
-                              )}
-                            </DropdownItem>
-                            <DropdownItem startContent={<LuChevronDown />}>
-                              {_getChartIndex() === charts.length - 1 && (
-                                <Text css={{ color: "$accents4" }}>
-                                  Move down
-                                </Text>
-                              )}
-                              {_getChartIndex() < charts.length - 1 && (
-                                <Text onClick={() => onChangeOrder(chart.id, "down")}>
-                                  Move down
-                                </Text>
-                              )}
-                            </DropdownItem>
-                            <DropdownItem startContent={<LuArrowDown />}>
-                              {_getChartIndex() === charts.length - 1 && (
-                                <Text className={"text-gray-300"}>
-                                  Move to bottom
-                                </Text>
-                              )}
-                              {_getChartIndex() !== charts.length - 1 && (
-                                <Text onClick={() => onChangeOrder(chart.id, "bottom")}>
-                                  Move to bottom
-                                </Text>
-                              )}
-                            </DropdownItem>
-                          </DropdownMenu>
-                        </Dropdown>
                       </DropdownItem>
                     )}
                     {_canAccess("projectAdmin") && (
@@ -746,12 +642,11 @@ function Chart(props) {
           </CardHeader>
           <CardBody className="pt-5 overflow-y-hidden">
             {chart.chartData && (
-              <div style={styles.mainChartArea(_isKpi(chart))}>
+              <div style={styles.mainChartArea(_isKpi(chart))} className="h-full">
                 {chart.type === "line"
                   && (
                     <LineChart
                       chart={chart}
-                      height={height}
                       redraw={redraw}
                       redrawComplete={() => setRedraw(false)}
                     />
@@ -760,7 +655,6 @@ function Chart(props) {
                   && (
                     <BarChart
                       chart={chart}
-                      height={height}
                       redraw={redraw}
                       redrawComplete={() => setRedraw(false)}
                     />
@@ -1174,22 +1068,10 @@ function Chart(props) {
 const styles = {
   container: {
     width: "100%",
+    height: "100%",
   },
   draft: {
     marginRight: 10,
-  },
-  chartContainer: (print) => {
-    if (!print) {
-      return {
-        minHeight: 350,
-      };
-    } else {
-      return {
-        minHeight: 350,
-        boxShadow: "none",
-        border: "solid 1px rgba(34,36,38,.15)",
-      };
-    }
   },
   mainChartArea: (noPadding) => ({
     paddingBottom: noPadding ? 0 : 10,
@@ -1213,6 +1095,8 @@ Chart.defaultProps = {
   height: 300,
   showExport: false,
   password: "",
+  editingLayout: false,
+  onEditLayout: () => {},
 };
 
 Chart.propTypes = {
@@ -1225,6 +1109,8 @@ Chart.propTypes = {
   height: PropTypes.number,
   showExport: PropTypes.bool,
   password: PropTypes.string,
+  editingLayout: PropTypes.bool,
+  onEditLayout: PropTypes.func,
 };
 
 const mapStateToProps = (state) => {

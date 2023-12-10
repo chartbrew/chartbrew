@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Fragment } from "react";
+import React, { useState, useEffect, Fragment, useRef } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import {
@@ -14,8 +14,12 @@ import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import moment from "moment";
 import {
-  LuCopyPlus, LuFileDown, LuFilter, LuPlay, LuPlusCircle, LuPrinter, LuRefreshCw, LuUser, LuUsers2, LuXCircle,
+  LuArrowDownRight,
+  LuCopyPlus, LuFileDown, LuFilter, LuLayoutDashboard, LuPlay, LuPlusCircle, LuRefreshCw, LuUser, LuUsers2, LuXCircle,
 } from "react-icons/lu";
+import { WidthProvider, Responsive } from "react-grid-layout";
+import "react-grid-layout/css/styles.css";
+import "react-resizable/css/styles.css";
 
 import Chart from "../Chart/Chart";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
@@ -32,11 +36,14 @@ import Row from "../../components/Row";
 import Container from "../../components/Container";
 import Text from "../../components/Text";
 
+const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
+
 const breakpoints = {
   mobile: 0,
-  tablet: 768,
+  tablet: 640,
   computer: 1024,
 };
+
 const AppMedia = createMedia({
   breakpoints,
 });
@@ -65,7 +72,7 @@ const getFilterGroupsFromStorage = () => {
 */
 function ProjectDashboard(props) {
   const {
-    cleanErrors, connections, showDrafts, user, team, onPrint, mobile, teamMembers,
+    cleanErrors, connections, showDrafts, user, team, mobile, teamMembers,
   } = props;
 
   const [filters, setFilters] = useState(getFiltersFromStorage());
@@ -77,6 +84,8 @@ function ProjectDashboard(props) {
   const [exportLoading, setExportLoading] = useState(false);
   const [exportError, setExportError] = useState(false);
   const [templateVisible, setTemplateVisible] = useState(false);
+  const [layouts, setLayouts] = useState(null);
+  const [editingLayout, setEditingLayout] = useState(false);
 
   const charts = useSelector(selectCharts);
 
@@ -84,6 +93,7 @@ function ProjectDashboard(props) {
   const isDark = useThemeDetector();
   const params = useParams();
   const dispatch = useDispatch();
+  const initLayoutRef = useRef(null);
 
   useEffect(() => {
     cleanErrors();
@@ -94,6 +104,30 @@ function ProjectDashboard(props) {
       _runFiltering();
     }
   }, [filters]);
+
+  useEffect(() => {
+    if (charts && charts.length > 0 && !initLayoutRef.current) {
+      initLayoutRef.current = true;
+
+      // set the grid layout
+      const newLayouts = { xxs: [], xs: [], sm: [], md: [], lg: [] };
+      charts.forEach((chart) => {
+        if (chart.layout) {
+          Object.keys(chart.layout).forEach((key) => {
+            newLayouts[key].push({
+              i: chart.id.toString(),
+              x: chart.layout[key][0] || 0,
+              y: chart.layout[key][1] || 0,
+              w: chart.layout[key][2],
+              h: chart.layout[key][3],
+            });
+          });
+        }
+      });
+
+      setLayouts(newLayouts);
+    }
+  }, [charts]);
 
   const _onEditFilterGroup = (chartId) => {
     const { projectId } = params;
@@ -365,6 +399,45 @@ function ProjectDashboard(props) {
     }));
   };
 
+  const _onChangeLayout = (layout, allLayouts) => {
+    const updatedCharts = charts.map(chart => {
+      const updatedLayout = {};
+
+      Object.keys(allLayouts).forEach(breakpoint => {
+        const layoutItem = allLayouts[breakpoint].find(item => item.i === chart.id.toString());
+        if (layoutItem) {
+          updatedLayout[breakpoint] = [layoutItem.x, layoutItem.y, layoutItem.w, layoutItem.h];
+        }
+      });
+
+      return { ...chart, layout: updatedLayout };
+    });
+
+    updatedCharts.forEach(chart => {
+      dispatch(updateChart({
+        project_id: params.projectId,
+        chart_id: chart.id,
+        data: { layout: chart.layout },
+        justUpdates: true
+      }));
+    });
+
+    setLayouts(allLayouts);    
+  };
+
+  const _onGetChartHeight = (chart) => {
+    const currentBreakpoint = Object.keys(layouts).find(breakpoint => {
+      return layouts[breakpoint].find(item => item.i === chart.id.toString());
+    });
+
+    if (currentBreakpoint) {
+      const layoutItem = layouts[currentBreakpoint].find(item => item.i === chart.id.toString());
+      return layoutItem.h * 150;
+    }
+
+    return 150;
+  };
+
   return (
     <div className="w-full">
       {charts && charts.length > 0
@@ -534,15 +607,15 @@ function ProjectDashboard(props) {
                   {!mobile && (
                     <>
                       <Spacer x={0.5} />
-                      <Tooltip content="Open print view" placement="bottom-end">
+                      <Tooltip content="Edit dashboard layout" placement="bottom-end">
                         <Button
                           variant="light"
                           isIconOnly
-                          onClick={onPrint}
-                          auto
+                          onClick={() => setEditingLayout(!editingLayout)}
+                          color={editingLayout ? "primary" : "default"}
                           size="sm"
                         >
-                          <LuPrinter size={22} />
+                          <LuLayoutDashboard size={22} />
                         </Button>
                       </Tooltip>
                     </>
@@ -637,28 +710,59 @@ function ProjectDashboard(props) {
           </Container>
         )}
 
-        {/* <Container className={"p-0 m-0 sm:pl-10 sm:pr-10"} size="fluid"> */}
-          <div className="grid grid-cols-12 gap-4 p-2">
-            {charts.map((chart, index) => {
-              if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
-              if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />);
-              return (
-                <div
-                  className={`min-h-[400px] overflow-y-hidden col-span-12 md:col-span-${chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4} lg:col-span-${chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3}`}
+        {/* <div className="grid grid-cols-12 gap-4 p-2">
+          {charts.map((chart, index) => {
+            if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
+            if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />);
+            return (
+              <div
+                className={`min-h-[400px] overflow-y-hidden col-span-12 md:col-span-${chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4} lg:col-span-${chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3}`}
+                key={chart.id}
+              >
+                <Chart
                   key={chart.id}
-                >
-                  <Chart
-                    key={chart.id}
-                    chart={chart}
-                    charts={charts}
-                    showDrafts={showDrafts}
-                    onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        {/* </Container> */}
+                  chart={chart}
+                  charts={charts}
+                  showDrafts={showDrafts}
+                  onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
+                />
+              </div>
+            );
+          })}
+        </div> */}
+
+        {layouts && (
+          <ResponsiveGridLayout
+            className="layout"
+            layouts={layouts}
+            breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+            cols={{ lg: 12, md: 10, sm: 8, xs: 6, xxs: 4 }}
+            rowHeight={150}
+            onLayoutChange={_onChangeLayout}
+            resizeHandle={(
+              <div className="react-resizable-handle">
+                <LuArrowDownRight className="text-primary animate-pulse" />
+              </div>
+            )}
+            isDraggable={editingLayout}
+            isResizable={editingLayout}
+          >
+            {charts.filter((c) => (c.draft && showDrafts) || !c.draft).map((chart, index) => (
+              <div key={chart.id} className={editingLayout ? "border-2 border-dashed border-primary rounded-2xl" : ""}>
+                <Chart
+                  key={chart.id}
+                  chart={chart}
+                  charts={charts}
+                  showDrafts={showDrafts}
+                  onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
+                  height={() => _onGetChartHeight(chart)}
+                  editingLayout={editingLayout}
+                  onEditLayout={() => setEditingLayout(!editingLayout)}
+                />
+              </div>
+            ))}
+          </ResponsiveGridLayout>
+        )}
       </div>
       
       <Filters
