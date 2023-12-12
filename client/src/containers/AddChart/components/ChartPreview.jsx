@@ -204,7 +204,7 @@ function ChartPreview(props) {
                 )}
               {chart.type === "table"
                 && (
-                  <div>
+                  <div className="h-full">
                     <TableContainer
                       tabularData={chart.chartData}
                       datasets={chart.ChartDatasetConfigs}

@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import {
   Button, Spacer,
 } from "@nextui-org/react";
-import { LuChevronDownCircle, LuChevronUpCircle } from "react-icons/lu";
 
 import TableComponent from "./TableComponent";
 import Row from "../../../../components/Row";
@@ -11,11 +10,10 @@ import Text from "../../../../components/Text";
 
 function TableContainer(props) {
   const {
-    tabularData, height, embedded, chartSize, datasets,
+    tabularData, embedded, chartSize, datasets,
   } = props;
 
   const [activeDataset, setActiveDataset] = useState(null);
-  const [expanded, setExpanded] = useState(false);
   const [totalValue, setTotalValue] = useState(0);
 
   useEffect(() => {
@@ -44,12 +42,8 @@ function TableContainer(props) {
     }
   }, [activeDataset]);
 
-  const _onExpand = () => {
-    setExpanded(!expanded);
-  };
-
   return (
-    <div>
+    <div className="h-full overflow-y-auto">
       <Row align="center" wrap="wrap" className={"gap-1"}>
         {activeDataset && datasets.map((dataset) => {
           return (
@@ -66,18 +60,6 @@ function TableContainer(props) {
             </Fragment>
           );
         })}
-        {!embedded && (
-          <Button
-            startContent={expanded ? <LuChevronUpCircle /> : <LuChevronDownCircle />}
-            onClick={() => _onExpand()}
-            color="default"
-            size={chartSize === 1 ? "xs" : "sm"}
-            variant="light"
-            className="text-default-500"
-          >
-            {expanded ? "See less" : "See more"}
-          </Button>
-        )}
 
         {activeDataset?.configuration?.sum && (
           <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
@@ -93,7 +75,6 @@ function TableContainer(props) {
         && tabularData[activeDataset.legend].columns
         && (
           <TableComponent
-            height={expanded ? height + 200 : chartSize > 1 ? height + 12 : height + 12}
             columns={tabularData[activeDataset.legend].columns}
             data={tabularData[activeDataset.legend].data}
             embedded={embedded}
@@ -105,7 +86,6 @@ function TableContainer(props) {
 }
 
 TableContainer.defaultProps = {
-  height: 300,
   embedded: false,
 };
 
@@ -113,7 +93,6 @@ TableContainer.propTypes = {
   tabularData: PropTypes.object.isRequired,
   chartSize: PropTypes.number.isRequired,
   datasets: PropTypes.array.isRequired,
-  height: PropTypes.number,
   embedded: PropTypes.bool,
 };
 

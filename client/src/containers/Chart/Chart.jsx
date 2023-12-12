@@ -693,12 +693,13 @@ function Chart(props) {
                   )}
                 {chart.type === "table"
                   && (
-                    <TableContainer
-                      height={height - 32}
-                      tabularData={chart.chartData}
-                      chartSize={chart.chartSize}
-                      datasets={chart.ChartDatasetConfigs}
-                    />
+                    <div className="h-full">
+                      <TableContainer
+                        tabularData={chart.chartData}
+                        chartSize={chart.chartSize}
+                        datasets={chart.ChartDatasetConfigs}
+                      />
+                    </div>
                   )}
                 {chart.type === "avg"
                   && (

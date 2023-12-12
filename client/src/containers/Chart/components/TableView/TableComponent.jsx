@@ -23,7 +23,7 @@ const paginationOptions = [5, 10, 20, 30, 40, 50].map((pageSize) => ({
 
 function TableComponent(props) {
   const {
-    columns, data, height, embedded,
+    columns, data, embedded,
   } = props;
 
   const {
@@ -45,7 +45,7 @@ function TableComponent(props) {
   usePagination);
 
   return (
-    <div style={styles.mainBody(height, embedded)}>
+    <div style={styles.mainBody(embedded)}>
       {(!headerGroups
         || !headerGroups[headerGroups.length - 1]
         || !headerGroups[headerGroups.length - 1].headers
@@ -106,7 +106,6 @@ function TableComponent(props) {
                   <TableColumn
                     key={column.getHeaderProps(column.getSortByToggleProps()).key}
                     style={{ whiteSpace: "unset" }}
-                    justify="center"
                     className={"pl-10 pr-10 max-w-[400px]"}
                   >
                     <Row align="center">
@@ -115,10 +114,13 @@ function TableComponent(props) {
                           ? (<LuChevronDownCircle />)
                           : (<LuChevronUpCircle />)
                         : ""}
+
+                      {(column.isSorted || column.isSortedDesc) && <Spacer x={1} />}
                       <LinkNext
+                        className="text-sm cursor-pointer hover:text-secondary"
                         onClick={column.getHeaderProps(column.getSortByToggleProps()).onClick}
                       >
-                        <Text>
+                        <Text className={"text-foreground-500"}>
                           {typeof column.render("Header") === "object"
                             ? column.render("Header") : column.render("Header").replace("__cb_group", "")}
                         </Text>
@@ -156,11 +158,12 @@ function TableComponent(props) {
                         <TableCell
                           key={`${row.id}-${cell.column.Header}`}
                           {...cell.getCellProps()}
-                          className={"max-w-[300px] pr-10 pl-10"}
+                          className={"max-w-[300px] pr-10 pl-10 truncate"}
                           css={{
                             userSelect: "text",
                             borderRight: cellIndex === row.cells.length - 1 ? "none" : "$accents3 solid 1px",
                           }}
+                          title={cellObj.props.value}
                         >
                           {(!isObject && !isArray) && (
                             <Text
@@ -206,11 +209,9 @@ function TableComponent(props) {
 }
 
 const styles = {
-  mainBody: (height, embedded) => ({
+  mainBody: (embedded) => ({
     overflowY: "auto",
     overflowX: "auto",
-    height,
-    transition: "height .5s ease-in",
     paddingBottom: embedded ? 30 : 0,
   }),
   table: {
@@ -222,14 +223,12 @@ const styles = {
 };
 
 TableComponent.defaultProps = {
-  height: 300,
   embedded: false,
 };
 
 TableComponent.propTypes = {
   columns: PropTypes.array.isRequired,
   data: PropTypes.array.isRequired,
-  height: PropTypes.number,
   embedded: PropTypes.bool,
   dataset: PropTypes.object.isRequired,
 };
