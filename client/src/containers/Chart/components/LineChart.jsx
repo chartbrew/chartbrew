@@ -106,7 +106,6 @@ function LineChart(props) {
       } else {
         newOptions.scales.y.ticks.maxTicksLimit = 10;
       }
-
       
       return newOptions;
     }

@@ -456,11 +456,11 @@ function Chart(props) {
                   <>
                     {_canAccess("projectAdmin") && !editingLayout && (
                       <Link to={`/${params.teamId}/${params.projectId}/chart/${chart.id}/edit`}>
-                        <Text b size="lg" className={"text-default"}>{chart.name}</Text>
+                        <Text b className={"text-default"}>{chart.name}</Text>
                       </Link>
                     )}
                     {(!_canAccess("projectAdmin") || editingLayout) && (
-                      <Text b size="lg">{chart.name}</Text>
+                      <Text b>{chart.name}</Text>
                     )}
                   </>
                   <Spacer x={0.5} />
@@ -489,18 +489,18 @@ function Chart(props) {
                   <Row justify="flex-start" align="center">
                     {!chartLoading && !chart.loading && (
                       <>
-                        {!print && <Text size="xs" i title="Last updated">{`${_getUpdatedTime(chart.chartDataUpdated)}`}</Text>}
-                        {print && <Text size="xs" i>{`${moment(chart.chartDataUpdated).format("LLL")}`}</Text>}
+                        {!print && <span className="text-[10px] text-default-500" title="Last updated">{`${_getUpdatedTime(chart.chartDataUpdated)}`}</span>}
+                        {print && <span className="text-[10px] text-default-500">{`${moment(chart.chartDataUpdated).format("LLL")}`}</span>}
                       </>
                     )}
                     {(chartLoading || chart.loading) && (
                       <>
                         <CircularProgress classNames={{ svg: "w-4 h-4" }} />
-                        <Spacer x={0.5} />
+                        <Spacer x={1} />
                         <Text size="xs">{"Updating..."}</Text>
                       </>
                     )}
-                    <Spacer x={0.5} />
+                    <Spacer x={1} />
                     {chart.autoUpdate > 0 && (
                       <Tooltip content={`Updates every ${_getUpdateFreqText(chart.autoUpdate)}`}>
                         <div>
