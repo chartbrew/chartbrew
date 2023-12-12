@@ -120,6 +120,7 @@ function ProjectDashboard(props) {
               y: chart.layout[key][1] || 0,
               w: chart.layout[key][2],
               h: chart.layout[key][3],
+              minW: 2,
             });
           });
         }
@@ -709,27 +710,6 @@ function ProjectDashboard(props) {
             </Row>
           </Container>
         )}
-
-        {/* <div className="grid grid-cols-12 gap-4 p-2">
-          {charts.map((chart, index) => {
-            if (chart.draft && !showDrafts) return (<span style={{ display: "none" }} key={chart.id} />);
-            if (!chart.id) return (<span style={{ display: "none" }} key={`no_id_${index}`} />);
-            return (
-              <div
-                className={`min-h-[400px] overflow-y-hidden col-span-12 md:col-span-${chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4} lg:col-span-${chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3}`}
-                key={chart.id}
-              >
-                <Chart
-                  key={chart.id}
-                  chart={chart}
-                  charts={charts}
-                  showDrafts={showDrafts}
-                  onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
-                />
-              </div>
-            );
-          })}
-        </div> */}
 
         {layouts && (
           <ResponsiveGridLayout

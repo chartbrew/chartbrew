@@ -1,17 +1,10 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { Line } from "react-chartjs-2";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
+  Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title,
+  Tooltip, Legend, Filler,
 } from "chart.js";
 import { semanticColors } from "@nextui-org/react";
 import { cloneDeep } from "lodash";
@@ -20,6 +13,7 @@ import KpiChartSegment from "./KpiChartSegment";
 import ChartErrorBoundary from "./ChartErrorBoundary";
 import KpiMode from "./KpiMode";
 import useThemeDetector from "../../../modules/useThemeDetector";
+import { getHeightBreakpoint, getWidthBreakpoint } from "../../../modules/layoutBreakpoints";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler
@@ -50,6 +44,9 @@ function LineChart(props) {
     chart, redraw, redrawComplete, editMode,
   } = props;
 
+  const theme = useThemeDetector() ? "dark" : "light";
+  const chartRef = useRef(null);
+
   useEffect(() => {
     if (redraw) {
       setTimeout(() => {
@@ -57,8 +54,6 @@ function LineChart(props) {
       }, 1000);
     }
   }, [redraw]);
-
-  const theme = useThemeDetector() ? "dark" : "light";
 
   const _getChartOptions = () => {
     // add any dynamic changes to the chartJS options here
@@ -79,6 +74,40 @@ function LineChart(props) {
       if (newOptions.plugins?.legend?.labels) {
         newOptions.plugins.legend.labels.color = semanticColors[theme].foreground.DEFAULT;
       }
+
+      // sizing changes
+      const widthBreakpoint = getWidthBreakpoint(chartRef);
+      const heightBreakpoint = getHeightBreakpoint(chartRef);
+
+      if (widthBreakpoint === "xxs" || widthBreakpoint === "xs") {
+        newOptions.elements.point.radius = 0;
+      } else {
+        newOptions.elements.point.radius = chart.chartData?.options?.elements?.point?.radius;
+      }
+
+      if (widthBreakpoint === "xxs" && chart.xLabelTicks === "default") {
+        newOptions.scales.x.ticks.maxTicksLimit = 4;
+        newOptions.scales.x.ticks.maxRotation = 25;
+      } else if (widthBreakpoint === "xs" && chart.xLabelTicks === "default") {
+        newOptions.scales.x.ticks.maxTicksLimit = 6;
+        newOptions.scales.x.ticks.maxRotation = 25;
+      } else if (widthBreakpoint === "sm" && chart.xLabelTicks === "default") {
+        newOptions.scales.x.ticks.maxTicksLimit = 8;
+        newOptions.scales.x.ticks.maxRotation = 25;
+      } else if (widthBreakpoint === "md" && chart.xLabelTicks === "default") {
+        newOptions.scales.x.ticks.maxTicksLimit = 12;
+        newOptions.scales.x.ticks.maxRotation = 45;
+      } else if (!chart.xLabelTicks) {
+        newOptions.scales.x.ticks.maxTicksLimit = 16;
+      }
+
+      if (heightBreakpoint === "xs") {
+        newOptions.scales.y.ticks.maxTicksLimit = 4;
+      } else {
+        newOptions.scales.y.ticks.maxTicksLimit = 10;
+      }
+
+      
       return newOptions;
     }
 
@@ -96,7 +125,7 @@ function LineChart(props) {
         )}
 
       {chart.mode !== "kpi" && chart.chartData && chart.chartData.data && (
-        <div className={`${chart.mode === "kpi" && "chart-kpi"} h-full`}>
+        <div className={`${chart.mode === "kpi" && "chart-kpi"} h-full`} ref={chartRef}>
           {chart.chartData.growth && chart.mode === "kpichart" && (
             <KpiChartSegment chart={chart} editMode={editMode} />
           )}

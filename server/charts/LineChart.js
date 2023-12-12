@@ -68,11 +68,6 @@ class NewLineChart {
       });
     }
 
-    let maxTickRotation = 0;
-    if (maxTickLength > 10) {
-      maxTickRotation = 25;
-    }
-
     const chartJsData = {
       data: {
         labels: selectedDatasetLabels === 0 ? ["No data"] : selectedDatasetLabels,
@@ -124,7 +119,7 @@ class NewLineChart {
         maintainAspectRatio: false,
         elements: {
           point: {
-            radius: this.chart.chartSize === 1 ? 0 : radius,
+            radius,
             hitRadius: 8,
             hoverRadius: 8,
           },
@@ -142,7 +137,7 @@ class NewLineChart {
                 family: "Inter",
                 size: 10,
               },
-              maxTicksLimit: this.chart.chartSize === 1 ? 4 : 10,
+              maxTicksLimit: 10,
               padding: this.chart.mode === "kpichart" ? 10 : 3,
               display: true,
             },
@@ -159,7 +154,7 @@ class NewLineChart {
                 family: "Inter",
                 size: 10,
               },
-              maxRotation: this.chart.chartSize === 1 ? maxTickRotation : 45,
+              maxRotation: 45,
               minRotation: 0,
             },
             grid: {
@@ -198,11 +193,6 @@ class NewLineChart {
 
       // check how many ticks should the X Axis have
       let maxTicksLimit = 10;
-
-      if (this.chart.chartSize === 1) maxTicksLimit = 4;
-      if (this.chart.chartSize === 2) maxTicksLimit = 8;
-      if (this.chart.chartSize === 3) maxTicksLimit = 12;
-      if (this.chart.chartSize === 4) maxTicksLimit = 16;
 
       if (this.axisData.x.length) {
         switch (this.chart.xLabelTicks) {
