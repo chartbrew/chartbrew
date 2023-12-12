@@ -129,7 +129,7 @@ function LineChart(props) {
             <KpiChartSegment chart={chart} editMode={editMode} />
           )}
           {chart.chartData.data && chart.chartData.data.labels && (
-            <div className="h-full">
+            <div className={chart.mode !== "kpichart" ? "h-full" : "h-full pb-[50px]"}>
               <ChartErrorBoundary>
                 <Line
                   data={chart.chartData.data}

@@ -56,8 +56,8 @@ function BarChart(props) {
       }
 
       // sizing changes
-      const widthBreakpoint = getWidthBreakpoint(chartRef);
-      const heightBreakpoint = getHeightBreakpoint(chartRef);
+      const widthBreakpoint = chart.horizontal ? getHeightBreakpoint(chartRef) : getWidthBreakpoint(chartRef);
+      const heightBreakpoint = chart.horizontal ? getWidthBreakpoint(chartRef) : getHeightBreakpoint(chartRef);
 
       if (widthBreakpoint === "xxs" || widthBreakpoint === "xs") {
         newOptions.elements.point.radius = 0;
@@ -65,26 +65,29 @@ function BarChart(props) {
         newOptions.elements.point.radius = chart.chartData?.options?.elements?.point?.radius;
       }
 
+      const realX = chart.horizontal ? "y" : "x";
+      const realY = chart.horizontal ? "x" : "y";
+
       if (widthBreakpoint === "xxs" && chart.xLabelTicks === "default") {
-        newOptions.scales.x.ticks.maxTicksLimit = 4;
-        newOptions.scales.x.ticks.maxRotation = 25;
+        newOptions.scales[realX].ticks.maxTicksLimit = 4;
+        newOptions.scales[realX].ticks.maxRotation = 25;
       } else if (widthBreakpoint === "xs" && chart.xLabelTicks === "default") {
-        newOptions.scales.x.ticks.maxTicksLimit = 6;
-        newOptions.scales.x.ticks.maxRotation = 25;
+        newOptions.scales[realX].ticks.maxTicksLimit = 6;
+        newOptions.scales[realX].ticks.maxRotation = 25;
       } else if (widthBreakpoint === "sm" && chart.xLabelTicks === "default") {
-        newOptions.scales.x.ticks.maxTicksLimit = 8;
-        newOptions.scales.x.ticks.maxRotation = 25;
+        newOptions.scales[realX].ticks.maxTicksLimit = 8;
+        newOptions.scales[realX].ticks.maxRotation = 25;
       } else if (widthBreakpoint === "md" && chart.xLabelTicks === "default") {
-        newOptions.scales.x.ticks.maxTicksLimit = 12;
-        newOptions.scales.x.ticks.maxRotation = 90;
+        newOptions.scales[realX].ticks.maxTicksLimit = 12;
+        newOptions.scales[realX].ticks.maxRotation = 90;
       } else if (!chart.xLabelTicks) {
-        newOptions.scales.x.ticks.maxTicksLimit = 16;
+        newOptions.scales[realX].ticks.maxTicksLimit = 16;
       }
 
       if (heightBreakpoint === "xs") {
-        newOptions.scales.y.ticks.maxTicksLimit = 4;
+        newOptions.scales[realY].ticks.maxTicksLimit = 4;
       } else {
-        newOptions.scales.y.ticks.maxTicksLimit = 10;
+        newOptions.scales[realY].ticks.maxTicksLimit = 10;
       }
 
       return newOptions;
@@ -137,20 +140,22 @@ function BarChart(props) {
             <KpiChartSegment chart={chart} editMode={editMode} />
           )}
           {chart.chartData.data && chart.chartData.data.labels && (
-            <ChartErrorBoundary>
-              <Bar
-                data={_getChartData()}
-                options={{
-                  ..._getChartOptions(),
-                  plugins: {
-                    ..._getChartOptions().plugins,
-                    datalabels: chart.dataLabels && _getDatalabelsOptions(),
-                  },
-                }}
-                redraw={redraw}
-                plugins={chart.dataLabels ? [ChartDataLabels] : []}
-              />
-            </ChartErrorBoundary>
+            <div className={chart.mode !== "kpichart" ? "h-full" : "h-full pb-[50px]"}>
+              <ChartErrorBoundary>
+                <Bar
+                  data={_getChartData()}
+                  options={{
+                    ..._getChartOptions(),
+                    plugins: {
+                      ..._getChartOptions().plugins,
+                      datalabels: chart.dataLabels && _getDatalabelsOptions(),
+                    },
+                  }}
+                  redraw={redraw}
+                  plugins={chart.dataLabels ? [ChartDataLabels] : []}
+                />
+              </ChartErrorBoundary>
+            </div>
           )}
         </div>
       )}

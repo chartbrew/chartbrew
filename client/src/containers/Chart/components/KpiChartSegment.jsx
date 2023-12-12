@@ -7,21 +7,24 @@ import {
 
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
+import { getWidthBreakpoint } from "../../../modules/layoutBreakpoints";
 
 function KpiChartSegment(props) {
   const { chart, editMode } = props;
+  const containerRef = React.useRef(null);
 
   return (
     <div
       className={"pl-unit-sm pr-unit-sm sm:max-w-full"}
+      ref={containerRef}
     >
       <Row wrap="wrap">
         {chart.chartData.growth.map((c, index) => {
-          if (chart.chartSize === 1 && index > 1) return (<span key={c.label} />);
+          if (getWidthBreakpoint(containerRef) === "xxs" && index > 1) return (<span key={c.label} />);
           else if (editMode && index > 3) return (<span key={c.label} />);
-          else if (chart.chartSize === 2 && index > 3) return (<span key={c.label} />);
-          else if (chart.chartSize === 3 && index > 5) return (<span key={c.label} />);
-          else if (chart.chartSize > 3 && index > 7) return (<span key={c.label} />);
+          else if (getWidthBreakpoint(containerRef) === "xs" && index > 3) return (<span key={c.label} />);
+          else if (getWidthBreakpoint(containerRef) === "sm" && index > 5) return (<span key={c.label} />);
+          else if (index > 7) return (<span key={c.label} />);
 
           return (
             <div

@@ -322,10 +322,6 @@ function Chart(props) {
     return canAccess(role, user.id, team.TeamRoles);
   };
 
-  const _isKpi = (chart) => {
-    return chart.mode === "kpi";
-  };
-
   const _onCopyIframe = () => {
     const iframeText = document.getElementById("iframe-text");
     iframeText.select();
@@ -497,7 +493,7 @@ function Chart(props) {
                       <>
                         <CircularProgress classNames={{ svg: "w-4 h-4" }} />
                         <Spacer x={1} />
-                        <Text size="xs">{"Updating..."}</Text>
+                        <span className="text-[10px] text-default-500">{"Updating..."}</span>
                       </>
                     )}
                     <Spacer x={1} />
@@ -640,9 +636,9 @@ function Chart(props) {
               )}
             </div>
           </CardHeader>
-          <CardBody className="pt-5 overflow-y-hidden">
+          <CardBody className="pt-2 pb-4 overflow-y-hidden">
             {chart.chartData && (
-              <div style={styles.mainChartArea(_isKpi(chart))} className="h-full">
+              <div className="h-full">
                 {chart.type === "line"
                   && (
                     <LineChart
@@ -1073,9 +1069,6 @@ const styles = {
   draft: {
     marginRight: 10,
   },
-  mainChartArea: (noPadding) => ({
-    paddingBottom: noPadding ? 0 : 10,
-  }),
   filterBtn: (addPadding) => ({
     position: "absolute",
     right: addPadding ? 40 : 10,
