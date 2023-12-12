@@ -117,7 +117,7 @@ function ChartPreview(props) {
     <div className={"mx-auto pr-4 pl-4 w-full"}>
       {chart && chart.chartData && chart.ChartDatasetConfigs && (
         <>
-          <div className={"min-h-[350px] w-full"}>
+          <div className={"w-full"}>
             <Row justify="flex-start" align="center">
               <Button
                 onClick={_onRefreshData}
@@ -149,78 +149,80 @@ function ChartPreview(props) {
               <Divider />
             </Row>
             <Spacer y={2} />
-            {chart.type === "line"
-              && (
-                <LineChart
-                  editMode
-                  chart={chart}
-                  redraw={redraw}
-                  redrawComplete={_redrawComplete}
-                />
-              )}
-            {chart.type === "bar"
-              && (
-                <BarChart
-                  editMode
-                  chart={chart}
-                  redraw={redraw}
-                  redrawComplete={_redrawComplete}
-                />
-              )}
-            {chart.type === "pie"
-              && (
-                <div>
-                  <PieChart
+            <div className="h-[300px] w-full">
+              {chart.type === "line"
+                && (
+                  <LineChart
+                    editMode
+                    chart={chart}
+                    redraw={redraw}
+                    redrawComplete={_redrawComplete}
+                  />
+                )}
+              {chart.type === "bar"
+                && (
+                  <BarChart
+                    editMode
+                    chart={chart}
+                    redraw={redraw}
+                    redrawComplete={_redrawComplete}
+                  />
+                )}
+              {chart.type === "pie"
+                && (
+                  <div>
+                    <PieChart
+                      chart={chart}
+                      height={300}
+                      editMode
+                    />
+                  </div>
+                )}
+              {chart.type === "doughnut"
+                && (
+                  <DoughnutChart
                     chart={chart}
                     height={300}
                     editMode
                   />
-                </div>
-              )}
-            {chart.type === "doughnut"
-              && (
-                <DoughnutChart
-                  chart={chart}
-                  height={300}
-                  editMode
-                />
-              )}
-            {chart.type === "radar"
-              && (
-                <RadarChart
-                  chart={chart}
-                  height={300}
-                  editMode
-                />
-              )}
-            {chart.type === "polar"
-              && (
-                <PolarChart
-                  chart={chart}
-                  height={300}
-                  editMode
-                />
-              )}
-            {chart.type === "table"
-              && (
-                <div>
-                  <TableContainer
-                    tabularData={chart.chartData}
-                    datasets={chart.ChartDatasetConfigs}
-                    height={400}
+                )}
+              {chart.type === "radar"
+                && (
+                  <RadarChart
+                    chart={chart}
+                    height={300}
                     editMode
                   />
-                </div>
-              )}
-            {chart.type === "avg"
-              && (
-                <LineChart
-                  chart={chart}
-                  redraw={redraw}
-                  redrawComplete={_redrawComplete}
-                  editMode
-                />
-              )}
+                )}
+              {chart.type === "polar"
+                && (
+                  <PolarChart
+                    chart={chart}
+                    height={300}
+                    editMode
+                  />
+                )}
+              {chart.type === "table"
+                && (
+                  <div>
+                    <TableContainer
+                      tabularData={chart.chartData}
+                      datasets={chart.ChartDatasetConfigs}
+                      height={400}
+                      editMode
+                    />
+                  </div>
+                )}
+              {chart.type === "avg"
+                && (
+                  <LineChart
+                    chart={chart}
+                    redraw={redraw}
+                    redrawComplete={_redrawComplete}
+                    editMode
+                  />
+                )}
+            </div>
           </div>
           <Spacer y={2} />
           <div className="border-solid border-1 border-content3 px-3 py-2 rounded-2xl">

@@ -55,39 +55,41 @@ function BarChart(props) {
         newOptions.plugins.legend.labels.color = semanticColors[theme].foreground.DEFAULT;
       }
 
-      // sizing changes
-      const widthBreakpoint = chart.horizontal ? getHeightBreakpoint(chartRef) : getWidthBreakpoint(chartRef);
-      const heightBreakpoint = chart.horizontal ? getWidthBreakpoint(chartRef) : getHeightBreakpoint(chartRef);
+      if (newOptions?.scales?.x?.ticks && newOptions?.scales?.y?.ticks) {
+        // sizing changes
+        const widthBreakpoint = chart.horizontal ? getHeightBreakpoint(chartRef) : getWidthBreakpoint(chartRef);
+        const heightBreakpoint = chart.horizontal ? getWidthBreakpoint(chartRef) : getHeightBreakpoint(chartRef);
 
-      if (widthBreakpoint === "xxs" || widthBreakpoint === "xs") {
-        newOptions.elements.point.radius = 0;
-      } else {
-        newOptions.elements.point.radius = chart.chartData?.options?.elements?.point?.radius;
-      }
+        if (widthBreakpoint === "xxs" || widthBreakpoint === "xs") {
+          newOptions.elements.point.radius = 0;
+        } else {
+          newOptions.elements.point.radius = chart.chartData?.options?.elements?.point?.radius;
+        }
 
-      const realX = chart.horizontal ? "y" : "x";
-      const realY = chart.horizontal ? "x" : "y";
+        const realX = chart.horizontal ? "y" : "x";
+        const realY = chart.horizontal ? "x" : "y";
 
-      if (widthBreakpoint === "xxs" && chart.xLabelTicks === "default") {
-        newOptions.scales[realX].ticks.maxTicksLimit = 4;
-        newOptions.scales[realX].ticks.maxRotation = 25;
-      } else if (widthBreakpoint === "xs" && chart.xLabelTicks === "default") {
-        newOptions.scales[realX].ticks.maxTicksLimit = 6;
-        newOptions.scales[realX].ticks.maxRotation = 25;
-      } else if (widthBreakpoint === "sm" && chart.xLabelTicks === "default") {
-        newOptions.scales[realX].ticks.maxTicksLimit = 8;
-        newOptions.scales[realX].ticks.maxRotation = 25;
-      } else if (widthBreakpoint === "md" && chart.xLabelTicks === "default") {
-        newOptions.scales[realX].ticks.maxTicksLimit = 12;
-        newOptions.scales[realX].ticks.maxRotation = 90;
-      } else if (!chart.xLabelTicks) {
-        newOptions.scales[realX].ticks.maxTicksLimit = 16;
-      }
+        if (widthBreakpoint === "xxs" && chart.xLabelTicks === "default") {
+          newOptions.scales[realX].ticks.maxTicksLimit = 4;
+          newOptions.scales[realX].ticks.maxRotation = 25;
+        } else if (widthBreakpoint === "xs" && chart.xLabelTicks === "default") {
+          newOptions.scales[realX].ticks.maxTicksLimit = 6;
+          newOptions.scales[realX].ticks.maxRotation = 25;
+        } else if (widthBreakpoint === "sm" && chart.xLabelTicks === "default") {
+          newOptions.scales[realX].ticks.maxTicksLimit = 8;
+          newOptions.scales[realX].ticks.maxRotation = 25;
+        } else if (widthBreakpoint === "md" && chart.xLabelTicks === "default") {
+          newOptions.scales[realX].ticks.maxTicksLimit = 12;
+          newOptions.scales[realX].ticks.maxRotation = 90;
+        } else if (!chart.xLabelTicks) {
+          newOptions.scales[realX].ticks.maxTicksLimit = 16;
+        }
 
-      if (heightBreakpoint === "xs") {
-        newOptions.scales[realY].ticks.maxTicksLimit = 4;
-      } else {
-        newOptions.scales[realY].ticks.maxTicksLimit = 10;
+        if (heightBreakpoint === "xs") {
+          newOptions.scales[realY].ticks.maxTicksLimit = 4;
+        } else {
+          newOptions.scales[realY].ticks.maxTicksLimit = 10;
+        }
       }
 
       return newOptions;

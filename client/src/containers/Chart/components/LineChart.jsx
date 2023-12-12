@@ -76,35 +76,37 @@ function LineChart(props) {
       }
 
       // sizing changes
-      const widthBreakpoint = getWidthBreakpoint(chartRef);
-      const heightBreakpoint = getHeightBreakpoint(chartRef);
+      if (newOptions?.scales?.x?.ticks && newOptions?.scales?.y?.ticks) {
+        const widthBreakpoint = getWidthBreakpoint(chartRef);
+        const heightBreakpoint = getHeightBreakpoint(chartRef);
 
-      if (widthBreakpoint === "xxs" || widthBreakpoint === "xs") {
-        newOptions.elements.point.radius = 0;
-      } else {
-        newOptions.elements.point.radius = chart.chartData?.options?.elements?.point?.radius;
-      }
+        if (widthBreakpoint === "xxs" || widthBreakpoint === "xs") {
+          newOptions.elements.point.radius = 0;
+        } else {
+          newOptions.elements.point.radius = chart.chartData?.options?.elements?.point?.radius;
+        }
 
-      if (widthBreakpoint === "xxs" && chart.xLabelTicks === "default") {
-        newOptions.scales.x.ticks.maxTicksLimit = 4;
-        newOptions.scales.x.ticks.maxRotation = 25;
-      } else if (widthBreakpoint === "xs" && chart.xLabelTicks === "default") {
-        newOptions.scales.x.ticks.maxTicksLimit = 6;
-        newOptions.scales.x.ticks.maxRotation = 25;
-      } else if (widthBreakpoint === "sm" && chart.xLabelTicks === "default") {
-        newOptions.scales.x.ticks.maxTicksLimit = 8;
-        newOptions.scales.x.ticks.maxRotation = 25;
-      } else if (widthBreakpoint === "md" && chart.xLabelTicks === "default") {
-        newOptions.scales.x.ticks.maxTicksLimit = 12;
-        newOptions.scales.x.ticks.maxRotation = 45;
-      } else if (!chart.xLabelTicks) {
-        newOptions.scales.x.ticks.maxTicksLimit = 16;
-      }
+        if (widthBreakpoint === "xxs" && chart.xLabelTicks === "default") {
+          newOptions.scales.x.ticks.maxTicksLimit = 4;
+          newOptions.scales.x.ticks.maxRotation = 25;
+        } else if (widthBreakpoint === "xs" && chart.xLabelTicks === "default") {
+          newOptions.scales.x.ticks.maxTicksLimit = 6;
+          newOptions.scales.x.ticks.maxRotation = 25;
+        } else if (widthBreakpoint === "sm" && chart.xLabelTicks === "default") {
+          newOptions.scales.x.ticks.maxTicksLimit = 8;
+          newOptions.scales.x.ticks.maxRotation = 25;
+        } else if (widthBreakpoint === "md" && chart.xLabelTicks === "default") {
+          newOptions.scales.x.ticks.maxTicksLimit = 12;
+          newOptions.scales.x.ticks.maxRotation = 45;
+        } else if (!chart.xLabelTicks) {
+          newOptions.scales.x.ticks.maxTicksLimit = 16;
+        }
 
-      if (heightBreakpoint === "xs") {
-        newOptions.scales.y.ticks.maxTicksLimit = 4;
-      } else {
-        newOptions.scales.y.ticks.maxTicksLimit = 10;
+        if (heightBreakpoint === "xs") {
+          newOptions.scales.y.ticks.maxTicksLimit = 4;
+        } else {
+          newOptions.scales.y.ticks.maxTicksLimit = 10;
+        }
       }
       
       return newOptions;
