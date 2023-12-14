@@ -173,11 +173,8 @@ function ProjectNavigation(props) {
               <Row justify="center" align="center">
                 {menuSize === "small" && (
                   <Tooltip content="Create a new chart" placement="right">
-                    <div>
-                      <Link to={`/${teamId}/${projectId}/chart`}>
-                        {/* <Text color="primary">
-                          <Avatar icon={<LuPlusCircle size={28} />} radius="sm" color="primary" />
-                        </Text> */}
+                    <div className="hover:saturate-200 transition-all">
+                      <Link to={`/${teamId}/${projectId}/chart`} className="m-0 p-0">
                         <Button
                           isIconOnly
                           variant="flat"

@@ -149,11 +149,11 @@ module.exports = (sequelize, DataTypes) => {
     layout: {
       type: DataTypes.TEXT,
       defaultValue: JSON.stringify({
-        "lg": [0, 0, 12, 2],
-        "md": [0, 0, 10, 2],
-        "sm": [0, 0, 8, 2],
-        "xs": [0, 0, 6, 2],
-        "xxs": [0, 0, 4, 2]
+        "lg": [0, 0, 6, 2],
+        "md": [0, 0, 6, 2],
+        "sm": [0, 0, 4, 2],
+        "xs": [0, 0, 4, 2],
+        "xxs": [0, 0, 2, 2]
       }),
       set(val) {
         return this.setDataValue("layout", JSON.stringify(val));
@@ -162,7 +162,6 @@ module.exports = (sequelize, DataTypes) => {
         try {
           return JSON.parse(this.getDataValue("layout"));
         } catch (e) {
-          console.error("e", e);
           return this.getDataValue("layout");
         }
       },

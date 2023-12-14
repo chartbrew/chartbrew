@@ -35,6 +35,7 @@ import useThemeDetector from "../../modules/useThemeDetector";
 import Row from "../../components/Row";
 import Container from "../../components/Container";
 import Text from "../../components/Text";
+import { getWidthBreakpoint } from "../../modules/layoutBreakpoints";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -98,6 +99,10 @@ function ProjectDashboard(props) {
   useEffect(() => {
     cleanErrors();
   }, []);
+
+  useEffect(() => {
+    console.log("width", getWidthBreakpoint());
+  }, [width]);
 
   useEffect(() => {
     if (!filterLoading && filters) {
@@ -401,6 +406,7 @@ function ProjectDashboard(props) {
   };
 
   const _onChangeLayout = (layout, allLayouts) => {
+    console.log(layout);
     const updatedCharts = charts.map(chart => {
       const updatedLayout = {};
 
@@ -441,6 +447,17 @@ function ProjectDashboard(props) {
 
   return (
     <div className="w-full">
+      {editingLayout && (
+        <div className="fixed bottom-4 left-20 z-50">
+          <Button
+            variant="shadow"
+            color="primary"
+            onClick={() => setEditingLayout(false)}
+          >
+            Close layout editor
+          </Button>
+        </div>
+      )}
       {charts && charts.length > 0
         && (
           <div>
