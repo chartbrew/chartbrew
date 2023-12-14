@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import PropTypes from "prop-types";
 import { Link as LinkDom, useParams } from "react-router-dom";
 import {
@@ -17,6 +17,10 @@ import {
   LuCheck, LuChevronLeft, LuClipboardEdit, LuEye, LuPalette, LuPencilLine,
   LuRefreshCw, LuShare, LuXCircle,
 } from "react-icons/lu";
+import { WidthProvider, Responsive } from "react-grid-layout";
+import "react-grid-layout/css/styles.css";
+import "react-resizable/css/styles.css";
+
 
 import AceEditor from "react-ace";
 import "ace-builds/src-min-noconflict/mode-css";
@@ -39,6 +43,8 @@ import Text from "../../components/Text";
 import Row from "../../components/Row";
 import Container from "../../components/Container";
 import useThemeDetector from "../../modules/useThemeDetector";
+
+const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
 const breakpoints = {
   mobile: 0,
@@ -75,6 +81,7 @@ function PublicDashboard(props) {
   const [notAuthorized, setNotAuthorized] = useState(false);
   const [reportPassword, setReportPassword] = useState("");
   const [refreshLoading, setRefreshLoading] = useState(false);
+  const [layouts, setLayouts] = useState(null);
 
   const teams = useSelector(selectTeams);
   const charts = useSelector(selectCharts);
@@ -82,6 +89,7 @@ function PublicDashboard(props) {
   const isDark = useThemeDetector();
   const params = useParams();
   const dispatch = useDispatch();
+  const initLayoutRef = useRef(null);
 
   const onDrop = useCallback((acceptedFiles) => {
     setNewChanges({ ...newChanges, logo: acceptedFiles });
@@ -132,6 +140,30 @@ function PublicDashboard(props) {
       setIsSaved(false);
     }
   }, [newChanges]);
+
+  useEffect(() => {
+    if (charts && charts.length > 0 && !initLayoutRef.current) {
+      initLayoutRef.current = true;
+      // set the grid layout
+      const newLayouts = { xxs: [], xs: [], sm: [], md: [], lg: [] };
+      charts.forEach((chart) => {
+        if (chart.layout) {
+          Object.keys(chart.layout).forEach((key) => {
+            newLayouts[key].push({
+              i: chart.id.toString(),
+              x: chart.layout[key][0] || 0,
+              y: chart.layout[key][1] || 0,
+              w: chart.layout[key][2],
+              h: chart.layout[key][3],
+              minW: 2,
+            });
+          });
+        }
+      });
+
+      setLayouts(newLayouts);
+    }
+  }, [charts]);
 
   const _fetchProject = (password) => {
     if (password) window.localStorage.setItem("reportPassword", password);
@@ -727,49 +759,33 @@ function PublicDashboard(props) {
           </div>
           <Spacer y={10} />
 
-          <div className="main-chart-grid grid grid-cols-12 gap-4">
-            {charts.map((chart) => {
-              if (chart.draft) return (<span style={{ display: "none" }} key={chart.id} />);
-              if (!chart.onReport) return (<span style={{ display: "none" }} key={chart.id} />);
-
-              return (
-                <div
-                  className={`min-h-[400px] overflow-y-hidden col-span-12 md:col-span-${chart.chartSize * 4 > 12 ? 12 : chart.chartSize * 4} lg:col-span-${chart.chartSize * 3 > 12 ? 12 : chart.chartSize * 3}`}
-                  key={chart.id}
-                >
-                  <Chart
-                    isPublic
-                    chart={chart}
-                    charts={charts}
-                    className="chart-card"
-                    showExport={project.Team?.allowReportExport}
-                    password={project.password || window.localStorage.getItem("reportPassword")}
-                  />
-                </div>
-              );
-            })}
-            {project.Team && project.Team.showBranding && (
-              <div className="col-span-12 footer-content mt-10 flex justify-center">
-                <Link
-                  className={`flex items-start !text-[${newChanges.titleColor || "black"}]`}
-                  href={"https://chartbrew.com?ref=chartbrew_os_report"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Text className={`text-[${newChanges.titleColor}]`}>
-                    Powered by
-                  </Text>
-                  <Spacer x={0.6} />
-                  <Text className={`text-[${newChanges.titleColor}]`}>
-                    <strong>Chart</strong>
-                  </Text>
-                  <Text className={`text-[${newChanges.titleColor}]`}>
-                    brew
-                  </Text>
-                </Link>
-              </div>
-            )}
-          </div>
+          {layouts && charts?.length > 0 && (
+            <div className="w-full">
+              <ResponsiveGridLayout
+                className="layout"
+                layouts={layouts}
+                breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+                cols={{ lg: 12, md: 10, sm: 8, xs: 6, xxs: 4 }}
+                onLayoutChange={() => {}}
+                rowHeight={150}
+                isDraggable={false}
+                isResizable={false}
+              >
+                {charts.filter((c) => !c.draft && c.onReport).map((chart) => (
+                  <div key={chart.id}>
+                    <Chart
+                      isPublic
+                      chart={chart}
+                      charts={charts}
+                      className="chart-card"
+                      showExport={project.Team?.allowReportExport}
+                      password={project.password || window.localStorage.getItem("reportPassword")}
+                    />
+                  </div>
+                ))}
+              </ResponsiveGridLayout>
+            </div>
+          )}
         </div>
       )}
 
