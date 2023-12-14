@@ -15,18 +15,17 @@ module.exports.up = () => {
   return db.Dataset.findAll({
     attributes: ["id"],
     include: [
-      { model: db.Connection, attributes: ["id"] },
       { model: db.DataRequest, attributes: ["id"] },
     ],
   })
     .then((datasets) => {
       const updatePromises = [];
       datasets.forEach((dataset) => {
-        if (dataset.Connection && dataset.Connection.id) {
+        if (dataset.connection_id) {
           dataset.DataRequests.forEach((dataRequest) => {
             updatePromises.push(
               db.DataRequest.update(
-                { connection_id: dataset.Connection.id }, { where: { id: dataRequest.id } },
+                { connection_id: dataset.connection_id }, { where: { id: dataRequest.id } },
               )
             );
           });
