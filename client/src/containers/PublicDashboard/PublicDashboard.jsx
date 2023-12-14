@@ -2,19 +2,19 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import PropTypes from "prop-types";
 import { Link as LinkDom, useParams } from "react-router-dom";
 import {
-  Button, Input, Spacer, Navbar, Tooltip, Popover, Divider, Modal, Badge,
-  Link, Image, CircularProgress, NavbarContent, PopoverTrigger, PopoverContent, ModalContent, ModalHeader, ModalBody, ModalFooter, Chip, NavbarItem,
+  Button, Input, Spacer, Navbar, Tooltip, Popover, Divider, Modal,
+  Link, Image, CircularProgress, NavbarContent, PopoverTrigger, PopoverContent, ModalContent, ModalHeader, ModalBody, ModalFooter, Chip, NavbarItem, NavbarBrand,
 } from "@nextui-org/react";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { TwitterPicker } from "react-color";
-import { createMedia } from "@artsy/fresnel";
 import { Helmet } from "react-helmet";
 import { clone } from "lodash";
 import { useDropzone } from "react-dropzone";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import {
-  LuCheck, LuChevronLeft, LuClipboardEdit, LuEye, LuPalette, LuPencilLine,
+  LuArrowLeftSquare,
+  LuCheckCircle, LuChevronLeft, LuClipboardEdit, LuEye, LuImagePlus, LuPalette,
   LuRefreshCw, LuShare, LuXCircle,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
@@ -46,14 +46,6 @@ import useThemeDetector from "../../modules/useThemeDetector";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
-const breakpoints = {
-  mobile: 0,
-  tablet: 768,
-  computer: 1024,
-};
-const AppMedia = createMedia({ breakpoints });
-const { Media } = AppMedia;
-
 const defaultColors = [
   "#FFFFFF", "#000000", "#D9E3F0", "#F47373", "#697689", "#37D67A", primary, secondary, blue,
   "#2CCCE4", "#555555", "#dce775", "#ff8a65", "#ba68c8",
@@ -82,6 +74,7 @@ function PublicDashboard(props) {
   const [reportPassword, setReportPassword] = useState("");
   const [refreshLoading, setRefreshLoading] = useState(false);
   const [layouts, setLayouts] = useState(null);
+  const [logoAspectRatio, setLogoAspectRatio] = useState(1);
 
   const teams = useSelector(selectTeams);
   const charts = useSelector(selectCharts);
@@ -311,6 +304,11 @@ function PublicDashboard(props) {
     return canAccess(role, user.id, team.TeamRoles);
   };
 
+  const _onLoadLogo = ({ target: img }) => {
+    const aspectRatio = img.naturalWidth / img.naturalHeight;
+    setLogoAspectRatio(aspectRatio);
+  };
+
   if (loading && !project?.id && !noCharts) {
     return (
       <>
@@ -473,321 +471,286 @@ function PublicDashboard(props) {
           `}
         </style>
       </Helmet>
+
       {editorVisible && !preview && (
-        <Navbar shouldHideOnScroll isBordered maxWidth={"full"}>
-          <NavbarContent>
-            <Tooltip content="Back to your dashboard" placement="rightStart">
-              <NavbarItem>
-                <LinkDom to={`/${project.team_id}/${project.id}/dashboard`}>
-                  <Button
-                    isIconOnly
-                    variant="bordered"
+        <aside className="fixed top-0 left-0 z-40 w-16 h-screen" aria-label="Sidebar">
+          <div className="h-full px-3 py-2 overflow-y-auto bg-gray-50 dark:bg-gray-800">
+            <div className="flex flex-col gap-4 p-2">
+              <div>
+                <Tooltip content="Back to your dashboard" placement="right-end">
+                  <LinkDom to={`/${project.team_id}/${project.id}/dashboard`}>
+                    <Link className="text-foreground cursor-pointer">
+                      <LuArrowLeftSquare size={26} />
+                    </Link>
+                  </LinkDom>
+                </Tooltip>
+              </div>
+
+              <Divider />
+
+              <div>
+                <Tooltip content="Preview dashboard" placement="right-end">
+                  <Link className="text-foreground cursor-pointer" onClick={() => setPreview(true)}>
+                    <LuEye size={26} />
+                  </Link>
+                </Tooltip>
+              </div>
+
+              {_canAccess("projectAdmin") && (
+                <>
+                  <div>
+                    <Tooltip content="Change logo" placement="right-end">
+                      <Link className="text-foreground cursor-pointer">
+                        <div {...getRootProps()}>
+                          <input {...getInputProps()} />
+                          <LuImagePlus size={26} />
+                        </div>
+                      </Link>
+                    </Tooltip>
+                  </div>
+                  <div>
+                    <Popover placement="right-end">
+                      <PopoverTrigger>
+                        <Link className="text-foreground cursor-pointer">
+                          <LuPalette size={26} />
+                        </Link>
+                      </PopoverTrigger>
+                      <PopoverContent>
+                        <div className="p-4">
+                          <Row>
+                            <Text b>Change background</Text>
+                          </Row>
+                          <Spacer y={1} />
+                          <Row>
+                            <div>
+                              <TwitterPicker
+                                color={newChanges.backgroundColor}
+                                onChangeComplete={(color) => {
+                                  setNewChanges({ ...newChanges, backgroundColor: color.hex.toUpperCase() });
+                                }}
+                                colors={defaultColors}
+                                triangle="hide"
+                                styles={{default: { card: { boxShadow: "none" } }}}
+                              />
+                            </div>
+                          </Row>
+
+                          <Spacer y={2} />
+                          <Divider />
+                          <Spacer y={2} />
+
+                          <Row>
+                            <Text b>Change text color</Text>
+                          </Row>
+                          <Spacer y={1} />
+                          <Row>
+                            <TwitterPicker
+                              color={newChanges.titleColor}
+                              onChangeComplete={(color) => {
+                                setNewChanges({ ...newChanges, titleColor: color.hex.toUpperCase() });
+                              }}
+                              colors={defaultColors}
+                              triangle="hide"
+                              styles={{ default: { card: { boxShadow: "none" } } }}
+                            />
+                          </Row>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div>
+                    <Tooltip content="Report settings" placement="right-end">
+                      <Link className="text-foreground cursor-pointer" onClick={() => setEditingTitle(true)}>
+                        <LuClipboardEdit size={26} />
+                      </Link>
+                    </Tooltip>
+                  </div>
+
+                  <div>
+                    <Tooltip content="Sharing settings" placement="right-end">
+                      <Link className="text-foreground cursor-pointer" onClick={() => setShowSettings(true)}>
+                        <LuShare size={26} />
+                      </Link>
+                    </Tooltip>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </aside>
+      )}
+
+      <div className={!preview ? "ml-16" : ""}>
+        <Navbar
+          isBordered
+          maxWidth={"full"}
+          className="flex-grow-0 justify-between bg-transparent"
+        >
+          <NavbarBrand>
+            <div className="flex items-center gap-4">
+              {editorVisible && !preview && (
+                <div className="dashboard-logo-container" style={{ height: 45, width: 45 * logoAspectRatio }}>
+                  <img
+                    onLoad={_onLoadLogo}
+                    className="dashboard-logo"
+                    src={logoPreview || newChanges.logo || logo}
+                    alt={`${project.name} Logo`}
+                    height={45}
+                    width={45 * logoAspectRatio}
+                  />
+                </div>
+              )}
+
+              {(!editorVisible || preview) && (
+                <div className="dashboard-logo-container">
+                  <a
+                    href={newChanges.logoLink || project.logoLink || "#"}
+                    target="_blank"
+                    rel="noreferrer"
                   >
-                    <LuChevronLeft />
-                  </Button>
-                </LinkDom>
-              </NavbarItem>
-            </Tooltip>
-            {!isSaved && (
-              <NavbarItem>
+                    <img
+                      className="dashboard-logo"
+                      src={project.logo ? `${API_HOST}/${project.logo}` : logo}
+                      height={45}
+                      width={45 * logoAspectRatio}
+                      alt={`${project.name} Logo`}
+                    />
+                  </a>
+                </div>
+              )}
+
+              <div className="flex flex-col">
+                <span
+                  className="text-lg font-bold"
+                  style={{ color: newChanges.titleColor || project.titleColor || "#000000" }}
+                >
+                  {newChanges.dashboardTitle || project.dashboardTitle || project.name}
+                </span>
+                {!editorVisible && project.description && (
+                  <span
+                    className="dashboard-sub-title"
+                    style={{ color: newChanges.titleColor || project.titleColor || "#000000" }}
+                  >
+                    {project.description}
+                  </span>
+                )}
+                {editorVisible && newChanges.description && (
+                  <span
+                    className="dashboard-sub-title"
+                    style={{ color: newChanges.titleColor || project.titleColor || "#000000" }}
+                  >
+                    {newChanges.description}
+                  </span>
+                )}
+              </div>
+            </div>
+          </NavbarBrand>
+          <NavbarContent justify="end">
+            {!isSaved && !preview && (
+              <div className="hidden sm:block">
                 <Button
-                  color="secondary"
-                  size="sm"
-                  endContent={<LuCheck />}
+                  color="success"
+                  endContent={<LuCheckCircle />}
                   isLoading={saveLoading}
                   onClick={_onSaveChanges}
                 >
-                  Save
+                  Save changes
+                </Button>
+              </div>
+            )}
+            {preview && (
+              <NavbarItem>
+                <Button
+                  onClick={() => setPreview(false)}
+                  endContent={<LuXCircle />}
+                  color="primary"
+                  variant="faded"
+                >
+                  Exit preview
+                </Button>
+              </NavbarItem>
+            )}
+
+            {project?.Team?.allowReportRefresh && (
+              <NavbarItem className="hidden sm:block">
+                <Button
+                  onClick={() => _onRefreshCharts()}
+                  endContent={<LuRefreshCw />}
+                  isLoading={refreshLoading}
+                  size="sm"
+                  color="primary"
+                >
+                  Refresh charts
                 </Button>
               </NavbarItem>
             )}
           </NavbarContent>
-          <NavbarContent className="gap-8 sm:gap-8" justify="end">
-            {_canAccess("projectAdmin") && (
-              <NavbarItem>
-                <Link className="text-foreground flex gap-1 items-center cursor-pointer" onClick={() => setPreview(true)}>
-                  <LuEye />
-                  <Text className={"hidden sm:block"}>Preview</Text>
-                </Link>
-              </NavbarItem>
-            )}
-            {_canAccess("projectAdmin") && (
-              <Popover>
-                <NavbarItem>
-                  <PopoverTrigger>
-                    <Link className="text-foreground flex gap-1 items-center">
-                      <LuPalette />
-                      <Text className={"hidden sm:block"}>Style</Text>
-                    </Link>
-                  </PopoverTrigger>
-                </NavbarItem>
-                <PopoverContent>
-                  <div className="p-4">
-                    <Row>
-                      <Text b>Change background</Text>
-                    </Row>
-                    <Spacer y={1} />
-                    <Row>
-                      <div>
-                        <TwitterPicker
-                          color={newChanges.backgroundColor}
-                          onChangeComplete={(color) => {
-                            setNewChanges({ ...newChanges, backgroundColor: color.hex.toUpperCase() });
-                          }}
-                          colors={defaultColors}
-                        />
-                      </div>
-                    </Row>
-
-                    <Spacer y={2} />
-                    <Divider />
-                    <Spacer y={2} />
-
-                    <Row>
-                      <Text b>Change text color</Text>
-                    </Row>
-                    <Spacer y={1} />
-                    <Row>
-                      <TwitterPicker
-                        color={newChanges.titleColor}
-                        onChangeComplete={(color) => {
-                          setNewChanges({ ...newChanges, titleColor: color.hex.toUpperCase() });
-                        }}
-                        colors={defaultColors}
-                      />
-                    </Row>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
-            {_canAccess("projectAdmin") && (
-              <NavbarItem>
-                <Link className="text-foreground flex gap-1 items-center" onClick={() => setEditingTitle(true)}>
-                    <LuClipboardEdit />
-                    <Text className={"hidden sm:block"}>Report settings</Text>
-                  </Link>
-              </NavbarItem>
-            )}
-            {_canAccess("projectAdmin") && (
-              <NavbarItem>
-                <Link className="text-foreground flex gap-1 items-center" onClick={() => setShowSettings(true)}>
-                  <LuShare />
-                  <Text className={"hidden sm:block"}>Sharing</Text>
-                </Link>
-              </NavbarItem>
-            )}
-          </NavbarContent>
         </Navbar>
-      )}
 
-      {preview && (
-        <Button
-          onClick={() => setPreview(false)}
-          isIconOnly
-          style={styles.previewBtn}
-          color="primary"
-          variant="faded"
-        >
-          <LuXCircle />
-        </Button>
-      )}
-
-      <Media greaterThan="mobile">
-        {project?.Team?.allowReportRefresh && (
-          <Button
-            onClick={() => _onRefreshCharts()}
-            endContent={<LuRefreshCw />}
-            isLoading={refreshLoading}
-            style={styles.refreshBtn(editorVisible)}
-            size="sm"
-            color="primary"
-          >
-            Refresh charts
-          </Button>
-        )}
-      </Media>
-
-      {charts && charts.length > 0 && _isOnReport() && (
-        <div className="main-container relative p-2 pt-10 pb-10 md:pt-10 md:pb-10 md:pl-4 md:pr-4">
-          {loading && (
-            <Container style={styles.container}>
-              <Spacer y={4} />
-              <Row align="center" justify="center">
-                <CircularProgress size="lg" aria-label="Loading" />
-              </Row>
-            </Container>
-          )}
-          <Media greaterThan="mobile">
-            <Spacer y={8} />
-          </Media>
-          <div className="title-container">
-            {editorVisible && !preview && (
-              <>
-                <Spacer y={2} />
-                <Row justify="flex-start">
-                  <Media greaterThan="mobile">
-                    <div className="dashboard-logo-container">
-                      <img
-                        className="dashboard-logo max-w-[200px] max-h-[100px]"
-                        src={logoPreview || newChanges.logo || logo}
-                        alt={`${project.name} Logo`}
-                        style={styles.logoContainer}
-                      />
-                      <Badge
-                        color="primary"
-                        className={"cursor-pointer mt-[-40px] ml-[-10px]"}
-                        content={<LuPencilLine className="p-1" size={24} />}
-                        variant="faded"
-                        {...getRootProps()}
-                      >
-                        <input {...getInputProps()} />
-                      </Badge>
-                    </div>
-                  </Media>
+        {charts && charts.length > 0 && _isOnReport() && (
+          <div className="main-container relative p-2 pt-4 pb-10 md:pt-4 md:pb-10 md:pl-4 md:pr-4">
+            {loading && (
+              <Container style={styles.container}>
+                <Spacer y={4} />
+                <Row align="center" justify="center">
+                  <CircularProgress size="lg" aria-label="Loading" />
                 </Row>
-                <Row justify="center">
-                  <Media at="mobile">
-                    <div style={{ textAlign: "center" }}>
-                      <img
-                        className="dashboard-logo max-w-[200px] max-h-[100px]"
-                        src={logoPreview || newChanges.logo || logo}
-                        alt={`${project.name} Logo`}
-                        style={styles.logoContainerMobile}
-                      />
-                    </div>
-                    <Spacer y={8} />
-                  </Media>
-                </Row>
-              </>
+              </Container>
             )}
 
-            {(!editorVisible || preview) && (
-              <Row justify="center">
-                <Media at="mobile">
-                  <Spacer y={4} />
-                </Media>
-              </Row>
-            )}
-
-            {(!editorVisible || preview) && (
-              <>
-                <Row className="dashboard-logo-container" justify="flex-start">
-                  <Media greaterThan="mobile">
-                    <a
-                      href={newChanges.logoLink || project.logoLink || "#"}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ ...styles.logoContainer, zIndex: 10 }}
-                    >
-                      <img
-                        className="dashboard-logo max-w-[200px] max-h-[100px]"
-                        src={project.logo ? `${API_HOST}/${project.logo}` : logo}
-                        height="70"
-                        alt={`${project.name} Logo`}
-                      />
-                    </a>
-                  </Media>
-                </Row>
-                <Row justify="center" className="dashboard-logo-container">
-                  <Media at="mobile">
-                    <div style={{ textAlign: "center" }}>
-                      <a
-                        href={newChanges.logoLink || project.logoLink || "#"}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <img
-                          className="dashboard-logo max-w-[200px] max-h-[100px]"
-                          src={project.logo ? `${API_HOST}/${project.logo}` : logo}
-                          height="70"
-                          alt={`${project.name} Logo`}
-                          style={styles.logoContainerMobile}
-                        />
-                      </a>
-                    </div>
-                    <Spacer y={8} />
-                  </Media>
-                </Row>
-              </>
-            )}
-
-            <Row justify="center" align="center">
-              <Text
-                b
-                className={`dashboard-title text-[2.4em] text-[${newChanges.titleColor || project.titleColor || "#000000"}]`}
-              >
-                {newChanges.dashboardTitle || project.dashboardTitle || project.name}
-              </Text>
-            </Row>
-            <Spacer y={0.2} />
-            {!editorVisible && project.description && (
-              <Row justify="center" align="center">
-                <Text
-                  className={`dashboard-sub-title text-[1.5em] text-[${project.titleColor || "#000000"}}]`}
+            {layouts && charts?.length > 0 && (
+              <div className="w-full">
+                <ResponsiveGridLayout
+                  className="layout"
+                  layouts={layouts}
+                  breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+                  cols={{ lg: 12, md: 10, sm: 8, xs: 6, xxs: 4 }}
+                  onLayoutChange={() => {}}
+                  rowHeight={150}
+                  isDraggable={false}
+                  isResizable={false}
                 >
-                  {project.description}
-                </Text>
-              </Row>
+                  {charts.filter((c) => !c.draft && c.onReport).map((chart) => (
+                    <div key={chart.id}>
+                      <Chart
+                        isPublic
+                        chart={chart}
+                        charts={charts}
+                        className="chart-card"
+                        showExport={project.Team?.allowReportExport}
+                        password={project.password || window.localStorage.getItem("reportPassword")}
+                      />
+                    </div>
+                  ))}
+                </ResponsiveGridLayout>
+              </div>
             )}
-            {editorVisible && newChanges.description && (
-              <Row justify="center" align="center">
-                <Text
-                  className={`dashboard-sub-title text-[1.2em] text-[${newChanges.titleColor || "#000000"}}]`}
+
+            {project.Team && project.Team.showBranding && (
+              <div className="footer-content mt-4 pr-4 flex justify-end">
+                <Link
+                  className={`flex items-start !text-[${newChanges.titleColor || "black"}]`}
+                  href={"https://chartbrew.com?ref=chartbrew_report"}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  {newChanges.description}
-                </Text>
-              </Row>
-            )}
-            {project.Team?.allowReportRefresh && (
-              <>
-                <Spacer y={2} />
-                <Row justify="center">
-                  <Media at="mobile">
-                    <Button
-                      onClick={() => _onRefreshCharts()}
-                      endContent={<LuRefreshCw />}
-                      disabled={refreshLoading}
-                      size="sm"
-                      color="primary"
-                    >
-                      Refresh charts
-                    </Button>
-                  </Media>
-                </Row>
-              </>
+                  <span className="text-sm" style={{ color: newChanges.titleColor || project.titleColor || "#000000" }}>
+                    {"Powered by "}
+                  </span> 
+                  <Spacer x={1} />
+                  <span className="text-sm" style={{ color: newChanges.titleColor || project.titleColor || "#000000" }}>
+                    <strong>{"Chart"}</strong>
+                  </span>
+                  <span className="text-sm" style={{ color: newChanges.titleColor || project.titleColor || "#000000" }}>
+                    {"brew"}
+                  </span>
+                </Link>
+              </div>
             )}
           </div>
-          <Spacer y={10} />
-
-          {layouts && charts?.length > 0 && (
-            <div className="w-full">
-              <ResponsiveGridLayout
-                className="layout"
-                layouts={layouts}
-                breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                cols={{ lg: 12, md: 10, sm: 8, xs: 6, xxs: 4 }}
-                onLayoutChange={() => {}}
-                rowHeight={150}
-                isDraggable={false}
-                isResizable={false}
-              >
-                {charts.filter((c) => !c.draft && c.onReport).map((chart) => (
-                  <div key={chart.id}>
-                    <Chart
-                      isPublic
-                      chart={chart}
-                      charts={charts}
-                      className="chart-card"
-                      showExport={project.Team?.allowReportExport}
-                      password={project.password || window.localStorage.getItem("reportPassword")}
-                    />
-                  </div>
-                ))}
-              </ResponsiveGridLayout>
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </div>
 
       <Modal isOpen={editingTitle} onClose={() => setEditingTitle(false)} size="2xl">
         <ModalContent>
