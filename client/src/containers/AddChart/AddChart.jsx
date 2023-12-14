@@ -40,6 +40,7 @@ import Text from "../../components/Text";
 import useThemeDetector from "../../modules/useThemeDetector";
 import { useNavigate, useParams } from "react-router";
 import ChartDatasets from "./components/ChartDatasets";
+import getDashboardLayout from "../../modules/getDashboardLayout";
 
 /*
   Container used for setting up a new chart
@@ -141,6 +142,29 @@ function AddChart(props) {
 
   const _onCreateClicked = () => {
     const tempChart = { ...newChart, name: chartName };
+
+    // add chart at the end of the dashboard
+    const layouts = getDashboardLayout(charts);
+    let bottomY = 0;
+    const chartLayout = {};
+    Object.keys(layouts).map((bp) => {
+      layouts[bp].forEach((item) => {
+        const bottom = item.y + item.h;
+        if (bottom > bottomY) {
+          bottomY = bottom;
+        }
+      });
+
+      chartLayout[bp] = [
+        0,
+        bottomY,
+        bp === "lg" ? 4 : bp === "md" ? 5 : bp === "sm" ? 3 : bp === "xs" ? 2 : 2,
+        2,
+      ];
+    });
+
+    tempChart.layout = chartLayout;
+
     return dispatch(createChart({ project_id: params.projectId, data: tempChart }))
       .then((res) => {
         setNewChart(res.payload);

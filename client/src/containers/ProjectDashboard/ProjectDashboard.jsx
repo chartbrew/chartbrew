@@ -441,17 +441,6 @@ function ProjectDashboard(props) {
 
   return (
     <div className="w-full">
-      {editingLayout && (
-        <div className="fixed bottom-4 left-20 z-50">
-          <Button
-            variant="shadow"
-            color="primary"
-            onClick={() => setEditingLayout(false)}
-          >
-            Close layout editor
-          </Button>
-        </div>
-      )}
       {charts && charts.length > 0
         && (
           <div>
