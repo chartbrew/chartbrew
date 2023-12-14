@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { LuAreaChart, LuArrowLeftCircle, LuCheckCircle, LuClipboard, LuCompass, LuLayoutDashboard, LuSearch } from "react-icons/lu";
+import { LuAreaChart, LuArrowLeftCircle, LuCheckCircle, LuClipboard, LuClipboardCheck, LuCompass, LuLayoutDashboard, LuSearch } from "react-icons/lu";
 import { Button, Card, CardBody, CardFooter, CardHeader, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer } from "@nextui-org/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
@@ -22,12 +22,15 @@ import TimescaleConnectionForm from "./Timescale/TimescaleConnectionForm";
 import { addConnection, getConnection, saveConnection } from "../../slices/connection";
 import HelpBanner from "../../components/HelpBanner";
 import { Link } from "react-router-dom";
+import { generateInviteUrl } from "../../slices/team";
 
 function ConnectionWizard() {
   const [connectionSearch, setConnectionSearch] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [completionModal, setCompletionModal] = useState(false);
   const [newConnection, setNewConnection] = useState(null);
+  const [inviteUrl, setInviteUrl] = useState("");
+  const [inviteCopied, setInviteCopied] = useState(false);
 
   const isDark = useThemeDetector();
   const bottomRef = useRef(null);
@@ -39,6 +42,18 @@ function ConnectionWizard() {
   const navigate = useNavigate();
 
   const connectionToEdit = useSelector((state) => state.connection.data.find((c) => c.id === parseInt(params.connectionId, 10)));
+
+  useEffect(() => {
+    dispatch(generateInviteUrl({
+      team_id: params.teamId,
+      projects: [],
+      canExport: true,
+      role: "teamAdmin",
+    }))
+      .then((data) => {
+        setInviteUrl(data.payload);
+      }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (selectedType) {
@@ -104,6 +119,14 @@ function ConnectionWizard() {
       .catch(() => {
         return false;
       });
+  };
+
+  const _onCopyInviteUrl = () => {
+    navigator.clipboard.writeText(inviteUrl);
+    setInviteCopied(true);
+    setTimeout(() => {
+      setInviteCopied(false);
+    }, 2000);
   };
 
   return (
@@ -268,17 +291,19 @@ function ConnectionWizard() {
                   <Input
                     readOnly
                     labelPlacement="outside"
-                    value={"https://app.chartbrew.com/invite/123456"}
+                    value={inviteUrl}
                   />
                 </CardBody>
                 <CardFooter>
                   <Button
                     size="sm"
                     color="primary"
+                    variant={inviteCopied ? "flat" : "solid"}
                     fullWidth
-                    endContent={<LuClipboard />}
+                    endContent={inviteCopied ? <LuClipboardCheck /> : <LuClipboard />}
+                    onClick={() => _onCopyInviteUrl()}
                   >
-                    Copy invite link
+                    {inviteCopied ? "Copied to clipboard" : "Copy invite link"}
                   </Button>
                 </CardFooter>
               </Card>
