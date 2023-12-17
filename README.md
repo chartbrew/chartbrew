@@ -86,6 +86,10 @@ Head over to `http://localhost:4018` to see the app running and create your firs
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://chartbrew.com/blog/how-to-deploy-chartbrew-on-render/)
 
+## Deploy Chartbrew on Elestio
+
+[![Deploy](https://pub-da36157c854648669813f3f76c526c2b.r2.dev/deploy-on-elestio-black.png)](https://elest.io/open-source/chartbrew)
+
 ## Deploy Chartbrew on Heroku and Vercel
 
 [Read more on how to do this here](https://chartbrew.com/blog/how-to-deploy-chartbrew-on-heroku-and-vercel/)
