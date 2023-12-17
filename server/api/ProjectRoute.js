@@ -255,9 +255,11 @@ module.exports = (app) => {
       .then((result) => {
         // refresh the charts
         const charts = [];
+
         result.forEach((r) => {
-          charts.push(r.chart);
+          charts.push(r);
         });
+
         refreshChartsApi(req.params.id, charts, req.headers.authorization);
 
         return res.status(200).send(result);

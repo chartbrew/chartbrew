@@ -445,7 +445,7 @@ function Chart(props) {
                 <Row justify="flex-start" align="center">
                   {chart.draft && (
                     <>
-                      <Chip color="secondary" size="sm">Draft</Chip>
+                      <Chip color="secondary" variant="flat" size="sm">Draft</Chip>
                       <Spacer x={1} />
                     </>
                   )}

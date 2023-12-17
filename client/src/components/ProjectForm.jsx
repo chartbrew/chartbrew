@@ -7,10 +7,10 @@ import {
 import { LuArrowRight } from "react-icons/lu";
 
 import { createProject } from "../slices/project";
+import { selectTeam } from "../slices/team";
 import CustomTemplates from "../containers/Connections/CustomTemplates/CustomTemplates";
 import Row from "./Row";
 import Text from "./Text";
-import { selectTeam } from "../slices/team";
 
 /*
   Contains the project creation functionality
@@ -26,7 +26,7 @@ function ProjectForm(props) {
   const [activeMenu, setActiveMenu] = useState("empty");
   const [createdProject, setCreatedProject] = useState(null);
   const modalSize = useMemo(() => {
-    if (activeMenu === "template") return "full";
+    if (activeMenu === "template") return "3xl";
     return "md";
   }, [activeMenu]);
 
