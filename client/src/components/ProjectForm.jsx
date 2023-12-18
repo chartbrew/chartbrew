@@ -134,6 +134,7 @@ function ProjectForm(props) {
 
           {activeMenu === "template" && (
             <>
+              <h3 className="font-semibold text-gray-900">{"Select a template"}</h3>
               <CustomTemplates
                 templates={templates.data}
                 loading={templates.loading}

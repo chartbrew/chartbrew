@@ -2,22 +2,20 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Avatar, Button, Card, Spacer, CircularProgress, CardHeader, CardBody, AvatarGroup, CardFooter,
+  Button, Card, Spacer, CircularProgress, CardHeader, CardBody, CardFooter, Divider,
 } from "@nextui-org/react";
 import moment from "moment";
 import { LuBarChart3 } from "react-icons/lu";
 
 import CreateTemplateForm from "../../../components/CreateTemplateForm";
-import connectionImages from "../../../config/connectionImages";
 import CustomTemplateForm from "./CustomTemplateForm";
 import { deleteTemplate as deleteTemplateAction } from "../../../actions/template";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
-import useThemeDetector from "../../../modules/useThemeDetector";
 
 function CustomTemplates(props) {
   const {
-    loading, templates, teamId, projectId, connections, onComplete, isAdmin, deleteTemplate,
+    loading, templates, teamId, projectId, onComplete, isAdmin, deleteTemplate,
     onCreateProject,
   } = props;
 
@@ -37,8 +35,6 @@ function CustomTemplates(props) {
       .then(() => setSelectedTemplate(null));
   };
 
-  const isDark = useThemeDetector();
-
   if (loading) {
     return (
       <CircularProgress aria-label="Loading">
@@ -50,9 +46,14 @@ function CustomTemplates(props) {
   if (templates.length === 0) {
     return (
       <div>
-        <Text size="h4">No custom templates yet</Text>
-        <Text>{"You can create custom templates from any project with data source connections and charts."}</Text>
-        {projectId && connections.length > 0 && (
+        <Row>
+          <Text size="h4">No custom templates yet</Text>
+        </Row>
+        <Spacer y={1} />
+        <Row>
+          <Text>{"You can create custom templates from any project with data source connections and charts."}</Text>
+        </Row>
+        {projectId && (
           <Button
             color="primary"
             content="Create a new template from this project"
@@ -77,7 +78,6 @@ function CustomTemplates(props) {
     return (
       <CustomTemplateForm
         template={selectedTemplate}
-        connections={connections}
         onBack={() => setSelectedTemplate(null)}
         projectId={projectId}
         onComplete={onComplete}
@@ -92,37 +92,21 @@ function CustomTemplates(props) {
     <div className="grid grid-cols-12 gap-4">
       {templates && templates.map((template) => (
         <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-4 xl:col-span-3" key={template.id}>
-          <Card onClick={() => setSelectedTemplate(template)} isHoverable isPressable className="min-w-[300px]">
+          <Card onClick={() => setSelectedTemplate(template)} isHoverable isPressable className="min-w-[300px] border-1 border-solid border-content3" shadow="none">
             <CardHeader>
               <Text b>{template.name}</Text>
             </CardHeader>
+            <Divider />
             <CardBody>
-              {template.model.Connections && (
-                <Row css={{ pr: 8, pl: 8 }} justify="center">
-                  <AvatarGroup animated={template.model.Connections.length > 1}>
-                    {template.model.Connections.map((c) => (
-                      <Avatar
-                        key={c.id}
-                        src={connectionImages(isDark)[c.type]}
-                        pointer
-                        bordered
-                        stacked
-                        title={`${c.type} connection`}
-                      />
-                    ))}
-                  </AvatarGroup>
-                </Row>
-              )}
-              <Spacer y={1} />
-              <Row align="center" justify="center">
+              <Row>
                 <LuBarChart3 />
                 <Spacer x={0.5} />
                 <Text>{`${template.model.Charts.length} charts`}</Text>
               </Row>
-              <Spacer y={1} />
             </CardBody>
+            <Divider />
             <CardFooter>
-              <Text size="sm">{`Updated ${_getUpdatedTime(template.updatedAt)}`}</Text>
+              <span className="text-sm">{`Updated ${_getUpdatedTime(template.updatedAt)}`}</span>
             </CardFooter>
           </Card>
         </div>
@@ -136,7 +120,6 @@ CustomTemplates.propTypes = {
   loading: PropTypes.bool,
   teamId: PropTypes.string.isRequired,
   projectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  connections: PropTypes.array.isRequired,
   onComplete: PropTypes.func.isRequired,
   deleteTemplate: PropTypes.func.isRequired,
   isAdmin: PropTypes.bool,

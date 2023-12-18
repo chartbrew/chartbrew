@@ -2,21 +2,17 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
 import {
-  Button, Card, CardBody, CardFooter, CardHeader, Checkbox, Divider,
-  Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer, Tooltip,
+  Button, Checkbox, Divider, Modal, ModalBody, ModalContent, ModalFooter,
+  ModalHeader, Spacer,
 } from "@nextui-org/react";
 import {
-  LuAlertTriangle, LuArrowLeft, LuArrowRight, LuCheckCheck, LuTrash, LuX, LuPlug,
+  LuArrowLeft, LuArrowRight, LuCheckCheck, LuTrash, LuX,
 } from "react-icons/lu";
 
-import connectionImages from "../../../config/connectionImages";
 import { generateDashboard } from "../../../slices/project";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import useThemeDetector from "../../../modules/useThemeDetector";
-import { secondary } from "../../../config/colors";
-import { useDispatch, useSelector } from "react-redux";
-import { selectConnections } from "../../../slices/connection";
+import { useDispatch } from "react-redux";
 
 function CustomTemplateForm(props) {
   const {
@@ -24,33 +20,15 @@ function CustomTemplateForm(props) {
     onCreateProject,
   } = props;
 
-  const [selectedConnections, setSelectedConnections] = useState({});
   const [selectedCharts, setSelectedCharts] = useState([]);
   const [isCreating, setIsCreating] = useState(false);
   const [deleteConfirmation, setDeleteConfimation] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [formStatus, setFormStatus] = useState("");
 
-  const connections = useSelector(selectConnections);
-
-  const isDark = useThemeDetector();
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (template && template.model.Connections) {
-      const newSelectedConnections = {};
-      template.model.Connections.forEach((c) => {
-        newSelectedConnections[c.id] = {
-          id: c.id,
-          name: c.name,
-          active: true,
-          createNew: false,
-        };
-      });
-
-      setSelectedConnections(newSelectedConnections);
-    }
-
     if (template && template.model && template.model.Charts) {
       const charts = [];
       template.model.Charts.forEach((c) => {
@@ -65,73 +43,6 @@ function CustomTemplateForm(props) {
       _generateTemplate();
     }
   }, [projectId]);
-
-  const _getExistingConnections = (connection) => {
-    // check existing connections
-    const foundConnections = [];
-    let sameConnection;
-    connections.forEach((c) => {
-      if (c.id === connection.id) {
-        sameConnection = c;
-      }
-
-      if (c.type === connection.type) {
-        // look for more compatibilities
-        switch (connection.type) {
-          case "api":
-            if (c.host === connection.host) {
-              foundConnections.push(c);
-            }
-            break;
-          case "mongodb":
-          case "mysql":
-          case "potgres":
-            if (
-              c.connectionString === connection.connectionString
-              || c.dbName === connection.dbName
-            ) {
-              foundConnections.push(c);
-            }
-            break;
-          case "firestore":
-          case "realtimedb":
-            if (c.firebaseServiceAccount === connection.firebaseServiceAccount) {
-              foundConnections.push(c);
-            }
-            break;
-          case "googleAnalytics":
-            if (c.oauth_id === connection.oauth_id) {
-              foundConnections.push(c);
-            }
-            break;
-          default:
-            break;
-        }
-      }
-    });
-
-    // add the same connection to the end of the array to keep track of it
-    if (sameConnection) {
-      foundConnections.push(sameConnection);
-    }
-
-    return foundConnections;
-  };
-
-  const _onToggleConnection = (cid) => {
-    const newList = _.clone(selectedConnections);
-    newList[cid].active = !newList[cid].active;
-    setSelectedConnections(newList);
-  };
-
-  const _onToggleCreateNew = (cid) => {
-    const newList = _.clone(selectedConnections);
-
-    if (newList[cid]) {
-      newList[cid].createNew = !newList[cid].createNew;
-      setSelectedConnections(newList);
-    }
-  };
 
   const _onChangeSelectedCharts = (tid) => {
     const newCharts = [].concat(selectedCharts) || [];
@@ -160,28 +71,6 @@ function CustomTemplateForm(props) {
     setSelectedCharts([]);
   };
 
-  const _getDependency = (chart) => {
-    if (Object.keys(selectedConnections).length < 1) return "";
-
-    const cdConfigs = chart.ChartDatasetConfigs || [];
-    let dependency = "";
-
-    for (let i = 0; i < cdConfigs.length; i++) {
-      if (selectedConnections[cdConfigs[i].Dataset.Connection]
-        && !selectedConnections[cdConfigs[i].Dataset.Connection].active
-      ) {
-        dependency = selectedConnections[cdConfigs[i].Dataset.Connection].name;
-        break;
-      }
-    }
-
-    if (dependency && _.indexOf(selectedCharts, chart.tid) > -1) {
-      _onChangeSelectedCharts(chart.tid);
-    }
-
-    return dependency;
-  };
-
   const _generateTemplate = () => {
     setIsCreating(true);
 
@@ -194,7 +83,6 @@ function CustomTemplateForm(props) {
     const data = {
       template_id: template.id,
       charts: selectedCharts,
-      connections: selectedConnections,
     };
 
     dispatch(generateDashboard({ project_id: projectId, data, template: "custom" }))
@@ -210,8 +98,13 @@ function CustomTemplateForm(props) {
   return (
     <div className="p-2 md:p-4 w-full">
       <Row align="center" className={"gap-2"}>
-        <Button variant="faded" startContent={<LuArrowLeft />} onClick={onBack} size="sm">
-          Back
+        <Button
+          variant="faded"
+          isIconOnly
+          onClick={onBack}
+          size="sm"
+        >
+          <LuArrowLeft />
         </Button>
         <Text size="h4">
           {template.name}
@@ -220,63 +113,6 @@ function CustomTemplateForm(props) {
       <Spacer y={2} />
       <Divider />
       <Spacer y={2} />
-      <Row>
-        <Text b>Connections</Text>
-      </Row>
-      <Spacer y={1} />
-      <div className="grid grid-cols-12 gap-2">
-        {template.model.Connections && template.model.Connections.map((c) => {
-          const existingConnections = _getExistingConnections(c);
-
-          return (
-            <div className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-3" key={c.id}>
-              <Card variant="bordered">
-                <CardHeader>
-                  <Row wrap={"wrap"} justify={"space-between"} align={"center"} className={"gap-4"}>
-                    <Row align={"center"}>
-                      <img src={connectionImages(isDark)[c.type]} alt={"Connection logo"} width="34px" height="34px" />
-                      <Text size="sm">{c.name}</Text>
-                    </Row>
-                    <Checkbox
-                      isSelected={selectedConnections[c.id] && selectedConnections[c.id].active}
-                      onChange={() => _onToggleConnection(c.id)}
-                      size="sm"
-                    />
-                  </Row>
-                </CardHeader>
-                <Divider />
-                <CardBody>
-                  <Checkbox
-                    isSelected={
-                      (selectedConnections[c.id]
-                      && selectedConnections[c.id].createNew)
-                      || !existingConnections
-                      || existingConnections.length < 1
-                    }
-                    onChange={() => _onToggleCreateNew(c.id)}
-                    isDisabled={!existingConnections || existingConnections.length < 1}
-                    size="sm"
-                  >
-                    New connection
-                  </Checkbox>
-                </CardBody>
-                {existingConnections && existingConnections.length > 0 && (
-                  <>
-                    <Divider />
-                    <CardFooter>
-                      <Row align="center">
-                        <LuPlug />
-                        <Spacer x={0.5} />
-                        <Text size="sm">Existing connection found</Text>
-                      </Row>
-                    </CardFooter>
-                  </>
-                )}
-              </Card>
-            </div>
-          );
-        })}
-      </div>
 
       {template && template.model && (
         <>
@@ -298,18 +134,6 @@ function CustomTemplateForm(props) {
                   >
                     {chart.name}
                   </Checkbox>
-                  {_getDependency(chart) && (
-                    <>
-                      {" "}
-                      <Tooltip
-                        content={`This chart depends on ${_getDependency(chart)} to display properly.`}
-                      >
-                        <div>
-                          <LuAlertTriangle color={secondary} />
-                        </div>
-                      </Tooltip>
-                    </>
-                  )}
                 </Row>
               </div>
             ))}
