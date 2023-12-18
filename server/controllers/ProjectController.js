@@ -169,6 +169,7 @@ class ProjectController {
   getTeamProjects(teamId) {
     return db.Project.findAll({
       where: { team_id: teamId },
+      include: [{ model: db.Chart, attributes: ["id"] }],
     })
       .then((projects) => {
         return projects;
