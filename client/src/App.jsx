@@ -79,9 +79,6 @@ const router = createBrowserRouter([
             path: "chart/:chartId/edit",
           },
           {
-            path: "projectSettings",
-          },
-          {
             path: "members",
           },
           {

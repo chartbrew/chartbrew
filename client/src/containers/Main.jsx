@@ -188,7 +188,7 @@ function Main(props) {
                   />
                   <Route
                     exact
-                    path="projectSettings"
+                    path="settings"
                     element={<ProjectSettings />}
                   />
                   <Route
@@ -199,11 +199,6 @@ function Main(props) {
                         <TeamMembers />
                       </div>
                     }
-                  />
-                  <Route
-                    exact
-                    path="settings"
-                    element={<TeamSettings />}
                   />
                   <Route
                     exact

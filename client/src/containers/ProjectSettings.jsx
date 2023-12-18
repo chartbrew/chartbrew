@@ -69,12 +69,12 @@ function ProjectSettings(props) {
         setLoading(false);
         setSuccess(true);
         dispatch(changeActiveProject(project.id));
-        toast.success("Project name updated!");
+        toast.success("Dashboard name updated!");
       })
       .catch(() => {
         setLoading(false);
         setError(true);
-        toast.error("There was a problem updating the project name. Please try again.");
+        toast.error("There was a problem updating the dashboard name. Please try again.");
       });
   };
 
@@ -124,9 +124,9 @@ function ProjectSettings(props) {
   return (
     <Segment style={style} className="container mx-auto mt-4 bg-background">
       <Row>
-        <Text size="h3">Project settings</Text>
+        <span className="text-lg font-bold">Dashboard settings</span>
       </Row>
-      <Spacer y={1} />
+      <Spacer y={4} />
       {!project.id && (
         <>
           <Row>
@@ -141,14 +141,14 @@ function ProjectSettings(props) {
           _onSaveName();
         }} className="w-full">
           <Input
-            label="Project name"
-            placeholder="Type a project name"
+            label="Dashboard name"
+            placeholder="Type a name for your dashboard"
             value={projectName ? projectName
               : project.name ? project.name : ""}
             onChange={(e) => setProjectName(e.target.value)}
             variant="bordered"
             color={nameError ? "success" : "default"}
-            description={nameError ? "Project name is required" : ""}
+            description={nameError ? "Dashboard name is required" : ""}
             className="max-w-md"
           />
           <Spacer y={2} />
@@ -170,7 +170,7 @@ function ProjectSettings(props) {
 
       <Row align="center" wrap={"wrap"}>
         <Select
-          label="Project timezone"
+          label="Dashboard timezone"
           placeholder="Select a timezone"
           variant="bordered"
           onSelectionChange={(keys) => {

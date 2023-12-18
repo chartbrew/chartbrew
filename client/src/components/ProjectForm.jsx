@@ -68,7 +68,7 @@ function ProjectForm(props) {
     >
       <ModalContent>
         <ModalHeader>
-          <Text size="h3">Create a new project</Text>
+          <Text size="h3">Create a new dashboard</Text>
         </ModalHeader>
         <ModalBody>
           <form onSubmit={(e) => {
@@ -80,7 +80,7 @@ function ProjectForm(props) {
               {!hideType && (
                 <Row align="center" justify="center">
                   <Tabs selectedKey={activeMenu} onSelectionChange={(key) => setActiveMenu(key)} fullWidth>
-                    <Tab key="empty" id="empty" title="Empty project" />
+                    <Tab key="empty" id="empty" title="Empty dashboard" />
                     <Tab key="template" id="template" title="From template" />
                   </Tabs>
                 </Row>
@@ -93,8 +93,8 @@ function ProjectForm(props) {
                     name: e.target.value,
                     team_id: team.id,
                   })}
-                  label="Project name"
-                  placeholder="Enter a name for your project"
+                  label="Dashboard name"
+                  placeholder="Enter a name for your dashboard"
                   fullWidth
                   size="lg"
                   variant="bordered"
@@ -134,7 +134,7 @@ function ProjectForm(props) {
 
           {activeMenu === "template" && (
             <>
-              <h3 className="font-semibold text-gray-900">{"Select a template"}</h3>
+              <h3 className="font-semibold">{"Select a template"}</h3>
               <CustomTemplates
                 templates={templates.data}
                 loading={templates.loading}

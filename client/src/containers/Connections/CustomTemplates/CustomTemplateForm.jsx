@@ -96,7 +96,7 @@ function CustomTemplateForm(props) {
   };
 
   return (
-    <div className="p-2 md:p-4 w-full">
+    <div className="w-full">
       <Row align="center" className={"gap-2"}>
         <Button
           variant="faded"

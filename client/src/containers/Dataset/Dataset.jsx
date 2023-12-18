@@ -374,7 +374,7 @@ function Dataset() {
             />
             <Spacer y={1} />
 
-            <div>Want to add this chart to a project?</div>
+            <div>Want to add this chart to a dashboard?</div>
             {projects.length > 5 && (
               <Input
                 labelPlacement="outside"

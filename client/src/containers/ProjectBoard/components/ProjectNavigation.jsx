@@ -36,16 +36,13 @@ const _checkIfActive = (path) => {
       if (window.location.pathname.indexOf("connections") > -1) return true;
       break;
     case "projectSettings":
-      if (window.location.pathname.indexOf("projectSettings") > -1) return true;
+      if (window.location.pathname.indexOf("settings") > -1) return true;
       break;
     case "inviteMembers":
       if (window.location.pathname.indexOf("inviteMembers") > -1) return true;
       break;
     case "members":
       if (window.location.pathname.indexOf("members") > -1) return true;
-      break;
-    case "settings":
-      if (window.location.pathname.indexOf("settings") > -1) return true;
       break;
     case "public":
       if (window.location.pathname.indexOf("public") > -1) return true;
@@ -113,9 +110,9 @@ function ProjectNavigation(props) {
                 )}
               {canAccess("projectAdmin")
                 && (
-                  <Link to={`/${teamId}/${projectId}/projectSettings`}>
+                  <Link to={`/${teamId}/${projectId}/settings`}>
                     <LinkNext className="pointer-events-none">
-                      <LuSettings color={_checkIfActive("projectSettings") ? secondary : "white"} size={24} />
+                      <LuSettings color={_checkIfActive("settings") ? secondary : "white"} size={24} />
                     </LinkNext>
                   </Link>
                 )}
@@ -149,14 +146,14 @@ function ProjectNavigation(props) {
               <PopoverContent className="max-w-[200px] max-h-[400px]">
                 <div className="flex flex-col gap-2 overflow-y-auto">
                   <Input
-                    placeholder="Search for a project"
+                    placeholder="Search for a dashboard"
                     fullWidth
                     size="small"
                     variant="bordered"
                     endContent={<HiSearch />}
                     onChange={(e) => setProjectSearch(e.target.value)}
                   />
-                  <Listbox aria-label="Project switch list">
+                  <Listbox aria-label="Dashboard switch list">
                     {projects.filter((p) => p.name.toLowerCase().indexOf(projectSearch) > -1).map((p) => (
                       <ListboxItem key={p.id} onClick={() => onChangeProject(p.id)}>
                         {p.name}
@@ -267,14 +264,14 @@ function ProjectNavigation(props) {
             <>
               <Spacer y={1} />
               <Row justify={menuSize === "large" ? "flex-start" : "center"}>
-                <Link to={`/${teamId}/${projectId}/projectSettings`}>
+                <Link to={`/${teamId}/${projectId}/settings`}>
                   {menuSize === "small" && (
-                    <Tooltip content="Project settings" placement="right">
+                    <Tooltip content="Dashboard settings" placement="right">
                       <div className="pointer-events-none">
                         <Button
                           isIconOnly
                           variant="light"
-                          color={_checkIfActive("projectSettings") ? "primary" : "default"}
+                          color={_checkIfActive("settings") ? "primary" : "default"}
                         >
                           <LuSettings size={28} />
                         </Button>
@@ -284,11 +281,11 @@ function ProjectNavigation(props) {
                   {menuSize === "large" && (
                     <Button
                       variant="light"
-                      color={_checkIfActive("projectSettings") ? "primary" : "default"}
+                      color={_checkIfActive("settings") ? "primary" : "default"}
                       startContent={<LuSettings size={24} />}
                       className="pointer-events-none"
                     >
-                      Project settings
+                      Dashboard settings
                     </Button>
                   )}
                 </Link>

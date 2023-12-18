@@ -124,15 +124,15 @@ function InviteMembersForm(props) {
               </Radio>
               <Radio
                 value="projectAdmin"
-                description={"Can manage all charts and dashboard appearance in assigned projects"}
+                description={"Can manage all charts in the selected dashboards"}
               >
-                Project Editor
+                Dashboard Editor
               </Radio>
               <Radio
                 value="projectViewer"
-                description={"Can view all charts and reports in assigned projects"}
+                description={"Can view all charts and reports in the selected dashboard"}
               >
-                Project Viewer
+                Dashboard Viewer
               </Radio>
             </RadioGroup>
           </Row>
@@ -144,8 +144,8 @@ function InviteMembersForm(props) {
                 variant="bordered"
               >
                 <AccordionItem
-                  title="Select project access"
-                  subtitle={projectAccess.length > 0 ? `${projectAccess.length} project${projectAccess.length > 1 ? "s" : ""} selected` : "No projects selected yet"}
+                  title="Select dashboard access"
+                  subtitle={projectAccess.length > 0 ? `${projectAccess.length} dashboard${projectAccess.length > 1 ? "s" : ""} selected` : "No dashboards selected yet"}
                 >
                   <div className="grid grid-cols-12 gap-1 pb-4">
                     <div className="col-span-12 pb-4 flex flex-row">
@@ -257,7 +257,7 @@ function InviteMembersForm(props) {
               <>
                 <Spacer x={1} />
                 <Chip color="primary" variant={"flat"} size="sm">
-                  {`Access to ${projectAccess.length} project${projectAccess.length !== 1 ? "s" : ""}`}
+                  {`Access to ${projectAccess.length} dashboard${projectAccess.length !== 1 ? "s" : ""}`}
                 </Chip>
                 <Spacer x={1} />
                 <Chip color="success" variant={"flat"} size="sm">

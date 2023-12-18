@@ -410,11 +410,11 @@ function UserDashboard(props) {
                   <ListboxItem
                     key="projects"
                     startContent={<LuLayoutGrid size={24} />}
-                    textValue="Projects"
+                    textValue="Dashboards"
                     color={activeMenu === "projects" ? "primary" : "default"}
                     className={activeMenu === "projects" ? "bg-content2 text-primary" : ""}
                   >
-                    <span className="text-lg">Projects</span>
+                    <span className="text-lg">Dashboards</span>
                   </ListboxItem>
                   {_canAccess("teamAdmin", team.TeamRoles) && (
                     <ListboxItem
@@ -467,13 +467,13 @@ function UserDashboard(props) {
                           onClick={() => _onNewProject(team)}
                           endContent={<LuPlus />}
                         >
-                          Create new project
+                          Create a new dashboard
                         </Button>
                       </>
                     )}
                     <Input
                       type="text"
-                      placeholder="Search projects"
+                      placeholder="Search dashboards"
                       variant="bordered"
                       endContent={<LuSearch />}
                       onChange={(e) => setSearch({ ...search, [team.id]: e.target.value })}
@@ -484,24 +484,18 @@ function UserDashboard(props) {
                   <Spacer y={4} />
                   {projects && (
                     <Table
-                      aria-label="Projects list"
+                      aria-label="Dashboard list"
                       className="h-auto min-w-full border-2 border-solid border-content3 rounded-xl"
                       radius="md"
                       shadow="none"
                       isStriped
                     >
                       <TableHeader>
-                        <TableColumn key="name">Project name</TableColumn>
+                        <TableColumn key="name">Dashboard name</TableColumn>
                         <TableColumn key="members">
                           <Row align="end" justify="center" className={"gap-1"}>
                             <LuUsers2 />
                             <Text>Members</Text>
-                          </Row>
-                        </TableColumn>
-                        <TableColumn key="connections">
-                          <Row align="end" justify="center" className={"gap-1"}>
-                            <LuPlug />
-                            <Text>Connections</Text>
                           </Row>
                         </TableColumn>
                         <TableColumn key="charts">
@@ -512,79 +506,70 @@ function UserDashboard(props) {
                         </TableColumn>
                         <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
                       </TableHeader>
-                      {_getFilteredProjects().length > 0 && (
-                        <TableBody>
-                          {_getFilteredProjects().map((project) => (
-                            <TableRow key={project.id}>
-                              <TableCell key="name">
-                                <LinkNext onClick={() => directToProject(project.id)} className="cursor-pointer flex flex-col items-start">
-                                  <Text b className={"text-foreground"}>{project.name}</Text>
-                                </LinkNext>
-                              </TableCell>
-                              <TableCell key="members" className="hidden sm:block">
-                                <Row justify="center" align="center">
-                                  {_getProjectMembers(project)?.length > 0 && (
-                                    <AvatarGroup max={3} isBordered size="sm">
-                                      {_getProjectMembers(project)?.map((pr) => (
-                                        <Avatar
-                                          key={pr.id}
-                                          name={pr.name}
-                                        />
-                                      ))}
-                                    </AvatarGroup>
-                                  )}
-                                  {_getProjectMembers(project)?.length === 0 && (
-                                    <Text i>-</Text>
-                                  )}
-                                </Row>
-                              </TableCell>
-                              <TableCell key="connections">
-                                <Row justify="center" align="center">
-                                  <Text b>
-                                    {project.Connections && project.Connections.length}
-                                  </Text>
-                                </Row>
-                              </TableCell>
-                              <TableCell key="charts">
-                                <Row justify="center" align="center">
-                                  <Text b>
-                                    {project?.Charts?.length || 0}
-                                  </Text>
-                                </Row>
-                              </TableCell>
-                              <TableCell key="actions">
-                                {_canAccess("teamAdmin", team.TeamRoles) && (
-                                  <Row justify="flex-end" align="center">
-                                    <Tooltip content="Rename the project">
-                                      <Button
-                                        startContent={<LuPencilLine />}
-                                        variant="light"
-                                        size="sm"
-                                        className={"min-w-fit"}
-                                        onClick={() => _onEditProject(project)}
+                      <TableBody>
+                        {_getFilteredProjects().map((project) => (
+                          <TableRow key={project.id}>
+                            <TableCell key="name">
+                              <LinkNext onClick={() => directToProject(project.id)} className="cursor-pointer flex flex-col items-start">
+                                <Text b className={"text-foreground"}>{project.name}</Text>
+                              </LinkNext>
+                            </TableCell>
+                            <TableCell key="members" className="hidden sm:block">
+                              <Row justify="center" align="center">
+                                {_getProjectMembers(project)?.length > 0 && (
+                                  <AvatarGroup max={3} isBordered size="sm">
+                                    {_getProjectMembers(project)?.map((pr) => (
+                                      <Avatar
+                                        key={pr.id}
+                                        name={pr.name}
                                       />
-                                    </Tooltip>
-                                    <Tooltip
-                                      content="Delete project"
-                                      color="danger"
-                                    >
-                                      <Button
-                                        color="danger"
-                                        startContent={<LuTrash />}
-                                        variant="light"
-                                        size="sm"
-                                        className={"min-w-fit"}
-                                        onClick={() => _onDeleteProject(project)}
-                                      />
-                                    </Tooltip>
-                                    <Spacer x={0.5} />
-                                  </Row>
+                                    ))}
+                                  </AvatarGroup>
                                 )}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      )}
+                                {_getProjectMembers(project)?.length === 0 && (
+                                  <Text i>-</Text>
+                                )}
+                              </Row>
+                            </TableCell>
+                            <TableCell key="charts">
+                              <Row justify="center" align="center">
+                                <Text b>
+                                  {project?.Charts?.length || 0}
+                                </Text>
+                              </Row>
+                            </TableCell>
+                            <TableCell key="actions">
+                              {_canAccess("teamAdmin", team.TeamRoles) && (
+                                <Row justify="flex-end" align="center">
+                                  <Tooltip content="Rename the project">
+                                    <Button
+                                      startContent={<LuPencilLine />}
+                                      variant="light"
+                                      size="sm"
+                                      className={"min-w-fit"}
+                                      onClick={() => _onEditProject(project)}
+                                    />
+                                  </Tooltip>
+                                  <Tooltip
+                                    content="Delete project"
+                                    color="danger"
+                                  >
+                                    <Button
+                                      color="danger"
+                                      startContent={<LuTrash />}
+                                      variant="light"
+                                      size="sm"
+                                      className={"min-w-fit"}
+                                      onClick={() => _onDeleteProject(project)}
+                                    />
+                                  </Tooltip>
+                                  <Spacer x={0.5} />
+                                </Row>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
                       {_getFilteredProjects().length === 0 && (
                         <TableBody>
                           <TableRow>
@@ -596,7 +581,7 @@ function UserDashboard(props) {
                                   onClick={() => _onNewProject(team)}
                                   startContent={<LuPlus />}
                                 >
-                                  Create your first project
+                                  Create your first dashboard
                                 </Button>
                               )}
                               {!_canAccess("teamAdmin", team.TeamRoles) && (
@@ -604,7 +589,6 @@ function UserDashboard(props) {
                               )}
                             </TableCell>
                             <TableCell key="members" align="center" />
-                            <TableCell key="connections" align="center" />
                             <TableCell key="charts" align="center" />
                             <TableCell key="actions" align="center" />
                           </TableRow>
