@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import {
-  Input, Button, Spacer, Modal, ModalHeader, ModalBody, ModalContent, Tabs, Tab
+  Input, Button, Spacer, Modal, ModalHeader, ModalBody, ModalContent, Tabs, Tab, Card, CardBody, Image, CardFooter
 } from "@nextui-org/react";
 import { LuArrowRight } from "react-icons/lu";
 
@@ -11,6 +11,13 @@ import { selectTeam } from "../slices/team";
 import CustomTemplates from "../containers/Connections/CustomTemplates/CustomTemplates";
 import Row from "./Row";
 import Text from "./Text";
+import availableTemplates from "../modules/availableTemplates";
+import SimpleAnalyticsTemplate from "../containers/Connections/SimpleAnalytics/SimpleAnalyticsTemplate";
+import { selectConnections } from "../slices/connection";
+import ChartMogulTemplate from "../containers/Connections/ChartMogul/ChartMogulTemplate";
+import MailgunTemplate from "../containers/Connections/Mailgun/MailgunTemplate";
+import GaTemplate from "../containers/Connections/GoogleAnalytics/GaTemplate";
+import PlausibleTemplate from "../containers/Connections/Plausible/PlausibleTemplate";
 
 /*
   Contains the project creation functionality
@@ -26,11 +33,13 @@ function ProjectForm(props) {
   const [activeMenu, setActiveMenu] = useState("empty");
   const [createdProject, setCreatedProject] = useState(null);
   const modalSize = useMemo(() => {
-    if (activeMenu === "template") return "3xl";
-    return "md";
+    if (activeMenu === "empty") return "xl";
+    return "3xl";
   }, [activeMenu]);
+  const [communityTemplate, setCommunityTemplate] = useState("");
 
   const team = useSelector(selectTeam);
+  const connections = useSelector(selectConnections);
 
   const dispatch = useDispatch();
 
@@ -81,7 +90,8 @@ function ProjectForm(props) {
                 <Row align="center" justify="center">
                   <Tabs selectedKey={activeMenu} onSelectionChange={(key) => setActiveMenu(key)} fullWidth>
                     <Tab key="empty" id="empty" title="Empty dashboard" />
-                    <Tab key="template" id="template" title="From template" />
+                    <Tab key="communityTemplates" title="Community templates" />
+                    <Tab key="template" id="template" title="Custom templates" />
                   </Tabs>
                 </Row>
               )}
@@ -131,6 +141,81 @@ function ProjectForm(props) {
               )}
             </div>
           </form>
+
+          {activeMenu === "communityTemplates" && (
+            <>
+              {communityTemplate === "" && (
+                <>
+                  <div className="grid grid-cols-12 gap-4">
+                    {availableTemplates.map((t) => (
+                      <div key={t.type} className="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-4">
+                        <Card
+                          isPressable
+                          isHoverable
+                          onClick={() => setCommunityTemplate(t.type)}
+                          className="border-1 border-solid border-content3"
+                        >
+                          <CardBody className="p-0">
+                            <Image className="object-cover" width="300" height="300" src={t.image} />
+                          </CardBody>
+                          <CardFooter>
+                            <Row wrap="wrap" justify="center" align="center">
+                              <span>
+                                {t.name}
+                              </span>
+                            </Row>
+                          </CardFooter>
+                        </Card>
+                      </div>
+                    ))}
+                  </div>
+                  <Spacer y={4} />
+                </>
+              )}
+
+              {communityTemplate === "saTemplate" && (
+                <SimpleAnalyticsTemplate
+                  teamId={team.id}
+                  onComplete={_onCompleteTemplate}
+                  connections={connections}
+                  onBack={() => setCommunityTemplate("")}
+                />
+              )}
+              {communityTemplate === "cmTemplate" && (
+                <ChartMogulTemplate
+                  teamId={team.id}
+                  onComplete={_onCompleteTemplate}
+                  connections={connections}
+                  onBack={() => setCommunityTemplate("")}
+                />
+              )}
+              {communityTemplate === "mailgunTemplate" && (
+                <MailgunTemplate
+                  teamId={team.id}
+                  onComplete={_onCompleteTemplate}
+                  connections={connections}
+                  onBack={() => setCommunityTemplate("")}
+                />
+              )}
+              {communityTemplate === "googleAnalyticsTemplate" && (
+                <GaTemplate
+                  teamId={team.id}
+                  onComplete={_onCompleteTemplate}
+                  connections={connections}
+                  onBack={() => setCommunityTemplate("")}
+                />
+              )}
+              {communityTemplate === "plausibleTemplate" && (
+                <PlausibleTemplate
+                  teamId={team.id}
+                  onComplete={_onCompleteTemplate}
+                  connections={connections}
+                  onBack={() => setCommunityTemplate("")}
+                />
+              )}
+            </>
+          )}
+
 
           {activeMenu === "template" && (
             <>

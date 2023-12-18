@@ -5,7 +5,7 @@ import {
 } from "@nextui-org/react";
 import _ from "lodash";
 import cookie from "react-cookies";
-import { LuArrowRight, LuCheckCheck, LuChevronRight, LuExternalLink, LuPlus, LuX } from "react-icons/lu";
+import { LuArrowLeft, LuArrowRight, LuCheckCheck, LuChevronRight, LuExternalLink, LuPlus, LuX } from "react-icons/lu";
 
 import { generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
@@ -19,7 +19,7 @@ import { selectConnections } from "../../../slices/connection";
 */
 function SimpleAnalyticsTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete,
+    teamId, projectId, addError, onComplete, onBack,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -159,9 +159,17 @@ function SimpleAnalyticsTemplate(props) {
   return (
     <div style={styles.container}>
       <Row align="center">
-        <Text size="h3">Configure the template</Text>
+        <Button
+          isIconOnly
+          variant="flat"
+          onClick={onBack}
+          size="sm"
+        >
+          <LuArrowLeft />
+        </Button>
+        <Spacer x={2} />
+        <span className="font-bold">Configure the template</span>
       </Row>
-      <Spacer y={2} />
       {availableConnections && availableConnections.length > 0 && (
         <>
           <Row>
@@ -440,6 +448,7 @@ SimpleAnalyticsTemplate.propTypes = {
   projectId: PropTypes.string.isRequired,
   onComplete: PropTypes.func.isRequired,
   addError: PropTypes.bool,
+  onBack: PropTypes.func.isRequired,
 };
 
 export default SimpleAnalyticsTemplate;

@@ -5,7 +5,7 @@ import {
 } from "@nextui-org/react";
 import cookie from "react-cookies";
 import _ from "lodash";
-import { LuArrowUp, LuCheckCheck, LuLink, LuPlus, LuX } from "react-icons/lu";
+import { LuArrowLeft, LuArrowUp, LuCheckCheck, LuLink, LuPlus, LuX } from "react-icons/lu";
 
 import { generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
@@ -18,7 +18,7 @@ import { useDispatch } from "react-redux";
 */
 function ChartMogulTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete, connections,
+    teamId, projectId, addError, onComplete, connections, onBack,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -161,7 +161,16 @@ function ChartMogulTemplate(props) {
   return (
     <div style={styles.container}>
       <Row align="center">
-        <Text size="h3">Configure the template</Text>
+        <Button
+          isIconOnly
+          variant="flat"
+          onClick={onBack}
+          size="sm"
+        >
+          <LuArrowLeft />
+        </Button>
+        <Spacer x={2} />
+        <span className="font-bold">Configure the template</span>
       </Row>
 
       {availableConnections && availableConnections.length > 0 && (
@@ -210,7 +219,7 @@ function ChartMogulTemplate(props) {
           </Row>
         </>
       )}
-      <Spacer y={4} />
+      <Spacer y={2} />
       {formVisible && (
         <>
           {availableConnections && availableConnections.length > 0 && (
@@ -218,7 +227,7 @@ function ChartMogulTemplate(props) {
               <Divider />
             </Row>
           )}
-          <Spacer y={4} />
+          <Spacer y={2} />
           <Row align="center">
             <Input
               label="Enter your ChartMogul API key"
@@ -382,6 +391,7 @@ ChartMogulTemplate.propTypes = {
   onComplete: PropTypes.func.isRequired,
   connections: PropTypes.array.isRequired,
   addError: PropTypes.bool,
+  onBack: PropTypes.func.isRequired,
 };
 
 export default ChartMogulTemplate;

@@ -5,7 +5,7 @@ import {
 } from "@nextui-org/react";
 import _ from "lodash";
 import cookie from "react-cookies";
-import { LuCheckCheck, LuChevronRight, LuExternalLink, LuPlus, LuX } from "react-icons/lu";
+import { LuArrowLeft, LuCheckCheck, LuChevronRight, LuExternalLink, LuPlus, LuX } from "react-icons/lu";
 
 import { generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
@@ -19,7 +19,7 @@ import { selectConnections } from "../../../slices/connection";
 */
 function PlausibleTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete,
+    teamId, projectId, addError, onComplete, onBack,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -163,7 +163,16 @@ function PlausibleTemplate(props) {
   return (
     <div style={styles.container}>
       <Row align="center">
-        <Text size="h3">Configure the template</Text>
+        <Button
+          isIconOnly
+          variant="flat"
+          onClick={onBack}
+          size="sm"
+        >
+          <LuArrowLeft />
+        </Button>
+        <Spacer x={2} />
+        <span className="font-bold">Configure the template</span>
       </Row>
       {availableConnections && availableConnections.length > 0 && (
         <>
@@ -235,7 +244,7 @@ function PlausibleTemplate(props) {
           </Row>
         </>
       )}
-      <Spacer y={4} />
+      <Spacer y={2} />
       {formVisible && (
         <>
           {availableConnections && availableConnections.length > 0 && (
@@ -439,6 +448,7 @@ PlausibleTemplate.propTypes = {
   onComplete: PropTypes.func.isRequired,
   connections: PropTypes.array.isRequired,
   addError: PropTypes.bool,
+  onBack: PropTypes.func.isRequired,
 };
 
 export default PlausibleTemplate;

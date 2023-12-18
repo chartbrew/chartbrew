@@ -5,7 +5,7 @@ import {
 } from "@nextui-org/react";
 import _ from "lodash";
 import cookie from "react-cookies";
-import { LuArrowRight, LuCheckCheck, LuPlus, LuX } from "react-icons/lu";
+import { LuArrowLeft, LuArrowRight, LuCheckCheck, LuPlus, LuX } from "react-icons/lu";
 import { FcGoogle } from "react-icons/fc";
 
 import {
@@ -22,7 +22,7 @@ import { useDispatch, useSelector } from "react-redux";
 */
 function GaTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete, selection,
+    teamId, projectId, addError, onComplete, selection, onBack,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -296,7 +296,16 @@ function GaTemplate(props) {
   return (
     <div style={styles.container}>
       <Row align="center">
-        <Text size="h3">Configure the template</Text>
+        <Button
+          isIconOnly
+          variant="flat"
+          onClick={onBack}
+          size="sm"
+        >
+          <LuArrowLeft />
+        </Button>
+        <Spacer x={2} />
+        <span className="font-bold">Configure the template</span>
       </Row>
       <Spacer y={2} />
       {availableConnections && availableConnections.length > 0 && (
@@ -536,6 +545,7 @@ GaTemplate.propTypes = {
   onComplete: PropTypes.func.isRequired,
   addError: PropTypes.bool,
   selection: PropTypes.number,
+  onBack: PropTypes.func.isRequired,
 };
 
 export default GaTemplate;
