@@ -35,6 +35,7 @@ import useThemeDetector from "../../modules/useThemeDetector";
 import Row from "../../components/Row";
 import Container from "../../components/Container";
 import Text from "../../components/Text";
+import { selectProjectMembers } from "../../slices/team";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -72,7 +73,7 @@ const getFilterGroupsFromStorage = () => {
 */
 function ProjectDashboard(props) {
   const {
-    cleanErrors, connections, showDrafts, user, team, mobile, teamMembers,
+    cleanErrors, connections, showDrafts, user, team, mobile,
   } = props;
 
   const [filters, setFilters] = useState(getFiltersFromStorage());
@@ -87,12 +88,14 @@ function ProjectDashboard(props) {
   const [layouts, setLayouts] = useState(null);
   const [editingLayout, setEditingLayout] = useState(false);
 
+  const params = useParams();
+  const dispatch = useDispatch();
+
   const charts = useSelector(selectCharts);
+  const projectMembers = useSelector((state) => selectProjectMembers(state, params.projectId));
 
   const { height, width } = useWindowSize();
   const isDark = useThemeDetector();
-  const params = useParams();
-  const dispatch = useDispatch();
   const initLayoutRef = useRef(null);
 
   useEffect(() => {
@@ -451,13 +454,13 @@ function ProjectDashboard(props) {
             >
               <Row justify="space-between" align="center" className={"w-full"}>
                 <Row justify="flex-start" align="center">
-                  {teamMembers && (
+                  {projectMembers && (
                     <>
                       <div className="hidden sm:flex sm:flex-row border-r-1 border-solid border-content3">
                         <Popover>
                           <PopoverTrigger>
                             <AvatarGroup max={3} isBordered size="sm" className="cursor-pointer">
-                              {teamMembers.map((member) => (
+                              {projectMembers.map((member) => (
                                 <Avatar
                                   key={member.id}
                                   name={member.name}
@@ -488,7 +491,7 @@ function ProjectDashboard(props) {
                               {"Users with project access"}
                             </Text>
                             <Listbox>
-                              {teamMembers.map((member) => (
+                              {projectMembers.map((member) => (
                                 <ListboxItem
                                   key={member.id}
                                   textValue={member.name}
@@ -853,7 +856,6 @@ ProjectDashboard.propTypes = {
   onPrint: PropTypes.func.isRequired,
   showDrafts: PropTypes.bool,
   mobile: PropTypes.bool,
-  teamMembers: PropTypes.array.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -861,7 +863,6 @@ const mapStateToProps = (state) => {
     connections: state.connection.data,
     user: state.user.data,
     team: state.team.active,
-    teamMembers: state.team.teamMembers,
   };
 };
 

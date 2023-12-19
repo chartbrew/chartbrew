@@ -231,7 +231,7 @@ function UserDashboard(props) {
   const _getProjectMembers = (project) => {
     if (!teamMembers) return [];
     const projectMembers = teamMembers.filter((tm) => {
-      return tm.TeamRoles.find((tr) => tr?.projects?.length > 0 && tr.projects.includes(project.id));
+      return tm.TeamRoles.find((tr) => tr?.projects?.length > 0 && tr.projects.includes(project.id) && tr.role !== "teamOwner" && tr.role !== "teamAdmin");
     });
 
     return projectMembers;
@@ -495,7 +495,7 @@ function UserDashboard(props) {
                         <TableColumn key="members">
                           <Row align="end" justify="center" className={"gap-1"}>
                             <LuUsers2 />
-                            <Text>Members</Text>
+                            <Text>Dashboard members</Text>
                           </Row>
                         </TableColumn>
                         <TableColumn key="charts">
@@ -514,7 +514,7 @@ function UserDashboard(props) {
                                 <Text b className={"text-foreground"}>{project.name}</Text>
                               </LinkNext>
                             </TableCell>
-                            <TableCell key="members" className="hidden sm:block">
+                            <TableCell key="members">
                               <Row justify="center" align="center">
                                 {_getProjectMembers(project)?.length > 0 && (
                                   <AvatarGroup max={3} isBordered size="sm">
@@ -527,7 +527,9 @@ function UserDashboard(props) {
                                   </AvatarGroup>
                                 )}
                                 {_getProjectMembers(project)?.length === 0 && (
-                                  <Text i>-</Text>
+                                  <Chip variant="flat" size="sm">
+                                    Team only
+                                  </Chip>
                                 )}
                               </Row>
                             </TableCell>
@@ -541,7 +543,7 @@ function UserDashboard(props) {
                             <TableCell key="actions">
                               {_canAccess("teamAdmin", team.TeamRoles) && (
                                 <Row justify="flex-end" align="center">
-                                  <Tooltip content="Rename the project">
+                                  <Tooltip content="Rename the dashboard">
                                     <Button
                                       startContent={<LuPencilLine />}
                                       variant="light"
@@ -636,6 +638,12 @@ function UserDashboard(props) {
                           <span>Tags</span>
                         </div>
                       </TableColumn>
+                      <TableColumn key="created" textValue="Created">
+                        <div className="flex flex-row items-center gap-1">
+                          <LuCalendarDays />
+                          <span>Created</span>
+                        </div>
+                      </TableColumn>
                       <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
                     </TableHeader>
                     <TableBody>
@@ -667,6 +675,9 @@ function UserDashboard(props) {
                             {_getConnectionTags(connection.project_ids).length > 3 && (
                               <span className="text-xs">{`+${_getConnectionTags(connection.project_ids).length - 3} more`}</span>
                             )}
+                          </TableCell>
+                          <TableCell key="created">
+                            <Text>{new Date(connection.createdAt).toLocaleDateString()}</Text>
                           </TableCell>
                           <TableCell key="actions">
                             <Row justify="flex-end" align="center">
@@ -824,12 +835,12 @@ function UserDashboard(props) {
         <Modal isOpen={!!projectToEdit} onClose={() => setProjectToEdit(null)}>
           <ModalContent>
             <ModalHeader>
-              <Text size="h3">Rename your project</Text>
+              <Text size="h3">Rename your dashboard</Text>
             </ModalHeader>
             <ModalBody>
               <Input
-                label="Project name"
-                placeholder="Enter the project name"
+                label="Dashboard name"
+                placeholder="Enter the dashboard name"
                 value={projectToEdit?.name || ""}
                 onChange={(e) => setProjectToEdit({ ...projectToEdit, name: e.target.value })}
                 variant="bordered"
@@ -860,11 +871,11 @@ function UserDashboard(props) {
         <Modal isOpen={!!projectToDelete} onClose={() => setProjectToDelete(null)}>
           <ModalContent>
             <ModalHeader>
-              <Text size="h4">Are you sure you want to delete the project?</Text>
+              <Text size="h4">Are you sure you want to delete the dashboard?</Text>
             </ModalHeader>
             <ModalBody>
               <Text>
-                {"Deleting a project will delete all the charts and connections associated with it. This action cannot be undone."}
+                {"Deleting a dashboard will delete all the charts and make the report unavailable. This action cannot be undone."}
               </Text>
             </ModalBody>
             <ModalFooter>

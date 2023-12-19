@@ -366,5 +366,13 @@ export const { saveActiveTeam, saveTeamList, addNewTeam } = teamSlice.actions;
 export const selectTeam = (state) => state.team.active;
 export const selectTeams = (state) => state.team.data;
 export const selectTeamMembers = (state) => state.team.teamMembers;
+export const selectProjectMembers = (state, projectId) => {
+  if (!state.team.teamMembers || state.team.teamMembers.length === 0) return [];
+  const projectMembers = state.team.teamMembers.filter((tm) => {
+    return tm.TeamRoles.filter((tr) => tr?.projects?.length > 0 && tr.projects.includes(parseInt(projectId, 10)) && tr.role !== "teamOwner" && tr.role !== "teamAdmin");
+  });
+
+  return projectMembers;
+};
 
 export default teamSlice.reducer;
