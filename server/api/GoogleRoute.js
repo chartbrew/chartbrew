@@ -1,4 +1,3 @@
-const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
 const ConnectionController = require("../controllers/ConnectionController");
 const oauthController = require("../controllers/OAuthController");
@@ -8,49 +7,56 @@ const accessControl = require("../modules/accessControl");
 const googleConnector = require("../modules/googleConnector");
 
 module.exports = (app) => {
-  const projectController = new ProjectController();
   const teamController = new TeamController();
   const connectionController = new ConnectionController();
 
-  const url = "/project/:project_id/connection/:connection_id";
+  const url = "/team/:team_id/connections/:connection_id";
 
-  const checkAccess = (req) => {
-    let gProject;
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        gProject = project;
+  const checkPermissions = (actionType = "readOwn") => {
+    return async (req, res, next) => {
+      const { team_id } = req.params;
 
-        if (req.params.connection_id) {
-          return connectionController.findById(req.params.connection_id);
+      // Fetch the TeamRole for the user
+      const teamRole = await teamController.getTeamRole(team_id, req.user.id);
+
+      if (!teamRole) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const permission = accessControl.can(teamRole.role)[actionType]("connection");
+      if (!permission.granted) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { role, projects } = teamRole;
+
+      // Handle permissions for teamOwner and teamAdmin
+      if (["teamOwner", "teamAdmin"].includes(role)) {
+        req.user.isEditor = true;
+        return next();
+      }
+
+      if (role === "projectAdmin" || role === "projectViewer") {
+        const connections = await connectionController.findByProjects(projects);
+        if (!connections || connections.length === 0) {
+          return res.status(404).json({ message: "No connections found" });
         }
 
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
-      .then((data) => {
-        if (!req.params.connection_id) return Promise.resolve(data);
+        return next();
+      }
 
-        if (data.project_id !== gProject.id) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return teamController.getTeamRole(gProject.team_id, req.user.id);
-      });
+      return res.status(403).json({ message: "Access denied" });
+    };
   };
 
   /*
   ** Route to get the Google authentication URL
   */
-  app.get(`${url}/google/auth`, verifyToken, async (req, res) => {
+  app.get(`${url}/google/auth`, verifyToken, checkPermissions("createAny"), async (req, res) => {
     try {
-      const teamRole = await checkAccess(req);
-      const permission = accessControl.can(teamRole.role).createAny("connection");
-      if (!permission.granted) {
-        return res.status(401).send({ error: "Not authorized" });
-      }
-
       return res.status(200).send({
         url: googleConnector.getAuthUrl(
-          req.params.project_id, req.params.connection_id, req.query.type
+          req.params.team_id, req.params.connection_id, req.query.type
         ),
       });
     } catch (e) {
@@ -61,19 +67,13 @@ module.exports = (app) => {
   /*
   ** Route to authenticate a Google connection and save the refresh token
   */
-  app.put(`${url}/google/auth`, verifyToken, async (req, res) => {
+  app.put(`${url}/google/auth`, verifyToken, checkPermissions("createAny"), async (req, res) => {
     const { code } = req.body;
-    const teamRole = await checkAccess(req);
-    const permission = accessControl.can(teamRole.role).createAny("connection");
-    if (!permission.granted) {
-      return res.status(401).send({ error: "Not authorized" });
-    }
 
-    let gConnection;
     return googleConnector.getToken(code)
       .then((data) => {
         return oauthController.create({
-          team_id: teamRole.team_id,
+          team_id: req.params.team_id,
           email: data.user.email,
           refreshToken: data.tokens.refresh_token,
           type: "google",
@@ -86,13 +86,9 @@ module.exports = (app) => {
         );
       })
       .then((connection) => {
-        gConnection = connection;
-        return projectController.findById(connection.project_id);
-      })
-      .then((project) => {
         return res.status(200).send({
-          team_id: project.team_id,
-          connection: gConnection,
+          team_id: req.params.team_id,
+          connection,
         });
       })
       .catch((err) => {
@@ -104,16 +100,10 @@ module.exports = (app) => {
   /*
   ** Get GA fields metadata
   */
-  app.get(`${url}/google/ga/metadata`, verifyToken, async (req, res) => {
+  app.get(`${url}/google/ga/metadata`, verifyToken, checkPermissions("createAny"), async (req, res) => {
     const { property_id } = req.query;
 
     if (!property_id) return res.status(400).send("Missing property_id");
-
-    const teamRole = await checkAccess(req);
-    const permission = accessControl.can(teamRole.role).createAny("connection");
-    if (!permission.granted) {
-      return res.status(401).send({ error: "Not authorized" });
-    }
 
     const connection = await connectionController.findById(req.params.connection_id);
     const oauth = await oauthController.findById(connection.oauth_id);

@@ -260,7 +260,7 @@ function GaTemplate(props) {
     const data = await dispatch(addConnection({ team_id: teamId, connection }));
     const newConnection = data.payload;
 
-    const url = `${API_HOST}/project/${projectId}/connection/${newConnection.id}/google/auth?type=googleAnalyticsTemplate`;
+    const url = `${API_HOST}/team/${teamId}/connections/${newConnection.id}/google/auth?type=googleAnalyticsTemplate`;
     const method = "GET";
     const headers = new Headers({
       "Accept": "application/json",

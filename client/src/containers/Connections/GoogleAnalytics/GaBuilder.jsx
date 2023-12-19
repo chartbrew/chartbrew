@@ -201,7 +201,7 @@ function GaBuilder(props) {
   };
 
   const _populateMetadata = (conn = fullConnection, propertyId) => {
-    getMetadata(params.projectId, conn.id, propertyId)
+    getMetadata(params.teamId, conn.id, propertyId)
       .then((metadata) => {
         const metrics = [];
         const dimensions = [];

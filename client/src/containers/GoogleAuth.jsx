@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { connect } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -21,9 +21,13 @@ function GoogleAuth() {
   const [error, setError] = useState(false);
 
   const navigate = useNavigate();
+  const initRef = useRef(null);
 
   useEffect(() => {
-    _processAuth();
+    if (!initRef.current) {
+      initRef.current = true;
+      _processAuth();
+    }
   }, []);
 
   const _processAuth = () => {
@@ -38,7 +42,7 @@ function GoogleAuth() {
     }
     const ids = state.split(",");
 
-    const url = `${API_HOST}/project/${ids[0]}/connection/${ids[1]}/google/auth`;
+    const url = `${API_HOST}/team/${ids[0]}/connections/${ids[1]}/google/auth`;
     const method = "PUT";
     const body = JSON.stringify({ code });
     const headers = new Headers({
@@ -58,8 +62,8 @@ function GoogleAuth() {
         setLoading(false);
         setSuccess(true);
 
-        let finalUrl = `/${result.team_id}/${result.connection.project_id}/connections?edit=${result.connection.id}`;
-        if (ids[2]) finalUrl += `&type=${ids[2]}`;
+        let finalUrl = `/${result.team_id}/connection/${result.connection.id}`;
+        if (ids[2]) finalUrl += `?type=${ids[2]}`;
 
         navigate(finalUrl);
       })

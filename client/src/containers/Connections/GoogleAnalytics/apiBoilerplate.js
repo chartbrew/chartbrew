@@ -25,9 +25,9 @@ export function getAccountDetails(projectId, connectionId) {
     });
 }
 
-export function getMetadata(projectId, connectionId, propertyId) {
+export function getMetadata(teamId, connectionId, propertyId) {
   const token = cookies.load("brewToken");
-  const url = `${API_HOST}/project/${projectId}/connection/${connectionId}/google/ga/metadata?property_id=${encodeURIComponent(propertyId)}`;
+  const url = `${API_HOST}/team/${teamId}/connections/${connectionId}/google/ga/metadata?property_id=${encodeURIComponent(propertyId)}`;
   const method = "GET";
   const headers = new Headers({
     "Accept": "application/json",

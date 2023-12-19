@@ -94,14 +94,16 @@ function GaConnectionForm(props) {
       } else {
         setLoading(true);
         onComplete(newConnection, true)
-          .then(() => setLoading(false))
+          .then(() => {
+            setLoading(false);
+          })
           .catch(() => setLoading(false));
       }
     }, 100);
   };
 
   const _onGoogleAuth = () => {
-    const url = `${API_HOST}/team/${params.teamId}/connections/${connection.id}/auth/google`;
+    const url = `${API_HOST}/team/${params.teamId}/connections/${connection.id}/google/auth`;
     const method = "GET";
     const headers = new Headers({
       "Accept": "application/json",
@@ -154,9 +156,9 @@ function GaConnectionForm(props) {
           {!editConnection && (
             <Button
               color={"secondary"}
-              isLoading={loading || !connection.name}
-              onClick={_onCreateConnection}
-              auto
+              isLoading={loading}
+              isDisabled={!connection.name}
+              onClick={() => _onCreateConnection()}
             >
               {"Create connection"}
             </Button>
@@ -166,7 +168,6 @@ function GaConnectionForm(props) {
               color={"secondary"}
               endContent={<FaGoogle size={20} />}
               onClick={_onGoogleAuth}
-              auto
             >
               {"Authenticate with Google"}
             </Button>

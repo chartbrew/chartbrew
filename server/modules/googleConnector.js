@@ -15,7 +15,7 @@ const getOAuthClient = () => {
   );
 };
 
-module.exports.getAuthUrl = (project_id, connection_id, type) => {
+module.exports.getAuthUrl = (team_id, connection_id, type) => {
   const oauth2Client = getOAuthClient();
 
   // generate a url that asks permissions for Google analytics and user email
@@ -27,7 +27,7 @@ module.exports.getAuthUrl = (project_id, connection_id, type) => {
   const authParams = {
     access_type: "offline",
     scope: scopes,
-    state: `${project_id},${connection_id}`,
+    state: `${team_id},${connection_id}`,
   };
   if (type) authParams.state = `${authParams.state},${type}`;
 

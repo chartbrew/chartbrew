@@ -111,7 +111,12 @@ function ConnectionWizard() {
         team_id: params.teamId,
         connection: { ...data, team_id: params.teamId }
       }))
-      .then(() => {
+      .then((newConnection) => {
+        if (data.type === "googleAnalytics") {
+          navigate(`/${params.teamId}/connection/${newConnection.payload.id}`);
+          return true;
+        }
+
         setCompletionModal(true);
         setSelectedType("");
         return true;
