@@ -175,6 +175,7 @@ function ProjectForm(props) {
 
               {communityTemplate === "saTemplate" && (
                 <SimpleAnalyticsTemplate
+                  projectName={newProject.name}
                   teamId={team.id}
                   onComplete={_onCompleteTemplate}
                   connections={connections}

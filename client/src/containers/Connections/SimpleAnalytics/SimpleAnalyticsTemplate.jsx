@@ -7,7 +7,7 @@ import _ from "lodash";
 import cookie from "react-cookies";
 import { LuArrowLeft, LuArrowRight, LuCheckCheck, LuChevronRight, LuExternalLink, LuPlus, LuX } from "react-icons/lu";
 
-import { generateDashboard } from "../../../slices/project";
+import { createProject, generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
@@ -19,7 +19,7 @@ import { selectConnections } from "../../../slices/connection";
 */
 function SimpleAnalyticsTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete, onBack,
+    teamId, projectId, addError, onComplete, onBack, projectName,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -47,7 +47,11 @@ function SimpleAnalyticsTemplate(props) {
     }
   }, [connections]);
 
-  const _onGenerateDashboard = () => {
+  const _onGenerateDashboard = async () => {
+    if (!projectId && !projectName) {
+      return;
+    }
+
     setErrors({});
 
     if (formVisible && !connection.website) {
@@ -66,7 +70,20 @@ function SimpleAnalyticsTemplate(props) {
     setNotPublic(false);
     setNotFound(false);
 
-    dispatch(generateDashboard({ project_id: projectId, data, template: "simpleanalytics" }))
+    let newProjectId = projectId;
+    if (!projectId && projectName) {
+      await dispatch(createProject({ data: { team_id: teamId, name: projectName } }))
+        .then((data) => {
+          newProjectId = data.payload?.id;
+        });
+    }
+
+    if (!newProjectId) {
+      setLoading(false);
+      return;
+    }
+
+    dispatch(generateDashboard({ project_id: newProjectId, data, template: "simpleanalytics" }))
       .then(() => {
         setTimeout(() => {
           onComplete();
@@ -415,6 +432,7 @@ function SimpleAnalyticsTemplate(props) {
             (!formVisible && !selectedConnection)
             || !connection.website
             || (!selectedCharts || selectedCharts.length < 1)
+            || (!projectId && !projectName)
           }
           isLoading={loading}
           onClick={_onGenerateDashboard}
@@ -441,11 +459,14 @@ const styles = {
 
 SimpleAnalyticsTemplate.defaultProps = {
   addError: null,
+  projectId: null,
+  projectName: "",
 };
 
 SimpleAnalyticsTemplate.propTypes = {
   teamId: PropTypes.string.isRequired,
-  projectId: PropTypes.string.isRequired,
+  projectId: PropTypes.string,
+  projectName: PropTypes.string,
   onComplete: PropTypes.func.isRequired,
   addError: PropTypes.bool,
   onBack: PropTypes.func.isRequired,

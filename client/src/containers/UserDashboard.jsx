@@ -631,7 +631,7 @@ function UserDashboard(props) {
                   <Spacer y={4} />
                   <Table shadow="none" isStriped className="border-2 border-solid border-content3 rounded-xl">
                     <TableHeader>
-                      <TableColumn key="name">Connection name</TableColumn>
+                      <TableColumn key="name">Connection</TableColumn>
                       <TableColumn key="tags">
                         <div className="flex flex-row items-center gap-1">
                           <LuTag />
@@ -778,7 +778,7 @@ function UserDashboard(props) {
                               <AvatarGroup max={3} isBordered size="sm">
                                 {dataset?.DataRequests?.map((dr) => (
                                   <Avatar
-                                    src={connectionImages(isDark)[dr?.Connection.subType]}
+                                    src={connectionImages(isDark)[dr?.Connection?.subType]}
                                     showFallback={<LuPlug />}
                                     size="sm"
                                     isBordered

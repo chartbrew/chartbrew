@@ -253,14 +253,7 @@ module.exports = (app) => {
       req.params.template,
     )
       .then((result) => {
-        // refresh the charts
-        const charts = [];
-
-        result.forEach((r) => {
-          charts.push(r);
-        });
-
-        refreshChartsApi(req.params.id, charts, req.headers.authorization);
+        refreshChartsApi(req.params.id, result, req.headers.authorization);
 
         return res.status(200).send(result);
       })

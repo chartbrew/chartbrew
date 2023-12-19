@@ -1,8 +1,9 @@
 const request = require("request-promise");
 
+const { chartColors } = require("../../charts/colors");
 const builder = require("./builder");
 
-const template = (website, apiKey, dashboardOrder) => ({
+const template = (website, apiKey) => ({
   Connections: [{
     name: "SimpleAnalyticsAPI",
     type: "api",
@@ -12,12 +13,98 @@ const template = (website, apiKey, dashboardOrder) => ({
       "Api-Key": apiKey || "none",
     }]
   }],
+  Datasets: [{
+    td_id: 1,
+    legend: "Pageviews",
+    datasetColor: chartColors.blue.rgb,
+    fill: false,
+    fillColor: "rgba(0,0,0,0)",
+    dateField: "root.histogram[].date",
+    xAxis: "root.histogram[].date",
+    yAxis: "root.histogram[].pageviews",
+    yAxisOperation: "none",
+    DataRequests: [{
+      route: `/${website}.json?version=5&fields=histogram`,
+    }]
+  }, {
+    td_id: 2,
+    legend: "Visitors",
+    datasetColor: chartColors.amber.rgb,
+    fill: false,
+    fillColor: "rgba(0,0,0,0)",
+    dateField: "root.histogram[].date",
+    xAxis: "root.histogram[].date",
+    yAxis: "root.histogram[].visitors",
+    yAxisOperation: "none",
+    DataRequests: [{
+      route: `/${website}.json?version=5&fields=histogram`,
+    }]
+  }, {
+    td_id: 3,
+    legend: "Devices",
+    datasetColor: "rgba(255, 255, 255, 1)",
+    fillColor: [chartColors.blue, chartColors.amber, chartColors.teal],
+    multiFill: true,
+    xAxis: "root.device_types[].value",
+    yAxis: "root.device_types[].visitors",
+    yAxisOperation: "none",
+    DataRequests: [{
+      route: `/${website}.json?version=5&fields=device_types`,
+    }],
+  }, {
+    td_id: 4,
+    legend: "Referrers",
+    datasetColor: chartColors.blue.rgb,
+    fill: false,
+    fillColor: "rgba(0,0,0,0)",
+    xAxis: "root.referrers[].value",
+    yAxis: "root.referrers[].pageviews",
+    yAxisOperation: "none",
+    DataRequests: [{
+      route: `/${website}.json?version=5&fields=referrers`,
+    }],
+  }, {
+    td_id: 5,
+    legend: "UTM Sources",
+    datasetColor: chartColors.amber.rgb,
+    fill: false,
+    fillColor: "rgba(0,0,0,0)",
+    xAxis: "root.utm_sources[].value",
+    yAxis: "root.utm_sources[].pageviews",
+    yAxisOperation: "none",
+    DataRequests: [{
+      route: `/${website}.json?version=5&fields=utm_sources`,
+    }],
+  }, {
+    td_id: 6,
+    legend: "Browsers",
+    datasetColor: chartColors.blue.rgb,
+    fill: false,
+    fillColor: "rgba(0,0,0,0)",
+    xAxis: "root.browser_names[].value",
+    yAxis: "root.browser_names[].pageviews",
+    yAxisOperation: "none",
+    DataRequests: [{
+      route: `/${website}.json?version=5&fields=browser_names`,
+    }],
+  }, {
+    td_id: 7,
+    legend: "Countries",
+    datasetColor: chartColors.amber.rgb,
+    fill: false,
+    fillColor: "rgba(0,0,0,0)",
+    xAxis: "root.countries[].value",
+    yAxis: "root.countries[].pageviews",
+    yAxisOperation: "none",
+    DataRequests: [{
+      route: `/${website}.json?version=5&fields=countries`,
+    }],
+  }],
   Charts: [{
     tid: 1,
     name: "30-day Stats",
     chartSize: 1,
     currentEndDate: false,
-    dashboardOrder: dashboardOrder + 1,
     displayLegend: false,
     draft: false,
     includeZeros: true,
@@ -26,9 +113,13 @@ const template = (website, apiKey, dashboardOrder) => ({
     subType: "AddTimeseries",
     timeInterval: "day",
     type: "line",
-    Datasets: [{
+    layout: {
+      "xxs": [0, 0, 2, 2], "xs": [0, 0, 6, 2], "sm": [0, 0, 3, 2], "md": [0, 0, 4, 2], "lg": [0, 0, 3, 2]
+    },
+    ChartDatasetConfigs: [{
+      td_id: 1,
       legend: "Pageviews",
-      datasetColor: "rgba(80, 227, 194, 1)",
+      datasetColor: chartColors.blue.rgb,
       fill: false,
       fillColor: "rgba(0,0,0,0)",
       dateField: "root.histogram[].date",
@@ -37,26 +128,23 @@ const template = (website, apiKey, dashboardOrder) => ({
       yAxisOperation: "none",
       DataRequests: [{
         route: `/${website}.json?version=5&fields=histogram`,
-      }]
+      }],
     }, {
+      td_id: 2,
       legend: "Visitors",
-      datasetColor: "rgba(74, 144, 226, 1)",
+      datasetColor: chartColors.amber.rgb,
       fill: false,
       fillColor: "rgba(0,0,0,0)",
       dateField: "root.histogram[].date",
       xAxis: "root.histogram[].date",
       yAxis: "root.histogram[].visitors",
       yAxisOperation: "none",
-      DataRequests: [{
-        route: `/${website}.json?version=5&fields=histogram`,
-      }]
     }]
   }, {
     tid: 2,
     name: "Site Stats",
     chartSize: 2,
     currentEndDate: false,
-    dashboardOrder: dashboardOrder + 2,
     displayLegend: false,
     draft: false,
     includeZeros: true,
@@ -66,36 +154,34 @@ const template = (website, apiKey, dashboardOrder) => ({
     timeInterval: "day",
     type: "line",
     showGrowth: true,
-    Datasets: [{
+    layout: {
+      "xxs": [0, 2, 2, 2], "xs": [0, 2, 6, 2], "sm": [3, 0, 5, 2], "md": [4, 0, 6, 2], "lg": [3, 0, 6, 2]
+    },
+    ChartDatasetConfigs: [{
+      td_id: 1,
       legend: "Pageviews",
-      datasetColor: "rgba(80, 227, 194, 1)",
+      datasetColor: chartColors.blue.rgb,
       fill: false,
       fillColor: "rgba(0,0,0,0)",
       dateField: "root.histogram[].date",
       xAxis: "root.histogram[].date",
       yAxis: "root.histogram[].pageviews",
       yAxisOperation: "none",
-      DataRequests: [{
-        route: `/${website}.json?version=5&fields=histogram`,
-      }]
     }, {
+      td_id: 2,
       legend: "Visitors",
-      datasetColor: "rgba(74, 144, 226, 1)",
+      datasetColor: chartColors.amber.rgb,
       fill: false,
       fillColor: "rgba(0,0,0,0)",
       dateField: "root.histogram[].date",
       xAxis: "root.histogram[].date",
       yAxis: "root.histogram[].visitors",
       yAxisOperation: "none",
-      DataRequests: [{
-        route: `/${website}.json?version=5&fields=histogram`,
-      }]
     }]
   }, {
     tid: 3,
     name: "Devices",
     chartSize: 1,
-    dashboardOrder: dashboardOrder + 3,
     draft: false,
     includeZeros: true,
     mode: "chart",
@@ -104,23 +190,23 @@ const template = (website, apiKey, dashboardOrder) => ({
     timeInterval: "day",
     type: "doughnut",
     displayLegend: true,
-    Datasets: [{
+    layout: {
+      "xxs": [0, 4, 2, 2], "xs": [0, 4, 6, 2], "sm": [0, 2, 2, 2], "md": [0, 2, 4, 2], "lg": [9, 0, 3, 2]
+    },
+    ChartDatasetConfigs: [{
+      td_id: 3,
       legend: "Devices",
       datasetColor: "rgba(255, 255, 255, 1)",
-      fillColor: ["rgba(74, 144, 226, 0.55)", "rgba(126, 211, 33, 0.4)", "rgba(245, 166, 35, 0.55)"],
+      fillColor: [chartColors.blue.rgb, chartColors.amber.rgb, chartColors.teal.rgb],
       multiFill: true,
       xAxis: "root.device_types[].value",
       yAxis: "root.device_types[].visitors",
       yAxisOperation: "none",
-      DataRequests: [{
-        route: `/${website}.json?version=5&fields=device_types`,
-      }],
     }]
   }, {
     tid: 5,
     name: "Referrers Data",
     chartSize: 2,
-    dashboardOrder: dashboardOrder + 4,
     draft: false,
     includeZeros: true,
     mode: "chart",
@@ -128,34 +214,32 @@ const template = (website, apiKey, dashboardOrder) => ({
     subType: "timeseries",
     type: "table",
     timeInterval: "day",
-    Datasets: [{
+    layout: {
+      "xxs": [0, 6, 2, 3], "xs": [0, 6, 6, 3], "sm": [2, 2, 6, 2], "md": [4, 2, 6, 2], "lg": [0, 2, 6, 3]
+    },
+    ChartDatasetConfigs: [{
+      td_id: 4,
       legend: "Referrers",
-      datasetColor: "#2CA02C",
+      datasetColor: chartColors.blue.rgb,
       fill: false,
       fillColor: "rgba(0,0,0,0)",
       xAxis: "root.referrers[].value",
       yAxis: "root.referrers[].pageviews",
       yAxisOperation: "none",
-      DataRequests: [{
-        route: `/${website}.json?version=5&fields=referrers`,
-      }],
     }, {
+      td_id: 5,
       legend: "UTM Sources",
-      datasetColor: "#17BECF",
+      datasetColor: chartColors.amber.rgb,
       fill: false,
       fillColor: "rgba(0,0,0,0)",
       xAxis: "root.utm_sources[].value",
       yAxis: "root.utm_sources[].pageviews",
       yAxisOperation: "none",
-      DataRequests: [{
-        route: `/${website}.json?version=5&fields=utm_sources`,
-      }],
     }]
   }, {
     tid: 6,
     name: "Browsers & Countries",
     chartSize: 2,
-    dashboardOrder: dashboardOrder + 5,
     draft: false,
     includeZeros: true,
     mode: "chart",
@@ -163,37 +247,36 @@ const template = (website, apiKey, dashboardOrder) => ({
     subType: "timeseries",
     type: "table",
     timeInterval: "day",
-    Datasets: [{
+    layout: {
+      "xxs": [0, 9, 2, 3], "xs": [0, 9, 6, 3], "sm": [0, 4, 6, 3], "md": [0, 4, 6, 3], "lg": [6, 2, 6, 3]
+    },
+    ChartDatasetConfigs: [{
+      td_id: 6,
       legend: "Browsers",
-      datasetColor: "#2CA02C",
+      datasetColor: chartColors.blue.rgb,
       fill: false,
       fillColor: "rgba(0,0,0,0)",
       xAxis: "root.browser_names[].value",
       yAxis: "root.browser_names[].pageviews",
       yAxisOperation: "none",
-      DataRequests: [{
-        route: `/${website}.json?version=5&fields=browser_names`,
-      }],
     }, {
+      td_id: 7,
       legend: "Countries",
-      datasetColor: "#17BECF",
+      datasetColor: chartColors.amber.rgb,
       fill: false,
       fillColor: "rgba(0,0,0,0)",
       xAxis: "root.countries[].value",
       yAxis: "root.countries[].pageviews",
       yAxisOperation: "none",
-      DataRequests: [{
-        route: `/${website}.json?version=5&fields=countries`,
-      }],
     }]
   }],
 });
 
 module.exports.template = template;
 
-module.exports.build = async (projectId, {
+module.exports.build = async (teamId, projectId, {
   website, apiKey, charts, connection_id
-}, dashboardOrder) => {
+}) => {
   if (!website && !connection_id) return Promise.reject("Missing required 'website' argument");
 
   if (!connection_id) {
@@ -226,7 +309,7 @@ module.exports.build = async (projectId, {
     }
   }
 
-  return builder(projectId, website, apiKey, dashboardOrder, template, charts, connection_id)
+  return builder(teamId, projectId, website, apiKey, template, charts, connection_id)
     .catch((err) => {
       if (err && err.message) {
         return Promise.reject(err.message);

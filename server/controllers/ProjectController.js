@@ -205,19 +205,10 @@ class ProjectController {
       });
   }
 
-  generateTemplate(projectId, data, template) {
-    return db.Chart.findAll({
-      where: { project_id: projectId },
-      order: [["dashboardOrder", "DESC"]],
-      limit: 1,
-    })
-      .then((charts) => {
-        let dashboardOrder = 0;
-        if (charts && charts.length > 0) {
-          dashboardOrder = charts[0].dashboardOrder;
-        }
-        return templateModels[template].build(projectId, data, dashboardOrder);
-      })
+  async generateTemplate(projectId, data, template) {
+    const project = await this.findById(projectId);
+
+    return templateModels[template].build(project.team_id, projectId, data)
       .then((result) => {
         return result;
       })
