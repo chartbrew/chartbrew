@@ -7,7 +7,7 @@ import cookie from "react-cookies";
 import _ from "lodash";
 import { LuArrowLeft, LuArrowUp, LuCheckCheck, LuLink, LuPlus, LuX } from "react-icons/lu";
 
-import { generateDashboard } from "../../../slices/project";
+import { createProject, generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
@@ -18,7 +18,7 @@ import { useDispatch } from "react-redux";
 */
 function ChartMogulTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete, connections, onBack,
+    teamId, projectId, addError, onComplete, connections, onBack, projectName,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -43,7 +43,11 @@ function ChartMogulTemplate(props) {
     }
   }, [connections]);
 
-  const _onGenerateDashboard = () => {
+  const _onGenerateDashboard = async () => {
+    if (!projectId && !projectName) {
+      return;
+    }
+
     setErrors({});
 
     if (formVisible && !connection.key) {
@@ -62,7 +66,20 @@ function ChartMogulTemplate(props) {
     setLoading(true);
     setTestError(false);
 
-    dispatch(generateDashboard({ project_id: projectId, data, template: "chartmogul" }))
+    let newProjectId = projectId;
+    if (!projectId && projectName) {
+      await dispatch(createProject({ data: { team_id: teamId, name: projectName } }))
+        .then((data) => {
+          newProjectId = data.payload?.id;
+        });
+    }
+
+    if (!newProjectId) {
+      setLoading(false);
+      return;
+    }
+
+    dispatch(generateDashboard({ project_id: newProjectId, data, template: "chartmogul" }))
       .then(() => {
         setTimeout(() => {
           onComplete();
@@ -175,6 +192,7 @@ function ChartMogulTemplate(props) {
 
       {availableConnections && availableConnections.length > 0 && (
         <>
+          <Spacer y={4} />
           <Row>
             <Select
               isDisabled={formVisible}
@@ -250,9 +268,9 @@ function ChartMogulTemplate(props) {
               rel="noreferrer noopener"
               className="flex items-center text-secondary"
             >
-              <Text className={"text-secondary"}>
+              <span className={"text-sm text-secondary"}>
                 {"Click here to learn how to find your ChartMogul API key"}
-              </Text>
+              </span>
               <Spacer x={1} />
               <LuLink size={16} />
             </Link>
@@ -387,6 +405,7 @@ ChartMogulTemplate.defaultProps = {
 
 ChartMogulTemplate.propTypes = {
   teamId: PropTypes.string.isRequired,
+  projectName: PropTypes.string.isRequired,
   projectId: PropTypes.string.isRequired,
   onComplete: PropTypes.func.isRequired,
   connections: PropTypes.array.isRequired,

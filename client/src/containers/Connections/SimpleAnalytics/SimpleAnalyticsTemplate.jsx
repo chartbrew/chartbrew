@@ -189,44 +189,39 @@ function SimpleAnalyticsTemplate(props) {
       </Row>
       {availableConnections && availableConnections.length > 0 && (
         <>
-          <Row>
-            <div className="grid grid-cols-12 gap-2">
-              <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6">
-                <Select
-                  isDisabled={formVisible}
-                  label="Select an existing connection"
-                  placeholder="Click to select a connection"
-                  selectedKeys={[selectedConnection]}
-                  onSelectionChange={(keys) => setSelectedConnection(keys.currentKey)}
-                  selectionMode="single"
-                  variant="bordered"
-                  value={
-                    availableConnections.find((c) => c.value === selectedConnection)?.text
-                  }
-                >
-                  {availableConnections.map((connection) => (
-                    <SelectItem key={connection.key}>
-                      {connection.text}
-                    </SelectItem>
-                  ))}
-                </Select>
-              </div>
-              <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6">
-                <Input
-                  label="Enter your Simple Analytics website"
-                  placeholder="example.com"
-                  value={(!formVisible && connection.website) || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, website: e.target.value });
-                  }}
-                  color={errors.website ? "danger" : "default"}
-                  description={errors.website}
-                  variant="bordered"
-                  fullWidth
-                  disabled={formVisible}
-                />
-              </div>
-            </div>
+          <Spacer y={4} />
+          <Row className={"gap-2"}>
+            <Select
+              isDisabled={formVisible}
+              label="Select an existing connection"
+              placeholder="Click to select a connection"
+              selectedKeys={[selectedConnection]}
+              onSelectionChange={(keys) => setSelectedConnection(keys.currentKey)}
+              selectionMode="single"
+              variant="bordered"
+              value={
+                availableConnections.find((c) => c.value === selectedConnection)?.text
+              }
+            >
+              {availableConnections.map((connection) => (
+                <SelectItem key={connection.key}>
+                  {connection.text}
+                </SelectItem>
+              ))}
+            </Select>
+            <Input
+              label="Enter your Simple Analytics website"
+              placeholder="example.com"
+              value={(!formVisible && connection.website) || ""}
+              onChange={(e) => {
+                setConnection({ ...connection, website: e.target.value });
+              }}
+              color={errors.website ? "danger" : "default"}
+              description={errors.website}
+              variant="bordered"
+              fullWidth
+              disabled={formVisible}
+            />
           </Row>
           <Spacer y={4} />
           <Row align="center">

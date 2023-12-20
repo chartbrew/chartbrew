@@ -184,6 +184,7 @@ function ProjectForm(props) {
               )}
               {communityTemplate === "cmTemplate" && (
                 <ChartMogulTemplate
+                  projectName={newProject.name}
                   teamId={team.id}
                   onComplete={_onCompleteTemplate}
                   connections={connections}
