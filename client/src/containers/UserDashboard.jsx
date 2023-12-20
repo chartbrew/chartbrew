@@ -7,7 +7,7 @@ import {
   Button, Input, Spacer, Table, Tooltip, Link as LinkNext, Chip, Modal,
   CircularProgress, TableHeader, TableColumn, TableCell, TableBody, TableRow,
   ModalHeader, ModalBody, ModalFooter, ModalContent, DropdownTrigger, Dropdown,
-  DropdownMenu, DropdownItem, Avatar, AvatarGroup, Listbox, ListboxItem, Switch,
+  DropdownMenu, DropdownItem, Avatar, AvatarGroup, Listbox, ListboxItem, Switch, Checkbox,
 } from "@nextui-org/react";
 import {
   LuBarChart, LuCalendarDays, LuChevronDown, LuDatabase, LuLayoutGrid, LuPencilLine, LuPlug, LuPlus, LuSearch, LuSettings,
@@ -77,6 +77,7 @@ function UserDashboard(props) {
   const [connectionToDelete, setConnectionToDelete] = useState(null);
   const [deletingConnection, setDeletingConnection] = useState(false);
   const [connectionSearch, setConnectionSearch] = useState("");
+  const [deleteRelatedDatasets, setDeleteRelatedDatasets] = useState(false);
 
   const teamsRef = useRef(null);
   const initRef = useRef(null);
@@ -303,7 +304,11 @@ function UserDashboard(props) {
 
   const _onDeleteConnection = () => {
     setDeletingConnection(true);
-    dispatch(removeConnection({ team_id: team.id, connection_id: connectionToDelete.id }))
+    dispatch(removeConnection({
+      team_id: team.id,
+      connection_id: connectionToDelete.id,
+      removeDatasets: deleteRelatedDatasets
+    }))
       .then(() => {
         setDeletingConnection(false);
         setConnectionToDelete(null);
@@ -652,7 +657,7 @@ function UserDashboard(props) {
                           <TableCell key="name">
                             <Row align={"center"} className={"gap-4"}>
                               <Avatar
-                                src={connectionImages(isDark)[connection.type]}
+                                src={connectionImages(isDark)[connection.subType]}
                                 size="sm"
                                 isBordered
                               />
@@ -1001,23 +1006,32 @@ function UserDashboard(props) {
                 )}
               </div>
             </ModalBody>
-            <ModalFooter>
-              <Button
-                variant="bordered"
-                onClick={() => setConnectionToDelete(null)}
-                auto
+            <ModalFooter className="justify-between">
+              <Checkbox
+                onChange={() => setDeleteRelatedDatasets(!deleteRelatedDatasets)}
+                isSelected={deleteRelatedDatasets}
+                size="sm"
               >
-                Cancel
-              </Button>
-              <Button
-                auto
-                color="danger"
-                endContent={<LuTrash />}
-                onClick={() => _onDeleteConnection()}
-                isLoading={deletingConnection}
-              >
-                Delete
-              </Button>
+                Delete related datasets
+              </Checkbox>
+              <div className="flex flex-row items-center gap-1">
+                <Button
+                  variant="bordered"
+                  onClick={() => setConnectionToDelete(null)}
+                  size="sm"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  color="danger"
+                  endContent={<LuTrash />}
+                  onClick={() => _onDeleteConnection()}
+                  isLoading={deletingConnection}
+                >
+                  Delete
+                </Button>
+              </div>
             </ModalFooter>
           </ModalContent>
         </Modal>

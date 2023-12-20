@@ -199,7 +199,19 @@ class ConnectionController {
       });
   }
 
-  removeConnection(id) {
+  async removeConnection(id, removeDatasets) {
+    if (removeDatasets) {
+      try {
+        const drs = await db.DataRequest.findAll({ where: { connection_id: id } });
+        const datasetIds = drs.map((dr) => dr.dataset_id);
+
+        await db.DataRequest.destroy({ where: { connection_id: id } });
+        await db.Dataset.destroy({ where: { id: datasetIds } });
+      } catch (e) {
+        //
+      }
+    }
+
     return db.Connection.destroy({ where: { id } })
       .then(() => {
         return true;

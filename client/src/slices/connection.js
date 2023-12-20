@@ -98,9 +98,10 @@ export const testRequest = createAsyncThunk(
 
 export const removeConnection = createAsyncThunk(
   "connection/removeConnection",
-  async ({ team_id, connection_id }) => {
+  async ({ team_id, connection_id, removeDatasets }) => {
     const token = getAuthToken();
-    const url = `${API_HOST}/team/${team_id}/connections/${connection_id}`;
+    let url = `${API_HOST}/team/${team_id}/connections/${connection_id}`;
+    if (removeDatasets) url += "?removeDatasets=true";
     const headers = new Headers({
       Accept: "application/json",
       Authorization: `Bearer ${token}`,

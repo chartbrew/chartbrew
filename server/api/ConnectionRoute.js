@@ -199,7 +199,7 @@ module.exports = (app) => {
   ** Route to remove a connection from a project
   */
   app.delete("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("deleteOwn"), (req, res) => {
-    return connectionController.removeConnection(req.params.connection_id)
+    return connectionController.removeConnection(req.params.connection_id, req.query.removeDatasets)
       .then((success) => {
         if (success) {
           return res.status(200).send({ removed: success });
