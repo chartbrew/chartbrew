@@ -6,6 +6,7 @@ import {
 import _ from "lodash";
 import cookie from "react-cookies";
 import { LuArrowLeft, LuArrowRight, LuCheckCheck, LuChevronRight, LuExternalLink, LuPlus, LuX } from "react-icons/lu";
+import { useNavigate } from "react-router";
 
 import { createProject, generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
@@ -36,6 +37,7 @@ function SimpleAnalyticsTemplate(props) {
   const connections = useSelector(selectConnections);
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   useEffect(() => {
     _getTemplateConfig();
@@ -86,6 +88,7 @@ function SimpleAnalyticsTemplate(props) {
     dispatch(generateDashboard({ project_id: newProjectId, data, template: "simpleanalytics" }))
       .then(() => {
         setTimeout(() => {
+          navigate(`/${teamId}/${newProjectId}/dashboard`);
           onComplete();
         }, 2000);
       })

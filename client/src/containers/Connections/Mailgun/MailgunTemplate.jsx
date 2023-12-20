@@ -6,12 +6,14 @@ import {
 import _ from "lodash";
 import cookie from "react-cookies";
 import { LuArrowLeft, LuArrowRight, LuCheckCheck, LuExternalLink, LuPlus, LuX } from "react-icons/lu";
-import { generateDashboard } from "../../../slices/project";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router";
+
+import { createProject, generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 import { selectConnections } from "../../../slices/connection";
-import { useDispatch, useSelector } from "react-redux";
 
 const countryOptions = [{
   key: "eu", value: "eu", text: "🇪🇺 Europe", flag: "eu"
@@ -24,7 +26,7 @@ const countryOptions = [{
 */
 function MailgunTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete, onBack,
+    teamId, projectId, addError, onComplete, onBack, projectName,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -40,6 +42,7 @@ function MailgunTemplate(props) {
   const connections = useSelector(selectConnections);
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   useEffect(() => {
     _getTemplateConfig();
@@ -52,7 +55,11 @@ function MailgunTemplate(props) {
     }
   }, [connections]);
 
-  const _onGenerateDashboard = () => {
+  const _onGenerateDashboard = async () => {
+    if (!projectId && !projectName) {
+      return;
+    }
+
     setErrors({});
 
     if (formVisible && !connection.domain) {
@@ -84,9 +91,23 @@ function MailgunTemplate(props) {
     setLoading(true);
     setTestError(false);
 
-    dispatch(generateDashboard({ project_id: projectId, data, template: "mailgun" }))
+    let newProjectId = projectId;
+    if (!projectId && projectName) {
+      await dispatch(createProject({ data: { team_id: teamId, name: projectName } }))
+        .then((data) => {
+          newProjectId = data.payload?.id;
+        });
+    }
+
+    if (!newProjectId) {
+      setLoading(false);
+      return;
+    }
+
+    dispatch(generateDashboard({ project_id: newProjectId, data, template: "mailgun" }))
       .then(() => {
         setTimeout(() => {
+          navigate(`/${teamId}/${newProjectId}/dashboard`);
           onComplete();
         }, 2000);
       })
@@ -474,6 +495,7 @@ MailgunTemplate.defaultProps = {
 
 MailgunTemplate.propTypes = {
   teamId: PropTypes.string.isRequired,
+  projectName: PropTypes.string.isRequired,
   projectId: PropTypes.string.isRequired,
   onComplete: PropTypes.func.isRequired,
   addError: PropTypes.bool,

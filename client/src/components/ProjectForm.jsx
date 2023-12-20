@@ -193,6 +193,7 @@ function ProjectForm(props) {
               )}
               {communityTemplate === "mailgunTemplate" && (
                 <MailgunTemplate
+                  projectName={newProject.name}
                   teamId={team.id}
                   onComplete={_onCompleteTemplate}
                   connections={connections}
@@ -201,6 +202,7 @@ function ProjectForm(props) {
               )}
               {communityTemplate === "googleAnalyticsTemplate" && (
                 <GaTemplate
+                  projectName={newProject.name}
                   teamId={team.id}
                   onComplete={_onCompleteTemplate}
                   connections={connections}
@@ -209,6 +211,7 @@ function ProjectForm(props) {
               )}
               {communityTemplate === "plausibleTemplate" && (
                 <PlausibleTemplate
+                  projectName={newProject.name}
                   teamId={team.id}
                   onComplete={_onCompleteTemplate}
                   connections={connections}

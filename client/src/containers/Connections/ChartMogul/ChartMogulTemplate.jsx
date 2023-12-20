@@ -6,12 +6,13 @@ import {
 import cookie from "react-cookies";
 import _ from "lodash";
 import { LuArrowLeft, LuArrowUp, LuCheckCheck, LuLink, LuPlus, LuX } from "react-icons/lu";
+import { useDispatch } from "react-redux";
+import { useNavigation } from "react-router";
 
 import { createProject, generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
-import { useDispatch } from "react-redux";
 
 /*
   The Form used to configure the ChartMogul template
@@ -32,6 +33,7 @@ function ChartMogulTemplate(props) {
   const [formVisible, setFormVisible] = useState(true);
 
   const dispatch = useDispatch();
+  const navigate = useNavigation();
 
   useEffect(() => {
     _getTemplateConfig();
@@ -82,6 +84,7 @@ function ChartMogulTemplate(props) {
     dispatch(generateDashboard({ project_id: newProjectId, data, template: "chartmogul" }))
       .then(() => {
         setTimeout(() => {
+          navigate(`/${teamId}/${newProjectId}/dashboard`);
           onComplete();
         }, 2000);
       })
