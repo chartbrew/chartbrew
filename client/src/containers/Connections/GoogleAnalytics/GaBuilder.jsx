@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Button, Popover, Divider, Input, Tooltip, Spacer, Chip, Checkbox,
-  Select, SelectItem, PopoverTrigger, PopoverContent, Code,
+  Select, SelectItem, PopoverTrigger, PopoverContent, Code, Autocomplete, AutocompleteItem,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import _ from "lodash";
@@ -19,9 +19,7 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 import "ace-builds/webpack-resolver";
 
-import {
-  runDataRequest as runDataRequestAction,
-} from "../../../actions/dataRequest";
+import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 import {
   testRequest, getConnection,
 } from "../../../slices/connection";
@@ -39,9 +37,8 @@ const validEndDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)
 */
 function GaBuilder(props) {
   const {
-    dataRequest, runDataRequest,
-    connection, onSave, requests, // eslint-disable-line
-    onDelete, responses,
+    dataRequest, connection, onSave, requests, // eslint-disable-line
+    onDelete,
   } = props;
 
   const [gaRequest, setGaRequest] = useState({});
@@ -71,6 +68,8 @@ function GaBuilder(props) {
   const initRef = React.useRef(null);
   const params = useParams();
   const dispatch = useDispatch();
+
+  const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
 
   useEffect(() => {
     if (!initRef.current) {
@@ -160,13 +159,13 @@ function GaBuilder(props) {
   }, [metricsOptions, dimensionsOptions]);
 
   useEffect(() => {
-    if (responses && responses.length > 0) {
-      const selectedResponse = responses.find((o) => o.id === dataRequest.id);
-      if (selectedResponse?.data) {
-        setResult(JSON.stringify(selectedResponse.data, null, 2));
+    if (stateDrs && stateDrs.length > 0) {
+      const selectedResponse = stateDrs.find((o) => o.id === dataRequest.id);
+      if (selectedResponse?.response) {
+        setResult(JSON.stringify(selectedResponse.response, null, 2));
       }
     }
-  }, [responses]);
+  }, [stateDrs]);
 
   const _initRequest = () => {
     if (dataRequest) {
@@ -233,14 +232,23 @@ function GaBuilder(props) {
     if (request === null) request = gaRequest;
     const requestToSave = { ...request, configuration };
     onSave(requestToSave).then(() => {
-      _onRunRequest();
+      _onRunRequest(requestToSave);
     });
   };
 
-  const _onRunRequest = () => {
-    const useCache = !invalidateCache;
-    runDataRequest(params.projectId, params.chartId, dataRequest.id, useCache)
-      .then(() => {
+  const _onRunRequest = (dr) => {
+    const getCache = !invalidateCache;
+    dispatch(runDataRequest({
+      team_id: params.teamId,
+      dataset_id: params.datasetId,
+      dataRequest_id: dr.id,
+      getCache,
+    }))
+      .then((data) => {
+        const result = data.payload;
+        if (result?.response?.dataRequest?.responseData?.data) {
+          setResult(JSON.stringify(result.response.dataRequest.responseData.data, null, 2));
+        }
         setRequestLoading(false);
       })
       .catch((error) => {
@@ -254,8 +262,11 @@ function GaBuilder(props) {
     setCollectionsLoading(true);
     return dispatch(testRequest({ team_id: params.teamId, connection: conn }))
       .then((data) => {
+        return data.payload.json();
+      })
+      .then((data) => {
         setCollectionsLoading(false);
-        setAnalyticsData(data.payload);
+        setAnalyticsData(data);
         _initRequest();
       })
       .catch(() => {
@@ -452,22 +463,23 @@ function GaBuilder(props) {
                   <div><LuInfo /></div>
                 </Tooltip>
               </div>
-              <Select
+              <Autocomplete
                 isDisabled={!configuration.propertyId}
                 variant="bordered"
                 isLoading={collectionsLoading}
                 selectedKeys={[configuration.metrics]}
                 placeholder="Select a metric"
+                labelPlacement="outside"
                 errorMessage={formErrors.metrics}
                 color={formErrors.metrics ? "danger" : "default"}
-                onSelectionChange={(keys) => setConfiguration({ ...configuration, metrics: keys.currentKey })}
+                onSelectionChange={(key) => setConfiguration({ ...configuration, metrics: key })}
                 selectionMode="single"
               >
                 {metricsOptions.map((item) => {
                   return (
-                    <SelectItem
+                    <AutocompleteItem
                       key={item.key}
-                      endContent={item.category}
+                      endContent={<Chip size="sm" variant="flat">item.category</Chip>}
                       description={item.description}
                       textValue={item.text}
                     >
@@ -478,42 +490,44 @@ function GaBuilder(props) {
                           {item.key}
                         </Text>
                       </div>
-                    </SelectItem>
+                    </AutocompleteItem>
                   );
                 })}
-              </Select>
+              </Autocomplete>
             </div>
             <div className="col-span-12">
               <Text>Choose a dimension</Text>
-              <Select
+              <Autocomplete
                 isDisabled={!configuration.propertyId}
                 variant="bordered"
                 selectedKeys={[configuration.dimensions]}
-                onSelectionChange={(keys) => setConfiguration({ ...configuration, dimensions: keys.currentKey })}
+                onSelectionChange={(key) => setConfiguration({ ...configuration, dimensions: key })}
                 selectionMode="single"
+                labelPlacement="outside"
                 placeholder="Select a dimension"
                 errorMessage={formErrors.dimensions}
                 color={formErrors.dimensions ? "danger" : "default"}
               >
                 {dimensionsOptions.map((item) => {
                   return (
-                    <SelectItem
+                    <AutocompleteItem
                       key={item.key}
-                      endContent={item.category}
+                      endContent={<Chip size="sm" variant="flat">item.category</Chip>}
                       description={item.description}
                       textValue={item.text}
                     >
                       <Text>{item.text}</Text>
-                    </SelectItem>
+                    </AutocompleteItem>
                   );
                 })}
-              </Select>
+              </Autocomplete>
             </div>
             <div className="col-span-12">
               <Text>Start date</Text>
               <Input
                 endContent={_renderCalendar("startDate")}
                 placeholder="YYYY-MM-DD"
+                labelPlacement="outside"
                 value={configuration.startDate}
                 disabled={!configuration.propertyId}
                 onChange={(e) => {
@@ -525,26 +539,35 @@ function GaBuilder(props) {
               <Spacer y={1} />
               <div className="flex flex-row gap-1 items-center">
                 <Chip
+                  variant="flat"
+                  color="secondary"
+                  className="cursor-pointer hover:shadow-sm hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, startDate: "today" })}
                 >
                   today
                 </Chip>
                 <Chip
+                  variant="flat"
+                  color="secondary"
+                  className="cursor-pointer hover:shadow-sm hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, startDate: "yesterday" })}
                 >
                   yesterday
                 </Chip>
                 <Chip
+                  variant="flat"
+                  color="secondary"
+                  className="cursor-pointer hover:shadow-sm hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, startDate: "30daysAgo" })}
                 >
                   30daysAgo
                 </Chip>
                 <Chip
                   onClick={() => setDateHelp(!dateHelp)}
-                  variant="flat"
+                  variant="bordered"
                   color={dateHelp ? "secondary" : "default"}
-                  size="sm"
                   startContent={<LuInfo />}
+                  className="cursor-pointer hover:shadow-sm hover:saturate-200 transition-all"
                 >
                   info
                 </Chip>
@@ -555,6 +578,7 @@ function GaBuilder(props) {
               <Input
                 endContent={_renderCalendar("endDate")}
                 placeholder="YYYY-MM-DD"
+                labelPlacement="outside"
                 value={configuration.endDate}
                 disabled={!configuration.propertyId}
                 onChange={(e) => {
@@ -566,26 +590,35 @@ function GaBuilder(props) {
               <Spacer y={1} />
               <div className="flex flex-row gap-1 items-center">
                 <Chip
+                  variant="flat"
+                  color="secondary"
+                  className="cursor-pointer hover:shadow-sm hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, endDate: "today" })}
                 >
                   today
                 </Chip>
                 <Chip
+                  variant="flat"
+                  color="secondary"
+                  className="cursor-pointer hover:shadow-sm hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, endDate: "yesterday" })}
                 >
                   yesterday
                 </Chip>
                 <Chip
+                  variant="flat"
+                  color="secondary"
+                  className="cursor-pointer hover:shadow-sm hover:saturate-200 transition-all"
                   onClick={() => setConfiguration({ ...configuration, endDate: "30daysAgo" })}
                 >
                   30daysAgo
                 </Chip>
                 <Chip
                   onClick={() => setDateHelp(!dateHelp)}
-                  variant="flat"
+                  variant="bordered"
                   color={dateHelp ? "secondary" : "default"}
-                  size="sm"
                   startContent={<LuInfo />}
+                  className="cursor-pointer hover:shadow-sm hover:saturate-200 transition-all"
                 >
                   info
                 </Chip>
@@ -691,7 +724,6 @@ GaBuilder.defaultProps = {
 
 GaBuilder.propTypes = {
   connection: PropTypes.object.isRequired,
-  runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   requests: PropTypes.array.isRequired,
   dataRequest: PropTypes.object,
@@ -705,11 +737,8 @@ const mapStateToProps = (state) => {
   };
 };
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = () => {
   return {
-    runDataRequest: (projectId, chartId, drId, getCache) => {
-      return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
-    },
   };
 };
 

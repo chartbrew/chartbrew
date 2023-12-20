@@ -177,17 +177,21 @@ function GaConnectionForm(props) {
               color={"secondary"}
               endContent={<LuRefreshCw />}
               onClick={_onGoogleAuth}
+              size="sm"
             >
               {"Click here to re-authenticate"}
             </Button>
           )}
         </Row>
         {editConnection && connection.OAuth && (
-          <Row>
-            <Text className="text-success">
-              {`Authenticated as ${connection.OAuth.email}`}
-            </Text>
-          </Row>
+          <>
+            <Spacer y={2} />
+            <Row>
+              <Chip variant="flat">
+                {`Authenticated as ${connection.OAuth.email}`}
+              </Chip>
+            </Row>
+          </>
         )}
         {errors.auth && (
           <Row>

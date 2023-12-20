@@ -83,11 +83,13 @@ export const testRequest = createAsyncThunk(
     const token = getAuthToken();
     const url = `${API_HOST}/team/${team_id}/connections/${connection.type}/test`;
     const body = JSON.stringify(connection);
+
     const headers = new Headers({
       Accept: "application/json",
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     });
+
     const response = await fetch(url, { headers, method: "POST", body });
 
     return response;

@@ -330,79 +330,73 @@ function DatasetBuilder(props) {
   return (
     <div className="grid grid-cols-12 divide-x-1 gap-4">
       <div className="col-span-12 md:col-span-4">
-        <Row align="center" className={"justify-between"}>
-          <div><Text>Dimension</Text></div>
-          <Autocomplete
-            labelPlacement="outside"
-            variant="bordered"
-            className="max-w-[300px]"
-            placeholder="Select a dimension"
-            selectedKey={dataset.xAxis}
-            onSelectionChange={(key) => _onUpdateDataset({ xAxis: key })}
-          >
-            {_filterOptions("x").map((option) => (
-              <AutocompleteItem
-                key={option.value}
-                startContent={(
-                  <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
-                )}
-                description={option.isObject ? "Key-Value visualization" : null}
-              >
-                {option.text}
-              </AutocompleteItem>
-            ))}
-          </Autocomplete>
-        </Row>
+        <Autocomplete
+          label="Dimension"
+          labelPlacement="outside"
+          variant="bordered"
+          placeholder="Select a dimension"
+          selectedKey={dataset.xAxis}
+          onSelectionChange={(key) => _onUpdateDataset({ xAxis: key })}
+        >
+          {_filterOptions("x").map((option) => (
+            <AutocompleteItem
+              key={option.value}
+              startContent={(
+                <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+              )}
+              description={option.isObject ? "Key-Value visualization" : null}
+            >
+              {option.text}
+            </AutocompleteItem>
+          ))}
+        </Autocomplete>
+
         <Spacer y={4} />
-        <Row align="center" className={"justify-between"}>
-          <div><Text>Metric</Text></div>
-          <Autocomplete
-            labelPlacement="outside"
-            variant="bordered"
-            className="max-w-[300px]"
-            placeholder="Select a metric"
-            selectedKey={dataset.yAxis}
-            onSelectionChange={(key) => _onUpdateDataset({ yAxis: key })}
-          >
-            {_getYFieldOptions().map((option) => (
-              <AutocompleteItem
-                key={option.value}
-                startContent={(
-                  <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
-                )}
-                description={option.isObject ? "Key-Value visualization" : null}
-              >
-                {option.text}
-              </AutocompleteItem>
-            ))}
-          </Autocomplete>
-        </Row>
+
+        <Autocomplete
+          label="Metric"
+          labelPlacement="outside"
+          variant="bordered"
+          placeholder="Select a metric"
+          selectedKey={dataset.yAxis}
+          onSelectionChange={(key) => _onUpdateDataset({ yAxis: key })}
+        >
+          {_getYFieldOptions().map((option) => (
+            <AutocompleteItem
+              key={option.value}
+              startContent={(
+                <Chip size="sm" variant="flat" className={"min-w-[70px] text-center"} color={option.label.color}>{option.label.content}</Chip>
+              )}
+              description={option.isObject ? "Key-Value visualization" : null}
+            >
+              {option.text}
+            </AutocompleteItem>
+          ))}
+        </Autocomplete>
+
         <Spacer y={2} />
-        <Row align={"center"} justify={"flex-end"}>
-          <Select
-            placeholder="Select an operation"
-            labelPlacement="outside"
-            onSelectionChange={(keys) => _onUpdateDataset({ yAxisOperation: keys.currentKey })}
-            selectedKeys={[dataset.yAxisOperation]}
-            selectionMode="single"
-            variant="bordered"
-            renderValue={(
-              <Text>
-                {(dataset.yAxisOperation
-                  && operations.find((i) => i.value === dataset.yAxisOperation).text
-                )
-                  || "Operation"}
-              </Text>
-            )}
-            className="max-w-[300px]"
-          >
-            {operations.map((option) => (
-              <SelectItem key={option.value}>
-                {option.text}
-              </SelectItem>
-            ))}
-          </Select>
-        </Row>
+        <Select
+          placeholder="Select an operation"
+          labelPlacement="outside"
+          onSelectionChange={(keys) => _onUpdateDataset({ yAxisOperation: keys.currentKey })}
+          selectedKeys={[dataset.yAxisOperation]}
+          selectionMode="single"
+          variant="bordered"
+          renderValue={(
+            <Text>
+              {(dataset.yAxisOperation
+                && operations.find((i) => i.value === dataset.yAxisOperation).text
+              )
+                || "Operation"}
+            </Text>
+          )}
+        >
+          {operations.map((option) => (
+            <SelectItem key={option.value}>
+              {option.text}
+            </SelectItem>
+          ))}
+        </Select>
         <Spacer y={4} />
         <Divider />
         <Spacer y={4} />
@@ -440,14 +434,14 @@ function DatasetBuilder(props) {
           </Link>
         )}
         {formula && (
-          <Row align={"center"} justify={"space-between"}>
+          <>
             <div className="flex flex-col">
               <Popover>
                 <PopoverTrigger>
                   <div className="flex flex-row gap-1 items-center">
-                    <Text>
+                    <span className="text-sm">
                       {"Metric formula"}
-                    </Text>
+                    </span>
                     <LuInfo size={18} />
                   </div>
                 </PopoverTrigger>
@@ -456,38 +450,41 @@ function DatasetBuilder(props) {
                 </PopoverContent>
               </Popover>
             </div>
-            <div className="flex flex-col">
-              <div className="flex flex-row gap-3 items-center w-full">
-                <Input
-                  labelPlacement="outside"
-                  placeholder="Enter your formula here: {val}"
-                  value={formula}
-                  onChange={(e) => setFormula(e.target.value)}
-                  variant="bordered"
-                  fullWidth
-                />
-                {formula !== dataset.formula && (
-                  <Tooltip
-                    content={"Apply the formula"}
-                  >
-                    <Link onClick={_onApplyFormula}>
-                      <LuCheckCircle className={"text-success"} />
+            <Spacer y={1} />
+            <Row align={"center"} justify={"space-between"}>
+              <div className="flex flex-col">
+                <div className="flex flex-row gap-3 items-center w-full">
+                  <Input
+                    labelPlacement="outside"
+                    placeholder="Enter your formula here: {val}"
+                    value={formula}
+                    onChange={(e) => setFormula(e.target.value)}
+                    variant="bordered"
+                    fullWidth
+                  />
+                  {formula !== dataset.formula && (
+                    <Tooltip
+                      content={"Apply the formula"}
+                    >
+                      <Link onClick={_onApplyFormula}>
+                        <LuCheckCircle className={"text-success"} />
+                      </Link>
+                    </Tooltip>
+                  )}
+                  <Tooltip content="Remove formula">
+                    <Link onClick={_onRemoveFormula}>
+                      <LuXCircle className="text-danger" />
                     </Link>
                   </Tooltip>
-                )}
-                <Tooltip content="Remove formula">
-                  <Link onClick={_onRemoveFormula}>
-                    <LuXCircle className="text-danger" />
-                  </Link>
-                </Tooltip>
-                <Tooltip content="Click for an example">
-                  <Link onClick={_onExampleFormula}>
-                    <LuWand2 className="text-primary" />
-                  </Link>
-                </Tooltip>
+                  <Tooltip content="Click for an example">
+                    <Link onClick={_onExampleFormula}>
+                      <LuWand2 className="text-primary" />
+                    </Link>
+                  </Tooltip>
+                </div>
               </div>
-            </div>
-          </Row>
+            </Row>
+          </>
         )}
 
         <Spacer y={4} />
