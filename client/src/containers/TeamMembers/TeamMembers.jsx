@@ -223,7 +223,7 @@ function TeamMembers(props) {
                     {memberRole.role === "projectViewer" && <Chip color="default" variant="flat" size="sm">Project viewer</Chip>}
                   </TableCell>
                   <TableCell key="projectAccess">
-                    {memberRole.role !== "teamOwner" && memberRole.role !== "teamAdmin" && (!memberRole.projects || memberRole.projects.length === 0) ? "None" : memberRole?.projects?.length}
+                    {memberRole.role !== "teamOwner" && memberRole.role !== "teamAdmin" ? memberRole?.projects?.length : ""}
                     {memberRole.role === "teamOwner" || memberRole.role === "teamAdmin" ? "All" : ""}
                   </TableCell>
                   <TableCell key="export">

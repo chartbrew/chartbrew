@@ -106,12 +106,6 @@ function InviteMembersForm(props) {
             <Text b>
               {"Select a role"}
             </Text>
-            <Spacer x={1} />
-            <Tooltip
-              content="The team role is applied over all the projects selected above"
-            >
-              <div><LuInfo /></div>
-            </Tooltip>
           </Row>
           <Spacer y={2} />
           <Row>
