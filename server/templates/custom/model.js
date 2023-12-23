@@ -1,6 +1,6 @@
 const builder = require("./builder");
 
-module.exports.build = async (projectId, {
+module.exports.build = async (teamId, projectId, {
   template_id, charts,
 }) => {
   if (!template_id) return Promise.reject("Missing required parameters");

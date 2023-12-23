@@ -27,6 +27,7 @@ import DatasetQuery from "./DatasetQuery";
 import DatasetBuilder from "./DatasetBuilder";
 import { getProjects, selectProjects } from "../../slices/project";
 import { chartColors } from "../../config/colors";
+import getDashboardLayout from "../../modules/getDashboardLayout";
 
 function Dataset() {
   const [error, setError] = useState(null);
@@ -191,9 +192,30 @@ function Dataset() {
     let loadingCounter = 0;
 
     completeProjects.forEach((projectId) => {
+      const currentProject = projects.find((p) => p.id === projectId);
+      // add chart at the end of the dashboard
+      const layouts = getDashboardLayout(currentProject.Charts);
+      let bottomY = 0;
+      const chartLayout = {};
+      Object.keys(layouts).map((bp) => {
+        layouts[bp].forEach((item) => {
+          const bottom = item.y + item.h;
+          if (bottom > bottomY) {
+            bottomY = bottom;
+          }
+        });
+
+        chartLayout[bp] = [
+          0,
+          bottomY,
+          bp === "lg" ? 4 : bp === "md" ? 5 : bp === "sm" ? 3 : bp === "xs" ? 2 : 2,
+          2,
+        ];
+      });
+
       dispatch(createChart({
         project_id: projectId,
-        data: { ...chart, draft: false, id: null },
+        data: { ...chart, draft: false, id: null, layout: chartLayout },
       }))
         .then((actionData) => {
           let cdcData = { ...dataset };

@@ -49,19 +49,19 @@ function CustomTemplates(props) {
         <Row>
           <Text size="h4">No custom templates yet</Text>
         </Row>
-        <Spacer y={1} />
         <Row>
           <Text>{"You can create custom templates from any project with data source connections and charts."}</Text>
         </Row>
+        <Spacer y={1} />
         {projectId && (
-          <Button
-            color="primary"
-            content="Create a new template from this project"
-            onClick={() => setCreateTemplate(true)}
-            size="small"
-          >
-            Create a new template from this project
-          </Button>
+          <Row>
+            <Button
+              color="primary"
+              onClick={() => setCreateTemplate(true)}
+            >
+              Create a new template from this project
+            </Button>
+          </Row>
         )}
 
         <CreateTemplateForm
