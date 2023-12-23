@@ -5,7 +5,7 @@ import {
 } from "@nextui-org/react";
 import _ from "lodash";
 import cookie from "react-cookies";
-import { LuArrowLeft, LuArrowRight, LuCheckCheck, LuExternalLink, LuPlus, LuX } from "react-icons/lu";
+import { LuArrowLeft, LuArrowRight, LuArrowUp, LuCheckCheck, LuExternalLink, LuPlus, LuX } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 
@@ -228,42 +228,38 @@ function MailgunTemplate(props) {
 
       {availableConnections && availableConnections.length > 0 && (
         <>
-          <Row>
-            <div className="grid grid-cols-12 gap-1">
-              <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6">
-                <Select
-                  isDisabled={formVisible}
-                  label="Select an existing connection"
-                  placeholder="Click to select a connection"
-                  value={_getConnectionName()}
-                  onSelectionChange={(key) => setSelectedConnection(key)}
-                  variant="bordered"
-                  selectionMode="single"
-                  selectedKeys={[selectedConnection]}
-                >
-                  {availableConnections.map((connection) => (
-                    <SelectItem key={connection.key}>
-                      {connection.text}
-                    </SelectItem>
-                  ))}
-                </Select>
-              </div>
-              <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6">
-                <Input
-                  label="Enter your Mailgun domain"
-                  placeholder="mg.domain.com"
-                  value={(!formVisible && connection.domain) || ""}
-                  onChange={(e) => {
-                    setConnection({ ...connection, domain: e.target.value });
-                  }}
-                  color={errors.domain ? "danger" : "default"}
-                  description={errors.domain}
-                  variant="bordered"
-                  fullWidth
-                  disabled={formVisible}
-                />
-              </div>
-            </div>
+          <Spacer y={2} />
+          <Row className={"gap-2"}>
+            <Select
+              isDisabled={formVisible}
+              label="Select an existing connection"
+              placeholder="Click to select a connection"
+              value={_getConnectionName()}
+              onSelectionChange={(keys) => setSelectedConnection(keys.currentKey)}
+              variant="bordered"
+              selectionMode="single"
+              selectedKeys={[selectedConnection]}
+            >
+              {availableConnections.map((connection) => (
+                <SelectItem key={connection.key}>
+                  {connection.text}
+                </SelectItem>
+              ))}
+            </Select>
+
+            <Input
+              label="Enter your Mailgun domain"
+              placeholder="mg.domain.com"
+              value={(!formVisible && connection.domain) || ""}
+              onChange={(e) => {
+                setConnection({ ...connection, domain: e.target.value });
+              }}
+              color={errors.domain ? "danger" : "default"}
+              description={errors.domain}
+              variant="bordered"
+              fullWidth
+              isDisabled={formVisible}
+            />
           </Row>
           <Spacer y={2} />
           <Row align="center">
@@ -282,6 +278,7 @@ function MailgunTemplate(props) {
                 variant="ghost"
                 auto
                 onClick={() => setFormVisible(false)}
+                startContent={<LuArrowUp />}
               >
                 Use an existing connection instead
               </Button>
