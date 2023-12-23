@@ -3,9 +3,9 @@ const _ = require("lodash");
 const db = require("../../models/models");
 
 module.exports = async (
-  projectId, configuration, dashboardOrder, modelTemplate, charts, connection_id
+  teamId, projectId, configuration, modelTemplate, charts, connection_id
 ) => {
-  const model = modelTemplate(configuration, dashboardOrder);
+  const model = modelTemplate(configuration);
 
   if (charts && Array.isArray(charts)) {
     const newModelCharts = [];
@@ -18,34 +18,25 @@ module.exports = async (
     model.Charts = newModelCharts;
   }
 
-  model.Connections[0].project_id = projectId;
+  model.Connections[0].team_id = teamId;
 
-  const createDatasets = (datasets, cId, chartId) => {
-    const datasetPromises = [];
-    // now go through the datasets
-    const newDatasets = datasets.map(
-      (d) => ({ ...d, chart_id: chartId, connection_id: cId })
-    );
+  let connection;
+  if (connection_id) connection = await db.Connection.findByPk(connection_id);
+  else connection = await db.Connection.create(model.Connections[0]);
 
-    newDatasets.forEach((d) => {
-      datasetPromises.push(
-        db.Dataset.create(d)
-          .then((createdDataset) => {
-            const drPromises = [];
-            d.DataRequests.forEach((dr) => {
-              drPromises.push(
-                db.DataRequest.create({ ...dr, connection_id: cId, dataset_id: createdDataset.id }),
-              );
-            });
-            return Promise.all(drPromises);
-          })
-      );
-    });
+  const datasetMapping = {};
+  const datasetPromises = [];
+  model.Datasets.forEach((dataset) => {
+    datasetPromises.push(db.Dataset.create({ ...dataset, team_id: teamId, draft: false })
+      .then((d) => {
+        datasetMapping[dataset.td_id] = d.id;
+        dataset.DataRequests.forEach((dr) => {
+          db.DataRequest.create({ ...dr, connection_id: connection.id, dataset_id: d.id });
+        });
+      }));
+  });
 
-    return Promise.all(datasetPromises);
-  };
-
-  const connection = await db.Connection.findByPk(connection_id);
+  await Promise.all(datasetPromises);
 
   const chartPromises = [];
   // now go through all the charts
@@ -55,17 +46,17 @@ module.exports = async (
 
     chartPromises.push(
       db.Chart.create(newChart)
-        .then(async (createdChart) => {
-          const createdDatasets = await createDatasets(
-            chart.Datasets,
-            connection.id,
-            createdChart.id
-          );
+        .then((createdChart) => {
+          chart.ChartDatasetConfigs.forEach((cdc) => {
+            const newCdc = {
+              ...cdc,
+              chart_id: createdChart.id,
+              dataset_id: datasetMapping[cdc.td_id],
+            };
+            db.ChartDatasetConfig.create(newCdc);
+          });
 
-          return {
-            chart: createdChart,
-            datasets: createdDatasets,
-          };
+          return createdChart;
         })
     );
   });

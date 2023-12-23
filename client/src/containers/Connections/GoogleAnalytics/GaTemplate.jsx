@@ -1,32 +1,31 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Checkbox, Divider, Input, Select, SelectItem, Spacer,
+  Button, Checkbox, Select, SelectItem, Spacer,
 } from "@nextui-org/react";
 import _ from "lodash";
 import cookie from "react-cookies";
 import { LuArrowLeft, LuArrowRight, LuCheckCheck, LuPlus, LuX } from "react-icons/lu";
-import { FcGoogle } from "react-icons/fc";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router";
 
 import {
-  testRequest, addConnection, selectConnections,
+  testRequest, selectConnections,
 } from "../../../slices/connection";
-import { generateDashboard } from "../../../slices/project";
+import { createProject, generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
-import { useDispatch, useSelector } from "react-redux";
 
 /*
   The Form used to configure the SimpleAnalytics template
 */
 function GaTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete, selection, onBack,
+    teamId, projectId, addError, onComplete, selection, onBack, projectName,
   } = props;
 
   const [loading, setLoading] = useState(false);
-  const [connection, setConnection] = useState({ name: "Google analytics", type: "googleAnalytics" });
   const [errors, setErrors] = useState({});
   const [configuration, setConfiguration] = useState({
     accountId: "",
@@ -35,7 +34,6 @@ function GaTemplate(props) {
   const [selectedCharts, setSelectedCharts] = useState(false);
   const [availableConnections, setAvailableConnections] = useState([]);
   const [selectedConnection, setSelectedConnection] = useState(null);
-  const [formVisible, setFormVisible] = useState(true);
   const [accountOptions, setAccountOptions] = useState([]);
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [accountsData, setAccountsData] = useState(null);
@@ -43,6 +41,7 @@ function GaTemplate(props) {
   const connections = useSelector(selectConnections);
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   useEffect(() => {
     _getTemplateConfig();
@@ -99,15 +98,12 @@ function GaTemplate(props) {
     }
   }, [selection]);
 
-  const _onGenerateDashboard = () => {
-    setErrors({});
-
-    if (formVisible && !connection.name) {
-      setTimeout(() => {
-        setErrors({ ...errors, name: "Please enter a name for your connection" });
-      }, 100);
+  const _onGenerateDashboard = async () => {
+    if (!projectId && !projectName) {
       return;
     }
+
+    setErrors({});
 
     if (!configuration.accountId) {
       setTimeout(() => {
@@ -131,17 +127,31 @@ function GaTemplate(props) {
     }
 
     const data = {
-      ...connection, team_id: teamId, charts: selectedCharts, configuration
+      team_id: teamId, charts: selectedCharts, configuration
     };
-    if (!formVisible && selectedConnection) {
+    if (selectedConnection) {
       data.connection_id = selectedConnection;
     }
 
     setLoading(true);
 
-    dispatch(generateDashboard({ project_id: projectId, data, template: "googleAnalytics" }))
+    let newProjectId = projectId;
+    if (!projectId && projectName) {
+      await dispatch(createProject({ data: { team_id: teamId, name: projectName } }))
+        .then((data) => {
+          newProjectId = data.payload?.id;
+        });
+    }
+
+    if (!newProjectId) {
+      setLoading(false);
+      return;
+    }
+
+    dispatch(generateDashboard({ project_id: newProjectId, data, template: "googleAnalytics" }))
       .then(() => {
         setTimeout(() => {
+          navigate(`/${teamId}/${newProjectId}/dashboard`);
           onComplete();
         }, 2000);
       })
@@ -163,10 +173,6 @@ function GaTemplate(props) {
     });
 
     setAvailableConnections(foundConnections);
-
-    if (!selectedConnection && foundConnections.length > 0) {
-      setFormVisible(false);
-    }
   };
 
   const _onSelectConnection = (value) => {
@@ -176,7 +182,10 @@ function GaTemplate(props) {
     const connectionObj = connections.filter((c) => c.id === parseInt(value, 10))[0];
     return dispatch(testRequest({ team_id: teamId, connection: connectionObj }))
       .then((data) => {
-        setAccountsData(data.payload);
+        return data.payload.json();
+      })
+      .then((data) => {
+        setAccountsData(data);
       })
       .catch(() => {
         //
@@ -256,35 +265,6 @@ function GaTemplate(props) {
     setSelectedCharts([]);
   };
 
-  const _onGoogleAuth = async () => {
-    const data = await dispatch(addConnection({ team_id: teamId, connection }));
-    const newConnection = data.payload;
-
-    const url = `${API_HOST}/team/${teamId}/connections/${newConnection.id}/google/auth?type=googleAnalyticsTemplate`;
-    const method = "GET";
-    const headers = new Headers({
-      "Accept": "application/json",
-      "Authorization": cookie.load("brewToken"),
-    });
-
-    return fetch(url, { method, headers })
-      .then((response) => {
-        if (!response.ok) return Promise.reject(response.status);
-
-        return response.json();
-      })
-      .then((result) => {
-        if (result.url) {
-          window.location.href = result.url;
-        } else {
-          Promise.reject("No URL found");
-        }
-      })
-      .catch(() => {
-        setErrors({ ...errors, auth: "Cannot authenticate with Google. Please try again." });
-      });
-  };
-
   const _getListName = (list, value, isInt) => (
     list
       && value
@@ -307,19 +287,39 @@ function GaTemplate(props) {
         <Spacer x={2} />
         <span className="font-bold">Configure the template</span>
       </Row>
-      <Spacer y={2} />
-      {availableConnections && availableConnections.length > 0 && (
+      <Spacer y={4} />
+      {!availableConnections || availableConnections.length === 0 && (
         <>
           <Row align="center">
+            <Text b>
+              {"You don't have any Google Analytics connections. Please create one first"}
+            </Text>
+          </Row>
+          <Spacer y={2} />
+          <Row align="center">
+            <Button
+              color="primary"
+              variant="ghost"
+              onClick={() => navigate(`/${teamId}/connection/new?type=googleAnalytics`)}
+              startContent={<LuPlus />}
+            >
+              {"Create a new Google Analytics connection"}
+            </Button>
+          </Row>
+        </>
+      )}
+      {availableConnections && availableConnections.length > 0 && (
+        <>
+          <Row align="center" className={"gap-2"}>
             <Select
-              isDisabled={formVisible}
-              label="Select an existing connection"
+              label="Select a connection"
               placeholder="Click to select a connection"
-              value={_getListName(availableConnections, selectedConnection, true)}
+              renderValue={_getListName(availableConnections, selectedConnection, true)}
               selectedKeys={[selectedConnection]}
               onSelectionChange={(keys) => _onSelectConnection(keys.currentKey)}
               selectionMode="single"
               variant="bordered"
+              fullWidth
             >
               {availableConnections.map((connection) => (
                 <SelectItem key={connection.key}>
@@ -327,41 +327,27 @@ function GaTemplate(props) {
                 </SelectItem>
               ))}
             </Select>
-          </Row>
-          <Spacer y={1} />
-          <Row align="center">
-            {!formVisible && (
-              <Button
-                variant="faded"
-                startContent={<LuPlus />}
-                onClick={() => setFormVisible(true)}
-                color="primary"
-                size="sm"
-              >
-                Or create a new connection
-              </Button>
-            )}
-            {formVisible && (
-              <Button
-                variant="faded"
-                color="primary"
-                onClick={() => setFormVisible(false)}
-              >
-                Use an existing connection instead
-              </Button>
-            )}
+            
+            <Button
+              variant="ghost"
+              onClick={() => navigate(`/${teamId}/connection/new?type=googleAnalytics`)}
+              startContent={<LuPlus />}
+              className="min-w-[200px]"
+            >
+              {"Or create new"}
+            </Button>
           </Row>
           <Spacer y={4} />
 
           <div className="grid grid-cols-12 gap-2">
-            {selectedConnection && !formVisible && (
+            {selectedConnection && (
               <>
                 <div className="col-span-12 md:col-span-6">
                   <Select
                     variant="bordered"
                     label="Account"
                     placeholder="Select an account"
-                    value={_getListName(accountOptions, configuration.accountId)}
+                    renderValue={_getListName(accountOptions, configuration.accountId)}
                     selectedKeys={[configuration.accountId]}
                     onSelectionChange={(keys) => _onAccountSelected(keys.currentKey)}
                     selectionMode="single"
@@ -397,45 +383,8 @@ function GaTemplate(props) {
         </>
       )}
 
-      {formVisible && (
-        <>
-          {availableConnections && availableConnections.length > 0 && (
-            <Row>
-              <Divider />
-            </Row>
-          )}
-          <Spacer y={2} />
-          <Row align="center">
-            <Input
-              placeholder="Google analytics"
-              label="Enter a name for your connection"
-              value={connection.name || ""}
-              onChange={(e) => {
-                setConnection({ ...connection, name: e.target.value });
-              }}
-              variant="bordered"
-              fullWidth
-              color={errors.name ? "danger" : "default"}
-              description={errors.name}
-            />
-          </Row>
-          <Spacer y={2} />
-          <Row align="center">
-            <Button
-              variant={"faded"}
-              endContent={<FcGoogle />}
-              onClick={_onGoogleAuth}
-              color="secondary"
-            >
-              {"Authenticate with Google"}
-            </Button>
-          </Row>
-          {errors.auth && (<Row><p>{errors.auth}</p></Row>)}
-        </>
-      )}
-
       {configuration && (
-        <>
+        <>  
           <Spacer y={4} />
           <Row>
             <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
@@ -502,7 +451,8 @@ function GaTemplate(props) {
       <Row>
         <Button
           isDisabled={
-            (!formVisible && !selectedConnection)
+            !selectedConnection
+            || !projectName
             || !configuration.accountId
             || !configuration.propertyId
             || (!selectedCharts || selectedCharts.length < 1)
@@ -542,6 +492,7 @@ GaTemplate.defaultProps = {
 GaTemplate.propTypes = {
   teamId: PropTypes.string.isRequired,
   projectId: PropTypes.string.isRequired,
+  projectName: PropTypes.string.isRequired,
   onComplete: PropTypes.func.isRequired,
   addError: PropTypes.bool,
   selection: PropTypes.number,

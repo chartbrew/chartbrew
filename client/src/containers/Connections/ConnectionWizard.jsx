@@ -21,7 +21,7 @@ import CustomerioConnectionForm from "./Customerio/CustomerioConnectionForm";
 import TimescaleConnectionForm from "./Timescale/TimescaleConnectionForm";
 import { addConnection, getConnection, saveConnection } from "../../slices/connection";
 import HelpBanner from "../../components/HelpBanner";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { generateInviteUrl } from "../../slices/team";
 
 function ConnectionWizard() {
@@ -40,6 +40,7 @@ function ConnectionWizard() {
   const dispatch = useDispatch();
   const params = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const connectionToEdit = useSelector((state) => state.connection.data.find((c) => c.id === parseInt(params.connectionId, 10)));
 
@@ -79,6 +80,12 @@ function ConnectionWizard() {
       dispatch(getConnection({ team_id: params.teamId, connection_id: params.connectionId }));
     }
   }, [params]);
+
+  useEffect(() => {
+    if (searchParams.get("type")) {
+      setSelectedType(searchParams.get("type"));
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (connectionToEdit && !fetchConnectionRef.current) {
