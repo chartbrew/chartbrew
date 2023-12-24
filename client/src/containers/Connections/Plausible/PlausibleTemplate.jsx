@@ -5,13 +5,14 @@ import {
 } from "@nextui-org/react";
 import _ from "lodash";
 import cookie from "react-cookies";
-import { LuArrowLeft, LuCheckCheck, LuChevronRight, LuExternalLink, LuPlus, LuX } from "react-icons/lu";
+import { LuArrowLeft, LuArrowUp, LuCheckCheck, LuChevronRight, LuExternalLink, LuPlus, LuX } from "react-icons/lu";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router";
 
-import { generateDashboard } from "../../../slices/project";
+import { createProject, generateDashboard } from "../../../slices/project";
 import { API_HOST } from "../../../config/settings";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
-import { useDispatch, useSelector } from "react-redux";
 import { selectConnections } from "../../../slices/connection";
 
 /*
@@ -19,7 +20,7 @@ import { selectConnections } from "../../../slices/connection";
 */
 function PlausibleTemplate(props) {
   const {
-    teamId, projectId, addError, onComplete, onBack,
+    teamId, projectId, addError, onComplete, onBack, projectName,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -35,6 +36,7 @@ function PlausibleTemplate(props) {
   const connections = useSelector(selectConnections);
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   useEffect(() => {
     _getTemplateConfig();
@@ -46,7 +48,11 @@ function PlausibleTemplate(props) {
     }
   }, [connections]);
 
-  const _onGenerateDashboard = () => {
+  const _onGenerateDashboard = async () => {
+    if (!projectId && !projectName) {
+      return;
+    }
+
     setErrors({});
 
     if (formVisible && !connection.website) {
@@ -71,9 +77,23 @@ function PlausibleTemplate(props) {
     setLoading(true);
     setGenerationError(false);
 
-    dispatch(generateDashboard({ project_id: projectId, data, template: "plausible" }))
+    let newProjectId = projectId;
+    if (!projectId && projectName) {
+      await dispatch(createProject({ data: { team_id: teamId, name: projectName } }))
+        .then((data) => {
+          newProjectId = data.payload?.id;
+        });
+    }
+
+    if (!newProjectId) {
+      setLoading(false);
+      return;
+    }
+
+    dispatch(generateDashboard({ project_id: newProjectId, data, template: "plausible" }))
       .then(() => {
         setTimeout(() => {
+          navigate(`/${teamId}/${newProjectId}/dashboard`);
           onComplete();
         }, 2000);
       })
@@ -176,66 +196,62 @@ function PlausibleTemplate(props) {
       </Row>
       {availableConnections && availableConnections.length > 0 && (
         <>
-          <div className="grid grid-cols-12 gap-2">
-            <div className="col-span-12 md:col-span-6">
-              <Select
-                isDisabled={formVisible}
-                variant="bordered"
-                label="Select an existing connection"
-                placeholder="Click to select a connection"
-                value={
-                  availableConnections.find((c) => c.value === selectedConnection)?.text
+          <Spacer y={4} />
+          <Row className={"gap-2"}>
+            <Select
+              isDisabled={formVisible}
+              variant="bordered"
+              label="Select an existing connection"
+              placeholder="Click to select a connection"
+              value={
+                availableConnections.find((c) => c.value === selectedConnection)?.text
+              }
+              selectedKeys={[selectedConnection]}
+              selectionMode="single"
+              onSelectionChange={(keys) => setSelectedConnection(keys.currentKey)}
+            >
+              {availableConnections.map((connection) => (
+                <SelectItem key={connection.key}>
+                  {connection.text}
+                </SelectItem>
+              ))}
+            </Select>
+            <Input
+              label="Enter your Plausible site ID"
+              placeholder="example.com"
+              value={(!formVisible && connection.website) || ""}
+              onChange={(e) => {
+                if (e.target.value && (e.target.value.indexOf("http://") > -1 || e.target.value.indexOf("https://") > -1)) {
+                  setErrors({ ...errors, website: "Http:// and https:// are not needed." });
+                  return;
+                } else {
+                  setErrors({ ...errors, website: "" });
                 }
-                selectedKeys={[selectedConnection]}
-                selectionMode="single"
-                onSelectionChange={(keys) => setSelectedConnection(keys.currentKey)}
-              >
-                {availableConnections.map((connection) => (
-                  <SelectItem key={connection.key}>
-                    {connection.text}
-                  </SelectItem>
-                ))}
-              </Select>
-            </div>
-            <div className="col-span-12 md:col-span-6 lg:col-span-6">
-              <Input
-                label="Enter your Plausible site ID"
-                placeholder="example.com"
-                value={(!formVisible && connection.website) || ""}
-                onChange={(e) => {
-                  if (e.target.value && (e.target.value.indexOf("http://") > -1 || e.target.value.indexOf("https://") > -1)) {
-                    setErrors({ ...errors, website: "Http:// and https:// are not needed." });
-                    return;
-                  } else {
-                    setErrors({ ...errors, website: "" });
-                  }
-                  setConnection({ ...connection, website: e.target.value });
-                }}
-                color={errors.website ? "danger" : "default"}
-                description={errors.website}
-                variant="bordered"
-                fullWidth
-                disabled={formVisible}
-              />
-            </div>
-          </div>
+                setConnection({ ...connection, website: e.target.value });
+              }}
+              color={errors.website ? "danger" : "default"}
+              description={errors.website}
+              variant="bordered"
+              fullWidth
+              disabled={formVisible}
+            />
+          </Row>
 
           <Spacer y={2} />
           <Row align="center">
             {!formVisible && (
               <Button
-                variant="faded"
+                variant="bordered"
                 startContent={<LuPlus />}
                 onClick={() => setFormVisible(true)}
-                color="primary"
               >
                 Or create a new connection
               </Button>
             )}
             {formVisible && (
               <Button
-                variant="faded"
-                color="primary"
+                variant="bordered"
+                startContent={<LuArrowUp />}
                 onClick={() => setFormVisible(false)}
               >
                 Use an existing connection instead
@@ -445,6 +461,7 @@ PlausibleTemplate.defaultProps = {
 PlausibleTemplate.propTypes = {
   teamId: PropTypes.string.isRequired,
   projectId: PropTypes.string.isRequired,
+  projectName: PropTypes.string.isRequired,
   onComplete: PropTypes.func.isRequired,
   connections: PropTypes.array.isRequired,
   addError: PropTypes.bool,
