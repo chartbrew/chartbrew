@@ -482,7 +482,7 @@ function Chart(props) {
                   })}
                 </Row>
                 {chart.chartData && (
-                  <Row justify="flex-start" align="center">
+                  <Row justify="flex-start" align="center" className={"gap-1"}>
                     {!chartLoading && !chart.loading && (
                       <>
                         {!print && <span className="text-[10px] text-default-500" title="Last updated">{`${_getUpdatedTime(chart.chartDataUpdated)}`}</span>}
@@ -496,7 +496,6 @@ function Chart(props) {
                         <span className="text-[10px] text-default-500">{"Updating..."}</span>
                       </>
                     )}
-                    <Spacer x={1} />
                     {chart.autoUpdate > 0 && (
                       <Tooltip content={`Updates every ${_getUpdateFreqText(chart.autoUpdate)}`}>
                         <div>
@@ -796,6 +795,7 @@ function Chart(props) {
                   onSelectionChange={(key) => {
                     setUpdateFrequency(parseInt(key[0].value));
                   }}
+                  variant="bordered"
                 >
                     <SelectItem key="0" onClick={() => setUpdateFrequency(0)}>
                       {"Don't auto update"}
@@ -842,6 +842,7 @@ function Chart(props) {
               <Row align="center" className={"gap-2"}>
                 <Input
                   type="number"
+                  labelPlacement="outside"
                   startContent={(<Text className={"text-default-400"}>Every</Text>)}
                   onChange={(e) => setCustomUpdateFreq(e.target.value)}
                   value={customUpdateFreq}
