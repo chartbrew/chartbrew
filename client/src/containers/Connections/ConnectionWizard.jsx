@@ -3,6 +3,9 @@ import { LuAreaChart, LuArrowLeftCircle, LuCheckCircle, LuClipboard, LuClipboard
 import { Button, Card, CardBody, CardFooter, CardHeader, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer } from "@nextui-org/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
+import { ToastContainer, toast, Flip } from "react-toastify";
+import "react-toastify/dist/ReactToastify.min.css";
+
 
 import Segment from "../../components/Segment";
 import availableConnections from "../../modules/availableConnections";
@@ -106,7 +109,7 @@ function ConnectionWizard() {
     if (params.connectionId !== "new") {
       return dispatch(saveConnection({ team_id: params.teamId, connection: data }))
         .then(() => {
-          setSelectedType("");
+          toast.success("Connection saved successfully");
           return true;
         })
         .catch(() => {
@@ -391,6 +394,20 @@ function ConnectionWizard() {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <ToastContainer
+        position="top-center"
+        autoClose={1500}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnVisibilityChange
+        draggable
+        pauseOnHover
+        transition={Flip}
+        theme={isDark ? "dark" : "light"}
+      />
     </div>
   )
 }
