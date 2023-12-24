@@ -36,7 +36,7 @@ function KpiChartSegment(props) {
               key={c.label}
             >
               <Row align="center">
-                <Text b className={`${chart.chartSize === 1 ? "text-lg" : "text-xl"} text-default-800`}>
+                <Text b className="text-xl text-default-800">
                   {`${c.value?.toLocaleString()}`}
                 </Text>
                 <Spacer x={1} />

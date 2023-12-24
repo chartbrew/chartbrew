@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Chip, Progress, Tooltip,
@@ -7,9 +7,30 @@ import {
 import determineType from "../../../modules/determineType";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
+import { getWidthBreakpoint } from "../../../modules/layoutBreakpoints";
 
 function KpiMode(props) {
   const { chart } = props;
+  const [chartSize, setChartSize] = useState(2);
+  const containerRef = React.useRef(null);
+
+  useEffect(() => {
+    switch (getWidthBreakpoint(containerRef)) {
+      case "xxs":
+      case "xs":
+        setChartSize(1);
+        break;
+      case "sm":
+        setChartSize(2);
+        break;
+      case "md":
+        setChartSize(3);
+        break;
+      case "lg":
+        setChartSize(4);
+        break;
+    }
+  }, [containerRef.current]);
 
   const _getKpi = (data) => {
     let finalData;
@@ -91,13 +112,13 @@ function KpiMode(props) {
   };
 
   return (
-    <div className={"flex h-full w-full gap-5 items-center justify-center align-middle"}>
+    <div ref={containerRef} className={"flex h-full w-full gap-5 items-center justify-center align-middle flex-wrap"}>
       {chart.chartData.data.datasets.map((dataset, index) => (
         <div key={dataset.label} className="p-3">
           <Row justify="center" align="center">
             <Text
               b
-              className={`${chart.chartSize === 1 ? "text-3xl" : "text-4xl"} text-default-800`}
+              className={`${chartSize === 1 || chartSize === 2 ? "text-3xl" : "text-4xl"} text-default-800`}
               key={dataset.label}
             >
               {dataset.data && _getKpi(dataset.data)}

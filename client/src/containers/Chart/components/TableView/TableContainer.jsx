@@ -7,14 +7,18 @@ import {
 import TableComponent from "./TableComponent";
 import Row from "../../../../components/Row";
 import Text from "../../../../components/Text";
+import { getWidthBreakpoint } from "../../../../modules/layoutBreakpoints";
 
 function TableContainer(props) {
   const {
-    tabularData, embedded, chartSize, datasets,
+    tabularData, embedded, datasets,
   } = props;
 
   const [activeDataset, setActiveDataset] = useState(null);
   const [totalValue, setTotalValue] = useState(0);
+  const [chartSize, setChartSize] = useState(2);
+
+  const containerRef = React.useRef(null);
 
   useEffect(() => {
     if (datasets && datasets[0] && !activeDataset) {
@@ -41,6 +45,25 @@ function TableContainer(props) {
       });
     }
   }, [activeDataset]);
+
+  useEffect(() => {
+    switch (getWidthBreakpoint(containerRef)) {
+      case "xxs":
+      case "xs":
+        setChartSize(1);
+        break;
+      case "sm":
+        setChartSize(2);
+        break;
+      case "md":
+        setChartSize(3);
+        break;
+      case "lg":
+        setChartSize(4);
+        break;
+    }
+  }, [containerRef.current]);
+
 
   return (
     <div className="h-full overflow-y-auto">
@@ -91,7 +114,6 @@ TableContainer.defaultProps = {
 
 TableContainer.propTypes = {
   tabularData: PropTypes.object.isRequired,
-  chartSize: PropTypes.number.isRequired,
   datasets: PropTypes.array.isRequired,
   embedded: PropTypes.bool,
 };

@@ -695,7 +695,6 @@ function Chart(props) {
                     <div className="h-full">
                       <TableContainer
                         tabularData={chart.chartData}
-                        chartSize={chart.chartSize}
                         datasets={chart.ChartDatasetConfigs}
                       />
                     </div>
