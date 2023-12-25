@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react-swc"
 
 export default ({ mode }) => {
   // Load app-level env vars to node-level env vars.
-  process.env = { ...process.env, ...loadEnv(mode, `${process.cwd()}/..`) }; // eslint-disable-line
+  process.env = { ...process.env, ...loadEnv(mode, `${process.cwd()}/..`) };
 
   let port = 4018;
   if (process.env.NODE_ENV === "production" && process.env.VITE_APP_CLIENT_PORT) {
