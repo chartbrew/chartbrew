@@ -14,7 +14,7 @@ link:
 
 ## Prerequisites
 
-**NodeJS** v14+
+**NodeJS** v20+ <i>(use only even versions)</i>
 
 **NPM**
 
@@ -110,8 +110,9 @@ The table below shows the `production` variables. The `development` variables ha
 | CB_SECRET <br /><br /> `required` | `change_to_random_string` | A secure string which is used to encrypt the data in the database |
 | CB_API_HOST <br /><br /> `required` | `localhost` | The address where the `server` app is running from. This variable is used internally by the `server` app. <br /> **This value is overwritten by the PORT variable (if set)**|
 | CB_API_PORT <br /><br /> `required` | `4019` | The port where the `server` app is running from. This variable is used internally by the `server` app |
-| REACT_APP_CLIENT_HOST <br /><br /> `required` | `http://localhost:4018` | The full address where the `client` app is running from. This variable is used in the `client` app and it's populated during the building process.<br /><br />`Note` The app needs to be restarted/rebuilt when this value is changed. |
-| REACT_APP_API_HOST <br /><br /> `required` | `http://localhost:4019` | The full address where the `server` app is running. This variable is used by the `client` app.<br /><br />`Note` The app needs to be restarted/rebuilt when this value is changed. |
+| VITE_APP_CLIENT_HOST <br /><br /> `required` | `http://localhost:4018` | The full address where the `client` app is running from. This variable is used in the `client` app and it's populated during the building process.<br /><br />`Note` The app needs to be restarted/rebuilt when this value is changed. |
+| VITE_APP_CLIENT_PORT <br /><br /> `required` | `4018` | The port where the `client` app is running from. This variable is used in the `client` app and it's populated during the building process.<br /><br />`Note` The app needs to be restarted/rebuilt when this value is changed. |
+| VITE_APP_API_HOST <br /><br /> `required` | `http://localhost:4019` | The full address where the `server` app is running. This variable is used by the `client` app.<br /><br />`Note` The app needs to be restarted/rebuilt when this value is changed. |
 | CB_MAIL_HOST | `smtp.gmail.com` | The server host of the email provider |
 | CB_MAIL_USER | No default | The username used to log in on the email server |
 | CB_MAIL_PASS | No deafult | The password used to log in on the email server |

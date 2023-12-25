@@ -64,20 +64,7 @@ The Frontend app needs to be built and then served using [pm2](https://pm2.keyme
 ```sh
 # build the app
 cd chartbrew/client
-mkdir dist && cd dist
-vim build.sh
-```
-
-Copy the following in the `build.sh` file
-
-```sh
-cd ../ && npm run build && cp -rf build/* dist/
-```
-
-Make sure the script can be executed after you save the file:
-
-```sh
-chmod +x build.sh
+npm run build
 ```
 
 Create the `pm2` configuration file:
@@ -91,9 +78,9 @@ vim app.config.json
   apps : [
     {
       name: "cbc-client",
-      script: "npx",
+      script: "npm",
       interpreter: "none",
-      args: "serve -s . -p 5100"
+      args: "run preview"
     }
   ]
 }
@@ -138,8 +125,8 @@ This configuration file will have everything necessary to serve the backend and 
         Allow from all
     </Proxy>
     <Location />
-        ProxyPass http://localhost:5100/
-        ProxyPassReverse http://localhost:5100/
+        ProxyPass http://localhost:4018/
+        ProxyPassReverse http://localhost:4018/
     </Location>
     <Location ~ "/chart/*">
       Header always unset X-Frame-Options
@@ -212,22 +199,21 @@ docker run -p 4019:4019 -p 4018:4018 \
   -e CB_DB_NAME=chartbrew \
   -e CB_DB_USERNAME=root \
   -e CB_DB_PASSWORD=password \
-  -e REACT_APP_CLIENT_HOST=http://localhost:4018 \
-  -e REACT_APP_API_HOST=http://localhost:4019 \
+  -e VITE_APP_CLIENT_HOST=http://localhost:4018 \
+  -e VITE_APP_CLIENT_PORT=4018 \
+  -e VITE_APP_API_HOST=http://localhost:4019 \
   razvanilin/chartbrew
 ```
 
 ### Changing environmental variables
 
-If you change any of the `REACT_APP_*` variables after the first run, **it's important** to build the client application again from inside the image. This is done by running the following command:
+If you change any of the `VITE_APP_*` variables after the first run, **it's important** to build the client application again from inside the image. This is done by running the following command:
 
 ```sh
 # replace 'your_container_name' with the name of your docker container where Chartbrew is running
 
 docker exec -it -w /code/client your_container_name npm run build
 ```
-
-Check `.env-template` in the repository for extra environmental variables to enable `One account` or emailing capabilities.
 
 **Now let's analyse what is needed for the docker image to run properly**.
 
@@ -245,9 +231,11 @@ The `4019` port is used by the API and `4018` for the client app (UI). Feel free
 
 * `CB_DB_USERNAME` and `CB_DB_PASSWORD` are used for authentication with the DB.
 
-* `REACT_APP_CLIENT_HOST` is the address of the client application and is used by the client to be aware of its own address (not as important)
+* `VITE_APP_CLIENT_HOST` is the address of the client application and is used by the client to be aware of its own address (not as important)
 
-* `REACT_APP_API_HOST` this is used for the client application to know where to make the API requests. This is the address of the API (backend).
+* `VITE_APP_CLIENT_PORT` The port number where your client application will run from.
+
+* `VITE_APP_API_HOST` this is used for the client application to know where to make the API requests. This is the address of the API (backend).
 
 If the setup fails in any way, please double-check that the environmental variables are set correctly. Check that both API and Client apps are running, and if you can't get it running, please [open a new issue](https://github.com/chartbrew/chartbrew/issues/new) with as much info as you can share (logs, vars).
 
