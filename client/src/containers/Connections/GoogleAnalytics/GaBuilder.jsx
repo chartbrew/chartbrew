@@ -17,7 +17,6 @@ import { useParams } from "react-router";
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
-import "ace-builds/webpack-resolver";
 
 import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 import {
