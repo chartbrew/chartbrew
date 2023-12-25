@@ -16,5 +16,5 @@ Most integrations work out-of-the-box when Chartbrew is installed, but some migh
 
 ### Contents
 
-[Google Analytics](/integrations/google-analytics)
-[Webhooks](/integrations/webhooks)
+[Google Analytics](/integrations/google-analytics/)
+[Webhooks](/integrations/webhooks/)
