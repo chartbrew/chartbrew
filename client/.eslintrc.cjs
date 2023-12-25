@@ -67,5 +67,6 @@ module.exports = {
   globals: {
     Headway: true,
     HW_config: true,
+    process: true,
   },
 }
