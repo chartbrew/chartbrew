@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 import { semanticColors } from "@nextui-org/theme";
-import { createMedia } from "@artsy/fresnel";
 import { Helmet } from "react-helmet";
 
 import SuspenseLoader from "../components/SuspenseLoader";
@@ -41,16 +40,6 @@ const PasswordReset = lazy(() => import("./PasswordReset"));
 const EmbeddedChart = lazy(() => import("./EmbeddedChart"));
 const GoogleAuth = lazy(() => import("./GoogleAuth"));
 const ProjectRedirect = lazy(() => import("./ProjectRedirect"));
-
-const AppMedia = createMedia({
-  breakpoints: {
-    mobile: 0,
-    tablet: 768,
-    computer: 1024,
-  },
-});
-const mediaStyles = AppMedia.createMediaStyle();
-const { MediaContextProvider } = AppMedia;
 
 /*
   The main component where the entire app routing resides
@@ -121,113 +110,110 @@ function Main(props) {
             </style>
           )}
         </Helmet>
-        <style>{mediaStyles}</style>
-        <MediaContextProvider>
-          <div>
-            <Suspense fallback={<SuspenseLoader />}>
-              <Routes>
-                <Route exact path="/" element={<UserDashboard />} />
-                <Route exact path="/b/:brewName" element={<PublicDashboard />} />
+        <div>
+          <Suspense fallback={<SuspenseLoader />}>
+            <Routes>
+              <Route exact path="/" element={<UserDashboard />} />
+              <Route exact path="/b/:brewName" element={<PublicDashboard />} />
+              <Route
+                exact
+                path="/feedback"
+                element={(
+                  <div className={"container mx-auto pt-unit-lg max-w-[600px]"}>
+                    <FeedbackForm />
+                  </div>
+                )}
+              />
+              <Route exact path="/signup" element={<Signup />} />
+              <Route exact path="/google-auth" element={<GoogleAuth />} />
+              <Route exact path="/login" element={<Login />} />
+              <Route exact path="/user" element={<UserDashboard />} />
+              <Route exact path="/user/profile" element={<ManageUser />} />
+              <Route exact path="/edit" element={<ManageUser />} />
+              <Route exact path="/passwordReset" element={<PasswordReset />} />
+              <Route path="/manage/:teamId" element={<ManageTeam />}>
+                <Route
+                  path="members"
+                  element={<TeamMembers />}
+                />
+                <Route
+                  path="settings"
+                  element={<TeamSettings />}
+                />
+                <Route
+                  path="api-keys"
+                  element={<ApiKeys teamId={team?.id} />}
+                />
+              </Route>
+              <Route
+                exact
+                path="/project/:projectId"
+                element={<ProjectRedirect />}
+              />
+
+              {/* Add all the routes for the project board here */}
+              <Route path="/:teamId/:projectId" element={<ProjectBoard />}>
                 <Route
                   exact
-                  path="/feedback"
-                  element={(
-                    <div className={"container mx-auto pt-unit-lg max-w-[600px]"}>
-                      <FeedbackForm />
+                  path="dashboard"
+                  element={<ProjectDashboard showDrafts={window.localStorage.getItem("_cb_drafts")} />}
+                />
+                <Route
+                  exact
+                  path="connections"
+                  element={<Connections />}
+                />
+                <Route
+                  exact
+                  path="chart"
+                  element={<AddChart />}
+                />
+                <Route
+                  exact
+                  path="chart/:chartId/edit"
+                  element={<AddChart />}
+                />
+                <Route
+                  exact
+                  path="settings"
+                  element={<ProjectSettings />}
+                />
+                <Route
+                  exact
+                  path="members"
+                  element={
+                    <div className="container mx-auto pt-unit-lg">
+                      <TeamMembers />
                     </div>
-                  )}
+                  }
                 />
-                <Route exact path="/signup" element={<Signup />} />
-                <Route exact path="/google-auth" element={<GoogleAuth />} />
-                <Route exact path="/login" element={<Login />} />
-                <Route exact path="/user" element={<UserDashboard />} />
-                <Route exact path="/user/profile" element={<ManageUser />} />
-                <Route exact path="/edit" element={<ManageUser />} />
-                <Route exact path="/passwordReset" element={<PasswordReset />} />
-                <Route path="/manage/:teamId" element={<ManageTeam />}>
-                  <Route
-                    path="members"
-                    element={<TeamMembers />}
-                  />
-                  <Route
-                    path="settings"
-                    element={<TeamSettings />}
-                  />
-                  <Route
-                    path="api-keys"
-                    element={<ApiKeys teamId={team?.id} />}
-                  />
-                </Route>
                 <Route
                   exact
-                  path="/project/:projectId"
-                  element={<ProjectRedirect />}
+                  path="integrations"
+                  element={<Integrations />}
                 />
+              </Route>
 
-                {/* Add all the routes for the project board here */}
-                <Route path="/:teamId/:projectId" element={<ProjectBoard />}>
-                  <Route
-                    exact
-                    path="dashboard"
-                    element={<ProjectDashboard showDrafts={window.localStorage.getItem("_cb_drafts")} />}
-                  />
-                  <Route
-                    exact
-                    path="connections"
-                    element={<Connections />}
-                  />
-                  <Route
-                    exact
-                    path="chart"
-                    element={<AddChart />}
-                  />
-                  <Route
-                    exact
-                    path="chart/:chartId/edit"
-                    element={<AddChart />}
-                  />
-                  <Route
-                    exact
-                    path="settings"
-                    element={<ProjectSettings />}
-                  />
-                  <Route
-                    exact
-                    path="members"
-                    element={
-                      <div className="container mx-auto pt-unit-lg">
-                        <TeamMembers />
-                      </div>
-                    }
-                  />
-                  <Route
-                    exact
-                    path="integrations"
-                    element={<Integrations />}
-                  />
-                </Route>
+              <Route
+                exact
+                path="/chart/:chartId/embedded"
+                element={<EmbeddedChart />}
+              />
+              <Route exact path="/invite" element={<UserInvite />} />
 
-                <Route
-                  exact
-                  path="/chart/:chartId/embedded"
-                  element={<EmbeddedChart />}
-                />
-                <Route exact path="/invite" element={<UserInvite />} />
-
-                <Route
-                  exact
-                  path="/:teamId/dataset/:datasetId"
-                  element={<Dataset />}
-                />
-                <Route
-                  exact
-                  path="/:teamId/connection/:connectionId"
-                  element={<ConnectionWizard />}
-                />
-              </Routes>
-            </Suspense>
-          </div>
-        </MediaContextProvider>
+              <Route
+                exact
+                path="/:teamId/dataset/:datasetId"
+                element={<Dataset />}
+              />
+              <Route
+                exact
+                path="/:teamId/connection/:connectionId"
+                element={<ConnectionWizard />}
+              />
+            </Routes>
+          </Suspense>
+        </div>
       </div>
     </IconContext.Provider>
   );

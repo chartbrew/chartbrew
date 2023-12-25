@@ -7,7 +7,6 @@ import {
   ModalBody, CircularProgress, NavbarBrand, NavbarContent, NavbarItem,
   DropdownTrigger, DropdownMenu, DropdownItem, CardBody, ModalFooter, ModalHeader, ModalContent, Avatar,
 } from "@nextui-org/react";
-import { createMedia } from "@artsy/fresnel";
 import useDarkMode from "@fisch0920/use-dark-mode";
 import { useLocalStorage } from "react-use";
 import {
@@ -27,15 +26,6 @@ import Container from "./Container";
 import Row from "./Row";
 import Text from "./Text";
 import { selectTeam, selectTeams } from "../slices/team";
-
-const AppMedia = createMedia({
-  breakpoints: {
-    mobile: 0,
-    tablet: 768,
-    computer: 1024,
-  },
-});
-const { Media } = AppMedia;
 
 /*
   The navbar component used throughout the app
@@ -176,28 +166,22 @@ function NavbarContainer(props) {
           <Row align="center" className={"gap-1"}>
             <Link to="/user" className="text-default-foreground">
                 {!params.teamId && (
-                  <Media greaterThan="mobile">
-                    <Row align="center" className={"gap-1"}>
-                      <Text>{"Home"}</Text>
-                    </Row>
-                  </Media>
+                  <Row align="center" className={"hidden sm:block gap-1"}>
+                    <Text>{"Home"}</Text>
+                  </Row>
                 )}
                 {params.teamId && (
-                  <Media greaterThan="mobile">
-                    <Row align="center" className={"gap-1"}>
-                      <Text>{team.name}</Text>
-                    </Row>
-                  </Media>
+                  <Row align="center" className={"hidden sm:block gap-1"}>
+                    <Text>{team.name}</Text>
+                  </Row>
                 )}
             </Link>
             {params.projectId && (
               <Link to={`/${params.teamId}/${params.projectId}/dashboard`}>
-                <Media greaterThan="mobile">
-                  <Row align={"center"} className={"gap-1"}>
-                    <Text>{"/"}</Text>
-                    <Text>{projectProp.name || project.name}</Text>
-                  </Row>
-                </Media>
+                <Row align={"center"} className={"hidden sm:block gap-1"}>
+                  <Text>{"/"}</Text>
+                  <Text>{projectProp.name || project.name}</Text>
+                </Row>
               </Link>
             )}
           </Row>
@@ -208,9 +192,7 @@ function NavbarContainer(props) {
               className="changelog-trigger items-center text-foreground"
               title="Changelog"
             >
-              <Media greaterThan="mobile">
-                <Text>Updates</Text>
-              </Media>
+              <Text className={"hidden sm:block"}>Updates</Text>
               <span className="changelog-badge">
                 {changelogPadding && <span style={{ paddingLeft: 16, paddingRight: 16 }} />}
               </span>

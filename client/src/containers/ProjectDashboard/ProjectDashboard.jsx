@@ -9,7 +9,6 @@ import {
 import { Link, useParams } from "react-router-dom";
 import { useWindowSize } from "react-use";
 import _ from "lodash";
-import { createMedia } from "@artsy/fresnel";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import moment from "moment";
@@ -44,11 +43,6 @@ const breakpoints = {
   tablet: 640,
   computer: 1024,
 };
-
-const AppMedia = createMedia({
-  breakpoints,
-});
-const { Media } = AppMedia;
 
 const getFiltersFromStorage = () => {
   try {
@@ -513,29 +507,26 @@ function ProjectDashboard(props) {
                       <Spacer x={2} />
                     </>
                   )}
-                  <Media greaterThan="mobile">
-                    <Button
-                      variant="ghost"
-                      startContent={<LuFilter />}
-                      isLoading={filterLoading}
-                      onClick={_onShowFilters}
-                      size="sm"
-                      auto
-                    >
-                      {"Add filter"}
-                    </Button>
-                  </Media>
-                  <Media at="mobile">
-                    <Button
-                      isIconOnly
-                      onClick={_onShowFilters}
-                      isLoading={filterLoading}
-                      variant="ghost"
-                      size="sm"
-                    >
-                      <LuFilter size={24} />
-                    </Button>
-                  </Media>
+                  <Button
+                    variant="ghost"
+                    startContent={<LuFilter />}
+                    isLoading={filterLoading}
+                    onClick={_onShowFilters}
+                    size="sm"
+                    className="hidden sm:flex"
+                  >
+                    {"Add filter"}
+                  </Button>
+                  <Button
+                    isIconOnly
+                    onClick={_onShowFilters}
+                    isLoading={filterLoading}
+                    variant="ghost"
+                    size="sm"
+                    className="flex sm:hidden"
+                  >
+                    <LuFilter size={24} />
+                  </Button>
                   <Spacer x={1} />
                   <div style={mobile ? {} : { paddingLeft: 10 }} className="hidden sm:block">
                     {filters
@@ -627,34 +618,30 @@ function ProjectDashboard(props) {
 
                   <>
                     <Spacer x={2} />
-                    <Media greaterThan="mobile">
-                      <Tooltip content="Refresh data" placement="bottom-start">
-                        <Button
-                          variant="ghost"
-                          onClick={() => _onRefreshData()}
-                          isLoading={refreshLoading}
-                          size="sm"
-                          endContent={<LuRefreshCw />}
-                        >
-                          Refresh charts
-                        </Button>
-                      </Tooltip>
-                    </Media>
-                    <Media at="mobile">
-                      <>
-                        <Tooltip content="Refresh all charts" placement="bottom-end">
-                          <Button
-                            variant="ghost"
-                            isIconOnly
-                            onClick={() => _onRefreshData()}
-                            isLoading={refreshLoading}
-                            size="sm"
-                          >
-                            <LuRefreshCw size={24} />
-                          </Button>
-                        </Tooltip>
-                      </>
-                    </Media>
+                    <Tooltip content="Refresh data" placement="bottom-start">
+                      <Button
+                        variant="ghost"
+                        onClick={() => _onRefreshData()}
+                        isLoading={refreshLoading}
+                        size="sm"
+                        endContent={<LuRefreshCw />}
+                        className="hidden sm:flex"
+                      >
+                        Refresh charts
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content="Refresh all charts" placement="bottom-end">
+                      <Button
+                        variant="ghost"
+                        isIconOnly
+                        onClick={() => _onRefreshData()}
+                        isLoading={refreshLoading}
+                        size="sm"
+                        className="flex sm:hidden"
+                      >
+                        <LuRefreshCw size={24} />
+                      </Button>
+                    </Tooltip>
                   </>
                 </Row>
               </Row>

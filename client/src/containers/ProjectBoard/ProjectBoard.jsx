@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { Outlet, Route, Routes, useParams } from "react-router";
 import { Allotment } from "allotment";
-import { createMedia } from "@artsy/fresnel";
 import { useWindowSize } from "react-use";
 import {
   CircularProgress,
@@ -26,16 +25,6 @@ import checkForUpdates from "../../modules/checkForUpdates";
 import Container from "../../components/Container";
 import Text from "../../components/Text";
 import Row from "../../components/Row";
-
-const breakpoints = {
-  mobile: 0,
-  tablet: 768,
-  computer: 1024,
-};
-const AppMedia = createMedia({
-  breakpoints,
-});
-const { Media } = AppMedia;
 
 const sideMaxSize = 220;
 const sideMinSize = 70;
@@ -183,50 +172,48 @@ function ProjectBoard(props) {
       {!isPrinting && (
         <>
           <Navbar />
-          <Media greaterThan="mobile">
-            {/* extract the navbar height from here */}
-            <div style={{ height: height - 50 }}>
-              <Allotment>
-                <Allotment.Pane
-                  minSize={_getDefaultMenuSize()}
-                  maxSize={_getDefaultMenuSize()}
-                  preferredSize={_getDefaultMenuSize()}
-                  className="bg-content2"
+          {/* extract the navbar height from here */}
+          <div style={{ height: height - 50 }} className="hidden sm:block">
+            <Allotment>
+              <Allotment.Pane
+                minSize={_getDefaultMenuSize()}
+                maxSize={_getDefaultMenuSize()}
+                preferredSize={_getDefaultMenuSize()}
+                className="bg-content2"
+              >
+                <div>
+                  <ProjectNavigation
+                    project={project}
+                    projects={projects}
+                    projectId={params.projectId}
+                    teamId={params.teamId}
+                    onChangeDrafts={_setDraftsVisible}
+                    onSetMenuSize={(mSize) => _setMenuSize(mSize)}
+                    canAccess={_canAccess}
+                    menuSize={menuSize}
+                    showDrafts={showDrafts}
+                    onChangeProject={_onChangeProject}
+                    update={update}
+                  />
+                </div>
+              </Allotment.Pane>
+              <Allotment.Pane>
+                <div
+                  style={{ overflowY: "auto", height: "100%", overflowX: "hidden" }}
                 >
-                  <div>
-                    <ProjectNavigation
-                      project={project}
-                      projects={projects}
-                      projectId={params.projectId}
-                      teamId={params.teamId}
-                      onChangeDrafts={_setDraftsVisible}
-                      onSetMenuSize={(mSize) => _setMenuSize(mSize)}
-                      canAccess={_canAccess}
-                      menuSize={menuSize}
+                  <div className="pl-0">
+                    <MainContent
                       showDrafts={showDrafts}
-                      onChangeProject={_onChangeProject}
-                      update={update}
+                      onPrint={_onPrint}
+                      _canAccess={_canAccess}
                     />
                   </div>
-                </Allotment.Pane>
-                <Allotment.Pane>
-                  <div
-                    style={{ overflowY: "auto", height: "100%", overflowX: "hidden" }}
-                  >
-                    <div className="pl-0">
-                      <MainContent
-                        showDrafts={showDrafts}
-                        onPrint={_onPrint}
-                        _canAccess={_canAccess}
-                      />
-                    </div>
-                  </div>
-                </Allotment.Pane>
-              </Allotment>
-            </div>
-          </Media>
+                </div>
+              </Allotment.Pane>
+            </Allotment>
+          </div>
 
-          <Media at="mobile">
+          <div className="block sm:hidden">
             <div className="grid grid-cols-12">
               <div className="col-span-12">
                 <MainContent
@@ -253,7 +240,7 @@ function ProjectBoard(props) {
               onChangeProject={_onChangeProject}
               mobile
             />
-          </Media>
+          </div>
         </>
       )}
     </div>
