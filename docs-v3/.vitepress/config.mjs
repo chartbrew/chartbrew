@@ -8,7 +8,7 @@ export default defineConfig({
     ['link', { rel: 'icon', href: '/logo_blue_2.png' }],
     ['meta', { prefix: ogprefix, property: 'og:title', content: 'Chartbrew Documentation' }],
     ['meta', { prefix: ogprefix, property: 'og:description', content: 'The official documentation of Chartbrew, a platform that lets you create powerful dashboards and interactive data reports by connecting all your services in one place' }],
-    ['meta', { prefix: ogprefix, property: 'og:image', content: 'https://cdn2.chartbrew.com/chartbrew_visualize_banner_3.png' }],
+    ['meta', { prefix: ogprefix, property: 'og:image', content: 'https://cdn2.chartbrew.com/chartbrew_visualize_banner_6.png' }],
     ['meta', { prefix: ogprefix, property: 'og:type', content: 'article' }],
     ['meta', { prefix: ogprefix, property: 'og:article:author', content: 'Razvan Ilin' }],
   ],
