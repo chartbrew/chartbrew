@@ -28,6 +28,7 @@ import Callout from "../components/Callout";
 import { LuFilter, LuXCircle } from "react-icons/lu";
 import { useParams } from "react-router";
 import { useDispatch } from "react-redux";
+import KpiMode from "./Chart/components/KpiMode";
 
 const pageHeight = window.innerHeight;
 
@@ -298,6 +299,9 @@ function EmbeddedChart() {
           />
         </div>
         )}
+      {(chart.type === "kpi" || chart.type === "avg") && (
+        <KpiMode chart={chart} />
+      )}
       <Spacer y={0.5} />
       <Container css={{ pr: 5, pl: 5 }} xl>
         <Row justify="space-between" align="center">

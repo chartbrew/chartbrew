@@ -11,7 +11,6 @@ import { cloneDeep } from "lodash";
 
 import KpiChartSegment from "./KpiChartSegment";
 import ChartErrorBoundary from "./ChartErrorBoundary";
-import KpiMode from "./KpiMode";
 import useThemeDetector from "../../../modules/useThemeDetector";
 import { getHeightBreakpoint, getWidthBreakpoint } from "../../../modules/layoutBreakpoints";
 
@@ -117,16 +116,8 @@ function LineChart(props) {
 
   return (
     <>
-      {chart.mode === "kpi"
-        && chart.chartData
-        && chart.chartData.data
-        && chart.chartData.data.datasets
-        && (
-          <KpiMode chart={chart} />
-        )}
-
-      {chart.mode !== "kpi" && chart.chartData && chart.chartData.data && (
-        <div className={`${chart.mode === "kpi" && "chart-kpi"} h-full`} ref={chartRef}>
+      {chart.chartData && chart.chartData.data && (
+        <div className="h-full" ref={chartRef}>
           {chart.chartData.growth && chart.mode === "kpichart" && (
             <KpiChartSegment chart={chart} editMode={editMode} />
           )}

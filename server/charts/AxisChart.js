@@ -594,7 +594,7 @@ class AxisChart {
             const newVal = parser.parse(expression);
 
             let finalVal = `${before}${newVal.result?.toLocaleString() || 0}${after}`;
-            if (this.chart.mode !== "kpi") {
+            if (this.chart.type !== "kpi") {
               finalVal = +(newVal.result?.toFixed(2) || 0).toLocaleString();
             }
 
@@ -607,6 +607,7 @@ class AxisChart {
     let chart;
     switch (this.chart.type) {
       case "line":
+      case "kpi":
         chart = new LineChart(this.chart, this.datasets, this.axisData);
         break;
       case "bar":

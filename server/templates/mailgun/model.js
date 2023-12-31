@@ -436,7 +436,7 @@ const template = (apiKey, domain, apiRoot) => ({
     {
       "tid": 0,
       "name": "Sending stats",
-      "type": "line",
+      "type": "kpi",
       "subType": "AddTimeseries",
       "public": false,
       "chartSize": 1,
@@ -449,7 +449,6 @@ const template = (apiKey, domain, apiRoot) => ({
       "timeInterval": "day",
       "autoUpdate": null,
       "draft": false,
-      "mode": "kpi",
       "layout": {
         "xs": [0, 0, 6, 1], "sm": [6, 0, 2, 2], "md": [7, 0, 3, 2], "lg": [8, 0, 4, 2]
       },

@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Checkbox, CircularProgress, Divider, Select, SelectItem, Skeleton, Spacer, Tooltip,
+  Button, Checkbox, CircularProgress, Divider, Skeleton, Spacer, Tooltip,
 } from "@nextui-org/react";
 import {
-  TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbMathAvg,
+  TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbHash, TbMathAvg,
 } from "react-icons/tb";
 import { TiChartPie } from "react-icons/ti";
 import { FaChartLine } from "react-icons/fa";
@@ -21,23 +21,7 @@ import PieChart from "../../Chart/components/PieChart";
 import TableContainer from "../../Chart/components/TableView/TableContainer";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-
-const chartModes = [{
-  key: "chart",
-  text: "Chart view",
-  value: "chart",
-  icon: "chart bar",
-}, {
-  key: "kpi",
-  text: "KPI View",
-  value: "kpi",
-  icon: "hashtag",
-}, {
-  key: "kpichart",
-  text: "KPI with chart",
-  value: "kpichart",
-  icon: "plus square outline",
-}];
+import KpiMode from "../../Chart/components/KpiMode";
 
 function ChartPreview(props) {
   const {
@@ -64,7 +48,6 @@ function ChartPreview(props) {
 
     if (data.type === "avg" && chart.type !== "avg") {
       newType.subType = "timeseries";
-      newType.mode = "kpi";
     } else if (data.type === "avg" && chart.type === "avg") {
       newType.subType = "timeseries";
       newType.mode = "chart";
@@ -85,12 +68,10 @@ function ChartPreview(props) {
     return onChange(updateData);
   };
 
-  const _onChangeMode = (key) => {
-    if (key === "chart" || key === "kpichart") {
-      setRedraw(true);
-    }
+  const _onChangeMode = () => {
+    setRedraw(true);
 
-    return onChange({ mode: key });
+    return onChange({ mode: chart.mode === "chart" ? "kpichart" : "chart" });
   };
 
   const _onChangeGrowth = () => {
@@ -213,15 +194,10 @@ function ChartPreview(props) {
                     />
                   </div>
                 )}
-              {chart.type === "avg"
-                && (
-                  <LineChart
-                    chart={chart}
-                    redraw={redraw}
-                    redrawComplete={_redrawComplete}
-                    editMode
-                  />
-                )}
+
+              {(chart.type === "kpi" || chart.type === "avg") && (
+                <KpiMode chart={chart} editMode />
+              )}
             </div>
           </div>
           <Spacer y={2} />
@@ -247,7 +223,7 @@ function ChartPreview(props) {
                     variant={chart.subType?.indexOf("AddTimeseries") === -1 ? "bordered" : "solid"}
                     color={chart.subType?.indexOf("AddTimeseries") > -1 ? "secondary" : "default"}
                     onClick={_toggleAccumulation}
-                    disabled={chart.type !== "line" && chart.type !== "bar" && chart.type !== "avg"}
+                    isDisabled={chart.type !== "line" && chart.type !== "bar" && chart.type !== "avg" && chart.type !== "kpi"}
                     isIconOnly
                   >
                     <FaChartLine size={20} />
@@ -284,6 +260,16 @@ function ChartPreview(props) {
                     isIconOnly
                   >
                     <TbChartBar size={24} />
+                  </Button>
+                </Tooltip>
+                <Tooltip content="Display as a single value (KPI)">
+                  <Button
+                    variant={chart.type !== "kpi" ? "bordered" : "solid"}
+                    onClick={() => _onChangeChartType({ type: "kpi" })}
+                    color={chart.type === "kpi" ? "primary" : "default"}
+                    isIconOnly
+                  >
+                    <TbHash size={24} />
                   </Button>
                 </Tooltip>
               </Row>
@@ -367,28 +353,20 @@ function ChartPreview(props) {
 
       {chart && chart.type && chart.ChartDatasetConfigs && chart.ChartDatasetConfigs.length > 0 && (
         <div style={styles.topBuffer}>
-          <Row align="center" justify="space-between" className={"gap-4"}>
-            <Select
-              isDisabled={chart.type !== "line" && chart.type !== "bar"}
-              selectionMode="single"
-              onSelectionChange={(keys) => _onChangeMode(keys.currentKey)}
-              selectedKeys={[chart.mode]}
-              variant="bordered"
-              renderValue={() => (
-                <Text>{chart.mode && chartModes.find((mode) => mode.value === chart.mode).text}</Text>
-              )}
-              labelPlacement="outside"
+          <Row align="center" className={"gap-4"}>
+            <Checkbox
+              isSelected={chart.mode === "kpichart"}
+              onChange={_onChangeMode}
+              isDisabled={chart.type === "kpi" || chart.type === "avg"}
+              size="sm"
+              className="min-w-[150px]"
             >
-              {chartModes.map((mode) => (
-                <SelectItem key={mode.value}>
-                  {mode.text}
-                </SelectItem>
-              ))}
-            </Select>
+              Show KPI on chart
+            </Checkbox>
             <Checkbox
               isSelected={chart.showGrowth}
               onChange={_onChangeGrowth}
-              isDisabled={chart.mode === "chart"}
+              isDisabled={chart.mode === "chart" && chart.type !== "kpi"}
               size="sm"
               className="min-w-[150px]"
             >

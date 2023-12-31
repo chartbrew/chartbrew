@@ -299,7 +299,7 @@ const template = (token, key) => ({
     {
       "tid": 1,
       "name": "MRR",
-      "type": "line",
+      "type": "kpi",
       "subType": "lcTimeseries",
       "public": false,
       "chartSize": 1,
@@ -312,7 +312,6 @@ const template = (token, key) => ({
       "timeInterval": "month",
       "autoUpdate": 21600,
       "draft": false,
-      "mode": "kpi",
       "showGrowth": true,
       "layout": {
         "xxs": [0, 0, 2, 2], "xs": [0, 0, 6, 2], "sm": [0, 0, 3, 2], "md": [0, 0, 3, 2], "lg": [0, 0, 3, 2]
@@ -393,7 +392,7 @@ const template = (token, key) => ({
     {
       "tid": 3,
       "name": "Anual Recurring Revenue",
-      "type": "line",
+      "type": "kpi",
       "subType": "lcTimeseries",
       "public": false,
       "chartSize": 1,
@@ -406,7 +405,6 @@ const template = (token, key) => ({
       "timeInterval": "month",
       "autoUpdate": 21600,
       "draft": false,
-      "mode": "kpi",
       "showGrowth": true,
       "layout": {
         "xxs": [0, 2, 2, 2], "xs": [0, 2, 6, 2], "sm": [0, 2, 3, 2], "md": [0, 2, 3, 2], "lg": [0, 2, 3, 2]
@@ -435,7 +433,7 @@ const template = (token, key) => ({
     {
       "tid": 4,
       "name": "Churn Rate",
-      "type": "line",
+      "type": "kpi",
       "subType": "lcTimeseries",
       "public": false,
       "chartSize": 1,
@@ -448,7 +446,6 @@ const template = (token, key) => ({
       "timeInterval": "month",
       "autoUpdate": 21600,
       "draft": false,
-      "mode": "kpi",
       "layout": {
         "xxs": [0, 6, 2, 2], "xs": [0, 8, 6, 2], "sm": [0, 4, 3, 2], "md": [7, 0, 3, 2], "lg": [8, 0, 4, 2]
       },
@@ -537,7 +534,7 @@ const template = (token, key) => ({
     {
       "tid": 6,
       "name": "Avg Revenue Per Account",
-      "type": "line",
+      "type": "kpi",
       "subType": "lcTimeseries",
       "public": false,
       "chartSize": 1,
@@ -550,7 +547,6 @@ const template = (token, key) => ({
       "timeInterval": "month",
       "autoUpdate": 21600,
       "draft": false,
-      "mode": "kpi",
       "showGrowth": true,
       "layout": {
         "xxs": [0, 8, 2, 2], "xs": [0, 10, 6, 2], "sm": [3, 4, 3, 2], "md": [7, 2, 3, 2], "lg": [8, 2, 3, 2]

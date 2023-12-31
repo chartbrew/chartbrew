@@ -46,7 +46,7 @@ const template = (templateData, dashboardOrder = 0) => {
     "Charts": [
       {
         "name": `Total ${collection}`,
-        "type": "line",
+        "type": "kpi",
         "subType": "AddTimeseries",
         "public": false,
         "shareable": false,
@@ -61,7 +61,6 @@ const template = (templateData, dashboardOrder = 0) => {
         "timeInterval": "month",
         "autoUpdate": 21600,
         "draft": false,
-        "mode": "kpi",
         "maxValue": null,
         "minValue": null,
         "disabledExport": null,

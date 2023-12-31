@@ -108,11 +108,10 @@ const template = (website, apiKey) => ({
     displayLegend: false,
     draft: false,
     includeZeros: true,
-    mode: "kpi",
     public: false,
     subType: "AddTimeseries",
     timeInterval: "day",
-    type: "line",
+    type: "kpi",
     layout: {
       "xxs": [0, 0, 2, 2], "xs": [0, 0, 6, 2], "sm": [0, 0, 3, 2], "md": [0, 0, 4, 2], "lg": [0, 0, 3, 2]
     },

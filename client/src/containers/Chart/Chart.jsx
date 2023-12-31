@@ -37,6 +37,7 @@ import ChartFilters from "./components/ChartFilters";
 import useInterval from "../../modules/useInterval";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
+import KpiMode from "./components/KpiMode";
 
 const getFiltersFromStorage = (projectId) => {
   try {
@@ -699,9 +700,9 @@ function Chart(props) {
                       />
                     </div>
                   )}
-                {chart.type === "avg"
+                {(chart.type === "kpi" || chart.type === "avg")
                   && (
-                    <LineChart
+                    <KpiMode
                       chart={chart}
                       height={height}
                       redraw={redraw}

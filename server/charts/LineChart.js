@@ -75,149 +75,115 @@ class NewLineChart {
       },
     };
 
-    if (this.chart.mode === "kpi") {
-      chartJsData.options = {
-        maintainAspectRatio: false,
-        elements: {
-          point: {
-            radius: 0,
-          },
-          line: {
-            tension: 0.05,
-            borderWidth: 4,
-          },
-        },
-        scales: {
-          y: {
-            display: false,
-          },
-          x: {
-            display: false,
-          },
-        },
-        plugins: {
-          decimation: {
-            enabled: true
-          },
-          tooltip: {
-            enabled: false,
-          },
-          legend: {
-            display: false,
-          },
-        }
-      };
-    } else {
-      const radius = !this.chart.pointRadius && this.chart.pointRadius !== 0
-        ? 0 : this.chart.pointRadius;
+    const radius = !this.chart.pointRadius && this.chart.pointRadius !== 0
+      ? 0 : this.chart.pointRadius;
 
-      chartJsData.options = {
-        interaction: {
-          intersect: false,
-          mode: "index",
+    chartJsData.options = {
+      interaction: {
+        intersect: false,
+        mode: "index",
+      },
+      maintainAspectRatio: false,
+      elements: {
+        point: {
+          radius,
+          hitRadius: 8,
+          hoverRadius: 8,
         },
-        maintainAspectRatio: false,
-        elements: {
-          point: {
-            radius,
-            hitRadius: 8,
-            hoverRadius: 8,
-          },
-          line: {
-            tension: 0.05,
-            borderCapStyle: "round",
-          },
+        line: {
+          tension: 0.05,
+          borderCapStyle: "round",
         },
-        scales: {
-          y: {
-            beginAtZero: !this.chart.minValue && true,
-            ticks: {
-              precision: 0,
-              font: {
-                family: "Inter",
-                size: 10,
-              },
-              maxTicksLimit: 10,
-              padding: this.chart.mode === "kpichart" ? 10 : 3,
-              display: true,
+      },
+      scales: {
+        y: {
+          beginAtZero: !this.chart.minValue && true,
+          ticks: {
+            precision: 0,
+            font: {
+              family: "Inter",
+              size: 10,
             },
-            grid: {
-              display: true,
-              drawBorder: this.chart.mode !== "kpichart",
-              lineWidth: 0.5,
-            },
+            maxTicksLimit: 10,
+            padding: this.chart.mode === "kpichart" ? 10 : 3,
+            display: true,
           },
-          x: {
-            ticks: {
-              precision: 0,
-              font: {
-                family: "Inter",
-                size: 10,
-              },
-              maxRotation: 45,
-              minRotation: 0,
-            },
-            grid: {
-              display: this.chart.mode !== "kpichart",
-              drawBorder: this.chart.mode !== "kpichart",
-              lineWidth: 0.5,
-            },
+          grid: {
+            display: true,
+            drawBorder: this.chart.mode !== "kpichart",
+            lineWidth: 0.5,
           },
         },
-        plugins: {
-          tooltip: tooltipsStyle,
-          legend: {
-            display: this.chart.displayLegend,
-            position: this.chart.mode === "kpichart" ? "bottom" : "top",
-            labels: {
-              font: {
-                family: "Inter",
-                size: 12,
-              },
-              boxWidth: 15,
-              pointerStyle: "start"
+        x: {
+          ticks: {
+            precision: 0,
+            font: {
+              family: "Inter",
+              size: 10,
             },
+            maxRotation: 45,
+            minRotation: 0,
           },
-          decimation: {
-            enabled: true,
+          grid: {
+            display: this.chart.mode !== "kpichart",
+            drawBorder: this.chart.mode !== "kpichart",
+            lineWidth: 0.5,
           },
         },
-      };
+      },
+      plugins: {
+        tooltip: tooltipsStyle,
+        legend: {
+          display: this.chart.displayLegend,
+          position: this.chart.mode === "kpichart" ? "bottom" : "top",
+          labels: {
+            font: {
+              family: "Inter",
+              size: 12,
+            },
+            boxWidth: 15,
+            pointerStyle: "start"
+          },
+        },
+        decimation: {
+          enabled: true,
+        },
+      },
+    };
 
-      if (this.chart.maxValue) {
-        chartJsData.options.scales.y.max = this.chart.maxValue;
-      }
-      if (this.chart.minValue) {
-        chartJsData.options.scales.y.min = this.chart.minValue;
-      }
-
-      // check how many ticks should the X Axis have
-      let maxTicksLimit = 10;
-
-      if (this.axisData.x.length) {
-        switch (this.chart.xLabelTicks) {
-          case "showAll":
-            maxTicksLimit = this.axisData.x.length;
-            break;
-          case "half":
-            maxTicksLimit = parseInt(this.axisData.x.length / 2, 10);
-            break;
-          case "third":
-            maxTicksLimit = parseInt(this.axisData.x.length / 3, 10);
-            break;
-          case "fourth":
-            maxTicksLimit = parseInt(this.axisData.x.length / 4, 10);
-            break;
-          default:
-            if (this.chart.xLabelTicks && !Number.isNaN(parseInt(this.chart.xLabelTicks, 10))) {
-              maxTicksLimit = parseInt(this.chart.xLabelTicks, 10);
-            }
-            break;
-        }
-      }
-
-      chartJsData.options.scales.x.ticks.maxTicksLimit = maxTicksLimit;
+    if (this.chart.maxValue) {
+      chartJsData.options.scales.y.max = this.chart.maxValue;
     }
+    if (this.chart.minValue) {
+      chartJsData.options.scales.y.min = this.chart.minValue;
+    }
+
+    // check how many ticks should the X Axis have
+    let maxTicksLimit = 10;
+
+    if (this.axisData.x.length) {
+      switch (this.chart.xLabelTicks) {
+        case "showAll":
+          maxTicksLimit = this.axisData.x.length;
+          break;
+        case "half":
+          maxTicksLimit = parseInt(this.axisData.x.length / 2, 10);
+          break;
+        case "third":
+          maxTicksLimit = parseInt(this.axisData.x.length / 3, 10);
+          break;
+        case "fourth":
+          maxTicksLimit = parseInt(this.axisData.x.length / 4, 10);
+          break;
+        default:
+          if (this.chart.xLabelTicks && !Number.isNaN(parseInt(this.chart.xLabelTicks, 10))) {
+            maxTicksLimit = parseInt(this.chart.xLabelTicks, 10);
+          }
+          break;
+      }
+    }
+
+    chartJsData.options.scales.x.ticks.maxTicksLimit = maxTicksLimit;
 
     return chartJsData;
   }

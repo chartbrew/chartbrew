@@ -113,7 +113,19 @@ function KpiMode(props) {
 
   return (
     <div ref={containerRef} className={"flex h-full w-full gap-5 items-center justify-center align-middle flex-wrap"}>
-      {chart.chartData.data.datasets.map((dataset, index) => (
+      {!chart?.chartData?.data?.datasets && (
+        <div className="p-3">
+          <Row justify="center" align="center">
+            <Text
+              b
+              className={`${chartSize === 1 || chartSize === 2 ? "text-3xl" : "text-4xl"} text-default-800`}
+            >
+              {chart.chartData && chart.chartData.data && _getKpi(chart.chartData.data)}
+            </Text>
+          </Row>
+        </div>
+      )}
+      {chart?.chartData?.data?.datasets.map((dataset, index) => (
         <div key={dataset.label} className="p-3">
           <Row justify="center" align="center">
             <Text

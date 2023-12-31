@@ -664,7 +664,7 @@ const template = (website, apiKey) => ({
   "Charts": [
     {
       "name": "Visits stats",
-      "type": "line",
+      "type": "kpi",
       "subType": "lcTimeseries",
       "public": false,
       "shareable": false,
@@ -678,7 +678,6 @@ const template = (website, apiKey) => ({
       "timeInterval": "day",
       "autoUpdate": null,
       "draft": false,
-      "mode": "kpi",
       "maxValue": null,
       "minValue": null,
       "disabledExport": null,
@@ -750,7 +749,7 @@ const template = (website, apiKey) => ({
     },
     {
       "name": "Visit length",
-      "type": "line",
+      "type": "kpi",
       "subType": "AddTimeseries",
       "public": false,
       "shareable": false,
@@ -764,7 +763,6 @@ const template = (website, apiKey) => ({
       "timeInterval": "day",
       "autoUpdate": null,
       "draft": false,
-      "mode": "kpi",
       "maxValue": null,
       "minValue": null,
       "disabledExport": null,
