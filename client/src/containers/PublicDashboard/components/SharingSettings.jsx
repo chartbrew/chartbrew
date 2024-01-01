@@ -59,6 +59,7 @@ function SharingSettings(props) {
             <Input
               id="share-url-text"
               placeholder="Enter your custom dashboard URL"
+              labelPlacement="outside"
               startContent={`${SITE_HOST}/b/`}
               value={newBrewName}
               onChange={(e) => _onChangeBrewName(e.target.value)}
@@ -97,7 +98,8 @@ function SharingSettings(props) {
           <Row align="center">
             <Switch
               isSelected={project.public}
-              onChange={onTogglePublic}
+              onValueChange={onTogglePublic}
+              size="sm"
             >
               Make the dashboard public
             </Switch>
@@ -116,8 +118,9 @@ function SharingSettings(props) {
           <Row align="center">
             <Switch
               isSelected={project.passwordProtected}
-              onChange={onTogglePassword}
+              onValueChange={onTogglePassword}
               isDisabled={!project.public}
+              size="sm"
             >
               Require password to view
             </Switch>
@@ -202,6 +205,7 @@ function SharingSettings(props) {
             <Switch
               isSelected={project.Team && project.Team.showBranding}
               onChange={onToggleBranding}
+              size="sm"
             >
               Chartbrew branding
             </Switch>

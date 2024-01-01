@@ -152,7 +152,13 @@ export const removeProject = createAsyncThunk(
 export const getPublicDashboard = createAsyncThunk(
   "project/getPublicDashboard",
   async ({ brewName, password }, thunkAPI) => {
-    const token = getAuthToken();
+    let token;
+    try {
+      token = getAuthToken();
+    } catch (err) {
+      // no token
+    }
+
     let url = `${API_HOST}/project/dashboard/${brewName}`;
     const headers = new Headers({
       "Accept": "application/json",
@@ -165,7 +171,7 @@ export const getPublicDashboard = createAsyncThunk(
 
     const response = await fetch(url, { headers });
     if (!response.ok) {
-      throw new Error(response.statusText);
+      throw new Error(response.status);
     }
 
     const project = await response.json();

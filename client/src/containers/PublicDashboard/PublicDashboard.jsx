@@ -21,7 +21,6 @@ import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
-
 import AceEditor from "react-ace";
 import "ace-builds/src-min-noconflict/mode-css";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
@@ -164,36 +163,40 @@ function PublicDashboard(props) {
     setLoading(true);
     dispatch(getPublicDashboard({ brewName: params.brewName, password }))
       .then((data) => {
-        if (!data.payload) throw new Error(404);
-        setProject(data.payload);
-        setLoading(false);
-        setNotAuthorized(false);
-        setPasswordRequired(false);
-
-        // now get the project (mainly to check if the user can edit)
-        dispatch(getProject({ project_id: data.payload?.id }))
-          .then((authenticatedProject) => {
-            if (authenticatedProject.password) {
-              setProject({ ...data, password: authenticatedProject.password });
+        if (data.error) {
+          if (data.error.message === "403") {
+            if (passwordRequired) {
+              toast.error("The password you entered is incorrect.");
             }
-            setEditorVisible(true);
-          })
-          .catch(() => {});
-      })
-      .catch((err) => {
-        setLoading(false);
-        if (err === 403) {
-          if (passwordRequired) {
-            toast.error("The password you entered is incorrect.");
+            setPasswordRequired(true);
+          } else if (data.error.message === 401) {
+            setNotAuthorized(true);
+            window.location.pathname = "/login";
+          } else {
+            setNoCharts(true);
           }
-          setPasswordRequired(true);
-        } else if (err === 401) {
-          setNotAuthorized(true);
-          window.location.pathname = "/login";
+
+          setLoading(false);
         } else {
-          setNoCharts(true);
-          toast.error("No charts found for this report.");
-        }
+          setProject(data.payload);
+          setLoading(false);
+          setNotAuthorized(false);
+          setPasswordRequired(false);
+
+          // now get the project (mainly to check if the user can edit)
+          dispatch(getProject({ project_id: data.payload?.id }))
+            .then((projectData) => {
+              if (!projectData.payload) throw new Error(404);
+              const authenticatedProject = projectData.payload;
+
+              if (authenticatedProject.password) {
+                setProject({ ...data.payload, password: authenticatedProject.password });
+              }
+
+              setEditorVisible(true);
+            })
+            .catch(() => {});
+          }
       });
   };
 
@@ -244,8 +247,8 @@ function PublicDashboard(props) {
       });
   };
 
-  const _onTogglePublic = () => {
-    dispatch(updateProject({ project_id: project.id, data: { public: !project.public } }))
+  const _onTogglePublic = (value) => {
+    dispatch(updateProject({ project_id: project.id, data: { public: value } }))
       .then(() => {
         _fetchProject();
         toast.success("The report has been updated!");
@@ -253,8 +256,8 @@ function PublicDashboard(props) {
       .catch(() => { });
   };
 
-  const _onTogglePassword = () => {
-    dispatch(updateProject({ project_id: project.id, data: { passwordProtected: !project.passwordProtected } }))
+  const _onTogglePassword = (value) => {
+    dispatch(updateProject({ project_id: project.id, data: { passwordProtected: value } }))
       .then(() => {
         _fetchProject();
         toast.success("The report has been updated!");
@@ -301,7 +304,8 @@ function PublicDashboard(props) {
   const _canAccess = (role) => {
     const team = teams.filter((t) => t.id === project.team_id)[0];
     if (!team) return false;
-    return canAccess(role, user.id, team.TeamRoles);
+    const canReallyAccess = canAccess(role, user.id, team.TeamRoles);
+    return canReallyAccess;
   };
 
   const _onLoadLogo = ({ target: img }) => {
@@ -352,13 +356,13 @@ function PublicDashboard(props) {
         </Helmet>
 
         {passwordRequired && (
-          <Container css={{ mt: 100, maxWidth: 500 }} justify="center">
+          <div className="container mx-auto max-w-xl p-16">
             <Row justify="center">
               <Text size="h3">
                 Please enter the password to access this report
               </Text>
             </Row>
-            <Spacer y={1} />
+            <Spacer y={2} />
 
             <Row>
               <Input
@@ -368,23 +372,21 @@ function PublicDashboard(props) {
                 onChange={(e) => setReportPassword(e.target.value)}
                 size="lg"
                 fullWidth
-                bordered
+                variant="bordered"
               />
             </Row>
-            <Spacer y={0.5} />
+            <Spacer y={2} />
             <Row>
               <Button
-                primary
+                color="primary"
                 loading={loading}
                 onClick={() => _fetchProject(reportPassword)}
                 size="lg"
-                shadow
-                auto
               >
-                Access
+                Access report
               </Button>
             </Row>
-          </Container>
+          </div>
         )}
 
         <ToastContainer
@@ -447,12 +449,12 @@ function PublicDashboard(props) {
   if (noCharts && !user.id) {
     return (
       <div>
-        <Container css={{ mt: 100 }}>
+        <div className="container mx-auto pt-16">
           <Row justify="center">
-            <Text size="h3">{"This dashbord does not contain any public charts"}</Text>
+            <Text size="h3">{"This dashboard does not contain any public charts"}</Text>
           </Row>
           <Spacer y={2} />
-        </Container>
+        </div>
       </div>
     );
   }
@@ -496,7 +498,7 @@ function PublicDashboard(props) {
                 </Tooltip>
               </div>
 
-              {_canAccess("projectAdmin") && (
+              {project?.id && _canAccess("projectAdmin") && (
                 <>
                   <div>
                     <Tooltip content="Change logo" placement="right-end">
@@ -581,11 +583,12 @@ function PublicDashboard(props) {
         </aside>
       )}
 
-      <div className={!preview ? "ml-16" : ""}>
+      <div className={editorVisible && !preview ? "ml-16" : ""}>
         <Navbar
           isBordered
           maxWidth={"full"}
-          className="flex-grow-0 justify-between bg-transparent"
+          isBlurred={false}
+          className={`flex-grow-0 justify-between bg-[${newChanges.backgroundColor || project.backgroundColor || "transparent"}]`}
         >
           <NavbarBrand>
             <div className="flex items-center gap-4">
