@@ -587,12 +587,12 @@ function Chart(props) {
                         {chart.onReport ? "Remove from report" : "Add to report"}
                       </DropdownItem>
                     )}
-                    {!chart.draft && _canAccess("projectAdmin") && (
+                    {!chart.draft && chart.public && _canAccess("projectAdmin") && (
                       <DropdownItem
                         startContent={chart.public ? <LuUnlock /> : <LuLock />}
                         onClick={_onPublicConfirmation}
                       >
-                        {chart.public ? "Make private" : "Make public"}
+                        {"Make private"}
                       </DropdownItem>
                     )}
                     {!chart.draft && (
@@ -999,12 +999,9 @@ function Chart(props) {
               && (
                 <>
                   <Row>
-                    <Text>
-                      {"Copy the following code on the website you wish to add your chart in."}
-                    </Text>
-                  </Row>
-                  <Row>
                     <Textarea
+                      label={"Copy the following code on the website you wish to add your chart in."}
+                      labelPlacement="outside"
                       id="iframe-text"
                       value={_getEmbedString()}
                       fullWidth
@@ -1017,6 +1014,7 @@ function Chart(props) {
                       endContent={iframeCopied ? <LuClipboardCheck /> : <LuClipboard />}
                       onClick={_onCopyIframe}
                       variant={iframeCopied ? "flat" : "solid"}
+                      size="sm"
                     >
                       {!iframeCopied && "Copy the code"}
                       {iframeCopied && "Copied to your clipboard"}
@@ -1025,10 +1023,14 @@ function Chart(props) {
 
                   <Spacer y={1} />
                   <Row>
-                    <Text>{"Or get just the URL"}</Text>
-                  </Row>
-                  <Row>
-                    <Input value={_getEmbedUrl()} id="url-text" fullWidth readOnly />
+                    <Input
+                      label={"Or copy the following URL"}
+                      labelPlacement="outside"
+                      value={_getEmbedUrl()}
+                      id="url-text"
+                      fullWidth
+                      readOnly
+                    />
                   </Row>
                   <Row>
                     <Button
@@ -1036,6 +1038,7 @@ function Chart(props) {
                       endContent={iframeCopied ? <LuClipboardCheck /> : <LuClipboard />}
                       variant={urlCopied ? "flat" : "solid"}
                       onClick={_onCopyUrl}
+                      size="sm"
                     >
                       {!urlCopied && "Copy URL"}
                       {urlCopied && "Copied to your clipboard"}
