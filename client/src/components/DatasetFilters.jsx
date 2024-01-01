@@ -351,7 +351,7 @@ function DatasetFilters(props) {
         <div>
           <div><Text>{"Exposed filters on the chart"}</Text></div>
           <Spacer y={1} />
-          <div>
+          <div className="flex gap-1">
             {conditions.filter((c) => c.exposed).map((condition) => {
               return (
                 <Chip

@@ -4,9 +4,9 @@ import { Calendar } from "react-date-range";
 import { enGB } from "date-fns/locale";
 import { format, formatISO } from "date-fns";
 import {
-  Button, Dropdown, Spacer, Input, DropdownTrigger, DropdownMenu, DropdownItem,
+  Button, Spacer, Input, Autocomplete, AutocompleteItem,
 } from "@nextui-org/react";
-import { LuCalendarDays, LuCheck, LuChevronDown, LuXCircle } from "react-icons/lu";
+import { LuCalendarDays, LuXCircle } from "react-icons/lu";
 
 import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css"; // theme css file
@@ -72,6 +72,18 @@ function ChartFilters(props) {
         && o.text.toString().toLowerCase()?.includes(optionFilter[cId].toLowerCase()));
   };
 
+  const _onOptionValueChange = (value, condition) => {
+    setOptionFilter({
+      ...optionFilter, [condition.id]: value,
+    });
+  };
+
+  const _onKeyDown = (e, condition) => {
+    if (e.key === "Enter") {
+      _onOptionSelected(optionFilter[condition.id], condition);
+    }
+  };
+
   return (
     <div className="min-w-[200px]">
       {!_checkIfFilters() && (
@@ -95,114 +107,88 @@ function ChartFilters(props) {
                       .operators?.find((o) => condition.operator === o.value)?.text}
                   </Text>
                 </Row>
-                <Spacer y={0.5} />
+                <Spacer y={1} />
                 {condition.type !== "date" && !condition.hideValues && (
-                  <Dropdown>
-                    <DropdownTrigger>
-                      <Input
-                        type="text"
-                        value={
-                          optionFilter[condition.id]
-                          || _getConditionValue(condition.id)
-                        }
-                        placeholder="Enter a value or search"
-                        onChange={(e) => {
-                          setOptionFilter({
-                            ...optionFilter, [condition.id]: e.target.value
-                          });
-                        }}
-                        variant="bordered"
-                        size="sm"
-                        endContent={<LuChevronDown />}
-                        fullWidth
-                      />
-                    </DropdownTrigger>
-                    <DropdownMenu
+                  <>
+                    <Autocomplete
                       variant="bordered"
-                      selectedKeys={[`${_getConditionValue(condition.id)}`]}
-                      onSelectionChange={(selection) => {
-                        _onOptionSelected(Object.values(selection)[0], condition);
-                        setOptionFilter({
-                          ...optionFilter, [condition.id]: ""
-                        });
+                      selectedKey={`${_getConditionValue(condition.id)}`}
+                      onSelectionChange={(key) => {
+                        _onOptionSelected(key, condition);
                       }}
-                      selectionMode="single"
+                      onInputChange={(value) => _onOptionValueChange(value, condition)}
+                      onKeyDown={(e) => _onKeyDown(e, condition)}
+                      labelPlacement="outside"
+                      placeholder={_getConditionValue(condition.id) || "Search here"}
+                      allowsCustomValue
                     >
                       {_getFilteredOptions(filterOptions, condition.id).map((opt) => (
-                        <DropdownItem key={opt.value}>
+                        <AutocompleteItem key={opt.value}>
                           {opt.text}
-                        </DropdownItem>
+                        </AutocompleteItem>
                       ))}
-                    </DropdownMenu>
-                  </Dropdown>
+                    </Autocomplete>
+                    <Spacer y={1} />
+                  </>
                 )}
                 {condition.type !== "date" && condition.hideValues && (
-                  <Input
-                    type="text"
-                    value={
-                      optionFilter[condition.id]
-                      || _getConditionValue(condition.id)
-                    }
-                    placeholder="Enter a value here"
-                    onChange={(e) => {
-                      setOptionFilter({
-                        ...optionFilter, [condition.id]: e.target.value
-                      });
-                    }}
-                    variant="bordered"
-                    size="sm"
-                    endContent={(
-                      <Button
-                        isIconOnly
-                        color="success"
-                        size="sm"
-                        variant="faded"
-                        onClick={() => {
-                          _onOptionSelected(optionFilter[condition.id], condition);
-                        }}
-                      >
-                        <LuCheck />
-                      </Button>
-                    )}
-                    fullWidth
-                  />
+                  <>
+                    <Input
+                      type="text"
+                      value={optionFilter[condition.id]}
+                      placeholder="Enter a value here"
+                      labelPlacement="outside"
+                      onChange={(e) => {
+                        setOptionFilter({
+                          ...optionFilter, [condition.id]: e.target.value
+                        });
+                      }}
+                      variant="bordered"
+                      onKeyDown={(e) => _onKeyDown(e, condition)}
+                    />
+                    <Spacer y={1} />
+                  </>
                 )}
                 {condition.type === "date" && calendarOpen !== condition.id && (
                   <>
-                    <Button
-                      variant="light"
-                      endContent={<LuCalendarDays />}
-                      onClick={() => setCalendarOpen(condition.id)}
-                      size="sm"
-                      color="primary"
-                    >
-                      {(_getConditionValue(condition.id) && format(new Date(_getConditionValue(condition.id)), "Pp", { locale: enGB })) || "Select a date"}
-                    </Button>
-                    <Spacer x={0.5} />
-                    {_getConditionValue(condition.id) && (
+                    <div className="flex items-center gap-1">
                       <Button
-                        variant="light"
-                        isIconOnly
-                        onClick={() => _onOptionSelected("", condition)}
+                        variant="bordered"
+                        endContent={<LuCalendarDays />}
+                        onClick={() => setCalendarOpen(condition.id)}
                       >
-                        <LuXCircle />
+                        {(_getConditionValue(condition.id) && format(new Date(_getConditionValue(condition.id)), "Pp", { locale: enGB })) || "Select a date"}
                       </Button>
-                    )}
+                      {_getConditionValue(condition.id) && (
+                        <Button
+                          variant="light"
+                          color="danger"
+                          isIconOnly
+                          onClick={() => _onOptionSelected("", condition)}
+                        >
+                          <LuXCircle />
+                        </Button>
+                      )}
+                    </div>
+                    <Spacer y={1} />
                   </>
                 )}
                 {condition.type === "date" && calendarOpen === condition.id && (
-                  <div>
-                    <Calendar
-                      date={(
-                        _getConditionValue(condition.id)
-                        && new Date(_getConditionValue(condition.id))
-                      )
-                        || new Date()}
-                      onChange={(date) => _onOptionSelected(formatISO(date), condition)}
-                      locale={enGB}
-                      color={secondary}
-                    />
-                  </div>
+                  <>
+                    <div>
+                      <Calendar
+                        date={(
+                          _getConditionValue(condition.id)
+                          && new Date(_getConditionValue(condition.id))
+                        )
+                          || new Date()}
+                        onChange={(date) => _onOptionSelected(formatISO(date), condition)}
+                        locale={enGB}
+                        color={secondary}
+                      />
+                    </div>
+                    <Spacer y={1} />
+                  </>
                 )}
               </div>
               <Spacer y={1} />

@@ -524,7 +524,7 @@ function Chart(props) {
             </div>
             <div className="col-span-6 sm:col-span-4 flex items-start justify-end">
               {_checkIfFilters() && (
-                <Popover placement="bottom-right">
+                <Popover>
                   <PopoverTrigger>
                     <LinkNext className="text-gray-500">
                       <LuFilter />

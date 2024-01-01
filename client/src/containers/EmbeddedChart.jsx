@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Popover, Link, Spacer, CircularProgress, Chip,
+  Popover, Link, Spacer, CircularProgress, Chip, PopoverTrigger, PopoverContent,
 } from "@nextui-org/react";
 import moment from "moment";
 import { format } from "date-fns";
@@ -217,21 +217,19 @@ function EmbeddedChart() {
               <p>
                 {_checkIfFilters() && (
                   <Popover>
-                    <Popover.Trigger>
-                      <Link css={{ color: "$accents6" }}>
+                    <PopoverTrigger>
+                      <Link className="text-gray-500">
                         <LuFilter />
                       </Link>
-                    </Popover.Trigger>
-                    <Popover.Content>
-                      <Container css={{ pt: 10, pb: 10 }}>
-                        <ChartFilters
-                          chart={chart}
-                          onAddFilter={_onAddFilter}
-                          onClearFilter={_onClearFilter}
-                          conditions={conditions}
-                        />
-                      </Container>
-                    </Popover.Content>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <ChartFilters
+                        chart={chart}
+                        onAddFilter={_onAddFilter}
+                        onClearFilter={_onClearFilter}
+                        conditions={conditions}
+                      />
+                    </PopoverContent>
                   </Popover>
                 )}
               </p>
