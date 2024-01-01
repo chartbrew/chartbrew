@@ -13,8 +13,8 @@ import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import moment from "moment";
 import {
-  LuArrowDownRight,
-  LuCopyPlus, LuFileDown, LuFilter, LuLayoutDashboard, LuPlay, LuPlusCircle, LuRefreshCw, LuUser, LuUsers2, LuXCircle,
+  LuArrowDownRight, LuCopyPlus, LuFileDown, LuLayoutDashboard, LuListFilter,
+  LuPlay, LuPlusCircle, LuRefreshCw, LuUser, LuUsers2, LuXCircle,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -509,7 +509,7 @@ function ProjectDashboard(props) {
                   )}
                   <Button
                     variant="ghost"
-                    startContent={<LuFilter />}
+                    startContent={<LuListFilter />}
                     isLoading={filterLoading}
                     onClick={_onShowFilters}
                     size="sm"
@@ -525,7 +525,7 @@ function ProjectDashboard(props) {
                     size="sm"
                     className="flex sm:hidden"
                   >
-                    <LuFilter size={24} />
+                    <LuListFilter size={24} />
                   </Button>
                   <Spacer x={1} />
                   <div style={mobile ? {} : { paddingLeft: 10 }} className="hidden sm:block">

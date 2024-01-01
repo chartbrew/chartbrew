@@ -25,7 +25,7 @@ import Container from "../components/Container";
 import Row from "../components/Row";
 import Text from "../components/Text";
 import Callout from "../components/Callout";
-import { LuFilter, LuXCircle } from "react-icons/lu";
+import { LuListFilter, LuXCircle } from "react-icons/lu";
 import { useParams } from "react-router";
 import { useDispatch } from "react-redux";
 import KpiMode from "./Chart/components/KpiMode";
@@ -219,7 +219,7 @@ function EmbeddedChart() {
                   <Popover>
                     <PopoverTrigger>
                       <Link className="text-gray-500">
-                        <LuFilter />
+                        <LuListFilter />
                       </Link>
                     </PopoverTrigger>
                     <PopoverContent>

@@ -10,7 +10,7 @@ import {
 } from "@nextui-org/react";
 import {
   LuCalendarClock, LuCheck, LuChevronDown, LuClipboard, LuClipboardCheck, LuFileDown,
-  LuFilter, LuLayoutDashboard, LuLink, LuLock, LuMoreHorizontal, LuMoreVertical,
+  LuLayoutDashboard, LuLink, LuListFilter, LuLock, LuMoreHorizontal, LuMoreVertical,
   LuPlus, LuRefreshCw, LuSettings, LuShare, LuTrash, LuTv2, LuUnlock, LuX, LuXCircle
 } from "react-icons/lu";
 
@@ -527,7 +527,7 @@ function Chart(props) {
                 <Popover>
                   <PopoverTrigger>
                     <LinkNext className="text-gray-500">
-                      <LuFilter />
+                      <LuListFilter />
                     </LinkNext>
                   </PopoverTrigger>
                   <PopoverContent>
