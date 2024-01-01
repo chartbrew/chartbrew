@@ -292,7 +292,7 @@ export const testQuery = createAsyncThunk(
 export const getEmbeddedChart = createAsyncThunk(
   "chart/getEmbeddedChart",
   async ({ embed_id }) => {
-    const url = `${API_HOST}/chart/${embed_id}/embed`;
+    const url = `${API_HOST}/chart/${embed_id}/embedded`;
     const method = "GET";
     const headers = new Headers({
       "Accept": "application/json",

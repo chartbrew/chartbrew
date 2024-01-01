@@ -21,7 +21,6 @@ import RadarChart from "./Chart/components/RadarChart";
 import PolarChart from "./Chart/components/PolarChart";
 import logo from "../assets/logo_inverted.png";
 import useInterval from "../modules/useInterval";
-import Container from "../components/Container";
 import Row from "../components/Row";
 import Text from "../components/Text";
 import Callout from "../components/Callout";
@@ -41,21 +40,22 @@ function EmbeddedChart() {
   const [error, setError] = useState(false);
   const [conditions, setConditions] = useState([]);
   const [dataLoading, setDataLoading] = useState(false);
+  const [redraw, setRedraw] = useState(true);
 
   const params = useParams();
   const dispatch = useDispatch();
 
   useInterval(() => {
     setDataLoading(true);
-    dispatch(getEmbeddedChart({ chart_id: params.chartId }))
+    dispatch(getEmbeddedChart({ embed_id: params.chartId }))
       .then((chart) => {
-        setChart(chart);
+        setChart(chart.payload);
         setDataLoading(false);
       })
       .catch(() => {
         setDataLoading(false);
       });
-  }, chart.autoUpdate ? chart.autoUpdate * 1000 : null);
+  }, chart?.autoUpdate ? chart.autoUpdate * 1000 : null);
 
   useEffect(() => {
     // change the background color to transparent
@@ -63,9 +63,9 @@ function EmbeddedChart() {
 
     setLoading(true);
     setTimeout(() => {
-      dispatch(getEmbeddedChart({ chart_id: params.chartId }))
+      dispatch(getEmbeddedChart({ embed_id: params.chartId }))
         .then((chart) => {
-          setChart(chart);
+          setChart(chart.payload);
           setLoading(false);
         })
         .catch(() => {
@@ -153,11 +153,11 @@ function EmbeddedChart() {
           `}
           </style>
         </Helmet>
-        <Container justify="center" style={{ ...styles.loaderContainer, paddingTop: 50 }}>
+        <div className="container mx-auto pt-10">
           <Row justify="center" align="center">
             <CircularProgress color="default" />
           </Row>
-        </Container>
+        </div>
       </>
     );
   }
@@ -186,10 +186,10 @@ function EmbeddedChart() {
           `}
         </style>
       </Helmet>
-      <Container size="fluid" className="pl-unit-sm" style={styles.header(chart.type)} xl>
+      <div className="pl-unit-sm w-full" style={styles.header(chart.type)}>
         <Row justify="space-between">
           <div style={{ display: "flex", alignItems: "center" }}>
-            <Text b size="1.1em" css={{ color: "$text", lineHeight: "$xs" }}>{chart.name}</Text>
+            <Text b className={"text-default"}>{chart.name}</Text>
             <Spacer x={0.5} />
             {chart.ChartDatasetConfigs && conditions.map((c) => {
               return (
@@ -214,143 +214,128 @@ function EmbeddedChart() {
 
           {chart.chartData && (
             <div>
-              <p>
-                {_checkIfFilters() && (
-                  <Popover>
-                    <PopoverTrigger>
-                      <Link className="text-gray-500">
-                        <LuListFilter />
-                      </Link>
-                    </PopoverTrigger>
-                    <PopoverContent>
-                      <ChartFilters
-                        chart={chart}
-                        onAddFilter={_onAddFilter}
-                        onClearFilter={_onClearFilter}
-                        conditions={conditions}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                )}
-              </p>
+              {_checkIfFilters() && (
+                <Popover>
+                  <PopoverTrigger>
+                    <Link className="text-gray-500">
+                      <LuListFilter />
+                    </Link>
+                  </PopoverTrigger>
+                  <PopoverContent>
+                    <ChartFilters
+                      chart={chart}
+                      onAddFilter={_onAddFilter}
+                      onClearFilter={_onClearFilter}
+                      conditions={conditions}
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
           )}
         </Row>
-      </Container>
-      <Spacer y={0.5} />
-      {chart.type === "line"
-        && (
-        <div>
-          <LineChart chart={chart} height={pageHeight - 100} />
+      </div>
+      <Spacer y={1} />
+      {chart && (
+        <div className="h-[calc(100vh-100px)]">
+          {chart.type === "line" && (
+            <LineChart
+              chart={chart}
+              redraw={redraw}
+              redrawComplete={() => setRedraw(false)}
+              embedded
+            />
+          )}
+          {chart.type === "bar" && (
+            <BarChart chart={chart} height={pageHeight - 100} />
+          )}
+          {chart.type === "pie" && (
+            <PieChart
+              chart={chart}
+              height={pageHeight - 100}
+            />
+          )}
+          {chart.type === "doughnut" && (
+            <DoughnutChart
+              chart={chart}
+              height={pageHeight - 100}
+            />
+          )}
+          {chart.type === "radar" && (
+            <RadarChart
+              chart={chart}
+              height={pageHeight - 100}
+            />
+          )}
+          {chart.type === "polar" && (
+            <PolarChart
+              chart={chart}
+              height={pageHeight - 100}
+            />
+          )}
+          {chart.type === "table" && (
+            <TableContainer
+              height={pageHeight - 100}
+              tabularData={chart.chartData}
+              embedded
+              datasets={chart.ChartDatasetConfigs}
+            />
+          )}
+          {(chart.type === "kpi" || chart.type === "avg") && (
+            <KpiMode chart={chart} />
+          )}
         </div>
-        )}
-      {chart.type === "bar"
-        && (
-        <div>
-          <BarChart chart={chart} height={pageHeight - 100} />
-        </div>
-        )}
-      {chart.type === "pie"
-        && (
-        <div>
-          <PieChart
-            chart={chart}
-            height={pageHeight - 100}
-          />
-        </div>
-        )}
-      {chart.type === "doughnut"
-        && (
-        <div>
-          <DoughnutChart
-            chart={chart}
-            height={pageHeight - 100}
-          />
-        </div>
-        )}
-      {chart.type === "radar"
-        && (
-        <div>
-          <RadarChart
-            chart={chart}
-            height={pageHeight - 100}
-          />
-        </div>
-        )}
-      {chart.type === "polar"
-        && (
-        <div>
-          <PolarChart
-            chart={chart}
-            height={pageHeight - 100}
-          />
-        </div>
-        )}
-      {chart.type === "table"
-        && (
-        <div>
-          <TableContainer
-            height={pageHeight - 100}
-            tabularData={chart.chartData}
-            embedded
-            datasets={chart.ChartDatasetConfigs}
-          />
-        </div>
-        )}
-      {(chart.type === "kpi" || chart.type === "avg") && (
-        <KpiMode chart={chart} />
       )}
-      <Spacer y={0.5} />
-      <Container css={{ pr: 5, pl: 5 }} xl>
+      <Spacer y={4} />
+      <div>
         <Row justify="space-between" align="center">
           <div style={styles.row}>
             {!loading && (
               <>
                 {dataLoading && (
                   <>
-                    <CircularProgress aria-label="loading" size="xs" />
-                    <Spacer x={0.2} />
-                    <Text small>{"Updating..."}</Text>
+                    <CircularProgress aria-label="loading" classNames={{ svg: "w-4 h-4" }} />
+                    <Spacer x={1} />
+                    <span className="text-default-500 text-xs">{"Updating..."}</span>
                   </>
                 )}
                 {!dataLoading && (
-                  <Text small i title="Last updated">
+                  <span className="text-default-500 text-xs">
                     {`${_getUpdatedTime(chart.chartDataUpdated)}`}
-                  </Text>
+                  </span>
                 )}
               </>
             )}
             {loading && (
               <>
-                <CircularProgress aria-label="loading" />
-                <Spacer x={0.2} />
-                <Text small css={{ color: "$accents6" }}>{"Updating..."}</Text>
+                <CircularProgress aria-label="loading" classNames={{ svg: "w-4 h-4" }} />
+                <Spacer x={1} />
+                <span className="text-default-500 text-xs">{"Updating..."}</span>
               </>
             )}
           </div>
           {chart.showBranding && (
-            <Link href="https://chartbrew.com" target="_blank" rel="noreferrer" className={"text-primary items-end"}>
+            <Link href="https://chartbrew.com" target="_blank" rel="noreferrer" className={"text-primary items-center"}>
               <img
                 src={logo}
                 width="15"
                 alt="Chartbrew logo"
               />
               <Spacer x={0.2} />
-              <Text small color="gray">
+              <span className="text-default-500 text-xs">
                 <strong>Chart</strong>
                 brew
-              </Text>
+              </span>
             </Link>
           )}
         </Row>
-      </Container>
+      </div>
     </div>
   );
 }
 
 const styles = {
   container: {
-    flex: 1,
     backgroundColor: "transparent",
     padding: 20,
   },
