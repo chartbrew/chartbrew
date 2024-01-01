@@ -25,8 +25,7 @@ import KpiMode from "../../Chart/components/KpiMode";
 
 function ChartPreview(props) {
   const {
-    chart, onChange, onRefreshData, onRefreshPreview, chartLoading,
-    invalidateCache, changeCache,
+    chart, onChange, onRefreshData, onRefreshPreview, chartLoading, changeCache,
   } = props;
 
   const [redraw, setRedraw] = useState(false);
@@ -112,8 +111,8 @@ function ChartPreview(props) {
               </Button>
               <Spacer x={2} />
               <Checkbox
-                isSelected={!invalidateCache}
-                onChange={changeCache}
+                checked={window.localStorage.getItem("_cb_use_cache") === "true"}
+                onValueChange={changeCache}
                 size="sm"
               >
                 {"Use cached data"}
@@ -418,7 +417,6 @@ ChartPreview.propTypes = {
   onChange: PropTypes.func.isRequired,
   onRefreshData: PropTypes.func.isRequired,
   onRefreshPreview: PropTypes.func.isRequired,
-  invalidateCache: PropTypes.bool.isRequired,
   changeCache: PropTypes.func.isRequired,
 };
 

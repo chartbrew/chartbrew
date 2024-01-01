@@ -421,8 +421,9 @@ class ChartController {
         if (chartData.conditionsOptions) {
           chartData.conditionsOptions.forEach((opt) => {
             if (opt.dataset_id) {
-              const dataset = gChart.ChartDatasetConfigs.find((d) => d.id === opt.dataset_id);
-              if (dataset && dataset.conditions) {
+              const cdc = gChart.ChartDatasetConfigs.find((d) => d.dataset_id === opt.dataset_id);
+              const dataset = cdc?.Dataset;
+              if (dataset?.conditions) {
                 const newConditions = dataset.conditions.map((c) => {
                   const optCondition = opt.conditions.find((o) => o.field === c.field);
                   const values = (optCondition && optCondition.values) || [];

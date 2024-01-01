@@ -79,7 +79,7 @@ function ChartFilters(props) {
           <p>No filters available</p>
         </Row>
       )}
-      {chart && chart.ChartDatasetConfigs.filter((d) => d.conditions && d.conditions.length).map((cdc) => {
+      {chart && chart.ChartDatasetConfigs.filter((d) => d?.Dataset?.conditions && d?.Dataset?.conditions?.length).map((cdc) => {
         return cdc.Dataset?.conditions.filter((c) => c.exposed).map((condition) => {
           const filterOptions = _getDropdownOptions(cdc.Dataset, condition);
           return (

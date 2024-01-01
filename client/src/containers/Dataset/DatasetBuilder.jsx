@@ -226,13 +226,13 @@ function DatasetBuilder(props) {
       });
   };
 
-  const _onRefreshPreview = () => {
+  const _onRefreshPreview = (getCache = true) => {
     dispatch(runQuery({
       project_id: projectId,
       chart_id: chart.id,
       noSource: false,
       skipParsing: false,
-      getCache: true,
+      getCache,
     }))
       .catch(() => {
         toast.error("Could not refresh the dataset. Please check your query.");
@@ -502,7 +502,10 @@ function DatasetBuilder(props) {
         <ChartPreview
           chart={chart}
           onRefreshPreview={() => _onRefreshPreview()}
+          onRefreshData={() => _onRefreshPreview(true)}
           onChange={(data) => _onUpdateChart(data)}
+          changeCache={(isSelected) => window.localStorage.setItem("_cb_use_cache", isSelected)}
+          invalidateCache={!!window.localStorage.getItem("_cb_use_cache")}
         />
         
         <Spacer y={4} />

@@ -2,14 +2,15 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Checkbox, Chip, Divider, Input, Link, Popover, PopoverContent,
+  Button, Checkbox, Chip, Divider, Input, Link, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent,
   PopoverTrigger, ScrollShadow, Spacer, Tooltip, commonColors,
 } from "@nextui-org/react";
 import { TbMathFunctionY, TbProgressCheck } from "react-icons/tb";
 import { TwitterPicker, SketchPicker } from "react-color";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import {
   LuArrowDown01, LuArrowDown10, LuCheck, LuCheckCircle, LuInfo,
+  LuSettings,
   LuWand2, LuXCircle,
 } from "react-icons/lu";
 
@@ -31,12 +32,14 @@ function ChartDatasetConfig(props) {
   const [goal, setGoal] = useState("");
   const [dataItems, setDataItems] = useState({});
   const [tableFields, setTableFields] = useState([]);
+  const [editConfirmation, setEditConfirmation] = useState(false);
 
   const cdc = useSelector((state) => selectCdc(state, chartId, datasetId));
   const chart = useSelector((state) => state.chart.data.find((c) => c.id === chartId));
 
   const dispatch = useDispatch();
   const params = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (cdc.formula) {
@@ -240,6 +243,18 @@ function ChartDatasetConfig(props) {
             </Button>
           </>
         )}
+      </Row>
+
+      <Spacer y={2} />
+      <Row>
+        <Button
+          variant="ghost"
+          size="sm"
+          endContent={<LuSettings size={18} />}
+          onClick={() => setEditConfirmation(true)}
+        >
+          Edit dataset
+        </Button>
       </Row>
 
       <Spacer y={4} />
@@ -618,6 +633,34 @@ function ChartDatasetConfig(props) {
           {`Remove ${cdc.legend}`}
         </Button>
       </Row>
+
+      <Modal isOpen={editConfirmation} onClose={() => setEditConfirmation(false)}>
+        <ModalContent>
+          <ModalHeader>Editting dataset?</ModalHeader>
+          <ModalBody>
+            <Text>
+              {"You are about to edit the dataset. This will affect all charts that use this dataset. Are you sure you want to continue?"}
+            </Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="bordered"
+              onClick={() => setEditConfirmation(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="primary"
+              onClick={() => {
+                setEditConfirmation(false);
+                navigate(`/${params.teamId}/dataset/${cdc.dataset_id}`);
+              }}
+            >
+              Continue
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

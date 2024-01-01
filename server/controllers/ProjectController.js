@@ -25,7 +25,12 @@ class ProjectController {
       where: { id },
       order: [[db.Chart, "dashboardOrder", "ASC"], [db.Chart, db.ChartDatasetConfig, "order", "ASC"]],
       include: [
-        { model: db.Chart, include: [{ model: db.ChartDatasetConfig }] }
+        {
+          model: db.Chart,
+          include: [{
+            model: db.ChartDatasetConfig, include: [{ model: db.Dataset }]
+          }]
+        }
       ],
     })
       .then((project) => {
