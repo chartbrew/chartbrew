@@ -253,7 +253,7 @@ function AddChart(props) {
       });
   };
 
-  const _onRefreshData = () => {
+  const _onRefreshData = (filters = []) => {
     if (!params.chartId) return;
 
     const getCache = !invalidateCache;
@@ -263,6 +263,7 @@ function AddChart(props) {
       chart_id: params.chartId,
       noSource: false,
       skipParsing: false,
+      filters,
       getCache
     }))
       .then(() => {
@@ -287,13 +288,14 @@ function AddChart(props) {
       });
   };
 
-  const _onRefreshPreview = (skipParsing = true) => {
+  const _onRefreshPreview = (skipParsing = true, filters = []) => {
     if (!params.chartId) return;
     dispatch(runQuery({
       project_id: params.projectId,
       chart_id: params.chartId,
       noSource: true,
       skipParsing,
+      filters,
       getCache: true
     }))
       .then(() => {

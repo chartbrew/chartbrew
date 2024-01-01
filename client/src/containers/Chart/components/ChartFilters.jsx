@@ -73,6 +73,7 @@ function ChartFilters(props) {
   };
 
   const _onOptionValueChange = (value, condition) => {
+    if (_getConditionValue(condition.id) === value) return;
     setOptionFilter({
       ...optionFilter, [condition.id]: value,
     });
@@ -112,7 +113,7 @@ function ChartFilters(props) {
                   <>
                     <Autocomplete
                       variant="bordered"
-                      selectedKey={`${_getConditionValue(condition.id)}`}
+                      selectedKey={_getConditionValue(condition.id)}
                       onSelectionChange={(key) => {
                         _onOptionSelected(key, condition);
                       }}

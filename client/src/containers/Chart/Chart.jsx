@@ -461,26 +461,24 @@ function Chart(props) {
                     )}
                   </>
                   <Spacer x={0.5} />
-                  {chart.ChartDatasetConfigs && conditions.map((c) => {
-                    return (
-                      <Chip
-                        color="primary"
-                        variant={"flat"}
-                        key={c.id}
-                        size="sm"
-                        endContent={(
-                          <LinkNext onClick={() => _onClearFilter(c)} className="text-default-500 flex items-center">
-                            <LuXCircle size={14} />
-                          </LinkNext>
-                        )}
-                      >
-                        <Text size="sm">
-                          {c.type !== "date" && `${c.value}`}
-                          {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
-                        </Text>
-                      </Chip>
-                    );
-                  })}
+                  {chart.ChartDatasetConfigs && conditions.map((c) => (
+                    <Chip
+                      color="primary"
+                      variant={"flat"}
+                      key={c.id}
+                      size="sm"
+                      endContent={(
+                        <LinkNext onClick={() => _onClearFilter(c)} className="text-default-500 flex items-center">
+                          <LuXCircle size={14} />
+                        </LinkNext>
+                      )}
+                    >
+                      <Text size="sm">
+                        {c.type !== "date" && `${c.value}`}
+                        {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
+                      </Text>
+                    </Chip>
+                  ))}
                 </Row>
                 {chart.chartData && (
                   <Row justify="flex-start" align="center" className={"gap-1"}>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import {
-  Button, Checkbox, CircularProgress, Divider, Skeleton, Spacer, Tooltip,
+  Button, Checkbox, Chip, CircularProgress, Divider, Link, Popover, PopoverContent, PopoverTrigger, Skeleton, Spacer, Tooltip,
 } from "@nextui-org/react";
 import {
   TbChartBar, TbChartDonut4, TbChartLine, TbChartPie2, TbChartRadar, TbHash, TbMathAvg,
@@ -10,7 +10,8 @@ import {
 import { TiChartPie } from "react-icons/ti";
 import { FaChartLine } from "react-icons/fa";
 import { BsTable } from "react-icons/bs";
-import { LuInfo, LuRefreshCw } from "react-icons/lu";
+import { LuInfo, LuListFilter, LuRefreshCw, LuXCircle } from "react-icons/lu";
+import { findIndex } from "lodash";
 
 import LineChart from "../../Chart/components/LineChart";
 import BarChart from "../../Chart/components/BarChart";
@@ -22,6 +23,9 @@ import TableContainer from "../../Chart/components/TableView/TableContainer";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import KpiMode from "../../Chart/components/KpiMode";
+import ChartFilters from "../../Chart/components/ChartFilters";
+import { format } from "date-fns";
+import { enGB } from "date-fns/locale";
 
 function ChartPreview(props) {
   const {
@@ -29,6 +33,7 @@ function ChartPreview(props) {
   } = props;
 
   const [redraw, setRedraw] = useState(false);
+  const [conditions, setConditions] = useState([]);
 
   useEffect(() => {
     _onRefreshPreview();
@@ -37,6 +42,43 @@ function ChartPreview(props) {
   useEffect(() => {
     setRedraw(true);
   }, [chart.dataLabels]);
+
+  const _checkIfFilters = () => {
+    let filterCount = 0;
+    chart.ChartDatasetConfigs.forEach((d) => {
+      if (d.Dataset?.conditions) {
+        filterCount += d.Dataset.conditions.filter((c) => c.exposed).length;
+      }
+    });
+
+    return filterCount > 0;
+  };
+
+  const _onAddFilter = (condition) => {
+    let found = false;
+    const newConditions = conditions.map((c) => {
+      let newCondition = c;
+      if (c.id === condition.id) {
+        newCondition = condition;
+        found = true;
+      }
+      return newCondition;
+    });
+    if (!found) newConditions.push(condition);
+    setConditions(newConditions);
+
+    onRefreshData(newConditions);
+  };
+
+  const _onClearFilter = (condition) => {
+    const newConditions = [...conditions];
+    const clearIndex = findIndex(conditions, { id: condition.id });
+    if (clearIndex > -1) newConditions.splice(clearIndex, 1);
+
+    setConditions(newConditions);
+
+    onRefreshData(newConditions);
+  };
 
   const _onChangeChartType = (data) => {
     const newType = data;
@@ -98,32 +140,76 @@ function ChartPreview(props) {
       {chart && chart.chartData && chart.ChartDatasetConfigs && (
         <>
           <div className={"w-full"}>
-            <Row justify="flex-start" align="center">
-              <Button
-                onClick={_onRefreshData}
-                isLoading={chartLoading}
-                size="sm"
-                endContent={<LuRefreshCw size={18} />}
-                variant="flat"
-                color="primary"
-              >
-                {"Refresh chart"}
-              </Button>
-              <Spacer x={2} />
-              <Checkbox
-                checked={window.localStorage.getItem("_cb_use_cache") === "true"}
-                onValueChange={changeCache}
-                size="sm"
-              >
-                {"Use cached data"}
-              </Checkbox>
-              <Spacer x={0.5} />
-              <Tooltip
-                content="Chartbrew will use cached data for extra editing speed ⚡️"
-              >
-                <div><LuInfo /></div>
-              </Tooltip>
+            <Row justify="flex-between" align="center">
+              <div className="flex items-center gap-1">
+                <Button
+                  onClick={_onRefreshData}
+                  isLoading={chartLoading}
+                  size="sm"
+                  endContent={<LuRefreshCw size={18} />}
+                  variant="flat"
+                  color="primary"
+                >
+                  {"Refresh chart"}
+                </Button>
+                <Spacer />
+                <Checkbox
+                  checked={window.localStorage.getItem("_cb_use_cache") === "true"}
+                  onValueChange={changeCache}
+                  size="sm"
+                >
+                  {"Use cached data"}
+                </Checkbox>
+                <Tooltip
+                  content="Chartbrew will use cached data for extra editing speed ⚡️"
+                >
+                  <div><LuInfo /></div>
+                </Tooltip>
+              </div>
+
+              {_checkIfFilters() && (
+                <Popover>
+                  <PopoverTrigger>
+                    <Link className="text-gray-500">
+                      <LuListFilter />
+                    </Link>
+                  </PopoverTrigger>
+                  <PopoverContent>
+                    <ChartFilters
+                      chart={chart}
+                      onAddFilter={_onAddFilter}
+                      onClearFilter={_onClearFilter}
+                      conditions={conditions}
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
             </Row>
+            {chart.ChartDatasetConfigs && conditions.length > 0 && (
+              <>
+                <Spacer y={2} />
+                <div className="flex items-center gap-1">
+                  {chart.ChartDatasetConfigs && conditions.map((c) => (
+                    <Chip
+                      color="primary"
+                      variant={"flat"}
+                      key={c.id}
+                      size="sm"
+                      endContent={(
+                        <Link onClick={() => _onClearFilter(c)} className="text-default-500 flex items-center">
+                          <LuXCircle size={14} />
+                        </Link>
+                      )}
+                    >
+                      <Text size="sm">
+                        {c.type !== "date" && `${c.value}`}
+                        {c.type === "date" && format(new Date(c.value), "Pp", { locale: enGB })}
+                      </Text>
+                    </Chip>
+                  ))}
+                </div>
+              </>
+            )}
             <Spacer y={2} />
             <Row>
               <Divider />
