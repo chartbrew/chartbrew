@@ -7,12 +7,11 @@ import {
   Button, Input, Spacer, Table, Tooltip, Link as LinkNext, Chip, Modal,
   CircularProgress, TableHeader, TableColumn, TableCell, TableBody, TableRow,
   ModalHeader, ModalBody, ModalFooter, ModalContent, DropdownTrigger, Dropdown,
-  DropdownMenu, DropdownItem, Avatar, AvatarGroup, Listbox, ListboxItem, Switch, Checkbox,
+  DropdownMenu, DropdownItem, Avatar, AvatarGroup, Listbox, ListboxItem, Switch, Checkbox, Card, CardHeader, Divider, CardBody,
 } from "@nextui-org/react";
 import {
-  LuBarChart, LuCalendarDays, LuChevronDown, LuDatabase, LuLayoutGrid, LuPencilLine, LuPlug, LuPlus, LuSearch, LuSettings,
-  LuTag,
-  LuTrash, LuUsers2,
+  LuBarChart, LuCalendarDays, LuChevronDown, LuDatabase, LuLayoutGrid, LuMoreHorizontal, LuPencilLine,
+  LuPlug, LuPlus, LuSearch, LuSettings, LuTable, LuTag, LuTrash, LuUsers2,
 } from "react-icons/lu";
 import { Flip, ToastContainer } from "react-toastify";
 
@@ -78,6 +77,7 @@ function UserDashboard(props) {
   const [deletingConnection, setDeletingConnection] = useState(false);
   const [connectionSearch, setConnectionSearch] = useState("");
   const [deleteRelatedDatasets, setDeleteRelatedDatasets] = useState(false);
+  const [viewMode, setViewMode] = useState("grid");
 
   const teamsRef = useRef(null);
   const initRef = useRef(null);
@@ -99,6 +99,9 @@ function UserDashboard(props) {
           navigate("/login");
         });
     }
+
+    const storageViewMode = window.localStorage.getItem("__cb_view_mode");
+    if (storageViewMode) setViewMode(storageViewMode);
   }, []);
 
   useEffect(() => {
@@ -159,6 +162,7 @@ function UserDashboard(props) {
   const directToProject = (projectId) => {
     dispatch(saveActiveTeam(team));
     window.location.href = `/${team.id}/${projectId}/dashboard`;
+    // navigate(`/${team.id}/${projectId}/dashboard`);
   };
 
   const _canAccess = (role, teamRoles) => {
@@ -341,6 +345,11 @@ function UserDashboard(props) {
     return filteredConnections || [];
   };
 
+  const _changeViewMode = (mode) => {
+    setViewMode(mode);
+    window.localStorage.setItem("__cb_view_mode", mode);
+  };
+
   if (!user.data.id) {
     return (
       <div style={styles.container(height)}>
@@ -464,33 +473,121 @@ function UserDashboard(props) {
             <div className="col-span-12 sm:col-span-7 md:col-span-8 lg:col-span-9">
               {activeMenu === "projects" && (
                 <>
-                  <Row className={"gap-2"} justify="flex-start" align="center">
-                    {_canAccess("teamAdmin", team.TeamRoles) && (
-                      <>
-                        <Button
-                          color="primary"
-                          onClick={() => _onNewProject(team)}
-                          endContent={<LuPlus />}
-                        >
-                          Create a new dashboard
-                        </Button>
-                      </>
-                    )}
-                    <Input
-                      type="text"
-                      placeholder="Search dashboards"
-                      variant="bordered"
-                      endContent={<LuSearch />}
-                      onChange={(e) => setSearch({ ...search, [team.id]: e.target.value })}
-                      className="max-w-[300px]"
-                      labelPlacement="outside"
-                    />
+                  <Row justify="space-between" align="center">
+                    <Row className={"gap-2"} justify="flex-start" align="center">
+                      {_canAccess("teamAdmin", team.TeamRoles) && (
+                        <div>
+                          <Button
+                            color="primary"
+                            onClick={() => _onNewProject(team)}
+                            endContent={<LuPlus />}
+                          >
+                            <span className="hidden md:block">Create a new dashboard</span>
+                            <span className="md:hidden">Create</span>
+                          </Button>
+                        </div>
+                      )}
+                      <Input
+                        type="text"
+                        placeholder="Search dashboards"
+                        variant="bordered"
+                        endContent={<LuSearch />}
+                        onChange={(e) => setSearch({ ...search, [team.id]: e.target.value })}
+                        className="max-w-[300px]"
+                        labelPlacement="outside"
+                      />
+                    </Row>
+                    <div className="flex">
+                      <Button
+                        variant="light"
+                        isIconOnly
+                        color={viewMode === "grid" ? "primary" : "default"}
+                        onClick={() => _changeViewMode("grid")}
+                      >
+                        <LuLayoutGrid />
+                      </Button>
+                      <Button
+                        variant="light"
+                        isIconOnly
+                        color={viewMode === "table" ? "primary" : "default"}
+                        onClick={() => _changeViewMode("table")}
+                      >
+                        <LuTable />
+                      </Button>
+                    </div>
                   </Row>
                   <Spacer y={4} />
-                  {projects && (
+                  {projects && viewMode === "grid" && (
+                    <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {_getFilteredProjects().map((project) => (
+                        <Card
+                          key={project.id}
+                          isPressable
+                          shadow="none"
+                          className="border-1 border-solid border-content3"
+                          radius="sm"
+                          onClick={() => directToProject(project.id)}
+                        >
+                          <CardHeader className="flex flex-row justify-between items-center">
+                            <span className="text-sm font-medium">{project.name}</span>
+                            {_canAccess("teamAdmin", team.TeamRoles) && (
+                              <Dropdown size="sm">
+                                <DropdownTrigger>
+                                  <LinkNext className="text-foreground-400">
+                                    <LuMoreHorizontal />
+                                  </LinkNext>
+                                </DropdownTrigger>
+                                <DropdownMenu>
+                                  <DropdownItem
+                                    onClick={() => _onEditProject(project)}
+                                    startContent={<LuPencilLine />}
+                                    showDivider
+                                  >
+                                    Rename
+                                  </DropdownItem>
+                                  <DropdownItem
+                                    onClick={() => _onDeleteProject(project)}
+                                    startContent={<LuTrash />}
+                                    color="danger"
+                                  >
+                                    Delete
+                                  </DropdownItem>
+                                </DropdownMenu>
+                              </Dropdown>
+                            )}
+                          </CardHeader>
+                          <Divider />
+                          <CardBody>
+                            <Row justify="space-between" align="center">
+                              {_getProjectMembers(project)?.length > 0 && (
+                                <AvatarGroup max={3} isBordered size="sm">
+                                  {_getProjectMembers(project)?.map((pr) => (
+                                    <Avatar
+                                      key={pr.id}
+                                      name={pr.name}
+                                    />
+                                  ))}
+                                </AvatarGroup>
+                              )}
+                              {_getProjectMembers(project)?.length === 0 && (
+                                <Chip variant="flat" size="sm">
+                                  Team only
+                                </Chip>
+                              )}
+                              <div className="flex flex-row items-center gap-1 text-sm">
+                                <LuBarChart />
+                                <span>{project?.Charts?.length || 0}</span>
+                              </div>
+                            </Row>
+                          </CardBody>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                  {projects && viewMode === "table" && (
                     <Table
                       aria-label="Dashboard list"
-                      className="h-auto min-w-full border-2 border-solid border-content3 rounded-xl"
+                      className="h-auto min-w-full border-1 border-solid border-content3 rounded-xl"
                       radius="md"
                       shadow="none"
                       isStriped
@@ -634,7 +731,7 @@ function UserDashboard(props) {
                     />
                   </Row>
                   <Spacer y={4} />
-                  <Table shadow="none" isStriped className="border-2 border-solid border-content3 rounded-xl">
+                  <Table shadow="none" isStriped className="border-1 border-solid border-content3 rounded-xl">
                     <TableHeader>
                       <TableColumn key="name">Connection</TableColumn>
                       <TableColumn key="tags">
@@ -746,7 +843,7 @@ function UserDashboard(props) {
                     </Switch>
                   </Row>
                   <Spacer y={4} />
-                  <Table shadow="none" isStriped className="border-2 border-solid border-content3 rounded-xl">
+                  <Table shadow="none" isStriped className="border-1 border-solid border-content3 rounded-xl">
                     <TableHeader>
                       <TableColumn key="name">Dataset name</TableColumn>
                       <TableColumn key="connections" textValue="Connections" align="center" justify="center">
