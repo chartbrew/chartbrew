@@ -136,7 +136,16 @@ function DatasetBuilder(props) {
           team_id: dataset.team_id,
           dataset_id: dataset.id,
           data: updateObj,
-        }));
+        }))
+          .then(() => {
+            dispatch(runQuery({
+              project_id: projectId,
+              chart_id: chart.id,
+              noSource: false,
+              skipParsing: false,
+              getCache: true,
+            }));
+          });
       }
     }
   }, [datasetResponse]);
