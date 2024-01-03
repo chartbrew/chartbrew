@@ -2,11 +2,11 @@ import React, { useState, useEffect, Fragment, useRef } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import {
-  Button, Spacer, Link as LinkNext, Tooltip, Card, Modal, Chip, CardBody,
+  Button, Spacer, Link as LinkNext, Tooltip, Modal, Chip,
   ModalHeader, ModalBody, ModalContent, AvatarGroup, Avatar, Popover, PopoverTrigger,
   PopoverContent, Listbox, ListboxItem, Divider,
 } from "@nextui-org/react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useWindowSize } from "react-use";
 import _, { isEqual } from "lodash";
 import { ToastContainer, toast, Flip } from "react-toastify";
@@ -14,7 +14,7 @@ import "react-toastify/dist/ReactToastify.min.css";
 import moment from "moment";
 import {
   LuArrowDownRight, LuCopyPlus, LuFileDown, LuLayoutDashboard, LuListFilter,
-  LuPlay, LuPlusCircle, LuRefreshCw, LuUser, LuUsers2, LuXCircle,
+  LuPlusCircle, LuRefreshCw, LuUser, LuUsers2, LuXCircle,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -32,7 +32,6 @@ import ChartExport from "./components/ChartExport";
 import CreateTemplateForm from "../../components/CreateTemplateForm";
 import useThemeDetector from "../../modules/useThemeDetector";
 import Row from "../../components/Row";
-import Container from "../../components/Container";
 import Text from "../../components/Text";
 import { selectProjectMembers } from "../../slices/team";
 
@@ -67,7 +66,7 @@ const getFilterGroupsFromStorage = () => {
 */
 function ProjectDashboard(props) {
   const {
-    cleanErrors, connections, showDrafts, user, team, mobile,
+    cleanErrors, showDrafts, user, team, mobile,
   } = props;
 
   const [filters, setFilters] = useState(getFiltersFromStorage());
@@ -84,11 +83,13 @@ function ProjectDashboard(props) {
 
   const params = useParams();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const charts = useSelector(selectCharts);
+  const chartsLoading = useSelector((state) => state.chart.loading);
   const projectMembers = useSelector((state) => selectProjectMembers(state, params.projectId));
 
-  const { height, width } = useWindowSize();
+  const { width } = useWindowSize();
   const isDark = useThemeDetector();
   const initLayoutRef = useRef(null);
 
@@ -658,56 +659,31 @@ function ProjectDashboard(props) {
           </div>
         )}
       <div className="bg-content2 w-full" style={styles.container(width < breakpoints.tablet)}>
-        {connections.length === 0 && charts.length === 0
-          && (
-            <Container justify="center" className={`pt-[${height / 3}]`}>
-              <Row justify="center" align="center">
-                <Text h1>
-                  Welcome to your dashboard
-                </Text>
-              </Row>
-              <Spacer y={1} />
-              <Row justify="center" align="center">
-              <Text size="h3">
-                  {"Connect to a data source and start visualizing your data. "}
-                </Text>
-              </Row>
-              <Spacer y={2} />
-              <Row justify="center" align="center">
-                <Link
-                  to={{
-                    pathname: `/${params.teamId}/${params.projectId}/connections`,
-                    state: { onboarding: true },
-                  }}
-                >
-                  <Button variant="shadow" endContent={<LuPlay size={24} />} size="lg" auto>
-                    Get started
-                  </Button>
-                </Link>
-              </Row>
-            </Container>
-          )}
-
-        {_canAccess("projectAdmin") && charts.length < 1 && connections.length > 0 && (
-          <Container justify="center" style={styles.addCard}>
+        {charts.length === 0 && !chartsLoading && (
+          <div className="flex flex-col justify-center pt-10">
             <Row justify="center" align="center">
-              <Link to={`/${params.teamId}/${params.projectId}/chart`}>
-                <Card
-                  isHoverable
-                  isPressable
-                >
-                  <CardBody>
-                    <Row justify="center" align="center">
-                      <LuPlusCircle size={28} />
-                    </Row>
-                    <Row justify="center" align="center">
-                      <Text size="h3">Add your first chart</Text>
-                    </Row>
-                  </CardBody>
-                </Card>
-              </Link>
+              <span className="text-xl font-bold">
+                Welcome to your dashboard
+              </span>
             </Row>
-          </Container>
+            <Spacer y={1} />
+            <Row justify="center" align="center">
+              <span>
+                {"It looks empty over here. Let's create a chart to get started."}
+              </span>
+            </Row>
+            <Spacer y={4} />
+            <Row justify="center" align="center">
+              <Button
+                endContent={<LuPlusCircle size={24} />}
+                size="lg"
+                color="primary"
+                onClick={() => navigate(`/${params.teamId}/${params.projectId}/chart`)}
+              >
+                Create a chart
+              </Button>
+            </Row>
+          </div>
         )}
 
         {layouts && charts.filter((c) => `${c.project_id}` === params.projectId).length > 0 && (
