@@ -213,9 +213,17 @@ function Dataset() {
         ];
       });
 
+      const newChart = {
+        ...ghostChart,
+        name: legend,
+        draft: false,
+        id: null,
+        layout: chartLayout,
+      };
+
       dispatch(createChart({
         project_id: projectId,
-        data: { ...chart, draft: false, id: null, layout: chartLayout },
+        data: newChart,
       }))
         .then((actionData) => {
           let cdcData = { ...dataset };

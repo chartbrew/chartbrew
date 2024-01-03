@@ -8,7 +8,7 @@ import {
 } from "@nextui-org/react";
 import { Link, useParams } from "react-router-dom";
 import { useWindowSize } from "react-use";
-import _ from "lodash";
+import _, { isEqual } from "lodash";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import moment from "moment";
@@ -103,7 +103,7 @@ function ProjectDashboard(props) {
   }, [filters]);
 
   useEffect(() => {
-    if (charts && charts.length > 0 && !initLayoutRef.current) {
+    if (charts && charts.filter((c) => c.project_id === parseInt(params.projectId, 10)).length > 0 && !initLayoutRef.current) {
       initLayoutRef.current = true;
 
       // set the grid layout
@@ -411,13 +411,22 @@ function ProjectDashboard(props) {
       return { ...chart, layout: updatedLayout };
     });
 
-    updatedCharts.forEach(chart => {
-      dispatch(updateChart({
-        project_id: params.projectId,
-        chart_id: chart.id,
-        data: { layout: chart.layout },
-        justUpdates: true
-      }));
+    updatedCharts.forEach((chart, index) => {
+      // only allow chart updates if the layout has all the breakpoints
+      const chartBreakpoints = Object.keys(chart.layout);
+      const allBreakpoints = Object.keys(layout);
+
+      if (chartBreakpoints.length === allBreakpoints.length) {
+        // only update the layout if it has changed
+        if (!isEqual(chart.layout, charts[index].layout)) {
+          dispatch(updateChart({
+            project_id: params.projectId,
+            chart_id: chart.id,
+            data: { layout: chart.layout },
+            justUpdates: true
+          }));
+        }
+      }
     });
 
     setLayouts(allLayouts);    
@@ -701,7 +710,7 @@ function ProjectDashboard(props) {
           </Container>
         )}
 
-        {layouts && (
+        {layouts && charts.filter((c) => `${c.project_id}` === params.projectId).length > 0 && (
           <ResponsiveGridLayout
             className="layout"
             layouts={layouts}

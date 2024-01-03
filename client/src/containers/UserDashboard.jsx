@@ -161,8 +161,8 @@ function UserDashboard(props) {
 
   const directToProject = (projectId) => {
     dispatch(saveActiveTeam(team));
-    window.location.href = `/${team.id}/${projectId}/dashboard`;
-    // navigate(`/${team.id}/${projectId}/dashboard`);
+    // window.location.href = `/${team.id}/${projectId}/dashboard`;
+    navigate(`/${team.id}/${projectId}/dashboard`);
   };
 
   const _canAccess = (role, teamRoles) => {

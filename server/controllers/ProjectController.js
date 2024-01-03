@@ -65,7 +65,7 @@ class ProjectController {
           where: {
             id: { [Op.in]: idArray },
           },
-          include: [{ model: db.ProjectRole }, { model: db.Chart, attributes: ["id"] }],
+          include: [{ model: db.ProjectRole }, { model: db.Chart, attributes: ["id", "layout"] }],
         });
       })
       .then((projects) => {
@@ -174,7 +174,7 @@ class ProjectController {
   getTeamProjects(teamId) {
     return db.Project.findAll({
       where: { team_id: teamId },
-      include: [{ model: db.Chart, attributes: ["id"] }],
+      include: [{ model: db.Chart, attributes: ["id", "layout"] }],
     })
       .then((projects) => {
         return projects;

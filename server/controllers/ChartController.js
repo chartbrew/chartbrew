@@ -26,46 +26,14 @@ class ChartController {
   }
 
   create(data, user) {
-    let chartId;
     return db.Chart.create({ ...data, chartDataUpdated: moment() })
       .then((chart) => {
-        chartId = chart.id;
-        if (data.ChartDatasetConfigs || data.dataRequests) {
-          const createPromises = [];
-
-          // add the datasets creation
-          if (data.ChartDatasetConfigs) {
-            for (const dataset of data.ChartDatasetConfigs) {
-              if (!dataset.deleted) {
-                dataset.chart_id = chartId;
-                createPromises.push(this.datasetController.create(dataset));
-              }
-            }
-          }
-
-          // add the dataRequest creation
-          if (data.dataRequests) {
-            data.dataRequests.forEach((dataRequest) => {
-              createPromises.push(
-                this.dataRequestController.create({ ...dataRequest, chart_id: chart.id })
-              );
-            });
-          }
-
-          // add the update promise as well
-          createPromises.push(this.update(chart.id, { dashboardOrder: chart.id }));
-          return Promise.all(createPromises);
-        } else {
-          return this.update(chart.id, { dashboardOrder: chart.id });
-        }
-      })
-      .then(() => {
         // delete chart cache
         if (user) {
-          this.chartCache.remove(user.id, chartId);
+          this.chartCache.remove(user.id, chart.id);
         }
 
-        return this.findById(chartId);
+        return this.findById(chart.id);
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));
