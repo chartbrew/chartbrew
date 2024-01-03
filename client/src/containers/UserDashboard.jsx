@@ -582,6 +582,14 @@ function UserDashboard(props) {
                           </CardBody>
                         </Card>
                       ))}
+
+                      {_getFilteredProjects().length === 0 && (
+                        <div>
+                          <span className="text-foreground-400 italic">
+                            {"No dashboards here"}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                   {projects && viewMode === "table" && (
@@ -678,19 +686,7 @@ function UserDashboard(props) {
                         <TableBody>
                           <TableRow>
                             <TableCell key="name" className="p-0 pt-2">
-                              {_canAccess("teamAdmin", team.TeamRoles) && (
-                                <Button
-                                  variant="light"
-                                  color="primary"
-                                  onClick={() => _onNewProject(team)}
-                                  startContent={<LuPlus />}
-                                >
-                                  Create your first dashboard
-                                </Button>
-                              )}
-                              {!_canAccess("teamAdmin", team.TeamRoles) && (
-                                <span className="italic text-default-500">No projects here</span>
-                              )}
+                              <span className="italic text-default-500">No dashboards here</span>
                             </TableCell>
                             <TableCell key="members" align="center" />
                             <TableCell key="charts" align="center" />
