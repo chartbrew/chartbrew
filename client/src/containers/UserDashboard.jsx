@@ -24,12 +24,11 @@ import {
   updateProject, removeProject, selectProjects, getProjects,
 } from "../slices/project";
 import {
-  getTeamConnections, removeConnection, selectConnections,
+  getTeamConnections, removeConnection, saveConnection, selectConnections,
 } from "../slices/connection";
 import ProjectForm from "../components/ProjectForm";
 import Navbar from "../components/Navbar";
 import canAccess from "../config/canAccess";
-import { secondary } from "../config/colors";
 import Container from "../components/Container";
 import Row from "../components/Row";
 import Text from "../components/Text";
@@ -77,6 +76,9 @@ function UserDashboard(props) {
   const [deletingConnection, setDeletingConnection] = useState(false);
   const [connectionSearch, setConnectionSearch] = useState("");
   const [deleteRelatedDatasets, setDeleteRelatedDatasets] = useState(false);
+  const [connectionToEdit, setConnectionToEdit] = useState(null);
+  const [modifyingConnection, setModifyingConnection] = useState(false);
+  
   const [viewMode, setViewMode] = useState("grid");
 
   const teamsRef = useRef(null);
@@ -343,6 +345,20 @@ function UserDashboard(props) {
     });
 
     return filteredConnections || [];
+  };
+
+  const _onEditConnectionTags = async () => {
+    setModifyingConnection(true);
+
+    const projectIds = connectionToEdit.project_ids || [];
+
+    await dispatch(saveConnection({
+      team_id: team.id,
+      connection: { id: connectionToEdit.id, project_ids: projectIds },
+    }));
+
+    setModifyingConnection(false);
+    setConnectionToEdit(null);
   };
 
   const _changeViewMode = (mode) => {
@@ -621,7 +637,7 @@ function UserDashboard(props) {
                           <TableRow key={project.id}>
                             <TableCell key="name">
                               <LinkNext onClick={() => directToProject(project.id)} className="cursor-pointer flex flex-col items-start">
-                                <Text b className={"text-foreground"}>{project.name}</Text>
+                                <span className={"text-foreground font-medium"}>{project.name}</span>
                               </LinkNext>
                             </TableCell>
                             <TableCell key="members">
@@ -755,23 +771,41 @@ function UserDashboard(props) {
                                 isBordered
                               />
                               <Link to={`/${team.id}/connection/${connection.id}`} className="cursor-pointer">
-                                <Text b>{connection.name}</Text>
+                                <span className="text-foreground font-medium">{connection.name}</span>
                               </Link>
                             </Row>
                           </TableCell>
                           <TableCell key="tags">
-                            {_getConnectionTags(connection.project_ids).slice(0, 3).map((tag) => (
-                              <Chip
-                                key={tag}
-                                size="sm"
-                                variant="flat"
-                                color="primary"
+                            {_getConnectionTags(connection.project_ids).length > 0 && (
+                              <div
+                                className="flex flex-row flex-wrap items-center gap-1 cursor-pointer hover:saturate-200 transition-all"
+                                onClick={() => setConnectionToEdit(connection)}
                               >
-                                {tag}
-                              </Chip>
-                            ))}
-                            {_getConnectionTags(connection.project_ids).length > 3 && (
-                              <span className="text-xs">{`+${_getConnectionTags(connection.project_ids).length - 3} more`}</span>
+                                {_getConnectionTags(connection.project_ids).slice(0, 3).map((tag) => (
+                                  <Chip
+                                    key={tag}
+                                    size="sm"
+                                    variant="flat"
+                                    color="primary"
+                                  >
+                                    {tag}
+                                  </Chip>
+                                ))}
+                                {_getConnectionTags(connection.project_ids).length > 3 && (
+                                  <span className="text-xs">{`+${_getConnectionTags(connection.project_ids).length - 3} more`}</span>
+                                )}
+                              </div>
+                            )}
+                            {_getConnectionTags(connection.project_ids).length === 0 && (
+                              <Button
+                                variant="light"
+                                startContent={<LuPlus size={18} />}
+                                size="sm"
+                                className="opacity-0 hover:opacity-100"
+                                onClick={() => setConnectionToEdit(connection)}
+                              >
+                                Add tag
+                              </Button>
                             )}
                           </TableCell>
                           <TableCell key="created">
@@ -779,28 +813,39 @@ function UserDashboard(props) {
                           </TableCell>
                           <TableCell key="actions">
                             <Row justify="flex-end" align="center">
-                              <Tooltip content="Edit connection">
-                                <Button
-                                  startContent={<LuPencilLine />}
-                                  variant="light"
-                                  size="sm"
-                                  className={"min-w-fit"}
-                                  onClick={() => navigate(`/${team.id}/connection/${connection.id}`)}
-                                />
-                              </Tooltip>
-                              <Tooltip
-                                content="Delete connection"
-                                color="danger"
-                              >
-                                <Button
-                                  color="danger"
-                                  startContent={<LuTrash />}
-                                  variant="light"
-                                  size="sm"
-                                  className={"min-w-fit"}
-                                  onClick={() => setConnectionToDelete(connection)}
-                                />
-                              </Tooltip>
+                              <Dropdown>
+                                <DropdownTrigger>
+                                  <Button
+                                    isIconOnly
+                                    variant="light"
+                                    size="sm"
+                                  >
+                                    <LuMoreHorizontal />
+                                  </Button>
+                                </DropdownTrigger>
+                                <DropdownMenu>
+                                  <DropdownItem
+                                    onClick={() => navigate(`/${team.id}/connection/${connection.id}`)}
+                                    startContent={<LuPencilLine />}
+                                  >
+                                    Edit
+                                  </DropdownItem>
+                                  <DropdownItem
+                                    onClick={() => setConnectionToEdit(connection)}
+                                    startContent={<LuTag />}
+                                    showDivider
+                                  >
+                                    Edit tags
+                                  </DropdownItem>
+                                  <DropdownItem
+                                    onClick={() => setConnectionToDelete(connection)}
+                                    startContent={<LuTrash />}
+                                    color="danger"
+                                  >
+                                    Delete
+                                  </DropdownItem>
+                                </DropdownMenu>
+                              </Dropdown>
                             </Row>
                           </TableCell>
                         </TableRow>
@@ -862,7 +907,7 @@ function UserDashboard(props) {
                           <TableCell key="name">
                             <div className="flex flex-row items-center gap-2">
                               <Link to={`/${team.id}/dataset/${dataset.id}`} className="cursor-pointer">
-                                <Text b>{dataset.legend}</Text>
+                                <span className="text-foreground font-medium">{dataset.legend}</span>
                               </Link>
                               {dataset.draft && (
                                 <Chip size="sm" variant="flat" color="secondary">
@@ -947,10 +992,8 @@ function UserDashboard(props) {
             </ModalBody>
             <ModalFooter>
               <Button
-                variant="flat"
-                color="warning"
+                variant="bordered"
                 onClick={() => setProjectToEdit(null)}
-                auto
               >
                 Cancel
               </Button>
@@ -978,10 +1021,8 @@ function UserDashboard(props) {
             </ModalBody>
             <ModalFooter>
               <Button
-                variant="flat"
-                color="warning"
+                variant="bordered"
                 onClick={() => setProjectToDelete(null)}
-                auto
               >
                 Cancel
               </Button>
@@ -1129,6 +1170,52 @@ function UserDashboard(props) {
           </ModalContent>
         </Modal>
 
+        <Modal isOpen={!!connectionToEdit} onClose={() => setConnectionToEdit(null)} size="xl">
+          <ModalContent>
+            <ModalHeader>
+              <Text size="h3">Edit tags</Text>
+            </ModalHeader>
+            <ModalBody>
+              <div className="flex flex-row flex-wrap items-center gap-2">
+                {projects.filter((p) => !p.ghost).map((project) => (
+                  <Chip
+                    key={project.id}
+                    radius="sm"
+                    variant={connectionToEdit?.project_ids?.includes(project.id) ? "solid" : "flat"}
+                    color="primary"
+                    className="cursor-pointer"
+                    onClick={() => {
+                      if (connectionToEdit?.project_ids?.includes(project.id)) {
+                        setConnectionToEdit({ ...connectionToEdit, project_ids: connectionToEdit?.project_ids?.filter((p) => p !== project.id) });
+                      }
+                      else {
+                        setConnectionToEdit({ ...connectionToEdit, project_ids: [...connectionToEdit?.project_ids || [], project.id] });
+                      }
+                    }}
+                  >
+                    {project.name}
+                  </Chip>
+                ))}
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <Button
+                variant="bordered"
+                onClick={() => setConnectionToEdit(null)}
+              >
+                Close
+              </Button>
+              <Button
+                color="primary"
+                onClick={() => _onEditConnectionTags()}
+                isLoading={modifyingConnection}
+              >
+                Save
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+
         {(teams && teams.length === 0) && (
           <>
             <Row align="center" justify="center">
@@ -1165,58 +1252,6 @@ const styles = {
     // backgroundColor: "#103751",
     minHeight: height,
   }),
-  listContent: {
-    cursor: "pointer",
-  },
-  listItem: {
-    margin: "4em",
-  },
-  listRole: {
-    color: "white",
-    fontSize: "13px"
-  },
-  card: {
-    backgroundColor: "white",
-  },
-  violetSection: {
-    backgroundColor: "#1a7fa0",
-    borderColor: "#1a7fa0",
-  },
-  teamContainer: {
-    marginTop: 50,
-  },
-  projectContainer: {
-    textAlign: "center",
-    cursor: "pointer",
-  },
-  cardsContainer: {
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  cardHeader: {
-    paddingTop: 10,
-    color: "black",
-  },
-  teamHeader: {
-    display: "inline",
-  },
-  settingsBtn: {
-    marginLeft: 20,
-  },
-  addProjectCard: {
-    opacity: 0.5,
-    display: "flex",
-    width: "100%"
-  },
-  iconColumn: {
-    color: "black",
-  },
-  roleBanner: {
-    backgroundColor: secondary,
-    paddingRight: 8,
-    paddingLeft: 8,
-    borderRadius: 10,
-  },
 };
 
 UserDashboard.propTypes = {
