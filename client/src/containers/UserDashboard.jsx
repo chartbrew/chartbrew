@@ -10,8 +10,8 @@ import {
   DropdownMenu, DropdownItem, Avatar, AvatarGroup, Listbox, ListboxItem, Switch, Checkbox, Card, CardHeader, Divider, CardBody,
 } from "@nextui-org/react";
 import {
-  LuBarChart, LuCalendarDays, LuChevronDown, LuDatabase, LuLayoutGrid, LuMoreHorizontal, LuPencilLine,
-  LuPlug, LuPlus, LuSearch, LuSettings, LuTable, LuTag, LuTrash, LuUsers2,
+  LuBarChart, LuCalendarDays, LuChevronDown, LuDatabase, LuInfo, LuLayoutGrid, LuMoreHorizontal, LuPencilLine,
+  LuPlug, LuPlus, LuSearch, LuSettings, LuTable, LuTags, LuTrash, LuUsers2,
 } from "react-icons/lu";
 import { Flip, ToastContainer } from "react-toastify";
 
@@ -39,7 +39,7 @@ import {
 } from "../slices/team";
 import {
   deleteDataset,
-  getDatasets, getRelatedCharts, selectDatasets,
+  getDatasets, getRelatedCharts, selectDatasets, updateDataset,
 } from "../slices/dataset";
 import Segment from "../components/Segment";
 
@@ -71,6 +71,8 @@ function UserDashboard(props) {
   const [deletingDataset, setDeletingDataset] = useState(false);
   const [datasetSearch, setDatasetSearch] = useState("");
   const [showDatasetDrafts, setShowDatasetDrafts] = useState(false);
+  const [datasetToEdit, setDatasetToEdit] = useState(null);
+  const [modifyingDataset, setModifyingDataset] = useState(false);
 
   const [connectionToDelete, setConnectionToDelete] = useState(null);
   const [deletingConnection, setDeletingConnection] = useState(false);
@@ -337,6 +339,19 @@ function UserDashboard(props) {
     return tags;
   };
 
+  const _getDatasetTags = (projectIds) => {
+    const tags = [];
+    if (!projects || !projectIds) return tags;
+    projectIds.forEach((projectId) => {
+      const project = projects.find((p) => p.id === projectId);
+      if (project) {
+        tags.push(project.name);
+      }
+    });
+
+    return tags;
+  };
+
   const _getFilteredConnections = () => {
     if (!connectionSearch) return connections || [];
 
@@ -359,6 +374,21 @@ function UserDashboard(props) {
 
     setModifyingConnection(false);
     setConnectionToEdit(null);
+  };
+
+  const _onEditDatasetTags = async () => {
+    setModifyingDataset(true);
+
+    const projectIds = datasetToEdit.project_ids || [];
+
+    await dispatch(updateDataset({
+      team_id: team.id,
+      dataset_id: datasetToEdit.id,
+      data: { project_ids: projectIds },
+    }));
+
+    setModifyingDataset(false);
+    setDatasetToEdit(null);
   };
 
   const _changeViewMode = (mode) => {
@@ -748,7 +778,7 @@ function UserDashboard(props) {
                       <TableColumn key="name">Connection</TableColumn>
                       <TableColumn key="tags">
                         <div className="flex flex-row items-center gap-1">
-                          <LuTag />
+                          <LuTags />
                           <span>Tags</span>
                         </div>
                       </TableColumn>
@@ -823,7 +853,7 @@ function UserDashboard(props) {
                                     <LuMoreHorizontal />
                                   </Button>
                                 </DropdownTrigger>
-                                <DropdownMenu>
+                                <DropdownMenu variant="flat">
                                   <DropdownItem
                                     onClick={() => navigate(`/${team.id}/connection/${connection.id}`)}
                                     startContent={<LuPencilLine />}
@@ -832,7 +862,7 @@ function UserDashboard(props) {
                                   </DropdownItem>
                                   <DropdownItem
                                     onClick={() => setConnectionToEdit(connection)}
-                                    startContent={<LuTag />}
+                                    startContent={<LuTags />}
                                     showDivider
                                   >
                                     Edit tags
@@ -893,10 +923,10 @@ function UserDashboard(props) {
                           <span>Connections</span>
                         </div>
                       </TableColumn>
-                      <TableColumn key="created" textValue="Created">
+                      <TableColumn key="tags" textValue="Tags">
                         <div className="flex flex-row items-center gap-1">
-                          <LuCalendarDays />
-                          <span>Created</span>
+                          <LuTags />
+                          <span>Tags</span>
                         </div>
                       </TableColumn>
                       <TableColumn key="actions" align="center" hideHeader>Actions</TableColumn>
@@ -931,36 +961,74 @@ function UserDashboard(props) {
                               </AvatarGroup>
                             </Row>
                           </TableCell>
-                          <TableCell key="created">
-                            <Text>{new Date(dataset.createdAt).toLocaleDateString()}</Text>
+                          <TableCell key="tags">
+                            {_getDatasetTags(dataset.project_ids).length > 0 && (
+                              <div
+                                className="flex flex-row flex-wrap items-center gap-1 cursor-pointer hover:saturate-200 transition-all"
+                                onClick={() => setDatasetToEdit(dataset)}
+                              >
+                                {_getDatasetTags(dataset.project_ids).slice(0, 3).map((tag) => (
+                                  <Chip
+                                    key={tag}
+                                    size="sm"
+                                    variant="flat"
+                                    color="primary"
+                                  >
+                                    {tag}
+                                  </Chip>
+                                ))}
+                                {_getDatasetTags(dataset.project_ids).length > 3 && (
+                                  <span className="text-xs">{`+${_getDatasetTags(dataset.project_ids).length - 3} more`}</span>
+                                )}
+                              </div>
+                            )}
+                            {_getDatasetTags(dataset.project_ids).length === 0 && (
+                              <Button
+                                variant="light"
+                                startContent={<LuPlus size={18} />}
+                                size="sm"
+                                className="opacity-0 hover:opacity-100"
+                                onClick={() => setDatasetToEdit(dataset)}
+                              >
+                                Add tag
+                              </Button>
+                            )}
                           </TableCell>
                           <TableCell key="actions">
                             <Row justify="flex-end" align="center">
-                              <Tooltip content="Edit dataset">
-                                <Button
-                                  isIconOnly
-                                  variant="light"
-                                  size="sm"
-                                  as={Link}
-                                  to={`/${team.id}/dataset/${dataset.id}`}
-                                >
-                                  <LuPencilLine />
-                                </Button>
-                              </Tooltip>
-                              <Tooltip
-                                content="Delete dataset"
-                                color="danger"
-                              >
-                                <Button
-                                  color="danger"
-                                  isIconOnly
-                                  variant="light"
-                                  size="sm"
-                                  onClick={() => _onPressDeleteDataset(dataset)}
-                                >
-                                  <LuTrash />
-                                </Button>
-                              </Tooltip>
+                              <Dropdown>
+                                <DropdownTrigger>
+                                  <Button
+                                    isIconOnly
+                                    variant="light"
+                                    size="sm"
+                                  >
+                                    <LuMoreHorizontal />
+                                  </Button>
+                                </DropdownTrigger>
+                                <DropdownMenu variant="flat">
+                                  <DropdownItem
+                                    onClick={() => navigate(`/${team.id}/dataset/${dataset.id}`)}
+                                    startContent={<LuPencilLine />}
+                                  >
+                                    Edit dataset
+                                  </DropdownItem>
+                                  <DropdownItem
+                                    onClick={() => setDatasetToEdit(dataset)}
+                                    startContent={<LuTags />}
+                                    showDivider
+                                  >
+                                    Edit tags
+                                  </DropdownItem>
+                                  <DropdownItem
+                                    onClick={() => _onPressDeleteDataset(dataset)}
+                                    startContent={<LuTrash />}
+                                    color="danger"
+                                  >
+                                    Delete
+                                  </DropdownItem>
+                                </DropdownMenu>
+                              </Dropdown>
                             </Row>
                           </TableCell>
                         </TableRow>
@@ -1197,6 +1265,13 @@ function UserDashboard(props) {
                   </Chip>
                 ))}
               </div>
+              <Spacer y={1} />
+              <div className="flex gap-1 bg-content2 p-2 mb-2 rounded-lg text-foreground-500 text-sm">
+                <div>
+                  <LuInfo />
+                </div>
+                {"Use tags to grant dashboard members access to these connections. Tagged connections can be used by members to create their own datasets within the associated dashboards."}
+              </div>
             </ModalBody>
             <ModalFooter>
               <Button
@@ -1209,6 +1284,58 @@ function UserDashboard(props) {
                 color="primary"
                 onClick={() => _onEditConnectionTags()}
                 isLoading={modifyingConnection}
+              >
+                Save
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+
+        <Modal isOpen={!!datasetToEdit} onClose={() => setDatasetToEdit(null)} size="xl">
+          <ModalContent>
+            <ModalHeader>
+              <Text size="h3">Edit tags</Text>
+            </ModalHeader>
+            <ModalBody>
+              <div className="flex flex-row flex-wrap items-center gap-2">
+                {projects.filter((p) => !p.ghost).map((project) => (
+                  <Chip
+                    key={project.id}
+                    radius="sm"
+                    variant={datasetToEdit?.project_ids?.includes(project.id) ? "solid" : "flat"}
+                    color="primary"
+                    className="cursor-pointer"
+                    onClick={() => {
+                      if (datasetToEdit?.project_ids?.includes(project.id)) {
+                        setDatasetToEdit({ ...datasetToEdit, project_ids: datasetToEdit?.project_ids?.filter((p) => p !== project.id) });
+                      } else {
+                        setDatasetToEdit({ ...datasetToEdit, project_ids: [...datasetToEdit?.project_ids || [], project.id] });
+                      }
+                    }}
+                  >
+                    {project.name}
+                  </Chip>
+                ))}
+              </div>
+              <Spacer y={1} />
+              <div className="flex gap-1 bg-content2 p-2 mb-2 rounded-lg text-foreground-500 text-sm">
+                <div>
+                  <LuInfo />
+                </div>
+                {"Assign tags to datasets to control which dashboards can use them. Members can create charts from these datasets within dashboards associated with the selected tags."}
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <Button
+                variant="bordered"
+                onClick={() => setDatasetToEdit(null)}
+              >
+                Close
+              </Button>
+              <Button
+                color="primary"
+                onClick={() => _onEditDatasetTags()}
+                isLoading={modifyingDataset}
               >
                 Save
               </Button>

@@ -163,7 +163,7 @@ function NavbarContainer(props) {
             <img src={isSystemDark ? cbLogoInverted : cbLogo} alt="Chartbrew Logo" width={30}  />
           </Link>
           <Spacer x={4} />
-          <Row align="center" className={"gap-1"}>
+          <Row align="center" className={"gap-1 hidden sm:flex"}>
             <Breadcrumbs variant="solid">
               {!params.teamId && (
                 <BreadcrumbItem key="home" onClick={() => navigate("/user")}>
