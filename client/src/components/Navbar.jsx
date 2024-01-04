@@ -5,7 +5,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Modal, Link as LinkNext, Spacer, Dropdown, Button, Navbar, Card,
   ModalBody, CircularProgress, NavbarBrand, NavbarContent, NavbarItem,
-  DropdownTrigger, DropdownMenu, DropdownItem, CardBody, ModalFooter, ModalHeader, ModalContent, Avatar,
+  DropdownTrigger, DropdownMenu, DropdownItem, CardBody, ModalFooter, ModalHeader, ModalContent, Avatar, Breadcrumbs, BreadcrumbItem,
 } from "@nextui-org/react";
 import useDarkMode from "@fisch0920/use-dark-mode";
 import { useLocalStorage } from "react-use";
@@ -164,26 +164,27 @@ function NavbarContainer(props) {
           </Link>
           <Spacer x={4} />
           <Row align="center" className={"gap-1"}>
-            <Link to="/user" className="text-default-foreground">
-                {!params.teamId && (
-                  <Row align="center" className={"hidden sm:block gap-1"}>
-                    <Text>{"Home"}</Text>
-                  </Row>
-                )}
-                {params.teamId && (
-                  <Row align="center" className={"hidden sm:block gap-1"}>
-                    <Text>{team.name}</Text>
-                  </Row>
-                )}
-            </Link>
-            {params.projectId && (
-              <Link to={`/${params.teamId}/${params.projectId}/dashboard`}>
-                <Row align={"center"} className={"hidden sm:block gap-1"}>
-                  <Text>{"/"}</Text>
-                  <Text>{projectProp.name || project.name}</Text>
-                </Row>
-              </Link>
-            )}
+            <Breadcrumbs variant="solid">
+              {!params.teamId && (
+                <BreadcrumbItem key="home" onClick={() => navigate("/user")}>
+                  <Text>{"Home"}</Text>
+                </BreadcrumbItem>
+              )}
+              {params.teamId && (
+                <BreadcrumbItem key="team" onClick={() => navigate("/user")} isCurrent={!params.projectId}>
+                  {team.name}
+                </BreadcrumbItem>
+              )}
+              {params.projectId && (
+                <BreadcrumbItem
+                  key="project"
+                  isCurrent={!!params.projectId}
+                  onClick={() => navigate(`/${params.teamId}/${params.projectId}/dashboard`)}
+                >
+                  {projectProp.name || project.name}
+                </BreadcrumbItem>
+              )}
+            </Breadcrumbs>
           </Row>
         </NavbarBrand>
         <NavbarContent justify="end">

@@ -828,7 +828,7 @@ function UserDashboard(props) {
                                     onClick={() => navigate(`/${team.id}/connection/${connection.id}`)}
                                     startContent={<LuPencilLine />}
                                   >
-                                    Edit
+                                    Edit connection
                                   </DropdownItem>
                                   <DropdownItem
                                     onClick={() => setConnectionToEdit(connection)}
