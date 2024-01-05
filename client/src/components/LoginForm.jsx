@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import PropTypes from "prop-types";
 import { connect, useDispatch } from "react-redux";
 import {
   Button, Input, Spacer, Link, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent,
@@ -8,10 +7,8 @@ import { LuChevronRight, LuLock, LuMail } from "react-icons/lu";
 import { useNavigate } from "react-router";
 
 import {
-  login as loginAction,
-  requestPasswordReset as requestPasswordResetAction,
-  oneaccountAuth as oneaccountAuthAction,
-} from "../actions/user";
+  login, requestPasswordReset,
+} from "../slices/user";
 import { addTeamMember } from "../slices/team";
 import { required, email as validateEmail } from "../config/validations";
 import { negative } from "../config/colors";
@@ -21,11 +18,7 @@ import Text from "./Text";
 /*
   Contains login functionality
 */
-function LoginForm(props) {
-  const {
-    requestPasswordReset, login,
-  } = props;
-
+function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetDone, setResetDone] = useState(false);
@@ -46,7 +39,7 @@ function LoginForm(props) {
     }
 
     setResetLoading(true);
-    requestPasswordReset(resetEmail)
+    dispatch(requestPasswordReset(resetEmail))
       .then(() => {
         setResetLoading(false);
         setResetDone(true);
@@ -71,10 +64,11 @@ function LoginForm(props) {
     }
 
     setLoading(true);
-    login({ email, password })
-      .then((user) => {
+    dispatch(login({ email, password }))
+      .then((data) => {
+        const userData = data.payload;
         if (params.has("inviteToken")) {
-          return dispatch(addTeamMember({ userId: user.id, inviteToken: params.get("inviteToken") }));
+          return dispatch(addTeamMember({ userId: userData.id, inviteToken: params.get("inviteToken") }));
         }
         setLoading(false);
         return "done";
@@ -84,12 +78,12 @@ function LoginForm(props) {
           return result;
         }
 
-        return login({ email, password });
+        return dispatch(login({ email, password }));
       })
-      .then((user) => {
+      .then((data) => {
         setLoading(false);
         navigate("/user");
-        return user;
+        return data.payload;
       })
       .catch(() => {
         setLoading(false);
@@ -221,23 +215,14 @@ const styles = {
   },
 };
 
-LoginForm.propTypes = {
-  oneaccountAuth: PropTypes.func.isRequired,
-  login: PropTypes.func.isRequired,
-  requestPasswordReset: PropTypes.func.isRequired,
-};
-
 const mapStateToProps = (state) => {
   return {
     form: state.forms,
   };
 };
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = () => {
   return {
-    oneaccountAuth: (user) => dispatch(oneaccountAuthAction(user)),
-    login: (data) => dispatch(loginAction(data)),
-    requestPasswordReset: (email) => dispatch(requestPasswordResetAction(email)),
   };
 };
 

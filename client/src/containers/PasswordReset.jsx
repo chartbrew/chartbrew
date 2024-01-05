@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import { PropTypes } from "prop-types";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Button, Input, Spacer,
 } from "@nextui-org/react";
 
-import { changePasswordWithToken } from "../actions/user";
+import { changePasswordWithToken } from "../slices/user";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import cbLogoSmall from "../assets/logo_inverted.png";
 import cbLogo from "../assets/logo_blue.png";
@@ -26,10 +26,11 @@ function PasswordReset(props) {
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
 
-  const { cleanErrors, changePasswordWithToken } = props;
+  const { cleanErrors } = props;
   const navigate = useNavigate();
 
   const isDark = useThemeDetector();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     cleanErrors();
@@ -50,11 +51,11 @@ function PasswordReset(props) {
     setLoading(true);
     setSuccess(false);
     setError(false);
-    changePasswordWithToken({
+    dispatch(changePasswordWithToken({
       token: params.get("token"),
       hash: params.get("hash"),
       password,
-    })
+    }))
       .then(() => {
         setSuccess(true);
         setLoading(false);
@@ -157,7 +158,6 @@ const styles = {
 };
 
 PasswordReset.propTypes = {
-  changePasswordWithToken: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
 };
 
@@ -168,7 +168,6 @@ const mapStateToProps = () => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    changePasswordWithToken: (data) => dispatch(changePasswordWithToken(data)),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import PropTypes from "prop-types";
-import { connect, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Modal, Link as LinkNext, Spacer, Dropdown, Button, Navbar, Card,
@@ -15,7 +14,7 @@ import {
 } from "react-icons/lu";
 import { TbBrandDiscord } from "react-icons/tb";
 
-import { logout } from "../actions/user";
+import { logout, selectUser } from "../slices/user";
 import FeedbackForm from "./FeedbackForm";
 import cbLogo from "../assets/logo_blue.png";
 import cbLogoInverted from "../assets/logo_inverted.png";
@@ -30,25 +29,23 @@ import { selectTeam, selectTeams } from "../slices/team";
 /*
   The navbar component used throughout the app
 */
-function NavbarContainer(props) {
+function NavbarContainer() {
   const [changelogPadding, setChangelogPadding] = useState(true);
   const [feedbackModal, setFeedbackModal] = useState();
   const [teamOwned, setTeamOwned] = useState({});
   const [showAppearance, setShowAppearance] = useState(false);
   const [isOsTheme, setIsOsTheme] = useLocalStorage("osTheme", "false");
 
-  const {
-    user, logout, projectProp,
-  } = props;
-
   const team = useSelector(selectTeam);
   const teams = useSelector(selectTeams);
   const project = useSelector((state) => state.project.active);
+  const user = useSelector(selectUser);
 
   const darkMode = useDarkMode(false);
   const isSystemDark = useThemeDetector();
   const params = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     setTimeout(() => {
@@ -181,7 +178,7 @@ function NavbarContainer(props) {
                   isCurrent={!!params.projectId}
                   onClick={() => navigate(`/${params.teamId}/${params.projectId}/dashboard`)}
                 >
-                  {projectProp.name || project.name}
+                  {project.name}
                 </BreadcrumbItem>
               )}
             </Breadcrumbs>
@@ -278,7 +275,7 @@ function NavbarContainer(props) {
                 </div>
               </DropdownItem>
 
-              <DropdownItem startContent={<LuLogOut />} onClick={logout}>
+              <DropdownItem startContent={<LuLogOut />} onClick={() => dispatch(logout())}>
                 Sign out
               </DropdownItem>
             </DropdownMenu>
@@ -369,23 +366,4 @@ function NavbarContainer(props) {
   );
 }
 
-NavbarContainer.propTypes = {
-  user: PropTypes.object.isRequired,
-  logout: PropTypes.func.isRequired,
-  projectProp: PropTypes.object.isRequired,
-};
-
-const mapStateToProps = (state) => {
-  return {
-    user: state.user.data,
-    projectProp: state.project.active,
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    logout: () => dispatch(logout()),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(NavbarContainer);
+export default NavbarContainer;

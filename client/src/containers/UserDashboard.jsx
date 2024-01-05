@@ -15,7 +15,7 @@ import {
 } from "react-icons/lu";
 import { Flip, ToastContainer } from "react-toastify";
 
-import { relog as relogAction } from "../actions/user";
+import { relog } from "../slices/user";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import {
   getTemplates as getTemplatesAction
@@ -48,7 +48,7 @@ import Segment from "../components/Segment";
 */
 function UserDashboard(props) {
   const {
-    relog, cleanErrors, user, getTemplates,
+    cleanErrors, getTemplates,
   } = props;
 
   const team = useSelector(selectTeam);
@@ -83,6 +83,8 @@ function UserDashboard(props) {
   
   const [viewMode, setViewMode] = useState("grid");
 
+  const user = useSelector((state) => state.user);
+
   const teamsRef = useRef(null);
   const initRef = useRef(null);
   const { height } = useWindowSize();
@@ -95,9 +97,13 @@ function UserDashboard(props) {
 
     if (!initRef.current) {
       initRef.current = true;
-      relog()
+      dispatch(relog())
         .then((data) => {
-          dispatch(getTeams(data.id));
+          if (data?.payload?.id) {
+            dispatch(getTeams(data.payload.id));
+          } else {
+            navigate("/login");
+          }
         })
         .catch(() => {
           navigate("/login");
@@ -409,7 +415,7 @@ function UserDashboard(props) {
   }
 
   return (
-    <div className="bg-content2" style={styles.container(height)}>
+    <div className="dashboard bg-content2" style={styles.container(height)}>
       <Navbar hideTeam transparent />
       {newProjectModal()}
       <div className="container mx-auto">
@@ -528,7 +534,7 @@ function UserDashboard(props) {
                             onClick={() => _onNewProject(team)}
                             endContent={<LuPlus />}
                           >
-                            <span className="hidden md:block">Create a new dashboard</span>
+                            <span className="hidden md:block">Create dashboard</span>
                             <span className="md:hidden">Create</span>
                           </Button>
                         </div>
@@ -760,7 +766,7 @@ function UserDashboard(props) {
                       endContent={<LuPlus />}
                       onClick={() => navigate(`/${team.id}/connection/new`)}
                     >
-                      Create new connection
+                      Create connection
                     </Button>
                     <Input
                       type="text"
@@ -776,7 +782,7 @@ function UserDashboard(props) {
                   <Table shadow="none" isStriped className="border-1 border-solid border-content3 rounded-xl">
                     <TableHeader>
                       <TableColumn key="name">Connection</TableColumn>
-                      <TableColumn key="tags">
+                      <TableColumn key="tags" className="tutorial-tags">
                         <div className="flex flex-row items-center gap-1">
                           <LuTags />
                           <span>Tags</span>
@@ -894,7 +900,7 @@ function UserDashboard(props) {
                       endContent={<LuPlus />}
                       onClick={() => _onCreateDataset()}
                     >
-                      Create new dataset
+                      Create dataset
                     </Button>
                     <Input
                       type="text"
@@ -1382,21 +1388,17 @@ const styles = {
 };
 
 UserDashboard.propTypes = {
-  user: PropTypes.object.isRequired,
-  relog: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
   getTemplates: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = (state) => {
+const mapStateToProps = () => {
   return {
-    user: state.user,
   };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    relog: () => dispatch(relogAction()),
     cleanErrors: () => dispatch(cleanErrorsAction()),
     getTemplates: (teamId) => dispatch(getTemplatesAction(teamId)),
   };

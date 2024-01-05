@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import PropTypes from "prop-types";
-import { connect } from "react-redux";
 import {
   Button, Divider, Input, CircularProgress, Modal, Spacer, ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
@@ -9,22 +7,20 @@ import "react-toastify/dist/ReactToastify.min.css";
 import { LuTrash } from "react-icons/lu";
 
 import {
-  updateUser as updateUserAction,
-  deleteUser as deleteUserAction,
-  requestEmailUpdate as requestEmailUpdateAction,
-  updateEmail as updateEmailAction,
-} from "../actions/user";
+  updateUser, deleteUser, requestEmailUpdate, updateEmail, selectUser
+} from "../slices/user";
 import Container from "./Container";
 import Row from "./Row";
 import Text from "./Text";
 import Callout from "./Callout";
 import useThemeDetector from "../modules/useThemeDetector";
 import { useNavigate } from "react-router";
+import { useDispatch, useSelector } from "react-redux";
 
 /*
   Component for editting/deleting user account
 */
-function EditUserForm(props) {
+function EditUserForm() {
   const [user, setUser] = useState({ name: "" });
   const [userEmail, setUserEmail] = useState("");
   const [submitError, setSubmitError] = useState(false);
@@ -35,12 +31,11 @@ function EditUserForm(props) {
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [deleteUserError, setDeleteUserError] = useState(false);
 
-  const {
-    userProp, updateUser, deleteUser, requestEmailUpdate, updateEmail,
-  } = props;
+  const userProp = useSelector(selectUser);
 
   const isDark = useThemeDetector();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const params = new URLSearchParams(document.location.search);
@@ -68,7 +63,7 @@ function EditUserForm(props) {
     setSubmitError(false);
     setLoading(true);
     setSuccess(false);
-    updateUser(userProp.id, user)
+    dispatch(updateUser({ user_id: userProp.id, data: user }))
       .then(() => {
         setSuccess(true);
         setLoading(false);
@@ -82,7 +77,7 @@ function EditUserForm(props) {
   const _onUpdateEmail = () => {
     setLoading(true);
     setSuccessEmail(false);
-    requestEmailUpdate(userProp.id, userEmail)
+    dispatch(requestEmailUpdate({ user_id: userProp.id, email: userEmail }))
       .then(() => {
         setSuccessEmail(true);
         setLoading(false);
@@ -97,7 +92,7 @@ function EditUserForm(props) {
   const _onUpdateEmailConfirm = () => {
     setLoading(true);
     setSuccessEmail(false);
-    updateEmail(userProp.id, updateEmailToken)
+    dispatch(updateEmail({ user_id: userProp.id, email: updateEmailToken }))
       .then(() => {
         setSuccessEmail(true);
         setLoading(false);
@@ -117,7 +112,7 @@ function EditUserForm(props) {
 
   const _onDeleteUser = () => {
     setLoading(true);
-    deleteUser(userProp.id)
+    dispatch(deleteUser(userProp.id))
       .then(() => {
         navigate("/feedback");
       })
@@ -321,26 +316,4 @@ function EditUserForm(props) {
   );
 }
 
-EditUserForm.propTypes = {
-  userProp: PropTypes.object.isRequired,
-  updateUser: PropTypes.func.isRequired,
-  deleteUser: PropTypes.func.isRequired,
-  requestEmailUpdate: PropTypes.func.isRequired,
-  updateEmail: PropTypes.func.isRequired,
-};
-const mapStateToProps = (state) => {
-  return {
-    userProp: state.user.data,
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    updateUser: (id, data) => dispatch(updateUserAction(id, data)),
-    deleteUser: id => dispatch(deleteUserAction(id)),
-    requestEmailUpdate: (id, email) => requestEmailUpdateAction(id, email),
-    updateEmail: (id, token) => updateEmailAction(id, token),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(EditUserForm);
+export default EditUserForm;

@@ -1,33 +1,33 @@
 import React, { useState } from "react";
-import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Input, Spacer, Textarea,
 } from "@nextui-org/react";
 
-import { sendFeedback } from "../actions/user";
+import { selectUser, sendFeedback } from "../slices/user";
 import Container from "./Container";
 import Row from "./Row";
 import Text from "./Text";
 
-function FeedbackForm(props) {
+function FeedbackForm() {
   const [success, setSuccess] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [name, setName] = useState("");
 
-  const { sendFeedback, user } = props;
+  const user = useSelector(selectUser);
+  const dispatch = useDispatch();
 
   const _onSendFeedback = () => {
     setLoading(true);
     setSuccess(false);
     setSubmitError(false);
-    sendFeedback({
+    dispatch(sendFeedback({
       name,
       feedback,
       email: user.email,
-    })
+    }))
       .then(() => {
         setLoading(false);
         setSuccess(true);
@@ -91,20 +91,4 @@ function FeedbackForm(props) {
   );
 }
 
-FeedbackForm.propTypes = {
-  sendFeedback: PropTypes.func.isRequired,
-  user: PropTypes.object.isRequired,
-};
-
-const mapStateToProps = (state) => {
-  return {
-    user: state.user.data,
-  };
-};
-const mapDispatchToProps = (dispatch) => {
-  return {
-    sendFeedback: (data) => dispatch(sendFeedback(data)),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(FeedbackForm);
+export default FeedbackForm;

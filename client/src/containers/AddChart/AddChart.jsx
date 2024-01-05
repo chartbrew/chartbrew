@@ -26,7 +26,6 @@ import {
   clearDatasets as clearDatasetsAction,
 } from "../../actions/dataset";
 import { getChartAlerts, clearAlerts } from "../../slices/alert";
-import { updateUser as updateUserAction } from "../../actions/user";
 import {
   getTemplates as getTemplatesAction
 } from "../../actions/template";
@@ -41,6 +40,7 @@ import useThemeDetector from "../../modules/useThemeDetector";
 import { useNavigate, useParams } from "react-router";
 import ChartDatasets from "./components/ChartDatasets";
 import getDashboardLayout from "../../modules/getDashboardLayout";
+import { selectUser } from "../../slices/user";
 
 /*
   Container used for setting up a new chart
@@ -63,12 +63,12 @@ function AddChart(props) {
   const { height } = useWindowSize();
 
   const {
-    getChartDatasets, tutorial,
-    datasets, user, changeTutorial,
+    getChartDatasets, tutorial, datasets, changeTutorial,
     completeTutorial, clearDatasets, connections, templates, getTemplates,
   } = props;
 
   const charts = useSelector(selectCharts);
+  const user = useSelector(selectUser);
 
   const isDark = useThemeDetector();
   const params = useParams();
@@ -638,7 +638,6 @@ const mapDispatchToProps = (dispatch) => {
     deleteDataset: (projectId, chartId, datasetId) => {
       return dispatch(deleteDatasetAction(projectId, chartId, datasetId));
     },
-    updateUser: (id, data) => dispatch(updateUserAction(id, data)),
     changeTutorial: (tut) => dispatch(changeTutorialAction(tut)),
     completeTutorial: (tut) => dispatch(completeTutorialAction(tut)),
     resetTutorial: (tut) => dispatch(resetTutorialAction(tut)),

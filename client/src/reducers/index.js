@@ -1,5 +1,5 @@
 // individual reducers imports
-import user from "./user";
+import user from "../slices/user";
 import project from "../slices/project";
 import team from "../slices/team";
 import chart from "../slices/chart";

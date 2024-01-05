@@ -1,25 +1,12 @@
 import React, { useState } from "react";
-import PropTypes from "prop-types";
 import { connect, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { useWindowSize } from "react-use";
 import {
-  Button,
-  Card,
-  Spacer,
-  Input,
-  Link as LinkNext,
-  Avatar,
-  CardHeader,
-  CardBody,
+  Button, Card, Spacer, Input, Link as LinkNext, Avatar, CardHeader, CardBody,
 } from "@nextui-org/react";
 import { LuArrowRight, LuLock, LuMail, LuUser } from "react-icons/lu";
 
-import {
-  createUser as createUserAction,
-  createInvitedUser as createInvitedUserAction,
-  oneaccountAuth as oneaccountAuthAction,
-} from "../actions/user";
 import { addTeamMember } from "../slices/team";
 import {
   required,
@@ -33,17 +20,14 @@ import {
 import signupBackground from "../assets/signup_background.webp";
 import Row from "../components/Row";
 import Text from "../components/Text";
+import { createUser, createInvitedUser } from "../slices/user";
 
 const testimonialAvatar = "https://cdn2.chartbrew.com/skyguy.webp";
 
 /*
   The Signup page
 */
-function Signup(props) {
-  const {
-    createUser, createInvitedUser,
-  } = props;
-
+function Signup() {
   const [loading, setLoading] = useState(false);
   const [addedToTeam, setAddedToTeam] = useState(false);
   const [errors, setErrors] = useState({});
@@ -79,7 +63,7 @@ function Signup(props) {
     if (params.has("inviteToken")) {
       _createInvitedUser({ name, email, password }, params.get("inviteToken"));
     } else {
-      createUser({ name, email, password })
+      dispatch(createUser({ name, email, password }))
         .then(() => {
           setLoading(false);
           navigate("/user?welcome=true");
@@ -93,9 +77,10 @@ function Signup(props) {
 
   // invited user doesn't receive verificationUrl
   const _createInvitedUser = (values, inviteToken) => {
-    createInvitedUser(values)
-      .then((user) => {
-        dispatch(addTeamMember({ userId: user.id, inviteToken }))
+    dispatch(createInvitedUser(values))
+      .then((data) => {
+        const userData = data.payload;
+        dispatch(addTeamMember({ userId: userData.id, inviteToken }))
           .then(() => {
             setLoading(false);
             setAddedToTeam(true);
@@ -298,65 +283,12 @@ function Signup(props) {
   );
 }
 
-const OneaccountSVG = (props) => {
-  const { style } = props;
-  return (
-    <svg style={style} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
-      <g fill="none" fillRule="evenodd">
-        <mask id="a">
-          <rect width="100%" height="100%" fill="#fff" />
-          <path
-            fill="#000"
-            d="M148.65 225.12c-30.6-5.51-71.54-106.68-55.76-137.06 14.38-27.7 102.01-13.66 116.08 20.9 13.82 33.97-32.89 121.1-60.32 116.16zm-30.35-76.6c0 18.24 13.68 33.02 30.55 33.02s30.54-14.78 30.54-33.02c0-18.25-13.67-33.03-30.54-33.03-16.87 0-30.55 14.78-30.55 33.03z"
-          />
-        </mask>
-        <path
-          fill="#fff"
-          d="M153.27 298.95c60.25-10.84 140.8-209.72 109.75-269.44C234.72-24.95 62.25 2.66 34.57 70.6c-27.2 66.77 64.72 238.06 118.7 228.34z"
-          mask="url(#a)"
-        />
-      </g>
-    </svg>
-  );
-};
-
-OneaccountSVG.propTypes = {
-  style: PropTypes.object
-};
-
-OneaccountSVG.defaultProps = {
-  style: {}
-};
-
 const styles = {
-  oneaccount: {
-    backgroundColor: "#FA4900",
-    color: "white",
-  },
-  oneaccountIcon: {
-    height: 18,
-    verticalAlign: "sub",
-    marginRight: 10,
-  },
-  oneaccountText: {
-    verticalAlign: "middle",
-  },
   container: (height) => ({
-    // backgroundColor: whiteTransparent(1),
     minHeight: height,
   }),
-  loginText: {
-    // color: "white",
-  },
   loginLink: {
     color: secondary,
-  },
-  leftAligned: {
-    textAlign: "left",
-  },
-  verticalPadding: {
-    paddingRight: 20,
-    paddingLeft: 20
   },
   sideBackground: {
     backgroundImage: `url(${signupBackground})`,
@@ -389,25 +321,15 @@ const styles = {
   },
 };
 
-Signup.propTypes = {
-  createUser: PropTypes.func.isRequired,
-  oneaccountAuth: PropTypes.func.isRequired,
-  createInvitedUser: PropTypes.func.isRequired,
-};
-
 const mapStateToProps = (state) => {
   return {
     form: state.forms,
-    user: state.user.data,
     errors: state.error,
   };
 };
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = () => {
   return {
-    createUser: (user) => dispatch(createUserAction(user)),
-    oneaccountAuth: (user) => dispatch(oneaccountAuthAction(user)),
-    createInvitedUser: (user) => dispatch(createInvitedUserAction(user)),
   };
 };
 export default connect(mapStateToProps, mapDispatchToProps)(Signup);

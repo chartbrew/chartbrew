@@ -9,9 +9,8 @@ import SuspenseLoader from "../components/SuspenseLoader";
 import UserDashboard from "./UserDashboard";
 
 import {
-  relog as relogAction,
-  areThereAnyUsers,
-} from "../actions/user";
+  relog, areThereAnyUsers,
+} from "../slices/user";
 import { getTeams, selectTeam } from "../slices/team";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import useThemeDetector from "../modules/useThemeDetector";
@@ -41,11 +40,32 @@ const EmbeddedChart = lazy(() => import("./EmbeddedChart"));
 const GoogleAuth = lazy(() => import("./GoogleAuth"));
 const ProjectRedirect = lazy(() => import("./ProjectRedirect"));
 
+function authenticatePage() {
+  if (window.location.pathname === "/login") {
+    return false;
+  } else if (window.location.pathname === "/signup") {
+    return false;
+  } else if (window.location.pathname.indexOf("/b/") > -1) {
+    return false;
+  } else if (window.location.pathname === "/passwordReset") {
+    return false;
+  } else if (window.location.pathname === "/invite") {
+    return false;
+  } else if (window.location.pathname === "/feedback") {
+    return false;
+  } else if (window.location.pathname.indexOf("embedded") > -1) {
+    return false;
+  }
+
+  window.location.pathname = "/login";
+  return true;
+}
+
 /*
   The main component where the entire app routing resides
 */
 function Main(props) {
-  const { relog, cleanErrors } = props;
+  const { cleanErrors } = props;
 
   const team = useSelector(selectTeam);
 
@@ -57,17 +77,25 @@ function Main(props) {
   useEffect(() => {
     cleanErrors();
     if (!location.pathname.match(/\/chart\/\d+\/embedded/g)) {
-      relog()
+      dispatch(relog())
         .then((data) => {
-          return dispatch(getTeams(data.id));
+          if (data.payload?.id) {
+            return dispatch(getTeams(data.payload?.id));
+          }
+
+          if (authenticatePage()) {
+            window.location.pathname = "/login";
+          }
+
+          return null;
         })
         .then(() => {
           // return dispatch(getProjects({ team_id: data.payload?.[0]?.id }));
         });
 
-      areThereAnyUsers()
+      dispatch(areThereAnyUsers())
         .then((anyUsers) => {
-          if (!anyUsers) navigate("/signup");
+          if (!anyUsers?.payload?.areThereAnyUsers) navigate("/signup");
         });
     }
   }, []);
@@ -226,7 +254,6 @@ const styles = {
 };
 
 Main.propTypes = {
-  relog: PropTypes.func.isRequired,
   cleanErrors: PropTypes.func.isRequired,
 };
 
@@ -237,7 +264,6 @@ const mapStateToProps = () => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    relog: () => dispatch(relogAction()),
     cleanErrors: () => dispatch(cleanErrorsAction()),
   };
 };

@@ -7,7 +7,6 @@ const settings = process.env.NODE_ENV === "production" ? require("../settings") 
 
 module.exports = async (req, res, next) => {
   const token = req.headers.authorization ? req.headers.authorization.replace("Bearer ", "") : "";
-
   if (token) {
     try {
       const blacklisted = await db.TokenBlacklist.findOne({ where: { token } });
