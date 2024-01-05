@@ -45,6 +45,7 @@
     "react-grid-layout": "^1.4.4",
     "react-helmet": "^6.1.0",
     "react-icons": "^4.4.0",
+    "react-joyride": "^2.7.2",
     "react-markdown": "^7.0.1",
     "react-redux": "^7.2.6",
     "react-refresh": "^0.8.3",
