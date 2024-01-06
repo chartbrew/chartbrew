@@ -13,7 +13,7 @@ import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import moment from "moment";
 import {
-  LuArrowDownRight, LuCopyPlus, LuFileDown, LuLayoutDashboard, LuListFilter,
+  LuCopyPlus, LuFileDown, LuLayoutDashboard, LuListFilter,
   LuPlusCircle, LuRefreshCw, LuUser, LuUsers2, LuXCircle,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
@@ -34,6 +34,7 @@ import useThemeDetector from "../../modules/useThemeDetector";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import { selectProjectMembers } from "../../slices/team";
+import { TbChevronDownRight } from "react-icons/tb";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -695,8 +696,8 @@ function ProjectDashboard(props) {
             rowHeight={150}
             onLayoutChange={_onChangeLayout}
             resizeHandle={(
-              <div className="react-resizable-handle">
-                <LuArrowDownRight className="text-primary animate-pulse" />
+              <div className="react-resizable-handle react-resizable-handle-se">
+                <TbChevronDownRight className="text-primary" size={20} />
               </div>
             )}
             isDraggable={editingLayout}
