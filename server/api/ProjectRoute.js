@@ -185,7 +185,9 @@ module.exports = (app) => {
       .then((projects) => {
         let filteredProjects = projects;
         if (req.user.projects) {
-          filteredProjects = projects.filter((o) => req.user.projects.includes(o.id));
+          filteredProjects = projects.filter((o) => {
+            return req.user.projects.includes(o.id) || o.ghost;
+          });
         }
 
         return res.status(200).send(filteredProjects);

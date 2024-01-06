@@ -491,7 +491,7 @@ function UserDashboard(props) {
                   >
                     <span className="text-lg">Dashboards</span>
                   </ListboxItem>
-                  {_canAccess("teamAdmin", team.TeamRoles) && (
+                  {_canAccess("projectAdmin", team.TeamRoles) && (
                     <ListboxItem
                       key="connections"
                       startContent={<LuPlug size={24} />}
@@ -502,10 +502,10 @@ function UserDashboard(props) {
                       <span className="text-lg">Connections</span>
                     </ListboxItem>
                   )}
-                  {_canAccess("teamAdmin", team.TeamRoles) && (
+                  {_canAccess("projectAdmin", team.TeamRoles) && (
                     <ListboxItem
                       key="datasets"
-                      showDivider
+                      showDivider={_canAccess("teamAdmin", team.TeamRoles)}
                       startContent={<LuDatabase size={24} />}
                       textValue="Datasets"
                       color={activeMenu === "datasets" ? "primary" : "default"}
@@ -558,7 +558,7 @@ function UserDashboard(props) {
                         labelPlacement="outside"
                       />
                     </Row>
-                    <div className="flex">
+                    <div className="flex flex-row">
                       <Button
                         variant="light"
                         isIconOnly
@@ -770,13 +770,15 @@ function UserDashboard(props) {
               {activeMenu === "connections" && (
                 <div className="max-h-full overflow-y-auto">
                   <Row className={"gap-4"}>
-                    <Button
-                      color="primary"
-                      endContent={<LuPlus />}
-                      onClick={() => navigate(`/${team.id}/connection/new`)}
-                    >
-                      Create connection
-                    </Button>
+                    {_canAccess("teamAdmin", team.TeamRoles) && (
+                      <Button
+                        color="primary"
+                        endContent={<LuPlus />}
+                        onClick={() => navigate(`/${team.id}/connection/new`)}
+                      >
+                        Create connection
+                      </Button>
+                    )}
                     <Input
                       type="text"
                       placeholder="Search connections"
@@ -857,41 +859,43 @@ function UserDashboard(props) {
                             <Text>{new Date(connection.createdAt).toLocaleDateString()}</Text>
                           </TableCell>
                           <TableCell key="actions">
-                            <Row justify="flex-end" align="center">
-                              <Dropdown>
-                                <DropdownTrigger>
-                                  <Button
-                                    isIconOnly
-                                    variant="light"
-                                    size="sm"
-                                  >
-                                    <LuMoreHorizontal />
-                                  </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu variant="flat">
-                                  <DropdownItem
-                                    onClick={() => navigate(`/${team.id}/connection/${connection.id}`)}
-                                    startContent={<LuPencilLine />}
-                                  >
-                                    Edit connection
-                                  </DropdownItem>
-                                  <DropdownItem
-                                    onClick={() => setConnectionToEdit(connection)}
-                                    startContent={<LuTags />}
-                                    showDivider
-                                  >
-                                    Edit tags
-                                  </DropdownItem>
-                                  <DropdownItem
-                                    onClick={() => setConnectionToDelete(connection)}
-                                    startContent={<LuTrash />}
-                                    color="danger"
-                                  >
-                                    Delete
-                                  </DropdownItem>
-                                </DropdownMenu>
-                              </Dropdown>
-                            </Row>
+                            {_canAccess("teamAdmin", team.TeamRoles) && (
+                              <Row justify="flex-end" align="center">
+                                <Dropdown>
+                                  <DropdownTrigger>
+                                    <Button
+                                      isIconOnly
+                                      variant="light"
+                                      size="sm"
+                                    >
+                                      <LuMoreHorizontal />
+                                    </Button>
+                                  </DropdownTrigger>
+                                  <DropdownMenu variant="flat">
+                                    <DropdownItem
+                                      onClick={() => navigate(`/${team.id}/connection/${connection.id}`)}
+                                      startContent={<LuPencilLine />}
+                                    >
+                                      Edit connection
+                                    </DropdownItem>
+                                    <DropdownItem
+                                      onClick={() => setConnectionToEdit(connection)}
+                                      startContent={<LuTags />}
+                                      showDivider
+                                    >
+                                      Edit tags
+                                    </DropdownItem>
+                                    <DropdownItem
+                                      onClick={() => setConnectionToDelete(connection)}
+                                      startContent={<LuTrash />}
+                                      color="danger"
+                                    >
+                                      Delete
+                                    </DropdownItem>
+                                  </DropdownMenu>
+                                </Dropdown>
+                              </Row>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -904,13 +908,15 @@ function UserDashboard(props) {
               {activeMenu === "datasets" && (
                 <div className="max-h-full overflow-y-auto">
                   <Row className={"gap-4"} align="center">
-                    <Button
-                      color="primary"
-                      endContent={<LuPlus />}
-                      onClick={() => _onCreateDataset()}
-                    >
-                      Create dataset
-                    </Button>
+                    {connections.length > 0 && (
+                      <Button
+                        color="primary"
+                        endContent={<LuPlus />}
+                        onClick={() => _onCreateDataset()}
+                      >
+                        Create dataset
+                      </Button>
+                    )}
                     <Input
                       type="text"
                       placeholder="Search datasets"
@@ -980,7 +986,11 @@ function UserDashboard(props) {
                             {_getDatasetTags(dataset.project_ids).length > 0 && (
                               <div
                                 className="flex flex-row flex-wrap items-center gap-1 cursor-pointer hover:saturate-200 transition-all"
-                                onClick={() => setDatasetToEdit(dataset)}
+                                onClick={() => {
+                                  if (_canAccess("teamAdmin", team.TeamRoles)) {
+                                    setDatasetToEdit(dataset);
+                                  }
+                                }}
                               >
                                 {_getDatasetTags(dataset.project_ids).slice(0, 3).map((tag) => (
                                   <Chip
@@ -1003,7 +1013,11 @@ function UserDashboard(props) {
                                 startContent={<LuPlus size={18} />}
                                 size="sm"
                                 className="opacity-0 hover:opacity-100"
-                                onClick={() => setDatasetToEdit(dataset)}
+                                onClick={() => {
+                                  if (_canAccess("teamAdmin", team.TeamRoles)) {
+                                    setDatasetToEdit(dataset);
+                                  }
+                                }}
                               >
                                 Add tag
                               </Button>
@@ -1021,14 +1035,19 @@ function UserDashboard(props) {
                                     <LuMoreHorizontal />
                                   </Button>
                                 </DropdownTrigger>
-                                <DropdownMenu variant="flat">
+                                <DropdownMenu
+                                  variant="flat"
+                                  disabledKeys={!_canAccess("teamAdmin", team.TeamRoles) ? ["tags", "delete"] : []}
+                                >
                                   <DropdownItem
                                     onClick={() => navigate(`/${team.id}/dataset/${dataset.id}`)}
                                     startContent={<LuPencilLine />}
+                                    key="dataset"
                                   >
                                     Edit dataset
                                   </DropdownItem>
                                   <DropdownItem
+                                    key="tags"
                                     onClick={() => setDatasetToEdit(dataset)}
                                     startContent={<LuTags />}
                                     showDivider
@@ -1036,6 +1055,7 @@ function UserDashboard(props) {
                                     Edit tags
                                   </DropdownItem>
                                   <DropdownItem
+                                    key="delete"
                                     onClick={() => _onPressDeleteDataset(dataset)}
                                     startContent={<LuTrash />}
                                     color="danger"

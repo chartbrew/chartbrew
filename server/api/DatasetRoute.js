@@ -19,7 +19,13 @@ module.exports = (app) => {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const permission = accessControl.can(teamRole.role)[actionType]("dataset");
+      let permission;
+      if (teamRole.role === "projectAdmin" && actionType.indexOf("Any") > -1) {
+        permission = accessControl.can(teamRole.role)[actionType.replace("Any", "Own")]("dataset");
+      } else {
+        permission = accessControl.can(teamRole.role)[actionType]("dataset");
+      }
+
       if (!permission.granted) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -37,6 +43,9 @@ module.exports = (app) => {
           return res.status(404).json({ message: "No datasets found" });
         }
 
+        // save the projects in the user object
+        req.user.projects = projects;
+
         return next();
       }
 
@@ -50,6 +59,16 @@ module.exports = (app) => {
   app.get(root, verifyToken, checkPermissions("readOwn"), (req, res) => {
     return datasetController.findByTeam(req.params.team_id)
       .then((datasets) => {
+        if (req.user.projects) {
+          const filteredDatasets = datasets.filter((dataset) => {
+            if (!dataset.project_ids) return false;
+            return dataset.project_ids.some((project_id) => {
+              return req.user.projects.includes(project_id);
+            });
+          });
+
+          return res.status(200).send(filteredDatasets);
+        }
         return res.status(200).send(datasets);
       })
       .catch((err) => {
@@ -79,6 +98,10 @@ module.exports = (app) => {
   ** Route to create a new dataset
   */
   app.post(root, verifyToken, checkPermissions("createAny"), (req, res) => {
+    if (req.user.projects) {
+      req.body.project_ids = req.user.projects;
+    }
+
     return datasetController.create(req.body)
       .then((dataset) => {
         return res.status(200).send(dataset);

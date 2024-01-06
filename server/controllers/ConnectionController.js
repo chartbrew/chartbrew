@@ -145,15 +145,22 @@ class ConnectionController {
       });
   }
 
-  findByProjects(projects) {
+  findByProjects(teamId, projects) {
     return db.Connection.findAll({
-      where: { project_ids: { [Sequelize.Op.overlap]: projects } },
+      where: { team_id: teamId },
       attributes: { exclude: ["password"] },
       include: [{ model: db.OAuth, attributes: { exclude: ["refreshToken"] } }],
       order: [["createdAt", "DESC"]],
     })
       .then((connections) => {
-        return connections;
+        const filteredConnections = connections.filter((connection) => {
+          if (!connection.project_ids) return false;
+          return connection.project_ids.some((projectId) => {
+            return projects.includes(projectId);
+          });
+        });
+
+        return filteredConnections;
       })
       .catch((error) => {
         return new Promise((resolve, reject) => reject(error));

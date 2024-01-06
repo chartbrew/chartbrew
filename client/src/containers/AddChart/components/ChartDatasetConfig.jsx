@@ -22,6 +22,9 @@ import { chartColors, primary } from "../../../config/colors";
 import { flatMap } from "lodash";
 import TableConfiguration from "../../../components/TableConfiguration";
 import FormulaTips from "../../../components/FormulaTips";
+import canAccess from "../../../config/canAccess";
+import { selectTeam } from "../../../slices/team";
+import { selectUser } from "../../../slices/user";
 
 function ChartDatasetConfig(props) {
   const { chartId, datasetId } = props;
@@ -36,6 +39,8 @@ function ChartDatasetConfig(props) {
 
   const cdc = useSelector((state) => selectCdc(state, chartId, datasetId));
   const chart = useSelector((state) => state.chart.data.find((c) => c.id === chartId));
+  const team = useSelector(selectTeam);
+  const user = useSelector(selectUser);
 
   const dispatch = useDispatch();
   const params = useParams();
@@ -245,17 +250,21 @@ function ChartDatasetConfig(props) {
         )}
       </Row>
 
-      <Spacer y={2} />
-      <Row>
-        <Button
-          variant="ghost"
-          size="sm"
-          endContent={<LuSettings size={18} />}
-          onClick={() => setEditConfirmation(true)}
-        >
-          Edit dataset
-        </Button>
-      </Row>
+      {canAccess("teamAdmin", user.id, team.TeamRoles) && (
+        <>
+          <Spacer y={2} />
+          <Row>
+            <Button
+              variant="ghost"
+              size="sm"
+              endContent={<LuSettings size={18} />}
+              onClick={() => setEditConfirmation(true)}
+            >
+              Edit dataset
+            </Button>
+          </Row>
+        </>
+      )}
 
       <Spacer y={4} />
       <Divider />

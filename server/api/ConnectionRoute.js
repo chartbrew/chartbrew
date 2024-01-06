@@ -57,10 +57,13 @@ module.exports = (app) => {
       }
 
       if (role === "projectAdmin" || role === "projectViewer") {
-        const connections = await connectionController.findByProjects(projects);
+        const connections = await connectionController.findByProjects(team_id, projects);
         if (!connections || connections.length === 0) {
           return res.status(404).json({ message: "No connections found" });
         }
+
+        // save the projects in the user object
+        req.user.projects = projects;
 
         return next();
       }
@@ -102,6 +105,17 @@ module.exports = (app) => {
         connections = await connectionController.findByProject(req.query.project_id);
       } else {
         connections = await connectionController.findByTeam(team_id);
+      }
+
+      if (req.user.projects) {
+        const filteredConnections = connections.filter((connection) => {
+          if (!connection.project_ids) return false;
+          return connection.project_ids.some((projectId) => {
+            return req.user.projects.includes(projectId);
+          });
+        });
+
+        return res.status(200).send(filteredConnections);
       }
 
       return res.status(200).send(connections);

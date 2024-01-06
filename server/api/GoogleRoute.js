@@ -37,7 +37,7 @@ module.exports = (app) => {
       }
 
       if (role === "projectAdmin" || role === "projectViewer") {
-        const connections = await connectionController.findByProjects(projects);
+        const connections = await connectionController.findByProjects(team_id, projects);
         if (!connections || connections.length === 0) {
           return res.status(404).json({ message: "No connections found" });
         }

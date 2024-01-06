@@ -57,7 +57,7 @@ module.exports = (app) => {
       if (teamRole?.projects?.length > 0) {
         if (projectId) {
           const filteredProjects = teamRole.projects.filter((o) => `${o}` === `${projectId}`);
-          if (filteredProjects.length === 0) {
+          if (filteredProjects.length === 0 && !project.ghost) {
             return res.status(403).json({ message: "Access denied" });
           }
         }

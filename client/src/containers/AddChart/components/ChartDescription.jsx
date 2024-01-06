@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {
   Button, Input, Spacer, Link, Card, Tabs, Tab, CardBody, Image, CardFooter, Divider,
 } from "@nextui-org/react";
-import { connect } from "react-redux";
+import { connect, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
 
@@ -18,11 +18,12 @@ import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 import availableTemplates from "../../../modules/availableTemplates";
+import { selectTeam } from "../../../slices/team";
+import { selectUser } from "../../../slices/user";
 
 function ChartDescription(props) {
   const {
     name, onChange, onCreate, teamId, projectId, connections, templates,
-    user, team,
   } = props;
 
   const [error, setError] = useState(false);
@@ -32,6 +33,8 @@ function ChartDescription(props) {
 
   const navigate = useNavigate();
   const params = useParams();
+  const team = useSelector(selectTeam);
+  const user = useSelector(selectUser);
 
   useEffect(() => {
     if (!name) _populateName();
@@ -67,13 +70,17 @@ function ChartDescription(props) {
     onChange(`${names[Math.floor(Math.random() * names.length)]} chart`);
   };
 
+  const _canAccess = (role) => {
+    return canAccess(role, user.id, team.TeamRoles);
+  };
+
   return (
     <Container className={"bg-content1 rounded-md p-5 mt-10"}>
       <Row align="center" wrap="wrap">
         <Tabs selectedKey={selectedMenu} onSelectionChange={(key) => setSelectedMenu(key)}>
           <Tab key="emptyChart" title="Create from scratch" />
-          <Tab key="communityTemplates" title="Community templates" />
-          <Tab key="customTemplates" title="Custom templates" />
+          <Tab key="communityTemplates" title="Community templates" isDisabled={!_canAccess("teamAdmin")} />
+          <Tab key="customTemplates" title="Custom templates" isDisabled={!_canAccess("teamAdmin")} />
         </Tabs>
       </Row>
       <Spacer y={4} />
@@ -267,14 +274,10 @@ ChartDescription.propTypes = {
   teamId: PropTypes.string.isRequired,
   projectId: PropTypes.string.isRequired,
   connections: PropTypes.array.isRequired,
-  team: PropTypes.object.isRequired,
-  user: PropTypes.object.isRequired,
   templates: PropTypes.object.isRequired,
 };
 
-const mapStateToProps = (state) => ({
-  team: state.team.active,
-  user: state.user.data,
+const mapStateToProps = () => ({
 });
 
 export default connect(mapStateToProps)(ChartDescription);
