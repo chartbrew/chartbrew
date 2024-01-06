@@ -148,6 +148,7 @@ class DatasetController {
     });
 
     return datasets.filter((dataset) => {
+      if (!dataset.project_ids) return false;
       return projects.find((p) => dataset.project_ids.includes(p));
     });
   }

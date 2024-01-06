@@ -73,6 +73,7 @@ function Main(props) {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { pathname } = useLocation();
 
   useEffect(() => {
     cleanErrors();
@@ -95,7 +96,9 @@ function Main(props) {
 
       dispatch(areThereAnyUsers())
         .then((anyUsers) => {
-          if (!anyUsers?.payload?.areThereAnyUsers) navigate("/signup");
+          if (!anyUsers?.payload?.areThereAnyUsers && (pathname === "/login" || pathname === "/")) {
+            navigate("/signup");
+          }
         });
     }
   }, []);
