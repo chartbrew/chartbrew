@@ -100,9 +100,9 @@ function UserDashboard(props) {
       dispatch(relog())
         .then((data) => {
           if (data?.payload?.id) {
-            dispatch(getTeams(data.payload.id));
+            return dispatch(getTeams(data.payload.id));
           } else {
-            navigate("/login");
+            throw new Error("No user");
           }
         })
         .catch(() => {
@@ -123,15 +123,22 @@ function UserDashboard(props) {
   useEffect(() => {
     if (teams && teams.length > 0 && !teamsRef.current) {
       teamsRef.current = true;
-      const owningTeam = teams.find((t) => t.TeamRoles.find((tr) => tr.role === "teamOwner" && tr.user_id === user.data.id));
-      if (!owningTeam) return;
-      dispatch(saveActiveTeam(owningTeam));
-      dispatch(getTeamMembers({ team_id: owningTeam.id }));
-      dispatch(getDatasets({ team_id: owningTeam.id }));
+      let selectedTeam = teams.find((t) => t.TeamRoles.find((tr) => tr.role === "teamOwner" && tr.user_id === user.data.id));
+      
+      const storageActiveTeam = window.localStorage.getItem("__cb_active_team");
+      if (storageActiveTeam) {
+        const storageTeam = teams.find((t) => `${t.id}` === `${storageActiveTeam}`);
+        if (storageTeam) selectedTeam = storageTeam;
+      }
+      
+      if (!selectedTeam) return;
+      dispatch(saveActiveTeam(selectedTeam));
+      dispatch(getTeamMembers({ team_id: selectedTeam.id }));
+      dispatch(getDatasets({ team_id: selectedTeam.id }));
 
       const welcome = new URLSearchParams(window.location.search).get("welcome");
       if (welcome) {
-        navigate(`/${owningTeam?.id}/connection/new`);
+        navigate(`/${selectedTeam?.id}/connection/new`);
       }
     }
   }, [teams]);
@@ -259,6 +266,8 @@ function UserDashboard(props) {
     setActiveMenu("projects");
     dispatch(saveActiveTeam(team));
     dispatch(getTeamMembers({ team_id: team.id }));
+
+    window.localStorage.setItem("__cb_active_team", team.id);
   };
 
   const newProjectModal = () => {
