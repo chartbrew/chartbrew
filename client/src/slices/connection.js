@@ -133,6 +133,9 @@ export const connectionSlice = createSlice({
   name: "dataset",
   initialState,
   reducers: {
+    clearConnections: (state) => {
+      state.data = [];
+    },
   },
   extraReducers: (builder) => {
     // getTeamConnections
@@ -239,6 +242,8 @@ export const connectionSlice = createSlice({
     });
   },
 });
+
+export const { clearConnections } = connectionSlice.actions;
 
 export const selectConnections = (state) => state.connection.data;
 

@@ -24,6 +24,7 @@ import {
   updateProject, removeProject, selectProjects, getProjects,
 } from "../slices/project";
 import {
+  clearConnections,
   getTeamConnections, removeConnection, saveConnection, selectConnections,
 } from "../slices/connection";
 import ProjectForm from "../components/ProjectForm";
@@ -38,6 +39,7 @@ import {
   selectTeam, selectTeams, getTeams, saveActiveTeam, getTeamMembers, selectTeamMembers,
 } from "../slices/team";
 import {
+  clearDatasets,
   deleteDataset,
   getDatasets, getRelatedCharts, selectDatasets, updateDataset,
 } from "../slices/dataset";
@@ -265,7 +267,10 @@ function UserDashboard(props) {
 
     setActiveMenu("projects");
     dispatch(saveActiveTeam(team));
+    dispatch(clearConnections());
+    dispatch(clearDatasets());
     dispatch(getTeamMembers({ team_id: team.id }));
+    dispatch(getDatasets({ team_id: team.id }));
 
     window.localStorage.setItem("__cb_active_team", team.id);
   };

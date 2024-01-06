@@ -290,6 +290,10 @@ export const datasetSlice = createSlice({
   name: "dataset",
   initialState,
   reducers: {
+    clearDatasets: (state) => {
+      state.data = [];
+      state.responses = [];
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -569,6 +573,8 @@ export const datasetSlice = createSlice({
       })
   },
 });
+
+export const { clearDatasets } = datasetSlice.actions;
 
 export const selectDatasets = (state) => state.dataset.data;
 export const selectResponses = (state) => state.dataset.responses;
