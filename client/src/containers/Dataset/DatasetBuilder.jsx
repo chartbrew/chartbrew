@@ -25,6 +25,7 @@ function DatasetBuilder(props) {
 
   const [fieldOptions, setFieldOptions] = useState([]);
   const [formula, setFormula] = useState("");
+  const [useCache, setUseCache] = useState(true);
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -513,8 +514,8 @@ function DatasetBuilder(props) {
           onRefreshPreview={() => _onRefreshPreview()}
           onRefreshData={() => _onRefreshPreview(true)}
           onChange={(data) => _onUpdateChart(data)}
-          changeCache={(isSelected) => window.localStorage.setItem("_cb_use_cache", isSelected)}
-          invalidateCache={!!window.localStorage.getItem("_cb_use_cache")}
+          changeCache={() => setUseCache(!useCache)}
+          useCache={useCache}
         />
         
         <Spacer y={4} />

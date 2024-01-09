@@ -29,7 +29,7 @@ import { enGB } from "date-fns/locale";
 
 function ChartPreview(props) {
   const {
-    chart, onChange, onRefreshData, onRefreshPreview, chartLoading, changeCache,
+    chart, onChange, onRefreshData, onRefreshPreview, chartLoading, changeCache, useCache,
   } = props;
 
   const [redraw, setRedraw] = useState(false);
@@ -132,7 +132,7 @@ function ChartPreview(props) {
 
   const _onRefreshData = () => {
     setRedraw(true);
-    onRefreshData(!!window.localStorage.getItem("_cb_use_cache"));
+    onRefreshData(useCache);
   };
 
   return (
@@ -154,7 +154,7 @@ function ChartPreview(props) {
                 </Button>
                 <Spacer />
                 <Checkbox
-                  checked={window.localStorage.getItem("_cb_use_cache") === "true"}
+                  isSelected={useCache}
                   onValueChange={changeCache}
                   size="sm"
                 >
@@ -504,6 +504,7 @@ ChartPreview.propTypes = {
   onRefreshData: PropTypes.func.isRequired,
   onRefreshPreview: PropTypes.func.isRequired,
   changeCache: PropTypes.func.isRequired,
+  useCache: PropTypes.bool.isRequired,
 };
 
 const mapStateToProps = (state) => {

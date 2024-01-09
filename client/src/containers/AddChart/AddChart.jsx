@@ -58,7 +58,7 @@ function AddChart(props) {
   const [loading, setLoading] = useState(false);
   const [startTutorial, setStartTutorial] = useState(false);
   const [conditions, setConditions] = useState([]);
-  const [invalidateCache, setInvalidateCache] = useState(false);
+  const [useCache, setUseCache] = useState(true);
 
   const { height } = useWindowSize();
 
@@ -256,7 +256,7 @@ function AddChart(props) {
   const _onRefreshData = (filters = []) => {
     if (!params.chartId) return;
 
-    const getCache = !invalidateCache;
+    const getCache = useCache;
 
     dispatch(runQuery({
       project_id: params.projectId,
@@ -482,8 +482,8 @@ function AddChart(props) {
               onClearFilter={_onClearFilter}
               conditions={conditions}
               datasets={datasets}
-              invalidateCache={invalidateCache}
-              changeCache={() => setInvalidateCache(!invalidateCache)}
+              useCache={useCache}
+              changeCache={() => setUseCache(!useCache)}
             />
           </Row>
           <Spacer y={4} />
