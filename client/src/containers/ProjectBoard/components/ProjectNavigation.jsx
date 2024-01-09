@@ -8,7 +8,7 @@ import {
   ModalContent, Popover, PopoverTrigger, PopoverContent, Listbox, ListboxItem, Input,
 } from "@nextui-org/react";
 import {
-  LuBarChartBig, LuChevronsUp, LuEye, LuLayoutGrid, LuMenu, LuPanelLeftClose,
+  LuBarChartBig, LuChevronsUp, LuEye, LuEyeOff, LuLayoutGrid, LuMenu, LuPanelLeftClose,
   LuPanelLeftOpen, LuPlusCircle, LuPresentation, LuPuzzle, LuSettings,
   LuTv2, LuUser, LuUsers2,
 } from "react-icons/lu";
@@ -352,44 +352,41 @@ function ProjectNavigation(props) {
               </Row>
             </>
           )}
-          <Spacer y={3} />
-          <Row justify={menuSize === "large" ? "flex-start" : "center"} align="center">
-            {_checkIfActive("dashboard") && canAccess("projectAdmin") && (
-              <Tooltip
-                content={showDrafts ? "Click to hide drafts" : "Click to show drafts"}
-                placement="right"
-              >
-                {menuSize === "small" && (
-                  <div>
-                    <Button
-                      isIconOnly
-                      variant="light"
-                      color="default"
-                      onClick={() => onChangeDrafts(!showDrafts)}
-                    >
-                      {showDrafts ? (<LuEye size={28} />) : (<LuEye size={28} />)}
-                    </Button>
-                  </div>
-                )}
-                {menuSize === "large" && (
-                  <div>
-                    <Button
-                      variant="light"
-                      color="default"
-                      onClick={() => onChangeDrafts(!showDrafts)}
-                      startContent={showDrafts ? (<LuEye size={24} />) : (<LuEye size={24} />)}
-                    >
-                      {showDrafts ? "Show drafts" : "Hide drafts"}
-                    </Button>
-                  </div>
-                )}
-              </Tooltip>
-            )}
-          </Row>
-          {/* {menuSize === "small" && <Spacer y={4} />}
-          {menuSize === "large" && <Spacer y={4} />} */}
         </div>
         <div className="translate-y-[-50px]">
+          {_checkIfActive("dashboard") && canAccess("projectAdmin") && (
+            <Row
+              justify={menuSize === "large" ? "flex-end" : "center"}
+              align="center"
+              className={menuSize === "large" ? "mr-5" : ""}
+            >
+              {menuSize === "small" && (
+                <Tooltip content={showDrafts ? "Hide chart drafts" : "Show chart drafts"} placement="right">
+                  <Button
+                    isIconOnly
+                    variant="light"
+                    color="default"
+                    onClick={() => onChangeDrafts(!showDrafts)}
+                  >
+                    {showDrafts ? (<LuEye size={28} />) : (<LuEyeOff size={28} />)}
+                  </Button>
+                </Tooltip>
+              )}
+              {menuSize === "large" && (
+                <Tooltip content={showDrafts ? "Hide chart drafts" : "Show chart drafts"} placement="right">
+                  <Button
+                    isIconOnly
+                    variant="light"
+                    color="default"
+                    onClick={() => onChangeDrafts(!showDrafts)}
+                  >
+                    {showDrafts ? (<LuEye size={28} />) : (<LuEyeOff size={28} />)}
+                  </Button>
+                </Tooltip>
+              )}
+            </Row>
+          )}
+          <Spacer y={3} />
           {menuSize === "large" && (
             <Row justify="flex-end" align="center" className={"mr-5"}>
               <Tooltip content="Click to collapse menu" placement="right">
