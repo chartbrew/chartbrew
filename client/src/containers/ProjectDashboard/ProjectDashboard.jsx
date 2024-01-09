@@ -35,6 +35,7 @@ import Row from "../../components/Row";
 import Text from "../../components/Text";
 import { selectProjectMembers } from "../../slices/team";
 import { TbChevronDownRight } from "react-icons/tb";
+import { widthSize } from "../../modules/layoutBreakpoints";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -405,7 +406,7 @@ function ProjectDashboard(props) {
 
       Object.keys(allLayouts).forEach(breakpoint => {
         const layoutItem = allLayouts[breakpoint].find(item => item.i === chart.id.toString());
-        if (layoutItem) {
+        if (layoutItem || layoutItem === 0) {
           updatedLayout[breakpoint] = [layoutItem.x, layoutItem.y, layoutItem.w, layoutItem.h];
         }
       });
@@ -416,7 +417,7 @@ function ProjectDashboard(props) {
     updatedCharts.forEach((chart, index) => {
       // only allow chart updates if the layout has all the breakpoints
       const chartBreakpoints = Object.keys(chart.layout);
-      const allBreakpoints = Object.keys(layout);
+      const allBreakpoints = Object.keys(widthSize);
 
       if (chartBreakpoints.length === allBreakpoints.length) {
         // only update the layout if it has changed
