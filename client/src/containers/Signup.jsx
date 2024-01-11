@@ -13,14 +13,14 @@ import {
   email as emailValidation,
   password as passwordValidation
 } from "../config/validations";
-import cbLogoSmall from "../assets/logo_blue.png";
 import {
   negative, positive, secondary,
 } from "../config/colors";
-import signupBackground from "../assets/signup_background.webp";
+import signupBackground from "../assets/dashboards_background.webp";
 import Row from "../components/Row";
 import Text from "../components/Text";
 import { createUser, createInvitedUser } from "../slices/user";
+import SimpleNavbar from "../components/SimpleNavbar";
 
 const testimonialAvatar = "https://cdn2.chartbrew.com/skyguy.webp";
 
@@ -35,7 +35,6 @@ function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [signupError, setSignupError] = useState("");
-  const [sideHovered, setSideHovered] = useState(false);
 
   const { height } = useWindowSize();
   const navigate = useNavigate();
@@ -96,21 +95,13 @@ function Signup() {
 
   return (
     <div style={styles.container(height)}>
+      <SimpleNavbar />
       <div style={styles.mainGrid(height)} className="grid grid-cols-12">
         <div className="col-span-12 md:col-span-6">
-          <div className="p-4 sm:p-8 md:p-16 lg:p-20">
-            <Row>
-              &nbsp;
-            </Row>
-            <Row justify="center">
-              <Link to="/">
-                <img src={cbLogoSmall} width="70" alt="Chartbrew logo" />
-              </Link>
-            </Row>
-            <Spacer y={8} />
+          <div className="py-10 px-4 sm:px-8 md:px-16 lg:px-20 lg:py-16">
             <Row>
               <Text size="h2">
-                {"Let's get you started with your new Chartbrew account"}
+                {"Let's get you started with your Chartbrew account"}
               </Text>
             </Row>
             <Spacer y={4} />
@@ -126,7 +117,7 @@ function Signup() {
               <Row>
                 <Input
                   variant="bordered"
-                  contentRight={<LuUser />}
+                  startContent={<LuUser />}
                   type="text"
                   placeholder="Enter your name"
                   labelPlacement="outside"
@@ -154,7 +145,7 @@ function Signup() {
               <Row>
                 <Input
                   variant="bordered"
-                  endContent={<LuMail />}
+                  startContent={<LuMail />}
                   type="email"
                   placeholder="Enter your email"
                   labelPlacement="outside"
@@ -178,7 +169,7 @@ function Signup() {
               <Row>
                 <Input
                   variant="bordered"
-                  endContent={<LuLock />}
+                  startContent={<LuLock />}
                   type="password"
                   placeholder="Enter a secure password"
                   labelPlacement="outside"
@@ -226,7 +217,7 @@ function Signup() {
               )}
             </form>
 
-            <Spacer y={2} />
+            <Spacer y={4} />
             <Text size="sm">
               {"By signing up for a Chartbrew account, you agree to our "}
               <a href="https://github.com/razvanilin/chartbrew-docs/blob/master/TermsAndConditions.md" rel="noopener noreferrer" target="_blank">Terms of Service</a>
@@ -243,18 +234,40 @@ function Signup() {
                 {" "}
               </Text>
             </div>
+
+            <Spacer y={8} className="block sm:hidden" />
+            <Card className="block sm:hidden p-4">
+              <CardHeader>
+                <Avatar isBordered size="lg" src={testimonialAvatar} alt="Fairchain testimonial" />
+                <div className="grid grid-cols-12 pl-6">
+                  <div className="col-span-12">
+                    <Text size={20} b className={"leading-4"}>
+                      Schuyler
+                    </Text>
+                  </div>
+                  <div className="col-span-12">
+                    <Text className="text-gray-400 flex flex-row">
+                      {"Full-stack Developer at "}
+                      <Spacer x={1} />
+                      <LinkNext href="https://fairchain.art" rel="noopener noreferrer" target="_blank" color="secondary">
+                        {"Fairchain"}
+                      </LinkNext>
+                    </Text>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardBody>
+                <i>{"\"Chartbrew has helped us move away from having to constantly update clunky Google-based charts, but what most impresses me is the responsiveness and the helpfulness of the people behind Chartbrew. Highly recommend!\""}</i>
+              </CardBody>
+            </Card>
           </div>
         </div>
         <div className="col-span-12 md:col-span-6">
-          <div
-            style={sideHovered ? styles.sideBackground : styles.sideBackgroundBlurred}
-            onMouseEnter={() => setSideHovered(true)}
-            onMouseLeave={() => setSideHovered(false)}
-          />
-          <div style={styles.testimonialCard} className="hidden sm:block">
-            <Card style={{ minWidth: 500, padding: 10 }}>
+          <div style={styles.sideBackground} className="opacity-30" />
+          <div style={styles.testimonialCard} className="hidden md:block">
+            <Card style={{ minWidth: 400, padding: 10 }}>
               <CardHeader>
-                <Avatar color="gradient" bordered squared size="lg" src={testimonialAvatar} alt="Fairchain testimonial" />
+                <Avatar isBordered size="lg" src={testimonialAvatar} alt="Fairchain testimonial" />
                 <div className="grid grid-cols-12 pl-6">
                   <div className="col-span-12">
                     <Text size={20} b className={"leading-4"}>
@@ -300,22 +313,12 @@ const styles = {
     transition: "filter 1s ease",
     position: "relative",
   },
-  sideBackgroundBlurred: {
-    backgroundImage: `url(${signupBackground})`,
-    filter: "contrast(130%) blur(5px)",
-    backgroundSize: "cover",
-    backgroundPosition: "top",
-    width: "100%",
-    height: "100%",
-    position: "relative",
-    transition: "filter 1s ease",
-  },
   mainGrid: (height) => ({
     height: height + 20,
   }),
   testimonialCard: {
     position: "absolute",
-    top: "25%",
+    top: "30%",
     right: "5%",
     width: "40%",
   },
