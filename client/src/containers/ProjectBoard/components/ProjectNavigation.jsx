@@ -154,7 +154,7 @@ function ProjectNavigation(props) {
                     onChange={(e) => setProjectSearch(e.target.value)}
                   />
                   <Listbox aria-label="Dashboard switch list">
-                    {projects.filter((p) => p.name.toLowerCase().indexOf(projectSearch) > -1).map((p) => (
+                    {projects.filter((p) => p.name.toLowerCase().indexOf(projectSearch) > -1 && !p.ghost).map((p) => (
                       <ListboxItem key={p.id} onClick={() => onChangeProject(p.id)}>
                         {p.name}
                       </ListboxItem>

@@ -11,7 +11,7 @@ import {
 
 import "allotment/dist/style.css";
 
-import { getProject, changeActiveProject, selectProjects, selectProject } from "../../slices/project";
+import { getProject, changeActiveProject, selectProjects, selectProject, getProjects } from "../../slices/project";
 import { cleanErrors as cleanErrorsAction } from "../../actions/error";
 import {
   getTeam, getTeamMembers, selectTeam,
@@ -87,6 +87,7 @@ function ProjectBoard(props) {
     dispatch(getTeam(teamId))
       .then(() => {
         dispatch(getTeamMembers({ team_id: teamId }));
+        dispatch(getProjects({ team_id: teamId }));
         return dispatch(getProject({ project_id: projectId }));
       })
       .then(() => {
