@@ -179,7 +179,7 @@ function ProjectBoard(props) {
                 minSize={_getDefaultMenuSize()}
                 maxSize={_getDefaultMenuSize()}
                 preferredSize={_getDefaultMenuSize()}
-                className="bg-content2"
+                className="bg-content2 transition-all"
               >
                 <div>
                   <ProjectNavigation
@@ -197,7 +197,7 @@ function ProjectBoard(props) {
                   />
                 </div>
               </Allotment.Pane>
-              <Allotment.Pane>
+              <Allotment.Pane className="transition-all">
                 <div
                   style={{ overflowY: "auto", height: "100%", overflowX: "hidden" }}
                 >

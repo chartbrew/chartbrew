@@ -75,8 +75,8 @@ function ProjectNavigation(props) {
   };
 
   const _formatProjectName = (projectName) => {
-    if (projectName && projectName.length > 18) {
-      return `${project.name.substring(0, 15)}...`;
+    if (projectName && projectName.length > 25) {
+      return `${project.name.substring(0, 25)}...`;
     }
 
     return projectName;
@@ -126,7 +126,7 @@ function ProjectNavigation(props) {
   return (
     <div>
       <div className={"bg-content1 flex flex-col justify-between"} style={styles.mainSideMenu(height)}>
-        <div>
+        <div className="p-2">
           <Row justify="center" align="center" className={"pt-4"}>
             <Popover>
               <PopoverTrigger>
@@ -139,7 +139,7 @@ function ProjectNavigation(props) {
                     // </Tooltip>
                   )}
                   {menuSize === "large" && (
-                    <Text b className={"text-blue-600"}>{_formatProjectName(project.name)}</Text>
+                    <Text b className={"text-sm text-blue-600"}>{_formatProjectName(project.name)}</Text>
                   )}
                 </div>
               </PopoverTrigger>
