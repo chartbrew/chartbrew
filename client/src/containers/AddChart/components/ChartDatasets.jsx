@@ -46,7 +46,7 @@ function ChartDatasets(props) {
       initRef.current = true;
       const projectDatasets = datasets.filter((d) => (
         !d.draft
-        && d?.legend.toLowerCase().includes(datasetSearch.toLowerCase())
+        && d?.legend?.toLowerCase().includes(datasetSearch?.toLowerCase())
         && d.project_ids?.includes(chart.project_id)
       ));
       if (projectDatasets.length === 0) {

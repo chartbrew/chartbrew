@@ -33,9 +33,10 @@ import CreateTemplateForm from "../../components/CreateTemplateForm";
 import useThemeDetector from "../../modules/useThemeDetector";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
-import { selectProjectMembers } from "../../slices/team";
+import { selectProjectMembers, selectTeam } from "../../slices/team";
 import { TbChevronDownRight } from "react-icons/tb";
 import { widthSize } from "../../modules/layoutBreakpoints";
+import { selectUser } from "../../slices/user";
 
 const ResponsiveGridLayout = WidthProvider(Responsive, { measureBeforeMount: true });
 
@@ -68,7 +69,7 @@ const getFilterGroupsFromStorage = () => {
 */
 function ProjectDashboard(props) {
   const {
-    cleanErrors, showDrafts, user, team, mobile,
+    cleanErrors, showDrafts, mobile,
   } = props;
 
   const [filters, setFilters] = useState(getFiltersFromStorage());
@@ -87,6 +88,8 @@ function ProjectDashboard(props) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const team = useSelector(selectTeam);
+  const user = useSelector(selectUser);
   const charts = useSelector(selectCharts);
   const chartsLoading = useSelector((state) => state.chart.loading);
   const projectMembers = useSelector((state) => selectProjectMembers(state, params.projectId));
@@ -823,20 +826,14 @@ ProjectDashboard.defaultProps = {
 };
 
 ProjectDashboard.propTypes = {
-  connections: PropTypes.array.isRequired,
-  user: PropTypes.object.isRequired,
-  team: PropTypes.object.isRequired,
   cleanErrors: PropTypes.func.isRequired,
   onPrint: PropTypes.func.isRequired,
   showDrafts: PropTypes.bool,
   mobile: PropTypes.bool,
 };
 
-const mapStateToProps = (state) => {
+const mapStateToProps = () => {
   return {
-    connections: state.connection.data,
-    user: state.user.data,
-    team: state.team.active,
   };
 };
 
