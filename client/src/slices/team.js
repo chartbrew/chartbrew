@@ -141,6 +141,10 @@ export const getTeamMembers = createAsyncThunk(
     });
 
     const response = await fetch(`${API_HOST}/team/${team_id}/members`, { method: "GET", headers });
+    if (!response.ok) {
+      throw new Error("Error getting team members");
+    }
+
     const responseJson = await response.json();
 
     return responseJson;
