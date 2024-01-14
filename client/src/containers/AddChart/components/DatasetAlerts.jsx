@@ -21,6 +21,7 @@ import Container from "../../../components/Container";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 import { selectCharts } from "../../../slices/chart";
+import { selectUser } from "../../../slices/user";
 
 const ruleTypes = [{
   label: "When reaching a milestone",
@@ -55,8 +56,13 @@ const timePeriods = [{
 
 function DatasetAlerts(props) {
   const {
-    user, chartId, cdcId, projectId, getTeamIntegrations, integrations,
+    chartId, cdcId, projectId, getTeamIntegrations, integrations,
   } = props;
+
+  const team = useSelector(selectTeam);
+  const user = useSelector(selectUser);
+  const teamMembers = useSelector(selectTeamMembers);
+  const charts = useSelector(selectCharts);
 
   const initAlert = {
     rules: {},
@@ -83,9 +89,6 @@ function DatasetAlerts(props) {
   const [selectedIntegrations, setSelectedIntegrations] = useState([]);
 
   const dispatch = useDispatch();
-  const team = useSelector(selectTeam);
-  const teamMembers = useSelector(selectTeamMembers);
-  const charts = useSelector(selectCharts);
   const alerts = useSelector(selectAlerts).filter((a) => a.cdc_id === cdcId);
 
   useEffect(() => {
@@ -98,6 +101,21 @@ function DatasetAlerts(props) {
       setChart(charts.find((c) => `${c.id}` === `${chartId}`));
     }
   }, [charts, chartId]);
+
+  const _filterTeamMembers = () => {
+    const userRole = team.TeamRoles?.find((tr) => tr.user_id === user.id);
+    if (!userRole) return [];
+
+    if (userRole.role === "teamOwner" || userRole.role === "teamAdmin") {
+      return teamMembers;
+    }
+
+    if (userRole.role === "projectAdmin") {
+      return teamMembers.filter((tm) => tm.TeamRoles?.find((tr) => tr.projects.includes(parseInt(projectId, 10)) && (tr.role === "projectAdmin" || tr.role === "projectViewer")));
+    }
+
+    return [{ ...user }];
+  };
 
   const _onRefreshIntegrationList = () => {
     getTeamIntegrations(team.id);
@@ -483,7 +501,7 @@ function DatasetAlerts(props) {
                     </Row>
                     <Spacer y={1} />
                     <Row wrap="wrap" className={"gap-2"}>
-                      {teamMembers.map((member) => (
+                      {_filterTeamMembers().map((member) => (
                         <Link key={member.email} onClick={() => _onChangeRecipient(member.email)}>
                           <Chip
                             color="secondary"
@@ -626,7 +644,6 @@ function DatasetAlerts(props) {
 }
 
 DatasetAlerts.propTypes = {
-  user: PropTypes.object.isRequired,
   chartId: PropTypes.string.isRequired,
   cdcId: PropTypes.string.isRequired,
   projectId: PropTypes.string.isRequired,
@@ -635,7 +652,6 @@ DatasetAlerts.propTypes = {
 };
 
 const mapStateToProps = (state) => ({
-  user: state.user.data,
   integrations: state.integration.data,
 });
 
