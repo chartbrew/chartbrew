@@ -695,6 +695,7 @@ function ProjectDashboard(props) {
           <ResponsiveGridLayout
             className="layout"
             layouts={layouts}
+            margin={{ lg: [12, 12], md: [12, 12], sm: [12, 12], xs: [12, 12], xxs: [12, 12] }}
             breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
             cols={{ lg: 12, md: 10, sm: 8, xs: 6, xxs: 4 }}
             rowHeight={150}
@@ -782,9 +783,9 @@ function ProjectDashboard(props) {
 const styles = {
   container: (mobile) => ({
     flex: 1,
-    padding: mobile ? 0 : 10,
-    paddingTop: 10,
-    paddingLeft: mobile ? 0 : 10,
+    padding: mobile ? 0 : 6,
+    paddingTop: 6,
+    paddingLeft: mobile ? 0 : 6,
   }),
   actionBar: {
     padding: 10,
