@@ -8,7 +8,7 @@ import {
   ModalContent, Popover, PopoverTrigger, PopoverContent, Listbox, ListboxItem, Input,
 } from "@nextui-org/react";
 import {
-  LuBarChartBig, LuChevronsUp, LuEye, LuEyeOff, LuLayoutGrid, LuMenu, LuPanelLeftClose,
+  LuBarChartBig, LuChevronsUp, LuLayoutGrid, LuMenu, LuPanelLeftClose,
   LuPanelLeftOpen, LuPlusCircle, LuPresentation, LuPuzzle, LuSettings,
   LuTv2, LuUser, LuUsers2,
 } from "react-icons/lu";
@@ -59,8 +59,8 @@ const _checkIfActive = (path) => {
 
 function ProjectNavigation(props) {
   const {
-    menuSize, teamId, projectId, project, showDrafts, onSetMenuSize,
-    canAccess, projects, onChangeDrafts, onChangeProject, mobile, update,
+    menuSize, teamId, projectId, project, onSetMenuSize,
+    canAccess, projects, onChangeProject, mobile, update,
   } = props;
 
   const [showUpdate, setShowUpdate] = useState(false);
@@ -354,39 +354,6 @@ function ProjectNavigation(props) {
           )}
         </div>
         <div className="translate-y-[-50px]">
-          {_checkIfActive("dashboard") && canAccess("projectAdmin") && (
-            <Row
-              justify={menuSize === "large" ? "flex-end" : "center"}
-              align="center"
-              className={menuSize === "large" ? "mr-5" : ""}
-            >
-              {menuSize === "small" && (
-                <Tooltip content={showDrafts ? "Hide chart drafts" : "Show chart drafts"} placement="right">
-                  <Button
-                    isIconOnly
-                    variant="light"
-                    color="default"
-                    onClick={() => onChangeDrafts(!showDrafts)}
-                  >
-                    {showDrafts ? (<LuEye size={28} />) : (<LuEyeOff size={28} />)}
-                  </Button>
-                </Tooltip>
-              )}
-              {menuSize === "large" && (
-                <Tooltip content={showDrafts ? "Hide chart drafts" : "Show chart drafts"} placement="right">
-                  <Button
-                    isIconOnly
-                    variant="light"
-                    color="default"
-                    onClick={() => onChangeDrafts(!showDrafts)}
-                  >
-                    {showDrafts ? (<LuEye size={28} />) : (<LuEyeOff size={28} />)}
-                  </Button>
-                </Tooltip>
-              )}
-            </Row>
-          )}
-          <Spacer y={3} />
           {menuSize === "large" && (
             <Row justify="flex-end" align="center" className={"mr-5"}>
               <Tooltip content="Click to collapse menu" placement="right">

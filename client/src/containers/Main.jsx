@@ -187,7 +187,7 @@ function Main(props) {
                 <Route
                   exact
                   path="dashboard"
-                  element={<ProjectDashboard showDrafts={window.localStorage.getItem("_cb_drafts")} />}
+                  element={<ProjectDashboard />}
                 />
                 <Route
                   exact

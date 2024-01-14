@@ -69,7 +69,7 @@ const getFilterGroupsFromStorage = () => {
 */
 function ProjectDashboard(props) {
   const {
-    cleanErrors, showDrafts, mobile,
+    cleanErrors, mobile,
   } = props;
 
   const [filters, setFilters] = useState(getFiltersFromStorage());
@@ -707,13 +707,12 @@ function ProjectDashboard(props) {
             isDraggable={editingLayout}
             isResizable={editingLayout}
           >
-            {charts.filter((c) => (c.draft && showDrafts) || !c.draft).map((chart, index) => (
+            {charts.map((chart, index) => (
               <div key={chart.id} className={editingLayout ? "border-2 border-dashed border-primary rounded-2xl" : ""}>
                 <Chart
                   key={chart.id}
                   chart={chart}
                   charts={charts}
-                  showDrafts={showDrafts}
                   onChangeOrder={(chartId, type) => _onChangeOrder(chartId, type, index)}
                   height={() => _onGetChartHeight(chart)}
                   editingLayout={editingLayout}
@@ -821,14 +820,12 @@ const styles = {
 };
 
 ProjectDashboard.defaultProps = {
-  showDrafts: true,
   mobile: false,
 };
 
 ProjectDashboard.propTypes = {
   cleanErrors: PropTypes.func.isRequired,
   onPrint: PropTypes.func.isRequired,
-  showDrafts: PropTypes.bool,
   mobile: PropTypes.bool,
 };
 
