@@ -363,7 +363,8 @@ function Chart(props) {
       });
   };
 
-  const _getUpdatedTime = (updatedAt) => {
+  const _getUpdatedTime = (chart) => {
+    const updatedAt = chart.chartDataUpdated || chart.lastAutoUpdate;
     if (moment().diff(moment(updatedAt), "days") > 1) {
       return moment(updatedAt).calendar();
     }
@@ -484,8 +485,7 @@ function Chart(props) {
                   <Row justify="flex-start" align="center" className={"gap-1"}>
                     {!chartLoading && !chart.loading && (
                       <>
-                        {!print && <span className="text-[10px] text-default-500" title="Last updated">{`${_getUpdatedTime(chart.chartDataUpdated)}`}</span>}
-                        {print && <span className="text-[10px] text-default-500">{`${moment(chart.chartDataUpdated).format("LLL")}`}</span>}
+                        <span className="text-[10px] text-default-500" title="Last updated">{`${_getUpdatedTime(chart)}`}</span>
                       </>
                     )}
                     {(chartLoading || chart.loading) && (
