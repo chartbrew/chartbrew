@@ -373,7 +373,7 @@ function Filters(props) {
 
           {filterType === "custom" && (
             <>
-              <Row align="center">
+              <Row align="center" className={"gap-2"}>
                 <Select
                   label="Select a field"
                   renderValue={() => (
@@ -381,8 +381,9 @@ function Filters(props) {
                   )}
                   selectedKeys={[filter.field]}
                   selectionMode="single"
-                  onSelectionChange={(keys) => _updateFilter(keys[0]?.value, "field")}
+                  onSelectionChange={(keys) => _updateFilter(keys.currentKey, "field")}
                   size="sm"
+                  variant="bordered"
                 >
                   {fieldOptions.map((field) => (
                     <SelectItem
@@ -440,6 +441,7 @@ function Filters(props) {
                           placeholder="Click to open calendar"
                           startContent={<LuCalendarDays />}
                           value={(filter.value && format(new Date(filter.value), "Pp", { locale: enGB })) || ""}
+                          variant="bordered"
                         />
                       </PopoverTrigger>
                       <PopoverContent>
@@ -466,10 +468,10 @@ function Filters(props) {
                     <Text b>The filter will affect the following charts:</Text>
                   </Row>
                   <Spacer y={1} />
-                  <Row wrap="wrap">
+                  <Row wrap="wrap" className={"gap-1"}>
                     {_getChartsWithField(filter.field).map((chart) => (
                       <>
-                        <Chip color="primary" key={chart.id} radius="sm">
+                        <Chip color="primary" key={chart.id} radius="sm" variant="flat">
                           {chart.name}
                         </Chip>
                         <Spacer x={0.3} />
@@ -496,9 +498,11 @@ function Filters(props) {
           <Button auto onClick={onClose} color="warning" variant="flat">
             Close
           </Button>
-          <Button color="primary" onClick={_onApplyFilter}>
-            Apply filter
-          </Button>
+          {filterType === "date" && (
+            <Button color="primary" onClick={_onApplyFilter}>
+              Apply filter
+            </Button>
+          )}
         </ModalFooter>
       </ModalContent>
     </Modal>

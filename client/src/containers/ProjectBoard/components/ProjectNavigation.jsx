@@ -35,7 +35,7 @@ const _checkIfActive = (path) => {
     case "connections":
       if (window.location.pathname.indexOf("connections") > -1) return true;
       break;
-    case "projectSettings":
+    case "settings":
       if (window.location.pathname.indexOf("settings") > -1) return true;
       break;
     case "inviteMembers":

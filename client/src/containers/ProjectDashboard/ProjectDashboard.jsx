@@ -563,7 +563,7 @@ function ProjectDashboard(props) {
                               {`${moment.utc(filter.startDate).format("YYYY/MM/DD")} - ${moment.utc(filter.endDate).format("YYYY/MM/DD")}`}
                             </Chip>
                           )}
-                          {filter.type !== "date" && (
+                          {filter.type !== "date" && filter.field && (
                             <Chip
                               color="primary"
                               variant={"flat"}
