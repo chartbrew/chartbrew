@@ -14,7 +14,7 @@ import "react-toastify/dist/ReactToastify.min.css";
 import moment from "moment";
 import {
   LuCopyPlus, LuFileDown, LuLayoutDashboard, LuListFilter,
-  LuPlusCircle, LuRefreshCw, LuUser, LuUsers2, LuXCircle,
+  LuPlusCircle, LuRefreshCw, LuUser, LuUserPlus, LuUsers2, LuXCircle,
 } from "react-icons/lu";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -463,7 +463,7 @@ function ProjectDashboard(props) {
             >
               <Row justify="space-between" align="center" className={"w-full"}>
                 <Row justify="flex-start" align="center">
-                  {projectMembers && (
+                  {projectMembers?.length > 0 && (
                     <>
                       <div className="hidden sm:flex sm:flex-row border-r-1 border-solid border-content3">
                         <Popover>
@@ -488,6 +488,7 @@ function ProjectDashboard(props) {
                                   as={Link}
                                   to={`/${params.teamId}/team/members`}
                                   fullWidth
+                                  className="hover:text-foreground"
                                 >
                                   Edit access
                                 </Button>
