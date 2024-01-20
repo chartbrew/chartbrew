@@ -159,9 +159,12 @@ class AxisChart {
         }
         let filteredData = filterData.data;
 
-        if (dateField && this.chart.startDate && this.chart.endDate && canDateFilter) {
+        const dateDashboardFilter = filters.find((f) => f.type === "date");
+        if (dateField
+          && ((this.chart.startDate && this.chart.endDate) || dateDashboardFilter)
+          && canDateFilter
+        ) {
           if (filters?.length > 0) {
-            const dateDashboardFilter = filters.find((f) => f.type === "date");
             if (dateDashboardFilter) {
               startDate = momentObj(dateDashboardFilter.startDate).startOf("day");
               endDate = momentObj(dateDashboardFilter.endDate).endOf("day");
