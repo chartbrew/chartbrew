@@ -697,6 +697,15 @@ class ConnectionController {
           url = tempUrl.substring(0, tempUrl.indexOf("?"));
         }
 
+        // if ant variable queryParams are left, remove them
+        if (queryParams && Object.keys(queryParams).length > 0) {
+          Object.keys(queryParams).forEach((q) => {
+            if (queryParams[q] === "{{start_date}}" || queryParams[q] === "{{end_date}}") {
+              delete queryParams[q];
+            }
+          });
+        }
+
         const options = {
           url,
           method: dataRequest.method || "GET",
