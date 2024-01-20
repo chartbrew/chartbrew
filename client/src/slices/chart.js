@@ -177,6 +177,7 @@ export const runQuery = createAsyncThunk(
     const method = "POST";
     const headers = new Headers({
       "Accept": "application/json",
+      "Content-Type": "application/json",
       "authorization": `Bearer ${token}`,
     });
     const body = JSON.stringify({ filters: filters && !filters.length ? [filters] : filters });
