@@ -103,15 +103,14 @@ function ProjectDashboard(props) {
   }, []);
 
   useEffect(() => {
-    if (!filterLoading && filters) {
+    if (!filterLoading && filters && initLayoutRef.current) {
       _runFiltering();
     }
-  }, [filters]);
+  }, [filters, initLayoutRef.current]);
 
   useEffect(() => {
     if (charts && charts.filter((c) => c.project_id === parseInt(params.projectId, 10)).length > 0 && !initLayoutRef.current) {
       initLayoutRef.current = true;
-
       // set the grid layout
       const newLayouts = { xxs: [], xs: [], sm: [], md: [], lg: [] };
       charts.forEach((chart) => {
