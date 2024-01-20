@@ -11,7 +11,7 @@ import {
 } from "@nextui-org/react";
 import {
   LuBarChart, LuCalendarDays, LuChevronDown, LuDatabase, LuInfo, LuLayoutGrid, LuMoreHorizontal, LuPencilLine,
-  LuPlug, LuPlus, LuSearch, LuSettings, LuTable, LuTags, LuTrash, LuUsers2,
+  LuPlug, LuPlus, LuSearch, LuSettings, LuTable, LuTags, LuTrash, LuUsers2, LuXCircle,
 } from "react-icons/lu";
 import { Flip, ToastContainer } from "react-toastify";
 
@@ -534,6 +534,23 @@ function UserDashboard(props) {
                   )}
                 </Listbox>
               </Segment>
+
+              <div className="mt-8 hidden sm:block">
+                <div className="flex flex-row items-center justify-between gap-2">
+                  <span className="font-medium">Welcome to Chartbrew v3</span>
+                  <Link className="text-default-500"><LuXCircle /></Link>
+                </div>
+                <div className="relative pb-[56.25%] h-0 mt-4">
+                  <iframe
+                    src="https://www.loom.com/embed/bdbadc9336794285b555825ca07c5159?sid=32e9215a-99d7-4a0f-9fa4-d04f545733ca&hideEmbedTopBar=true"
+                    frameBorder="0"
+                    webkitallowfullscreen
+                    mozallowfullscreen
+                    allowfullscreen
+                    className="absolute top-0 left-0 w-full h-full rounded-lg shadow-lg"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="col-span-12 sm:col-span-7 md:col-span-8 lg:col-span-9">

@@ -428,7 +428,7 @@ function Chart(props) {
   return (
     <motion.div
       animate={{ opacity: [0, 1] }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.7 }}
       style={styles.container}
     >
       {error && (

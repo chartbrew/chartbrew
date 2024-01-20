@@ -59,7 +59,7 @@ module.exports = (app) => {
   */
   app.get(`${url}/community/:template`, verifyToken, async (req, res) => {
     try {
-      await checkAccess(req, "updateAny", "chart");
+      await checkAccess(req, "updateOwn", "chart");
     } catch (error) {
       return formatError(error, res);
     }

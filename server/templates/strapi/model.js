@@ -3,7 +3,7 @@ const moment = require("moment");
 
 const builder = require("./builder");
 
-const template = (templateData, dashboardOrder = 0) => {
+const template = (templateData) => {
   const {
     strapiToken, apiEndpoint, collection, strapiHost, createdField, updatedField,
   } = templateData || {};
@@ -43,6 +43,163 @@ const template = (templateData, dashboardOrder = 0) => {
         "srv": false
       }
     ],
+    "Datasets": [{
+      "td_id": 1,
+      "fillColor": "rgba(0,0,0,0)",
+      "patterns": [],
+      "conditions": null,
+      "fieldsSchema": {},
+      "excludedFields": null,
+      "groups": null,
+      "query": null,
+      "xAxis": `root[].${formattedCreatedAt}`,
+      "xAxisOperation": null,
+      "yAxis": "root[].id",
+      "yAxisOperation": "count",
+      "dateField": `root[].${formattedCreatedAt}`,
+      "datasetColor": "#50E3C2",
+      "fill": false,
+      "multiFill": false,
+      "dateFormat": null,
+      "legend": collection,
+      "pointRadius": null,
+      "formula": null,
+      "groupBy": null,
+      "sort": null,
+      "DataRequests": [{
+        "headers": {},
+        "body": "null",
+        "conditions": null,
+        "configuration": null,
+        "method": "GET",
+        "route": collection,
+        "useGlobalHeaders": true,
+        "query": null,
+        "pagination": true,
+        "items": "items",
+        "itemsLimit": 10000,
+        "offset": "pagination[page]",
+        "paginationField": null,
+        "template": "pages"
+      }],
+    }, {
+      "td_id": 2,
+      "fillColor": "rgba(80, 227, 194, 0.47)",
+      "patterns": [],
+      "conditions": null,
+      "fieldsSchema": {},
+      "excludedFields": null,
+      "groups": null,
+      "query": null,
+      "xAxis": `root[].${formattedCreatedAt}`,
+      "xAxisOperation": null,
+      "yAxis": "root[].id",
+      "yAxisOperation": "count",
+      "dateField": `root[].${formattedCreatedAt}`,
+      "datasetColor": "#50E3C2",
+      "fill": false,
+      "multiFill": false,
+      "dateFormat": null,
+      "legend": `${collection}`,
+      "pointRadius": null,
+      "formula": null,
+      "groupBy": null,
+      "sort": null,
+      "DataRequests": [{
+        "headers": {},
+        "body": "null",
+        "conditions": null,
+        "configuration": null,
+        "method": "GET",
+        "route": `${collection}?filters[${createdField}][$gt]=${moment().subtract(32, "days").startOf("day").toISOString()}`,
+        "useGlobalHeaders": true,
+        "query": null,
+        "pagination": true,
+        "items": "items",
+        "itemsLimit": 0,
+        "offset": "pagination.page",
+        "paginationField": null,
+        "template": "pages"
+      }],
+    }, {
+      "td_id": 3,
+      "fillColor": "rgba(80, 227, 194, 0.47)",
+      "patterns": [],
+      "conditions": null,
+      "fieldsSchema": {},
+      "excludedFields": null,
+      "groups": null,
+      "query": null,
+      "xAxis": `root[].${formattedCreatedAt}`,
+      "xAxisOperation": null,
+      "yAxis": "root[].id",
+      "yAxisOperation": "count",
+      "dateField": `root[].${formattedCreatedAt}`,
+      "datasetColor": "#50E3C2",
+      "fill": false,
+      "multiFill": false,
+      "dateFormat": null,
+      "legend": collection,
+      "pointRadius": null,
+      "formula": null,
+      "groupBy": null,
+      "sort": null,
+      "DataRequests": [{
+        "headers": {},
+        "body": "null",
+        "conditions": null,
+        "configuration": null,
+        "method": "GET",
+        "route": `${collection}?filters[${createdField}][$gt]=${moment().subtract(367, "days").startOf("day").toISOString()}`,
+        "useGlobalHeaders": true,
+        "query": null,
+        "pagination": true,
+        "items": "items",
+        "itemsLimit": 0,
+        "offset": "pagination[page]",
+        "paginationField": null,
+        "template": "pages"
+      }],
+    }, {
+      "td_id": 4,
+      "fillColor": "rgba(0,0,0,0)",
+      "patterns": [],
+      "conditions": null,
+      "fieldsSchema": {},
+      "excludedFields": null,
+      "groups": null,
+      "query": null,
+      "xAxis": `root[].${formattedUpdatedAt}`,
+      "xAxisOperation": null,
+      "yAxis": "root[].id",
+      "yAxisOperation": "count",
+      "dateField": "root[].updatedAt",
+      "datasetColor": "#FF7F0E",
+      "fill": false,
+      "multiFill": false,
+      "dateFormat": null,
+      "legend": collection,
+      "pointRadius": null,
+      "formula": null,
+      "groupBy": null,
+      "sort": null,
+      "DataRequests": [{
+        "headers": {},
+        "body": "null",
+        "conditions": null,
+        "configuration": null,
+        "method": "GET",
+        "route": `${collection}?filters[${updatedField}][$gt]=${moment().subtract(32, "days").startOf("day").toISOString()}`,
+        "useGlobalHeaders": true,
+        "query": null,
+        "pagination": true,
+        "items": "items",
+        "itemsLimit": 0,
+        "offset": "pagination[page]",
+        "paginationField": null,
+        "template": "pages"
+      }],
+    }],
     "Charts": [
       {
         "name": `Total ${collection}`,
@@ -51,7 +208,6 @@ const template = (templateData, dashboardOrder = 0) => {
         "public": false,
         "shareable": false,
         "chartSize": 1,
-        "dashboardOrder": dashboardOrder + 1,
         "displayLegend": false,
         "pointRadius": null,
         "startDate": null,
@@ -68,20 +224,17 @@ const template = (templateData, dashboardOrder = 0) => {
         "xLabelTicks": "default",
         "stacked": false,
         "showGrowth": true,
-        "Datasets": [
+        "layout": {
+          "xs": [0, 0, 6, 1], "sm": [6, 0, 2, 2], "md": [7, 0, 3, 2], "lg": [8, 0, 4, 2]
+        },
+        "ChartDatasetConfigs": [
           {
+            "td_id": 1,
             "fillColor": "rgba(0,0,0,0)",
             "patterns": [],
             "conditions": null,
             "fieldsSchema": {},
             "excludedFields": null,
-            "groups": null,
-            "query": null,
-            "xAxis": `root[].${formattedCreatedAt}`,
-            "xAxisOperation": null,
-            "yAxis": "root[].id",
-            "yAxisOperation": "count",
-            "dateField": `root[].${formattedCreatedAt}`,
             "datasetColor": "#50E3C2",
             "fill": false,
             "multiFill": false,
@@ -91,22 +244,6 @@ const template = (templateData, dashboardOrder = 0) => {
             "formula": null,
             "groupBy": null,
             "sort": null,
-            "DataRequests": [{
-              "headers": {},
-              "body": "null",
-              "conditions": null,
-              "configuration": null,
-              "method": "GET",
-              "route": collection,
-              "useGlobalHeaders": true,
-              "query": null,
-              "pagination": true,
-              "items": "items",
-              "itemsLimit": 10000,
-              "offset": "pagination[page]",
-              "paginationField": null,
-              "template": "pages"
-            }],
           }
         ],
         "tid": 1
@@ -118,7 +255,6 @@ const template = (templateData, dashboardOrder = 0) => {
         "public": false,
         "shareable": false,
         "chartSize": 3,
-        "dashboardOrder": dashboardOrder + 2,
         "displayLegend": false,
         "pointRadius": null,
         "startDate": moment().subtract(1, "months").startOf("day"),
@@ -136,8 +272,12 @@ const template = (templateData, dashboardOrder = 0) => {
         "xLabelTicks": "default",
         "stacked": false,
         "showGrowth": true,
-        "Datasets": [
+        "layout": {
+          "xs": [0, 3, 6, 2], "sm": [0, 2, 8, 2], "md": [0, 2, 10, 2], "lg": [0, 2, 8, 2]
+        },
+        "ChartDatasetConfigs": [
           {
+            "td_id": 2,
             "fillColor": "rgba(80, 227, 194, 0.47)",
             "patterns": [],
             "conditions": null,
@@ -145,11 +285,6 @@ const template = (templateData, dashboardOrder = 0) => {
             "excludedFields": null,
             "groups": null,
             "query": null,
-            "xAxis": `root[].${formattedCreatedAt}`,
-            "xAxisOperation": null,
-            "yAxis": "root[].id",
-            "yAxisOperation": "count",
-            "dateField": `root[].${formattedCreatedAt}`,
             "datasetColor": "#50E3C2",
             "fill": false,
             "multiFill": false,
@@ -159,22 +294,6 @@ const template = (templateData, dashboardOrder = 0) => {
             "formula": null,
             "groupBy": null,
             "sort": null,
-            "DataRequests": [{
-              "headers": {},
-              "body": "null",
-              "conditions": null,
-              "configuration": null,
-              "method": "GET",
-              "route": `${collection}?filters[${createdField}][$gt]=${moment().subtract(32, "days").startOf("day").toISOString()}`,
-              "useGlobalHeaders": true,
-              "query": null,
-              "pagination": true,
-              "items": "items",
-              "itemsLimit": 0,
-              "offset": "pagination.page",
-              "paginationField": null,
-              "template": "pages"
-            }],
           }
         ],
         "tid": 2
@@ -186,7 +305,6 @@ const template = (templateData, dashboardOrder = 0) => {
         "public": false,
         "shareable": false,
         "chartSize": 2,
-        "dashboardOrder": dashboardOrder + 3,
         "displayLegend": false,
         "pointRadius": null,
         "startDate": moment().subtract(1, "year").startOf("day"),
@@ -204,20 +322,18 @@ const template = (templateData, dashboardOrder = 0) => {
         "xLabelTicks": "default",
         "stacked": false,
         "showGrowth": true,
-        "Datasets": [
+        "layout": {
+          "xs": [0, 1, 6, 2], "sm": [0, 0, 6, 2], "md": [0, 0, 7, 2], "lg": [0, 0, 8, 2]
+        },
+        "ChartDatasetConfigs": [
           {
+            "td_id": 3,
             "fillColor": "rgba(80, 227, 194, 0.47)",
             "patterns": [],
             "conditions": null,
             "fieldsSchema": {},
             "excludedFields": null,
             "groups": null,
-            "query": null,
-            "xAxis": `root[].${formattedCreatedAt}`,
-            "xAxisOperation": null,
-            "yAxis": "root[].id",
-            "yAxisOperation": "count",
-            "dateField": `root[].${formattedCreatedAt}`,
             "datasetColor": "#50E3C2",
             "fill": false,
             "multiFill": false,
@@ -227,22 +343,6 @@ const template = (templateData, dashboardOrder = 0) => {
             "formula": null,
             "groupBy": null,
             "sort": null,
-            "DataRequests": [{
-              "headers": {},
-              "body": "null",
-              "conditions": null,
-              "configuration": null,
-              "method": "GET",
-              "route": `${collection}?filters[${createdField}][$gt]=${moment().subtract(367, "days").startOf("day").toISOString()}`,
-              "useGlobalHeaders": true,
-              "query": null,
-              "pagination": true,
-              "items": "items",
-              "itemsLimit": 0,
-              "offset": "pagination[page]",
-              "paginationField": null,
-              "template": "pages"
-            }],
           }
         ],
         "tid": 3
@@ -254,7 +354,6 @@ const template = (templateData, dashboardOrder = 0) => {
         "public": false,
         "shareable": false,
         "chartSize": 2,
-        "dashboardOrder": dashboardOrder + 4,
         "displayLegend": false,
         "pointRadius": null,
         "startDate": moment().subtract(1, "months").startOf("day"),
@@ -272,20 +371,18 @@ const template = (templateData, dashboardOrder = 0) => {
         "xLabelTicks": "default",
         "stacked": false,
         "showGrowth": true,
-        "Datasets": [
+        "layout": {
+          "xs": [0, 5, 6, 3], "sm": [0, 4, 8, 3], "md": [0, 4, 10, 3], "lg": [0, 4, 12, 2]
+        },
+        "ChartDatasetConfigs": [
           {
+            "td_id": 4,
             "fillColor": "rgba(0,0,0,0)",
             "patterns": [],
             "conditions": null,
             "fieldsSchema": {},
             "excludedFields": null,
             "groups": null,
-            "query": null,
-            "xAxis": `root[].${formattedUpdatedAt}`,
-            "xAxisOperation": null,
-            "yAxis": "root[].id",
-            "yAxisOperation": "count",
-            "dateField": "root[].updatedAt",
             "datasetColor": "#FF7F0E",
             "fill": false,
             "multiFill": false,
@@ -295,22 +392,6 @@ const template = (templateData, dashboardOrder = 0) => {
             "formula": null,
             "groupBy": null,
             "sort": null,
-            "DataRequests": [{
-              "headers": {},
-              "body": "null",
-              "conditions": null,
-              "configuration": null,
-              "method": "GET",
-              "route": `${collection}?filters[${updatedField}][$gt]=${moment().subtract(32, "days").startOf("day").toISOString()}`,
-              "useGlobalHeaders": true,
-              "query": null,
-              "pagination": true,
-              "items": "items",
-              "itemsLimit": 0,
-              "offset": "pagination[page]",
-              "paginationField": null,
-              "template": "pages"
-            }],
           }
         ],
         "tid": 4
@@ -321,7 +402,7 @@ const template = (templateData, dashboardOrder = 0) => {
 
 module.exports.template = template;
 
-module.exports.build = async (projectId, templateData, dashboardOrder) => {
+module.exports.build = async (teamId, projectId, templateData) => {
   const {
     strapiToken, apiEndpoint, collection, strapiHost, connection_id, charts,
   } = templateData;
@@ -359,7 +440,7 @@ module.exports.build = async (projectId, templateData, dashboardOrder) => {
     return Promise.reject(new Error("Request cannot be authenticated"));
   }
 
-  return builder(projectId, templateData, dashboardOrder, template, charts, connection_id)
+  return builder(teamId, projectId, templateData, template, charts, connection_id)
     .catch((err) => {
       if (err && err.message) {
         return Promise.reject(err.message);
