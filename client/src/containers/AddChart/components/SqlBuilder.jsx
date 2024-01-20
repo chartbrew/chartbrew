@@ -17,7 +17,6 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import { createSavedQuery, updateSavedQuery } from "../../../actions/savedQuery";
 import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
-import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import SavedQueries from "../../../components/SavedQueries";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
@@ -28,7 +27,7 @@ import useThemeDetector from "../../../modules/useThemeDetector";
 */
 function SqlBuilder(props) {
   const {
-    createSavedQuery, updateSavedQuery, changeTutorial,
+    createSavedQuery, updateSavedQuery,
     dataRequest, onChangeRequest, onSave, connection,
     onDelete,
   } = props;
@@ -56,9 +55,6 @@ function SqlBuilder(props) {
   useEffect(() => {
     if (dataRequest) {
       setSqlRequest({ ...sqlRequest, ...dataRequest });
-      setTimeout(() => {
-        changeTutorial("sqlbuilder");
-      }, 1000);
     }
   }, []);
 
@@ -385,7 +381,6 @@ SqlBuilder.propTypes = {
   createSavedQuery: PropTypes.func.isRequired,
   updateSavedQuery: PropTypes.func.isRequired,
   connection: PropTypes.object.isRequired,
-  changeTutorial: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   responses: PropTypes.array.isRequired,
 };
@@ -402,7 +397,6 @@ const mapDispatchToProps = (dispatch) => {
     updateSavedQuery: (projectId, savedQueryId, data) => (
       dispatch(updateSavedQuery(projectId, savedQueryId, data))
     ),
-    changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };
 };
 

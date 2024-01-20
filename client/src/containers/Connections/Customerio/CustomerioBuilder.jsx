@@ -16,7 +16,6 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 import {
   runDataRequest as runDataRequestAction,
 } from "../../../actions/dataRequest";
-import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import CustomerQuery from "./CustomerQuery";
 import CampaignsQuery from "./CampaignsQuery";
 import Container from "../../../components/Container";
@@ -44,7 +43,7 @@ function CustomerioBuilder(props) {
 
   const {
     dataRequest, onChangeRequest, runDataRequest, project,
-    connection, onSave, responses, changeTutorial, // eslint-disable-line
+    connection, onSave, responses,
     onDelete,
   } = props;
 
@@ -79,10 +78,6 @@ function CustomerioBuilder(props) {
       }
 
       setCioRequest(newRequestData);
-
-      // setTimeout(() => {
-      //   changeTutorial("Customerio");
-      // }, 1000);
     }
   }, []);
 
@@ -367,7 +362,6 @@ CustomerioBuilder.propTypes = {
   onSave: PropTypes.func.isRequired,
   responses: PropTypes.array.isRequired,
   dataRequest: PropTypes.object,
-  changeTutorial: PropTypes.func.isRequired,
   project: PropTypes.object.isRequired,
   onDelete: PropTypes.func.isRequired,
 };
@@ -384,7 +378,6 @@ const mapDispatchToProps = (dispatch) => {
     runDataRequest: (projectId, chartId, drId, getCache) => {
       return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
     },
-    changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };
 };
 

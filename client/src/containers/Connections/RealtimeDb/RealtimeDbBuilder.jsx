@@ -16,7 +16,6 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 import {
   runDataRequest as runDataRequestAction,
 } from "../../../actions/dataRequest";
-import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import { getConnection } from "../../../slices/connection";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
@@ -45,8 +44,7 @@ function RealtimeDbBuilder(props) {
 
   const {
     dataRequest, onChangeRequest, runDataRequest,
-    connection, onSave, changeTutorial, // eslint-disable-line
-    onDelete, responses,
+    connection, onSave, onDelete, responses,
   } = props;
 
   // on init effect
@@ -58,9 +56,6 @@ function RealtimeDbBuilder(props) {
       } else if (dataRequest?.configuration?.limitToFirst) {
         setLimitValue(dataRequest.configuration.limitToFirst);
       }
-      // setTimeout(() => {
-      //   changeTutorial("RealtimeDb");
-      // }, 1000);
     }
   }, []);
 
@@ -498,7 +493,6 @@ RealtimeDbBuilder.propTypes = {
   runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   dataRequest: PropTypes.object,
-  changeTutorial: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   responses: PropTypes.array.isRequired,
 };
@@ -514,7 +508,6 @@ const mapDispatchToProps = (dispatch) => {
     runDataRequest: (projectId, chartId, drId, getCache) => {
       return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
     },
-    changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };
 };
 

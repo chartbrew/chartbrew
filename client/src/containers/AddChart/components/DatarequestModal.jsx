@@ -30,7 +30,6 @@ import {
   updateDataRequest as updateDataRequestAction,
   deleteDataRequest as deleteDataRequestAction,
 } from "../../../actions/dataRequest";
-import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import connectionImages from "../../../config/connectionImages";
 import {
   updateDataset as updateDatasetAction,
@@ -41,7 +40,7 @@ import { useParams } from "react-router";
 function DatarequestModal(props) {
   const {
     open, onClose, dataset, getDataRequestByDataset,
-    createDataRequest, updateDataRequest, requests, changeTutorial, chart,
+    createDataRequest, updateDataRequest, chart,
     connections, deleteDataRequest, updateDataset, responses, stateDataRequests,
     datasetResponses, runRequest,
   } = props;
@@ -90,10 +89,6 @@ function DatarequestModal(props) {
         return err;
       });
   }, [open]);
-
-  useEffect(() => {
-    if (open && selectedRequest?.Connection?.type !== "firestore") changeTutorial("requestmodal");
-  }, [requests, dataset]);
 
   useEffect(() => {
     let message = error;
@@ -514,7 +509,6 @@ DatarequestModal.propTypes = {
   createDataRequest: PropTypes.func.isRequired,
   updateDataRequest: PropTypes.func.isRequired,
   requests: PropTypes.array.isRequired,
-  changeTutorial: PropTypes.func.isRequired,
   chart: PropTypes.object.isRequired,
   connections: PropTypes.array.isRequired,
   deleteDataRequest: PropTypes.func.isRequired,
@@ -546,7 +540,6 @@ const mapDispatchToProps = (dispatch) => {
     updateDataRequest: (projectId, chartId, drId, data) => {
       return dispatch(updateDataRequestAction(projectId, chartId, drId, data));
     },
-    changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
     deleteDataRequest: (projectId, chartId, drId) => {
       return dispatch(deleteDataRequestAction(projectId, chartId, drId));
     },

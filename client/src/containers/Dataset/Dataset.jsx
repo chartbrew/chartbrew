@@ -17,7 +17,6 @@ import {
   runQuery,
 } from "../../slices/chart";
 
-import { changeTutorial as changeTutorialAction } from "../../actions/tutorial";
 import {
   getDataset, runRequest, saveNewDataset, updateDataset,
 } from "../../slices/dataset";
@@ -471,7 +470,6 @@ function Dataset() {
 Dataset.propTypes = {
   dataset: PropTypes.object.isRequired,
   requests: PropTypes.array.isRequired,
-  changeTutorial: PropTypes.func.isRequired,
   datasetResponses: PropTypes.array.isRequired,
 };
 
@@ -482,9 +480,8 @@ const mapStateToProps = (state) => {
   };
 };
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = () => {
   return {
-    changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };
 };
 

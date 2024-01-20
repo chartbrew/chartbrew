@@ -25,7 +25,6 @@ import {
 import {
   getConnection, testRequest,
 } from "../../../slices/connection";
-import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import fieldFinder from "../../../modules/fieldFinder";
 import { secondary } from "../../../config/colors";
 import determineType from "../../../modules/determineType";
@@ -113,7 +112,7 @@ function FirestoreBuilder(props) {
 
   const {
     dataRequest, onChangeRequest, runDataRequest,
-    connection, onSave, changeTutorial, onDelete, responses,
+    connection, onSave, onDelete, responses,
   } = props;
 
   // on init effect
@@ -121,10 +120,6 @@ function FirestoreBuilder(props) {
     if (dataRequest) {
       setFirestoreRequest(dataRequest);
       _initializeConditions(dataRequest);
-
-      setTimeout(() => {
-        changeTutorial("firestoreBuilder");
-      }, 1000);
     }
   }, []);
 
@@ -1057,7 +1052,6 @@ FirestoreBuilder.propTypes = {
   runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   dataRequest: PropTypes.object,
-  changeTutorial: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   responses: PropTypes.array.isRequired,
 };
@@ -1074,7 +1068,6 @@ const mapDispatchToProps = (dispatch) => {
     runDataRequest: (projectId, chartId, drId, getCache) => {
       return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
     },
-    changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };
 };
 

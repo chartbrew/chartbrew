@@ -13,7 +13,6 @@ import { chartColors, primary } from "../../../config/colors";
 import DatarequestModal from "./DatarequestModal";
 import DatasetAppearance from "./DatasetAppearance";
 import DatasetData from "./DatasetData";
-import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import Text from "../../../components/Text";
 
 const emptyColor = "rgba(0,0,0,0)";
@@ -37,7 +36,7 @@ function replaceEmptyColors(colors) {
 function Dataset(props) {
   const {
     dataset, onUpdate, onDelete, chart, onRefresh,
-    changeTutorial, loading, datasetResponses,
+    loading, datasetResponses,
   } = props;
 
   const [newDataset, setNewDataset] = useState(dataset);
@@ -151,9 +150,6 @@ function Dataset(props) {
   };
 
   const _onCloseConfig = () => {
-    if (requestResult) {
-      changeTutorial("datasetdata");
-    }
     setConfigOpened(false);
   };
 
@@ -348,7 +344,6 @@ Dataset.propTypes = {
   onDelete: PropTypes.func.isRequired,
   chart: PropTypes.object.isRequired,
   onRefresh: PropTypes.func.isRequired,
-  changeTutorial: PropTypes.func.isRequired,
   loading: PropTypes.bool,
   datasetResponses: PropTypes.array.isRequired,
 };
@@ -385,9 +380,8 @@ const mapStateToProps = (state) => {
   };
 };
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = () => {
   return {
-    changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };
 };
 

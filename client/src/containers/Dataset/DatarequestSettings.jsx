@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Avatar, Chip, Button, Checkbox, Divider, Input, Spacer, Tooltip,
   Select, SelectItem,
@@ -20,14 +20,13 @@ import {
 } from "../../slices/dataset";
 import connectionImages from "../../config/connectionImages";
 import fieldFinder from "../../modules/fieldFinder";
-import { changeTutorial as changeTutorialAction } from "../../actions/tutorial";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import useThemeDetector from "../../modules/useThemeDetector";
 
 function DatarequestSettings(props) {
   const {
-    onChange, changeTutorial,
+    onChange,
   } = props;
 
   const [result, setResult] = useState("");
@@ -46,12 +45,6 @@ function DatarequestSettings(props) {
   const dataRequests = useSelector((state) => selectDataRequests(state, parseInt(params.datasetId, 10))) || [];
   const drResponses = dataRequests.map((dr) => dr.response) || [];
   const responses = useSelector(selectResponses);
-
-  useEffect(() => {
-    setTimeout(() => {
-      changeTutorial("drsettings");
-    }, 1000);
-  }, []);
 
   useEffect(() => {
     if (dataset?.joinSettings?.joins && !initRef.current) {
@@ -561,14 +554,6 @@ const styles = {
 DatarequestSettings.propTypes = {
   onChange: PropTypes.func.isRequired,
   drResponses: PropTypes.array.isRequired,
-  changeTutorial: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = () => ({
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(DatarequestSettings);
+export default DatarequestSettings;

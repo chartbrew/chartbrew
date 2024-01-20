@@ -2,19 +2,17 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { connect, useDispatch, useSelector } from "react-redux";
 import {
-  Link as LinkNext, Spacer, Tooltip, Input, Button,
-  Switch, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent,
+  Link as LinkNext, Spacer, Tooltip, Input, Button, Switch,
 } from "@nextui-org/react";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import _ from "lodash";
 import { useWindowSize } from "react-use";
-import { LuArrowRight, LuPencilLine } from "react-icons/lu";
+import { LuPencilLine } from "react-icons/lu";
 
 import ChartPreview from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
 import ChartDescription from "./components/ChartDescription";
-import Walkthrough from "./components/Walkthrough";
 import {
   createChart, updateChart, runQuery, runQueryWithFilters, selectCharts,
 } from "../../slices/chart";
@@ -29,18 +27,12 @@ import { getChartAlerts, clearAlerts } from "../../slices/alert";
 import {
   getTemplates as getTemplatesAction
 } from "../../actions/template";
-import {
-  changeTutorial as changeTutorialAction,
-  completeTutorial as completeTutorialAction,
-  resetTutorial as resetTutorialAction,
-} from "../../actions/tutorial";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import useThemeDetector from "../../modules/useThemeDetector";
 import { useNavigate, useParams } from "react-router";
 import ChartDatasets from "./components/ChartDatasets";
 import getDashboardLayout from "../../modules/getDashboardLayout";
-import { selectUser } from "../../slices/user";
 
 /*
   Container used for setting up a new chart
@@ -56,19 +48,16 @@ function AddChart(props) {
   const [toastOpen, setToastOpen] = useState(false);
   const [saveRequired, setSaveRequired] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [startTutorial, setStartTutorial] = useState(false);
   const [conditions, setConditions] = useState([]);
   const [useCache, setUseCache] = useState(true);
 
   const { height } = useWindowSize();
 
   const {
-    getChartDatasets, tutorial, datasets, changeTutorial,
-    completeTutorial, clearDatasets, connections, templates, getTemplates,
+    getChartDatasets, datasets, clearDatasets, connections, templates, getTemplates,
   } = props;
 
   const charts = useSelector(selectCharts);
-  const user = useSelector(selectUser);
 
   const isDark = useThemeDetector();
   const params = useParams();
@@ -95,12 +84,6 @@ function AddChart(props) {
         chart_id: params.chartId
       }));
     }
-
-    // if (user && (!user.tutorials || Object.keys(user.tutorials).length === 0)) {
-    //   setTimeout(() => {
-    //     setStartTutorial(true);
-    //   }, 1000);
-    // }
 
     getTemplates(params.teamId);
   }, []);
@@ -317,28 +300,6 @@ function AddChart(props) {
       });
   };
 
-  const _changeTour = (tut) => {
-    changeTutorial(tut);
-  };
-
-  const _onCloseTour = () => {
-    completeTutorial();
-  };
-
-  const _onCancelWalkthrough = () => {
-    setStartTutorial(false);
-    // complete all AddChart-related tutorials
-    // TODO: find a better way of doing this
-    return completeTutorial("addchart")
-      .then(() => completeTutorial("dataset"))
-      .then(() => completeTutorial("apibuilder"))
-      .then(() => completeTutorial("mongobuilder"))
-      .then(() => completeTutorial("sqlbuilder"))
-      .then(() => completeTutorial("requestmodal"))
-      .then(() => completeTutorial("datasetdata"))
-      .then(() => completeTutorial("drsettings"));
-  };
-
   const _onAddFilter = (condition) => {
     let found = false;
     const newConditions = conditions.map((c) => {
@@ -519,47 +480,6 @@ function AddChart(props) {
           </div>
         </div>
       </div>
-
-      <Walkthrough
-        tourActive={tutorial}
-        closeTour={_onCloseTour}
-        userTutorials={user.tutorials}
-      />
-
-      <Modal isOpen={startTutorial} onClose={() => setStartTutorial(false)}>
-        <ModalContent>
-          <ModalHeader>
-            <Text size="h3">
-              Welcome to the chart builder!
-            </Text>
-          </ModalHeader>
-          <ModalBody>
-            <Text b>{"This is the place where your charts will take shape."}</Text>
-            <Spacer y={1} />
-            <Text>
-              {"It is recommended that you read through the next steps to get familiar with the interface. "}
-              {"You can always restart the tutorial from the upper right corner at any later time."}
-            </Text>
-            <Spacer y={1} />
-            <Text>{"But without further ado, let's get started"}</Text>
-          </ModalBody>
-          <ModalFooter>
-            <Button onClick={_onCancelWalkthrough} variant="flat" color="warning">
-              Cancel walkthrough
-            </Button>
-            <Button
-              color="success"
-              onClick={() => {
-                setStartTutorial(false);
-                _changeTour("addchart");
-              }}
-              endContent={<LuArrowRight />}
-            >
-              Get started
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
     </div>
   );
 }
@@ -603,11 +523,6 @@ AddChart.propTypes = {
   updateDataset: PropTypes.func.isRequired,
   deleteDataset: PropTypes.func.isRequired,
   datasets: PropTypes.array.isRequired,
-  user: PropTypes.object.isRequired,
-  tutorial: PropTypes.string.isRequired,
-  changeTutorial: PropTypes.func.isRequired,
-  completeTutorial: PropTypes.func.isRequired,
-  resetTutorial: PropTypes.func.isRequired,
   clearDatasets: PropTypes.func.isRequired,
   connections: PropTypes.array.isRequired,
   getTemplates: PropTypes.func.isRequired,
@@ -617,8 +532,6 @@ AddChart.propTypes = {
 const mapStateToProps = (state) => {
   return {
     datasets: state.dataset.data,
-    user: state.user.data,
-    tutorial: state.tutorial,
     connections: state.connection.data,
     templates: state.template,
   };
@@ -638,9 +551,6 @@ const mapDispatchToProps = (dispatch) => {
     deleteDataset: (projectId, chartId, datasetId) => {
       return dispatch(deleteDatasetAction(projectId, chartId, datasetId));
     },
-    changeTutorial: (tut) => dispatch(changeTutorialAction(tut)),
-    completeTutorial: (tut) => dispatch(completeTutorialAction(tut)),
-    resetTutorial: (tut) => dispatch(resetTutorialAction(tut)),
     clearDatasets: () => dispatch(clearDatasetsAction()),
     getTemplates: (teamId) => dispatch(getTemplatesAction(teamId)),
   };

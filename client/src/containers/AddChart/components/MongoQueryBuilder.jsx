@@ -17,7 +17,6 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 import { createSavedQuery, updateSavedQuery } from "../../../actions/savedQuery";
 import SavedQueries from "../../../components/SavedQueries";
 import { runDataRequest as runDataRequestAction } from "../../../actions/dataRequest";
-import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
@@ -30,7 +29,7 @@ function MongoQueryBuilder(props) {
   const {
     createSavedQuery, updateSavedQuery, onChangeRequest,
     runDataRequest, onSave, dataRequest,
-    changeTutorial, connection, onDelete, responses,
+    connection, onDelete, responses,
   } = props;
 
   const [savedQuery, setSavedQuery] = useState(null);
@@ -56,9 +55,6 @@ function MongoQueryBuilder(props) {
       const newRequest = { ...mongoRequest, ...dataRequest };
       if (!dataRequest.query) newRequest.query = mongoRequest.query;
       setMongoRequest(newRequest);
-      setTimeout(() => {
-        changeTutorial("mongobuilder");
-      }, 1000);
     }
   }, []);
 
@@ -457,7 +453,6 @@ MongoQueryBuilder.propTypes = {
   createSavedQuery: PropTypes.func.isRequired,
   updateSavedQuery: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
-  changeTutorial: PropTypes.func.isRequired,
   connection: PropTypes.object.isRequired,
   onDelete: PropTypes.func.isRequired,
   responses: PropTypes.array.isRequired,
@@ -478,7 +473,6 @@ const mapDispatchToProps = (dispatch) => {
     runDataRequest: (projectId, chartId, drId, getCache) => {
       return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
     },
-    changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
   };
 };
 

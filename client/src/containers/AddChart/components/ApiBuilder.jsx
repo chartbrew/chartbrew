@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Checkbox, Divider, Input, Link, Spacer, Tooltip, Chip,
   Tabs, Tab, Select, SelectItem,
@@ -18,7 +18,6 @@ import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import ApiPagination from "./ApiPagination";
 import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
-import { changeTutorial as changeTutorialAction } from "../../../actions/tutorial";
 import {
   getConnection,
 } from "../../../slices/connection";
@@ -80,9 +79,7 @@ function ApiBuilder(props) {
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
 
   const {
-    dataRequest, onChangeRequest,
-    connection, onSave, changeTutorial, chart,
-    onDelete,
+    dataRequest, onChangeRequest, connection, onSave, chart, onDelete,
   } = props;
 
   // on init effect
@@ -107,10 +104,6 @@ function ApiBuilder(props) {
       formattedApiRequest.formattedHeaders = formattedHeaders;
 
       setApiRequest(formattedApiRequest);
-
-      setTimeout(() => {
-        changeTutorial("apibuilder");
-      }, 1000);
     }
   }, [dataRequest]);
 
@@ -626,20 +619,8 @@ ApiBuilder.propTypes = {
   runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   dataRequest: PropTypes.object,
-  changeTutorial: PropTypes.func.isRequired,
   chart: PropTypes.object,
   onDelete: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = () => {
-  return {
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    changeTutorial: (tutorial) => dispatch(changeTutorialAction(tutorial)),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(ApiBuilder);
+export default ApiBuilder;
