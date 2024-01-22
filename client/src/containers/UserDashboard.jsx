@@ -11,7 +11,7 @@ import {
 } from "@nextui-org/react";
 import {
   LuBarChart, LuCalendarDays, LuChevronDown, LuDatabase, LuInfo, LuLayoutGrid, LuMoreHorizontal, LuPencilLine,
-  LuPlug, LuPlus, LuSearch, LuSettings, LuTable, LuTags, LuTrash, LuUsers2, LuXCircle,
+  LuPlug, LuPlus, LuSearch, LuSettings, LuTable, LuTags, LuTrash, LuUsers2,
 } from "react-icons/lu";
 import { Flip, ToastContainer } from "react-toastify";
 
@@ -44,6 +44,7 @@ import {
   getDatasets, getRelatedCharts, selectDatasets, updateDataset,
 } from "../slices/dataset";
 import Segment from "../components/Segment";
+import Tutorials from "../components/Tutorials";
 
 /*
   The user dashboard with all the teams and projects
@@ -432,6 +433,7 @@ function UserDashboard(props) {
     <div className="dashboard bg-content2" style={styles.container(height)}>
       <Navbar hideTeam transparent />
       {newProjectModal()}
+      <Tutorials currentPage="dashboard" />
       <div className="container mx-auto">
         <Spacer y={4} />
 
@@ -535,7 +537,7 @@ function UserDashboard(props) {
                 </Listbox>
               </Segment>
 
-              <div className="mt-8 hidden sm:block">
+              {/* <div className="mt-8 hidden sm:block">
                 <div className="flex flex-row items-center justify-between gap-2">
                   <span className="font-medium">Welcome to Chartbrew v3</span>
                   <Link className="text-default-500"><LuXCircle /></Link>
@@ -550,7 +552,7 @@ function UserDashboard(props) {
                     className="absolute top-0 left-0 w-full h-full rounded-lg shadow-lg"
                   />
                 </div>
-              </div>
+              </div> */}
             </div>
 
             <div className="col-span-12 sm:col-span-7 md:col-span-8 lg:col-span-9">
