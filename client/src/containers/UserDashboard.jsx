@@ -433,7 +433,7 @@ function UserDashboard(props) {
     <div className="dashboard bg-content2" style={styles.container(height)}>
       <Navbar hideTeam transparent />
       {team?.id && (
-        <Tutorials currentPage="dashboard" />
+        <Tutorials currentPage="home" />
       )}
       {newProjectModal()}
       <div className="container mx-auto">

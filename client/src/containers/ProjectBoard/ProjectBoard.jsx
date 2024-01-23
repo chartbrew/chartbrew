@@ -25,6 +25,7 @@ import checkForUpdates from "../../modules/checkForUpdates";
 import Container from "../../components/Container";
 import Text from "../../components/Text";
 import Row from "../../components/Row";
+import Tutorials from "../../components/Tutorials";
 
 const sideMaxSize = 220;
 const sideMinSize = 70;
@@ -173,6 +174,7 @@ function ProjectBoard(props) {
       {!isPrinting && (
         <>
           <Navbar />
+          <Tutorials currentPage="dashboard" />
           {/* extract the navbar height from here */}
           <div style={{ height: height - 50 }} className="hidden sm:block">
             <Allotment>

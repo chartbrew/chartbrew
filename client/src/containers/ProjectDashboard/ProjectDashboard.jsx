@@ -590,8 +590,8 @@ function ProjectDashboard(props) {
                           variant="light"
                           isIconOnly
                           onClick={() => setTemplateVisible(true)}
-                          auto
                           size="sm"
+                          className="dashboard-template-tutorial"
                         >
                           <LuCopyPlus size={22} />
                         </Button>
@@ -606,7 +606,7 @@ function ProjectDashboard(props) {
                           variant="light"
                           isIconOnly
                           onClick={_openExport}
-                          auto
+                          className="dashboard-export-tutorial"
                           size="sm"
                         >
                           <LuFileDown size={22} />
@@ -624,6 +624,7 @@ function ProjectDashboard(props) {
                           onClick={() => setEditingLayout(!editingLayout)}
                           color={editingLayout ? "primary" : "default"}
                           size="sm"
+                          className="dashboard-layout-tutorial"
                         >
                           <LuLayoutDashboard size={22} />
                         </Button>
@@ -693,7 +694,7 @@ function ProjectDashboard(props) {
 
         {layouts && charts.filter((c) => `${c.project_id}` === params.projectId).length > 0 && (
           <ResponsiveGridLayout
-            className="layout"
+            className="layout dashboard-tutorial"
             layouts={layouts}
             margin={{ lg: [12, 12], md: [12, 12], sm: [12, 12], xs: [12, 12], xxs: [12, 12] }}
             breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}

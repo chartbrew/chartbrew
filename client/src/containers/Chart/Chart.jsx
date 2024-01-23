@@ -541,7 +541,7 @@ function Chart(props) {
               {projectId && !print && (
                 <Dropdown>
                   <DropdownTrigger>
-                    <LinkNext className="text-gray-500 cursor-pointer">
+                    <LinkNext className="text-gray-500 cursor-pointer chart-settings-tutorial">
                       <LuMoreVertical />
                     </LinkNext>
                   </DropdownTrigger>

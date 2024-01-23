@@ -176,7 +176,7 @@ function ProjectNavigation(props) {
                           isIconOnly
                           variant="flat"
                           color="primary"
-                          className="pointer-events-none cursor-pointer"
+                          className="pointer-events-none cursor-pointer create-chart-tutorial"
                         >
                           <LuPlusCircle size={28} />
                         </Button>
@@ -190,7 +190,7 @@ function ProjectNavigation(props) {
                       endContent={<LuPlusCircle />}
                       fullWidth
                       color="primary"
-                      className="pointer-events-none cursor-pointer"
+                      className="pointer-events-none cursor-pointer create-chart-tutorial"
                       variant="flat"
                       size="sm"
                     >
@@ -240,6 +240,7 @@ function ProjectNavigation(props) {
                         isIconOnly
                         variant="light"
                         color={_checkIfActive("public") ? "primary" : "default"}
+                        className="dashboard-report-tutorial"
                       >
                         <LuTv2 size={28} />
                       </Button>
@@ -251,7 +252,7 @@ function ProjectNavigation(props) {
                     variant="light"
                     color={_checkIfActive("public") ? "primary" : "default"}
                     startContent={<LuTv2 size={24} />}
-                    className="pointer-events-none"
+                    className="pointer-events-none dashboard-report-tutorial"
                   >
                     Dashboard report
                   </Button>
@@ -272,6 +273,7 @@ function ProjectNavigation(props) {
                           isIconOnly
                           variant="light"
                           color={_checkIfActive("settings") ? "primary" : "default"}
+                          className="dashboard-settings-tutorial"
                         >
                           <LuSettings size={28} />
                         </Button>
@@ -283,7 +285,7 @@ function ProjectNavigation(props) {
                       variant="light"
                       color={_checkIfActive("settings") ? "primary" : "default"}
                       startContent={<LuSettings size={24} />}
-                      className="pointer-events-none"
+                      className="pointer-events-none dashboard-settings-tutorial"
                     >
                       Dashboard settings
                     </Button>

@@ -11,7 +11,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectUser, updateUser } from "../slices/user";
 
 export const configs = {
-  dashboard: [
+  home: [
     {
       id: "connections",
       target: ".connection-tutorial",
@@ -39,6 +39,58 @@ export const configs = {
       content: "Adjust your team settings from here and invite your team members or clients to collaborate. You can adjust the permissions of each member to control what dashboards they can see and edit.",
     }
   ],
+  dashboard: [
+    {
+      id: "dashboard",
+      target: ".dashboard-tutorial",
+      title: "Dashboards: Your canvas for insights",
+      content: "This is where your data takes visual form. Arrange and display your charts here to tell the story hidden in your numbers.",
+      placementBeacon: "top",
+      placement: "center",
+    },
+    {
+      id: "create-chart",
+      target: ".create-chart-tutorial",
+      title: "Create visualizations",
+      content: "Tap to start crafting new charts and data visuals that make your data speak volumes."
+    },
+    {
+      id: "chart-settings",
+      target: ".chart-settings-tutorial",
+      title: "Chart settings",
+      content: "Tailor your chart to perfection. Here, you can set auto-updates, embed options, configure alerts, and add your chart to reports. Customize to suit your needs."
+    },
+    {
+      id: "dashboard-report",
+      target: ".dashboard-report-tutorial",
+      title: "Dashboard reports",
+      content: "This space lets you add charts, tweak text and colors, and brand your report. Perfect for presenting insights to stakeholders."
+    },
+    {
+      id: "dashboard-settings",
+      target: ".dashboard-settings-tutorial",
+      title: "Dashboard settings",
+      content: "Here, you can rename your dashboard and set the preferred timezone. Customize to align with your project's context.",
+    },
+    {
+      id: "dashboard-template",
+      target: ".dashboard-template-tutorial",
+      title: "Dashboard templates",
+      content: "Streamline your workflow. Use this function to turn your dashboard into a reusable template, enabling quick replication for consistent reporting."
+    },
+    {
+      id: "dashboard-export",
+      target: ".dashboard-export-tutorial",
+      title: "Export dashboard to Excel",
+      content: "Export your dashboard to Excel for further analysis or to share with stakeholders."
+    },
+    {
+      id: "dashboard-layout",
+      target: ".dashboard-layout-tutorial",
+      title: "Change your dashboard layout",
+      content: "This mode allows you to modify the dashboard layout. Tailor the arrangement to best showcase your data insights."
+    }
+  ]
 };
 
 const Tooltip = ({
@@ -50,7 +102,7 @@ const Tooltip = ({
   primaryProps,
   tooltipProps,
 }) => (
-  <Segment className="bg-content1 max-w-[500px]" {...tooltipProps}>
+  <Segment className="bg-content1 max-w-[500px] z-50" {...tooltipProps}>
     {step.title && (
       <>
         <Row>
