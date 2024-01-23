@@ -16,6 +16,7 @@ import ChartDatasetConfig from "./ChartDatasetConfig";
 import { chartColors } from "../../../config/colors";
 import { selectTeam } from "../../../slices/team";
 import canAccess from "../../../config/canAccess";
+import Tutorials from "../../../components/Tutorials";
 
 function ChartDatasets(props) {
   const { projects, chartId, user } = props;
@@ -151,7 +152,7 @@ function ChartDatasets(props) {
               variant={tag === "team" ? "solid" : "bordered"}
               radius="sm"
               onClick={() => setTag("team")}
-              className="cursor-pointer"
+              className="cursor-pointer chart-empty-filter-tutorial"
             >
               All
             </Chip>
@@ -161,12 +162,12 @@ function ChartDatasets(props) {
           <Spacer y={4} />
 
           <ScrollShadow className="max-h-[500px] w-full">
-            {datasets.length > 0 && _filteredDatasets().map((dataset) => (
+            {datasets.length > 0 && _filteredDatasets().map((dataset, index) => (
               <Fragment key={dataset.id}>
                 <Card
                   isPressable
                   isHoverable
-                  className="w-full shadow-none border-2 border-solid border-content3"
+                  className={`w-full shadow-none border-2 border-solid border-content3 ${index === 0 ? "chart-empty-select-tutorial" : ""}`}
                   onClick={() => _onCreateCdc(dataset.id)}
                 >
                   <CardHeader>
@@ -174,7 +175,7 @@ function ChartDatasets(props) {
                       <div className="flex flex-row gap-4 items-center justify-between w-full">
                         <div className="flex flex-col gap-1 items-start">
                           <Text b>{dataset.legend}</Text>
-                          <div className="flex-wrap">
+                          <div className="flex flex-wrap gap-1">
                             {_getDatasetTags(dataset).map((tag) => (
                               <Chip key={tag} size="sm" variant="flat" color="primary">
                                 {tag}
@@ -250,6 +251,8 @@ function ChartDatasets(props) {
           </Tabs>
         </div>
       )}
+
+      <Tutorials currentPage="chart_empty" />
     </div>
   );
 }

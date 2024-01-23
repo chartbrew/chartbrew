@@ -90,6 +90,21 @@ export const configs = {
       title: "Change your dashboard layout",
       content: "This mode allows you to modify the dashboard layout. Tailor the arrangement to best showcase your data insights."
     }
+  ],
+  chart_empty: [
+    {
+      id: "chart-empty-filter",
+      target: ".chart-empty-filter-tutorial",
+      title: "Find your datasets",
+      content: "Toggle between datasets tagged with this project or view All. Select the data that best fits your chart's narrative.",
+      placement: "left-start",
+    },
+    {
+      id: "chart-empty-select",
+      target: ".chart-empty-select-tutorial",
+      title: "Select your dataset",
+      content: "Begin your visualization journey here. Click on a dataset to start creating your chart and bringing your data to life.",
+    }
   ]
 };
 

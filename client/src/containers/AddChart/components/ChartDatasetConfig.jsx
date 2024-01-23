@@ -475,6 +475,7 @@ function ChartDatasetConfig(props) {
                     value={goal}
                     onChange={(e) => setGoal(e.target.value)}
                     variant="bordered"
+                    labelPlacement="outside"
                   />
                   {goal !== cdc.goal && (
                     <Tooltip
