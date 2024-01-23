@@ -7,17 +7,17 @@ module.exports = {
       type: Sequelize.STRING,
     });
 
-    await queryInterface.sequelize.query(
-      "UPDATE `TeamRole` SET `role_backup` = `role`"
-    );
+    await queryInterface.sequelize.query(`
+      UPDATE "TeamRole" SET "role_backup" = "role"
+    `);
 
     await migrateTeamRolesToV3.up();
   },
 
   async down(queryInterface) {
-    await queryInterface.sequelize.query(
-      "UPDATE `TeamRole` SET `role` = `role_backup`"
-    );
+    await queryInterface.sequelize.query(`
+      UPDATE "TeamRole" SET "role" = "role_backup"
+    `);
 
     await queryInterface.removeColumn("TeamRole", "role_backup");
   }
