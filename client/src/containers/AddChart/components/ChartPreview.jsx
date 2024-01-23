@@ -26,6 +26,7 @@ import KpiMode from "../../Chart/components/KpiMode";
 import ChartFilters from "../../Chart/components/ChartFilters";
 import { format } from "date-fns";
 import { enGB } from "date-fns/locale";
+import Tutorials from "../../../components/Tutorials";
 
 function ChartPreview(props) {
   const {
@@ -139,6 +140,7 @@ function ChartPreview(props) {
     <div className={"mx-auto pr-4 pl-4 w-full"}>
       {chart && chart.chartData && chart.ChartDatasetConfigs && (
         <>
+          <Tutorials currentPage="chart_preview" />
           <div className={"w-full"}>
             <Row justify="flex-between" align="center">
               <div className="flex items-center gap-1">
@@ -286,7 +288,7 @@ function ChartPreview(props) {
             </div>
           </div>
           <Spacer y={2} />
-          <div className="border-solid border-1 border-content3 px-3 py-2 rounded-2xl">
+          <div className="border-solid border-1 border-content3 px-3 py-2 rounded-2xl chart-preview-types">
             <Row align="center" wrap="wrap" className={"gap-4 justify-around"}>
               <Row className={"gap-1"}>
                 <Tooltip
@@ -437,7 +439,7 @@ function ChartPreview(props) {
       </div>
 
       {chart && chart.type && chart.ChartDatasetConfigs && chart.ChartDatasetConfigs.length > 0 && (
-        <div style={styles.topBuffer}>
+        <div style={styles.topBuffer} className="chart-preview-growth">
           <Row align="center" className={"gap-4"}>
             <Checkbox
               isSelected={chart.mode === "kpichart"}

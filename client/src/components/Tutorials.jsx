@@ -46,7 +46,6 @@ export const configs = {
       title: "Dashboards: Your canvas for insights",
       content: "This is where your data takes visual form. Arrange and display your charts here to tell the story hidden in your numbers.",
       placementBeacon: "top",
-      placement: "center",
     },
     {
       id: "create-chart",
@@ -105,6 +104,72 @@ export const configs = {
       title: "Select your dataset",
       content: "Begin your visualization journey here. Click on a dataset to start creating your chart and bringing your data to life.",
     }
+  ],
+  chart_cdc: [
+    {
+      id: "chart-cdc-formula",
+      target: ".chart-cdc-formula",
+      title: "Formula",
+      content: "You can configure simple formulas to format the final numbers you get on the chart. Tap on the field to see some examples."
+    },
+    {
+      id: "chart-cdc-goal",
+      target: ".chart-cdc-goal",
+      title: "Set a goal",
+      content: "Goals only work with single value charts and can show a progress bar with where you are in relation to your goal."
+    },
+    {
+      id: "chart-cdc-alert",
+      target: ".chart-cdc-alert",
+      title: "Get notified",
+      content: "Set up alerts to get notified when your data reaches a certain threshold or there is an anomaly in your data. You can configure alerts to be sent to your email or Slack."
+    },
+    {
+      id: "chart-cdc-colors",
+      target: ".chart-cdc-colors",
+      title: "Change the appearance",
+      content: "Customize the colors of your chart to match your brand or project's theme."
+    },
+    {
+      id: "chart-cdc-add",
+      target: ".chart-cdc-add",
+      title: "Add more datasets",
+      content: "You can add more datasets to your chart to create more complex visualizations."
+    },
+  ],
+  chart_preview: [
+    {
+      id: "chart-preview-types",
+      target: ".chart-preview-types",
+      title: "Select a chart type",
+      content: "Choose from various chart types like bar, line, pie, etc., to best represent your data. Each type offers a unique perspective, so pick the one that aligns with your visualization goals."
+    },
+    {
+      id: "chart-preview-growth",
+      target: ".chart-preview-growth",
+      title: "Show growth",
+      content: "Use these checkboxes to highlight growth trends in your data, providing a clear view of increases or decreases over time.",
+    },
+  ],
+  chart_settings: [
+    {
+      id: "chart-settings-dates",
+      target: ".chart-settings-dates",
+      title: "Date range filters",
+      content: "Use these filters to select the date range you want to visualize. The date range requires you to have a Date Field selected in the dataset configuration.",
+    },
+    {
+      id: "chart-settings-relative",
+      target: ".chart-settings-relative",
+      title: "Relative to present",
+      content: "Toggle the auto-update checkbox to make the date range relative to the present date. This means that you don't have to manually update the range every time you want to see the latest data.",
+    },
+    {
+      id: "chart-settings-interval",
+      target: ".chart-settings-interval",
+      title: "Date interval",
+      content: "This option lets you choose the granularity of your data. For example, if you have daily data, you can choose to see it by day, month, or year.",
+    },
   ]
 };
 
@@ -185,8 +250,6 @@ function Tutorials({ currentPage }) {
     }
   }, [user]);
 
-  if (!tutorial || !initRef.current) return null;
-
   const _onCallback = (data) => {
     const { status, type, index, action } = data;
 
@@ -207,6 +270,8 @@ function Tutorials({ currentPage }) {
       dispatch(updateUser({ user_id: user.id, data: { tutorials: newTutorials }}));
     }
   };
+
+  if (!tutorial || !initRef.current) return null;
 
   return (
     <Joyride

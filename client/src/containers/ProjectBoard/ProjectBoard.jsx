@@ -174,7 +174,6 @@ function ProjectBoard(props) {
       {!isPrinting && (
         <>
           <Navbar />
-          <Tutorials currentPage="dashboard" />
           {/* extract the navbar height from here */}
           <div style={{ height: height - 50 }} className="hidden sm:block">
             <Allotment>
@@ -225,6 +224,8 @@ function ProjectBoard(props) {
                   _canAccess={_canAccess}
                   mobile
                 />
+
+                <Tutorials currentPage="dashboard" />
               </div>
             </div>
 

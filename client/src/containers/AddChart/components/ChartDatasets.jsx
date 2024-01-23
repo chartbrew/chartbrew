@@ -118,6 +118,7 @@ function ChartDatasets(props) {
           variant="faded"
           size="sm"
           onClick={() => setAddMode(!addMode)}
+          className="chart-cdc-add"
         >
           {!addMode && (<LuPlus />)}
           {addMode && (<LuMinus />)}
@@ -249,6 +250,8 @@ function ChartDatasets(props) {
               </Tab>
             ))}
           </Tabs>
+
+          <Tutorials currentPage="chart_cdc" />
         </div>
       )}
 

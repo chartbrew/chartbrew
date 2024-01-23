@@ -289,7 +289,7 @@ function DatasetAlerts(props) {
   };
 
   return (
-    <div className="dataset-alerts-tut">
+    <div className="dataset-alerts-tut chart-cdc-alert">
       <Container className={"pl-0 pr-0"}>
         <Row wrap="wrap">
           {alerts.length === 0 && (

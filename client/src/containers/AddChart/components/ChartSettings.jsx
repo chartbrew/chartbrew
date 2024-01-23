@@ -15,6 +15,7 @@ import { secondary, primary } from "../../../config/colors";
 import { defaultStaticRanges, defaultInputRanges } from "../../../config/dateRanges";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
+import Tutorials from "../../../components/Tutorials";
 
 const xLabelOptions = [{
   key: "default",
@@ -216,6 +217,7 @@ function ChartSettings(props) {
 
   return (
     <div className={"bg-content1 rounded-lg mx-auto p-4 w-full"}>
+      <Tutorials currentPage="chart_settings" />
       <Row>
         <Text b>Chart Settings</Text>
       </Row>
@@ -235,6 +237,7 @@ function ChartSettings(props) {
               endContent={<LuCalendarDays />}
               onClick={() => _onViewRange(true)}
               variant="ghost"
+              className="chart-settings-dates"
             >
               Date filter
             </Button>
@@ -289,6 +292,7 @@ function ChartSettings(props) {
               onChange({ currentEndDate: !currentEndDate });
             }}
             size="sm"
+            className="chart-settings-relative"
           >
             <Row align={"center"}>
               Auto-update the date range
@@ -357,6 +361,7 @@ function ChartSettings(props) {
             renderValue={() => (
               <Text>{timeIntervalOptions.find((option) => option.value === timeInterval).text}</Text>
             )}
+            className="chart-settings-interval"
           >
             {timeIntervalOptions.map((option) => (
               <SelectItem key={option.value}>
