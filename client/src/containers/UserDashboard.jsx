@@ -44,7 +44,6 @@ import {
   getDatasets, getRelatedCharts, selectDatasets, updateDataset,
 } from "../slices/dataset";
 import Segment from "../components/Segment";
-import Tutorials from "../components/Tutorials";
 
 /*
   The user dashboard with all the teams and projects
@@ -432,9 +431,6 @@ function UserDashboard(props) {
   return (
     <div className="dashboard bg-content2" style={styles.container(height)}>
       <Navbar hideTeam transparent />
-      {team?.id && (
-        <Tutorials currentPage="home" />
-      )}
       {newProjectModal()}
       <div className="container mx-auto">
         <Spacer y={4} />

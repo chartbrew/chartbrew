@@ -25,7 +25,6 @@ import checkForUpdates from "../../modules/checkForUpdates";
 import Container from "../../components/Container";
 import Text from "../../components/Text";
 import Row from "../../components/Row";
-import Tutorials from "../../components/Tutorials";
 
 const sideMaxSize = 220;
 const sideMinSize = 70;
@@ -225,7 +224,6 @@ function ProjectBoard(props) {
                   mobile
                 />
 
-                <Tutorials currentPage="dashboard" />
               </div>
             </div>
 

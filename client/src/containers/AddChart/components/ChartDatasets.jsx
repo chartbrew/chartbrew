@@ -16,7 +16,6 @@ import ChartDatasetConfig from "./ChartDatasetConfig";
 import { chartColors } from "../../../config/colors";
 import { selectTeam } from "../../../slices/team";
 import canAccess from "../../../config/canAccess";
-import Tutorials from "../../../components/Tutorials";
 
 function ChartDatasets(props) {
   const { projects, chartId, user } = props;
@@ -250,12 +249,8 @@ function ChartDatasets(props) {
               </Tab>
             ))}
           </Tabs>
-
-          <Tutorials currentPage="chart_cdc" />
         </div>
       )}
-
-      <Tutorials currentPage="chart_empty" />
     </div>
   );
 }

@@ -15,7 +15,6 @@ import { secondary, primary } from "../../../config/colors";
 import { defaultStaticRanges, defaultInputRanges } from "../../../config/dateRanges";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import Tutorials from "../../../components/Tutorials";
 
 const xLabelOptions = [{
   key: "default",
@@ -217,7 +216,6 @@ function ChartSettings(props) {
 
   return (
     <div className={"bg-content1 rounded-lg mx-auto p-4 w-full"}>
-      <Tutorials currentPage="chart_settings" />
       <Row>
         <Text b>Chart Settings</Text>
       </Row>

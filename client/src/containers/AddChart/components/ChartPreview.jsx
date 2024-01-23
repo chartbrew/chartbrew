@@ -26,7 +26,6 @@ import KpiMode from "../../Chart/components/KpiMode";
 import ChartFilters from "../../Chart/components/ChartFilters";
 import { format } from "date-fns";
 import { enGB } from "date-fns/locale";
-import Tutorials from "../../../components/Tutorials";
 
 function ChartPreview(props) {
   const {
@@ -140,7 +139,6 @@ function ChartPreview(props) {
     <div className={"mx-auto pr-4 pl-4 w-full"}>
       {chart && chart.chartData && chart.ChartDatasetConfigs && (
         <>
-          <Tutorials currentPage="chart_preview" />
           <div className={"w-full"}>
             <Row justify="flex-between" align="center">
               <div className="flex items-center gap-1">
