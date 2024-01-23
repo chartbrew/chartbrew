@@ -9,12 +9,12 @@ import {
 import useDarkMode from "@fisch0920/use-dark-mode";
 import { useLocalStorage } from "react-use";
 import {
-  LuBook, LuChevronDown, LuCompass, LuContrast, LuGithub, LuHeartHandshake, LuLogOut,
+  LuBook, LuChevronDown, LuCode2, LuCompass, LuContrast, LuGithub, LuHeartHandshake, LuLogOut,
   LuMoon, LuSettings, LuSmile, LuSun, LuUser, LuWallpaper,
 } from "react-icons/lu";
 import { TbBrandDiscord } from "react-icons/tb";
 
-import { logout, selectUser } from "../slices/user";
+import { logout, selectUser, updateUser } from "../slices/user";
 import FeedbackForm from "./FeedbackForm";
 import cbLogo from "../assets/logo_blue.png";
 import cbLogoInverted from "../assets/logo_inverted.png";
@@ -136,6 +136,11 @@ function NavbarContainer() {
         setShowAppearance(true);
         break;
       }
+      case "user_tutorials": {
+        dispatch(updateUser({ user_id: user.id, data: { tutorials: {} } }));
+        window.location.reload();
+        break;
+      }
     }
   }
 
@@ -211,13 +216,16 @@ function NavbarContainer() {
               </DropdownTrigger>
             </NavbarItem>
             <DropdownMenu variant="faded" onAction={(key) => _onDropdownAction(key)}>
+              <DropdownItem startContent={<LuCompass />} key="user_tutorials">
+                <Text>{"Restart in-app tutorials"}</Text>
+              </DropdownItem>
               <DropdownItem startContent={<TbBrandDiscord />} key="discord">
                 <Text>{"Join our Discord"}</Text>
               </DropdownItem>
-              <DropdownItem startContent={<LuCompass />} key="tutorials">
-                <Text>{"Tutorials"}</Text>
+              <DropdownItem startContent={<LuBook />} key="tutorials">
+                <Text>{"Blog tutorials"}</Text>
               </DropdownItem>
-              <DropdownItem startContent={<LuBook />} key="documentation">
+              <DropdownItem startContent={<LuCode2 />} key="documentation">
                 <Text>{"Documentation"}</Text>
               </DropdownItem>
               <DropdownItem startContent={<LuGithub />} key="github">

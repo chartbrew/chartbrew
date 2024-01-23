@@ -432,8 +432,10 @@ function UserDashboard(props) {
   return (
     <div className="dashboard bg-content2" style={styles.container(height)}>
       <Navbar hideTeam transparent />
+      {team?.id && (
+        <Tutorials currentPage="dashboard" />
+      )}
       {newProjectModal()}
-      <Tutorials currentPage="dashboard" />
       <div className="container mx-auto">
         <Spacer y={4} />
 
@@ -504,7 +506,7 @@ function UserDashboard(props) {
                       startContent={<LuPlug size={24} />}
                       textValue="Connections"
                       color={activeMenu === "connections" ? "primary" : "default"}
-                      className={activeMenu === "connections" ? "bg-content2 text-primary" : ""}
+                      className={activeMenu === "connections" ? "bg-content2 text-primary connection-tutorial" : "connection-tutorial"}
                     >
                       <span className="text-lg">Connections</span>
                     </ListboxItem>
@@ -516,7 +518,7 @@ function UserDashboard(props) {
                       startContent={<LuDatabase size={24} />}
                       textValue="Datasets"
                       color={activeMenu === "datasets" ? "primary" : "default"}
-                      className={activeMenu === "datasets" ? "bg-content2 text-primary" : ""}
+                      className={activeMenu === "datasets" ? "bg-content2 text-primary dataset-tutorial" : "dataset-tutorial"}
                     >
                       <span className="text-lg">Datasets</span>
                     </ListboxItem>
@@ -529,7 +531,7 @@ function UserDashboard(props) {
                       startContent={<LuSettings size={24} />}
                       textValue="Team settings"
                       color={activeMenu === "teamSettings" ? "primary" : "default"}
-                      className={activeMenu === "teamSettings" ? "bg-content2 text-primary" : "text-foreground"}
+                      className={activeMenu === "teamSettings" ? "bg-content2 text-primary team-settings-tutorial" : "text-foreground team-settings-tutorial"}
                     >
                       <span className="text-lg">Team settings</span>
                     </ListboxItem>
@@ -566,6 +568,7 @@ function UserDashboard(props) {
                             color="primary"
                             onClick={() => _onNewProject(team)}
                             endContent={<LuPlus />}
+                            className="create-dashboard-tutorial"
                           >
                             <span className="hidden md:block">Create dashboard</span>
                             <span className="md:hidden">Create</span>
