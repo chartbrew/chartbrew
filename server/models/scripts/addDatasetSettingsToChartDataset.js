@@ -2,11 +2,22 @@ const uuid = require("uuid/v4");
 const db = require("../models");
 
 module.exports.up = async (queryInterface) => {
-  const [datasets] = await queryInterface.sequelize.query(`
-    SELECT d.*, c.id as c_id
-    FROM Dataset AS d
-    JOIN Chart AS c ON c.id = d.chart_id
-  `);
+  const dialect = queryInterface.sequelize.getDialect();
+
+  let datasets;
+  if (dialect === "mysql") {
+    [datasets] = await queryInterface.sequelize.query(`
+      SELECT d.*, c.id as c_id
+      FROM Dataset AS d
+      JOIN Chart AS c ON c.id = d.chart_id
+    `);
+  } else if (dialect === "postgres") {
+    [datasets] = await queryInterface.sequelize.query(`
+      SELECT d.*, c.id as c_id
+      FROM "Dataset" AS d
+      JOIN "Chart" AS c ON c.id = d.chart_id
+    `);
+  }
 
   const cdConfigs = [];
   datasets.forEach((dataset) => {

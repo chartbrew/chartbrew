@@ -4,12 +4,23 @@ const migrateFields = require("../scripts/migrateFieldsToDataRequest");
 
 module.exports = {
   up: (queryInterface) => {
+    const dialect = queryInterface.sequelize.getDialect();
+
     return queryInterface.renameTable("ApiRequest", "DataRequest")
       .then(() => {
-        return Promise.all([
-          queryInterface.sequelize.query(`
+        let rawQuery;
+        if (dialect === "mysql") {
+          rawQuery = `
             ALTER TABLE DataRequest MODIFY chart_id INT NULL
-          `),
+          `;
+        } else if (dialect === "postgres") {
+          rawQuery = `
+            ALTER TABLE "DataRequest" ALTER COLUMN chart_id DROP NOT NULL;
+          `;
+        }
+
+        return Promise.all([
+          queryInterface.sequelize.query(rawQuery),
           queryInterface.addColumn("DataRequest", "dataset_id", {
             type: Sequelize.INTEGER,
             allowNull: false,

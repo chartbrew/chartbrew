@@ -11,9 +11,18 @@ function throttlePromises(promises, chunkSize, index) {
 }
 
 module.exports.up = async (queryInterface) => {
-  const teams = await queryInterface.sequelize.query(
-    "SELECT id FROM Team;",
-  );
+  const dialect = queryInterface.sequelize.getDialect();
+
+  let teams;
+  if (dialect === "mysql") {
+    teams = await queryInterface.sequelize.query(
+      "SELECT id FROM Team;",
+    );
+  } else if (dialect === "postgres") {
+    teams = await queryInterface.sequelize.query(
+      "SELECT id FROM \"Team\";",
+    );
+  }
 
   const teamRows = teams[0];
   const projectPromises = [];
@@ -37,7 +46,15 @@ module.exports.up = async (queryInterface) => {
 };
 
 module.exports.down = async (queryInterface) => {
-  await queryInterface.sequelize.query(
-    "DELETE FROM Project WHERE ghost = true;",
-  );
+  const dialect = queryInterface.sequelize.getDialect();
+
+  if (dialect === "mysql") {
+    await queryInterface.sequelize.query(
+      "DELETE FROM Project WHERE ghost = true;",
+    );
+  } else if (dialect === "postgres") {
+    await queryInterface.sequelize.query(
+      "DELETE FROM \"Project\" WHERE ghost = true;",
+    );
+  }
 };
