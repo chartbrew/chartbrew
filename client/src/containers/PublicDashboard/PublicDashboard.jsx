@@ -60,8 +60,8 @@ function PublicDashboard(props) {
   const [isSaved, setIsSaved] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const [newChanges, setNewChanges] = useState({
-    backgroundColor: "#1F77B4",
-    titleColor: "black",
+    backgroundColor: "#FFFFFF",
+    titleColor: "#000000",
   });
   const [logoPreview, setLogoPreview] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -588,7 +588,8 @@ function PublicDashboard(props) {
           isBordered
           maxWidth={"full"}
           isBlurred={false}
-          className={`flex-grow-0 justify-between bg-[${newChanges.backgroundColor || project.backgroundColor || "transparent"}]`}
+          className={"flex-grow-0 justify-between"}
+          style={{ backgroundColor: newChanges.backgroundColor || project.backgroundColor || "#FFFFFF" }}
         >
           <NavbarBrand>
             <div className="flex items-center gap-4">
