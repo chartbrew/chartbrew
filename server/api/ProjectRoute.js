@@ -139,7 +139,7 @@ module.exports = (app) => {
   /*
   ** Route to update a project's Logo
   */
-  app.post("/project/:id/logo", verifyToken, checkPermissions("udpateOwn"), (req, res) => {
+  app.post("/project/:id/logo", verifyToken, checkPermissions("updateOwn"), (req, res) => {
     let logoPath;
 
     req.pipe(req.busboy);

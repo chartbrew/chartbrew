@@ -115,7 +115,7 @@ export const updateProjectLogo = createAsyncThunk(
     });
 
     const formData = new FormData();
-    formData.append("file", logo);
+    formData.append("file", logo[0]);
     const body = formData;
 
     const response = await fetch(url, { method, headers, body });
