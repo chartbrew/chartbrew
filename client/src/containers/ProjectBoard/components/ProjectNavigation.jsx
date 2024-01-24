@@ -144,9 +144,9 @@ function ProjectNavigation(props) {
                 </div>
               </PopoverTrigger>
               <PopoverContent className="max-w-[200px] max-h-[400px]">
-                <div className="flex flex-col gap-2 overflow-y-auto">
+                <div className="flex flex-col gap-2 overflow-y-auto px-4">
                   <Input
-                    placeholder="Search for a dashboard"
+                    placeholder="Search"
                     fullWidth
                     size="small"
                     variant="bordered"
