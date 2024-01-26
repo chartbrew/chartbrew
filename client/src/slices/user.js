@@ -281,6 +281,30 @@ export const updateEmail = createAsyncThunk(
   }
 );
 
+export const completeTutorial = createAsyncThunk(
+  "user/completeTutorial",
+  async ({ user_id, tutorial }, thunkApi) => {
+    const currentTutorials = thunkApi.getState().user.data?.tutorials || {};
+    const newTutorials = { ...currentTutorials, ...tutorial };
+
+    const url = `${API_HOST}/user/${user_id}`;
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${getAuthToken()}`,
+    });
+    const body = JSON.stringify({ tutorials: newTutorials });
+
+    const response = await fetch(url, { headers, method: "PUT", body });
+    if (!response.ok) {
+      throw new Error("Error completing tutorial");
+    }
+
+    const data = await response.json();
+    return data;
+  }
+);
+
 const initialState = {
   loading: false,
   error: false,
@@ -372,6 +396,19 @@ export const userSlice = createSlice({
       state.data = action.payload;
     });
     builder.addCase(relog.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    })
+
+    // completeTutorial
+    builder.addCase(completeTutorial.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(completeTutorial.fulfilled, (state, action) => {
+      state.loading = false;
+      state.data = action.payload;
+    });
+    builder.addCase(completeTutorial.rejected, (state) => {
       state.loading = false;
       state.error = true;
     })
