@@ -127,6 +127,26 @@ module.exports = (app) => {
   // --------------------------------------------------------
 
   /*
+  ** Route to get a chart by id
+  */
+  app.get("/project/:project_id/chart/:id", verifyToken, checkPermissions("readAny"), (req, res) => {
+    return chartController.findById(req.params.id)
+      .then((chart) => {
+        return res.status(200).send(chart);
+      })
+      .catch((error) => {
+        if (error === "401" || error.message === "401") {
+          return res.status(401).send({ error: "Not authorized" });
+        }
+        if (error === "413" && error.message === "413") {
+          return res.status(413).send(error);
+        }
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------------------------
+
+  /*
   ** Route to create a new chart
   */
   app.post("/project/:project_id/chart", verifyToken, checkPermissions("createOwn"), (req, res) => {

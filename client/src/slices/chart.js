@@ -10,22 +10,7 @@ const initialState = {
 
 export const getChart = createAsyncThunk(
   "chart/getChart",
-  async ({ project_id, chart_id, password, fromInterval }, thunkApi) => {
-    // -------------------------------------------
-    // do not get the chart if already loading and if coming from an interval
-    // there is currently a bug with useInterval() and it triggers twice
-    if (fromInterval) {
-      try {
-        const selectedChart = thunkApi.getState().chart.data.find((c) => c.id === chart_id);
-        if (selectedChart && selectedChart.loading) {
-          return new Promise((resolve) => resolve());
-        }
-      } catch (e) {
-        // do nothing
-      }
-    }
-    // --------------------------------------------
-
+  async ({ project_id, chart_id, password }) => {
     const token = getAuthToken();
     let url = `${API_HOST}/project/${project_id}/chart/${chart_id}`;
     const method = "GET";

@@ -59,8 +59,8 @@ function ChartDatasets(props) {
     if (tag === "project") {
       return datasets.filter((d) => (
         !d.draft
-        && d.legend.toLowerCase().includes(datasetSearch.toLowerCase())
-        && d.project_ids?.includes(chart.project_id)
+        && d?.legend?.toLowerCase().includes(datasetSearch.toLowerCase())
+        && d?.project_ids?.includes(chart.project_id)
       ));
     }
     return datasets.filter((d) => !d.draft && d.legend && d.legend?.toLowerCase().includes(datasetSearch.toLowerCase()));
