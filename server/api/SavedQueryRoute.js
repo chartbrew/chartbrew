@@ -1,35 +1,37 @@
 const SavedQueryController = require("../controllers/SavedQueryController");
-const ProjectController = require("../controllers/ProjectController");
 const TeamController = require("../controllers/TeamController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
 
 module.exports = (app) => {
   const savedQueryController = new SavedQueryController();
-  const projectController = new ProjectController();
   const teamController = new TeamController();
 
-  const checkAccess = (req) => {
-    let gProject;
-    return projectController.findById(req.params.project_id)
-      .then((project) => {
-        gProject = project;
-        if (req.params.id) {
-          return savedQueryController.findById(req.params.id);
-        }
-        return teamController.getTeamRole(project.team_id, req.user.id);
-      })
-      .then((data) => {
-        if (!req.params.id) {
-          return Promise.resolve(data);
-        }
+  const checkPermissions = (actionType = "readAny") => {
+    return async (req, res, next) => {
+      const { team_id } = req.params;
 
-        if (parseInt(data.project_id, 10) !== parseInt(gProject.id, 10)) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
+      // Fetch the TeamRole for the user
+      const teamRole = await teamController.getTeamRole(team_id, req.user.id);
 
-        return teamController.getTeamRole(gProject.team_id, req.user.id);
-      });
+      if (!teamRole) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const permission = accessControl.can(teamRole.role)[actionType]("savedQuery");
+      if (!permission.granted) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { role } = teamRole;
+
+      // Handle permissions for teamOwner and teamAdmin
+      if (["teamOwner", "teamAdmin"].includes(role)) {
+        req.user.isEditor = true;
+      }
+
+      return next();
+    };
   };
 
   /**
@@ -58,15 +60,8 @@ module.exports = (app) => {
   /*
   ** Route to get all the saved queries in a project
   */
-  app.get("/project/:project_id/savedQuery", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).readAny("savedQuery");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-        return savedQueryController.findByProject(req.params.project_id, req.query.type);
-      })
+  app.get("/team/:team_id/savedQuery", verifyToken, checkPermissions("readAny"), (req, res) => {
+    return savedQueryController.findByTeam(req.params.team_id, req.query.type)
       .then((savedQueries) => {
         return res.status(200).send(savedQueries);
       })
@@ -83,20 +78,12 @@ module.exports = (app) => {
   /*
   ** Route to create a new savedQuery
   */
-  app.post("/project/:project_id/savedQuery", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).createAny("savedQuery");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
+  app.post("/team/:team_id/savedQuery", verifyToken, checkPermissions("createAny"), (req, res) => {
+    const newSavedQuery = req.body;
+    newSavedQuery.team_id = req.params.team_id;
+    newSavedQuery.user_id = req.user.id;
 
-        const newSavedQuery = req.body;
-        newSavedQuery.project_id = req.params.project_id;
-        newSavedQuery.user_id = req.user.id;
-
-        return savedQueryController.create(newSavedQuery);
-      })
+    return savedQueryController.create(newSavedQuery)
       .then((savedQuery) => {
         return res.status(200).send(savedQuery);
       })
@@ -113,20 +100,12 @@ module.exports = (app) => {
   /*
   ** Route to update a savedQuery
   */
-  app.put("/project/:project_id/savedQuery/:id", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("savedQuery");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
+  app.put("/team/:team_id/savedQuery/:id", verifyToken, checkPermissions("updateAny"), (req, res) => {
+    const newSavedQuery = req.body;
+    newSavedQuery.team_id = req.params.team_id;
+    newSavedQuery.user_id = req.user.id;
 
-        const newSavedQuery = req.body;
-        newSavedQuery.project_id = req.params.project_id;
-        newSavedQuery.user_id = req.user.id;
-
-        return savedQueryController.update(req.params.id, newSavedQuery);
-      })
+    return savedQueryController.update(req.params.id, newSavedQuery)
       .then((savedQuery) => {
         return res.status(200).send(savedQuery);
       })
@@ -142,16 +121,8 @@ module.exports = (app) => {
   /*
   ** Remove a savedQuery
   */
-  app.delete("/project/:project_id/savedQuery/:id", verifyToken, (req, res) => {
-    return checkAccess(req)
-      .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).updateAny("savedQuery");
-        if (!permission.granted) {
-          return new Promise((resolve, reject) => reject(new Error(401)));
-        }
-
-        return savedQueryController.remove(req.params.id);
-      })
+  app.delete("/team/:team_id/savedQuery/:id", verifyToken, checkPermissions("deleteAny"), (req, res) => {
+    return savedQueryController.remove(req.params.id)
       .then((resp) => {
         return res.status(200).send(resp);
       })

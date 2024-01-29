@@ -293,6 +293,7 @@ function MongoQueryBuilder(props) {
               style={styles.savedQueriesContainer}
             />
           </Row>
+          <Spacer y={8} />
         </div>
         <div className="col-span-12 sm:col-span-6">
           <Row>

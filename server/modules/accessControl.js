@@ -357,18 +357,7 @@ const grantList = [
     role: "projectAdmin", resource: "chart", action: "delete:own", attributes: "*",
   },
   // resource: savedQuery ---> Team Perspective
-  {
-    role: "projectAdmin", resource: "savedQuery", action: "create:any", attributes: "*",
-  },
-  {
-    role: "projectAdmin", resource: "savedQuery", action: "read:any", attributes: "*",
-  },
-  {
-    role: "projectAdmin", resource: "savedQuery", action: "update:any", attributes: "*",
-  },
-  {
-    role: "projectAdmin", resource: "savedQuery", action: "delete:any", attributes: "*",
-  },
+  //
   // resource: dataset ---> Team Perspective
   {
     role: "projectAdmin", resource: "dataset", action: "create:own", attributes: "*",

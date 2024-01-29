@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
-  Button, Input, CircularProgress, Modal, Spacer, Tooltip, ModalHeader, ModalBody, ModalFooter, ModalContent,
+  Button, Input, CircularProgress, Modal, Spacer, Tooltip, ModalHeader, ModalBody, ModalFooter, ModalContent, Divider,
 } from "@nextui-org/react";
 import { LuCheck, LuPencilLine, LuX } from "react-icons/lu";
+import { useParams } from "react-router-dom";
 
-import { getSavedQueries, updateSavedQuery, deleteSavedQuery } from "../actions/savedQuery";
+import { getSavedQueries, updateSavedQuery, deleteSavedQuery, selectSavedQueries } from "../slices/savedQuery";
 import { secondaryTransparent } from "../config/colors";
 import Row from "./Row";
 import Text from "./Text";
@@ -24,9 +25,13 @@ function SavedQueries(props) {
   const [removeLoading, setRemoveLoading] = useState();
 
   const {
-    project, type, getSavedQueries, updateSavedQuery, deleteSavedQuery,
-    savedQueries, onSelectQuery, selectedQuery, style
+    type, onSelectQuery, selectedQuery, style,
   } = props;
+
+  const savedQueries = useSelector(selectSavedQueries);
+
+  const dispatch = useDispatch();
+  const params = useParams();
 
   useEffect(() => {
     _getSavedQueries();
@@ -34,7 +39,7 @@ function SavedQueries(props) {
 
   const _getSavedQueries = () => {
     setLoading(true);
-    getSavedQueries(project.id, type)
+    dispatch(getSavedQueries({ team_id: params.teamId, type}))
       .then(() => {
         setLoading(false);
       })
@@ -50,9 +55,10 @@ function SavedQueries(props) {
 
   const _onEditQuery = () => {
     setEditLoading(true);
-    updateSavedQuery(project.id, editQuery.id, {
+    dispatch(updateSavedQuery({ team_id: params.teamId, data: {
+      id: editQuery.id,
       summary: savedQuerySummary,
-    })
+    }}))
       .then(() => {
         setEditLoading(false);
         setEditQuery(null);
@@ -71,7 +77,7 @@ function SavedQueries(props) {
 
   const _onRemoveQuery = () => {
     setRemoveLoading(true);
-    deleteSavedQuery(project.id, removeQuery)
+    dispatch(deleteSavedQuery({ team_id: params.teamId, id: removeQuery }))
       .then(() => {
         setRemoveQuery(null);
         setRemoveLoading(false);
@@ -100,53 +106,57 @@ function SavedQueries(props) {
         <div>
           {savedQueries.map((query) => {
             return (
-              <Row
-                key={query.id}
-                style={selectedQuery === query.id ? styles.selectedItem : {}}
-                justify="space-between"
-                align="center"
-                className={"gap-4"}
-              >
-                <div>
-                  <Text size="sm" b>{query.summary}</Text>
-                  <Spacer y={0.2} />
-                  <Text size="sm">{`created by ${query.User.name}`}</Text>
-                </div>
-                <div className="flex flex-row justify-end gap-2">
-                  <Tooltip content="Use this query">
-                    <Button
-                      isIconOnly
-                      onClick={() => onSelectQuery(query)}
-                      size="sm"
-                      variant="faded"
-                    >
-                      <LuCheck />
-                    </Button>
-                  </Tooltip>
-                  <Tooltip content="Edit the summary">
-                    <Button
-                      isIconOnly
-                      isDisabled={editQuery && editQuery.id === query.id}
-                      onClick={() => _onEditQueryConfirmation(query)}
-                      size="sm"
-                      isLoading={editLoading}
-                      variant="faded"
-                    >
-                      <LuPencilLine />
-                    </Button>
-                  </Tooltip>
-                  <Tooltip content="Remove the saved query">
-                    <Button
-                      isIconOnly
-                      onClick={() => _onRemoveQueryConfirmation(query.id)}
-                      size="sm"
-                      variant="faded"
-                    >
-                      <LuX />
-                    </Button>
-                  </Tooltip>
-                </div>
-              </Row>
+              <Fragment key={query.id}>
+                <Row
+                  style={selectedQuery === query.id ? styles.selectedItem : {}}
+                  justify="space-between"
+                  align="center"
+                  className={"gap-4"}
+                >
+                  <div>
+                    <Text size="sm" b>{query.summary}</Text>
+                    <Spacer y={0.2} />
+                    <Text size="sm">{`created by ${query.User.name}`}</Text>
+                  </div>
+                  <div className="flex flex-row justify-end gap-2">
+                    <Tooltip content="Use this query">
+                      <Button
+                        isIconOnly
+                        onClick={() => onSelectQuery(query)}
+                        size="sm"
+                        variant="faded"
+                      >
+                        <LuCheck />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content="Edit the summary">
+                      <Button
+                        isIconOnly
+                        isDisabled={editQuery && editQuery.id === query.id}
+                        onClick={() => _onEditQueryConfirmation(query)}
+                        size="sm"
+                        isLoading={editLoading}
+                        variant="faded"
+                      >
+                        <LuPencilLine />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content="Remove the saved query">
+                      <Button
+                        isIconOnly
+                        onClick={() => _onRemoveQueryConfirmation(query.id)}
+                        size="sm"
+                        variant="faded"
+                      >
+                        <LuX />
+                      </Button>
+                    </Tooltip>
+                  </div>
+                </Row>
+                <Spacer y={1} />
+                <Divider />
+                <Spacer y={1} />
+              </Fragment>
             );
           })}
         </div>
@@ -237,34 +247,10 @@ SavedQueries.defaultProps = {
 };
 
 SavedQueries.propTypes = {
-  project: PropTypes.object.isRequired,
-  savedQueries: PropTypes.array.isRequired,
-  getSavedQueries: PropTypes.func.isRequired,
-  updateSavedQuery: PropTypes.func.isRequired,
-  deleteSavedQuery: PropTypes.func.isRequired,
   onSelectQuery: PropTypes.func,
   selectedQuery: PropTypes.number,
   type: PropTypes.string,
   style: PropTypes.object,
 };
 
-const mapStateToProps = (state) => {
-  return {
-    project: state.project.active,
-    savedQueries: state.savedQuery.data,
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    getSavedQueries: (projectId, type) => dispatch(getSavedQueries(projectId, type)),
-    updateSavedQuery: (projectId, savedQueryId, data) => (
-      dispatch(updateSavedQuery(projectId, savedQueryId, data))
-    ),
-    deleteSavedQuery: (projectId, savedQueryId) => (
-      dispatch(deleteSavedQuery(projectId, savedQueryId))
-    ),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(SavedQueries);
+export default SavedQueries;

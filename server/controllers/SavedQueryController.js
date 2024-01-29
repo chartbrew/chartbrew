@@ -27,9 +27,9 @@ class SavedQueryController {
       });
   }
 
-  findByProject(projectId, type) {
+  findByTeam(teamId, type) {
     return db.SavedQuery.findAll({
-      where: { project_id: projectId, type },
+      where: { team_id: teamId, type },
       include: [{ model: db.User }],
     })
       .then((savedQueries) => {

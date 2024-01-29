@@ -5,11 +5,11 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true,
     },
-    project_id: {
+    team_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       reference: {
-        model: "Project",
+        model: "Team",
         key: "id",
         onDelete: "cascade",
       },
@@ -38,7 +38,7 @@ module.exports = (sequelize, DataTypes) => {
 
   SavedQuery.associate = (models) => {
     models.SavedQuery.belongsTo(models.User, { foreignKey: "user_id" });
-    models.SavedQuery.belongsTo(models.Project, { foreignKey: "project_id" });
+    models.SavedQuery.belongsTo(models.Team, { foreignKey: "team_id" });
   };
 
   return SavedQuery;

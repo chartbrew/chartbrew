@@ -292,6 +292,7 @@ function SqlBuilder(props) {
               style={styles.savedQueriesContainer}
             />
           </Row>
+          <Spacer y={8} />
         </div>
         <div className="col-span-12 md:col-span-6">
           <Row>

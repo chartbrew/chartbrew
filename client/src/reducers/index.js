@@ -4,7 +4,7 @@ import project from "../slices/project";
 import team from "../slices/team";
 import chart from "../slices/chart";
 import connection from "../slices/connection";
-import savedQuery from "./savedQuery";
+import savedQuery from "../slices/savedQuery";
 import error from "./error";
 import dataset from "../slices/dataset";
 import dataRequest from "./dataRequest";
