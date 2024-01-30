@@ -258,7 +258,7 @@ function Filters(props) {
 
                 <LinkNext onPress={() => _onSelectRange("last_month")}>
                   <Chip color="primary" size="sm" variant={"bordered"}>
-                    This month
+                    Last month
                   </Chip>
                 </LinkNext>
                 
