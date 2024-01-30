@@ -10,10 +10,6 @@ meta:
 
 # Migrate from v2 to v3
 
-::: tip
-V3 is still in beta and the docs are under construction :construction:
-:::
-
 ::: warning
 Since this is a major release, we recommend you to back up your current v2 database before migrating to v3. All the database migration scripts are automated, but it's always better to be safe than sorry.
 :::

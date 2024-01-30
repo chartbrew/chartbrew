@@ -10,7 +10,7 @@ link:
 
 ---
 
-# Chartbrew v3 Docs
+# Chartbrew Docs
 
 ## Prerequisites
 

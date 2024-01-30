@@ -12,7 +12,7 @@ export default defineConfig({
     ['meta', { prefix: ogprefix, property: 'og:type', content: 'article' }],
     ['meta', { prefix: ogprefix, property: 'og:article:author', content: 'Razvan Ilin' }],
   ],
-  title: "Chartbrew v3 Docs",
+  title: "Chartbrew Docs",
   description: "The official Chartbrew Documentation site",
   themeConfig: {
     logo: "/logo_blue_2.png",
