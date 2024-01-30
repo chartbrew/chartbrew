@@ -16,7 +16,7 @@ Since this is a major release, we recommend you to back up your current v2 datab
 
 ## v3 Preview
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/3YsVFEEWwUc?si=kCn7-te6zbayY0Gt" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/15nAw318Vo4?si=Ha-uKlqItUiCfeXE" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 ## Major architectural changes
 
