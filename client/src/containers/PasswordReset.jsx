@@ -10,7 +10,6 @@ import { changePasswordWithToken } from "../slices/user";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
 import cbLogoSmall from "../assets/logo_inverted.png";
 import cbLogo from "../assets/logo_blue.png";
-import Container from "../components/Container";
 import Row from "../components/Row";
 import Text from "../components/Text";
 import useThemeDetector from "../modules/useThemeDetector";
@@ -73,13 +72,13 @@ function PasswordReset(props) {
 
   return (
     <div style={styles.container}>
-      <Container size="sm">
+      <div className="container mx-auto max-w-xl px-4">
         <Row>
           <Link to="/">
             <img src={isDark ? cbLogoSmall : cbLogo} style={{ width: 70 }} alt="Chartbrew logo" />
           </Link>
         </Row>
-        <Spacer y={1} />
+        <Spacer y={4} />
         <Row>
           <Text size="h2">
             Forgot your password?
@@ -88,7 +87,7 @@ function PasswordReset(props) {
         <Row>
           <Text size="h4">{"No worries, complete the form below to change to a brand new one"}</Text>
         </Row>
-        <Spacer y={1} />
+        <Spacer y={4} />
         <Row>
           <Input
             label="New password"
@@ -96,11 +95,11 @@ function PasswordReset(props) {
             type="password"
             value={password || ""}
             onChange={(e) => setPassword(e.target.value)}
-            bordered
+            variant="bordered"
             fullWidth
           />
         </Row>
-        <Spacer y={0.5} />
+        <Spacer y={2} />
         <Row>
           <Input
             label="Confirm your new password"
@@ -109,17 +108,17 @@ function PasswordReset(props) {
             value={passwordConfirm || ""}
             onChange={(e) => setPasswordConfirm(e.target.value)}
             fullWidth
-            bordered
+            variant="bordered"
           />
         </Row>
-        <Spacer y={1} />
+        <Spacer y={4} />
         <Row>
           <Button
             type="submit"
             size="lg"
             disabled={success}
             onClick={_onSubmit}
-            auto
+            color="primary"
             isLoading={loading}
           >
             Change password
@@ -145,7 +144,7 @@ function PasswordReset(props) {
             />
           </Row>
         )}
-      </Container>
+      </div>
     </div>
   );
 }
