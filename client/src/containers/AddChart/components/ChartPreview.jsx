@@ -136,7 +136,7 @@ function ChartPreview(props) {
   };
 
   return (
-    <div className={"mx-auto pr-4 pl-4 w-full"}>
+    <div className={"bg-content1 rounded-lg mx-auto p-4 w-full"}>
       {chart && chart.chartData && chart.ChartDatasetConfigs && (
         <>
           <div className={"w-full"}>

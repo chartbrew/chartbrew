@@ -18,6 +18,7 @@ import { runQuery, updateChart } from "../../slices/chart";
 import FormulaTips from "../../components/FormulaTips";
 import DatasetFilters from "../../components/DatasetFilters";
 import ChartSettings from "../AddChart/components/ChartSettings";
+import { updateCdc } from "../../slices/chart";
 
 
 function DatasetBuilder(props) {
@@ -276,6 +277,14 @@ function DatasetBuilder(props) {
 
   const _onApplyFormula = () => {
     _onUpdateDataset({ formula });
+    if (chart?.ChartDatasetConfigs?.[0]?.id) {
+      dispatch(updateCdc({
+        project_id: projectId,
+        chart_id: chart.id,
+        cdc_id: chart?.ChartDatasetConfigs?.[0]?.id,
+        data: { formula },
+      }));
+    }
   };
 
   const _onChangeGlobalSettings = ({
@@ -338,8 +347,8 @@ function DatasetBuilder(props) {
   };
 
   return (
-    <div className="grid grid-cols-12 divide-x-1 gap-4">
-      <div className="col-span-12 md:col-span-4">
+    <div className="grid grid-cols-12 divide-x-1 dark:divide-x-0 divide-content3 gap-4">
+      <div className="col-span-12 md:col-span-4 bg-content1 rounded-lg p-4">
         <Autocomplete
           label="Dimension"
           labelPlacement="outside"
@@ -508,7 +517,7 @@ function DatasetBuilder(props) {
         />
       </div>
 
-      <div className="col-span-12 md:col-span-8">
+      <div className="col-span-12 md:col-span-8 pl-4">
         <ChartPreview
           chart={chart}
           onRefreshPreview={() => _onRefreshPreview()}

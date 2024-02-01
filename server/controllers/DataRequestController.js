@@ -124,7 +124,7 @@ class RequestController {
           return this.connectionController.runMongo(connection.id, dataRequest, getCache);
         } else if (connection.type === "api") {
           return this.connectionController.runApiRequest(
-            connection.id, chartId, dataRequest, getCache
+            connection.id, chartId, dataRequest, getCache,
           );
         } else if (connection.type === "postgres" || connection.type === "mysql") {
           return this.connectionController.runMysqlOrPostgres(connection.id, dataRequest);

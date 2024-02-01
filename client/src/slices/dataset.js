@@ -232,10 +232,13 @@ export const runDataRequest = createAsyncThunk(
     const method = "POST";
     const headers = new Headers({
       "Accept": "application/json",
+      "Content-Type": "application/json",
       "authorization": `Bearer ${token}`,
     });
 
+    const body = {};
     if (getCache) {
+      body.getCache = getCache;
       url += "?getCache=true";
     }
 
@@ -246,7 +249,7 @@ export const runDataRequest = createAsyncThunk(
 
     let data;
     try {
-      const response = await fetch(url, { method, headers });
+      const response = await fetch(url, { method, headers, body: JSON.stringify(body) });
       status = {
         statusCode: response.status,
         statusText: response.statusText,

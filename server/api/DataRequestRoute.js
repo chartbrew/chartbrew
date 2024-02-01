@@ -134,7 +134,7 @@ module.exports = (app) => {
   */
   app.post(`${root}/:id/request`, verifyToken, checkPermissions, (req, res) => {
     return dataRequestController.runRequest(
-      req.params.id, req.params.chart_id, req.body.noSource, req.body.getCache
+      req.params.id, req.params.chart_id, req.body.noSource, req.body.getCache, req.body.filters,
     )
       .then((dataRequest) => {
         const newDataRequest = dataRequest;

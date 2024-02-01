@@ -3,13 +3,17 @@ import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Checkbox, Divider, Input, Link, Spacer, Tooltip, Chip,
-  Tabs, Tab, Select, SelectItem,
+  Tabs, Tab, Select, SelectItem, PopoverTrigger, Popover, PopoverContent,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import uuid from "uuid/v4";
 import { toast } from "react-toastify";
 import { useParams } from "react-router";
-import { LuInfo, LuPlay, LuPlus, LuPlusCircle, LuTrash, LuXCircle } from "react-icons/lu";
+import { LuCalendarDays, LuInfo, LuPlay, LuPlus, LuPlusCircle, LuTrash, LuXCircle } from "react-icons/lu";
+import { endOfDay, startOfDay, sub } from "date-fns";
+import { Calendar } from "react-date-range";
+import { enGB } from "date-fns/locale";
+import moment from "moment";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/mode-javascript";
@@ -25,6 +29,7 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
+import { isEqual } from "lodash";
 
 const methods = [{
   key: 1,
@@ -70,6 +75,20 @@ function ApiBuilder(props) {
   const [invalidateCache, setInvalidateCache] = useState(false);
   const [fullConnection, setFullConnection] = useState({});
   const [saveLoading, setSaveLoading] = useState(false);
+  const [variables, setVariables] = useState({
+    startDate: {
+      value: startOfDay(sub(new Date(), { months: 1 })),
+      type: "date",
+    },
+    endDate: {
+      value: endOfDay(new Date()),
+      type: "date",
+    },
+    dateFormat: {
+      value: "YYYY-MM-DD",
+      type: "string",
+    },
+  });
 
   const isDark = useThemeDetector();
   const params = useParams();
@@ -102,6 +121,12 @@ function ApiBuilder(props) {
       }
       if (!formattedApiRequest.method) formattedApiRequest.method = "GET";
       formattedApiRequest.formattedHeaders = formattedHeaders;
+
+      if (dataRequest.variables) {
+        setVariables(dataRequest.variables);
+      } else if (variables) {
+        formattedApiRequest.variables = variables;
+      }
 
       setApiRequest(formattedApiRequest);
     }
@@ -221,6 +246,11 @@ function ApiBuilder(props) {
     setApiRequest({ ...apiRequest, [type]: newValue });
   };
 
+  const _onSaveVariables = () => {
+    setApiRequest({ ...apiRequest, variables });
+    toast.success("Variables saved 👌");
+  };
+
   const _onTest = (dr = dataRequest) => {
     const { formattedHeaders } = apiRequest;
     let newHeaders = {};
@@ -243,7 +273,7 @@ function ApiBuilder(props) {
         team_id: params.teamId,
         dataset_id: params.datasetId,
         dataRequest_id: dr.id,
-        getCache
+        getCache,
       }))
         .then((data) => {
           const result = data.payload;
@@ -284,7 +314,6 @@ function ApiBuilder(props) {
                 size="sm"
                 onClick={() => _onSavePressed()}
                 isLoading={saveLoading || requestLoading}
-                variant="flat"
               >
                 {"Save"}
               </Button>
@@ -334,7 +363,7 @@ function ApiBuilder(props) {
             <Text size="sm">{"Available variables: "}</Text>
             <Spacer x={1} />
             <Tooltip
-              content={chart.startDate || "Set this value in chart date settings first"}
+              content={chart.startDate || "You can set this value later in the chart date settings"}
             >
               <Link>
                 <Chip
@@ -352,7 +381,7 @@ function ApiBuilder(props) {
             </Tooltip>
             <Spacer x={0.5} />
             <Tooltip
-              content={chart.endDate || "Set this value in chart date settings first"}
+              content={chart.endDate || "You can set this value later in the chart date settings"}
             >
               <Link onClick={() => chart.endDate && _onChangeRoute(`${apiRequest.route}{{end_date}}`)}>
                 <Chip
@@ -370,6 +399,95 @@ function ApiBuilder(props) {
             </Tooltip>
           </Row>
           <Spacer y={4} />
+          {(apiRequest.route.indexOf("{{start_date}}") > -1 || apiRequest.route.indexOf("{{end_date}}") > -1) && (
+            <>
+              <div className="border-1 border-content3 rounded-lg px-4 py-2">
+                <p>Configure variables</p>
+                <Spacer y={2} />
+                <div className="flex flex-row items-center gap-2">
+                  <Popover placement="bottom">
+                    <PopoverTrigger>
+                      <Input
+                        label="{{start_date}}"
+                        value={(variables?.startDate?.value && moment(variables.startDate.value).format(variables?.dateFormat?.value || "")) || ""}
+                        variant="bordered"
+                        endContent={<LuCalendarDays />}
+                        readOnly
+                        classNames={{ input: "text-left" }}
+                      />
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <div className="p-2">
+                        <Calendar
+                          date={variables?.startDate?.value || new Date()}
+                          onChange={(date) => setVariables({ ...variables, startDate: { ...variables.startDate, value: startOfDay(date) } })}
+                          locale={enGB}
+                        />
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
+                  <Popover placement="bottom">
+                    <PopoverTrigger>
+                      <Input
+                        label="{{end_date}}"
+                        value={(variables?.endDate?.value && moment(variables.endDate.value).format(variables?.dateFormat?.value || "")) || ""}
+                        variant="bordered"
+                        endContent={<LuCalendarDays />}
+                        readOnly
+                        classNames={{ input: "text-left" }}
+                      />
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <div className="p-2">
+                        <Calendar
+                          date={variables?.endDate?.value || new Date()}
+                          onChange={(date) => setVariables({ ...variables, endDate: { ...variables.endDate, value: endOfDay(date) } })}
+                          locale={enGB}
+                        />
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <Spacer y={2} />
+                <div>
+                  <Input
+                    label="Date format"
+                    labelPlacement="outside"
+                    value={variables?.dateFormat?.value}
+                    onChange={(e) => setVariables({ ...variables, dateFormat: { ...variables.dateFormat, value: e.target.value } })}
+                    variant="bordered"
+                    placeholder="YYYY-MM-DD"
+                    description={(
+                      <Text small>
+                        {"See "}
+                        <a
+                          href="https://momentjs.com/docs/#/displaying/format/"
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {"moment.js documentation"}
+                        </a>
+                        {" for how to format dates."}
+                      </Text>
+                    )}
+                  />
+                </div>
+                <Spacer y={2} />
+                <div>
+                  <Button
+                    color={isEqual(variables, apiRequest.variables) ? "success" : "primary"}
+                    variant={isEqual(variables, apiRequest.variables) ? "flat" : "solid"}
+                    size="sm"
+                    onClick={() => _onSaveVariables()}
+                  >
+                    {isEqual(variables, apiRequest.variables) ? "Saved" : "Save"}
+                  </Button>
+                </div>
+              </div>
+              <Spacer y={4} />
+            </>
+          )}
           <Row className="apibuilder-menu-tut justify-between">
             <Tabs
               selectedKey={activeMenu}
@@ -555,7 +673,7 @@ function ApiBuilder(props) {
               {"Send the request"}
             </Button>
           </Row>
-          <Spacer y={1} />
+          <Spacer y={2} />
           <Row align="center">
             <Checkbox
               isSelected={!invalidateCache}
@@ -568,7 +686,7 @@ function ApiBuilder(props) {
             <Tooltip
               content={(
                 <>
-                  <p>{"Chartbrew will use cached data for extra editing speed ⚡️⚡️⚡️"}</p>
+                  <p>{"Chartbrew will use cached data for extra editing speed ⚡️"}</p>
                   <p>{"The cache gets automatically invalidated when you change the configuration of the request."}</p>
                 </>
               )}

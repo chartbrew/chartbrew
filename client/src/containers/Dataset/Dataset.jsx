@@ -110,16 +110,19 @@ function Dataset() {
       }))
         .then((data) => {
           setChart(data.payload);
+          const cdcData = {
+            ...dataset,
+            dataset_id: dataset.id,
+            datasetColor: chartColors.blue.hex,
+            fill: false,
+            order: 0,
+          };
+          delete cdcData.id;
 
           dispatch(createCdc({
             project_id: data.payload.project_id,
             chart_id: data.payload.id,
-            data: {
-              dataset_id: dataset.id,
-              datasetColor: chartColors.blue.hex,
-              fill: false,
-              order: 0,
-            },
+            data: cdcData,
           }))
         });
     }
@@ -225,7 +228,8 @@ function Dataset() {
         data: newChart,
       }))
         .then((actionData) => {
-          let cdcData = { ...dataset };
+          let ghostCdc = ghostChart?.ChartDatasetConfigs?.[0] || {};
+          let cdcData = { ...dataset, ...ghostCdc };
           delete cdcData.id;
 
           dispatch(createCdc({

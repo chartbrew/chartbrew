@@ -622,6 +622,8 @@ class ConnectionController {
 
     const limit = dataRequest.itemsLimit
       ? parseInt(dataRequest.itemsLimit, 10) : 0;
+    const { variables } = dataRequest;
+
     return this.findById(id)
       .then(async (connection) => {
         let tempUrl = connection.getApiUrl(connection);
@@ -646,7 +648,7 @@ class ConnectionController {
           // something was found, go through all and replace the variables
           if (Object.keys(keysFound).length > 0) {
             const chart = await db.Chart.findByPk(chartId);
-            if (chart.startDate && chart.endDate) {
+            if (chart?.startDate && chart?.endDate) {
               Object.keys(keysFound).forEach((q) => {
                 const value = keysFound[q];
                 let startDate = getMomentObj(timezone)(chart.startDate);
@@ -686,6 +688,20 @@ class ConnectionController {
 
                 if (value === "endDate" && endDate) {
                   queryParams[q] = endDate.format(chart.dateVarsFormat || "");
+                }
+              });
+            } else if (variables?.startDate?.value && variables?.endDate?.value) {
+              Object.keys(keysFound).forEach((q) => {
+                const value = keysFound[q];
+                const startDate = getMomentObj(timezone)(variables.startDate.value);
+                const endDate = getMomentObj(timezone)(variables.endDate.value);
+
+                if (value === "startDate" && startDate) {
+                  queryParams[q] = startDate.format(variables.dateFormat?.value || "");
+                }
+
+                if (value === "endDate" && endDate) {
+                  queryParams[q] = endDate.format(variables.dateFormat?.value || "");
                 }
               });
             }

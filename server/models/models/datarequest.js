@@ -120,6 +120,23 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+    variables: {
+      type: DataTypes.TEXT,
+      set(val) {
+        try {
+          return this.setDataValue("variables", sc.encrypt(JSON.stringify(val)));
+        } catch (e) {
+          return this.setDataValue("variables", val);
+        }
+      },
+      get() {
+        try {
+          return JSON.parse(sc.decrypt(this.getDataValue("variables")));
+        } catch (e) {
+          return this.getDataValue("variables");
+        }
+      },
+    },
   }, {
     freezeTableName: true,
   });
