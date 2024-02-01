@@ -26,6 +26,7 @@ import Integrations from "./Integrations/Integrations";
 import Dataset from "./Dataset/Dataset";
 // import { getProjects } from "../slices/project";
 import ConnectionWizard from "./Connections/ConnectionWizard";
+import LoadingScreen from "../components/LoadingScreen";
 
 const ProjectBoard = lazy(() => import("./ProjectBoard/ProjectBoard"));
 const Signup = lazy(() => import("./Signup"));
@@ -173,7 +174,7 @@ function Main(props) {
                 />
                 <Route
                   path="api-keys"
-                  element={<ApiKeys teamId={team?.id} />}
+                  element={team?.id ? <ApiKeys teamId={team.id} /> : <LoadingScreen />}
                 />
               </Route>
               <Route
