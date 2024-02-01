@@ -202,15 +202,15 @@ export const requestPasswordReset = createAsyncThunk(
 
 export const changePasswordWithToken = createAsyncThunk(
   "user/changePasswordWithToken",
-  async ({ token, password }) => {
-    const url = `${API_HOST}/user/password/reset/${token}`;
-    const body = JSON.stringify({ password });
+  async ({ hash, token, password }) => {
+    const url = `${API_HOST}/user/password/change`;
+    const body = JSON.stringify({ password, token, hash });
     const headers = new Headers({
       "Accept": "application/json",
       "Content-Type": "application/json",
     });
 
-    const response = await fetch(url, { body, headers, method: "POST" });
+    const response = await fetch(url, { body, headers, method: "PUT" });
     if (!response.ok) {
       throw new Error("Error changing password");
     }
