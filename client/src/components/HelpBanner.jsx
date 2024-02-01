@@ -30,7 +30,7 @@ const bannerData = {
   mysql: {
     title: "How to visualize your MySQL data with Chartbrew",
     description: "Chartbrew can connect to your MySQL database and create charts that tell you more about your data.",
-    url: "https://chartbrew.com/blog/how-to-visualize-your-mysql-data-with-chartbrew/",
+    url: "https://chartbrew.com/blog/visualize-mysql-data-with-chartbrew/",
     info: "5 min read",
   },
   firestore: {
