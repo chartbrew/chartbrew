@@ -399,7 +399,7 @@ function ApiBuilder(props) {
             </Tooltip>
           </Row>
           <Spacer y={4} />
-          {(apiRequest.route.indexOf("{{start_date}}") > -1 || apiRequest.route.indexOf("{{end_date}}") > -1) && (
+          {apiRequest?.route && (apiRequest.route.indexOf("{{start_date}}") > -1 || apiRequest.route.indexOf("{{end_date}}") > -1) && (
             <>
               <div className="border-1 border-content3 rounded-lg px-4 py-2">
                 <p>Configure variables</p>
