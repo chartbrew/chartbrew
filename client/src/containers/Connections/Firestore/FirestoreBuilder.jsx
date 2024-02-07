@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import {
   Button,Spacer, Divider, Chip, Switch, Tooltip, Link, Checkbox, Input, Popover,
   CircularProgress, Select, SelectItem, PopoverTrigger, PopoverContent,
@@ -20,9 +20,6 @@ import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
 import {
-  runDataRequest as runDataRequestAction,
-} from "../../../actions/dataRequest";
-import {
   getConnection, testRequest,
 } from "../../../slices/connection";
 import fieldFinder from "../../../modules/fieldFinder";
@@ -32,6 +29,7 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
+import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 
 export const operators = [{
   key: "=",
@@ -110,9 +108,10 @@ function FirestoreBuilder(props) {
   const params = useParams();
   const dispatch = useDispatch();
 
+  const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
+
   const {
-    dataRequest, onChangeRequest, runDataRequest,
-    connection, onSave, onDelete, responses,
+    dataRequest, onChangeRequest, connection, onSave, onDelete,
   } = props;
 
   // on init effect
@@ -175,15 +174,13 @@ function FirestoreBuilder(props) {
   }, [dataRequest]);
 
   useEffect(() => {
-    if (responses && responses.length > 0) {
-      const selectedResponse = responses.find((o) => o.id === dataRequest.id);
-      if (selectedResponse?.data) {
-        setResult(JSON.stringify(selectedResponse.data, null, 2));
-      } else if (selectedResponse?.error) {
-        setResult(JSON.stringify(selectedResponse.error, null, 2));
+    if (stateDrs && stateDrs.length > 0) {
+      const selectedResponse = stateDrs.find((o) => o.id === dataRequest.id);
+      if (selectedResponse?.response) {
+        setResult(JSON.stringify(selectedResponse.response, null, 2));
       }
     }
-  }, [responses]);
+  }, [stateDrs]);
 
   const _initializeConditions = (dr = dataRequest) => {
     if (dr && dr.conditions) {
@@ -286,11 +283,26 @@ function FirestoreBuilder(props) {
 
   const _onRunRequest = () => {
     setIndexUrl("");
-    const useCache = !invalidateCache;
-    runDataRequest(params.projectId, params.chartId, dataRequest.id, useCache)
-      .then((dr) => {
-        if (dr?.dataRequest) {
-          setFirestoreRequest(dr.dataRequest);
+    const getCache = !invalidateCache;
+    dispatch(runDataRequest({
+      team_id: params.teamId,
+      dataset_id: params.datasetId,
+      dataRequest_id: dataRequest.id,
+      getCache,
+    }))
+      .then((data) => {
+        if (data?.error) {
+          setRequestLoading(false);
+          toast.error("The request failed. Please check your request 🕵️‍♂️");
+          setResult(JSON.stringify(data.error, null, 2));
+
+          if (data.error?.message && data.error.message.indexOf("COLLECTION_GROUP_ASC") > -1) {
+            setIndexUrl(data.error.message.substring(data.error.message.indexOf("https://")));
+          }
+        }
+        const result = data.payload;
+        if (result?.response?.dataRequest?.responseData?.data) {
+          setResult(JSON.stringify(result.response.dataRequest.responseData.data, null, 2));
         }
         setRequestLoading(false);
       })
@@ -309,8 +321,18 @@ function FirestoreBuilder(props) {
     setCollectionsLoading(true);
     return dispatch(testRequest({ team_id: params.teamId, connection: conn }))
       .then((data) => {
-        setCollectionsLoading(false);
-        setCollectionData(data.payload);
+        if (data?.error) {
+          setCollectionsLoading(false);
+          return;
+        }
+        
+        return data?.payload?.json();
+      })
+      .then((data) => {
+        if (data) {
+          setCollectionData(data);
+          setCollectionsLoading(false);
+        }
       })
       .catch(() => {
         setCollectionsLoading(false);
@@ -503,7 +525,7 @@ function FirestoreBuilder(props) {
           <Spacer y={1} />
           <Row wrap="wrap" className="pl-0 firestorebuilder-collections-tut gap-1">
             {collectionsLoading && <CircularProgress />}
-            {collectionData.map((collection) => (
+            {collectionData?.length > 0 && collectionData?.map((collection) => (
               <Fragment key={collection._queryOptions.collectionId}>
                 <Chip
                   variant={firestoreRequest.query !== collection._queryOptions.collectionId ? "bordered" : "solid"}
@@ -515,6 +537,9 @@ function FirestoreBuilder(props) {
                 </Chip>
               </Fragment>
             ))}
+            {(!collectionData || collectionData?.length === 0) && !collectionsLoading && (
+              <span className="text-sm italic">No collections found</span>
+            )}
           </Row>
           <Spacer y={1} />
           <Row>
@@ -1049,7 +1074,6 @@ FirestoreBuilder.defaultProps = {
 FirestoreBuilder.propTypes = {
   connection: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
-  runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   dataRequest: PropTypes.object,
   onDelete: PropTypes.func.isRequired,
@@ -1063,11 +1087,8 @@ const mapStateToProps = (state) => {
   };
 };
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = () => {
   return {
-    runDataRequest: (projectId, chartId, drId, getCache) => {
-      return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
-    },
   };
 };
 
