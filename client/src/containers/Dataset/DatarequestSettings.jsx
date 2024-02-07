@@ -43,7 +43,6 @@ function DatarequestSettings(props) {
 
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
   const dataRequests = useSelector((state) => selectDataRequests(state, parseInt(params.datasetId, 10))) || [];
-  const drResponses = dataRequests.map((dr) => dr.response) || [];
   const responses = useSelector(selectResponses);
 
   useEffect(() => {
@@ -68,8 +67,8 @@ function DatarequestSettings(props) {
       joins.forEach((data) => {
         if (data.dr_id || data.join_id) {
           // check to see if there is a response for the data request
-          const response = drResponses.find((o) => o?.id === data.dr_id);
-          if (!response || !response.data) {
+          const dr = dataRequests.find((o) => o?.id === data.dr_id);
+          if (!dr?.response || !dr.response?.data) {
             dispatch(runDataRequest({
               team_id: params.teamId,
               dataset_id: dataset.id,
@@ -79,8 +78,8 @@ function DatarequestSettings(props) {
               .catch(() => {});
           }
 
-          const responseJoin = drResponses.find((o) => o?.id === data.join_id);
-          if (!responseJoin || !responseJoin.data) {
+          const drJoin = dataRequests.find((o) => o?.id === data.join_id);
+          if (!drJoin?.response || !drJoin.response?.data) {
             dispatch(runDataRequest({
               team_id: params.teamId,
               dataset_id: dataset.id,
@@ -181,11 +180,11 @@ function DatarequestSettings(props) {
     const join = joins.find((o) => o.key === key);
     let fields = [];
 
-    if (join && drResponses && drResponses.length > 0) {
+    if (join && dataRequests?.length > 0) {
       const drId = join[type];
-      const response = drResponses.find((o) => o?.id === drId);
-      if (response?.data) {
-        fields = fieldFinder(response?.data);
+      const response = dataRequests.find((o) => o?.id === drId)?.response;
+      if (response) {
+        fields = fieldFinder(response?.data || response);
       }
     }
 
@@ -553,7 +552,6 @@ const styles = {
 
 DatarequestSettings.propTypes = {
   onChange: PropTypes.func.isRequired,
-  drResponses: PropTypes.array.isRequired,
 };
 
 export default DatarequestSettings;
