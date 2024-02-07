@@ -211,6 +211,23 @@ module.exports = (sequelize, DataTypes) => {
         }
       },
     },
+    ssl: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    sslMode: {
+      type: DataTypes.STRING,
+      defaultValue: "require",
+    },
+    sslRootCert: {
+      type: DataTypes.STRING,
+    },
+    sslClientCert: {
+      type: DataTypes.STRING,
+    },
+    sslClientKey: {
+      type: DataTypes.STRING,
+    },
   }, {
     freezeTableName: true,
   });

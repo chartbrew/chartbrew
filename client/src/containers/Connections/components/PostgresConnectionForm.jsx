@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Button, Input, Link, Spacer, Chip, Tabs, Tab, Divider,
+  Button, Input, Link, Spacer, Chip, Tabs, Tab, Divider, Switch, Select, SelectItem,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
 import { RiArrowRightSLine } from "react-icons/ri";
@@ -16,7 +16,7 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
-import { LuExternalLink } from "react-icons/lu";
+import { LuExternalLink, LuUpload } from "react-icons/lu";
 import { testRequest } from "../../../slices/connection";
 
 /*
@@ -33,6 +33,16 @@ function PostgresConnectionForm(props) {
   const [errors, setErrors] = useState({});
   const [formStyle, setFormStyle] = useState("string");
   const [testResult, setTestResult] = useState(null);
+  const [sslCerts, setSslCerts] = useState({
+    sslRootCert: null,
+    sslClientCert: null,
+    sslClientKey: null,
+  });
+  const [sslCertsErrors, setSslCertsErrors] = useState({
+    sslRootCert: null,
+    sslClientCert: null,
+    sslClientKey: null,
+  });
 
   const isDark = useThemeDetector();
   const dispatch = useDispatch();
@@ -117,6 +127,54 @@ function PostgresConnectionForm(props) {
           .catch(() => setLoading(false));
       }
     }, 100);
+  };
+
+  const isValidExtension = (fileName, validExtensions = [".crt", ".key", ".pem"]) => {
+    return validExtensions.some(extension => fileName.toLowerCase().endsWith(extension));
+  };
+
+  const isValidFileSize = (file, maxSizeInBytes = 8192) => { // 8KB max size
+    return file.size <= maxSizeInBytes;
+  };
+
+  const _selectRootCert = (e) => {
+    const file = e.target.files[0];
+    if (!isValidExtension(file.name)) {
+      setSslCertsErrors({ ...sslCertsErrors, sslRootCert: "Invalid file type. Try .crt or .pem" });
+      return;
+    }
+    if (!isValidFileSize(file)) {
+      setSslCertsErrors({ ...sslCertsErrors, sslRootCert: "File size is too large. Max size is 8KB" });
+      return;
+    }
+
+    setSslCerts({ ...sslCerts, sslRootCert: file });
+  };
+
+  const _selectClientCert = (e) => {
+    const file = e.target.files[0];
+    if (!isValidExtension(file.name)) {
+      setSslCertsErrors({ ...sslCertsErrors, sslClientCert: "Invalid file type. Try .crt or .pem" });
+      return;
+    }
+    if (!isValidFileSize(file)) {
+      setSslCertsErrors({ ...sslCertsErrors, sslClientCert: "File size is too large. Max size is 8KB" });
+      return;
+    }
+    setSslCerts({ ...sslCerts, sslClientCert: file });
+  };
+
+  const _selectClientKey = (e) => {
+    const file = e.target.files[0];
+    if (!isValidExtension(file.name, [".key"])) {
+      setSslCertsErrors({ ...sslCertsErrors, sslClientKey: "Invalid file type. Try .key" });
+      return;
+    }
+    if (!isValidFileSize(file)) {
+      setSslCertsErrors({ ...sslCertsErrors, sslClientKey: "File size is too large. Max size is 8KB" });
+      return;
+    }
+    setSslCerts({ ...sslCerts, sslClientKey: file });
   };
 
   return (
@@ -275,6 +333,117 @@ function PostgresConnectionForm(props) {
               </div>
             </div>
           </Row>
+        )}
+        <Spacer y={2} />
+        <Row align="center">
+          <Switch
+            label="SSL"
+            checked={connection.ssl || false}
+            onChange={(e) => {
+              setConnection({ ...connection, ssl: e.target.checked });
+            }}
+            size="sm"
+          >
+            {"Enable SSL"}
+          </Switch>
+        </Row>
+        {connection.ssl && (
+          <>
+            <Spacer y={2} />
+            <Row align="center">
+              <Select
+                variant="bordered"
+                label="SSL Mode"
+                value={connection.sslMode || "prefer"}
+                onChange={(e) => {
+                  setConnection({ ...connection, sslMode: e.target.value });
+                }}
+                className="w-full md:w-1/2 lg:w-1/3"
+                size="sm"
+              >
+                <SelectItem value="disable">{"Disable"}</SelectItem>
+                <SelectItem value="prefer">{"Prefer"}</SelectItem>
+                <SelectItem value="require">{"Require"}</SelectItem>
+                <SelectItem value="verify-ca">{"Verify CA"}</SelectItem>
+                <SelectItem value="verify-full">{"Verify Full"}</SelectItem>
+              </Select>
+            </Row>
+            <Spacer y={2} />
+            <Row align="center">
+              <input
+                type="file"
+                id="rootCertInput"
+                style={{ display: "none" }}
+                onChange={_selectRootCert}
+              />
+              <Button
+                variant="ghost"
+                startContent={<LuUpload />}
+                onClick={() => document.getElementById("rootCertInput").click()}
+              >
+                {"SSL root certificate (.pem)"}
+              </Button>
+              <Spacer x={2} />
+              {sslCerts.sslRootCert && (
+                <span className="text-sm">{sslCerts.sslRootCert.name}</span>
+              )}
+              {sslCertsErrors.sslRootCert && (
+                <span className="text-sm text-danger">
+                  {sslCertsErrors.sslRootCert}
+                </span>
+              )}
+            </Row>
+            <Spacer y={2} />
+            <Row align="center">
+              <input
+                type="file"
+                id="clientCertInput"
+                style={{ display: "none" }}
+                onChange={_selectClientCert}
+              />
+              <Button
+                variant="ghost"
+                startContent={<LuUpload />}
+                onClick={() => document.getElementById("clientCertInput").click()}
+              >
+                {"SSL client certificate (.pem)"}
+              </Button>
+              <Spacer x={2} />
+              {sslCerts.sslRootCert && (
+                <span className="text-sm">{sslCerts.sslClientCert.name}</span>
+              )}
+              {sslCertsErrors.sslClientCert && (
+                <span className="text-sm text-danger">
+                  {sslCertsErrors.sslClientCert}
+                </span>
+              )}
+            </Row>
+            <Spacer y={2} />
+            <Row align="center">
+              <input
+                type="file"
+                id="clientKeyInput"
+                style={{ display: "none" }}
+                onChange={_selectClientKey}
+              />
+              <Button
+                variant="ghost"
+                startContent={<LuUpload />}
+                onClick={() => document.getElementById("clientKeyInput").click()}
+              >
+                {"SSL client key (PKCS-8/DER)"}
+              </Button>
+              <Spacer x={2} />
+              {sslCerts.sslClientKey && (
+                <span className="text-sm">{sslCerts.sslClientKey.name}</span>
+              )}
+              {sslCertsErrors.sslClientKey && (
+                <span className="text-sm text-danger">
+                  {sslCertsErrors.sslClientKey}
+                </span>
+              )}
+            </Row>
+          </>
         )}
 
         <Spacer y={4} />
