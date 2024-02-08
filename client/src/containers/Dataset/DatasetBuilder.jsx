@@ -27,6 +27,7 @@ function DatasetBuilder(props) {
   const [fieldOptions, setFieldOptions] = useState([]);
   const [formula, setFormula] = useState("");
   const [useCache, setUseCache] = useState(true);
+  const [loadingFields, setLoadingFields] = useState(false);
 
   const params = useParams();
   const dispatch = useDispatch();
@@ -134,19 +135,26 @@ function DatasetBuilder(props) {
       }
 
       if (Object.keys(updateObj).length > 0) {
+        setLoadingFields(true);
         dispatch(updateDataset({
           team_id: dataset.team_id,
           dataset_id: dataset.id,
           data: updateObj,
         }))
           .then(() => {
-            dispatch(runQuery({
+            return dispatch(runQuery({
               project_id: projectId,
               chart_id: chart.id,
               noSource: false,
               skipParsing: false,
               getCache: true,
             }));
+          })
+          .then(() => {
+            setLoadingFields(false);
+          })
+          .catch(() => {
+            setLoadingFields(false);
           });
       }
     }
@@ -356,6 +364,7 @@ function DatasetBuilder(props) {
           placeholder="Select a dimension"
           selectedKey={dataset.xAxis}
           onSelectionChange={(key) => _onUpdateDataset({ xAxis: key })}
+          isLoading={loadingFields}
         >
           {_filterOptions("x").map((option) => (
             <AutocompleteItem
@@ -379,6 +388,7 @@ function DatasetBuilder(props) {
           placeholder="Select a metric"
           selectedKey={dataset.yAxis}
           onSelectionChange={(key) => _onUpdateDataset({ yAxis: key })}
+          isLoading={loadingFields}
         >
           {_getYFieldOptions().map((option) => (
             <AutocompleteItem
@@ -427,6 +437,7 @@ function DatasetBuilder(props) {
             placeholder="Select a field"
             selectedKey={dataset.dateField}
             onSelectionChange={(key) => _onUpdateDataset({ dateField: key })}
+            isLoading={loadingFields}
           >
             {_getDateFieldOptions().map((option) => (
               <AutocompleteItem
