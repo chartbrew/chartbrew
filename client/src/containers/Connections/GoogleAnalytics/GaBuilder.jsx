@@ -164,7 +164,7 @@ function GaBuilder(props) {
         setResult(JSON.stringify(selectedResponse.response, null, 2));
       }
     }
-  }, [stateDrs]);
+  }, [stateDrs, gaRequest]);
 
   const _initRequest = () => {
     if (dataRequest) {

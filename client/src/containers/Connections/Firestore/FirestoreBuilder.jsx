@@ -180,7 +180,7 @@ function FirestoreBuilder(props) {
         setResult(JSON.stringify(selectedResponse.response, null, 2));
       }
     }
-  }, [stateDrs]);
+  }, [stateDrs, firestoreRequest]);
 
   const _initializeConditions = (dr = dataRequest) => {
     if (dr && dr.conditions) {

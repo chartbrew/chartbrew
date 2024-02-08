@@ -50,7 +50,7 @@ function SqlBuilder(props) {
   const isDark = useThemeDetector();
   const params = useParams();
   const dispatch = useDispatch();
-  const stateDrs = useSelector((state) => selectDataRequests(state, sqlRequest.id));
+  const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
 
   useEffect(() => {
     if (dataRequest) {
@@ -69,7 +69,7 @@ function SqlBuilder(props) {
         setResult(JSON.stringify(selectedResponse.response, null, 2));
       }
     }
-  }, [stateDrs]);
+  }, [stateDrs, sqlRequest]);
 
   const _onSaveQueryConfirmation = () => {
     setSaveQueryModal(true);

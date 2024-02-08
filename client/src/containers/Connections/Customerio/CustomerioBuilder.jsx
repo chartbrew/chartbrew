@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
 import {
   Button, Spacer, Checkbox, Tooltip, Divider, Tabs, Tab,
 } from "@nextui-org/react";
@@ -8,20 +7,19 @@ import AceEditor from "react-ace";
 import { toast } from "react-toastify";
 import { LuInfo, LuMessageCircle, LuPlay, LuTrash, LuUsers2 } from "react-icons/lu";
 import { useParams } from "react-router";
+import { useDispatch, useSelector } from "react-redux";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import {
-  runDataRequest as runDataRequestAction,
-} from "../../../actions/dataRequest";
 import CustomerQuery from "./CustomerQuery";
 import CampaignsQuery from "./CampaignsQuery";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
+import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 
 /*
   The Customer.io data request builder
@@ -40,11 +38,13 @@ function CustomerioBuilder(props) {
 
   const isDark = useThemeDetector();
   const params = useParams();
+  const dispatch = useDispatch();
+
+  const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
 
   const {
-    dataRequest, onChangeRequest, runDataRequest, project,
-    connection, onSave, responses,
-    onDelete,
+    dataRequest, onChangeRequest,
+    connection, onSave, onDelete,
   } = props;
 
   // on init effect
@@ -88,13 +88,13 @@ function CustomerioBuilder(props) {
   }, [cioRequest, connection]);
 
   useEffect(() => {
-    if (responses && responses.length > 0) {
-      const selectedResponse = responses.find((o) => o.id === dataRequest.id);
-      if (selectedResponse?.data) {
-        setResult(JSON.stringify(selectedResponse.data, null, 2));
+    if (stateDrs && stateDrs.length > 0) {
+      const selectedResponse = stateDrs.find((o) => o.id === cioRequest.id);
+      if (selectedResponse?.response) {
+        setResult(JSON.stringify(selectedResponse.response, null, 2));
       }
     }
-  }, [responses]);
+  }, [stateDrs, cioRequest]);
 
   const _onSelectCustomers = () => {
     setEntity("customers");
@@ -126,9 +126,24 @@ function CustomerioBuilder(props) {
     };
 
     onSave(drData).then(() => {
-      const useCache = !invalidateCache;
-      runDataRequest(params.projectId, params.chartId, dataRequest.id, useCache)
-        .then(() => {
+      const getCache = !invalidateCache;
+      dispatch(runDataRequest({
+        team_id: params.teamId,
+        dataset_id: drData.dataset_id,
+        dataRequest_id: drData.id,
+        getCache
+      }))
+        .then((data) => {
+          if (data?.error) {
+            setRequestLoading(false);
+            toast.error("The request failed. Please check your request 🕵️‍♂️");
+            setResult(JSON.stringify(data.error, null, 2));
+          }
+
+          const result = data.payload;
+          if (result?.response?.dataRequest?.responseData?.data) {
+            setResult(JSON.stringify(result.response.dataRequest.responseData.data, null, 2));
+          }
           setRequestLoading(false);
         })
         .catch((error) => {
@@ -253,7 +268,6 @@ function CustomerioBuilder(props) {
                   onUpdateConditions={_onUpdateCustomerConditions}
                   limit={limitValue}
                   onUpdateLimit={(value) => setLimitValue(value)}
-                  projectId={project.id}
                   connectionId={connection.id}
                   populateAttributes={
                     cioRequest.configuration && cioRequest.configuration.populateAttributes
@@ -274,7 +288,6 @@ function CustomerioBuilder(props) {
             {entity === "campaigns" && (
               <Row>
                 <CampaignsQuery
-                  projectId={project.id}
                   connectionId={connection.id}
                   onUpdate={_onUpdateCampaignConfig}
                   request={cioRequest}
@@ -358,27 +371,9 @@ CustomerioBuilder.defaultProps = {
 CustomerioBuilder.propTypes = {
   connection: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
-  runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
-  responses: PropTypes.array.isRequired,
   dataRequest: PropTypes.object,
-  project: PropTypes.object.isRequired,
   onDelete: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = (state) => {
-  return {
-    responses: state.dataRequest.responses,
-    project: state.project.active,
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    runDataRequest: (projectId, chartId, drId, getCache) => {
-      return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
-    },
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(CustomerioBuilder);
+export default CustomerioBuilder;

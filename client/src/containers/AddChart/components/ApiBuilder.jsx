@@ -158,7 +158,7 @@ function ApiBuilder(props) {
         setResult(JSON.stringify(selectedResponse.response, null, 2));
       }
     }
-  }, [stateDrs]);
+  }, [stateDrs, apiRequest]);
 
   const _addHeader = () => {
     const { formattedHeaders } = apiRequest;
