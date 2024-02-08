@@ -175,7 +175,7 @@ function PostgresConnectionForm(props) {
 
   const _selectClientKey = (e) => {
     const file = e.target.files[0];
-    if (!isValidExtension(file.name, [".key"])) {
+    if (!isValidExtension(file.name)) {
       setSslCertsErrors({ ...sslCertsErrors, sslKey: "Invalid file type. Try .key" });
       return;
     }
@@ -399,7 +399,7 @@ function PostgresConnectionForm(props) {
                 startContent={<LuUpload />}
                 onClick={() => document.getElementById("rootCertInput").click()}
               >
-                {"SSL root certificate (.pem, .crt)"}
+                {"Certificate authority"}
               </Button>
               <Spacer x={2} />
               {sslCerts.sslCa && (
@@ -427,7 +427,7 @@ function PostgresConnectionForm(props) {
                 startContent={<LuUpload />}
                 onClick={() => document.getElementById("clientCertInput").click()}
               >
-                {"SSL client certificate (.pem, .crt)"}
+                {"SSL certificate"}
               </Button>
               <Spacer x={2} />
               {sslCerts.sslCert && (
@@ -455,7 +455,7 @@ function PostgresConnectionForm(props) {
                 startContent={<LuUpload />}
                 onClick={() => document.getElementById("clientKeyInput").click()}
               >
-                {"SSL client key (.key)"}
+                {"SSL key"}
               </Button>
               <Spacer x={2} />
               {sslCerts.sslKey && (
@@ -469,6 +469,12 @@ function PostgresConnectionForm(props) {
               {!sslCertsErrors.sslKey && connection.sslKey && (
                 <LuCheckCircle2 className="text-success" size={20} />
               )}
+            </Row>
+            <Spacer y={2} />
+            <Row align="center">
+              <span className="text-sm">
+                {"Certificates are accepted in .crt, .pem, and .key formats"}
+              </span>
             </Row>
           </>
         )}
