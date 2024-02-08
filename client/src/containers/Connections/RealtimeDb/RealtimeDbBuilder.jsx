@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Input, Spacer, Divider, Chip, Checkbox, Tooltip,
 } from "@nextui-org/react";
@@ -13,13 +13,11 @@ import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import {
-  runDataRequest as runDataRequestAction,
-} from "../../../actions/dataRequest";
 import { getConnection } from "../../../slices/connection";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
+import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 
 /*
   The API Data Request builder
@@ -41,10 +39,10 @@ function RealtimeDbBuilder(props) {
   const isDark = useThemeDetector();
   const params = useParams();
   const dispatch = useDispatch();
+  const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
 
   const {
-    dataRequest, onChangeRequest, runDataRequest,
-    connection, onSave, onDelete, responses,
+    dataRequest, onChangeRequest, connection, onSave, onDelete,
   } = props;
 
   // on init effect
@@ -60,7 +58,7 @@ function RealtimeDbBuilder(props) {
   }, []);
 
   useEffect(() => {
-    const newApiRequest = firebaseRequest;
+    const newRequest = firebaseRequest;
 
     dispatch(getConnection({ team_id: params.teamId, connection_id: connection.id }))
       .then((data) => {
@@ -75,17 +73,17 @@ function RealtimeDbBuilder(props) {
       })
       .catch(() => {});
 
-    onChangeRequest(newApiRequest);
+    onChangeRequest(newRequest);
   }, [firebaseRequest, connection]);
 
   useEffect(() => {
-    if (responses && responses.length > 0) {
-      const selectedResponse = responses.find((o) => o.id === dataRequest.id);
-      if (selectedResponse?.data) {
-        setResult(JSON.stringify(selectedResponse.data, null, 2));
+    if (stateDrs && stateDrs.length > 0) {
+      const selectedResponse = stateDrs.find((o) => o.id === firebaseRequest.id);
+      if (selectedResponse?.response) {
+        setResult(JSON.stringify(selectedResponse.response, null, 2));
       }
     }
-  }, [responses]);
+  }, [stateDrs, firebaseRequest]);
 
   const _onChangeRoute = (value) => {
     setFirebaseRequest({ ...firebaseRequest, route: value });
@@ -97,10 +95,29 @@ function RealtimeDbBuilder(props) {
     setRequestError(false);
 
     onSave(firebaseRequest).then(() => {
-      const useCache = !invalidateCache;
-      runDataRequest(params.projectId, params.chartId, dataRequest.id, useCache)
-        .then(() => {
+      const getCache = !invalidateCache;
+      dispatch(runDataRequest({
+        team_id: params.teamId,
+        dataset_id: firebaseRequest.dataset_id,
+        dataRequest_id: firebaseRequest.id,
+        getCache
+      }))
+        .then((data) => {
+          console.log(data);
+          if (data?.error) {
+            setRequestLoading(false);
+            setRequestError(data.error);
+            toast.error("The request failed. Please check your request 🕵️‍♂️");
+            setResult(JSON.stringify(data.error, null, 2));
+            return;
+          }
+
+          const result = data.payload;
+          if (result?.response?.dataRequest?.responseData?.data) {
+            setResult(JSON.stringify(result.response.dataRequest.responseData.data, null, 2));
+          }
           setRequestLoading(false);
+          setRequestSuccess(result.status);
         })
         .catch((error) => {
           setRequestLoading(false);
@@ -185,6 +202,7 @@ function RealtimeDbBuilder(props) {
               value={fullConnection.connectionString || `https://${projectId || "<your_project>"}.firebaseio.com/`}
               fullWidth
               className={"pointer-events-none"}
+              labelPlacement="outside"
             />
             <Spacer x={1} />
             <Input
@@ -195,13 +213,14 @@ function RealtimeDbBuilder(props) {
               variant="bordered"
               fullWidth
               disableAnimation
+              labelPlacement="outside"
             />
           </Row>
           {(requestSuccess || requestError) && (
             <>
               <Spacer y={2} />
               <Row>
-                {requestSuccess && (
+                {requestSuccess && requestSuccess.statusCode < 300 && (
                   <>
                     <Chip color="success">
                       {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
@@ -212,9 +231,9 @@ function RealtimeDbBuilder(props) {
                     </Chip>
                   </>
                 )}
-                {requestError && (
+                {requestSuccess?.statusCode > 300 && (
                   <Chip color="danger">
-                    {`${requestError.statusCode} ${requestError.statusText}`}
+                    {`${requestSuccess.statusCode} ${requestSuccess.statusText}`}
                   </Chip>
                 )}
               </Row>
@@ -320,6 +339,7 @@ function RealtimeDbBuilder(props) {
                 )}
                 variant="bordered"
                 fullWidth
+                labelPlacement="outside"
               />
             </Row>
           )}
@@ -416,6 +436,7 @@ function RealtimeDbBuilder(props) {
               }
               variant="bordered"
               fullWidth
+              labelPlacement="outside"
             />
           </Row>
         </div>
@@ -490,25 +511,9 @@ RealtimeDbBuilder.defaultProps = {
 RealtimeDbBuilder.propTypes = {
   connection: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
-  runDataRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   dataRequest: PropTypes.object,
   onDelete: PropTypes.func.isRequired,
-  responses: PropTypes.array.isRequired,
 };
 
-const mapStateToProps = (state) => {
-  return {
-    responses: state.dataRequest.responses,
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    runDataRequest: (projectId, chartId, drId, getCache) => {
-      return dispatch(runDataRequestAction(projectId, chartId, drId, getCache));
-    },
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(RealtimeDbBuilder);
+export default RealtimeDbBuilder;
