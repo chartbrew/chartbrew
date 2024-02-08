@@ -103,7 +103,6 @@ function RealtimeDbBuilder(props) {
         getCache
       }))
         .then((data) => {
-          console.log(data);
           if (data?.error) {
             setRequestLoading(false);
             setRequestError(data.error);
