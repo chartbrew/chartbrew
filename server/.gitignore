@@ -3,4 +3,5 @@ node_modules
 models/.env
 .eslintcache 
 .cache
+.connectionFiles
 uploads

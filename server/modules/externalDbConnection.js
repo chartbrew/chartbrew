@@ -1,4 +1,5 @@
 const Sequelize = require("sequelize");
+const fs = require("fs");
 
 module.exports = (connection) => {
   const name = connection.dbName;
@@ -17,13 +18,60 @@ module.exports = (connection) => {
     logging: false,
   };
 
+  let sslOptions = null;
+
   if (connection.subType === "timescaledb") {
-    connectionConfig.dialectOptions = {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false,
-      },
+    sslOptions = {
+      require: true,
+      rejectUnauthorized: false,
     };
+  }
+
+  if (connection.ssl) {
+    switch (connection.sslMode) {
+      case "require":
+        sslOptions = {
+          require: true,
+          rejectUnauthorized: false,
+        };
+        break;
+
+      case "verify-ca":
+        sslOptions = {
+          require: true,
+          rejectUnauthorized: true,
+          ca: connection.sslCa ? fs.readFileSync(connection.sslCa) : undefined,
+        };
+        break;
+
+      case "verify-full":
+        sslOptions = {
+          require: true,
+          rejectUnauthorized: true,
+          ca: connection.sslCa ? fs.readFileSync(connection.sslCa) : undefined,
+          key: connection.sslKey ? fs.readFileSync(connection.sslKey) : undefined,
+          cert: connection.sslCert ? fs.readFileSync(connection.sslCert) : undefined,
+        };
+        break;
+      case "prefer":
+        sslOptions = {
+          require: false,
+          rejectUnauthorized: false,
+        };
+        break;
+      case "disable":
+        sslOptions = {
+          require: false,
+          rejectUnauthorized: false,
+        };
+        break;
+      default:
+        sslOptions = {
+          require: true,
+          rejectUnauthorized: false,
+        };
+        break;
+    }
   }
 
   if (connectionString) {
@@ -44,8 +92,12 @@ module.exports = (connection) => {
 
     newConnectionString = `${protocol}${username}:${password}${hostAndOpt}`;
 
+    connectionConfig.dialectOptions = {
+      ssl: sslOptions,
+    };
+
     // check if a postgres connection needs SSL
-    if (newConnectionString.indexOf("sslmode=require") > -1 && dialect === "postgres") {
+    if (newConnectionString.indexOf("sslmode=require") > -1 && dialect === "postgres" && !connection.ssl) {
       newConnectionString = newConnectionString.replace("?sslmode=require", "");
       newConnectionString = newConnectionString.replace("&sslmode=require", "");
       connectionConfig.dialectOptions = {
@@ -59,6 +111,11 @@ module.exports = (connection) => {
     sequelize = new Sequelize(newConnectionString, connectionConfig);
   // else just connect with each field from the form
   } else {
+    if (sslOptions) {
+      connectionConfig.dialectOptions = {
+        ssl: sslOptions,
+      };
+    }
     sequelize = new Sequelize(name, username, password, connectionConfig);
   }
 

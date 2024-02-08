@@ -1,8 +1,13 @@
+const multer = require("multer");
+const fs = require("fs");
+
 const ConnectionController = require("../controllers/ConnectionController");
 const TeamController = require("../controllers/TeamController");
 const ProjectController = require("../controllers/ProjectController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
+
+const upload = multer({ dest: ".connectionFiles/" });
 
 module.exports = (app) => {
   const connectionController = new ConnectionController();
@@ -210,6 +215,30 @@ module.exports = (app) => {
   // -------------------------------------------
 
   /*
+  ** Route to add files to a connection
+  */
+  app.post("/team/:team_id/connections/:connection_id/files", verifyToken, checkPermissions("updateOwn"), upload.any(), (req, res) => {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).send({ error: "No files were uploaded" });
+    }
+
+    // update the fields with the paths of the files
+    const files = {};
+    req.files.forEach((file) => {
+      files[file.fieldname] = file.path;
+    });
+
+    return connectionController.update(req.params.connection_id, files)
+      .then((connection) => {
+        return res.status(200).send(connection);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // -------------------------------------------
+
+  /*
   ** Route to remove a connection from a project
   */
   app.delete("/team/:team_id/connections/:connection_id", verifyToken, checkPermissions("deleteOwn"), (req, res) => {
@@ -278,6 +307,48 @@ module.exports = (app) => {
         }
       })
       .catch((err) => {
+        return res.status(400).send(err.message || err);
+      });
+  });
+  // -------------------------------------------------
+
+  /*
+  ** Route to test any connection that need file (like SSL certificates)
+  */
+  app.post("/team/:team_id/connections/:type/test/files", verifyToken, checkPermissions("readOwn"), upload.any(), (req, res) => {
+    let connectionParams;
+    try {
+      connectionParams = JSON.parse(req.body.connection);
+    } catch (err) {
+      return res.status(400).send("Invalid connection parameters");
+    }
+
+    return connectionController.testRequest(connectionParams, { files: req.files })
+      .then((response) => {
+        // if done, remove the files
+        try {
+          req.files.forEach((file) => {
+            fs.unlink(file.path, () => {});
+          });
+        } catch (err) {
+          // do nothing
+        }
+
+        if (req.params.type === "api") {
+          return res.status(response.statusCode).send(response.body);
+        } else {
+          return res.status(200).send(response);
+        }
+      })
+      .catch((err) => {
+        // remove the files if there is an error
+        try {
+          req.files.forEach((file) => {
+            fs.unlink(file.path, () => { });
+          });
+        } catch (err) {
+          // do nothing
+        }
         return res.status(400).send(err.message || err);
       });
   });

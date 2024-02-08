@@ -22,7 +22,7 @@ import GaConnectionForm from "./GoogleAnalytics/GaConnectionForm";
 import StrapiConnectionForm from "./Strapi/StrapiConnectionForm";
 import CustomerioConnectionForm from "./Customerio/CustomerioConnectionForm";
 import TimescaleConnectionForm from "./Timescale/TimescaleConnectionForm";
-import { addConnection, getConnection, saveConnection } from "../../slices/connection";
+import { addConnection, addFilesToConnection, getConnection, saveConnection } from "../../slices/connection";
 import HelpBanner from "../../components/HelpBanner";
 import { Link, useSearchParams } from "react-router-dom";
 import { generateInviteUrl } from "../../slices/team";
@@ -105,10 +105,14 @@ function ConnectionWizard() {
     return true;
   });
 
-  const _onAddNewConnection = (data) => {
+  const _onAddNewConnection = (data, files) => {
     if (params.connectionId !== "new") {
       return dispatch(saveConnection({ team_id: params.teamId, connection: data }))
-        .then(() => {
+        .then(async () => {
+          if (files) {
+            await dispatch(addFilesToConnection({ team_id: params.teamId, connection_id: params.connectionId, files }));
+          }
+
           toast.success("Connection saved successfully");
           return true;
         })
@@ -122,6 +126,14 @@ function ConnectionWizard() {
         connection: { ...data, team_id: params.teamId }
       }))
       .then((newConnection) => {
+        if (newConnection.error) {
+          return false;
+        }
+
+        if (files) {
+          dispatch(addFilesToConnection({ team_id: params.teamId, connection_id: newConnection.payload.id, files }));
+        }
+
         if (data.type === "googleAnalytics") {
           navigate(`/${params.teamId}/connection/${newConnection.payload.id}`);
           return true;
