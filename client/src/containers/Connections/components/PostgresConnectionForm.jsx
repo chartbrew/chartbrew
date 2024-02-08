@@ -354,18 +354,20 @@ function PostgresConnectionForm(props) {
               <Select
                 variant="bordered"
                 label="SSL Mode"
-                value={connection.sslMode || "prefer"}
-                onChange={(e) => {
-                  setConnection({ ...connection, sslMode: e.target.value });
+                value={connection.sslMode || "require"}
+                onSelectionChange={(keys) => {
+                  setConnection({ ...connection, sslMode: keys.currentKey });
                 }}
                 className="w-full md:w-1/2 lg:w-1/3"
                 size="sm"
+                selectionMode="single"
+                disallowEmptySelection
               >
-                <SelectItem value="disable">{"Disable"}</SelectItem>
-                <SelectItem value="prefer">{"Prefer"}</SelectItem>
-                <SelectItem value="require">{"Require"}</SelectItem>
-                <SelectItem value="verify-ca">{"Verify CA"}</SelectItem>
-                <SelectItem value="verify-full">{"Verify Full"}</SelectItem>
+                <SelectItem key="require">{"Require"}</SelectItem>
+                <SelectItem key="disable">{"Disable"}</SelectItem>
+                <SelectItem key="prefer">{"Prefer"}</SelectItem>
+                <SelectItem key="verify-ca">{"Verify CA"}</SelectItem>
+                <SelectItem key="verify-full">{"Verify Full"}</SelectItem>
               </Select>
             </Row>
             <Spacer y={2} />
@@ -410,7 +412,7 @@ function PostgresConnectionForm(props) {
               </Button>
               <Spacer x={2} />
               {sslCerts.sslRootCert && (
-                <span className="text-sm">{sslCerts.sslClientCert.name}</span>
+                <span className="text-sm">{sslCerts.sslClientCert?.name}</span>
               )}
               {sslCertsErrors.sslClientCert && (
                 <span className="text-sm text-danger">
