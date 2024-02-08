@@ -219,13 +219,13 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       defaultValue: "require",
     },
-    sslRootCert: {
+    sslCa: {
       type: DataTypes.STRING,
     },
-    sslClientCert: {
+    sslCert: {
       type: DataTypes.STRING,
     },
-    sslClientKey: {
+    sslKey: {
       type: DataTypes.STRING,
     },
   }, {

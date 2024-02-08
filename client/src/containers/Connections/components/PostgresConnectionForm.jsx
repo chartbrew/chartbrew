@@ -16,8 +16,8 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
-import { LuExternalLink, LuUpload } from "react-icons/lu";
-import { testRequest } from "../../../slices/connection";
+import { LuCheckCircle2, LuExternalLink, LuUpload } from "react-icons/lu";
+import { testRequest, testRequestWithFiles } from "../../../slices/connection";
 
 /*
   A form for creating a new Postgres connection
@@ -34,14 +34,14 @@ function PostgresConnectionForm(props) {
   const [formStyle, setFormStyle] = useState("string");
   const [testResult, setTestResult] = useState(null);
   const [sslCerts, setSslCerts] = useState({
-    sslRootCert: null,
-    sslClientCert: null,
-    sslClientKey: null,
+    sslCa: null,
+    sslCert: null,
+    sslKey: null,
   });
   const [sslCertsErrors, setSslCertsErrors] = useState({
-    sslRootCert: null,
-    sslClientCert: null,
-    sslClientKey: null,
+    sslCa: null,
+    sslCert: null,
+    sslKey: null,
   });
 
   const isDark = useThemeDetector();
@@ -64,24 +64,33 @@ function PostgresConnectionForm(props) {
     }
   };
 
-  const _onTestRequest = (data) => {
+  const _onTestRequest = async (data) => {
     const newTestResult = {};
-    return dispatch(testRequest({ team_id: params.teamId, connection: data }))
-      .then(async (response) => {
-        newTestResult.status = response.payload.status;
-        newTestResult.body = await response.payload.text();
+    let response;
+    
+    if (data.ssl && sslCerts.sslCa) {
+      response = await dispatch(testRequestWithFiles({
+        team_id: params.teamId,
+        connection: data,
+        files: sslCerts
+      }));
+    } else {
+      response = await dispatch(testRequest({ team_id: params.teamId, connection: data }));
+    }
+    
+    newTestResult.status = response.payload.status;
+    newTestResult.body = await response.payload.text();
 
-        try {
-          newTestResult.body = JSON.parse(newTestResult.body);
-          newTestResult.body = JSON.stringify(newTestResult, null, 2);
-        } catch (e) {
-          // the response is not in JSON format
-        }
+    try {
+      newTestResult.body = JSON.parse(newTestResult.body);
+      newTestResult.body = JSON.stringify(newTestResult, null, 2);
+    } catch (e) {
+      // the response is not in JSON format
+    }
 
-        setTestResult(newTestResult);
-        return Promise.resolve(newTestResult);
-      })
-      .catch(() => { });
+    setTestResult(newTestResult);
+
+    return Promise.resolve(newTestResult);
   };
 
   const _onCreateConnection = (test = false) => {
@@ -122,7 +131,7 @@ function PostgresConnectionForm(props) {
           .catch(() => setTestLoading(false));
       } else {
         setLoading(true);
-        onComplete(newConnection)
+        onComplete(newConnection, sslCerts)
           .then(() => setLoading(false))
           .catch(() => setLoading(false));
       }
@@ -140,41 +149,49 @@ function PostgresConnectionForm(props) {
   const _selectRootCert = (e) => {
     const file = e.target.files[0];
     if (!isValidExtension(file.name)) {
-      setSslCertsErrors({ ...sslCertsErrors, sslRootCert: "Invalid file type. Try .crt or .pem" });
+      setSslCertsErrors({ ...sslCertsErrors, sslCa: "Invalid file type. Try .crt or .pem" });
       return;
     }
     if (!isValidFileSize(file)) {
-      setSslCertsErrors({ ...sslCertsErrors, sslRootCert: "File size is too large. Max size is 8KB" });
+      setSslCertsErrors({ ...sslCertsErrors, sslCa: "File size is too large. Max size is 8KB" });
       return;
     }
 
-    setSslCerts({ ...sslCerts, sslRootCert: file });
+    setSslCerts({ ...sslCerts, sslCa: file });
   };
 
   const _selectClientCert = (e) => {
     const file = e.target.files[0];
     if (!isValidExtension(file.name)) {
-      setSslCertsErrors({ ...sslCertsErrors, sslClientCert: "Invalid file type. Try .crt or .pem" });
+      setSslCertsErrors({ ...sslCertsErrors, sslCert: "Invalid file type. Try .crt or .pem" });
       return;
     }
     if (!isValidFileSize(file)) {
-      setSslCertsErrors({ ...sslCertsErrors, sslClientCert: "File size is too large. Max size is 8KB" });
+      setSslCertsErrors({ ...sslCertsErrors, sslCert: "File size is too large. Max size is 8KB" });
       return;
     }
-    setSslCerts({ ...sslCerts, sslClientCert: file });
+    setSslCerts({ ...sslCerts, sslCert: file });
   };
 
   const _selectClientKey = (e) => {
     const file = e.target.files[0];
     if (!isValidExtension(file.name, [".key"])) {
-      setSslCertsErrors({ ...sslCertsErrors, sslClientKey: "Invalid file type. Try .key" });
+      setSslCertsErrors({ ...sslCertsErrors, sslKey: "Invalid file type. Try .key" });
       return;
     }
     if (!isValidFileSize(file)) {
-      setSslCertsErrors({ ...sslCertsErrors, sslClientKey: "File size is too large. Max size is 8KB" });
+      setSslCertsErrors({ ...sslCertsErrors, sslKey: "File size is too large. Max size is 8KB" });
       return;
     }
-    setSslCerts({ ...sslCerts, sslClientKey: file });
+    setSslCerts({ ...sslCerts, sslKey: file });
+  };
+
+  const _onChangeSSL = (checked) => {
+    if (checked && !connection.sslMode) {
+      setConnection({ ...connection, ssl: checked, sslMode: "require" });
+    } else {
+      setConnection({ ...connection, ssl: checked });
+    }
   };
 
   return (
@@ -338,10 +355,9 @@ function PostgresConnectionForm(props) {
         <Row align="center">
           <Switch
             label="SSL"
+            isSelected={connection.ssl || false}
             checked={connection.ssl || false}
-            onChange={(e) => {
-              setConnection({ ...connection, ssl: e.target.checked });
-            }}
+            onChange={(e) => _onChangeSSL(e.target.checked)}
             size="sm"
           >
             {"Enable SSL"}
@@ -354,7 +370,7 @@ function PostgresConnectionForm(props) {
               <Select
                 variant="bordered"
                 label="SSL Mode"
-                value={connection.sslMode || "require"}
+                selectedKeys={[connection.sslMode]}
                 onSelectionChange={(keys) => {
                   setConnection({ ...connection, sslMode: keys.currentKey });
                 }}
@@ -383,16 +399,19 @@ function PostgresConnectionForm(props) {
                 startContent={<LuUpload />}
                 onClick={() => document.getElementById("rootCertInput").click()}
               >
-                {"SSL root certificate (.pem)"}
+                {"SSL root certificate (.pem, .crt)"}
               </Button>
               <Spacer x={2} />
-              {sslCerts.sslRootCert && (
-                <span className="text-sm">{sslCerts.sslRootCert.name}</span>
+              {sslCerts.sslCa && (
+                <span className="text-sm">{sslCerts.sslCa.name}</span>
               )}
-              {sslCertsErrors.sslRootCert && (
+              {sslCertsErrors.sslCa && (
                 <span className="text-sm text-danger">
-                  {sslCertsErrors.sslRootCert}
+                  {sslCertsErrors.sslCa}
                 </span>
+              )}
+              {!sslCertsErrors.sslCa && connection.sslCa && (
+                <LuCheckCircle2 className="text-success" size={20} />
               )}
             </Row>
             <Spacer y={2} />
@@ -408,16 +427,19 @@ function PostgresConnectionForm(props) {
                 startContent={<LuUpload />}
                 onClick={() => document.getElementById("clientCertInput").click()}
               >
-                {"SSL client certificate (.pem)"}
+                {"SSL client certificate (.pem, .crt)"}
               </Button>
               <Spacer x={2} />
-              {sslCerts.sslRootCert && (
-                <span className="text-sm">{sslCerts.sslClientCert?.name}</span>
+              {sslCerts.sslCert && (
+                <span className="text-sm">{sslCerts.sslCert.name}</span>
               )}
-              {sslCertsErrors.sslClientCert && (
+              {sslCertsErrors.sslCert && (
                 <span className="text-sm text-danger">
-                  {sslCertsErrors.sslClientCert}
+                  {sslCertsErrors.sslCert}
                 </span>
+              )}
+              {!sslCertsErrors.sslCert && connection.sslCert && (
+                <LuCheckCircle2 className="text-success" size={20} />
               )}
             </Row>
             <Spacer y={2} />
@@ -433,16 +455,19 @@ function PostgresConnectionForm(props) {
                 startContent={<LuUpload />}
                 onClick={() => document.getElementById("clientKeyInput").click()}
               >
-                {"SSL client key (PKCS-8/DER)"}
+                {"SSL client key (.key)"}
               </Button>
               <Spacer x={2} />
-              {sslCerts.sslClientKey && (
-                <span className="text-sm">{sslCerts.sslClientKey.name}</span>
+              {sslCerts.sslKey && (
+                <span className="text-sm">{sslCerts.sslKey.name}</span>
               )}
-              {sslCertsErrors.sslClientKey && (
+              {sslCertsErrors.sslKey && (
                 <span className="text-sm text-danger">
-                  {sslCertsErrors.sslClientKey}
+                  {sslCertsErrors.sslKey}
                 </span>
+              )}
+              {!sslCertsErrors.sslKey && connection.sslKey && (
+                <LuCheckCircle2 className="text-success" size={20} />
               )}
             </Row>
           </>

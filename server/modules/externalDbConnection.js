@@ -32,14 +32,14 @@ module.exports = (connection) => {
       case "require":
         sslOptions = {
           require: true,
-          rejectUnauthorized: false, // Corresponds to sslmode=require
+          rejectUnauthorized: false,
         };
         break;
 
       case "verify-ca":
         sslOptions = {
           require: true,
-          rejectUnauthorized: true, // You want to check the CA but not necessarily the hostname
+          rejectUnauthorized: true,
           ca: connection.sslCa ? fs.readFileSync(connection.sslCa) : undefined,
         };
         break;
@@ -47,13 +47,19 @@ module.exports = (connection) => {
       case "verify-full":
         sslOptions = {
           require: true,
-          rejectUnauthorized: true, // Full verification including hostname
+          rejectUnauthorized: true,
           ca: connection.sslCa ? fs.readFileSync(connection.sslCa) : undefined,
           key: connection.sslKey ? fs.readFileSync(connection.sslKey) : undefined,
           cert: connection.sslCert ? fs.readFileSync(connection.sslCert) : undefined,
         };
         break;
       case "prefer":
+        sslOptions = {
+          require: false,
+          rejectUnauthorized: false,
+        };
+        break;
+      case "disable":
         sslOptions = {
           require: false,
           rejectUnauthorized: false,

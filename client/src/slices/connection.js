@@ -77,6 +77,32 @@ export const saveConnection = createAsyncThunk(
   }
 );
 
+export const addFilesToConnection = createAsyncThunk(
+  "connection/addFilesToConnection",
+  async ({ team_id, connection_id, files }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/team/${team_id}/connections/${connection_id}/files`;
+    const formData = new FormData();
+
+    Object.keys(files).forEach((key) => {
+      formData.append(key, files[key]);
+    });
+
+    const headers = new Headers({
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    });
+    
+    const response = await fetch(url, { headers, method: "POST", body: formData });
+    if (!response.ok) {
+      throw new Error(response.status);
+    }
+    
+    const data = await response.json();
+    return data;
+  }
+);
+
 export const testRequest = createAsyncThunk(
   "connection/testConnection",
   async ({ team_id, connection }) => {
@@ -91,6 +117,30 @@ export const testRequest = createAsyncThunk(
     });
 
     const response = await fetch(url, { headers, method: "POST", body });
+
+    return response;
+  }
+);
+
+export const testRequestWithFiles = createAsyncThunk(
+  "connection/testConnectionWithFiles",
+  async ({ team_id, connection, files }) => {
+    const token = getAuthToken();
+    const url = `${API_HOST}/team/${team_id}/connections/${connection.type}/test/files`;
+    const formData = new FormData();
+    formData.append("connection", JSON.stringify(connection));
+    if (files) {
+      formData.append("sslCa", files.sslCa);
+      formData.append("sslCert", files.sslCert);
+      formData.append("sslKey", files.sslKey);
+    }
+
+    const headers = new Headers({
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    });
+
+    const response = await fetch(url, { headers, method: "POST", body: formData });
 
     return response;
   }
@@ -212,6 +262,18 @@ export const connectionSlice = createSlice({
       state.loading = false;
     })
     builder.addCase(testRequest.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    })
+
+    // testRequestWithFiles
+    builder.addCase(testRequestWithFiles.pending, (state) => {
+      state.loading = true;
+    })
+    builder.addCase(testRequestWithFiles.fulfilled, (state) => {
+      state.loading = false;
+    })
+    builder.addCase(testRequestWithFiles.rejected, (state) => {
       state.loading = false;
       state.error = true;
     })

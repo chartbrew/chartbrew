@@ -12,15 +12,15 @@ module.exports = {
       defaultValue: "require"
     });
 
-    await queryInterface.addColumn("Connection", "sslRootCert", {
+    await queryInterface.addColumn("Connection", "sslCa", {
       type: Sequelize.STRING,
     });
 
-    await queryInterface.addColumn("Connection", "sslClientCert", {
+    await queryInterface.addColumn("Connection", "sslCert", {
       type: Sequelize.STRING,
     });
 
-    await queryInterface.addColumn("Connection", "sslClientKey", {
+    await queryInterface.addColumn("Connection", "sslKey", {
       type: Sequelize.STRING,
     });
   },
@@ -28,8 +28,8 @@ module.exports = {
   async down(queryInterface) {
     await queryInterface.removeColumn("Connection", "ssl");
     await queryInterface.removeColumn("Connection", "sslMode");
-    await queryInterface.removeColumn("Connection", "sslRootCert");
-    await queryInterface.removeColumn("Connection", "sslClientCert");
-    await queryInterface.removeColumn("Connection", "sslClientKey");
+    await queryInterface.removeColumn("Connection", "sslCa");
+    await queryInterface.removeColumn("Connection", "sslCert");
+    await queryInterface.removeColumn("Connection", "sslKey");
   }
 };
