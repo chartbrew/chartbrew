@@ -7,9 +7,22 @@ const ProjectController = require("../controllers/ProjectController");
 const verifyToken = require("../modules/verifyToken");
 const accessControl = require("../modules/accessControl");
 
-const upload = multer({ dest: ".connectionFiles/" });
+const upload = multer({
+  dest: ".connectionFiles/",
+  limits: {
+    fileSize: 1024 * 1024, // 1MB
+  }
+});
 
 module.exports = (app) => {
+  app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ error: "File size limit exceeded." });
+    }
+    // Handle other errors or pass them to the default Express error handler
+    return next(err);
+  });
+
   const connectionController = new ConnectionController();
   const projectController = new ProjectController();
   const teamController = new TeamController();
