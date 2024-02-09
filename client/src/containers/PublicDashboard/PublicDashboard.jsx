@@ -71,6 +71,8 @@ import Text from "../../components/Text";
 import Row from "../../components/Row";
 import Container from "../../components/Container";
 import useThemeDetector from "../../modules/useThemeDetector";
+import ReportSettings from "./components/ReportSettings";
+
 
 const ResponsiveGridLayout = WidthProvider(Responsive, {
   measureBeforeMount: true,
@@ -557,8 +559,11 @@ function PublicDashboard(props) {
       </Helmet>
 
       {editorVisible && !preview && (
-        <aside className="fixed top-0 left-0 z-40 w-96 h-screen" aria-label="Sidebar">
-          <div className="h-full flex flex-row px-3 py-2 overflow-y-auto bg-gray-50 dark:bg-gray-800">
+        <aside
+          className="fixed top-0 left-0 z-40 w-96 h-screen"
+          aria-label="Sidebar"
+        >
+          <div className="h-full flex flex-row px-3 py-2 bg-gray-50 dark:bg-gray-800">
             <div className="flex flex-col gap-4 p-2 w-16">
               <div>
                 <Tooltip content="Back to your dashboard" placement="right-end">
@@ -680,34 +685,8 @@ function PublicDashboard(props) {
                 </>
               )}
             </div>
-
-            <div className="h-screen py-8 overflow-y-auto bg-white border-l border-r w-80 z-[50]">
-              <h4 className="px-5 text-lg font-semibold text-gray-800 dark:text-white">
-                Report setting
-                <Divider className="mt-2 w-40 " />
-              </h4>
-
-              <div className="mt-5">
-                <h4 className="px-5 text-md font-semibold text-gray-800">
-                  Change Logo
-                </h4>
-                <div className="px-5 flex items-start justify-start mt-2 ">
-                  <Link className="text-foreground cursor-pointer">
-                    <div className="max-w-sm p-6 bg-content2 border-dashed border-2 border-gray-400 rounded-lg text-center">
-                      <div className="flex items-center px-5">
-                        <div {...getRootProps()}>
-                          <input {...getInputProps()} />
-                          <LuImagePlus size={30} />
-                        </div>
-                      </div>
-                      <div>
-                        <p className="mt-2 text-sm">Upload your</p>
-                        <p className="text-sm">logo</p>
-                      </div>
-                    </div>
-                  </Link>
-                </div>
-              </div>
+            <div className="h-screen py-4 overflow-y-auto bg-white border-l border-r w-86 z-[50] rouned-xl">
+              <ReportSettings />
             </div>
           </div>
         </aside>
@@ -809,231 +788,241 @@ function PublicDashboard(props) {
 
       <div className={editorVisible && !preview ? "ml-96" : ""}>
         <div className="">
-        <Navbar
-          isBordered
-          maxWidth={"full"}
-          isBlurred={false}
-          className={"flex-grow-0 justify-between z-20"}
-          style={{
-            backgroundColor:
-              newChanges.backgroundColor ||
-              project.backgroundColor ||
-              "#FFFFFF",
-          }}
-        >
-          <NavbarBrand>
-            <div className="flex items-center gap-4">
-              {editorVisible && !preview && (
-                <div
-                  className="dashboard-logo-container"
-                  style={{ height: 45, width: 45 * logoAspectRatio }}
-                >
-                  <img
-                    onLoad={_onLoadLogo}
-                    className="dashboard-logo"
-                    src={logoPreview || newChanges.logo || logo}
-                    alt={`${project.name} Logo`}
-                    height={45}
-                    width={45 * logoAspectRatio}
-                  />
-                </div>
-              )}
-
-              {(!editorVisible || preview) && (
-                <div className="dashboard-logo-container">
-                  <a
-                    href={newChanges.logoLink || project.logoLink || "#"}
-                    target="_blank"
-                    rel="noreferrer"
+          <Navbar
+            isBordered
+            maxWidth={"full"}
+            isBlurred={false}
+            className={"flex-grow-0 justify-between z-20"}
+            style={{
+              backgroundColor:
+                newChanges.backgroundColor ||
+                project.backgroundColor ||
+                "#FFFFFF",
+            }}
+          >
+            <NavbarBrand>
+              <div className="flex items-center gap-4">
+                {editorVisible && !preview && (
+                  <div
+                    className="dashboard-logo-container"
+                    style={{ height: 45, width: 45 * logoAspectRatio }}
                   >
                     <img
+                      onLoad={_onLoadLogo}
                       className="dashboard-logo"
-                      src={project.logo ? `${API_HOST}/${project.logo}` : logo}
+                      src={logoPreview || newChanges.logo || logo}
+                      alt={`${project.name} Logo`}
                       height={45}
                       width={45 * logoAspectRatio}
-                      alt={`${project.name} Logo`}
                     />
-                  </a>
+                  </div>
+                )}
+
+                {(!editorVisible || preview) && (
+                  <div className="dashboard-logo-container">
+                    <a
+                      href={newChanges.logoLink || project.logoLink || "#"}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <img
+                        className="dashboard-logo"
+                        src={
+                          project.logo ? `${API_HOST}/${project.logo}` : logo
+                        }
+                        height={45}
+                        width={45 * logoAspectRatio}
+                        alt={`${project.name} Logo`}
+                      />
+                    </a>
+                  </div>
+                )}
+
+                <div className="flex flex-col">
+                  <span
+                    className="text-lg font-bold"
+                    style={{
+                      color:
+                        newChanges.titleColor ||
+                        project.titleColor ||
+                        "#000000",
+                    }}
+                  >
+                    {newChanges.dashboardTitle ||
+                      project.dashboardTitle ||
+                      project.name}
+                  </span>
+                  {!editorVisible && project.description && (
+                    <span
+                      className="dashboard-sub-title"
+                      style={{
+                        color:
+                          newChanges.titleColor ||
+                          project.titleColor ||
+                          "#000000",
+                      }}
+                    >
+                      {project.description}
+                    </span>
+                  )}
+                  {editorVisible && newChanges.description && (
+                    <span
+                      className="dashboard-sub-title"
+                      style={{
+                        color:
+                          newChanges.titleColor ||
+                          project.titleColor ||
+                          "#000000",
+                      }}
+                    >
+                      {newChanges.description}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </NavbarBrand>
+            <NavbarContent justify="end">
+              {!isSaved && !preview && (
+                <div className="hidden sm:block">
+                  <Button
+                    color="success"
+                    endContent={<LuCheckCircle />}
+                    isLoading={saveLoading}
+                    onClick={_onSaveChanges}
+                  >
+                    Save changes
+                  </Button>
+                </div>
+              )}
+              {preview && (
+                <NavbarItem>
+                  <Button
+                    onClick={() => setPreview(false)}
+                    endContent={<LuXCircle />}
+                    color="primary"
+                    variant="faded"
+                  >
+                    Exit preview
+                  </Button>
+                </NavbarItem>
+              )}
+
+              {project?.Team?.allowReportRefresh && (
+                <NavbarItem className="hidden sm:block">
+                  <Button
+                    onClick={() => _onRefreshCharts()}
+                    endContent={<LuRefreshCw />}
+                    isLoading={refreshLoading}
+                    size="sm"
+                    color="primary"
+                  >
+                    Refresh charts
+                  </Button>
+                </NavbarItem>
+              )}
+            </NavbarContent>
+          </Navbar>
+
+          {charts && charts.length > 0 && _isOnReport() && (
+            <div className="main-container relative p-2 pt-4 pb-10 md:pt-4 md:pb-10 md:pl-4 md:pr-4">
+              {loading && (
+                <Container style={styles.container}>
+                  <Spacer y={4} />
+                  <Row align="center" justify="center">
+                    <CircularProgress size="lg" aria-label="Loading" />
+                  </Row>
+                </Container>
+              )}
+
+              {layouts && charts?.length > 0 && (
+                <div className="w-full">
+                  <ResponsiveGridLayout
+                    className="layout"
+                    layouts={layouts}
+                    breakpoints={{
+                      lg: 1200,
+                      md: 996,
+                      sm: 768,
+                      xs: 480,
+                      xxs: 0,
+                    }}
+                    cols={{ lg: 12, md: 10, sm: 8, xs: 6, xxs: 4 }}
+                    onLayoutChange={() => {}}
+                    rowHeight={150}
+                    isDraggable={false}
+                    isResizable={false}
+                  >
+                    {charts
+                      .filter((c) => !c.draft && c.onReport)
+                      .map((chart) => (
+                        <div key={chart.id}>
+                          <Chart
+                            isPublic
+                            chart={chart}
+                            charts={charts}
+                            className="chart-card"
+                            showExport={project.Team?.allowReportExport}
+                            password={
+                              project.password ||
+                              window.localStorage.getItem("reportPassword")
+                            }
+                          />
+                        </div>
+                      ))}
+                  </ResponsiveGridLayout>
                 </div>
               )}
 
-              <div className="flex flex-col">
-                <span
-                  className="text-lg font-bold"
-                  style={{
-                    color:
-                      newChanges.titleColor || project.titleColor || "#000000",
-                  }}
-                >
-                  {newChanges.dashboardTitle ||
-                    project.dashboardTitle ||
-                    project.name}
-                </span>
-                {!editorVisible && project.description && (
-                  <span
-                    className="dashboard-sub-title"
-                    style={{
-                      color:
-                        newChanges.titleColor ||
-                        project.titleColor ||
-                        "#000000",
-                    }}
+              {project.Team && project.Team.showBranding && (
+                <div className="footer-content mt-4 pr-4 flex justify-end">
+                  <Link
+                    className={`flex items-start !text-[${
+                      newChanges.titleColor || "black"
+                    }]`}
+                    href={"https://chartbrew.com?ref=chartbrew_report"}
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
-                    {project.description}
-                  </span>
-                )}
-                {editorVisible && newChanges.description && (
-                  <span
-                    className="dashboard-sub-title"
-                    style={{
-                      color:
-                        newChanges.titleColor ||
-                        project.titleColor ||
-                        "#000000",
-                    }}
-                  >
-                    {newChanges.description}
-                  </span>
-                )}
-              </div>
+                    <span
+                      className="text-sm"
+                      style={{
+                        color:
+                          newChanges.titleColor ||
+                          project.titleColor ||
+                          "#000000",
+                      }}
+                    >
+                      {"Powered by "}
+                    </span>
+                    <Spacer x={1} />
+                    <span
+                      className="text-sm"
+                      style={{
+                        color:
+                          newChanges.titleColor ||
+                          project.titleColor ||
+                          "#000000",
+                      }}
+                    >
+                      <strong>{"Chart"}</strong>
+                    </span>
+                    <span
+                      className="text-sm"
+                      style={{
+                        color:
+                          newChanges.titleColor ||
+                          project.titleColor ||
+                          "#000000",
+                      }}
+                    >
+                      {"brew"}
+                    </span>
+                  </Link>
+                </div>
+              )}
             </div>
-          </NavbarBrand>
-          <NavbarContent justify="end">
-            {!isSaved && !preview && (
-              <div className="hidden sm:block">
-                <Button
-                  color="success"
-                  endContent={<LuCheckCircle />}
-                  isLoading={saveLoading}
-                  onClick={_onSaveChanges}
-                >
-                  Save changes
-                </Button>
-              </div>
-            )}
-            {preview && (
-              <NavbarItem>
-                <Button
-                  onClick={() => setPreview(false)}
-                  endContent={<LuXCircle />}
-                  color="primary"
-                  variant="faded"
-                >
-                  Exit preview
-                </Button>
-              </NavbarItem>
-            )}
-
-            {project?.Team?.allowReportRefresh && (
-              <NavbarItem className="hidden sm:block">
-                <Button
-                  onClick={() => _onRefreshCharts()}
-                  endContent={<LuRefreshCw />}
-                  isLoading={refreshLoading}
-                  size="sm"
-                  color="primary"
-                >
-                  Refresh charts
-                </Button>
-              </NavbarItem>
-            )}
-          </NavbarContent>
-        </Navbar>
-
-        {charts && charts.length > 0 && _isOnReport() && (
-          <div className="main-container relative p-2 pt-4 pb-10 md:pt-4 md:pb-10 md:pl-4 md:pr-4">
-            {loading && (
-              <Container style={styles.container}>
-                <Spacer y={4} />
-                <Row align="center" justify="center">
-                  <CircularProgress size="lg" aria-label="Loading" />
-                </Row>
-              </Container>
-            )}
-
-            {layouts && charts?.length > 0 && (
-              <div className="w-full">
-                <ResponsiveGridLayout
-                  className="layout"
-                  layouts={layouts}
-                  breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                  cols={{ lg: 12, md: 10, sm: 8, xs: 6, xxs: 4 }}
-                  onLayoutChange={() => {}}
-                  rowHeight={150}
-                  isDraggable={false}
-                  isResizable={false}
-                >
-                  {charts
-                    .filter((c) => !c.draft && c.onReport)
-                    .map((chart) => (
-                      <div key={chart.id}>
-                        <Chart
-                          isPublic
-                          chart={chart}
-                          charts={charts}
-                          className="chart-card"
-                          showExport={project.Team?.allowReportExport}
-                          password={
-                            project.password ||
-                            window.localStorage.getItem("reportPassword")
-                          }
-                        />
-                      </div>
-                    ))}
-                </ResponsiveGridLayout>
-              </div>
-            )}
-
-            {project.Team && project.Team.showBranding && (
-              <div className="footer-content mt-4 pr-4 flex justify-end">
-                <Link
-                  className={`flex items-start !text-[${
-                    newChanges.titleColor || "black"
-                  }]`}
-                  href={"https://chartbrew.com?ref=chartbrew_report"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <span
-                    className="text-sm"
-                    style={{
-                      color:
-                        newChanges.titleColor ||
-                        project.titleColor ||
-                        "#000000",
-                    }}
-                  >
-                    {"Powered by "}
-                  </span>
-                  <Spacer x={1} />
-                  <span
-                    className="text-sm"
-                    style={{
-                      color:
-                        newChanges.titleColor ||
-                        project.titleColor ||
-                        "#000000",
-                    }}
-                  >
-                    <strong>{"Chart"}</strong>
-                  </span>
-                  <span
-                    className="text-sm"
-                    style={{
-                      color:
-                        newChanges.titleColor ||
-                        project.titleColor ||
-                        "#000000",
-                    }}
-                  >
-                    {"brew"}
-                  </span>
-                </Link>
-              </div>
-            )}
-          </div>
-        )}
-      </div>  
+          )}
+        </div>
       </div>
 
       {project && (
@@ -1124,230 +1113,3 @@ const mapStateToProps = (state) => ({
 const mapDispatchToProps = () => ({});
 
 export default connect(mapStateToProps, mapDispatchToProps)(PublicDashboard);
-
-{
-  /* <Modal
-isOpen={editingTitle}
-onClose={() => setEditingTitle(false)}
-size="2xl"
->
-<ModalContent>
-  <ModalHeader>
-    <Text size="h4">Edit the title and description</Text>
-  </ModalHeader>
-  <ModalBody>
-    <Row>
-      <Input
-        label="Dashboard title"
-        placeholder="Enter your dashboard title"
-        value={newChanges.dashboardTitle}
-        onChange={(e) => {
-          setNewChanges({
-            ...newChanges,
-            dashboardTitle: e.target.value,
-          });
-        }}
-        variant="bordered"
-        fullWidth
-      />
-    </Row>
-    <Row>
-      <Input
-        label="Dashboard description"
-        placeholder="Enter a short description"
-        value={newChanges.description}
-        onChange={(e) => {
-          setNewChanges({ ...newChanges, description: e.target.value });
-        }}
-        variant="bordered"
-        fullWidth
-      />
-    </Row>
-    <Row>
-      <Input
-        label="Company website URL"
-        placeholder="https://example.com"
-        value={newChanges.logoLink}
-        onChange={(e) => {
-          setNewChanges({ ...newChanges, logoLink: e.target.value });
-        }}
-        variant="bordered"
-        fullWidth
-      />
-    </Row>
-    <Spacer y={1} />
-    <Divider />
-    <Spacer y={1} />
-    <Row>
-      <Text b>Custom CSS</Text>
-    </Row>
-    <Row>
-      <Text size={"sm"}>Some of the main classes on the page:</Text>
-    </Row>
-    <Row wrap="wrap" className={"gap-1"}>
-      <Chip>.main-container</Chip>
-      <Chip>.title-container</Chip>
-      <Chip>.dashboard-title</Chip>
-      <Chip>.dashboard-sub-title</Chip>
-      <Chip>.chart-grid</Chip>
-      <Chip>.chart-container</Chip>
-      <Chip>.chart-card</Chip>
-    </Row>
-    <Row>
-      <div style={{ width: "100%" }}>
-        <AceEditor
-          mode="css"
-          theme={isDark ? "one_dark" : "tomorrow"}
-          height="200px"
-          width="none"
-          value={newChanges.headerCode}
-          style={{ borderRadius: 10 }}
-          onChange={(value) => {
-            setNewChanges({ ...newChanges, headerCode: value });
-          }}
-          name="queryEditor"
-          editorProps={{ $blockScrolling: true }}
-          className="rounded-md border-1 border-solid border-content3"
-        />
-      </div>
-    </Row>
-  </ModalBody>
-  <ModalFooter>
-    <Button color="primary" onClick={() => setEditingTitle(false)}>
-      Preview changes
-    </Button>
-  </ModalFooter>
-</ModalContent>
-</Modal> */
-}
-
-// {editorVisible && !preview && (
-//   <aside
-//     className="fixed top-0 left-0 z-40 w-16 h-screen"
-//     aria-label="Sidebar"
-//   >
-//     <div className="h-full px-3 py-2 overflow-y-auto bg-gray-50 dark:bg-gray-800">
-//       <div className="flex flex-col gap-4 p-2">
-//         <div>
-//           <Tooltip content="Back to your dashboard" placement="right-end">
-//             <LinkDom to={`/${project.team_id}/${project.id}/dashboard`}>
-//               <Link className="text-foreground cursor-pointer">
-//                 <LuArrowLeftSquare size={26} />
-//               </Link>
-//             </LinkDom>
-//           </Tooltip>
-//         </div>
-
-//         <Divider />
-
-//         <div>
-//           <Tooltip content="Preview dashboard" placement="right-end">
-//             <Link
-//               className="text-foreground cursor-pointer"
-//               onClick={() => setPreview(true)}
-//             >
-//               <LuEye size={26} />
-//             </Link>
-//           </Tooltip>
-//         </div>
-
-//         {project?.id && _canAccess("projectAdmin") && (
-//           <>
-//             <div>
-//               <Tooltip content="Change logo" placement="right-end">
-//                 <Link className="text-foreground cursor-pointer">
-//                   <div {...getRootProps()}>
-//                     <input {...getInputProps()} />
-//                     <LuImagePlus size={26} />
-//                   </div>
-//                 </Link>
-//               </Tooltip>
-//             </div>
-//             <div>
-//               <Popover placement="right-end">
-//                 <PopoverTrigger>
-//                   <Link className="text-foreground cursor-pointer">
-//                     <LuPalette size={26} />
-//                   </Link>
-//                 </PopoverTrigger>
-//                 <PopoverContent>
-//                   <div className="p-4">
-//                     <Row>
-//                       <Text b>Change background</Text>
-//                     </Row>
-//                     <Spacer y={1} />
-//                     <Row>
-//                       <div>
-//                         <TwitterPicker
-//                           color={newChanges.backgroundColor}
-//                           onChangeComplete={(color) => {
-//                             setNewChanges({
-//                               ...newChanges,
-//                               backgroundColor: color.hex.toUpperCase(),
-//                             });
-//                           }}
-//                           colors={defaultColors}
-//                           triangle="hide"
-//                           styles={{
-//                             default: { card: { boxShadow: "none" } },
-//                           }}
-//                         />
-//                       </div>
-//                     </Row>
-
-//                     <Spacer y={2} />
-//                     <Divider />
-//                     <Spacer y={2} />
-
-//                     <Row>
-//                       <Text b>Change text color</Text>
-//                     </Row>
-//                     <Spacer y={1} />
-//                     <Row>
-//                       <TwitterPicker
-//                         color={newChanges.titleColor}
-//                         onChangeComplete={(color) => {
-//                           setNewChanges({
-//                             ...newChanges,
-//                             titleColor: color.hex.toUpperCase(),
-//                           });
-//                         }}
-//                         colors={defaultColors}
-//                         triangle="hide"
-//                         styles={{
-//                           default: { card: { boxShadow: "none" } },
-//                         }}
-//                       />
-//                     </Row>
-//                   </div>
-//                 </PopoverContent>
-//               </Popover>
-//             </div>
-
-//             <div>
-//               <Tooltip content="Report settings" placement="right-end">
-//                 <Link
-//                   className="text-foreground cursor-pointer"
-//                   onClick={() => setEditingTitle(true)}
-//                 >
-//                   <LuClipboardEdit size={26} />
-//                 </Link>
-//               </Tooltip>
-//             </div>
-
-//             <div>
-//               <Tooltip content="Sharing settings" placement="right-end">
-//                 <Link
-//                   className="text-foreground cursor-pointer"
-//                   onClick={() => setShowSettings(true)}
-//                 >
-//                   <LuShare size={26} />
-//                 </Link>
-//               </Tooltip>
-//             </div>
-//           </>
-//         )}
-//       </div>
-//     </div>
-//   </aside>
-// )}
