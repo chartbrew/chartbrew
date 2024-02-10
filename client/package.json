@@ -4,10 +4,10 @@
   "version": "v3.1.0",
   "type": "module",
   "scripts": {
-    "start": "echo n | cp -vipr ../.env .env | true && npm run prepareSettings && npx cross-env VITE_APP_VERSION=$npm_package_version vite",
-    "build": "npm run prepareSettings && npx cross-env VITE_APP_VERSION=$npm_package_version vite build",
+    "start": "echo n | cp -vipr ../.env .env | true && npm run prepareSettings && vite",
+    "build": "npm run prepareSettings && vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "npx cross-env VITE_APP_VERSION=$npm_package_version vite preview",
+    "preview": "vite preview",
     "tailwind": "npx tailwindcss -i ./src/input.css -o ./dist/output.css --watch",
     "prepareSettings": "echo n | cp -vipr src/config/settings.template.js src/config/settings.js | true"
   },

@@ -12,6 +12,8 @@ export default ({ mode }) => {
     port = process.env.VITE_APP_CLIENT_PORT_DEV;
   }
 
+  process.env.VITE_APP_VERSION = process.env.npm_package_version;
+
   return defineConfig({
     plugins: [react()],
     server: {
