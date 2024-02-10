@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { LuAreaChart, LuArrowLeftCircle, LuCheckCircle2, LuClipboard, LuClipboardCheck, LuCompass, LuLayoutDashboard, LuSearch } from "react-icons/lu";
+import { LuAreaChart, LuArrowLeftCircle, LuClipboard, LuClipboardCheck, LuCompass, LuLayoutDashboard, LuPartyPopper, LuSearch } from "react-icons/lu";
 import { Button, Card, CardBody, CardFooter, CardHeader, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer } from "@nextui-org/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
@@ -308,7 +308,7 @@ function ConnectionWizard() {
                 </CardHeader>
                 <CardBody>
                   <p className="text-sm text-gray-500">
-                    {"Someone like your CTO or a senior engineer can help you with this."}
+                    {"Someone from your engineering team can help you with this."}
                   </p>
                   <Spacer y={2} />
                   <p className="text-sm text-gray-500">
@@ -380,7 +380,7 @@ function ConnectionWizard() {
       >
         <ModalContent>
           <ModalHeader className="flex flex-row items-center gap-2">
-            <LuCheckCircle2 className="text-success" size={24} />
+            <LuPartyPopper className="text-success" size={24} />
             <span className="font-semibold">Your connection was saved!</span>
           </ModalHeader>
           <ModalBody>

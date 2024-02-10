@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Chip, Progress, Tooltip,
+  Progress, Tooltip,
 } from "@nextui-org/react";
 
 import determineType from "../../../modules/determineType";
@@ -63,19 +63,13 @@ function KpiMode(props) {
       <div>
         <Tooltip content={`compared to last ${chart.timeInterval}`}>
           <div className="w-full py-1">
-            <Chip
+            <Text
               size="sm"
-              variant="flat"
-              color={status === "neutral" ? "default" : status === "positive" ? "success" : "danger"}
+              className={status === "neutral" ? "text-gray-500" : status === "positive" ? "text-success" : "text-danger"}
             >
-              <Text
-                size="sm"
-                className={status === "neutral" ? "text-gray-500" : status === "positive" ? "text-success" : "text-danger"}
-              >
-                {status === "positive" ? "+" : ""}
-                {`${comparison}%`}
-              </Text>
-            </Chip>
+              {status === "positive" ? "+" : ""}
+              {`${comparison}%`}
+            </Text>
           </div>
         </Tooltip>
       </div>
@@ -92,7 +86,7 @@ function KpiMode(props) {
     if ((!max && max !== 0) || (!value && value !== 0)) return (<span />);
 
     return (
-      <div style={{ width: "100%", paddingTop: 20 }}>
+      <div style={{ width: "100%" }} className="pt-2">
         <Progress
           value={value}
           maxValue={max}
@@ -112,7 +106,7 @@ function KpiMode(props) {
   };
 
   return (
-    <div ref={containerRef} className={"flex h-full w-full gap-5 items-center justify-center align-middle flex-wrap"}>
+    <div ref={containerRef} className={"flex h-full w-full gap-2 items-center justify-center align-middle flex-wrap"}>
       {!chart?.chartData?.data?.datasets && (
         <div className="p-3">
           <Row justify="center" align="center">
@@ -126,7 +120,17 @@ function KpiMode(props) {
         </div>
       )}
       {chart?.chartData?.data?.datasets.map((dataset, index) => (
-        <div key={dataset.label} className="p-3">
+        <div key={dataset.label} className="p-2">
+          {chart.ChartDatasetConfigs[index] && (
+            <Row justify="center" align="center">
+              <Text className={`mt-${chart.showGrowth ? "[-5px]" : 0} text-center text-default-600`}>
+                <span>
+                  {dataset.label}
+                </span>
+              </Text>
+            </Row>
+          )}
+
           <Row justify="center" align="center">
             <Text
               b
@@ -137,21 +141,9 @@ function KpiMode(props) {
             </Text>
           </Row>
 
-          {chart.ChartDatasetConfigs[index] && (
+          {chart.showGrowth && chart.chartData.growth && (
             <Row justify="center" align="center">
-              <Text className={`mt-${chart.showGrowth ? "[-5px]" : 0} text-center text-default-600`}>
-                {chart.showGrowth && chart.chartData.growth && (
-                  _renderGrowth(chart.chartData.growth[index])
-                )}
-                <span
-                  style={
-                    chart.ChartDatasetConfigs
-                      && styles.datasetLabelColor(chart.ChartDatasetConfigs[index].datasetColor)
-                    }
-                  >
-                  {dataset.label}
-                </span>
-              </Text>
+              {_renderGrowth(chart.chartData.growth[index])}
             </Row>
           )}
 
@@ -165,22 +157,6 @@ function KpiMode(props) {
     </div>
   );
 }
-
-const styles = {
-  kpiContainer: {
-    height: 300, display: "flex", justifyContent: "center", alignItems: "center"
-  },
-  kpiItem: (size, items, index) => ({
-    fontSize: size === 1 ? "2.5em" : "4em",
-    textAlign: "center",
-    margin: 0,
-    marginBottom: size === 1 && index < items - 1 ? (50 - items * 10) : 0,
-    marginRight: index < items - 1 && size > 1 ? (40 * size) - (items * 8) : 0,
-  }),
-  datasetLabelColor: (color) => ({
-    borderBottom: `solid 3px ${color}`,
-  }),
-};
 
 KpiMode.propTypes = {
   chart: PropTypes.object.isRequired,
