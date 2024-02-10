@@ -19,7 +19,6 @@ import TeamMembers from "./TeamMembers/TeamMembers";
 import TeamSettings from "./TeamSettings";
 import ApiKeys from "./ApiKeys/ApiKeys";
 import ProjectDashboard from "./ProjectDashboard/ProjectDashboard";
-import Connections from "./Connections/Connections";
 import AddChart from "./AddChart/AddChart";
 import ProjectSettings from "./ProjectSettings";
 import Integrations from "./Integrations/Integrations";
@@ -189,11 +188,6 @@ function Main(props) {
                   exact
                   path="dashboard"
                   element={<ProjectDashboard />}
-                />
-                <Route
-                  exact
-                  path="connections"
-                  element={<Connections />}
                 />
                 <Route
                   exact

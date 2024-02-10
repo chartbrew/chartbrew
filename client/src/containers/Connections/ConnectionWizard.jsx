@@ -21,7 +21,6 @@ import RealtimeDbConnectionForm from "./RealtimeDb/RealtimeDbConnectionForm";
 import GaConnectionForm from "./GoogleAnalytics/GaConnectionForm";
 import StrapiConnectionForm from "./Strapi/StrapiConnectionForm";
 import CustomerioConnectionForm from "./Customerio/CustomerioConnectionForm";
-import TimescaleConnectionForm from "./Timescale/TimescaleConnectionForm";
 import { addConnection, addFilesToConnection, getConnection, saveConnection } from "../../slices/connection";
 import HelpBanner from "../../components/HelpBanner";
 import { Link, useSearchParams } from "react-router-dom";
@@ -289,9 +288,10 @@ function ConnectionWizard() {
             />
           )}
           {selectedType === "timescaledb" && (
-            <TimescaleConnectionForm
+            <PostgresConnectionForm
               onComplete={_onAddNewConnection}
               editConnection={newConnection}
+              subType="timescaledb"
             />
           )}
 

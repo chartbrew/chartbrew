@@ -4,7 +4,6 @@ import {
   Button, Input, Link, Spacer, Chip, Tabs, Tab, Divider, Switch, Select, SelectItem,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
-import { RiArrowRightSLine } from "react-icons/ri";
 import { useDispatch } from "react-redux";
 import { useParams } from "react-router";
 
@@ -16,20 +15,33 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
-import { LuCheckCircle2, LuExternalLink, LuUpload } from "react-icons/lu";
+import { LuCheckCircle2, LuChevronRight, LuExternalLink, LuUpload } from "react-icons/lu";
 import { testRequest, testRequestWithFiles } from "../../../slices/connection";
+
+const formStrings = {
+  postgres: {
+    csPlaceholder: "postgres://username:password@postgres.example.com:5432/dbname",
+    csDescription: "postgres://username:password@postgres.example.com:5432/dbname",
+    hostname: "postgres.example.com",
+  },
+  timescaledb: {
+    csPlaceholder: "postgres://username:password@helpful.example.tsdb.cloud.timescale.com:35646/dbname",
+    csDescription: "postgres://username:password@helpful.example.tsdb.cloud.timescale.com:35646/dbname",
+    hostname: "helpful.example.tsdb.cloud.timescale.com",
+  },
+};
 
 /*
   A form for creating a new Postgres connection
 */
 function PostgresConnectionForm(props) {
   const {
-    editConnection, onComplete, addError,
+    editConnection, onComplete, addError, subType,
   } = props;
 
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
-  const [connection, setConnection] = useState({ type: "postgres", subType: "postgres" });
+  const [connection, setConnection] = useState({ type: "postgres" });
   const [errors, setErrors] = useState({});
   const [formStyle, setFormStyle] = useState("string");
   const [testResult, setTestResult] = useState(null);
@@ -51,6 +63,12 @@ function PostgresConnectionForm(props) {
   useEffect(() => {
     _init();
   }, []);
+
+  useEffect(() => {
+    if (connection.subType !== subType) {
+      setConnection({ ...connection, subType });
+    }
+  }, [subType]);
 
   const _init = () => {
     if (editConnection) {
@@ -197,8 +215,8 @@ function PostgresConnectionForm(props) {
   return (
     <div className="p-unit-lg bg-content1 border-1 border-solid border-content3 rounded-lg">
       <div>
-        <p className="font-semibold">
-          {!editConnection && "Add a new PostgreSQL connection"}
+        <p className="font-bold">
+          {!editConnection && "Add a new connection"}
           {editConnection && `Edit ${editConnection.name}`}
         </p>
         <Spacer y={4} />
@@ -240,12 +258,12 @@ function PostgresConnectionForm(props) {
             <Row align="center">
               <Input
                 label="Enter your Postgres connection string"
-                placeholder="postgres://username:password@postgres.example.com:5432/dbname"
+                placeholder={formStrings[subType].csPlaceholder}
                 value={connection.connectionString || ""}
                 onChange={(e) => {
                   setConnection({ ...connection, connectionString: e.target.value });
                 }}
-                description={"postgres://username:password@postgres.example.com:5432/dbname"}
+                description={formStrings[subType].csDescription}
                 variant="bordered"
                 fullWidth
               />
@@ -282,7 +300,7 @@ function PostgresConnectionForm(props) {
               <div className="sm:col-span-12 md:col-span-10">
                 <Input
                   label="Hostname or IP address"
-                  placeholder="postgres.example.com"
+                  placeholder={formStrings[subType].hostname}
                   value={connection.host || ""}
                   onChange={(e) => {
                     setConnection({ ...connection, host: e.target.value });
@@ -480,32 +498,9 @@ function PostgresConnectionForm(props) {
         )}
 
         <Spacer y={4} />
-        <Row align="center">
-          <RiArrowRightSLine />
-          <Spacer x={1} />
-          <Link
-            target="_blank"
-            rel="noopener noreferrer"
-            href="https://gist.github.com/oinopion/4a207726edba8b99fd0be31cb28124d0"
-          >
-            <Text>{"For security reasons, connect to your PostgreSQL database with read-only credentials"}</Text>
-          </Link>
-          <Spacer x={1} />
-          <LuExternalLink size={12} />
-        </Row>
-        <Row align="center">
-          <RiArrowRightSLine />
-          <Spacer x={1} />
-          <Link
-            href="https://coderwall.com/p/cr2a1a/allowing-remote-connections-to-your-postgresql-vps-installation"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Text>{"Find out how to allow remote connections to your PostgreSQL database"}</Text>
-          </Link>
-          <Spacer x={1} />
-          <LuExternalLink size={12} />
-        </Row>
+        <div>
+          <FormGuides subType={subType} />
+        </div>
 
         {addError && (
           <Row>
@@ -580,12 +575,71 @@ PostgresConnectionForm.defaultProps = {
   onComplete: () => {},
   editConnection: null,
   addError: false,
+  subType: "postgres",
 };
 
 PostgresConnectionForm.propTypes = {
   onComplete: PropTypes.func,
   editConnection: PropTypes.object,
   addError: PropTypes.bool,
+  subType: PropTypes.string,
+};
+
+function FormGuides({ subType }) {
+  if (subType === "timescaledb") {
+    return (
+      <>
+        <Row align="center">
+          <LuChevronRight />
+          <Spacer x={1} />
+          <Link
+            href="https://docs.timescale.com/timescaledb/latest/how-to-guides/connecting/about-connecting/#find-connection-details-in-timescale-cloud"
+            target="_blank"
+            rel="noopener"
+          >
+            <Text>{"Find out how to get your TimescaleDB connection credentials"}</Text>
+          </Link>
+          <Spacer x={1} />
+          <LuExternalLink />
+        </Row>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <Row align="center">
+        <LuChevronRight />
+        <Spacer x={1} />
+        <Link
+          target="_blank"
+          rel="noopener noreferrer"
+          href="https://gist.github.com/oinopion/4a207726edba8b99fd0be31cb28124d0"
+        >
+          <Text>{"For security reasons, connect to your PostgreSQL database with read-only credentials"}</Text>
+        </Link>
+        <Spacer x={1} />
+        <LuExternalLink />
+      </Row>
+      <Row align="center">
+        <LuChevronRight />
+        <Spacer x={1} />
+        <Link
+          href="https://coderwall.com/p/cr2a1a/allowing-remote-connections-to-your-postgresql-vps-installation"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Text>{"Find out how to allow remote connections to your PostgreSQL database"}</Text>
+        </Link>
+        <Spacer x={1} />
+        <LuExternalLink />
+      </Row>
+    </>
+  );
+}
+
+FormGuides.propTypes = {
+  subType: PropTypes.string.isRequired,
 };
 
 export default PostgresConnectionForm;
