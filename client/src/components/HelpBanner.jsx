@@ -22,9 +22,9 @@ const bannerData = {
     info: "7 min read",
   },
   postgres: {
-    title: "How to visualize your PostgreSQL data with Chartbrew",
-    description: "Chartbrew can connect to your PostgreSQL database and create charts that tell you more about your data.",
-    url: "https://chartbrew.com/blog/how-to-visualize-your-supabase-data-with-chartbrew/#connect-to-supabase-using-the-database-connection-url",
+    title: "How to visualize your Postgres data with Chartbrew",
+    description: "Chartbrew can connect to your Postgres database and create charts that tell you more about your data.",
+    url: "https://chartbrew.com/blog/how-to-visualize-postgresql-data-with-chartbrew/",
     info: "5 min read",
   },
   mysql: {
