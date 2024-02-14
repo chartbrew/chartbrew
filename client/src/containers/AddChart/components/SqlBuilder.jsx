@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Spacer, Modal, Input, Tooltip, Checkbox, Divider,
   ModalHeader, ModalBody, ModalFooter, ModalContent,
@@ -15,19 +15,18 @@ import "ace-builds/src-min-noconflict/mode-pgsql";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import { createSavedQuery, updateSavedQuery } from "../../../actions/savedQuery";
 import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 import SavedQueries from "../../../components/SavedQueries";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
+import { createSavedQuery, updateSavedQuery } from "../../../slices/savedQuery";
 
 /*
   The query builder for Mysql and Postgres
 */
 function SqlBuilder(props) {
   const {
-    createSavedQuery, updateSavedQuery,
     dataRequest, onChangeRequest, onSave, connection,
     onDelete,
   } = props;
@@ -77,11 +76,14 @@ function SqlBuilder(props) {
 
   const _onSaveQuery = () => {
     setSavingQuery(true);
-    createSavedQuery(params.projectId, {
-      query: sqlRequest.query,
-      summary: savedQuerySummary,
-      type: connection.type,
-    })
+    dispatch(createSavedQuery({
+      team_id: params.teamId,
+      data: {
+        query: sqlRequest.query,
+        summary: savedQuerySummary,
+        type: connection.type,
+      },
+    }))
       .then((savedQuery) => {
         setSavingQuery(false);
         setSavedQuery(savedQuery.id);
@@ -96,11 +98,13 @@ function SqlBuilder(props) {
 
   const _onUpdateSavedQuery = () => {
     setUpdatingSavedQuery(true);
-    updateSavedQuery(
-      params.projectId,
-      savedQuery,
-      { query: sqlRequest.query }
-    )
+    dispatch(updateSavedQuery({
+      team_id: params.teamId,
+      data: {
+        ...savedQuery,
+        query: sqlRequest.query,
+      },
+    }))
       .then(() => {
         setUpdatingSavedQuery(false);
         toast.success("The query was updated 👍");
@@ -379,26 +383,8 @@ SqlBuilder.propTypes = {
   dataRequest: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
-  createSavedQuery: PropTypes.func.isRequired,
-  updateSavedQuery: PropTypes.func.isRequired,
   connection: PropTypes.object.isRequired,
   onDelete: PropTypes.func.isRequired,
-  responses: PropTypes.array.isRequired,
 };
 
-const mapStateToProps = (state) => {
-  return {
-    responses: state.dataRequest.responses,
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    createSavedQuery: (projectId, data) => dispatch(createSavedQuery(projectId, data)),
-    updateSavedQuery: (projectId, savedQueryId, data) => (
-      dispatch(updateSavedQuery(projectId, savedQueryId, data))
-    ),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(SqlBuilder);
+export default SqlBuilder;

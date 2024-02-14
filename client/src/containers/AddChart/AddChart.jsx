@@ -8,7 +8,8 @@ import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import _ from "lodash";
 import { useWindowSize } from "react-use";
-import { LuPencilLine } from "react-icons/lu";
+import { LuCheck, LuPencilLine } from "react-icons/lu";
+import { useNavigate, useParams } from "react-router";
 
 import ChartPreview from "./components/ChartPreview";
 import ChartSettings from "./components/ChartSettings";
@@ -30,7 +31,6 @@ import {
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import useThemeDetector from "../../modules/useThemeDetector";
-import { useNavigate, useParams } from "react-router";
 import ChartDatasets from "./components/ChartDatasets";
 import getDashboardLayout from "../../modules/getDashboardLayout";
 
@@ -394,16 +394,18 @@ function AddChart(props) {
                       value={chartName}
                       onChange={(e) => _onNameChange(e.target.value)}
                       variant="bordered"
-                      size="sm"
+                      labelPlacement="outside"
                     />
                     <Spacer x={0.5} />
                     <Button
-                      color="secondary"
+                      color="success"
                       type="submit"
                       onClick={_onSubmitNewName}
                       size="sm"
+                      isIconOnly
+
                     >
-                      Save
+                      <LuCheck />
                     </Button>
                   </div>
                 </form>

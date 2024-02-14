@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Button, Checkbox, Divider, Input, Link, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Spacer,
   Tooltip,
@@ -14,7 +14,7 @@ import "ace-builds/src-min-noconflict/mode-javascript";
 import "ace-builds/src-min-noconflict/theme-tomorrow";
 import "ace-builds/src-min-noconflict/theme-one_dark";
 
-import { createSavedQuery, updateSavedQuery } from "../../../actions/savedQuery";
+import { createSavedQuery, updateSavedQuery } from "../../../slices/savedQuery";
 import SavedQueries from "../../../components/SavedQueries";
 import Container from "../../../components/Container";
 import Row from "../../../components/Row";
@@ -27,9 +27,7 @@ import { runDataRequest, selectDataRequests } from "../../../slices/dataset";
 */
 function MongoQueryBuilder(props) {
   const {
-    createSavedQuery, updateSavedQuery, onChangeRequest,
-    onSave, dataRequest,
-    connection, onDelete,
+    onChangeRequest, onSave, dataRequest, connection, onDelete,
   } = props;
 
   const [savedQuery, setSavedQuery] = useState(null);
@@ -79,11 +77,14 @@ function MongoQueryBuilder(props) {
 
   const _onSaveQuery = () => {
     setSavingQuery(true);
-    createSavedQuery(params.projectId, {
-      query: mongoRequest.query,
-      summary: savedQuerySummary,
-      type: "mongodb",
-    })
+    dispatch(createSavedQuery({
+      team_id: params.teamId,
+      data: {
+        query: mongoRequest.query,
+        summary: savedQuerySummary,
+        type: "mongodb",
+      }
+    }))
       .then((savedQuery) => {
         setSavingQuery(false);
         setSavedQuery(savedQuery.id);
@@ -100,11 +101,13 @@ function MongoQueryBuilder(props) {
   const _onUpdateSavedQuery = () => {
     setUpdatingSavedQuery(true);
 
-    updateSavedQuery(
-      params.projectId,
-      savedQuery,
-      { query: mongoRequest.query }
-    )
+    dispatch(updateSavedQuery({
+      team_id: params.teamId,
+      data: {
+        ...savedQuery,
+        query: mongoRequest.query
+      },
+    }))
       .then(() => {
         setUpdatingSavedQuery(false);
         toast.success("The query was updated 👍");
@@ -469,25 +472,9 @@ MongoQueryBuilder.propTypes = {
   dataRequest: PropTypes.object.isRequired,
   onChangeRequest: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
-  createSavedQuery: PropTypes.func.isRequired,
-  updateSavedQuery: PropTypes.func.isRequired,
   match: PropTypes.object.isRequired,
   connection: PropTypes.object.isRequired,
   onDelete: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = () => {
-  return {
-  };
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    createSavedQuery: (projectId, data) => dispatch(createSavedQuery(projectId, data)),
-    updateSavedQuery: (projectId, savedQueryId, data) => (
-      dispatch(updateSavedQuery(projectId, savedQueryId, data))
-    ),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(MongoQueryBuilder);
+export default MongoQueryBuilder;
