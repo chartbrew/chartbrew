@@ -6,7 +6,6 @@ const Umzug = require("umzug");
 const basename = path.basename(__filename);
 const config = process.env.NODE_ENV === "production"
   ? require("../config/config.js").production : require("../config/config.js").development;
-const packageJson = require("../../package.json");
 
 const db = {};
 
@@ -72,24 +71,5 @@ const umzug = new Umzug({
 });
 
 db.migrate = () => umzug.up();
-db.migrate()
-  .then(async (data) => {
-    if (data && data.length > 0) {
-      console.info("Updated database schema to the latest version!"); // eslint-disable-line
-    }
-
-    // create an instance ID and record the current version
-    try {
-      const appData = await db.App.findAll();
-      if (!appData || appData.length === 0) {
-        db.App.create({ version: packageJson.version });
-      } else if (appData && appData[0]) {
-        db.App.update({ version: packageJson.version }, { where: { id: appData[0].id } });
-      }
-    } catch (e) {
-      // continue
-    }
-  })
-  .catch((err) => console.error(err)); // eslint-disable-line
 
 module.exports = db;

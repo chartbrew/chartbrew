@@ -20,6 +20,8 @@ const cleanChartCache = require("./modules/CleanChartCache");
 const cleanAuthCache = require("./modules/CleanAuthCache");
 const AuthCacheController = require("./controllers/AuthCacheController");
 const parseQueryParams = require("./middlewares/parseQueryParams");
+const db = require("./models/models");
+const packageJson = require("./package.json");
 
 const authCache = new AuthCacheController();
 
@@ -71,17 +73,41 @@ _.each(routes, (controller, route) => {
 });
 
 const port = process.env.PORT || app.settings.port || 4019;
-app.listen(port, app.settings.api, () => {
-  // Check if this is the main cluster and run the cron jobs if it is
-  const isMainCluster = parseInt(process.env.NODE_APP_INSTANCE, 10) === 0;
-  if (isMainCluster || !process.env.NODE_APP_INSTANCE) {
-    // start CronJob, making sure the database is populated for the first time
-    setTimeout(() => {
-      updateChartsCron();
-      cleanChartCache();
-      cleanAuthCache();
-    }, 5000);
-  }
 
-  console.log(`Running server on port ${port}`); // eslint-disable-line
-});
+db.migrate()
+  .then(async (data) => {
+    if (data && data.length > 0) {
+      console.info("Updated database schema to the latest version!"); // eslint-disable-line
+    }
+
+    // create an instance ID and record the current version
+    try {
+      const appData = await db.App.findAll();
+      if (!appData || appData.length === 0) {
+        db.App.create({ version: packageJson.version });
+      } else if (appData && appData[0]) {
+        db.App.update({ version: packageJson.version }, { where: { id: appData[0].id } });
+      }
+    } catch (e) {
+      // continue
+    }
+
+    app.listen(port, app.settings.api, () => {
+      // Check if this is the main cluster and run the cron jobs if it is
+      const isMainCluster = parseInt(process.env.NODE_APP_INSTANCE, 10) === 0;
+      if (isMainCluster || !process.env.NODE_APP_INSTANCE) {
+        // start CronJob, making sure the database is populated for the first time
+        setTimeout(() => {
+          updateChartsCron();
+          cleanChartCache();
+          cleanAuthCache();
+        }, 5000);
+      }
+
+      console.log(`Running server on port ${port}`); // eslint-disable-line
+    });
+  })
+  .catch((err) => {
+    console.error(err); // eslint-disable-line
+    console.error("Migrations failed, could not run the server app."); // eslint-disable-line
+  });
