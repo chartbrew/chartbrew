@@ -25,3 +25,4 @@ jobs:
         stale-pr-message: 'Marked as stale because of inactivity. Feel free to comment if this is an active PR.'
         stale-issue-label: 'no-issue-activity'
         stale-pr-label: 'no-pr-activity'
+        start-date: '2019-12-01 15:00:00'
