@@ -5,7 +5,7 @@ module.exports = {
   async up(queryInterface) {
     await queryInterface.addColumn("Connection", "team_id", {
       type: Sequelize.INTEGER,
-      allowNull: false,
+      allowNull: true,
       reference: {
         model: "Team",
         key: "id",
@@ -19,6 +19,16 @@ module.exports = {
     });
 
     await populateConnectionTeamId.up();
+
+    await queryInterface.changeColumn("Connection", "team_id", {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      reference: {
+        model: "Team",
+        key: "id",
+        onDelete: "cascade",
+      },
+    });
   },
 
   async down(queryInterface) {
