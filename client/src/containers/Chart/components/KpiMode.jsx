@@ -61,7 +61,7 @@ function KpiMode(props) {
     const { status, comparison } = c;
     return (
       <div>
-        <Tooltip content={`compared to last ${chart.timeInterval}`}>
+        <Tooltip content={`compared to last ${chart.timeInterval}`} placement="bottom">
           <div className="w-full py-1">
             <Text
               size="sm"
