@@ -1,25 +1,23 @@
 import React from "react";
 import { Divider, Link, Button } from "@nextui-org/react";
-import { TwitterPicker } from "react-color";
-import { blue, primary, secondary } from "../../../config/colors";
 import { LuCheckCircle } from "react-icons/lu";
 
-const defaultColors = [
-  "#FFFFFF",
-  "#000000",
-  "#D9E3F0",
-  "#F47373",
-  "#697689",
-  "#37D67A",
-  primary,
-  secondary,
-  blue,
-  "#2CCCE4",
-  "#555555",
-  "#dce775",
-  "#ff8a65",
-  "#ba68c8",
-];
+// const defaultColors = [
+//   "#FFFFFF",
+//   "#000000",
+//   "#D9E3F0",
+//   "#F47373",
+//   "#697689",
+//   "#37D67A",
+//   primary,
+//   secondary,
+//   blue,
+//   "#2CCCE4",
+//   "#555555",
+//   "#dce775",
+//   "#ff8a65",
+//   "#ba68c8",
+// ];
 
 function ThemeSettingsAside() {
   const listGradients = [
