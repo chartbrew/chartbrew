@@ -72,6 +72,7 @@ import Row from "../../components/Row";
 import Container from "../../components/Container";
 import useThemeDetector from "../../modules/useThemeDetector";
 import ReportSettings from "./components/ReportSettings";
+import ThemeSettingsAside from "./components/ThemeSettingsAside";
 
 
 const ResponsiveGridLayout = WidthProvider(Responsive, {
@@ -685,8 +686,9 @@ function PublicDashboard(props) {
                 </>
               )}
             </div>
-            <div className="h-screen py-4 overflow-y-auto bg-white border-l border-r w-86 z-[50] rouned-xl">
-              <ReportSettings />
+            <div className="h-screen py-4 overflow-y-auto bg-white border-l border-r w-96 z-[50] dark:bg-gray-800">
+              {/* <ReportSettings /> */}
+              <ThemeSettingsAside/>
             </div>
           </div>
         </aside>

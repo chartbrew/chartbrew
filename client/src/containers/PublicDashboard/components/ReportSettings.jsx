@@ -1,12 +1,6 @@
 import React, { useState } from "react";
 
-import {
-  Checkbox,
-  Chip,
-  Link,
-  Divider,
-  Input,
-} from "@nextui-org/react";
+import { Checkbox, Chip, Link, Divider, Input } from "@nextui-org/react";
 import { LuImagePlus } from "react-icons/lu";
 import AceEditor from "react-ace";
 // import { useDropzone } from "react-dropzone";
@@ -21,19 +15,18 @@ function ReportSettings() {
 
   return (
     <div>
-      <h4 className="px-5 text-lg font-semibold text-gray-800 dark:text-white">
+      <h4 className="mt-1 px-5 text-lg font-semibold text-gray-800 dark:text-white">
         Report setting
         <Divider className="mt-2 w-40 " />
       </h4>
-
       <div className="mt-5">
         <h4 className="px-5 text-md font-semibold text-gray-800">
           Change Logo
         </h4>
         <div className="px-5 flex items-start justify-start mt-2 ">
           <Link className="text-foreground cursor-pointer">
-            <div className="max-w-sm p-3 bg-content2 border-dashed border-2 border-gray-400 rounded-lg text-center">
-              <div className="flex items-center px-5">
+            <div className="max-w-sm p-3 bg-content2 border-dashed border-2 border-gray-300 rounded-lg text-center">
+              <div className="flex justify-center">
                 {/* <div {...getRootProps()}>
                   <input {...getInputProps()} />
                 </div> */}
