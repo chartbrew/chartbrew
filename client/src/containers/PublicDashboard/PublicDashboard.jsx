@@ -687,8 +687,8 @@ function PublicDashboard(props) {
               )}
             </div>
             <div className="h-screen py-4 overflow-y-auto bg-white border-l border-r w-96 z-[50] dark:bg-gray-800">
-              {/* <ReportSettings /> */}
-              <ThemeSettingsAside/>
+              <ReportSettings />
+              {/* <ThemeSettingsAside/> */}
             </div>
           </div>
         </aside>
