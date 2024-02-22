@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Input, Button, Spacer, Modal, ModalHeader, ModalBody, ModalContent, Tabs, Tab, Card, CardBody, Image, CardFooter
 } from "@nextui-org/react";
@@ -24,7 +24,7 @@ import PlausibleTemplate from "../containers/Connections/Plausible/PlausibleTemp
 */
 function ProjectForm(props) {
   const {
-    onComplete, templates, hideType, onClose, open,
+    onComplete, hideType, onClose, open,
   } = props;
 
   const [loading, setLoading] = useState(false);
@@ -226,8 +226,6 @@ function ProjectForm(props) {
             <>
               <h3 className="font-semibold">{"Select a template"}</h3>
               <CustomTemplates
-                templates={templates.data}
-                loading={templates.loading}
                 teamId={team.id}
                 projectId={createdProject && createdProject.id}
                 connections={[]}
@@ -250,21 +248,9 @@ ProjectForm.defaultProps = {
 
 ProjectForm.propTypes = {
   onComplete: PropTypes.func,
-  templates: PropTypes.object.isRequired,
   hideType: PropTypes.bool,
   onClose: PropTypes.func.isRequired,
   open: PropTypes.bool.isRequired,
 };
 
-const mapStateToProps = (state) => {
-  return {
-    templates: state.template
-  };
-};
-
-const mapDispatchToProps = () => {
-  return {
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(ProjectForm);
+export default ProjectForm;

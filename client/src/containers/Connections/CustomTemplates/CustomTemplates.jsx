@@ -5,17 +5,17 @@ import {
 } from "@nextui-org/react";
 import moment from "moment";
 import { LuBarChart3 } from "react-icons/lu";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import CreateTemplateForm from "../../../components/CreateTemplateForm";
 import CustomTemplateForm from "./CustomTemplateForm";
-import { deleteTemplate } from "../../../slices/template";
+import { deleteTemplate, selectTemplates } from "../../../slices/template";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 
 function CustomTemplates(props) {
   const {
-    loading, templates, teamId, projectId, onComplete, isAdmin,
+    teamId, projectId, onComplete, isAdmin,
     onCreateProject,
   } = props;
 
@@ -23,6 +23,8 @@ function CustomTemplates(props) {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
 
   const dispatch = useDispatch();
+  const templates = useSelector(selectTemplates);
+  const loading = useSelector((state) => state.template.loading);
 
   const _getUpdatedTime = (updatedAt) => {
     if (moment().diff(moment(updatedAt), "hours") < 24) {

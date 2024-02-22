@@ -36,8 +36,6 @@ function CustomTemplateForm(props) {
       });
       setSelectedCharts(charts);
     }
-
-    console.log("template", template);
   }, [template]);
 
   useEffect(() => {
