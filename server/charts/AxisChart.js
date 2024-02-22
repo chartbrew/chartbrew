@@ -113,6 +113,7 @@ class AxisChart {
         let xType;
         let xAxisData = [];
         let yAxisData = [];
+        let alreadyDateFiltered = false;
 
         const filterData = dataFilter(dataset.data, xAxis, dataset.options.conditions);
         if (filterData.conditionsOptions) {
@@ -121,12 +122,22 @@ class AxisChart {
             conditions: filterData.conditionsOptions,
           });
         }
+
+        if (filters && filters.length > 0) {
+          filters.forEach((filter) => {
+            if (filter.field === dateField && filter.exposed && filter.value) {
+              alreadyDateFiltered = true;
+            }
+          });
+        }
+
         let filteredData = filterData.data;
 
         const dateDashboardFilter = filters?.find((f) => f.type === "date");
         if (dateField
           && ((this.chart.startDate && this.chart.endDate) || dateDashboardFilter)
           && canDateFilter
+          && !alreadyDateFiltered
         ) {
           if (filters?.length > 0) {
             if (dateDashboardFilter) {
