@@ -9,7 +9,7 @@ import error from "./error";
 import dataset from "../slices/dataset";
 import dataRequest from "./dataRequest";
 import tutorial from "./tutorial";
-import template from "./template";
+import template from "../slices/template";
 import alert from "../slices/alert";
 import integration from "./integration";
 

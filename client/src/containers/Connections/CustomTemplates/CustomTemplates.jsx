@@ -1,26 +1,28 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
 import {
   Button, Card, Spacer, CircularProgress, CardHeader, CardBody, CardFooter, Divider,
 } from "@nextui-org/react";
 import moment from "moment";
 import { LuBarChart3 } from "react-icons/lu";
+import { useDispatch } from "react-redux";
 
 import CreateTemplateForm from "../../../components/CreateTemplateForm";
 import CustomTemplateForm from "./CustomTemplateForm";
-import { deleteTemplate as deleteTemplateAction } from "../../../actions/template";
+import { deleteTemplate } from "../../../slices/template";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 
 function CustomTemplates(props) {
   const {
-    loading, templates, teamId, projectId, onComplete, isAdmin, deleteTemplate,
+    loading, templates, teamId, projectId, onComplete, isAdmin,
     onCreateProject,
   } = props;
 
   const [createTemplate, setCreateTemplate] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+
+  const dispatch = useDispatch();
 
   const _getUpdatedTime = (updatedAt) => {
     if (moment().diff(moment(updatedAt), "hours") < 24) {
@@ -31,7 +33,10 @@ function CustomTemplates(props) {
   };
 
   const _onDelete = (templateId) => {
-    return deleteTemplate(teamId, templateId)
+    return dispatch(deleteTemplate({
+      team_id: teamId,
+      template_id: templateId
+    }))
       .then(() => setSelectedTemplate(null));
   };
 
@@ -127,7 +132,6 @@ CustomTemplates.propTypes = {
   teamId: PropTypes.string.isRequired,
   projectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onComplete: PropTypes.func.isRequired,
-  deleteTemplate: PropTypes.func.isRequired,
   isAdmin: PropTypes.bool,
   onCreateProject: PropTypes.func,
 };
@@ -139,11 +143,4 @@ CustomTemplates.defaultProps = {
   onCreateProject: () => {},
 };
 
-const mapStateToProps = () => ({});
-const mapDispatchToProps = (dispatch) => {
-  return {
-    deleteTemplate: (teamId, templateId) => dispatch(deleteTemplateAction(teamId, templateId)),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(CustomTemplates);
+export default CustomTemplates;

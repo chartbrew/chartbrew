@@ -444,12 +444,9 @@ function Chart(props) {
           <CardHeader className="pb-0 grid grid-cols-12 items-start">
             <div className="col-span-6 sm:col-span-8 flex items-start justify-start">
               <div>
-                <Row justify="flex-start" align="center">
+                <Row align="center" className={"flex-wrap gap-1"}>
                   {chart.draft && (
-                    <>
-                      <Chip color="secondary" variant="flat" size="sm">Draft</Chip>
-                      <Spacer x={1} />
-                    </>
+                    <Chip color="secondary" variant="flat" size="sm">Draft</Chip>
                   )}
                   <>
                     {_canAccess("projectAdmin") && !editingLayout && (
@@ -461,7 +458,6 @@ function Chart(props) {
                       <Text b>{chart.name}</Text>
                     )}
                   </>
-                  <Spacer x={0.5} />
                   {chart.ChartDatasetConfigs && conditions.map((c) => (
                     <Chip
                       color="primary"

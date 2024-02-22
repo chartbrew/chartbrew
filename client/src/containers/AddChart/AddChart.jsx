@@ -25,9 +25,7 @@ import {
   clearDatasets as clearDatasetsAction,
 } from "../../actions/dataset";
 import { getChartAlerts, clearAlerts } from "../../slices/alert";
-import {
-  getTemplates as getTemplatesAction
-} from "../../actions/template";
+import { getTemplates, selectTemplates } from "../../slices/template";
 import Row from "../../components/Row";
 import Text from "../../components/Text";
 import useThemeDetector from "../../modules/useThemeDetector";
@@ -54,10 +52,11 @@ function AddChart(props) {
   const { height } = useWindowSize();
 
   const {
-    getChartDatasets, datasets, clearDatasets, connections, templates, getTemplates,
+    getChartDatasets, datasets, clearDatasets, connections,
   } = props;
 
   const charts = useSelector(selectCharts);
+  const templates = useSelector(selectTemplates);
 
   const isDark = useThemeDetector();
   const params = useParams();
@@ -85,7 +84,7 @@ function AddChart(props) {
       }));
     }
 
-    getTemplates(params.teamId);
+    dispatch(getTemplates(params.teamId));
   }, []);
 
   useEffect(() => {
@@ -527,15 +526,12 @@ AddChart.propTypes = {
   datasets: PropTypes.array.isRequired,
   clearDatasets: PropTypes.func.isRequired,
   connections: PropTypes.array.isRequired,
-  getTemplates: PropTypes.func.isRequired,
-  templates: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => {
   return {
     datasets: state.dataset.data,
     connections: state.connection.data,
-    templates: state.template,
   };
 };
 
@@ -554,7 +550,6 @@ const mapDispatchToProps = (dispatch) => {
       return dispatch(deleteDatasetAction(projectId, chartId, datasetId));
     },
     clearDatasets: () => dispatch(clearDatasetsAction()),
-    getTemplates: (teamId) => dispatch(getTemplatesAction(teamId)),
   };
 };
 

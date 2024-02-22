@@ -1,23 +1,23 @@
 import React, { useState } from "react";
-import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import {
   Button, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer,
 } from "@nextui-org/react";
+import { useDispatch } from "react-redux";
 
-import {
-  createTemplate as createTemplateAction,
-} from "../actions/template";
+import { createTemplate } from "../slices/template";
 import Text from "./Text";
 
 function CreateTemplateForm(props) {
   const {
-    teamId, projectId, visible, onClose, createTemplate,
+    teamId, projectId, visible, onClose,
   } = props;
 
   const [templateName, setTemplateName] = useState("");
   const [loading, setLoading] = useState(false);
   const [validationError, setValidationError] = useState(false);
+
+  const dispatch = useDispatch();
 
   const _onSaveTemplate = () => {
     if (!templateName) {
@@ -28,7 +28,11 @@ function CreateTemplateForm(props) {
     setValidationError(false);
     setLoading(true);
 
-    return createTemplate(teamId, projectId, templateName)
+    return dispatch(createTemplate({
+      team_id: teamId,
+      project_id: projectId,
+      name: templateName
+    }))
       .then(() => {
         setLoading(false);
         onClose(true);
@@ -93,20 +97,10 @@ CreateTemplateForm.propTypes = {
   projectId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   visible: PropTypes.bool,
   onClose: PropTypes.func.isRequired,
-  createTemplate: PropTypes.func.isRequired,
 };
 
 CreateTemplateForm.defaultProps = {
   visible: false,
 };
 
-const mapStateToProps = () => ({});
-const mapDispatchToProps = (dispatch) => {
-  return {
-    createTemplate: (teamId, projectId, name) => (
-      dispatch(createTemplateAction(teamId, projectId, name))
-    ),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(CreateTemplateForm);
+export default CreateTemplateForm;

@@ -19,9 +19,7 @@ import { Flip, ToastContainer } from "react-toastify";
 
 import { relog, completeTutorial } from "../slices/user";
 import { cleanErrors as cleanErrorsAction } from "../actions/error";
-import {
-  getTemplates as getTemplatesAction
-} from "../actions/template";
+import { getTemplates } from "../slices/template";
 import {
   updateProject, removeProject, selectProjects, getProjects,
 } from "../slices/project";
@@ -53,9 +51,7 @@ import startVideoThumbnail from "../assets/quick-start-video.jpg";
   The user dashboard with all the teams and projects
 */
 function UserDashboard(props) {
-  const {
-    cleanErrors, getTemplates,
-  } = props;
+  const { cleanErrors } = props;
 
   const team = useSelector(selectTeam);
   const teams = useSelector(selectTeams);
@@ -171,7 +167,7 @@ function UserDashboard(props) {
   const _onNewProject = (team) => {
     setAddProject(true);
     dispatch(saveActiveTeam(team));
-    getTemplates(team.id);
+    dispatch(getTemplates(team.id));
   };
 
   const _onProjectCreated = (project, isNew = true) => {
@@ -1472,7 +1468,6 @@ const styles = {
 
 UserDashboard.propTypes = {
   cleanErrors: PropTypes.func.isRequired,
-  getTemplates: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = () => {
@@ -1483,7 +1478,6 @@ const mapStateToProps = () => {
 const mapDispatchToProps = (dispatch) => {
   return {
     cleanErrors: () => dispatch(cleanErrorsAction()),
-    getTemplates: (teamId) => dispatch(getTemplatesAction(teamId)),
   };
 };
 
