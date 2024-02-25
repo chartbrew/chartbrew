@@ -27,6 +27,8 @@ module.exports.delete = (id) => {
 module.exports.getDashboardModel = (projectId) => {
   const template = {
     Charts: [],
+    Connections: [],
+    Datasets: [],
   };
   return db.Chart.findAll({
     where: { project_id: projectId },
@@ -34,6 +36,16 @@ module.exports.getDashboardModel = (projectId) => {
     include: [{
       model: db.ChartDatasetConfig,
       attributes: { exclude: ["id", "chart_id", "createdAt", "updatedAt"] },
+      include: [{
+        model: db.Dataset,
+        include: [{
+          model: db.DataRequest,
+          include: [{
+            model: db.Connection,
+            attributes: ["id", "type", "subType", "name", "host", "createdAt", "updatedAt"],
+          }],
+        }],
+      }],
     }],
   })
     .then((charts) => {
@@ -42,7 +54,38 @@ module.exports.getDashboardModel = (projectId) => {
         // set a template ID for each chart
         newChart.setDataValue("tid", dIndex);
 
+        // extract the connections and datasets from the chart
+        const datasets = [];
+        const connections = [];
+        chart.ChartDatasetConfigs.forEach((config) => {
+          const dataset = config.Dataset;
+          const dataRequests = dataset.DataRequests;
+          const drConnections = [];
+          dataRequests.forEach((dr) => {
+            if (dr.Connection) {
+              drConnections.push(dr.Connection);
+            }
+          });
+
+          // add datasets and connections only if not already added
+          if (!datasets.find((d) => d.id === dataset.id)
+            && !template.Datasets.find((d) => d.id === dataset.id)
+          ) {
+            datasets.push(dataset);
+          }
+
+          drConnections.forEach((c) => {
+            if (!connections.find((conn) => conn.id === c.id)
+              && !template.Connections.find((conn) => conn.id === c.id)
+            ) {
+              connections.push(c);
+            }
+          });
+        });
+
         template.Charts.push(newChart);
+        template.Connections = template.Connections.concat(connections);
+        template.Datasets = template.Datasets.concat(datasets);
       });
 
       return template;

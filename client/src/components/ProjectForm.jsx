@@ -88,7 +88,7 @@ function ProjectForm(props) {
               <Spacer y={2} />
               {!hideType && (
                 <Row align="center" justify="center">
-                  <Tabs selectedKey={activeMenu} onSelectionChange={(key) => setActiveMenu(key)} fullWidth>
+                  <Tabs selectedKey={activeMenu} onSelectionChange={(key) => setActiveMenu(key)} fullWidth isDisabled={!newProject.name}>
                     <Tab key="empty" id="empty" title="Empty dashboard" />
                     <Tab key="communityTemplates" title="Community templates" />
                     <Tab key="template" id="template" title="Custom templates" />
@@ -231,6 +231,7 @@ function ProjectForm(props) {
                 connections={[]}
                 onComplete={_onCompleteTemplate}
                 onCreateProject={() => _onCreateProject(true)}
+                isAdmin
               />
             </>
           )}

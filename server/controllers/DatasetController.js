@@ -98,7 +98,7 @@ class DatasetController {
       include: [
         { model: db.DataRequest, include: [{ model: db.Connection, attributes: ["id", "name", "type", "subType"] }] },
       ],
-      order: [["order", "ASC"], ["createdAt", "DESC"]],
+      order: [["createdAt", "DESC"]],
     })
       .then((datasets) => {
         return datasets;

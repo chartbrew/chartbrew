@@ -2,17 +2,24 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
 import {
-  Button, Checkbox, Divider, Modal, ModalBody, ModalContent, ModalFooter,
-  ModalHeader, Spacer,
+  Autocomplete,
+  AutocompleteItem,
+  Avatar,
+  Button, Checkbox, Chip, Divider, Modal, ModalBody, ModalContent, ModalFooter,
+  ModalHeader, Spacer, Switch,
 } from "@nextui-org/react";
 import {
   LuArrowLeft, LuArrowRight, LuCheckCheck, LuTrash, LuX,
 } from "react-icons/lu";
+import { useDispatch, useSelector } from "react-redux";
 
 import { generateDashboard } from "../../../slices/project";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
-import { useDispatch } from "react-redux";
+import { selectConnections } from "../../../slices/connection";
+import connectionImages from "../../../config/connectionImages";
+import useThemeDector from "../../../modules/useThemeDetector";
+
 
 function CustomTemplateForm(props) {
   const {
@@ -25,8 +32,13 @@ function CustomTemplateForm(props) {
   const [deleteConfirmation, setDeleteConfimation] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [formStatus, setFormStatus] = useState("");
+  const [customConnections, setCustomConnections] = useState({});
+  const [newDatasets, setNewDatasets] = useState(false);
+  const [canChangeNewDatasets, setCanChangeNewDatasets] = useState(true);
 
   const dispatch = useDispatch();
+  const connections = useSelector(selectConnections);
+  const isDark = useThemeDector();
 
   useEffect(() => {
     if (template && template.model && template.model.Charts) {
@@ -36,7 +48,30 @@ function CustomTemplateForm(props) {
       });
       setSelectedCharts(charts);
     }
+
+    if (template?.model?.Connections) {
+      const cc = {};
+      template.model.Connections.forEach((c) => {
+        cc[c.id] = c.id;
+      });
+
+      setCustomConnections(cc);
+    }
   }, [template]);
+
+  useEffect(() => {
+    if (customConnections) {
+      let canChange = true;
+      Object.keys(customConnections).forEach((key) => {
+        if (customConnections[key] !== parseInt(key, 10)) {
+          canChange = false;
+        }
+      });
+
+      setCanChangeNewDatasets(canChange);
+      setNewDatasets(true);
+    }
+  }, [customConnections]);
 
   useEffect(() => {
     if (projectId && formStatus === "waitingForProject") {
@@ -83,6 +118,8 @@ function CustomTemplateForm(props) {
     const data = {
       template_id: template.id,
       charts: selectedCharts,
+      connections: customConnections,
+      newDatasets,
     };
 
     dispatch(generateDashboard({ project_id: projectId, data, template: "custom" }))
@@ -93,6 +130,13 @@ function CustomTemplateForm(props) {
         }, 2000);
       })
       .catch(() => { setIsCreating(false); });
+  };
+
+  const _onSelectCustomConnections = (key, currentConnection) => {
+    const newCustomConnections = { ...customConnections };
+    newCustomConnections[currentConnection.id] = parseInt(key, 10);
+    
+    setCustomConnections(newCustomConnections);
   };
 
   return (
@@ -117,6 +161,86 @@ function CustomTemplateForm(props) {
       {template && template.model && (
         <>
           <Spacer y={4} />
+          {template.model?.Connections && (
+            <>
+              <Row>
+                <Text b>{"Template connections"}</Text>
+              </Row>
+              <Spacer y={1} />
+              <div className="flex flex-col gap-2">
+                {template.model?.Connections?.map((connection) => (
+                  <div key={connection.id} className="flex flex-col gap-1">
+                    <Autocomplete
+                      selectedKey={`${customConnections[connection.id]}`}
+                      onSelectionChange={(key) => _onSelectCustomConnections(key, connection)}
+                      variant="bordered"
+                      labelPlacement="outside"
+                      onKeyDown={(e) => e.continuePropagation()}
+                    >
+                      {connections.map((c) => (
+                        <AutocompleteItem
+                          key={`${c.id}`}
+                          textValue={c.name}
+                          startContent={(
+                            <Avatar src={connectionImages(isDark)[c.subType]} radius="sm" />
+                          )}
+                        >
+                          {c.name}
+                        </AutocompleteItem>
+                      ))}
+                    </Autocomplete>
+                    {`${customConnections[connection.id]}` !== `${connection.id}` && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm">{"Connection "}</span>
+                        <Chip variant="flat" radius="sm">
+                          {connection.name}
+                        </Chip>
+                        <span className="text-sm">{" will be replaced by "}</span>
+                        <Chip variant="flat" radius="sm">
+                          {connections.find((c) => c.id === customConnections[connection.id])?.name}
+                        </Chip>
+                      </div>
+                    )}
+                    <Spacer y={1} />
+                  </div>
+                ))}
+              </div>
+              <Spacer y={3} />
+              <Row>
+                <Text b>{"Datasets"}</Text>
+              </Row>
+              <Spacer y={1} />
+              <Row>
+                <Switch
+                  isSelected={newDatasets}
+                  onChange={() => setNewDatasets(!newDatasets)}
+                  isDisabled={!canChangeNewDatasets}
+                  size="sm"
+                >
+                  {"Create new datasets"}
+                </Switch>
+              </Row>
+              {!canChangeNewDatasets && (
+                <Row>
+                  <span className="text-sm">
+                    {"New datasets will be created when connections are replaced."}
+                  </span>
+                </Row>
+              )}
+              <Spacer y={4} />
+            </>
+          )}
+          {!template.model?.Connections && (
+            <div className="flex flex-col gap-2">
+              <Chip variant="flat" color="warning" radius="sm">
+                {"Legacy template"}
+              </Chip>
+              <span className="text-sm">
+                {"This template does not support custom connections and datasets. You can re-create the template to enable this feature."}
+              </span>
+              <Spacer y={2} />
+            </div>
+          )}
           <Row>
             <Text b>{"Select which charts you want Chartbrew to create for you"}</Text>
           </Row>
