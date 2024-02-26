@@ -311,7 +311,7 @@ function Chart(props) {
   const _checkIfFilters = () => {
     let filterCount = 0;
     chart.ChartDatasetConfigs.forEach((d) => {
-      if (d.Dataset?.conditions?.length > 0) {
+      if (Array.isArray(d.Dataset?.conditions)) {
         filterCount += d.Dataset.conditions.filter((c) => c.exposed).length;
       }
     });
