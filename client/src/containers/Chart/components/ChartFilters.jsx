@@ -56,7 +56,7 @@ function ChartFilters(props) {
   const _checkIfFilters = () => {
     let filterCount = 0;
     chart.ChartDatasetConfigs.forEach((cdc) => {
-      if (cdc.Dataset?.conditions) {
+      if (cdc.Dataset?.conditions?.length > 0) {
         filterCount += cdc.Dataset.conditions.filter((c) => c.exposed).length;
       }
     });
