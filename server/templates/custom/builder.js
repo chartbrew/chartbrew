@@ -20,12 +20,14 @@ module.exports = async (teamId, projectId, {
       }],
     });
 
-    const dataRequests = ogDataset.DataRequests.map((dr) => dr.dataValues);
+    const dataRequests = ogDataset.DataRequests.map((dr) => dr.toJSON());
+
+    const ogJsonDataset = ogDataset.toJSON();
 
     const newDataset = {
-      ...ogDataset.dataValues,
+      ...ogJsonDataset,
       team_id: teamId,
-      project_ids: [projectId],
+      project_ids: [parseInt(projectId, 10)],
       draft: false,
     };
     delete newDataset.main_dr_id;
