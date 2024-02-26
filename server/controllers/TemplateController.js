@@ -7,6 +7,7 @@ module.exports.findById = (id) => {
 module.exports.find = (condition) => {
   return db.Template.findAll({
     where: condition,
+    order: [["createdAt", "DESC"]],
   });
 };
 
