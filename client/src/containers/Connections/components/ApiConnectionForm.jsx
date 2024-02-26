@@ -18,6 +18,7 @@ import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
 import { testRequest } from "../../../slices/connection";
+import { LuEye, LuEyeOff } from "react-icons/lu";
 
 
 const authTypes = [{
@@ -50,6 +51,7 @@ function ApiConnectionForm(props) {
   const [errors, setErrors] = useState({});
   const [menuType, setMenuType] = useState("authentication");
   const [testResult, setTestResult] = useState(null);
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
   const isDark = useThemeDetector();
   const initRef = useRef(null);
@@ -277,13 +279,20 @@ function ApiConnectionForm(props) {
                 <Spacer y={2} />
                 <Row align="center">
                   <Input
-                    type="password"
+                    type={passwordVisible ? "text" : "password"}
                     label="Enter a Password or API Key Value"
                     placeholder="Password or API Key Value"
                     onChange={(e) => _onChangeAuthParams("pass", e.target.value)}
                     value={connection.authentication.pass}
                     fullWidth
                     variant="bordered"
+                    endContent={(
+                      <button
+                        onClick={() => setPasswordVisible(!passwordVisible)}
+                      >
+                        {passwordVisible ? <LuEyeOff /> : <LuEye />}
+                      </button>
+                    )}
                   />
                 </Row>
               </div>
@@ -291,13 +300,20 @@ function ApiConnectionForm(props) {
             {connection.authentication && connection.authentication.type === "bearer_token" && (
               <div className="col-span-12 sm:col-span-12 md:col-span-5 lg:col-span-5 xl:col-span-5">
                 <Input
-                  type="password"
+                  type={passwordVisible ? "text" : "password"}
                   label="Enter the token"
                   placeholder="Authentication token"
                   onChange={(e) => _onChangeAuthParams("token", e.target.value)}
                   value={connection.authentication.token}
                   fullWidth
                   variant="bordered"
+                  endContent={(
+                    <button
+                      onClick={() => setPasswordVisible(!passwordVisible)}
+                    >
+                      {passwordVisible ? <LuEyeOff /> : <LuEye />}
+                    </button>
+                  )}
                 />
               </div>
             )}
