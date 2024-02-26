@@ -161,7 +161,7 @@ function CustomTemplateForm(props) {
       {template && template.model && (
         <>
           <Spacer y={4} />
-          {template.model?.Connections && (
+          {template.model?.Connections && template.model?.Datasets && (
             <>
               <Row>
                 <Text b>{"Template connections"}</Text>
@@ -230,7 +230,7 @@ function CustomTemplateForm(props) {
               <Spacer y={4} />
             </>
           )}
-          {!template.model?.Connections && (
+          {!template.model?.Datasets?.length && (
             <div className="flex flex-col gap-2">
               <Chip variant="flat" color="warning" radius="sm">
                 {"Legacy template"}
