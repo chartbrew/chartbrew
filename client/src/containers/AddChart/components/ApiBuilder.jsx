@@ -123,7 +123,14 @@ function ApiBuilder(props) {
       formattedApiRequest.formattedHeaders = formattedHeaders;
 
       if (dataRequest.variables) {
-        setVariables(dataRequest.variables);
+        const formattedVariables = { ...dataRequest.variables };
+        if (formattedVariables.startDate && formattedVariables.startDate.value) {
+          formattedVariables.startDate.value = startOfDay(moment(formattedVariables.startDate.value).toDate());
+        }
+        if (formattedVariables.endDate && formattedVariables.endDate.value) {
+          formattedVariables.endDate.value = endOfDay(moment(formattedVariables.endDate.value).toDate());
+        }
+        setVariables(formattedVariables);
       } else if (variables) {
         formattedApiRequest.variables = variables;
       }
