@@ -294,6 +294,13 @@ function ConnectionWizard() {
               subType="timescaledb"
             />
           )}
+          {selectedType === "supabasedb" && (
+            <PostgresConnectionForm
+              onComplete={_onAddNewConnection}
+              editConnection={newConnection}
+              subType="supabasedb"
+            />
+          )}
 
           <div ref={bottomRef} />
         </div>

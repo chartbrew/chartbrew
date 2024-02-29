@@ -48,4 +48,6 @@ export default (isDark) => ({
   strapi: isDark ? strapiDarkLogo : strapiLogo,
   stripe: isDark ? stripeDarkLogo : stripeLogo,
   supabase: isDark ? supabaseDarkLogo : supabaseLogo,
+  supabasedb: isDark ? supabaseDarkLogo : supabaseLogo,
+  supabaseapi: isDark ? supabaseDarkLogo : supabaseLogo,
 });

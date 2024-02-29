@@ -29,6 +29,11 @@ const formStrings = {
     csDescription: "postgres://username:password@helpful.example.tsdb.cloud.timescale.com:35646/dbname",
     hostname: "helpful.example.tsdb.cloud.timescale.com",
   },
+  supabasedb: {
+    csPlaceholder: "postgres://postgres.[PROJECT_REF]:[YOUR-PASSWORD]@aws-[REGION].pooler.supabase.com:5432/postgres",
+    csDescription: "postgres://postgres.[PROJECT_REF]:[YOUR-PASSWORD]@aws-[REGION].pooler.supabase.com:5432/postgres",
+    hostname: "aws-[REGION].pooler.supabase.com",
+  },
 };
 
 /*
@@ -604,6 +609,26 @@ function FormGuides({ subType }) {
         </Row>
       </>
     )
+  }
+
+  if (subType === "supabasedb") {
+    return (
+      <>
+        <Row align="center">
+          <LuChevronRight />
+          <Spacer x={1} />
+          <Link
+            target="_blank"
+            rel="noopener"
+            href="https://chartbrew.com/blog/connect-and-visualize-supabase-database-with-chartbrew/#create-a-read-only-user"
+          >
+            <Text>{"For security reasons, connect to your Supabase database with read-only credentials"}</Text>
+          </Link>
+          <Spacer x={1} />
+          <LuExternalLink />
+        </Row>
+      </>
+    );
   }
 
   return (

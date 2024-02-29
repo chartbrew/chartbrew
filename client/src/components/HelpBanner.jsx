@@ -69,6 +69,12 @@ const bannerData = {
     url: "https://chartbrew.com/blog/connect-and-visualize-timescaledb-data-with-chartbrew/",
     info: "5 min read",
   },
+  supabasedb: {
+    title: "How to visualize your Supabase data with Chartbrew",
+    description: "Chartbrew can connect to your Supabase database and create charts that tell you more about your data.",
+    url: "https://chartbrew.com/blog/connect-and-visualize-supabase-database-with-chartbrew/",
+    info: "5 min read",
+  },
 }
 
 function HelpBanner(props) {
@@ -78,6 +84,10 @@ function HelpBanner(props) {
     // open the url in a new tab
     window.open(bannerData[type].url, "_blank");
   };
+
+  if (!bannerData[type]) {
+    return null;
+  }
 
   return (
     <Card

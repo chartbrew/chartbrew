@@ -28,4 +28,7 @@ export default [{
 }, {
   type: "timescaledb",
   name: "Timescale",
+}, {
+  type: "supabasedb",
+  name: "Supabase DB",
 }];
