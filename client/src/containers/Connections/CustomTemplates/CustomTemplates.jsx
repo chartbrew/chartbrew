@@ -103,14 +103,14 @@ function CustomTemplates(props) {
             onClick={() => setSelectedTemplate(template)}
             isHoverable
             isPressable
-            className="w-[230px] border-1 border-solid border-content3"
+            className="w-[230px] border-1 border-solid border-content3 h-full"
             shadow="none"
           >
             <CardHeader>
               <Text b>{template.name}</Text>
             </CardHeader>
             <Divider />
-            <CardBody>
+            <CardBody className="flex flex-col align-middle justify-center">
               <Row>
                 <LuBarChart3 />
                 <Spacer x={0.5} />
