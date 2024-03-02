@@ -6,7 +6,7 @@ import { Link, useParams } from "react-router-dom";
 import moment from "moment";
 
 import { createCdc, runQuery, selectChart } from "../../../slices/chart";
-import { Avatar, AvatarGroup, Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Input, ScrollShadow, Spacer, Tab, Tabs } from "@nextui-org/react";
+import { Avatar, Button, Card, CardBody, CardFooter, CardHeader, Chip, Divider, Input, ScrollShadow, Spacer, Tab, Tabs, Tooltip } from "@nextui-org/react";
 import Text from "../../../components/Text";
 import Row from "../../../components/Row";
 import connectionImages from "../../../config/connectionImages";
@@ -183,15 +183,18 @@ function ChartDatasets(props) {
                             ))}
                           </div>
                         </div>
-                        <AvatarGroup size="sm" isBordered>
+                        <div className="flex flex-row items-center gap-1">
                           {dataset?.DataRequests?.map((dr) => (
-                            <Avatar
-                              key={dr.id}
-                              src={connectionImages(isDark)[dr?.Connection?.subType]}
-                              isBordered
-                            />
+                            <Tooltip content={dr?.Connection?.name} key={dr.id}>
+                              <Avatar
+                                key={dr.id}
+                                src={connectionImages(isDark)[dr?.Connection?.subType]}
+                                isBordered
+                                size="sm"
+                              />
+                            </Tooltip>
                           ))}
-                        </AvatarGroup>
+                        </div>
                       </div>                      
                     </div>
                   </CardHeader>
