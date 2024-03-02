@@ -63,13 +63,12 @@ function KpiMode(props) {
       <div>
         <Tooltip content={`compared to last ${chart.timeInterval}`} placement="bottom">
           <div className="w-full py-1">
-            <Text
-              size="sm"
-              className={status === "neutral" ? "text-gray-500" : status === "positive" ? "text-success" : "text-danger"}
+            <span
+              className={`text-sm ${status === "neutral" ? "text-gray-500" : status === "positive" ? "text-success" : "text-danger"}`}
             >
               {status === "positive" ? "+" : ""}
               {`${comparison}%`}
-            </Text>
+            </span>
           </div>
         </Tooltip>
       </div>
