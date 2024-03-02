@@ -2,7 +2,7 @@ import React, { useState, Fragment, useEffect } from "react"
 import PropTypes from "prop-types";
 import {
   Button, Link, Spacer, Avatar, Badge, Tooltip, Card, CardBody,
-  CardFooter, Spinner, Input,
+  CardFooter, Spinner, Input, Divider, Chip,
 } from "@nextui-org/react";
 import { LuDatabase, LuMonitorX, LuPlus, LuSearch } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
@@ -30,6 +30,7 @@ import Container from "../../components/Container";
 import Row from "../../components/Row";
 import useThemeDetector from "../../modules/useThemeDetector";
 import Text from "../../components/Text";
+import { selectProjects } from "../../slices/project";
 
 
 function DatasetQuery(props) {
@@ -47,6 +48,7 @@ function DatasetQuery(props) {
   const stateDataRequests = useSelector((state) => selectDataRequests(state, parseInt(params.datasetId, 10))) || [];
   const connections = useSelector(selectConnections);
   const dataset = useSelector((state) => state.dataset.data.find((d) => `${d.id}` === `${params.datasetId}`));
+  const projects = useSelector(selectProjects);
 
   useEffect(() => {
     dispatch(getDataRequestsByDataset({
@@ -206,6 +208,19 @@ function DatasetQuery(props) {
     }
 
     return connections;
+  };
+
+  const _getConnectionTags = (projectIds) => {
+    const tags = [];
+    if (!projects || !projectIds) return tags;
+    projectIds.forEach((projectId) => {
+      const project = projects.find((p) => p.id === projectId);
+      if (project) {
+        tags.push(project.name);
+      }
+    });
+
+    return tags;
   };
 
   return (
@@ -386,7 +401,7 @@ function DatasetQuery(props) {
               variant="bordered"
             />
           </div>
-          <Spacer y={2} />
+          <Spacer y={4} />
           <div className="grid grid-cols-12 gap-4">
             {_filteredConnections().map((c) => {
               return (
@@ -397,6 +412,7 @@ function DatasetQuery(props) {
                     onClick={() => _onCreateNewRequest(c)}
                     fullWidth
                     shadow="sm"
+                    className="h-full"
                   >
                     <CardBody className="p-unit-4 pl-unit-8">
                       <Row align="center" justify="space-between">
@@ -408,12 +424,21 @@ function DatasetQuery(props) {
                           alt={`${c.type} logo`}
                         />
                       </Row>
+                      <Row align={"center"} className={"gap-1 flex-wrap"}>
+                        {_getConnectionTags(c.project_ids).map((tag) => (
+                          <Chip key={tag} color="primary" variant="flat" size="sm">
+                            {tag}
+                          </Chip>
+                        ))}
+                      </Row>
+                      <Spacer y={2} />
                       <Row>
-                        <Text className={"text-default-400"} size="sm">
+                        <span className={"text-xs text-default-400"}>
                           {`Created on ${moment(c.createdAt).format("LLL")}`}
-                        </Text>
+                        </span>
                       </Row>
                     </CardBody>
+                    <Divider />
                     <CardFooter>
                       <Container>
                         <Row justify="center">
