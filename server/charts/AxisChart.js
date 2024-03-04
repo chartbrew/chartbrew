@@ -432,8 +432,12 @@ class AxisChart {
             const newY = [];
             this.axisData.y[yLength].map((item, index) => {
               let formattedItem = item;
-              if (determineType(item) === "number") {
-                formattedItem = parseFloat(item);
+              try {
+                if (determineType(item) === "number" || determineType(item) === "string") {
+                  formattedItem = parseFloat(item);
+                }
+              } catch (e) {
+                // do nothing
               }
 
               if (index > 0) {
