@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import {
-  Button, Divider, Input, CircularProgress, Modal, Spacer, ModalHeader, ModalBody, ModalFooter, ModalContent,
+  Button, Divider, Input, CircularProgress, Modal, Spacer, ModalHeader, ModalBody, ModalFooter, ModalContent, Chip, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
 } from "@nextui-org/react";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
-import { LuTrash } from "react-icons/lu";
+import { LuClipboardCheck, LuClipboardCopy, LuLock, LuTrash } from "react-icons/lu";
 
 import {
-  updateUser, deleteUser, requestEmailUpdate, updateEmail, selectUser
+  updateUser, deleteUser, requestEmailUpdate, updateEmail, selectUser, get2faAppCode, verify2faApp, get2faMethods, remove2faMethod
 } from "../slices/user";
 import Container from "./Container";
 import Row from "./Row";
@@ -30,8 +30,18 @@ function EditUserForm() {
   const [updateEmailToken, setUpdateEmailToken] = useState("");
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [deleteUserError, setDeleteUserError] = useState(false);
+  const [qrCode, setQrCode] = useState("");
+  const [appToken, setAppToken] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading2fa, setLoading2fa] = useState(false);
+  const [backupCodes, setBackupCodes] = useState(null);
+  const [removeMethod, setRemoveMethod] = useState(null);
+  const [removePassword, setRemovePassword] = useState("");
+  const [removeLoading, setRemoveLoading] = useState(false);
+  const [codesCopied, setCodesCopied] = useState(false);
 
   const userProp = useSelector(selectUser);
+  const authMethods = useSelector((state) => state.user.auths);
 
   const isDark = useThemeDetector();
   const navigate = useNavigate();
@@ -50,6 +60,8 @@ function EditUserForm() {
     }
 
     if (userProp.email) setUserEmail(userProp.email);
+
+    if (userProp.id) dispatch(get2faMethods(userProp.id));
   }, [userProp, user]);
 
   const loadData = () => {
@@ -123,6 +135,68 @@ function EditUserForm() {
       });
   };
 
+  const _onSetup2FA = () => {
+    dispatch(get2faAppCode(userProp.id))
+      .then((res) => {
+        if (res.payload.qrUrl) {
+          setQrCode(res.payload.qrUrl);
+        }
+      });
+  };
+
+  const _onVerify2FA = () => {
+    setLoading2fa(true);
+    dispatch(verify2faApp({ user_id: userProp.id, token: appToken, password }))
+      .then((res) => {
+        if (res.error) {
+          toast.error("Error enabling 2FA. Please try again.");
+          setLoading2fa(false);
+          return;
+        }
+
+        toast.success("2FA has been enabled.");
+        setQrCode("");
+        setAppToken("");
+        setPassword("");
+        if (res?.payload?.backupCodes) {
+          setBackupCodes(res.payload.backupCodes);
+        }
+        setLoading2fa(false);
+
+        dispatch(get2faMethods(userProp.id));
+      })
+      .catch(() => {
+        toast.error("Error enabling 2FA. Please try again.");
+      });
+  };
+
+  const _onRemove2fa = () => {
+    setRemoveLoading(true);
+    dispatch(remove2faMethod({
+      user_id: userProp.id,
+      method_id: removeMethod,
+      password: removePassword,
+    }))
+      .then((res) => {
+        if (res?.error) {
+          setRemoveLoading(false);
+          toast.error("Could not remove. Please check if your password is correct.")
+          return;
+        }
+
+        setRemoveLoading(false);
+        setRemoveMethod(null);
+      });
+  };
+
+  const _onCopyCodes = () => {
+    window.navigator.clipboard.writeText(backupCodes.join("\n"));
+    setCodesCopied(true);
+    setTimeout(() => {
+      setCodesCopied(false);
+    }, 2000);
+  };
+
   if (!user.name) {
     return (
       <Container>
@@ -182,6 +256,11 @@ function EditUserForm() {
       <Spacer y={4} />
 
       <Row>
+        <Text size="h3">Email settings</Text>
+      </Row>
+      <Spacer y={1} />
+
+      <Row>
         <Input
           label="Your email"
           name="email"
@@ -200,7 +279,7 @@ function EditUserForm() {
       <Spacer y={0.5} />
       <Row>
         <Button
-          disabled={!userEmail || userEmail === userProp.email}
+          isDisabled={!userEmail || userEmail === userProp.email}
           color={successEmail ? "success" : "primary"}
           onClick={_onUpdateEmail}
           variant={successEmail ? "flat" : "solid"}
@@ -210,9 +289,123 @@ function EditUserForm() {
         </Button>
       </Row>
 
-      <Spacer y={1} />
+      <Spacer y={4} />
       <Divider />
+      <Spacer y={4} />
+
+      <Row>
+        <Text size="h3">Two-factor authentication</Text>
+      </Row>
       <Spacer y={1} />
+
+      {!qrCode && authMethods?.length === 0 && (
+        <Row>
+          <Button
+            color="primary"
+            variant="bordered"
+            onClick={() => _onSetup2FA()}
+            endContent={<LuLock />}
+          >
+            {"Enable 2FA"}
+          </Button>
+        </Row>
+      )}
+
+      {qrCode && (
+        <div className="flex flex-col gap-2">
+          <Text>{"1. Have an authenticator app for mobile or browser ready"}</Text>
+          <Text>{"2. Scan the QR code with the authenticator app"}</Text>
+          <img src={qrCode} alt="QR code" width={200} />
+          <Text>{"3. Enter the code from the authenticator app below"}</Text>
+          <Input
+            label="Code"
+            placeholder="Enter the code here"
+            variant="bordered"
+            fullWidth
+            onChange={(e) => setAppToken(e.target.value)}
+          />
+          <Text>{"4. Enter your account password to confirm"}</Text>
+          <Input
+            label="Password"
+            placeholder="Enter your password"
+            variant="bordered"
+            fullWidth
+            type="password"
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <div>
+            <Button
+              color="primary"
+              onClick={() => _onVerify2FA()}
+              isDisabled={!appToken || !password}
+              isLoading={loading2fa}
+            >
+              {"Confirm"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {backupCodes && (
+        <>
+          <Text>{"Save these backup codes in a safe place. You can use them to access your account if you lose access to your authenticator app."}</Text>
+          <Spacer y={1} />
+          <div className="flex flex-row flex-wrap gap-1">
+            {backupCodes?.map((code) => (
+              <Chip key={code} variant="flat" radius="sm">
+                {code}
+              </Chip>
+            ))}
+          </div>
+          <Spacer y={1} />
+          <Button
+            variant="bordered"
+            endContent={codesCopied ? <LuClipboardCheck /> : <LuClipboardCopy />}
+            onClick={_onCopyCodes}
+          >
+            {codesCopied ? "Copied" : "Copy codes"}
+          </Button>
+          <Spacer y={1} />
+        </>
+      )}
+
+      {authMethods?.length > 0 && (
+        <Table>
+          <TableHeader>
+            <TableColumn key="method" align="center">Method</TableColumn>
+            <TableColumn key="isEnabled" align="center">Enabled</TableColumn>
+            <TableColumn key="actions" align="end" hideHeader />
+          </TableHeader>
+          <TableBody>
+            {authMethods.map((method) => (
+              <TableRow key={method.id}>
+                <TableCell key="method">{method.method}</TableCell>
+                <TableCell key="isEnabled">
+                  {method.isEnabled
+                    ? <Chip color="success" size="sm" variant="flat">Yes</Chip>
+                    : <Chip color="danger" size="sm" variant="flat">No</Chip>
+                  }
+                </TableCell>
+                <TableCell key="actions" align="right" className="flex justify-end">
+                  <Button
+                    color="danger"
+                    variant="light"
+                    isIconOnly
+                    onClick={() => setRemoveMethod(method.id)}
+                  >
+                    <LuTrash />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+
+      <Spacer y={4} />
+      <Divider />
+      <Spacer y={4} />
 
       <Row>
         <Button
@@ -263,30 +456,32 @@ function EditUserForm() {
         </ModalContent>
       </Modal>
 
-      <Modal open={!!updateEmailToken}>
-        <ModalHeader>
-          <Text size="h3">Update email</Text>
-        </ModalHeader>
-        <ModalBody>
-          <Text>Are you sure you want to update your email?</Text>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            color="warning"
-            flat
-            auto
-            onClick={() => setUpdateEmailToken("")}
-          >
-            Cancel
-          </Button>
-          <Button
-            color="primary"
-            auto
-            onClick={_onUpdateEmailConfirm}
-          >
-            Confirm
-          </Button>
-        </ModalFooter>
+      <Modal isOpen={!!updateEmailToken}>
+        <ModalContent>
+          <ModalHeader>
+            <Text size="h3">Update email</Text>
+          </ModalHeader>
+          <ModalBody>
+            <Text>Are you sure you want to update your email?</Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              color="warning"
+              flat
+              auto
+              onClick={() => setUpdateEmailToken("")}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="primary"
+              auto
+              onClick={_onUpdateEmailConfirm}
+            >
+              Confirm
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
 
       {deleteUserError && (
@@ -298,6 +493,42 @@ function EditUserForm() {
           />
         </Row>
       )}
+
+      <Modal isOpen={!!removeMethod} onClose={() => setRemoveMethod(null)}>
+        <ModalContent>
+          <ModalHeader>
+            <Text h3>Remove 2FA method</Text>
+          </ModalHeader>
+          <ModalBody>
+            <p>Are you sure you want to remove your 2FA method? You can add a new one afterwards.</p>
+            <p>To proceed with the deletion, please confirm your Chartbrew password.</p>
+            <Input
+              label="Password"
+              placeholder="Enter your password"
+              variant="bordered"
+              onChange={(e) => setRemovePassword(e.target.value)}
+              fullWidth
+              type="password"
+            />
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="flat"
+              onClick={() => setRemoveMethod(null)}
+            >
+              Close
+            </Button>
+            <Button
+              color="danger"
+              isDisabled={!removePassword}
+              onClick={_onRemove2fa}
+              isLoading={removeLoading}
+            >
+              Remove 2FA
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       <ToastContainer
         position="top-right"

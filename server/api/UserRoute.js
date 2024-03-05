@@ -394,6 +394,62 @@ module.exports = (app) => {
   });
   // --------------------------------------
 
+  /*
+  ** Route to set up 2FA app for a user
+  */
+  app.post("/user/:id/2fa/app", apiLimiter(5), verifyToken, (req, res) => {
+    return userController.setup2faApp(req.user.id)
+      .then((qrUrl) => {
+        return res.status(200).send({ qrUrl });
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------
+
+  /*
+  ** Route to verify the 2FA app for a user
+  */
+  app.post("/user/:id/2fa/app/verify", apiLimiter(5), verifyToken, (req, res) => {
+    return userController.verify2faApp(req.user.id, req.body)
+      .then((backupCodes) => {
+        return res.status(200).send({ backupCodes });
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------
+
+  /*
+  ** Route to get all 2fa methods for a user
+  */
+  app.get("/user/:id/2fa", verifyToken, (req, res) => {
+    return userController.get2faMethods(req.user.id)
+      .then((methods) => {
+        return res.status(200).send(methods);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------
+
+  /*
+  ** Route to remove a 2fa method
+  */
+  app.delete("/user/:id/2fa/:method_id", verifyToken, (req, res) => {
+    return userController.remove2faMethod(req.user.id, req.params.method_id, req.body.password)
+      .then((result) => {
+        return res.status(200).send({ removed: result });
+      })
+      .catch((err) => {
+        return res.status(400).send(err);
+      });
+  });
+  // -------------------------------------
+
   return (req, res, next) => {
     next();
   };
