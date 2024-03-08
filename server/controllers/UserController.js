@@ -166,6 +166,14 @@ class UserController {
         throw new Error(401);
       }
 
+      const user2FA = await db.User2fa.findOne({
+        where: { user_id: foundUser.id, isEnabled: true }
+      });
+
+      if (user2FA?.id) {
+        return new Promise((resolve) => resolve({ twoFa: user2FA.id, method: user2FA.method }));
+      }
+
       return foundUser;
     } catch (error) {
       throw new Error(error.message);
@@ -526,7 +534,7 @@ class UserController {
     const delta = totp.validate({ token, window: 1 });
 
     if (delta !== null) {
-      return new Promise((resolve) => resolve(true));
+      return this.findById(userId);
     } else {
       return new Promise((resolve, reject) => reject(new Error(401)));
     }
