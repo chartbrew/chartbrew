@@ -254,10 +254,10 @@ function NavbarContainer() {
                 </Link>
               </DropdownItem>
               {_canAccess("teamAdmin", teamOwned) && (
-                <DropdownItem startContent={<LuSettings />} key="account" textValue="Account settings">
+                <DropdownItem startContent={<LuSettings />} key="account" textValue="Team settings">
                   <Link to={`/manage/${team?.id || teamOwned.id}/settings`}>
                     <div className="w-full text-foreground">
-                      Account settings
+                      Team settings
                     </div>
                   </Link>
                 </DropdownItem>
