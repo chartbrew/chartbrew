@@ -77,8 +77,8 @@ function LoginForm() {
           return "2fa"
         }
 
-        if (params.has("inviteToken")) {
-          return dispatch(addTeamMember({ userId: userData.id, inviteToken: params.get("inviteToken") }));
+        if (params?.inviteToken) {
+          return dispatch(addTeamMember({ userId: userData.id, inviteToken: params.inviteToken }));
         }
         setLoading(false);
         return "done";
@@ -113,11 +113,9 @@ function LoginForm() {
       .then((data) => {
         const userData = data.payload;
 
-        if (params.has("inviteToken")) {
-          return dispatch(addTeamMember({ userId: userData.id, inviteToken: params.get("inviteToken") }));
+        if (params?.inviteToken) {
+          return dispatch(addTeamMember({ userId: userData.id, inviteToken: params.inviteToken }));
         }
-        navigate("/user");
-        setLoading(false);
         return "done";
       })
       .then(() => {

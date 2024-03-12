@@ -8,44 +8,42 @@ import {
   CircularProgress, TableHeader, TableColumn, TableCell, TableBody, TableRow,
   ModalHeader, ModalBody, ModalFooter, ModalContent, DropdownTrigger, Dropdown,
   DropdownMenu, DropdownItem, Avatar, AvatarGroup, Listbox, ListboxItem, Switch,
-  Checkbox, Card, CardHeader, Divider, CardBody, Image,
+  Checkbox, Card, CardHeader, Divider, CardBody,
 } from "@nextui-org/react";
 import {
   LuBarChart, LuCalendarDays, LuChevronDown, LuDatabase, LuInfo, LuLayoutGrid, LuMoreHorizontal, LuPencilLine,
-  LuPlayCircle,
-  LuPlug, LuPlus, LuSearch, LuSettings, LuTable, LuTags, LuTrash, LuUsers2, LuX,
+  LuPlug, LuPlus, LuSearch, LuSettings, LuTable, LuTags, LuTrash, LuUsers2,
 } from "react-icons/lu";
 import { Flip, ToastContainer } from "react-toastify";
 
-import { relog, completeTutorial } from "../slices/user";
-import { cleanErrors as cleanErrorsAction } from "../actions/error";
-import { getTemplates } from "../slices/template";
+import { relog } from "../../slices/user";
+import { cleanErrors as cleanErrorsAction } from "../../actions/error";
+import { getTemplates } from "../../slices/template";
 import {
   updateProject, removeProject, selectProjects, getProjects,
-} from "../slices/project";
+} from "../../slices/project";
 import {
   clearConnections,
   getTeamConnections, removeConnection, saveConnection, selectConnections,
-} from "../slices/connection";
-import ProjectForm from "../components/ProjectForm";
-import Navbar from "../components/Navbar";
-import canAccess from "../config/canAccess";
-import Container from "../components/Container";
-import Row from "../components/Row";
-import Text from "../components/Text";
-import connectionImages from "../config/connectionImages";
-import useThemeDetector from "../modules/useThemeDetector";
+} from "../../slices/connection";
+import ProjectForm from "../../components/ProjectForm";
+import Navbar from "../../components/Navbar";
+import canAccess from "../../config/canAccess";
+import Container from "../../components/Container";
+import Row from "../../components/Row";
+import Text from "../../components/Text";
+import connectionImages from "../../config/connectionImages";
+import useThemeDetector from "../../modules/useThemeDetector";
 import {
   selectTeam, selectTeams, getTeams, saveActiveTeam, getTeamMembers, selectTeamMembers,
-} from "../slices/team";
+} from "../../slices/team";
 import {
   clearDatasets,
   deleteDataset,
   getDatasets, getRelatedCharts, selectDatasets, updateDataset,
-} from "../slices/dataset";
-import Segment from "../components/Segment";
-import QuickStartVideo from "../components/QuickStartVideo";
-import startVideoThumbnail from "../assets/quick-start-video.jpg";
+} from "../../slices/dataset";
+import Segment from "../../components/Segment";
+import NoticeBoard from "./components/NoticeBoard";
 
 /*
   The user dashboard with all the teams and projects
@@ -84,7 +82,6 @@ function UserDashboard(props) {
   const [modifyingConnection, setModifyingConnection] = useState(false);
   
   const [viewMode, setViewMode] = useState("grid");
-  const [showQuickStart, setShowQuickStart] = useState(false);
 
   const user = useSelector((state) => state.user);
 
@@ -417,10 +414,6 @@ function UserDashboard(props) {
     window.localStorage.setItem("__cb_view_mode", mode);
   };
 
-  const _onCompleteTutorials = (data) => {
-    dispatch(completeTutorial({ user_id: user.data.id, tutorial: data }));
-  };
-
   if (!user.data.id) {
     return (
       <div style={styles.container(height)}>
@@ -540,40 +533,7 @@ function UserDashboard(props) {
                 </Listbox>
               </Segment>
 
-              {!user.data?.tutorials?.quickStartVideo && (
-                <Card className="mt-4 hidden sm:block" shadow="sm">
-                  <CardHeader className="flex flex-row items-center justify-between gap-2">
-                    <span className="font-medium">Quick start guide</span>
-                    <Tooltip content="Close the guide">
-                      <span className="text-default-500 cursor-pointer" onClick={() => _onCompleteTutorials({ quickStartVideo: true })}>
-                        <LuX />
-                      </span>
-                    </Tooltip>
-                  </CardHeader>
-                  <Divider />
-                  <CardBody>
-                    <div className="relative pb-[60.25%] h-0 mb-4">
-                      <Image
-                        src={startVideoThumbnail}
-                        alt="Chartbrew quick start video"
-                        className="rounded-md"
-                        onClick={() => setShowQuickStart(true)}
-                      />
-                      <div className="absolute inset-0 w-full h-full flex flex-col justify-center items-center z-50">
-                        <Button
-                          variant="flat"
-                          color="primary"
-                          onClick={() => setShowQuickStart(true)}
-                          endContent={<LuPlayCircle />}
-                          size="lg"
-                        >
-                          Watch video
-                        </Button>
-                      </div>
-                    </div>
-                  </CardBody>
-                </Card>
-              )}
+              <NoticeBoard />
             </div>
 
             <div className="col-span-12 sm:col-span-7 md:col-span-8 lg:col-span-9">
@@ -1450,10 +1410,6 @@ function UserDashboard(props) {
         transition={Flip}
         theme={isDark ? "dark" : "light"}
       />
-
-      {showQuickStart && (
-        <QuickStartVideo onClose={() => setShowQuickStart(false)} isOpen={showQuickStart} />
-      )}
     </div>
   );
 }

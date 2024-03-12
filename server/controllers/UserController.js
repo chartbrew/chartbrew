@@ -455,7 +455,7 @@ class UserController {
   }
 
   async setup2faApp(userId) {
-    const user = this.findById(userId);
+    const user = await this.findById(userId);
     if (!user) {
       return new Promise((resolve, reject) => reject(new Error(404)));
     }

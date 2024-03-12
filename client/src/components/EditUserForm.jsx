@@ -4,7 +4,7 @@ import {
 } from "@nextui-org/react";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
-import { LuClipboardCheck, LuClipboardCopy, LuLock, LuTrash } from "react-icons/lu";
+import { LuClipboardCheck, LuClipboardCopy, LuShieldCheck, LuTrash } from "react-icons/lu";
 
 import {
   updateUser, deleteUser, requestEmailUpdate, updateEmail, selectUser, get2faAppCode, verify2faApp, get2faMethods, remove2faMethod
@@ -272,10 +272,14 @@ function EditUserForm() {
           fullWidth
         />
       </Row>
-      <Spacer y={0.5} />
-      <Row>
-        <Text>{"We will send you an email to confirm your new email address."}</Text>
-      </Row>
+      {userEmail !== userProp.email && (
+        <>
+          <Spacer y={0.5} />
+          <Row>
+            <Text>{"We will send you an email to confirm your new email address."}</Text>
+          </Row>
+        </>
+      )}
       <Spacer y={0.5} />
       <Row>
         <Button
@@ -304,7 +308,7 @@ function EditUserForm() {
             color="primary"
             variant="bordered"
             onClick={() => _onSetup2FA()}
-            endContent={<LuLock />}
+            endContent={<LuShieldCheck />}
           >
             {"Enable 2FA"}
           </Button>
@@ -334,6 +338,7 @@ function EditUserForm() {
             onChange={(e) => setPassword(e.target.value)}
           />
 
+          <Spacer y={1} />
           <div>
             <Button
               color="primary"
@@ -349,7 +354,7 @@ function EditUserForm() {
 
       {backupCodes && (
         <>
-          <Text>{"Save these backup codes in a safe place. You can use them to access your account if you lose access to your authenticator app."}</Text>
+          <Text>{"Save these backup codes in a safe place as we only show them once. You can use them to access your account if you lose access to your authenticator app."}</Text>
           <Spacer y={1} />
           <div className="flex flex-row flex-wrap gap-1">
             {backupCodes?.map((code) => (
@@ -406,6 +411,11 @@ function EditUserForm() {
       <Spacer y={4} />
       <Divider />
       <Spacer y={4} />
+
+      <Row>
+        <Text size="h3">Danger zone</Text>
+      </Row>
+      <Spacer y={1} />
 
       <Row>
         <Button

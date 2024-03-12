@@ -7,5 +7,6 @@ module.exports = (user) => {
     active: user.active,
     tutorials: user.tutorials,
     createdAt: user.createdAt,
+    User2fas: user.User2fas,
   };
 };

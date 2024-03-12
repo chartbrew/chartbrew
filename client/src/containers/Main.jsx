@@ -6,7 +6,7 @@ import { semanticColors } from "@nextui-org/theme";
 import { Helmet } from "react-helmet";
 
 import SuspenseLoader from "../components/SuspenseLoader";
-import UserDashboard from "./UserDashboard";
+import UserDashboard from "./UserDashboard/UserDashboard";
 
 import {
   relog, areThereAnyUsers,

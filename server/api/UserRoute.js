@@ -258,6 +258,9 @@ module.exports = (app) => {
     return userController.update(req.user.id, { lastLogin: new Date() })
       .then(() => {
         return res.status(200).send(req.user);
+      })
+      .catch((error) => {
+        return res.status(400).send(error);
       });
   });
   // --------------------------------------
