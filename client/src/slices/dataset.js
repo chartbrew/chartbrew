@@ -22,6 +22,10 @@ export const getDatasets = createAsyncThunk(
     });
 
     const response = await fetch(url, { method, headers });
+    if (!response.ok) {
+      throw new Error("Failed to fetch datasets");
+    }
+
     const responseJson = await response.json();
 
     return responseJson;
@@ -40,6 +44,10 @@ export const getDataset = createAsyncThunk(
     });
 
     const response = await fetch(url, { method, headers });
+    if (!response.ok) {
+      throw new Error("Failed to fetch datasets");
+    }
+
     const responseJson = await response.json();
 
     return responseJson;
@@ -60,6 +68,10 @@ export const saveNewDataset = createAsyncThunk(
     });
 
     const response = await fetch(url, { method, body, headers });
+    if (!response.ok) {
+      throw new Error("Failed to fetch datasets");
+    }
+
     const responseJson = await response.json();
 
     return responseJson;
@@ -80,6 +92,10 @@ export const updateDataset = createAsyncThunk(
     });
 
     const response = await fetch(url, { method, body, headers });
+    if (!response.ok) {
+      throw new Error("Failed to fetch datasets");
+    }
+
     const responseJson = await response.json();
 
     return responseJson;
@@ -98,6 +114,10 @@ export const deleteDataset = createAsyncThunk(
     });
 
     const response = await fetch(url, { method, headers });
+    if (!response.ok) {
+      throw new Error("Failed to fetch datasets");
+    }
+
     const responseJson = await response.json();
 
     return responseJson;
