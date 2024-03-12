@@ -111,6 +111,7 @@ function LoginForm() {
   const _onValidateToken = (e) => {
     e.preventDefault();
 
+    setLoading(true);
     dispatch(validate2faLogin({
       ...twoFaData,
       token: otpToken,
