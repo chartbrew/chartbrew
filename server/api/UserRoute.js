@@ -244,8 +244,10 @@ module.exports = (app) => {
         return tokenizeUser(user, res);
       })
       .catch((error) => {
-        if (error.message === "401") return res.status(401).send("The credentials are incorrect");
-        if (error.message === "404") return res.status(404).send("The email is not registreded");
+        if (error.message === "401") {
+          return res.status(401).json({ message: "The credentials are incorrect" });
+        }
+
         return res.status(400).send(error);
       });
   });

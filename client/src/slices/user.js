@@ -117,7 +117,14 @@ export const login = createAsyncThunk(
 
     const response = await fetch(url, { body, headers, method });
     if (!response.ok) {
-      throw new Error("Error logging in");
+      let errorMessage = "Invalid credentials";
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error;
+      } catch (e) {
+        errorMessage = response.statusText;
+      }
+      throw new Error(errorMessage);
     }
 
     const userData = await response.json();

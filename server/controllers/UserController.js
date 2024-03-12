@@ -146,7 +146,7 @@ class UserController {
       const foundUser = await db.User.findOne({ where: { "email": sc.encrypt(email) } });
 
       if (!foundUser) {
-        throw new Error(404);
+        throw new Error(401);
       }
 
       let isAuthenticated = false;
@@ -201,6 +201,22 @@ class UserController {
     if (delta !== null) {
       const foundUser = await db.User.findOne({ where: { id: user2FA.user_id } });
       return foundUser;
+    }
+
+    if (user2FA.backup) {
+      try {
+        const backupCodes = JSON.parse(user2FA.backup);
+        if (backupCodes.includes(token)) {
+          const foundUser = await db.User.findOne({ where: { id: user2FA.user_id } });
+          if (foundUser) {
+            const newBackupCodes = backupCodes.filter((code) => code !== token);
+            await user2FA.update({ backup: JSON.stringify(newBackupCodes) });
+            return foundUser;
+          }
+        }
+      } catch (e) {
+        // do nothing
+      }
     }
 
     return new Promise((resolve, reject) => reject(401));

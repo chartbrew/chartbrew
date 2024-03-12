@@ -70,6 +70,10 @@ function LoginForm() {
     setLoading(true);
     dispatch(login({ email, password }))
       .then((data) => {
+        if (data.error) {
+          throw new Error(data.error?.message || "Wrong email or password");
+        }
+
         const userData = data.payload;
         if (userData?.method_id) {
           setView2FaApp(true);
@@ -98,7 +102,8 @@ function LoginForm() {
         setLoading(false);
         navigate("/user");
       })
-      .catch(() => {
+      .catch((err) => {
+        setErrors({ ...errors, login: err.message });
         setLoading(false);
       });
   };
@@ -111,6 +116,9 @@ function LoginForm() {
       token: otpToken,
     }))
       .then((data) => {
+        if (data.error) {
+          throw new Error("Invalid token");
+        }
         const userData = data.payload;
 
         if (params?.inviteToken) {
@@ -123,6 +131,7 @@ function LoginForm() {
         navigate("/user");
       })
       .catch(() => {
+        setErrors({ ...errors, otpToken: "Invalid token" });
         setLoading(false);
       });
   }
@@ -176,6 +185,14 @@ function LoginForm() {
                 endContent={<LuLock />}
               />
             </Row>
+            {errors.login && (
+              <>
+                <Spacer y={2} />
+                <p className="text-danger">
+                  {errors.login}
+                </p>
+              </>
+            )}
             <Spacer y={4} />
             <Row justify="center" align="center">
               <Button
@@ -215,6 +232,12 @@ function LoginForm() {
             variant="bordered"
             onChange={(e) => setOtpToken(e.target.value)}
           />
+
+          {errors.otpToken && (
+            <Row>
+              <span className="text-danger">{"Invalid token. Try a new one or use a backup code."}</span>
+            </Row>
+          )}
 
           <Spacer />
           <div>
