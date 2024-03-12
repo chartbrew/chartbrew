@@ -230,10 +230,17 @@ module.exports = (app) => {
     let user = {};
     return userController.login(req.body.email, req.body.password)
       .then((data) => {
+        if (data?.method_id) {
+          return data;
+        }
+
         user = data;
         return userController.update(user.id, { lastLogin: new Date() });
       })
-      .then(() => {
+      .then((data) => {
+        if (data?.method_id) {
+          return res.status(200).json(data);
+        }
         return tokenizeUser(user, res);
       })
       .catch((error) => {
@@ -417,6 +424,27 @@ module.exports = (app) => {
         return res.status(200).send({ backupCodes });
       })
       .catch((error) => {
+        return res.status(400).send(error);
+      });
+  });
+  // --------------------------------------
+
+  /*
+  ** Route to validate 2fa login method
+  */
+  app.post("/user/:id/2fa/:method_id/login", apiLimiter(5), (req, res) => {
+    let user;
+    return userController.validate2FaLogin(req.params.id, req.body.method_id, req.body.token)
+      .then((data) => {
+        user = data;
+        return userController.update(user.id, { lastLogin: new Date() });
+      })
+      .then(() => {
+        return tokenizeUser(user, res);
+      })
+      .catch((error) => {
+        if (error.message === "401") return res.status(401).send("The credentials are incorrect");
+        if (error.message === "404") return res.status(404).send("The email is not registreded");
         return res.status(400).send(error);
       });
   });

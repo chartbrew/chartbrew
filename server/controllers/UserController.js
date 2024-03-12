@@ -171,13 +171,39 @@ class UserController {
       });
 
       if (user2FA?.id) {
-        return new Promise((resolve) => resolve({ twoFa: user2FA.id, method: user2FA.method }));
+        return new Promise((resolve) => resolve({
+          user_id: foundUser.id, method_id: user2FA.id, method: user2FA.method,
+        }));
       }
 
       return foundUser;
     } catch (error) {
       throw new Error(error.message);
     }
+  }
+
+  async validate2FaLogin(userId, methodId, token) {
+    const user2FA = await db.User2fa.findByPk(methodId);
+
+    if (`${user2FA.user_id}` !== `${userId}`) {
+      return new Promise((resolve, reject) => reject({ error: "User mismatch" }));
+    }
+
+    if (!user2FA) {
+      return new Promise((resolve, reject) => reject({ error: "2FA method does not exist" }));
+    }
+
+    const totp = new TOTP({
+      secret: user2FA.secret
+    });
+
+    const delta = totp.validate({ token, window: 1 });
+    if (delta !== null) {
+      const foundUser = await db.User.findOne({ where: { id: user2FA.user_id } });
+      return foundUser;
+    }
+
+    return new Promise((resolve, reject) => reject(401));
   }
 
   findAll() {

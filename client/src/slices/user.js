@@ -390,6 +390,32 @@ export const remove2faMethod = createAsyncThunk(
   }
 );
 
+export const validate2faLogin = createAsyncThunk(
+  "user/validate2faLogin",
+  async({ user_id, method_id, token }) => {
+    const url = `${API_HOST}/user/${user_id}/2fa/${method_id}/login`;
+    const body = JSON.stringify({ token, method_id });
+    const method = "POST";
+    const headers = new Headers({
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+    });
+
+    const response = await fetch(url, { headers, method, body });
+    if (!response.ok) {
+      throw new Error("Error verifying 2fa app");
+    }
+
+    const userData = await response.json();
+    if (getAuthToken()) {
+      cookie.remove(tokenKey, { path: "/" });
+    }
+    cookie.save(tokenKey, userData.token, { expires, path: "/" });
+
+    return userData;
+  }
+)
+
 const initialState = {
   loading: false,
   error: false,
@@ -466,7 +492,9 @@ export const userSlice = createSlice({
     });
     builder.addCase(login.fulfilled, (state, action) => {
       state.loading = false;
-      state.data = action.payload;
+      if (!action.payload?.method_id) {
+        state.data = action.payload;
+      }
     });
     builder.addCase(login.rejected, (state) => {
       state.loading = false;
@@ -524,6 +552,20 @@ export const userSlice = createSlice({
       state.loading = false;
       state.error = true;
     });
+
+    // validate2faLogin
+    // login
+    builder.addCase(validate2faLogin.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(validate2faLogin.fulfilled, (state, action) => {
+      state.loading = false;
+      state.data = action.payload;
+    });
+    builder.addCase(validate2faLogin.rejected, (state) => {
+      state.loading = false;
+      state.error = true;
+    })
   },
 });
 
