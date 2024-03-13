@@ -58,7 +58,7 @@ function NoticeBoard() {
         </Card>
       )}
 
-      {!user?.tutorials?.twoFactorAuth && user?.User2fas.length < 1 && (
+      {!user?.tutorials?.twoFactorAuth && user?.User2fas && user?.User2fas?.length < 1 && (
         <Card className="mt-4 hidden sm:block" shadow="sm">
           <CardHeader className="flex flex-row items-center justify-between gap-2">
             <span className="font-medium">Two-factor Authentication</span>
