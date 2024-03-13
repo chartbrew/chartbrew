@@ -192,137 +192,139 @@ function TeamMembers(props) {
         </Row>
         <Spacer y={2} />
 
-        <Table shadow="none" isStriped>
-          <TableHeader>
-            <TableColumn key="member">Member</TableColumn>
-            <TableColumn key="role">Role</TableColumn>
-            <TableColumn key="projectAccess">Projects</TableColumn>
-            <TableColumn key="export">Can export</TableColumn>
-            <TableColumn key="actions" hideHeader>Actions</TableColumn>
-          </TableHeader>
-          <TableBody>
-            {teamMembers?.length > 0 && teamMembers.map((member) => {
-              let memberRole = {};
-              for (let i = 0; i < member.TeamRoles.length; i++) {
-                if (member.TeamRoles[i].team_id === team.id) {
-                  memberRole = member.TeamRoles[i];
-                  break;
+        {_canAccess("teamAdmin") && (
+          <Table shadow="none" isStriped>
+            <TableHeader>
+              <TableColumn key="member">Member</TableColumn>
+              <TableColumn key="role">Role</TableColumn>
+              <TableColumn key="projectAccess">Projects</TableColumn>
+              <TableColumn key="export">Can export</TableColumn>
+              <TableColumn key="actions" hideHeader>Actions</TableColumn>
+            </TableHeader>
+            <TableBody>
+              {teamMembers?.length > 0 && teamMembers.map((member) => {
+                let memberRole = {};
+                for (let i = 0; i < member.TeamRoles.length; i++) {
+                  if (member.TeamRoles[i].team_id === team.id) {
+                    memberRole = member.TeamRoles[i];
+                    break;
+                  }
                 }
-              }
 
-              return (
-                <TableRow key={member.id}>
-                  <TableCell key="member" className="flex flex-col">
-                    <Text b>{member.name}</Text>
-                    <Text size="sm" className={"text-foreground-500"}>{member.email}</Text>
-                  </TableCell>
-                  <TableCell key="role">
-                    {memberRole.role === "teamOwner" && <Chip color="primary" variant="flat" size="sm">Team Owner</Chip>}
-                    {memberRole.role === "teamAdmin" && <Chip color="success" variant="flat" size="sm">Team Admin</Chip>}
-                    {memberRole.role === "projectAdmin" && <Chip color="secondary" variant="flat" size="sm">Project admin</Chip>}
-                    {memberRole.role === "projectViewer" && <Chip color="default" variant="flat" size="sm">Project viewer</Chip>}
-                  </TableCell>
-                  <TableCell key="projectAccess">
-                    {memberRole.role !== "teamOwner" && memberRole.role !== "teamAdmin" ? memberRole?.projects?.length : ""}
-                    {memberRole.role === "teamOwner" || memberRole.role === "teamAdmin" ? "All" : ""}
-                  </TableCell>
-                  <TableCell key="export">
-                    {(memberRole.canExport || (memberRole.role.indexOf("team") > -1)) && <Chip color="success" variant={"flat"} size="sm">Yes</Chip>}
-                    {(!memberRole.canExport && memberRole.role.indexOf("team") === -1) && <Chip color="danger" variant={"flat"} size="sm">No</Chip>}
-                  </TableCell>
-                  <TableCell key="actions">
-                    <div>
-                      <Row className={"gap-2"}>
-                        {_canAccess("teamAdmin") && memberRole.role !== "teamOwner" && memberRole !== "teamAdmin" && (
-                          <>
-                            <Tooltip content="Adjust project access">
-                              <Button
-                                variant="light"
-                                color="primary"
-                                isIconOnly
-                                auto
-                                onClick={() => _openProjectAccess(member)}
-                              >
-                                <LuBookKey />
-                              </Button>
-                            </Tooltip>
-                          </>
-                        )}
-                        {_canAccess("teamAdmin") && user.id !== member.id && (
-                          <>
-                            <Tooltip content="Change member role">
-                              <Dropdown>
-                                <DropdownTrigger>
-                                  <Button variant="light" auto isIconOnly color="secondary">
-                                    <LuUsers2 />
-                                  </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu
-                                  variant="bordered"
-                                  onAction={(key) => _onChangeRole(key, member)}
-                                  selectedKeys={[memberRole.role]}
-                                  selectionMode="single"
+                return (
+                  <TableRow key={member.id}>
+                    <TableCell key="member" className="flex flex-col">
+                      <Text b>{member.name}</Text>
+                      <Text size="sm" className={"text-foreground-500"}>{member.email}</Text>
+                    </TableCell>
+                    <TableCell key="role">
+                      {memberRole.role === "teamOwner" && <Chip color="primary" variant="flat" size="sm">Team Owner</Chip>}
+                      {memberRole.role === "teamAdmin" && <Chip color="success" variant="flat" size="sm">Team Admin</Chip>}
+                      {memberRole.role === "projectAdmin" && <Chip color="secondary" variant="flat" size="sm">Project admin</Chip>}
+                      {memberRole.role === "projectViewer" && <Chip color="default" variant="flat" size="sm">Project viewer</Chip>}
+                    </TableCell>
+                    <TableCell key="projectAccess">
+                      {memberRole.role !== "teamOwner" && memberRole.role !== "teamAdmin" ? memberRole?.projects?.length : ""}
+                      {memberRole.role === "teamOwner" || memberRole.role === "teamAdmin" ? "All" : ""}
+                    </TableCell>
+                    <TableCell key="export">
+                      {(memberRole.canExport || (memberRole.role.indexOf("team") > -1)) && <Chip color="success" variant={"flat"} size="sm">Yes</Chip>}
+                      {(!memberRole.canExport && memberRole.role.indexOf("team") === -1) && <Chip color="danger" variant={"flat"} size="sm">No</Chip>}
+                    </TableCell>
+                    <TableCell key="actions">
+                      <div>
+                        <Row className={"gap-2"}>
+                          {_canAccess("teamAdmin") && memberRole.role !== "teamOwner" && memberRole !== "teamAdmin" && (
+                            <>
+                              <Tooltip content="Adjust project access">
+                                <Button
+                                  variant="light"
+                                  color="primary"
+                                  isIconOnly
+                                  auto
+                                  onClick={() => _openProjectAccess(member)}
                                 >
-                                  {user.id !== member.id
-                                    && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                    && (
-                                      <DropdownItem
-                                        key="teamAdmin"
-                                        textValue="Team Admin"
-                                        description={"Full access, but can't delete the team"}
-                                      >
-                                        <Text>Team Admin</Text>
-                                      </DropdownItem>
-                                    )}
-                                  {user.id !== member.id
-                                    && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                    && (
-                                      <DropdownItem
-                                        key="projectAdmin"
-                                        textValue="Project Admin"
-                                        description={"Can create, edit, and remove charts and connections in assigned projects"}
-                                      >
-                                        <Text>Project Admin</Text>
-                                      </DropdownItem>
-                                    )}
-                                  {user.id !== member.id
-                                    && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
-                                    && (
-                                      <DropdownItem
-                                        key="projectViewer"
-                                        textValue="Project Viewer"
-                                        description={"Can view charts in assigned projects"}
-                                      >
-                                        <Text>Project Viewer</Text>
-                                      </DropdownItem>
-                                    )}
-                                </DropdownMenu>
-                              </Dropdown>
-                            </Tooltip>
-                          </>
-                        )}
-                        {user.id !== member.id
-                          && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole !== "teamOwner"))
-                          && (
-                            <Tooltip content="Remove user from the team">
-                              <Button
-                                variant="light"
-                                onClick={() => _onDeleteConfirmation(member.id)}
-                                isIconOnly
-                                color="danger"
-                              >
-                                <LuXCircle />
-                              </Button>
-                            </Tooltip>
+                                  <LuBookKey />
+                                </Button>
+                              </Tooltip>
+                            </>
                           )}
-                      </Row>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                          {_canAccess("teamAdmin") && user.id !== member.id && (
+                            <>
+                              <Tooltip content="Change member role">
+                                <Dropdown>
+                                  <DropdownTrigger>
+                                    <Button variant="light" auto isIconOnly color="secondary">
+                                      <LuUsers2 />
+                                    </Button>
+                                  </DropdownTrigger>
+                                  <DropdownMenu
+                                    variant="bordered"
+                                    onAction={(key) => _onChangeRole(key, member)}
+                                    selectedKeys={[memberRole.role]}
+                                    selectionMode="single"
+                                  >
+                                    {user.id !== member.id
+                                      && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                      && (
+                                        <DropdownItem
+                                          key="teamAdmin"
+                                          textValue="Team Admin"
+                                          description={"Full access, but can't delete the team"}
+                                        >
+                                          <Text>Team Admin</Text>
+                                        </DropdownItem>
+                                      )}
+                                    {user.id !== member.id
+                                      && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                      && (
+                                        <DropdownItem
+                                          key="projectAdmin"
+                                          textValue="Project Admin"
+                                          description={"Can create, edit, and remove charts and connections in assigned projects"}
+                                        >
+                                          <Text>Project Admin</Text>
+                                        </DropdownItem>
+                                      )}
+                                    {user.id !== member.id
+                                      && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole.role !== "teamOwner"))
+                                      && (
+                                        <DropdownItem
+                                          key="projectViewer"
+                                          textValue="Project Viewer"
+                                          description={"Can view charts in assigned projects"}
+                                        >
+                                          <Text>Project Viewer</Text>
+                                        </DropdownItem>
+                                      )}
+                                  </DropdownMenu>
+                                </Dropdown>
+                              </Tooltip>
+                            </>
+                          )}
+                          {user.id !== member.id
+                            && (_canAccess("teamOwner") || (_canAccess("teamAdmin") && memberRole !== "teamOwner"))
+                            && (
+                              <Tooltip content="Remove user from the team">
+                                <Button
+                                  variant="light"
+                                  onClick={() => _onDeleteConfirmation(member.id)}
+                                  isIconOnly
+                                  color="danger"
+                                >
+                                  <LuXCircle />
+                                </Button>
+                              </Tooltip>
+                            )}
+                        </Row>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
       </Segment>
 
       {/* Remove user modal */}
