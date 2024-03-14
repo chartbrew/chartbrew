@@ -22,6 +22,7 @@ const AuthCacheController = require("./controllers/AuthCacheController");
 const parseQueryParams = require("./middlewares/parseQueryParams");
 const db = require("./models/models");
 const packageJson = require("./package.json");
+const cleanGhostChartsCron = require("./modules/cleanGhostChartsCron");
 
 const authCache = new AuthCacheController();
 
@@ -101,6 +102,7 @@ db.migrate()
           updateChartsCron();
           cleanChartCache();
           cleanAuthCache();
+          cleanGhostChartsCron();
         }, 5000);
       }
 
