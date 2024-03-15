@@ -75,6 +75,18 @@ const bannerData = {
     url: "https://chartbrew.com/blog/connect-and-visualize-supabase-database-with-chartbrew/",
     info: "5 min read",
   },
+  rdsPostgres: {
+    title: "How to connect Amazon RDS Postgres to Chartbrew",
+    description: "Chartbrew can connect to your RDS Postgres database and create charts that tell you more about your data.",
+    url: "https://chartbrew.com/blog/how-to-connect-and-visualize-amazon-rds-with-chartbrew/",
+    info: "5 min read",
+  },
+  rdsMysql: {
+    title: "How to connect Amazon RDS MySQL to Chartbrew",
+    description: "Chartbrew can connect to your RDS MySQL database and create charts that tell you more about your data.",
+    url: "https://chartbrew.com/blog/how-to-connect-and-visualize-amazon-rds-with-chartbrew/",
+    info: "5 min read",
+  },
 }
 
 function HelpBanner(props) {

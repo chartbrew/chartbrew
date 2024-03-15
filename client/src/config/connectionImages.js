@@ -30,6 +30,8 @@ import stripeLogo from "../assets/stripe-connection.webp";
 import stripeDarkLogo from "../assets/Stripe-dark.png";
 import supabaseLogo from "../assets/supabase-connection.webp";
 import supabaseDarkLogo from "../assets/Supabase-dark.png";
+import rdsLogo from "../assets/rds.png";
+import rdsDarkLogo from "../assets/rds-dark.png";
 
 export default (isDark) => ({
   mongodb: isDark ? mongoDarkLogo : mongoLogo,
@@ -50,4 +52,6 @@ export default (isDark) => ({
   supabase: isDark ? supabaseDarkLogo : supabaseLogo,
   supabasedb: isDark ? supabaseDarkLogo : supabaseLogo,
   supabaseapi: isDark ? supabaseDarkLogo : supabaseLogo,
+  rdsPostgres: isDark ? rdsDarkLogo : rdsLogo,
+  rdsMysql: isDark ? rdsDarkLogo : rdsLogo,
 });

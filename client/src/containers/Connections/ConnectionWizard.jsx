@@ -255,6 +255,7 @@ function ConnectionWizard() {
             <MysqlConnectionForm
               onComplete={_onAddNewConnection}
               editConnection={newConnection}
+              subType="mysql"
             />
           )}
           {selectedType === "firestore" && (
@@ -299,6 +300,20 @@ function ConnectionWizard() {
               onComplete={_onAddNewConnection}
               editConnection={newConnection}
               subType="supabasedb"
+            />
+          )}
+          {selectedType === "rdsPostgres" && (
+            <PostgresConnectionForm
+              onComplete={_onAddNewConnection}
+              editConnection={newConnection}
+              subType="rdsPostgres"
+            />
+          )}
+          {selectedType === "rdsMysql" && (
+            <MysqlConnectionForm
+              onComplete={_onAddNewConnection}
+              editConnection={newConnection}
+              subType="rdsMysql"
             />
           )}
 

@@ -31,4 +31,10 @@ export default [{
 }, {
   type: "supabasedb",
   name: "Supabase DB",
+}, {
+  type: "rdsPostgres",
+  name: "RDS Postgres",
+}, {
+  type: "rdsMysql",
+  name: "RDS MySQL",
 }];

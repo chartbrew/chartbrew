@@ -34,6 +34,11 @@ const formStrings = {
     csDescription: "postgres://postgres.[PROJECT_REF]:[YOUR-PASSWORD]@aws-[REGION].pooler.supabase.com:5432/postgres",
     hostname: "aws-[REGION].pooler.supabase.com",
   },
+  rdsPostgres: {
+    csPlaceholder: "postgres://[USERNAME]:[PASSWORD]@[HOSTNAME]:[PORT]/[DB_NAME]",
+    csDescription: "postgres://[USERNAME]:[PASSWORD]@[HOSTNAME]:[PORT]/[DB_NAME]",
+    hostname: "example-database.ref.region.rds.amazonaws.com",
+  },
 };
 
 /*
@@ -623,6 +628,39 @@ function FormGuides({ subType }) {
             href="https://chartbrew.com/blog/connect-and-visualize-supabase-database-with-chartbrew/#create-a-read-only-user"
           >
             <Text>{"For security reasons, connect to your Supabase database with read-only credentials"}</Text>
+          </Link>
+          <Spacer x={1} />
+          <LuExternalLink />
+        </Row>
+      </>
+    );
+  }
+
+  if (subType === "rdsPostgres") {
+    return (
+      <>
+        <Row align="center">
+          <LuChevronRight />
+          <Spacer x={1} />
+          <Link
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://chartbrew.com/blog/how-to-connect-and-visualize-amazon-rds-with-chartbrew/#ensure-your-database-user-has-read-only-access-optional-but-recommended"
+          >
+            <Text>{"For security reasons, connect to your PostgreSQL database with read-only credentials"}</Text>
+          </Link>
+          <Spacer x={1} />
+          <LuExternalLink />
+        </Row>
+        <Row align="center">
+          <LuChevronRight />
+          <Spacer x={1} />
+          <Link
+            href="https://chartbrew.com/blog/how-to-connect-and-visualize-amazon-rds-with-chartbrew/#adjust-your-rds-instance-to-allow-remote-connections"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Text>{"Find out how to allow remote connections to your PostgreSQL database"}</Text>
           </Link>
           <Spacer x={1} />
           <LuExternalLink />
