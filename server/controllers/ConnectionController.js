@@ -573,7 +573,6 @@ class ConnectionController {
     return this.getConnectionUrl(id)
       .then((url) => {
         const options = {
-          keepAlive: true,
           connectTimeoutMS: 100000,
         };
         mongoConnection = mongoose.createConnection(url, options);
@@ -583,7 +582,8 @@ class ConnectionController {
         return Function(`'use strict';return (mongoConnection, ObjectId) => mongoConnection.${formattedQuery}.toArray()`)()(mongoConnection, ObjectId); // eslint-disable-line
       })
       // if array fails, check if it works with object (for example .findOne() return object)
-      .catch(() => {
+      .catch((err) => {
+        console.log("err", err);
         return Function(`'use strict';return (mongoConnection, ObjectId) => mongoConnection.${formattedQuery}`)()(mongoConnection, ObjectId); // eslint-disable-line
       })
       .then(async (data) => {
@@ -609,6 +609,7 @@ class ConnectionController {
         return Promise.resolve(dataToCache);
       })
       .catch((error) => {
+        console.log("error", error);
         // close the mongodb connection
         mongoConnection.close();
 

@@ -7,7 +7,6 @@ module.exports = ({ connection_id, query }) => {
   return connectionController.getConnectionUrl(connection_id)
     .then((url) => {
       const options = {
-        keepAlive: 1,
         connectTimeoutMS: 30000,
       };
       return mongoose.connect(url, options);
