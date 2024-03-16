@@ -7,7 +7,7 @@ import {
   Button, Input, Spacer, Tooltip,
 } from "@nextui-org/react";
 import { Helmet } from "react-helmet";
-import uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { LuCheck, LuChevronLeftCircle, LuPrinter, LuRedo } from "react-icons/lu";
 
 import Chart from "../Chart/Chart";

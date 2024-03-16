@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import {
   Button, Divider, Input, Spacer,Chip, Tabs, Tab, Select, SelectItem,
 } from "@nextui-org/react";
-import uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import AceEditor from "react-ace";
 import { useParams } from "react-router";
 import { HiPlus, HiX } from "react-icons/hi";

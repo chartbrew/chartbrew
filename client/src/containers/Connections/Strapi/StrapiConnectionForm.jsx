@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import {
   Button, Input, Spacer,
 } from "@nextui-org/react";
-import uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { LuPlusCircle, LuXCircle } from "react-icons/lu";
 import { useDispatch } from "react-redux";
 import { useParams } from "react-router";

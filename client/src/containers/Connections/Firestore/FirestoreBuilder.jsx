@@ -8,7 +8,7 @@ import {
 import AceEditor from "react-ace";
 import _ from "lodash";
 import { toast } from "react-toastify";
-import uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { Calendar } from "react-date-range";
 import { format, formatISO } from "date-fns";
 import { enGB } from "date-fns/locale";

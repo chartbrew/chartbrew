@@ -5,7 +5,7 @@ import {
 } from "@nextui-org/react";
 
 import { FaExternalLinkSquareAlt } from "react-icons/fa";
-import uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import AceEditor from "react-ace";
 import { LuChevronRight, LuInfo, LuPlus, LuXCircle } from "react-icons/lu";
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, Fragment } from "react";
 import PropTypes from "prop-types";
 import moment from "moment";
 import _ from "lodash";
-import uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { formatISO, format } from "date-fns";
 import { Calendar, DateRange } from "react-date-range";
 import { enGB } from "date-fns/locale";

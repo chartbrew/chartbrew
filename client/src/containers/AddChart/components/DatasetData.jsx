@@ -4,7 +4,7 @@ import React, {
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Calendar } from "react-date-range";
-import uuid from "uuid/v4";
+import { v4 as uuid} from "uuid";
 import _ from "lodash";
 import { formatISO, format } from "date-fns";
 import { enGB } from "date-fns/locale";

@@ -6,7 +6,7 @@ import {
   Tabs, Tab, Select, SelectItem, PopoverTrigger, Popover, PopoverContent,
 } from "@nextui-org/react";
 import AceEditor from "react-ace";
-import uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { toast } from "react-toastify";
 import { useParams } from "react-router";
 import { LuCalendarDays, LuInfo, LuPlay, LuPlus, LuPlusCircle, LuTrash, LuXCircle } from "react-icons/lu";
