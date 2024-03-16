@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const moment = require("moment");
 const Sequelize = require("sequelize");
 const { nanoid } = require("nanoid");
-const uuid = require("uuid/v4");
+const { v4: uuid } = require("uuid");
 
 const externalDbConnection = require("../modules/externalDbConnection");
 

@@ -1,5 +1,5 @@
 const simplecrypt = require("simplecrypt");
-const uuid = require("uuid/v4");
+const { v4: uuid } = require("uuid");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { nanoid } = require("nanoid");
@@ -27,7 +27,6 @@ class UserController {
 
         return db.User.create({
           name: user.name,
-          oneaccountId: user.oneaccountId,
           email: user.email,
           password: bcryptHash,
           icon: user.icon,

@@ -1,5 +1,5 @@
 const simplecrypt = require("simplecrypt");
-const uuidv4 = require("uuid/v4");
+const { v4: uuidv4 } = require("uuid");
 const _ = require("lodash");
 const jwt = require("jsonwebtoken");
 

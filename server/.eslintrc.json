@@ -21,7 +21,10 @@
     "prefer-promise-reject-errors": "off",
     "camelcase": "off",
     "import/extensions": "off",
-    "no-template-curly-in-string": "off"
+    "no-template-curly-in-string": "off",
+    "no-promise-executor-return": "off",
+    "function-paren-newline": "off",
+    "default-param-last": "off"
   },
   "parser": "@babel/eslint-parser",
   "parserOptions": {

@@ -7,7 +7,6 @@ const { urlencoded, json } = require("body-parser");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const _ = require("lodash");
-const { OneAccount } = require("oneaccount-express");
 const morgan = require("morgan");
 const helmet = require("helmet");
 const fs = require("fs");
@@ -18,13 +17,10 @@ const routes = require("./api");
 const updateChartsCron = require("./modules/updateChartsCron");
 const cleanChartCache = require("./modules/CleanChartCache");
 const cleanAuthCache = require("./modules/CleanAuthCache");
-const AuthCacheController = require("./controllers/AuthCacheController");
 const parseQueryParams = require("./middlewares/parseQueryParams");
 const db = require("./models/models");
 const packageJson = require("./package.json");
 const cleanGhostChartsCron = require("./modules/cleanGhostChartsCron");
-
-const authCache = new AuthCacheController();
 
 // set up folders
 fs.mkdir(".cache", () => {});
@@ -46,17 +42,6 @@ app.use(json());
 app.use(methodOverride("X-HTTP-Method-Override"));
 app.use(helmet());
 app.use(cors());
-app.use(new OneAccount({
-  engine: {
-    set: (k, v) => {
-      authCache.set(k, v);
-    },
-    get: async (k) => {
-      const v = await authCache.get(k); authCache.delete(k); return v;
-    }
-  },
-  callbackURL: "/oneaccountauth"
-}));
 //---------------------------------------
 
 app.get("/", (req, res) => {

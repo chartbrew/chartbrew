@@ -1,4 +1,4 @@
-const uuid = require("uuid/v4");
+const { v4: uuid } = require("uuid");
 const db = require("../models");
 
 module.exports.up = async (queryInterface) => {

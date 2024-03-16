@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 const request = require("request");
-const uuid = require("uuid/v4");
 const rateLimit = require("express-rate-limit");
 
 const UserController = require("../controllers/UserController");
@@ -102,49 +101,6 @@ module.exports = (app) => {
         if (error.message === "409") return res.status(409).send("The email is already used");
         return res.status(400).send(error);
       });
-  });
-
-  // --------------------------------------
-  /*
-  ** Route for authenticating a oneaccount user
-  */
-  app.post("/oneaccountauth", async (req, res) => {
-    if (!req.oneaccount) {
-      return res.status(401).send("Unauthorized");
-    }
-    const icon = req.oneaccount.firstName.substring(0, 1) + req.oneaccount.lastName.substring(0, 1);
-    const userObj = {
-      oneaccountId: req.oneaccount.userId,
-      name: `${req.oneaccount.firstName} ${req.oneaccount.lastName}`,
-      email: req.oneaccount.email,
-      // generate random password so no one can login using email/pass combination
-      password: uuid(),
-      active: false,
-      icon: icon.toUpperCase(),
-    };
-    // one account provides the same flow for sign up and sign in
-    // so we can handle both here:
-    // log in if exists
-    try {
-      const user = await userController.findByEmail(userObj.email);
-      if (user && user.id) {
-        const updatedUser = await userController.update(user.id, { lastLogin: new Date() });
-        return tokenizeUser(updatedUser, res);
-      }
-    } catch (error) {
-      // the user is not registered yet, continue to register
-    }
-    // otherwise register
-    try {
-      if (!userObj || !userObj.email) {
-        return new Promise((resolve, reject) => reject(new Error("no email is provided")));
-      }
-      const user = await userController.createUser(userObj);
-      return tokenizeUser(user, res);
-    } catch (error) {
-      if (error.message === "409") return res.status(409).send("The email is already used");
-      return res.status(400).send(error);
-    }
   });
   // --------------------------------------
 

@@ -1,4 +1,4 @@
-const compareVersions = require("compare-versions");
+const { compareVersions } = require("compare-versions");
 const request = require("request-promise");
 
 const db = require("../models/models");

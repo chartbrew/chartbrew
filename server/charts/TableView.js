@@ -12,9 +12,6 @@ function formatValue(value, config, timezone) {
     if (value.toString().length === 10 && `${value}`.match(checkNumbersOnly)) {
       return timezone ? moment.utc(value, "X").tz(timezone).format(config.format || "")
         : moment.utc(value, "X").format(config.format);
-    } else if (value.toString().length === 10 && `${value}`.match(checkNumbersOnly)) {
-      return timezone ? moment.utc(value, "x").tz(timezone).format(config.format || "")
-        : moment.utc(value, "x").format(config.format);
     } else {
       return timezone ? moment.utc(value).tz(timezone).format(config.format || "")
         : moment.utc(value).format(config.format);
