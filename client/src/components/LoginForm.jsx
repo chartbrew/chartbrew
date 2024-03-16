@@ -4,7 +4,7 @@ import {
   Button, Input, Spacer, Link, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent,
 } from "@nextui-org/react";
 import { LuChevronRight, LuLock, LuMail } from "react-icons/lu";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate } from "react-router";
 
 import {
   login, requestPasswordReset, validate2faLogin,
@@ -34,7 +34,6 @@ function LoginForm() {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const params = useParams();
 
   const _onSendResetRequest = () => {
     if (validateEmail(resetEmail)) {
@@ -56,6 +55,8 @@ function LoginForm() {
 
   const loginUser = (e) => {
     e.preventDefault();
+
+    const params = new URLSearchParams(document.location.search);
 
     if (validateEmail(email)) {
       setErrors({ ...errors, email: validateEmail(email) });
@@ -81,8 +82,8 @@ function LoginForm() {
           return "2fa"
         }
 
-        if (params?.inviteToken) {
-          return dispatch(addTeamMember({ userId: userData.id, inviteToken: params.inviteToken }));
+        if (params.has("inviteToken")) {
+          return dispatch(addTeamMember({ userId: userData.id, inviteToken: params.get("inviteToken") }));
         }
         setLoading(false);
         return "done";
@@ -111,6 +112,8 @@ function LoginForm() {
   const _onValidateToken = (e) => {
     e.preventDefault();
 
+    const params = new URLSearchParams(document.location.search);
+
     setLoading(true);
     dispatch(validate2faLogin({
       ...twoFaData,
@@ -122,8 +125,8 @@ function LoginForm() {
         }
         const userData = data.payload;
 
-        if (params?.inviteToken) {
-          return dispatch(addTeamMember({ userId: userData.id, inviteToken: params.inviteToken }));
+        if (params.has("inviteToken")) {
+          return dispatch(addTeamMember({ userId: userData.id, inviteToken: params.get("inviteToken") }));
         }
         return "done";
       })
