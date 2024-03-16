@@ -90,7 +90,7 @@ jobs:
   build_docs:
     docker:
       - image: cimg/node:20.11.1
-    working_directory: ~/chartbrew
+    working_directory: ~/chartbrew/docs-v3
     # build the docs
     steps:
       - checkout
