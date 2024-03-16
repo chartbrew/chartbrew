@@ -267,7 +267,7 @@ class FirestoreConnection {
 
     let subDocData = [];
     let finalDocs;
-    if (configuration?.selectedSubCollection) {
+    if (configuration?.showSubCollections && configuration?.selectedSubCollection) {
       subDocData = await this.getSubCollections(dataRequest);
       finalDocs = populateReferences(subDocData);
       // filter the docs based on what docs from the main collection are available
