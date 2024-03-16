@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { PropTypes } from "prop-types";
 import {
-  Button, CircularProgress, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Spacer,
+  Autocomplete,
+  AutocompleteItem,
+  Button, CircularProgress, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spacer,
 } from "@nextui-org/react";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
@@ -37,7 +39,6 @@ function ProjectSettings(props) {
   const [removeLoading, setRemoveLoading] = useState(false);
   const [removeError, setRemoveError] = useState(false);
   const [projectTimezone, setProjectTimezone] = useState("");
-  const [timezoneSearch, setTimezoneSearch] = useState("");
   const [loadingTimezone, setLoadingTimezone] = useState(false);
 
   const team = useSelector(selectTeam);
@@ -100,7 +101,6 @@ function ProjectSettings(props) {
     dispatch(updateProject({ project_id: project.id, data: { timezone: clear ? "" : projectTimezone } }))
       .then(() => {
         setProjectTimezone("");
-        setTimezoneSearch("");
         setLoadingTimezone(false);
         dispatch(changeActiveProject(project.id));
         toast.success("The timezone was updated successfully!");
@@ -114,7 +114,6 @@ function ProjectSettings(props) {
   const _onGetMachineTimezone = () => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     setProjectTimezone(tz);
-    setTimezoneSearch("");
   };
 
   const _canAccess = (role) => {
@@ -122,7 +121,7 @@ function ProjectSettings(props) {
   };
 
   return (
-    <Segment style={style} className="container mx-auto mt-4 bg-background">
+    <Segment style={style} className="container mx-auto mt-4 bg-content1">
       <Row>
         <span className="text-lg font-bold">Dashboard settings</span>
       </Row>
@@ -169,31 +168,26 @@ function ProjectSettings(props) {
       <Spacer y={4} />
 
       <Row align="center" wrap={"wrap"}>
-        <Select
+        <Autocomplete
           label="Dashboard timezone"
           placeholder="Select a timezone"
           variant="bordered"
-          onSelectionChange={(keys) => {
-            setTimezoneSearch("");
-            setProjectTimezone(keys.currentKey);
+          onSelectionChange={(key) => {
+            setProjectTimezone(key);
           }}
-          selectedKeys={[projectTimezone || project.timezone]}
-          selectionMode="single"
+          selectedKey={projectTimezone || project.timezone}
           className="max-w-md"
         >
-          {timezones
-            .filter((timezone) => (
-              timezone.toLowerCase().indexOf(timezoneSearch.toLocaleLowerCase()) > -1
-            )).map((timezone) => (
-              <SelectItem key={timezone} textValue={timezone}>
-                {timezone}
-              </SelectItem>
-            ))}
-        </Select>
+          {timezones.map((timezone) => (
+            <AutocompleteItem key={timezone} textValue={timezone}>
+              {timezone}
+            </AutocompleteItem>
+          ))}
+        </Autocomplete>
         <Spacer x={1} />
         <Button
           color="primary"
-          variant="bordered"
+          variant="light"
           disabled={!_canAccess("projectAdmin")}
           onClick={() => _onGetMachineTimezone()}
           startContent={<LuClock4 />}
@@ -206,7 +200,7 @@ function ProjectSettings(props) {
       <Spacer y={2} />
       <Row>
         <Button
-          isDisabled={!_canAccess("projectAdmin")}
+          isDisabled={!_canAccess("projectAdmin") || !projectTimezone || projectTimezone === project.timezone}
           onClick={() => _onSaveTimezone()}
           isLoading={loadingTimezone}
           color="primary"
