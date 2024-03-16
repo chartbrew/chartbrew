@@ -90,7 +90,7 @@ jobs:
   build_docs:
     docker:
       - image: cimg/node:20.11.1
-    working_directory: ~/chartbrew/docs-v3
+    working_directory: ~/chartbrew
     # build the docs
     steps:
       - checkout
@@ -103,7 +103,7 @@ jobs:
             - v7-dependencies-
       - run:
           name: Building the docs
-          command: npm install && npm run docs:build
+          command: cd docs-v3 && npm install && npm run docs:build
 
 workflows:
   version: 2
