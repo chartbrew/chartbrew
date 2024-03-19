@@ -403,7 +403,7 @@ function RealtimeDbConnectionForm(props) {
             <Spacer y={1} />
             <AceEditor
               mode="json"
-              theme="tomorrow"
+              theme={isDark ? "one_dark" : "tomorrow"}
               height="150px"
               width="none"
               value={testResult.body || "Hello"}
