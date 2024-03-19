@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import PropTypes from "prop-types";
 import {
   Popover, Link, Spacer, CircularProgress, Chip, PopoverTrigger, PopoverContent,
 } from "@nextui-org/react";
@@ -19,7 +18,6 @@ import PieChart from "./Chart/components/PieChart";
 import DoughnutChart from "./Chart/components/DoughnutChart";
 import RadarChart from "./Chart/components/RadarChart";
 import PolarChart from "./Chart/components/PolarChart";
-import logo from "../assets/logo_inverted.png";
 import useInterval from "../modules/useInterval";
 import Row from "../components/Row";
 import Text from "../components/Text";
@@ -76,7 +74,8 @@ function EmbeddedChart() {
     }, 1000);
   }, []);
 
-  const _getUpdatedTime = (updatedAt) => {
+  const _getUpdatedTime = (chart) => {
+    const updatedAt = chart.chartDataUpdated || chart.lastAutoUpdate;
     if (moment().diff(moment(updatedAt), "days") > 1) {
       return moment(updatedAt).calendar();
     }
@@ -100,8 +99,11 @@ function EmbeddedChart() {
     setDataLoading(true);
     dispatch(runQueryWithFilters({ project_id: chart.project_id, chart_id: chart.id, filters: newConditions }))
       .then((data) => {
+        if (data.payload) {
+          setChart(data.payload);
+        }
+
         setDataLoading(false);
-        setChart(data);
       })
       .catch(() => {
         setDataLoading(false);
@@ -120,9 +122,13 @@ function EmbeddedChart() {
     if (clearIndex > -1) newConditions.splice(clearIndex, 1);
 
     setConditions(newConditions);
+    setDataLoading(true);
     dispatch(runQueryWithFilters({ project_id: chart.project_id, chart_id: chart.id, filters: newConditions }))
       .then((data) => {
-        setChart(data);
+        if (data.payload) {
+          setChart(data.payload);
+        }
+        setDataLoading(false);
       });
   };
 
@@ -137,7 +143,7 @@ function EmbeddedChart() {
     return filterCount > 0;
   };
 
-  if (loading || !chart.id) {
+  if (loading) {
     return (
       <>
         <Helmet>
@@ -189,7 +195,7 @@ function EmbeddedChart() {
       <div className="pl-unit-sm w-full" style={styles.header(chart.type)}>
         <Row justify="space-between">
           <div style={{ display: "flex", alignItems: "center" }}>
-            <Text b className={"text-default"}>{chart.name}</Text>
+            <Text b>{chart.name}</Text>
             <Spacer x={0.5} />
             {chart.ChartDatasetConfigs && conditions.map((c) => {
               return (
@@ -232,6 +238,20 @@ function EmbeddedChart() {
                 </Popover>
               )}
             </div>
+          )}
+        </Row>
+        <Row justify="flex-start" align="center" className={"gap-1"}>
+          {!dataLoading && (
+            <>
+              <span className="text-[10px] text-default-500" title="Last updated">{`${_getUpdatedTime(chart)}`}</span>
+            </>
+          )}
+          {dataLoading && (
+            <>
+              <CircularProgress classNames={{ svg: "w-4 h-4" }} />
+              <Spacer x={1} />
+              <span className="text-[10px] text-default-500">{"Updating..."}</span>
+            </>
           )}
         </Row>
       </div>
@@ -286,50 +306,7 @@ function EmbeddedChart() {
           )}
         </div>
       )}
-      <Spacer y={4} />
-      <div>
-        <Row justify="space-between" align="center">
-          <div style={styles.row}>
-            {!loading && (
-              <>
-                {dataLoading && (
-                  <>
-                    <CircularProgress aria-label="loading" classNames={{ svg: "w-4 h-4" }} />
-                    <Spacer x={1} />
-                    <span className="text-default-500 text-xs">{"Updating..."}</span>
-                  </>
-                )}
-                {!dataLoading && (
-                  <span className="text-default-500 text-xs">
-                    {`${_getUpdatedTime(chart.chartDataUpdated)}`}
-                  </span>
-                )}
-              </>
-            )}
-            {loading && (
-              <>
-                <CircularProgress aria-label="loading" classNames={{ svg: "w-4 h-4" }} />
-                <Spacer x={1} />
-                <span className="text-default-500 text-xs">{"Updating..."}</span>
-              </>
-            )}
-          </div>
-          {chart.showBranding && (
-            <Link href="https://chartbrew.com" target="_blank" rel="noreferrer" className={"text-primary items-center"}>
-              <img
-                src={logo}
-                width="15"
-                alt="Chartbrew logo"
-              />
-              <Spacer x={0.2} />
-              <span className="text-default-500 text-xs">
-                <strong>Chart</strong>
-                brew
-              </span>
-            </Link>
-          )}
-        </Row>
-      </div>
+      <Spacer y={2} />
     </div>
   );
 }
@@ -359,11 +336,6 @@ const styles = {
     flexDirection: "row",
     alignItems: "center",
   }
-};
-
-EmbeddedChart.propTypes = {
-  getEmbeddedChart: PropTypes.func.isRequired,
-  runQueryWithFilters: PropTypes.func.isRequired,
 };
 
 export default EmbeddedChart;
