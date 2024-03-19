@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
-import { connect } from "react-redux";
+import { connect, useSelector } from "react-redux";
 import PropTypes from "prop-types";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Card, CardBody, CardFooter, CardHeader, Spacer,
 } from "@nextui-org/react";
@@ -13,6 +13,7 @@ import cbLogoSmall from "../assets/logo_inverted.png";
 import Container from "../components/Container";
 import Row from "../components/Row";
 import Text from "../components/Text";
+import { selectUser } from "../slices/user";
 
 /*
   Login container with an embedded login form
@@ -20,10 +21,19 @@ import Text from "../components/Text";
 function Login(props) {
   const { errors, cleanErrors } = props;
   const loginError = _.find(errors, { pathname: window.location.pathname });
+  const user = useSelector(selectUser);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     cleanErrors();
   }, []);
+
+  useEffect(() => {
+    if (user?.id) {
+      navigate("/");
+    }
+  }, [user]);
 
   return (
     <div style={styles.container}>
