@@ -36,8 +36,7 @@ const validEndDate = /[0-9]{4}-[0-9]{2}-[0-9]{2}|today|yesterday|[0-9]+(daysAgo)
 */
 function GaBuilder(props) {
   const {
-    dataRequest, connection, onSave, requests, // eslint-disable-line
-    onDelete,
+    dataRequest, connection, onSave, onDelete,
   } = props;
 
   const [gaRequest, setGaRequest] = useState({});
@@ -145,6 +144,7 @@ function GaBuilder(props) {
     if (metricsOptions.length > 0
       && gaRequest.configuration
       && gaRequest.configuration.metrics
+      && !configuration.metrics
     ) {
       setConfiguration({ ...configuration, metrics: gaRequest.configuration.metrics });
     }
@@ -152,6 +152,7 @@ function GaBuilder(props) {
     if (dimensionsOptions.length > 0
       && gaRequest.configuration
       && gaRequest.configuration.dimensions
+      && !configuration.dimensions
     ) {
       setConfiguration({ ...configuration, dimensions: gaRequest.configuration.dimensions });
     }
@@ -466,7 +467,7 @@ function GaBuilder(props) {
                 isDisabled={!configuration.propertyId}
                 variant="bordered"
                 isLoading={collectionsLoading}
-                selectedKeys={[configuration.metrics]}
+                selectedKey={configuration.metrics}
                 placeholder="Select a metric"
                 labelPlacement="outside"
                 errorMessage={formErrors.metrics}
@@ -499,7 +500,7 @@ function GaBuilder(props) {
               <Autocomplete
                 isDisabled={!configuration.propertyId}
                 variant="bordered"
-                selectedKeys={[configuration.dimensions]}
+                selectedKey={configuration.dimensions}
                 onSelectionChange={(key) => setConfiguration({ ...configuration, dimensions: key })}
                 selectionMode="single"
                 labelPlacement="outside"
