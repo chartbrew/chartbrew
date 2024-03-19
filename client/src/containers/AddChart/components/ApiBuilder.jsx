@@ -14,6 +14,7 @@ import { endOfDay, startOfDay, sub } from "date-fns";
 import { Calendar } from "react-date-range";
 import { enGB } from "date-fns/locale";
 import moment from "moment";
+import { cloneDeep, isEqual } from "lodash";
 
 import "ace-builds/src-min-noconflict/mode-json";
 import "ace-builds/src-min-noconflict/mode-javascript";
@@ -29,7 +30,6 @@ import Container from "../../../components/Container";
 import Row from "../../../components/Row";
 import Text from "../../../components/Text";
 import useThemeDetector from "../../../modules/useThemeDetector";
-import { isEqual } from "lodash";
 
 const methods = [{
   key: 1,
@@ -123,7 +123,7 @@ function ApiBuilder(props) {
       formattedApiRequest.formattedHeaders = formattedHeaders;
 
       if (dataRequest.variables) {
-        const formattedVariables = { ...dataRequest.variables };
+        const formattedVariables = cloneDeep(dataRequest.variables);
         if (formattedVariables.startDate && formattedVariables.startDate.value) {
           formattedVariables.startDate.value = startOfDay(moment(formattedVariables.startDate.value).toDate());
         }
@@ -144,7 +144,7 @@ function ApiBuilder(props) {
 
     // automate the pagination template here (to a possible extent)
     if (connection && apiRequest && !apiRequest.template) {
-      if (connection.host.indexOf("api.stripe.com") > -1) {
+      if (connection?.host?.indexOf("api.stripe.com") > -1) {
         apiRequest.template = "stripe";
       }
     }

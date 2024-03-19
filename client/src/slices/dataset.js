@@ -559,12 +559,21 @@ export const datasetSlice = createSlice({
               ...dataset,
               DataRequests: dataset.DataRequests.map((dataRequest) => {
                 if (dataRequest.id === parseInt(action.meta.arg.dataRequest_id, 10)) {
-                  return {
+                  let newDr = {
                     ...dataRequest,
                     loading: false,
                     response: action.payload.response?.dataRequest?.responseData?.data,
                     error: false,
                   };
+
+                  if (action.payload?.response?.dataRequest?.dataRequest) {
+                    newDr = {
+                      ...newDr,
+                      ...action.payload.response.dataRequest.dataRequest,
+                    }; 
+                  }
+
+                  return newDr;
                 }
                 return dataRequest;
               }),
@@ -607,6 +616,17 @@ export const selectDataRequests = (state, datasetId) => {
     return dataset.DataRequests;
   }
   return [];
+}
+
+export const selectDataRequest = (state, datasetId, drId) => {
+  const dataset = state.dataset.data.find((dataset) => dataset.id === parseInt(datasetId, 10));
+  if (dataset) {
+    const dr = dataset.DataRequests.find((dr) => dr.id === parseInt(drId, 10));
+    if (dr) {
+      return dr;
+    }
+  }
+  return {};
 }
 
 export default datasetSlice.reducer;

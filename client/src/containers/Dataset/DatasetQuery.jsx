@@ -84,6 +84,12 @@ function DatasetQuery(props) {
       });
   }, []);
 
+  useEffect(() => {
+    if (stateDataRequests.length > 0) {
+      setDataRequests(stateDataRequests);
+    }
+  }, [stateDataRequests]);
+
   const _updateDataRequest = (newData) => {
     let newDr = newData;
     // transform the headers array

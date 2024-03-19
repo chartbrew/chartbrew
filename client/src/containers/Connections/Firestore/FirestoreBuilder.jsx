@@ -88,6 +88,10 @@ export const operators = [{
   The API Data Request builder
 */
 function FirestoreBuilder(props) {
+  const {
+    dataRequest, connection, onSave, onDelete,
+  } = props;
+
   const [firestoreRequest, setFirestoreRequest] = useState({
     query: "",
   });
@@ -113,10 +117,6 @@ function FirestoreBuilder(props) {
 
   const stateDrs = useSelector((state) => selectDataRequests(state, params.datasetId));
 
-  const {
-    dataRequest, onChangeRequest, connection, onSave, onDelete,
-  } = props;
-
   // on init effect
   useEffect(() => {
     if (dataRequest) {
@@ -126,7 +126,6 @@ function FirestoreBuilder(props) {
   }, []);
 
   useEffect(() => {
-    onChangeRequest(firestoreRequest);
     if (connection?.id && !fullConnection?.id) {
       dispatch(getConnection({ team_id: params.teamId, connection_id: connection.id }))
         .then((data) => {
@@ -166,8 +165,8 @@ function FirestoreBuilder(props) {
   useEffect(() => {
     if (dataRequest
       && dataRequest.configuration
-      // && dataRequest.configuration.subCollections
-      // && dataRequest.configuration.subCollections.length > 0
+      && dataRequest.configuration.subCollections
+      && dataRequest.configuration.subCollections.length > 0
       && dataRequest.configuration.showSubCollections
     ) {
       setShowSubUI(true);
@@ -351,7 +350,7 @@ function FirestoreBuilder(props) {
   };
 
   const _onChangeQuery = (query) => {
-    setFirestoreRequest({ ...firestoreRequest, query });
+    _onTest({ ...firestoreRequest, query }, true);
   };
 
   const _updateCondition = (id, data, type) => {
@@ -543,6 +542,7 @@ function FirestoreBuilder(props) {
                   onClick={() => _onChangeQuery(collection._queryOptions.collectionId)}
                   className="min-w-[50px] text-center cursor-pointer"
                   radius="sm"
+                  size="lg"
                 >
                   {collection._queryOptions.collectionId}
                 </Chip>
@@ -676,7 +676,7 @@ function FirestoreBuilder(props) {
                 <Text>Fetch sub-collection data only</Text>
               </Row>
               <Spacer y={1} />
-              <Row wrap="wrap" className={"gap-1"}>
+              <Row wrap="wrap" className={"gap-1 items-center"}>
                 {dataRequest.configuration.subCollections.map((subCollection) => (
                   <Fragment key={subCollection}>
                     <Chip
@@ -690,9 +690,7 @@ function FirestoreBuilder(props) {
                     </Chip>
                   </Fragment>
                 ))}
-              </Row>
-              <Spacer y={1} />
-              <Row>
+
                 <Button
                   color="danger"
                   onClick={() => _onSelectSubCollection("")}

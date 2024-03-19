@@ -1,4 +1,5 @@
 const ConnectionController = require("./ConnectionController");
+const drCacheController = require("./DataRequestCacheController");
 const db = require("../models/models");
 
 class RequestController {
@@ -165,7 +166,18 @@ class RequestController {
               { configuration: newConfiguration },
               { where: { id: response.dataRequest.id } },
             );
+
+            try {
+              const drCache = await drCacheController.findLast(dataRequest.id);
+              if (drCache?.responseData?.configuration) {
+                drCache.responseData.configuration = newConfiguration;
+                drCacheController.update(drCache, dataRequest.id);
+              }
+            } catch (e) {
+              // do nothing
+            }
           }
+          // console.log("newConfiguration", newConfiguration);
         }
 
         return Promise.resolve({
