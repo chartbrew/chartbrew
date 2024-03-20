@@ -110,9 +110,11 @@ class NewLineChart {
           },
           grid: {
             display: true,
-            drawBorder: this.chart.mode !== "kpichart",
             lineWidth: 0.5,
           },
+          border: {
+            display: this.chart.mode !== "kpichart",
+          }
         },
         x: {
           ticks: {
@@ -126,9 +128,11 @@ class NewLineChart {
           },
           grid: {
             display: this.chart.mode !== "kpichart",
-            drawBorder: this.chart.mode !== "kpichart",
             lineWidth: 0.5,
           },
+          border: {
+            display: this.chart.mode !== "kpichart",
+          }
         },
       },
       plugins: {

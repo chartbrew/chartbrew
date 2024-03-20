@@ -128,8 +128,10 @@ class NewBarChart {
           },
           grid: {
             display: !this.chart.horizontal,
-            drawBorder: this.chart.mode !== "kpichart",
             lineWidth: 0.5,
+          },
+          border: {
+            display: this.chart.mode !== "kpichart",
           },
         },
         x: {
@@ -144,8 +146,10 @@ class NewBarChart {
           },
           grid: {
             display: this.chart.mode !== "kpichart" || this.chart.horizontal,
-            drawBorder: this.chart.mode !== "kpichart" || this.chart.horizontal,
             lineWidth: 0.5,
+          },
+          border: {
+            display: this.chart.mode !== "kpichart" || this.chart.horizontal,
           },
         },
       },
