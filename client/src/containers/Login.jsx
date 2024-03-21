@@ -42,8 +42,8 @@ function Login(props) {
         </Link>
       </Row>
       <Spacer y={4} />
-      <div className="flex flex-col p-4 sm:items-center">
-        <Card fullWidth>
+      <div className="sm:flex m-4 justify-center">
+        <Card>
           <CardHeader className={"flex justify-center"}>
             <Text size="h3" className={"mt-4"}>{"Welcome back to Chartbrew"}</Text>
           </CardHeader>
