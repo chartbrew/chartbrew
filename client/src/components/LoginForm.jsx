@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { connect, useDispatch } from "react-redux";
 import {
-  Button, Input, Spacer, Link, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent,
+  Button, Input, Spacer, Link, Modal, ModalHeader, ModalBody, ModalFooter, ModalContent, Divider,
 } from "@nextui-org/react";
 import { LuChevronRight, LuLock, LuMail } from "react-icons/lu";
 import { useNavigate } from "react-router";
@@ -141,16 +141,15 @@ function LoginForm() {
   }
 
   return (
-    <div style={styles.container} className="container mx-auto w-full p-4">
+    <div className="w-full py-2 px-4">
       {!view2FaApp && (
-        <form onSubmit={loginUser} className="sm:min-w-[500px]">
+        <form onSubmit={loginUser} className="sm:min-w-[400px]">
           <div className="w-full">
             <Row>
               <Input
-                endContent={<LuMail />}
+                startContent={<LuMail />}
                 type="email"
                 placeholder="Enter your email"
-                labelPlacement="outside"
                 onChange={(e) => {
                   setEmail(e.target.value);
                   setErrors({ ...errors, email: "" });
@@ -175,7 +174,6 @@ function LoginForm() {
               <Input
                 type="password"
                 placeholder="Enter your password"
-                labelPlacement="outside"
                 onChange={(e) => {
                   setPassword(e.target.value);
                   setErrors({ ...errors, password: "" });
@@ -186,7 +184,7 @@ function LoginForm() {
                 variant="bordered"
                 color={errors.password ? "danger" : "default"}
                 description={errors.password && "Please enter your password"}
-                endContent={<LuLock />}
+                startContent={<LuLock />}
               />
             </Row>
             {errors.login && (
@@ -212,13 +210,15 @@ function LoginForm() {
               </Button>
             </Row>
             <Spacer y={4} />
+            <Divider />
+            <Spacer y={2} />
             <Row justify="center" align="center">
               <Link
                 style={{ paddingTop: 10 }}
                 onClick={() => setForgotModal(true)}
                 className="cursor-pointer"
               >
-                Did you forget your password?
+                Forgot password?
               </Link>
             </Row>
           </div>
@@ -304,12 +304,6 @@ function LoginForm() {
     </div>
   );
 }
-
-const styles = {
-  container: {
-    flex: 1,
-  },
-};
 
 const mapStateToProps = (state) => {
   return {
